@@ -30,7 +30,7 @@ export function readLocalAiProviderConfig(): LocalAiProviderConfig {
 export function writeLocalAiProviderConfig(config: Partial<LocalAiProviderConfig>) {
   const current = readLocalAiProviderConfig();
   const next: LocalAiProviderConfig = {
-    provider: config.provider === "siliconflow" || config.provider === "openai-compatible" ? config.provider : "deepseek",
+    provider: config.provider === "deepseek" || config.provider === "siliconflow" || config.provider === "openai-compatible" ? config.provider : current.provider,
     apiKey: typeof config.apiKey === "string" ? config.apiKey.trim() : current.apiKey,
     baseUrl: typeof config.baseUrl === "string" && config.baseUrl.trim() ? config.baseUrl.trim() : current.baseUrl,
     model: typeof config.model === "string" && config.model.trim() ? config.model.trim() : current.model,

@@ -9,6 +9,7 @@
 
 ### 修复
 - 优化 Execute 与 Planning 的移动端布局：规划页在竖屏使用顶部栏并保持说明单列，候选任务优先显示标题并保留触控尺寸；手机任务与日程切换改为两个清晰选项，桌面导航文字也更易读。
+- 切换到 SiliconFlow 或其他 OpenAI 兼容服务后，编辑 API Key 或模型会保留当前提供商，不再意外切回 DeepSeek。
 - 无效的 AI 查询协议现在会先进行一次有限修复；真正达到查询上限时才提示缩小范围。无效或过大的操作批次会整体拒绝，AI 也不能修改自己的权限等级。
 
 ## 2026-09-07 · AI 回复与习惯
@@ -68,6 +69,7 @@
 
 ### Fixed
 - Improved Execute and Planning layouts on portrait phones: Planning now uses a top bar with a single-column guide, candidate rows prioritize titles while retaining touch targets, and Tasks/Schedule are two clear choices. Desktop navigation labels are easier to read.
+- Editing the API key or model after selecting SiliconFlow or another OpenAI-compatible service now keeps the selected provider instead of unexpectedly switching back to DeepSeek.
 - Invalid AI query protocols receive one bounded repair attempt, and only a real query limit reports an oversized scope. Invalid or oversized action batches are rejected as a whole, and AI cannot change its own permission level.
 
 ## 2026-09-07 · AI Replies and Habits
