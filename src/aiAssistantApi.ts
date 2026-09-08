@@ -190,11 +190,18 @@ export async function invokeAiAssistant(client: SupabaseClient, params: {
     const currentDate = localIsoDate();
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const context = { ...((params.context as Record<string, unknown>) || {}), currentDate, timezone };
-    const { data, error } = await client.functions.invoke("ai-assistant", {
+    const invoke = () => client.functions.invoke("ai-assistant", {
       body: { ...params, providerConfig: params.providerConfig || readLocalAiProviderConfig(), context, signal: undefined, timeoutMs: undefined },
       signal: controller.signal,
       timeout: timeoutMs,
     });
+    let invocation = await invoke();
+    const authStatus = (invocation.error as { context?: Response } | null)?.context?.status;
+    if (authStatus === 401 && typeof client.auth?.refreshSession === "function") {
+      const { error: refreshError } = await client.auth.refreshSession();
+      if (!refreshError) invocation = await invoke();
+    }
+    const { data, error } = invocation;
     if (error) return failure(await readFunctionError(error));
     if (!data) return failure({ code: "AI_BAD_RESPONSE", retryable: true, message: "AI 返回格式异常，请重试。" });
     if (typeof data === "string") return { ok: true, reply: data, actions: [], steps: [{ label: "AI 回复", status: "done" }] };

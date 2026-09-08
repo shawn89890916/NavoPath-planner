@@ -35,6 +35,17 @@ describe("AI assistant client", () => {
     if (!result.ok) expect(result.error).toMatchObject({ code: "AI_AUTH", requestId: "req-1", retryable: false });
   });
 
+  it("refreshes an expired session once before returning an auth failure", async () => {
+    const invoke = vi.fn()
+      .mockResolvedValueOnce({ data: null, error: { message: "expired", context: new Response("expired", { status: 401 }) } })
+      .mockResolvedValueOnce({ data: { ok: true, reply: "ok", actions: [] }, error: null });
+    const refreshSession = vi.fn().mockResolvedValue({ data: { session: {} }, error: null });
+    const client = { functions: { invoke }, auth: { refreshSession } } as any;
+    await expect(invokeAiAssistant(client, { mode: "agent", message: "hello" })).resolves.toMatchObject({ ok: true, reply: "ok" });
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledTimes(2);
+  });
+
   it("cancels a hanging request within the configured timeout", async () => {
     const client = { functions: { invoke: vi.fn((_name: string, options: { signal: AbortSignal }) => new Promise((_resolve, reject) => {
       options.signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));

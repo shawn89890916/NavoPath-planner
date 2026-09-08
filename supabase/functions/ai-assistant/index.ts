@@ -221,6 +221,12 @@ function supabaseKeys() {
   };
 }
 
+function workspaceFailureMessage(rawMessage: string) {
+  if (/profile|workspace|jwt|token|session/i.test(rawMessage)) return "云端登录或工作区已失效，请重新登录后重试。";
+  if (/agent.?runs|audit|Could not create agent/i.test(rawMessage)) return "AI 已连接，但工作区记录服务暂时不可用，请刷新页面后重试。";
+  return "全局 AI 工作区暂时不可用，请刷新页面后重试。";
+}
+
 async function authenticatedWorkspace(req: Request) {
   const authorization = req.headers.get("authorization") || "";
   const keys = supabaseKeys();
@@ -765,7 +771,7 @@ serve(async (req: Request) => {
         const gatewayError = error instanceof AiGatewayError ? error : null;
         const code = rawMessage === "AI_AUTH" ? "AI_AUTH" : /PROFILE_REVISION_CONFLICT/.test(rawMessage) ? "AI_PLAN_EXPIRED" : rawMessage === "SCHEDULE_CONFLICT" ? "AI_BAD_RESPONSE" : gatewayError?.code || "AI_PROVIDER";
         const detail = gatewayError?.attempts[gatewayError.attempts.length - 1]?.detail;
-        const publicMessage = rawMessage === "AI_AUTH" ? "请先登录云端账号后使用全局 AI。" : code === "AI_PLAN_EXPIRED" ? "工作区已变化，请重新发送请求。" : rawMessage === "SCHEDULE_CONFLICT" ? "目标时间与现有排程或外部日历冲突，未执行任何写入。" : gatewayErrorMessage(gatewayError?.code || "AI_PROVIDER", detail);
+        const publicMessage = rawMessage === "AI_AUTH" ? "请先登录云端账号后使用全局 AI。" : code === "AI_PLAN_EXPIRED" ? "工作区已变化，请重新发送请求。" : rawMessage === "SCHEDULE_CONFLICT" ? "目标时间与现有排程或外部日历冲突，未执行任何写入。" : gatewayError ? gatewayErrorMessage(gatewayError.code, detail) : workspaceFailureMessage(rawMessage);
         console.error("Global agent failed", { code, detail: rawMessage.slice(0, 120) });
         return new Response(JSON.stringify({ ok: false, reply: publicMessage, actions: [], error: { code, retryable: gatewayError?.retryable ?? (code !== "AI_AUTH" && rawMessage !== "SCHEDULE_CONFLICT"), requestId: crypto.randomUUID(), message: publicMessage } }), { status: code === "AI_AUTH" ? 401 : code === "AI_RATE_LIMIT" ? 429 : code === "AI_PLAN_EXPIRED" || rawMessage === "SCHEDULE_CONFLICT" ? 409 : 503, headers: corsHeaders });
       }
