@@ -129,14 +129,14 @@ async function callDeepSeek(
   maxTokens: number,
   reasoningMode: "instant" | "high" | "xhigh" = "instant",
   signal?: AbortSignal,
-  providerConfig?: { apiKey?: string; baseUrl?: string; model?: string },
+  providerConfig?: { provider?: string; apiKey?: string; baseUrl?: string; model?: string },
 ): Promise<string> {
   if (signal?.aborted) throw new DOMException("aborted", "AbortError");
   const providers: AiProviderConfig[] = [];
   const configuredKey = providerConfig?.apiKey || apiKey;
   if (configuredKey) {
     providers.push({
-      name: "deepseek",
+      name: providerConfig?.provider === "siliconflow" ? "siliconflow" : providerConfig?.provider === "openai-compatible" ? "openai-compatible" : "deepseek",
       baseUrl: providerConfig?.baseUrl || Deno.env.get("DEEPSEEK_BASE_URL") || "https://api.deepseek.com",
       apiKey: configuredKey,
       model: providerConfig?.model || model,
@@ -177,7 +177,7 @@ async function plannerStage(
   userContent: string,
   historyMessages: Array<{ role: "user" | "assistant"; content: string }>,
   reasoningMode: "instant" | "high" | "xhigh" = "instant",
-  providerConfig?: { apiKey?: string; baseUrl?: string; model?: string },
+  providerConfig?: { provider?: string; apiKey?: string; baseUrl?: string; model?: string },
 ) {
   const systemPrompt = mode === "enrich_task"
     ? `You estimate task duration and choose an existing project. Return JSON only: {"reply":"","steps":[],"actions":[],"memories":[],"enrichment":{"durationMinutes":15-240,"projectId":"existing id or empty","confidence":0-1}}. Never invent a project. ${ctx.projectsInfo}`
@@ -357,7 +357,7 @@ async function runGlobalAgent(req: Request, params: {
   trigger?: "manual" | "start_brief" | "end_review";
   attachmentText?: string;
   attachmentName?: string;
-  providerConfig?: { apiKey?: string; baseUrl?: string; model?: string };
+  providerConfig?: { provider?: string; apiKey?: string; baseUrl?: string; model?: string };
 }) {
   const workspace = await authenticatedWorkspace(req);
   const ctx = agentPromptContext(workspace.profile, params.context, params.message);
@@ -738,8 +738,8 @@ serve(async (req: Request) => {
       );
     }
 
-    const selectedModel = providerConfig?.model === "deepseek-v4-pro" ? "deepseek-v4-pro" : providerConfig?.model === "deepseek-v4-flash" ? "deepseek-v4-flash" : STABLE_MODEL;
-    const supportedReasoning = /^deepseek-v4-(?:flash|pro)$/i.test(selectedModel);
+    const selectedModel = typeof providerConfig?.model === "string" && /^[A-Za-z0-9._:/-]{2,160}$/.test(providerConfig.model) ? providerConfig.model : STABLE_MODEL;
+    const supportedReasoning = providerConfig?.provider !== "deepseek" || /^deepseek-v4-(?:flash|pro)$/i.test(selectedModel);
     const selectedReasoning = supportedReasoning && (reasoningMode === "high" || reasoningMode === "xhigh") ? reasoningMode : "instant";
 
     if (mode === "agent") {

@@ -1,7 +1,7 @@
 export type GatewayMessage = { role: string; content: string };
 
 export type AiProviderConfig = {
-  name: "deepseek";
+  name: "deepseek" | "siliconflow" | "openai-compatible";
   baseUrl: string;
   apiKey: string;
   model: string;
@@ -41,8 +41,15 @@ function providerUrl(baseUrl: string): string {
 
 export function reasoningParameters(provider: AiProviderConfig, reasoningMode: "instant" | "high" | "xhigh" = "instant") {
   if (!provider.supportsReasoning) return {};
-  if (reasoningMode === "instant") return { thinking: { type: "disabled" } };
-  return { thinking: { type: "enabled" }, reasoning_effort: reasoningMode === "xhigh" ? "max" : "high" };
+  if (provider.name === "deepseek") {
+    if (reasoningMode === "instant") return { thinking: { type: "disabled" } };
+    return { thinking: { type: "enabled" }, reasoning_effort: reasoningMode === "xhigh" ? "max" : "high" };
+  }
+  if (provider.name === "siliconflow") {
+    if (reasoningMode === "instant") return { enable_thinking: false };
+    return { enable_thinking: true, ...(reasoningMode === "xhigh" ? { reasoning_effort: "max" } : {}) };
+  }
+  return reasoningMode === "instant" ? {} : { reasoning_effort: reasoningMode === "xhigh" ? "max" : "high" };
 }
 
 export async function callAiGateway(params: {

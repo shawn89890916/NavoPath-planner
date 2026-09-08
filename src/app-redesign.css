@@ -387,7 +387,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
    toggles never get squeezed into an unreadable sliver. */
 .df-settings-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(190px, .42fr) minmax(0, .58fr);
   align-items: center;
   column-gap: 24px;
   min-height: 52px;
@@ -403,7 +403,17 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  min-width: 140px;
+  min-width: 0;
+  width: 100%;
+}
+.df-ai-provider-settings { width: 100%; max-width: 620px; }
+.df-ai-provider-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.df-ai-provider-grid label { min-width: 0; }
+.df-ai-provider-grid input, .df-ai-provider-grid select { width: 100%; min-width: 0; box-sizing: border-box; }
+@media (max-width: 760px) {
+  .df-settings-row { grid-template-columns: 1fr; row-gap: 10px; }
+  .df-settings-row-control { justify-content: flex-start; }
+  .df-ai-provider-grid { grid-template-columns: 1fr; }
 }
 .df-settings-row[data-disabled="true"] .df-settings-row-title,
 .df-settings-row[data-disabled="true"] .df-settings-row-desc { color: var(--text-faint); }
