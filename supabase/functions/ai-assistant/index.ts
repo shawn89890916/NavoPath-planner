@@ -343,7 +343,10 @@ async function loadExternalSources(admin: ReturnType<typeof createClient>, userI
     .select("id,name,display_url,enabled,sync_status,last_synced_at")
     .eq("user_id", userId)
     .order("created_at");
-  if (error) throw new Error("Could not read external calendar sources");
+  if (error) {
+    console.warn("External calendar sources unavailable; continuing without integrations", { code: error.code });
+    return [];
+  }
   return data || [];
 }
 
@@ -761,7 +764,8 @@ serve(async (req: Request) => {
         const rawMessage = error instanceof Error ? error.message : "AI agent failed";
         const gatewayError = error instanceof AiGatewayError ? error : null;
         const code = rawMessage === "AI_AUTH" ? "AI_AUTH" : /PROFILE_REVISION_CONFLICT/.test(rawMessage) ? "AI_PLAN_EXPIRED" : rawMessage === "SCHEDULE_CONFLICT" ? "AI_BAD_RESPONSE" : gatewayError?.code || "AI_PROVIDER";
-        const publicMessage = rawMessage === "AI_AUTH" ? "请先登录云端账号后使用全局 AI。" : code === "AI_PLAN_EXPIRED" ? "工作区已变化，请重新发送请求。" : rawMessage === "SCHEDULE_CONFLICT" ? "目标时间与现有排程或外部日历冲突，未执行任何写入。" : gatewayErrorMessage(gatewayError?.code || "AI_PROVIDER");
+        const detail = gatewayError?.attempts[gatewayError.attempts.length - 1]?.detail;
+        const publicMessage = rawMessage === "AI_AUTH" ? "请先登录云端账号后使用全局 AI。" : code === "AI_PLAN_EXPIRED" ? "工作区已变化，请重新发送请求。" : rawMessage === "SCHEDULE_CONFLICT" ? "目标时间与现有排程或外部日历冲突，未执行任何写入。" : gatewayErrorMessage(gatewayError?.code || "AI_PROVIDER", detail);
         console.error("Global agent failed", { code, detail: rawMessage.slice(0, 120) });
         return new Response(JSON.stringify({ ok: false, reply: publicMessage, actions: [], error: { code, retryable: gatewayError?.retryable ?? (code !== "AI_AUTH" && rawMessage !== "SCHEDULE_CONFLICT"), requestId: crypto.randomUUID(), message: publicMessage } }), { status: code === "AI_AUTH" ? 401 : code === "AI_RATE_LIMIT" ? 429 : code === "AI_PLAN_EXPIRED" || rawMessage === "SCHEDULE_CONFLICT" ? 409 : 503, headers: corsHeaders });
       }
@@ -837,7 +841,7 @@ serve(async (req: Request) => {
           code: gatewayError?.code || "AI_PROVIDER",
           retryable: gatewayError?.retryable ?? true,
           requestId,
-          message: gatewayErrorMessage(gatewayError?.code || "AI_PROVIDER"),
+          message: gatewayErrorMessage(gatewayError?.code || "AI_PROVIDER", gatewayError?.attempts[gatewayError.attempts.length - 1]?.detail),
         },
       }), { status: gatewayError?.code === "AI_AUTH" ? 401 : gatewayError?.code === "AI_RATE_LIMIT" ? 429 : 503, headers: corsHeaders });
     }

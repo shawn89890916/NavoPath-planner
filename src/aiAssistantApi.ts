@@ -154,6 +154,10 @@ async function readFunctionError(error: unknown): Promise<AiServiceError> {
   }
   const message = candidate.message || "";
   if (/not found|not deployed/i.test(message)) return { code: "AI_NOT_CONFIGURED", retryable: false, message: "AI 服务尚未部署。" };
+  const status = candidate.context?.status;
+  if (status === 401 || status === 403) return { code: "AI_AUTH", retryable: false, message: "云端登录已失效，请重新登录后重试。" };
+  if (status === 402 || status === 429) return { code: "AI_RATE_LIMIT", retryable: status === 429, message: "AI 服务额度不足或请求过于频繁，请稍后重试。" };
+  if (status === 404) return { code: "AI_NOT_CONFIGURED", retryable: false, message: "AI 服务尚未部署。" };
   return { code: "AI_PROVIDER", retryable: true, message: "AI 服务暂时不可用，请稍后重试。" };
 }
 

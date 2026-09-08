@@ -9,6 +9,7 @@
 - AI 在等待澄清时保持只读；较大的任务列表会分批读取并明确还有哪些结果，避免把不完整的列表当作“全部”处理。
 
 ### 修复
+- 全局 AI 现在会区分登录失效、额度限制、临时网络或上游错误；短暂的供应商 5xx 与网络失败会自动重试一次，并忽略外部日历读取故障，避免它阻断工作区 Agent。
 - 自动迁移此前被保存为 DeepSeek 提供商但实际使用 SiliconFlow 地址的本机 AI 配置，已有 Key 无需重新录入即可恢复正确路由。
 - AI 提供商设置现在会为 SiliconFlow 自动使用正确的模型标识，直接显示可编辑的 API 地址，并兼容完整的对话接口地址；调用失败时会明确区分 Key、额度、超时及地址或模型错误。历史对话会自动清理没有任何消息的“新对话”。
 - 优化 Execute 与 Planning 的移动端布局：规划页在竖屏使用顶部栏并保持说明单列，候选任务优先显示标题并保留触控尺寸；手机任务与日程切换恢复为带 Logo 滑动提示的单一控件，指标图表、矩阵任务与筛选按钮在窄屏下保持完整可读，桌面导航文字也更易读。
@@ -72,6 +73,7 @@
 - The AI stays read-only while waiting for clarification. Larger task lists are read in batches with remaining results made clear, preventing incomplete lists from being treated as “all.”
 
 ### Fixed
+- Global AI now distinguishes expired sessions, quota limits, transient network or upstream failures; temporary provider 5xx and network failures retry once, and external calendar read failures no longer block the workspace Agent.
 - Existing local AI settings saved as DeepSeek with a SiliconFlow address are migrated automatically, so their stored key can use the correct route without being entered again.
 - AI provider settings now apply the correct SiliconFlow model identifier, expose an editable API base URL, and accept full chat endpoint URLs. Failures distinguish key, quota, timeout, and endpoint or model errors, while conversation history automatically removes empty “New conversation” entries.
 - Improved Execute and Planning layouts on portrait phones: Planning now uses a top bar with a single-column guide, candidate rows prioritize titles while retaining touch targets, and the Tasks/Schedule switch is restored as one Logo sliding control. Metrics charts, Matrix tasks, and the filter control remain fully readable at narrow widths, while desktop navigation labels stay easy to read.

@@ -94,6 +94,38 @@ test("falls back immediately after a primary 403", async () => {
   assert.equal(calls.length, 2);
 });
 
+test("retries transient provider failures once and exposes a safe upstream detail", async () => {
+  let calls = 0;
+  const result = await callAiGateway({
+    providers: providers.slice(0, 1),
+    messages: [{ role: "user", content: "hello" }],
+    maxTokens: 100,
+    fetchImpl: async () => {
+      calls += 1;
+      return calls === 1
+        ? Response.json({ error: { message: "temporary upstream failure" } }, { status: 503 })
+        : Response.json({ choices: [{ message: { content: "recovered" } }] });
+    },
+  });
+  assert.equal(result.content, "recovered");
+  assert.equal(calls, 2);
+});
+
+test("preserves an actionable provider error without exposing credentials", async () => {
+  await assert.rejects(
+    callAiGateway({
+      providers: providers.slice(0, 1),
+      messages: [{ role: "user", content: "private task title" }],
+      maxTokens: 100,
+      fetchImpl: async () => Response.json({ error: { message: "model does not exist for sk-secret1234567890" } }, { status: 400 }),
+    }),
+    (error: unknown) => error instanceof AiGatewayError
+      && error.code === "AI_PROVIDER"
+      && error.attempts[0]?.detail?.includes("model does not exist") === true
+      && !JSON.stringify(error).includes("sk-secret1234567890"),
+  );
+});
+
 test("returns a structured error when both providers fail", async () => {
   await assert.rejects(
     callAiGateway({

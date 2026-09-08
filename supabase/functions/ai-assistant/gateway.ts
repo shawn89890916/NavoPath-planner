@@ -13,13 +13,13 @@ export type GatewayErrorCode = "AI_AUTH" | "AI_RATE_LIMIT" | "AI_TIMEOUT" | "AI_
 export class AiGatewayError extends Error {
   readonly code: GatewayErrorCode;
   readonly retryable: boolean;
-  readonly attempts: Array<{ provider: string; code: GatewayErrorCode; status?: number; elapsedMs: number }>;
+  readonly attempts: Array<{ provider: string; code: GatewayErrorCode; status?: number; elapsedMs: number; detail?: string }>;
 
   constructor(
     code: GatewayErrorCode,
     message: string,
     retryable: boolean,
-    attempts: Array<{ provider: string; code: GatewayErrorCode; status?: number; elapsedMs: number }>,
+    attempts: Array<{ provider: string; code: GatewayErrorCode; status?: number; elapsedMs: number; detail?: string }>,
   ) {
     super(message);
     this.name = "AiGatewayError";
@@ -35,18 +35,49 @@ function codeForStatus(status: number): GatewayErrorCode {
   return "AI_PROVIDER";
 }
 
+function safeProviderDetail(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const detail = value
+    .replace(/\s+/g, " ")
+    .replace(/Bearer\s+[^\s,;]+/gi, "Bearer [redacted]")
+    .replace(/(?:sk|key|token)[-_]?[A-Za-z0-9_-]{12,}/gi, "[redacted]")
+    .trim()
+    .slice(0, 180);
+  return detail || undefined;
+}
+
+async function responseDetail(response: Response): Promise<string | undefined> {
+  try {
+    const text = await response.text();
+    if (!text) return undefined;
+    try {
+      const payload = JSON.parse(text) as Record<string, unknown>;
+      const nested = payload.error && typeof payload.error === "object" ? payload.error as Record<string, unknown> : undefined;
+      return safeProviderDetail(nested?.message || payload.message || nested?.code || payload.code || text);
+    } catch {
+      return safeProviderDetail(text);
+    }
+  } catch {
+    return undefined;
+  }
+}
+
+function shouldRetryProvider(status?: number, code?: GatewayErrorCode) {
+  return code === "AI_PROVIDER" && (status === undefined || [408, 425, 500, 502, 503, 504].includes(status));
+}
+
 function providerUrl(baseUrl: string, provider: AiProviderConfig["name"]): string {
   const normalized = baseUrl.replace(/\/$/, "");
   if (provider === "anthropic") return /\/messages$/i.test(normalized) ? normalized : `${normalized}/messages`;
   return /\/chat\/completions$/i.test(normalized) ? normalized : `${normalized}/chat/completions`;
 }
 
-export function gatewayErrorMessage(code: GatewayErrorCode): string {
+export function gatewayErrorMessage(code: GatewayErrorCode, detail?: string): string {
   if (code === "AI_AUTH") return "API Key 无效，或无权访问所选模型。";
   if (code === "AI_RATE_LIMIT") return "AI 服务额度不足或请求过于频繁，请稍后重试。";
   if (code === "AI_TIMEOUT") return "AI 服务响应超时，请重试。";
   if (code === "AI_NOT_CONFIGURED") return "请先配置 AI 提供商和 API Key。";
-  return "AI 服务拒绝了请求，请检查 API 地址和模型名称。";
+  return detail ? `AI 服务拒绝了请求（${detail}），请检查 API 地址和模型名称。` : "AI 服务拒绝了请求，请检查 API 地址和模型名称。";
 }
 
 export function reasoningParameters(provider: AiProviderConfig, reasoningMode: "instant" | "high" | "xhigh" = "instant", maxTokens = 2_400) {
@@ -96,12 +127,16 @@ export async function callAiGateway(params: {
     if (params.signal?.aborted) break;
     const remaining = deadline - Date.now();
     if (remaining <= 0) break;
-    const startedAt = Date.now();
-    const controller = new AbortController();
-    const abort = () => controller.abort();
-    params.signal?.addEventListener("abort", abort, { once: true });
-    const timeoutId = setTimeout(() => controller.abort(), Math.min(perProviderTimeoutMs, remaining));
-    try {
+    const maxAttempts = 2;
+    for (let providerAttempt = 0; providerAttempt < maxAttempts; providerAttempt += 1) {
+      const remainingAttemptBudget = deadline - Date.now();
+      if (remainingAttemptBudget <= 0) break;
+      const startedAt = Date.now();
+      const controller = new AbortController();
+      const abort = () => controller.abort();
+      params.signal?.addEventListener("abort", abort, { once: true });
+      const timeoutId = setTimeout(() => controller.abort(), Math.min(perProviderTimeoutMs, remainingAttemptBudget));
+      try {
       const isAnthropic = provider.name === "anthropic";
       const systemMessages = isAnthropic ? params.messages.filter((message) => message.role === "system").map((message) => message.content).join("\n\n") : "";
       const messages = isAnthropic ? params.messages.filter((message) => message.role !== "system") : params.messages;
@@ -124,9 +159,14 @@ export async function callAiGateway(params: {
       const elapsedMs = Date.now() - startedAt;
       if (!response.ok) {
         const code = codeForStatus(response.status);
-        attempts.push({ provider: provider.name, code, status: response.status, elapsedMs });
+        const detail = await responseDetail(response);
+        attempts.push({ provider: provider.name, code, status: response.status, elapsedMs, detail });
         params.onAttempt?.({ provider: provider.name, ok: false, code, status: response.status, elapsedMs });
-        continue;
+        if (providerAttempt + 1 < maxAttempts && shouldRetryProvider(response.status, code) && deadline - Date.now() > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          continue;
+        }
+        break;
       }
       const payload = await response.json();
       const content = isAnthropic
@@ -135,7 +175,7 @@ export async function callAiGateway(params: {
       if (typeof content !== "string" || !content.trim()) {
         attempts.push({ provider: provider.name, code: "AI_PROVIDER", status: response.status, elapsedMs });
         params.onAttempt?.({ provider: provider.name, ok: false, code: "AI_PROVIDER", status: response.status, elapsedMs });
-        continue;
+        break;
       }
       params.onAttempt?.({ provider: provider.name, ok: true, status: response.status, elapsedMs });
       return { content, provider: provider.name, model: provider.model, attempts: attempts.length + 1 };
@@ -144,9 +184,15 @@ export async function callAiGateway(params: {
       const code: GatewayErrorCode = error instanceof DOMException && error.name === "AbortError" ? "AI_TIMEOUT" : "AI_PROVIDER";
       attempts.push({ provider: provider.name, code, elapsedMs });
       params.onAttempt?.({ provider: provider.name, ok: false, code, elapsedMs });
+      if (providerAttempt + 1 < maxAttempts && code === "AI_PROVIDER" && deadline - Date.now() > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        continue;
+      }
+      break;
     } finally {
       clearTimeout(timeoutId);
       params.signal?.removeEventListener("abort", abort);
+    }
     }
   }
 
