@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { readLocalAiProviderConfig, writeLocalAiProviderConfig } from "./aiProviderConfig";
+import { aiProviderPreset, readLocalAiProviderConfig, writeLocalAiProviderConfig } from "./aiProviderConfig";
 
 describe("local AI provider configuration", () => {
   beforeEach(() => {
@@ -32,4 +32,12 @@ describe("local AI provider configuration", () => {
       });
     },
   );
+
+  it("uses the SiliconFlow endpoint and model identifier together", () => {
+    expect(aiProviderPreset("siliconflow")).toEqual({
+      provider: "siliconflow",
+      baseUrl: "https://api.siliconflow.cn/v1",
+      model: "deepseek-ai/DeepSeek-V4-Flash",
+    });
+  });
 });

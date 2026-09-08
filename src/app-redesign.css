@@ -407,7 +407,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   width: 100%;
 }
 .df-ai-provider-settings { width: 100%; max-width: 620px; }
-.df-ai-provider-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.df-ai-provider-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .df-ai-provider-grid label { min-width: 0; }
 .df-ai-provider-grid input, .df-ai-provider-grid select { width: 100%; min-width: 0; box-sizing: border-box; }
 @media (max-width: 760px) {

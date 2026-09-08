@@ -6,7 +6,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { chatPrompt, globalAgentPrompt, importSchedulePrompt, suggestSubtasksPrompt, summarizeMemoryPrompt, type PromptContext } from "./prompts.ts";
-import { AiGatewayError, callAiGateway, type AiProviderConfig } from "./gateway.ts";
+import { AiGatewayError, callAiGateway, gatewayErrorMessage, type AiProviderConfig } from "./gateway.ts";
 import { applyAgentSafetyLevel, classifyAgentCommands, executeAgentCommands, executeReadTool, executeReadToolPage, normalizeToolCalls, validateAgentCommandBatch, type AgentCommand, type AgentToolCall } from "./agent.ts";
 import { unwrapReplyLayers } from "./response.ts";
 import { serializeToolResults } from "./toolResults.ts";
@@ -759,10 +759,11 @@ serve(async (req: Request) => {
         return new Response(JSON.stringify({ ok: true, ...agentResult, version: AI_GATEWAY_VERSION }), { headers: corsHeaders });
       } catch (error) {
         const rawMessage = error instanceof Error ? error.message : "AI agent failed";
-        const code = rawMessage === "AI_AUTH" ? "AI_AUTH" : /PROFILE_REVISION_CONFLICT/.test(rawMessage) ? "AI_PLAN_EXPIRED" : rawMessage === "SCHEDULE_CONFLICT" ? "AI_BAD_RESPONSE" : error instanceof AiGatewayError && error.code === "AI_TIMEOUT" ? "AI_TIMEOUT" : "AI_PROVIDER";
-        const publicMessage = code === "AI_AUTH" ? "请先登录云端账号后使用全局 AI。" : code === "AI_PLAN_EXPIRED" ? "工作区已变化，请重新发送请求。" : rawMessage === "SCHEDULE_CONFLICT" ? "目标时间与现有排程或外部日历冲突，未执行任何写入。" : code === "AI_TIMEOUT" ? "全局 AI 已达到 60 秒运行上限，未执行新的写入。" : "全局 AI 暂时无法完成请求。";
+        const gatewayError = error instanceof AiGatewayError ? error : null;
+        const code = rawMessage === "AI_AUTH" ? "AI_AUTH" : /PROFILE_REVISION_CONFLICT/.test(rawMessage) ? "AI_PLAN_EXPIRED" : rawMessage === "SCHEDULE_CONFLICT" ? "AI_BAD_RESPONSE" : gatewayError?.code || "AI_PROVIDER";
+        const publicMessage = rawMessage === "AI_AUTH" ? "请先登录云端账号后使用全局 AI。" : code === "AI_PLAN_EXPIRED" ? "工作区已变化，请重新发送请求。" : rawMessage === "SCHEDULE_CONFLICT" ? "目标时间与现有排程或外部日历冲突，未执行任何写入。" : gatewayErrorMessage(gatewayError?.code || "AI_PROVIDER");
         console.error("Global agent failed", { code, detail: rawMessage.slice(0, 120) });
-        return new Response(JSON.stringify({ ok: false, reply: publicMessage, actions: [], error: { code, retryable: code !== "AI_AUTH" && rawMessage !== "SCHEDULE_CONFLICT", requestId: crypto.randomUUID(), message: publicMessage } }), { status: code === "AI_AUTH" ? 401 : code === "AI_PLAN_EXPIRED" || rawMessage === "SCHEDULE_CONFLICT" ? 409 : 503, headers: corsHeaders });
+        return new Response(JSON.stringify({ ok: false, reply: publicMessage, actions: [], error: { code, retryable: gatewayError?.retryable ?? (code !== "AI_AUTH" && rawMessage !== "SCHEDULE_CONFLICT"), requestId: crypto.randomUUID(), message: publicMessage } }), { status: code === "AI_AUTH" ? 401 : code === "AI_RATE_LIMIT" ? 429 : code === "AI_PLAN_EXPIRED" || rawMessage === "SCHEDULE_CONFLICT" ? 409 : 503, headers: corsHeaders });
       }
     }
 
@@ -836,9 +837,9 @@ serve(async (req: Request) => {
           code: gatewayError?.code || "AI_PROVIDER",
           retryable: gatewayError?.retryable ?? true,
           requestId,
-          message: gatewayError?.code === "AI_AUTH" ? "AI 服务凭据无效，已尝试备用服务。" : "AI 服务暂时不可用，请稍后重试。",
+          message: gatewayErrorMessage(gatewayError?.code || "AI_PROVIDER"),
         },
-      }), { status: 503, headers: corsHeaders });
+      }), { status: gatewayError?.code === "AI_AUTH" ? 401 : gatewayError?.code === "AI_RATE_LIMIT" ? 429 : 503, headers: corsHeaders });
     }
 
     // Stage 2: Actor — normalize the planner payload.

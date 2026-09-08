@@ -8,6 +8,7 @@
 - AI 在等待澄清时保持只读；较大的任务列表会分批读取并明确还有哪些结果，避免把不完整的列表当作“全部”处理。
 
 ### 修复
+- AI 提供商设置现在会为 SiliconFlow 自动使用正确的模型标识，直接显示可编辑的 API 地址，并兼容完整的对话接口地址；调用失败时会明确区分 Key、额度、超时及地址或模型错误。历史对话会自动清理没有任何消息的“新对话”。
 - 优化 Execute 与 Planning 的移动端布局：规划页在竖屏使用顶部栏并保持说明单列，候选任务优先显示标题并保留触控尺寸；手机任务与日程切换恢复为带 Logo 滑动提示的单一控件，指标图表、矩阵任务与筛选按钮在窄屏下保持完整可读，桌面导航文字也更易读。
 - 修复竖屏 Planning 在关闭说明后筛选按钮遮挡首个任务的问题，并收紧工具栏、项目任务卡和指标区域的间距。
 - 切换到 SiliconFlow 或其他 OpenAI 兼容服务后，编辑 API Key 或模型会保留当前提供商，不再意外切回 DeepSeek。
@@ -69,6 +70,7 @@
 - The AI stays read-only while waiting for clarification. Larger task lists are read in batches with remaining results made clear, preventing incomplete lists from being treated as “all.”
 
 ### Fixed
+- AI provider settings now apply the correct SiliconFlow model identifier, expose an editable API base URL, and accept full chat endpoint URLs. Failures distinguish key, quota, timeout, and endpoint or model errors, while conversation history automatically removes empty “New conversation” entries.
 - Improved Execute and Planning layouts on portrait phones: Planning now uses a top bar with a single-column guide, candidate rows prioritize titles while retaining touch targets, and the Tasks/Schedule switch is restored as one Logo sliding control. Metrics charts, Matrix tasks, and the filter control remain fully readable at narrow widths, while desktop navigation labels stay easy to read.
 - Fixed the portrait Planning filter overlapping the first task after the guide is dismissed, and tightened spacing across the toolbar, project task cards, and metrics area.
 - Editing the API key or model after selecting SiliconFlow or another OpenAI-compatible service now keeps the selected provider instead of unexpectedly switching back to DeepSeek.

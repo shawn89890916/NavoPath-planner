@@ -12,6 +12,16 @@ const DEFAULT_CONFIG = {
   model: "deepseek-v4-flash",
 };
 
+export function aiProviderPreset(provider: LocalAiProviderConfig["provider"]): Partial<LocalAiProviderConfig> {
+  if (provider === "deepseek") {
+    return { provider, baseUrl: "https://api.deepseek.com", model: "deepseek-v4-flash" };
+  }
+  if (provider === "siliconflow") {
+    return { provider, baseUrl: "https://api.siliconflow.cn/v1", model: "deepseek-ai/DeepSeek-V4-Flash" };
+  }
+  return { provider };
+}
+
 export function readLocalAiProviderConfig(): LocalAiProviderConfig {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") as Partial<LocalAiProviderConfig> | null;

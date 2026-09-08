@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AiGatewayError, callAiGateway, reasoningParameters, type AiProviderConfig } from "./gateway.ts";
+import { AiGatewayError, callAiGateway, gatewayErrorMessage, reasoningParameters, type AiProviderConfig } from "./gateway.ts";
 
 const providers: AiProviderConfig[] = [
   { name: "deepseek", baseUrl: "https://primary.test/v1", apiKey: "primary", model: "deepseek-v4-flash", supportsReasoning: true },
@@ -27,6 +27,20 @@ test("returns the primary provider response without a backup call", async () => 
   });
   assert.equal(result.provider, "deepseek");
   assert.equal(calls, 1);
+});
+
+test("accepts a full chat completions endpoint without appending it twice", async () => {
+  let requestedUrl = "";
+  await callAiGateway({
+    providers: [{ ...providers[0], baseUrl: "https://primary.test/v1/chat/completions" }],
+    messages: [{ role: "user", content: "hello" }],
+    maxTokens: 100,
+    fetchImpl: async (url) => {
+      requestedUrl = String(url);
+      return Response.json({ choices: [{ message: { content: "ok" } }] });
+    },
+  });
+  assert.equal(requestedUrl, "https://primary.test/v1/chat/completions");
 });
 
 test("falls back immediately after a primary 403", async () => {
@@ -56,6 +70,18 @@ test("returns a structured error when both providers fail", async () => {
       fetchImpl: async () => new Response("busy", { status: 429 }),
     }),
     (error: unknown) => error instanceof AiGatewayError && error.code === "AI_RATE_LIMIT" && error.retryable,
+  );
+});
+
+test("reports insufficient provider balance as a quota error", async () => {
+  await assert.rejects(
+    callAiGateway({
+      providers: providers.slice(0, 1),
+      messages: [{ role: "user", content: "hello" }],
+      maxTokens: 100,
+      fetchImpl: async () => new Response("insufficient balance", { status: 402 }),
+    }),
+    (error: unknown) => error instanceof AiGatewayError && error.code === "AI_RATE_LIMIT" && !error.retryable,
   );
 });
 
@@ -108,4 +134,10 @@ test("structured errors do not include credentials or prompt content", async () 
     assert.equal(serialized.includes("secret-"), false);
     assert.equal(serialized.includes("private task title"), false);
   }
+});
+
+test("explains provider failures with actionable configuration messages", () => {
+  assert.match(gatewayErrorMessage("AI_AUTH"), /API Key/);
+  assert.match(gatewayErrorMessage("AI_RATE_LIMIT"), /额度|频繁/);
+  assert.match(gatewayErrorMessage("AI_PROVIDER"), /API 地址.*模型/);
 });

@@ -31,12 +31,21 @@ export class AiGatewayError extends Error {
 
 function codeForStatus(status: number): GatewayErrorCode {
   if (status === 401 || status === 403) return "AI_AUTH";
-  if (status === 429) return "AI_RATE_LIMIT";
+  if (status === 402 || status === 429) return "AI_RATE_LIMIT";
   return "AI_PROVIDER";
 }
 
 function providerUrl(baseUrl: string): string {
-  return `${baseUrl.replace(/\/$/, "")}/chat/completions`;
+  const normalized = baseUrl.replace(/\/$/, "");
+  return /\/chat\/completions$/i.test(normalized) ? normalized : `${normalized}/chat/completions`;
+}
+
+export function gatewayErrorMessage(code: GatewayErrorCode): string {
+  if (code === "AI_AUTH") return "API Key 无效，或无权访问所选模型。";
+  if (code === "AI_RATE_LIMIT") return "AI 服务额度不足或请求过于频繁，请稍后重试。";
+  if (code === "AI_TIMEOUT") return "AI 服务响应超时，请重试。";
+  if (code === "AI_NOT_CONFIGURED") return "请先配置 AI 提供商和 API Key。";
+  return "AI 服务拒绝了请求，请检查 API 地址和模型名称。";
 }
 
 export function reasoningParameters(provider: AiProviderConfig, reasoningMode: "instant" | "high" | "xhigh" = "instant") {
@@ -122,6 +131,6 @@ export async function callAiGateway(params: {
 
   if (params.signal?.aborted) throw new AiGatewayError("AI_TIMEOUT", "AI run deadline exceeded", true, attempts);
   const last = attempts[attempts.length - 1];
-  const retryable = attempts.some((attempt) => attempt.code === "AI_TIMEOUT" || attempt.code === "AI_RATE_LIMIT" || attempt.code === "AI_PROVIDER");
+  const retryable = attempts.some((attempt) => attempt.code === "AI_TIMEOUT" || attempt.code === "AI_PROVIDER" || (attempt.code === "AI_RATE_LIMIT" && attempt.status !== 402));
   throw new AiGatewayError(last?.code || "AI_PROVIDER", "All configured AI providers failed", retryable, attempts);
 }

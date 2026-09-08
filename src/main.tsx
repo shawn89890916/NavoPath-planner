@@ -16,7 +16,8 @@ import {
 import { exportDataAsJson, exportTasksAsCsv, isImportFileSizeAllowed, parsePlannerBackupJson, parseTasksCsv } from "./dataExport";
 import type { ParsedAttachment } from "./fileParser";
 import { reasoningModesForModel } from "./utils/aiModels";
-import { readLocalAiProviderConfig, writeLocalAiProviderConfig, clearLocalAiProviderConfig, type LocalAiProviderConfig } from "./aiProviderConfig";
+import { aiProviderPreset, readLocalAiProviderConfig, writeLocalAiProviderConfig, clearLocalAiProviderConfig, type LocalAiProviderConfig } from "./aiProviderConfig";
+import { removeEmptyAiConversations } from "./aiConversationHistory";
 import { autoScheduleTasks, type UnscheduledTask } from "./autoSchedule";
 import { AI_INFERENCE_MODEL_VERSION, buildAiProfile, learnedTaskDurationMinutes, predictTaskIntelligence } from "./aiPersonalization";
 import { TaskDragLayer, UnifiedDragOverlay, type UnifiedDragSnapshot } from "./unifiedDrag";
@@ -6754,7 +6755,7 @@ function App() {
           agent,
         };
         const userChat = { id: userMessage.id, role: "user" as const, content: msg, createdAt: userMessage.createdAt, saved: true };
-        const conversations = currentData.aiConversations || [];
+        const conversations = removeEmptyAiConversations(currentData.aiConversations || [], conversationId);
         let nextConversations = conversations;
         nextConversations = nextConversations.map((conversation) => {
           if (conversation.id !== conversationId) return conversation;
@@ -6919,7 +6920,7 @@ function App() {
     const current = dataRef.current || data;
     if (!current) return;
     const conversation = makeAiConversation();
-    const nextConversations = [conversation, ...(current.aiConversations || [])];
+    const nextConversations = [conversation, ...removeEmptyAiConversations(current.aiConversations || [])];
     setActiveAiConversationId(conversation.id);
     setAiMessages([]);
     setAiConversationListOpen(false);
@@ -6938,7 +6939,7 @@ function App() {
     setAiConversationListOpen(false);
     setAiMemoryNotice("");
     setAiActionPatches({});
-    void saveData({ ...current, activeAiConversationId: conversation.id, chat: (conversation.messages || []).slice(-40) });
+    void saveData({ ...current, aiConversations: removeEmptyAiConversations(current.aiConversations || []), activeAiConversationId: conversation.id, chat: (conversation.messages || []).slice(-40) });
   }
 
   async function renameAiConversation(conversationId: string, title: string) {
@@ -13504,7 +13505,7 @@ function AiPanel({ input, setInput, busy, onSend, onCancel, onPlanToday, planSta
     const streaming = messages.some((message) => message.streaming);
     body.scrollTo({ top: body.scrollHeight, behavior: streaming || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }, [messages, attachmentStatus]);
-  const sortedConversations = sortAiConversations(conversations);
+  const sortedConversations = sortAiConversations(removeEmptyAiConversations(conversations));
   const activeConversationTitle = conversations.find((conversation) => conversation.id === activeConversationId)?.title;
   const conversationPreview = (conversation: AiConversation) => {
     const preview = conversation.messages.find((message) => message.role === "user")?.content
@@ -14284,8 +14285,9 @@ function AiProviderSettings({ lang, onSave }: { lang: Language; onSave: (patch: 
   };
   return <div className="df-ai-provider-settings">
     <div className="df-ai-provider-grid">
-      <label><span>{lang === "zh" ? "提供商" : "Provider"}</span><select value={config.provider} onChange={(event) => { const provider = event.target.value as LocalAiProviderConfig["provider"]; save({ provider, baseUrl: provider === "deepseek" ? "https://api.deepseek.com" : provider === "siliconflow" ? "https://api.siliconflow.cn/v1" : config.baseUrl, model: provider === "deepseek" ? "deepseek-v4-flash" : config.model }); }}><option value="deepseek">DeepSeek 官方</option><option value="siliconflow">SiliconFlow</option><option value="openai-compatible">其他 OpenAI 兼容服务</option></select></label>
+      <label><span>{lang === "zh" ? "提供商" : "Provider"}</span><select value={config.provider} onChange={(event) => save(aiProviderPreset(event.target.value as LocalAiProviderConfig["provider"]))}><option value="deepseek">DeepSeek 官方</option><option value="siliconflow">SiliconFlow</option><option value="openai-compatible">其他 OpenAI 兼容服务</option></select></label>
       <label><span>{lang === "zh" ? "API Key" : "API key"}</span><input type="password" value={config.apiKey} placeholder="sk-..." autoComplete="off" onChange={(event) => save({ apiKey: event.target.value })} /></label>
+      <label><span>{lang === "zh" ? "API 地址" : "Base URL"}</span><input value={config.baseUrl} placeholder="https://provider.example/v1" inputMode="url" onChange={(event) => save({ baseUrl: event.target.value })} /></label>
       <label><span>{lang === "zh" ? "模型" : "Model"}</span>{config.provider === "deepseek" ? <select value={config.model === "deepseek-v4-pro" ? config.model : "deepseek-v4-flash"} onChange={(event) => save({ model: event.target.value })}><option value="deepseek-v4-flash">DeepSeek V4 Flash</option><option value="deepseek-v4-pro">DeepSeek V4 Pro</option></select> : <input value={config.model} placeholder={config.provider === "siliconflow" ? "deepseek-ai/DeepSeek-V4-Flash" : "model-name"} onChange={(event) => save({ model: event.target.value })} />}</label>
     </div>
     <small>{config.apiKey ? (lang === "zh" ? "Key 仅保存在本机浏览器/桌面应用中。" : "The key is stored only on this device.") : (lang === "zh" ? "请填写 API Key。" : "Enter an API key.")}</small>
