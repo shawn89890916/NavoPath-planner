@@ -3626,4 +3626,125 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     justify-content: flex-end !important;
   }
 
+  /* Matrix cards use the checkbox as a small corner control. The copy gets
+     the full row below it so long titles keep their reading width. */
+  #root .df-app.mode-planning .df-planning .df-eisenhower-task .df-task-block-row {
+    --task-grid-template: minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 44px minmax(0, 1fr) !important;
+    row-gap: 2px !important;
+    align-items: start !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-eisenhower-task .df-task-checkbox-wrap,
+  #root .df-app.mode-planning .df-planning .df-eisenhower-task .df-task-block-check {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: start !important;
+    align-self: start !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    justify-content: flex-start !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-eisenhower-task .df-task-checkbox-wrap .df-block-check {
+    position: relative !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    transform: none !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-eisenhower-task .df-task-checkbox-wrap .df-block-check::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 12px !important;
+    width: 18px !important;
+    height: 18px !important;
+    box-sizing: border-box !important;
+    border: 2px solid var(--task-checkbox-color) !important;
+    border-radius: 4px !important;
+    background: color-mix(in srgb, var(--task-checkbox-color) 12%, transparent) !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-eisenhower-task .df-task-checkbox-wrap .df-block-check.completed::before {
+    background: color-mix(in srgb, var(--task-checkbox-color) 18%, transparent) !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-eisenhower-task .df-task-checkbox-wrap .df-block-check.completed::after {
+    content: "✓" !important;
+    position: absolute !important;
+    inset: 12px !important;
+    z-index: 1 !important;
+    color: var(--task-checkbox-color) !important;
+    font: 700 13px/18px var(--paper-sans) !important;
+    text-align: center !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-eisenhower-task .df-task-block-content {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    align-self: stretch !important;
+  }
+
+  /* Once the long-range note is dismissed, reserve the filter's top lane so
+     it never sits over the first project row. */
+  #root .df-app.mode-planning .df-planning .df-tree-wrap:not(:has(.df-planning-longrange-guide)) {
+    padding-top: 68px !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-project-tasks {
+    padding-left: 2px !important;
+    margin-top: 4px !important;
+    gap: 4px !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-task-branch {
+    margin-top: 3px !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-plan-task-node.added-to-today::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  /* Keep the metrics report inside the narrow paper column. SVG labels may
+     extend beyond the ring, so the whole report stays visible and scrollable. */
+  #root .df-app.mode-planning .df-planning .df-metrics-view,
+  #root .df-app.mode-planning .df-planning .df-metrics-main-grid,
+  #root .df-app.mode-planning .df-planning .df-metrics-panel,
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-panel,
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-wrap {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-main-grid {
+    display: block !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-panel {
+    min-height: 0 !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-wrap {
+    width: 100% !important;
+    min-height: 250px !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut {
+    width: min(100%, 300px) !important;
+    height: auto !important;
+    transform: translateX(-12px) !important;
+  }
+
 }
