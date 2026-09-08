@@ -164,7 +164,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-tabs button {
   position: relative; min-width: auto; min-height: 36px; padding: 0 2px !important;
   border: 0 !important; border-radius: 0 !important; color: var(--text-muted) !important;
-  background: transparent !important; box-shadow: none !important; font-size: 11px !important; font-weight: 650 !important;
+  background: transparent !important; box-shadow: none !important; font-size: 13px !important; font-weight: 650 !important;
 }
 .df-tabs button::after {
   content: ""; position: absolute; right: 0; bottom: 0; left: 0; height: 1px;
@@ -282,7 +282,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-view-switch-vertical button {
   min-width: 34px !important; min-height: 26px !important; padding: 3px 2px !important;
   border: 0 !important; border-bottom: 1px solid transparent !important; border-radius: 0 !important;
-  color: var(--text-faint) !important; background: transparent !important; font-family: var(--paper-mono); font-size: 9px !important; box-shadow: none !important;
+  color: var(--text-faint) !important; background: transparent !important; font-family: var(--paper-mono); font-size: 13px !important; box-shadow: none !important;
   pointer-events: auto;
 }
 .df-view-switch-vertical button:hover { color: var(--text-main) !important; }

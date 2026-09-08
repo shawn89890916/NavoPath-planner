@@ -78,7 +78,7 @@
     {
       "name": "Core styles",
       "path": "dist/assets/index-*.css",
-      "limit": "92 KB"
+    "limit": "93 KB"
     },
     {
       "name": "Deferred styles",
@@ -97,7 +97,7 @@
         "dist/assets/WidgetApp-*.css",
         "dist/assets/MobileTaskSummary-*.css"
       ],
-      "limit": "100 KB"
+    "limit": "101 KB"
     }
   ],
   "build": {

@@ -8,6 +8,7 @@
 - AI 在等待澄清时保持只读；较大的任务列表会分批读取并明确还有哪些结果，避免把不完整的列表当作“全部”处理。
 
 ### 修复
+- 优化 Execute 与 Planning 的移动端布局：规划页在竖屏使用顶部栏并保持说明单列，候选任务优先显示标题并保留触控尺寸；手机任务与日程切换改为两个清晰选项，桌面导航文字也更易读。
 - 无效的 AI 查询协议现在会先进行一次有限修复；真正达到查询上限时才提示缩小范围。无效或过大的操作批次会整体拒绝，AI 也不能修改自己的权限等级。
 
 ## 2026-09-07 · AI 回复与习惯
@@ -66,6 +67,7 @@
 - The AI stays read-only while waiting for clarification. Larger task lists are read in batches with remaining results made clear, preventing incomplete lists from being treated as “all.”
 
 ### Fixed
+- Improved Execute and Planning layouts on portrait phones: Planning now uses a top bar with a single-column guide, candidate rows prioritize titles while retaining touch targets, and Tasks/Schedule are two clear choices. Desktop navigation labels are easier to read.
 - Invalid AI query protocols receive one bounded repair attempt, and only a real query limit reports an oversized scope. Invalid or oversized action batches are rejected as a whole, and AI cannot change its own permission level.
 
 ## 2026-09-07 · AI Replies and Habits

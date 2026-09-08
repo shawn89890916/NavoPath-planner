@@ -3559,3 +3559,71 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app.mode-planning .df-planning .df-view-btn span { display: none !important; }
   #root .df-app.mode-planning .df-planning .df-tree-wrap { padding: 18px 14px 28px !important; }
 }
+
+@media (max-width: 899.98px) and (orientation: portrait) {
+  #root .df-app.mode-planning .df-planning .df-mindmap.no-root {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 52px minmax(0, 1fr) !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-planning-sidebar {
+    position: relative !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 1 / 2 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 52px !important;
+    padding: 4px 10px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--paper-rule) !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-planning-view-switch {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-view-btn {
+    display: flex !important;
+    min-width: 44px !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-view-btn span { display: inline !important; }
+
+  #root .df-app.mode-planning .df-planning .df-tree-wrap {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 / 3 !important;
+    padding: 16px 12px 24px !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-planning-longrange-guide {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-planning-longrange-guide > span,
+  #root .df-app.mode-planning .df-planning .df-planning-longrange-guide > strong,
+  #root .df-app.mode-planning .df-planning .df-planning-longrange-guide > div {
+    grid-column: 1 / -1 !important;
+  }
+
+  #root .df-app .df-task-card .df-candidate-row {
+    grid-template-columns: 44px minmax(0, 1fr) 88px !important;
+    grid-template-rows: minmax(44px, auto) auto !important;
+    column-gap: 6px !important;
+  }
+
+  #root .df-app .df-task-card .df-task-checkbox-wrap { grid-column: 1; grid-row: 1 / 3; }
+  #root .df-app .df-task-card .df-candidate-main { grid-column: 2; grid-row: 1; }
+  #root .df-app .df-task-card .df-task-block-duration { grid-column: 2; grid-row: 2; justify-self: start; }
+  #root .df-app .df-task-card .df-task-actions {
+    grid-column: 3; grid-row: 1 / 3;
+    min-width: 88px !important;
+    justify-content: flex-end !important;
+  }
+
+}

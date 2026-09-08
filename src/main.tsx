@@ -8374,15 +8374,11 @@ function App() {
         <ExecutionSplitLayout className={`${candidatePanelCollapsed ? "candidate-collapsed" : ""}${fullscreen ? " fullscreen" : ""}${simpleView ? " simple-view" : ""}`} style={candidatePanelCollapsed || candidatePanelWidth ? { "--df-candidate-width": candidatePanelCollapsed ? "44px" : `${candidatePanelWidth}px` } as CSSProperties : undefined}>
           <div className="df-compact-execute-controls">
             <nav className="df-compact-execute-tabs" aria-label={lang === "zh" ? "执行视图" : "Execute view"}>
-              <button
-                className={`active ${compactExecuteView === "schedule" ? "schedule-state" : "tasks-state"}`}
-                aria-label={compactExecuteView === "tasks" ? (lang === "zh" ? "任务" : "Tasks") : (lang === "zh" ? "日程" : "Schedule")}
-                aria-pressed={compactExecuteView === "schedule"}
-                onClick={() => setCompactExecuteView((view) => view === "tasks" ? "schedule" : "tasks")}
-              >
-                <span className="df-compact-mode-label tasks-label" aria-hidden="true">{lang === "zh" ? "任务" : "Tasks"}</span>
-                <span className="df-compact-mode-label schedule-label" aria-hidden="true">{lang === "zh" ? "日程" : "Schedule"}</span>
-                <span className="df-compact-mode-logo" aria-hidden="true"><ProductIcon compact /></span>
+              <button type="button" className={compactExecuteView === "tasks" ? "active" : ""} aria-pressed={compactExecuteView === "tasks"} onClick={() => setCompactExecuteView("tasks")}>
+                {lang === "zh" ? "任务" : "Tasks"}
+              </button>
+              <button type="button" className={compactExecuteView === "schedule" ? "active" : ""} aria-pressed={compactExecuteView === "schedule"} onClick={() => setCompactExecuteView("schedule")}>
+                {lang === "zh" ? "日程" : "Schedule"}
               </button>
             </nav>
             {(() => {
