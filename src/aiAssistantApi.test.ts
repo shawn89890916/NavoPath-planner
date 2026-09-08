@@ -22,7 +22,7 @@ describe("AI assistant client", () => {
   it("exposes the current curated model catalog without retired models", async () => {
     const models = await listAiModels();
     expect(new Set(models)).toEqual(new Set(FALLBACK_AI_MODELS));
-    expect(FALLBACK_AI_MODELS).toContain("deepseek-ai/DeepSeek-V4-Flash");
+    expect(FALLBACK_AI_MODELS).toEqual(["deepseek-v4-flash", "deepseek-v4-pro"]);
     expect(FALLBACK_AI_MODELS).not.toContain("deepseek-ai/DeepSeek-V3.2");
     expect(FALLBACK_AI_MODELS).not.toContain("deepseek-ai/DeepSeek-R1");
   });

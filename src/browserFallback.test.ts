@@ -45,7 +45,7 @@ describe("browser fallback preview mode", () => {
     expect(settings.displayName).toBe("NavoPath Preview");
     expect(settings.panelWidths).toEqual({ left: 310, right: 360 });
     expect(settings.language).toBe("zh");
-    expect(settings.model).toBe("deepseek-ai/DeepSeek-V4-Flash");
+    expect(settings.model).toBe("deepseek-v4-flash");
     expect(settings.executeAccentColor).toBe("");
     expect(settings.hasApiKey).toBe(false);
     expect(settings.apiKeyPreview).toBe("");

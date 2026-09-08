@@ -99,7 +99,7 @@ describe("planner backup export", () => {
     expect(backup.data.scheduleTemplates).toEqual([]);
     expect(backup.settings.language).toBe("zh");
     expect(backup.settings.theme).toBe("dark");
-    expect(backup.settings.model).toBe("deepseek-ai/DeepSeek-V4-Flash");
+    expect(backup.settings.model).toBe("deepseek-v4-flash");
     expect(backup.settings.executeAccentColor).toBe("");
   });
 

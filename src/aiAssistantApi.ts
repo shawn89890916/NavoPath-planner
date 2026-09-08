@@ -1,9 +1,10 @@
-// Frontend wrapper for the server-managed NavoPath AI gateway.
-// Provider credentials never enter the renderer process.
+// Frontend wrapper for the NavoPath AI gateway.
+// The optional local provider configuration is forwarded only for the current request.
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { localIsoDate } from "./utils/localDate";
 import { filterAiModels } from "./utils/aiModels";
+import { readLocalAiProviderConfig } from "./aiProviderConfig";
 import type { AgentAuditEntry, AgentRunState } from "./types";
 
 export type AiMode = "health" | "agent" | "agent_audit" | "agent_confirm" | "agent_reject" | "agent_undo" | "chat" | "suggest_subtasks" | "parse_task" | "plan_day" | "plan_schedule" | "enrich_task" | "import_schedule" | "summarize_memory";
@@ -171,6 +172,7 @@ export async function invokeAiAssistant(client: SupabaseClient, params: {
   runId?: string;
   signal?: AbortSignal;
   timeoutMs?: number;
+  providerConfig?: ReturnType<typeof readLocalAiProviderConfig>;
 }): Promise<AiAssistantResponse> {
   const timeoutMs = params.timeoutMs || (params.mode.startsWith("agent") ? 65_000 : AI_REQUEST_TIMEOUT_MS);
   const controller = new AbortController();
@@ -185,7 +187,7 @@ export async function invokeAiAssistant(client: SupabaseClient, params: {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const context = { ...((params.context as Record<string, unknown>) || {}), currentDate, timezone };
     const { data, error } = await client.functions.invoke("ai-assistant", {
-      body: { ...params, context, signal: undefined, timeoutMs: undefined },
+      body: { ...params, providerConfig: params.providerConfig || readLocalAiProviderConfig(), context, signal: undefined, timeoutMs: undefined },
       signal: controller.signal,
       timeout: timeoutMs,
     });
@@ -276,15 +278,8 @@ export async function getAiHealth(): Promise<AiHealthResponse> {
 }
 
 export const FALLBACK_AI_MODELS = [
-  "deepseek-ai/DeepSeek-V4-Flash",
-  "deepseek-ai/DeepSeek-V4-Pro",
-  "Qwen/Qwen3.6-35B-A3B",
-  "Qwen/Qwen3.6-27B",
-  "zai-org/GLM-5.2",
-  "moonshotai/Kimi-K2.7-Code",
-  "meituan-longcat/LongCat-2.0",
-  "nex-agi/Nex-N2-Pro",
-  "MiniMaxAI/MiniMax-M2.5",
+  "deepseek-v4-flash",
+  "deepseek-v4-pro",
 ] as const;
 
 export async function listAiModels(): Promise<string[]> {

@@ -15,37 +15,19 @@ export type AiReasoningMode = "instant" | "high" | "xhigh";
 
 export function reasoningModesForModel(id: string): AiReasoningMode[] {
   const label = id.replace(/^Pro\//i, "").split("/").pop() || id;
-  if (/DeepSeek-V4-(?:Flash|Pro)|GLM-5\.2|Kimi-K2\.7-Code|LongCat-2\.0|Nex-N2-Pro/i.test(label)) {
+  if (/deepseek-v4-(?:flash|pro)/i.test(label)) {
     return ["instant", "high", "xhigh"];
   }
-  if (/Qwen3\.6|MiniMax-M2\.5/i.test(label)) return ["instant", "high"];
   return ["instant"];
 }
 
-const MODEL_FAMILIES: Array<{ family: string; pattern: RegExp }> = [
-  { family: "DeepSeek", pattern: /deepseek/i },
-  { family: "Qwen", pattern: /qwen/i },
-  { family: "GLM", pattern: /(?:glm|zai-org)/i },
-  { family: "Kimi", pattern: /(?:kimi|moonshot)/i },
-  { family: "MiniMax", pattern: /minimax/i },
-  { family: "LongCat", pattern: /longcat/i },
-  { family: "Nex", pattern: /nex-(?:agi|n2)/i },
-  { family: "Llama", pattern: /llama/i },
-  { family: "Mistral", pattern: /mistral|mixtral/i },
-  { family: "Gemma", pattern: /gemma/i },
-];
+const MODEL_FAMILIES: Array<{ family: string; pattern: RegExp }> = [{ family: "DeepSeek", pattern: /deepseek/i }];
 
-const PRO_MODEL = /(?:deepseek-v4-pro|glm-5\.2|kimi-k2\.7-code|longcat-2\.0|nex-n2-pro)/i;
-const ECONOMY_MODEL = /(?:deepseek-v4-flash|qwen3\.6-27b|minimax-m2\.5)/i;
+const PRO_MODEL = /deepseek-v4-pro/i;
+const ECONOMY_MODEL = /deepseek-v4-flash/i;
 const NON_ASSISTANT_MODEL = /(?:ocr|vision|[-_.]vl(?:[-_.]|$)|omni|caption|audio|image|embedding|rerank|translate|mt[-_.])/i;
 const ASSISTANT_MODEL_ALLOWLIST = [
-  /DeepSeek-V4-(?:Flash|Pro)$/i,
-  /Qwen3\.6-(?:27B|35B-A3B)$/i,
-  /GLM-5\.2$/i,
-  /Kimi-K2\.7-Code$/i,
-  /LongCat-2\.0$/i,
-  /MiniMax-M2\.5$/i,
-  /Nex-N2-Pro$/i,
+  /deepseek-v4-(?:flash|pro)$/i,
 ];
 
 export function filterAiModels(ids: string[]): string[] {

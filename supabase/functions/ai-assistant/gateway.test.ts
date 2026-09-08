@@ -3,19 +3,15 @@ import assert from "node:assert/strict";
 import { AiGatewayError, callAiGateway, reasoningParameters, type AiProviderConfig } from "./gateway.ts";
 
 const providers: AiProviderConfig[] = [
-  { name: "siliconflow", baseUrl: "https://primary.test/v1", apiKey: "primary", model: "primary-model" },
-  { name: "deepseek", baseUrl: "https://backup.test/v1", apiKey: "backup", model: "backup-model" },
+  { name: "deepseek", baseUrl: "https://primary.test/v1", apiKey: "primary", model: "deepseek-v4-flash", supportsReasoning: true },
+  { name: "deepseek", baseUrl: "https://backup.test/v1", apiKey: "backup", model: "deepseek-v4-pro", supportsReasoning: true },
 ];
 
 test("maps reasoning modes to each provider protocol", () => {
-  const siliconflow = { ...providers[0], model: "deepseek-ai/DeepSeek-V4-Flash", supportsReasoning: true };
-  const deepseek = { ...providers[1], supportsReasoning: true };
-  assert.deepEqual(reasoningParameters(siliconflow, "instant"), { enable_thinking: false });
-  assert.deepEqual(reasoningParameters(siliconflow, "high"), { enable_thinking: true, reasoning_effort: "high" });
-  assert.deepEqual(reasoningParameters(siliconflow, "xhigh"), { enable_thinking: true, reasoning_effort: "max" });
-  assert.deepEqual(reasoningParameters({ ...siliconflow, model: "zai-org/GLM-5.2" }, "high"), { enable_thinking: true });
-  assert.deepEqual(reasoningParameters(deepseek, "instant"), {});
-  assert.deepEqual(reasoningParameters(deepseek, "xhigh"), { reasoning_effort: "xhigh" });
+  const deepseek = providers[0];
+  assert.deepEqual(reasoningParameters(deepseek, "instant"), { thinking: { type: "disabled" } });
+  assert.deepEqual(reasoningParameters(deepseek, "high"), { thinking: { type: "enabled" }, reasoning_effort: "high" });
+  assert.deepEqual(reasoningParameters(deepseek, "xhigh"), { thinking: { type: "enabled" }, reasoning_effort: "max" });
 });
 
 test("returns the primary provider response without a backup call", async () => {
@@ -29,7 +25,7 @@ test("returns the primary provider response without a backup call", async () => 
       return Response.json({ choices: [{ message: { content: "primary ok" } }] });
     },
   });
-  assert.equal(result.provider, "siliconflow");
+  assert.equal(result.provider, "deepseek");
   assert.equal(calls, 1);
 });
 

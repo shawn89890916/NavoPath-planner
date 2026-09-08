@@ -15,9 +15,9 @@ describe("plugin settings normalization", () => {
   });
 
   it("migrates retired AI models to the current default", () => {
-    expect(normalizeSettings({ model: "deepseek-ai/DeepSeek-V3.2" }).model).toBe("deepseek-ai/DeepSeek-V4-Flash");
-    expect(normalizeSettings({ model: "Qwen/Qwen3.5-397B-A17B" }).model).toBe("deepseek-ai/DeepSeek-V4-Flash");
-    expect(normalizeSettings({ model: "deepseek-ai/DeepSeek-V4-Pro" }).model).toBe("deepseek-ai/DeepSeek-V4-Pro");
+    expect(normalizeSettings({ model: "deepseek-ai/DeepSeek-V3.2" }).model).toBe("deepseek-v4-flash");
+    expect(normalizeSettings({ model: "Qwen/Qwen3.5-397B-A17B" }).model).toBe("deepseek-v4-flash");
+    expect(normalizeSettings({ model: "deepseek-ai/DeepSeek-V4-Pro" }).model).toBe("deepseek-v4-flash");
   });
 
   it("normalizes the AI permission level and migrates legacy values", () => {
@@ -114,7 +114,7 @@ describe("plugin settings normalization", () => {
     expect(normalized.displayName).toHaveLength(64);
     expect(normalized.avatarDataUrl).toBe("");
     expect(normalized.backgroundImagePath).toHaveLength(4_096);
-    expect(normalized.model).toHaveLength(200);
+    expect(normalized.model).toBe("deepseek-v4-flash");
     expect(normalized.baseUrl).toHaveLength(2_048);
     expect(normalized.hasApiKey).toBe(false);
     expect(normalized.apiKeyPreview).toBe("");

@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-09-08 · DeepSeek 本地配置
+
+### 改进
+- AI 模型收敛为 DeepSeek V4 Flash 与 V4 Pro，默认使用 Flash；设置中可直接填写官方 API Key、切换模型和调整思考强度，高级用户可展开 JSON 配置。
+- API Key 仅保存在当前设备的应用存储中，并按请求发送给 AI 网关；移除 SiliconFlow 及其他模型目录。
+
 ## 2026-09-08 · AI 查询与澄清
 
 ### 改进

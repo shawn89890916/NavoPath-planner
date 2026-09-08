@@ -16,6 +16,7 @@ import {
 import { exportDataAsJson, exportTasksAsCsv, isImportFileSizeAllowed, parsePlannerBackupJson, parseTasksCsv } from "./dataExport";
 import type { ParsedAttachment } from "./fileParser";
 import { reasoningModesForModel } from "./utils/aiModels";
+import { readLocalAiProviderConfig, writeLocalAiProviderConfig, clearLocalAiProviderConfig, type LocalAiProviderConfig } from "./aiProviderConfig";
 import { autoScheduleTasks, type UnscheduledTask } from "./autoSchedule";
 import { AI_INFERENCE_MODEL_VERSION, buildAiProfile, learnedTaskDurationMinutes, predictTaskIntelligence } from "./aiPersonalization";
 import { TaskDragLayer, UnifiedDragOverlay, type UnifiedDragSnapshot } from "./unifiedDrag";
@@ -14271,6 +14272,28 @@ function patchPluginConfig(settings: Settings, onSave: (patch: Partial<Settings>
   onSave({ pluginConfigs: { ...(settings.pluginConfigs ?? {}), [pluginId]: { ...existing, ...patch } } });
 }
 
+function AiProviderSettings({ lang, onSave }: { lang: Language; onSave: (patch: Partial<Settings>) => void }) {
+  const [config, setConfig] = useState<LocalAiProviderConfig>(() => readLocalAiProviderConfig());
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [jsonText, setJsonText] = useState(() => JSON.stringify(readLocalAiProviderConfig(), null, 2));
+  const save = (patch: Partial<LocalAiProviderConfig>) => {
+    const next = writeLocalAiProviderConfig(patch);
+    setConfig(next);
+    setJsonText(JSON.stringify(next, null, 2));
+    onSave({ model: next.model, baseUrl: next.baseUrl });
+  };
+  return <div className="df-ai-provider-settings">
+    <div className="df-ai-provider-grid">
+      <label><span>{lang === "zh" ? "提供商" : "Provider"}</span><select value="deepseek" disabled><option value="deepseek">DeepSeek 官方</option></select></label>
+      <label><span>{lang === "zh" ? "API Key" : "API key"}</span><input type="password" value={config.apiKey} placeholder="sk-..." autoComplete="off" onChange={(event) => save({ apiKey: event.target.value })} /></label>
+      <label><span>{lang === "zh" ? "模型" : "Model"}</span><select value={config.model} onChange={(event) => save({ model: event.target.value as LocalAiProviderConfig["model"] })}><option value="deepseek-v4-flash">DeepSeek V4 Flash</option><option value="deepseek-v4-pro">DeepSeek V4 Pro</option></select></label>
+    </div>
+    <small>{config.apiKey ? (lang === "zh" ? "Key 仅保存在本机浏览器/桌面应用中。" : "The key is stored only on this device.") : (lang === "zh" ? "请填入 DeepSeek 官方 API Key。" : "Enter your official DeepSeek API key.")}</small>
+    <button type="button" className="df-settings-disclosure" onClick={() => setAdvancedOpen((open) => !open)}>{advancedOpen ? "−" : "+"} {lang === "zh" ? "高级配置" : "Advanced configuration"}</button>
+    {advancedOpen && <div className="df-ai-provider-advanced"><label><span>JSON</span><textarea value={jsonText} spellCheck={false} onChange={(event) => setJsonText(event.target.value)} onBlur={() => { try { save(JSON.parse(jsonText) as Partial<LocalAiProviderConfig>); } catch { /* Keep the draft visible until valid JSON is entered. */ } }} /></label><button type="button" onClick={() => { clearLocalAiProviderConfig(); const next = readLocalAiProviderConfig(); setConfig(next); setJsonText(JSON.stringify(next, null, 2)); onSave({ model: next.model, baseUrl: next.baseUrl }); }}>{lang === "zh" ? "清除本机 Key" : "Clear local key"}</button></div>}
+  </div>;
+}
+
 function localizedPluginName(plugin: ReturnType<typeof listRegisteredPlugins>[number], lang: Language) {
   return pluginText(plugin.name, plugin.nameI18n, lang);
 }
@@ -15273,7 +15296,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
               </div>
             </SettingSection>}
             {settingsTarget.category === "advanced" && settingsTarget.detail === "ai" && <SettingSection title="Navo AI" description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
-              <SettingRow anchor="ai-model" title={lang === "zh" ? "高级模型偏好" : "Advanced model preference"} control={<SettingSelect value={settings.model} ariaLabel={lang === "zh" ? "高级模型偏好" : "Advanced model preference"} onChange={(model) => onSave({ model, reasoningMode: "instant" })} options={FALLBACK_AI_MODELS.map((model) => ({ value: model, label: model.split("/").pop() || model }))} />} />
+              <SettingRow anchor="ai-provider" title={lang === "zh" ? "AI 提供商与密钥" : "AI provider and key"} description={lang === "zh" ? "默认连接 DeepSeek 官方 API。" : "Uses the official DeepSeek API by default."} control={<AiProviderSettings lang={lang} onSave={onSave} />} />
               <SettingRow anchor="ai-reasoning" title={lang === "zh" ? "思考模式" : "Reasoning mode"} control={<SettingSelect value={settings.reasoningMode || "instant"} ariaLabel={lang === "zh" ? "思考模式" : "Reasoning mode"} onChange={(value) => onSave({ reasoningMode: value as Settings["reasoningMode"] })} options={[
                 { value: "instant", label: lang === "zh" ? "即时" : "Instant" },
                 ...reasoningModesForModel(settings.model).filter((mode) => mode === "high" || mode === "xhigh").map((mode) => ({ value: mode, label: mode === "xhigh" ? "Xhigh" : "High" })),

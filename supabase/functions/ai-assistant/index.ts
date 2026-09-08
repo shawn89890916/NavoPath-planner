@@ -1,7 +1,7 @@
 // Supabase Edge Function: NavoPath AI Agent (lightweight 3-stage pipeline)
 // Stages: Planner (structured plan) -> Actor (final actions)
 // Deploy: supabase functions deploy ai-assistant
-// Set secret: supabase secrets set SILICONFLOW_API_KEY=sk-xxx
+// Optional cloud fallback: supabase secrets set DEEPSEEK_API_KEY=sk-xxx
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -34,20 +34,13 @@ const corsHeaders = {
   "Content-Type": "application/json; charset=utf-8",
 };
 
-const STABLE_MODEL = "deepseek-ai/DeepSeek-V4-Flash";
+const STABLE_MODEL = "deepseek-v4-flash";
 const AI_GATEWAY_VERSION = "2026-08-20.1";
 const AGENT_MAX_ROUNDS = 10;
 const AGENT_MAX_TOOL_CALLS = 64;
 const FALLBACK_MODELS = [
   STABLE_MODEL,
-  "deepseek-ai/DeepSeek-V4-Pro",
-  "Qwen/Qwen3.6-35B-A3B",
-  "Qwen/Qwen3.6-27B",
-  "zai-org/GLM-5.2",
-  "moonshotai/Kimi-K2.7-Code",
-  "meituan-longcat/LongCat-2.0",
-  "nex-agi/Nex-N2-Pro",
-  "MiniMaxAI/MiniMax-M2.5",
+  "deepseek-v4-pro",
 ];
 
 function resolveModel(model: string): string {
@@ -136,25 +129,27 @@ async function callDeepSeek(
   maxTokens: number,
   reasoningMode: "instant" | "high" | "xhigh" = "instant",
   signal?: AbortSignal,
+  providerConfig?: { apiKey?: string; baseUrl?: string; model?: string },
 ): Promise<string> {
   if (signal?.aborted) throw new DOMException("aborted", "AbortError");
   const providers: AiProviderConfig[] = [];
-  if (apiKey) {
+  const configuredKey = providerConfig?.apiKey || apiKey;
+  if (configuredKey) {
     providers.push({
-      name: "siliconflow",
-      baseUrl: Deno.env.get("SILICONFLOW_BASE_URL") || "https://api.siliconflow.cn/v1",
-      apiKey,
-      model: resolveModel(model),
+      name: "deepseek",
+      baseUrl: providerConfig?.baseUrl || Deno.env.get("DEEPSEEK_BASE_URL") || "https://api.deepseek.com",
+      apiKey: configuredKey,
+      model: providerConfig?.model || model,
       supportsReasoning: true,
     });
   }
-  const deepSeekKey = Deno.env.get("DEEPSEEK_API_KEY");
-  if (deepSeekKey) {
+  const deepSeekKey = providerConfig?.apiKey ? undefined : Deno.env.get("DEEPSEEK_API_KEY");
+  if (deepSeekKey && !configuredKey) {
     providers.push({
       name: "deepseek",
-      baseUrl: Deno.env.get("DEEPSEEK_BASE_URL") || "https://api.deepseek.com/v1",
+      baseUrl: Deno.env.get("DEEPSEEK_BASE_URL") || "https://api.deepseek.com",
       apiKey: deepSeekKey,
-      model: Deno.env.get("DEEPSEEK_MODEL") || "deepseek-chat",
+      model: Deno.env.get("DEEPSEEK_MODEL") || STABLE_MODEL,
     });
   }
   const result = await callAiGateway({
@@ -182,6 +177,7 @@ async function plannerStage(
   userContent: string,
   historyMessages: Array<{ role: "user" | "assistant"; content: string }>,
   reasoningMode: "instant" | "high" | "xhigh" = "instant",
+  providerConfig?: { apiKey?: string; baseUrl?: string; model?: string },
 ) {
   const systemPrompt = mode === "enrich_task"
     ? `You estimate task duration and choose an existing project. Return JSON only: {"reply":"","steps":[],"actions":[],"memories":[],"enrichment":{"durationMinutes":15-240,"projectId":"existing id or empty","confidence":0-1}}. Never invent a project. ${ctx.projectsInfo}`
@@ -199,7 +195,7 @@ async function plannerStage(
     { role: "user", content: userContent },
   ];
   const maxTokens = mode === "import_schedule" ? 6000 : mode === "summarize_memory" ? 600 : 1600;
-  const content = await callDeepSeek(apiKey, model, messages, maxTokens, reasoningMode);
+  const content = await callDeepSeek(apiKey, model, messages, maxTokens, reasoningMode, undefined, providerConfig);
   try {
     return normalizeAssistantPayload(extractJsonObject(content));
   } catch (firstError) {
@@ -361,6 +357,7 @@ async function runGlobalAgent(req: Request, params: {
   trigger?: "manual" | "start_brief" | "end_review";
   attachmentText?: string;
   attachmentName?: string;
+  providerConfig?: { apiKey?: string; baseUrl?: string; model?: string };
 }) {
   const workspace = await authenticatedWorkspace(req);
   const ctx = agentPromptContext(workspace.profile, params.context, params.message);
@@ -415,7 +412,7 @@ async function runGlobalAgent(req: Request, params: {
   try {
   const unrestricted = workspace.profile.settings.aiSafetyLevel === "full";
   for (let round = 0; round < (unrestricted ? 24 : AGENT_MAX_ROUNDS); round += 1) {
-    const content = await callDeepSeek(params.apiKey, params.model, messages, 2_400, params.reasoningMode, runController.signal);
+    const content = await callDeepSeek(params.apiKey, params.model, messages, 2_400, params.reasoningMode, runController.signal, params.providerConfig);
     let parsed: Record<string, any>;
     try {
       parsed = extractJsonObject(content) as Record<string, any>;
@@ -647,7 +644,7 @@ serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { mode, message, model, reasoningMode, context, history, memories, conversationId, trigger, attachmentText, attachmentName } = body as {
+    const { mode, message, model, reasoningMode, context, history, memories, conversationId, trigger, attachmentText, attachmentName, providerConfig } = body as {
       mode?: string;
       message?: string;
       model?: string;
@@ -662,15 +659,16 @@ serve(async (req: Request) => {
       runId?: string;
       cloudContext?: Record<string, unknown>;
       cloudTool?: Record<string, unknown>;
+      providerConfig?: { provider?: string; apiKey?: string; baseUrl?: string; model?: string };
     };
 
     if (!mode) {
       return new Response(JSON.stringify({ error: "Missing mode" }), { status: 400, headers: corsHeaders });
     }
 
-    const apiKey = Deno.env.get("SILICONFLOW_API_KEY");
-    const deepSeekKey = Deno.env.get("DEEPSEEK_API_KEY");
-    const configuredProviders = [apiKey ? "siliconflow" : "", deepSeekKey ? "deepseek" : ""].filter(Boolean);
+    const apiKey = Deno.env.get("DEEPSEEK_API_KEY");
+    const localProviderKey = typeof providerConfig?.apiKey === "string" && providerConfig.apiKey.length <= 512 ? providerConfig.apiKey.trim() : "";
+    const configuredProviders = [localProviderKey ? "deepseek" : "", apiKey ? "deepseek" : ""].filter(Boolean);
 
     if (mode === "cloud_decision") {
       const keys = supabaseKeys();
@@ -678,7 +676,7 @@ serve(async (req: Request) => {
       if (!keys.serviceKey || bearer !== keys.serviceKey) return new Response(JSON.stringify({ error: "AI_AUTH" }), { status: 401, headers: corsHeaders });
       if (!apiKey) return new Response(JSON.stringify({ error: "AI_NOT_CONFIGURED" }), { status: 503, headers: corsHeaders });
       try {
-        const decision = await runCloudDecision(apiKey, Deno.env.get("SILICONFLOW_BASE_URL") || "https://api.siliconflow.cn/v1", STABLE_MODEL, { context: body.cloudContext, tool: body.cloudTool });
+        const decision = await runCloudDecision(apiKey, Deno.env.get("DEEPSEEK_BASE_URL") || "https://api.deepseek.com", STABLE_MODEL, { context: body.cloudContext, tool: body.cloudTool });
         return new Response(JSON.stringify({ ok: true, ...decision, version: AI_GATEWAY_VERSION }), { headers: corsHeaders });
       } catch (error) {
         console.error("Cloud decision failed", { error: error instanceof Error ? error.message.slice(0, 160) : "unknown" });
@@ -740,16 +738,14 @@ serve(async (req: Request) => {
       );
     }
 
-    const selectedModel = typeof model === "string" && /^[A-Za-z0-9._/-]{2,160}$/.test(model)
-      ? model
-      : Deno.env.get("SILICONFLOW_MODEL") || STABLE_MODEL;
-    const supportedReasoning = /DeepSeek-V4-(?:Flash|Pro)|Qwen3\.6|GLM-5\.2|Kimi-K2\.7-Code|LongCat-2\.0|Nex-N2-Pro|MiniMax-M2\.5/i.test(selectedModel);
+    const selectedModel = providerConfig?.model === "deepseek-v4-pro" ? "deepseek-v4-pro" : providerConfig?.model === "deepseek-v4-flash" ? "deepseek-v4-flash" : STABLE_MODEL;
+    const supportedReasoning = /^deepseek-v4-(?:flash|pro)$/i.test(selectedModel);
     const selectedReasoning = supportedReasoning && (reasoningMode === "high" || reasoningMode === "xhigh") ? reasoningMode : "instant";
 
     if (mode === "agent") {
       try {
         const agentResult = await runGlobalAgent(req, {
-          apiKey,
+          apiKey: localProviderKey || apiKey,
           model: selectedModel,
           reasoningMode: selectedReasoning,
           message,
@@ -758,6 +754,7 @@ serve(async (req: Request) => {
           trigger,
           attachmentText: typeof attachmentText === "string" ? attachmentText : undefined,
           attachmentName: typeof attachmentName === "string" ? attachmentName : undefined,
+          providerConfig: localProviderKey ? providerConfig : undefined,
         });
         return new Response(JSON.stringify({ ok: true, ...agentResult, version: AI_GATEWAY_VERSION }), { headers: corsHeaders });
       } catch (error) {
@@ -821,7 +818,7 @@ serve(async (req: Request) => {
     // a separate model call would only add latency and another failure point.
     let plannerValue: unknown;
     try {
-      plannerValue = await plannerStage(apiKey, selectedModel, mode, promptCtx, userContent, historyMessages, selectedReasoning);
+      plannerValue = await plannerStage(localProviderKey || apiKey, selectedModel, mode, promptCtx, userContent, historyMessages, selectedReasoning, localProviderKey ? providerConfig : undefined);
     } catch (err) {
       const fallback = {
         reply: "AI 请求失败，请稍后重试。",

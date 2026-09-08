@@ -25,10 +25,10 @@ export const defaultSettings: Settings = {
   metricsCompletionFilter: "all",
   aiDockOpen: false,
   appTitle: "NavoPath",
-  model: "deepseek-ai/DeepSeek-V4-Flash",
+  model: "deepseek-v4-flash",
   reasoningMode: "instant",
   aiSafetyLevel: "approve",
-  baseUrl: "https://api.siliconflow.cn/v1/chat/completions",
+  baseUrl: "https://api.deepseek.com",
   hasApiKey: false,
   apiKeyPreview: "",
   displayName: "NavoPath",
@@ -260,6 +260,8 @@ export function normalizeSettings(value: unknown): Settings {
   if (stored.planningAccentColor === "#CAFF72") stored.planningAccentColor = "";
   if (
     stored.model === "deepseek-v4-flash"
+    || stored.model === "deepseek-ai/DeepSeek-V4-Flash"
+    || stored.model === "deepseek-ai/DeepSeek-V4-Pro"
     || stored.model === "deepseek-chat"
     || (typeof stored.model === "string" && /^(?:deepseek-ai\/DeepSeek-(?:V3\.2|R1)|Qwen\/Qwen3\.5-|zai-org\/GLM-4\.6|moonshotai\/Kimi-K2\.7$|MiniMaxAI\/MiniMax-M3)/i.test(stored.model))
   ) {
@@ -301,7 +303,7 @@ export function normalizeSettings(value: unknown): Settings {
   normalized.appTitle = boundedString(stored.appTitle, defaults.appTitle, 120);
   normalized.displayName = boundedString(stored.displayName, defaults.displayName, 64);
   normalized.avatarDataUrl = normalizeAvatarDataUrl(stored.avatarDataUrl);
-  normalized.model = boundedString(stored.model, defaults.model, 200);
+  normalized.model = stored.model === "deepseek-v4-pro" ? "deepseek-v4-pro" : defaults.model;
   normalized.baseUrl = boundedString(stored.baseUrl, defaults.baseUrl, 2_048);
   normalized.backgroundImagePath = boundedString(stored.backgroundImagePath, defaults.backgroundImagePath, 4_096);
   normalized.accentColor = boundedString(stored.accentColor, defaults.accentColor, 64);
