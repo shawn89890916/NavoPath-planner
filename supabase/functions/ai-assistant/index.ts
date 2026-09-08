@@ -314,7 +314,10 @@ function agentPromptContext(profile: { data: Record<string, any>; settings: Reco
   const timezone = typeof bodyContext?.timezone === "string" ? bodyContext.timezone : "Asia/Shanghai";
   const currentDate = validIsoDate(bodyContext?.currentDate) ? bodyContext.currentDate : localDateForTimeZone(timezone);
   const language = detectLanguage(message, profile.settings.language === "zh" ? "zh" : "en");
-  const memories = (profile.data.aiMemories || []).filter((memory: Record<string, any>) => !memory.archived).slice(-20).map((memory: Record<string, any>) => ({ content: memory.content, tags: memory.tags || [] }));
+  const memories = (Array.isArray(profile.data.aiMemories) ? profile.data.aiMemories : [])
+    .filter((memory: unknown): memory is Record<string, any> => Boolean(memory && typeof memory === "object" && !(memory as Record<string, unknown>).archived))
+    .slice(-20)
+    .map((memory: Record<string, any>) => ({ content: typeof memory.content === "string" ? memory.content : "", tags: Array.isArray(memory.tags) ? memory.tags : [] }));
   return {
     language,
     currentDate,
@@ -382,8 +385,12 @@ async function runGlobalAgent(req: Request, params: {
         elapsedSeconds: Math.max(0, Math.min(31_536_000, Math.floor(Number((timerInput as Record<string, unknown>).elapsedSeconds) || 0))),
       }
     : {};
-  const conversation = (workspace.profile.data.aiConversations || []).find((item: Record<string, any>) => item.id === params.conversationId);
-  const history = (conversation?.messages || []).filter((item: Record<string, any>) => (item.role === "user" || item.role === "assistant") && typeof item.content === "string").slice(-20).map((item: Record<string, any>) => ({ role: item.role, content: item.content.slice(0, 3_000) }));
+  const conversations = Array.isArray(workspace.profile.data.aiConversations) ? workspace.profile.data.aiConversations : [];
+  const conversation = conversations.find((item: unknown): item is Record<string, any> => Boolean(item && typeof item === "object" && (item as Record<string, unknown>).id === params.conversationId));
+  const history = (Array.isArray(conversation?.messages) ? conversation.messages : [])
+    .filter((item: unknown): item is Record<string, any> => Boolean(item && typeof item === "object" && ((item as Record<string, unknown>).role === "user" || (item as Record<string, unknown>).role === "assistant") && typeof (item as Record<string, unknown>).content === "string"))
+    .slice(-20)
+    .map((item: Record<string, any>) => ({ role: item.role, content: item.content.slice(0, 3_000) }));
   const messages: Array<{ role: string; content: string }> = [
     { role: "system", content: globalAgentPrompt(ctx) },
     ...history,
