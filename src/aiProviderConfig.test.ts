@@ -40,4 +40,18 @@ describe("local AI provider configuration", () => {
       model: "deepseek-ai/DeepSeek-V4-Flash",
     });
   });
+
+  it("migrates the provider state saved by the earlier SiliconFlow settings bug", () => {
+    localStorage.setItem("navopath.ai-provider-config.v1", JSON.stringify({
+      provider: "deepseek",
+      apiKey: "existing-key",
+      baseUrl: "https://api.siliconflow.cn/v1",
+      model: "deepseek-v4-flash",
+    }));
+
+    expect(readLocalAiProviderConfig()).toMatchObject({
+      provider: "siliconflow",
+      model: "deepseek-ai/DeepSeek-V4-Flash",
+    });
+  });
 });

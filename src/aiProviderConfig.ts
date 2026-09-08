@@ -25,12 +25,16 @@ export function aiProviderPreset(provider: LocalAiProviderConfig["provider"]): P
 export function readLocalAiProviderConfig(): LocalAiProviderConfig {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") as Partial<LocalAiProviderConfig> | null;
+    const storedBaseUrl = typeof parsed?.baseUrl === "string" ? parsed.baseUrl.trim() : "";
+    const storedProvider = parsed?.provider === "siliconflow" || parsed?.provider === "openai-compatible" ? parsed.provider : DEFAULT_CONFIG.provider;
+    const provider = storedProvider === "deepseek" && /api\.siliconflow\.cn/i.test(storedBaseUrl) ? "siliconflow" : storedProvider;
+    const storedModel = typeof parsed?.model === "string" ? parsed.model.trim() : "";
     return {
       ...DEFAULT_CONFIG,
-      provider: parsed?.provider === "siliconflow" || parsed?.provider === "openai-compatible" ? parsed.provider : DEFAULT_CONFIG.provider,
+      provider,
       apiKey: typeof parsed?.apiKey === "string" ? parsed.apiKey.trim() : "",
-      baseUrl: typeof parsed?.baseUrl === "string" && parsed.baseUrl.trim() ? parsed.baseUrl.trim() : DEFAULT_CONFIG.baseUrl,
-      model: typeof parsed?.model === "string" && parsed.model.trim() ? parsed.model.trim() : DEFAULT_CONFIG.model,
+      baseUrl: storedBaseUrl || DEFAULT_CONFIG.baseUrl,
+      model: provider === "siliconflow" && storedModel === "deepseek-v4-flash" ? "deepseek-ai/DeepSeek-V4-Flash" : storedModel || DEFAULT_CONFIG.model,
     };
   } catch {
     return { ...DEFAULT_CONFIG, apiKey: "" };
