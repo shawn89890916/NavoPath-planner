@@ -40,6 +40,7 @@
       "path": [
         "dist/assets/PlanningView-*.js",
         "dist/assets/LandingPage-*.js",
+        "dist/assets/AiClarificationQuestions-*.js",
         "dist/assets/WidgetApp-*.js",
         "dist/assets/MobileTaskSummary-*.js"
       ],
@@ -58,6 +59,7 @@
         "dist/assets/supabase-vendor-*.js",
         "dist/assets/supabasePlannerApi-*.js",
         "dist/assets/AiMarkdown-*.js",
+        "dist/assets/AiClarificationQuestions-*.js",
         "dist/assets/PlanningView-*.js",
         "dist/assets/LandingPage-*.js",
         "dist/assets/WidgetApp-*.js",

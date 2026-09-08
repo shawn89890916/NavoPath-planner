@@ -271,6 +271,7 @@ export interface ChatMessage {
   plan?: Array<{ taskId?: string; title: string; start: string; end: string; durationMinutes?: number; reason?: string }>;
   format?: "text" | "markdown";
   agent?: AgentRunState;
+  clarifications?: Array<{ id: string; question: string; options: string[] }>;
 }
 
 export type AgentEntity = "task" | "project" | "habit" | "note" | "memory" | "template" | "settings" | "integration" | "app" | "timer";

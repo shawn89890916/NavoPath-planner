@@ -72,6 +72,8 @@ const RECURRENCE_RE = /recurrence/i;
 const ID_RE = /^[A-Za-z0-9._:-]{1,200}$/;
 const MAX_COMMANDS = 50;
 
+export type AgentCommandBatch = { commands: AgentCommand[]; valid: boolean; reason?: string };
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -176,6 +178,20 @@ export function normalizeAgentCommands(value: unknown, options: { allowInternalR
   return commands;
 }
 
+/** Validate a model batch before execution. Invalid entries must never be silently
+ * dropped from a destructive batch: doing so could apply only part of the user's
+ * requested operation. The permissive normalizer remains useful for read/display
+ * paths and backwards-compatible callers. */
+export function validateAgentCommandBatch(value: unknown, options: { allowInternalRestore?: boolean } = {}): AgentCommandBatch {
+  if (!Array.isArray(value)) return { commands: [], valid: false, reason: "Commands must be an array" };
+  if (value.length > MAX_COMMANDS) return { commands: [], valid: false, reason: `A command batch may contain at most ${MAX_COMMANDS} commands` };
+  if (value.some((raw) => isRecord(raw) && raw.values !== undefined && !isRecord(raw.values))) return { commands: [], valid: false, reason: "Command values must be objects" };
+  const commands = normalizeAgentCommands(value, options);
+  if (commands.length !== value.length) return { commands: [], valid: false, reason: "Command batch contains an invalid or unsupported command" };
+  if (new Set(commands.map((command) => command.id)).size !== commands.length) return { commands: [], valid: false, reason: "Command batch contains duplicate command ids" };
+  return { commands, valid: true };
+}
+
 export function classifyAgentCommands(input: AgentCommand[]): AgentCommandDecision[] {
   const commands = normalizeAgentCommands(input);
   const createCount = commands.filter((command) => command.operation === "create").length;
@@ -185,7 +201,7 @@ export function classifyAgentCommands(input: AgentCommand[]): AgentCommandDecisi
 
   return commands.map((command) => {
     const valueKeys = Object.keys(command.values || {});
-    if (command.entity === "settings" && valueKeys.some((key) => SENSITIVE_SETTING_RE.test(key))) {
+    if (command.entity === "settings" && valueKeys.some((key) => key === "aiSafetyLevel" || SENSITIVE_SETTING_RE.test(key))) {
       return { command, risk: "forbidden", reason: "Sensitive account and credential settings are never available to AI." };
     }
     if (command.entity === "integration") {
@@ -294,7 +310,9 @@ export function executeAgentCommands(
   input: AgentCommand[],
   options: { allowInternalRestore?: boolean; timestamp?: string; busyOccurrences?: BusyOccurrence[]; timezone?: string; integrations?: Array<Record<string, any>> } = {},
 ): AgentExecutionResult {
-  const commands = normalizeAgentCommands(input, { allowInternalRestore: options.allowInternalRestore });
+  const batch = validateAgentCommandBatch(input, { allowInternalRestore: options.allowInternalRestore });
+  if (!batch.valid) throw new Error(`INVALID_COMMAND_BATCH: ${batch.reason}`);
+  const commands = batch.commands;
   const data = clone(originalData);
   const settings = clone(originalSettings);
   const applied: AgentExecutionResult["applied"] = [];
@@ -442,8 +460,10 @@ export function normalizeToolCalls(value: unknown): AgentToolCall[] {
 
 function matchesText(item: Record<string, any>, query: string) {
   if (!query) return true;
-  const haystack = [item.title, item.content, item.notes, item.details, ...(item.tags || [])].filter(Boolean).join(" ").toLowerCase();
-  return haystack.includes(query.toLowerCase());
+  const normalize = (value: unknown) => String(value || "").normalize("NFKC").toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, "");
+  const haystack = normalize([item.title, item.content, item.notes, item.details, ...(item.tags || [])].filter(Boolean).join(" "));
+  const normalizedQuery = normalize(query).replace(/(?:project|项目|task|任务)$/u, "");
+  return haystack.includes(normalizedQuery);
 }
 
 function filtered(items: Array<Record<string, any>>, args: Record<string, unknown>) {
@@ -463,7 +483,7 @@ function readRecord(item: Record<string, any>) {
   // Keep tool results compact so an ordinary delete/update request does not
   // force the model to re-read a large workspace snapshot.
   const record: Record<string, unknown> = { id: item.id, title: item.title, content: item.content };
-  for (const key of ["projectId", "completed", "archived", "dueDate", "date", "scheduledDate", "scheduledStart", "scheduledEnd", "plannedForDate", "workflowStatus", "executionLane", "category", "priority", "order"]) {
+  for (const key of ["projectId", "completed", "archived", "dueDate", "dueDateSource", "date", "scheduledDate", "scheduledStart", "scheduledEnd", "plannedForDate", "workflowStatus", "executionLane", "category", "priority", "order"]) {
     if (item[key] !== undefined) record[key] = item[key];
   }
   if (Array.isArray(item.timelineRecords)) {
@@ -481,6 +501,7 @@ export function executeReadTool(
   runtime: { timerStatus?: Record<string, unknown>; integrations?: Array<Record<string, any>> } = {},
 ) {
   const limit = Math.max(1, Math.min(200, Number(call.arguments.limit) || 100));
+  const offset = Math.max(0, Math.min(10_000, Number(call.arguments.offset) || 0));
   if (call.name === "workspace_overview") return {
     projects: (data.projects || []).length,
     tasks: (data.tasks || []).length,
@@ -495,14 +516,23 @@ export function executeReadTool(
   if (call.name === "search_workspace") {
     const types = Array.isArray(call.arguments.types) ? call.arguments.types.map(String) : ["tasks", "projects", "habits", "notes", "memories", "templates"];
     const map: Record<string, Array<Record<string, any>>> = { tasks: data.tasks || [], projects: data.projects || [], habits: data.habits || [], notes: data.notes || [], memories: data.aiMemories || [], templates: data.scheduleTemplates || [] };
-    return types.flatMap((type) => filtered(map[type] || [], call.arguments).map((item) => ({ type, ...readRecord(item) }))).slice(0, limit);
+    const projectMatches = filtered(map.projects || [], call.arguments);
+    const projectIds = new Set(projectMatches.map((project) => String(project.id)));
+    return types.flatMap((type) => {
+      const direct = filtered(map[type] || [], call.arguments);
+      const related = type === "tasks" && projectIds.size
+        ? (map.tasks || []).filter((task) => projectIds.has(String(task.projectId)) && !direct.some((item) => String(item.id) === String(task.id)))
+        : [];
+      const records = type === "projects" ? projectMatches : [...direct, ...related];
+      return records.map((item) => ({ type, ...readRecord(item) }));
+    }).slice(offset, offset + limit);
   }
-  if (call.name === "list_tasks") return filtered(data.tasks || [], call.arguments).slice(0, limit).map(readRecord);
-  if (call.name === "list_projects") return filtered(data.projects || [], call.arguments).slice(0, limit).map(readRecord);
-  if (call.name === "list_habits") return filtered(data.habits || [], call.arguments).slice(0, limit).map(readRecord);
-  if (call.name === "list_notes") return filtered(data.notes || [], call.arguments).slice(0, limit).map(readRecord);
-  if (call.name === "list_templates") return filtered(data.scheduleTemplates || [], call.arguments).slice(0, limit).map(readRecord);
-  if (call.name === "list_memories") return filtered(data.aiMemories || [], call.arguments).filter((memory) => !memory.archived).slice(0, limit).map(readRecord);
+  if (call.name === "list_tasks") return filtered(data.tasks || [], call.arguments).slice(offset, offset + limit).map(readRecord);
+  if (call.name === "list_projects") return filtered(data.projects || [], call.arguments).slice(offset, offset + limit).map(readRecord);
+  if (call.name === "list_habits") return filtered(data.habits || [], call.arguments).slice(offset, offset + limit).map(readRecord);
+  if (call.name === "list_notes") return filtered(data.notes || [], call.arguments).slice(offset, offset + limit).map(readRecord);
+  if (call.name === "list_templates") return filtered(data.scheduleTemplates || [], call.arguments).slice(offset, offset + limit).map(readRecord);
+  if (call.name === "list_memories") return filtered(data.aiMemories || [], call.arguments).filter((memory) => !memory.archived).slice(offset, offset + limit).map(readRecord);
   if (call.name === "get_settings") {
     const safeKeys = Object.keys(settings).filter((key) => !SENSITIVE_SETTING_RE.test(key));
     return Object.fromEntries(safeKeys.map((key) => [key, settings[key]]));
@@ -512,7 +542,7 @@ export function executeReadTool(
       .flatMap((task: Record<string, any>) => (task.timelineRecords || []).map((record: Record<string, any>) => ({ source: "navopath", taskId: task.id, title: task.title, ...record })))
       .filter((record: Record<string, any>) => (!call.arguments.from || record.scheduledDate >= call.arguments.from) && (!call.arguments.to || record.scheduledDate <= call.arguments.to));
     const external = externalOccurrences.filter((item) => (!call.arguments.from || item.start_date >= call.arguments.from) && (!call.arguments.to || item.start_date <= call.arguments.to));
-    return [...taskBlocks, ...external].slice(0, limit);
+    return [...taskBlocks, ...external].slice(offset, offset + limit);
   }
   if (call.name === "get_metrics") {
     const tasks = filtered(data.tasks || [], call.arguments);
@@ -528,4 +558,28 @@ export function executeReadTool(
     return (runtime.integrations || []).slice(0, limit).map((source) => ({ id: source.id, name: source.name, displayUrl: source.display_url, enabled: source.enabled, syncStatus: source.sync_status, lastSyncedAt: source.last_synced_at || null }));
   }
   throw new Error(`Unknown read tool: ${call.name}`);
+}
+
+export function executeReadToolPage(call: AgentToolCall, data: Record<string, any>, settings: Record<string, any>, externalOccurrences: Array<Record<string, any>> = [], runtime: { timerStatus?: Record<string, unknown>; integrations?: Array<Record<string, any>> } = {}) {
+  const offset = Math.max(0, Math.min(10_000, Number(call.arguments.offset) || 0));
+  const limit = Math.max(1, Math.min(200, Number(call.arguments.limit) || 100));
+  const collections: Record<string, Array<Record<string, any>>> = { tasks: data.tasks || [], projects: data.projects || [], habits: data.habits || [], notes: data.notes || [], templates: data.scheduleTemplates || [], memories: (data.aiMemories || []).filter((memory: Record<string, any>) => !memory.archived) };
+  let rows: Array<Record<string, any>>;
+  if (call.name === "search_workspace") {
+    const types = Array.isArray(call.arguments.types) ? call.arguments.types.map(String) : ["tasks", "projects", "habits", "notes", "memories", "templates"];
+    const projects = filtered(collections.projects, call.arguments);
+    const projectIds = new Set(projects.map((project) => String(project.id)));
+    rows = [...(types.includes("projects") ? [{ __type: "projects", items: projects }] : []), ...types.filter((type) => type !== "projects").map((type) => ({ __type: type, items: [] as any[] }))].flatMap(({ __type: type, items: forced }) => {
+      const direct = filtered(collections[type] || [], call.arguments);
+      const related = type === "tasks" ? filtered(collections.tasks || [], { ...call.arguments, query: "" }).filter((task) => projectIds.has(String(task.projectId)) && !direct.some((item) => String(item.id) === String(task.id))) : [];
+      const records = type === "projects" ? (forced.length ? forced : direct) : [...direct, ...related];
+      return records.map((item) => ({ type, ...readRecord(item) }));
+    });
+  } else {
+    const map: Record<string, string> = { list_tasks: "tasks", list_projects: "projects", list_habits: "habits", list_notes: "notes", list_templates: "templates", list_memories: "memories" };
+    const key = map[call.name];
+    if (!key) return executeReadTool(call, data, settings, externalOccurrences, runtime);
+    rows = filtered(collections[key] || [], call.arguments).map(readRecord);
+  }
+  return { items: rows.slice(offset, offset + limit), total: rows.length, offset, nextOffset: offset + limit < rows.length ? offset + limit : null };
 }

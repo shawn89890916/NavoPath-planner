@@ -1,5 +1,14 @@
 # NavoPath 更新日志
 
+## 2026-09-08 · AI 查询与澄清
+
+### 改进
+- 项目搜索现在会带出关联任务，并能识别大小写、标点和自然语言表达；“移到规划页”会正确整理任务，信息不足时提供选项，也支持用户在同一处填写答案后一次提交。
+- AI 在等待澄清时保持只读；较大的任务列表会分批读取并明确还有哪些结果，避免把不完整的列表当作“全部”处理。
+
+### 修复
+- 无效的 AI 查询协议现在会先进行一次有限修复；真正达到查询上限时才提示缩小范围。无效或过大的操作批次会整体拒绝，AI 也不能修改自己的权限等级。
+
 ## 2026-09-07 · AI 回复与习惯
 
 ### 修复
@@ -46,6 +55,15 @@
 ### 修复
 - 恢复 Execute 时间轴底卡的四角圆角，收窄左右下外边距；保持今日候选宽度与横向位置不变，略微上移，使其相对底卡的上、左、下留白统一为 6px；右移日期箭头与 Day / 3-Day / Week / Month 的纵向控件列对齐。
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
+
+## 2026-09-08 · AI Search and Clarification
+
+### Improved
+- Project search now includes associated tasks and understands case, punctuation, and natural phrasing. “Move to Planning” updates tasks correctly, while missing details offer options and a single submit path for the user's own answer.
+- The AI stays read-only while waiting for clarification. Larger task lists are read in batches with remaining results made clear, preventing incomplete lists from being treated as “all.”
+
+### Fixed
+- Invalid AI query protocols receive one bounded repair attempt, and only a real query limit reports an oversized scope. Invalid or oversized action batches are rejected as a whole, and AI cannot change its own permission level.
 
 ## 2026-09-07 · AI Replies and Habits
 

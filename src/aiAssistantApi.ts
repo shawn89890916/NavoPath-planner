@@ -10,6 +10,7 @@ export type AiMode = "health" | "agent" | "agent_audit" | "agent_confirm" | "age
 export type AiStep = { label: string; status: "pending" | "running" | "done" | "error" };
 export type AiChatMessage = { role: "user" | "assistant" | "system"; content: string };
 export type AiMemoryPatch = { content: string; tags?: string[] };
+export type AiClarification = { id: string; question: string; options: string[] };
 
 export type AiAction =
   | { type: "create_subtasks"; taskId?: string; projectId?: string; subtasks?: { title: string; estimateMinutes?: number }[]; reason?: string }
@@ -63,6 +64,7 @@ type AiAssistantPayload = {
   enrichment?: { durationMinutes?: number; projectId?: string; confidence?: number };
   agent?: AgentRunState;
   audits?: AgentAuditEntry[];
+  clarifications?: AiClarification[];
 };
 
 export type AiAssistantResponse =
@@ -208,6 +210,11 @@ export async function invokeAiAssistant(client: SupabaseClient, params: {
       enrichment: data.enrichment && typeof data.enrichment === "object" ? data.enrichment : undefined,
       agent: data.agent && typeof data.agent === "object" ? data.agent as AgentRunState : undefined,
       audits: Array.isArray(data.audits) ? data.audits as AgentAuditEntry[] : undefined,
+      clarifications: Array.isArray(data.clarifications) ? data.clarifications.slice(0, 3).flatMap((item: any, index: number) => {
+        if (!item || typeof item.question !== "string") return [];
+        const options = Array.isArray(item.options) ? item.options.filter((option: unknown): option is string => typeof option === "string").slice(0, 3) : [];
+        return [{ id: typeof item.id === "string" ? item.id.slice(0, 80) : `clarification_${index}`, question: item.question.slice(0, 300), options }];
+      }) : undefined,
     });
   } catch (error) {
     console.error("AI Assistant network error:", error);
