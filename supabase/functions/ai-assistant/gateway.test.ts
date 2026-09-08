@@ -12,6 +12,39 @@ test("maps reasoning modes to each provider protocol", () => {
   assert.deepEqual(reasoningParameters(deepseek, "instant"), { thinking: { type: "disabled" } });
   assert.deepEqual(reasoningParameters(deepseek, "high"), { thinking: { type: "enabled" }, reasoning_effort: "high" });
   assert.deepEqual(reasoningParameters(deepseek, "xhigh"), { thinking: { type: "enabled" }, reasoning_effort: "max" });
+  const anthropic: AiProviderConfig = { name: "anthropic", baseUrl: "https://api.anthropic.com/v1", apiKey: "key", model: "claude-opus-4-8", supportsReasoning: true };
+  assert.deepEqual(reasoningParameters(anthropic, "instant"), {});
+  assert.deepEqual(reasoningParameters(anthropic, "high", 2_400), { thinking: { type: "enabled", budget_tokens: 2_399 } });
+  assert.deepEqual(reasoningParameters(anthropic, "high", 600), {});
+  const zhipu: AiProviderConfig = { name: "zhipu", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: "key", model: "glm-5.2", supportsReasoning: true };
+  assert.deepEqual(reasoningParameters(zhipu, "instant"), { thinking: { type: "disabled" } });
+  assert.deepEqual(reasoningParameters(zhipu, "xhigh"), { thinking: { type: "enabled" }, reasoning_effort: "max" });
+  const qwen: AiProviderConfig = { name: "qwen", baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1", apiKey: "key", model: "qwen3.8-max", supportsReasoning: true };
+  assert.deepEqual(reasoningParameters(qwen, "instant"), { enable_thinking: false });
+  assert.deepEqual(reasoningParameters(qwen, "high"), { enable_thinking: true });
+});
+
+test("uses the Anthropic messages protocol", async () => {
+  let requestedUrl = "";
+  let requestedHeaders: HeadersInit | undefined;
+  let requestedBody: Record<string, unknown> | undefined;
+  const result = await callAiGateway({
+    providers: [{ name: "anthropic", baseUrl: "https://api.anthropic.com/v1", apiKey: "secret", model: "claude-opus-4-8", supportsReasoning: true }],
+    messages: [{ role: "system", content: "You are concise." }, { role: "user", content: "hello" }],
+    maxTokens: 1_200,
+    fetchImpl: async (url, init) => {
+      requestedUrl = String(url);
+      requestedHeaders = init?.headers;
+      requestedBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      return Response.json({ content: [{ type: "text", text: "anthropic ok" }] });
+    },
+  });
+  assert.equal(result.content, "anthropic ok");
+  assert.equal(requestedUrl, "https://api.anthropic.com/v1/messages");
+  assert.equal(new Headers(requestedHeaders).get("x-api-key"), "secret");
+  assert.equal(new Headers(requestedHeaders).get("authorization"), null);
+  assert.equal(requestedBody?.system, "You are concise.");
+  assert.deepEqual(requestedBody?.messages, [{ role: "user", content: "hello" }]);
 });
 
 test("returns the primary provider response without a backup call", async () => {

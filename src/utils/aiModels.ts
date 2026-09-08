@@ -15,7 +15,7 @@ export type AiReasoningMode = "instant" | "high" | "xhigh";
 
 export function reasoningModesForModel(id: string): AiReasoningMode[] {
   const label = id.replace(/^Pro\//i, "").split("/").pop() || id;
-  if (/deepseek-v4-(?:flash|pro)/i.test(label)) {
+  if (/deepseek-v4-(?:flash|pro)|gpt-5(?:\.\d+)?|claude-(?:opus|sonnet|haiku)|glm-|qwen3\./i.test(label)) {
     return ["instant", "high", "xhigh"];
   }
   return ["instant"];

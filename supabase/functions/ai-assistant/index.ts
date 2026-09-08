@@ -35,7 +35,7 @@ const corsHeaders = {
 };
 
 const STABLE_MODEL = "deepseek-v4-flash";
-const AI_GATEWAY_VERSION = "2026-08-20.1";
+const AI_GATEWAY_VERSION = "2026-09-08.1";
 const AGENT_MAX_ROUNDS = 10;
 const AGENT_MAX_TOOL_CALLS = 64;
 const FALLBACK_MODELS = [
@@ -136,7 +136,7 @@ async function callDeepSeek(
   const configuredKey = providerConfig?.apiKey || apiKey;
   if (configuredKey) {
     providers.push({
-      name: providerConfig?.provider === "siliconflow" ? "siliconflow" : providerConfig?.provider === "openai-compatible" ? "openai-compatible" : "deepseek",
+      name: providerConfig?.provider === "siliconflow" || providerConfig?.provider === "openai" || providerConfig?.provider === "anthropic" || providerConfig?.provider === "zhipu" || providerConfig?.provider === "qwen" || providerConfig?.provider === "openai-compatible" ? providerConfig.provider : "deepseek",
       baseUrl: providerConfig?.baseUrl || Deno.env.get("DEEPSEEK_BASE_URL") || "https://api.deepseek.com",
       apiKey: configuredKey,
       model: providerConfig?.model || model,

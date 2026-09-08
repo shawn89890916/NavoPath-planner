@@ -1,7 +1,7 @@
 export type GatewayMessage = { role: string; content: string };
 
 export type AiProviderConfig = {
-  name: "deepseek" | "siliconflow" | "openai-compatible";
+  name: "deepseek" | "siliconflow" | "openai" | "anthropic" | "zhipu" | "qwen" | "openai-compatible";
   baseUrl: string;
   apiKey: string;
   model: string;
@@ -35,8 +35,9 @@ function codeForStatus(status: number): GatewayErrorCode {
   return "AI_PROVIDER";
 }
 
-function providerUrl(baseUrl: string): string {
+function providerUrl(baseUrl: string, provider: AiProviderConfig["name"]): string {
   const normalized = baseUrl.replace(/\/$/, "");
+  if (provider === "anthropic") return /\/messages$/i.test(normalized) ? normalized : `${normalized}/messages`;
   return /\/chat\/completions$/i.test(normalized) ? normalized : `${normalized}/chat/completions`;
 }
 
@@ -48,8 +49,12 @@ export function gatewayErrorMessage(code: GatewayErrorCode): string {
   return "AI 服务拒绝了请求，请检查 API 地址和模型名称。";
 }
 
-export function reasoningParameters(provider: AiProviderConfig, reasoningMode: "instant" | "high" | "xhigh" = "instant") {
+export function reasoningParameters(provider: AiProviderConfig, reasoningMode: "instant" | "high" | "xhigh" = "instant", maxTokens = 2_400) {
   if (!provider.supportsReasoning) return {};
+  if (provider.name === "anthropic") {
+    if (reasoningMode === "instant" || maxTokens < 1_025) return {};
+    return { thinking: { type: "enabled", budget_tokens: Math.max(1_024, Math.min(maxTokens - 1, reasoningMode === "xhigh" ? 8_192 : 4_096)) } };
+  }
   if (provider.name === "deepseek") {
     if (reasoningMode === "instant") return { thinking: { type: "disabled" } };
     return { thinking: { type: "enabled" }, reasoning_effort: reasoningMode === "xhigh" ? "max" : "high" };
@@ -57,6 +62,13 @@ export function reasoningParameters(provider: AiProviderConfig, reasoningMode: "
   if (provider.name === "siliconflow") {
     if (reasoningMode === "instant") return { enable_thinking: false };
     return { enable_thinking: true, ...(reasoningMode === "xhigh" ? { reasoning_effort: "max" } : {}) };
+  }
+  if (provider.name === "zhipu") {
+    if (reasoningMode === "instant") return { thinking: { type: "disabled" } };
+    return { thinking: { type: "enabled" }, reasoning_effort: reasoningMode === "xhigh" ? "max" : "high" };
+  }
+  if (provider.name === "qwen") {
+    return reasoningMode === "instant" ? { enable_thinking: false } : { enable_thinking: true };
   }
   return reasoningMode === "instant" ? {} : { reasoning_effort: reasoningMode === "xhigh" ? "max" : "high" };
 }
@@ -90,16 +102,23 @@ export async function callAiGateway(params: {
     params.signal?.addEventListener("abort", abort, { once: true });
     const timeoutId = setTimeout(() => controller.abort(), Math.min(perProviderTimeoutMs, remaining));
     try {
-      const response = await fetchImpl(providerUrl(provider.baseUrl), {
+      const isAnthropic = provider.name === "anthropic";
+      const systemMessages = isAnthropic ? params.messages.filter((message) => message.role === "system").map((message) => message.content).join("\n\n") : "";
+      const messages = isAnthropic ? params.messages.filter((message) => message.role !== "system") : params.messages;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (isAnthropic) {
+        headers["x-api-key"] = provider.apiKey;
+        headers["anthropic-version"] = "2023-06-01";
+      } else {
+        headers.Authorization = `Bearer ${provider.apiKey}`;
+      }
+      const body = isAnthropic
+        ? { model: provider.model, ...(systemMessages ? { system: systemMessages } : {}), messages, max_tokens: params.maxTokens, ...reasoningParameters(provider, params.reasoningMode, params.maxTokens) }
+        : { model: provider.model, messages, max_tokens: params.maxTokens, stream: false, ...reasoningParameters(provider, params.reasoningMode, params.maxTokens) };
+      const response = await fetchImpl(providerUrl(provider.baseUrl, provider.name), {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${provider.apiKey}` },
-        body: JSON.stringify({
-          model: provider.model,
-          messages: params.messages,
-          max_tokens: params.maxTokens,
-          stream: false,
-          ...reasoningParameters(provider, params.reasoningMode),
-        }),
+        headers,
+        body: JSON.stringify(body),
         signal: controller.signal,
       });
       const elapsedMs = Date.now() - startedAt;
@@ -110,7 +129,9 @@ export async function callAiGateway(params: {
         continue;
       }
       const payload = await response.json();
-      const content = payload?.choices?.[0]?.message?.content;
+      const content = isAnthropic
+        ? payload?.content?.filter((item: { type?: string; text?: string }) => item?.type === "text").map((item: { text?: string }) => item.text || "").join("")
+        : payload?.choices?.[0]?.message?.content;
       if (typeof content !== "string" || !content.trim()) {
         attempts.push({ provider: provider.name, code: "AI_PROVIDER", status: response.status, elapsedMs });
         params.onAttempt?.({ provider: provider.name, ok: false, code: "AI_PROVIDER", status: response.status, elapsedMs });

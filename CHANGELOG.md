@@ -3,6 +3,7 @@
 ## 2026-09-08 · AI 查询与澄清
 
 ### 改进
+- AI 设置新增 OpenAI、Anthropic、智谱 GLM 和通义千问，按供应商提供当前模型目录，并支持自定义模型 ID；请求协议、推理参数与中英文界面会随供应商自动适配。
 - AI 设置页改为完整宽度的提供商配置区，支持 DeepSeek 官方、SiliconFlow 和其他 OpenAI 兼容服务；全局 Agent 与普通 AI 统一读取本机配置，修复已配置 Key 后 Agent 仍无法完成请求的问题。
 - 项目搜索现在会带出关联任务，并能识别大小写、标点和自然语言表达；“移到规划页”会正确整理任务，信息不足时提供选项，也支持用户在同一处填写答案后一次提交。
 - AI 在等待澄清时保持只读；较大的任务列表会分批读取并明确还有哪些结果，避免把不完整的列表当作“全部”处理。
@@ -65,8 +66,8 @@
 ## 2026-09-08 · AI Search and Clarification
 
 ### Improved
+- AI settings now include OpenAI, Anthropic, Zhipu GLM, and Qwen with current provider model catalogs and custom model IDs; request protocols, reasoning parameters, and Chinese or English labels adapt to the selected provider.
 - AI settings now use a full-width provider configuration area with DeepSeek official, SiliconFlow, and other OpenAI-compatible services. The global Agent and regular AI share the local configuration, fixing Agent failures after a key was configured.
-- AI now uses only DeepSeek V4 Flash and V4 Pro, with Flash as the default. Settings can store the official API key locally, switch models, adjust reasoning, and expose an advanced JSON editor; SiliconFlow and other model entries were removed.
 - Project search now includes associated tasks and understands case, punctuation, and natural phrasing. “Move to Planning” updates tasks correctly, while missing details offer options and a single submit path for the user's own answer.
 - The AI stays read-only while waiting for clarification. Larger task lists are read in batches with remaining results made clear, preventing incomplete lists from being treated as “all.”
 

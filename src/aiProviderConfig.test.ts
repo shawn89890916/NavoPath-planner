@@ -41,6 +41,15 @@ describe("local AI provider configuration", () => {
     });
   });
 
+  it.each([
+    ["openai", "https://api.openai.com/v1", "gpt-5.6-sol"],
+    ["anthropic", "https://api.anthropic.com/v1", "claude-opus-4-8"],
+    ["zhipu", "https://open.bigmodel.cn/api/paas/v4", "glm-5.2"],
+    ["qwen", "https://dashscope.aliyuncs.com/compatible-mode/v1", "qwen3.8-max"],
+  ] as const)("provides the current %s preset", (provider, baseUrl, model) => {
+    expect(aiProviderPreset(provider)).toEqual({ provider, baseUrl, model });
+  });
+
   it("migrates the provider state saved by the earlier SiliconFlow settings bug", () => {
     localStorage.setItem("navopath.ai-provider-config.v1", JSON.stringify({
       provider: "deepseek",
