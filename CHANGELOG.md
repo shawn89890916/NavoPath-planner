@@ -1,11 +1,5 @@
 # NavoPath 更新日志
 
-## 2026-09-08 · DeepSeek 本地配置
-
-### 改进
-- AI 模型收敛为 DeepSeek V4 Flash 与 V4 Pro，默认使用 Flash；设置中可直接填写官方 API Key、切换模型和调整思考强度，高级用户可展开 JSON 配置。
-- API Key 仅保存在当前设备的应用存储中，并按请求发送给 AI 网关；移除 SiliconFlow 及其他模型目录。
-
 ## 2026-09-08 · AI 查询与澄清
 
 ### 改进
@@ -65,6 +59,7 @@
 ## 2026-09-08 · AI Search and Clarification
 
 ### Improved
+- AI now uses only DeepSeek V4 Flash and V4 Pro, with Flash as the default. Settings can store the official API key locally, switch models, adjust reasoning, and expose an advanced JSON editor; SiliconFlow and other model entries were removed.
 - Project search now includes associated tasks and understands case, punctuation, and natural phrasing. “Move to Planning” updates tasks correctly, while missing details offer options and a single submit path for the user's own answer.
 - The AI stays read-only while waiting for clarification. Larger task lists are read in batches with remaining results made clear, preventing incomplete lists from being treated as “all.”
 
