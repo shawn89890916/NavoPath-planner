@@ -224,7 +224,16 @@ function supabaseKeys() {
 function workspaceFailureMessage(rawMessage: string) {
   if (/profile|workspace|jwt|token|session/i.test(rawMessage)) return "云端登录或工作区已失效，请重新登录后重试。";
   if (/agent.?runs|audit|Could not create agent/i.test(rawMessage)) return "AI 已连接，但工作区记录服务暂时不可用，请刷新页面后重试。";
-  return "全局 AI 工作区暂时不可用，请刷新页面后重试。";
+  const detail = rawMessage
+    .replace(/https?:\/\/[^\s)]+/gi, "[url]")
+    .replace(/Bearer\s+[^\s,;]+/gi, "Bearer [redacted]")
+    .replace(/(?:sk|key|token)[-_]?[A-Za-z0-9_-]{12,}/gi, "[redacted]")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 180);
+  return detail && detail !== "AI agent failed"
+    ? `全局 AI 工作区暂时不可用（${detail}），请刷新页面后重试。`
+    : "全局 AI 工作区暂时不可用，请刷新页面后重试。";
 }
 
 async function authenticatedWorkspace(req: Request) {
