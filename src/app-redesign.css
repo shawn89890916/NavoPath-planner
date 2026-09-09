@@ -4130,6 +4130,12 @@ body.df-timeline-pointer-drag * {
   box-shadow: none;
 }
 
+.df-app .df-theme-setting .df-project-color-picker button,
+.df-app .df-theme-setting .df-project-color-custom span {
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
 .df-app .df-settings-shell {
   grid-template-columns: 148px minmax(0, 1fr);
 }
