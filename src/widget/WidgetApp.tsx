@@ -1,6 +1,6 @@
 import React, { type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Cherry, MoreHorizontal, Pause, Pin, PinOff, Play, RotateCcw, Sprout, X } from "lucide-react";
 import type { WidgetAction, WidgetBounds, WidgetResizeFixedEdges, WidgetSnapshot, WidgetTimerMode, WidgetTimerPreferences } from "../types";
+import { UiIcon } from "../components/UiIconRegistry";
 import {
   DEFAULT_WIDGET_APPEARANCE,
   getWidgetDensity,
@@ -199,8 +199,8 @@ export function WidgetView({ snapshot, density, onToggleTimer, onTogglePopover, 
             {timerContext && <span className="df-widget-timer-context">{timerContext}</span>}
             <button type="button" className="df-widget-timer-display" aria-label={zh ? "切换分钟或秒显示" : "Toggle minute or second display"} title={zh ? "点击切换分钟或秒显示" : "Click to toggle minute or second display"} onClick={toggleTimerPrecision}>{snapshot.timelineState === "empty" ? "--:--" : formatTimer(snapshot.timerDisplaySeconds, timerPrecision)}</button>
           </div>
-          {showPrimaryControl && <button type="button" className="df-widget-icon-btn" aria-label={controlLabel} title={controlLabel} onClick={onToggleTimer}>{runningPomodoro ? (pomodoroBreak ? <Sprout size={18} strokeWidth={1.8} aria-hidden="true" /> : <Cherry size={18} strokeWidth={1.8} aria-hidden="true" />) : effectiveRunning ? <Pause size={18} strokeWidth={1.8} aria-hidden="true" /> : <Play size={18} strokeWidth={1.8} aria-hidden="true" />}</button>}
-          {showMoreControl && <button type="button" className="df-widget-icon-btn" aria-label={zh ? "更多" : "More"} aria-haspopup="dialog" aria-expanded={snapshot.popoverOpen} onClick={onTogglePopover}><MoreHorizontal size={18} strokeWidth={1.8} aria-hidden="true" /></button>}
+          {showPrimaryControl && <button type="button" className="df-widget-icon-btn" aria-label={controlLabel} title={controlLabel} onClick={onToggleTimer}>{runningPomodoro ? (pomodoroBreak ? <UiIcon name="sprout" size={18} /> : <UiIcon name="cherry" size={18} />) : effectiveRunning ? <UiIcon name="pause" size={18} /> : <UiIcon name="play" size={18} />}</button>}
+          {showMoreControl && <button type="button" className="df-widget-icon-btn" aria-label={zh ? "更多" : "More"} aria-haspopup="dialog" aria-expanded={snapshot.popoverOpen} onClick={onTogglePopover}><UiIcon name="more" size={18} /></button>}
         </div>
       </section>
       <WidgetResizeHandles onResize={onResize} />
@@ -272,7 +272,7 @@ export function TimerModeTabs({ lang, mode, onSelect }: { lang: WidgetSnapshot["
 
 export function WidgetPopoverUtilities({ lang, alwaysOnTop, onResetTimer, onToggleAlwaysOnTop, onCloseWidget }: { lang: WidgetSnapshot["lang"]; alwaysOnTop: boolean; onResetTimer: () => void; onToggleAlwaysOnTop: () => void; onCloseWidget: () => void }) {
   const zh = lang === "zh";
-  return <div className="df-widget-popover-utilities"><button type="button" className="df-widget-icon-btn" aria-label={zh ? "重置计时器" : "Reset timer"} onClick={onResetTimer}><RotateCcw size={18} strokeWidth={1.8} aria-hidden="true" /></button><button type="button" className="df-widget-icon-btn" aria-label={alwaysOnTop ? (zh ? "取消置顶小组件" : "Unpin widget") : (zh ? "置顶小组件" : "Pin widget")} aria-pressed={alwaysOnTop} onClick={onToggleAlwaysOnTop}>{alwaysOnTop ? <PinOff size={18} strokeWidth={1.8} aria-hidden="true" /> : <Pin size={18} strokeWidth={1.8} aria-hidden="true" />}</button><button type="button" className="df-widget-icon-btn df-widget-close-widget-btn" aria-label={zh ? "关闭小组件" : "Close widget"} onClick={onCloseWidget}><X size={18} strokeWidth={1.8} aria-hidden="true" /></button></div>;
+  return <div className="df-widget-popover-utilities"><button type="button" className="df-widget-icon-btn" aria-label={zh ? "重置计时器" : "Reset timer"} onClick={onResetTimer}><UiIcon name="reset" size={18} /></button><button type="button" className="df-widget-icon-btn" aria-label={alwaysOnTop ? (zh ? "取消置顶小组件" : "Unpin widget") : (zh ? "置顶小组件" : "Pin widget")} aria-pressed={alwaysOnTop} onClick={onToggleAlwaysOnTop}>{alwaysOnTop ? <UiIcon name="pin-off" size={18} /> : <UiIcon name="pin" size={18} />}</button><button type="button" className="df-widget-icon-btn df-widget-close-widget-btn" aria-label={zh ? "关闭小组件" : "Close widget"} onClick={onCloseWidget}><UiIcon name="close" size={18} /></button></div>;
 }
 
 interface WidgetTimerSettingsViewProps { snapshot: WidgetSnapshot; onSave: (draft: WidgetTimerPreferences) => void; onCancel: () => void; onReset: (draft: WidgetTimerPreferences) => void; onSchedule: (durationMinutes: number) => void; }

@@ -161,10 +161,10 @@ describe("WidgetPopoverView", () => {
     expect(pinnedHtml).toContain('aria-label="Reset timer"');
     expect(pinnedHtml.indexOf('aria-label="Reset timer"')).toBeLessThan(pinnedHtml.indexOf('aria-label="Unpin widget"'));
     const source = readFileSync(new URL("./WidgetApp.tsx", import.meta.url), "utf8");
-    expect(source).toContain("<Pin ");
-    expect(source).toContain("<PinOff ");
-    expect(source).toContain("<X ");
-    expect(source).toContain("<RotateCcw ");
+    expect(source).toContain('name="pin"');
+    expect(source).toContain('name="pin-off"');
+    expect(source).toContain('name="close"');
+    expect(source).toContain('name="reset"');
   });
 
   const countdownWithoutDeadline: WidgetSnapshot = {

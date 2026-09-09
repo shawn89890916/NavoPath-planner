@@ -29937,6 +29937,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 
 #root .df-app .df-brand-ai-button:disabled {
   opacity: 1;
+  cursor: default;
 }
 
 #root .df-app .df-back-to-now svg {
@@ -38904,15 +38905,15 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   .df-ai-reference-suggestions button { transition: none; }
 }/* Final Execute refinements are imported after the legacy workspace sheets. */
 #root .df-app:not(.theme-dark).mode-execute .df-execute { background: rgb(250, 249, 245); }
-#root .df-app:not(.theme-dark).mode-execute .df-candidate-panel { background: #fff; }
-#root .df-app:not(.theme-dark).mode-execute .df-timeline-panel { background: #fff; }
+#root .df-app:not(.theme-dark).mode-execute .df-candidate-panel { background: rgb(248, 247, 243); }
+#root .df-app:not(.theme-dark).mode-execute .df-timeline-panel { background: rgb(248, 247, 243); }
 
 /* Keep the composer rule flush with the candidate sheet while retaining its readable inset. */
 @media (min-width: 900px) {
   #root .df-app .df-candidate-panel .df-quick-add {
     margin: 0 -14px -12px;
     padding: 8px 14px 13px;
-    grid-template-columns: minmax(0, 1fr) 58px 78px;
+    grid-template-columns: minmax(0, 1fr) 64px 48px;
     border-top: 0;
   }
   #root .df-app .df-candidate-panel .df-quick-add::before { display: none; }
@@ -39133,7 +39134,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     width: var(--df-daily-scroll-width);
     min-width: 0;
     max-width: none;
-    flex-basis: var(--df-daily-scroll-width);
+    flex: 1 1 auto;
+    height: auto;
+    flex-basis: auto;
   }
   #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday {
     width: 100%;
@@ -39321,4 +39324,55 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app.mode-execute .df-quick-add-submit:disabled {
   background: rgb(245, 241, 232);
   opacity: 1;
+}
+
+/* Browser review follow-up: keep compact controls in the viewport and let the
+   timeline own the remaining height instead of leaving a dead lower shelf. */
+#root .df-app .df-brand-ai-button,
+#root .df-app .df-brand-ai-button:hover,
+#root .df-app .df-brand-ai-button:focus-visible {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#root .df-app .df-header-right .df-user-avatar > svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+}
+
+@media (min-width: 981px) {
+  #root .df-app.mode-execute > .df-add-fab {
+    position: fixed;
+    right: 24px;
+    bottom: 72px;
+    z-index: 100;
+  }
+  #root .df-app.mode-execute > .df-ai-fab {
+    position: fixed;
+    right: 24px;
+    bottom: 22px;
+    z-index: 100;
+  }
+
+}
+
+#root .df-app .df-quick-add-submit {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  padding: 0;
+}
+#root .df-app .df-quick-add-submit::before {
+  content: "↑";
+  font-size: 16px;
+  line-height: 1;
+}
+#root .df-app:not(.theme-dark).mode-execute .df-timeline-body,
+#root .df-app:not(.theme-dark).mode-execute .df-timeline-content,
+#root .df-app:not(.theme-dark).mode-execute .df-timeline-daily,
+#root .df-app:not(.theme-dark).mode-execute .df-timeline-scroll,
+#root .df-app:not(.theme-dark).mode-execute .df-timeline-canvas,
+#root .df-app:not(.theme-dark).mode-execute .df-time-grid {
+  background-color: rgb(248, 247, 243);
 }

@@ -1,6 +1,6 @@
 import React, { forwardRef, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { UiCloseIcon } from "./UiIcons";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
@@ -13,7 +13,7 @@ export const IconButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTM
 });
 
 export const CloseButton = forwardRef<HTMLButtonElement, Omit<ButtonHTMLAttributes<HTMLButtonElement>, "aria-label"> & { label: string }>(function CloseButton({ label, className, ...props }, ref) {
-  return <IconButton ref={ref} icon={<X size={16} strokeWidth={1.8} aria-hidden="true" />} label={label} className={["ui-icon-button--close", className || ""].filter(Boolean).join(" ")} {...props} />;
+  return <IconButton ref={ref} icon={<UiCloseIcon size={16} />} label={label} className={["ui-icon-button--close", className || ""].filter(Boolean).join(" ")} {...props} />;
 });
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...props }, ref) {

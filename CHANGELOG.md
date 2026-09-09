@@ -1,5 +1,12 @@
 # NavoPath 更新日志
 
+## 2026-09-10 · Execute 时间轴与快捷操作
+
+### 改进
+- 修正 Execute 时间轴底部留白，让时间画布填满可用区域并与候选区纸面背景自然衔接；快速添加改为居中的小型上箭头，右下角添加与 Navo AI 入口在桌面端保持可见。
+- 放大顶栏同步、搜索、通知和设置图标，品牌标志保持无边框且禁用时不再显示禁止手势。
+- 顶栏、移动 Dock、模板操作和桌面小组件统一复用同一套图标组件，保持图标尺寸、语义标签和交互状态一致。
+
 ## 2026-09-09 · 主动通知与每日 AI 助理
 
 ### 改进
@@ -77,6 +84,13 @@
 ### 修复
 - 恢复 Execute 时间轴底卡的四角圆角，收窄左右下外边距；保持今日候选宽度与横向位置不变，略微上移，使其相对底卡的上、左、下留白统一为 6px；右移日期箭头与 Day / 3-Day / Week / Month 的纵向控件列对齐。
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
+
+## 2026-09-10 · Execute timeline and quick actions
+
+### Improved
+- Fixed the empty shelf below the Execute timeline so the time canvas fills the available area and shares the paper background with the candidate panel; the quick-add action is now a centered small up arrow, and the desktop Add and Navo AI entries remain visible in the lower-right corner.
+- Enlarged the sync, search, notification, and settings icons in the header; the brand mark stays borderless and no longer shows a forbidden cursor when disabled.
+- Reused one shared icon component set across the header, mobile dock, template actions, and desktop widget so icon sizing, labels, and interaction states stay consistent.
 
 ## 2026-09-09 · Proactive notifications and daily AI assistant
 

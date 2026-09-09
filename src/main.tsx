@@ -88,6 +88,7 @@ import { TaskActions, TaskBlock, TaskBlockAccent, TaskBlockContent, TaskBlockDur
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, CandidateBlock, TimelineCanvas, TimelineEventBlock } from "./components/ExecutionSharedLayout";
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDivider, SettingDescription } from "./components/SettingsControls";
 import { CloseButton } from "./components/UiPrimitives";
+import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon } from "./components/UiIcons";
 import { SETTINGS_CATEGORIES, normalizeSettingsTarget, searchSettings, settingsSearchPath, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { getDefaultSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -8394,7 +8395,7 @@ function App() {
             onClick={() => { setCommandOpen(true); setCommandQuery(""); }}
             aria-label={lang === "zh" ? "搜索" : "Search"}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <UiSearchIcon size={20} strokeWidth={2} />
           </button>
           {authState?.mode === "cloud" && <button
             className={`df-user-avatar df-proactive-notification-button${proactiveNotifications.length ? " has-unread" : ""}`}
@@ -8403,7 +8404,7 @@ function App() {
             aria-label={lang === "zh" ? `主动助理提醒${proactiveNotifications.length ? `，${proactiveNotifications.length} 条未读` : ""}` : `Proactive assistant messages${proactiveNotifications.length ? `, ${proactiveNotifications.length} unread` : ""}`}
             title={lang === "zh" ? "主动助理提醒" : "Proactive assistant messages"}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+            <UiBellIcon size={20} strokeWidth={2} />
             {proactiveNotifications.length > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{proactiveNotifications.length > 9 ? "9+" : proactiveNotifications.length}</span>}
           </button>}
           <button className="df-user-avatar" onClick={() => { rememberLayerTrigger("utility"); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")}>
@@ -8828,7 +8829,8 @@ function App() {
                 onCreate={createQuickProject}
                 lang={lang}
               />
-              <button className="df-quick-add-submit" type="submit" disabled={!quickTitle.trim()}>{t(lang, "candidate.add")}</button>
+              <button className="df-quick-add-submit" type="submit" aria-label={t(lang, "candidate.add")} disabled={!quickTitle.trim()}>
+              </button>
             </form>
             <span className="df-candidate-resize-zone" aria-hidden="true" onPointerDown={startCandidatePanelResize} />
               </>
@@ -9828,7 +9830,7 @@ function App() {
             <button className={mode === "planning" ? "active" : ""} onClick={() => changeMode("planning")}>{term(lang, "planning")}</button>
           </div>
           {authState?.mode === "cloud" && <button className={`df-mobile-dock-action df-proactive-notification-button${proactiveNotifications.length ? " has-unread" : ""}`} onClick={() => setNotificationCenterOpen(true)} aria-label={lang === "zh" ? `主动助理提醒${proactiveNotifications.length ? `，${proactiveNotifications.length} 条未读` : ""}` : `Proactive assistant messages${proactiveNotifications.length ? `, ${proactiveNotifications.length} unread` : ""}`}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+            <UiBellIcon size={20} />
             {proactiveNotifications.length > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{proactiveNotifications.length > 9 ? "9+" : proactiveNotifications.length}</span>}
           </button>}
           <button className="df-mobile-dock-action df-mobile-settings" onClick={() => { rememberLayerTrigger("utility"); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")}>
@@ -9845,7 +9847,7 @@ function App() {
         aria-label={lang === "zh" ? "快速添加任务" : "Quick add task"}
         title={lang === "zh" ? "快速添加任务" : "Quick add task"}
         onClick={() => { if (mode !== "execute") changeMode("execute"); setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
-      ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></button>}
+      ><UiPlusIcon size={20} /></button>}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
       {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} />}
@@ -10512,7 +10514,7 @@ function ScheduleTemplateModal({
             <CandidatePanelHeader
               title={<span id="df-template-modal-title" ref={titleRef} tabIndex={-1}>{zh ? "模板" : "Templates"}</span>}
               actions={
-                <button type="button" className="df-icon-action df-icon-template-new" data-tip={zh ? "新建模板" : "New template"} aria-label={zh ? "新建模板" : "New template"} onClick={createCustomTemplate}><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                <button type="button" className="df-icon-action df-icon-template-new" data-tip={zh ? "新建模板" : "New template"} aria-label={zh ? "新建模板" : "New template"} onClick={createCustomTemplate}><UiPlusIcon size={14} strokeWidth={2} /></button>
               }
             />
             <div className="df-candidate-list">
@@ -10554,9 +10556,9 @@ function ScheduleTemplateModal({
                     ) : null}
                     {row.kind === "custom" && !isRenaming ? (
                       <span className="df-candidate-block-actions" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-                        <button type="button" className="df-icon-action" data-tip={zh ? "重命名" : "Rename"} aria-label={zh ? "重命名" : "Rename"} onClick={() => startRename(customTemplates.find((t) => t.id === row.id)!)}><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>
-                        <button type="button" className="df-icon-action" data-tip={zh ? "复制" : "Duplicate"} aria-label={zh ? "复制" : "Duplicate"} onClick={() => duplicateCustomTemplate(row.id)}><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-                        <button type="button" className="df-icon-action" data-tip={zh ? "删除" : "Delete"} aria-label={zh ? "删除" : "Delete"} onClick={() => deleteCustomTemplateById(row.id)}><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                        <button type="button" className="df-icon-action" data-tip={zh ? "重命名" : "Rename"} aria-label={zh ? "重命名" : "Rename"} onClick={() => startRename(customTemplates.find((t) => t.id === row.id)!)}><UiPencilIcon size={13} /></button>
+                        <button type="button" className="df-icon-action" data-tip={zh ? "复制" : "Duplicate"} aria-label={zh ? "复制" : "Duplicate"} onClick={() => duplicateCustomTemplate(row.id)}><UiCopyIcon size={13} /></button>
+                        <button type="button" className="df-icon-action" data-tip={zh ? "删除" : "Delete"} aria-label={zh ? "删除" : "Delete"} onClick={() => deleteCustomTemplateById(row.id)}><UiTrashIcon size={13} /></button>
                       </span>
                     ) : null}
                   </CandidateBlock>
@@ -10567,7 +10569,7 @@ function ScheduleTemplateModal({
               {/* New-template entry — small, narrow, centered button (not a full card). */}
               <div className="df-template-new-row">
                 <button type="button" className="df-template-new-btn" onClick={createCustomTemplate}>
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                  <UiPlusIcon size={14} strokeWidth={2} />
                   <span>{zh ? "新建模板" : "New template"}</span>
                 </button>
               </div>

@@ -26,6 +26,23 @@ Visual and interaction work must follow `NavoPathStyle.md`.
   architecture check.
 - Run `npm run css:check` when changing CSS, components, or style imports.
 
+## Reuse-first UI implementation
+
+- Before adding a component, hook, event wrapper, CSS selector, or icon, search
+  the current workspace for an existing implementation and extend that owner
+  when the behavior is shared.
+- Reuse `TaskBlock`, `ExecutionSharedLayout`, `Button`, `IconButton`, `Modal`,
+  and the canonical [`UiIcons`](src/components/UiIcons.tsx) registry. Do not
+  add a second inline SVG for an icon already present in the registry.
+- Shared icons must keep their accessible label on the owning button; the icon
+  itself remains decorative unless it is the labeled control.
+- Delete a duplicate implementation in the same change after checking static
+  and dynamic callsites. Do not preserve parallel aliases or compatibility DOM
+  without a documented migration reason.
+- Keep shared behavior and visual rules in their owning component. Page-level
+  code may compose shared primitives, but it must not redefine their base
+  geometry, icon drawing, or interaction states.
+
 ## Verification policy
 
 Use proportional verification so small changes stay fast without weakening the
