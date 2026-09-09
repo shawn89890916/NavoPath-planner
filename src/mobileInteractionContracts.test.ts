@@ -19,8 +19,9 @@ describe("portrait interaction contracts", () => {
     expect(main).not.toContain("const canResize = !isExternalEvent && !isReturnedUnfinished");
   });
 
-  it("uses the task-detail language for quick-add More with a start/end range", () => {
-    expect(main).toContain("quickAddDetail={quickAddDetailOpen}");
+  it("uses the task-detail language for every new task with a start/end range", () => {
+    expect(main).not.toContain("quickAddDetail");
+    expect(main).toContain("if (!props.editing && props.type === \"task\")");
     expect(main).toContain('className="df-drawer df-task-detail df-quick-add-detail"');
     expect(main).toContain('className="df-detail-time-range"');
   });

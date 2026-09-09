@@ -3,6 +3,7 @@
 ## 2026-09-09 · 主动通知与每日 AI 助理
 
 ### 改进
+- 快捷键 `N` 与桌面添加按钮统一打开新的任务详情页，并移除旧的任务快速添加表单入口。
 - 设置页改为通用、外观、工作流、账户与数据、Navo AI、桌面窗口（桌面端）和日历与集成七个清晰分区；点缀色、账户操作与恢复设置直接展开，并移除三个不再需要的子设置。
 - 云端每分钟扫描时间轴，在任务开始前 1 分钟提醒；工作时间内至少 1 小时的空档提醒补记；工作结束时聚合未完成任务并提供逐项完成、移至明日候选或交给 Navo AI 安排。
 - 通知中心的消息关闭叉仅在悬停对应提醒时出现，使用更浅的灰色无边框样式；右上角总关闭叉放大并保持无边框，移动端仍保留可操作的触控区域。
@@ -78,6 +79,7 @@
 ## 2026-09-09 · Proactive notifications and daily AI assistant
 
 ### Improved
+- The `N` shortcut and desktop add button now open the new task detail page consistently, and the obsolete task quick-add form entry point has been removed.
 - Reorganized Settings into General, Appearance, Workflow, Account & Data, Navo AI, Desktop Windows (desktop only), and Calendar & Integrations; accent colors, account actions, and recovery settings are directly visible, and three obsolete child settings were removed.
 - The cloud scans every minute to remind users one minute before a timeline task starts, prompt logging for working-time gaps of at least one hour, and group unfinished tasks at day end with per-task complete, move to tomorrow candidates, or ask Navo AI to arrange actions.
 - Notification-item close marks now appear only when hovering the corresponding reminder and use a lighter gray borderless treatment; the top-right close mark is larger and remains borderless while mobile keeps a usable touch target.
