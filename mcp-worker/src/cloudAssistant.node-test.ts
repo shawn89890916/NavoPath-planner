@@ -156,6 +156,12 @@ test("finds only a past unplanned interval and excludes task blocks and actual l
   assert.deepEqual(result, { start: 630, end: 720, startTime: "10:30", endTime: "12:00" });
 });
 
+test("respects the configured gap threshold at the exact minute boundary", () => {
+  const data = { tasks: [{ timelineRecords: [{ scheduledDate: "2026-08-31", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled" }] }], timeEntries: [] };
+  assert.equal(findUnrecordedGap(data, { date: "2026-08-31", nowMinutes: 10 * 60 + 59, startMinutes: 9 * 60, endMinutes: 19 * 60, thresholdMinutes: 60 }), null);
+  assert.deepEqual(findUnrecordedGap(data, { date: "2026-08-31", nowMinutes: 11 * 60, startMinutes: 9 * 60, endMinutes: 19 * 60, thresholdMinutes: 60 }), { start: 600, end: 660, startTime: "10:00", endTime: "11:00" });
+});
+
 test("finds one-minute task starts and excludes completed or cancelled blocks", () => {
   const result = findUpcomingTaskStarts({ tasks: [
     task({ timelineRecords: [{ id: "record-1", taskId: "task-1", scheduledDate: "2026-08-28", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled" }] }),

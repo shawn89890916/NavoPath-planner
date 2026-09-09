@@ -3,9 +3,11 @@
 ## 2026-09-09 · 主动通知与每日 AI 助理
 
 ### 改进
+- 设置页改为通用、外观、工作流、账户与数据、Navo AI、桌面窗口（桌面端）和日历与集成七个清晰分区；点缀色、账户操作与恢复设置直接展开，并移除三个不再需要的子设置。
 - 云端每分钟扫描时间轴，在任务开始前 1 分钟提醒；工作时间内至少 1 小时的空档提醒补记；工作结束时聚合未完成任务并提供逐项完成、移至明日候选或交给 Navo AI 安排。
 - 工作日开始按工作时间生成开工简报并按邮件开关发送；工作日结束生成只读复盘，持久追加到固定的“每日复盘”对话，重复同步不会产生重复消息。
 - 顶栏新增通知中心，应用运行且已授权时可显示系统通知；关闭应用期间的非邮件提醒保留到通知中心。空档默认阈值调整为 60 分钟，旧账户的晨间邮件开关通过迁移立即开启。
+- 修复“空闲阈值”只保存不生效的问题：任务计时器会在达到设置的无操作时长后自动暂停，设为“关闭”时保持运行；刷新页面后 AI 对话默认收起。通知卡片的 dismiss 统一改为右上角无边框灰色叉，补记提醒与其他主动提示保持一致。
 - 修复数据库 API 的 schema cache 暂时失步导致全局 AI 与 Agent 审计历史同时无法读取的问题；部署会主动刷新 PostgREST schema，让已有工作区恢复访问。
 
 ## 2026-09-08 · AI 查询与澄清
@@ -75,9 +77,11 @@
 ## 2026-09-09 · Proactive notifications and daily AI assistant
 
 ### Improved
+- Reorganized Settings into General, Appearance, Workflow, Account & Data, Navo AI, Desktop Windows (desktop only), and Calendar & Integrations; accent colors, account actions, and recovery settings are directly visible, and three obsolete child settings were removed.
 - The cloud scans every minute to remind users one minute before a timeline task starts, prompt logging for working-time gaps of at least one hour, and group unfinished tasks at day end with per-task complete, move to tomorrow candidates, or ask Navo AI to arrange actions.
 - A start-of-work brief is generated from work hours and emailed when email delivery is enabled. The read-only end-of-day review is persistently appended to one fixed Daily review conversation, with duplicate syncs safely deduplicated.
 - A notification center now lives in the top bar. Authorized running clients can show system notifications, while non-email reminders remain in the center when the app is closed. The default gap threshold is 60 minutes, and the migration immediately enables morning email for existing active accounts.
+- Fixed the Idle threshold setting so the task timer pauses after the configured inactivity period and stays running when set to Off. AI now remains collapsed after refresh, and notification dismiss actions use a small borderless gray close mark in the top-right corner, including gap logging prompts.
 - Fixed a stale database API schema cache causing Global AI and Agent audit history to fail together; deployment now actively refreshes the PostgREST schema so existing workspaces can become readable again.
 
 ## 2026-09-08 · AI Search and Clarification

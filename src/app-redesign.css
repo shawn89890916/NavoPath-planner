@@ -696,6 +696,18 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 /* Accent color row: place the two ThemeColorSetting pickers side by
    side when there is room. */
 .df-settings-accent-row { display: flex; flex-wrap: wrap; gap: 18px; padding: 4px 0 8px; }
+
+.df-settings-accent-colors { display: grid; gap: 4px; padding-top: 8px; }
+
+/* Theme accents are flat paper swatches; the picker must not inherit the
+   textured project-color shadow treatment. */
+.df-app .df-theme-setting .df-project-color-picker,
+.df-app .df-theme-setting .df-project-color-picker button,
+.df-app .df-theme-setting .df-project-color-custom,
+.df-app .df-theme-setting .df-project-color-custom span {
+  background-image: none !important;
+  box-shadow: none !important;
+}
 .df-settings-accent-row > .df-theme-setting { padding: 6px 0 !important; border: 0 !important; }
 
 /* Confirmation phrase input for danger dialogs. */
@@ -8000,8 +8012,8 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   font-style: normal;
 }
 
-/* Settings information architecture: five quiet top-level destinations,
-   searchable deep links, and progressive disclosure for power-user controls. */
+/* Settings information architecture: quiet top-level destinations with
+   searchable deep links and direct access to power-user controls. */
 .df-app .df-settings-shell {
   position: relative;
   grid-template-columns: 164px minmax(0, 1fr);

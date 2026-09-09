@@ -8,13 +8,15 @@ import {
 } from "./settingsNavigation";
 
 describe("settings navigation", () => {
-  it("exposes exactly five top-level categories", () => {
+  it("exposes the requested top-level categories", () => {
     expect(SETTINGS_CATEGORIES.map((category) => category.id)).toEqual([
       "general",
       "appearance",
       "workflow",
       "account-data",
-      "advanced",
+      "ai",
+      "widget",
+      "integrations",
     ]);
   });
 
@@ -22,7 +24,7 @@ describe("settings navigation", () => {
     expect(normalizeSettingsTarget("execution")).toEqual({ category: "general", anchor: "execution-defaults" });
     expect(normalizeSettingsTarget("templates")).toEqual({ category: "workflow", anchor: "templates" });
     expect(normalizeSettingsTarget("account")).toEqual({ category: "account-data", anchor: "account" });
-    expect(normalizeSettingsTarget("mcp")).toEqual({ category: "advanced", detail: "integrations", anchor: "mcp" });
+    expect(normalizeSettingsTarget("mcp")).toEqual({ category: "integrations", anchor: "mcp" });
     expect(normalizeSettingsTarget("page")).toEqual({ category: "general" });
     expect(normalizeSettingsTarget("features")).toEqual({ category: "workflow", anchor: "planning-views" });
   });
@@ -40,8 +42,12 @@ describe("settings navigation", () => {
 
   it("returns advanced details with a complete breadcrumb", () => {
     const result = searchSettings("dark appearance", "en")[0];
-    expect(result.target).toEqual({ category: "advanced", detail: "widget", anchor: "widget-dark" });
-    expect(settingsSearchPath(result, "en")).toBe("Advanced › Desktop Windows › Widget dark appearance");
+    expect(result.target).toEqual({ category: "widget", anchor: "widget-dark" });
+    expect(settingsSearchPath(result, "en")).toBe("Desktop Windows › Widget dark appearance");
+  });
+
+  it("keeps desktop settings out of web search results", () => {
+    expect(searchSettings("desktop opacity", "en", false)).toEqual([]);
   });
 
   it("keeps search ids unique", () => {

@@ -86,7 +86,7 @@ import { useInAppDialog } from "./InAppDialog";
 import { TaskActions, TaskBlock, TaskBlockAccent, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskGroup, type TaskBlockDragState } from "./components/TaskBlock";
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, CandidateBlock, TimelineCanvas, TimelineEventBlock } from "./components/ExecutionSharedLayout";
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDivider, SettingDescription } from "./components/SettingsControls";
-import { SETTINGS_CATEGORIES, normalizeSettingsTarget, searchSettings, settingsDetailLabel, settingsSearchPath, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
+import { SETTINGS_CATEGORIES, normalizeSettingsTarget, searchSettings, settingsSearchPath, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { getDefaultSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
 import { usePointerReorder } from "./usePointerReorder";
@@ -1473,6 +1473,7 @@ function App() {
   const timerElapsedRef = useRef(0);
   const timerElapsedBaseRef = useRef(0);
   const timerStartedAtRef = useRef<number | null>(null);
+  const timerLastActivityAtRef = useRef<number | null>(null);
   const widgetManagesTaskTimerRef = useRef(false);
   timerElapsedRef.current = timerElapsed;
 
@@ -1500,18 +1501,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!timerRunning || timerStartedAt === null) {
-      if (timerIntervalRef.current) { window.clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
-      return;
-    }
-    timerIntervalRef.current = window.setInterval(() => {
-      if (widgetManagesTaskTimerRef.current) return;
-      setTimerElapsed(advanceTaskElapsedSeconds(timerElapsedBaseRef.current, timerStartedAt, Date.now()));
-    }, 1000);
-    return () => { if (timerIntervalRef.current) { window.clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; } };
-  }, [timerRunning, timerStartedAt]);
-
-  useEffect(() => {
     if (timerTaskId) {
       timerTaskRef.current = timerTaskId;
       try { localStorage.setItem("navopath-active-timer", JSON.stringify({ taskId: timerTaskId, elapsed: timerElapsed, running: timerRunning })); } catch { /* ignore */ }
@@ -1526,6 +1515,7 @@ function App() {
     const now = Date.now();
     timerElapsedBaseRef.current = baseElapsed;
     timerStartedAtRef.current = now;
+    timerLastActivityAtRef.current = now;
     timerTaskRef.current = taskId;
     setTimerElapsed(baseElapsed);
     setTimerTaskId(taskId);
@@ -1541,16 +1531,50 @@ function App() {
       setTimerElapsed(elapsed);
     }
     timerStartedAtRef.current = null;
+    timerLastActivityAtRef.current = null;
     setTimerRunning(false);
     setTimerStartedAt(null);
   }, []);
 
   const pauseTimer = useCallback(() => pauseTimerAt(Date.now()), [pauseTimerAt]);
 
+  useEffect(() => {
+    if (!timerRunning || timerStartedAt === null) {
+      if (timerIntervalRef.current) { window.clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
+      return;
+    }
+    const markTimerActivity = () => { timerLastActivityAtRef.current = Date.now(); };
+    markTimerActivity();
+    window.addEventListener("pointerdown", markTimerActivity, { passive: true });
+    window.addEventListener("keydown", markTimerActivity);
+    window.addEventListener("touchstart", markTimerActivity, { passive: true });
+    window.addEventListener("scroll", markTimerActivity, { passive: true });
+    timerIntervalRef.current = window.setInterval(() => {
+      if (widgetManagesTaskTimerRef.current) return;
+      const now = Date.now();
+      const thresholdMinutes = Math.max(0, Number(settings?.idleThresholdMinutes ?? 5));
+      const lastActivityAt = timerLastActivityAtRef.current ?? now;
+      if (thresholdMinutes > 0 && now - lastActivityAt >= thresholdMinutes * 60_000) {
+        pauseTimerAt(now);
+        showToast(lang === "zh" ? `已因 ${thresholdMinutes} 分钟无操作自动暂停计时` : `Timer paused after ${thresholdMinutes} minutes of inactivity`);
+        return;
+      }
+      setTimerElapsed(advanceTaskElapsedSeconds(timerElapsedBaseRef.current, timerStartedAt, now));
+    }, 1000);
+    return () => {
+      window.removeEventListener("pointerdown", markTimerActivity);
+      window.removeEventListener("keydown", markTimerActivity);
+      window.removeEventListener("touchstart", markTimerActivity);
+      window.removeEventListener("scroll", markTimerActivity);
+      if (timerIntervalRef.current) { window.clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
+    };
+  }, [lang, pauseTimerAt, settings?.idleThresholdMinutes, timerRunning, timerStartedAt]);
+
   const resumeTimer = useCallback(() => {
     const now = Date.now();
     timerElapsedBaseRef.current = timerElapsedRef.current;
     timerStartedAtRef.current = now;
+    timerLastActivityAtRef.current = now;
     setTimerRunning(true);
     setTimerStartedAt(now);
   }, []);
@@ -6843,8 +6867,7 @@ function App() {
       if (!active) return;
       items.forEach((item) => seenProactiveNotificationIdsRef.current.add(item.id));
       setProactiveNotifications(items);
-      const latestUnreadReview = [...reviews].reverse().find((review) => review.read_at == null);
-      for (const review of reviews) await hydrateReview(review, review.id === latestUnreadReview?.id);
+      for (const review of reviews) await hydrateReview(review, false);
     };
     const receive = (notification: ProactiveNotification) => {
       if (!active || seenProactiveNotificationIdsRef.current.has(notification.id)) return;
@@ -6852,7 +6875,7 @@ function App() {
       setProactiveNotifications((items) => [notification, ...items.filter((item) => item.id !== notification.id)].slice(0, 50));
       showToast(lang === "zh" ? `Navo AI：${notification.title}` : `Navo AI: ${notification.title}`);
       showProactiveSystemNotification(notification);
-      if (notification.kind === "daily_review") void hydrateReview(notification, document.visibilityState !== "hidden");
+      if (notification.kind === "daily_review") void hydrateReview(notification, false);
       if (notification.kind === "unfinished_tasks" && !aiBusyRef.current && !aiInputRef.current.trim()) setUnfinishedNotification(notification);
     };
     void refresh();
@@ -14449,24 +14472,18 @@ function SubscriptionPanel({ lang }: { lang: Language }) {
   );
 }
 
-function AccountMoreSection({ lang, onShowAbout, onSignOut, onDeleteAccount }: { lang: Language; onShowAbout: () => void; onSignOut?: () => void; onDeleteAccount?: () => void }) {
-  const [open, setOpen] = useState(false);
+function AccountMoreSection({ lang, onShowAbout, onDeleteAccount }: { lang: Language; onShowAbout: () => void; onDeleteAccount?: () => void }) {
   return (
-    <section className="df-account-more">
-      <button type="button" className="df-account-more-toggle" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-        <span>{lang === "zh" ? "更多" : "More"}</span>
-        <i aria-hidden="true">{open ? "−" : "+"}</i>
-      </button>
-      {open && <div className="df-account-more-body">
+    <section className="df-account-more" aria-label={lang === "zh" ? "账户操作" : "Account actions"}>
+      <div className="df-account-more-body">
         <button className="df-settings-about" onClick={onShowAbout}>
           <span className="df-settings-about-icon">i</span>
           <span>{t(lang, "settings.about")}</span>
           <small>{lang === "zh" ? "将打开外部链接" : "Opens external link"}</small>
           <i aria-hidden="true">↗</i>
         </button>
-        {onSignOut && <button className="df-settings-logout" onClick={onSignOut}>{t(lang, "settings.logout")}</button>}
         {onDeleteAccount && <button className="df-settings-delete-account" onClick={onDeleteAccount}>{lang === "zh" ? "删除账号和全部数据" : "Delete account and all data"}</button>}
-      </div>}
+      </div>
     </section>
   );
 }
@@ -14587,17 +14604,18 @@ function PluginRuntimePanel({ settings, data, onSave, onSaveData, lang }: { sett
 
 function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose, onSave, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang, onOpenScheduleTemplates }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language; onOpenScheduleTemplates?: () => void }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
-  const [settingsTarget, setSettingsTarget] = useState<SettingsTarget>(resolvedInitial);
+  const isDesktopRuntime = Boolean(window.desktopApi);
+  const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
+  const [settingsTarget, setSettingsTarget] = useState<SettingsTarget>(resolveRuntimeTarget(resolvedInitial));
   const [settingsQuery, setSettingsQuery] = useState("");
-  const [accentSettingsOpen, setAccentSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [widgetThemeOpen, setWidgetThemeOpen] = useState<"light" | "dark">("light");
   const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "plugins" | "mcp">("calendar");
   const settingsContentRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
-  const settingsResults = useMemo(() => searchSettings(settingsQuery, lang), [settingsQuery, lang]);
+  const settingsResults = useMemo(() => searchSettings(settingsQuery, lang, isDesktopRuntime), [settingsQuery, lang, isDesktopRuntime]);
   useEffect(() => {
-    if (initialSection) setSettingsTarget(normalizeSettingsTarget(initialSection));
+    if (initialSection) setSettingsTarget(resolveRuntimeTarget(normalizeSettingsTarget(initialSection)));
   }, [initialSection]);
   useEffect(() => {
     if (kind !== "settings") return;
@@ -14613,7 +14631,6 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
   useEffect(() => {
-    if (settingsTarget.anchor === "accent-colors") setAccentSettingsOpen(true);
     if (settingsTarget.anchor === "shortcuts") setShortcutsOpen(true);
     if (settingsTarget.anchor?.startsWith("widget-light")) setWidgetThemeOpen("light");
     if (settingsTarget.anchor?.startsWith("widget-dark")) setWidgetThemeOpen("dark");
@@ -14639,7 +14656,6 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
   }, [settingsTarget]);
 
   function navigateSettings(target: SettingsTarget) {
-    if (target.anchor === "accent-colors") setAccentSettingsOpen(true);
     if (target.anchor === "shortcuts") setShortcutsOpen(true);
     if (target.anchor?.startsWith("widget-light")) setWidgetThemeOpen("light");
     if (target.anchor?.startsWith("widget-dark")) setWidgetThemeOpen("dark");
@@ -14647,7 +14663,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
     if (target.anchor === "plugins") setIntegrationTab("plugins");
     if (target.anchor === "calendar-feed") setIntegrationTab("calendar");
     if (target.anchor === "external-calendar") setIntegrationTab("external-calendar");
-    setSettingsTarget(target);
+    setSettingsTarget(resolveRuntimeTarget(target));
     setSettingsQuery("");
   }
   const [confirmResetSettings, setConfirmResetSettings] = useState(false);
@@ -14895,21 +14911,17 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
               <label className="df-settings-mobile-category">
                 <span className="df-visually-hidden">{lang === "zh" ? "设置分类" : "Settings category"}</span>
                 <select value={settingsTarget.category} onChange={(event) => navigateSettings({ category: event.target.value as SettingsCategory })}>
-                  {SETTINGS_CATEGORIES.map((category) => <option key={category.id} value={category.id}>{lang === "zh" ? category.labelZh : category.labelEn}</option>)}
+                  {SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => <option key={category.id} value={category.id}>{lang === "zh" ? category.labelZh : category.labelEn}</option>)}
                 </select>
               </label>
               <nav className="df-settings-nav" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
-                {SETTINGS_CATEGORIES.map((category) => (
+                {SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => (
                   <button type="button" key={category.id} className={settingsTarget.category === category.id ? "active" : ""} aria-current={settingsTarget.category === category.id ? "page" : undefined} onClick={() => navigateSettings({ category: category.id })}>{lang === "zh" ? category.labelZh : category.labelEn}</button>
                 ))}
               </nav>
             </div>
             <div ref={settingsContentRef} className="df-settings-content">
-            {settingsTarget.category === "advanced" && settingsTarget.detail && <div className="df-settings-detail-head">
-              <button type="button" onClick={() => navigateSettings({ category: "advanced" })}>← {lang === "zh" ? "高级" : "Advanced"}</button>
-              <span>{settingsDetailLabel(settingsTarget.detail, lang)}</span>
-            </div>}
-            {settingsTarget.category === "general" && <SettingSection anchor="general-basics" title={lang === "zh" ? "基础" : "Basics"} description={lang === "zh" ? "语言、时间边界与启动位置。" : "Language, time boundary, and startup destination."}>
+            {settingsTarget.category === "general" && <SettingSection anchor="general-basics" title={lang === "zh" ? "基础" : "Basics"} description={lang === "zh" ? "语言与时间边界。" : "Language and time boundary."}>
               <SettingRow
                 anchor="language"
                 title={lang === "zh" ? "语言" : "Language"}
@@ -14928,20 +14940,6 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                 title={lang === "zh" ? "一天开始时间" : "Day start time"}
                 description={lang === "zh" ? "决定时间轴的起始分界，影响跨天滚动与统计范围。" : "Sets the boundary used by the timeline, cross-day scroll, and metric ranges."}
                 control={<SettingTextInput type="time" value={settings.dayStartTime || "00:00"} ariaLabel={lang === "zh" ? "一天开始时间" : "Day start time"} onChange={(value) => onSave({ dayStartTime: value })} />}
-              />
-              <SettingRow
-                anchor="default-page"
-                title={lang === "zh" ? "默认打开页面" : "Default page"}
-                description={lang === "zh" ? "启动时优先进入执行或规划。" : "Choose whether the app opens on Execution or Planning."}
-                control={<SettingSelect<Settings["activeMode"]>
-                  value={settings.activeMode}
-                  ariaLabel={lang === "zh" ? "默认打开页面" : "Default page"}
-                  onChange={(value) => onSave({ activeMode: value })}
-                  options={[
-                    { value: "execute", label: lang === "zh" ? "执行" : "Execution" },
-                    { value: "planning", label: lang === "zh" ? "规划" : "Planning" },
-                  ]}
-                />}
               />
             </SettingSection>}
 
@@ -14993,28 +14991,16 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                   </span>
                 }
               />
-              <SettingRow
-                anchor="task-block-fill"
-                title={lang === "zh" ? "任务块颜色填充" : "Fill task block with project color"}
-                description={lang === "zh" ? "以归属项目色整块填充（开启）或仅描边（关闭）。" : "Fill the whole block with project color (on) or use a thin outline (off)."}
-                control={<SettingToggle checked={Boolean(settings.taskBlockFill)} ariaLabel={lang === "zh" ? "任务块颜色填充" : "Fill task block with project color"} onChange={(next) => onSave({ taskBlockFill: next })} />}
-              />
-              <div className="df-settings-disclosure" data-settings-anchor="accent-colors" tabIndex={-1}>
-                <button type="button" className="df-settings-disclosure-toggle" aria-expanded={accentSettingsOpen} onClick={() => setAccentSettingsOpen((open) => !open)}>
-                  <span><strong>{lang === "zh" ? "自定义点缀色" : "Customize accent colors"}</strong><small>{lang === "zh" ? "用于细线、勾选与当前时间标记。" : "Used for fine rules, checks, and the current-time marker."}</small></span>
-                  <i aria-hidden="true">{accentSettingsOpen ? "−" : "+"}</i>
-                </button>
-                {accentSettingsOpen && <div className="df-settings-disclosure-body">
-                  <SettingDescription>{lang === "zh" ? "点缀色不会作为大面积填充；恢复后使用当前纸面主题的默认墨色。" : "Accent colors never become dominant fills; restore returns to the current paper theme's default ink."}</SettingDescription>
-                  <div className="df-settings-accent-row">
-                    <ThemeColorSetting label={t(lang, "settings.executeAccent")} presets={settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT} value={settings.executeAccentColor || defaultAccent} onChange={(color) => onSave({ executeAccentColor: color })} />
-                    <ThemeColorSetting label={t(lang, "settings.planningAccent")} presets={settings.theme === "dark" ? PLANNING_THEME_PRESETS_DARK : PLANNING_THEME_PRESETS_LIGHT} value={settings.planningAccentColor || defaultAccent} onChange={(color) => onSave({ planningAccentColor: color })} />
-                  </div>
-                  <SettingRow
-                    title={lang === "zh" ? "恢复默认点缀色" : "Restore default accent colors"}
-                    control={<SettingActionButton onClick={() => onSave({ executeAccentColor: "", planningAccentColor: "" })}>{lang === "zh" ? "恢复" : "Restore"}</SettingActionButton>}
-                  />
-                </div>}
+              <div className="df-settings-accent-colors" data-settings-anchor="accent-colors" tabIndex={-1}>
+                <SettingDescription>{lang === "zh" ? "点缀色用于细线、勾选与当前时间标记，不会作为大面积填充。" : "Accent colors are used for fine rules, checks, and the current-time marker, never as dominant fills."}</SettingDescription>
+                <div className="df-settings-accent-row">
+                  <ThemeColorSetting label={t(lang, "settings.executeAccent")} presets={settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT} value={settings.executeAccentColor || defaultAccent} onChange={(color) => onSave({ executeAccentColor: color })} />
+                  <ThemeColorSetting label={t(lang, "settings.planningAccent")} presets={settings.theme === "dark" ? PLANNING_THEME_PRESETS_DARK : PLANNING_THEME_PRESETS_LIGHT} value={settings.planningAccentColor || defaultAccent} onChange={(color) => onSave({ planningAccentColor: color })} />
+                </div>
+                <SettingRow
+                  title={lang === "zh" ? "恢复默认点缀色" : "Restore default accent colors"}
+                  control={<SettingActionButton onClick={() => onSave({ executeAccentColor: "", planningAccentColor: "" })}>{lang === "zh" ? "恢复" : "Restore"}</SettingActionButton>}
+                />
               </div>
             </SettingSection>}
 
@@ -15052,23 +15038,6 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                     { value: "stopwatch", label: lang === "zh" ? "秒表" : "Stopwatch" },
                     { value: "pomodoro", label: "Pomodoro" },
                     { value: "flowtime", label: "Flowtime" },
-                  ]}
-                />}
-              />
-              <SettingRow
-                anchor="idle-threshold"
-                title={lang === "zh" ? "空闲阈值" : "Idle threshold"}
-                description={lang === "zh" ? "超过该时长未操作视为空闲，0 表示关闭。" : "Idle minutes before the timer auto-pauses; 0 disables."}
-                control={<SettingSelect<string>
-                  value={String(settings.idleThresholdMinutes ?? 5)}
-                  ariaLabel={lang === "zh" ? "空闲阈值" : "Idle threshold"}
-                  onChange={(value) => onSave({ idleThresholdMinutes: Number(value) })}
-                  options={[
-                    { value: "3", label: `3 ${lang === "zh" ? "分钟" : "min"}` },
-                    { value: "5", label: `5 ${lang === "zh" ? "分钟" : "min"}` },
-                    { value: "10", label: `10 ${lang === "zh" ? "分钟" : "min"}` },
-                    { value: "15", label: `15 ${lang === "zh" ? "分钟" : "min"}` },
-                    { value: "0", label: lang === "zh" ? "关闭" : "Off" },
                   ]}
                 />}
               />
@@ -15231,34 +15200,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
               />
             </SettingSection>}
 
-            {settingsTarget.category === "advanced" && !settingsTarget.detail && <SettingSection title={lang === "zh" ? "高级" : "Advanced"} description={lang === "zh" ? "仅在需要时进入对应详情；所有项目仍可通过搜索直接找到。" : "Open a detail only when needed; every setting remains directly searchable."}>
-              {([
-                ["ai", "Navo AI", lang === "zh" ? "模型、自动化行为与记忆" : "Models, automation behavior, and memory"],
-                ["widget", lang === "zh" ? "桌面窗口" : "Desktop Windows", lang === "zh" ? "竖屏小窗、桌面小组件与计时" : "Portrait window, desktop widget, and timer"],
-                ["integrations", lang === "zh" ? "日历与集成" : "Calendar & Integrations", lang === "zh" ? "日历订阅、扩展、工具与远程连接" : "Calendar subscriptions, extensions, tools, and remote connections"],
-                ["recovery", lang === "zh" ? "恢复与重置" : "Recovery & Reset", lang === "zh" ? "恢复默认设置" : "Restore default settings"],
-              ] as const).map(([detail, label, description]) => (
-                <button key={detail} type="button" className="df-settings-detail-link" data-settings-detail={detail} onClick={() => navigateSettings({ category: "advanced", detail })}>
-                  <span><strong>{label}</strong><small>{description}</small></span>
-                  <i aria-hidden="true">→</i>
-                </button>
-              ))}
-              <div className="df-settings-mobile-advanced-tail">
-                <SettingRow
-                  title={lang === "zh" ? "重新开始新手指南" : "Restart onboarding guide"}
-                  description={lang === "zh" ? "重新触发首次使用引导流程。" : "Re-trigger the first-run onboarding flow."}
-                  control={<SettingActionButton onClick={() => onSave({ onboardingVersion: 1, onboardingStep: "add" })}>{lang === "zh" ? "重新开始" : "Restart"}</SettingActionButton>}
-                />
-                <SettingRow
-                  anchor="reset-settings-mobile"
-                  title={lang === "zh" ? "重置所有设置" : "Reset all settings"}
-                  description={lang === "zh" ? "恢复默认设置，不会删除任务和项目。" : "Restore defaults without deleting tasks or projects."}
-                  control={<SettingActionButton tone="danger" onClick={() => setConfirmResetSettings(true)}>{lang === "zh" ? "重置…" : "Reset…"}</SettingActionButton>}
-                />
-              </div>
-            </SettingSection>}
-
-            {settingsTarget.category === "advanced" && settingsTarget.detail === "widget" && <SettingSection
+            {settingsTarget.category === "widget" && <SettingSection
               anchor="desktop-window-settings"
               title={lang === "zh" ? "桌面窗口" : "Desktop Windows"}
               description={Boolean(window.desktopApi?.widget || window.desktopApi?.compactWindow)
@@ -15395,7 +15337,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                 </div>}
               </div>
             </SettingSection>}
-            {settingsTarget.category === "advanced" && settingsTarget.detail === "ai" && <SettingSection title="Navo AI" description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
+            {settingsTarget.category === "ai" && <SettingSection title="Navo AI" description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
               <SettingRow anchor="ai-provider" title={lang === "zh" ? "AI 提供商与密钥" : "AI provider and key"} description={lang === "zh" ? "支持 DeepSeek、SiliconFlow、OpenAI、Anthropic、智谱和通义千问。" : "Supports DeepSeek, SiliconFlow, OpenAI, Anthropic, Zhipu, and Qwen."} control={<AiProviderSettings lang={lang} onSave={onSave} />} />
               <SettingRow anchor="ai-reasoning" title={lang === "zh" ? "思考模式" : "Reasoning mode"} control={<SettingSelect value={settings.reasoningMode || "instant"} ariaLabel={lang === "zh" ? "思考模式" : "Reasoning mode"} onChange={(value) => onSave({ reasoningMode: value as Settings["reasoningMode"] })} options={[
                 { value: "instant", label: lang === "zh" ? "即时" : "Instant" },
@@ -15437,16 +15379,16 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                 </div>
               </section>}
             </SettingSection>}
-            {settingsTarget.category === "advanced" && settingsTarget.detail === "integrations" && <div className="df-settings-subtabs df-settings-integration-tabs" role="tablist" aria-label={lang === "zh" ? "日历与集成" : "Calendar and integrations"}>
-              <button type="button" role="tab" aria-selected={integrationTab === "calendar"} className={integrationTab === "calendar" ? "active" : ""} onClick={() => { setIntegrationTab("calendar"); setSettingsTarget({ category: "advanced", detail: "integrations", anchor: "calendar-feed" }); }}>{lang === "zh" ? "日历订阅" : "Calendar"}</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "external-calendar"} className={integrationTab === "external-calendar" ? "active" : ""} onClick={() => { setIntegrationTab("external-calendar"); setSettingsTarget({ category: "advanced", detail: "integrations", anchor: "external-calendar" }); }}>{lang === "zh" ? "外部日历" : "External"}</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "plugins"} className={integrationTab === "plugins" ? "active" : ""} onClick={() => { setIntegrationTab("plugins"); setSettingsTarget({ category: "advanced", detail: "integrations", anchor: "plugins" }); }}>{lang === "zh" ? "插件" : "Plugins"}</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={integrationTab === "mcp" ? "active" : ""} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "advanced", detail: "integrations", anchor: "mcp" }); }}>MCP</button>
+            {settingsTarget.category === "integrations" && <div className="df-settings-subtabs df-settings-integration-tabs" role="tablist" aria-label={lang === "zh" ? "日历与集成" : "Calendar and integrations"}>
+              <button type="button" role="tab" aria-selected={integrationTab === "calendar"} className={integrationTab === "calendar" ? "active" : ""} onClick={() => { setIntegrationTab("calendar"); setSettingsTarget({ category: "integrations", anchor: "calendar-feed" }); }}>{lang === "zh" ? "日历订阅" : "Calendar"}</button>
+              <button type="button" role="tab" aria-selected={integrationTab === "external-calendar"} className={integrationTab === "external-calendar" ? "active" : ""} onClick={() => { setIntegrationTab("external-calendar"); setSettingsTarget({ category: "integrations", anchor: "external-calendar" }); }}>{lang === "zh" ? "外部日历" : "External"}</button>
+              <button type="button" role="tab" aria-selected={integrationTab === "plugins"} className={integrationTab === "plugins" ? "active" : ""} onClick={() => { setIntegrationTab("plugins"); setSettingsTarget({ category: "integrations", anchor: "plugins" }); }}>{lang === "zh" ? "插件" : "Plugins"}</button>
+              <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={integrationTab === "mcp" ? "active" : ""} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "integrations", anchor: "mcp" }); }}>MCP</button>
             </div>}
-            {settingsTarget.category === "advanced" && settingsTarget.detail === "integrations" && integrationTab === "calendar" && <section className="df-settings-group" data-settings-anchor="calendar-feed" tabIndex={-1}><h3>{lang === "zh" ? "日历订阅" : "Calendar Subscription"}</h3><CalendarFeedManager lang={lang} /></section>}
-            {settingsTarget.category === "advanced" && settingsTarget.detail === "integrations" && integrationTab === "external-calendar" && <section className="df-settings-group" data-settings-anchor="external-calendar" tabIndex={-1}><h3>{lang === "zh" ? "外部日历" : "External Calendars"}</h3><ExternalCalendarManager lang={lang} /></section>}
-            {settingsTarget.category === "advanced" && settingsTarget.detail === "integrations" && integrationTab === "mcp" && <section className="df-settings-group" data-settings-anchor="mcp" tabIndex={-1}><h3>MCP</h3><McpTokenManager lang={lang} /></section>}
-            {settingsTarget.category === "advanced" && settingsTarget.detail === "integrations" && integrationTab === "plugins" && <section className="df-settings-group" data-settings-anchor="plugins" tabIndex={-1}>
+            {settingsTarget.category === "integrations" && integrationTab === "calendar" && <section className="df-settings-group" data-settings-anchor="calendar-feed" tabIndex={-1}><h3>{lang === "zh" ? "日历订阅" : "Calendar Subscription"}</h3><CalendarFeedManager lang={lang} /></section>}
+            {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <section className="df-settings-group" data-settings-anchor="external-calendar" tabIndex={-1}><h3>{lang === "zh" ? "外部日历" : "External Calendars"}</h3><ExternalCalendarManager lang={lang} /></section>}
+            {settingsTarget.category === "integrations" && integrationTab === "mcp" && <section className="df-settings-group" data-settings-anchor="mcp" tabIndex={-1}><h3>MCP</h3><McpTokenManager lang={lang} /></section>}
+            {settingsTarget.category === "integrations" && integrationTab === "plugins" && <section className="df-settings-group" data-settings-anchor="plugins" tabIndex={-1}>
               <h3>{lang === "zh" ? "插件" : "Plugins"}</h3>
               <p className="df-settings-desc">{lang === "zh" ? "这里会显示随应用发布的内置插件，以及桌面端用户插件目录中经过校验的本地 manifest。本地插件可保存配置，但不会加载或执行 index.js 等目录脚本。" : "This list includes built-in plugins shipped with the app and validated local manifests from the desktop plugin directory. Local plugin configuration can be stored, but directory scripts such as index.js are not loaded or executed."}</p>
 
@@ -15582,13 +15524,15 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                 /></div>
               <div data-settings-anchor="updates" tabIndex={-1}><DesktopUpdateControl lang={lang} /></div>
               <div data-settings-anchor="auto-launch" tabIndex={-1}><AutoLaunchToggle lang={lang} /></div>
-              <div data-settings-anchor="delete-account" tabIndex={-1}><AccountMoreSection lang={lang} onShowAbout={onShowAbout} onSignOut={onSignOut} onDeleteAccount={onDeleteAccount} /></div>
+              <div data-settings-anchor="delete-account" tabIndex={-1}><AccountMoreSection lang={lang} onShowAbout={onShowAbout} onDeleteAccount={onDeleteAccount} /></div>
+              {onSignOut && <SettingRow
+                title={t(lang, "settings.logout")}
+                description={lang === "zh" ? "退出当前 NavoPath 账户。" : "Sign out of the current NavoPath account."}
+                control={<SettingActionButton onClick={onSignOut}>{t(lang, "settings.logout")}</SettingActionButton>}
+              />}
             </section>}
 
-            {settingsTarget.category === "advanced" && settingsTarget.detail === "recovery" && <SettingSection
-              title={lang === "zh" ? "高级" : "Advanced"}
-              description={lang === "zh" ? "调试、实验与恢复选项。修改前请确认你了解影响范围。" : "Debug, experimental, and recovery options. Only change these if you understand the impact."}
-            >
+            {settingsTarget.category === "account-data" && <SettingSection anchor="recovery-settings" title={lang === "zh" ? "恢复与重置" : "Recovery & Reset"}>
               <SettingSection title={lang === "zh" ? "危险操作" : "Danger zone"} tone="danger">
                 <SettingRow
                   anchor="reset-settings"
