@@ -39336,6 +39336,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   box-shadow: none;
 }
 #root .df-app .df-header-right .df-user-avatar > svg {
+  flex: 0 0 24px;
   width: 24px;
   height: 24px;
   stroke-width: 2;
