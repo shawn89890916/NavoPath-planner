@@ -8375,3 +8375,13 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   .df-external-calendar-connect { grid-template-columns: 1fr; }
   .df-external-calendar-source { align-items: stretch; flex-direction: column; }
 }
+
+/* Keep the direct accent controls visually flat in every theme state. */
+#root .df-app .df-theme-setting .df-project-color-picker button,
+#root .df-app .df-theme-setting .df-project-color-picker button:hover,
+#root .df-app .df-theme-setting .df-project-color-picker button:focus-visible,
+#root .df-app .df-theme-setting .df-project-color-picker button:active,
+#root .df-app .df-theme-setting .df-project-color-custom span {
+  background-image: none !important;
+  box-shadow: none !important;
+}
