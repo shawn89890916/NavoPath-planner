@@ -125,17 +125,9 @@ import { calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanM
 import { anchoredTimelineScrollTop, timelineZoomFromPinch } from "./utils/timelineZoom";
 import { calendarEventDurationMinutes, expandTimedCalendarEvent } from "./utils/calendarEventSlices";
 import { MOTION, runMotionTransition, scheduleMotionCommit } from "./motion";
-import "./styles.css";
-import "./ui-tokens.css";
-import "./app-redesign.css";
-import "./navopath-buttons.css";
-import "./mobile.css";
-import "./task-block.css";
-import "./ai-chat.css";
-void import("./ai-history-actions.css");
-import "./workspace-v0.css";
-import "./execute-review.css";
+import "./app.css";
 import "./ui-primitives.css";
+void import("./ai-history-actions.css");
 import type { MobileShortSheetKind } from "./MobileTaskSummary";
 
 installBrowserFallback();

@@ -13,6 +13,19 @@ Every agent turn that changes user-visible behavior must update `CHANGELOG.md` b
 
 Visual and interaction work must follow `NavoPathStyle.md`.
 
+## CSS architecture
+
+- Every component owns one canonical style surface; shared UI and behavior must
+  reuse the existing primitives and `TaskBlock` variants.
+- Do not add historical override layers or duplicate compatibility DOM. Prefer
+  tokens, shared components, and the canonical application stylesheet.
+- Do not add `!important` without a documented, testable reason. Keep the
+  normalized application allowlist at 24 declarations or fewer.
+- Before deleting CSS, JSX, or event code, confirm there are no static or
+  dynamic callsites and record any intentional selector allowlist in the CSS
+  architecture check.
+- Run `npm run css:check` when changing CSS, components, or style imports.
+
 ## Verification policy
 
 Use proportional verification so small changes stay fast without weakening the

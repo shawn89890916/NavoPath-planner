@@ -23,7 +23,8 @@
     "ios:open": "cap open ios",
     "ios:run": "cap run ios",
     "size": "npm run build && size-limit",
-    "size:check": "size-limit"
+    "size:check": "size-limit",
+    "css:check": "node scripts/check-css-architecture.mjs"
   },
   "size-limit": [
     {
@@ -79,7 +80,7 @@
     {
       "name": "Core styles",
       "path": "dist/assets/index-*.css",
-    "limit": "94 KB"
+    "limit": "85 KB"
     },
     {
       "name": "Deferred styles",
@@ -98,7 +99,7 @@
         "dist/assets/WidgetApp-*.css",
         "dist/assets/MobileTaskSummary-*.css"
       ],
-    "limit": "102 KB"
+    "limit": "94 KB"
     }
   ],
   "build": {
@@ -171,6 +172,7 @@
     "mammoth": "^1.12.0",
     "pdfjs-dist": "^6.0.227",
     "png-to-ico": "^3.0.1",
+    "postcss": "^8.5.23",
     "rcedit": "^5.0.2",
     "react": "19.2.6",
     "react-dom": "19.2.6",

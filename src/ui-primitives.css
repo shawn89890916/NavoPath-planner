@@ -1,77 +1,103 @@
-.ui-button,
-#root .df-app .ui-button,
-.ui-icon-button,
-#root .df-app .ui-icon-button,
-.ui-input {
+.ui-button {
   font: inherit;
   transition: color var(--motion-base) var(--motion-ease), background-color var(--motion-base) var(--motion-ease), border-color var(--motion-base) var(--motion-ease), opacity var(--motion-base) var(--motion-ease), transform var(--motion-instant) ease-out;
-}
-
-#root .df-app .ui-input,
-.ui-input {
-  font: inherit;
-}
-
-.ui-button,
-#root .df-app .ui-button {
   min-height: 34px;
   padding: 0 var(--space-2);
-  border: 0 !important;
-  border-bottom: 1px solid transparent !important;
-  border-radius: var(--radius-control) !important;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: var(--radius-control);
   color: var(--color-muted, #7b7062);
-  background: transparent !important;
+  background: transparent;
   cursor: pointer;
 }
 
-.ui-button:hover:not(:disabled),
-.ui-button:focus-visible {
+#root .df-app .ui-button {
+  font: inherit;
+  transition: color var(--motion-base) var(--motion-ease), background-color var(--motion-base) var(--motion-ease), border-color var(--motion-base) var(--motion-ease), opacity var(--motion-base) var(--motion-ease), transform var(--motion-instant) ease-out;
+  min-height: 34px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--color-muted, #7b7062);
+  background: transparent;
+  cursor: pointer;
+}
+
+.ui-button:hover:not(:disabled) {
   color: var(--color-ink, #584d3d);
   border-bottom-color: var(--border-default, rgba(88, 77, 61, .21));
   background: var(--paper-note, rgba(88, 77, 61, .08));
 }
 
-.ui-button:active:not(:disabled),
+.ui-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
 .ui-icon-button:active:not(:disabled) {
   transform: translateY(1px);
 }
 
-.ui-button--primary {
-  color: var(--color-accent, #584d3d);
-  border-bottom-color: var(--color-accent, #584d3d);
+.ui-button:focus-visible {
+  color: var(--color-ink, #584d3d);
+  border-bottom-color: var(--border-default, rgba(88, 77, 61, .21));
   background: var(--paper-note, rgba(88, 77, 61, .08));
+  outline: 1px solid var(--border-focus, currentColor);
+  outline-offset: 2px;
 }
 
-.ui-button--danger {
-  color: var(--color-danger, #b6423c);
-  border-bottom-color: var(--color-danger, #b6423c);
+.ui-icon-button:focus-visible {
+  outline: 1px solid var(--border-focus, currentColor);
+  outline-offset: 2px;
 }
 
-.ui-button:focus-visible,
-.ui-icon-button:focus-visible,
 .ui-input:focus-visible {
   outline: 1px solid var(--border-focus, currentColor);
   outline-offset: 2px;
 }
 
-.ui-button:disabled,
-.ui-icon-button:disabled,
+.ui-button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+.ui-icon-button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
 .ui-input:disabled {
   opacity: .42;
   cursor: not-allowed;
 }
 
-.ui-icon-button,
-#root .df-app .ui-icon-button {
+.ui-icon-button {
+  font: inherit;
+  transition: color var(--motion-base) var(--motion-ease), background-color var(--motion-base) var(--motion-ease), border-color var(--motion-base) var(--motion-ease), opacity var(--motion-base) var(--motion-ease), transform var(--motion-instant) ease-out;
   width: 34px;
   height: 34px;
   display: inline-grid;
   place-items: center;
   padding: 0;
-  border: 1px solid transparent !important;
-  border-radius: var(--radius-control) !important;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
   color: var(--color-muted, #7b7062);
-  background: transparent !important;
+  background: transparent;
+  cursor: pointer;
+}
+
+#root .df-app .ui-icon-button {
+  font: inherit;
+  transition: color var(--motion-base) var(--motion-ease), background-color var(--motion-base) var(--motion-ease), border-color var(--motion-base) var(--motion-ease), opacity var(--motion-base) var(--motion-ease), transform var(--motion-instant) ease-out;
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--color-muted, #7b7062);
+  background: transparent;
   cursor: pointer;
 }
 
@@ -83,27 +109,42 @@
 
 .ui-icon-button--close { color: var(--color-muted, #7b7062); }
 
-.ui-input,
-#root .df-app .ui-input {
+.ui-input {
+  font: inherit;
+  transition: color var(--motion-base) var(--motion-ease), background-color var(--motion-base) var(--motion-ease), border-color var(--motion-base) var(--motion-ease), opacity var(--motion-base) var(--motion-ease), transform var(--motion-instant) ease-out;
   min-height: 38px;
   min-width: 0;
   padding: 0 var(--space-2);
-  border: 1px solid var(--border-subtle, rgba(88, 77, 61, .13)) !important;
-  border-radius: var(--radius-control) !important;
+  border: 1px solid var(--border-subtle, rgba(88, 77, 61, .13));
+  border-radius: var(--radius-control);
   color: var(--color-ink, #584d3d);
-  background: var(--surface-default, #faf9f5) !important;
+  background: var(--surface-default, #faf9f5);
+}
+
+#root .df-app .ui-input {
+  font: inherit;
+  min-height: 38px;
+  min-width: 0;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-subtle, rgba(88, 77, 61, .13));
+  border-radius: var(--radius-control);
+  color: var(--color-ink, #584d3d);
+  background: var(--surface-default, #faf9f5);
 }
 
 .ui-input:hover { border-color: var(--border-default, rgba(88, 77, 61, .21)); }
 
 .ui-surface { color: var(--color-ink, #584d3d); background: var(--surface-default, #faf9f5); }
-.ui-surface--main { background: var(--surface-main, var(--surface-default)); }
-.ui-surface--raised { background: var(--surface-elevated, var(--surface-default)); }
-.ui-surface--card { border-radius: var(--radius-card); background: var(--surface-card, var(--surface-default)); }
 
 .ui-divider { height: 1px; margin: 0; border: 0; background: var(--border-subtle, rgba(88, 77, 61, .13)); }
 
-.ui-popover,
+.ui-popover {
+  border: 1px solid var(--border-default, rgba(88, 77, 61, .21));
+  border-radius: var(--radius-overlay);
+  background: var(--surface-elevated, #fdfcf8);
+  box-shadow: var(--shadow-floating);
+}
+
 .ui-modal {
   border: 1px solid var(--border-default, rgba(88, 77, 61, .21));
   border-radius: var(--radius-overlay);
@@ -124,8 +165,771 @@
 @media (max-width: 640px) {
   .ui-icon-button { width: 44px; height: 44px; }
   .ui-button { min-height: 44px; }
+}/*
+ * NavoPath global interaction layer.
+ * Direction: minimal text controls with restrained editorial annotation.
+ */
+
+.df-app {
+  --navo-action-accent: var(--accent-active, #d7816a);
+  --navo-action-ink: var(--text-main, #f4f3f6);
+  --navo-action-muted: var(--text-muted, #9899a4);
+  --navo-action-rule: var(--paper-rule, rgba(255, 255, 255, .12));
+  --navo-action-rule-strong: var(--paper-rule-strong, rgba(255, 255, 255, .22));
+  --navo-action-note: var(--paper-note, color-mix(in srgb, var(--navo-action-accent) 9%, transparent));
+  --navo-action-danger: var(--df-danger, #d97777);
+  --navo-action-motion: 170ms cubic-bezier(.2, .75, .25, 1);
+}
+
+.landing {
+  --navo-action-accent: var(--l-purple);
+  --navo-action-ink: var(--l-text);
+  --navo-action-muted: var(--l-muted);
+  --navo-action-rule: var(--l-line);
+  --navo-action-rule-strong: rgba(255, 255, 255, .22);
+  --navo-action-note: var(--paper-note, color-mix(in srgb, var(--navo-action-accent) 9%, transparent));
+  --navo-action-danger: var(--df-danger, #d97777);
+  --navo-action-motion: 170ms cubic-bezier(.2, .75, .25, 1);
+}
+
+.portfolio {
+  --navo-action-accent: var(--purple);
+  --navo-action-ink: #f4f3f6;
+  --navo-action-muted: var(--muted);
+  --navo-action-rule: var(--line);
+  --navo-action-rule-strong: rgba(255, 255, 255, .22);
+  --navo-action-note: var(--paper-note, color-mix(in srgb, var(--navo-action-accent) 9%, transparent));
+  --navo-action-danger: var(--df-danger, #d97777);
+  --navo-action-motion: 170ms cubic-bezier(.2, .75, .25, 1);
+}
+
+.df-app button {
+  appearance: none;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+  transition:
+    color var(--navo-action-motion),
+    background-color var(--navo-action-motion),
+    border-color var(--navo-action-motion),
+    opacity var(--navo-action-motion),
+    transform 90ms ease-out;
+}
+
+.landing button {
+  appearance: none;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+  transition:
+    color var(--navo-action-motion),
+    background-color var(--navo-action-motion),
+    border-color var(--navo-action-motion),
+    opacity var(--navo-action-motion),
+    transform 90ms ease-out;
+}
+
+.portfolio button {
+  appearance: none;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+  transition:
+    color var(--navo-action-motion),
+    background-color var(--navo-action-motion),
+    border-color var(--navo-action-motion),
+    opacity var(--navo-action-motion),
+    transform 90ms ease-out;
+}
+
+.portfolio a.portfolio-primary-link {
+  appearance: none;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+  transition:
+    color var(--navo-action-motion),
+    background-color var(--navo-action-motion),
+    border-color var(--navo-action-motion),
+    opacity var(--navo-action-motion),
+    transform 90ms ease-out;
+}
+
+.df-app button:hover {
+  filter: none;
+  text-shadow: none;
+  transform: none;
+}
+
+.landing button:hover {
+  filter: none;
+  text-shadow: none;
+  transform: none;
+}
+
+.portfolio button:hover {
+  filter: none;
+  text-shadow: none;
+  transform: none;
+}
+
+.portfolio a.portfolio-primary-link:hover {
+  filter: none;
+  text-shadow: none;
+  transform: none;
+}
+
+.df-app button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.landing button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.landing .landing-button:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.portfolio button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.portfolio a.portfolio-primary-link:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.portfolio .portfolio-contact a:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.portfolio .portfolio-projects a:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.df-app button:focus-visible {
+  outline: 1px solid var(--navo-action-accent);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+.landing button:focus-visible {
+  outline: 1px solid var(--navo-action-accent);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+.landing .landing-button:focus-visible {
+  outline: 1px solid var(--navo-action-accent);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+.portfolio button:focus-visible {
+  outline: 1px solid var(--navo-action-accent);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+.portfolio a:focus-visible {
+  outline: 1px solid var(--navo-action-accent);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+.df-app button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: none;
+}
+
+.landing button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: none;
+}
+
+.portfolio button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: none;
+}
+
+/* Application: primary annotations */
+
+/* Application: secondary text, tabs, and toggles */
+.df-app .df-tabs button.active:hover {
+  color: var(--navo-action-accent);
+  border-bottom-color: var(--navo-action-accent);
+  background: transparent;
+}
+.df-app .df-view-switch-vertical button.active:hover {
+  color: var(--navo-action-accent);
+  border-bottom-color: var(--navo-action-accent);
+  background: transparent;
+}
+.df-app .df-segment button.active:hover {
+  color: var(--navo-action-accent);
+  border-bottom-color: var(--navo-action-accent);
+  background: transparent;
+}
+.df-app .df-auth-tabs button.active:hover {
+  color: var(--navo-action-accent);
+  border-bottom-color: var(--navo-action-accent);
+  background: transparent;
+}
+
+/* Application: icon tools */
+
+/* Application: AI planning is an annotation action, not a glowing CTA. */
+.df-app .df-ai-plan::before { box-shadow: none; filter: none; }
+.df-app .df-ai-plan {
+  color: var(--navo-action-ink);
+  border: 1px solid var(--navo-action-rule);
+  border-bottom: 1px solid var(--navo-action-accent);
+  border-radius: var(--paper-radius, 4px);
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+.df-app .df-ai-plan:hover:not(:disabled) {
+  color: var(--navo-action-ink);
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+  border: 1px solid var(--navo-action-rule);
+  border-radius: var(--paper-radius, 4px);
+}
+
+/* Execute floating add follows the same quiet tool treatment as Ask Navo. */
+.df-app .df-add-fab {
+  color: var(--navo-action-accent);
+  border: 1px solid var(--navo-action-rule);
+  border-radius: var(--paper-radius, 4px);
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+.df-app .df-add-fab:hover:not(:disabled) {
+  color: var(--navo-action-accent);
+  border: 1px solid var(--navo-action-rule);
+  border-radius: var(--paper-radius, 4px);
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+.df-app.theme-dark .df-add-fab {
+  color: var(--navo-action-muted);
+  border: 1px solid var(--navo-action-rule);
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+.df-app:not(.theme-dark) .df-add-fab {
+  color: var(--navo-action-muted);
+  border: 1px solid var(--navo-action-rule);
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+.df-app.theme-dark .df-add-fab:hover:not(:disabled) {
+  color: var(--navo-action-muted);
+  border: 1px solid var(--navo-action-rule);
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+.df-app:not(.theme-dark) .df-add-fab:hover:not(:disabled) {
+  color: var(--navo-action-muted);
+  border: 1px solid var(--navo-action-rule);
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+.df-app.theme-dark .df-ai-fab {
+  color: var(--navo-action-muted);
+  border: 1px solid var(--navo-action-rule);
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+.df-app:not(.theme-dark) .df-ai-fab {
+  color: var(--navo-action-muted);
+  border: 1px solid var(--navo-action-rule);
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+.df-app.theme-dark .df-ai-fab:hover:not(:disabled) {
+  color: var(--navo-action-muted);
+  border: 1px solid var(--navo-action-rule);
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+.df-app:not(.theme-dark) .df-ai-fab:hover:not(:disabled) {
+  color: var(--navo-action-muted);
+  border: 1px solid var(--navo-action-rule);
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+.df-app .df-add-fab.i-plus::before {
+  font-size: 24px;
+  font-weight: 800;
+}
+.df-app .df-add-fab:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--navo-action-ink) 18%, transparent);
+}
+.df-app .df-ai-fab:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--navo-action-ink) 18%, transparent);
+}
+.df-app .df-date-arrow:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--navo-action-ink) 18%, transparent);
+}
+
+/* Application: restrained danger ink */
+
+/* Product page: text controls and annotation CTAs */
+.landing .landing-button {
+  appearance: none;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+  transition:
+    color var(--navo-action-motion),
+    background-color var(--navo-action-motion),
+    border-color var(--navo-action-motion),
+    opacity var(--navo-action-motion),
+    transform 90ms ease-out;
+  min-height: 42px;
+  padding: 0 16px;
+  color: var(--navo-action-muted);
+  border: 0;
+  border-bottom: 1px solid var(--navo-action-rule);
+  border-radius: 0;
+  background: transparent;
+}
+.landing .landing-button.primary {
+  color: var(--navo-action-accent);
+  border-bottom-color: var(--navo-action-accent);
+  background: var(--navo-action-note);
+}
+.landing .landing-button:hover {
+  filter: none;
+  text-shadow: none;
+  transform: none;
+  color: var(--navo-action-ink);
+  border-bottom-color: var(--navo-action-accent);
+  background: var(--navo-action-note);
+  box-shadow: none;
+}
+.landing .landing-lang {
+  color: var(--navo-action-muted);
+  border-color: transparent;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+}
+.landing .landing-auth-close {
+  color: var(--navo-action-muted);
+  border-color: transparent;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+}
+.landing .landing-lang:hover {
+  color: var(--navo-action-accent);
+  border-color: var(--navo-action-rule);
+  background: var(--navo-action-note);
+}
+.landing .landing-auth-close:hover {
+  color: var(--navo-action-accent);
+  border-color: var(--navo-action-rule);
+  background: var(--navo-action-note);
+}
+.landing .landing-auth-tabs {
+  gap: 16px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--navo-action-rule);
+  border-radius: 0;
+}
+.landing .landing-auth-tabs button {
+  color: var(--navo-action-muted);
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+}
+.landing .landing-auth-notice button {
+  color: var(--navo-action-muted);
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+}
+.landing .landing-auth-tabs button.active {
+  color: var(--navo-action-accent);
+  border-bottom-color: var(--navo-action-accent);
+  background: transparent;
+}
+
+/* Portfolio: links behave like editorial controls. */
+.portfolio .portfolio-nav button {
+  color: var(--navo-action-muted);
+  border-color: transparent;
+  border-radius: 2px;
+  background: transparent;
+}
+.portfolio .portfolio-nav button:hover {
+  color: var(--navo-action-accent);
+  border-color: var(--navo-action-rule);
+  background: var(--navo-action-note);
+}
+.portfolio .portfolio-primary-link {
+  padding: 10px 2px;
+  color: var(--navo-action-accent);
+  border-bottom: 1px solid var(--navo-action-accent);
+  background: var(--navo-action-note);
+}
+.portfolio .portfolio-contact a {
+  appearance: none;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+  transition:
+    color var(--navo-action-motion),
+    background-color var(--navo-action-motion),
+    border-color var(--navo-action-motion),
+    opacity var(--navo-action-motion),
+    transform 90ms ease-out;
+  border: 0;
+  border-bottom: 1px solid var(--navo-action-rule);
+  border-radius: 0;
+  background: transparent;
+}
+.portfolio .portfolio-contact a:hover {
+  filter: none;
+  text-shadow: none;
+  transform: none;
+  color: var(--navo-action-accent);
+  border-bottom-color: var(--navo-action-accent);
+  background: var(--navo-action-note);
+}
+.portfolio .portfolio-projects a {
+  appearance: none;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+  transition:
+    color var(--navo-action-motion),
+    background-color var(--navo-action-motion),
+    border-color var(--navo-action-motion),
+    opacity var(--navo-action-motion),
+    transform 90ms ease-out;
+  border-color: transparent;
+  border-radius: 2px;
+  background: transparent;
+}
+.portfolio .portfolio-projects a:hover {
+  filter: none;
+  text-shadow: none;
+  transform: none;
+  border-color: var(--navo-action-rule);
+  background: var(--navo-action-note);
+}
+
+@media (pointer: coarse), (max-width: 620px) {
+  .df-app button {
+    min-height: 44px;
+  }
+  .landing button {
+    min-height: 44px;
+  }
+  .landing .landing-button {
+    min-height: 44px;
+  }
+  .portfolio button {
+    min-height: 44px;
+  }
+  .portfolio .portfolio-contact a {
+    min-height: 44px;
+  }
+  .portfolio .portfolio-primary-link {
+    min-height: 44px;
+  }
+  .landing :is(.landing-lang, .landing-auth-close) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .portfolio .portfolio-nav button {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ui-button, .ui-icon-button, .ui-input { transition: none; }
+  .df-app button {
+    transition-duration: .001ms;
+  }
+  .landing button {
+    transition-duration: .001ms;
+  }
+  .landing .landing-button {
+    transition-duration: .001ms;
+  }
+  .portfolio button {
+    transition-duration: .001ms;
+  }
+  .portfolio a {
+    transition-duration: .001ms;
+  }
+  .ui-button { transition: none; }
+  .ui-icon-button { transition: none; }
+  .ui-input { transition: none; }
+}
+
+/* Final application pencil-button rule: controls merge into their paper surface. */
+.df-app button:not(.df-project-color-picker button) {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+}
+.df-app button:not(.df-project-color-picker button):hover:not(:disabled) {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+}
+.df-app button:not(.df-project-color-picker button):focus-visible {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+}
+.df-app button:not(.df-project-color-picker button):disabled {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+}
+
+.df-app button:not(.df-project-color-picker button):active:not(:disabled) {
+  background: transparent;
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, var(--text-main) 18%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--text-main) 8%, transparent);
+}
+
+/* Project swatches intentionally retain their color fill. */
+.df-app .df-project-color-picker button {
+  background-color: var(--project-color);
+  background-image:
+    linear-gradient(97deg, rgba(255,255,255,.12), transparent 42%),
+    repeating-linear-gradient(12deg, rgba(0,0,0,.06) 0 1px, transparent 1px 4px);
+}
+.df-app .df-project-color-picker button:hover {
+  background-color: var(--project-color);
+  background-image:
+    linear-gradient(97deg, rgba(255,255,255,.12), transparent 42%),
+    repeating-linear-gradient(12deg, rgba(0,0,0,.06) 0 1px, transparent 1px 4px);
+}
+.df-app .df-project-color-picker button:focus-visible {
+  background-color: var(--project-color);
+  background-image:
+    linear-gradient(97deg, rgba(255,255,255,.12), transparent 42%),
+    repeating-linear-gradient(12deg, rgba(0,0,0,.06) 0 1px, transparent 1px 4px);
+}
+.df-app .df-project-color-picker button:active {
+  background-color: var(--project-color);
+  background-image:
+    linear-gradient(97deg, rgba(255,255,255,.12), transparent 42%),
+    repeating-linear-gradient(12deg, rgba(0,0,0,.06) 0 1px, transparent 1px 4px);
+}
+
+/* Specificity closeout for legacy application button overrides. */
+#root .df-app button {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+#root .df-app button:hover:not(:disabled) {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+#root .df-app button:focus-visible {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+#root .df-app button:disabled {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+
+#root .df-app button:active:not(:disabled) {
+  background: transparent;
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, var(--text-main) 18%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--text-main) 8%, transparent);
+}
+
+#root .df-app .df-project-color-picker button {
+  background-color: var(--project-color);
+  background-image:
+    linear-gradient(97deg, rgba(255,255,255,.12), transparent 42%),
+    repeating-linear-gradient(12deg, rgba(0,0,0,.06) 0 1px, transparent 1px 4px);
+}
+
+#root .df-app .df-project-color-picker button:hover {
+  background-color: var(--project-color);
+  background-image:
+    linear-gradient(97deg, rgba(255,255,255,.12), transparent 42%),
+    repeating-linear-gradient(12deg, rgba(0,0,0,.06) 0 1px, transparent 1px 4px);
+}
+
+#root .df-app .df-project-color-picker button:focus-visible {
+  background-color: var(--project-color);
+  background-image:
+    linear-gradient(97deg, rgba(255,255,255,.12), transparent 42%),
+    repeating-linear-gradient(12deg, rgba(0,0,0,.06) 0 1px, transparent 1px 4px);
+}
+
+#root .df-app .df-project-color-picker button:active {
+  background-color: var(--project-color);
+  background-image:
+    linear-gradient(97deg, rgba(255,255,255,.12), transparent 42%),
+    repeating-linear-gradient(12deg, rgba(0,0,0,.06) 0 1px, transparent 1px 4px);
+}
+
+/* Icon controls use graphite underlines instead of curved bottom shadows. */
+#root .df-app :is(
+  .df-panel-title .df-icon-action,
+  .df-icon-button,
+  .df-tabs button,
+  .df-view-switch-vertical button
+) {
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+#root .df-app :is(
+  .df-panel-title .df-icon-action.active,
+  .df-icon-button.is-active,
+  .df-icon-button.icon-collapse,
+  .df-tabs button.active,
+  .df-view-switch-vertical button.active,
+  .df-panel-title .df-icon-action[aria-pressed="true"],
+  .df-icon-button[aria-pressed="true"]
+) {
+  border-bottom-width: 2px;
+  border-bottom-color: var(--pencil-rule-strong);
+}
+#root .df-app .df-task-card .df-icon-button {
+  border: 0;
+  border-bottom-color: transparent;
+}
+#root .df-app .df-task-card .df-icon-button:hover {
+  border: 0;
+  border-bottom-color: transparent;
+}
+#root .df-app .df-task-card .df-icon-button:focus-visible {
+  border: 0;
+  border-bottom-color: transparent;
+}
+#root .df-app .df-panel-title .df-icon-action:not(.active) {
+  border-bottom-color: transparent;
+}
+#root .df-app .df-panel-title .df-icon-action:not(.active):hover {
+  border-bottom-color: transparent;
+}
+#root .df-app .df-view-switch-vertical button:not(.active) {
+  border-bottom-color: transparent;
+}
+#root .df-app .df-view-switch-vertical button:not(.active):hover {
+  border-bottom-color: transparent;
+}
+#root .df-app .df-date-arrow {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  line-height: 1;
+}
+#root .df-app .df-date-arrow:hover {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  line-height: 1;
+}
+#root .df-app .df-date-arrow:focus-visible {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  line-height: 1;
+}
+#root .df-app :is(
+  .df-panel-title .df-icon-action,
+  .df-icon-button,
+  .df-tabs button,
+  .df-view-switch-vertical button
+):active:not(:disabled) {
+  box-shadow: inset 0 1px 2px var(--pencil-press);
 }

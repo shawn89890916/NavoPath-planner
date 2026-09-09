@@ -3,8 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const main = readFileSync(resolve(__dirname, "main.tsx"), "utf8");
-const mobileCss = readFileSync(resolve(__dirname, "mobile.css"), "utf8");
-const appRedesignCss = readFileSync(resolve(__dirname, "app-redesign.css"), "utf8");
+const appCss = readFileSync(resolve(__dirname, "app.css"), "utf8");
 
 describe("portrait interaction contracts", () => {
   it("opens the task short sheet on the second tap after selection", () => {
@@ -33,21 +32,21 @@ describe("portrait interaction contracts", () => {
   });
 
   it("uses the portrait settings switch style in narrow landscape mode", () => {
-    expect(mobileCss).toContain("(max-width: 899.98px) and (orientation: portrait),");
-    expect(mobileCss).toContain("(max-width: 1180px) and (orientation: landscape)");
-    expect(mobileCss).toContain("/* Touch settings use the same system switch in portrait and landscape. */");
+    expect(appCss).toContain("(max-width: 899.98px) and (orientation: portrait),");
+    expect(appCss).toContain("(max-width: 1180px) and (orientation: landscape)");
+    expect(appCss).toContain("/* Touch settings use the same system switch in portrait and landscape. */");
   });
 
   it("keeps the landscape candidate list as the native vertical touch scroller", () => {
-    expect(mobileCss).toContain("#root .df-app .df-candidate-list {");
-    expect(mobileCss).toContain("touch-action: pan-y !important;");
-    expect(mobileCss).toContain("overscroll-behavior-y: contain !important;");
-    expect(mobileCss).toContain("#root .df-app .df-candidate-list .df-candidate-task-row {");
+    expect(appCss).toContain("#root .df-app .df-candidate-list {");
+    expect(appCss).toContain("touch-action: pan-y;");
+    expect(appCss).toContain("overscroll-behavior-y: contain;");
+    expect(appCss).toContain("#root .df-app .df-candidate-list .df-candidate-task-row {");
   });
 
   it("keeps the candidate panel height bounded and scrolls the list at desktop widths", () => {
-    expect(appRedesignCss).toMatch(/\.df-candidate-panel\s*\{[\s\S]*?min-height:\s*0;[\s\S]*?overflow:\s*hidden\s*!important;/);
-    expect(appRedesignCss).toMatch(/\.df-app \.df-candidate-list\s*\{[\s\S]*?flex:\s*1 1 0;[\s\S]*?min-height:\s*0;[\s\S]*?overflow-y:\s*auto;/);
+    expect(appCss).toMatch(/\.df-candidate-panel\s*\{[\s\S]*?min-height:\s*0;[\s\S]*?overflow:\s*hidden;/);
+    expect(appCss).toMatch(/\.df-app \.df-candidate-list\s*\{[\s\S]*?flex:\s*1 1 0;[\s\S]*?min-height:\s*0;[\s\S]*?overflow-y:\s*auto;/);
   });
 
   it("resolves the product mark from the Vite base path", () => {

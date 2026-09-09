@@ -12,6 +12,7 @@
 - 修复“空闲阈值”只保存不生效的问题：任务计时器会在达到设置的无操作时长后自动暂停，设为“关闭”时保持运行；刷新页面后 AI 对话默认收起。通知卡片的 dismiss 统一改为右上角无边框灰色叉，补记提醒与其他主动提示保持一致。
 - 修复数据库 API 的 schema cache 暂时失步导致全局 AI 与 Agent 审计历史同时无法读取的问题；部署会主动刷新 PostgREST schema，让已有工作区恢复访问。
 - 建立统一的 UI token、共享控件和产品术语表，统一关闭、按钮、输入、弹窗及 Planning/Execute/Schedule 等核心词汇。
+- 收敛全局样式层级与任务块结构，桌面、移动端、Planning、Execute 和时间轴共用同一套轻量 UI 规则，减少重复覆盖并保持现有操作方式。
 
 ## 2026-09-08 · AI 查询与澄清
 
@@ -89,6 +90,7 @@
 - Fixed the Idle threshold setting so the task timer pauses after the configured inactivity period and stays running when set to Off. AI now remains collapsed after refresh, and notification dismiss actions use a small borderless gray close mark in the top-right corner, including gap logging prompts.
 - Fixed a stale database API schema cache causing Global AI and Agent audit history to fail together; deployment now actively refreshes the PostgREST schema so existing workspaces can become readable again.
 - Added shared UI tokens, reusable controls, and a product terminology catalog to unify close buttons, inputs, dialogs, and core Planning/Execute/Schedule language.
+- Consolidated the global style layers and task-block structure so desktop, mobile, Planning, Execute, and timeline views share one lighter UI rule set while keeping existing interactions intact.
 
 ## 2026-09-08 · AI Search and Clarification
 

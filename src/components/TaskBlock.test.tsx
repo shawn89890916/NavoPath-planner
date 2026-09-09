@@ -78,27 +78,26 @@ describe("TaskBlock shared component contract", () => {
   });
 
   it("declares variant layout isolation rules in the shared stylesheet", () => {
-    const css = readFileSync(resolve(__dirname, "../task-block.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
     expect(css).toContain('[data-task-variant="habit-child"]');
     expect(css).toContain("--task-grid-template: auto minmax(0, 1fr) auto auto;");
     expect(css).toContain("--task-min-height: unset;");
   });
 
   it("keeps scheduled blocks absolutely positioned so timeline top and height styles remain authoritative", () => {
-    const css = readFileSync(resolve(__dirname, "../task-block.css"), "utf8");
-    const scheduledRule = css.match(/\.df-app \.df-task-block\[data-task-appearance\]\[data-task-variant="scheduled"\],[\s\S]*?\n}/)?.[0] || "";
-    expect(scheduledRule).toContain("position: absolute !important;");
-    expect(scheduledRule).not.toContain("height: 100% !important;");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
+    expect(css).toMatch(/\.df-app \.df-task-block\[data-task-appearance\]\[data-task-variant="scheduled"\]\s*\{[^}]*position: absolute;/);
+    expect(css).not.toMatch(/\.df-app \.df-task-block\[data-task-appearance\]\[data-task-variant="scheduled"\]\s*\{[^}]*height: 100%;/);
   });
 
   it("uses a project-color left rule in the shared TaskBlock stylesheet", () => {
-    const taskBlockCss = readFileSync(resolve(__dirname, "../task-block.css"), "utf8");
+    const taskBlockCss = readFileSync(resolve(__dirname, "../app.css"), "utf8");
     expect(taskBlockCss).toContain("--task-accent-position: left;");
     expect(taskBlockCss).toContain("border-left-color: var(--task-project-color");
   });
 
   it("keeps candidate content vertically centered while allowing long titles to wrap left-aligned", () => {
-    const css = readFileSync(resolve(__dirname, "../task-block.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
     const contentRule = css.match(/Content[\s\S]*?\.df-app \.df-task-block\[data-task-appearance\] \.df-task-block-main[\s\S]*?\n}/)?.[0] || "";
     const titleRule = css.match(/Title[\s\S]*?\.df-app \.df-task-block\[data-task-appearance\] \.df-task-block-title[\s\S]*?\n}/)?.[0] || "";
     const actionsRule = css.match(/Actions[\s\S]*?\.df-app \.df-task-block\[data-task-appearance\] \.df-task-actions[\s\S]*?\n}/)?.[0] || "";
@@ -116,7 +115,7 @@ describe("TaskBlock shared component contract", () => {
 
   it("keeps Planning task-like surfaces on the current TaskBlock variants", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
-    const css = readFileSync(resolve(__dirname, "../task-block.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     expect(planning).toContain('variant="candidate"');
     expect(planning).toContain('variant="habit-child"');
@@ -126,8 +125,8 @@ describe("TaskBlock shared component contract", () => {
   });
 
   it("keeps completed task blocks free of full-card opacity and overlay masks", () => {
-    const css = readFileSync(resolve(__dirname, "../task-block.css"), "utf8");
-    const completedRule = css.match(/Completed[\s\S]*?\.df-app \.df-task-block\[data-task-appearance\]\.is-checked[\s\S]*?\n}/)?.[0] || "";
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
+    const completedRule = css.match(/\.df-app \.df-task-block\[data-task-appearance\]\.is-checked\s*\{[\s\S]*?\n}/)?.[0] || "";
 
     expect(completedRule).toContain("opacity: 1;");
     expect(completedRule).not.toContain("opacity: .");
@@ -144,22 +143,22 @@ describe("TaskBlock shared component contract", () => {
 
   it("keeps Planning view controls in the left sidebar with compact tree rows and no task left strip", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
-    const css = readFileSync(resolve(__dirname, "../app-redesign.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     expect(planning).toContain('className="df-planning-sidebar"');
     expect(planning).not.toMatch(/<aside className="df-planning-sidebar"[\s\S]*df-planning-filter-menu[\s\S]*<\/aside>/);
     expect(planning).toMatch(/<aside className="df-planning-sidebar"[\s\S]*df-planning-view-switch[\s\S]*<\/aside>/);
     expect(css).toContain(".df-planning-sidebar");
-    expect(css).toContain("left: 0 !important;");
+    expect(css).toContain("left: 0;");
     expect(css).toContain(".df-app.mode-planning .df-task-block[data-task-variant=\"planning\"]");
     expect(css).toContain("--task-project-accent-size: 0px;");
     expect(css).toContain(".df-category-branch");
-    expect(css).toContain("margin-bottom: 28px !important;");
+    expect(css).toContain("margin-bottom: 28px;");
   });
 
   it("keeps Planning filters as a top-right compact hover menu without search", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
-    const css = readFileSync(resolve(__dirname, "../task-block.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     expect(planning).toContain("effectiveFilterCategories");
     expect(planning).toContain("const filterOptionsByCategory");
@@ -172,23 +171,23 @@ describe("TaskBlock shared component contract", () => {
     expect(planning).toContain("const activeFilterCategory = filterExpandedCategory");
     expect(planning).not.toContain("effectiveFilterCategories[0]?.key || null");
     expect(css).toContain(".df-app.mode-planning .df-planning .df-planning-filter-corner");
-    expect(css).toContain("position: sticky !important;");
-    expect(css).toContain("top: 0 !important;");
+    expect(css).toContain("position: sticky;");
+    expect(css).toContain("top: 0;");
     expect(css).toContain(".df-app.mode-planning .df-planning .df-filter-panel");
     expect(css).toContain(".df-app.mode-planning .df-planning .df-filter-flyout-panel");
-    expect(css).toContain("font: 500 11px/1.25 var(--paper-sans) !important;");
+    expect(css).toContain("font: 500 11px/1.25 var(--paper-sans);");
   });
 
   it("keeps the final Planning repair layer in the last-loaded TaskBlock stylesheet", () => {
-    const css = readFileSync(resolve(__dirname, "../task-block.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     expect(css).toContain("Planning repair layer");
     expect(css).toContain(".df-app.mode-planning .df-planning .df-mindmap.no-root");
-    expect(css).toContain("display: grid !important;");
+    expect(css).toContain("display: grid;");
     expect(css).toContain("grid-template-columns: var(--planning-sidebar-width, 86px) minmax(0, 1fr)");
-    expect(css).toContain("grid-column: 2 / 3 !important;");
+    expect(css).toContain("grid-column: 2 / 3;");
     expect(css).toContain(".df-app .df-planning .df-view-btn span");
-    expect(css).toContain("transform: none !important;");
+    expect(css).toContain("transform: none;");
     expect(css).toContain(".df-kanban-card.is-drag-source");
   });
 
@@ -203,7 +202,7 @@ describe("TaskBlock shared component contract", () => {
 
   it("exposes a clear habit settings entry and weekly overview toolbar", () => {
     const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8");
-    const css = readFileSync(resolve(__dirname, "../task-block.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     // Habit overview was refactored from `df-habit-week-*` to the borderless
     // `df-habit-overview-*` table layout. Assert the new class names so this
@@ -241,40 +240,39 @@ describe("TaskBlock shared component contract", () => {
 
   it("keeps Planning tree drag UX stable with the always-visible tools sidebar", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
-    const css = readFileSync(resolve(__dirname, "../task-block.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     expect(planning).toContain('className="df-planning-sidebar"');
     expect(planning).toContain("clearPlanningDragState");
-    expect(css).toContain("background: var(--bg-app-soft, var(--surface-main)) !important;");
+    expect(css).toContain("background: var(--bg-app-soft, var(--surface-main));");
     expect(css).toContain(".df-app.mode-planning .df-planning .df-task-node-inner > .df-task-block-accent");
     expect(css).toContain(".df-app.mode-planning .df-planning .df-task-node-inner::before");
     expect(css).toContain(".df-app.mode-planning .df-planning .df-plan-subtask-node::after");
-    expect(css).toContain("content: none !important;");
-    expect(css).toContain("border: 0 !important;");
+    expect(css).toContain("content: none;");
+    expect(css).toContain("border: 0;");
     expect(css).toContain(".df-app.mode-planning .df-planning-native-drag-image");
     expect(planning).toContain("beginTreeDrag");
-    expect(css).toContain("cursor: grabbing !important;");
+    expect(css).toContain("cursor: grabbing;");
   });
 
   it("keeps Planning fallbacks bound to the active theme accent", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
-    const redesignCss = readFileSync(resolve(__dirname, "../app-redesign.css"), "utf8");
-    const legacyCss = readFileSync(resolve(__dirname, "../styles.css"), "utf8");
-    const planningModeRule = legacyCss.match(/\.df-app\.mode-planning\s*{[\s\S]*?\n}/)?.[0] || "";
+    const appCss = readFileSync(resolve(__dirname, "../app.css"), "utf8");
+    const planningModeRule = appCss.match(/\.df-app\.mode-planning\s*{[\s\S]*?\n}/)?.[0] || "";
 
     expect(planning).toContain('const DEFAULT_PROJECT_COLOR = "var(--accent-active)"');
     expect(planning).toContain("color-mix(in srgb, ${color} ${alpha * 100}%, transparent)");
     expect(planning).not.toContain("--accent-plan");
     expect(planning).not.toContain("#CAFF72");
     expect(planning).not.toContain("rgba(202, 255, 114");
-    expect(redesignCss).not.toContain("--accent-plan");
-    expect(redesignCss).not.toContain("#CAFF72");
+    expect(appCss).not.toContain("--accent-plan");
+    expect(appCss).not.toContain("#CAFF72");
     expect(planningModeRule).toContain("--accent-active: var(--planning-primary, #584D3D);");
     expect(planningModeRule).toContain("--accent-rgb: 88, 77, 61;");
   });
 
   it("keeps retired purple and lime defaults out of shared app styles", () => {
-    const css = readFileSync(resolve(__dirname, "../styles.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     expect(css).not.toMatch(/#(?:C69CF9|CAFF72)/i);
     expect(css).not.toMatch(/rgba\(\s*198\s*,\s*156\s*,\s*249\s*,/i);

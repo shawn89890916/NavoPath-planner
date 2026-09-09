@@ -38,6 +38,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Check CSS architecture
+        run: npm run css:check
+
       - name: Build
         run: npm run build
 
