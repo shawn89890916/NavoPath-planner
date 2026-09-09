@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-09-09 · AI 工作区稳定性
+
+### 修复
+- 修复数据库 API 的 schema cache 暂时失步导致全局 AI 与 Agent 审计历史同时无法读取的问题；部署会主动刷新 PostgREST schema，让已有工作区恢复访问。
+
 ## 2026-09-08 · AI 查询与澄清
 
 ### 改进
@@ -63,6 +68,11 @@
 ### 修复
 - 恢复 Execute 时间轴底卡的四角圆角，收窄左右下外边距；保持今日候选宽度与横向位置不变，略微上移，使其相对底卡的上、左、下留白统一为 6px；右移日期箭头与 Day / 3-Day / Week / Month 的纵向控件列对齐。
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
+
+## 2026-09-09 · AI workspace reliability
+
+### Fixed
+- Fixed a stale database API schema cache causing Global AI and Agent audit history to fail together; deployment now actively refreshes the PostgREST schema so existing workspaces can become readable again.
 
 ## 2026-09-08 · AI Search and Clarification
 
