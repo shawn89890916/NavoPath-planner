@@ -322,7 +322,8 @@ Use for compact workspace tools, close controls, arrows, and utility actions.
 - Hover: ink color, annotation wash, or rule change only.
 - Active: `translateY(1px)` only.
 - Focus-visible: one-pixel active-accent outline with clear offset.
-- Disabled: reduced opacity, no decorative effects, and `not-allowed` cursor.
+- Disabled: reduced opacity, no decorative effects, and
+ot-allowed` cursor.
 - Loading: quiet ink-opacity breathing; never glow, bounce, or spin purely for decoration.
 - Respect `prefers-reduced-motion`.
 - Do not use scale, hover lift, bloom, neon, or decorative bounce.
@@ -381,4 +382,34 @@ Before adding or changing a control:
 7. Confirm project color is used as annotation, not structure.
 8. Confirm candidate tasks read as quiet rows, not stacked cards.
 9. Confirm scheduled blocks read as annotated time regions, not dashboard widgets.
-10. Confirm the interface feels like clean paper software, not a literal notebook or generic SaaS dashboard.
+10. Confirm the interface feels like clean paper software, not a literal notebook or generic SaaS dashboard.
+
+## Shared UI Tokens And Primitives
+
+The token layer lives in `src/ui-tokens.css`; shared controls live in
+`src/components/UiPrimitives.tsx` and `src/ui-primitives.css`. New application
+controls should use these tokens and primitives instead of adding page-level
+visual values.
+
+| Token group | Canonical values |
+| --- | --- |
+| Spacing | `4 / 8 / 12 / 16 / 24 / 32px` (`--space-1` to `--space-6`) |
+| Radius | control `4px`, card `8px`, overlay `12px`, round `999px` |
+| Icon and touch size | icon `16px`; desktop hit area `34px`; touch target `44px` |
+| Motion | instant `90ms`, fast `140ms`, base `180ms`, layout `240ms` |
+| Borders | `subtle` for inputs and separators, `default` for overlays, `strong` for emphasis, `focus` for keyboard focus, `danger` for destructive actions |
+
+### Border Semantics
+
+- Page sections and ordinary task cards are borderless by default.
+- Inputs, popovers, and modals may use a subtle or default border to express structure.
+- Selected and drag-and-drop states may use the active accent as a one-pixel ring.
+- A border must communicate structure or state; do not add one only for decoration.
+
+### Shared Component Rules
+
+- Use `Button`, `IconButton`, `CloseButton`, `Input`, `Surface`, `Divider`, `Popover`, and `Modal` for shared controls.
+- All close actions use the Lucide `X` icon through `CloseButton`; do not add a new close selector or a text `×`/`✕` implementation.
+- Hover may change ink, use a faint paper wash, or change a hairline rule. Active state is limited to `translateY(1px)`.
+- Focus-visible uses the shared focus ring. Disabled controls reduce opacity and retain a readable label.
+- `TaskBlock` remains the shared task structure for candidate tasks, planning tasks, and timeline blocks. `SettingsControls` composes the shared button, input, and divider primitives.

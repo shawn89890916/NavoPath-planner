@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import type { Language } from "./i18n";
+import { Button, Input, Modal } from "./components/UiPrimitives";
 
 type DialogKind = "prompt" | "confirm" | "alert";
 
@@ -98,20 +98,18 @@ function InAppDialogHost({
     else onClose(true);
   };
 
-  return createPortal(
-    <div className="df-dialog-overlay" role="presentation" onMouseDown={() => onClose(isAlert ? true : null)}>
-      <section
-        className="df-dialog"
-        role={isAlert ? "alertdialog" : "dialog"}
-        aria-modal="true"
-        aria-labelledby="df-dialog-title"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
+  return (
+    <Modal
+      role={isAlert ? "alertdialog" : "dialog"}
+      labelledBy="df-dialog-title"
+      onClose={() => onClose(isAlert ? true : null)}
+      className="df-dialog"
+    >
         <form onSubmit={submit}>
           <h2 id="df-dialog-title">{request.title}</h2>
           {request.message && <p>{request.message}</p>}
           {isPrompt && (
-            <input
+            <Input
               ref={inputRef}
               value={value}
               onChange={(event) => setValue(event.target.value)}
@@ -120,17 +118,15 @@ function InAppDialogHost({
           )}
           <div className="df-dialog-actions">
             {!isAlert && (
-              <button type="button" className="df-dialog-secondary" onClick={() => onClose(null)}>
+              <Button type="button" variant="secondary" className="df-dialog-secondary" onClick={() => onClose(null)}>
                 {request.cancelLabel || text.cancel}
-              </button>
+              </Button>
             )}
-            <button type="submit" className="df-dialog-primary">
+            <Button type="submit" variant="primary" className="df-dialog-primary">
               {request.confirmLabel || (isAlert ? text.ok : text.confirm)}
-            </button>
+            </Button>
           </div>
         </form>
-      </section>
-    </div>,
-    document.body,
+    </Modal>
   );
 }

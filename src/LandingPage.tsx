@@ -1,6 +1,7 @@
 import { type CSSProperties, useEffect, useState } from "react";
 import { ProductIcon } from "./main";
 import { DESKTOP_DOWNLOAD_URL } from "./downloads";
+import { CloseButton } from "./components/UiPrimitives";
 import "./landing.css";
 
 type AuthIntent = "signin" | "signup";
@@ -139,7 +140,7 @@ function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, 
 
   return <div className="landing-auth-overlay" onMouseDown={onClose}>
     <section className="landing-auth-card" onMouseDown={(event) => event.stopPropagation()}>
-      <button className="landing-auth-close" aria-label={lang === "zh" ? "关闭" : "Close"} onClick={onClose}>×</button>
+      <CloseButton className="landing-auth-close" label={lang === "zh" ? "关闭" : "Close"} onClick={onClose} />
       <ProductIcon /><span className="landing-auth-label">{text.account}</span>
       {authView !== "login" ? <>
         <h2>{authView === "forgot" ? text.forgotTitle : text.sentTitle}</h2>

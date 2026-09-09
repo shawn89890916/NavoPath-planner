@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, useState, type CSSProperties, type Dispatc
 import type { Category, Language, NullablePriority, Priority, Project, Subtask, Task, TaskRecurrence, TimelineRecord } from "./types";
 import { clockTimeSpanMinutes, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { toggleSubtaskInTree } from "./utils/treeOrder";
+import { CloseButton } from "./components/UiPrimitives";
 import "./mobile-task-summary.css";
 
 export type MobileShortSheetKind = "task" | "project" | "habit";
@@ -89,7 +90,7 @@ export function MobileShortSheet(props: {
     else if (distance < -54 && props.swipeUpForMore && props.onMore && !props.moreDisabled) props.onMore();
   };
   return <aside className={`df-drawer df-task-detail df-mobile-task-summary df-mobile-short-sheet${props.className ? ` ${props.className}` : ""}`} onMouseDown={(event) => event.stopPropagation()}>
-    <button className="df-detail-close df-icon-action i-close" type="button" aria-label={locale.close} onClick={props.onClose} />
+    <CloseButton className="df-detail-close" type="button" label={locale.close} onClick={props.onClose} />
     <button type="button" className="df-mobile-sheet-grabber" aria-label={props.lang === "zh" ? "上下滑动短栏" : "Swipe sheet"} onPointerDown={(event) => { if (event.pointerType === "mouse" && event.button !== 0) return; const panel = event.currentTarget.parentElement; if (!panel) return; event.currentTarget.setPointerCapture(event.pointerId); panel.classList.add("is-sheet-dragging"); gestureRef.current = { pointerId: event.pointerId, startY: event.clientY, panel }; }} onPointerMove={(event) => { const gesture = gestureRef.current; if (!gesture || gesture.pointerId !== event.pointerId) return; const distance = event.clientY - gesture.startY; gesture.panel.style.setProperty("--mobile-sheet-drag-y", `${Math.max(-24, distance)}px`); }} onPointerUp={finishGesture} onPointerCancel={finishGesture} />
     {props.showKind && <label className="df-mobile-short-sheet-kind-wrap"><span className="df-visually-hidden">{locale.choose}</span><select className="df-mobile-short-sheet-kind" value={kind} aria-label={locale.choose} onChange={(event) => props.onKindChange?.(event.target.value as MobileShortSheetKind)}>{kinds.map((option) => <option key={option} value={option}>{locale[option]}</option>)}</select></label>}
     <div className="df-mobile-summary-head"><input ref={inputRef} autoFocus={props.autoFocus} value={props.title} aria-label={props.titleLabel || (props.lang === "zh" ? "名称" : "Title")} placeholder={props.titlePlaceholder} onChange={(event) => props.onTitleChange(event.target.value)} onBlur={(event) => props.onTitleBlur?.(event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); props.onTitleEnter?.(); } }} />{props.onMore && <button type="button" className="df-mobile-more" disabled={props.moreDisabled} onClick={props.onMore}>{locale.more}</button>}</div>

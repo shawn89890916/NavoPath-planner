@@ -1,5 +1,6 @@
 import React, { type CSSProperties } from "react";
 import { TaskBlock } from "./TaskBlock";
+import { CloseButton } from "./UiPrimitives";
 import type { Language } from "../types";
 
 /**
@@ -358,13 +359,12 @@ export function TimelineEventBlock({
             <div className="df-resize-dot bottom" onPointerDown={onResizeStart("bottom")} />
           ) : null}
           {onDelete ? (
-            <button
-              type="button"
+            <CloseButton
               className="df-template-period-delete"
-              aria-label={lang === "zh" ? "删除时间段" : "Delete period"}
+              label={lang === "zh" ? "删除时间段" : "Delete period"}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); onDelete(e); }}
-            >×</button>
+            />
           ) : null}
         </>
       }

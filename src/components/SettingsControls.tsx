@@ -1,4 +1,5 @@
 import React, { type ReactNode } from "react";
+import { Button, Divider, Input } from "./UiPrimitives";
 
 /**
  * SettingsControls — the unified setting-row primitive system for the NavoPath
@@ -160,7 +161,7 @@ export function SettingNumberInput({
 }) {
   return (
     <span className="df-settings-number-wrap">
-      <input
+      <Input
         type="number"
         className="df-settings-number df-utility-input"
         value={value}
@@ -195,7 +196,7 @@ export function SettingTextInput({
   type?: "text" | "password" | "time" | "email";
 }) {
   return (
-    <input
+    <Input
       type={type}
       className="df-settings-input df-utility-input"
       value={value}
@@ -243,21 +244,24 @@ export function SettingActionButton({
   tone?: "secondary" | "primary" | "danger";
   ariaLabel?: string;
 }) {
+  const variant = tone === "danger" ? "danger" : tone === "primary" ? "primary" : "secondary";
+
   return (
-    <button
+    <Button
       type="button"
+      variant={variant}
       className={`df-settings-action df-settings-action--${tone}`}
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={onClick}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
 export function SettingDivider() {
-  return <hr className="df-settings-divider" />;
+  return <Divider className="df-settings-divider" />;
 }
 
 export function SettingDescription({ children }: { children: ReactNode }) {

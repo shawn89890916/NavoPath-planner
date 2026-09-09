@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom";
 import type { PlannerData, Project, Settings, Subtask, Task, WorkflowStatus } from "./types";
 import { t, type Language } from "./i18n";
+import { term } from "./terminology";
 import { useInAppDialog } from "./InAppDialog";
 import { localIsoDate } from "./utils/localDate";
 import { buildTaskMetaBadges } from "./utils/taskMetaBadges";
@@ -10,6 +11,7 @@ import { kanbanGroups, WORKFLOW_LABELS } from "./utils/productivity";
 import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch, type UiWorkflowStatus, type StateFilterValue } from "./utils/productivityModel";
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, type TaskBlockVariant } from "./components/TaskBlock";
+import { CloseButton } from "./components/UiPrimitives";
 import { TaskDragLayer } from "./unifiedDrag";
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricCompletionFilter, type MetricDisplayMetric, type MetricGroupBy, type MetricHabitMode, type MetricRangePreset, type TimeAllocationGroup } from "./metrics/timeAllocation";
 
@@ -475,7 +477,7 @@ function PlanningSubtaskNode(props: {
                   event.stopPropagation();
                   props.onPromote(props.subtask.id);
                 }}
-                aria-label={t(props.lang, "planning.addToCandidate")}
+                aria-label={term(props.lang, "todayCandidates")}
               >
                 <ArrowRightIcon />
               </button>
@@ -588,7 +590,7 @@ function PlanningTaskNode(props: {
               tone={normalizeTaskCheckTone(props.task)}
               priority={props.task.priority}
               className="df-list-status-toggle df-planning-task-check"
-              ariaLabel={done ? "Mark open" : "Mark done"}
+              ariaLabel={done ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
               onClick={(event) => {
                 event.stopPropagation();
                 props.onToggleComplete();
@@ -641,8 +643,8 @@ function PlanningTaskNode(props: {
                   if (isPlanned) return;
                   props.onToggleTodayCandidate();
                 }}
-                aria-label={isPlanned ? t(props.lang, "planning.planned") : t(props.lang, "planning.addToCandidate")}
-                title={isPlanned ? t(props.lang, "planning.planned") : t(props.lang, "planning.addToCandidate")}
+                aria-label={isPlanned ? t(props.lang, "planning.planned") : term(props.lang, "todayCandidates")}
+                title={isPlanned ? t(props.lang, "planning.planned") : term(props.lang, "todayCandidates")}
                 aria-disabled={isPlanned}
               >
                 <ArrowRightIcon />
@@ -730,7 +732,7 @@ function PlanningProjectNode(props: {
                 event.stopPropagation();
                 props.onComplete?.();
               }}
-              aria-label={props.lang === "zh" ? "Complete project" : "Complete project"}
+              aria-label={props.lang === "zh" ? "完成项目" : "Complete project"}
             >
               <CheckIcon />
             </button>
@@ -1933,7 +1935,7 @@ export default function PlanningView(props: {
     }] : []),
     ...(filterScheduled ? [{
       key: `scheduled-${filterScheduled}`,
-      label: `${props.lang === "zh" ? "Scheduled" : "Scheduled"}: ${filterScheduled === "scheduled" ? (props.lang === "zh" ? "Scheduled" : "Scheduled") : (props.lang === "zh" ? "Unscheduled" : "Unscheduled")}`,
+      label: `${props.lang === "zh" ? "已安排" : "Scheduled"}: ${filterScheduled === "scheduled" ? (props.lang === "zh" ? "已安排" : "Scheduled") : (props.lang === "zh" ? "未安排" : "Unscheduled")}`,
       onClear: () => setFilterScheduled(null),
     }] : []),
   ];
@@ -2025,7 +2027,7 @@ export default function PlanningView(props: {
       .filter((s) => filterScheduled === s || safeTasks.some((task) => s === "scheduled" ? filterHasSchedule(task) : !filterHasSchedule(task)))
       .map((s) => ({
         value: s,
-        label: s === "scheduled" ? (props.lang === "zh" ? "Scheduled" : "Scheduled") : (props.lang === "zh" ? "Unscheduled" : "Unscheduled"),
+        label: s === "scheduled" ? (props.lang === "zh" ? "已安排" : "Scheduled") : (props.lang === "zh" ? "未安排" : "Unscheduled"),
         checked: filterScheduled === s,
         inputType: "radio" as const,
         onToggle: () => setFilterScheduled(filterScheduled === s ? null : s),
@@ -2037,7 +2039,7 @@ export default function PlanningView(props: {
     { key: "urgency", label: props.lang === "zh" ? "Urgency" : "Urgency", icon: "clock", activeCount: filterUrgencies.length, summary: filterUrgencies.length > 0 ? filterUrgencies.map(stateLabel).join(", ") : "" },
     { key: "project", label: props.lang === "zh" ? "Project" : "Project", icon: "folder", activeCount: filterProjects.length, summary: filterProjects.length > 0 ? filterProjects.map((id) => safeProjects.find((p) => String(p.id) === id)?.title || id).join(", ") : "" },
     { key: "due", label: props.lang === "zh" ? "Due date" : "Due date", icon: "calendar", activeCount: filterDueDate ? 1 : 0, summary: filterDueDate ? dueDateLabel(filterDueDate) : "" },
-    { key: "scheduled", label: props.lang === "zh" ? "Scheduled" : "Scheduled", icon: "layers", activeCount: filterScheduled ? 1 : 0, summary: filterScheduled ? (filterScheduled === "scheduled" ? (props.lang === "zh" ? "Scheduled" : "Scheduled") : (props.lang === "zh" ? "Unscheduled" : "Unscheduled")) : "" },
+    { key: "scheduled", label: props.lang === "zh" ? "已安排" : "Scheduled", icon: "layers", activeCount: filterScheduled ? 1 : 0, summary: filterScheduled ? (filterScheduled === "scheduled" ? (props.lang === "zh" ? "已安排" : "Scheduled") : (props.lang === "zh" ? "未安排" : "Unscheduled")) : "" },
   ];
   const effectiveFilterCategories = filterCategories.filter((cat) => (filterOptionsByCategory[cat.key] || []).length > 0);
   const activeFilterCategory = filterExpandedCategory && effectiveFilterCategories.some((cat) => cat.key === filterExpandedCategory)
@@ -2190,7 +2192,7 @@ export default function PlanningView(props: {
           <div className="df-tree-wrap">
             {showLongRangeGuide && (
               <aside className="df-planning-longrange-guide" role="note">
-                <button type="button" className="df-planning-guide-close" aria-label={props.lang === "zh" ? "关闭规划说明" : "Dismiss planning note"} onClick={() => setGuideDismissed(true)}>×</button>
+                <CloseButton className="df-planning-guide-close" label={props.lang === "zh" ? "关闭规划说明" : "Dismiss planning note"} onClick={() => setGuideDismissed(true)} />
                 <span>{props.lang === "zh" ? "长期任务，从这里开始规划" : "Plan long-range work here"}</span>
                 <strong>{props.lang === "zh" ? "先建立项目，再拆成任务，最后排进日程。" : "Create a project, break it into tasks, then schedule it."}</strong>
                 <div aria-hidden="true"><b>01 {props.lang === "zh" ? "项目" : "Project"}</b><i>→</i><b>02 {props.lang === "zh" ? "任务" : "Tasks"}</b><i>→</i><b>03 {props.lang === "zh" ? "排程" : "Schedule"}</b></div>
@@ -2589,7 +2591,7 @@ export default function PlanningView(props: {
                               tone={normalizeTaskCheckTone(task)}
                               priority={task.priority}
                               className="df-list-status-toggle"
-                              ariaLabel={normalizeWorkflowStatus(task) === "done" ? "Mark open" : "Mark done"}
+                              ariaLabel={normalizeWorkflowStatus(task) === "done" ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
                               onClick={(e) => { e.stopPropagation(); props.onTaskUpdate(task.id, workflowStatusForPatch(normalizeWorkflowStatus(task) === "done" ? "backlog" : "done")); }}
                             />
                             <TaskBlockContent className="df-planning-task-copy" title={<span className="df-kanban-card-title">{task.title}</span>}>
@@ -2670,7 +2672,7 @@ export default function PlanningView(props: {
                                 tone={normalizeTaskCheckTone(task)}
                                 priority={task.priority}
                                 className="df-list-status-toggle"
-                                ariaLabel={taskDone ? "Mark open" : "Mark done"}
+                                ariaLabel={taskDone ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
                                 onClick={(e) => { e.stopPropagation(); props.onTaskUpdate(task.id, workflowStatusForPatch(taskDone ? "backlog" : "done")); }}
                               />
                               <TaskBlockContent className="df-planning-task-copy" title={<span className="df-eisenhower-task-title">{task.title}</span>}>
@@ -2726,7 +2728,7 @@ export default function PlanningView(props: {
                           tone={normalizeTaskCheckTone(task)}
                           priority={task.priority}
                           className="df-list-status-toggle"
-                          ariaLabel={uiStatus === "done" ? "Mark open" : "Mark done"}
+                          ariaLabel={uiStatus === "done" ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
                           onClick={() => props.onTaskUpdate(task.id, workflowStatusForPatch(uiStatus === "done" ? "backlog" : "done"))}
                         />
                         <TaskBlockContent title={<span className="df-list-title" onClick={() => openTaskFromPlanning(task)}>{task.title}</span>} />

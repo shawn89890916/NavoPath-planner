@@ -1,0 +1,54 @@
+/* NavoPath UI tokens. Theme-specific values continue to resolve from the
+ * active .df-app theme through the paper aliases below. */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-control: 4px;
+  --radius-card: 8px;
+  --radius-overlay: 12px;
+  --radius-round: 999px;
+
+  --shadow-none: none;
+  --shadow-floating: 0 20px 48px rgba(20, 18, 15, .18);
+
+  --motion-instant: 90ms;
+  --motion-fast: 140ms;
+  --motion-base: 180ms;
+  --motion-layout: 240ms;
+  --motion-ease: cubic-bezier(.2, .75, .25, 1);
+
+  --icon-size-sm: 14px;
+  --icon-size-md: 16px;
+}
+
+.df-app {
+  --color-ink: var(--text-main);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-accent: var(--accent-active);
+  --color-danger: var(--df-danger, #b6423c);
+  --surface-page: var(--bg-app);
+  --surface-elevated: var(--surface-raised);
+  --surface-default: var(--surface-main);
+  --border-subtle: var(--paper-rule);
+  --border-default: var(--paper-rule-strong);
+  --border-strong: var(--paper-rule-strong);
+  --border-focus: var(--accent-active);
+  --border-danger: var(--color-danger);
+  --shadow-floating: var(--paper-float-shadow);
+  --motion-ease: var(--paper-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-instant: 1ms;
+    --motion-fast: 1ms;
+    --motion-base: 1ms;
+    --motion-layout: 1ms;
+  }
+}

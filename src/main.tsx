@@ -44,6 +44,7 @@ import {
   type TimelineViewMode,
 } from "./timelineGeometry";
 import { t, detectSystemLanguage, catLabels, priLabels, viewLabel, monthTitle, weekdayName } from "./i18n";
+import { term } from "./terminology";
 import { migrateLegacyHabitTracker, scheduleHabitRecord, toggleHabitCompletion, unscheduleHabitRecord, updateHabit, archiveHabit, buildHabitMetrics, isHabitDueOnDate, weekdayLabels, type HabitMetrics } from "./utils/habits";
 import { shouldShowHabitCandidates } from "./utils/habitCandidateVisibility";
 import { normalizeAiReply } from "./utils/aiReply";
@@ -86,6 +87,7 @@ import { useInAppDialog } from "./InAppDialog";
 import { TaskActions, TaskBlock, TaskBlockAccent, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskGroup, type TaskBlockDragState } from "./components/TaskBlock";
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, CandidateBlock, TimelineCanvas, TimelineEventBlock } from "./components/ExecutionSharedLayout";
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDivider, SettingDescription } from "./components/SettingsControls";
+import { CloseButton } from "./components/UiPrimitives";
 import { SETTINGS_CATEGORIES, normalizeSettingsTarget, searchSettings, settingsSearchPath, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { getDefaultSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -124,6 +126,7 @@ import { anchoredTimelineScrollTop, timelineZoomFromPinch } from "./utils/timeli
 import { calendarEventDurationMinutes, expandTimedCalendarEvent } from "./utils/calendarEventSlices";
 import { MOTION, runMotionTransition, scheduleMotionCommit } from "./motion";
 import "./styles.css";
+import "./ui-tokens.css";
 import "./app-redesign.css";
 import "./navopath-buttons.css";
 import "./mobile.css";
@@ -132,6 +135,7 @@ import "./ai-chat.css";
 void import("./ai-history-actions.css");
 import "./workspace-v0.css";
 import "./execute-review.css";
+import "./ui-primitives.css";
 import type { MobileShortSheetKind } from "./MobileTaskSummary";
 
 installBrowserFallback();
@@ -8373,8 +8377,8 @@ function App() {
             </button>
           </div>
           <nav className="df-tabs df-tabs-center">
-            <button className={mode === "execute" ? "active" : ""} onClick={() => changeMode("execute")}>{t(lang, "header.execute")}</button>
-            <button className={mode === "planning" ? "active" : ""} onClick={() => changeMode("planning")}>{t(lang, "header.planning")}</button>
+            <button className={mode === "execute" ? "active" : ""} onClick={() => changeMode("execute")}>{term(lang, "execute")}</button>
+            <button className={mode === "planning" ? "active" : ""} onClick={() => changeMode("planning")}>{term(lang, "planning")}</button>
           </nav>
           <div className="df-header-right">
           <button
@@ -8579,7 +8583,7 @@ function App() {
                 <button className="df-candidate-expand-btn" title={t(lang, "candidate.expand")} aria-label={t(lang, "candidate.expand")} onClick={() => {
                   setCandidatePanelCollapsed(false);
                 }}>&#9654;</button>
-                <span className="df-candidate-collapsed-label">{t(lang, "candidate.title")}</span>
+                <span className="df-candidate-collapsed-label">{term(lang, "todayCandidates")}</span>
                 <div className="df-candidate-collapsed-actions">
                   <button className={`df-candidate-strip-btn${fullscreen ? " active" : ""}`} title={t(lang, "candidate.fullscreen")} aria-label={t(lang, "candidate.fullscreen")} onClick={() => setFullscreen((value) => !value)}>⛶</button>
                 </div>
@@ -8587,7 +8591,7 @@ function App() {
             ) : (
               <>
             <CandidatePanelHeader
-              title={t(lang, "candidate.title")}
+              title={term(lang, "todayCandidates")}
               actions={<>
                 {(timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
                   <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }} style={{ fontSize: "14px", lineHeight: 1, padding: "0 2px" }}>«</button>
@@ -8655,7 +8659,7 @@ function App() {
                     <button className={`df-icon-action df-ai-plan-options ${aiPlanMenuOpen ? "active" : ""}`} aria-label={t(lang, "timeline.aiPlanningSettings")} aria-expanded={aiPlanMenuOpen} onClick={(event) => { event.stopPropagation(); setAiPlanMenuOpen((open) => !open); }}><span className="df-ai-plan-chevron" aria-hidden="true" /></button>
                     {schedulePreviews.length > 0 && autoScheduleState === "preview" && <>
                       <button className="df-icon-action df-ai-plan-confirm" onClick={() => acceptAllPreviews()} title={t(lang, "timeline.adoptAll")} aria-label={t(lang, "timeline.adoptAll")}>✓</button>
-                      <button className="df-icon-action df-ai-plan-cancel" onClick={() => cancelAutoSchedule()} title={t(lang, "timeline.cancelPreview")} aria-label={t(lang, "timeline.cancelPreview")}>✕</button>
+            <CloseButton className="df-ai-plan-cancel" onClick={() => cancelAutoSchedule()} label={t(lang, "timeline.cancelPreview")} />
                     </>}
                     {aiPlanMenuOpen && <span className="df-ai-plan-menu df-ai-plan-menu-visible open" onClick={(event) => event.stopPropagation()}>
                       <span className={`df-ai-capacity-risk ${dailyCapacityRisk.level}`}>
@@ -8698,7 +8702,7 @@ function App() {
                   <span>09:30</span><i /><i /><i />
                 </div>
                 <span className="df-schedule-drop-guide-copy">{lang === "zh" ? "拖到日程" : "Drag to Schedule"}</span>
-                <button type="button" aria-label={lang === "zh" ? "关闭提示" : "Dismiss hint"} onClick={() => setScheduleGuideOpen(false)}>×</button>
+                  <CloseButton label={lang === "zh" ? "关闭提示" : "Dismiss hint"} onClick={() => setScheduleGuideOpen(false)} />
               </aside>
             )}
             {(dailyCapacityRisk.level !== "comfortable" || schedulePreviews.length > 0 || scheduleUnscheduled.length > 0) && (
@@ -8881,7 +8885,7 @@ function App() {
                 }}><span className="df-ai-plan-chevron" aria-hidden="true" /></button>
                 {schedulePreviews.length > 0 && autoScheduleState === "preview" && <>
                   <button className="df-ai-plan-confirm" onClick={() => acceptAllPreviews()} title={t(lang, "timeline.adoptAll")}>✓</button>
-                  <button className="df-ai-plan-cancel" onClick={() => cancelAutoSchedule()} title={t(lang, "timeline.cancelPreview")}>✕</button>
+                  <CloseButton className="df-ai-plan-cancel" onClick={() => cancelAutoSchedule()} label={t(lang, "timeline.cancelPreview")} />
                 </>}
                 {aiPlanMenuOpen && <span className="df-ai-plan-menu open" onClick={(event) => event.stopPropagation()}>
                   <label>{t(lang, "timeline.source")}<select value={aiPlanPrefs.source} onChange={(event) => setAiPlanPrefs((current) => ({ ...current, source: event.target.value as AiPlanPrefs["source"] }))}><option value="today">{t(lang, "timeline.fromCandidates")}</option><option value="all">{t(lang, "timeline.allUnfinished")}</option></select></label>
@@ -9828,8 +9832,8 @@ function App() {
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
           </button> : <span className="df-mobile-dock-spacer" aria-hidden="true" />}
           <div className="df-mobile-mode-switch">
-            <button className={mode === "execute" ? "active" : ""} onClick={() => changeMode("execute")}>{t(lang, "header.execute")}</button>
-            <button className={mode === "planning" ? "active" : ""} onClick={() => changeMode("planning")}>{t(lang, "header.planning")}</button>
+            <button className={mode === "execute" ? "active" : ""} onClick={() => changeMode("execute")}>{term(lang, "execute")}</button>
+            <button className={mode === "planning" ? "active" : ""} onClick={() => changeMode("planning")}>{term(lang, "planning")}</button>
           </div>
           {authState?.mode === "cloud" && <button className={`df-mobile-dock-action df-proactive-notification-button${proactiveNotifications.length ? " has-unread" : ""}`} onClick={() => setNotificationCenterOpen(true)} aria-label={lang === "zh" ? `主动助理提醒${proactiveNotifications.length ? `，${proactiveNotifications.length} 条未读` : ""}` : `Proactive assistant messages${proactiveNotifications.length ? `, ${proactiveNotifications.length} unread` : ""}`}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
@@ -9867,9 +9871,7 @@ function App() {
                 </button>
               ))}
             </div>
-            <button className="df-focus-close" onClick={() => setFocusOverlayMode(null)} aria-label={lang === "zh" ? "关闭" : "Close"}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
+            <CloseButton className="df-focus-close" onClick={() => setFocusOverlayMode(null)} label={lang === "zh" ? "关闭" : "Close"} />
           </div>
           <div className="df-focus-main">
             <div className="df-focus-timer-display">{focusClockDisplay}</div>
@@ -10466,7 +10468,7 @@ function ScheduleTemplateModal({
         aria-labelledby="df-template-modal-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <button type="button" className="df-template-close" onClick={onClose} aria-label={zh ? "关闭模板模式" : "Close template mode"}>×</button>
+        <CloseButton className="df-template-close" onClick={onClose} label={zh ? "关闭模板模式" : "Close template mode"} />
 
         {TEMPLATE_VISUAL_PARITY_DEBUG ? (
           <ExecutionSplitLayout className="df-template-shell">
@@ -11067,7 +11069,7 @@ function HabitPanel(props: {
       <aside className="df-utility-panel df-habit-panel">
         <div className="df-utility-head">
           <h2>{props.mode === "detail" && detailHabit ? (zh ? "编辑习惯" : "Edit Habit") : (zh ? "习惯总览" : "Habits Overview")}</h2>
-          <button className="df-icon-action i-close" aria-label={zh ? "关闭" : "Close"} onClick={props.onClose} />
+          <CloseButton label={zh ? "关闭" : "Close"} onClick={props.onClose} />
         </div>
         <div className="df-utility-body">
           {props.mode === "overview" ? (
@@ -11306,7 +11308,7 @@ function LegacyHabitDetailBody(props: {
             const completed = completedDates.has(date);
             const label = zh ? `周${weekdays[day]} ${date.slice(8)}` : `${weekdays[day]} ${date.slice(8)}`;
             return (
-              <div key={date} className={`df-habit-detail-progress-day${due ? " is-due" : ""}${completed ? " is-complete" : ""}${date === today ? " is-today" : ""}`} title={label} aria-label={`${label}: ${completed ? (zh ? "已完成" : "Completed") : due ? (zh ? "未完成" : "Not completed") : (zh ? "无需检查" : "Not scheduled")}`}>
+              <div key={date} className={`df-habit-detail-progress-day${due ? " is-due" : ""}${completed ? " is-complete" : ""}${date === today ? " is-today" : ""}`} title={label} aria-label={`${label}: ${completed ? term(zh ? "zh" : "en", "done") : due ? term(zh ? "zh" : "en", "incomplete") : (zh ? "无需检查" : "Not scheduled")}`}>
                 <b>{zh ? `周${weekdays[day]}` : weekdays[day]}</b>
                 <small>{date.slice(8)}</small>
                 <i aria-hidden="true">{completed && <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l2.5 2.5L10 3" /></svg>}</i>
@@ -11889,11 +11891,7 @@ function TaskCard({
                     <path d="M6.5 6l.6 9h5.8l.6-9" />
                   </svg>
                 </button>
-                <button className="df-icon-button icon-close accent-close" title={t(lang, "taskCard.collapseMore")} onClick={() => setOpenPanel(null)}>
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M6 6l8 8M14 6l-8 8" />
-                  </svg>
-                </button>
+                  <CloseButton label={t(lang, "taskCard.collapseMore")} onClick={() => setOpenPanel(null)} />
               </div>
             </div>
 
@@ -11947,11 +11945,7 @@ function TaskCard({
           <div className="df-repeat-modal" onClick={(event) => event.stopPropagation()}>
             <div className="df-repeat-modal-head">
               <h3>设置重复规则</h3>
-              <button className="df-icon-button icon-close" title="关闭" onClick={() => setRepeatOpen(false)}>
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M6 6l8 8M14 6l-8 8" />
-                </svg>
-              </button>
+              <CloseButton label="关闭" onClick={() => setRepeatOpen(false)} />
             </div>
             <div className="df-repeat-modal-body">
               <label className={`df-repeat-option ${recurrenceDraft.mode === "flexible" ? "selected" : ""}`}>
@@ -12363,7 +12357,7 @@ function TimeBlock({ task, preview, projectName, projects, hovered, showResizeHi
       {isPreview && (
         <span className="df-preview-actions">
           <button className="df-preview-action accept" onClick={(e) => { e.stopPropagation(); onAcceptPreview?.(); }} aria-label={t(lang, "timeBlock.adopt")} title={t(lang, "timeBlock.adopt")}>✓</button>
-          <button className="df-preview-action cancel" onClick={(e) => { e.stopPropagation(); onCancelPreview?.(); }} aria-label={t(lang, "timeBlock.cancel")} title={t(lang, "timeBlock.cancel")}>✕</button>
+          <CloseButton className="df-preview-action cancel" onClick={(e) => { e.stopPropagation(); onCancelPreview?.(); }} label={t(lang, "timeBlock.cancel")} />
         </span>
       )}
       {!isEvent && (hovered || showResizeHint) && <span className="df-block-project-wrap" onMouseDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
@@ -12876,7 +12870,7 @@ function EditDrawer(props: {
     const recurrenceText = recurrenceLabel(f.recurrence);
     return (
       <aside className="df-drawer df-task-detail df-event-detail" onMouseDown={(event) => event.stopPropagation()}>
-        <button className="df-detail-close df-icon-action i-close" type="button" aria-label={t(props.lang, "form.close")} onClick={props.onClose} />
+                  <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
         <section className="df-detail-hero-trevor">
           <textarea className="df-detail-title-trevor" value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.eventTitlePlaceholder")} spellCheck={false} />
         </section>
@@ -12965,7 +12959,7 @@ function EditDrawer(props: {
     return (
       <>
         <aside className="df-drawer df-task-detail df-quick-add-detail" onMouseDown={(event) => event.stopPropagation()}>
-          <button className="df-detail-close df-icon-action i-close" type="button" aria-label={t(props.lang, "form.close")} onClick={props.onClose} />
+          <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
           <div className="df-segment df-detail-type-segment">{(["task", "project", "habit"] as AddType[]).map((type) => <button key={type} className={props.type === type ? "active" : ""} onClick={() => props.setType(type)}>{type === "task" ? t(props.lang, "form.task") : type === "project" ? t(props.lang, "form.project") : (props.lang === "zh" ? "习惯" : "Habit")}</button>)}</div>
           <section className="df-detail-hero-trevor">
             <textarea ref={titleRef} className="df-detail-title-trevor" autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.titlePlaceholder")} spellCheck={false} />
@@ -13125,7 +13119,7 @@ function EditDrawer(props: {
       <>
       {dialog.host}
       <aside className="df-drawer df-task-detail" onMouseDown={(event) => event.stopPropagation()}>
-        <button className="df-detail-close df-icon-action i-close" type="button" aria-label={t(props.lang, "form.close")} onClick={props.onClose} />
+        <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
         {/* ── Hero title area ── */}
         <section className="df-detail-hero-trevor">
           <textarea ref={titleRef} className="df-detail-title-trevor" value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.titlePlaceholder")} spellCheck={false} />
@@ -13336,7 +13330,7 @@ function EditDrawer(props: {
   if (props.editing && props.type === "project") {
     return (
       <aside className="df-drawer df-task-detail df-project-detail" onMouseDown={(event) => event.stopPropagation()}>
-        <button className="df-detail-close df-icon-action i-close" type="button" aria-label={t(props.lang, "form.close")} onClick={props.onClose} />
+        <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
         <section className="df-detail-hero-trevor">
           <textarea className="df-detail-title-trevor" autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={props.lang === "zh" ? "项目名称" : "Project name"} spellCheck={false} />
         </section>
@@ -13375,7 +13369,7 @@ function EditDrawer(props: {
   }
   return (
     <aside className="df-drawer">
-      <div className="df-drawer-head"><h2>{props.editing ? t(props.lang, "form.edit") : t(props.lang, "form.add")}</h2><button className="df-icon-action i-close" data-tip={t(props.lang, "form.close")} aria-label={t(props.lang, "form.close")} onClick={props.onClose} /></div>
+      <div className="df-drawer-head"><h2>{props.editing ? t(props.lang, "form.edit") : t(props.lang, "form.add")}</h2><CloseButton className="df-drawer-close" label={t(props.lang, "form.close")} onClick={props.onClose} /></div>
       <div className="df-segment">{(["task", "project", "habit"] as AddType[]).map((type) => <button key={type} className={props.type === type ? "active" : ""} title={addTypeHints[type]} aria-label={addTypeHints[type]} onClick={() => props.setType(type)}>{type === "task" ? t(props.lang, "form.task") : type === "project" ? t(props.lang, "form.project") : (props.lang === "zh" ? "习惯" : "Habit")}</button>)}</div>
       {props.editing && props.type === "task" && <label className="df-check"><input type="checkbox" checked={Boolean(props.task?.completed)} onChange={props.onToggleDone} />{t(props.lang, "form.completed")}</label>}
       <label>{t(props.lang, "form.name")}<input autoFocus={!props.editing} value={f.title} onChange={(event) => set("title", event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); props.onSave(); } }} /></label>
@@ -13710,7 +13704,7 @@ function AiPanel({ input, setInput, busy, onSend, onCancel, onPlanToday, planSta
             <button onClick={onOpenMemorySettings}>{lang === "zh" ? "AI 设置" : "AI settings"}</button>
           </div>
         </details>
-        <button className="df-ai-reference-tool close" onClick={onClose} aria-label={t(lang, "aiPanel.close")} title={t(lang, "aiPanel.close")}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
+        <CloseButton className="df-ai-reference-tool close" onClick={onClose} label={t(lang, "aiPanel.close")} />
       </div>
     </div>
     {conversationListOpen && <section className="df-ai-conversation-list" aria-label={text.historyTitle}>
@@ -13904,7 +13898,7 @@ function AiPanel({ input, setInput, busy, onSend, onCancel, onPlanToday, planSta
               {!isAccepted && (
                 <div className="df-ai-task-actions">
                   <button className="df-ai-task-accept" onClick={() => onConfirmAction(message.id, patchedAction, i)} title={t(lang, "aiPanel.adopt")}>✓</button>
-                  <button className="df-ai-task-cancel" onClick={() => onDismissAction(message.id, patchedAction, i)} title={t(lang, "aiPanel.cancel")}>✕</button>
+                  <CloseButton className="df-ai-task-cancel" onClick={() => onDismissAction(message.id, patchedAction, i)} label={t(lang, "aiPanel.cancel")} />
                 </div>
               )}
               {isAccepted && <span className="df-ai-task-done">{t(lang, "aiPanel.adopted")}</span>}
@@ -13931,8 +13925,8 @@ function AiPanel({ input, setInput, busy, onSend, onCancel, onPlanToday, planSta
     </div>
     <div className="df-ai-panel-foot">
       <button className={`df-ai-panel-plan${planState === "generating" || planState === "committing" ? " thinking" : ""}`} type="button" onClick={onPlanToday} disabled={planState === "generating" || planState === "committing"}>
-        <span>{lang === "zh" ? "计划建议" : "Plan Suggestions"}</span>
-        <small>{planState === "generating" ? (lang === "zh" ? "分析中" : "Analyzing") : planState === "committing" ? (lang === "zh" ? "采用中" : "Adopting") : planState === "preview" ? (lang === "zh" ? "重新生成" : "Regenerate") : (lang === "zh" ? "为今天生成时间安排" : "Build today's schedule")}</small>
+        <span>{lang === "zh" ? "安排建议" : "Schedule Suggestions"}</span>
+        <small>{planState === "generating" ? (lang === "zh" ? "分析中" : "Analyzing") : planState === "committing" ? (lang === "zh" ? "应用中" : "Applying") : planState === "preview" ? (lang === "zh" ? "重新生成" : "Regenerate") : (lang === "zh" ? "为今天生成时间安排" : "Build today's schedule")}</small>
       </button>
       {memoryNotice && <button className="df-ai-memory-notice" onClick={onOpenMemorySettings}>{memoryNotice} · {text.viewMemory}</button>}
       {(attachment || attachmentStatus) && <AttachmentCard attachment={attachment ? { name: attachment.name, size: attachment.size, pageCount: attachment.pageCount, truncated: attachment.truncated, status: "ready", statusText: attachmentStatus || "文本已提取", summary: attachment.text.slice(0, 120).replace(/\s+/g, " ") } : { name: "正在解析附件", size: 0, status: "error", statusText: attachmentStatus || "正在解析", summary: "" }} onRemove={onClearAttachment} />}
@@ -13964,7 +13958,7 @@ function AttachmentCard({ attachment, referenced = false, onRemove }: { attachme
   return <div className={`df-ai-attachment-card ${referenced ? "referenced" : ""} ${attachment.status}`}>
     <span className="df-ai-file-icon">{ext.slice(0, 4)}</span>
     <div><strong>{attachment.name}</strong><small>{referenced ? "引用附件" : attachment.statusText}{attachment.pageCount ? ` · ${attachment.pageCount} 页` : ""}{size ? ` · ${size}` : ""}</small>{referenced && attachment.summary ? <p>{attachment.summary}</p> : null}</div>
-    {onRemove && <button onClick={onRemove} aria-label="移除附件">×</button>}
+    {onRemove && <CloseButton onClick={onRemove} label="移除附件" />}
   </div>;
 }
 
@@ -14874,7 +14868,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
         <MobileSheetDismissHandle onDismiss={onClose} lang={lang} />
         <div className="df-utility-head">
           <h2 id="df-utility-title">{kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
-          <button ref={closeButtonRef} className="df-icon-action i-close" aria-label={t(lang, "settings.close")} onClick={onClose} />
+          <CloseButton ref={closeButtonRef} label={t(lang, "settings.close")} onClick={onClose} />
         </div>
         {kind === "settings" ? (
           <div className="df-utility-body df-settings-shell">

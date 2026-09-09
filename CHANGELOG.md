@@ -11,6 +11,7 @@
 - 顶栏新增通知中心，应用运行且已授权时可显示系统通知；关闭应用期间的非邮件提醒保留到通知中心。空档默认阈值调整为 60 分钟，旧账户的晨间邮件开关通过迁移立即开启。
 - 修复“空闲阈值”只保存不生效的问题：任务计时器会在达到设置的无操作时长后自动暂停，设为“关闭”时保持运行；刷新页面后 AI 对话默认收起。通知卡片的 dismiss 统一改为右上角无边框灰色叉，补记提醒与其他主动提示保持一致。
 - 修复数据库 API 的 schema cache 暂时失步导致全局 AI 与 Agent 审计历史同时无法读取的问题；部署会主动刷新 PostgREST schema，让已有工作区恢复访问。
+- 建立统一的 UI token、共享控件和产品术语表，统一关闭、按钮、输入、弹窗及 Planning/Execute/Schedule 等核心词汇。
 
 ## 2026-09-08 · AI 查询与澄清
 
@@ -87,6 +88,7 @@
 - A notification center now lives in the top bar. Authorized running clients can show system notifications, while non-email reminders remain in the center when the app is closed. The default gap threshold is 60 minutes, and the migration immediately enables morning email for existing active accounts.
 - Fixed the Idle threshold setting so the task timer pauses after the configured inactivity period and stays running when set to Off. AI now remains collapsed after refresh, and notification dismiss actions use a small borderless gray close mark in the top-right corner, including gap logging prompts.
 - Fixed a stale database API schema cache causing Global AI and Agent audit history to fail together; deployment now actively refreshes the PostgREST schema so existing workspaces can become readable again.
+- Added shared UI tokens, reusable controls, and a product terminology catalog to unify close buttons, inputs, dialogs, and core Planning/Execute/Schedule language.
 
 ## 2026-09-08 · AI Search and Clarification
 

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Language, PlannerData } from "../types";
 import { applyUnfinishedTaskDecisions, type ProactiveNotification, type UnfinishedTaskDecision } from "../proactiveAssistant";
+import { CloseButton } from "./UiPrimitives";
 import "./UnfinishedTasksDialog.css";
 
 export function UnfinishedTasksDialog({ notification, data, lang, onClose, onSaveData, onOpenAi, onDismiss }: {
@@ -26,7 +27,7 @@ export function UnfinishedTasksDialog({ notification, data, lang, onClose, onSav
 
   return <div className="df-unfinished-dialog-layer" role="presentation" onMouseDown={onClose}>
     <section className="df-unfinished-dialog" role="dialog" aria-modal="true" aria-labelledby="df-unfinished-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
-      <header className="df-unfinished-dialog-head"><div><strong id="df-unfinished-dialog-title">{lang === "zh" ? "收工前确认" : "End-of-day check-in"}</strong><p>{lang === "zh" ? "确认今天未完成的时间块，决定下一步。" : "Decide what to do with today's unfinished time blocks."}</p></div><button type="button" onClick={onClose} aria-label={lang === "zh" ? "关闭" : "Close"}>×</button></header>
+      <header className="df-unfinished-dialog-head"><div><strong id="df-unfinished-dialog-title">{lang === "zh" ? "收工前确认" : "End-of-day check-in"}</strong><p>{lang === "zh" ? "确认今天未完成的时间块，决定下一步。" : "Decide what to do with today's incomplete time blocks."}</p></div><CloseButton onClick={onClose} label={lang === "zh" ? "关闭" : "Close"} /></header>
       <div className="df-unfinished-dialog-list">
         {tasks.map(({ item, task }) => <label className="df-unfinished-dialog-row" key={`${item.taskId}:${item.recordId}`}>
           <span><strong>{task!.title}</strong><small>{item.startTime}–{item.endTime}</small></span>
