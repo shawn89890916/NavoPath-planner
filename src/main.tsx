@@ -88,8 +88,7 @@ import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, Candid
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDivider, SettingDescription } from "./components/SettingsControls";
 import { SETTINGS_CATEGORIES, normalizeSettingsTarget, searchSettings, settingsDetailLabel, settingsSearchPath, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { getDefaultSettings } from "./defaultSettings";
-import { nextDueAiBrief } from "./aiBriefs";
-import { listProactiveNotifications, showProactiveSystemNotification, subscribeToProactiveNotifications } from "./proactiveAssistant";
+import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
 import { usePointerReorder } from "./usePointerReorder";
 import { DESKTOP_DOWNLOAD_URL, DESKTOP_RELEASES_URL } from "./downloads";
 import { readAutoLaunchState, toggleAutoLaunchState } from "./desktopAutoLaunch";
@@ -145,6 +144,8 @@ const MobileTimelineDraftSheet = lazy(() => import("./MobileTaskSummary").then((
 const WidgetAppLazy = lazy(() => import("./widget/WidgetApp").then((module) => ({ default: module.WidgetApp })));
 const WidgetPopoverAppLazy = lazy(() => import("./widget/WidgetApp").then((module) => ({ default: module.WidgetPopoverApp })));
 const ProactiveAssistantSettings = lazy(() => import("./components/ProactiveAssistantSettings").then((module) => ({ default: module.ProactiveAssistantSettings })));
+const ProactiveNotificationCenter = lazy(() => import("./components/ProactiveNotificationCenter").then((module) => ({ default: module.ProactiveNotificationCenter })));
+const UnfinishedTasksDialog = lazy(() => import("./components/UnfinishedTasksDialog").then((module) => ({ default: module.UnfinishedTasksDialog })));
 
 const todayIso = () => localIsoDate();
 const TIMELINE_START = 0;
@@ -1335,6 +1336,8 @@ function App() {
   const [referencedTaskId, setReferencedTaskId] = useState("");
   const [aiInput, setAiInput] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
+  const aiBusyRef = useRef(false);
+  const aiInputRef = useRef("");
   const aiAbortRef = useRef<AbortController | null>(null);
   const [aiMessages, setAiMessages] = useState<AiSessionMessage[]>([]);
   const [activeAiConversationId, setActiveAiConversationId] = useState("");
@@ -1347,8 +1350,6 @@ function App() {
   const [aiActionPatches, setAiActionPatches] = useState<Record<string, Record<number, Record<string, unknown>>>>({});
   const [aiAttachment, setAiAttachment] = useState<ParsedAttachment | null>(null);
   const [aiAttachmentStatus, setAiAttachmentStatus] = useState("");
-  const briefAutomationBusyRef = useRef(false);
-  const briefAttemptedRef = useRef(new Set<string>());
   const proactiveIntroShownRef = useRef(false);
   const [externalCalendarSources, setExternalCalendarSources] = useState<ExternalCalendarSource[]>([]);
   const [externalCalendarOccurrences, setExternalCalendarOccurrences] = useState<ExternalCalendarOccurrence[]>([]);
@@ -1433,7 +1434,9 @@ function App() {
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState("");
   const [toast, setToast] = useState("");
-  const [unreadProactiveNotifications, setUnreadProactiveNotifications] = useState(0);
+  const [proactiveNotifications, setProactiveNotifications] = useState<ProactiveNotification[]>([]);
+  const [notificationCenterOpen, setNotificationCenterOpen] = useState(false);
+  const [unfinishedNotification, setUnfinishedNotification] = useState<ProactiveNotification | null>(null);
   const seenProactiveNotificationIdsRef = useRef(new Set<string>());
   // Enhanced toast with optional undo action (5-second window)
   const [toastAction, setToastAction] = useState<{ label: string; onClick: () => void } | null>(null);
@@ -1946,6 +1949,11 @@ function App() {
   useEffect(() => {
     dataRef.current = data;
   }, [data]);
+
+  useEffect(() => {
+    aiBusyRef.current = aiBusy;
+    aiInputRef.current = aiInput;
+  }, [aiBusy, aiInput]);
 
   useEffect(() => {
     settingsRef.current = settings;
@@ -6802,54 +6810,50 @@ function App() {
   }
 
   useEffect(() => {
-    if (!settings?.aiBriefsEnabled || !authState?.user) return;
-    const check = async () => {
-      if (briefAutomationBusyRef.current || aiBusy) return;
-      const now = new Date();
-      const date = localIsoDate(now);
-      const minutes = now.getHours() * 60 + now.getMinutes();
-      const kind = nextDueAiBrief({ date, minutes, startTime: settings.aiStartBriefTime, endTime: settings.aiEndBriefTime, lastStartDate: settings.aiLastStartBriefDate, lastEndDate: settings.aiLastEndReviewDate });
-      if (!kind) return;
-      const attemptKey = `${kind}:${date}`;
-      if (briefAttemptedRef.current.has(attemptKey)) return;
-      briefAttemptedRef.current.add(attemptKey);
-      briefAutomationBusyRef.current = true;
-      try {
-        setAiOpen(true);
-        const prompt = kind === "start"
-          ? (lang === "zh" ? "请生成今天的开工简报：结合完整工作区、截止日期、已排程内容和外部日历忙碌时间，总结三项重点、首个行动和一项风险；优先指出已逾期或未来七天内到期的未完成任务，并给出下一步。简报只读，不执行任何操作。" : "Generate today's start brief using the full workspace, deadlines, schedule, and external calendar busy time. Give three priorities, the first action, and one risk; call out unfinished overdue work or work due within seven days first, with a next step. This brief is read-only; execute no actions.")
-          : (lang === "zh" ? "请生成今天的收工复盘：结合完整工作区、完成情况、计时记录和排程偏差，总结进展并给出明天的一项调整建议。复盘只读，不执行任何操作。" : "Generate today's end-of-day review using the full workspace, completion state, timer records, and schedule variance. Summarize progress and suggest one adjustment for tomorrow. This review is read-only; execute no actions.");
-        const success = await sendAi(prompt, kind === "start" ? "start_brief" : "end_review");
-        if (success) await saveSettings(kind === "start" ? { aiLastStartBriefDate: date } : { aiLastEndReviewDate: date });
-        else showToast(lang === "zh" ? "简报生成失败，可在 AI 抽屉中重试" : "Brief generation failed; retry from the AI drawer");
-      } finally {
-        briefAutomationBusyRef.current = false;
-      }
-    };
-    void check();
-    const interval = window.setInterval(() => void check(), 60_000);
-    return () => window.clearInterval(interval);
-  }, [authState?.user?.id, aiBusy, lang, settings?.aiBriefsEnabled, settings?.aiStartBriefTime, settings?.aiEndBriefTime, settings?.aiLastStartBriefDate, settings?.aiLastEndReviewDate]);
-
-  useEffect(() => {
     if (authState?.mode !== "cloud" || !authState.user) {
-      setUnreadProactiveNotifications(0);
+      setProactiveNotifications([]);
       seenProactiveNotificationIdsRef.current.clear();
       return;
     }
     let active = true;
+    const hydrateReview = async (notification: ProactiveNotification, autoOpen: boolean) => {
+      const current = dataRef.current;
+      if (!current || notification.kind !== "daily_review") return;
+      const shouldOpen = autoOpen && document.visibilityState !== "hidden" && !aiBusyRef.current && !aiInputRef.current.trim();
+      const result = ensureDailyReviewConversation(current, notification, lang === "zh" ? "zh" : "en");
+      if (result.added) {
+        dataRef.current = result.data;
+        if (shouldOpen) {
+          setAiMessages(chatToSessionMessages(result.data.chat || []));
+          setActiveAiConversationId(result.conversationId);
+        }
+        await saveData(result.data);
+      }
+      if (shouldOpen) {
+        setAiOpen(true);
+        await markProactiveNotificationRead(notification.id).catch(() => undefined);
+        setProactiveNotifications((items) => items.filter((item) => item.id !== notification.id));
+      }
+    };
     const refresh = async () => {
-      const items = await listProactiveNotifications().catch(() => []);
+      const [items, reviews] = await Promise.all([
+        listProactiveNotifications().catch(() => [] as ProactiveNotification[]),
+        listDailyReviewNotifications().catch(() => [] as ProactiveNotification[]),
+      ]);
       if (!active) return;
       items.forEach((item) => seenProactiveNotificationIdsRef.current.add(item.id));
-      setUnreadProactiveNotifications(items.length);
+      setProactiveNotifications(items);
+      const latestUnreadReview = [...reviews].reverse().find((review) => review.read_at == null);
+      for (const review of reviews) await hydrateReview(review, review.id === latestUnreadReview?.id);
     };
-    const receive = (notification: { id: string; title: string; body: string }) => {
+    const receive = (notification: ProactiveNotification) => {
       if (!active || seenProactiveNotificationIdsRef.current.has(notification.id)) return;
       seenProactiveNotificationIdsRef.current.add(notification.id);
-      setUnreadProactiveNotifications((count) => count + 1);
+      setProactiveNotifications((items) => [notification, ...items.filter((item) => item.id !== notification.id)].slice(0, 50));
       showToast(lang === "zh" ? `Navo AI：${notification.title}` : `Navo AI: ${notification.title}`);
       showProactiveSystemNotification(notification);
+      if (notification.kind === "daily_review") void hydrateReview(notification, document.visibilityState !== "hidden");
+      if (notification.kind === "unfinished_tasks" && !aiBusyRef.current && !aiInputRef.current.trim()) setUnfinishedNotification(notification);
     };
     void refresh();
     const unsubscribe = subscribeToProactiveNotifications(receive);
@@ -6875,6 +6879,60 @@ function App() {
       ? (lang === "zh" ? "请结合今日容量、截止日期和我的常用执行时段，给我一份简短的开工简报：三项重点、首个行动和一项风险。" : "Give me a short start-of-day brief using today's capacity, deadlines, and my preferred work hours: three priorities, the first action, and one risk.")
       : (lang === "zh" ? "请结合今天的计划、完成情况和计时记录做收工复盘：总结进展、识别偏差，并给出明天的一个调整建议。" : "Review my day using the plan, completions, and timer history: summarize progress, identify variance, and suggest one adjustment for tomorrow."));
     setAiOpen(true);
+  }
+
+  function selectDailyReviewConversation() {
+    const current = dataRef.current || data;
+    if (!current) return;
+    const existing = (current.aiConversations || []).find((conversation) => conversation.id === DAILY_REVIEW_CONVERSATION_ID);
+    if (existing) {
+      setActiveAiConversationId(existing.id);
+      setAiMessages(chatToSessionMessages(existing.messages || []));
+      return;
+    }
+    const now = new Date().toISOString();
+    const conversation: AiConversation = { id: DAILY_REVIEW_CONVERSATION_ID, title: lang === "zh" ? "每日复盘" : "Daily review", messages: [], createdAt: now, updatedAt: now, pinned: true };
+    const nextData = { ...current, aiConversations: [conversation, ...(current.aiConversations || [])], activeAiConversationId: conversation.id, chat: [] };
+    dataRef.current = nextData;
+    setActiveAiConversationId(conversation.id);
+    setAiMessages([]);
+    void saveData(nextData);
+  }
+
+  async function openDailyReviewNotification(notification?: ProactiveNotification) {
+    if (notification?.kind === "daily_review") {
+      const current = dataRef.current || data;
+      if (!current) return;
+      const result = ensureDailyReviewConversation(current, notification, lang === "zh" ? "zh" : "en");
+      if (result.added) {
+        dataRef.current = result.data;
+        await saveData(result.data);
+      }
+      setActiveAiConversationId(result.conversationId);
+      setAiMessages(chatToSessionMessages(result.data.aiConversations?.find((conversation) => conversation.id === result.conversationId)?.messages || []));
+      await markProactiveNotificationRead(notification.id).catch(() => undefined);
+      setProactiveNotifications((items) => items.filter((item) => item.id !== notification.id));
+    } else {
+      selectDailyReviewConversation();
+    }
+    setNotificationCenterOpen(false);
+    setAiOpen(true);
+  }
+
+  function openUnfinishedAi(taskIds: string[]) {
+    selectDailyReviewConversation();
+    const current = dataRef.current || data;
+    const titles = current ? taskIds.map((id) => current.tasks.find((task) => task.id === id)?.title).filter(Boolean) : [];
+    setAiInput(lang === "zh"
+      ? `请帮我安排以下未完成任务：${titles.join("、") || "今天的未完成任务"}。先给出明日候选时间和安排理由，涉及锁定日程或硬截止请先请求确认。`
+      : `Please arrange these unfinished tasks: ${titles.join(", ") || "today's unfinished tasks"}. First propose candidate times for tomorrow and explain why; ask for confirmation before touching locked schedules or hard deadlines.`);
+    setNotificationCenterOpen(false);
+    setAiOpen(true);
+  }
+
+  function dismissProactiveNotification(notification: ProactiveNotification) {
+    setProactiveNotifications((items) => items.filter((item) => item.id !== notification.id));
+    void markProactiveNotificationRead(notification.id).catch(() => undefined);
   }
 
   function cancelAi() {
@@ -8324,14 +8382,14 @@ function App() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
           </button>
           {authState?.mode === "cloud" && <button
-            className={`df-user-avatar df-proactive-notification-button${unreadProactiveNotifications ? " has-unread" : ""}`}
+            className={`df-user-avatar df-proactive-notification-button${proactiveNotifications.length ? " has-unread" : ""}`}
             type="button"
-            onClick={() => { rememberLayerTrigger("utility"); openSettingsSection({ category: "advanced", detail: "ai", anchor: "proactive-assistant" }); }}
-            aria-label={lang === "zh" ? `主动助理提醒${unreadProactiveNotifications ? `，${unreadProactiveNotifications} 条未读` : ""}` : `Proactive assistant messages${unreadProactiveNotifications ? `, ${unreadProactiveNotifications} unread` : ""}`}
+            onClick={() => setNotificationCenterOpen(true)}
+            aria-label={lang === "zh" ? `主动助理提醒${proactiveNotifications.length ? `，${proactiveNotifications.length} 条未读` : ""}` : `Proactive assistant messages${proactiveNotifications.length ? `, ${proactiveNotifications.length} unread` : ""}`}
             title={lang === "zh" ? "主动助理提醒" : "Proactive assistant messages"}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
-            {unreadProactiveNotifications > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{unreadProactiveNotifications > 9 ? "9+" : unreadProactiveNotifications}</span>}
+            {proactiveNotifications.length > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{proactiveNotifications.length > 9 ? "9+" : proactiveNotifications.length}</span>}
           </button>}
           <button className="df-user-avatar" onClick={() => { rememberLayerTrigger("utility"); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.01A1.65 1.65 0 0 0 10.91 3H11a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -8363,6 +8421,26 @@ function App() {
       )}
       <div id="df-portal-target" />
       {dialog.host}
+      {authState?.mode === "cloud" && <Suspense fallback={null}><ProactiveNotificationCenter
+        data={data}
+        lang={lang}
+        notifications={proactiveNotifications}
+        open={notificationCenterOpen}
+        onClose={() => setNotificationCenterOpen(false)}
+        onDismiss={dismissProactiveNotification}
+        onOpenReview={(notification) => void openDailyReviewNotification(notification)}
+        onOpenUnfinished={(notification) => { setNotificationCenterOpen(false); setUnfinishedNotification(notification); }}
+        onSaveData={(next) => void saveData(next)}
+      /></Suspense>}
+      {unfinishedNotification && <Suspense fallback={null}><UnfinishedTasksDialog
+        notification={unfinishedNotification}
+        data={data}
+        lang={lang}
+        onClose={() => setUnfinishedNotification(null)}
+        onSaveData={(next) => void saveData(next)}
+        onOpenAi={openUnfinishedAi}
+        onDismiss={dismissProactiveNotification}
+      /></Suspense>}
       {onboardingActive && (
         <OnboardingGuide
           lang={lang}
@@ -9734,6 +9812,10 @@ function App() {
             <button className={mode === "execute" ? "active" : ""} onClick={() => changeMode("execute")}>{t(lang, "header.execute")}</button>
             <button className={mode === "planning" ? "active" : ""} onClick={() => changeMode("planning")}>{t(lang, "header.planning")}</button>
           </div>
+          {authState?.mode === "cloud" && <button className={`df-mobile-dock-action df-proactive-notification-button${proactiveNotifications.length ? " has-unread" : ""}`} onClick={() => setNotificationCenterOpen(true)} aria-label={lang === "zh" ? `主动助理提醒${proactiveNotifications.length ? `，${proactiveNotifications.length} 条未读` : ""}` : `Proactive assistant messages${proactiveNotifications.length ? `, ${proactiveNotifications.length} unread` : ""}`}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+            {proactiveNotifications.length > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{proactiveNotifications.length > 9 ? "9+" : proactiveNotifications.length}</span>}
+          </button>}
           <button className="df-mobile-dock-action df-mobile-settings" onClick={() => { rememberLayerTrigger("utility"); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01A1.65 1.65 0 0 0 10.91 3H11a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
@@ -15321,9 +15403,9 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
               ]} />} />
               <SettingRow anchor="ai-estimate" title={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} control={<SettingToggle checked={settings.autoEstimateTaskDuration !== false} ariaLabel={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} onChange={(next) => onSave({ autoEstimateTaskDuration: next })} />} />
               <SettingRow anchor="ai-project" title={lang === "zh" ? "自动归入项目" : "Auto-assign project"} description={lang === "zh" ? "仅在判断置信度较高时归入已有项目。" : "Assign to an existing project only at high confidence."} control={<SettingToggle checked={settings.autoAssignTaskProject !== false} ariaLabel={lang === "zh" ? "自动归入项目" : "Auto-assign project"} onChange={(next) => onSave({ autoAssignTaskProject: next })} />} />
-              <SettingRow anchor="ai-briefs" title={lang === "zh" ? "每日开工与收工简报" : "Daily start and end briefs"} description={cloudReady ? (lang === "zh" ? "应用运行时跨过时间点生成；当天错过后会在下次打开时补生成一次。简报只读。" : "Generated when the running app crosses each time; a missed brief is generated on the next open that day. Briefs are read-only.") : (lang === "zh" ? "登录云端账号后可启用。" : "Sign in to a cloud account to enable briefs.")} control={<SettingToggle checked={Boolean(settings.aiBriefsEnabled)} disabled={!cloudReady} ariaLabel={lang === "zh" ? "每日 AI 简报" : "Daily AI briefs"} onChange={(next) => onSave({ aiBriefsEnabled: next })} />} />
-              <SettingRow title={lang === "zh" ? "开工时间" : "Start brief time"} control={<SettingTextInput type="time" value={settings.aiStartBriefTime || "08:00"} disabled={!settings.aiBriefsEnabled || !cloudReady} ariaLabel={lang === "zh" ? "开工简报时间" : "Start brief time"} onChange={(value) => onSave({ aiStartBriefTime: value })} />} />
-              <SettingRow title={lang === "zh" ? "收工时间" : "End review time"} control={<SettingTextInput type="time" value={settings.aiEndBriefTime || "21:30"} disabled={!settings.aiBriefsEnabled || !cloudReady} ariaLabel={lang === "zh" ? "收工复盘时间" : "End review time"} onChange={(value) => onSave({ aiEndBriefTime: value })} />} />
+              <SettingRow anchor="ai-briefs" title={lang === "zh" ? "每日开工与收工简报" : "Daily start and end briefs"} description={cloudReady ? (lang === "zh" ? "由云端按工作时间调度；应用关闭时邮件仍可送达，打开应用后收工复盘会追加到固定的每日复盘对话。简报只读。" : "Scheduled in the cloud using your work hours; morning email can arrive while the app is closed, and the end-of-day review is appended to the fixed Daily review conversation when you open the app. Briefs are read-only.") : (lang === "zh" ? "登录云端账号后可启用。" : "Sign in to a cloud account to enable briefs.")} control={<SettingToggle checked={Boolean(settings.aiBriefsEnabled)} disabled={!cloudReady} ariaLabel={lang === "zh" ? "每日 AI 简报" : "Daily AI briefs"} onChange={(next) => onSave({ aiBriefsEnabled: next })} />} />
+              <SettingRow title={lang === "zh" ? "工作日开始" : "Workday starts"} description={lang === "zh" ? "云端在此时间生成开工简报并发送邮件（邮件开关开启时）。" : "The cloud creates the start brief here and emails it when email delivery is enabled."} control={<SettingTextInput type="time" value={settings.scheduleDayStartTime || "08:00"} disabled={!settings.aiBriefsEnabled || !cloudReady} ariaLabel={lang === "zh" ? "工作日开始时间" : "Workday start time"} onChange={(value) => onSave({ scheduleDayStartTime: value })} />} />
+              <SettingRow title={lang === "zh" ? "工作日结束" : "Workday ends"} description={lang === "zh" ? "云端在此时间检查未完成任务，并生成每日复盘。" : "The cloud checks unfinished tasks and creates the daily review here."} control={<SettingTextInput type="time" value={settings.dayEndTime || "22:00"} disabled={!settings.aiBriefsEnabled || !cloudReady} ariaLabel={lang === "zh" ? "工作日结束时间" : "Workday end time"} onChange={(value) => onSave({ dayEndTime: value })} />} />
               <Suspense fallback={null}><ProactiveAssistantSettings settings={settings} data={data} lang={lang} cloudReady={Boolean(cloudReady)} onSave={onSave} onSaveData={onSaveData} onRequestLocation={requestProactiveLocation} /></Suspense>
               <SettingRow anchor="ai-memory" title={t(lang, "settings.allowAiContext")} description={lang === "zh" ? "启用后，下方才显示可参与上下文的记忆。" : "When enabled, memories available to context appear below."} control={<SettingToggle checked={Boolean(settings.aiMemoryEnabled)} ariaLabel={t(lang, "settings.allowAiContext")} onChange={(next) => onSave({ aiMemoryEnabled: next })} />} />
               <SettingRow anchor="hide-ai" title={t(lang, "settings.hideAllAi")} control={<SettingToggle checked={Boolean(settings.hideAi)} ariaLabel={t(lang, "settings.hideAllAi")} onChange={(next) => onSave({ hideAi: next })} />} />

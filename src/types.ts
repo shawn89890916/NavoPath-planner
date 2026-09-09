@@ -262,6 +262,8 @@ export interface ChatMessage {
   content: string;
   createdAt: string;
   saved?: boolean;
+  source?: "manual" | "scheduled_summary";
+  notificationId?: string;
   status?: "thinking" | "done" | "error";
   steps?: Array<{ label: string; status: "pending" | "running" | "done" | "error" }>;
   actions?: unknown[];

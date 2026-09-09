@@ -270,10 +270,7 @@ export default {
     return mcpHandler.fetch(request, env, ctx);
   },
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
-    const clock = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Shanghai", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date());
-    const trigger = clock === "08:30" ? "morning" : clock === "20:30" ? "evening" : "gap_check";
-    if (trigger === "gap_check" && (clock < "08:00" || clock >= "19:00")) return;
-    ctx.waitUntil(scheduleCloudRuns(env, trigger).then((count) => console.log("Scheduled NavoPath cloud assistants", { trigger, count })));
+    ctx.waitUntil(scheduleCloudRuns(env, "notification_tick").then((count) => console.log("Scheduled NavoPath notification ticks", { count })));
   },
   async queue(batch: MessageBatch<AssistantMessage>, env: Env) {
     for (const message of batch.messages) {

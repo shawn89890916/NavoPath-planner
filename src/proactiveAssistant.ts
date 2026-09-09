@@ -1,12 +1,23 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { PlannerData, Task, TimeEntry, TimelineRecord } from "./types";
+import type { AiConversation, ChatMessage, PlannerData, Task, TimeEntry, TimelineRecord } from "./types";
+
+export const DAILY_REVIEW_CONVERSATION_ID = "navopath-daily-review";
+
+export type ProactiveNotificationItem = {
+  taskId: string;
+  recordId: string;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+};
 
 export type ProactiveNotification = {
   id: string;
-  kind: "summary" | "material_change" | "deadline_risk" | "weather" | "needs_input" | "gap_check";
+  kind: "summary" | "material_change" | "deadline_risk" | "weather" | "needs_input" | "gap_check" | "task_start" | "unfinished_tasks" | "daily_review";
   title: string;
   body: string;
-  metadata?: { action?: string; date?: string; startTime?: string; endTime?: string };
+  metadata?: { action?: string; date?: string; startTime?: string; endTime?: string; taskId?: string; recordId?: string; targetConversation?: string; items?: ProactiveNotificationItem[] };
   read_at?: string | null;
   created_at: string;
 };
@@ -29,7 +40,20 @@ export async function listProactiveNotifications() {
     .select("id,kind,title,body,metadata,read_at,created_at")
     .is("read_at", null)
     .order("created_at", { ascending: false })
-    .limit(12);
+    .limit(50);
+  if (error) throw error;
+  return (data || []) as ProactiveNotification[];
+}
+
+export async function listDailyReviewNotifications() {
+  const api = cloudClient();
+  if (!api) return [] as ProactiveNotification[];
+  const { data, error } = await api
+    .from("navopath_notifications")
+    .select("id,kind,title,body,metadata,read_at,created_at")
+    .eq("kind", "daily_review")
+    .order("created_at", { ascending: true })
+    .limit(365);
   if (error) throw error;
   return (data || []) as ProactiveNotification[];
 }
@@ -86,6 +110,70 @@ export async function setProactiveEmailEnabled(enabled: boolean) {
   if (!auth.user) throw new Error("Sign in to configure email notifications.");
   const { error } = await api.from("navopath_cloud_assistant_settings").update({ email_enabled: enabled }).eq("user_id", auth.user.id);
   if (error) throw error;
+}
+
+export function ensureDailyReviewConversation(data: PlannerData, notification: ProactiveNotification, lang: "zh" | "en") {
+  if (notification.kind !== "daily_review" || !notification.body.trim()) return { data, conversationId: DAILY_REVIEW_CONVERSATION_ID, added: false };
+  const now = notification.created_at || new Date().toISOString();
+  const conversations = [...(data.aiConversations || [])];
+  const existing = conversations.find((conversation) => conversation.id === DAILY_REVIEW_CONVERSATION_ID);
+  const alreadyAdded = existing?.messages.some((message) => message.notificationId === notification.id);
+  if (alreadyAdded) return { data, conversationId: DAILY_REVIEW_CONVERSATION_ID, added: false };
+  const dateLabel = notification.metadata?.date || now.slice(0, 10);
+  const message: ChatMessage = {
+    id: `scheduled-summary-${notification.id}`,
+    role: "assistant",
+    content: notification.body,
+    createdAt: now,
+    saved: true,
+    status: "done",
+    format: "markdown",
+    source: "scheduled_summary",
+    notificationId: notification.id,
+    steps: [{ label: lang === "zh" ? `每日复盘 · ${dateLabel}` : `Daily review · ${dateLabel}`, status: "done" }],
+  };
+  const nextConversation: AiConversation = existing
+    ? { ...existing, title: lang === "zh" ? "每日复盘" : "Daily review", messages: [...existing.messages, message], updatedAt: now }
+    : { id: DAILY_REVIEW_CONVERSATION_ID, title: lang === "zh" ? "每日复盘" : "Daily review", messages: [message], createdAt: now, updatedAt: now, pinned: true };
+  const nextConversations = existing
+    ? conversations.map((conversation) => conversation.id === DAILY_REVIEW_CONVERSATION_ID ? nextConversation : conversation)
+    : [nextConversation, ...conversations];
+  const active = nextConversations.find((conversation) => conversation.id === DAILY_REVIEW_CONVERSATION_ID)!;
+  return {
+    data: { ...data, aiConversations: nextConversations, activeAiConversationId: DAILY_REVIEW_CONVERSATION_ID, chat: active.messages.slice(-40) },
+    conversationId: DAILY_REVIEW_CONVERSATION_ID,
+    added: true,
+  };
+}
+
+export type UnfinishedTaskDecision = "complete" | "tomorrow" | "ai";
+
+export function applyUnfinishedTaskDecisions(data: PlannerData, items: ProactiveNotificationItem[], decisions: Record<string, UnfinishedTaskDecision>, now = new Date().toISOString()) {
+  const tomorrow = new Date(`${items[0]?.date || now.slice(0, 10)}T00:00:00Z`);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  const tomorrowDate = tomorrow.toISOString().slice(0, 10);
+  const aiTaskIds: string[] = [];
+  const tasks = data.tasks.map((task) => {
+    const item = items.find((candidate) => candidate.taskId === task.id && decisions[candidate.taskId]);
+    if (!item) return task;
+    const decision = decisions[item.taskId];
+    if (decision === "ai") {
+      aiTaskIds.push(task.id);
+      return task;
+    }
+    const timelineRecords = (task.timelineRecords || []).map((record) => record.id !== item.recordId ? record : {
+      ...record,
+      executionStatus: decision === "complete" ? "completed" as const : "returned_unfinished" as const,
+    });
+    return {
+      ...task,
+      completed: decision === "complete" ? true : task.completed,
+      ...(decision === "complete" ? { completedAt: now } : { plannedForDate: tomorrowDate, executionLane: "candidate" as const }),
+      timelineRecords,
+      updatedAt: now,
+    };
+  });
+  return { data: { ...data, tasks }, aiTaskIds };
 }
 
 function uid(prefix: string) {

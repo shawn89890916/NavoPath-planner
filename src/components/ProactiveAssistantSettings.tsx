@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Language, PlannerData, Settings } from "../types";
 import { SettingActionButton, SettingDivider, SettingRow, SettingSelect, SettingToggle } from "./SettingsControls";
-import { ProactiveAssistantInbox } from "./ProactiveAssistantInbox";
 import { readProactiveEmailEnabled, requestProactiveNotificationPermission, setProactiveEmailEnabled } from "../proactiveAssistant";
 
 export function ProactiveAssistantSettings({ settings, data, lang, cloudReady, onSave, onSaveData, onRequestLocation }: {
@@ -29,7 +28,6 @@ export function ProactiveAssistantSettings({ settings, data, lang, cloudReady, o
   };
   const enableSystemNotifications = async () => setNotificationPermission(await requestProactiveNotificationPermission());
   return <>
-    {cloudReady && <ProactiveAssistantInbox data={data} lang={lang} onSaveData={onSaveData} />}
     <SettingDivider />
     <SettingRow
       anchor="proactive-assistant"
@@ -49,12 +47,12 @@ export function ProactiveAssistantSettings({ settings, data, lang, cloudReady, o
     />
     <SettingRow
       title={lang === "zh" ? "补记未安排空档" : "Ask about unplanned gaps"}
-      description={lang === "zh" ? "工作时间内，已过去且未安排的空档会提醒你补记实际工作。" : "During working hours, unplanned past gaps prompt you to log what you actually did."}
+      description={lang === "zh" ? "云端每 30 分钟检查一次；工作时间内至少 1 小时的空档会提醒你补记实际工作。" : "The cloud checks every 30 minutes; gaps of at least one hour during working hours prompt you to log what you actually did."}
       control={<SettingToggle checked={settings.proactiveAssistantGapChecks !== false} disabled={settings.proactiveAssistantEnabled === false} ariaLabel={lang === "zh" ? "补记未安排空档" : "Ask about unplanned gaps"} onChange={(next) => onSave({ proactiveAssistantGapChecks: next })} />}
     />
     <SettingRow
       title={lang === "zh" ? "空档阈值" : "Gap threshold"}
-      control={<SettingSelect<string> value={String(settings.proactiveAssistantGapThresholdMinutes || 30)} ariaLabel={lang === "zh" ? "空档阈值" : "Gap threshold"} onChange={(value) => onSave({ proactiveAssistantGapThresholdMinutes: Number(value) })} options={[15, 30, 45, 60, 90].map((minutes) => ({ value: String(minutes), label: `${minutes} ${lang === "zh" ? "分钟" : "min"}` }))} />}
+      control={<SettingSelect<string> value={String(settings.proactiveAssistantGapThresholdMinutes || 60)} ariaLabel={lang === "zh" ? "空档阈值" : "Gap threshold"} onChange={(value) => onSave({ proactiveAssistantGapThresholdMinutes: Number(value) })} options={[30, 45, 60, 90].map((minutes) => ({ value: String(minutes), label: `${minutes} ${lang === "zh" ? "分钟" : "min"}` }))} />}
     />
     <SettingRow
       title={lang === "zh" ? "晨间天气地点" : "Morning weather location"}

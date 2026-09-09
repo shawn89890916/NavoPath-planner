@@ -451,6 +451,8 @@ function normalizeChatMessages(value: unknown, forceSaved = false): ChatMessage[
       content: boundedPersistedString(message.content, MAX_PERSISTED_TEXT_LENGTH),
       createdAt: typeof message.createdAt === "string" && message.createdAt ? message.createdAt : now(),
       saved: forceSaved || Boolean(message.saved),
+      source: message.source === "scheduled_summary" ? "scheduled_summary" : "manual",
+      notificationId: persistedId(message.notificationId) || undefined,
       status: ["thinking", "done", "error"].includes(String(message.status)) ? message.status : "done",
       steps: steps.length > 0 ? steps : undefined,
       actions: actions.length > 0 ? actions : undefined,

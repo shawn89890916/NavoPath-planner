@@ -1,0 +1,18 @@
+.df-unfinished-dialog-layer { position: fixed; inset: 0; z-index: 130; display: grid; place-items: center; padding: 20px; background: rgb(39 35 30 / 22%); }
+.df-unfinished-dialog { width: min(580px, 100%); max-height: min(680px, calc(100vh - 40px)); overflow: auto; padding: 22px; color: var(--text-main); background: var(--surface-main); border: 1px solid var(--paper-rule); box-shadow: 0 18px 44px rgb(39 35 30 / 18%); }
+.df-unfinished-dialog-head { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--paper-rule); }
+.df-unfinished-dialog-head > div { display: grid; gap: 6px; }
+.df-unfinished-dialog-head p { margin: 0; color: var(--text-muted); font-size: 13px; }
+.df-unfinished-dialog-head button { width: 44px; height: 44px; margin: -10px -10px 0 0; border: 0; color: var(--text-muted); background: transparent; font-size: 26px; cursor: pointer; }
+.df-unfinished-dialog-list { display: grid; }
+.df-unfinished-dialog-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--paper-rule); }
+.df-unfinished-dialog-row > span { display: grid; gap: 4px; min-width: 0; }
+.df-unfinished-dialog-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.df-unfinished-dialog-row small { color: var(--text-muted); font: 11px var(--paper-mono); }
+.df-unfinished-dialog-row select { min-height: 40px; max-width: 190px; border: 0; border-bottom: 1px solid var(--paper-rule); color: var(--text-main); background: transparent; }
+.df-unfinished-dialog-actions { display: flex; justify-content: flex-end; gap: 16px; padding-top: 18px; }
+.df-unfinished-dialog-primary, .df-unfinished-dialog-secondary { min-height: 44px; padding: 0 4px; border: 0; border-bottom: 1px solid var(--accent-active); color: var(--accent-active); background: transparent; cursor: pointer; font: 600 13px var(--paper-sans); }
+.df-unfinished-dialog-secondary { border-bottom-color: var(--paper-rule); color: var(--text-muted); }
+.df-unfinished-dialog-primary:disabled { opacity: .45; cursor: not-allowed; }
+.df-unfinished-dialog-empty { margin: 0; padding: 24px 0; color: var(--text-muted); }
+@media (max-width: 520px) { .df-unfinished-dialog-layer { padding: 12px; place-items: end center; } .df-unfinished-dialog { padding: 18px; } .df-unfinished-dialog-row { align-items: start; flex-direction: column; gap: 8px; } .df-unfinished-dialog-row select { max-width: none; width: 100%; min-height: 44px; } }

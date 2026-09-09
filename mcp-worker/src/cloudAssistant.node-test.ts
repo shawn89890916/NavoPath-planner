@@ -1,7 +1,7 @@
 // @ts-nocheck
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildBehaviorProfile, findUnrecordedGap, ingestWorkspaceEvent, normalizeTaskOperations, previewTaskOperations, processAssistantMessage, verifyWebhookSignature, type CloudAssistantEnv } from "./cloudAssistant.ts";
+import { buildBehaviorProfile, findUnrecordedGap, findUpcomingTaskStarts, findUnfinishedTasks, ingestWorkspaceEvent, normalizeTaskOperations, previewTaskOperations, processAssistantMessage, verifyWebhookSignature, type CloudAssistantEnv } from "./cloudAssistant.ts";
 
 function task(overrides: Record<string, unknown> = {}) {
   return {
@@ -154,4 +154,25 @@ test("finds only a past unplanned interval and excludes task blocks and actual l
     timeEntries: [{ startAt: "2026-08-31T02:00:00.000Z", durationMinutes: 30 }],
   }, { date: "2026-08-31", nowMinutes: 12 * 60, startMinutes: 9 * 60, endMinutes: 19 * 60, thresholdMinutes: 30 });
   assert.deepEqual(result, { start: 630, end: 720, startTime: "10:30", endTime: "12:00" });
+});
+
+test("finds one-minute task starts and excludes completed or cancelled blocks", () => {
+  const result = findUpcomingTaskStarts({ tasks: [
+    task({ timelineRecords: [{ id: "record-1", taskId: "task-1", scheduledDate: "2026-08-28", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled" }] }),
+    task({ id: "task-done", completed: true, timelineRecords: [{ id: "record-done", scheduledDate: "2026-08-28", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled" }] }),
+    task({ id: "task-cancelled", timelineRecords: [{ id: "record-cancelled", scheduledDate: "2026-08-28", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "cancelled" }] }),
+  ] }, new Date("2026-08-28T00:59:00.000Z"));
+  assert.deepEqual(result.map((item) => item.recordId), ["record-1"]);
+  assert.deepEqual(findUpcomingTaskStarts({ tasks: [task()] }, new Date("2026-08-28T01:01:31.000Z")), []);
+});
+
+test("aggregates unfinished blocks at workday end and handles a block crossing midnight", () => {
+  const result = findUnfinishedTasks({ tasks: [
+    task({ timelineRecords: [{ id: "record-1", taskId: "task-1", scheduledDate: "2026-08-28", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled" }] }),
+    task({ id: "task-complete", completed: true, timelineRecords: [{ id: "record-complete", scheduledDate: "2026-08-28", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled" }] }),
+    task({ id: "task-crossing", timelineRecords: [{ id: "record-crossing", scheduledDate: "2026-08-28", scheduledStart: "23:30", scheduledEndDate: "2026-08-29", scheduledEnd: "00:30", executionStatus: "scheduled" }] }),
+    task({ id: "task-running", timelineRecords: [{ id: "record-running", scheduledDate: "2026-08-28", scheduledStart: "21:30", scheduledEnd: "22:30", executionStatus: "scheduled" }] }),
+  ] }, "2026-08-28", new Date("2026-08-28T14:00:00.000Z"));
+  assert.deepEqual(result.map((item) => item.recordId), ["record-1", "record-running"]);
+  assert.deepEqual(findUnfinishedTasks({ tasks: [task({ timelineRecords: [{ id: "record-1", taskId: "task-1", scheduledDate: "2026-08-28", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled" }] })] }, "2026-08-28", new Date("2026-08-28T00:59:59.000Z")), []);
 });

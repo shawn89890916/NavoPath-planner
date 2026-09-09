@@ -64,7 +64,7 @@ export const defaultSettings: Settings = {
   proactiveAssistantIntroSeen: false,
   proactiveAssistantAutoAdjust: true,
   proactiveAssistantGapChecks: true,
-  proactiveAssistantGapThresholdMinutes: 30,
+  proactiveAssistantGapThresholdMinutes: 60,
   addAdvancedOpen: false,
   uiStyle: "gradient",
   dayStartTime: "00:00",

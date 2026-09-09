@@ -1,0 +1,19 @@
+.df-proactive-center-layer { position: fixed; inset: 0; z-index: 120; background: rgb(39 35 30 / 12%); }
+.df-proactive-center { position: absolute; top: 62px; right: 18px; width: min(420px, calc(100vw - 24px)); max-height: min(620px, calc(100vh - 82px)); overflow: auto; padding: 18px 20px; color: var(--text-main); background: var(--surface-main); border: 1px solid var(--paper-rule); box-shadow: 0 14px 34px rgb(39 35 30 / 14%); }
+.df-proactive-center-head { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--paper-rule); }
+.df-proactive-center-head > div { display: grid; gap: 4px; }
+.df-proactive-center-head small { color: var(--text-muted); font: 11px var(--paper-mono); }
+.df-proactive-center-close { width: 44px; height: 44px; margin: -8px -8px 0 0; border: 0; color: var(--text-muted); background: transparent; font-size: 26px; line-height: 1; cursor: pointer; }
+.df-proactive-center-list { display: grid; }
+.df-proactive-center-item { display: grid; gap: 10px; padding: 15px 0; border-bottom: 1px solid var(--paper-rule); }
+.df-proactive-center-item:last-child { border-bottom: 0; }
+.df-proactive-center-item-copy { display: grid; gap: 5px; }
+.df-proactive-center-item-copy p { margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.5; white-space: pre-wrap; }
+.df-proactive-center-action, .df-proactive-center-secondary { width: fit-content; min-height: 36px; padding: 0 2px; border: 0; border-bottom: 1px solid var(--accent-active); color: var(--accent-active); background: transparent; cursor: pointer; font: 600 12px var(--paper-sans); }
+.df-proactive-center-secondary { border-bottom-color: var(--paper-rule); color: var(--text-muted); }
+.df-proactive-center-gap { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.df-proactive-center-gap select { min-height: 36px; min-width: 0; flex: 1 1 210px; border: 0; border-bottom: 1px solid var(--paper-rule); color: var(--text-main); background: transparent; }
+.df-proactive-center-empty { margin: 0; padding: 28px 0; color: var(--text-muted); font-size: 13px; }
+@media (max-width: 640px) { .df-proactive-center { top: 54px; right: 12px; width: calc(100vw - 24px); padding: 16px; } }
+@media (max-width: 640px) { .df-proactive-center-action, .df-proactive-center-secondary, .df-proactive-center-gap select { min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) { .df-proactive-center-layer * { transition: none !important; } }

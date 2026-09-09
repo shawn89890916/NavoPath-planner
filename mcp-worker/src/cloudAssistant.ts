@@ -10,7 +10,7 @@ export interface CloudAssistantEnv {
 
 export type AssistantMessage = {
   userId: string;
-  trigger: "morning" | "evening" | "workspace_event" | "gap_check";
+  trigger: "morning" | "evening" | "workspace_event" | "gap_check" | "notification_tick";
   scheduledDate?: string;
 };
 
@@ -154,6 +154,38 @@ function shanghaiDateTime(value: unknown) {
   return { date: `${item.year}-${item.month}-${item.day}`, minutes: Number(item.hour) * 60 + Number(item.minute) };
 }
 
+function fixedShanghaiTimestamp(date: string, time: string) {
+  return Date.parse(`${date}T${time}:00+08:00`);
+}
+
+type StartReminder = { taskId: string; recordId: string; title: string; date: string; startTime: string; endTime: string };
+type UnfinishedTask = StartReminder;
+
+/** Returns scheduled blocks whose start is within the one-minute reminder window. */
+export function findUpcomingTaskStarts(data: Json, now = new Date()): StartReminder[] {
+  const nowAt = now.getTime();
+  return (data.tasks || []).flatMap((task: Json) => (task.completed ? [] : (task.timelineRecords || []).flatMap((record: Json) => {
+    if (record.executionStatus !== "scheduled" || !ISO_DATE.test(record.scheduledDate || "") || !CLOCK.test(record.scheduledStart || "") || !CLOCK.test(record.scheduledEnd || "")) return [];
+    const startAt = fixedShanghaiTimestamp(record.scheduledDate, record.scheduledStart);
+    const secondsUntilStart = (startAt - nowAt) / 1000;
+    if (secondsUntilStart < -30 || secondsUntilStart > 90) return [];
+    return [{ taskId: String(task.id), recordId: String(record.id), title: cleanText(task.title, 300), date: record.scheduledDate, startTime: record.scheduledStart, endTime: record.scheduledEnd }];
+  })));
+}
+
+/** Returns incomplete scheduled blocks already started on the current work day. */
+export function findUnfinishedTasks(data: Json, date: string, now = new Date()): UnfinishedTask[] {
+  const nowAt = now.getTime();
+  return (data.tasks || []).flatMap((task: Json) => (task.completed ? [] : (task.timelineRecords || []).flatMap((record: Json) => {
+    if (record.executionStatus !== "scheduled" || record.scheduledDate !== date || !CLOCK.test(record.scheduledStart || "") || !CLOCK.test(record.scheduledEnd || "")) return [];
+    const endDate = ISO_DATE.test(record.scheduledEndDate || "") ? record.scheduledEndDate : date;
+    const startAt = fixedShanghaiTimestamp(record.scheduledDate, record.scheduledStart);
+    const endAt = fixedShanghaiTimestamp(endDate, record.scheduledEnd);
+    if (startAt > nowAt || !Number.isFinite(endAt)) return [];
+    return [{ taskId: String(task.id), recordId: String(record.id), title: cleanText(task.title, 300), date, startTime: record.scheduledStart, endTime: record.scheduledEnd }];
+  })));
+}
+
 function median(values: number[]) {
   if (!values.length) return 0;
   const sorted = [...values].sort((a, b) => a - b);
@@ -201,11 +233,11 @@ export function buildBehaviorProfile(data: Json, date = shanghaiDate()) {
   const activityDays = new Set(activitySamples.map((sample) => sample.day)).size;
   const hasConfidentGapEvidence = activitySamples.length >= 3 && activityDays >= 2;
   // A user's typical logged work chunk is a conservative proxy for how much
-  // unlogged time is worth interrupting them about. Never lower the 30-minute
+  // unlogged time is worth interrupting them about. Never lower the 60-minute
   // default automatically; explicit settings remain the first priority.
   const gapThresholdMinutes = hasConfidentGapEvidence
     ? Math.max(30, Math.min(90, Math.round(median(activitySamples.map((sample) => sample.minutes)) / 15) * 15))
-    : 30;
+    : 60;
   return {
     version: 1,
     policyVersion: CLOUD_ASSISTANT_POLICY_VERSION,
@@ -523,18 +555,18 @@ function nextMorning() {
 }
 
 export async function sendNotification(env: CloudAssistantEnv, userId: string, input: Json) {
-  const kind = ["summary", "material_change", "deadline_risk", "weather", "needs_input", "gap_check"].includes(input.kind) ? input.kind : "summary";
+  const kind = ["summary", "material_change", "deadline_risk", "weather", "needs_input", "gap_check", "task_start", "unfinished_tasks", "daily_review"].includes(input.kind) ? input.kind : "summary";
   const urgency = input.urgency === "urgent" ? "urgent" : "normal";
   const title = cleanText(input.title, 160);
   const body = cleanText(input.body, 2000);
   const idempotencyKey = cleanText(input.idempotency_key, 240);
   if (!title || !body || !/^[A-Za-z0-9._:-]{8,240}$/.test(idempotencyKey)) throw new Error("Invalid notification");
   const currentMinutes = shanghaiClockMinutes();
-  const quiet = currentMinutes >= 19 * 60 || currentMinutes < 8 * 60 + 30;
+  const quiet = (currentMinutes >= 19 * 60 || currentMinutes < 8 * 60 + 30) && input.allow_during_quiet !== true;
   const interruptible = urgency === "urgent" && kind === "deadline_risk";
   const deliverAfter = quiet && !interruptible ? nextMorning() : isoNow();
   const settings = await dbJson<Json[]>(env, `navopath_cloud_assistant_settings?select=email_enabled&user_id=eq.${encodeURIComponent(userId)}&limit=1`);
-  const channels = ["in_app", ...(settings[0]?.email_enabled ? ["email"] : [])];
+  const channels = ["in_app", ...(settings[0]?.email_enabled && input.email === true ? ["email"] : [])];
   const rows = await dbJson<Json[]>(env, "navopath_notifications?on_conflict=user_id,idempotency_key", { method: "POST", headers: { Prefer: "resolution=ignore-duplicates,return=representation" }, body: JSON.stringify({ user_id: userId, idempotency_key: idempotencyKey, kind, title, body, urgency, channels, status: quiet && !interruptible ? "deferred" : "sent", deliver_after: deliverAfter, sent_at: quiet && !interruptible ? null : isoNow(), metadata: input.metadata && typeof input.metadata === "object" ? input.metadata : {} }) });
   if (rows[0] && channels.includes("email") && (!quiet || interruptible)) await sendEmail(env, userId, title, body);
   return rows[0] || { duplicate: true };
@@ -574,7 +606,14 @@ function compactWorkspace(profile: Profile, date: string) {
   const tasks = (profile.data.tasks || []).filter((task: Json) => !task.completed).slice(0, 160).map((task: Json) => ({ id: task.id, title: cleanText(task.title, 300), projectId: task.projectId || null, dueDate: task.dueDate || null, priority: task.priority || null, importance: task.importance || null, urgency: task.urgency || null, estimatedMinutes: Math.round((Number(task.estimatedHours) || 0.5) * 60), agentLocked: taskLocked(task), hardDeadline: hardDeadline(task), subtasks: (task.subtasks || []).slice(0, 12).map((subtask: Json) => ({ id: subtask.id, title: cleanText(subtask.title, 240), completed: Boolean(subtask.completed || subtask.done) })), schedule: (task.timelineRecords || []).filter((record: Json) => [date, tomorrow].includes(record.scheduledDate) && (!record.executionStatus || record.executionStatus === "scheduled")).map((record: Json) => ({ id: record.id, date: record.scheduledDate, start: record.scheduledStart, endDate: record.scheduledEndDate || record.scheduledDate, end: record.scheduledEnd })) }));
   const habits = (profile.data.habits || []).filter((habit: Json) => habit.archived !== true).slice(0, 40).map((habit: Json) => ({ id: habit.id, title: cleanText(habit.title, 240), defaultDurationMinutes: Math.max(5, Math.min(720, Number(habit.defaultDurationMinutes) || 30)), frequencyRule: habit.frequencyRule || "daily", activeWeekdays: Array.isArray(habit.activeWeekdays) ? habit.activeWeekdays.slice(0, 7) : [], reminder: habit.reminder?.enabled ? { enabled: true, time: cleanText(habit.reminder.time, 5) } : { enabled: false } }));
   const habitHistory = (profile.data.habitDailyStates || []).filter((state: Json) => state.date >= addDays(date, -30) && state.date <= date).slice(-500).map((state: Json) => ({ habitId: state.habitId, date: state.date, completed: state.completed === true }));
-  return { revision: profile.revision, date, tomorrow, tasks, habits, habitHistory };
+  const dayTasks: Array<{ task: Json; record: Json }> = (profile.data.tasks || []).flatMap((task: Json) => (task.timelineRecords || []).filter((record: Json) => record.scheduledDate === date).map((record: Json) => ({ task, record })));
+  const plannedMinutes = dayTasks.reduce((total, item) => total + Math.max(0, Math.round((fixedShanghaiTimestamp(item.record.scheduledEndDate || date, item.record.scheduledEnd) - fixedShanghaiTimestamp(item.record.scheduledDate, item.record.scheduledStart)) / 60_000)), 0);
+  const completedTasks = dayTasks.filter((item) => item.task.completed || item.record.executionStatus === "completed").length;
+  const actualMinutes = (profile.data.timeEntries || []).reduce((total: number, entry: Json) => {
+    const start = shanghaiDateTime(entry.startAt);
+    return total + (start?.date === date ? Math.max(0, Math.round(Number(entry.durationMinutes) || 0)) : 0);
+  }, 0);
+  return { revision: profile.revision, date, tomorrow, tasks, habits, habitHistory, dayReview: { scheduledBlocks: dayTasks.length, completedBlocks: completedTasks, unfinishedBlocks: dayTasks.filter((item) => !item.task.completed && item.record.executionStatus === "scheduled").length, plannedMinutes, actualMinutes } };
 }
 
 function mergeFileSnapshot(previous: unknown, events: Json[]) {
@@ -649,11 +688,11 @@ async function processGapCheck(env: CloudAssistantEnv, userId: string, profile: 
   if (nowMinutes >= quietAfter) return { skipped: "quiet_hours" };
   const startMinutes = clockMinutes(preferences.workStart || profile.settings.scheduleDayStartTime, 8 * 60);
   const endMinutes = Math.min(clockMinutes(preferences.workEnd || profile.settings.dayEndTime, 22 * 60), quietAfter);
-  const thresholdMinutes = Math.max(15, Math.min(180, Number(profile.settings.proactiveAssistantGapThresholdMinutes) || Number(preferences.gapCheck?.thresholdMinutes) || Number(state.behavior_profile?.gapThresholdMinutes) || 30));
+  const thresholdMinutes = Math.max(15, Math.min(180, Number(profile.settings.proactiveAssistantGapThresholdMinutes) || Number(preferences.gapCheck?.thresholdMinutes) || Number(state.behavior_profile?.gapThresholdMinutes) || 60));
   const busy = await dbJson<Json[]>(env, `navopath_calendar_occurrences?select=start_at,end_at&user_id=eq.${encodeURIComponent(userId)}&status=neq.cancelled&start_date=lte.${date}&end_date=gte.${date}&limit=100`);
   const gap = findUnrecordedGap(profile.data, { date, nowMinutes, startMinutes, endMinutes, thresholdMinutes, busy });
   if (!gap) return { skipped: "no_unrecorded_gap" };
-  const key = `gap:${date}:${gap.startTime}:${gap.endTime}`;
+  const key = `gap:${date}:${gap.startTime}`;
   const notification = await sendNotification(env, userId, {
     kind: "gap_check",
     title: "补记一段时间",
@@ -669,8 +708,70 @@ async function processGapCheck(env: CloudAssistantEnv, userId: string, profile: 
   return { gap, notification };
 }
 
+function settingClock(settings: Json, primary: string, fallback: string) {
+  const value = typeof settings[primary] === "string" && CLOCK.test(settings[primary]) ? settings[primary] : fallback;
+  return value;
+}
+
+async function processNotificationTick(env: CloudAssistantEnv, userId: string, date: string) {
+  const [profile, settingsRows] = await Promise.all([
+    getCloudProfile(env, userId),
+    dbJson<Json[]>(env, `navopath_cloud_assistant_settings?select=*&user_id=eq.${encodeURIComponent(userId)}&limit=1`),
+  ]);
+  const assistantSettings = settingsRows[0] || {};
+  if (assistantSettings.enabled !== true || profile.settings.proactiveAssistantEnabled === false) return { skipped: "disabled" };
+  await deliverDueNotifications(env, userId);
+  const now = new Date();
+  const local = shanghaiDateTime(now.toISOString());
+  if (!local) return { skipped: "invalid_clock" };
+  const startTime = settingClock(profile.settings, "scheduleDayStartTime", settingClock(profile.settings, "aiStartBriefTime", String(assistantSettings.morning_time || "08:30").slice(0, 5)));
+  const endTime = settingClock(profile.settings, "dayEndTime", settingClock(profile.settings, "aiEndBriefTime", String(assistantSettings.evening_time || "20:30").slice(0, 5)));
+  const result = { startReminders: 0, unfinished: 0, queued: [] as string[] };
+  const starts = findUpcomingTaskStarts(profile.data, now);
+  await Promise.all(starts.map((item) => sendNotification(env, userId, {
+    kind: "task_start",
+    title: "任务即将开始",
+    body: `${item.startTime}–${item.endTime}：${item.title}`,
+    urgency: "normal",
+    allow_during_quiet: true,
+    idempotency_key: `task-start:${item.date}:${item.recordId}`,
+    metadata: { action: "task_start", taskId: item.taskId, recordId: item.recordId, date: item.date, startTime: item.startTime, endTime: item.endTime },
+  })));
+  result.startReminders = starts.length;
+
+  if (local.minutes % 30 === 0) {
+    await env.ASSISTANT_QUEUE.send({ userId, trigger: "gap_check", scheduledDate: date });
+    result.queued.push("gap_check");
+  }
+  if (`${String(Math.floor(local.minutes / 60)).padStart(2, "0")}:${String(local.minutes % 60).padStart(2, "0")}` === startTime && profile.settings.aiBriefsEnabled !== false) {
+    await env.ASSISTANT_QUEUE.send({ userId, trigger: "morning", scheduledDate: date });
+    result.queued.push("morning");
+  }
+  if (`${String(Math.floor(local.minutes / 60)).padStart(2, "0")}:${String(local.minutes % 60).padStart(2, "0")}` === endTime) {
+    const unfinished = findUnfinishedTasks(profile.data, date, now);
+    if (unfinished.length) {
+      await sendNotification(env, userId, {
+        kind: "unfinished_tasks",
+        title: "今天还有任务未完成",
+        body: `有 ${unfinished.length} 个时间轴任务未完成，请确认下一步安排。`,
+        urgency: "normal",
+        allow_during_quiet: true,
+        idempotency_key: `unfinished:${date}`,
+        metadata: { action: "unfinished_tasks", date, items: unfinished },
+      });
+      result.unfinished = unfinished.length;
+    }
+    if (profile.settings.aiBriefsEnabled !== false) {
+      await env.ASSISTANT_QUEUE.send({ userId, trigger: "evening", scheduledDate: date });
+      result.queued.push("evening");
+    }
+  }
+  return result;
+}
+
 export async function processAssistantMessage(env: CloudAssistantEnv, message: AssistantMessage) {
   const date = message.scheduledDate || shanghaiDate();
+  if (message.trigger === "notification_tick") return processNotificationTick(env, message.userId, date);
   let events: Json[] = [];
   if (message.trigger === "workspace_event") {
     const readyBefore = new Date(Date.now() - EVENT_SETTLE_SECONDS * 1000).toISOString();
@@ -717,17 +818,28 @@ export async function processAssistantMessage(env: CloudAssistantEnv, message: A
     const eventContext = events.map((event) => ({ changed_files: event.changed_files, fragments: event.fragments, summary: event.summary, schedule_impact: event.schedule_impact, timestamp: event.source_timestamp }));
     const plannerSnapshot = compactWorkspace(profile, date);
     const fileSnapshot = mergeFileSnapshot(stateRows[0]?.last_snapshot, events);
-    const context = { trigger: message.trigger, timezone: "Asia/Shanghai", workspace: plannerSnapshot, weather, events: eventContext, workspaceSnapshot: fileSnapshot.slice(-40).map((file) => ({ ...file, excerpt: cleanText(file.excerpt, 800) })), persistentState: { preferences: { ...(assistantSettings.preferences || {}), autoAdjust: profile.settings.proactiveAssistantAutoAdjust !== false }, behaviorProfile, lastScanSummary: stateRows[0]?.last_scan_summary || "", eventCursor: stateRows[0]?.event_cursor || 0, recentActivity: activityRows } };
+    const context = { trigger: message.trigger, timezone: "Asia/Shanghai", language: profile.settings.language === "zh" ? "zh" : "en", workspace: plannerSnapshot, weather, events: eventContext, workspaceSnapshot: fileSnapshot.slice(-40).map((file) => ({ ...file, excerpt: cleanText(file.excerpt, 800) })), persistentState: { preferences: { ...(assistantSettings.preferences || {}), autoAdjust: profile.settings.proactiveAssistantAutoAdjust !== false }, behaviorProfile, lastScanSummary: stateRows[0]?.last_scan_summary || "", eventCursor: stateRows[0]?.event_cursor || 0, recentActivity: activityRows } };
     await updateJob(env, job.job_id, { model_called: true });
     const decision = await callDecisionModel(env, context);
-    const applied = await batchUpdateTasks(env, message.userId, { operations: profile.settings.proactiveAssistantAutoAdjust === false ? [] : decision.operations, dryRun: false, commit: true, idempotencyKey: key, source: message.trigger === "workspace_event" ? "workspace_event" : "cloud_assistant", summary: decision.summary, reason: decision.reason });
-    const notification = decision.notification && (applied.applied || applied.confirmationRequired?.length || decision.notification.kind === "material_change" || decision.notification.kind === "deadline_risk" || decision.notification.kind === "weather" || decision.notification.kind === "needs_input")
-      ? await sendNotification(env, message.userId, { ...decision.notification, idempotency_key: `${key}:notification`.slice(0, 240), metadata: { changeSetId: applied.changeSet?.change_set_id || null } })
-      : null;
+    const applied = await batchUpdateTasks(env, message.userId, { operations: message.trigger === "evening" || profile.settings.proactiveAssistantAutoAdjust === false ? [] : decision.operations, dryRun: false, commit: true, idempotencyKey: key, source: message.trigger === "workspace_event" ? "workspace_event" : "cloud_assistant", summary: decision.summary, reason: decision.reason });
+    const scheduledSummary = message.trigger === "morning" || message.trigger === "evening"
+      ? await sendNotification(env, message.userId, {
+          kind: message.trigger === "evening" ? "daily_review" : "summary",
+          title: message.trigger === "evening" ? "今日收工复盘" : "今日开工简报",
+          body: [decision.summary, decision.notification?.body].filter((item) => typeof item === "string" && item.trim()).join("\n\n") || (message.trigger === "evening" ? "今天的复盘暂时没有更多内容。" : "今天的简报暂时没有更多内容。"),
+          urgency: "normal",
+          email: message.trigger === "morning",
+          allow_during_quiet: true,
+          idempotency_key: `${key}:brief`.slice(0, 240),
+          metadata: { action: message.trigger === "evening" ? "daily_review" : "morning_brief", date, targetConversation: message.trigger === "evening" ? "navopath-daily-review" : undefined, changeSetId: applied.changeSet?.change_set_id || null },
+        })
+      : decision.notification && (applied.applied || applied.confirmationRequired?.length || decision.notification.kind === "material_change" || decision.notification.kind === "deadline_risk" || decision.notification.kind === "weather" || decision.notification.kind === "needs_input")
+        ? await sendNotification(env, message.userId, { ...decision.notification, idempotency_key: `${key}:notification`.slice(0, 240), metadata: { changeSetId: applied.changeSet?.change_set_id || null } })
+        : null;
     const maxCursor = events.reduce((max, event) => Math.max(max, Number(event.event_cursor) || 0), Number(stateRows[0]?.event_cursor) || 0);
     await serviceDb(env, "navopath_cloud_assistant_state?on_conflict=user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates" }, body: JSON.stringify({ user_id: message.userId, event_cursor: maxCursor, last_snapshot: { planner: plannerSnapshot, files: fileSnapshot }, behavior_profile: behaviorProfile, last_scan_summary: decision.summary, last_model_call_at: isoNow(), ...(message.trigger === "morning" ? { last_morning_run_date: date } : {}), ...(message.trigger === "evening" ? { last_evening_run_date: date } : {}), updated_at: isoNow() }) });
     if (events.length) await serviceDb(env, `navopath_workspace_events?id=in.(${events.map((event) => event.id).join(",")})`, { method: "PATCH", body: JSON.stringify({ status: "processed", processed_at: isoNow() }) });
-    const result = { model: decision.model, summary: decision.summary, applied, notification };
+    const result = { model: decision.model, summary: decision.summary, applied, notification: scheduledSummary };
     await updateJob(env, job.job_id, { status: "completed", result, finished_at: isoNow() });
     return result;
   } catch (error) {
@@ -738,7 +850,7 @@ export async function processAssistantMessage(env: CloudAssistantEnv, message: A
   }
 }
 
-export async function scheduleCloudRuns(env: CloudAssistantEnv, trigger: "morning" | "evening" | "gap_check", date = shanghaiDate()) {
+export async function scheduleCloudRuns(env: CloudAssistantEnv, trigger: "morning" | "evening" | "gap_check" | "notification_tick", date = shanghaiDate()) {
   const rows = await dbJson<Array<{ user_id: string }>>(env, "navopath_cloud_assistant_settings?select=user_id&enabled=eq.true");
   await Promise.all(rows.map((row) => env.ASSISTANT_QUEUE.send({ userId: row.user_id, trigger, scheduledDate: date })));
   return rows.length;
