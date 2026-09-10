@@ -855,3 +855,12 @@ export async function scheduleCloudRuns(env: CloudAssistantEnv, trigger: "mornin
   await Promise.all(rows.map((row) => env.ASSISTANT_QUEUE.send({ userId: row.user_id, trigger, scheduledDate: date })));
   return rows.length;
 }
+
+/** Run minute-level deterministic checks without spending Queue operations. */
+export async function processNotificationTicks(env: CloudAssistantEnv, date = shanghaiDate()) {
+  const rows = await dbJson<Array<{ user_id: string }>>(env, "navopath_cloud_assistant_settings?select=user_id&enabled=eq.true");
+  const results = await Promise.allSettled(rows.map((row) => processNotificationTick(env, row.user_id, date)));
+  const failed = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
+  if (failed.length) throw new Error(`${failed.length} notification tick(s) failed`);
+  return rows.length;
+}

@@ -65,6 +65,12 @@ jobs:
           npx supabase@2.115.0 functions deploy ai-assistant --project-ref "$SUPABASE_PROJECT_REF" --use-api
           npx supabase@2.115.0 functions deploy external-calendar --project-ref "$SUPABASE_PROJECT_REF" --use-api
 
+      - name: Deploy MCP Worker
+        run: npm run deploy --prefix mcp-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Deploy to Cloudflare Pages
         run: npx wrangler pages deploy dist --project-name navopath-xiaoyang --branch production
         env:

@@ -10,7 +10,7 @@ import {
   getChangesSince,
   ingestWorkspaceEvent,
   processAssistantMessage,
-  scheduleCloudRuns,
+  processNotificationTicks,
   sendNotification,
   undoChange,
   verifyWebhookSignature,
@@ -270,7 +270,7 @@ export default {
     return mcpHandler.fetch(request, env, ctx);
   },
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(scheduleCloudRuns(env, "notification_tick").then((count) => console.log("Scheduled NavoPath notification ticks", { count })));
+    ctx.waitUntil(processNotificationTicks(env).then((count) => console.log("Processed NavoPath notification ticks", { count })));
   },
   async queue(batch: MessageBatch<AssistantMessage>, env: Env) {
     for (const message of batch.messages) {
