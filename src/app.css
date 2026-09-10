@@ -39377,3 +39377,99 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app:not(.theme-dark).mode-execute .df-time-grid {
   background-color: rgb(248, 247, 243);
 }
+
+/* Medium landscape workbench: keep the paper split usable between phone and
+   desktop widths. The compact mobile dock remains reserved for portrait mode. */
+@media (min-width: 701px) and (max-width: 980px) and (orientation: landscape) {
+  #root .df-app.mode-execute > .df-execute {
+    grid-template-columns: clamp(330px, 40%, 390px) minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px 16px 16px;
+    background: var(--surface-main);
+  }
+
+  #root .df-app.mode-execute .df-candidate-panel {
+    min-width: 0;
+    max-width: 100%;
+    padding: 17px 14px 12px;
+    overflow: visible;
+    border: 1px solid var(--paper-rule-strong);
+    border-radius: 14px;
+    background: var(--surface-card);
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--text-main) 11%, transparent);
+  }
+
+  #root .df-app.mode-execute .df-timeline-panel {
+    min-width: 0;
+    max-width: none;
+    border: 1px solid var(--paper-rule);
+    border-radius: 14px;
+    background: var(--surface-main);
+    box-shadow: none;
+  }
+
+  #root .df-app.mode-execute .df-timeline-content,
+  #root .df-app.mode-execute .df-timeline-daily {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+
+  #root .df-app.mode-execute .df-timeline-scroll {
+    width: min(470px, calc(100% - 86px));
+    min-width: 0;
+    max-width: none;
+    margin: 0 auto;
+    flex: 1 1 auto;
+    height: auto;
+    flex-basis: auto;
+  }
+
+  #root .df-app.mode-execute .df-candidate-list .df-task-block .df-task-checkbox-wrap {
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #root .df-app.mode-execute .df-candidate-list .df-task-block .df-task-block-check {
+    width: 18px;
+    min-width: 18px;
+    height: 18px;
+    min-height: 18px;
+    flex: 0 0 18px;
+    display: inline-flex;
+    padding: 0;
+  }
+
+  #root .df-app.mode-execute .df-candidate-list .df-task-block .df-task-block-check svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  #root .df-app.mode-execute .df-quick-add {
+    position: relative;
+    z-index: 3;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) 64px 48px;
+    background: var(--surface-card);
+  }
+
+  #root .df-app.mode-execute > :is(.df-add-fab, .df-ai-fab) {
+    position: fixed;
+    right: 16px;
+    left: auto;
+    top: auto;
+    z-index: 100;
+  }
+
+  #root .df-app.mode-execute > .df-add-fab {
+    bottom: 72px;
+  }
+
+  #root .df-app.mode-execute > .df-ai-fab {
+    bottom: 22px;
+  }
+}
