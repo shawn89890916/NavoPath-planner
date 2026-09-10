@@ -11,6 +11,7 @@ import {
   ingestWorkspaceEvent,
   processAssistantMessage,
   processNotificationTicks,
+  isQuarterHourTime,
   sendNotification,
   undoChange,
   verifyWebhookSignature,
@@ -140,7 +141,9 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return result(item);
     });
 
-    this.server.registerTool("create_task", { description: "Create a task and optionally schedule it.", inputSchema: { title: z.string().trim().min(1).max(300), projectId: z.string().optional(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(), durationMinutes: z.number().int().min(15).max(1440).default(30), notes: z.string().max(10000).optional() } }, async ({ title, projectId, dueDate, startTime, durationMinutes, notes }) => {
+    this.server.registerTool("create_task", { description: "Create a task and optionally schedule it. Scheduled times and durations must use 15-minute increments.", inputSchema: { title: z.string().trim().min(1).max(300), projectId: z.string().optional(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(), durationMinutes: z.number().int().min(15).max(1440).default(30), notes: z.string().max(10000).optional() } }, async ({ title, projectId, dueDate, startTime, durationMinutes, notes }) => {
+      if (startTime && !isQuarterHourTime(startTime)) throw new Error("SCHEDULE_TIME_MUST_USE_15_MINUTE_GRID");
+      if (durationMinutes % 15 !== 0) throw new Error("SCHEDULE_DURATION_MUST_USE_15_MINUTE_GRID");
       const profile = await getProfile(this.env, this.userId());
       const date = dueDate || today();
       const id = uid("task");
@@ -166,11 +169,13 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return result(await getChangesSince(this.env, this.userId(), cursor));
     });
 
-    this.server.registerTool("reschedule_task", { description: "Move or create the active schedule block for a task with conflict checks, audit, idempotency, and undo.", inputSchema: { taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(15).max(1440), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), idempotency_key: z.string().min(8).max(240), reason: z.string().max(500).optional() } }, async ({ taskId, startTime, durationMinutes, date, idempotency_key, reason }) => {
+    this.server.registerTool("reschedule_task", { description: "Move or create the active schedule block for a task with conflict checks, audit, idempotency, and undo. Scheduled times and durations must use 15-minute increments.", inputSchema: { taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(15).max(1440), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), idempotency_key: z.string().min(8).max(240), reason: z.string().max(500).optional() } }, async ({ taskId, startTime, durationMinutes, date, idempotency_key, reason }) => {
+      if (!isQuarterHourTime(startTime) || durationMinutes % 15 !== 0) throw new Error("SCHEDULE_MUST_USE_15_MINUTE_GRID");
       return result(await batchUpdateTasks(this.env, this.userId(), { operations: [{ type: "reschedule_task", taskId, startTime, durationMinutes, date, reason }], dryRun: false, commit: true, idempotencyKey: idempotency_key, source: "mcp", summary: "Rescheduled task", reason }));
     });
 
-    this.server.registerTool("upsert_schedule_block", { description: "Create or update one schedule block with conflict checks, audit, idempotency, and undo.", inputSchema: { taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), blockId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(15).max(1440), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), idempotency_key: z.string().min(8).max(240), reason: z.string().max(500).optional() } }, async ({ taskId, blockId, startTime, durationMinutes, date, idempotency_key, reason }) => {
+    this.server.registerTool("upsert_schedule_block", { description: "Create or update one schedule block with conflict checks, audit, idempotency, and undo. Scheduled times and durations must use 15-minute increments.", inputSchema: { taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), blockId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(15).max(1440), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), idempotency_key: z.string().min(8).max(240), reason: z.string().max(500).optional() } }, async ({ taskId, blockId, startTime, durationMinutes, date, idempotency_key, reason }) => {
+      if (!isQuarterHourTime(startTime) || durationMinutes % 15 !== 0) throw new Error("SCHEDULE_MUST_USE_15_MINUTE_GRID");
       return result(await batchUpdateTasks(this.env, this.userId(), { operations: [{ type: "upsert_schedule_block", taskId, blockId, startTime, durationMinutes, date, reason }], dryRun: false, commit: true, idempotencyKey: idempotency_key, source: "mcp", summary: "Upserted schedule block", reason }));
     });
 

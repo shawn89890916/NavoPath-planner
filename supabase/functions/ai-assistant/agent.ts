@@ -71,6 +71,7 @@ const SENSITIVE_SETTING_RE = /(password|secret|token|api.?key|auth|account|ident
 const RECURRENCE_RE = /recurrence/i;
 const ID_RE = /^[A-Za-z0-9._:-]{1,200}$/;
 const MAX_COMMANDS = 50;
+const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export type AgentCommandBatch = { commands: AgentCommand[]; valid: boolean; reason?: string };
 
@@ -80,6 +81,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function boundedText(value: unknown, max: number, fallback = "") {
   return typeof value === "string" ? value.trim().slice(0, max) : fallback;
+}
+
+function isQuarterHourTime(value: unknown): value is string {
+  return typeof value === "string" && CLOCK.test(value) && Number(value.slice(3)) % 15 === 0;
 }
 
 function now() {
@@ -406,7 +411,10 @@ export function executeAgentCommands(
     } else if (command.operation === "schedule" && command.entity === "task") {
       const date = boundedText(command.values?.date, 10, item.dueDate || timestamp.slice(0, 10));
       const start = boundedText(command.values?.start, 5, "09:00");
-      const duration = Math.max(15, Math.min(1440, Number(command.values?.durationMinutes) || 30));
+      const duration = Number(command.values?.durationMinutes) || 30;
+      if (!isQuarterHourTime(start)) throw new Error("SCHEDULE_TIME_MUST_USE_15_MINUTE_GRID");
+      if (duration < 15 || duration > 1440 || duration % 15 !== 0) throw new Error("SCHEDULE_DURATION_MUST_USE_15_MINUTE_GRID");
+      if (command.values?.end !== undefined && command.values?.end !== null && command.values?.end !== "" && !isQuarterHourTime(command.values?.end)) throw new Error("SCHEDULE_TIME_MUST_USE_15_MINUTE_GRID");
       const [hour, minute] = start.split(":").map(Number);
       const endMinutes = hour * 60 + minute + duration;
       const end = boundedText(command.values?.end, 5, `${String(Math.floor(endMinutes / 60) % 24).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`);

@@ -598,7 +598,24 @@ function validIsoDate(value: unknown) {
 }
 
 function validTime(value: unknown) {
-  return typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+  return typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value) && Number(value.slice(3)) % SLOT_MINUTES === 0;
+}
+
+function validScheduleDuration(value: unknown) {
+  if (value === undefined || value === null || value === "") return true;
+  const minutes = Number(value);
+  return Number.isFinite(minutes) && minutes >= SLOT_MINUTES && minutes <= 1440 && minutes % SLOT_MINUTES === 0;
+}
+
+function normalizeTaskStartTime(value: unknown, fallback = "09:00") {
+  const source = typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : fallback;
+  return minutesToTime(Math.min(24 * 60 - SLOT_MINUTES, Math.max(0, Math.round(timeToMinutes(source) / SLOT_MINUTES) * SLOT_MINUTES)));
+}
+
+function normalizeTaskDuration(value: unknown, fallback = 60) {
+  const minutes = Number(value);
+  const safe = Number.isFinite(minutes) && minutes > 0 ? minutes : fallback;
+  return Math.max(SLOT_MINUTES, Math.min(1440, Math.round(safe / SLOT_MINUTES) * SLOT_MINUTES));
 }
 
 function normalizeAiRecurrence(value: unknown, date: string, startTime?: string, durationMinutes?: number): TaskRecurrence | undefined {
@@ -613,20 +630,30 @@ function normalizeAiRecurrence(value: unknown, date: string, startTime?: string,
     frequency: raw.frequency as RecurrenceFrequency,
     startDate: normalizedStart,
     startTime: normalizedTime || undefined,
-    durationMinutes: normalizedTime ? Math.max(Number(raw.durationMinutes) || durationMinutes || 60, 15) : undefined,
+    durationMinutes: normalizedTime
+      ? Math.max(SLOT_MINUTES, Math.round((Number(raw.durationMinutes) || durationMinutes || 60) / SLOT_MINUTES) * SLOT_MINUTES)
+      : undefined,
     endDate: validIsoDate(raw.endDate) ? String(raw.endDate) : undefined,
     count: Number.isFinite(Number(raw.count)) && Number(raw.count) > 0 ? Number(raw.count) : undefined,
   };
 }
 
 function isValidAiAction(action: AiAction) {
-  if (action.type !== "import_schedule_item") return true;
   const raw = action as Record<string, unknown>;
-  return raw.kind === "task" &&
-    typeof raw.title === "string" && raw.title.trim().length > 0 &&
-    validIsoDate(raw.date) &&
-    (!raw.startTime || validTime(raw.startTime)) &&
-    (!raw.endTime || validTime(raw.endTime));
+  if (action.type === "import_schedule_item") {
+    return raw.kind === "task" &&
+      typeof raw.title === "string" && raw.title.trim().length > 0 &&
+      validIsoDate(raw.date) &&
+      (!raw.startTime || validTime(raw.startTime)) &&
+      (!raw.endTime || validTime(raw.endTime)) &&
+      validScheduleDuration(raw.durationMinutes);
+  }
+  if (action.type === "create_scheduled_task" || action.type === "create_task" || action.type === "schedule_task") {
+    return (!raw.start || validTime(raw.start)) &&
+      (!raw.end || validTime(raw.end)) &&
+      validScheduleDuration(raw.durationMinutes);
+  }
+  return true;
 }
 
 function minutesToTime(minutes: number) {
@@ -5219,12 +5246,14 @@ function App() {
 
   function createScheduledRecord(task: Task, scheduledDate: string, scheduledStart: string, durationMinutes: number): TimelineRecord {
     const now = new Date().toISOString();
+    const startTime = normalizeTaskStartTime(scheduledStart);
+    const duration = normalizeTaskDuration(durationMinutes);
     return {
       id: `${task.id}_rec_${Date.now().toString(36)}`,
       taskId: task.id,
       scheduledDate,
-      scheduledStart,
-      ...calculateTimelineRecordEnd(scheduledDate, scheduledStart, durationMinutes),
+      scheduledStart: startTime,
+      ...calculateTimelineRecordEnd(scheduledDate, startTime, duration),
       executionStatus: "scheduled",
       createdAt: now,
     };
@@ -7121,7 +7150,7 @@ function App() {
           const projectId = projects.some((project) => project.id === a.projectId) ? a.projectId : undefined;
           const learnedDuration = learnedTaskDurationMinutes(action.title, nextTasks, projectId);
           const recurrence = normalizeAiRecurrence(a.recurrence, a.date, a.startTime, a.durationMinutes);
-          const duration = Number(a.durationMinutes) || (a.startTime && a.endTime ? clockTimeSpanMinutes(a.startTime, a.endTime) : learnedDuration);
+          const duration = normalizeTaskDuration(Number(a.durationMinutes) || (a.startTime && a.endTime ? clockTimeSpanMinutes(a.startTime, a.endTime) : learnedDuration));
           const task: Task = {
             ...makeSmartTask({ ...defaultForm("task"), title: action.title, projectId: projectId || "", dueDate: a.date, estimatedHours: Math.max(duration, 15) / 60 }),
             category: validCategory(a.category), priority: validPriority(a.priority), notes: a.notes || "",
@@ -7137,14 +7166,14 @@ function App() {
       if ((action.type === "create_scheduled_task" || action.type === "create_task") && action.title) {
         const a = action as Record<string, any>;
         const projectId = projects.some((project) => project.id === a.projectId) ? a.projectId : undefined;
-        const duration = Math.max(Number(a.durationMinutes) || learnedTaskDurationMinutes(action.title, nextTasks, projectId), 15);
-        const startTime = a.start || "09:00";
+        const duration = normalizeTaskDuration(Number(a.durationMinutes) || learnedTaskDurationMinutes(action.title, nextTasks, projectId));
+        const startTime = normalizeTaskStartTime(a.start);
         const date = a.date || today;
         const task: Task = {
           ...makeSmartTask({ ...defaultForm("task"), title: action.title, projectId: projectId || "", dueDate: date, estimatedHours: duration / 60 }),
           importance: null, urgency: null, notes: a.reason || "", goalId: "",
           scheduledDate: date, scheduledStart: startTime,
-          scheduledEnd: a.end || addMinutes(startTime, duration), subtasks: [], order: Date.now(),
+          scheduledEnd: validTime(a.end) ? a.end : addMinutes(startTime, duration), subtasks: [], order: Date.now(),
           createdAt: now, updatedAt: now,
         };
         nextTasks.push(task);
@@ -7157,8 +7186,10 @@ function App() {
         const index = nextTasks.findIndex((task) => task.id === action.taskId);
         if (index !== -1) {
           if (!previousTasks.some((task) => task.id === nextTasks[index].id)) previousTasks.push(nextTasks[index]);
-          nextTasks[index] = { ...nextTasks[index], scheduledDate: action.date, scheduledStart: a.start || nextTasks[index].scheduledStart, scheduledEnd: a.end || nextTasks[index].scheduledEnd };
-          focus ||= { date: action.date, startTime: a.start || nextTasks[index].scheduledStart, taskId: action.taskId, source: "schedule" };
+          const startTime = normalizeTaskStartTime(a.start || nextTasks[index].scheduledStart);
+          const endTime = validTime(a.end) ? a.end : addMinutes(startTime, normalizeTaskDuration(taskDuration(nextTasks[index])));
+          nextTasks[index] = { ...nextTasks[index], scheduledDate: action.date, scheduledStart: startTime, scheduledEnd: endTime };
+          focus ||= { date: action.date, startTime, taskId: action.taskId, source: "schedule" };
         }
       }
     }
@@ -7634,7 +7665,7 @@ function App() {
       } else {
         const projectId = projects.some((project) => project.id === a.projectId) ? a.projectId : undefined;
         const recurrence = normalizeAiRecurrence(a.recurrence, a.date, a.startTime, a.durationMinutes);
-        const duration = Number(a.durationMinutes) || (a.startTime && a.endTime ? clockTimeSpanMinutes(a.startTime, a.endTime) : learnedTaskDurationMinutes(action.title, currentData.tasks, projectId));
+        const duration = normalizeTaskDuration(Number(a.durationMinutes) || (a.startTime && a.endTime ? clockTimeSpanMinutes(a.startTime, a.endTime) : learnedTaskDurationMinutes(action.title, currentData.tasks, projectId)));
         const task: Task = {
           ...makeSmartTask({ ...defaultForm("task"), title: action.title, projectId: projectId || "", dueDate: a.date, estimatedHours: Math.max(duration, 15) / 60 }),
           category: validCategory(a.category), priority: validPriority(a.priority), notes: a.notes || "",
@@ -7650,9 +7681,9 @@ function App() {
     if ((action.type === "create_scheduled_task" || action.type === "create_task") && action.title) {
       const a = action as Record<string, unknown>;
       const projectId = projects.some((project) => project.id === a.projectId) ? a.projectId as string : undefined;
-      const dur = (a.durationMinutes as number) || learnedTaskDurationMinutes(action.title, currentData.tasks, projectId);
-      const startTime = (a.start as string) || "09:00";
-      const endTime = (a.end as string) || addMinutes(startTime, dur);
+      const dur = normalizeTaskDuration((a.durationMinutes as number) || learnedTaskDurationMinutes(action.title, currentData.tasks, projectId));
+      const startTime = normalizeTaskStartTime(a.start);
+      const endTime = validTime(a.end) ? a.end as string : addMinutes(startTime, dur);
       const newTask: Task = {
         id: `ai_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 8)}`,
         title: action.title,
@@ -7687,7 +7718,7 @@ function App() {
       const a = action as Record<string, unknown>;
       const updatedTasks = currentData.tasks.map((t) =>
         t.id === action.taskId
-          ? { ...t, scheduledDate: action.date, scheduledStart: (a.start as string) || t.scheduledStart, scheduledEnd: (a.end as string) || t.scheduledEnd }
+          ? { ...t, scheduledDate: action.date, scheduledStart: normalizeTaskStartTime(a.start || t.scheduledStart), scheduledEnd: validTime(a.end) ? a.end as string : addMinutes(normalizeTaskStartTime(a.start || t.scheduledStart), normalizeTaskDuration(taskDuration(t))) }
           : t
       );
       await saveData({ ...currentData, version: currentData.version || 1, tasks: updatedTasks });

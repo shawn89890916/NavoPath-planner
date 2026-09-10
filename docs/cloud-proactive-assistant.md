@@ -4,8 +4,8 @@
 
 主动助理运行在现有 `navopath-mcp` Cloudflare Worker 中，不依赖用户电脑：
 
-- Cloudflare Cron 每分钟触发一次；在 `Asia/Shanghai` 的 `08:30` 和 `20:30` 分别排入晨间与晚间助理，其他工作时段每 30 分钟排入一次确定性的空档检查。
-- Cron 直接为已启用的账户执行分钟级确定性通知检查；只有天气、工作区读取、DeepSeek 决策、写入和失败重试等主动助理工作进入 Cloudflare Queue，避免把每分钟检查本身计入 Queue 操作额度。
+- Cloudflare Cron 在每小时的 `14/29/44/59` 分执行任务开始前检查，并在 `00/30` 分运行整点与半点逻辑；在 `Asia/Shanghai` 的 `08:30` 和 `20:30` 分别排入晨间与晚间助理，其他工作时段每 30 分钟排入一次确定性的空档检查。
+- Cron 直接为已启用的账户执行确定性通知检查；只有天气、工作区读取、DeepSeek 决策、写入和失败重试等主动助理工作进入 Cloudflare Queue，避免把定时检查本身计入 Queue 操作额度。
 - 工作区事件通过 HTTPS API 入库后延迟 45 秒入队。消费者一次认领同一用户所有已经稳定 30 秒的事件，从而合并编辑器一次保存产生的多条事件。
 - Supabase 保存启用状态、用户偏好、事件游标、最后快照、上次扫描摘要、Agent job、通知和 change set。模型不承担记忆职责。
 - 每个晨/晚 job 使用 `schedule:<morning|evening>:<date>`；空档 job 以 30 分钟桶为键，实际提醒以日期和空档范围为键；每个事件 job 使用事件 ID 集合的 SHA-256 作为幂等键。重复队列消息不会再次调用模型。
@@ -148,4 +148,4 @@ npm run deploy --prefix mcp-worker
 
 主分支发布流程也会在检查通过后自动部署 MCP Worker，确保 Queue、Cron 和 Worker 代码与仓库保持一致。
 
-Cron Trigger 使用 `* * * * *`；Worker 按上海时间识别分钟级任务提醒，以及晨间、晚间和每 30 分钟一次的工作时段空档检查。Cloudflare 的运行方式见 [Cron Triggers](https://developers.cloudflare.com/workers/configuration/cron-triggers/) 和 [Worker handlers](https://developers.cloudflare.com/workers/runtime-apis/handlers/)。
+Cron Trigger 使用 `14,29,44,59 * * * *` 与 `0,30 * * * *`；Worker 按上海时间识别 15 分钟时间轴上的任务提醒，以及晨间、晚间和每 30 分钟一次的工作时段空档检查。Cloudflare 的运行方式见 [Cron Triggers](https://developers.cloudflare.com/workers/configuration/cron-triggers/) 和 [Worker handlers](https://developers.cloudflare.com/workers/runtime-apis/handlers/)。

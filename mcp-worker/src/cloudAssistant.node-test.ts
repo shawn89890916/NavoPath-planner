@@ -1,7 +1,7 @@
 // @ts-nocheck
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildBehaviorProfile, findUnrecordedGap, findUpcomingTaskStarts, findUnfinishedTasks, ingestWorkspaceEvent, normalizeTaskOperations, previewTaskOperations, processAssistantMessage, verifyWebhookSignature, type CloudAssistantEnv } from "./cloudAssistant.ts";
+import { buildBehaviorProfile, findUnrecordedGap, findUpcomingTaskStarts, findUnfinishedTasks, ingestWorkspaceEvent, isQuarterHourTime, normalizeTaskOperations, previewTaskOperations, processAssistantMessage, verifyWebhookSignature, type CloudAssistantEnv } from "./cloudAssistant.ts";
 
 function task(overrides: Record<string, unknown> = {}) {
   return {
@@ -32,20 +32,26 @@ test("normalizes only bounded, allowlisted task operations", () => {
     { type: "delete_task", taskId: "task-1" },
     { type: "update_task", taskId: "bad id with spaces", patch: { completed: true } },
   ]);
-  assert.deepEqual(operations, [{ type: "reschedule_task", taskId: "task-1", date: "2026-08-29", startTime: "23:50", durationMinutes: 1440, reason: "Move it" }]);
+  assert.deepEqual(operations, []);
+});
+
+test("accepts only quarter-hour task schedule times", () => {
+  assert.equal(isQuarterHourTime("09:00"), true);
+  assert.equal(isQuarterHourTime("09:15"), true);
+  assert.equal(isQuarterHourTime("09:07"), false);
 });
 
 test("reschedules an existing block across midnight and records exact before and after values", () => {
-  const preview = previewTaskOperations({ tasks: [task()] }, [{ type: "reschedule_task", taskId: "task-1", date: "2026-08-29", startTime: "23:50", durationMinutes: 30, reason: "Prepare tomorrow" }]);
+  const preview = previewTaskOperations({ tasks: [task()] }, [{ type: "reschedule_task", taskId: "task-1", date: "2026-08-29", startTime: "23:45", durationMinutes: 30, reason: "Prepare tomorrow" }]);
   assert.equal(preview.confirmationRequired.length, 0);
   assert.equal(preview.changes.length, 1);
   assert.deepEqual(preview.data.tasks[0].timelineRecords[0], {
     id: "record-1",
     taskId: "task-1",
     scheduledDate: "2026-08-29",
-    scheduledStart: "23:50",
+    scheduledStart: "23:45",
     scheduledEndDate: "2026-08-30",
-    scheduledEnd: "00:20",
+    scheduledEnd: "00:15",
     executionStatus: "scheduled",
     createdAt: "2026-08-28T00:00:00.000Z",
   });

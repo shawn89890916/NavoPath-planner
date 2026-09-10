@@ -7,6 +7,7 @@
 - 放大顶栏同步、搜索、通知和设置图标，品牌标志保持无边框且禁用时不再显示禁止手势。
 - 顶栏、移动 Dock、模板操作和桌面小组件统一复用同一套图标组件，保持图标尺寸、语义标签和交互状态一致。
 - 降低云端主动助理的 Queue 用量：分钟级通知检查改为直接运行，任务开始提醒继续保持及时，晨间简报、晚间复盘、空档检查和工作区事件仍按需排队处理。
+- 任务排程现在严格使用时间轴的 15 分钟刻度：AI、MCP 和 Agent 都只接受 `:00`、`:15`、`:30`、`:45` 的开始时间及 15 分钟倍数时长；主动提醒改为在 `14/29/44/59` 分执行，并保留整点与半点的空档和简报检查。
 
 ## 2026-09-09 · 主动通知与每日 AI 助理
 
@@ -93,6 +94,7 @@
 - Enlarged the sync, search, notification, and settings icons in the header; the brand mark stays borderless and no longer shows a forbidden cursor when disabled.
 - Reused one shared icon component set across the header, mobile dock, template actions, and desktop widget so icon sizing, labels, and interaction states stay consistent.
 - Reduced Cloud Assistant Queue usage by running minute-level notification checks directly; task-start reminders remain timely while morning briefs, evening reviews, gap checks, and workspace events continue to use the queue when needed.
+- Restricted task scheduling to the timeline's 15-minute grid across AI, MCP, and Agent: starts must be at `:00`, `:15`, `:30`, or `:45`, durations must be multiples of 15 minutes, and proactive reminders run at `14/29/44/59` past each hour while exact half-hour and brief checks remain active.
 
 ## 2026-09-09 · Proactive notifications and daily AI assistant
 

@@ -35,6 +35,16 @@ const SAFE_ID = /^[A-Za-z0-9._:-]{1,200}$/;
 const EVENT_SETTLE_SECONDS = 30;
 export const CLOUD_ASSISTANT_POLICY_VERSION = "proactive-v2";
 
+export function isQuarterHourTime(value: unknown): value is string {
+  return typeof value === "string" && CLOCK.test(value) && Number(value.slice(3)) % 15 === 0;
+}
+
+function quarterHourDuration(value: unknown, fallback = 30) {
+  const minutes = Number(value);
+  const safe = Number.isFinite(minutes) && minutes > 0 ? minutes : fallback;
+  return Math.max(15, Math.min(1440, Math.round(safe / 15) * 15));
+}
+
 export async function serviceDb(env: CloudAssistantEnv, path: string, init?: RequestInit) {
   return fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
     ...init,
@@ -318,9 +328,12 @@ export function normalizeTaskOperations(value: unknown): TaskOperation[] {
     if (item.type === "create_task") {
       const title = cleanText(item.title, 300);
       if (!title) continue;
-      const startTime = CLOCK.test(item.startTime || "") ? item.startTime : undefined;
+      const hasStartTime = item.startTime !== undefined && item.startTime !== null && item.startTime !== "";
+      const hasDuration = item.durationMinutes !== undefined && item.durationMinutes !== null && item.durationMinutes !== "";
+      if ((hasStartTime && !isQuarterHourTime(item.startTime)) || (hasDuration && (!Number.isInteger(Number(item.durationMinutes)) || Number(item.durationMinutes) < 15 || Number(item.durationMinutes) > 1440 || Number(item.durationMinutes) % 15 !== 0))) continue;
+      const startTime = isQuarterHourTime(item.startTime) ? item.startTime : undefined;
       const dueDate = ISO_DATE.test(item.dueDate || "") ? item.dueDate : undefined;
-      operations.push({ type: "create_task", title, projectId: SAFE_ID.test(item.projectId || "") ? item.projectId : undefined, dueDate, startTime, durationMinutes: Math.max(15, Math.min(1440, Math.round(Number(item.durationMinutes) || 30))), notes: cleanText(item.notes, 4000), reason });
+      operations.push({ type: "create_task", title, projectId: SAFE_ID.test(item.projectId || "") ? item.projectId : undefined, dueDate, startTime, durationMinutes: quarterHourDuration(item.durationMinutes), notes: cleanText(item.notes, 4000), reason });
       continue;
     }
     const taskId = cleanText(item.taskId, 200);
@@ -345,8 +358,8 @@ export function normalizeTaskOperations(value: unknown): TaskOperation[] {
     if (item.type === "reschedule_task" || item.type === "upsert_schedule_block") {
       const date = cleanText(item.date, 10);
       const startTime = cleanText(item.startTime, 5);
-      const durationMinutes = Math.max(15, Math.min(1440, Math.round(Number(item.durationMinutes) || 0)));
-      if (!ISO_DATE.test(date) || !CLOCK.test(startTime) || !durationMinutes) continue;
+      const durationMinutes = quarterHourDuration(item.durationMinutes, 0);
+      if (!ISO_DATE.test(date) || !isQuarterHourTime(startTime) || !durationMinutes) continue;
       if (item.type === "reschedule_task") operations.push({ type: item.type, taskId, date, startTime, durationMinutes, reason });
       else operations.push({ type: item.type, taskId, blockId: SAFE_ID.test(item.blockId || "") ? item.blockId : undefined, date, startTime, durationMinutes, reason });
     }

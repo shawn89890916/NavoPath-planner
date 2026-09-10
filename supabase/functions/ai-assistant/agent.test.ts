@@ -146,3 +146,7 @@ test("external calendar busy time deterministically blocks conflicting schedules
     busyOccurrences: [{ start_at: "2026-08-20T09:00:00.000Z", end_at: "2026-08-20T10:00:00.000Z", start_date: "2026-08-20", end_date: "2026-08-20", all_day: false, status: "confirmed" }],
   }), /SCHEDULE_CONFLICT/);
 });
+
+test("rejects non-quarter-hour agent schedules", () => {
+  assert.throws(() => executeAgentCommands(data(), {}, [{ id: "schedule", entity: "task", operation: "schedule", targetId: "t1", values: { date: "2026-08-20", start: "15:07", durationMinutes: 30 } }]), /SCHEDULE_TIME_MUST_USE_15_MINUTE_GRID/);
+});
