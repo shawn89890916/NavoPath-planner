@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-09-11 · 窄屏 Execute 工作区
+
+### 修复
+- 修复 760px 以下横向窗口的 Execute 布局：候选区与过窄时间轴不会同时挤在屏幕内，改用完整时间轴和移动操作栏；底部 Dock 为时间内容预留空间，AI 与快速添加入口保持在可视区域内。
+
 ## 2026-09-10 · Execute 时间轴与快捷操作
 
 ### 改进
@@ -87,6 +92,13 @@
 ### 修复
 - 恢复 Execute 时间轴底卡的四角圆角，收窄左右下外边距；保持今日候选宽度与横向位置不变，略微上移，使其相对底卡的上、左、下留白统一为 6px；右移日期箭头与 Day / 3-Day / Week / Month 的纵向控件列对齐。
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
+
+# NavoPath Changelog
+
+## 2026-09-11 · Narrow Execute workspace
+
+### Fixed
+- Fixed the Execute layout below 760px in landscape: the candidate sheet and a collapsed timeline no longer compete for the same screen, the full timeline uses the mobile action layout, and the bottom dock reserves space so AI and quick-add actions stay visible without covering time content.
 
 ## 2026-09-10 · Execute timeline and quick actions
 

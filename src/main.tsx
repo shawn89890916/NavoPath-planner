@@ -88,6 +88,8 @@ import { TaskActions, TaskBlock, TaskBlockAccent, TaskBlockContent, TaskBlockDur
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, CandidateBlock, TimelineCanvas, TimelineEventBlock } from "./components/ExecutionSharedLayout";
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDivider, SettingDescription } from "./components/SettingsControls";
 import { CloseButton } from "./components/UiPrimitives";
+
+const COMPACT_LAYOUT_MEDIA_QUERY = "(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)";
 import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon } from "./components/UiIcons";
 import { SETTINGS_CATEGORIES, normalizeSettingsTarget, searchSettings, settingsSearchPath, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { getDefaultSettings } from "./defaultSettings";
@@ -1328,7 +1330,7 @@ function App() {
   const [authNotice, setAuthNotice] = useState<AuthNotice>(null);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [mode, setModeState] = useState<Mode>("execute");
-  const [compactLayout, setCompactLayout] = useState(() => window.matchMedia("(max-width: 899.98px) and (orientation: portrait)").matches);
+  const [compactLayout, setCompactLayout] = useState(() => window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches);
   const [compactExecuteView, setCompactExecuteView] = useState<CompactExecuteView>("schedule");
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [mobileQuickAddKind, setMobileQuickAddKind] = useState<MobileShortSheetKind>("task");
@@ -1709,7 +1711,7 @@ function App() {
   }, [fullscreen]);
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 899.98px) and (orientation: portrait)");
+    const media = window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY);
     const sync = () => setCompactLayout(media.matches);
     sync();
     media.addEventListener("change", sync);
@@ -11629,7 +11631,7 @@ function TaskCard({
   dragState?: TaskBlockDragState;
   lang: Language;
 }) {
-  const compact = window.matchMedia("(max-width: 899.98px) and (orientation: portrait)").matches;
+  const compact = window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches;
   const [openPanel, setOpenPanel] = useState<"more" | null>(null);
   const [subtasksOpen, setSubtasksOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState<"duration" | "deadline" | null>(null);

@@ -34964,7 +34964,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app.mode-planning .df-planning .df-tree-wrap { padding: 16px 12px 24px; }
 }
 
-@media (max-width: 899.98px) and (orientation: portrait) {
+@media (max-width: 899.98px) and (orientation: portrait),
+       (max-width: 760px) and (orientation: landscape) {
 
   #root .df-app.mode-planning .df-planning .df-view-btn span { display: inline; }
   #root .df-app .df-task-card .df-candidate-main { grid-column: 2; grid-row: 1; }
@@ -39380,7 +39381,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 /* Medium landscape workbench: keep the paper split usable between phone and
    desktop widths. The compact mobile dock remains reserved for portrait mode. */
-@media (min-width: 701px) and (max-width: 980px) and (orientation: landscape) {
+@media (min-width: 761px) and (max-width: 980px) and (orientation: landscape) {
   #root .df-app.mode-execute > .df-execute {
     grid-template-columns: clamp(330px, 40%, 390px) minmax(0, 1fr);
     gap: 12px;
