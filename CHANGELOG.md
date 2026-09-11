@@ -4,7 +4,7 @@
 
 ### 修复
 - 修复 760px 以下横向窗口的 Execute 布局：候选区与过窄时间轴不会同时挤在屏幕内，改用完整时间轴和移动操作栏；底部 Dock 为时间内容预留空间，AI 与快速添加入口保持在可视区域内。
-- 竖屏底栏将通知与设置合并到一个头像入口，设置页增加账户摘要、清晰的分组纸面和可直接访问的通知项；移除 Focus Mode 设置与强调色恢复按钮，强调色改为统一色板并同步作用于 Execute 与 Planning。
+- 修复竖屏与窄屏工作区的底栏对齐和 Planning 内容遮挡问题；底栏设置入口直接显示用户头像，设置页采用更清晰的分组列表结构。通知与设置共用头像入口，移除 Focus Mode 设置与强调色恢复按钮，强调色改为统一色板并同步作用于 Execute 与 Planning。
 
 ## 2026-09-10 · Execute 时间轴与快捷操作
 
@@ -100,7 +100,7 @@
 
 ### Fixed
 - Fixed the Execute layout below 760px in landscape: the candidate sheet and a collapsed timeline no longer compete for the same screen, the full timeline uses the mobile action layout, and the bottom dock reserves space so AI and quick-add actions stay visible without covering time content.
-- On portrait screens, notifications and settings now share one avatar entry in the bottom dock. The settings page adds an account summary, clearer paper groups, and a direct notifications row; the Focus Mode setting and accent-color restore action are removed, and one accent palette applies to both Execute and Planning.
+- Fixed bottom-dock alignment and the Planning content obstruction on portrait and narrow screens; the dock now shows the user avatar directly, and settings use a clearer grouped-list structure. Notifications and settings share the avatar entry, the Focus Mode setting and accent-color restore action are removed, and one accent palette applies to both Execute and Planning.
 
 ## 2026-09-10 · Execute timeline and quick actions
 
