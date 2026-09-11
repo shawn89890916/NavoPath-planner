@@ -90,7 +90,7 @@ import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumber
 import { CloseButton } from "./components/UiPrimitives";
 
 const COMPACT_LAYOUT_MEDIA_QUERY = "(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)";
-import { UiBellIcon, UiBotIcon, UiCalendarIcon, UiChevronRightIcon, UiCopyIcon, UiLanguagesIcon, UiMonitorIcon, UiPaletteIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiSettingsIcon, UiSunIcon, UiTrashIcon, UiUserIcon, UiWorkflowIcon } from "./components/UiIcons";
+import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon } from "./components/UiIcons";
 import { SETTINGS_CATEGORIES, normalizeSettingsTarget, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { getDefaultSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -14632,13 +14632,12 @@ function settingsCategoryDescription(category: SettingsCategory, lang: Language)
 function SettingsCategoryIcon({ category }: { category: SettingsCategory }) {
   const props = { size: 19, strokeWidth: 1.8 };
   switch (category) {
-    case "appearance": return <UiSunIcon {...props} />;
-    case "workflow": return <UiWorkflowIcon {...props} />;
-    case "account-data": return <UiUserIcon {...props} />;
-    case "ai": return <UiBotIcon {...props} />;
-    case "widget": return <UiMonitorIcon {...props} />;
-    case "integrations": return <UiCalendarIcon {...props} />;
-    default: return <UiSettingsIcon {...props} />;
+    case "appearance": return <UiPencilIcon {...props} />;
+    case "workflow": return <UiSearchIcon {...props} />;
+    case "account-data": return <UiBellIcon {...props} />;
+    case "ai": return <UiPlusIcon {...props} />;
+    case "widget": return <UiTrashIcon {...props} />;
+    default: return <UiCopyIcon {...props} />;
   }
 }
 
@@ -14942,7 +14941,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                   </header>
                   <div className="df-settings-home-card df-settings-home-quick-card">
                     <div className="df-settings-home-quick-row">
-                      <div className="df-settings-home-quick-label"><UiSunIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "界面模式" : "Appearance"}</span></div>
+                      <div className="df-settings-home-quick-label"><UiPencilIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "界面模式" : "Appearance"}</span></div>
                       <SettingSelect<Settings["theme"]>
                         value={settings.theme}
                         ariaLabel={lang === "zh" ? "界面模式" : "Appearance"}
@@ -14951,7 +14950,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                       />
                     </div>
                     <div className="df-settings-home-quick-row df-settings-home-quick-row--accent">
-                      <div className="df-settings-home-quick-label"><UiPaletteIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "强调色" : "Accent color"}</span></div>
+                      <div className="df-settings-home-quick-label"><UiCopyIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "强调色" : "Accent color"}</span></div>
                       <ProjectColorPicker
                         compact
                         presets={settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT}
@@ -14960,7 +14959,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                       />
                     </div>
                     <div className="df-settings-home-quick-row">
-                      <div className="df-settings-home-quick-label"><UiLanguagesIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "语言" : "Language"}</span></div>
+                      <div className="df-settings-home-quick-label"><UiBellIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "语言" : "Language"}</span></div>
                       <SettingSelect<Language>
                         value={settings.language || lang}
                         ariaLabel={lang === "zh" ? "语言" : "Language"}
@@ -14983,7 +14982,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                           <strong>{lang === "zh" ? category.labelZh : category.labelEn}</strong>
                           <small>{settingsCategoryDescription(category.id, lang)}</small>
                         </span>
-                        <UiChevronRightIcon className="df-settings-home-entry-chevron" size={20} strokeWidth={1.8} />
+                        <span className="df-settings-home-entry-chevron" aria-hidden="true">›</span>
                       </button>
                     ))}
                   </div>
