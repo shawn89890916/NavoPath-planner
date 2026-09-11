@@ -54,4 +54,9 @@ describe("settings navigation", () => {
     const ids = SETTINGS_SEARCH_ENTRIES.map((entry) => entry.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  it("does not expose Focus Mode as a settings destination", () => {
+    expect(SETTINGS_SEARCH_ENTRIES.some((entry) => entry.id === "focus-mode")).toBe(false);
+    expect(searchSettings("focus mode", "en")).toEqual([]);
+  });
 });

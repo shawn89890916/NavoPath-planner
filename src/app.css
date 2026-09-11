@@ -34966,6 +34966,13 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 @media (max-width: 899.98px) and (orientation: portrait),
        (max-width: 760px) and (orientation: landscape) {
+  #root .df-app:where(.mode-execute, .mode-planning) .df-utility-panel .df-utility-body.df-settings-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 0;
+    width: 100%;
+  }
+
 
   #root .df-app.mode-planning .df-planning .df-view-btn span { display: inline; }
   #root .df-app .df-task-card .df-candidate-main { grid-column: 2; grid-row: 1; }
@@ -37908,7 +37915,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     font-size: 16px;
   }
 
-  #root .df-app .df-settings-mobile-category select {
+  #root .df-app:where(.mode-execute, .mode-planning) .df-settings-shell .df-settings-mobile-category select {
     width: 100%;
     height: 44px;
     min-height: 44px;
@@ -39470,7 +39477,259 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     bottom: 72px;
   }
 
-  #root .df-app.mode-execute > .df-ai-fab {
+#root .df-app.mode-execute > .df-ai-fab {
     bottom: 22px;
+  }
+}
+
+/* Settings surface: one profile entry point on compact layouts, with clear
+   paper groups and a single ChatGPT-style accent palette. */
+#root .df-app .df-settings-shell {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+#root .df-app .df-settings-profile-hero {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 4px 0 16px;
+  border-bottom: 1px solid var(--paper-rule);
+}
+
+#root .df-app .df-settings-profile-hero .df-settings-avatar {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--text-main);
+  color: var(--surface-main);
+  overflow: hidden;
+}
+
+#root .df-app .df-settings-profile-hero .df-settings-avatar span {
+  font: 700 26px/1 var(--paper-display);
+}
+
+#root .df-app .df-settings-profile-hero .df-settings-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#root .df-app .df-settings-profile-hero > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+#root .df-app .df-settings-profile-hero strong {
+  overflow: hidden;
+  color: var(--text-main);
+  font: 700 18px/1.2 var(--paper-display);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .df-app .df-settings-profile-hero div span {
+  overflow: hidden;
+  color: var(--text-muted);
+  font: 500 11px/1.35 var(--paper-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .df-app .df-settings-shell > .df-settings-rail { grid-column: 1; grid-row: 2; }
+#root .df-app .df-settings-shell > .df-settings-content { grid-column: 2; grid-row: 2; }
+
+#root .df-app .df-settings-content {
+  padding: 2px 4px 18px 0;
+  background: color-mix(in srgb, var(--bg-app) 72%, var(--surface-main));
+}
+
+#root .df-app .df-settings-group {
+  margin: 0 0 18px;
+  padding: 16px 16px 4px;
+  border: 1px solid var(--paper-rule-strong);
+  border-radius: 12px;
+  background: var(--surface-card);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--text-main) 5%, transparent);
+}
+
+#root .df-app .df-settings-group-head {
+  margin: 0 0 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--paper-rule);
+}
+
+#root .df-app .df-settings-group-title { font-size: 12px; }
+#root .df-app .df-settings-group-desc { max-width: 54ch; }
+
+#root .df-app .df-settings-group--danger {
+  border-color: color-mix(in srgb, #C96F5B 55%, var(--paper-rule-strong));
+  background: color-mix(in srgb, #C96F5B 5%, var(--surface-card));
+}
+
+#root .df-app .df-theme-accent-setting {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0 14px;
+}
+
+#root .df-app .df-theme-accent-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#root .df-app .df-theme-accent-heading strong {
+  color: var(--text-main);
+  font: 600 13px/1.35 var(--paper-sans);
+}
+
+#root .df-app .df-theme-accent-current {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 2px solid color-mix(in srgb, var(--project-color) 55%, var(--text-faint));
+  border-radius: 50%;
+  background: var(--project-color);
+}
+
+#root .df-app .df-theme-accent-setting .df-project-color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid var(--paper-rule-strong);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-main) 88%, var(--bg-app));
+  box-shadow: none;
+}
+
+#root .df-app .df-theme-accent-setting .df-project-color-picker > button,
+#root .df-app .df-theme-accent-setting .df-project-color-custom,
+#root .df-app .df-theme-accent-setting .df-project-color-custom input,
+#root .df-app .df-theme-accent-setting .df-project-color-custom span {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+}
+
+#root .df-app .df-theme-accent-setting .df-project-color-picker > button[aria-label] {
+  border-radius: 50%;
+}
+
+#root .df-app .df-theme-accent-setting .df-project-color-picker > button.active {
+  outline: 2px solid var(--text-main);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+@media (max-width: 899.98px) and (orientation: portrait),
+       (max-width: 760px) and (orientation: landscape) {
+  #root .df-app:where(.mode-execute, .mode-planning) .df-mobile-dock {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    width: min(420px, calc(100% - 16px));
+    gap: 6px;
+    padding: 5px 6px;
+  }
+
+  #root .df-app .df-mobile-profile {
+    position: relative;
+    overflow: visible;
+    padding: 2px;
+    border: 1px solid var(--paper-rule-strong);
+    border-radius: 50%;
+    background: var(--surface-main);
+    color: var(--text-main);
+  }
+
+  #root .df-app .df-mobile-profile:hover,
+  #root .df-app .df-mobile-profile:focus-visible {
+    background: var(--surface-card);
+  }
+
+  #root .df-app .df-mobile-profile > img,
+  #root .df-app .df-mobile-profile > span:not(.df-proactive-notification-count) {
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    min-height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--text-main);
+    color: var(--surface-main);
+    font: 700 14px/1 var(--paper-display);
+  }
+
+  #root .df-app .df-mobile-profile .df-proactive-notification-count {
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    line-height: 14px;
+  }
+
+  #root .df-app .df-settings-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 0;
+  }
+
+  #root .df-app .df-settings-profile-hero {
+    grid-column: 1;
+    grid-row: 1;
+    padding: 8px 16px 14px;
+  }
+
+  #root .df-app .df-utility-panel .df-utility-body.df-settings-shell > .df-settings-rail {
+    grid-template-columns: minmax(0, 1fr) minmax(132px, 38%);
+    grid-column: 1;
+    grid-row: 2;
+    width: auto;
+  }
+
+  #root .df-app:where(.mode-execute, .mode-planning) .df-settings-mobile-category select {
+    padding-right: 26px;
+    padding-left: 10px;
+    font-size: 14px;
+  }
+
+  #root .df-app .df-utility-panel .df-utility-body.df-settings-shell > .df-settings-content {
+    grid-column: 1;
+    grid-row: 3;
+    padding: 14px 16px calc(28px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--bg-app) 78%, var(--surface-main));
+  }
+
+  #root .df-app:where(.mode-execute, .mode-planning) .df-settings-group {
+    margin-bottom: 18px;
+    padding: 16px 14px 4px;
+    border-radius: 14px;
+  }
+
+  #root .df-app:where(.mode-execute, .mode-planning) .df-settings-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    min-height: 60px;
+  }
+
+  #root .df-app:where(.mode-execute, .mode-planning) .df-settings-row-control { max-width: 48vw; }
+
+  #root .df-app .df-theme-accent-setting .df-project-color-picker {
+    gap: 14px;
+    padding: 14px 12px;
   }
 }

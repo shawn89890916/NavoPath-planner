@@ -127,7 +127,6 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("day-start", { category: "general" }, "一天开始时间", "Day start time", "timeline boundary 跨天"),
   entry("default-timeline", { category: "general" }, "默认时间轴视图", "Default timeline view", "day 3-day week month 日 周 月"),
   entry("continuous-scroll", { category: "general" }, "开启无限跨天滚动", "Continuous cross-day scroll", "timeline"),
-  entry("focus-mode", { category: "general" }, "默认专注模式", "Default focus mode", "timer stopwatch pomodoro flowtime 计时"),
   entry("hide-completed", { category: "general" }, "隐藏已完成任务", "Hide completed tasks", "timeline 时间轴"),
   entry("shortcuts", { category: "general" }, "快捷键", "Shortcuts", "keyboard hotkeys help 帮助"),
   entry("restart-onboarding", { category: "general" }, "重新开始新手指南", "Restart onboarding guide", "tutorial 引导"),

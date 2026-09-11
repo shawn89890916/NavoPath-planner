@@ -9862,12 +9862,9 @@ function App() {
             <button className={mode === "execute" ? "active" : ""} onClick={() => changeMode("execute")}>{term(lang, "execute")}</button>
             <button className={mode === "planning" ? "active" : ""} onClick={() => changeMode("planning")}>{term(lang, "planning")}</button>
           </div>
-          {authState?.mode === "cloud" && <button className={`df-mobile-dock-action df-proactive-notification-button${proactiveNotifications.length ? " has-unread" : ""}`} onClick={() => setNotificationCenterOpen(true)} aria-label={lang === "zh" ? `主动助理提醒${proactiveNotifications.length ? `，${proactiveNotifications.length} 条未读` : ""}` : `Proactive assistant messages${proactiveNotifications.length ? `, ${proactiveNotifications.length} unread` : ""}`}>
-            <UiBellIcon size={20} />
+          <button className={`df-mobile-dock-action df-mobile-profile${proactiveNotifications.length ? " has-unread" : ""}`} onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget({ category: "general" }); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")} title={t(lang, "header.settings")}>
+            {settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span aria-hidden="true">{(settings.displayName || "N").slice(0, 1).toUpperCase()}</span>}
             {proactiveNotifications.length > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{proactiveNotifications.length > 9 ? "9+" : proactiveNotifications.length}</span>}
-          </button>}
-          <button className="df-mobile-dock-action df-mobile-settings" onClick={() => { rememberLayerTrigger("utility"); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01A1.65 1.65 0 0 0 10.91 3H11a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
         </nav>
       )}
@@ -9886,7 +9883,7 @@ function App() {
       {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} />}
       {aiOpen && <AiPanel model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />}
       <CommandPalette open={commandOpen} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
-      {utilityPanel && settings && <UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} />}
+      {utilityPanel && settings && <UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} />}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
       {focusOverlayMode && (
         <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: focusProject.color } as React.CSSProperties : undefined}>
@@ -14618,7 +14615,7 @@ function PluginRuntimePanel({ settings, data, onSave, onSaveData, lang }: { sett
   );
 }
 
-function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose, onSave, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang, onOpenScheduleTemplates }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language; onOpenScheduleTemplates?: () => void }) {
+function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose, onSave, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang, onOpenScheduleTemplates }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language; onOpenScheduleTemplates?: () => void }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
   const isDesktopRuntime = Boolean(window.desktopApi);
   const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
@@ -14899,6 +14896,16 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
         </div>
         {kind === "settings" ? (
           <div className="df-utility-body df-settings-shell">
+            <section className="df-settings-profile-hero" aria-label={lang === "zh" ? "当前账户" : "Current account"}>
+              <label className="df-settings-avatar" title={lang === "zh" ? "上传头像" : "Upload avatar"}>
+                {settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span>{(settings.displayName || "N").slice(0, 1).toUpperCase()}</span>}
+                <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { void uploadAvatar(event.target.files?.[0]); event.currentTarget.value = ""; }} />
+              </label>
+              <div>
+                <strong>{settings.displayName || (lang === "zh" ? "NavoPath 用户" : "NavoPath user")}</strong>
+                {authEmail && <span>{authEmail}</span>}
+              </div>
+            </section>
             <div className="df-settings-rail">
               <label className="df-settings-search">
                 <span className="df-visually-hidden">{lang === "zh" ? "搜索设置" : "Search settings"}</span>
@@ -15010,17 +15017,17 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
               <div className="df-settings-accent-colors" data-settings-anchor="accent-colors" tabIndex={-1}>
                 <SettingDescription>{lang === "zh" ? "点缀色用于细线、勾选与当前时间标记，不会作为大面积填充。" : "Accent colors are used for fine rules, checks, and the current-time marker, never as dominant fills."}</SettingDescription>
                 <div className="df-settings-accent-row">
-                  <ThemeColorSetting label={t(lang, "settings.executeAccent")} presets={settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT} value={settings.executeAccentColor || defaultAccent} onChange={(color) => onSave({ executeAccentColor: color })} />
-                  <ThemeColorSetting label={t(lang, "settings.planningAccent")} presets={settings.theme === "dark" ? PLANNING_THEME_PRESETS_DARK : PLANNING_THEME_PRESETS_LIGHT} value={settings.planningAccentColor || defaultAccent} onChange={(color) => onSave({ planningAccentColor: color })} />
+                  <ThemeAccentSetting
+                    label={lang === "zh" ? "强调色" : "Accent color"}
+                    presets={settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT}
+                    value={settings.executeAccentColor || settings.planningAccentColor || defaultAccent}
+                    onChange={(color) => onSave({ executeAccentColor: color, planningAccentColor: color })}
+                  />
                 </div>
-                <SettingRow
-                  title={lang === "zh" ? "恢复默认点缀色" : "Restore default accent colors"}
-                  control={<SettingActionButton onClick={() => onSave({ executeAccentColor: "", planningAccentColor: "" })}>{lang === "zh" ? "恢复" : "Restore"}</SettingActionButton>}
-                />
               </div>
             </SettingSection>}
 
-            {settingsTarget.category === "general" && <SettingSection anchor="execution-defaults" title={lang === "zh" ? "执行默认项" : "Execution defaults"} description={lang === "zh" ? "时间轴、专注与完成任务的默认行为。" : "Default timeline, focus, and completed-task behavior."}>
+            {settingsTarget.category === "general" && <SettingSection anchor="execution-defaults" title={lang === "zh" ? "执行默认项" : "Execution defaults"} description={lang === "zh" ? "时间轴与完成任务的默认行为。" : "Default timeline and completed-task behavior."}>
               <SettingRow
                 anchor="default-timeline"
                 title={lang === "zh" ? "默认时间轴视图" : "Default timeline view"}
@@ -15041,21 +15048,6 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                 title={lang === "zh" ? "开启无限跨天滚动" : "Continuous cross-day scroll"}
                 description={lang === "zh" ? "时间轴可连续滚动到前后日期。" : "The timeline scrolls continuously across days."}
                 control={<SettingToggle checked={settings.continuousCrossDayScroll !== false} ariaLabel={lang === "zh" ? "无限跨天滚动" : "Continuous cross-day scroll"} onChange={(next) => onSave({ continuousCrossDayScroll: next })} />}
-              />
-              <SettingRow
-                anchor="focus-mode"
-                title={lang === "zh" ? "默认专注模式" : "Default focus mode"}
-                description={lang === "zh" ? "进入专注时默认使用的计时方式。" : "Timer mode used when entering focus."}
-                control={<SettingSelect<NonNullable<Settings["focusModeDefault"]>>
-                  value={settings.focusModeDefault || "flowtime"}
-                  ariaLabel={lang === "zh" ? "默认专注模式" : "Default focus mode"}
-                  onChange={(value) => onSave({ focusModeDefault: value })}
-                  options={[
-                    { value: "stopwatch", label: lang === "zh" ? "秒表" : "Stopwatch" },
-                    { value: "pomodoro", label: "Pomodoro" },
-                    { value: "flowtime", label: "Flowtime" },
-                  ]}
-                />}
               />
               <SettingRow
                 anchor="hide-completed"
@@ -15528,6 +15520,11 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                 <label className="df-settings-avatar" title={lang === "zh" ? "上传头像" : "Upload avatar"}>{settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span>N</span>}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { void uploadAvatar(event.target.files?.[0]); event.currentTarget.value = ""; }} /></label>
                 <div><input className="df-settings-name-input" value={settings.displayName || ""} placeholder={t(lang, "settings.usernamePlaceholder")} maxLength={64} onChange={(event) => onSave({ displayName: event.target.value })} /></div>
               </section>
+              <SettingRow
+                title={lang === "zh" ? "通知" : "Notifications"}
+                description={lang === "zh" ? "查看 Navo AI 的主动提醒与未读消息。" : "View proactive Navo AI reminders and unread messages."}
+                control={<SettingActionButton onClick={() => onOpenNotifications?.()}>{lang === "zh" ? "查看" : "View"}</SettingActionButton>}
+              />
               <SubscriptionPanel lang={lang} />
               {authEmail && <p className="df-settings-account">{authEmail}</p>}
               <div data-settings-anchor="sync" tabIndex={-1}><SyncSettingsControl
@@ -15711,12 +15708,12 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
   );
 }
 
-function ThemeColorSetting({ label, presets, value, onChange }: { label: string; presets: string[]; value: string; onChange: (color: string) => void }) {
+function ThemeAccentSetting({ label, presets, value, onChange }: { label: string; presets: string[]; value: string; onChange: (color: string) => void }) {
   return (
-    <section className="df-theme-setting">
-      <div>
+    <section className="df-theme-setting df-theme-accent-setting">
+      <div className="df-theme-accent-heading">
         <strong>{label}</strong>
-        <span style={{ "--project-color": value } as CSSProperties} />
+        <span className="df-theme-accent-current" style={{ "--project-color": value } as CSSProperties} aria-hidden="true" />
       </div>
       <ProjectColorPicker presets={presets} value={value} onChange={onChange} />
     </section>
