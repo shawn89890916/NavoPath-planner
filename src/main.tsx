@@ -90,8 +90,8 @@ import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumber
 import { CloseButton } from "./components/UiPrimitives";
 
 const COMPACT_LAYOUT_MEDIA_QUERY = "(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)";
-import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon } from "./components/UiIcons";
-import { SETTINGS_CATEGORIES, normalizeSettingsTarget, searchSettings, settingsSearchPath, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
+import { UiBellIcon, UiBotIcon, UiCalendarIcon, UiChevronRightIcon, UiCopyIcon, UiLanguagesIcon, UiMonitorIcon, UiPaletteIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiSettingsIcon, UiSunIcon, UiTrashIcon, UiUserIcon, UiWorkflowIcon } from "./components/UiIcons";
+import { SETTINGS_CATEGORIES, normalizeSettingsTarget, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { getDefaultSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
 import { usePointerReorder } from "./usePointerReorder";
@@ -1455,7 +1455,7 @@ function App() {
   const layerTriggerRef = useRef(new Map<string, HTMLElement>());
   const [habitPanel, setHabitPanel] = useState<"overview" | "detail" | null>(null);
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
-  const [settingsSectionTarget, setSettingsSectionTarget] = useState<SettingsTarget>({ category: "general" });
+  const [settingsSectionTarget, setSettingsSectionTarget] = useState<SettingsTargetInput>();
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState("");
   const [toast, setToast] = useState("");
@@ -8440,7 +8440,7 @@ function App() {
             <UiBellIcon size={20} strokeWidth={2} />
             {proactiveNotifications.length > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{proactiveNotifications.length > 9 ? "9+" : proactiveNotifications.length}</span>}
           </button>}
-          <button className="df-user-avatar" onClick={() => { rememberLayerTrigger("utility"); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")}>
+          <button className="df-user-avatar" onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.01A1.65 1.65 0 0 0 10.91 3H11a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
         </div>
@@ -9862,7 +9862,7 @@ function App() {
             <button className={mode === "execute" ? "active" : ""} onClick={() => changeMode("execute")}>{term(lang, "execute")}</button>
             <button className={mode === "planning" ? "active" : ""} onClick={() => changeMode("planning")}>{term(lang, "planning")}</button>
           </div>
-          <button className={`df-mobile-dock-action df-mobile-profile${proactiveNotifications.length ? " has-unread" : ""}`} onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget({ category: "general" }); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")} title={t(lang, "header.settings")}>
+          <button className={`df-mobile-dock-action df-mobile-profile${proactiveNotifications.length ? " has-unread" : ""}`} onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")} title={t(lang, "header.settings")}>
             {settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span aria-hidden="true">{(settings.displayName || "N").slice(0, 1).toUpperCase()}</span>}
             {proactiveNotifications.length > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{proactiveNotifications.length > 9 ? "9+" : proactiveNotifications.length}</span>}
           </button>
@@ -14615,20 +14615,47 @@ function PluginRuntimePanel({ settings, data, onSave, onSaveData, lang }: { sett
   );
 }
 
+function settingsCategoryDescription(category: SettingsCategory, lang: Language): string {
+  const descriptions: Record<SettingsCategory, [string, string]> = {
+    general: ["语言、时间边界与快捷键。", "Language, time boundaries, and shortcuts."],
+    appearance: ["界面模式、字体与强调色。", "Interface mode, typography, and accent color."],
+    workflow: ["规划视图、智能排程与工作习惯。", "Planning views, smart scheduling, and work habits."],
+    "account-data": ["账户、同步、导入导出与数据控制。", "Account, sync, imports, exports, and data controls."],
+    ai: ["Navo AI 的模型、记忆与主动助理。", "Navo AI models, memory, and proactive assistant."],
+    widget: ["桌面窗口的外观与计时器。", "Desktop window appearance and timer."],
+    integrations: ["日历订阅、外部日历、插件与 MCP。", "Calendar subscriptions, plugins, and MCP."],
+    advanced: ["高级设置与恢复选项。", "Advanced and recovery options."],
+  };
+  return descriptions[category][lang === "zh" ? 0 : 1];
+}
+
+function SettingsCategoryIcon({ category }: { category: SettingsCategory }) {
+  const props = { size: 19, strokeWidth: 1.8 };
+  switch (category) {
+    case "appearance": return <UiSunIcon {...props} />;
+    case "workflow": return <UiWorkflowIcon {...props} />;
+    case "account-data": return <UiUserIcon {...props} />;
+    case "ai": return <UiBotIcon {...props} />;
+    case "widget": return <UiMonitorIcon {...props} />;
+    case "integrations": return <UiCalendarIcon {...props} />;
+    default: return <UiSettingsIcon {...props} />;
+  }
+}
+
 function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose, onSave, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang, onOpenScheduleTemplates }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language; onOpenScheduleTemplates?: () => void }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
   const isDesktopRuntime = Boolean(window.desktopApi);
   const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
   const [settingsTarget, setSettingsTarget] = useState<SettingsTarget>(resolveRuntimeTarget(resolvedInitial));
-  const [settingsQuery, setSettingsQuery] = useState("");
+  const [settingsHome, setSettingsHome] = useState(!initialSection);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [widgetThemeOpen, setWidgetThemeOpen] = useState<"light" | "dark">("light");
   const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "plugins" | "mcp">("calendar");
   const settingsContentRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
-  const settingsResults = useMemo(() => searchSettings(settingsQuery, lang, isDesktopRuntime), [settingsQuery, lang, isDesktopRuntime]);
   useEffect(() => {
-    if (initialSection) setSettingsTarget(resolveRuntimeTarget(normalizeSettingsTarget(initialSection)));
+    setSettingsTarget(resolveRuntimeTarget(normalizeSettingsTarget(initialSection)));
+    setSettingsHome(!initialSection);
   }, [initialSection]);
   useEffect(() => {
     if (kind !== "settings") return;
@@ -14677,7 +14704,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
     if (target.anchor === "calendar-feed") setIntegrationTab("calendar");
     if (target.anchor === "external-calendar") setIntegrationTab("external-calendar");
     setSettingsTarget(resolveRuntimeTarget(target));
-    setSettingsQuery("");
+    setSettingsHome(false);
   }
   const [confirmResetSettings, setConfirmResetSettings] = useState(false);
   const [confirmClearLocalData, setConfirmClearLocalData] = useState(false);
@@ -14906,31 +14933,64 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                 {authEmail && <span>{authEmail}</span>}
               </div>
             </section>
+            {settingsHome ? (
+              <div className="df-settings-home">
+                <section className="df-settings-home-group" aria-labelledby="df-settings-quick-title">
+                  <header className="df-settings-home-heading">
+                    <h3 id="df-settings-quick-title">{lang === "zh" ? "快速设置" : "Quick settings"}</h3>
+                    <p>{lang === "zh" ? "常用选项可直接在这里调整。" : "Adjust the options you use most, right here."}</p>
+                  </header>
+                  <div className="df-settings-home-card df-settings-home-quick-card">
+                    <div className="df-settings-home-quick-row">
+                      <div className="df-settings-home-quick-label"><UiSunIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "界面模式" : "Appearance"}</span></div>
+                      <SettingSelect<Settings["theme"]>
+                        value={settings.theme}
+                        ariaLabel={lang === "zh" ? "界面模式" : "Appearance"}
+                        onChange={(value) => onSave({ theme: value })}
+                        options={[{ value: "light", label: t(lang, "settings.light") }, { value: "dark", label: t(lang, "settings.dark") }]}
+                      />
+                    </div>
+                    <div className="df-settings-home-quick-row df-settings-home-quick-row--accent">
+                      <div className="df-settings-home-quick-label"><UiPaletteIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "强调色" : "Accent color"}</span></div>
+                      <ProjectColorPicker
+                        compact
+                        presets={settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT}
+                        value={settings.executeAccentColor || settings.planningAccentColor || defaultAccent}
+                        onChange={(color) => onSave({ executeAccentColor: color, planningAccentColor: color })}
+                      />
+                    </div>
+                    <div className="df-settings-home-quick-row">
+                      <div className="df-settings-home-quick-label"><UiLanguagesIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "语言" : "Language"}</span></div>
+                      <SettingSelect<Language>
+                        value={settings.language || lang}
+                        ariaLabel={lang === "zh" ? "语言" : "Language"}
+                        onChange={(value) => onSave({ language: value })}
+                        options={[{ value: "zh", label: "中文" }, { value: "en", label: "English" }]}
+                      />
+                    </div>
+                  </div>
+                </section>
+                <section className="df-settings-home-group" aria-labelledby="df-settings-sections-title">
+                  <header className="df-settings-home-heading">
+                    <h3 id="df-settings-sections-title">{lang === "zh" ? "设置" : "Settings"}</h3>
+                    <p>{lang === "zh" ? "打开一个分区，查看全部相关选项。" : "Open a section to see all related options."}</p>
+                  </header>
+                  <div className="df-settings-home-card df-settings-home-detail-card">
+                    {SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => (
+                      <button type="button" className="df-settings-home-entry" key={category.id} onClick={() => navigateSettings({ category: category.id })}>
+                        <span className="df-settings-home-entry-icon"><SettingsCategoryIcon category={category.id} /></span>
+                        <span className="df-settings-home-entry-copy">
+                          <strong>{lang === "zh" ? category.labelZh : category.labelEn}</strong>
+                          <small>{settingsCategoryDescription(category.id, lang)}</small>
+                        </span>
+                        <UiChevronRightIcon className="df-settings-home-entry-chevron" size={20} strokeWidth={1.8} />
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            ) : <>
             <div className="df-settings-rail">
-              <label className="df-settings-search">
-                <span className="df-visually-hidden">{lang === "zh" ? "搜索设置" : "Search settings"}</span>
-                <input
-                  type="search"
-                  value={settingsQuery}
-                  placeholder={lang === "zh" ? "搜索设置" : "Search settings"}
-                  onChange={(event) => setSettingsQuery(event.target.value)}
-                  aria-controls="df-settings-search-results"
-                  aria-expanded={Boolean(settingsQuery.trim())}
-                />
-              </label>
-              {settingsQuery.trim() && <div id="df-settings-search-results" className="df-settings-search-results" role="listbox">
-                {settingsResults.length > 0 ? settingsResults.map((result) => (
-                  <button
-                    type="button"
-                    role="option"
-                    key={result.id}
-                    onClick={() => navigateSettings(result.target)}
-                  >
-                    <strong>{lang === "zh" ? result.labelZh : result.labelEn}</strong>
-                    <span>{settingsSearchPath(result, lang)}</span>
-                  </button>
-                )) : <p>{lang === "zh" ? "没有找到相关设置" : "No matching settings"}</p>}
-              </div>}
               <label className="df-settings-mobile-category">
                 <span className="df-visually-hidden">{lang === "zh" ? "设置分类" : "Settings category"}</span>
                 <select value={settingsTarget.category} onChange={(event) => navigateSettings({ category: event.target.value as SettingsCategory })}>
@@ -15556,6 +15616,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
               </SettingSection>
             </SettingSection>}
             </div>
+            </>}
           </div>
         ) : (
           <div className="df-utility-body">
