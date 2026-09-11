@@ -14762,6 +14762,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
   }
 
   const defaultAccent = settings.theme === "dark" ? "#EEE9DF" : "#27231E";
+  const selectedAccent = settings.executeAccentColor || settings.planningAccentColor || defaultAccent;
   const shortcutGroups = groupShortcutsByScope(SHORTCUTS);
   const shortcutScopeLabel = (scope: ShortcutScope) => {
     if (lang === "zh") {
@@ -14923,12 +14924,16 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
         {kind === "settings" ? (
           <div className="df-utility-body df-settings-shell">
             <section className="df-settings-profile-hero" aria-label={lang === "zh" ? "当前账户" : "Current account"}>
-              <label className="df-settings-avatar" title={lang === "zh" ? "上传头像" : "Upload avatar"}>
+              <label className="df-settings-avatar" title={lang === "zh" ? "点击编辑头像" : "Click to edit avatar"}>
                 {settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span>{(settings.displayName || "N").slice(0, 1).toUpperCase()}</span>}
+                <span className="df-settings-avatar-edit" aria-hidden="true"><UiPencilIcon size={12} strokeWidth={2} /></span>
                 <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { void uploadAvatar(event.target.files?.[0]); event.currentTarget.value = ""; }} />
               </label>
-              <div>
-                <strong>{settings.displayName || (lang === "zh" ? "NavoPath 用户" : "NavoPath user")}</strong>
+              <div className="df-settings-profile-hero-copy">
+                <button type="button" className="df-settings-profile-name" onClick={() => navigateSettings({ category: "account-data" })} aria-label={lang === "zh" ? "编辑用户名" : "Edit username"}>
+                  <strong>{settings.displayName || (lang === "zh" ? "NavoPath 用户" : "NavoPath user")}</strong>
+                  <UiPencilIcon size={13} strokeWidth={1.8} aria-hidden="true" />
+                </button>
                 {authEmail && <span>{authEmail}</span>}
               </div>
             </section>
@@ -14951,12 +14956,16 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                     </div>
                     <div className="df-settings-home-quick-row df-settings-home-quick-row--accent">
                       <div className="df-settings-home-quick-label"><UiCopyIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "强调色" : "Accent color"}</span></div>
-                      <ProjectColorPicker
-                        compact
-                        presets={settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT}
-                        value={settings.executeAccentColor || settings.planningAccentColor || defaultAccent}
-                        onChange={(color) => onSave({ executeAccentColor: color, planningAccentColor: color })}
-                      />
+                      <div className="df-settings-accent-native">
+                        <span className="df-settings-accent-dot" style={{ "--settings-accent": selectedAccent } as CSSProperties} />
+                        <SettingSelect<string>
+                          value={selectedAccent}
+                          ariaLabel={lang === "zh" ? "强调色" : "Accent color"}
+                          onChange={(color) => onSave({ executeAccentColor: color, planningAccentColor: color })}
+                          options={(settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT).map((color) => ({ value: color, label: color }))}
+                        />
+                        <span className="df-settings-accent-arrows" aria-hidden="true"><span>⌃</span><span>⌄</span></span>
+                      </div>
                     </div>
                     <div className="df-settings-home-quick-row">
                       <div className="df-settings-home-quick-label"><UiBellIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "语言" : "Language"}</span></div>
@@ -15079,7 +15088,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                   <ThemeAccentSetting
                     label={lang === "zh" ? "强调色" : "Accent color"}
                     presets={settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT}
-                    value={settings.executeAccentColor || settings.planningAccentColor || defaultAccent}
+                    value={selectedAccent}
                     onChange={(color) => onSave({ executeAccentColor: color, planningAccentColor: color })}
                   />
                 </div>

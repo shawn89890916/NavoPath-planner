@@ -1,11 +1,17 @@
 # NavoPath 更新日志
 
+## 2026-09-12 · 设置个人资料与强调色
+
+### 改进
+- 设置首页支持点击头像上传或替换图片，用户名旁的编辑入口可打开显示名称编辑区；强调色改为右侧当前值与上下箭头触发的展开选择，并在手机与桌面保持完整显示。
+
 ## 2026-09-11 · 窄屏 Execute 工作区
 
 ### 修复
 - 修复 760px 以下横向窗口的 Execute 布局：候选区与过窄时间轴不会同时挤在屏幕内，改用完整时间轴和移动操作栏；底部 Dock 为时间内容预留空间，AI 与快速添加入口保持在可视区域内。
 - 修复竖屏与窄屏工作区的底栏对齐和 Planning 内容遮挡问题；底栏设置入口直接显示用户头像，设置页采用更清晰的分组列表结构。通知与设置共用头像入口，移除 Focus Mode 设置与强调色恢复按钮，强调色改为统一色板并同步作用于 Execute 与 Planning。
 - 设置入口现在默认打开 ChatGPT 风格的设置首页：主题、强调色和语言可快速调整，其余选项通过带说明的分区入口展开；移除设置搜索，并恢复桌面与竖屏开关的稳定尺寸和轨道样式。
+- 设置首页的头像现在可直接点击上传或替换图片，用户名旁提供编辑入口；强调色改为右侧当前值与上下箭头触发的展开色板，手机和桌面均保持完整可用。
 
 ## 2026-09-10 · Execute 时间轴与快捷操作
 
@@ -97,12 +103,18 @@
 
 # NavoPath Changelog
 
+## 2026-09-12 · Settings profile and accent picker
+
+### Improved
+- The settings home now supports direct avatar upload or replacement and an entry to the display-name editor; accent color opens from the right-aligned current value with an up/down affordance and remains fully visible on mobile and desktop.
+
 ## 2026-09-11 · Narrow Execute workspace
 
 ### Fixed
 - Fixed the Execute layout below 760px in landscape: the candidate sheet and a collapsed timeline no longer compete for the same screen, the full timeline uses the mobile action layout, and the bottom dock reserves space so AI and quick-add actions stay visible without covering time content.
 - Fixed bottom-dock alignment and the Planning content obstruction on portrait and narrow screens; the dock now shows the user avatar directly, and settings use a clearer grouped-list structure. Notifications and settings share the avatar entry, the Focus Mode setting and accent-color restore action are removed, and one accent palette applies to both Execute and Planning.
 - The settings entry now opens a ChatGPT-style home page with quick controls for theme, accent color, and language, plus described section entries for everything else; settings search is removed, and desktop and portrait switches retain stable track and knob geometry.
+- The settings home now lets users upload or replace the avatar directly and edit the username beside it; accent color uses a right-aligned current value with up/down affordance and an unobstructed palette on both mobile and desktop.
 
 ## 2026-09-10 · Execute timeline and quick actions
 
