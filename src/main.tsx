@@ -158,6 +158,21 @@ const PROJECT_COLOR_PRESETS = [DEFAULT_PROJECT_COLOR, "#7EA172", "#D7816A", "#0F
 const COMMON_COLOR_PRESETS = ["#EF4444", "#F97316", "#EAB308", "#22C55E", "#06B6D4", "#3B82F6", "#8B5CF6", "#1F2937", "#F9FAFB", "#6B7280"];
 const EXECUTE_THEME_PRESETS_LIGHT = ["#D7816A", "#584D3D", "#7EA172", "#0F0326", "#BE185D", "#D97706", "#2563EB"];
 const EXECUTE_THEME_PRESETS_DARK  = ["#D7816A", "#FBF9FF", "#7EA172", "#584D3D", "#EC4899", "#F59E0B", "#3B82F6"];
+const ACCENT_COLOR_NAMES: Record<string, [string, string]> = {
+  "#D7816A": ["珊瑚", "Coral"],
+  "#584D3D": ["棕褐", "Brown"],
+  "#7EA172": ["鼠尾草", "Green"],
+  "#0F0326": ["紫色", "Purple"],
+  "#BE185D": ["粉色", "Pink"],
+  "#EC4899": ["粉色", "Pink"],
+  "#D97706": ["橙色", "Orange"],
+  "#F59E0B": ["黄色", "Yellow"],
+  "#2563EB": ["蓝色", "Blue"],
+  "#3B82F6": ["蓝色", "Blue"],
+  "#27231E": ["黑色", "Black"],
+  "#FBF9FF": ["柔白", "Soft white"],
+  "#EEE9DF": ["白色", "White"],
+};
 const PLANNING_THEME_PRESETS_LIGHT = ["#7EA172", "#584D3D", "#D7816A", "#0F0326", "#BE185D", "#D97706", "#2563EB"];
 const PLANNING_THEME_PRESETS_DARK  = ["#7EA172", "#FBF9FF", "#D7816A", "#584D3D", "#EC4899", "#F59E0B", "#3B82F6"];
 const SAVE_DEBOUNCE_MS = 250;
@@ -14705,6 +14720,10 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
     setSettingsTarget(resolveRuntimeTarget(target));
     setSettingsHome(false);
   }
+  function openNotifications() {
+    onClose();
+    window.setTimeout(() => onOpenNotifications?.(), 220);
+  }
   const [confirmResetSettings, setConfirmResetSettings] = useState(false);
   const [confirmClearLocalData, setConfirmClearLocalData] = useState(false);
   const [clearLocalDataPhrase, setClearLocalDataPhrase] = useState("");
@@ -14763,6 +14782,8 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
 
   const defaultAccent = settings.theme === "dark" ? "#EEE9DF" : "#27231E";
   const selectedAccent = settings.executeAccentColor || settings.planningAccentColor || defaultAccent;
+  const accentPresets = [...(settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT), defaultAccent];
+  const accentOptions = [selectedAccent, ...accentPresets.filter((color) => color.toUpperCase() !== selectedAccent.toUpperCase())];
   const shortcutGroups = groupShortcutsByScope(SHORTCUTS);
   const shortcutScopeLabel = (scope: ShortcutScope) => {
     if (lang === "zh") {
@@ -14957,12 +14978,12 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                     <div className="df-settings-home-quick-row df-settings-home-quick-row--accent">
                       <div className="df-settings-home-quick-label"><UiCopyIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "强调色" : "Accent color"}</span></div>
                       <div className="df-settings-accent-native">
-                        <span className="df-settings-accent-dot" style={{ "--settings-accent": selectedAccent } as CSSProperties} />
+                        <span className="df-settings-accent-dot" style={{ backgroundColor: selectedAccent }} />
                         <SettingSelect<string>
                           value={selectedAccent}
                           ariaLabel={lang === "zh" ? "强调色" : "Accent color"}
                           onChange={(color) => onSave({ executeAccentColor: color, planningAccentColor: color })}
-                          options={(settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT).map((color) => ({ value: color, label: color }))}
+                          options={accentOptions.map((color) => ({ value: color, label: ACCENT_COLOR_NAMES[color.toUpperCase()]?.[lang === "zh" ? 0 : 1] || color }))}
                         />
                         <span className="df-settings-accent-arrows" aria-hidden="true"><span>⌃</span><span>⌄</span></span>
                       </div>
@@ -14994,6 +15015,14 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                         <span className="df-settings-home-entry-chevron" aria-hidden="true">›</span>
                       </button>
                     ))}
+                    <button type="button" className="df-settings-home-entry" onClick={openNotifications}>
+                      <span className="df-settings-home-entry-icon"><UiBellIcon size={19} strokeWidth={1.8} /></span>
+                      <span className="df-settings-home-entry-copy">
+                        <strong>{lang === "zh" ? "通知" : "Notifications"}</strong>
+                        <small>{lang === "zh" ? "查看 Navo AI 的主动提醒与未读消息。" : "View proactive Navo AI reminders and unread messages."}</small>
+                      </span>
+                      <span className="df-settings-home-entry-chevron" aria-hidden="true">›</span>
+                    </button>
                   </div>
                 </section>
               </div>
@@ -15591,7 +15620,7 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
               <SettingRow
                 title={lang === "zh" ? "通知" : "Notifications"}
                 description={lang === "zh" ? "查看 Navo AI 的主动提醒与未读消息。" : "View proactive Navo AI reminders and unread messages."}
-                control={<SettingActionButton onClick={() => onOpenNotifications?.()}>{lang === "zh" ? "查看" : "View"}</SettingActionButton>}
+                control={<SettingActionButton onClick={openNotifications}>{lang === "zh" ? "查看" : "View"}</SettingActionButton>}
               />
               <SubscriptionPanel lang={lang} />
               {authEmail && <p className="df-settings-account">{authEmail}</p>}

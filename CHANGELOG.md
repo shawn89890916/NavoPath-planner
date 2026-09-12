@@ -4,6 +4,7 @@
 
 ### 改进
 - 设置首页支持点击头像上传或替换图片，用户名旁的编辑入口可打开显示名称编辑区；强调色改为右侧当前值与上下箭头触发的展开选择，并在手机与桌面保持完整显示。
+- 设置首页补回通知入口，打开通知前会先关闭设置面板；强调色选择器显示颜色名称并使用真实色点，补齐浅色黑色与深色白色的中性选项。
 
 ## 2026-09-11 · 窄屏 Execute 工作区
 
@@ -105,8 +106,9 @@
 
 ## 2026-09-12 · Settings profile and accent picker
 
-### Improved
-- The settings home now supports direct avatar upload or replacement and an entry to the display-name editor; accent color opens from the right-aligned current value with an up/down affordance and remains fully visible on mobile and desktop.
+  ### Improved
+  - The settings home now supports direct avatar upload or replacement and an entry to the display-name editor; accent color opens from the right-aligned current value with an up/down affordance and remains fully visible on mobile and desktop.
+  - Restored a direct Notifications entry on the settings home and close the settings sheet before opening the notification center; accent choices now use named colors with a matching swatch, including light-mode Black and dark-mode White neutrals.
 
 ## 2026-09-11 · Narrow Execute workspace
 
