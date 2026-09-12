@@ -3,6 +3,7 @@
 ## 2026-09-12 · 工作区精简与设置改进
 
 ### 改进
+- 顶栏移除同步按钮，手动同步、上传与下载集中保留在设置的账户与数据分区；横屏通知保持原有右上浮层位置。
 - 修复深色主题下任务、习惯与规划区域的纸面背景及竖屏导航文字对比度。
 - 收紧竖屏规划页的顶部留白、项目间距和任务缩进，候选任务行减少常驻操作，为标题保留更多宽度；保留完整触控区域。
 - 候选区常驻工具收敛为 AI 安排与更多图标，并提供悬停提示；分组、完成项、专注和模板等在更多菜单中展开。规划任务仅保留一次候选状态，任务详情将重复、复制、删除与类型转换收进更多，手机短栏可打开完整详情。
@@ -111,6 +112,7 @@
 ## 2026-09-12 · Workspace clarity and settings improvements
 
 ### Improved
+- Removed the header sync button; manual sync, upload, and download remain in Settings under Account & Data. Landscape notifications keep their existing upper-right floating position.
 - Tightened portrait planning padding, project spacing, and task indentation; candidate rows show fewer persistent actions to give titles more room while preserving touch targets.
 - Candidate tools now keep only AI scheduling and More icons visible, with hover hints; grouping, completed items, focus, and templates open from More. Planning tasks show a single candidate status, task details group repeat, duplicate, delete, and type conversion under More, and mobile task sheets can open full details.
 - Fixed task, habit, and planning surfaces plus portrait navigation contrast in dark mode.

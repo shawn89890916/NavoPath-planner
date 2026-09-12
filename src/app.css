@@ -21118,11 +21118,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   transform: scale(1.06); }
 .df-user-avatar:disabled { cursor: wait; opacity: .52; }
-.df-header-sync.is-syncing { animation: df-header-sync-pulse 1s ease-in-out infinite alternate; }
-@keyframes df-header-sync-pulse {
-  from { opacity: .38; }
-  to { opacity: .72; }
-}
 
 .df-app .df-card-popover.note-output { box-shadow: none; }
 
