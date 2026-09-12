@@ -636,19 +636,17 @@ function PlanningTaskNode(props: {
                   <ChevronIcon open={!props.collapsed} />
                 </button>
               )}
-              <button
+              {!isPlanned && <button
                 className="df-tree-icon-button"
                 onClick={(event) => {
                   event.stopPropagation();
-                  if (isPlanned) return;
                   props.onToggleTodayCandidate();
                 }}
-                aria-label={isPlanned ? t(props.lang, "planning.planned") : term(props.lang, "todayCandidates")}
-                title={isPlanned ? t(props.lang, "planning.planned") : term(props.lang, "todayCandidates")}
-                aria-disabled={isPlanned}
+                aria-label={term(props.lang, "todayCandidates")}
+                title={term(props.lang, "todayCandidates")}
               >
                 <ArrowRightIcon />
-              </button>
+              </button>}
               <button
                 className="df-tree-icon-button"
                 onClick={(event) => {

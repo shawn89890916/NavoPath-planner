@@ -1,6 +1,6 @@
 import React, { forwardRef, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { UiCloseIcon } from "./UiIcons";
+import { UiCloseIcon, UiMoreIcon } from "./UiIcons";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
@@ -30,6 +30,25 @@ export function Divider({ className, ...props }: HTMLAttributes<HTMLHRElement>) 
 
 export function Popover({ className, children, ...props }: HTMLAttributes<HTMLDivElement> & { children?: ReactNode }) {
   return <div role={props.role || "dialog"} className={["ui-popover", className || ""].filter(Boolean).join(" ")} {...props}>{children}</div>;
+}
+
+export function ActionDisclosure({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <details className="ui-action-disclosure" onBlur={(event) => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) event.currentTarget.open = false;
+    }} onKeyDown={(event) => {
+      if (event.key !== "Escape") return;
+      event.stopPropagation();
+      event.currentTarget.open = false;
+      event.currentTarget.querySelector("summary")?.focus();
+    }}>
+      <summary aria-label={label} title={label}><UiMoreIcon /></summary>
+      <Popover role="group" aria-label={label} className="ui-action-disclosure-panel" onClick={(event) => {
+        const button = (event.target as HTMLElement).closest("button");
+        if (button && !button.hasAttribute("aria-pressed")) event.currentTarget.closest("details")!.open = false;
+      }}>{children}</Popover>
+    </details>
+  );
 }
 
 export function Modal({ open = true, role = "dialog", label, labelledBy, onClose, className, children, ...props }: Omit<HTMLAttributes<HTMLElement>, "role"> & { open?: boolean; role?: "dialog" | "alertdialog"; label?: string; labelledBy?: string; onClose?: () => void; children?: ReactNode }) {

@@ -23109,7 +23109,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-tree.is-tree-dragging .df-plan-task-node:active { cursor:grabbing; }
 .df-tree.is-tree-dragging .df-plan-subtask-node:active { cursor:grabbing; }
 .df-plan-task-node.added-to-today { border-color: color-mix(in srgb, var(--accent-active) 58%, var(--paper-rule)); background: color-mix(in srgb, var(--accent-active) 7%, transparent); }
-.df-plan-task-node.added-to-today::after { content: "TODAY"; font-family: var(--paper-mono); font-size: 9px; letter-spacing: .08em; color: var(--accent-active); margin-inline-start: 8px; }
 .df-mcp-settings { display:grid; gap:12px; }
 .df-mcp-settings p { margin:0; color:var(--paper-ink-muted); font-size:12px; line-height:1.6; }
 .df-mcp-docs { display:grid; gap:8px; padding:12px 0; border-block:1px solid var(--paper-rule); }
@@ -27811,10 +27810,7 @@ body.df-timeline-pointer-drag * {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-}
-
-.df-app .df-ai-plan-options {
-  width: 22px;
+  order: -1;
 }
 
 .df-app .df-ai-plan-menu-visible {
@@ -34530,7 +34526,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   grid-row: 1 / 2;
   padding: 22px 28px 32px;
   position: relative;
-  background: rgb(250, 249, 245);
+  background: var(--surface-main);
 }
 
 #root .df-app.mode-planning .df-planning .df-planning-filter-corner {
@@ -34624,12 +34620,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 /* Keep all candidate header tools on one deliberate row; a narrow candidate
    sheet scrolls horizontally rather than collapsing the tool language. */
 #root .df-app .df-candidate-panel header {
-  flex-wrap: nowrap;
-}
-
-#root .df-app .df-candidate-panel .df-candidate-view-toggles {
-  display: inline-flex;
-  flex: 0 0 auto;
   flex-wrap: nowrap;
 }
 
@@ -34862,15 +34852,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     align-self: stretch;
   }
 
-  /* Once the long-range note is dismissed, reserve the filter's top lane so
-     it never sits over the first project row. */
+  /* The portrait filter lives in the fixed toolbar; the list needs only a small gap. */
   #root .df-app.mode-planning .df-planning .df-tree-wrap:not(:has(.df-planning-longrange-guide)) {
-    padding-top: 68px;
-  }
-
-  #root .df-app.mode-planning .df-planning .df-plan-task-node.added-to-today::after {
-    display: none;
-    content: none;
+    padding-top: 8px;
   }
 
   /* Keep the metrics report inside the narrow paper column. SVG labels may
@@ -36348,20 +36332,20 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
   #root .df-app.theme-dark .df-mobile-dock {
     background: #000;
-    color: var(--surface-main);
+    color: var(--text-main);
     border-top-color: color-mix(in srgb, var(--surface-main) 24%, transparent);
   }
 
   #root .df-app.theme-dark .df-mobile-dock-action {
-    color: var(--surface-main);
+    color: var(--text-main);
   }
 
   #root .df-app.theme-dark .df-mobile-mode-switch button {
-    color: var(--surface-main);
+    color: var(--text-main);
   }
 
   #root .df-app.theme-dark .df-mobile-mode-switch button.active {
-    color: var(--surface-main);
+    color: var(--text-main);
   }
 
   #root .df-app.theme-dark .df-mobile-mode-switch {
@@ -36438,7 +36422,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app .df-task-card .df-candidate-row {
-    grid-template-columns: 44px minmax(0, 1fr) auto auto;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
     grid-template-rows: minmax(44px, auto) auto;
     column-gap: 6px;
   }
@@ -36452,13 +36436,30 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app .df-task-card .df-block-check {
-    position: static;
+    position: relative;
     inset: auto;
     width: 24px;
     min-width: 24px;
     height: 24px;
     min-height: 24px;
     transform: none;
+  }
+
+  /* Extend the hit region within the existing 44px cell without enlarging the check mark. */
+  #root .df-app .df-task-card .df-block-check::before {
+    content: "";
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  #root .df-app .df-task-card .df-task-actions .df-icon-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
   }
 
   #root .df-app .df-task-card .df-task-block-title {
@@ -36481,7 +36482,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
   #root .df-app .df-task-card .df-task-actions {
     grid-column: 3; grid-row: 1 / 3;
-    min-width: 88px;
+    min-width: 44px;
     justify-content: flex-end;
     gap: 0;
   }
@@ -36499,9 +36500,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app.mode-execute .df-compact-execute-controls {
-    top: 10px;
-    left: 16px;
-    right: 16px;
+    top: 6px;
+    left: 8px;
+    right: 8px;
     width: auto;
     height: 44px;
     display: flex;
@@ -36733,7 +36734,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app .df-candidate-panel > .df-panel-title .df-ai-plan-title-icon {
-    width: 44px;
+    width: auto;
     min-width: 44px;
     height: 44px;
     min-height: 44px;
@@ -36743,52 +36744,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     display: none;
   }
 
-  #root .df-app .df-candidate-panel .df-icon-focus {
-    display: none;
-  }
-
-  #root .df-app .df-candidate-panel .df-icon-template {
-    display: none;
-  }
-
-  #root .df-app .df-candidate-panel .df-icon-widget {
-    display: none;
-  }
-
-  #root .df-app .df-candidate-panel .df-ai-plan-options {
-    display: none;
-  }
-
   #root .df-app .df-candidate-panel .df-ai-plan-title-tools {
     flex: 0 0 auto;
-  }
-
-  #root .df-app .df-candidate-panel .df-candidate-completed-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
-    padding: 0;
-    border: 0;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-    color: var(--text-muted);
-    background: transparent;
-    box-shadow: none;
-  }
-
-  #root .df-app .df-candidate-panel .df-candidate-completed-toggle span {
-    display: none;
-  }
-
-  #root .df-app .df-candidate-panel .df-candidate-completed-toggle.active {
-    color: var(--text-main);
-    border-bottom-color: var(--accent-active);
-    background: color-mix(in srgb, var(--surface-main) 92%, var(--accent-active) 8%);
   }
 
   #root .df-app .df-candidate-panel .df-candidate-quick-add-top {
@@ -37231,22 +37188,22 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app.mode-planning .df-planning .df-tree-wrap {
     grid-column: 1 / -1;
     grid-row: 2 / 3;
-    padding: 16px 12px 24px;
-    padding-top: 60px;
+    padding: 8px 6px 16px;
   }
 
-  #root .df-app.mode-planning .df-planning .df-project-tasks{padding-left:8px;margin-top:5px;gap:5px}
+  #root .df-app.mode-planning .df-planning .df-project-tasks{padding-left:8px;margin:5px 0 0;gap:5px}
+  #root .df-app.mode-planning .df-planning .df-category-branch { margin-bottom: 12px; }
   #root .df-app.mode-planning .df-planning .df-task-branch{margin-top:4px}
   #root .df-app.mode-planning .df-planning .df-plan-task-node{width:100%;min-width:0;max-width:none}
   #root .df-app.mode-planning .df-planning .df-task-node-inner{width:100%;min-width:0;padding:5px 2px 5px 6px;gap:4px}
-  #root .df-app.mode-planning .df-planning .df-task-node-actions{min-width:76px}
+  #root .df-app.mode-planning .df-planning .df-task-node-actions{min-width:0}
 
   #root .df-app.mode-planning .df-planning .df-planning-longrange-guide {
     grid-template-columns: minmax(0, 1fr);
     display: grid;
-    gap: 7px;
-    margin: 0 12px 12px;
-    padding: 15px 2px 13px;
+    gap: 4px;
+    margin: 0 0 8px;
+    padding: 8px 2px;
     border-block: 1px solid var(--paper-rule-strong);
     color: var(--text-main);
     background: transparent;
@@ -37296,7 +37253,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
   #root .df-app .df-task-node-actions {
     width: auto;
-    min-width: 88px;
+    min-width: 0;
     gap: 0;
   }
 
@@ -39035,16 +38992,14 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   --task-checkbox-color: color-mix(in srgb, var(--task-project-color) 68%, #fff);
 }
 #root .df-app.mode-execute .df-candidate-list .df-candidate-task-row .df-task-block[data-task-appearance] {
-  /* Match Planning: the project bar carries the actual project color rather
-     than a washed-out mix against the white task paper. */
+  /* Project color annotates the active theme surface. */
   border-left-color: var(--task-project-color);
-  background: #fff;
+  background: var(--task-bg);
 }
 #root .df-app.mode-execute .df-timeline-panel .df-task-block[data-task-appearance] {
-  /* Match Planning: the project bar carries the actual project color rather
-     than a washed-out mix against the white task paper. */
+  /* Project color annotates the active theme surface. */
   border-left-color: var(--task-project-color);
-  background: #fff;
+  background: var(--task-bg);
 }
 
 /* The pointer overlay is the actual candidate row, retained as white paper
@@ -39101,10 +39056,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   display: none;
 }
 #root .df-app.mode-execute .df-habit-candidate-card {
-  background: #fff;
+  background: var(--surface-card);
 }
 #root .df-app.mode-execute .df-habit-candidate-card .df-task-block[data-task-appearance] {
-  background: #fff;
+  background: var(--task-bg);
 }
 #root .df-app.mode-execute .df-quick-add-submit {
   background: rgb(245, 241, 232);

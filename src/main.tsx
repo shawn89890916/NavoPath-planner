@@ -87,10 +87,10 @@ import { useInAppDialog } from "./InAppDialog";
 import { TaskActions, TaskBlock, TaskBlockAccent, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskGroup, type TaskBlockDragState } from "./components/TaskBlock";
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, CandidateBlock, TimelineCanvas, TimelineEventBlock } from "./components/ExecutionSharedLayout";
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDivider, SettingDescription } from "./components/SettingsControls";
-import { CloseButton } from "./components/UiPrimitives";
+import { ActionDisclosure, Button, CloseButton, IconButton } from "./components/UiPrimitives";
 
 const COMPACT_LAYOUT_MEDIA_QUERY = "(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)";
-import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { SETTINGS_CATEGORIES, normalizeSettingsTarget, settingsCategoryLabel, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { getDefaultSettings, normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -8637,72 +8637,29 @@ function App() {
                 {(timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
                   <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }} style={{ fontSize: "14px", lineHeight: 1, padding: "0 2px" }}>«</button>
                 )}
-                <div className="df-candidate-view-toggles">
-                  <button
-                    type="button"
-                    className={`df-icon-action df-candidate-group-toggle${groupByProject ? " active" : ""}`}
-                    aria-pressed={groupByProject}
-                    aria-label={lang === "zh" ? "按项目分类" : "Group by project"}
-                    title={lang === "zh" ? "按项目分类" : "Group by project"}
-                    onClick={() => setGroupByProject((value) => !value)}
-                  >
-                    <svg viewBox="0 0 18 18" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx=".7"/><rect x="2" y="11" width="5" height="5" rx=".7"/><path d="M10 3h6M10 6h4M10 12h6M10 15h4"/></svg>
-                  </button>
-                  <button
-                    type="button"
-                    className={`df-icon-action df-candidate-completed-toggle${showCompletedCandidates ? " active" : ""}`}
-                    aria-pressed={showCompletedCandidates}
-                    aria-label={t(lang, "candidate.showCompleted")}
-                    title={t(lang, "candidate.showCompleted")}
-                    onClick={() => setShowCompletedCandidates((value) => !value)}
-                  >
-                    <svg className="df-candidate-completed-check" viewBox="0 0 18 18" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect x="2" y="2" width="14" height="14" rx="1.5"/>
-                      <path d="m5 9 2.5 2.5L13 6"/>
-                    </svg>
-                  </button>
-                </div>
-                <button
-                  className="df-icon-action df-icon-focus"
-                  data-tip={lang === "zh" ? "专注" : "Focus"}
-                  aria-label={lang === "zh" ? "专注" : "Focus"}
-                  disabled={!focusTask}
-                  onClick={() => { if (!focusTask) return; if (!timerTask) startTimer(focusTask.id); setFocusOverlayMode(settings.focusModeDefault || "flowtime"); }}
-                >
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                </button>
-                {settings.featureTemplatesEnabled !== false && (
-                <button className="df-icon-action df-icon-template" data-tip={lang === "zh" ? "日程模版" : "Schedule Template"} aria-label={lang === "zh" ? "日程模版" : "Schedule Template"} onClick={() => setScheduleTemplateOpen(true)}><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 4V2M16 4V2M8 13h3M8 17h6"/></svg></button>
-                )}
-                {Boolean(window.desktopApi?.widget) && settings.featureWidgetEnabled !== false && (
-                  <button
-                    className="df-icon-action df-icon-widget"
-                    data-tip={lang === "zh" ? "桌面小组件" : "Desktop widget"}
-                    aria-label={lang === "zh" ? "桌面小组件" : "Desktop widget"}
-                    onClick={() => void window.desktopApi?.widget?.open()}
-                  ><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/></svg></button>
-                )}
+                <ActionDisclosure label={lang === "zh" ? "更多" : "More"}>
+                  <Button aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)}>{lang === "zh" ? "按项目分类" : "Group by project"}</Button>
+                  <Button aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)}>{t(lang, "candidate.showCompleted")}</Button>
+                  <Button disabled={!focusTask} onClick={() => { if (!focusTask) return; if (!timerTask) startTimer(focusTask.id); setFocusOverlayMode(settings.focusModeDefault || "flowtime"); }}>{lang === "zh" ? "专注" : "Focus"}</Button>
+                  {settings.featureTemplatesEnabled !== false && <Button onClick={() => setScheduleTemplateOpen(true)}>{lang === "zh" ? "日程模板" : "Schedule Template"}</Button>}
+                  {Boolean(window.desktopApi?.widget) && settings.featureWidgetEnabled !== false && <Button onClick={() => void window.desktopApi?.widget?.open()}>{lang === "zh" ? "桌面小组件" : "Desktop widget"}</Button>}
+                  {!settings.hideAi && <Button onClick={() => setAiPlanMenuOpen((open) => !open)}>{t(lang, "timeline.aiPlanningSettings")}</Button>}
+                </ActionDisclosure>
                 {!settings.hideAi && (
                   <span className="df-ai-plan-title-tools">
-                    <button
-                      className={`df-icon-action df-ai-plan-title-icon ${autoScheduleState === "generating" || autoScheduleState === "committing" ? "thinking" : ""}`}
-                      data-tip={drawerOpen ? t(lang, "timeline.aiPlanToday") : t(lang, "timeline.planningSuggestion")}
-                      aria-label={t(lang, "timeline.aiPlanToday")}
+                    <IconButton
+                      className={`df-ai-plan-title-icon ${autoScheduleState === "generating" || autoScheduleState === "committing" ? "thinking" : ""}`}
+                      icon={<UiSparklesIcon />}
+                      label={t(lang, "timeline.aiPlanToday")}
                       disabled={autoScheduleState === "generating" || autoScheduleState === "committing" || drawerOpen}
                       onClick={() => { setAiPlanMenuOpen(false); void planMyDay(); }}
-                    >
-                      <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M10 2.5l1.1 3.2 3.4 1.1-3.4 1.1L10 11.1 8.9 7.9 5.5 6.8l3.4-1.1L10 2.5z" />
-                        <path d="M4.8 11.5l.7 2 2.1.7-2.1.7-.7 2-.7-2-2.1-.7 2.1-.7.7-2z" />
-                        <path d="M15.6 12.5l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5.5-1.4z" />
-                      </svg>
-                    </button>
-                    <button className={`df-icon-action df-ai-plan-options ${aiPlanMenuOpen ? "active" : ""}`} aria-label={t(lang, "timeline.aiPlanningSettings")} aria-expanded={aiPlanMenuOpen} onClick={(event) => { event.stopPropagation(); setAiPlanMenuOpen((open) => !open); }}><span className="df-ai-plan-chevron" aria-hidden="true" /></button>
+                    />
                     {schedulePreviews.length > 0 && autoScheduleState === "preview" && <>
                       <button className="df-icon-action df-ai-plan-confirm" onClick={() => acceptAllPreviews()} title={t(lang, "timeline.adoptAll")} aria-label={t(lang, "timeline.adoptAll")}>✓</button>
             <CloseButton className="df-ai-plan-cancel" onClick={() => cancelAutoSchedule()} label={t(lang, "timeline.cancelPreview")} />
                     </>}
                     {aiPlanMenuOpen && <span className="df-ai-plan-menu df-ai-plan-menu-visible open" onClick={(event) => event.stopPropagation()}>
+                      <CloseButton label={t(lang, "form.close")} onClick={() => setAiPlanMenuOpen(false)} />
                       <span className={`df-ai-capacity-risk ${dailyCapacityRisk.level}`}>
                         <strong>{lang === "zh" ? "今日容量" : "Today's capacity"}</strong>
                         <small>{lang === "zh" ? `待安排 ${formatMinutes(dailyCapacityRisk.demandMinutes)} / 可用 ${formatMinutes(dailyCapacityRisk.availableMinutes)}` : `${formatMinutes(dailyCapacityRisk.demandMinutes)} to place / ${formatMinutes(dailyCapacityRisk.availableMinutes)} free`}</small>
@@ -9895,7 +9852,7 @@ function App() {
       ><UiPlusIcon size={20} /></button>}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} />}
+      {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
       {aiOpen && <AiPanel model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />}
       <CommandPalette open={commandOpen} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
       {utilityPanel && settings && <UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} />}
@@ -11771,7 +11728,7 @@ function TaskCard({
             )}
           </TaskBlockDuration>}
           {!isEvent && !showScheduleSummary && <TaskActions>
-            {hasSubtasks && onToggleSubtask ? (
+            {!compact && hasSubtasks && onToggleSubtask ? (
               <button
                 type="button"
                 className="df-candidate-subtask-toggle"
@@ -11799,7 +11756,7 @@ function TaskCard({
                 <path d="M6.5 3.5v3M13.5 3.5v3M3.5 8.5h13" />
               </svg>
             </button>
-            <button
+            {!compact && <button
               className={`df-icon-button ${isMoreOpen ? "icon-collapse" : "icon-expand"}`}
               title={isMoreOpen ? t(lang, "taskCard.collapseMore") : t(lang, "taskCard.expandMore")}
               onClick={(event) => {
@@ -11811,7 +11768,7 @@ function TaskCard({
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 {isMoreOpen ? <path d="M5 12l5-5 5 5" /> : <path d="M5 8l5 5 5-5" />}
               </svg>
-            </button>
+            </button>}
           </TaskActions>}
           {showScheduleSummary && <span className="df-candidate-schedule-slot">
             {scheduleSummary ? <button
@@ -12662,7 +12619,7 @@ function EditDrawer(props: {
   const [recurrenceDraft, setRecurrenceDraft] = useState<TaskRecurrence | null>(null);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState("");
-  const [quickActionMenu, setQuickActionMenu] = useState<"reschedule" | "repeat" | null>(null);
+  const [quickActionMenu, setQuickActionMenu] = useState<"reschedule" | null>(null);
   const [cancelAllConfirm, setCancelAllConfirm] = useState(false);
   const f = props.form;
   const set = (key: keyof FormState, value: FormState[keyof FormState]) => props.setForm((current) => ({ ...current, [key]: value }));
@@ -13136,16 +13093,6 @@ function EditDrawer(props: {
       { date: addDays(props.today, 7), zh: "下周", en: "Next week" },
       { date: addDays(props.today, 30), zh: "下个月", en: "Next month" },
     ];
-    const quickRepeatOptions: Array<{ frequency: RecurrenceFrequency; zh: string; en: string }> = [
-      { frequency: "daily", zh: "每天", en: "Daily" },
-      { frequency: "weekly", zh: "每周", en: "Weekly" },
-      { frequency: "weekdays", zh: "每个工作日", en: "Weekdays" },
-      { frequency: "weekends", zh: "每个周末", en: "Weekends" },
-    ];
-    const applyQuickRepeat = (frequency: RecurrenceFrequency) => {
-      props.onSaveRecurrence(props.task!.id, { ...fixedRecurrence, mode: "scheduled", frequency });
-      setQuickActionMenu(null);
-    };
     if (props.compactSummary) {
       return (
         <>
@@ -13189,10 +13136,12 @@ function EditDrawer(props: {
             <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3l-6 6M3 3l6 6"/></svg>
             <span>{t(props.lang, "drawer.unfinished")}</span>
           </button>}
-          <button className="df-detail-pill-trevor action danger" onClick={props.onDelete}>
-            <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 3h8M4 3V2h4v1M3 3v6.5a1 1 0 001 1h4a1 1 0 001-1V3"/></svg>
-            <span>{t(props.lang, "drawer.remove")}</span>
-          </button>
+          <ActionDisclosure label={props.lang === "zh" ? "更多" : "More"}>
+            <Button onClick={() => { setQuickActionMenu(null); setRecurrenceDraft({ ...fixedRecurrence, mode: "scheduled" }); setRecurrenceOpen(true); }}>{t(props.lang, "drawer.setRepeat")}</Button>
+            <Button onClick={props.onCopy}>{t(props.lang, "drawer.duplicate")}</Button>
+            {convertControl("task")}
+            <Button variant="danger" onClick={props.onDelete}>{t(props.lang, "drawer.remove")}</Button>
+          </ActionDisclosure>
         </section>
 
         <section className="df-detail-schedule-row df-detail-due-date">
@@ -13229,31 +13178,6 @@ function EditDrawer(props: {
             </div>
           </section>
         )}
-
-        {/* ── Recurrence + Copy ── */}
-        <section className="df-detail-schedule-row">
-          <div className="df-detail-split-action">
-            <button className={`df-detail-pill-trevor action ${recurrenceOpen ? "active" : ""}`} onClick={() => {
-              setQuickActionMenu(null);
-              if (recurrenceOpen) {
-                setRecurrenceOpen(false);
-                setRecurrenceDraft(null);
-              } else {
-                setRecurrenceDraft({ ...fixedRecurrence, mode: "scheduled" });
-                setRecurrenceOpen(true);
-              }
-            }}>
-              <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="8" height="7" rx="1"/><path d="M2 5h8"/></svg>
-              <span>{t(props.lang, "drawer.setRepeat")}</span>
-            </button>
-            <button className="df-detail-split-arrow" type="button" aria-label={props.lang === "zh" ? "快速重复选项" : "Quick repeat options"} aria-expanded={quickActionMenu === "repeat"} onClick={() => { setRecurrenceOpen(false); setQuickActionMenu((open) => open === "repeat" ? null : "repeat"); }}><svg viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M2 4l3 3 3-3" /></svg></button>
-            {quickActionMenu === "repeat" && <div className="df-detail-quick-menu">{quickRepeatOptions.map((option) => <button key={option.frequency} type="button" onClick={() => applyQuickRepeat(option.frequency)}>{props.lang === "zh" ? option.zh : option.en}</button>)}</div>}
-          </div>
-          <button className="df-detail-pill-trevor action" onClick={props.onCopy}>
-            <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="2" width="7" height="9" rx="1"/><path d="M2 5v7a1 1 0 001 1h6"/></svg>
-            <span>{t(props.lang, "drawer.duplicate")}</span>
-          </button>
-        </section>
 
         {projectPickerOpen && createPortal(
           <div className="df-detail-popover-layer" onMouseDown={() => setProjectPickerOpen(false)}>
@@ -13361,7 +13285,6 @@ function EditDrawer(props: {
             </div>
           )}
         </section>
-        {convertControl("task")}
       </aside>
       </>
     );

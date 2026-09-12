@@ -1,8 +1,11 @@
 # NavoPath 更新日志
 
-## 2026-09-12 · 设置个人资料与强调色
+## 2026-09-12 · 工作区精简与设置改进
 
 ### 改进
+- 修复深色主题下任务、习惯与规划区域的纸面背景及竖屏导航文字对比度。
+- 收紧竖屏规划页的顶部留白、项目间距和任务缩进，候选任务行减少常驻操作，为标题保留更多宽度；保留完整触控区域。
+- 候选区常驻工具收敛为 AI 安排与更多图标，并提供悬停提示；分组、完成项、专注和模板等在更多菜单中展开。规划任务仅保留一次候选状态，任务详情将重复、复制、删除与类型转换收进更多，手机短栏可打开完整详情。
 - 设置首页支持点击头像上传或替换图片，用户名旁的编辑入口可打开显示名称编辑区；强调色改为右侧当前值与上下箭头触发的展开选择，并在手机与桌面保持完整显示。
 - 设置首页补回通知入口，打开通知前会先关闭设置面板；强调色选择器显示颜色名称并使用真实色点，补齐浅色黑色与深色白色的中性选项。
 - 通知入口现在紧跟个人资料；竖屏通知中心改为占据下半屏的底部短栏，横屏继续使用原有浮层。进入设置分区后隐藏头像资料，标题移到顶栏并提供返回设置首页的入口，用户名编辑改为首页内联保存，避免头像和名称被旧数据回写覆盖。
@@ -105,12 +108,15 @@
 
 # NavoPath Changelog
 
-## 2026-09-12 · Settings profile and accent picker
+## 2026-09-12 · Workspace clarity and settings improvements
 
-  ### Improved
-  - The settings home now supports direct avatar upload or replacement and an entry to the display-name editor; accent color opens from the right-aligned current value with an up/down affordance and remains fully visible on mobile and desktop.
-  - Restored a direct Notifications entry on the settings home and close the settings sheet before opening the notification center; accent choices now use named colors with a matching swatch, including light-mode Black and dark-mode White neutrals.
-  - Notifications now sits directly below the profile; portrait notification center uses a lower-half bottom sheet while landscape keeps the existing floating panel. Detail sections hide profile identity, move the section title into the top bar with a back-to-settings action, and save inline username edits so avatar and name do not revert to stale data.
+### Improved
+- Tightened portrait planning padding, project spacing, and task indentation; candidate rows show fewer persistent actions to give titles more room while preserving touch targets.
+- Candidate tools now keep only AI scheduling and More icons visible, with hover hints; grouping, completed items, focus, and templates open from More. Planning tasks show a single candidate status, task details group repeat, duplicate, delete, and type conversion under More, and mobile task sheets can open full details.
+- Fixed task, habit, and planning surfaces plus portrait navigation contrast in dark mode.
+- The settings home now supports direct avatar upload or replacement and an entry to the display-name editor; accent color opens from the right-aligned current value with an up/down affordance and remains fully visible on mobile and desktop.
+- Restored a direct Notifications entry on the settings home and close the settings sheet before opening the notification center; accent choices now use named colors with a matching swatch, including light-mode Black and dark-mode White neutrals.
+- Notifications now sits directly below the profile; portrait notification center uses a lower-half bottom sheet while landscape keeps the existing floating panel. Detail sections hide profile identity, move the section title into the top bar with a back-to-settings action, and save inline username edits so avatar and name do not revert to stale data.
 
 ## 2026-09-11 · Narrow Execute workspace
 
