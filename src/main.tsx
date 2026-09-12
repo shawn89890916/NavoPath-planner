@@ -91,8 +91,8 @@ import { CloseButton } from "./components/UiPrimitives";
 
 const COMPACT_LAYOUT_MEDIA_QUERY = "(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)";
 import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon } from "./components/UiIcons";
-import { SETTINGS_CATEGORIES, normalizeSettingsTarget, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
-import { getDefaultSettings } from "./defaultSettings";
+import { SETTINGS_CATEGORIES, normalizeSettingsTarget, settingsCategoryLabel, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
+import { getDefaultSettings, normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
 import { usePointerReorder } from "./usePointerReorder";
 import { DESKTOP_DOWNLOAD_URL, DESKTOP_RELEASES_URL } from "./downloads";
@@ -3074,7 +3074,7 @@ function App() {
   async function saveSettings(patch: SettingsPatch) {
     const current = settingsRef.current || settings;
     if (!current) return;
-    const optimistic = { ...current, ...patch };
+    const optimistic = normalizeSettings({ ...current, ...patch });
     const pendingSavedAt = new Date().toISOString();
     const version = settingsSaveVersionRef.current + 1;
     settingsSaveVersionRef.current = version;
@@ -14667,10 +14667,16 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
   const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "plugins" | "mcp">("calendar");
   const settingsContentRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [profileNameEditing, setProfileNameEditing] = useState(false);
+  const [profileNameDraft, setProfileNameDraft] = useState(settings.displayName || "");
   useEffect(() => {
     setSettingsTarget(resolveRuntimeTarget(normalizeSettingsTarget(initialSection)));
     setSettingsHome(!initialSection);
+    setProfileNameEditing(false);
   }, [initialSection]);
+  useEffect(() => {
+    if (!profileNameEditing) setProfileNameDraft(settings.displayName || "");
+  }, [settings.displayName, profileNameEditing]);
   useEffect(() => {
     if (kind !== "settings") return;
     closeButtonRef.current?.focus();
@@ -14719,6 +14725,16 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
     if (target.anchor === "external-calendar") setIntegrationTab("external-calendar");
     setSettingsTarget(resolveRuntimeTarget(target));
     setSettingsHome(false);
+  }
+  function backToSettingsHome() {
+    setSettingsTarget(resolveRuntimeTarget({ category: "general" }));
+    setSettingsHome(true);
+    if (settingsContentRef.current) settingsContentRef.current.scrollTop = 0;
+  }
+  function commitProfileName() {
+    const nextName = profileNameDraft.trim();
+    if (nextName && nextName !== settings.displayName) onSave({ displayName: nextName });
+    setProfileNameEditing(false);
   }
   function openNotifications() {
     onClose();
@@ -14939,27 +14955,40 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
       <aside className="df-utility-panel" role="dialog" aria-modal="true" aria-labelledby="df-utility-title">
         <MobileSheetDismissHandle onDismiss={onClose} lang={lang} />
         <div className="df-utility-head">
-          <h2 id="df-utility-title">{kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
+          <div className="df-utility-head-leading">
+            {kind === "settings" && !settingsHome && <button type="button" className="df-settings-back-button" onClick={backToSettingsHome} aria-label={lang === "zh" ? "返回设置" : "Back to settings"}><span aria-hidden="true">‹</span><span>{lang === "zh" ? "设置" : "Settings"}</span></button>}
+            <h2 id="df-utility-title">{kind === "settings" && !settingsHome ? settingsCategoryLabel(settingsTarget.category, lang) : kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
+          </div>
           <CloseButton ref={closeButtonRef} label={t(lang, "settings.close")} onClick={onClose} />
         </div>
         {kind === "settings" ? (
-          <div className="df-utility-body df-settings-shell">
-            <section className="df-settings-profile-hero" aria-label={lang === "zh" ? "当前账户" : "Current account"}>
+          <div className={`df-utility-body df-settings-shell${settingsHome ? "" : " df-settings-detail-shell"}`}>
+            {settingsHome && <section className="df-settings-profile-hero" aria-label={lang === "zh" ? "当前账户" : "Current account"}>
               <label className="df-settings-avatar" title={lang === "zh" ? "点击编辑头像" : "Click to edit avatar"}>
                 {settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span>{(settings.displayName || "N").slice(0, 1).toUpperCase()}</span>}
                 <span className="df-settings-avatar-edit" aria-hidden="true"><UiPencilIcon size={12} strokeWidth={2} /></span>
                 <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { void uploadAvatar(event.target.files?.[0]); event.currentTarget.value = ""; }} />
               </label>
               <div className="df-settings-profile-hero-copy">
-                <button type="button" className="df-settings-profile-name" onClick={() => navigateSettings({ category: "account-data" })} aria-label={lang === "zh" ? "编辑用户名" : "Edit username"}>
+                {profileNameEditing ? <input className="df-settings-profile-name-input" value={profileNameDraft} onChange={(event) => setProfileNameDraft(event.target.value)} onBlur={commitProfileName} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); commitProfileName(); } if (event.key === "Escape") { setProfileNameDraft(settings.displayName || ""); setProfileNameEditing(false); } }} autoFocus maxLength={64} aria-label={lang === "zh" ? "用户名" : "Username"} /> : <button type="button" className="df-settings-profile-name" onClick={() => setProfileNameEditing(true)} aria-label={lang === "zh" ? "编辑用户名" : "Edit username"}>
                   <strong>{settings.displayName || (lang === "zh" ? "NavoPath 用户" : "NavoPath user")}</strong>
                   <UiPencilIcon size={13} strokeWidth={1.8} aria-hidden="true" />
-                </button>
+                </button>}
                 {authEmail && <span>{authEmail}</span>}
               </div>
-            </section>
+            </section>}
             {settingsHome ? (
               <div className="df-settings-home">
+                <section className="df-settings-home-card df-settings-home-notification-card">
+                  <button type="button" className="df-settings-home-entry" onClick={openNotifications}>
+                    <span className="df-settings-home-entry-icon"><UiBellIcon size={19} strokeWidth={1.8} /></span>
+                    <span className="df-settings-home-entry-copy">
+                      <strong>{lang === "zh" ? "通知" : "Notifications"}</strong>
+                      <small>{lang === "zh" ? "查看 Navo AI 的主动提醒与未读消息。" : "View proactive Navo AI reminders and unread messages."}</small>
+                    </span>
+                    <span className="df-settings-home-entry-chevron" aria-hidden="true">›</span>
+                  </button>
+                </section>
                 <section className="df-settings-home-group" aria-labelledby="df-settings-quick-title">
                   <header className="df-settings-home-heading">
                     <h3 id="df-settings-quick-title">{lang === "zh" ? "快速设置" : "Quick settings"}</h3>
@@ -15015,14 +15044,6 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
                         <span className="df-settings-home-entry-chevron" aria-hidden="true">›</span>
                       </button>
                     ))}
-                    <button type="button" className="df-settings-home-entry" onClick={openNotifications}>
-                      <span className="df-settings-home-entry-icon"><UiBellIcon size={19} strokeWidth={1.8} /></span>
-                      <span className="df-settings-home-entry-copy">
-                        <strong>{lang === "zh" ? "通知" : "Notifications"}</strong>
-                        <small>{lang === "zh" ? "查看 Navo AI 的主动提醒与未读消息。" : "View proactive Navo AI reminders and unread messages."}</small>
-                      </span>
-                      <span className="df-settings-home-entry-chevron" aria-hidden="true">›</span>
-                    </button>
                   </div>
                 </section>
               </div>
@@ -15613,15 +15634,6 @@ function UtilityPanel({ kind, settings, initialSection, data, authEmail, onClose
             </SettingSection>}
 
             {settingsTarget.category === "account-data" && <section className="df-settings-group" data-settings-anchor="account" tabIndex={-1}><h3>{lang === "zh" ? "账户" : "Account"}</h3>
-              <section className="df-settings-profile">
-                <label className="df-settings-avatar" title={lang === "zh" ? "上传头像" : "Upload avatar"}>{settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span>N</span>}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { void uploadAvatar(event.target.files?.[0]); event.currentTarget.value = ""; }} /></label>
-                <div><input className="df-settings-name-input" value={settings.displayName || ""} placeholder={t(lang, "settings.usernamePlaceholder")} maxLength={64} onChange={(event) => onSave({ displayName: event.target.value })} /></div>
-              </section>
-              <SettingRow
-                title={lang === "zh" ? "通知" : "Notifications"}
-                description={lang === "zh" ? "查看 Navo AI 的主动提醒与未读消息。" : "View proactive Navo AI reminders and unread messages."}
-                control={<SettingActionButton onClick={openNotifications}>{lang === "zh" ? "查看" : "View"}</SettingActionButton>}
-              />
               <SubscriptionPanel lang={lang} />
               {authEmail && <p className="df-settings-account">{authEmail}</p>}
               <div data-settings-anchor="sync" tabIndex={-1}><SyncSettingsControl

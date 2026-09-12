@@ -1491,30 +1491,6 @@
 
 
 
-.df-settings-name-input:hover {
-
-  border-color: var(--df-border);
-
-  background: #fff;
-
-}
-
-
-
-.df-settings-name-input:focus {
-
-  border-bottom-color: var(--accent-active);
-
-  box-shadow: none;
-
-  border-color: var(--df-border);
-
-  background: #fff;
-
-}
-
-
-
 .df-settings-about {
 
   display: inline-flex;
@@ -22281,29 +22257,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   transition: border-color .15s, background .15s;
   border-color: var(--paper-rule); box-shadow: none;
 }
-.df-settings-name-input {
-
-  width: 100%;
-
-  border: 1px solid transparent;
-
-  border-bottom: 1px solid var(--border-soft); border-radius: var(--paper-radius);
-
-  padding: 6px 8px;
-
-  font-size: 14px;
-
-  font-weight: 600; background: var(--surface-card);
-
-  color: var(--df-text);
-
-  font-family: inherit;
-
-  outline: none;
-
-  transition: border-color .15s, background .15s;
-  border-color: var(--paper-rule); box-shadow: none;
-}
 .df-notes-editor textarea {
 
   width: 100%; border: 1px solid color-mix(in srgb, var(--text-muted) 18%, transparent); border-radius: var(--paper-radius); background: var(--surface-card);
@@ -25487,40 +25440,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   height: 1px;
   opacity: 0;
   pointer-events: none;
-}
-.df-app .df-settings-name-input {
-  padding: 2px 0;
-  border: 0;
-  border-bottom: 1px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--text-main);
-  font-size: 16px;
-  font-weight: 750;
-}
-.df-app .df-settings-name-input:hover {
-  padding: 2px 0;
-  border: 0;
-  border-bottom: 1px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--text-main);
-  font-size: 16px;
-  font-weight: 750;
-}
-.df-app .df-settings-name-input:focus {
-  padding: 2px 0;
-  border: 0;
-  border-bottom: 1px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--text-main);
-  font-size: 16px;
-  font-weight: 750;
-  border-bottom-color: var(--pencil-rule);
 }
 .df-app .df-settings-profile small {
   margin: 2px 0 0;
@@ -40063,4 +39982,104 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app .df-settings-home-entry-copy small { white-space: normal; }
+}
+
+/* Settings details start at the utility header; the profile hero belongs to
+   the home surface only. Keep the existing desktop rail and mobile category
+   selector as the single navigation owners. */
+#root .df-app .df-utility-head-leading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+#root .df-app .df-utility-head-leading h2 {
+  min-width: 0;
+  margin: 0;
+}
+
+#root .df-app .df-settings-back-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 4px 0 0;
+  border: 0;
+  color: var(--text-muted);
+  background: transparent;
+  font: 600 12px/1 var(--paper-sans);
+  cursor: pointer;
+}
+
+#root .df-app .df-settings-back-button span:first-child {
+  font: 400 29px/1 var(--paper-sans);
+}
+
+#root .df-app .df-settings-back-button:hover,
+#root .df-app .df-settings-back-button:focus-visible {
+  color: var(--accent-active);
+}
+
+#root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+#root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell > .df-settings-rail,
+#root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell > .df-settings-content {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+#root .df-app .df-settings-detail-shell > .df-settings-rail {
+  align-content: start;
+}
+
+#root .df-app .df-settings-profile-name-input {
+  width: min(240px, 100%);
+  min-height: 32px;
+  padding: 3px 8px;
+  border: 1px solid var(--paper-rule-strong);
+  border-radius: 7px;
+  color: var(--text-main);
+  background: var(--surface-card);
+  font: 700 18px/1.2 var(--paper-display);
+}
+
+#root .df-app .df-settings-profile-name-input:focus {
+  outline: 2px solid var(--accent-active);
+  outline-offset: 1px;
+}
+
+#root .df-app .df-settings-home-notification-card {
+  margin: 0;
+  min-height: 78px;
+}
+
+@media (max-width: 899.98px) and (orientation: portrait),
+       (max-width: 760px) and (orientation: landscape) {
+  #root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  #root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell > .df-settings-rail {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  #root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell > .df-settings-content {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  #root .df-app .df-settings-detail-shell > .df-settings-rail .df-settings-mobile-category {
+    height: 46px;
+    align-self: start;
+  }
+
+  #root .df-app .df-settings-detail-shell > .df-settings-content {
+    grid-row: 2;
+  }
 }

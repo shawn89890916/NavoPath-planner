@@ -5,6 +5,7 @@
 ### 改进
 - 设置首页支持点击头像上传或替换图片，用户名旁的编辑入口可打开显示名称编辑区；强调色改为右侧当前值与上下箭头触发的展开选择，并在手机与桌面保持完整显示。
 - 设置首页补回通知入口，打开通知前会先关闭设置面板；强调色选择器显示颜色名称并使用真实色点，补齐浅色黑色与深色白色的中性选项。
+- 通知入口现在紧跟个人资料；竖屏通知中心改为占据下半屏的底部短栏，横屏继续使用原有浮层。进入设置分区后隐藏头像资料，标题移到顶栏并提供返回设置首页的入口，用户名编辑改为首页内联保存，避免头像和名称被旧数据回写覆盖。
 
 ## 2026-09-11 · 窄屏 Execute 工作区
 
@@ -109,6 +110,7 @@
   ### Improved
   - The settings home now supports direct avatar upload or replacement and an entry to the display-name editor; accent color opens from the right-aligned current value with an up/down affordance and remains fully visible on mobile and desktop.
   - Restored a direct Notifications entry on the settings home and close the settings sheet before opening the notification center; accent choices now use named colors with a matching swatch, including light-mode Black and dark-mode White neutrals.
+  - Notifications now sits directly below the profile; portrait notification center uses a lower-half bottom sheet while landscape keeps the existing floating panel. Detail sections hide profile identity, move the section title into the top bar with a back-to-settings action, and save inline username edits so avatar and name do not revert to stale data.
 
 ## 2026-09-11 · Narrow Execute workspace
 
