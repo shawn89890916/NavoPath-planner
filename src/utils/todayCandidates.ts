@@ -6,6 +6,37 @@ export type TodayCandidateResult = {
   taskId: string;
 };
 
+export function reorderTodayCandidates(
+  data: PlannerData,
+  visibleIds: string[],
+  dragId: string,
+  targetId: string,
+  position: "before" | "after",
+  groupByProject: boolean,
+  now = new Date().toISOString(),
+): PlannerData {
+  const byId = new Map(data.tasks.map((task) => [task.id, task]));
+  const dragged = byId.get(dragId);
+  const target = byId.get(targetId);
+  if (!dragged || !target || dragId === targetId
+    || dragged.completed !== target.completed
+    || (groupByProject && dragged.projectId !== target.projectId)) return data;
+  const ids = [...new Set(visibleIds)].filter((id) => byId.has(id));
+  if (!ids.includes(dragId) || !ids.includes(targetId)) return data;
+  const reordered = ids.filter((id) => id !== dragId);
+  const targetIndex = reordered.indexOf(targetId);
+  reordered.splice(targetIndex + (position === "after" ? 1 : 0), 0, dragId);
+  if (reordered.every((id, index) => id === ids[index])) return data;
+  // Use the whole visible list so ranks from different projects cannot collide.
+  const order = new Map(reordered.map((id, index) => [id, index * 10]));
+  return {
+    ...data,
+    tasks: data.tasks.map((task) => order.has(task.id) && task.order !== order.get(task.id)
+      ? { ...task, order: order.get(task.id), updatedAt: now }
+      : task),
+  };
+}
+
 function findSubtask(subtasks: Subtask[] | undefined, id: string): Subtask | undefined {
   for (const subtask of subtasks || []) {
     if (subtask.id === id) return subtask;

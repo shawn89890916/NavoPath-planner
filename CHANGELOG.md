@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-09-13 · 候选任务拖动修复
+
+### 修复
+- 修复今日候选拖动后顺序跳动、意外改变项目归属的问题，稳定落点预览与松手位置；按项目分类时仅在同组内排序，取消分类后可跨项目排序并保留原有归属。
+
 ## 2026-09-12 · 工作区精简与设置改进
 
 ### 改进
@@ -108,6 +113,11 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-13 · Candidate drag fixes
+
+### Fixed
+- Fixed unexpected reordering and project changes when dragging Today's Candidates, with stable drop previews and release targeting. Grouped lists reorder within each project; ungrouped lists support cross-project ordering while preserving task ownership.
 
 ## 2026-09-12 · Workspace clarity and settings improvements
 

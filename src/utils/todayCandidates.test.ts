@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PlannerData, Task } from "../types";
-import { promoteSubtaskToToday, returnScheduledTaskToToday, toggleTodayCandidate } from "./todayCandidates";
+import { promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToToday, toggleTodayCandidate } from "./todayCandidates";
 
 function task(overrides: Partial<Task> = {}): Task {
   return {
@@ -74,5 +74,58 @@ describe("today candidate transformations", () => {
     expect(result.action).toBe("returned");
     expect(result.data.tasks[1]).toMatchObject({ plannedForDate: "2026-06-20", executionLane: "candidate", timelineRecords: [] });
     expect(result.data.tasks[0].subtasks?.[0].plannedTaskId).toBe("promoted-1");
+  });
+});
+
+
+describe("today candidate ordering", () => {
+  const candidates = () => data([
+    task({ id: "a", projectId: "p1", order: 0, parentTaskId: "parent", goalId: "goal", recurrence: { mode: "flexible", frequency: "daily" } }),
+    task({ id: "b", projectId: "p2", order: 0 }),
+    task({ id: "c", projectId: "p1", order: 10 }),
+    task({ id: "d", order: 10 }),
+    task({ id: "hidden", projectId: "p1", order: 15 }),
+  ]);
+  const visible = ["a", "b", "c", "d"];
+  const ordered = (result: PlannerData) => result.tasks.filter((item) => visible.includes(item.id))
+    .sort((a, b) => (a.order || 0) - (b.order || 0)).map((item) => item.id);
+
+  it("orders the entire mixed-project list without changing task metadata", () => {
+    const source = candidates();
+    const result = reorderTodayCandidates(source, visible, "a", "d", "after", false, "now");
+    expect(ordered(result)).toEqual(["b", "c", "d", "a"]);
+    for (const original of source.tasks) {
+      const updated = result.tasks.find((item) => item.id === original.id)!;
+      expect({ ...updated, order: original.order, updatedAt: original.updatedAt }).toEqual(original);
+    }
+    expect(result.tasks[4]).toBe(source.tasks[4]);
+    expect(source.tasks[0].order).toBe(0);
+  });
+
+  it("keeps repeated up/down moves stable after serialization", () => {
+    let result = reorderTodayCandidates(candidates(), visible, "a", "d", "after", false);
+    result = JSON.parse(JSON.stringify(result));
+    result = reorderTodayCandidates(result, ordered(result), "a", "b", "before", false);
+    expect(ordered(result)).toEqual(visible);
+    result = reorderTodayCandidates(result, ordered(result), "d", "b", "after", false);
+    expect(ordered(result)).toEqual(["a", "b", "d", "c"]);
+  });
+
+  it("allows same-project sorting and rejects cross-project drops when grouped", () => {
+    const source = candidates();
+    expect(reorderTodayCandidates(source, visible, "a", "b", "after", true)).toBe(source);
+    expect(reorderTodayCandidates(source, visible, "a", "d", "after", true)).toBe(source);
+    expect(ordered(reorderTodayCandidates(source, visible, "c", "a", "before", true)))
+      .toEqual(["c", "a", "b", "d"]);
+  });
+
+  it("ignores missing, hidden, same-position and different-completion targets", () => {
+    const source = candidates();
+    expect(reorderTodayCandidates(source, visible, "a", "missing", "after", false)).toBe(source);
+    expect(reorderTodayCandidates(source, visible, "a", "hidden", "after", false)).toBe(source);
+    expect(reorderTodayCandidates(source, visible, "a", "a", "after", false)).toBe(source);
+    expect(reorderTodayCandidates(source, visible, "a", "b", "before", false)).toBe(source);
+    source.tasks[1].completed = true;
+    expect(reorderTodayCandidates(source, visible, "a", "b", "after", false)).toBe(source);
   });
 });
