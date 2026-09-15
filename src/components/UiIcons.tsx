@@ -15,3 +15,10 @@ export const UiSearchIcon = createNamedIcon(Search);
 export const UiTrashIcon = createNamedIcon(Trash2);
 export const UiMoreIcon = createNamedIcon(Ellipsis);
 export const UiSparklesIcon = createNamedIcon(Sparkles);
+
+export function UiDockSidebarIcon({ size = 16, strokeWidth = 1.8, absoluteStrokeWidth: _absoluteStrokeWidth, ...props }: LucideProps) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden={props["aria-label"] ? undefined : true} {...props}>
+    <path d="M5 4h14M5 20h14M12 7v10" />
+    <path d="m9 10 3-3 3 3M9 14l3 3 3-3" />
+  </svg>;
+}

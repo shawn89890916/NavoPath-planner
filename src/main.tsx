@@ -90,7 +90,7 @@ import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumber
 import { ActionDisclosure, Button, CloseButton, IconButton } from "./components/UiPrimitives";
 
 const COMPACT_LAYOUT_MEDIA_QUERY = "(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)";
-import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiBellIcon, UiCopyIcon, UiDockSidebarIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { SETTINGS_CATEGORIES, normalizeSettingsTarget, settingsCategoryLabel, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { getDefaultSettings, normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -13354,6 +13354,7 @@ function AiPanel({ input, setInput, busy, onSend, onCancel, onPlanToday, planSta
   const [renamingConversationId, setRenamingConversationId] = useState<string | null>(null);
   const [conversationDraftTitle, setConversationDraftTitle] = useState("");
   const [desktopBounds, setDesktopBounds] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+  const [desktopDocked, setDesktopDocked] = useState(false);
   const resizeCursors = { n: "n-resize", ne: "ne-resize", e: "e-resize", se: "se-resize", s: "s-resize", sw: "sw-resize", w: "w-resize", nw: "nw-resize" } as const;
   const desktopInteractionRef = useRef<{
     kind: "move" | keyof typeof resizeCursors;
@@ -13364,7 +13365,7 @@ function AiPanel({ input, setInput, busy, onSend, onCancel, onPlanToday, planSta
   } | null>(null);
   const isLandscapePanel = () => window.matchMedia("(min-width: 701px) and (orientation: landscape)").matches;
   const beginDesktopPanelInteraction = (event: React.PointerEvent<HTMLElement>, kind: "move" | keyof typeof resizeCursors) => {
-    if (!isLandscapePanel()) return;
+    if (!isLandscapePanel() || desktopDocked) return;
     if (kind === "move" && (event.target as HTMLElement).closest("button, summary, input, select, textarea, label")) return;
     const rect = panelRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -13379,7 +13380,7 @@ function AiPanel({ input, setInput, busy, onSend, onCancel, onPlanToday, planSta
     event.currentTarget.setPointerCapture(event.pointerId);
   };
   const getDesktopResizeDirection = (event: React.PointerEvent<HTMLElement>): keyof typeof resizeCursors | null => {
-    if (!isLandscapePanel()) return null;
+    if (!isLandscapePanel() || desktopDocked) return null;
     const rect = panelRef.current?.getBoundingClientRect();
     if (!rect) return null;
     const vertical = event.clientY - rect.top <= 16 ? "n" : rect.bottom - event.clientY <= 16 ? "s" : "";
@@ -13567,7 +13568,10 @@ function AiPanel({ input, setInput, busy, onSend, onCancel, onPlanToday, planSta
     event.currentTarget.value = "";
     setComposerMenuOpen(false);
   };
-  return <aside ref={panelRef} className={`df-ai-panel df-ai-panel-reference${mobileCollapsed ? " is-mobile-collapsed" : ""}${conversationListOpen ? " is-history-open" : ""}${desktopBounds ? " is-desktop-positioned" : ""}`} style={desktopBounds ? { "--ai-panel-left": `${desktopBounds.left}px`, "--ai-panel-top": `${desktopBounds.top}px`, "--ai-panel-width": `${desktopBounds.width}px`, "--ai-panel-height": `${desktopBounds.height}px` } as CSSProperties : undefined} onPointerDown={beginDesktopResizeFromPanel} onPointerMove={(event) => { updateDesktopPanelInteraction(event); updateDesktopResizeCursor(event); }} onPointerUp={endDesktopPanelInteraction} onPointerCancel={endDesktopPanelInteraction} onPointerLeave={() => { panelRef.current?.style.removeProperty("cursor"); panelRef.current?.querySelector<HTMLElement>(".df-ai-panel-head")?.style.removeProperty("cursor"); }}>
+  const dockLabel = desktopDocked
+    ? (lang === "zh" ? "恢复浮动窗口" : "Undock to floating window")
+    : (lang === "zh" ? "停靠到侧栏" : "Dock to sidebar");
+  return <aside ref={panelRef} className={`df-ai-panel df-ai-panel-reference${mobileCollapsed ? " is-mobile-collapsed" : ""}${conversationListOpen ? " is-history-open" : ""}${desktopBounds ? " is-desktop-positioned" : ""}${desktopDocked ? " is-docked" : ""}`} style={desktopBounds ? { "--ai-panel-left": `${desktopBounds.left}px`, "--ai-panel-top": `${desktopBounds.top}px`, "--ai-panel-width": `${desktopBounds.width}px`, "--ai-panel-height": `${desktopBounds.height}px` } as CSSProperties : undefined} onPointerDown={beginDesktopResizeFromPanel} onPointerMove={(event) => { updateDesktopPanelInteraction(event); updateDesktopResizeCursor(event); }} onPointerUp={endDesktopPanelInteraction} onPointerCancel={endDesktopPanelInteraction} onPointerLeave={() => { panelRef.current?.style.removeProperty("cursor"); panelRef.current?.querySelector<HTMLElement>(".df-ai-panel-head")?.style.removeProperty("cursor"); }}>
     <MobileSheetDismissHandle onDismiss={onClose} onCollapse={() => setMobileCollapsed(true)} onExpand={() => setMobileCollapsed(false)} collapsed={mobileCollapsed} lang={lang} />
     <div className="df-ai-panel-head" onPointerDown={(event) => beginDesktopPanelInteraction(event, "move")} onPointerMove={updateDesktopPanelInteraction} onPointerUp={endDesktopPanelInteraction} onPointerCancel={endDesktopPanelInteraction}>
       <div className="df-ai-panel-title">
@@ -13576,6 +13580,10 @@ function AiPanel({ input, setInput, busy, onSend, onCancel, onPlanToday, planSta
       <div className="df-ai-head-actions">
         <button className="df-ai-reference-tool new-chat" onClick={onNewConversation} aria-label={text.newChat} title={text.newChat}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" /><path d="m16.5 3.5 4 4L12 16l-4.5 1 1-4.5Z" /></svg></button>
         <button className={`df-ai-reference-tool history ${conversationListOpen ? "active" : ""}`} onClick={onToggleConversationList} aria-label={text.chats} title={text.chats}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.5 2" /></svg></button>
+        <IconButton className={`df-ai-reference-tool dock${desktopDocked ? " active" : ""}`} icon={<UiDockSidebarIcon size={18} />} label={dockLabel} aria-pressed={desktopDocked} onClick={() => {
+          desktopInteractionRef.current = null;
+          setDesktopDocked((docked) => !docked);
+        }} />
         <details className="df-ai-head-more">
           <summary className="df-ai-reference-tool" aria-label={lang === "zh" ? "更多选项" : "More options"} title={lang === "zh" ? "更多选项" : "More options"}>•••</summary>
           <div className="df-ai-head-menu">

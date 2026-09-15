@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-09-16 · Navo AI 侧栏
+
+### 改进
+- Navo AI 标题栏新增侧栏停靠按钮，可在可拖动浮窗与贴右侧栏之间快速切换；窄屏继续使用原有底部面板。
+
 ## 2026-09-13 · 候选任务拖动修复
 
 ### 修复
@@ -113,6 +118,11 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-16 · Navo AI sidebar
+
+### Improvements
+- Added a dock control to the Navo AI title bar for switching between the movable floating window and a right-side panel; narrow screens keep the existing bottom sheet.
 
 ## 2026-09-13 · Candidate drag fixes
 

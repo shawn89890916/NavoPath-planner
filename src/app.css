@@ -37860,6 +37860,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   stroke-linejoin: round;
 }
 
+#root .df-app .df-ai-panel-reference .df-ai-reference-tool.dock { display: none; }
+
 .df-ai-head-more { position: relative; }
 .df-ai-head-more > summary { font: 700 13px/1 var(--paper-sans); letter-spacing: .08em; }
 .df-ai-head-menu {
@@ -38440,6 +38442,12 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 
 @media (min-width: 701px) and (orientation: landscape) {
+  #root .df-app .df-ai-panel-reference {
+    transition: top var(--motion-layout) var(--motion-ease), right var(--motion-layout) var(--motion-ease), bottom var(--motion-layout) var(--motion-ease), width var(--motion-layout) var(--motion-ease), height var(--motion-layout) var(--motion-ease), border-radius var(--motion-layout) var(--motion-ease), box-shadow var(--motion-layout) var(--motion-ease);
+  }
+
+  #root .df-app .df-ai-panel-reference .df-ai-reference-tool.dock { display: grid; }
+
   #root .df-app .df-ai-panel-reference.is-desktop-positioned {
     top: var(--ai-panel-top);
     right: auto;
@@ -38449,6 +38457,20 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     height: var(--ai-panel-height);
   }
 
+  #root .df-app .df-ai-panel-reference.is-docked {
+    top: 58px;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    width: clamp(420px, 34vw, 520px);
+    height: auto;
+    max-width: calc(100vw - 360px);
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 14px 0 0;
+    box-shadow: -12px 0 30px color-mix(in srgb, var(--text-main) 10%, transparent);
+  }
+
   #root .df-app .df-ai-panel-reference .df-ai-panel-head {
     cursor: grab;
     touch-action: none;
@@ -38456,6 +38478,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
   #root .df-app .df-ai-panel-reference .df-ai-panel-head:active { cursor: grabbing; }
   #root .df-app .df-ai-panel-reference .df-ai-panel-head :is(button, summary, input, select, textarea, label) { cursor: pointer; }
+  #root .df-app .df-ai-panel-reference.is-docked .df-ai-panel-head,
+  #root .df-app .df-ai-panel-reference.is-docked .df-ai-panel-head:active { cursor: default; }
 
 }/* v0 workspace hierarchy: application paper → primary work paper → floating tools. */
 #root .df-app .df-header {
