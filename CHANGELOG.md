@@ -4,6 +4,7 @@
 
 ### 改进
 - Navo AI 停靠到右侧栏时，Execute 工作区会以平滑动画为侧栏腾出空间；日、三日、周、月时间轴均随可用宽度自适应，内容不再被侧栏遮挡。
+- 横屏网页版设置现在直接打开左侧分类、右侧详情的双栏界面；竖屏继续使用带快速设置与分类入口的设置首页。
 
 ### 修复
 - 修复桌面端设置详情的分类栏与内容区相互重叠、页面被挤成窄列的问题；手机端仍保持清晰的上下分区布局。
@@ -131,6 +132,7 @@
 
 ### Improved
 - When Navo AI is docked on the right, the Execute workspace now makes room with a smooth layout transition; Day, 3-day, Week, and Month timelines adapt to the available width instead of sitting beneath the sidebar.
+- Landscape web settings now open directly into the two-column category and detail view, while portrait keeps the settings home with quick controls and section entry points.
 
 ### Fixed
 - Fixed the desktop settings detail navigation overlapping its content and squeezing the page into a narrow column, while preserving the stacked mobile layout.

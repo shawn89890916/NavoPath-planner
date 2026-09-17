@@ -42,6 +42,13 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toMatch(/\.df-settings-detail-shell > \.df-settings-content\s*\{[\s\S]*?grid-column:\s*2;/);
   });
 
+  it("opens settings details directly on landscape while retaining the compact home", () => {
+    expect(main).toContain("compactLayout={compactLayout}");
+    expect(main).toContain("useState(!initialSection && compactLayout)");
+    expect(main).toContain("setSettingsHome(!initialSection && compactLayout)");
+    expect(main).toContain('kind === "settings" && compactLayout && !settingsHome');
+  });
+
   it("uses the compact workbench before a narrow landscape timeline collapses", () => {
     expect(main).toContain("const COMPACT_LAYOUT_MEDIA_QUERY = \"(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)\";");
     expect(appCss).toContain("@media (min-width: 761px) and (max-width: 980px) and (orientation: landscape)");
