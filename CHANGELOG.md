@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-09-17 · 设置页布局
+
+### 修复
+- 修复桌面端设置详情的分类栏与内容区相互重叠、页面被挤成窄列的问题；手机端仍保持清晰的上下分区布局。
+
 ## 2026-09-16 · Navo AI 侧栏
 
 ### 改进
@@ -118,6 +123,11 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-17 · Settings layout
+
+### Fixed
+- Fixed the desktop settings detail navigation overlapping its content and squeezing the page into a narrow column, while preserving the stacked mobile layout.
 
 ## 2026-09-16 · Navo AI sidebar
 

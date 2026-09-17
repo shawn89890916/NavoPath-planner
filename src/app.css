@@ -40001,9 +40001,13 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   grid-template-rows: minmax(0, 1fr);
 }
 
-#root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell > .df-settings-rail,
-#root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell > .df-settings-content {
+#root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell > .df-settings-rail {
   grid-column: 1;
+  grid-row: 1;
+}
+
+#root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell > .df-settings-content {
+  grid-column: 2;
   grid-row: 1;
 }
 

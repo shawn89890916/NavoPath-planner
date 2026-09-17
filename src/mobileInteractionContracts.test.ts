@@ -37,6 +37,11 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toContain("/* Touch settings use the same system switch in portrait and landscape. */");
   });
 
+  it("keeps desktop settings navigation beside the detail content", () => {
+    expect(appCss).toMatch(/\.df-settings-detail-shell > \.df-settings-rail\s*\{[\s\S]*?grid-column:\s*1;/);
+    expect(appCss).toMatch(/\.df-settings-detail-shell > \.df-settings-content\s*\{[\s\S]*?grid-column:\s*2;/);
+  });
+
   it("uses the compact workbench before a narrow landscape timeline collapses", () => {
     expect(main).toContain("const COMPACT_LAYOUT_MEDIA_QUERY = \"(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)\";");
     expect(appCss).toContain("@media (min-width: 761px) and (max-width: 980px) and (orientation: landscape)");
