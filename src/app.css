@@ -32655,6 +32655,7 @@ body.df-planning-native-dragging [contenteditable] * {
   --motion-base: 180ms;
   --motion-layout: 240ms;
   --motion-ease: cubic-bezier(.2,.75,.25,1);
+  --df-ai-sidebar-width: clamp(400px, 32vw, 500px);
 
   --icon-size-sm: 14px;
   --icon-size-md: 16px;
@@ -38443,10 +38444,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 @media (min-width: 701px) and (orientation: landscape) {
   #root .df-app .df-ai-panel-reference {
-    transition: top var(--motion-layout) var(--motion-ease), right var(--motion-layout) var(--motion-ease), bottom var(--motion-layout) var(--motion-ease), width var(--motion-layout) var(--motion-ease), height var(--motion-layout) var(--motion-ease), border-radius var(--motion-layout) var(--motion-ease), box-shadow var(--motion-layout) var(--motion-ease);
+    transition: top var(--motion-layout) var(--motion-ease-settle), right var(--motion-layout) var(--motion-ease-settle), bottom var(--motion-layout) var(--motion-ease-settle), width var(--motion-layout) var(--motion-ease-settle), height var(--motion-layout) var(--motion-ease-settle), border-radius var(--motion-layout) var(--motion-ease-settle), box-shadow var(--motion-layout) var(--motion-ease-settle);
   }
-
-  #root .df-app .df-ai-panel-reference .df-ai-reference-tool.dock { display: grid; }
 
   #root .df-app .df-ai-panel-reference.is-desktop-positioned {
     top: var(--ai-panel-top);
@@ -38457,12 +38456,24 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     height: var(--ai-panel-height);
   }
 
+  #root .df-app .df-ai-panel-reference .df-ai-panel-head {
+    cursor: grab;
+    touch-action: none;
+  }
+
+  #root .df-app .df-ai-panel-reference .df-ai-panel-head:active { cursor: grabbing; }
+  #root .df-app .df-ai-panel-reference .df-ai-panel-head :is(button, summary, input, select, textarea, label) { cursor: pointer; }
+}
+
+@media (min-width: 981px) and (orientation: landscape) {
+  #root .df-app .df-ai-panel-reference .df-ai-reference-tool.dock { display: grid; }
+
   #root .df-app .df-ai-panel-reference.is-docked {
     top: 58px;
     right: 0;
     bottom: 0;
     left: auto;
-    width: clamp(420px, 34vw, 520px);
+    width: var(--df-ai-sidebar-width);
     height: auto;
     max-width: calc(100vw - 360px);
     border-right: 0;
@@ -38471,17 +38482,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     box-shadow: -12px 0 30px color-mix(in srgb, var(--text-main) 10%, transparent);
   }
 
-  #root .df-app .df-ai-panel-reference .df-ai-panel-head {
-    cursor: grab;
-    touch-action: none;
-  }
-
-  #root .df-app .df-ai-panel-reference .df-ai-panel-head:active { cursor: grabbing; }
-  #root .df-app .df-ai-panel-reference .df-ai-panel-head :is(button, summary, input, select, textarea, label) { cursor: pointer; }
   #root .df-app .df-ai-panel-reference.is-docked .df-ai-panel-head,
   #root .df-app .df-ai-panel-reference.is-docked .df-ai-panel-head:active { cursor: default; }
+}
 
-}/* v0 workspace hierarchy: application paper → primary work paper → floating tools. */
+/* v0 workspace hierarchy: application paper → primary work paper → floating tools. */
 #root .df-app .df-header {
   border-bottom: 1px solid var(--paper-rule);
   background: color-mix(in srgb, var(--surface-main) 97%, transparent);
@@ -38977,6 +38982,24 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     gap: 12px;
     padding: 12px 16px 16px;
     background: color-mix(in srgb, var(--surface-main) 94%, var(--text-main) 6%);
+    transition: width var(--motion-layout) var(--motion-ease-settle), grid-template-columns var(--motion-layout) var(--motion-ease-settle);
+  }
+
+  #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) {
+    --df-candidate-width: clamp(300px, 24vw, 340px);
+    width: calc(100% - var(--df-ai-sidebar-width));
+    grid-template-columns: var(--df-candidate-width) minmax(0, 1fr);
+    animation: df-ai-dock-workspace-in var(--motion-layout) var(--motion-ease-settle) both;
+  }
+
+  #root .df-app.mode-execute.is-ai-docked :is(.df-timeline-content, .df-timeline-daily, .df-timeline-3day, .df-week-view, .df-month-view, .df-month-body) {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  @keyframes df-ai-dock-workspace-in {
+    from { width: 100%; }
+    to { width: calc(100% - var(--df-ai-sidebar-width)); }
   }
 
   #root .df-app.mode-execute .df-candidate-panel {

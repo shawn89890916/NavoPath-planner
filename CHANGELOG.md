@@ -1,6 +1,9 @@
 # NavoPath 更新日志
 
-## 2026-09-17 · 设置页布局
+## 2026-09-17 · 设置页布局与 AI 侧栏
+
+### 改进
+- Navo AI 停靠到右侧栏时，Execute 工作区会以平滑动画为侧栏腾出空间；日、三日、周、月时间轴均随可用宽度自适应，内容不再被侧栏遮挡。
 
 ### 修复
 - 修复桌面端设置详情的分类栏与内容区相互重叠、页面被挤成窄列的问题；手机端仍保持清晰的上下分区布局。
@@ -124,7 +127,10 @@
 
 # NavoPath Changelog
 
-## 2026-09-17 · Settings layout
+## 2026-09-17 · Settings layout and AI sidebar
+
+### Improved
+- When Navo AI is docked on the right, the Execute workspace now makes room with a smooth layout transition; Day, 3-day, Week, and Month timelines adapt to the available width instead of sitting beneath the sidebar.
 
 ### Fixed
 - Fixed the desktop settings detail navigation overlapping its content and squeezing the page into a narrow column, while preserving the stacked mobile layout.
