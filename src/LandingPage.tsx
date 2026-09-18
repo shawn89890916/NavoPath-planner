@@ -18,15 +18,6 @@ const copy = {
     title: "See what to do today — and when to do it.",
     scroll: "Scroll to explore", start: "Start planning", download: "Download for Windows",
     productKicker: "Execute / Today", productLabel: "Candidates · Timeline",
-    preview: {
-      execute: "Execute", planning: "Planning", candidates: "Today's Candidates", allDay: "All Day", add: "Add task #project",
-      views: ["Day", "3-Day", "Week", "Month"], date: "31 · Mon",
-      candidateGroups: [
-        { title: "Client work", tasks: [["Prepare weekly update", "30m"], ["Review design handoff", "45m"]] },
-        { title: "Personal", tasks: [["Inbox & follow-ups", "30m"], ["Prepare team 1:1", "25m"], ["Book focus time", "15m"]] },
-      ],
-      timeline: [["09:00", "Team stand-up", "coral"], ["10:00", "Deep work: proposal", "sage"], ["13:30", "Client review", "blue"], ["15:00", "Follow-up block", "brown"]],
-    },
     stepsKicker: "Plan the day", stepsTitle: "Turn one list into a timeline you can follow.",
     steps: [
       ["01", "Keep the list small", "Bring only the tasks that might genuinely fit today into view."],
@@ -46,15 +37,6 @@ const copy = {
     title: "今天的事，先安排明白。",
     scroll: "继续探索", start: "开始安排", download: "下载 Windows 版",
     productKicker: "今天的安排", productLabel: "待办 · 日程",
-    preview: {
-      execute: "执行", planning: "规划", candidates: "今日候选", allDay: "全天", add: "添加任务 #项目",
-      views: ["日", "3 天", "周", "月"], date: "31 · 周一",
-      candidateGroups: [
-        { title: "客户项目", tasks: [["整理本周项目进度", "30 分钟"], ["审阅设计交接", "45 分钟"]] },
-        { title: "个人安排", tasks: [["处理邮件与跟进", "30 分钟"], ["准备团队一对一", "25 分钟"], ["预留专注时间", "15 分钟"]] },
-      ],
-      timeline: [["09:00", "团队站会", "coral"], ["10:00", "专注：客户方案", "sage"], ["13:30", "客户评审", "blue"], ["15:00", "集中跟进", "brown"]],
-    },
     stepsKicker: "怎么用", stepsTitle: "别让待办，只是一长串。",
     steps: [
       ["01", "先挑最要紧的几件", "不用什么都塞进今天。今天该做什么，先挑出来。"],
@@ -71,35 +53,16 @@ const copy = {
 
 function ProductPreview({ lang }: { lang: Lang }) {
   const c = copy[lang];
-  const p = c.preview;
   return <section className="landing-product-rise" aria-label={c.productKicker}>
-    <div className={`landing-execute-preview lang-${lang}`} role="img" aria-label={lang === "zh" ? "NavoPath 执行页面：日常职场任务和时间轴" : "NavoPath Execute view with an everyday professional schedule"}>
-      <header className="landing-execute-preview-header">
-        <div className="landing-execute-preview-brand"><ProductIcon compact /><strong>NavoPath</strong></div>
-        <nav><b>{p.execute}</b><span>{p.planning}</span></nav>
-        <div className="landing-execute-preview-actions" aria-hidden="true"><i>↻</i><i>⌕</i><i>⚙</i></div>
-      </header>
-      <div className="landing-execute-preview-body">
-        <aside className="landing-execute-candidates">
-          <header><h3>{p.candidates}</h3><span aria-hidden="true">⌘</span><span aria-hidden="true">◎</span><span aria-hidden="true">⌄</span></header>
-          <div className="landing-execute-candidate-list">
-            {p.candidateGroups.map((group) => <section key={group.title} className="landing-execute-group">
-              <div className="landing-execute-group-label"><i /><span>{group.title}</span><small>{group.tasks.length}</small></div>
-              {group.tasks.map(([title, duration]) => <article key={title} className="landing-execute-task"><i aria-hidden="true" /><strong>{title}</strong><small>{duration}</small><span aria-hidden="true">⌄</span></article>)}
-            </section>)}
-          </div>
-          <footer><span>{p.add}</span><i aria-hidden="true" /><button type="button" tabIndex={-1}>{lang === "zh" ? "添加" : "Add"}</button></footer>
-        </aside>
-        <section className="landing-execute-timeline">
-          <header className="landing-execute-timeline-header"><strong>{p.date}</strong><nav>{p.views.map((view, index) => <span key={view} className={index === 0 ? "active" : ""}>{view}</span>)}</nav></header>
-          <div className="landing-execute-all-day"><b>{p.allDay}</b><span /></div>
-          <div className="landing-execute-hours">
-            {p.timeline.map(([time, title, tone]) => <div className={`landing-execute-hour is-${tone}`} key={time}><time>{time}</time><span className="landing-execute-hour-rule" /><article><i aria-hidden="true" /><strong>{title}</strong></article></div>)}
-          </div>
-          <div className="landing-execute-preview-fabs" aria-hidden="true"><i>+</i><i>AI</i></div>
-        </section>
-      </div>
-    </div>
+    <img
+      className="landing-product-screenshot"
+      src={lang === "zh" ? "/navopath-home-zh.png" : "/navopath-home-en.png"}
+      width={1440}
+      height={810}
+      loading="eager"
+      decoding="async"
+      alt={lang === "zh" ? "NavoPath 中文执行工作区：今日候选、习惯与时间轴" : "NavoPath Execute workspace in English with today's candidates, habits, and timeline"}
+    />
   </section>;
 }
 

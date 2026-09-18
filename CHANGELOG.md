@@ -5,6 +5,7 @@
 ### 改进
 - AI 提供商设置改为上方说明、下方横向表单，充分利用横屏空间；界面中的智谱名称统一为 GLM。新账号首次登录网页端后会请求开启通知，浏览器需要额外手势时会在进入工作区后的第一次操作中触发。
 - AI 侧栏模式会记住用户选择，关闭后再次打开仍保持停靠；三日与周视图的纸面背景、小时色带和分割线现已与日视图统一。
+- 首页产品预览更新为当前真实 Execute 工作区截图，切换中英文时会同步展示对应语言的界面与示例内容。
 
 ## 2026-09-17 · 设置页布局与 AI 侧栏
 
@@ -139,6 +140,7 @@
 ### Improved
 - AI provider settings now place their explanation above a horizontal form to use landscape space efficiently, and the Zhipu label is consistently shown as GLM. New accounts request web notification access after their first sign-in, using the first workspace interaction when the browser requires a fresh user gesture.
 - AI sidebar mode now survives close and reopen; 3-day and Week views use the same paper background, hour bands, and separators as Day.
+- The homepage product preview now uses current screenshots of the real Execute workspace, with matching interface and sample content when switching between English and Chinese.
 
 ## 2026-09-17 · Settings layout and AI sidebar
 
