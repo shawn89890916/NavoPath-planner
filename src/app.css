@@ -18982,22 +18982,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.df-added-today-label {
-
-  flex: 0 0 auto;
-
-  color: var(--accent-active);
-
-  font-size: 10px;
-
-  font-weight: 700;
-
-  letter-spacing: .04em;
-
-}
-
-
-
 .df-plan-task-node.added-to-today .df-task-node-inner {
 
   border-color: color-mix(in srgb, var(--accent-active) 38%, var(--border-soft));
@@ -34425,7 +34409,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app.mode-planning .df-planning {
   height: calc(100vh - 58px);
   padding: 0 6px 6px;
-  background: rgb(245, 241, 232);
+  background: var(--timeline-paper, rgb(248, 247, 243));
 }
 
 #root .df-app.mode-planning .df-planning .df-planning-body {
@@ -34434,7 +34418,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   overflow: hidden;
   border: 1px solid var(--paper-rule);
   border-radius: 22px;
-  background: rgb(250, 249, 245);
+  background: var(--timeline-paper, rgb(248, 247, 243));
 }
 
 #root .df-app.mode-planning .df-planning .df-mindmap.no-root {
@@ -34459,7 +34443,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   gap: 8px;
   border-right: 1px solid var(--paper-rule);
   border-bottom: 0;
-  background: rgb(250, 249, 245);
+  background: var(--timeline-paper, rgb(248, 247, 243));
 }
 
 #root .df-app.mode-planning .df-planning .df-planning-view-switch {
@@ -34504,7 +34488,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   grid-row: 1 / 2;
   padding: 22px 28px 32px;
   position: relative;
-  background: var(--surface-main);
+  background: var(--timeline-paper, rgb(248, 247, 243));
 }
 
 #root .df-app.mode-planning .df-planning .df-planning-filter-corner {
@@ -34589,6 +34573,22 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-left-width: 4px;
   border-left-color: var(--task-project-color);
   background: var(--surface-card);
+}
+
+#root .df-app.mode-planning .df-planning .df-planning-task-copy {
+  justify-content: center;
+}
+
+#root .df-app.mode-planning .df-planning .df-task-node-inner .df-task-title {
+  color: var(--text-main);
+  font: 700 17px/1.25 var(--paper-display);
+}
+
+#root .df-app:not(.theme-dark) .df-utility-panel:has(.df-settings-shell),
+#root .df-app:not(.theme-dark) .df-utility-panel:has(.df-settings-shell) .df-utility-head,
+#root .df-app:not(.theme-dark) .df-utility-panel:has(.df-settings-shell) .df-settings-shell,
+#root .df-app:not(.theme-dark) .df-utility-panel:has(.df-settings-shell) .df-settings-content {
+  background: var(--timeline-paper, rgb(248, 247, 243));
 }
 
 #root .df-app.mode-planning .df-planning .df-subtask-inner {
@@ -39143,12 +39143,12 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-scroll,
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-canvas,
 #root .df-app:not(.theme-dark).mode-execute .df-time-grid {
-  background-color: rgb(248, 247, 243);
+  background-color: var(--timeline-paper, rgb(248, 247, 243));
 }
 
 /* Multi-day views share the Day view's paper and hour-band rhythm. */
 #root .df-app:not(.theme-dark).mode-execute :is(.df-timeline-3day-top, .df-timeline-3day-allday, .df-timeline-3day-scroll) {
-  background: rgb(248, 247, 243);
+  background: var(--timeline-paper, rgb(248, 247, 243));
 }
 #root .df-app.mode-execute .df-timeline-3day .df-time-grid {
   background-color: transparent;

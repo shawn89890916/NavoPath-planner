@@ -423,6 +423,7 @@ function themeVars(settings: Settings, mode: Mode) {
       "--header-fg-muted": "#999999",
       "--input-bg": "#252525",
       "--input-border": "rgba(255,255,255,0.10)",
+      "--timeline-paper": "#252525",
       "--timeline-font-scale": String(fontScale),
     } as CSSProperties;
   }
@@ -452,6 +453,7 @@ function themeVars(settings: Settings, mode: Mode) {
     "--header-fg-muted": "#7B7062",
     "--input-bg": "#FFFFFF",
     "--input-border": "#DED8D8",
+    "--timeline-paper": "#F8F7F3",
     "--timeline-font-scale": String(fontScale),
   } as CSSProperties;
 }

@@ -613,13 +613,12 @@ function PlanningTaskNode(props: {
                 </span>
               )}
             >
-              {(metaBadges.length > 0 || hasSubtasks || isPlanned) && (
+              {(metaBadges.length > 0 || hasSubtasks) && (
                 <span className="df-task-meta-badges" aria-label={props.lang === "zh" ? "Task status" : "Task status"}>
                   {metaBadges.map((badge) => (
                     <span key={badge.key} className={badge.className}>{badge.label}</span>
                   ))}
                   {hasSubtasks && <span className="df-subtask-progress">{doneCount}/{totalCount}</span>}
-                  {isPlanned && <span className="df-added-today-label">{t(props.lang, "planning.planned")}</span>}
                 </span>
               )}
             </TaskBlockContent>

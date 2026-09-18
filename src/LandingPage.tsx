@@ -12,41 +12,39 @@ const GITHUB_URL = "https://github.com/shawn89890916/NavoPath-planner";
 
 const copy = {
   en: {
-    nav: [["How it works", "#how-it-works"], ["Support", DONATION_URL], ["GitHub", GITHUB_URL]],
+    nav: [["Execute", "#how-it-works"], ["Support", DONATION_URL], ["GitHub", GITHUB_URL]],
     login: "Log in", donate: "Support",
     productName: "NavoPath",
     title: "See what to do today — and when to do it.",
     scroll: "Scroll to explore", start: "Start planning", download: "Download for Windows",
     productKicker: "Execute / Today", productLabel: "Candidates · Timeline",
-    stepsKicker: "Plan the day", stepsTitle: "Turn one list into a timeline you can follow.",
+    stepsKicker: "Execute", stepsTitle: "Get every task done on time.",
     steps: [
       ["01", "Keep the list small", "Bring only the tasks that might genuinely fit today into view."],
       ["02", "See the open time", "Place a task beside the commitments that already shape your day."],
       ["03", "Follow the next step", "A clear timeline makes the next useful action easier to begin."],
     ],
-    planningKicker: "Work plan", planningTitle: "Keep work moving without losing the day.",
+    planningKicker: "Planning", planningTitle: "Keep even the biggest projects moving.",
     planningBody: "Keep related work together, then make room for it in a real week.",
-    planningProject: "Client launch", planningTasks: [["Prepare project update", "45m"], ["Review campaign brief", "30m"], ["Send follow-up", "15m"]],
-    ctaTitle: "Give the next useful task a time and a place.", ctaBody: "Open a calm workspace for the day ahead.",
+    ctaTitle: "Do one thing well today.", ctaBody: "Open NavoPath and start a productive day.",
     footer: "NavoPath / Plan the path. Execute today.", ctaDonate: "Support ongoing development",
   },
   zh: {
-    nav: [["怎么用", "#how-it-works"], ["支持我们", DONATION_URL], ["GitHub", GITHUB_URL]],
+    nav: [["执行", "#how-it-works"], ["支持我们", DONATION_URL], ["GitHub", GITHUB_URL]],
     login: "登录", donate: "支持",
     productName: "NavoPath",
-    title: "今天的事，先安排明白。",
+    title: "今天的事，先安排明白",
     scroll: "继续探索", start: "开始安排", download: "下载 Windows 版",
     productKicker: "今天的安排", productLabel: "待办 · 日程",
-    stepsKicker: "怎么用", stepsTitle: "别让待办，只是一长串。",
+    stepsKicker: "执行", stepsTitle: "任务再多，也能按时完成。",
     steps: [
       ["01", "先挑最要紧的几件", "不用什么都塞进今天。今天该做什么，先挑出来。"],
       ["02", "再看看怎么排", "打开日历，把它们挪进空档。忙不忙、赶不赶，一眼就知道。"],
       ["03", "照着做下去", "几点做什么，都写在眼前。接下来该做哪件，不用再想。"],
     ],
-    planningKicker: "项目规划", planningTitle: "项目再大，也能一件件做下去。",
+    planningKicker: "规划", planningTitle: "项目再大，也能持续推进。",
     planningBody: "把相关的事放在一块儿，什么时候该推哪一件，就清楚了。",
-    planningProject: "客户发布", planningTasks: [["对一遍项目进度", "45 分钟"], ["看活动方案", "30 分钟"], ["发跟进邮件", "15 分钟"]],
-    ctaTitle: "今天，先把一件事做好。", ctaBody: "打开 NavoPath，把它排进日程，就开始。",
+    ctaTitle: "今天，先把一件事做好。", ctaBody: "打开 NavoPath，开启效率的一天",
     footer: "NavoPath / 今天的事，今天安排。", ctaDonate: "支持我们",
   },
 } as const;
@@ -56,9 +54,9 @@ function ProductPreview({ lang }: { lang: Lang }) {
   return <section className="landing-product-rise" aria-label={c.productKicker}>
     <img
       className="landing-product-screenshot"
-      src={lang === "zh" ? "/navopath-home-zh.png" : "/navopath-home-en.png"}
-      width={1440}
-      height={810}
+      src={lang === "zh" ? "/navopath-execute-zh-v2.png" : "/navopath-execute-en-v2.png"}
+      width={2880}
+      height={1620}
       loading="eager"
       decoding="async"
       alt={lang === "zh" ? "NavoPath 中文执行工作区：今日候选、习惯与时间轴" : "NavoPath Execute workspace in English with today's candidates, habits, and timeline"}
@@ -69,8 +67,15 @@ function ProductPreview({ lang }: { lang: Lang }) {
 function PlanningPreview({ lang }: { lang: Lang }) {
   const c = copy[lang];
   return <section className="landing-planning-preview" aria-label={c.planningTitle}>
-    <div className="landing-project-node"><span>01</span><strong>{c.planningProject}</strong><i>3</i></div>
-    <div className="landing-project-branch">{c.planningTasks.map(([task, duration]) => <div className="landing-project-task" key={task}><i aria-hidden="true" /><strong>{task}</strong><small>{duration}</small></div>)}</div>
+    <img
+      className="landing-planning-screenshot"
+      src={lang === "zh" ? "/navopath-planning-zh-v2.png" : "/navopath-planning-en-v2.png"}
+      width={2880}
+      height={1620}
+      loading="lazy"
+      decoding="async"
+      alt={lang === "zh" ? "NavoPath 中文规划工作区：产品发布、数据分析课程与个人安排" : "NavoPath Planning workspace in English with product launch, coursework, and personal projects"}
+    />
   </section>;
 }
 
