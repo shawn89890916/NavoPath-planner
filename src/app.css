@@ -3888,28 +3888,6 @@ textarea:focus {
 
 
 
-/* Timeline */
-
-
-
-.execute-timeline-header {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  padding: 10px 16px;
-
-  border-bottom: 1px solid var(--border);
-
-  flex-shrink: 0;
-
-}
-
-
-
 /* Timeline empty */
 
 
@@ -4217,20 +4195,6 @@ input[type="range"] {
   border-radius: 14px;
 
   box-shadow: 0 12px 28px rgba(17, 24, 39, 0.06);
-
-}
-
-
-
-.execute-timeline-header h2 {
-
-  font-size: 14px;
-
-  font-weight: 600;
-
-  margin: 0;
-
-  color: var(--color-text);
 
 }
 
