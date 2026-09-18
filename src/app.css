@@ -39182,6 +39182,20 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background-color: rgb(248, 247, 243);
 }
 
+/* Multi-day views share the Day view's paper and hour-band rhythm. */
+#root .df-app:not(.theme-dark).mode-execute :is(.df-timeline-3day-top, .df-timeline-3day-allday, .df-timeline-3day-scroll) {
+  background: rgb(248, 247, 243);
+}
+#root .df-app.mode-execute .df-timeline-3day .df-time-grid {
+  background-color: transparent;
+}
+#root .df-app:not(.theme-dark).mode-execute .df-timeline-3day .df-hour-lines-layer .df-slot.hour {
+  border-top-color: #E5E7EB;
+}
+#root .df-app.theme-dark.mode-execute .df-timeline-3day .df-hour-lines-layer .df-slot.hour {
+  border-top-color: rgba(255, 255, 255, .09);
+}
+
 /* Medium landscape workbench: keep the paper split usable between phone and
    desktop widths. The compact mobile dock remains reserved for portrait mode. */
 @media (min-width: 761px) and (max-width: 980px) and (orientation: landscape) {

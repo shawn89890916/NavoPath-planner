@@ -49,6 +49,20 @@ describe("portrait interaction contracts", () => {
     expect(main).toContain('kind === "settings" && compactLayout && !settingsHome');
   });
 
+  it("persists the AI sidebar preference when the panel closes and reopens", () => {
+    expect(main).toContain('const AI_DOCKED_STORAGE_KEY = "navopath-ai-docked";');
+    expect(main).toContain("const [aiDocked, setAiDocked] = useState(loadAiDockedPreference);");
+    expect(main).toContain("localStorage.setItem(AI_DOCKED_STORAGE_KEY, String(aiDocked))");
+    expect(main).not.toContain("cancelAi(); setAiDocked(false); setAiOpen(false);");
+  });
+
+  it("keeps 3-Day and Week on the Day view paper and hour-band rhythm", () => {
+    expect(appCss).toContain(":is(.df-timeline-3day-top, .df-timeline-3day-allday, .df-timeline-3day-scroll)");
+    expect(appCss).toMatch(/\.df-timeline-3day \.df-time-grid\s*\{[\s\S]*?background-color:\s*transparent;/);
+    expect(appCss).toMatch(/:not\(\.theme-dark\).*?\.df-timeline-3day \.df-hour-lines-layer \.df-slot\.hour\s*\{[\s\S]*?border-top-color:\s*#E5E7EB;/);
+    expect(appCss).toContain("/* Multi-day views share the Day view's paper and hour-band rhythm. */");
+  });
+
   it("uses the compact workbench before a narrow landscape timeline collapses", () => {
     expect(main).toContain("const COMPACT_LAYOUT_MEDIA_QUERY = \"(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)\";");
     expect(appCss).toContain("@media (min-width: 761px) and (max-width: 980px) and (orientation: landscape)");
