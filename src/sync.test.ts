@@ -24,8 +24,9 @@ describe("sync host account isolation", () => {
     expect(mainSource).not.toMatch(/(?:read|write)BootstrapCache\([^\n]*authState\?\.user\?\.id/);
   });
 
-  it("keeps a foreground revision fallback when Realtime is unavailable", () => {
-    expect(mainSource).toContain("const REMOTE_REVISION_POLL_MS = 5_000;");
+  it("keeps a paced foreground revision fallback when Realtime is unavailable", () => {
+    expect(mainSource).toContain("const REMOTE_REVISION_POLL_MS = 30_000;");
+    expect(mainSource).toContain("const SAVE_DEBOUNCE_MS = 750;");
     expect(mainSource).toContain("window.plannerApi.getRemoteRevision");
     expect(mainSource).toContain('window.addEventListener("pageshow", onForeground)');
     expect(mainSource).toContain('document.addEventListener("visibilitychange", onForeground)');

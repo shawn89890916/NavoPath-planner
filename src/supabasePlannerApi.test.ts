@@ -106,6 +106,28 @@ describe("createSupabasePlannerApi", () => {
     vi.unstubAllGlobals();
   });
 
+  it("avoids a direct Realtime socket on production web", async () => {
+    window.location = { origin: "https://navopath.com", href: "https://navopath.com/app" } as any;
+    const user = { id: "user_1", email: "user@example.com" };
+    const channel = vi.fn();
+    createClientMock.mockReturnValue({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({ data: { session: { user } }, error: null }),
+        onAuthStateChange: vi.fn(),
+      },
+      channel,
+    });
+
+    const { createSupabasePlannerApi } = await import("./supabasePlannerApi");
+    const api = createSupabasePlannerApi("https://project.supabase.co", "anon");
+    const unsubscribe = api.subscribeToRemoteChanges?.(vi.fn());
+    await Promise.resolve();
+
+    expect(channel).not.toHaveBeenCalled();
+    expect(unsubscribe).toBeTypeOf("function");
+    unsubscribe?.();
+  });
+
   it("does not treat an email-confirmation signup as an authenticated session", async () => {
     const pendingUser = { id: "user_pending", email: "pending@example.com" };
     createClientMock.mockReturnValue({

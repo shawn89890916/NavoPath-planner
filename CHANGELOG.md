@@ -7,6 +7,7 @@
 - AI 侧栏模式会记住用户选择，关闭后再次打开仍保持停靠；三日与周视图的纸面背景、小时色带和分割线现已与日视图统一。
 - 首页的 Execute 与 Planning 产品预览均更新为高清真实工作区截图，以工作、学习和日常生活组成完整的一天；中英文主文案与界面示例同步切换，并使用新图片地址避免旧图缓存。产品主图现与网页同宽，下方执行、规划与行动文案改为从上到下的单列信息流，主行动按钮改为“直接开始”。Planning 与设置页统一为时间轴的中性纸面背景，Planning 任务卡移除“已加入今日候选”副标题并让标题竖直居中。
 - 设置分类、设置内页标签与 Planning 视图切换统一采用整行圆角选中态，替换旧的底边半包样式；通知中心、全局搜索及后续浅色界面统一继承时间轴的中性纸面底色，避免出现泛紫表面。
+- 降低网页端同步造成的卡顿与掉线：线上网页停止建立不稳定的跨域 Realtime WebSocket，改用切回页面时立即检查、前台每 30 秒轻量检查版本；连续编辑合并为 750 毫秒后保存，减少整份工作区的重复上传与重连压力。
 
 ## 2026-09-17 · 设置页布局与 AI 侧栏
 
@@ -143,6 +144,7 @@
 - AI sidebar mode now survives close and reopen; 3-day and Week views use the same paper background, hour bands, and separators as Day.
 - The homepage Execute and Planning previews now use high-resolution screenshots of the real workspace, showing work, study, and everyday life; the primary copy and sample interface switch together in English and Chinese, and versioned image URLs prevent stale cached artwork. The main product image now spans the webpage width, the Execute, Planning, and action copy follows a vertical single-column flow, and the primary action is now “Start now.” Planning and Settings share the timeline's neutral paper background, while Planning task cards omit the “In Today’s Candidates” subtitle and vertically center their titles.
 - Settings categories, Settings tabs, and Planning view controls now share a complete rounded-row selection state instead of the old partial underline. The notification center, global search, and future light-mode interfaces inherit the timeline's neutral paper surface to prevent a lavender cast.
+- Reduced web sync lag and disconnect churn: production web no longer opens an unreliable cross-origin Realtime WebSocket, using an immediate foreground check plus a lightweight 30-second revision check instead. Continuous edits are coalesced for 750 ms before saving to avoid repeated full-workspace uploads.
 
 ## 2026-09-17 · Settings layout and AI sidebar
 

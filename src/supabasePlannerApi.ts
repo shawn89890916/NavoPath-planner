@@ -541,17 +541,23 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     subscribeToRemoteChanges: (listener) => {
       let channel: ReturnType<typeof supabase.channel> | null = null;
       let disposed = false;
+      // Production web traffic already uses the same-origin REST proxy. A
+      // direct Supabase WebSocket is unreliable on some networks and can enter
+      // a costly reconnect loop, so the lightweight foreground revision check
+      // remains the production-web synchronization path.
+      if (useSameOriginProxy) return () => { disposed = true; };
       void requireUser().then((user) => {
         if (disposed || cachedUser?.id !== user.id) return;
         let latestRevision = profileCache?.userId === user.id ? profileCache.revision : 0;
         const emitIfNewer = (row: any) => {
           if (!row?.data || !row?.settings || cachedUser?.id !== user.id) return;
-          const next = { userId: user.id, data: normalizeData(row.data), settings: mergeSettings(row.settings), revision: Number(row.revision || 0) };
+          const nextRevision = Number(row.revision || 0);
           const cachedRevision = profileCache?.userId === user.id ? profileCache.revision : 0;
           const knownRevision = Math.max(latestRevision, cachedRevision);
           latestRevision = knownRevision;
-          if (next.revision <= knownRevision) return;
-          latestRevision = next.revision;
+          if (nextRevision <= knownRevision) return;
+          const next = { userId: user.id, data: normalizeData(row.data), settings: mergeSettings(row.settings), revision: nextRevision };
+          latestRevision = nextRevision;
           profileCache = next;
           listener({ data: next.data, settings: next.settings, revision: next.revision });
         };
