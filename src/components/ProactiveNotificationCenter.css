@@ -1,5 +1,5 @@
 .df-proactive-center-layer { position: fixed; inset: 0; z-index: 120; background: rgb(39 35 30 / 12%); }
-.df-proactive-center { position: absolute; top: 62px; right: 18px; width: min(420px, calc(100vw - 24px)); max-height: min(620px, calc(100vh - 82px)); overflow: auto; padding: 18px 20px; color: var(--text-main); background: var(--surface-main); border: 1px solid var(--paper-rule); box-shadow: 0 14px 34px rgb(39 35 30 / 14%); }
+.df-proactive-center { position: absolute; top: 62px; right: 18px; width: min(420px, calc(100vw - 24px)); max-height: min(620px, calc(100vh - 82px)); overflow: auto; padding: 18px 20px; color: var(--text-main); background: var(--timeline-paper, var(--surface-main)); border: 1px solid var(--paper-rule); box-shadow: 0 14px 34px rgb(39 35 30 / 14%); }
 .df-proactive-center-head { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--paper-rule); }
 .df-proactive-center-head > div { display: grid; gap: 4px; }
 .df-proactive-center-head small { color: var(--text-muted); font: 11px var(--paper-mono); }

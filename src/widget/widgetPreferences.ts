@@ -9,7 +9,7 @@ const WINDOW_MARGIN = 6;
 
 export const DEFAULT_WIDGET_APPEARANCE: WidgetAppearance = {
   light: {
-    backgroundColor: "#FBF9FF",
+    backgroundColor: "#F8F7F3",
     fontColor: "#27231E",
     timerColor: "#5D9B63",
     overrunColor: "#B34F47",

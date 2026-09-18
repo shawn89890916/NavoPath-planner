@@ -30,7 +30,7 @@ NavoPath is not:
 
 ## Brand And Theme
 
-- Core palette: brown `#584D3D`, sage `#7EA172`, coral `#D7816A`, aubergine `#0F0326`, and soft white `#FBF9FF`.
+- Core palette: brown `#584D3D`, sage `#7EA172`, coral `#D7816A`, aubergine `#0F0326`, and neutral paper `#F8F7F3`.
 - Light mode uses charcoal `#27231E` as the primary text and ink color. It is not a large filled accent.
 - Dark mode uses warm ivory `#EEE9DF` as primary text and as the default interaction accent.
 - Execute coral `#D7816A` and Planning sage `#7EA172` are annotation colors for rules, checks, focus, and small status details only.
@@ -304,10 +304,11 @@ Use for compact workspace tools, close controls, arrows, and utility actions.
 
 ### Toggle And Tab
 
-- Selected state uses text color plus a one-pixel active-accent rule.
-- Never use a filled segmented-control capsule for selected state.
-- Avoid hard filled backgrounds for selection.
-- Selection should feel like an editorial mark, not a heavy component state.
+- Option lists, tabs, and view switchers use the shared `ui-choice-list` / `ui-choice-item` pattern.
+- Selected state uses a complete, low-contrast neutral paper highlight with a consistent rounded rectangle; do not use a bottom-only or partially wrapped underline treatment.
+- Keep selection fills neutral. Accent colors remain annotations and focus indicators, not structural fills.
+- Avoid hard or saturated filled capsules. Selection should stay quiet, readable, and visible through both shape and tone.
+- On/off switches retain their dedicated switch treatment and do not use the option-list row pattern.
 
 ### Danger
 
@@ -356,7 +357,9 @@ paper, ink, and annotation principles.
 - Colored drop shadows.
 - Gradient button fills.
 - Fully filled accent capsules for tabs and toggles.
+- Bottom-only or partially wrapped selected states for option lists, tabs, and view switchers.
 - Hard-coded purple/lime on shared application controls.
+- Lavender or purple-tinted structural surfaces; new light-mode UI must inherit neutral paper surfaces from `--timeline-paper` or `--surface-main`.
 - Emoji used as substitute icons.
 - Thick colored outlines on candidate task rows.
 - Stacked card-heavy candidate lists.

@@ -94,7 +94,7 @@ html.landing-document #root {
 
 .landing-auth-overlay { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(39, 35, 30, .48); }
 .landing-auth-card { position: relative; width: min(450px, 100%); padding: 34px; border: 1px solid var(--l-rule-strong); border-radius: 3px; background: var(--l-paper); }
-.landing-auth-card::after { content: ""; position: absolute; z-index: -1; inset: 7px -6px -6px 7px; border: 1px solid rgba(251, 249, 255, .72); }
+.landing-auth-card::after { content: ""; position: absolute; z-index: -1; inset: 7px -6px -6px 7px; border: 1px solid rgba(248, 247, 243, .72); }
 .landing-auth-card > .dayflow-icon { margin-bottom: 18px; }
 .landing-auth-label { color: var(--l-faint); font: 10px var(--l-mono); letter-spacing: .12em; text-transform: uppercase; }
 .landing-auth-card h2 { margin: 10px 0 24px; font-family: var(--l-display); font-size: 38px; font-weight: 600; }

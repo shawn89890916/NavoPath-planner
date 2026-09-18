@@ -17,7 +17,7 @@ const snapshot: WidgetSnapshot = {
   appearanceConfigured: true,
   theme: "light",
   appearance: {
-    light: { backgroundColor: "#FBF9FF", fontColor: "#27231E", timerColor: "#5D9B63", overrunColor: "#B34F47" },
+    light: { backgroundColor: "#F8F7F3", fontColor: "#27231E", timerColor: "#5D9B63", overrunColor: "#B34F47" },
     dark: { backgroundColor: "#27231E", fontColor: "#EEE9DF", timerColor: "#70D978", overrunColor: "#E27C68" },
     opacity: 0.96,
     fontFamily: "system-ui, sans-serif",

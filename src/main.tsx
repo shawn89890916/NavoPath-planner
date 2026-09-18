@@ -435,10 +435,10 @@ function themeVars(settings: Settings, mode: Mode) {
     "--accent-active": activeAccent,
     "--accent-rgb": `${r}, ${g}, ${b}`,
     "--accent-on": activeLight ? "#111827" : "#FFFFFF",
-    "--bg-app": "#FBF9FF",
-    "--bg-app-soft": "#F5F1EA",
-    "--surface-main": "#FBF9FF",
-    "--surface-raised": "#FFFFFF",
+    "--bg-app": "#F8F7F3",
+    "--bg-app-soft": "#F3F0E9",
+    "--surface-main": "#F8F7F3",
+    "--surface-raised": "#FCFBF8",
     "--surface-card": "#FFFFFF",
     "--text-main": "#27231E",
     "--text-muted": "#7B7062",
@@ -447,11 +447,11 @@ function themeVars(settings: Settings, mode: Mode) {
     "--border-subtle": "#EBE6E8",
     "--shadow-soft": "0 12px 28px rgba(88,77,61,0.10)",
     "--shadow-hl": "none",
-    "--header-bg": "rgba(251,249,255,0.90)",
+    "--header-bg": "rgba(248,247,243,0.92)",
     "--header-border": "rgba(88,77,61,0.14)",
     "--header-fg": "#584D3D",
     "--header-fg-muted": "#7B7062",
-    "--input-bg": "#FFFFFF",
+    "--input-bg": "#FCFBF8",
     "--input-border": "#DED8D8",
     "--timeline-paper": "#F8F7F3",
     "--timeline-font-scale": String(fontScale),
@@ -14931,9 +14931,9 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
                   {SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => <option key={category.id} value={category.id}>{lang === "zh" ? category.labelZh : category.labelEn}</option>)}
                 </select>
               </label>
-              <nav className="df-settings-nav" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
+              <nav className="df-settings-nav ui-choice-list" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
                 {SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => (
-                  <button type="button" key={category.id} className={settingsTarget.category === category.id ? "active" : ""} aria-current={settingsTarget.category === category.id ? "page" : undefined} onClick={() => navigateSettings({ category: category.id })}>{lang === "zh" ? category.labelZh : category.labelEn}</button>
+                  <button type="button" key={category.id} className={`ui-choice-item${settingsTarget.category === category.id ? " active" : ""}`} aria-current={settingsTarget.category === category.id ? "page" : undefined} onClick={() => navigateSettings({ category: category.id })}>{lang === "zh" ? category.labelZh : category.labelEn}</button>
                 ))}
               </nav>
             </div>
@@ -15255,8 +15255,8 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
                 control={<SettingNumberInput value={widgetAppearance.fontScale} min={0.5} max={2} step={0.05} suffix="×" ariaLabel={lang === "zh" ? "小组件字号比例" : "Widget font scale"} onChange={(fontScale) => saveWidgetAppearance({ fontScale })} />}
               />
               <SettingDivider />
-              <div className="df-settings-subtabs" role="tablist" aria-label={lang === "zh" ? "小组件外观主题" : "Widget appearance theme"}>
-                {(["light", "dark"] as const).map((theme) => <button key={theme} type="button" role="tab" aria-selected={widgetThemeOpen === theme} className={widgetThemeOpen === theme ? "active" : ""} onClick={() => setWidgetThemeOpen(theme)}>{theme === "light" ? (lang === "zh" ? "浅色" : "Light") : (lang === "zh" ? "深色" : "Dark")}</button>)}
+              <div className="df-settings-subtabs ui-choice-list ui-choice-list--inline" role="tablist" aria-label={lang === "zh" ? "小组件外观主题" : "Widget appearance theme"}>
+                {(["light", "dark"] as const).map((theme) => <button key={theme} type="button" role="tab" aria-selected={widgetThemeOpen === theme} className={`ui-choice-item${widgetThemeOpen === theme ? " active" : ""}`} onClick={() => setWidgetThemeOpen(theme)}>{theme === "light" ? (lang === "zh" ? "浅色" : "Light") : (lang === "zh" ? "深色" : "Dark")}</button>)}
               </div>
               {(() => {
                 const theme = widgetThemeOpen;
@@ -15381,11 +15381,11 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
                 </div>
               </section>}
             </SettingSection>}
-            {settingsTarget.category === "integrations" && <div className="df-settings-subtabs df-settings-integration-tabs" role="tablist" aria-label={lang === "zh" ? "日历与集成" : "Calendar and integrations"}>
-              <button type="button" role="tab" aria-selected={integrationTab === "calendar"} className={integrationTab === "calendar" ? "active" : ""} onClick={() => { setIntegrationTab("calendar"); setSettingsTarget({ category: "integrations", anchor: "calendar-feed" }); }}>{lang === "zh" ? "日历订阅" : "Calendar"}</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "external-calendar"} className={integrationTab === "external-calendar" ? "active" : ""} onClick={() => { setIntegrationTab("external-calendar"); setSettingsTarget({ category: "integrations", anchor: "external-calendar" }); }}>{lang === "zh" ? "外部日历" : "External"}</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "plugins"} className={integrationTab === "plugins" ? "active" : ""} onClick={() => { setIntegrationTab("plugins"); setSettingsTarget({ category: "integrations", anchor: "plugins" }); }}>{lang === "zh" ? "插件" : "Plugins"}</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={integrationTab === "mcp" ? "active" : ""} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "integrations", anchor: "mcp" }); }}>MCP</button>
+            {settingsTarget.category === "integrations" && <div className="df-settings-subtabs df-settings-integration-tabs ui-choice-list ui-choice-list--inline" role="tablist" aria-label={lang === "zh" ? "日历与集成" : "Calendar and integrations"}>
+              <button type="button" role="tab" aria-selected={integrationTab === "calendar"} className={`ui-choice-item${integrationTab === "calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("calendar"); setSettingsTarget({ category: "integrations", anchor: "calendar-feed" }); }}>{lang === "zh" ? "日历订阅" : "Calendar"}</button>
+              <button type="button" role="tab" aria-selected={integrationTab === "external-calendar"} className={`ui-choice-item${integrationTab === "external-calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("external-calendar"); setSettingsTarget({ category: "integrations", anchor: "external-calendar" }); }}>{lang === "zh" ? "外部日历" : "External"}</button>
+              <button type="button" role="tab" aria-selected={integrationTab === "plugins"} className={`ui-choice-item${integrationTab === "plugins" ? " active" : ""}`} onClick={() => { setIntegrationTab("plugins"); setSettingsTarget({ category: "integrations", anchor: "plugins" }); }}>{lang === "zh" ? "插件" : "Plugins"}</button>
+              <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={`ui-choice-item${integrationTab === "mcp" ? " active" : ""}`} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "integrations", anchor: "mcp" }); }}>MCP</button>
             </div>}
             {settingsTarget.category === "integrations" && integrationTab === "calendar" && <section className="df-settings-group" data-settings-anchor="calendar-feed" tabIndex={-1}><h3>{lang === "zh" ? "日历订阅" : "Calendar Subscription"}</h3><CalendarFeedManager lang={lang} /></section>}
             {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <section className="df-settings-group" data-settings-anchor="external-calendar" tabIndex={-1}><h3>{lang === "zh" ? "外部日历" : "External Calendars"}</h3><ExternalCalendarManager lang={lang} /></section>}

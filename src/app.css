@@ -4924,7 +4924,7 @@ body.df-resizing * {
 
   padding: 32px;
 
-  background: #FBF9FF;
+  background: #F8F7F3;
 
   color: #27231E;
 
@@ -5120,7 +5120,7 @@ body.df-resizing * {
 
   border-radius: 2px;
 
-  background: #FBF9FF;
+  background: #F8F7F3;
 
   color: #27231E;
 
@@ -26419,7 +26419,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border: 1px solid var(--paper-rule-strong);
   border-bottom-color: var(--accent-active);
   border-radius: 8px;
-  background: var(--surface-main);
+  background: var(--timeline-paper, var(--surface-main));
   color: var(--text-main);
   box-shadow: var(--paper-float-shadow);
 }
@@ -30133,7 +30133,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
  * project accent (~2px). No full project outline, no glow, no lift.
  * ============================================================ */
 .df-app .df-task-block[data-task-appearance="calm"] {
-  --task-bg: var(--surface-card, var(--surface-main, #FBF9FF));
+  --task-bg: var(--surface-card, var(--surface-main, #F8F7F3));
   --task-border: color-mix(in srgb, var(--paper-rule, var(--border-subtle, #E7E2D8)) 90%, transparent);
   --task-border-hover: color-mix(in srgb, var(--text-faint, #807A70) 34%, var(--paper-rule, #E7E2D8));
   --task-project-accent-size: 4px;
@@ -30141,7 +30141,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --task-accent-strength: subtle;
 }
 .navo-demo-app .df-task-block[data-task-appearance="calm"] {
-  --task-bg: var(--surface-card, var(--surface-main, #FBF9FF));
+  --task-bg: var(--surface-card, var(--surface-main, #F8F7F3));
   --task-border: color-mix(in srgb, var(--paper-rule, var(--border-subtle, #E7E2D8)) 90%, transparent);
   --task-border-hover: color-mix(in srgb, var(--text-faint, #807A70) 34%, var(--paper-rule, #E7E2D8));
   --task-project-accent-size: 4px;
@@ -30179,13 +30179,13 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
  * ============================================================ */
 .df-app .df-task-block[data-task-appearance="custom"] {
   /* Defaults mirror Calm; a settings layer may override these vars. */
-  --task-bg: var(--surface-card, var(--surface-main, #FBF9FF));
+  --task-bg: var(--surface-card, var(--surface-main, #F8F7F3));
   --task-border: color-mix(in srgb, var(--paper-rule, var(--border-subtle, #E7E2D8)) 90%, transparent);
   --task-border-hover: color-mix(in srgb, var(--text-faint, #807A70) 34%, var(--paper-rule, #E7E2D8));
 }
 .navo-demo-app .df-task-block[data-task-appearance="custom"] {
   /* Defaults mirror Calm; a settings layer may override these vars. */
-  --task-bg: var(--surface-card, var(--surface-main, #FBF9FF));
+  --task-bg: var(--surface-card, var(--surface-main, #F8F7F3));
   --task-border: color-mix(in srgb, var(--paper-rule, var(--border-subtle, #E7E2D8)) 90%, transparent);
   --task-border-hover: color-mix(in srgb, var(--text-faint, #807A70) 34%, var(--paper-rule, #E7E2D8));
 }
@@ -30966,19 +30966,19 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 }
 
 .df-app .df-task-block[data-task-appearance] .df-task-block-check.completed {
-  color: var(--surface-main, #FBF9FF);
+  color: var(--surface-main, #F8F7F3);
   background: var(--task-checkbox-color);
   border-color: var(--task-checkbox-color);
 }
 
 .df-app .df-task-block[data-task-appearance] .df-block-check.completed {
-  color: var(--surface-main, #FBF9FF);
+  color: var(--surface-main, #F8F7F3);
   background: var(--task-checkbox-color);
   border-color: var(--task-checkbox-color);
 }
 
 .navo-demo-app .df-task-block[data-task-appearance] .df-task-block-check.completed {
-  color: var(--surface-main, #FBF9FF);
+  color: var(--surface-main, #F8F7F3);
   background: var(--task-checkbox-color);
   border-color: var(--task-checkbox-color);
 }
@@ -32535,13 +32535,13 @@ body.df-planning-native-dragging [contenteditable] * {
 
   font-size: 17px;
 
-  --bg-app: #F8FAFC;
+  --bg-app: #F8F7F3;
 
-  --bg-app-soft: #FBF7FF;
+  --bg-app-soft: #F3F0E9;
 
-  --surface-main: #FFFFFF;
+  --surface-main: #F8F7F3;
 
-  --surface-raised: #FFFFFF;
+  --surface-raised: #FCFBF8;
 
   --surface-card: #FFFFFF;
 
@@ -32705,7 +32705,7 @@ body.df-planning-native-dragging [contenteditable] * {
   --navo-sage: #7ea172;
   --navo-coral: #d7816a;
   --navo-aubergine: #0f0326;
-  --navo-white: #fbf9ff;
+  --navo-white: #f8f7f3;
   --paper-serif: Georgia, "Noto Serif SC", "Songti SC", SimSun, serif;
   --paper-sans: "Avenir Next", "Segoe UI", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei UI", sans-serif;
   --paper-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -32742,7 +32742,7 @@ body.df-planning-native-dragging [contenteditable] * {
   --pencil-press: color-mix(in srgb, var(--text-main) 18%, transparent);
   --navo-task-rest-bg: rgb(250, 249, 245);
   --navo-card-rest-bg: rgb(250, 249, 245);
-  --task-bg: var(--surface-card, var(--surface-main, #FBF9FF));
+  --task-bg: var(--surface-card, var(--surface-main, #F8F7F3));
   --task-border: color-mix(in srgb, var(--paper-rule, var(--border-subtle, #E7E2D8)) 90%, transparent);
   --task-border-hover: color-mix(in srgb, var(--text-faint, #807A70) 38%, var(--paper-rule, #E7E2D8));
   --task-radius: 6px;
@@ -32784,8 +32784,8 @@ body.df-planning-native-dragging [contenteditable] * {
   --text-main: #f5f1e8;
   --text-muted: #bbb5aa;
   --text-faint: #89847b;
-  --border-soft: rgba(251,249,255,.15);
-  --border-subtle: rgba(251,249,255,.08);
+  --border-soft: rgba(238,233,223,.15);
+  --border-subtle: rgba(238,233,223,.08);
   --paper-float-shadow: 0 20px 48px rgba(0,0,0,.32);
   background-color: var(--bg-app);
   background-image:

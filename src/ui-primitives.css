@@ -979,3 +979,71 @@
 ):active:not(:disabled) {
   box-shadow: inset 0 1px 2px var(--pencil-press);
 }
+
+/* Shared option-list selection: a quiet, complete row highlight. */
+#root .df-app .ui-choice-list {
+  --ui-choice-hover: color-mix(in srgb, var(--text-main) 5%, var(--timeline-paper, var(--surface-main)));
+  --ui-choice-selected: color-mix(in srgb, var(--text-main) 9%, var(--timeline-paper, var(--surface-main)));
+  gap: var(--space-1);
+}
+
+#root .df-app .ui-choice-list--inline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: var(--space-1);
+  border: 0;
+}
+
+#root .df-app .ui-choice-list.ui-choice-list.ui-choice-list--bare {
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+#root .df-app .ui-choice-list.ui-choice-list > .ui-choice-item {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  box-shadow: none;
+  transition: color var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease), transform var(--motion-instant) ease-out;
+}
+
+#root .df-app .ui-choice-list.ui-choice-list > .ui-choice-item:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--ui-choice-hover);
+  color: var(--text-main);
+}
+
+#root .df-app .ui-choice-list.ui-choice-list > .ui-choice-item:is(.active, [aria-current="page"], [aria-selected="true"], [aria-pressed="true"]) {
+  border-color: transparent;
+  background: var(--ui-choice-selected);
+  color: var(--text-main);
+  box-shadow: none;
+}
+
+#root .df-app .ui-choice-list.ui-choice-list > .ui-choice-item:focus-visible {
+  border-color: var(--paper-rule-strong);
+  background: var(--ui-choice-hover);
+  color: var(--text-main);
+  outline: 1px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+#root .df-app .ui-choice-list.ui-choice-list > .ui-choice-item:active:not(:disabled) {
+  background: var(--ui-choice-selected);
+  box-shadow: none;
+  transform: translateY(1px);
+}
+
+@media (pointer: coarse), (max-width: 620px) {
+  #root .df-app .ui-choice-list.ui-choice-list > .ui-choice-item {
+    min-height: 44px;
+  }
+}
