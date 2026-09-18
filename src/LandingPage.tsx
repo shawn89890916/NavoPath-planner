@@ -16,7 +16,7 @@ const copy = {
     login: "Log in", donate: "Support",
     productName: "NavoPath",
     title: "See what to do today — and when to do it.",
-    scroll: "Scroll to explore", start: "Start planning", download: "Download for Windows",
+    scroll: "Scroll to explore", start: "Start now", download: "Download for Windows",
     productKicker: "Execute / Today", productLabel: "Candidates · Timeline",
     stepsKicker: "Execute", stepsTitle: "Get every task done on time.",
     steps: [
@@ -34,7 +34,7 @@ const copy = {
     login: "登录", donate: "支持",
     productName: "NavoPath",
     title: "今天的事，先安排明白",
-    scroll: "继续探索", start: "开始安排", download: "下载 Windows 版",
+    scroll: "继续探索", start: "直接开始", download: "下载 Windows 版",
     productKicker: "今天的安排", productLabel: "待办 · 日程",
     stepsKicker: "执行", stepsTitle: "任务再多，也能按时完成。",
     steps: [
