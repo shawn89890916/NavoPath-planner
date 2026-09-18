@@ -22314,6 +22314,24 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-ai-provider-grid label { min-width: 0; }
 .df-ai-provider-grid input { width: 100%; min-width: 0; box-sizing: border-box; }
 .df-ai-provider-grid select { width: 100%; min-width: 0; box-sizing: border-box; }
+@media (min-width: 900px), (min-width: 761px) and (orientation: landscape) {
+  #root .df-app .df-settings-row.df-settings-row--stacked {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    row-gap: 12px;
+  }
+  #root .df-app .df-settings-row.df-settings-row--stacked > .df-settings-row-control {
+    max-width: none;
+    justify-content: flex-start;
+  }
+  #root .df-app .df-settings-row--stacked .df-ai-provider-settings {
+    max-width: none;
+  }
+  #root .df-app .df-settings-row--stacked .df-ai-provider-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 12px;
+  }
+}
 .df-settings-row[data-disabled="true"] .df-settings-row-title { color: var(--text-faint); }
 .df-settings-row[data-disabled="true"] .df-settings-row-desc { color: var(--text-faint); }
 .df-settings-row[data-disabled="true"] .df-settings-row-control { opacity: .55; pointer-events: none; }

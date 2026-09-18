@@ -58,6 +58,7 @@ export function SettingRow({
   disabled,
   children,
   anchor,
+  layout = "default",
 }: {
   title: ReactNode;
   description?: ReactNode;
@@ -65,10 +66,11 @@ export function SettingRow({
   disabled?: boolean;
   children?: ReactNode;
   anchor?: string;
+  layout?: "default" | "stacked";
 }) {
   return (
     <div
-      className="df-settings-row"
+      className={`df-settings-row${layout === "stacked" ? " df-settings-row--stacked" : ""}`}
       data-disabled={disabled ? "true" : undefined}
       data-settings-anchor={anchor}
       tabIndex={anchor ? -1 : undefined}

@@ -98,6 +98,11 @@ import { usePointerReorder } from "./usePointerReorder";
 import { DESKTOP_DOWNLOAD_URL, DESKTOP_RELEASES_URL } from "./downloads";
 import { readAutoLaunchState, toggleAutoLaunchState } from "./desktopAutoLaunch";
 import { canAcknowledgeBootstrapSave, parseBootstrapCache, recoverAccountSettings, resolveBootstrap, type BootstrapCache } from "./syncBootstrap";
+
+// Preload the optional first-login permission flow without adding it to the
+// initial workspace bundle; the promise is already warm when auth completes.
+const webNotificationOnboardingPromise = import("./webNotificationOnboarding");
+const rememberWebNotification = (email: string) => webNotificationOnboardingPromise.then(({ rememberNewUserNotificationRequest }) => rememberNewUserNotificationRequest(email));
 import { preparePlannerDataRestore, withDeletionTombstones } from "./syncMerge";
 import { SyncScheduler, formatLastSyncedAt, isCurrentWorkspaceLoad, presetForMinutes, readSyncInterval, shouldApplyWorkspaceRevision, shouldReconcileRemoteRevision, shouldRequeueFailedSave, SYNC_INTERVAL_PRESETS } from "./sync";
 import { MAX_PLUGIN_CONFIG_STRING_LENGTH, listPlugins as listRegisteredPlugins, activate as activatePlugin, deactivate as deactivatePlugin, isActive as isPluginActive, register as registerPlugin, resolveConfig as resolvePluginConfig, pluginText, type NavoPlugin, type PluginHost } from "./plugins/registry";
@@ -2411,6 +2416,7 @@ function App() {
       let feedbackMessage = "";
       if (intent === "signup") {
         const response = await api.signUp?.(email, password);
+        if (response?.user || response?.requiresEmailConfirmation) await rememberWebNotification(response.email || email);
         if (response?.requiresEmailConfirmation) {
           setAuthNotice({ type: "confirm-email", email: response.email || email });
           return;
@@ -6839,6 +6845,17 @@ function App() {
       setAiBusy(false);
     }
   }
+
+  useEffect(() => {
+    const user = authState?.mode === "cloud" ? authState.user : null;
+    if (!user) return;
+    let active = true;
+    let cleanup: () => void = () => undefined;
+    void webNotificationOnboardingPromise.then(({ watchForNewUserNotification }) => {
+      if (active) cleanup = watchForNewUserNotification(user);
+    });
+    return () => { active = false; cleanup(); };
+  }, [authState?.mode, authState?.user?.id, authState?.user?.email]);
 
   useEffect(() => {
     if (authState?.mode !== "cloud" || !authState.user) {
@@ -14275,7 +14292,7 @@ function AiProviderSettings({ lang, onSave }: { lang: Language; onSave: (patch: 
     siliconflow: "SiliconFlow",
     openai: "OpenAI",
     anthropic: "Anthropic",
-    zhipu: lang === "zh" ? "智谱 GLM" : "Zhipu GLM",
+    zhipu: "GLM",
     qwen: lang === "zh" ? "通义千问" : "Qwen",
     "openai-compatible": lang === "zh" ? "其他 OpenAI 兼容服务" : "Other OpenAI-compatible",
   };
@@ -15312,7 +15329,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
               </div>
             </SettingSection>}
             {settingsTarget.category === "ai" && <SettingSection title="Navo AI" description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
-              <SettingRow anchor="ai-provider" title={lang === "zh" ? "AI 提供商与密钥" : "AI provider and key"} description={lang === "zh" ? "支持 DeepSeek、SiliconFlow、OpenAI、Anthropic、智谱和通义千问。" : "Supports DeepSeek, SiliconFlow, OpenAI, Anthropic, Zhipu, and Qwen."} control={<AiProviderSettings lang={lang} onSave={onSave} />} />
+              <SettingRow layout="stacked" anchor="ai-provider" title={lang === "zh" ? "AI 提供商与密钥" : "AI provider and key"} description={lang === "zh" ? "支持 DeepSeek、SiliconFlow、OpenAI、Anthropic、GLM 和通义千问。" : "Supports DeepSeek, SiliconFlow, OpenAI, Anthropic, GLM, and Qwen."} control={<AiProviderSettings lang={lang} onSave={onSave} />} />
               <SettingRow anchor="ai-reasoning" title={lang === "zh" ? "思考模式" : "Reasoning mode"} control={<SettingSelect value={settings.reasoningMode || "instant"} ariaLabel={lang === "zh" ? "思考模式" : "Reasoning mode"} onChange={(value) => onSave({ reasoningMode: value as Settings["reasoningMode"] })} options={[
                 { value: "instant", label: lang === "zh" ? "即时" : "Instant" },
                 ...reasoningModesForModel(settings.model).filter((mode) => mode === "high" || mode === "xhigh").map((mode) => ({ value: mode, label: mode === "xhigh" ? "Xhigh" : "High" })),

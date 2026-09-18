@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-09-18 · AI 设置与网页通知
+
+### 改进
+- AI 提供商设置改为上方说明、下方横向表单，充分利用横屏空间；界面中的智谱名称统一为 GLM。新账号首次登录网页端后会请求开启通知，浏览器需要额外手势时会在进入工作区后的第一次操作中触发。
+
 ## 2026-09-17 · 设置页布局与 AI 侧栏
 
 ### 改进
@@ -127,6 +132,11 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-18 · AI settings and web notifications
+
+### Improved
+- AI provider settings now place their explanation above a horizontal form to use landscape space efficiently, and the Zhipu label is consistently shown as GLM. New accounts request web notification access after their first sign-in, using the first workspace interaction when the browser requires a fresh user gesture.
 
 ## 2026-09-17 · Settings layout and AI sidebar
 
