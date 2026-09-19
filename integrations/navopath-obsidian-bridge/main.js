@@ -30,10 +30,16 @@ var SCHEDULE_LINE = /(?:\b(?:due|deadline|submit|submission|exam|test|interview|
 function normalizeVaultPath(path) {
   return path.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
 }
-function isPathWatched(path, watchedRoot) {
+function normalizeWatchedRoots(roots) {
+  const values = Array.isArray(roots) ? roots : [roots];
+  return [...new Set(values.map(normalizeVaultPath).filter(Boolean))];
+}
+function isValidDeviceToken(value) {
+  return /^nvp_[a-f0-9]{64}$/i.test(value);
+}
+function isPathWatched(path, watchedRoots) {
   const normalizedPath = normalizeVaultPath(path);
-  const normalizedRoot = normalizeVaultPath(watchedRoot);
-  return Boolean(normalizedRoot) && (normalizedPath === normalizedRoot || normalizedPath.startsWith(`${normalizedRoot}/`));
+  return normalizeWatchedRoots(watchedRoots).some((root) => normalizedPath === root || normalizedPath.startsWith(`${root}/`));
 }
 function detectManifestChanges(previous, current) {
   const paths = /* @__PURE__ */ new Set([...Object.keys(previous), ...Object.keys(current)]);
@@ -77,13 +83,15 @@ async function eventDedupeKey(changes) {
 
 // src/main.ts
 var DEFAULT_SETTINGS = {
-  watchedRoot: "\u5347\u5B66/\u8D44\u6599",
+  watchedRoots: ["\u5347\u5B66/\u8D44\u6599", "\u9879\u76EE/NavoPath"],
   endpoint: "https://navopath-mcp.shawn89890916.workers.dev/api/workspace-events",
   secretName: "",
   debounceSeconds: 45
 };
 var TEXT_EXTENSIONS = /* @__PURE__ */ new Set(["md", "txt", "csv", "json", "yaml", "yml", "html", "htm", "py"]);
 var MAX_HASH_BYTES = 16 * 1024 * 1024;
+var DEVICE_SECRET_NAME = "navopath-obsidian-bridge-device-token";
+var DESKTOP_BOOTSTRAP_FILENAME = "navopath-obsidian-bridge.token";
 function hex(bytes) {
   return [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
@@ -100,10 +108,14 @@ var NavoPathBridgePlugin = class extends import_obsidian.Plugin {
   warnedMissingSecret = false;
   async onload() {
     const stored = await this.loadData();
+    const storedSettings = { ...stored?.settings || {} };
+    const watchedRoots = normalizeWatchedRoots(storedSettings.watchedRoots?.length ? storedSettings.watchedRoots : storedSettings.watchedRoot || DEFAULT_SETTINGS.watchedRoots);
+    delete storedSettings.watchedRoot;
     this.data = {
-      settings: { ...DEFAULT_SETTINGS, ...stored?.settings || {} },
+      settings: { ...DEFAULT_SETTINGS, ...storedSettings, watchedRoots },
       manifest: stored?.manifest && typeof stored.manifest === "object" ? stored.manifest : {}
     };
+    await this.importDesktopBootstrapSecret();
     this.statusEl = this.addStatusBarItem();
     this.setStatus("\u7B49\u5F85\u521D\u59CB\u5316");
     this.addSettingTab(new NavoPathBridgeSettingTab(this));
@@ -126,17 +138,42 @@ var NavoPathBridgePlugin = class extends import_obsidian.Plugin {
     return this.data.settings;
   }
   async updateSettings(patch) {
-    this.data.settings = { ...this.data.settings, ...patch };
+    this.data.settings = {
+      ...this.data.settings,
+      ...patch,
+      watchedRoots: patch.watchedRoots ? normalizeWatchedRoots(patch.watchedRoots) : this.data.settings.watchedRoots
+    };
     await this.saveData(this.data);
+  }
+  async importDesktopBootstrapSecret() {
+    if (!import_obsidian.Platform.isDesktopApp || !process.env.LOCALAPPDATA) return;
+    const fs = require("fs");
+    const path = require("path");
+    const bootstrapPath = path.join(process.env.LOCALAPPDATA, "NavoPath", DESKTOP_BOOTSTRAP_FILENAME);
+    if (!fs.existsSync(bootstrapPath)) return;
+    try {
+      const token = fs.readFileSync(bootstrapPath, "utf8").trim();
+      if (!isValidDeviceToken(token)) {
+        new import_obsidian.Notice("NavoPath Bridge \u7684\u4E00\u6B21\u6027\u8BBE\u5907\u4EE4\u724C\u65E0\u6548\uFF0C\u672A\u5BFC\u5165\u3002");
+        return;
+      }
+      this.app.secretStorage.setSecret(DEVICE_SECRET_NAME, token);
+      this.data.settings.secretName = DEVICE_SECRET_NAME;
+      await this.saveData(this.data);
+      new import_obsidian.Notice("NavoPath Bridge \u5DF2\u5B89\u5168\u5BFC\u5165\u8BBE\u5907\u4EE4\u724C\u3002");
+    } finally {
+      fs.rmSync(bootstrapPath, { force: true });
+    }
   }
   setStatus(value) {
     if (this.statusEl) this.statusEl.setText(`NavoPath\uFF1A${value}`);
   }
   queuePath(path) {
     const normalized = normalizeVaultPath(path);
-    const root = this.data.settings.watchedRoot;
+    const roots = this.data.settings.watchedRoots;
     const wasTracked = Object.keys(this.data.manifest).some((item) => item === normalized || item.startsWith(`${normalized}/`));
-    if (!isPathWatched(normalized, root) && !wasTracked) return;
+    const stillExists = Boolean(this.app.vault.getAbstractFileByPath(normalized));
+    if (!isPathWatched(normalized, roots) && !(wasTracked && !stillExists)) return;
     this.pendingPaths.add(normalized);
     this.setStatus(`${this.pendingPaths.size} \u9879\u53D8\u5316\u5F85\u53D1\u9001`);
     if (this.flushTimer !== null) window.clearTimeout(this.flushTimer);
@@ -161,7 +198,7 @@ var NavoPathBridgePlugin = class extends import_obsidian.Plugin {
     }
   }
   watchedFiles() {
-    return this.app.vault.getFiles().filter((file) => isPathWatched(file.path, this.data.settings.watchedRoot));
+    return this.app.vault.getFiles().filter((file) => isPathWatched(file.path, this.data.settings.watchedRoots));
   }
   async fileEntry(file) {
     const hash = file.stat.size <= MAX_HASH_BYTES ? await sha256Hex(await this.app.vault.readBinary(file)) : await sha256Hex(`${file.stat.mtime}:${file.stat.size}:${file.path}`);
@@ -224,10 +261,11 @@ var NavoPathBridgePlugin = class extends import_obsidian.Plugin {
         const batch = changes.slice(offset, offset + 100);
         const fragmentCandidates = (await Promise.all(batch.slice(0, 20).map((change) => this.fragmentFor(change)))).filter((item) => Boolean(item));
         const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+        const watchedLabel = this.data.settings.watchedRoots.join("\u3001");
         const body = JSON.stringify({
           changed_files: batch.map((change) => ({ path: change.path, change_type: change.changeType, content_hash: `sha256:${change.current?.hash || change.previous?.hash || "deleted"}` })),
           fragments: fragmentCandidates,
-          summary: `Obsidian Vault \u7684\u300C${this.data.settings.watchedRoot}\u300D\u68C0\u6D4B\u5230 ${batch.length} \u4E2A\u589E\u91CF\u53D8\u5316\u3002`,
+          summary: `Obsidian Vault \u7684\u300C${watchedLabel}\u300D\u68C0\u6D4B\u5230 ${batch.length} \u4E2A\u589E\u91CF\u53D8\u5316\u3002`,
           schedule_impact: fragmentCandidates.length ? "\u8BF7\u4EC5\u6839\u636E\u6240\u9644\u65E5\u671F\u3001\u622A\u6B62\u3001\u5F85\u529E\u6216\u8BA1\u5212\u7247\u6BB5\u5224\u65AD\u662F\u5426\u5F71\u54CD NavoPath \u65E5\u7A0B\u3002" : "\u5F53\u524D\u53EA\u5305\u542B\u6587\u4EF6\u540D\u548C\u5185\u5BB9\u54C8\u5E0C\uFF1B\u9664\u975E\u6587\u4EF6\u540D\u660E\u786E\u8868\u793A\u622A\u6B62\u98CE\u9669\uFF0C\u5426\u5219\u4E0D\u8981\u8C03\u6574\u65E5\u7A0B\u3002",
           timestamp,
           dedupe_key: await eventDedupeKey(batch)
@@ -278,7 +316,7 @@ var NavoPathBridgeSettingTab = class extends import_obsidian.PluginSettingTab {
     containerEl.empty();
     containerEl.createEl("h2", { text: "NavoPath Bridge" });
     containerEl.createEl("p", { text: "\u53EA\u76D1\u542C\u6307\u5B9A\u76EE\u5F55\uFF0C\u5E76\u5411 NavoPath \u4E0A\u4F20\u53D8\u5316\u6E05\u5355\u3001\u54C8\u5E0C\u548C\u6709\u9650\u7684\u65E5\u7A0B\u76F8\u5173\u7247\u6BB5\u3002\u9996\u6B21\u542F\u52A8\u53EA\u5EFA\u7ACB\u57FA\u7EBF\u3002" });
-    new import_obsidian.Setting(containerEl).setName("\u76D1\u542C\u76EE\u5F55").setDesc("\u4F7F\u7528 Vault \u5185\u7684\u76F8\u5BF9\u8DEF\u5F84\uFF1B\u4E0D\u8981\u586B\u5199 C:\\ \u7EDD\u5BF9\u8DEF\u5F84\u3002").addText((text) => text.setValue(this.plugin.bridgeSettings().watchedRoot).onChange(async (value) => this.plugin.updateSettings({ watchedRoot: normalizeVaultPath(value) })));
+    new import_obsidian.Setting(containerEl).setName("\u76D1\u542C\u76EE\u5F55\u767D\u540D\u5355").setDesc("\u6BCF\u884C\u4E00\u4E2A Vault \u76F8\u5BF9\u8DEF\u5F84\uFF1B\u4E0D\u8981\u586B\u5199 C:\\ \u7EDD\u5BF9\u8DEF\u5F84\u3002").addTextArea((text) => text.setPlaceholder("\u5347\u5B66/\u8D44\u6599\n\u9879\u76EE/NavoPath").setValue(this.plugin.bridgeSettings().watchedRoots.join("\n")).onChange(async (value) => this.plugin.updateSettings({ watchedRoots: normalizeWatchedRoots(value.split(/\r?\n/)) })));
     new import_obsidian.Setting(containerEl).setName("NavoPath \u8BBE\u5907\u4EE4\u724C").setDesc("\u521B\u5EFA\u6216\u9009\u62E9\u4E00\u4E2A\u4EC5\u7528\u4E8E\u6B64\u8BBE\u5907\u7684 nvp_ \u4EE4\u724C\u3002\u4EE4\u724C\u7531 Obsidian SecretStorage \u4FDD\u5B58\uFF0C\u4E0D\u8FDB\u5165\u63D2\u4EF6 data.json\u3002").addComponent((element) => new import_obsidian.SecretComponent(this.app, element).setValue(this.plugin.bridgeSettings().secretName).onChange(async (value) => this.plugin.updateSettings({ secretName: value })));
     new import_obsidian.Setting(containerEl).setName("\u5408\u5E76\u7B49\u5F85\u65F6\u95F4").setDesc("\u8FDE\u7EED\u4FDD\u5B58\u4F1A\u5728\u6B64\u65F6\u95F4\u5185\u5408\u5E76\u4E3A\u4E00\u6B21\u4E8B\u4EF6\u3002").addSlider((slider) => slider.setLimits(15, 120, 15).setDynamicTooltip().setValue(this.plugin.bridgeSettings().debounceSeconds).onChange(async (value) => this.plugin.updateSettings({ debounceSeconds: value })));
     new import_obsidian.Setting(containerEl).setName("\u7ACB\u5373\u53D1\u9001").setDesc("\u53D1\u9001\u5DF2\u7ECF\u68C0\u6D4B\u5230\u4F46\u5C1A\u672A\u4E0A\u4F20\u7684\u589E\u91CF\u53D8\u5316\u3002").addButton((button) => button.setButtonText("\u53D1\u9001\u5F85\u5904\u7406\u53D8\u5316").setCta().onClick(() => void this.plugin.flushNow(true)));

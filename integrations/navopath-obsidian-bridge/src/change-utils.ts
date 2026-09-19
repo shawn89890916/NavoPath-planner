@@ -19,14 +19,18 @@ export function normalizeVaultPath(path: string) {
   return path.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
 }
 
+export function normalizeWatchedRoots(roots: string | string[]) {
+  const values = Array.isArray(roots) ? roots : [roots];
+  return [...new Set(values.map(normalizeVaultPath).filter(Boolean))];
+}
+
 export function isValidDeviceToken(value: string) {
   return /^nvp_[a-f0-9]{64}$/i.test(value);
 }
 
-export function isPathWatched(path: string, watchedRoot: string) {
+export function isPathWatched(path: string, watchedRoots: string | string[]) {
   const normalizedPath = normalizeVaultPath(path);
-  const normalizedRoot = normalizeVaultPath(watchedRoot);
-  return Boolean(normalizedRoot) && (normalizedPath === normalizedRoot || normalizedPath.startsWith(`${normalizedRoot}/`));
+  return normalizeWatchedRoots(watchedRoots).some((root) => normalizedPath === root || normalizedPath.startsWith(`${root}/`));
 }
 
 export function detectManifestChanges(previous: BridgeManifest, current: BridgeManifest): DetectedChange[] {

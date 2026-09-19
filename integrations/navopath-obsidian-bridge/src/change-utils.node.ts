@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { detectManifestChanges, eventDedupeKey, isPathWatched, isValidDeviceToken, schedulingExcerpt, type BridgeManifest } from "./change-utils.ts";
+import { detectManifestChanges, eventDedupeKey, isPathWatched, isValidDeviceToken, normalizeWatchedRoots, schedulingExcerpt, type BridgeManifest } from "./change-utils.ts";
 
 test("accepts only complete NavoPath device tokens", () => {
   assert.equal(isValidDeviceToken(`nvp_${"a".repeat(64)}`), true);
@@ -8,11 +8,18 @@ test("accepts only complete NavoPath device tokens", () => {
   assert.equal(isValidDeviceToken("nvp_not-a-token"), false);
 });
 
-test("watches only the configured admissions folder", () => {
-  assert.equal(isPathWatched("升学/资料/申请.md", "升学/资料"), true);
-  assert.equal(isPathWatched("升学\\资料\\申请.md", "升学/资料"), true);
-  assert.equal(isPathWatched("升学/资料备份/申请.md", "升学/资料"), false);
-  assert.equal(isPathWatched("日记/今天.md", "升学/资料"), false);
+test("watches only configured allowlisted folders", () => {
+  const roots = ["升学/资料", "项目/NavoPath"];
+  assert.equal(isPathWatched("升学/资料/申请.md", roots), true);
+  assert.equal(isPathWatched("升学\\资料\\申请.md", roots), true);
+  assert.equal(isPathWatched("项目/NavoPath/NavoPath.md", roots), true);
+  assert.equal(isPathWatched("升学/资料备份/申请.md", roots), false);
+  assert.equal(isPathWatched("日记/今天.md", roots), false);
+});
+
+test("normalizes legacy single roots and removes duplicates", () => {
+  assert.deepEqual(normalizeWatchedRoots("升学\\资料"), ["升学/资料"]);
+  assert.deepEqual(normalizeWatchedRoots(["升学/资料/", "升学\\资料", "项目/NavoPath"]), ["升学/资料", "项目/NavoPath"]);
 });
 
 test("detects only content changes and deletions", () => {

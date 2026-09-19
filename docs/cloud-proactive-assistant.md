@@ -71,7 +71,7 @@ node scripts/navopath-workspace-event.mjs .\workspace-event.json
 
 ## Obsidian Bridge
 
-仓库内的 `integrations/navopath-obsidian-bridge` 可在桌面端和移动端 Obsidian 中监听 Vault 相对目录 `升学/资料`。它使用 Obsidian Vault 事件接收新建、修改、重命名和删除，连续保存默认合并 45 秒，并在插件重新启动时通过本地哈希清单补发离线期间遗漏的变化。
+仓库内的 `integrations/navopath-obsidian-bridge` 可在桌面端和移动端 Obsidian 中监听明确的 Vault 相对目录白名单；默认连接 `升学/资料` 与 `项目/NavoPath`。它使用 Obsidian Vault 事件接收新建、修改、重命名和删除，连续保存默认合并 45 秒，并在插件重新启动时通过本地哈希清单补发离线期间遗漏的变化。旧版单目录配置会自动迁移，设置页可按行增删白名单目录。
 
 隐私边界：
 

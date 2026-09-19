@@ -1,11 +1,15 @@
 import { Notice, Platform, Plugin, PluginSettingTab, requestUrl, SecretComponent, Setting, TFile } from "obsidian";
-import { detectManifestChanges, eventDedupeKey, isPathWatched, isValidDeviceToken, normalizeVaultPath, schedulingExcerpt, sha256Hex, type BridgeManifest, type DetectedChange, type ManifestEntry } from "./change-utils.ts";
+import { detectManifestChanges, eventDedupeKey, isPathWatched, isValidDeviceToken, normalizeVaultPath, normalizeWatchedRoots, schedulingExcerpt, sha256Hex, type BridgeManifest, type DetectedChange, type ManifestEntry } from "./change-utils.ts";
 
 type BridgeSettings = {
-  watchedRoot: string;
+  watchedRoots: string[];
   endpoint: string;
   secretName: string;
   debounceSeconds: number;
+};
+
+type LegacyBridgeSettings = Partial<BridgeSettings> & {
+  watchedRoot?: string;
 };
 
 type StoredData = {
@@ -14,7 +18,7 @@ type StoredData = {
 };
 
 const DEFAULT_SETTINGS: BridgeSettings = {
-  watchedRoot: "升学/资料",
+  watchedRoots: ["升学/资料", "项目/NavoPath"],
   endpoint: "https://navopath-mcp.shawn89890916.workers.dev/api/workspace-events",
   secretName: "",
   debounceSeconds: 45,
@@ -44,8 +48,13 @@ export default class NavoPathBridgePlugin extends Plugin {
 
   async onload() {
     const stored = (await this.loadData()) as Partial<StoredData> | null;
+    const storedSettings = { ...(stored?.settings || {}) } as LegacyBridgeSettings;
+    const watchedRoots = normalizeWatchedRoots(storedSettings.watchedRoots?.length
+      ? storedSettings.watchedRoots
+      : storedSettings.watchedRoot || DEFAULT_SETTINGS.watchedRoots);
+    delete storedSettings.watchedRoot;
     this.data = {
-      settings: { ...DEFAULT_SETTINGS, ...(stored?.settings || {}) },
+      settings: { ...DEFAULT_SETTINGS, ...storedSettings, watchedRoots },
       manifest: stored?.manifest && typeof stored.manifest === "object" ? stored.manifest : {},
     };
     await this.importDesktopBootstrapSecret();
@@ -75,7 +84,11 @@ export default class NavoPathBridgePlugin extends Plugin {
   }
 
   async updateSettings(patch: Partial<BridgeSettings>) {
-    this.data.settings = { ...this.data.settings, ...patch };
+    this.data.settings = {
+      ...this.data.settings,
+      ...patch,
+      watchedRoots: patch.watchedRoots ? normalizeWatchedRoots(patch.watchedRoots) : this.data.settings.watchedRoots,
+    };
     await this.saveData(this.data);
   }
 
@@ -107,9 +120,10 @@ export default class NavoPathBridgePlugin extends Plugin {
 
   private queuePath(path: string) {
     const normalized = normalizeVaultPath(path);
-    const root = this.data.settings.watchedRoot;
+    const roots = this.data.settings.watchedRoots;
     const wasTracked = Object.keys(this.data.manifest).some((item) => item === normalized || item.startsWith(`${normalized}/`));
-    if (!isPathWatched(normalized, root) && !wasTracked) return;
+    const stillExists = Boolean(this.app.vault.getAbstractFileByPath(normalized));
+    if (!isPathWatched(normalized, roots) && !(wasTracked && !stillExists)) return;
     this.pendingPaths.add(normalized);
     this.setStatus(`${this.pendingPaths.size} 项变化待发送`);
     if (this.flushTimer !== null) window.clearTimeout(this.flushTimer);
@@ -136,7 +150,7 @@ export default class NavoPathBridgePlugin extends Plugin {
   }
 
   private watchedFiles() {
-    return this.app.vault.getFiles().filter((file) => isPathWatched(file.path, this.data.settings.watchedRoot));
+    return this.app.vault.getFiles().filter((file) => isPathWatched(file.path, this.data.settings.watchedRoots));
   }
 
   private async fileEntry(file: TFile): Promise<ManifestEntry> {
@@ -209,10 +223,11 @@ export default class NavoPathBridgePlugin extends Plugin {
         const batch = changes.slice(offset, offset + 100);
         const fragmentCandidates = (await Promise.all(batch.slice(0, 20).map((change) => this.fragmentFor(change)))).filter((item): item is NonNullable<typeof item> => Boolean(item));
         const timestamp = new Date().toISOString();
+        const watchedLabel = this.data.settings.watchedRoots.join("、");
         const body = JSON.stringify({
           changed_files: batch.map((change) => ({ path: change.path, change_type: change.changeType, content_hash: `sha256:${change.current?.hash || change.previous?.hash || "deleted"}` })),
           fragments: fragmentCandidates,
-          summary: `Obsidian Vault 的「${this.data.settings.watchedRoot}」检测到 ${batch.length} 个增量变化。`,
+          summary: `Obsidian Vault 的「${watchedLabel}」检测到 ${batch.length} 个增量变化。`,
           schedule_impact: fragmentCandidates.length ? "请仅根据所附日期、截止、待办或计划片段判断是否影响 NavoPath 日程。" : "当前只包含文件名和内容哈希；除非文件名明确表示截止风险，否则不要调整日程。",
           timestamp,
           dedupe_key: await eventDedupeKey(batch),
@@ -268,9 +283,12 @@ class NavoPathBridgeSettingTab extends PluginSettingTab {
     containerEl.createEl("p", { text: "只监听指定目录，并向 NavoPath 上传变化清单、哈希和有限的日程相关片段。首次启动只建立基线。" });
 
     new Setting(containerEl)
-      .setName("监听目录")
-      .setDesc("使用 Vault 内的相对路径；不要填写 C:\\ 绝对路径。")
-      .addText((text) => text.setValue(this.plugin.bridgeSettings().watchedRoot).onChange(async (value) => this.plugin.updateSettings({ watchedRoot: normalizeVaultPath(value) })));
+      .setName("监听目录白名单")
+      .setDesc("每行一个 Vault 相对路径；不要填写 C:\\ 绝对路径。")
+      .addTextArea((text) => text
+        .setPlaceholder("升学/资料\n项目/NavoPath")
+        .setValue(this.plugin.bridgeSettings().watchedRoots.join("\n"))
+        .onChange(async (value) => this.plugin.updateSettings({ watchedRoots: normalizeWatchedRoots(value.split(/\r?\n/)) })));
 
     new Setting(containerEl)
       .setName("NavoPath 设备令牌")
