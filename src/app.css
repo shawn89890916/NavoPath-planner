@@ -39011,6 +39011,27 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 }
 
+/* Keep toast actions readable after the global transparent-button layer. */
+#root .df-app .df-toast .df-toast-undo-btn {
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: none;
+  color: var(--accent-active);
+  box-shadow: none;
+}
+
+#root .df-app .df-toast .df-toast-undo-btn:hover:not(:disabled),
+#root .df-app .df-toast .df-toast-undo-btn:focus-visible {
+  border-bottom-color: currentColor;
+  background-color: var(--paper-note);
+  color: var(--accent-active);
+  transform: none;
+}
+
 /* Let project accents keep their identity without overpowering the paper blocks. */
 #root .df-app.mode-execute .df-task-block[data-task-appearance] {
   --task-checkbox-color: color-mix(in srgb, var(--task-project-color) 68%, #fff);

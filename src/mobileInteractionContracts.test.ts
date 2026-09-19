@@ -93,4 +93,13 @@ describe("portrait interaction contracts", () => {
     expect(main).toContain("dragOverlayTask && drag?.source !== \"candidate\" && !timelineSnapActive");
     expect(main).not.toContain("draggingBlock conflict=");
   });
+
+  it("keeps the task-prediction undo action readable after global button resets", () => {
+    const globalButtonReset = appCss.lastIndexOf(".df-app button:not(.df-resize-dot):not(.df-level-option)");
+    const toastActionRule = appCss.lastIndexOf("#root .df-app .df-toast .df-toast-undo-btn");
+
+    expect(toastActionRule).toBeGreaterThan(globalButtonReset);
+    expect(appCss.slice(toastActionRule)).toMatch(/color:\s*var\(--accent-active\)/);
+    expect(main).toContain('lang === "zh" ? "撤销归属" : "Undo assignment"');
+  });
 });

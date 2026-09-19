@@ -9,6 +9,7 @@
 
 ### 修复
 - 移除 Jev 请求状态中的空可选字段，避免新任务缺少历史信息时触发网关参数校验并降级到通用模型。
+- 修复任务估时并自动归入项目后，底部提示中的“撤销归属”操作被全局按钮样式覆盖成空白方框的问题。
 
 ## 2026-09-18 · AI 设置与网页通知
 
@@ -156,6 +157,7 @@
 
 ### Fixed
 - Optional empty fields are now omitted from Jev evaluation state, preventing new tasks without history from failing gateway validation and falling back to the general model.
+- Fixed the task-prediction toast showing a blank outlined box when global button styles hid the “Undo assignment” action label.
 
 ## 2026-09-18 · AI settings and web notifications
 
