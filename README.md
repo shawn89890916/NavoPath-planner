@@ -125,6 +125,15 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_public_key
 
 Without these variables, NavoPath runs in local preview mode.
 
+Fast task-duration and project prediction can optionally use Jev through Vercel AI Gateway. Store the key only as a Supabase Edge Function secret; never expose it through a `VITE_` variable:
+
+```text
+supabase secrets set AI_GATEWAY_API_KEY=your_vercel_ai_gateway_key
+```
+
+When this secret is absent or the gateway is unavailable, task creation and scheduling continue to use NavoPath's local prediction, with the existing generative provider as a server-side fallback when configured.
+Teams whose Vercel plan supports per-request Zero Data Retention can additionally set `AI_GATEWAY_ZERO_DATA_RETENTION=true` as a Supabase secret.
+
 ## Web Deployment
 
 NavoPath can be deployed as a Cloudflare Pages project.

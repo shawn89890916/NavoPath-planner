@@ -26,6 +26,7 @@ function validIsoDate(value: unknown): value is string {
 }
 import { buildConversationContinuation } from "./conversation.ts";
 import { runCloudDecision } from "./cloudDecision.ts";
+import { predictTaskWithJev } from "./jevPrediction.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,7 +36,7 @@ const corsHeaders = {
 };
 
 const STABLE_MODEL = "deepseek-v4-flash";
-const AI_GATEWAY_VERSION = "2026-09-08.1";
+const AI_GATEWAY_VERSION = "2026-09-19.1";
 const AGENT_MAX_ROUNDS = 10;
 const AGENT_MAX_TOOL_CALLS = 64;
 const FALLBACK_MODELS = [
@@ -692,8 +693,10 @@ serve(async (req: Request) => {
     }
 
     const apiKey = Deno.env.get("DEEPSEEK_API_KEY");
+    const jevApiKey = Deno.env.get("AI_GATEWAY_API_KEY")?.trim() || "";
     const localProviderKey = typeof providerConfig?.apiKey === "string" && providerConfig.apiKey.length <= 512 ? providerConfig.apiKey.trim() : "";
-    const configuredProviders = [localProviderKey ? "deepseek" : "", apiKey ? "deepseek" : ""].filter(Boolean);
+    const configuredProviders = [localProviderKey ? "local" : "", apiKey ? "deepseek" : "", jevApiKey ? "jev" : ""].filter(Boolean);
+    const hasGenerativeProvider = Boolean(localProviderKey || apiKey);
 
     if (mode === "cloud_decision") {
       const keys = supabaseKeys();
@@ -744,7 +747,41 @@ serve(async (req: Request) => {
       }
     }
 
-    if (configuredProviders.length === 0) {
+    if (mode === "enrich_task" && jevApiKey) {
+      if (!message) {
+        return new Response(JSON.stringify({ error: "Missing mode or message" }), { status: 400, headers: corsHeaders });
+      }
+      try {
+        const enrichment = await predictTaskWithJev(
+          jevApiKey,
+          (context || {}) as Record<string, unknown>,
+          { zeroDataRetention: Deno.env.get("AI_GATEWAY_ZERO_DATA_RETENTION") === "true" },
+        );
+        return new Response(JSON.stringify({
+          ok: true,
+          reply: "",
+          steps: [],
+          actions: [],
+          memories: [],
+          enrichment,
+          version: AI_GATEWAY_VERSION,
+        }), { headers: corsHeaders });
+      } catch (error) {
+        console.warn("Jev task prediction failed; using the configured generative fallback", {
+          error: error instanceof Error ? error.message.slice(0, 160) : "unknown",
+        });
+        if (!hasGenerativeProvider) {
+          return new Response(JSON.stringify({
+            ok: false,
+            reply: "",
+            actions: [],
+            error: { code: "AI_PROVIDER", retryable: true, requestId: crypto.randomUUID(), message: "任务预测服务暂时不可用。" },
+          }), { status: 503, headers: corsHeaders });
+        }
+      }
+    }
+
+    if (!hasGenerativeProvider) {
       return new Response(JSON.stringify({
         ok: false,
         error: { code: "AI_NOT_CONFIGURED", retryable: false, requestId: crypto.randomUUID(), message: "AI 服务尚未配置。" },

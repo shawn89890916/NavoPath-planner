@@ -62,7 +62,17 @@ type AiAssistantPayload = {
   intent?: string;
   plan?: AiPlanBlock[];
   format?: "text" | "markdown";
-  enrichment?: { durationMinutes?: number; projectId?: string; confidence?: number };
+  enrichment?: {
+    durationMinutes?: number;
+    projectId?: string;
+    confidence?: number;
+    durationConfidence?: number;
+    projectConfidence?: number;
+    durationProbabilities?: Record<string, number>;
+    projectProbabilities?: Record<string, number>;
+    modelVersion?: string;
+    provider?: "jev" | "generative";
+  };
   agent?: AgentRunState;
   audits?: AgentAuditEntry[];
   clarifications?: AiClarification[];

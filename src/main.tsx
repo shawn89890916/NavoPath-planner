@@ -867,6 +867,16 @@ function makeTask(form: FormState, intelligence?: { data: PlannerData; projects:
   const inferredProject = !form.projectId && intelligence?.settings.autoAssignTaskProject !== false ? prediction?.project : undefined;
   const autoProjectId = inferredProject && inferredProject.confidence >= 0.78 ? inferredProject.projectId : undefined;
   const estimatedMinutes = inferDuration ? prediction!.duration.minutes : Math.round(Math.max(form.estimatedHours || 0.25, 0.25) * 60);
+  const durationInference = inferDuration
+    ? { minutes: prediction!.duration.minutes, confidence: prediction!.duration.confidence, source: prediction!.duration.source, inferredAt: now, modelVersion: AI_INFERENCE_MODEL_VERSION }
+    : Math.abs((form.estimatedHours || 0.5) - 0.5) >= 0.001
+      ? { minutes: estimatedMinutes, confidence: 1, source: "user" as const, inferredAt: now, modelVersion: "user", userOverridden: true }
+      : undefined;
+  const projectInference = form.projectId
+    ? { projectId: form.projectId, confidence: 1, source: "user" as const, inferredAt: now, modelVersion: "user", userOverridden: true }
+    : inferredProject
+      ? { projectId: inferredProject.projectId, confidence: inferredProject.confidence, source: inferredProject.source, inferredAt: now, modelVersion: AI_INFERENCE_MODEL_VERSION }
+      : undefined;
   return {
     id: uid("task"),
     title: form.title.trim(),
@@ -881,10 +891,7 @@ function makeTask(form: FormState, intelligence?: { data: PlannerData; projects:
     importance: form.importance,
     urgency: form.urgency,
     estimatedHours: Math.max(estimatedMinutes / 60, 0.25),
-    aiInference: prediction ? {
-      ...(inferDuration ? { duration: { minutes: prediction.duration.minutes, confidence: prediction.duration.confidence, source: prediction.duration.source, inferredAt: now, modelVersion: AI_INFERENCE_MODEL_VERSION } } : {}),
-      ...(inferredProject ? { project: { projectId: inferredProject.projectId, confidence: inferredProject.confidence, source: inferredProject.source, inferredAt: now, modelVersion: AI_INFERENCE_MODEL_VERSION } } : {}),
-    } : undefined,
+    aiInference: durationInference || projectInference ? { duration: durationInference, project: projectInference } : undefined,
     plannedForDate: form.dueDate && form.dueDate === todayIso() ? todayIso() : undefined,
     executionLane: form.dueDate && form.dueDate === todayIso() ? "candidate" : undefined,
     order: Date.now(),
@@ -1461,6 +1468,9 @@ function App() {
   }, [selectedDate, timelineView, timelineSlotHeight]);
   const [pendingTimelineFocus, setPendingTimelineFocus] = useState<TimelineFocusTarget | null>(null);
   const [placementPreview, setPlacementPreview] = useState<PlacementPreview>(null);
+  const placementPreviewRef = useRef<PlacementPreview>(placementPreview);
+  placementPreviewRef.current = placementPreview;
+  const taskEnrichmentInFlightRef = useRef(new Map<string, Promise<Task | undefined>>());
   const [editingOccurrence, setEditingOccurrence] = useState<EditingOccurrence>(null);
   const [quickSchedule, setQuickSchedule] = useState<QuickSchedule>(null);
   const [scheduleTemplateOpen, setScheduleTemplateOpen] = useState(false);
@@ -3036,54 +3046,105 @@ function App() {
     return makeTask(nextForm, current && currentSettings ? { data: current, projects: current.projects, settings: currentSettings } : undefined);
   }
 
-  async function enrichTaskInBackground(task: Task) {
-    const durationConfidence = task.aiInference?.duration?.confidence ?? 1;
-    const projectConfidence = task.aiInference?.project?.confidence ?? 0;
-    if (durationConfidence >= 0.6 && (task.projectId || projectConfidence >= 0.6)) return;
-    const snapshot = dataRef.current;
-    if (!snapshot) return;
-    const result = await callAiAssistant({
-      mode: "enrich_task",
-      message: task.title,
-      context: {
-        task: { id: task.id, title: task.title, estimatedMinutes: Math.round((task.estimatedHours || 0.5) * 60), projectId: task.projectId },
-        projects: snapshot.projects.map((project) => ({ id: project.id, title: project.title })),
-        preferences: snapshot.aiProfile ? {
-          durationByProject: snapshot.aiProfile.durationByProject,
-          feedback: snapshot.aiProfile.feedback,
-        } : undefined,
-      },
-    });
-    if (!result.ok || !result.enrichment) return;
-    const latest = dataRef.current;
-    const currentTask = latest?.tasks.find((item) => item.id === task.id);
-    if (!latest || !currentTask) return;
-    const confidence = Math.max(0, Math.min(1, Number(result.enrichment.confidence) || 0));
-    if (confidence < 0.72) return;
-    const canApplyDuration = !currentTask.aiInference?.duration?.userOverridden
-      && currentTask.estimatedHours === task.estimatedHours
-      && Number.isFinite(result.enrichment.durationMinutes);
-    const projectId = result.enrichment.projectId;
-    const canApplyProject = !currentTask.projectId
-      && !currentTask.aiInference?.project?.userOverridden
-      && typeof projectId === "string"
-      && latest.projects.some((project) => project.id === projectId);
-    if (!canApplyDuration && !canApplyProject) return;
-    const inferredAt = new Date().toISOString();
-    await saveData({
-      ...latest,
-      tasks: latest.tasks.map((item) => item.id === task.id ? {
-        ...item,
-        ...(canApplyDuration ? { estimatedHours: Math.max(15, Number(result.enrichment!.durationMinutes)) / 60 } : {}),
+  function enrichTaskInBackground(task: Task): Promise<Task | undefined> {
+    const currentSettings = settingsRef.current;
+    const hasJevDuration = task.aiInference?.duration?.source === "ai"
+      && task.aiInference.duration.modelVersion.startsWith("typesafe-ai/jev");
+    const hasJevProjectSuggestion = task.aiInference?.project?.source === "ai"
+      && task.aiInference.project.modelVersion.startsWith("typesafe-ai/jev")
+      && task.aiInference.project.confidence >= 0.45;
+    const requestDuration = currentSettings?.autoEstimateTaskDuration !== false
+      && !task.aiInference?.duration?.userOverridden
+      && !hasJevDuration;
+    const requestProject = currentSettings?.autoAssignTaskProject !== false
+      && !task.projectId
+      && !task.aiInference?.project?.userOverridden
+      && !hasJevProjectSuggestion;
+    if (!requestDuration && !requestProject) return Promise.resolve(task);
+
+    const requestKey = `${task.id}|${task.title}|${task.estimatedHours || 0}|${task.projectId || ""}|${requestDuration ? 1 : 0}${requestProject ? 1 : 0}`;
+    const inFlight = taskEnrichmentInFlightRef.current.get(requestKey);
+    if (inFlight) return inFlight;
+
+    const promise = (async () => {
+      const snapshot = dataRef.current;
+      if (!snapshot) return undefined;
+      const result = await callAiAssistant({
+        mode: "enrich_task",
+        message: task.title,
+        context: {
+          task: { id: task.id, title: task.title, estimatedMinutes: Math.round((task.estimatedHours || 0.5) * 60), projectId: task.projectId },
+          projects: snapshot.projects
+            .filter((project) => !project.completed)
+            .map((project) => ({ id: project.id, title: project.title, notes: project.notes })),
+          preferences: snapshot.aiProfile ? {
+            durationByProject: snapshot.aiProfile.durationByProject,
+            feedback: snapshot.aiProfile.feedback,
+          } : undefined,
+          requestDuration,
+          requestProject,
+        },
+      });
+      if (!result.ok || !result.enrichment) return undefined;
+      const latest = dataRef.current;
+      const currentTask = latest?.tasks.find((item) => item.id === task.id);
+      if (!latest || !currentTask || currentTask.title !== task.title) return undefined;
+
+      const commonConfidence = Math.max(0, Math.min(1, Number(result.enrichment.confidence) || 0));
+      const rawDurationConfidence = Number(result.enrichment.durationConfidence);
+      const rawProjectConfidence = Number(result.enrichment.projectConfidence);
+      const durationConfidence = Number.isFinite(rawDurationConfidence)
+        ? Math.max(0, Math.min(1, rawDurationConfidence))
+        : commonConfidence;
+      const projectConfidence = Number.isFinite(rawProjectConfidence)
+        ? Math.max(0, Math.min(1, rawProjectConfidence))
+        : commonConfidence;
+      const durationMinutes = Math.max(15, Math.min(240, Math.round(Number(result.enrichment.durationMinutes) / 15) * 15));
+      const hasActiveSchedule = Boolean(currentTask.scheduledDate)
+        || (currentTask.timelineRecords || []).some((record) => record.executionStatus === "scheduled");
+      const canApplyDuration = requestDuration
+        && durationConfidence >= 0.55
+        && !hasActiveSchedule
+        && !currentTask.aiInference?.duration?.userOverridden
+        && currentTask.estimatedHours === task.estimatedHours
+        && Number.isFinite(durationMinutes);
+
+      const projectId = result.enrichment.projectId;
+      const canSuggestProject = requestProject
+        && projectConfidence >= 0.45
+        && !currentTask.projectId
+        && !currentTask.aiInference?.project?.userOverridden
+        && typeof projectId === "string"
+        && latest.projects.some((project) => project.id === projectId && !project.completed);
+      const canApplyProject = canSuggestProject && projectConfidence >= 0.78;
+      if (!canApplyDuration && !canSuggestProject) return currentTask;
+
+      const inferredAt = new Date().toISOString();
+      const modelVersion = result.enrichment.modelVersion || (result.enrichment.provider === "jev" ? "typesafe-ai/jev" : "gateway-enrich-v1");
+      const updatedTask: Task = {
+        ...currentTask,
+        ...(canApplyDuration ? { estimatedHours: durationMinutes / 60 } : {}),
         ...(canApplyProject ? { projectId } : {}),
         aiInference: {
-          ...item.aiInference,
-          ...(canApplyDuration ? { duration: { minutes: Math.max(15, Number(result.enrichment!.durationMinutes)), confidence, source: "ai" as const, inferredAt, modelVersion: "gateway-enrich-v1" } } : {}),
-          ...(canApplyProject ? { project: { projectId: projectId!, confidence, source: "ai" as const, inferredAt, modelVersion: "gateway-enrich-v1" } } : {}),
+          ...currentTask.aiInference,
+          ...(canApplyDuration ? { duration: { minutes: durationMinutes, confidence: durationConfidence, source: "ai" as const, inferredAt, modelVersion } } : {}),
+          ...(canSuggestProject ? { project: { projectId: projectId!, confidence: projectConfidence, source: "ai" as const, inferredAt, modelVersion } } : {}),
         },
         updatedAt: inferredAt,
-      } : item),
-    });
+      };
+      await saveData({
+        ...latest,
+        tasks: latest.tasks.map((item) => item.id === task.id ? updatedTask : item),
+      });
+      return updatedTask;
+    })();
+
+    taskEnrichmentInFlightRef.current.set(requestKey, promise);
+    const clearInFlight = () => {
+      if (taskEnrichmentInFlightRef.current.get(requestKey) === promise) taskEnrichmentInFlightRef.current.delete(requestKey);
+    };
+    void promise.then(clearInFlight, clearInFlight);
+    return promise;
   }
 
   async function saveSettings(patch: SettingsPatch) {
@@ -3874,7 +3935,10 @@ function App() {
     const existing = current.tasks.find((task) => task.id === taskId);
     const durationChanged = existing && patch.estimatedHours !== undefined && patch.estimatedHours !== existing.estimatedHours;
     const projectChanged = existing && Object.prototype.hasOwnProperty.call(patch, "projectId") && patch.projectId !== existing.projectId;
+    const titleChanged = existing && typeof patch.title === "string" && patch.title !== existing.title;
+    const inferredAt = new Date().toISOString();
     const nextProfile = current.aiProfile || buildAiProfile(current);
+    let updatedTask: Task | undefined;
     void saveData({
       ...current,
       aiProfile: {
@@ -3886,17 +3950,26 @@ function App() {
           assignmentUndos: nextProfile.feedback.assignmentUndos + (projectChanged && existing?.aiInference?.project && !patch.projectId ? 1 : 0),
         },
       },
-      tasks: current.tasks.map((task) => task.id === taskId ? {
-        ...task,
-        ...patch,
-        aiInference: task.aiInference ? {
-          ...task.aiInference,
-          ...(durationChanged && task.aiInference.duration ? { duration: { ...task.aiInference.duration, userOverridden: true } } : {}),
-          ...(projectChanged && task.aiInference.project ? { project: { ...task.aiInference.project, userOverridden: true } } : {}),
-        } : undefined,
-        updatedAt: new Date().toISOString(),
-      } : task)
+      tasks: current.tasks.map((task) => {
+        if (task.id !== taskId) return task;
+        const durationInference = durationChanged
+          ? { minutes: Math.max(15, Math.round(Number(patch.estimatedHours) * 60)), confidence: 1, source: "user" as const, inferredAt, modelVersion: "user", userOverridden: true }
+          : titleChanged && !task.aiInference?.duration?.userOverridden ? undefined : task.aiInference?.duration;
+        const projectInference = projectChanged
+          ? { projectId: patch.projectId || "", confidence: 1, source: "user" as const, inferredAt, modelVersion: "user", userOverridden: true }
+          : titleChanged && !task.aiInference?.project?.userOverridden ? undefined : task.aiInference?.project;
+        updatedTask = {
+          ...task,
+          ...patch,
+          aiInference: durationInference || projectInference
+            ? { duration: durationInference, project: projectInference }
+            : undefined,
+          updatedAt: inferredAt,
+        };
+        return updatedTask;
+      })
     });
+    if (titleChanged && updatedTask) void enrichTaskInBackground(updatedTask);
   }
 
   /** Delete a subtask by ID — uses dataRef.current to avoid stale-closure races. */
@@ -5159,9 +5232,14 @@ function App() {
     return [...explicit, ...recurrence, ...fixedEvents, ...externalEvents];
   }
 
-  function findCandidatePlacement(task: Task) {
-    const visibleRange = getTimelineRangeFor(timelineView, timelineDate);
-    const fallbackRange = Array.from({ length: 14 }, (_, index) => addDays(visibleRange[0] || today, index));
+  function findCandidatePlacement(task: Task, cached?: {
+    visibleRange: string[];
+    fallbackRange: string[];
+    visibleEvents: ReturnType<typeof getScheduledEventsForRange>;
+    fallbackEvents: ReturnType<typeof getScheduledEventsForRange>;
+  }) {
+    const visibleRange = cached?.visibleRange || getTimelineRangeFor(timelineView, timelineDate);
+    const fallbackRange = cached?.fallbackRange || Array.from({ length: 14 }, (_, index) => addDays(visibleRange[0] || today, index));
     const tryRange = (dateRange: string[]) => autoScheduleTasks({
       tasks: [{
         id: task.id,
@@ -5172,7 +5250,9 @@ function App() {
         projectId: task.projectId,
         completed: task.completed,
       }],
-      scheduledEvents: getScheduledEventsForRange(dateRange),
+      scheduledEvents: cached
+        ? (dateRange === visibleRange ? cached.visibleEvents : cached.fallbackEvents)
+        : getScheduledEventsForRange(dateRange),
       dateRange,
       settings: {
         dayStart: settings?.scheduleDayStartTime || "08:00",
@@ -5186,6 +5266,7 @@ function App() {
   }
 
   function cancelPlacementPreview() {
+    placementPreviewRef.current = null;
     setPlacementPreview(null);
     setPendingTimelineFocus(null);
   }
@@ -5197,24 +5278,55 @@ function App() {
       cancelPlacementPreview();
       return;
     }
-    const proposed = findCandidatePlacement(task);
+    const visibleRange = getTimelineRangeFor(timelineView, timelineDate);
+    const fallbackRange = Array.from({ length: 14 }, (_, index) => addDays(visibleRange[0] || today, index));
+    const placementSnapshot = {
+      visibleRange,
+      fallbackRange,
+      visibleEvents: getScheduledEventsForRange(visibleRange),
+      fallbackEvents: getScheduledEventsForRange(fallbackRange),
+    };
+    const proposed = findCandidatePlacement(task, placementSnapshot);
     if (!proposed) {
       showToast(t(lang, "toast.noSlotFound"));
       return;
     }
-    setPlacementPreview({
+    const preview: NonNullable<PlacementPreview> = {
       taskId,
       date: proposed.scheduledDate,
       startTime: proposed.scheduledStart,
       endTime: proposed.scheduledEnd,
       durationMinutes: proposed.durationMinutes,
       source: "candidate-calendar",
-    });
+    };
+    placementPreviewRef.current = preview;
+    setPlacementPreview(preview);
     setPendingTimelineFocus({
       date: proposed.scheduledDate,
       startTime: proposed.scheduledStart,
       taskId,
       source: "placement",
+    });
+    void enrichTaskInBackground(task).then((updatedTask) => {
+      if (!updatedTask || taskDuration(updatedTask) === taskDuration(task) || placementPreviewRef.current?.taskId !== taskId) return;
+      const calibrated = findCandidatePlacement(updatedTask, placementSnapshot);
+      if (!calibrated || placementPreviewRef.current?.taskId !== taskId) return;
+      const calibratedPreview: NonNullable<PlacementPreview> = {
+        taskId,
+        date: calibrated.scheduledDate,
+        startTime: calibrated.scheduledStart,
+        endTime: calibrated.scheduledEnd,
+        durationMinutes: calibrated.durationMinutes,
+        source: "candidate-calendar",
+      };
+      placementPreviewRef.current = calibratedPreview;
+      setPlacementPreview(calibratedPreview);
+      setPendingTimelineFocus({
+        date: calibrated.scheduledDate,
+        startTime: calibrated.scheduledStart,
+        taskId,
+        source: "placement",
+      });
     });
   }
 
@@ -5226,6 +5338,7 @@ function App() {
       durationMinutes: placementPreview.durationMinutes,
       allDay: false,
     });
+    placementPreviewRef.current = null;
     setPlacementPreview(null);
   }
 
@@ -6308,20 +6421,37 @@ function App() {
   function saveForm() {
     if (!data || !form.title.trim()) return;
     const now = new Date().toISOString();
-    const buildUpdatedTask = (task: Task): Task => ({
-      ...task,
-      title: form.title.trim(),
-      dueDate: form.dueDate,
-      dueDateSource: form.dueDate ? "manual" : undefined,
-      category: form.category,
-      priority: form.priority,
-      projectId: form.projectId || undefined,
-      estimatedHours: Math.max(form.estimatedHours || 0.25, 0.25),
-      importance: form.importance,
-      urgency: form.urgency,
-      notes: form.details,
-      updatedAt: now,
-    });
+    const buildUpdatedTask = (task: Task): Task => {
+      const title = form.title.trim();
+      const estimatedHours = Math.max(form.estimatedHours || 0.25, 0.25);
+      const projectId = form.projectId || undefined;
+      const titleChanged = title !== task.title;
+      const durationChanged = estimatedHours !== task.estimatedHours;
+      const projectChanged = projectId !== task.projectId;
+      const durationInference = durationChanged
+        ? { minutes: Math.round(estimatedHours * 60), confidence: 1, source: "user" as const, inferredAt: now, modelVersion: "user", userOverridden: true }
+        : titleChanged && !task.aiInference?.duration?.userOverridden ? undefined : task.aiInference?.duration;
+      const projectInference = projectChanged
+        ? { projectId: projectId || "", confidence: 1, source: "user" as const, inferredAt: now, modelVersion: "user", userOverridden: true }
+        : titleChanged && !task.aiInference?.project?.userOverridden ? undefined : task.aiInference?.project;
+      return {
+        ...task,
+        title,
+        dueDate: form.dueDate,
+        dueDateSource: form.dueDate ? "manual" : undefined,
+        category: form.category,
+        priority: form.priority,
+        projectId,
+        estimatedHours,
+        importance: form.importance,
+        urgency: form.urgency,
+        notes: form.details,
+        aiInference: durationInference || projectInference
+          ? { duration: durationInference, project: projectInference }
+          : undefined,
+        updatedAt: now,
+      };
+    };
     if (editingId) {
       const editingTask = data.tasks.find((task) => task.id === editingId);
       const editingProject = data.projects.find((project) => project.id === editingId);
@@ -6402,10 +6532,14 @@ function App() {
         };
         void saveData({ ...data, projects: [...data.projects, converted], habits: (data.habits || []).filter((habit) => habit.id !== editingHabit.id) });
       } else if (addType === "task") {
+        const updatedTask = data.tasks.find((task) => task.id === editingId);
+        if (!updatedTask) return;
+        const enrichedCandidate = buildUpdatedTask(updatedTask);
         void saveData({
           ...data,
-          tasks: data.tasks.map((task) => task.id === editingId ? buildUpdatedTask(task) : task)
+          tasks: data.tasks.map((task) => task.id === editingId ? enrichedCandidate : task)
         });
+        void enrichTaskInBackground(enrichedCandidate);
       } else if (addType === "project") {
         void saveData({ ...data, projects: data.projects.map((project) => project.id === editingId ? { ...project, title: form.title.trim(), dueDate: form.dueDate || undefined, category: form.category, color: form.projectColor || categories[form.category].color, notes: form.details, importance: form.importance, updatedAt: now } : project) });
       } else if (addType === "habit") {

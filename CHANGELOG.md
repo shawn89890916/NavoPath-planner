@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-09-19 · 快速任务预测
+
+### 改进
+- 创建任务时会先用本地历史立即估算用时与项目，再由服务端 Jev 在后台校准；点击“安排到时间轴”会先显示即时落点，并在预测返回后安全更新尚未确认的预览。
+- 用时与项目分别采用独立置信度：高置信度项目可自动归属，中等置信度只显示建议；用户修改、已确认排程和关闭自动预测设置始终优先。Vercel AI Gateway 密钥仅保存在 Supabase 服务端，缺少密钥或网关异常时继续使用原有降级路径。
+
 ## 2026-09-18 · AI 设置与网页通知
 
 ### 改进
@@ -136,6 +142,12 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-19 · Fast task prediction
+
+### Improved
+- Task creation now uses local history for an immediate duration and project estimate, then lets server-side Jev calibrate it in the background. “Schedule on timeline” shows a placement immediately and safely refreshes an unconfirmed preview when prediction returns.
+- Duration and project use separate confidence values: high-confidence projects can be assigned automatically, while medium-confidence matches remain suggestions. User edits, confirmed schedules, and disabled automation settings always take precedence. The Vercel AI Gateway key stays in Supabase server secrets, with existing fallbacks preserved when the key or gateway is unavailable.
 
 ## 2026-09-18 · AI settings and web notifications
 
