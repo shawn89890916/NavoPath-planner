@@ -5,6 +5,7 @@
 ### 改进
 - 创建任务时会先用本地历史立即估算用时与项目，再由服务端 Jev 在后台校准；点击“安排到时间轴”会先显示即时落点，并在预测返回后安全更新尚未确认的预览。
 - 用时与项目分别采用独立置信度：高置信度项目可自动归属，中等置信度只显示建议；用户修改、已确认排程和关闭自动预测设置始终优先。Vercel AI Gateway 密钥仅保存在 Supabase 服务端，缺少密钥或网关异常时继续使用原有降级路径。
+- Jev 新增 OpenRouter Decisions API 通道，优先使用支付宝可充值的 OpenRouter 额度，并继续保留 Vercel Jev 与 DeepSeek 降级；请求默认拒绝提供商采集任务内容。
 
 ### 修复
 - 移除 Jev 请求状态中的空可选字段，避免新任务缺少历史信息时触发网关参数校验并降级到通用模型。
@@ -151,6 +152,7 @@
 ### Improved
 - Task creation now uses local history for an immediate duration and project estimate, then lets server-side Jev calibrate it in the background. “Schedule on timeline” shows a placement immediately and safely refreshes an unconfirmed preview when prediction returns.
 - Duration and project use separate confidence values: high-confidence projects can be assigned automatically, while medium-confidence matches remain suggestions. User edits, confirmed schedules, and disabled automation settings always take precedence. The Vercel AI Gateway key stays in Supabase server secrets, with existing fallbacks preserved when the key or gateway is unavailable.
+- Jev now supports OpenRouter's Decisions API, preferring its Alipay-funded credits while retaining Vercel Jev and DeepSeek fallbacks. Requests deny provider data collection by default.
 
 ### Fixed
 - Optional empty fields are now omitted from Jev evaluation state, preventing new tasks without history from failing gateway validation and falling back to the general model.

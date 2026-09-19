@@ -1,5 +1,7 @@
 export const JEV_MODEL = "typesafe-ai/jev";
 export const JEV_MODEL_VERSION = JEV_MODEL;
+export const OPENROUTER_JEV_MODEL = "~typesafe/jev-latest";
+const OPENROUTER_DECISIONS_URL = "https://openrouter.ai/api/alpha/decisions";
 
 const DURATION_MINUTES = [15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240] as const;
 const MAX_PROJECT_CHOICES = 32;
@@ -17,11 +19,18 @@ type ChoiceAnswer = {
   type?: unknown;
   choice?: unknown;
   probabilities?: unknown;
+  confidence?: unknown;
 };
 
 type EvaluationResult = {
+  model?: unknown;
   answers?: Record<string, ChoiceAnswer>;
   providerMetadata?: unknown;
+};
+
+type JevPredictionOptions = {
+  zeroDataRetention?: boolean;
+  fetcher?: typeof fetch;
 };
 
 export type JevTaskPrediction = {
@@ -150,20 +159,24 @@ export function buildJevTaskEvaluation(context: JevContext): JevTaskEvaluation {
   };
 }
 
-export function normalizeJevTaskEvaluation(result: EvaluationResult, projectIdByChoice: Record<string, string>): JevTaskPrediction {
+export function normalizeJevTaskEvaluation(
+  result: EvaluationResult,
+  projectIdByChoice: Record<string, string>,
+  modelVersion = JEV_MODEL_VERSION,
+): JevTaskPrediction {
   const durationAnswer = result.answers?.duration;
   const durationChoice = typeof durationAnswer?.choice === "string" ? durationAnswer.choice : "";
   const durationMatch = /^m(15|30|45|60|75|90|105|120|135|150|165|180|195|210|225|240)$/.exec(durationChoice);
   const durationMinutes = durationMatch ? Number(durationMatch[1]) : undefined;
   const durationConfidence = durationMinutes === undefined
     ? undefined
-    : providerConfidence(result, "duration") ?? selectedProbability(durationAnswer);
+    : providerConfidence(result, "duration") ?? clampProbability(durationAnswer?.confidence) ?? selectedProbability(durationAnswer);
 
   const projectAnswer = result.answers?.project;
   const projectChoice = typeof projectAnswer?.choice === "string" ? projectAnswer.choice : "";
   const projectId = projectChoice && projectChoice !== "unassigned" ? projectIdByChoice[projectChoice] : undefined;
   const projectConfidence = projectChoice
-    ? providerConfidence(result, "project") ?? selectedProbability(projectAnswer)
+    ? providerConfidence(result, "project") ?? clampProbability(projectAnswer?.confidence) ?? selectedProbability(projectAnswer)
     : undefined;
 
   const confidences = [durationConfidence, projectConfidence].filter((value): value is number => value !== undefined);
@@ -175,15 +188,50 @@ export function normalizeJevTaskEvaluation(result: EvaluationResult, projectIdBy
     durationProbabilities: normalizeProbabilities(durationAnswer?.probabilities),
     projectProbabilities: normalizeProbabilities(projectAnswer?.probabilities),
     confidence: confidences.length ? Math.min(...confidences) : undefined,
-    modelVersion: JEV_MODEL_VERSION,
+    modelVersion,
     provider: "jev",
   };
+}
+
+export async function predictTaskWithOpenRouter(
+  apiKey: string,
+  context: JevContext,
+  options: JevPredictionOptions = {},
+): Promise<JevTaskPrediction> {
+  if (!apiKey.trim()) throw new Error("OPENROUTER_API_KEY is missing");
+  const evaluation = buildJevTaskEvaluation(context);
+  const response = await (options.fetcher || fetch)(OPENROUTER_DECISIONS_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: OPENROUTER_JEV_MODEL,
+      state: evaluation.state,
+      questions: evaluation.questions,
+      provider: {
+        data_collection: "deny",
+        ...(options.zeroDataRetention ? { zdr: true } : {}),
+      },
+    }),
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) {
+    const detail = (await response.text()).replace(/\s+/g, " ").slice(0, 240);
+    throw new Error(`OpenRouter Jev ${response.status}: ${detail || response.statusText}`);
+  }
+  const result = await response.json() as EvaluationResult;
+  const modelVersion = typeof result.model === "string" && result.model.trim()
+    ? result.model.trim().slice(0, 120)
+    : OPENROUTER_JEV_MODEL;
+  return normalizeJevTaskEvaluation(result, evaluation.projectIdByChoice, modelVersion);
 }
 
 export async function predictTaskWithJev(
   apiKey: string,
   context: JevContext,
-  options: { zeroDataRetention?: boolean } = {},
+  options: JevPredictionOptions = {},
 ): Promise<JevTaskPrediction> {
   if (!apiKey.trim()) throw new Error("AI_GATEWAY_API_KEY is missing");
   const evaluation = buildJevTaskEvaluation(context);

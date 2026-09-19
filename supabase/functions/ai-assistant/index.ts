@@ -26,7 +26,7 @@ function validIsoDate(value: unknown): value is string {
 }
 import { buildConversationContinuation } from "./conversation.ts";
 import { runCloudDecision } from "./cloudDecision.ts";
-import { predictTaskWithJev } from "./jevPrediction.ts";
+import { predictTaskWithJev, predictTaskWithOpenRouter, type JevTaskPrediction } from "./jevPrediction.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,7 +36,7 @@ const corsHeaders = {
 };
 
 const STABLE_MODEL = "deepseek-v4-flash";
-const AI_GATEWAY_VERSION = "2026-09-19.1";
+const AI_GATEWAY_VERSION = "2026-09-19.2";
 const AGENT_MAX_ROUNDS = 10;
 const AGENT_MAX_TOOL_CALLS = 64;
 const FALLBACK_MODELS = [
@@ -693,9 +693,10 @@ serve(async (req: Request) => {
     }
 
     const apiKey = Deno.env.get("DEEPSEEK_API_KEY");
+    const openRouterApiKey = Deno.env.get("OPENROUTER_API_KEY")?.trim() || "";
     const jevApiKey = Deno.env.get("AI_GATEWAY_API_KEY")?.trim() || "";
     const localProviderKey = typeof providerConfig?.apiKey === "string" && providerConfig.apiKey.length <= 512 ? providerConfig.apiKey.trim() : "";
-    const configuredProviders = [localProviderKey ? "local" : "", apiKey ? "deepseek" : "", jevApiKey ? "jev" : ""].filter(Boolean);
+    const configuredProviders = [localProviderKey ? "local" : "", apiKey ? "deepseek" : "", openRouterApiKey ? "openrouter-jev" : "", jevApiKey ? "vercel-jev" : ""].filter(Boolean);
     const hasGenerativeProvider = Boolean(localProviderKey || apiKey);
 
     if (mode === "cloud_decision") {
@@ -747,16 +748,32 @@ serve(async (req: Request) => {
       }
     }
 
-    if (mode === "enrich_task" && jevApiKey) {
+    if (mode === "enrich_task" && (openRouterApiKey || jevApiKey)) {
       if (!message) {
         return new Response(JSON.stringify({ error: "Missing mode or message" }), { status: 400, headers: corsHeaders });
       }
-      try {
-        const enrichment = await predictTaskWithJev(
-          jevApiKey,
-          (context || {}) as Record<string, unknown>,
-          { zeroDataRetention: Deno.env.get("AI_GATEWAY_ZERO_DATA_RETENTION") === "true" },
-        );
+      const predictionContext = (context || {}) as Record<string, unknown>;
+      const zeroDataRetention = Deno.env.get("AI_GATEWAY_ZERO_DATA_RETENTION") === "true";
+      let enrichment: JevTaskPrediction | undefined;
+      if (openRouterApiKey) {
+        try {
+          enrichment = await predictTaskWithOpenRouter(openRouterApiKey, predictionContext, { zeroDataRetention });
+        } catch (error) {
+          console.warn("OpenRouter Jev task prediction failed", {
+            error: error instanceof Error ? error.message.slice(0, 160) : "unknown",
+          });
+        }
+      }
+      if (!enrichment && jevApiKey) {
+        try {
+          enrichment = await predictTaskWithJev(jevApiKey, predictionContext, { zeroDataRetention });
+        } catch (error) {
+          console.warn("Vercel Jev task prediction failed", {
+            error: error instanceof Error ? error.message.slice(0, 160) : "unknown",
+          });
+        }
+      }
+      if (enrichment) {
         return new Response(JSON.stringify({
           ok: true,
           reply: "",
@@ -766,18 +783,15 @@ serve(async (req: Request) => {
           enrichment,
           version: AI_GATEWAY_VERSION,
         }), { headers: corsHeaders });
-      } catch (error) {
-        console.warn("Jev task prediction failed; using the configured generative fallback", {
-          error: error instanceof Error ? error.message.slice(0, 160) : "unknown",
-        });
-        if (!hasGenerativeProvider) {
-          return new Response(JSON.stringify({
-            ok: false,
-            reply: "",
-            actions: [],
-            error: { code: "AI_PROVIDER", retryable: true, requestId: crypto.randomUUID(), message: "任务预测服务暂时不可用。" },
-          }), { status: 503, headers: corsHeaders });
-        }
+      }
+      console.warn("Jev task prediction unavailable; using the configured generative fallback");
+      if (!hasGenerativeProvider) {
+        return new Response(JSON.stringify({
+          ok: false,
+          reply: "",
+          actions: [],
+          error: { code: "AI_PROVIDER", retryable: true, requestId: crypto.randomUUID(), message: "任务预测服务暂时不可用。" },
+        }), { status: 503, headers: corsHeaders });
       }
     }
 

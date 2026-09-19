@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildJevTaskEvaluation, normalizeJevTaskEvaluation } from "./jevPrediction.ts";
+import { buildJevTaskEvaluation, normalizeJevTaskEvaluation, predictTaskWithOpenRouter } from "./jevPrediction.ts";
 
 test("builds bounded duration and project choices without exposing project ids as choice keys", () => {
   const evaluation = buildJevTaskEvaluation({
@@ -37,6 +37,37 @@ test("normalizes typed Jev answers and keeps field confidence separate", () => {
   assert.equal(prediction.durationConfidence, 0.76);
   assert.equal(prediction.projectConfidence, 0.88);
   assert.equal(prediction.confidence, 0.76);
+});
+
+test("calls OpenRouter Decisions with privacy routing and preserves its model version", async () => {
+  let capturedUrl = "";
+  let capturedInit: RequestInit | undefined;
+  const prediction = await predictTaskWithOpenRouter("or-test-key", {
+    task: { title: "Review electricity mistakes" },
+    projects: [{ id: "physics", title: "ESAT Physics" }],
+  }, {
+    zeroDataRetention: true,
+    fetcher: async (input, init) => {
+      capturedUrl = String(input);
+      capturedInit = init;
+      return new Response(JSON.stringify({
+        model: "typesafe/jev-1.13-20260917",
+        answers: {
+          duration: { type: "choice", choice: "m45", probabilities: { m30: 0.2, m45: 0.8 }, confidence: 0.74 },
+          project: { type: "choice", choice: "p0", probabilities: { unassigned: 0.05, p0: 0.95 }, confidence: 0.91 },
+        },
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    },
+  });
+
+  const body = JSON.parse(String(capturedInit?.body));
+  assert.equal(capturedUrl, "https://openrouter.ai/api/alpha/decisions");
+  assert.equal((capturedInit?.headers as Record<string, string>).Authorization, "Bearer or-test-key");
+  assert.equal(body.model, "~typesafe/jev-latest");
+  assert.deepEqual(body.provider, { data_collection: "deny", zdr: true });
+  assert.equal(prediction.durationConfidence, 0.74);
+  assert.equal(prediction.projectConfidence, 0.91);
+  assert.equal(prediction.modelVersion, "typesafe/jev-1.13-20260917");
 });
 
 test("rejects unknown choices and treats unassigned as an intentional empty project", () => {
