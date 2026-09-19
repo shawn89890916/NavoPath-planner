@@ -130,15 +130,20 @@ export function buildJevTaskEvaluation(context: JevContext): JevTaskEvaluation {
 
   if (!Object.keys(questions).length) throw new Error("Jev task prediction has no requested fields");
 
+  const currentEstimateMinutes = Number(context.task?.estimatedMinutes);
+  const userHistorySummary = context.preferences && typeof context.preferences === "object"
+    ? context.preferences
+    : undefined;
+
   return {
     state: {
       task: {
         title,
-        currentEstimateMinutes: Number.isFinite(Number(context.task?.estimatedMinutes))
-          ? Math.max(15, Math.min(240, Math.round(Number(context.task?.estimatedMinutes))))
-          : undefined,
+        ...(Number.isFinite(currentEstimateMinutes)
+          ? { currentEstimateMinutes: Math.max(15, Math.min(240, Math.round(currentEstimateMinutes))) }
+          : {}),
       },
-      userHistorySummary: context.preferences && typeof context.preferences === "object" ? context.preferences : undefined,
+      ...(userHistorySummary ? { userHistorySummary } : {}),
     },
     questions,
     projectIdByChoice,

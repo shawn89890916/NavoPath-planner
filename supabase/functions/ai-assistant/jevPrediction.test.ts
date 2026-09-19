@@ -17,6 +17,12 @@ test("builds bounded duration and project choices without exposing project ids a
   assert.equal(evaluation.projectIdByChoice.p0, "project-private-id");
 });
 
+test("omits optional state fields when no estimate or history is available", () => {
+  const evaluation = buildJevTaskEvaluation({ task: { title: "Review electricity mistakes" } });
+
+  assert.deepEqual(evaluation.state, { task: { title: "Review electricity mistakes" } });
+});
+
 test("normalizes typed Jev answers and keeps field confidence separate", () => {
   const prediction = normalizeJevTaskEvaluation({
     answers: {
