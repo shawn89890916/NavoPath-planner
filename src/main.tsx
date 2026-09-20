@@ -8901,7 +8901,6 @@ function App() {
                         <div className="df-project-group-header">
                           <span className="df-project-group-dot" style={{ background: projectColor }} />
                           <span className="df-project-group-name">{projectTitle}</span>
-                          <span className="df-project-group-count">{tasks.length}</span>
                           {gid !== "__events__" && <span className="df-project-group-actions">
                             <IconButton
                               className="df-project-group-action"

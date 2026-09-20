@@ -97,6 +97,8 @@ describe("portrait interaction contracts", () => {
     expect(main).toContain('lang === "zh" ? "显示到时间轴" : "Show in schedule"');
     expect(appCss).toContain("@keyframes dfCandidateScheduleReveal");
     expect(appCss).toMatch(/prefers-reduced-motion:[\s\S]*?\.df-candidate-schedule-panel[\s\S]*?animation:\s*none/);
+    expect(appCss).toMatch(/\.df-candidate-schedule-more\s*\{[\s\S]*?width:\s*100%;[\s\S]*?justify-self:\s*stretch/);
+    expect(main).not.toContain('<span className="df-project-group-count">{tasks.length}</span>');
   });
 
   it("resolves the product mark from the Vite base path", () => {

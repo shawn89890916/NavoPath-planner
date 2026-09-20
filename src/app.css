@@ -20533,15 +20533,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   min-width: 46px; border-radius: 0; font-family: var(--paper-mono);
 }
-.df-project-group-count {
-
-  font-size: 11px;
-
-  font-weight: 500;
-
-  opacity: .55;
-  border: 0; border-radius: 0; background: transparent; box-shadow: none; font-family: var(--paper-mono);
-}
 .df-candidate-subtask-count {
   border: 0; border-radius: 0; background: transparent; box-shadow: none; font-family: var(--paper-mono);
   position: absolute;
@@ -38322,13 +38313,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   font: 680 16px/1.25 var(--paper-display);
 }
 
-#root .df-app.mode-execute .df-project-group-count {
-  min-width: 20px;
-  color: var(--text-muted);
-  font: 600 10px/1 var(--paper-mono);
-  text-align: center;
-}
-
 #root .df-app.mode-execute .df-project-group-actions {
   display: inline-flex;
   align-items: center;
@@ -38467,7 +38451,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 
 #root .df-app.mode-execute .df-candidate-schedule-panel.is-overdue-actions button {
-  min-height: 42px;
+  min-height: 38px;
 }
 
 #root .df-app.mode-execute .df-candidate-schedule-panel.is-overdue-actions .df-candidate-schedule-choices > button {
@@ -38475,9 +38459,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 
 #root .df-app.mode-execute .df-candidate-schedule-more {
-  width: 58px;
-  justify-self: center;
-  border-color: transparent;
+  width: 100%;
+  justify-self: stretch;
   font: 700 14px/1 var(--paper-mono);
   letter-spacing: .12em;
 }
