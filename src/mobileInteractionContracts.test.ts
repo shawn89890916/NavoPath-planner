@@ -80,6 +80,25 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toMatch(/\.df-app \.df-candidate-list\s*\{[\s\S]*?flex:\s*1 1 0;[\s\S]*?min-height:\s*0;[\s\S]*?overflow-y:\s*auto;/);
   });
 
+  it("centers the timeline on now once and keeps scheduling previews in place", () => {
+    const previewStart = main.indexOf("function startPlacementPreview");
+    const previewEnd = main.indexOf("function confirmPlacementPreview", previewStart);
+
+    expect(main).toContain("timelineInitialFocusCompleteRef");
+    expect(main.slice(previewStart, previewEnd)).not.toContain("setPendingTimelineFocus");
+    expect(main).toContain("preserveTimelineViewportOnNextDataChange();\n    applyCandidateTimeSettings");
+    expect(main).toContain("focusTimeline: false");
+  });
+
+  it("uses the overdue scheduling action grid with a restrained reveal", () => {
+    expect(main).toContain('df-candidate-schedule-panel is-overdue-actions');
+    expect(main).toContain('term(lang, "incomplete")');
+    expect(main).toContain('term(lang, "unschedule")');
+    expect(main).toContain('lang === "zh" ? "显示到时间轴" : "Show in schedule"');
+    expect(appCss).toContain("@keyframes dfCandidateScheduleReveal");
+    expect(appCss).toMatch(/prefers-reduced-motion:[\s\S]*?\.df-candidate-schedule-panel[\s\S]*?animation:\s*none/);
+  });
+
   it("resolves the product mark from the Vite base path", () => {
     expect(main).toContain("const PRODUCT_ICON_SRC = `${import.meta.env.BASE_URL}navopath-icon.png`;");
     expect(main).toContain("const size = compact ? 32 : 36;");

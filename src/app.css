@@ -38389,6 +38389,22 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   margin-top: 6px;
   padding: 8px 0 0;
   border-top: 1px solid var(--paper-rule);
+  transform-origin: top center;
+  animation: dfCandidateScheduleReveal var(--motion-base) cubic-bezier(.2, .75, .25, 1) both;
+}
+
+@keyframes dfCandidateScheduleReveal {
+  from {
+    opacity: .45;
+    transform: translateY(-4px);
+    clip-path: inset(0 0 100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    clip-path: inset(0);
+  }
 }
 
 #root .df-app.mode-execute .df-candidate-schedule-panel button {
@@ -38450,12 +38466,26 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   font: 650 11px/1 var(--paper-mono);
 }
 
+#root .df-app.mode-execute .df-candidate-schedule-panel.is-overdue-actions button {
+  min-height: 42px;
+}
+
+#root .df-app.mode-execute .df-candidate-schedule-panel.is-overdue-actions .df-candidate-schedule-choices > button {
+  font-family: var(--paper-mono);
+}
+
 #root .df-app.mode-execute .df-candidate-schedule-more {
   width: 58px;
   justify-self: center;
   border-color: transparent;
   font: 700 14px/1 var(--paper-mono);
   letter-spacing: .12em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .df-app.mode-execute .df-candidate-schedule-panel {
+    animation: none;
+  }
 }
 
 #root .df-app.mode-execute .df-candidate-more-toolbar {

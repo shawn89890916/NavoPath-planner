@@ -10,6 +10,8 @@
 
 ### 修复
 - 逾期或从时间轴退回的未完成任务会保留并显示原排程日期时间；悬停时切换为当前时间轴视角下的建议安排时间，点击后展开完整安排选项。
+- 页面刷新后时间轴只在首次加载时对焦当前时刻；悬停安排建议、切换候选任务操作及确认快捷日期会保留用户当前的时间轴位置。
+- 逾期时间展开区改为“显示到时间轴、未完成、取消安排、四个快捷日期、更多”的紧凑操作布局，并加入轻量展开动画与减少动态效果适配。
 
 ## 2026-09-19 · 快速任务预测
 
@@ -170,6 +172,8 @@
 
 ### Fixed
 - Overdue tasks and unfinished tasks returned from the timeline retain their original scheduled date and time. Hovering reveals a recommendation adapted to the visible timeline, while clicking opens the full scheduling choices.
+- After refresh, the timeline focuses the current time only once. Hover previews, unrelated candidate actions, and quick-date confirmation now preserve the user’s current timeline position.
+- The overdue-time panel now uses a compact Show in schedule, Incomplete, Unschedule, four quick dates, and More layout, with a restrained reveal animation and reduced-motion support.
 
 ## 2026-09-19 · Fast task prediction
 

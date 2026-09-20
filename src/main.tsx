@@ -1834,7 +1834,7 @@ function App() {
     return () => scrollElement.removeEventListener("scroll", keepTimelineStill);
   }, [allDayDragDate, timelineView]);
   const dragTargetDateRef = useRef<string>("");
-  const lastTimelineAutoScrollKeyRef = useRef("");
+  const timelineInitialFocusCompleteRef = useRef(false);
   const dataRef = useRef<PlannerData | null>(null);
   const settingsRef = useRef<Settings | null>(null);
   const authStateRef = useRef<AuthState | null>(authState);
@@ -2646,10 +2646,15 @@ function App() {
   }, [settings?.dayStartTime]);
 
   useLayoutEffect(() => {
+    if (timelineInitialFocusCompleteRef.current) return;
     if (pendingTimelineFocus) return;
     if (mode !== "execute" || !data || timelineView === "month") return;
-    const autoScrollKey = `${timelineView}:${selectedDate}`;
-    if (lastTimelineAutoScrollKeyRef.current === autoScrollKey) return;
+    const nowDate = todayIso();
+    if (selectedDate !== nowDate) {
+      setSelectedDate(nowDate);
+      setVisibleTimelineDate(nowDate);
+      return;
+    }
     let observer: ResizeObserver | null = null;
     let settled = false;
     const alignTimeline = () => {
@@ -2657,7 +2662,7 @@ function App() {
       if (!container || container.clientHeight <= 0 || container.scrollHeight <= container.clientHeight) return false;
       const now = new Date();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      const targetMinutes = selectedDate === todayIso() ? currentMinutes : 9 * 60;
+      const targetMinutes = currentMinutes;
       const effectColumnCount = timelineView === "weekly" ? 7 : timelineView === "3day" ? 3 : 1;
       const effectEnabled = settings?.continuousCrossDayScroll !== false;
       const effectAnchorDate = timelineView === "weekly" ? getVisibleDays("weekly", selectedDate)[0] : selectedDate;
@@ -2670,7 +2675,7 @@ function App() {
         ? bandIndex * ((24 * 60 / SLOT_MINUTES) * timelineSlotHeight) + (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight
         : (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight;
       container.scrollTop = Math.max(0, targetTop - container.clientHeight * 0.5);
-      lastTimelineAutoScrollKeyRef.current = autoScrollKey;
+      timelineInitialFocusCompleteRef.current = true;
       settled = true;
       observer?.disconnect();
       return true;
@@ -5339,12 +5344,6 @@ function App() {
     placementPreviewRef.current = preview;
     setPlacementPreview(preview);
     setPlacementChoices(choices);
-    setPendingTimelineFocus({
-      date: preview.date,
-      startTime: preview.startTime,
-      taskId,
-      source: "placement",
-    });
     void enrichTaskInBackground(task).then((updatedTask) => {
       if (!updatedTask || taskDuration(updatedTask) === taskDuration(task) || placementPreviewRef.current?.taskId !== taskId) return;
       const calibratedChoices = findCandidatePlacementChoices(updatedTask, placementSnapshot);
@@ -5353,12 +5352,6 @@ function App() {
       placementPreviewRef.current = calibratedPreview;
       setPlacementPreview(calibratedPreview);
       setPlacementChoices(calibratedChoices);
-      setPendingTimelineFocus({
-        date: calibratedPreview.date,
-        startTime: calibratedPreview.startTime,
-        taskId,
-        source: "placement",
-      });
     });
   }
 
@@ -5368,12 +5361,13 @@ function App() {
   }
 
   function confirmPlacementChoice(choice: PlacementChoice) {
+    preserveTimelineViewportOnNextDataChange();
     applyCandidateTimeSettings(choice.taskId, {
       date: choice.date,
       startTime: choice.startTime,
       durationMinutes: choice.durationMinutes,
       allDay: false,
-    });
+    }, { focusTimeline: false });
     placementPreviewRef.current = null;
     setPlacementPreview(null);
     setPlacementChoices([]);
@@ -5828,6 +5822,7 @@ function App() {
 
   function unscheduleTask(taskId: string) {
     if (!data) return;
+    preserveTimelineViewportOnNextDataChange();
     void saveData({
       ...data,
       tasks: data.tasks.map((t) =>
@@ -5836,9 +5831,11 @@ function App() {
               ...t,
               plannedForDate: today,
               executionLane: "candidate",
-              timelineRecords: (t.timelineRecords || []).filter(
-                (r) => r.executionStatus !== "scheduled"
-              ),
+              scheduledDate: undefined,
+              scheduledStart: undefined,
+              scheduledEnd: undefined,
+              executionStatus: undefined,
+              timelineRecords: (t.timelineRecords || []).filter((r) => r.executionStatus === "completed"),
               updatedAt: new Date().toISOString(),
             }
           : t
@@ -5847,6 +5844,28 @@ function App() {
     showToast(t(lang, "toast.movedBackToCandidates"));
     setDrag(null);
     setHoverSlot("");
+  }
+
+  function markCandidateUnfinished(taskId: string) {
+    const current = dataRef.current;
+    if (!current) return;
+    preserveTimelineViewportOnNextDataChange();
+    const now = new Date().toISOString();
+    void saveData({
+      ...current,
+      tasks: current.tasks.map((task) => task.id === taskId ? {
+        ...task,
+        completed: false,
+        plannedForDate: today,
+        executionLane: "candidate",
+        executionStatus: "returned_unfinished",
+        timelineRecords: (task.timelineRecords || []).map((record) => record.executionStatus === "scheduled"
+          ? { ...record, executionStatus: "returned_unfinished" as const }
+          : record),
+        updatedAt: now,
+      } : task),
+    });
+    showToast(lang === "zh" ? "已保留为未完成任务" : "Kept as incomplete");
   }
 
   function returnToPlanning(taskId: string) {
@@ -8316,7 +8335,6 @@ function App() {
     setCompactExecuteView("schedule");
     setMobileDatePickerOpen(false);
     setTimelineView("daily");
-    lastTimelineAutoScrollKeyRef.current = "";
     setPendingTimelineFocus({ date: nowDate, startTime: nowTime, source: "schedule" });
   }
 
@@ -8732,7 +8750,6 @@ function App() {
                 setVisibleTimelineDate(date);
                 setMobileDatePickerOpen(false);
                 setDragCreate(null);
-                lastTimelineAutoScrollKeyRef.current = "";
               }}
             />
           )}
@@ -8916,7 +8933,7 @@ function App() {
                               }}
                             >
                               {dropHere && candidateDropTarget?.kind === "task" && candidateDropTarget.position === "before" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${drag?.sourceRect?.height || 64}px` } as CSSProperties} aria-hidden="true" />}
-                              {!isReorderSource && <TaskCard task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onStartPlacementPreview={() => startPlacementPreview(task.id)} onCancelPlacementPreview={cancelPlacementPreview} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
+                              {!isReorderSource && <TaskCard task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onStartPlacementPreview={() => startPlacementPreview(task.id)} onCancelPlacementPreview={cancelPlacementPreview} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
                               {dropHere && candidateDropTarget?.kind === "task" && candidateDropTarget.position === "after" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${drag?.sourceRect?.height || 64}px` } as CSSProperties} aria-hidden="true" />}
                             </div>
                           );
@@ -8939,7 +8956,7 @@ function App() {
                   }}
                 >
                   {dropHere && candidateDropTarget?.kind === "task" && candidateDropTarget.position === "before" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${drag?.sourceRect?.height || 64}px` } as CSSProperties} aria-hidden="true" />}
-                  {!isReorderSource && <TaskCard task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onStartPlacementPreview={() => startPlacementPreview(task.id)} onCancelPlacementPreview={cancelPlacementPreview} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
+                  {!isReorderSource && <TaskCard task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onStartPlacementPreview={() => startPlacementPreview(task.id)} onCancelPlacementPreview={cancelPlacementPreview} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
                   {dropHere && candidateDropTarget?.kind === "task" && candidateDropTarget.position === "after" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${drag?.sourceRect?.height || 64}px` } as CSSProperties} aria-hidden="true" />}
                 </div>
               })}
@@ -9673,7 +9690,6 @@ function App() {
                           setVisibleTimelineDate(date);
                           setMobileDatePickerOpen(false);
                           setDragCreate(null);
-                          lastTimelineAutoScrollKeyRef.current = "";
                         }}
                       />
                     )}
@@ -10107,6 +10123,8 @@ function App() {
             onToggleSubtask={() => {}}
             onSubtaskDragStart={() => {}}
             onMoveToPlanning={() => {}}
+            onMarkUnfinished={() => {}}
+            onUnschedule={() => {}}
             onMetaUpdate={() => {}}
             dragState="overlay"
             lang={lang}
@@ -10137,6 +10155,8 @@ function App() {
             onToggleSubtask={() => {}}
             onSubtaskDragStart={() => {}}
             onMoveToPlanning={() => {}}
+            onMarkUnfinished={() => {}}
+            onUnschedule={() => {}}
             onMetaUpdate={() => {}}
             dragState="overlay"
             lang={lang}
@@ -11727,6 +11747,14 @@ function candidateRelativeScheduleOptions(focusDate: string, lang: Language) {
   ];
 }
 
+function candidateQuickScheduleOptions(focusDate: string, lang: Language, startTime: string) {
+  return [1, 2, 3, 4].map((offset) => {
+    const date = addDays(focusDate, offset);
+    const dayLabel = offset === 1 ? (lang === "zh" ? "明天" : "Tomorrow") : weekdayName(lang, new Date(`${date}T00:00:00`).getDay());
+    return { date, label: `${dayLabel} ${startTime}` };
+  });
+}
+
 function TaskCard({
   task,
   projects,
@@ -11749,6 +11777,8 @@ function TaskCard({
   onSaveRecurrence,
   onMetaUpdate,
   onMoveToPlanning,
+  onMarkUnfinished,
+  onUnschedule,
   onToggleSubtask,
   onSubtaskDragStart,
   dragState,
@@ -11775,6 +11805,8 @@ function TaskCard({
   onSaveRecurrence: (recurrence?: TaskRecurrence) => void;
   onMetaUpdate?: (patch: Partial<Task>) => void;
   onMoveToPlanning?: () => void;
+  onMarkUnfinished: () => void;
+  onUnschedule: () => void;
   onToggleSubtask?: (subtaskId: string) => void;
   onSubtaskDragStart?: (event: React.PointerEvent, subtaskId: string) => void;
   dragState?: TaskBlockDragState;
@@ -11795,6 +11827,7 @@ function TaskCard({
   const priorityTriggerRef = useRef<HTMLButtonElement>(null);
   const projectTriggerRef = useRef<HTMLButtonElement>(null);
   const scheduleMoreTriggerRef = useRef<HTMLButtonElement>(null);
+  const schedulePanelRef = useRef<HTMLDivElement>(null);
   const [recurrenceDraft, setRecurrenceDraft] = useState<TaskRecurrence>(() => ({
     mode: task.recurrence?.mode || "flexible",
     frequency: task.recurrence?.frequency || "weekly",
@@ -11818,6 +11851,11 @@ function TaskCard({
   const isMoreOpen = openPanel === "more";
   const recurrenceChoices = recurrenceOptions(lang);
   const relativeScheduleOptions = candidateRelativeScheduleOptions(focusDate, lang);
+  const quickScheduleTime = placementPreview?.taskId === task.id ? placementPreview.startTime : returnedSchedule?.startTime || "09:00";
+  const quickScheduleOptions = candidateQuickScheduleOptions(focusDate, lang, quickScheduleTime);
+  const scheduleFocusTarget: CandidateScheduleSummary | null = returnedSchedule || (placementPreview?.taskId === task.id
+    ? { date: placementPreview.date, startTime: placementPreview.startTime, label: `${placementPreview.date} ${placementPreview.startTime}` }
+    : null);
   const suggestedProject = !task.projectId && !task.aiInference?.project?.userOverridden && (task.aiInference?.project?.confidence || 0) >= 0.45
     ? projects.find((project) => project.id === task.aiInference?.project?.projectId)
     : undefined;
@@ -11841,6 +11879,18 @@ function TaskCard({
   useEffect(() => {
     if (!isPlacementArmed) setSchedulePanelOpen(false);
   }, [isPlacementArmed]);
+
+  useLayoutEffect(() => {
+    if (!schedulePanelOpen || !schedulePanelRef.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      const panel = schedulePanelRef.current;
+      const list = panel?.closest<HTMLElement>(".df-candidate-list");
+      if (!panel || !list) return;
+      const overflow = panel.getBoundingClientRect().bottom - list.getBoundingClientRect().bottom + 8;
+      if (overflow > 0) list.scrollTop += overflow;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [schedulePanelOpen]);
 
   useEffect(() => {
     if (!deleteConfirm) return;
@@ -11921,7 +11971,15 @@ function TaskCard({
 
         {!isEvent && onToggleSubtask && hasSubtasks && subtasksOpen && <div className="df-candidate-subtasks"><div className="df-candidate-subtask-list-head"><span>{lang === "zh" ? "子任务" : "Subtasks"}</span><small>{countDoneSubtasks(task.subtasks)}/{countSubtasks(task.subtasks)}</small></div>{(task.subtasks || []).map((subtask) => <CandidateSubtaskItem key={subtask.id} subtask={subtask} lang={lang} onToggleSubtask={onToggleSubtask} onSubtaskDragStart={onSubtaskDragStart} />)}</div>}
 
-        {schedulePanelOpen && <div className="df-candidate-schedule-panel" onClick={stop}>
+        {schedulePanelOpen && (isOverdueCandidate ? <div ref={schedulePanelRef} className="df-candidate-schedule-panel is-overdue-actions" onClick={stop}>
+          <button type="button" className="df-candidate-schedule-primary" disabled={!scheduleFocusTarget} onClick={() => scheduleFocusTarget && onFocusSchedule?.(scheduleFocusTarget)}><span aria-hidden="true">→</span><span>{lang === "zh" ? "显示到时间轴" : "Show in schedule"}</span></button>
+          <div className="df-candidate-schedule-tools">
+            <button type="button" onClick={() => { onMarkUnfinished(); setSchedulePanelOpen(false); onCancelPlacementPreview(); }}><UiCalendarCheckIcon size={16} /><span>{term(lang, "incomplete")}</span></button>
+            <button type="button" onClick={() => { onUnschedule(); setSchedulePanelOpen(false); onCancelPlacementPreview(); }}><UiCalendarClockIcon size={16} /><span>{term(lang, "unschedule")}</span></button>
+          </div>
+          <div className="df-candidate-schedule-choices">{quickScheduleOptions.map((option) => <button key={option.date} type="button" onClick={() => { onScheduleDate(option.date); setSchedulePanelOpen(false); }}><span>{option.label}</span></button>)}</div>
+          <button ref={scheduleMoreTriggerRef} type="button" className="df-candidate-schedule-more" title={lang === "zh" ? "更多安排日期" : "More schedule dates"} aria-label={lang === "zh" ? "更多安排日期" : "More schedule dates"} aria-expanded={morePopover === "schedule-more"} onClick={() => setMorePopover((current) => current === "schedule-more" ? null : "schedule-more")}><span aria-hidden="true">•••</span></button>
+        </div> : <div ref={schedulePanelRef} className="df-candidate-schedule-panel" onClick={stop}>
           {isPlacementArmed && placementPreview && <button type="button" className="df-candidate-schedule-primary" onClick={() => { onConfirmPlacementPreview(); setSchedulePanelOpen(false); }}><UiCalendarCheckIcon size={17} /><span>{lang === "zh" ? `安排到 ${formatCandidateDate(placementPreview.date, lang)} ${placementPreview.startTime}` : `Schedule at ${formatCandidateDate(placementPreview.date, lang)} ${placementPreview.startTime}`}</span></button>}
           <div className="df-candidate-schedule-tools">
             <button ref={deadlineTriggerRef} type="button" aria-expanded={popoverOpen === "deadline"} onClick={() => setPopoverOpen((current) => current === "deadline" ? null : "deadline")}><UiFlagIcon size={15} /><span>{lang === "zh" ? "截止日期" : "Due date"}</span></button>
@@ -11929,7 +11987,7 @@ function TaskCard({
           </div>
           {placementChoices.length > 0 && <div className="df-candidate-schedule-choices">{placementChoices.slice(0, 4).map((choice) => <button key={`${choice.date}-${choice.startTime}`} type="button" onClick={() => { onConfirmPlacementChoice(choice); setSchedulePanelOpen(false); }}><span>{formatCandidateDate(choice.date, lang)}</span><strong>{choice.startTime}</strong></button>)}</div>}
           <button ref={scheduleMoreTriggerRef} type="button" className="df-candidate-schedule-more" title={lang === "zh" ? "更多安排日期" : "More schedule dates"} aria-label={lang === "zh" ? "更多安排日期" : "More schedule dates"} aria-expanded={morePopover === "schedule-more"} onClick={() => setMorePopover((current) => current === "schedule-more" ? null : "schedule-more")}><span aria-hidden="true">•••</span></button>
-        </div>}
+        </div>)}
 
         {isMoreOpen && <div className="df-candidate-more-toolbar" onClick={stop}>
           {onMoveToPlanning && <button type="button" title={lang === "zh" ? "移回规划" : "Move back to Planning"} onClick={() => { onMoveToPlanning(); setOpenPanel(null); }}><UiReturnIcon size={18} /><span>{lang === "zh" ? "移回规划" : "Planning"}</span></button>}
