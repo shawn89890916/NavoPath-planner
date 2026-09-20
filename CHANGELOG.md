@@ -1,5 +1,16 @@
 # NavoPath 更新日志
 
+## 2026-09-20 · 今日候选快捷安排
+
+### 改进
+- 今日候选按项目呈现更清晰的分组标题，并为每组加入快捷添加与整组智能安排；快捷添加会预选项目并聚焦输入框，整组安排继续复用现有可确认的批量排程流程。
+- 候选任务的时长、安排日期、优先级与归属项目统一使用可滚动的悬浮短列表；点击其他区域或按 Escape 会自动收起，并在桌面与窄屏保持正确图层。
+- 普通任务会按当前日、三日或周时间轴生成 Jev 建议落点；时间轴预览默认显示 N 标志，悬停后切换为确认安排提示，点击即可沿用现有排程保存流程。
+- 任务更多操作收敛为移回规划、设置优先级、归属项目和二次确认删除；重复设置及周期选项现已完整适配中英文。
+
+### 修复
+- 逾期或从时间轴退回的未完成任务会保留并显示原排程日期时间；悬停时切换为当前时间轴视角下的建议安排时间，点击后展开完整安排选项。
+
 ## 2026-09-19 · 快速任务预测
 
 ### 改进
@@ -148,6 +159,17 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-20 · Today’s Candidates quick scheduling
+
+### Improved
+- Today’s Candidates now has clearer project headings with quick-add and schedule-all actions. Quick add preselects and focuses the project composer, while schedule all continues through the existing reviewable batch-scheduling flow.
+- Candidate duration, schedule-date, priority, and project choices now use scrollable anchored menus that close on outside click or Escape and remain correctly layered on desktop and narrow screens.
+- Regular tasks generate Jev placement choices for the visible Day, 3-day, or Week timeline. Timeline previews show the N mark by default, switch to a scheduling confirmation cue on hover, and commit through the existing scheduling path.
+- Task actions now present Move to Planning, priority, project, and two-click delete controls. Repeat settings and recurrence choices are fully localized in Chinese and English.
+
+### Fixed
+- Overdue tasks and unfinished tasks returned from the timeline retain their original scheduled date and time. Hovering reveals a recommendation adapted to the visible timeline, while clicking opens the full scheduling choices.
 
 ## 2026-09-19 · Fast task prediction
 

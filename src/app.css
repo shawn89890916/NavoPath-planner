@@ -2609,46 +2609,6 @@
 
 
 
-/* 锟斤拷锟斤拷 Dark mode: popover inner elements 锟斤拷锟斤拷 */
-
-.df-app.theme-dark .df-card-popover button {
-
-  color: var(--text-main);
-
-  background: transparent;
-
-}
-
-
-
-.df-app.theme-dark .df-card-popover button:hover {
-
-  background: color-mix(in srgb, var(--accent-active) 12%, transparent);
-
-}
-
-
-
-.df-app.theme-dark .df-card-popover button.active {
-
-  background: color-mix(in srgb, var(--accent-active) 16%, transparent);
-
-  color: color-mix(in srgb, var(--accent-active) 85%, #fff);
-
-}
-
-
-
-.df-app.theme-dark .df-card-popover.info span {
-
-  color: var(--text-muted);
-
-  border-color: color-mix(in srgb, var(--accent-active) 20%, rgba(255,255,255,0.08));
-
-}
-
-
-
 .df-app.theme-dark .df-next {
 
   background: color-mix(in srgb, var(--accent-active) 10%, transparent);
@@ -7205,16 +7165,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.df-task-card.completed .df-candidate-title {
-
-  text-decoration: line-through;
-
-  opacity: .78;
-
-}
-
-
-
 .df-task-card.expanded {
 
   gap: 10px;
@@ -7286,144 +7236,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   width: 16px;
 
   height: 16px;
-
-}
-
-
-
-.df-task-card-more {
-
-  display: grid;
-
-  gap: 10px;
-
-}
-
-
-
-.df-task-card-more-head {
-
-  display: grid;
-
-  grid-template-columns: minmax(0, 1fr) auto;
-
-  align-items: center;
-
-  gap: 10px;
-
-}
-
-
-
-.df-task-card-more-actions {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  flex-wrap: wrap;
-
-  justify-content: flex-end;
-
-}
-
-
-
-.df-inline-action {
-
-  min-height: 34px;
-
-  border-radius: 12px;
-
-  border: 1px solid color-mix(in srgb, var(--accent-active) 22%, var(--border-soft));
-
-  background: color-mix(in srgb, var(--accent-active) 7%, var(--surface-card));
-
-  color: var(--text-main);
-
-  font-weight: 600;
-
-}
-
-
-
-.df-inline-form-actions .active {
-
-  background: color-mix(in srgb, var(--accent-active) 18%, var(--surface-card));
-
-  border-color: color-mix(in srgb, var(--accent-active) 48%, var(--border-soft));
-
-  color: color-mix(in srgb, var(--accent-active) 84%, var(--text-main));
-
-}
-
-
-
-.df-inline-action.is-active {
-
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-active) 45%, transparent) inset;
-
-}
-
-
-
-.df-inline-action:disabled {
-
-  opacity: .72;
-
-  cursor: default;
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Card popovers 锟斤拷锟斤拷 */
-
-
-
-.df-card-popover input {
-
-  width: 100%;
-
-  border: 1px solid color-mix(in srgb, var(--accent-active) 30%, var(--border-soft));
-
-  border-radius: var(--radius-sm);
-
-  padding: 8px;
-
-  color: var(--df-text);
-
-  background: var(--bg-surface);
-
-}
-
-
-
-.df-card-popover.inline-form label {
-
-  display: grid;
-
-  gap: 6px;
-
-  color: var(--text-muted);
-
-  font-size: 12px;
-
-}
-
-
-
-.df-inline-form-actions {
-
-  display: flex;
-
-  justify-content: flex-end;
-
-  gap: 8px;
-
-  margin-top: 8px;
 
 }
 
@@ -7761,222 +7573,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.df-card-popover.duration-list {
-
-  display: grid;
-
-  grid-template-columns: 1fr;
-
-  gap: 3px;
-
-  max-height: 190px;
-
-  overflow-y: auto;
-
-}
-
-
-
-.df-card-popover.project-list {
-
-  display: grid;
-
-  grid-template-columns: 1fr;
-
-  gap: 3px;
-
-  max-height: 190px;
-
-  overflow-y: auto;
-
-}
-
-
-
-.df-card-popover.project-list button {
-
-  padding: 8px 10px;
-
-  text-align: left;
-
-  color: var(--df-text);
-
-  border-color: color-mix(in srgb, var(--accent-active) 20%, var(--border-soft));
-
-  background: transparent;
-
-  box-shadow: none;
-
-}
-
-
-
-.df-card-popover.duration-list button {
-
-  padding: 8px 10px;
-
-  text-align: left;
-
-  color: var(--df-text);
-
-  border-color: color-mix(in srgb, var(--accent-active) 20%, var(--border-soft));
-
-  background: transparent;
-
-  box-shadow: none;
-
-}
-
-
-
-.df-card-popover.project-list button.active {
-
-  background: color-mix(in srgb, var(--accent-active) 12%, var(--bg-surface));
-
-  color: color-mix(in srgb, var(--accent-active) 80%, var(--text-main));
-
-  border-color: color-mix(in srgb, var(--accent-active) 55%, var(--border-soft));
-
-}
-
-
-
-.df-card-popover.duration-list button.active {
-
-  background: color-mix(in srgb, var(--accent-active) 12%, var(--bg-surface));
-
-  color: color-mix(in srgb, var(--accent-active) 80%, var(--text-main));
-
-  border-color: color-mix(in srgb, var(--accent-active) 55%, var(--border-soft));
-
-}
-
-
-
-.df-card-popover.note-output {
-
-  margin-top: 0;
-
-  padding: 14px 16px;
-
-  border-radius: 18px;
-
-  border-color: color-mix(in srgb, var(--accent-active) 18%, var(--border-soft));
-
-  background: color-mix(in srgb, var(--accent-active) 3%, var(--surface-card));
-
-}
-
-
-
-.df-note-output-head {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 8px;
-
-  margin-bottom: 10px;
-
-}
-
-
-
-.df-note-output-head span {
-
-  color: var(--text-main);
-
-  font-size: 14px;
-
-  font-weight: 600;
-
-}
-
-
-
-.df-note-output-body {
-
-  min-height: 56px;
-
-  color: var(--text-main);
-
-  font-size: 14px;
-
-  line-height: 1.6;
-
-  white-space: pre-wrap;
-
-}
-
-
-
-.df-note-output-body.placeholder {
-
-  color: var(--text-faint);
-
-}
-
-
-
-.df-card-popover.note-output textarea {
-
-  min-height: 96px;
-
-  resize: vertical;
-
-}
-
-
-
-.df-card-popover.info {
-
-  display: flex;
-
-  flex-wrap: wrap;
-
-  gap: 6px;
-
-}
-
-
-
-.df-card-popover.info span {
-
-  padding: 4px 7px;
-
-  border: 1px solid var(--border-soft);
-
-  border-radius: 999px;
-
-  color: var(--df-muted);
-
-  font-size: 11px;
-
-}
-
-
-
-.df-card-popover.note {
-
-  display: grid;
-
-  gap: 8px;
-
-}
-
-
-
-.df-card-popover.note button {
-
-  justify-self: end;
-
-}
-
-
-
 .df-block-check {
 
   position: absolute;
@@ -8093,42 +7689,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 /* 锟斤拷锟斤拷 9. df-card-popover 锟叫憋拷锟叫的帮拷钮 锟斤拷锟斤拷 */
 
-.df-card-popover.grid button:not(.active):hover {
-
-  background: color-mix(in srgb, var(--mode-primary) 8%, transparent);
-
-  border-color: color-mix(in srgb, var(--mode-primary) 45%, transparent);
-
-}
-
-.df-card-popover.duration-list button:not(.active):hover {
-
-  background: color-mix(in srgb, var(--mode-primary) 8%, transparent);
-
-  border-color: color-mix(in srgb, var(--mode-primary) 45%, transparent);
-
-}
-
-.df-card-popover.project-list button:not(.active):hover {
-
-  background: color-mix(in srgb, var(--mode-primary) 8%, transparent);
-
-  border-color: color-mix(in srgb, var(--mode-primary) 45%, transparent);
-
-}
-
-
-
-.df-card-popover button:not(.active):active {
-
-  transform: var(--ix-press);
-
-  background: color-mix(in srgb, var(--mode-primary) 16%, transparent);
-
-}
-
-
-
 /* 锟斤拷锟斤拷 19. df-pick-card 拾取锟斤拷灏�?锟斤拷锟斤拷 */
 
 
@@ -8178,20 +7738,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 /* 锟斤拷锟斤拷 Neumorphic Popover 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic .df-card-popover {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: var(--neu-radius-sm, 12px);
-
-  box-shadow: var(--neu-concave-sm);
-
-}
-
-
 
 /* Gentle scale on active for tactile feedback */
 
@@ -8433,16 +7979,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.df-app.theme-dark .df-task-card.completed .df-candidate-title {
-
-  color: var(--text-main);
-
-  opacity: .78;
-
-}
-
-
-
 /* 锟斤拷锟斤拷 Dark mode: candidate accent & checkbox 锟斤拷锟斤拷 */
 
 .df-app.theme-dark .df-task-card .df-block-check {
@@ -8468,120 +8004,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-app.theme-dark .df-task-card.completed .df-block-check svg {
 
   color: #1F2430;
-
-}
-
-
-
-.df-app.theme-dark .df-task-card-more {
-
-  color: var(--text-main);
-
-}
-
-
-
-.df-app.theme-dark .df-task-card-more-head {
-
-  color: var(--text-main);
-
-}
-
-
-
-.df-app.theme-dark .df-card-popover button:not(.active) {
-
-  background: var(--surface-card);
-
-  color: var(--text-main);
-
-  border-color: color-mix(in srgb, var(--accent-active) 26%, rgba(255,255,255,0.14));
-
-}
-
-
-
-.df-app.theme-dark .df-inline-action.primary {
-
-  background: color-mix(in srgb, var(--accent-active) 16%, var(--surface-card));
-
-  color: color-mix(in srgb, var(--accent-active) 86%, var(--text-main));
-
-  border-color: color-mix(in srgb, var(--accent-active) 44%, rgba(255,255,255,0.16));
-
-}
-
-
-
-.df-app.theme-dark .df-inline-form-actions .active {
-
-  background: color-mix(in srgb, var(--accent-active) 16%, var(--surface-card));
-
-  color: color-mix(in srgb, var(--accent-active) 86%, var(--text-main));
-
-  border-color: color-mix(in srgb, var(--accent-active) 44%, rgba(255,255,255,0.16));
-
-}
-
-
-
-.df-app.theme-dark .df-card-popover.project-list button.active {
-
-  background: color-mix(in srgb, var(--accent-active) 16%, var(--surface-card));
-
-  color: color-mix(in srgb, var(--accent-active) 86%, var(--text-main));
-
-  border-color: color-mix(in srgb, var(--accent-active) 44%, rgba(255,255,255,0.16));
-
-}
-
-
-
-.df-app.theme-dark .df-card-popover.duration-list button.active {
-
-  background: color-mix(in srgb, var(--accent-active) 16%, var(--surface-card));
-
-  color: color-mix(in srgb, var(--accent-active) 86%, var(--text-main));
-
-  border-color: color-mix(in srgb, var(--accent-active) 44%, rgba(255,255,255,0.16));
-
-}
-
-
-
-.df-app.theme-dark .df-inline-action.primary:disabled {
-
-  background: color-mix(in srgb, var(--accent-active) 8%, var(--surface-main));
-
-  color: var(--text-faint);
-
-  border-color: color-mix(in srgb, var(--accent-active) 18%, rgba(255,255,255,0.10));
-
-  opacity: 1;
-
-}
-
-
-
-.df-app.theme-dark .df-note-output-head span {
-
-  color: var(--text-main);
-
-}
-
-
-
-.df-app.theme-dark .df-note-output-body {
-
-  color: var(--text-main);
-
-}
-
-
-
-.df-app.theme-dark .df-card-popover.inline-form label {
-
-  color: var(--text-main);
 
 }
 
@@ -12144,26 +11566,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 /* 锟斤拷锟斤拷 Neumorphic Inputs 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
 
-.theme-neumorphic .df-card-popover textarea {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: var(--neu-radius-xs, 8px);
-
-  box-shadow: var(--neu-concave-sm);
-
-  color: var(--df-text);
-
-  padding: 8px 12px;
-
-  transition: var(--neu-transition);
-
-}
-
-
-
 /* Override neumorphic on popover inputs 锟斤�?must come AFTER to win cascade */
 
 .drag-create-quick-add input {
@@ -12279,48 +11681,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   transition: all .15s ease;
 
 }
-
-.df-card-popover select {
-
-  width: 100%;
-
-  border: 1px solid #E5E7EB;
-
-  border-radius: 6px;
-
-  padding: 7px 10px;
-
-  color: var(--df-text);
-
-  background: #FFFFFF;
-
-  box-shadow: none;
-
-  transition: all .15s ease;
-
-}
-
-.df-card-popover textarea {
-
-  width: 100%;
-
-  border: 1px solid #E5E7EB;
-
-  border-radius: 6px;
-
-  padding: 7px 10px;
-
-  color: var(--df-text);
-
-  background: #FFFFFF;
-
-  box-shadow: none;
-
-  transition: all .15s ease;
-
-}
-
-
 
 /* 锟斤拷锟斤拷 Quick Add 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
 
@@ -15621,12 +14981,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 }
 
-.df-app:not(.theme-dark) .df-candidate-title {
-
-  color: #111827;
-
-}
-
 .df-app:not(.theme-dark) .df-task-card strong {
 
   color: #111827;
@@ -17872,46 +17226,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.df-candidate-placement-summary {
-
-  display: grid;
-
-  gap: 3px;
-
-}
-
-
-
-.df-candidate-placement-summary strong {
-
-  font-size: 13px;
-
-}
-
-
-
-.df-candidate-placement-summary span {
-
-  color: var(--text-muted);
-
-  font-size: 12px;
-
-}
-
-
-
-.df-candidate-placement-actions {
-
-  display: flex;
-
-  gap: 8px;
-
-  flex-wrap: wrap;
-
-}
-
-
-
 .df-task-detail {
 
   width: min(440px, 94vw);
@@ -18034,36 +17348,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.df-app.theme-dark .df-card-popover {
-
-  background: color-mix(in srgb, var(--accent-active) 6%, var(--surface-card));
-
-  border: 1px solid color-mix(in srgb, var(--accent-active) 24%, rgba(255,255,255,0.10));
-
-  color: var(--text-main);
-
-}
-
-
-
-.df-app.theme-dark .df-card-popover.note-output {
-
-  background: color-mix(in srgb, var(--accent-active) 6%, var(--surface-card));
-
-  border-color: color-mix(in srgb, var(--accent-active) 16%, rgba(255,255,255,0.12));
-
-}
-
-
-
-.df-app.theme-dark .df-candidate-placement-bar {
-
-  background: color-mix(in srgb, var(--accent-active) 6%, var(--surface-card));
-
-}
-
-
-
 .df-app.theme-dark .df-detail-hero {
 
   background: color-mix(in srgb, var(--accent-active) 6%, var(--surface-card));
@@ -18075,84 +17359,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-app.theme-dark .df-detail-pill {
 
   background: color-mix(in srgb, var(--accent-active) 6%, var(--surface-card));
-
-}
-
-
-
-.df-app.theme-dark .df-inline-action {
-
-  background: color-mix(in srgb, var(--bg-app-soft) 80%, var(--surface-card));
-
-  color: var(--text-main);
-
-  border-color: color-mix(in srgb, var(--accent-active) 22%, var(--border-soft));
-
-}
-
-
-
-.df-app.theme-dark .df-card-popover input {
-
-  background: color-mix(in srgb, var(--bg-app-soft) 80%, var(--surface-card));
-
-  color: var(--text-main);
-
-  border-color: color-mix(in srgb, var(--accent-active) 22%, var(--border-soft));
-
-}
-
-
-
-.df-app.theme-dark .df-card-popover select {
-
-  background: color-mix(in srgb, var(--bg-app-soft) 80%, var(--surface-card));
-
-  color: var(--text-main);
-
-  border-color: color-mix(in srgb, var(--accent-active) 22%, var(--border-soft));
-
-}
-
-
-
-.df-app.theme-dark .df-card-popover textarea {
-
-  background: color-mix(in srgb, var(--bg-app-soft) 80%, var(--surface-card));
-
-  color: var(--text-main);
-
-  border-color: color-mix(in srgb, var(--accent-active) 22%, var(--border-soft));
-
-}
-
-
-
-.df-app.theme-dark .df-inline-action:disabled {
-
-  background: color-mix(in srgb, var(--bg-app-soft) 76%, var(--surface-card));
-
-  color: var(--text-faint);
-
-  border-color: color-mix(in srgb, var(--accent-active) 18%, rgba(255,255,255,0.10));
-
-  opacity: 1;
-
-}
-
-
-
-.df-app.theme-dark .df-note-output-body.placeholder {
-
-  color: var(--text-faint);
-
-}
-
-
-
-.df-app.theme-dark .df-candidate-placement-summary span {
-
-  color: var(--text-faint);
 
 }
 
@@ -19226,30 +18432,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-/* Bold today candidates title and task names */
-
-.df-candidate-title {
-
-  font-family: var(--df-font-task);
-
-  min-width: 0;
-
-  font-size: 14px;
-
-  line-height: 1.35;
-
-  font-weight: 700;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-
-}
-
-
-
 /* Logo: remove border, enlarge */
 
 .df-brand-ai-button {
@@ -19497,12 +18679,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   cursor: pointer;
 
   transition: background .1s ease;
-
-  color: var(--text-main);
-
-}
-
-.df-app.theme-dark .df-candidate-title {
 
   color: var(--text-main);
 
@@ -21067,8 +20243,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   transform: scale(1.06); }
 .df-user-avatar:disabled { cursor: wait; opacity: .52; }
 
-.df-app .df-card-popover.note-output { box-shadow: none; }
-
 /* Desktop workbench */
 .df-execute { background: transparent;
 
@@ -21335,12 +20509,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--accent-active); border: 0; border-bottom: 1px solid var(--accent-active);
   border-radius: 0; background: transparent; box-shadow: none; filter: none;
 }
-.df-inline-action.primary { background: transparent;
-
-  border-color: color-mix(in srgb, var(--accent-active) 48%, var(--border-soft));
-  color: var(--accent-active); border: 0; border-bottom: 1px solid var(--accent-active);
-  border-radius: 0; box-shadow: none; filter: none;
-}
 .df-project-group-header {
 
   display: flex;
@@ -21384,14 +20552,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-muted);
   opacity: .8;
   pointer-events: none;
-}
-.df-card-popover {
-
-  margin-top: 8px;
-
-  padding: 8px;
-  border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius-soft);
-  background: var(--surface-raised); box-shadow: var(--paper-float-shadow); backdrop-filter: none;
 }
 .df-quick-add-project-menu {
 
@@ -21451,23 +20611,21 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   pointer-events: none; backdrop-filter: none;
 }
-.df-candidate-placement-bar {
-
-  display: grid;
-
-  gap: 10px;
-
-  padding: 12px 14px; border-radius: var(--paper-radius);
-  border: 1px dashed var(--paper-rule-strong);
-  background: color-mix(in srgb, var(--surface-main) 96%, var(--text-main) 4%); box-shadow: none;
-}
 .df-drop-preview.placement-preview {
-
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  align-content: center;
+  gap: 7px;
+  padding: 5px 8px;
   border-style: dashed;
-
   border-color: color-mix(in srgb, var(--accent-active) 56%, var(--border-soft));
   background: color-mix(in srgb, var(--surface-main) 96%, var(--text-main) 4%); box-shadow: none;
   border: 1px dashed var(--paper-rule-strong); border-radius: var(--paper-radius);
+  pointer-events: auto;
+  cursor: pointer;
+  text-align: left;
+  opacity: .96;
+  transition: border-color var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease);
 }
 
 /* Timeline as the main paper canvas */
@@ -23200,7 +22358,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   height: 5px; border-radius:50%; background:var(--accent-active); flex-shrink:0;
   animation: none;
 }
-.df-app .df-card-popover { animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; }
 .df-app .df-quick-add-project-menu { animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; }
 .df-app .df-detail-floating-popover { animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; }
 .df-app .df-repeat-modal {
@@ -23354,10 +22511,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background-image: none; text-shadow: none; filter: none;
   transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion), transform 90ms ease-out;
 }
-.df-app .df-inline-action.primary {
-  background-image: none; text-shadow: none; filter: none;
-  transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion), transform 90ms ease-out;
-}
 .df-app .df-repeat-modal-actions .primary {
   background-image: none; text-shadow: none; filter: none;
   transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion), transform 90ms ease-out;
@@ -23368,9 +22521,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-app .df-ai-task-accept:hover:not(:disabled) {
   transform: none; filter: none; box-shadow: var(--paper-float-shadow);
 }
-.df-app .df-inline-action.primary:hover:not(:disabled) {
-  transform: none; filter: none; box-shadow: var(--paper-float-shadow);
-}
 .df-app .df-repeat-modal-actions .primary:hover:not(:disabled) {
   transform: none; filter: none; box-shadow: var(--paper-float-shadow);
 }
@@ -23378,7 +22528,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-app .df-ai-fab:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
 .df-app .df-ai-send-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
 .df-app .df-ai-task-accept:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
-.df-app .df-inline-action.primary:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
 @media (max-width: 620px) {
   .df-header-inner { padding: 0 10px; }
   .df-tabs { gap: 12px; }
@@ -33204,12 +32353,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   text-indent: 0;
 }
 
-.df-app .df-candidate-title {
-  margin-left: 0;
-  padding-left: 0;
-  text-indent: 0;
-}
-
 .df-app .df-task-card.is-event {
   padding-left: var(--task-padding-x);
 }
@@ -36449,15 +35592,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     word-break: normal;
   }
 
-  #root .df-app .df-task-card .df-candidate-title {
-    display: -webkit-box;
-    overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow-wrap: normal;
-    word-break: normal;
-  }
-
   #root .df-app .df-task-card .df-task-actions {
     grid-column: 3; grid-row: 1 / 3;
     min-width: 44px;
@@ -38495,14 +37629,15 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 
 #root .df-app.mode-execute .df-project-group-header {
-  min-height: 40px;
+  min-height: 46px;
   display: flex;
-  align-items: end;
-  padding: 14px 4px 7px;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 3px 7px;
   border-bottom: 1px solid var(--paper-rule);
   color: var(--text-muted);
   font: 650 10px/1.2 var(--paper-mono);
-  letter-spacing: .09em;
+  letter-spacing: 0;
 }
 
 #root .df-app.mode-execute .df-candidate-task-row {
@@ -39179,6 +38314,278 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 #root .df-app.theme-dark.mode-execute .df-timeline-3day .df-hour-lines-layer .df-slot.hour {
   border-top-color: rgba(255, 255, 255, .09);
+}
+
+/* Today's Candidates: project sheet headers and compact task interactions. */
+#root .df-app.mode-execute .df-project-group-name {
+  color: color-mix(in srgb, var(--task-project-color, var(--text-main)) 18%, var(--text-main));
+  font: 680 16px/1.25 var(--paper-display);
+}
+
+#root .df-app.mode-execute .df-project-group-count {
+  min-width: 20px;
+  color: var(--text-muted);
+  font: 600 10px/1 var(--paper-mono);
+  text-align: center;
+}
+
+#root .df-app.mode-execute .df-project-group-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 2px;
+}
+
+#root .df-app.mode-execute .df-project-group-action.ui-icon-button {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+#root .df-app.mode-execute .df-project-group-action.ui-icon-button:hover,
+#root .df-app.mode-execute .df-project-group-action.ui-icon-button:focus-visible {
+  background: var(--paper-note);
+  color: var(--accent-active);
+}
+
+#root .df-app.mode-execute .df-task-card.more-open {
+  padding-top: 7px;
+  border-color: var(--task-border);
+  background: var(--task-bg);
+}
+
+#root .df-app.mode-execute .df-overdue-time {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 3px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--danger-ink, #b4232f);
+  box-shadow: none;
+  font: 650 11px/1.2 var(--paper-mono);
+  white-space: nowrap;
+}
+
+#root .df-app.mode-execute .df-overdue-time:hover,
+#root .df-app.mode-execute .df-overdue-time:focus-visible,
+#root .df-app.mode-execute .df-overdue-time.is-previewing {
+  border-bottom-color: currentColor;
+  background: color-mix(in srgb, var(--danger-ink, #b4232f) 5%, transparent);
+}
+
+#root .df-app.mode-execute .df-candidate-schedule-panel {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--paper-rule);
+}
+
+#root .df-app.mode-execute .df-candidate-schedule-panel button {
+  min-height: 34px;
+  border: 1px solid var(--paper-rule-strong);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-main);
+  box-shadow: none;
+  font: 650 11px/1.2 var(--paper-sans);
+}
+
+#root .df-app.mode-execute .df-candidate-schedule-panel button:hover,
+#root .df-app.mode-execute .df-candidate-schedule-panel button:focus-visible {
+  border-color: color-mix(in srgb, var(--accent-active) 48%, var(--paper-rule));
+  background: var(--paper-note);
+  color: var(--accent-active);
+}
+
+#root .df-app.mode-execute .df-candidate-schedule-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--accent-active);
+}
+
+#root .df-app.mode-execute .df-candidate-schedule-tools,
+#root .df-app.mode-execute .df-candidate-schedule-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+#root .df-app.mode-execute .df-candidate-schedule-tools > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+#root .df-app.mode-execute .df-candidate-schedule-choices > button {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 5px 7px;
+  white-space: nowrap;
+}
+
+#root .df-app.mode-execute .df-candidate-schedule-choices > button span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#root .df-app.mode-execute .df-candidate-schedule-choices > button strong {
+  font: 650 11px/1 var(--paper-mono);
+}
+
+#root .df-app.mode-execute .df-candidate-schedule-more {
+  width: 58px;
+  justify-self: center;
+  border-color: transparent;
+  font: 700 14px/1 var(--paper-mono);
+  letter-spacing: .12em;
+}
+
+#root .df-app.mode-execute .df-candidate-more-toolbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+  margin-top: 5px;
+  padding-top: 7px;
+  border-top: 1px solid var(--paper-rule);
+}
+
+#root .df-app.mode-execute .df-candidate-more-toolbar > button {
+  min-width: 0;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-muted);
+  box-shadow: none;
+  font: 650 10px/1.15 var(--paper-sans);
+}
+
+#root .df-app.mode-execute .df-candidate-more-toolbar > button:hover,
+#root .df-app.mode-execute .df-candidate-more-toolbar > button:focus-visible {
+  border-color: var(--paper-rule);
+  background: var(--paper-note);
+  color: var(--text-main);
+}
+
+#root .df-app.mode-execute .df-candidate-more-toolbar > button.danger-lite {
+  color: var(--danger-ink, #b4232f);
+}
+
+#root .df-app.mode-execute .df-candidate-more-toolbar > button.is-confirming {
+  border-color: var(--danger-rule, color-mix(in srgb, #b4232f 45%, var(--paper-rule)));
+  background: color-mix(in srgb, var(--danger-ink, #b4232f) 7%, var(--surface-card));
+}
+
+.ui-narrow-menu-layer .df-menu-project-dot {
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+#root .ui-narrow-menu-layer .ui-narrow-menu > button {
+  border-color: transparent;
+  background: transparent;
+}
+
+#root .ui-narrow-menu-layer .ui-narrow-menu > button:hover,
+#root .ui-narrow-menu-layer .ui-narrow-menu > button:focus-visible {
+  border-color: var(--paper-rule);
+  background: var(--paper-note);
+}
+
+#root .ui-narrow-menu-layer .ui-narrow-menu > button.active {
+  border-color: var(--paper-rule-strong);
+  background: color-mix(in srgb, var(--text-main) 7%, var(--surface-raised));
+}
+
+.ui-narrow-menu-layer :is(.df-priority-high, .df-priority-medium, .df-priority-low, .df-priority-none) {
+  color: var(--text-muted);
+}
+
+.ui-narrow-menu-layer .df-priority-high { color: var(--danger-ink, #b4232f); }
+.ui-narrow-menu-layer .df-priority-medium { color: var(--warning-ink, #b26a00); }
+.ui-narrow-menu-layer .df-priority-low { color: var(--accent-active); }
+
+.df-drop-preview.placement-preview:hover,
+.df-drop-preview.placement-preview:focus-visible {
+  border-color: var(--accent-active);
+  background: color-mix(in srgb, var(--accent-active) 7%, var(--surface-main));
+  outline: 1px solid color-mix(in srgb, var(--accent-active) 42%, transparent);
+  outline-offset: 1px;
+}
+
+.df-placement-preview-icon {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  color: var(--accent-active);
+}
+
+.df-placement-preview-icon img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  transition: opacity var(--motion-fast) var(--motion-ease);
+}
+
+.df-placement-preview-confirm-icon {
+  position: absolute;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--motion-ease);
+}
+
+.df-drop-preview.placement-preview:hover .df-placement-preview-icon img,
+.df-drop-preview.placement-preview:focus-visible .df-placement-preview-icon img { opacity: 0; }
+.df-drop-preview.placement-preview:hover .df-placement-preview-confirm-icon,
+.df-drop-preview.placement-preview:focus-visible .df-placement-preview-confirm-icon { opacity: 1; }
+
+.df-drop-preview.placement-preview > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-main);
+  font: 650 12px/1.2 var(--paper-task);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.df-drop-preview.placement-preview .df-placement-preview-time {
+  color: var(--text-muted);
+  font: 600 9px/1 var(--paper-mono);
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  #root .df-app.mode-execute .df-candidate-more-toolbar > button span { display: none; }
+  #root .df-app.mode-execute .df-candidate-more-toolbar > button { min-height: 44px; }
+  #root .df-app.mode-execute .df-project-group-action.ui-icon-button { width: 44px; min-width: 44px; height: 44px; }
+  .df-drop-preview.placement-preview .df-placement-preview-time { display: none; }
 }
 
 /* Medium landscape workbench: keep the paper split usable between phone and

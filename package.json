@@ -35,7 +35,7 @@
         "dist/assets/supabase-vendor-*.js",
         "dist/assets/supabasePlannerApi-*.js"
       ],
-      "limit": "252 KB"
+      "limit": "254 KB"
     },
     {
       "name": "Deferred app scripts",
@@ -67,7 +67,7 @@
         "dist/assets/WidgetApp-*.js",
         "dist/assets/MobileTaskSummary-*.js"
       ],
-      "limit": "324 KB"
+      "limit": "326 KB"
     },
     {
       "name": "Document parsing scripts",

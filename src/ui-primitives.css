@@ -1047,3 +1047,91 @@
     min-height: 44px;
   }
 }
+
+/* Anchored choice menus stay above scrollable work sheets and keep a compact,
+   paper-like footprint. The owner supplies only semantic rows and actions. */
+.ui-narrow-menu-layer {
+  position: fixed;
+  z-index: 100006;
+  width: min(224px, calc(100vw - 20px));
+}
+
+.ui-narrow-menu-layer .ui-narrow-menu {
+  display: grid;
+  gap: 2px;
+  max-height: min(320px, var(--ui-narrow-menu-max-height, 320px));
+  padding: 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  border: 1px solid var(--paper-rule-strong, var(--border-default));
+  border-radius: var(--radius-overlay, 12px);
+  background: var(--surface-raised);
+  color: var(--text-main);
+  box-shadow: var(--shadow-overlay, var(--paper-float-shadow));
+}
+
+.ui-narrow-menu-layer .ui-narrow-menu > button,
+.ui-narrow-menu-layer .ui-narrow-menu > label {
+  width: 100%;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control, 4px);
+  background: transparent;
+  color: var(--text-main);
+  box-shadow: none;
+  font: 600 12px/1.25 var(--paper-sans);
+  text-align: left;
+}
+
+.ui-narrow-menu-layer .ui-narrow-menu > button:hover,
+.ui-narrow-menu-layer .ui-narrow-menu > button:focus-visible {
+  border-color: var(--paper-rule);
+  background: var(--paper-note);
+}
+
+.ui-narrow-menu-layer .ui-narrow-menu > button.active {
+  border-color: var(--paper-rule-strong);
+  background: color-mix(in srgb, var(--text-main) 7%, var(--surface-raised));
+}
+
+.ui-narrow-menu-layer .ui-narrow-menu > button:active {
+  transform: translateY(1px);
+}
+
+.ui-narrow-menu-layer .ui-narrow-menu > button svg {
+  flex: 0 0 auto;
+}
+
+.ui-narrow-menu-layer .ui-narrow-menu input {
+  min-width: 0;
+  width: 100%;
+  height: 32px;
+  border: 0;
+  border-bottom: 1px solid var(--paper-rule-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-main);
+  font: 600 12px var(--paper-mono);
+  outline: none;
+}
+
+.ui-narrow-menu-layer .ui-narrow-menu input:focus {
+  border-bottom-color: var(--accent-active);
+}
+
+.ui-narrow-menu-layer .ui-narrow-menu > label > span {
+  white-space: nowrap;
+}
+
+@media (pointer: coarse), (max-width: 620px) {
+  .ui-narrow-menu-layer .ui-narrow-menu > button,
+  .ui-narrow-menu-layer .ui-narrow-menu > label {
+    min-height: 44px;
+  }
+}
