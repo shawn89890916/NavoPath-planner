@@ -90,6 +90,21 @@ describe("portrait interaction contracts", () => {
     expect(main).toContain("focusTimeline: false");
   });
 
+  it("keeps candidate suggestions inside the dates visible in the current timeline view", () => {
+    const choicesStart = main.indexOf("function findCandidatePlacementChoices");
+    const choicesEnd = main.indexOf("function cancelPlacementPreview", choicesStart);
+    const choicesSource = main.slice(choicesStart, choicesEnd);
+
+    expect(choicesSource).toContain("const visibleRange");
+    expect(choicesSource).toContain("return [];");
+    expect(choicesSource).not.toContain("fallbackRange");
+    expect(main).not.toContain("function findCandidatePlacement(task:");
+    expect(main).toContain("if (wasPlacementArmedRef.current && !isPlacementArmed) setSchedulePanelOpen(false)");
+    expect(main).toContain("const viewportFocus = currentTimelineViewportFocus();");
+    expect(main).toContain("setVisibleTimelineDate(viewportFocus.date);");
+    expect(main).toContain('if (nextView !== "month") setPendingTimelineFocus({ ...viewportFocus, source: "schedule" });');
+  });
+
   it("uses the overdue scheduling action grid with a restrained reveal", () => {
     expect(main).toContain('df-candidate-schedule-panel is-overdue-actions');
     expect(main).toContain('term(lang, "incomplete")');
@@ -99,6 +114,12 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toMatch(/prefers-reduced-motion:[\s\S]*?\.df-candidate-schedule-panel[\s\S]*?animation:\s*none/);
     expect(appCss).toMatch(/\.df-candidate-schedule-more\s*\{[\s\S]*?width:\s*100%;[\s\S]*?justify-self:\s*stretch/);
     expect(main).not.toContain('<span className="df-project-group-count">{tasks.length}</span>');
+  });
+
+  it("keeps an overdue task's original unfinished time while previewing a suggestion", () => {
+    expect(main).toContain("const overdueDisplayTime = returnedSchedule");
+    expect(main).toContain("<span>{overdueDisplayTime}</span>");
+    expect(main).not.toContain("isPlacementArmed && placementPreview ? `${formatCandidateDate(placementPreview.date, lang)}");
   });
 
   it("resolves the product mark from the Vite base path", () => {

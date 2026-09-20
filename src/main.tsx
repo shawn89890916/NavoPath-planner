@@ -5252,9 +5252,7 @@ function App() {
 
   type CandidatePlacementSnapshot = {
     visibleRange: string[];
-    fallbackRange: string[];
     visibleEvents: ReturnType<typeof getScheduledEventsForRange>;
-    fallbackEvents: ReturnType<typeof getScheduledEventsForRange>;
   };
 
   function findCandidatePlacementForRange(task: Task, dateRange: string[], scheduledEvents = getScheduledEventsForRange(dateRange)) {
@@ -5280,13 +5278,6 @@ function App() {
     }).proposedEvents[0];
   }
 
-  function findCandidatePlacement(task: Task, cached?: CandidatePlacementSnapshot) {
-    const visibleRange = cached?.visibleRange || getTimelineRangeFor(timelineView, timelineWindowAnchorDate);
-    const fallbackRange = cached?.fallbackRange || Array.from({ length: 14 }, (_, index) => addDays(visibleRange[0] || today, index));
-    return findCandidatePlacementForRange(task, visibleRange, cached?.visibleEvents)
-      || findCandidatePlacementForRange(task, fallbackRange, cached?.fallbackEvents);
-  }
-
   function placementChoiceFromProposal(taskId: string, proposed: ReturnType<typeof findCandidatePlacementForRange>): PlacementChoice | null {
     if (!proposed) return null;
     return {
@@ -5308,9 +5299,7 @@ function App() {
       return choice ? [choice] : [];
     });
     if (choices.length > 0) return choices;
-    const fallback = findCandidatePlacement(task, cached);
-    const choice = placementChoiceFromProposal(task.id, fallback);
-    return choice ? [choice] : [];
+    return [];
   }
 
   function cancelPlacementPreview() {
@@ -5328,12 +5317,9 @@ function App() {
       return;
     }
     const visibleRange = getTimelineRangeFor(timelineView, timelineWindowAnchorDate);
-    const fallbackRange = Array.from({ length: 14 }, (_, index) => addDays(visibleRange[0] || today, index));
     const placementSnapshot = {
       visibleRange,
-      fallbackRange,
       visibleEvents: getScheduledEventsForRange(visibleRange),
-      fallbackEvents: getScheduledEventsForRange(fallbackRange),
     };
     const choices = findCandidatePlacementChoices(task, placementSnapshot);
     const preview = choices[0];
@@ -8316,12 +8302,26 @@ function App() {
     }, { direction: nextMode === "planning" ? "forward" : "backward", scope: "workspace" });
   }
 
+  function currentTimelineViewportFocus() {
+    const scrollElement = timelineRef.current;
+    if (!scrollElement || timelineView === "month") return { date: timelineWindowAnchorDate, startTime: "09:00" };
+    const dayHeight = (24 * 60 / SLOT_MINUTES) * timelineSlotHeight;
+    const centerY = scrollElement.scrollTop + scrollElement.clientHeight / 2;
+    const minutesIntoBand = ((centerY % dayHeight) + dayHeight) % dayHeight / timelineSlotHeight * SLOT_MINUTES;
+    const minutes = Math.round((dayStartHour * 60 + minutesIntoBand) / SLOT_MINUTES) * SLOT_MINUTES;
+    return { date: timelineWindowAnchorDate, startTime: minutesToTime(minutes) };
+  }
+
   function changeTimelineView(nextView: TimelineView) {
     if (nextView === timelineView) return;
     const order: TimelineView[] = ["daily", "3day", "weekly", "month"];
     const direction = order.indexOf(nextView) < order.indexOf(timelineView) ? "backward" : "forward";
+    const viewportFocus = currentTimelineViewportFocus();
     void runMotionTransition(() => {
+      setSelectedDate(viewportFocus.date);
+      setVisibleTimelineDate(viewportFocus.date);
       setTimelineView(nextView);
+      if (nextView !== "month") setPendingTimelineFocus({ ...viewportFocus, source: "schedule" });
       setDragCreate(null);
     }, { direction, scope: "timeline" });
   }
@@ -8444,16 +8444,16 @@ function App() {
           void saveSettings({ activeMode: "planning" });
           break;
         case "day-view":
-          setTimelineView("daily");
+          changeTimelineView("daily");
           break;
         case "three-day-view":
-          setTimelineView("3day");
+          changeTimelineView("3day");
           break;
         case "week-view":
-          setTimelineView("weekly");
+          changeTimelineView("weekly");
           break;
         case "month-view":
-          setTimelineView("month");
+          changeTimelineView("month");
           break;
         case "timer-toggle":
           toggleTimerShortcut();
@@ -11827,6 +11827,7 @@ function TaskCard({
   const projectTriggerRef = useRef<HTMLButtonElement>(null);
   const scheduleMoreTriggerRef = useRef<HTMLButtonElement>(null);
   const schedulePanelRef = useRef<HTMLDivElement>(null);
+  const wasPlacementArmedRef = useRef(false);
   const [recurrenceDraft, setRecurrenceDraft] = useState<TaskRecurrence>(() => ({
     mode: task.recurrence?.mode || "flexible",
     frequency: task.recurrence?.frequency || "weekly",
@@ -11850,6 +11851,9 @@ function TaskCard({
   const isMoreOpen = openPanel === "more";
   const recurrenceChoices = recurrenceOptions(lang);
   const relativeScheduleOptions = candidateRelativeScheduleOptions(focusDate, lang);
+  const overdueDisplayTime = returnedSchedule
+    ? `${formatCandidateDate(returnedSchedule.date, lang)} ${returnedSchedule.startTime}`
+    : formatCandidateDate(task.dueDate, lang);
   const quickScheduleTime = placementPreview?.taskId === task.id ? placementPreview.startTime : returnedSchedule?.startTime || "09:00";
   const quickScheduleOptions = candidateQuickScheduleOptions(focusDate, lang, quickScheduleTime);
   const scheduleFocusTarget: CandidateScheduleSummary | null = returnedSchedule || (placementPreview?.taskId === task.id
@@ -11876,7 +11880,8 @@ function TaskCard({
   }, [focusDate, task]);
 
   useEffect(() => {
-    if (!isPlacementArmed) setSchedulePanelOpen(false);
+    if (wasPlacementArmedRef.current && !isPlacementArmed) setSchedulePanelOpen(false);
+    wasPlacementArmedRef.current = isPlacementArmed;
   }, [isPlacementArmed]);
 
   useLayoutEffect(() => {
@@ -11954,9 +11959,9 @@ function TaskCard({
 
           {!isEvent && <TaskBlockDuration>
             {scheduleSummary ? <button type="button" className="df-candidate-schedule-link" title={lang === "zh" ? `跳转到时间轴：${scheduleSummary.date} ${scheduleSummary.startTime}` : `Show on timeline: ${scheduleSummary.date} ${scheduleSummary.startTime}`} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onFocusSchedule?.(scheduleSummary); }}>{scheduleSummary.label}</button>
-              : isOverdueCandidate ? <button type="button" className={`df-overdue-time${isPlacementArmed ? " is-previewing" : ""}`} title={lang === "zh" ? "悬停预览建议时间，点击打开安排选项" : "Hover to preview a suggested time; click for options"} onMouseEnter={previewPlacement} onFocus={previewPlacement} onClick={toggleSchedulePanel}>
+              : isOverdueCandidate ? <button type="button" className={`df-overdue-time${isPlacementArmed ? " is-previewing" : ""}`} title={lang === "zh" ? "原安排时间保持不变；悬停可在时间轴预览建议位置" : "Keeps the original time; hover to preview a suggestion on the timeline"} onMouseEnter={previewPlacement} onFocus={previewPlacement} onClick={toggleSchedulePanel}>
                 <UiCalendarClockIcon size={15} />
-                <span>{isPlacementArmed && placementPreview ? `${formatCandidateDate(placementPreview.date, lang)} ${placementPreview.startTime}` : returnedSchedule ? `${formatCandidateDate(returnedSchedule.date, lang)} ${returnedSchedule.startTime}` : formatCandidateDate(task.dueDate, lang)}</span>
+                <span>{overdueDisplayTime}</span>
               </button>
               : <button ref={durationTriggerRef} className="df-duration-pill" title={t(lang, "taskCard.adjustDuration")} aria-expanded={popoverOpen === "duration"} onClick={(event) => { event.stopPropagation(); setPopoverOpen((current) => current === "duration" ? null : "duration"); }}>{formatDuration(task.estimatedHours || 0.5)}</button>}
           </TaskBlockDuration>}

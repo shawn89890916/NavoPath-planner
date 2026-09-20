@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-09-21 · 时间轴视图内建议
+
+### 修复
+- Jev 候选建议严格限制在当前日、三日或周视图覆盖的日期内；切换视图时保留画面中心对应的日期与时间，当前范围无空档时明确提示，不再跳到截止日期或未来日期。
+- 逾期或退回候选区的未完成任务在悬停时始终显示上次实际安排的日期时间，建议时间只出现在时间轴预览中。
+
 ## 2026-09-20 · 今日候选快捷安排
 
 ### 改进
@@ -13,6 +19,9 @@
 - 页面刷新后时间轴只在首次加载时对焦当前时刻；悬停安排建议、切换候选任务操作及确认快捷日期会保留用户当前的时间轴位置。
 - 逾期时间展开区改为“显示到时间轴、未完成、取消安排、四个快捷日期、更多”的紧凑操作布局，并加入轻量展开动画与减少动态效果适配。
 - 项目分组标题不再显示任务数量；安排面板按钮略微收紧高度，底部“更多”按钮改为与其余操作区域等宽。
+- 悬停逾期或退回候选区的未完成任务时，卡片始终保留上次实际安排的日期时间；Jev 建议时间仅显示在时间轴预览中。
+- 候选任务的 Jev 建议严格限制在当前日、三日或周视图覆盖的日期内；当前视图没有可用空档时会明确提示，不再静默跳到截止日期或未来两周中的日期。
+- 切换日、三日和周视图时会保留当前画面中心对应的日期与时间，避免复用旧滚动像素后把视图错误映射到更早日期，并确保后续建议读取真实可见范围。
 
 ## 2026-09-19 · 快速任务预测
 
@@ -163,6 +172,12 @@
 
 # NavoPath Changelog
 
+## 2026-09-21 · In-view timeline suggestions
+
+### Fixed
+- Jev candidate suggestions are strictly limited to dates covered by the current Day, 3-day, or Week view. View changes preserve the date and time at the viewport center, and an unavailable range reports no slot instead of jumping to a due date or future date.
+- Hovering an overdue or returned-incomplete task always keeps its last actual scheduled date and time on the card; suggested times appear only in the timeline preview.
+
 ## 2026-09-20 · Today’s Candidates quick scheduling
 
 ### Improved
@@ -176,6 +191,9 @@
 - After refresh, the timeline focuses the current time only once. Hover previews, unrelated candidate actions, and quick-date confirmation now preserve the user’s current timeline position.
 - The overdue-time panel now uses a compact Show in schedule, Incomplete, Unschedule, four quick dates, and More layout, with a restrained reveal animation and reduced-motion support.
 - Project headings no longer show task counts. Scheduling actions are slightly shorter, and the bottom More button now spans the same width as the other controls.
+- Hovering an overdue or returned-incomplete task now keeps its last actual scheduled date and time on the card; Jev suggestions appear only in the timeline preview.
+- Jev candidate suggestions are now strictly limited to dates covered by the current Day, 3-day, or Week view. If that view has no free slot, the app reports it instead of silently jumping to a due date or another date in the next two weeks.
+- Switching between Day, 3-day, and Week now preserves the date and time at the viewport center, preventing stale scroll pixels from remapping the view to earlier dates and ensuring later suggestions read the actual visible range.
 
 ## 2026-09-19 · Fast task prediction
 
