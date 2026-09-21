@@ -320,7 +320,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       configured: true
     }),
 
-    getBootstrap: async (options?: { force?: boolean }) => {
+    getBootstrap: async (options?: { force?: boolean; cachedProfile?: { userId: string; data: PlannerData; settings: Settings; revision?: number } }) => {
       const user = await getUser();
       const auth = {
         mode: "cloud" as const,
@@ -328,6 +328,10 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
         configured: true
       };
       if (!user) return { auth, data: null, settings: null };
+      const cached = options?.cachedProfile;
+      if (cached?.userId === user.id && profileCache?.userId !== user.id) {
+        profileCache = { userId: user.id, data: cached.data, settings: cached.settings, revision: cached.revision ?? 0 };
+      }
       const profile = await ensureProfile(user, Boolean(options?.force));
       return { auth, data: profile.data, settings: profile.settings, revision: profile.revision };
     },

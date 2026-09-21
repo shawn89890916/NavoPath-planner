@@ -650,7 +650,10 @@ export interface AiPlanItem {
 
 export interface PlannerApi {
   getAuthState?: () => Promise<{ mode: "local" | "cloud"; user: { id: string; email?: string } | null; configured: boolean }>;
-  getBootstrap?: (options?: { force?: boolean }) => Promise<{
+  getBootstrap?: (options?: {
+    force?: boolean;
+    cachedProfile?: { userId: string; data: PlannerData; settings: Settings; revision?: number };
+  }) => Promise<{
     auth: { mode: "local" | "cloud"; user: { id: string; email?: string } | null; configured: boolean };
     data: PlannerData | null;
     settings: Settings | null;

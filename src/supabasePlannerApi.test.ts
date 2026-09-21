@@ -161,6 +161,83 @@ describe("createSupabasePlannerApi", () => {
     });
   });
 
+  it("reuses the profile initialized by immediate signup during the first bootstrap", async () => {
+    const user = { id: "user_new", email: "new@example.com" };
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    const from = vi.fn(() => ({
+      select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle })) })),
+      insert,
+    }));
+    createClientMock.mockReturnValue({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+        onAuthStateChange: vi.fn(),
+        signUp: vi.fn().mockResolvedValue({ data: { user, session: { user } }, error: null }),
+      },
+      from,
+    });
+
+    const { createSupabasePlannerApi } = await import("./supabasePlannerApi");
+    const api = createSupabasePlannerApi("https://supabase.test", "anon");
+
+    await api.signUp?.("new@example.com", "password");
+    const bootstrap = await api.getBootstrap?.();
+
+    expect(bootstrap?.auth.user).toEqual(user);
+    expect(maybeSingle).toHaveBeenCalledTimes(1);
+    expect(insert).toHaveBeenCalledTimes(1);
+  });
+
+  it("primes only the current account cache and preserves a newer profile", async () => {
+    const user = { id: "user_1", email: "user@example.com" };
+    const maybeSingle = vi.fn().mockResolvedValue({ data: profileRow(user.id, "Cloud", 8), error: null });
+    const from = vi.fn(() => ({
+      select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle })) })),
+    }));
+    createClientMock.mockReturnValue({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({ data: { session: { user } }, error: null }),
+        onAuthStateChange: vi.fn(),
+      },
+      from,
+    });
+
+    const { createSupabasePlannerApi } = await import("./supabasePlannerApi");
+    const api = createSupabasePlannerApi("https://supabase.test", "anon");
+    await api.getAuthState?.();
+
+    expect((await api.getBootstrap?.({
+      cachedProfile: {
+        userId: user.id,
+        data: profileRow(user.id, "Cached", 5).data,
+        settings: { language: "en" } as any,
+        revision: 5,
+      },
+    }))?.data?.tasks[0]?.title).toBe("Cached");
+    expect(maybeSingle).not.toHaveBeenCalled();
+
+    await api.getBootstrap?.({ force: true });
+
+    expect((await api.getBootstrap?.({
+      cachedProfile: {
+        userId: user.id,
+        data: profileRow(user.id, "Stale", 6).data,
+        settings: { language: "en" } as any,
+        revision: 6,
+      },
+    }))?.data?.tasks[0]?.title).toBe("Cloud");
+    expect((await api.getBootstrap?.({
+      cachedProfile: {
+        userId: "another_user",
+        data: profileRow(user.id, "Other", 9).data,
+        settings: { language: "en" } as any,
+        revision: 9,
+      },
+    }))?.data?.tasks[0]?.title).toBe("Cloud");
+    expect(maybeSingle).toHaveBeenCalledTimes(1);
+  });
+
   it("clears the local session even when the sign-out request fails offline", async () => {
     const user = { id: "user_1", email: "user@example.com" };
     const removeItem = vi.fn().mockResolvedValue(undefined);

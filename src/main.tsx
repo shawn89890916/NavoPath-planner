@@ -2276,6 +2276,7 @@ function App() {
       return;
     }
     const cached = readBootstrapCache(auth.user?.id);
+    const hasDirtyCache = Boolean(cached?.dataDirty || cached?.settingsDirty);
     if (cached?.data && cached?.settings) {
       dataRef.current = cached.data;
       settingsRef.current = cached.settings;
@@ -2285,8 +2286,12 @@ function App() {
       setModeState((cached.settings.activeMode as Mode) || "execute");
       if (cached.settings.defaultTimelineView) setTimelineView(cached.settings.defaultTimelineView);
     }
+    const cachedProfile = auth.user && cached && !hasDirtyCache
+      ? { userId: auth.user.id, data: cached.data, settings: cached.settings, revision: cached.remoteRevision }
+      : undefined;
+    if (cachedProfile) remoteRevisionRef.current = Math.max(remoteRevisionRef.current, cachedProfile.revision ?? 0);
     const bootstrap = api.getBootstrap
-      ? await api.getBootstrap({ force: true })
+      ? await api.getBootstrap({ force: hasDirtyCache, cachedProfile })
       : {
         auth,
         data: await api.getData(),
