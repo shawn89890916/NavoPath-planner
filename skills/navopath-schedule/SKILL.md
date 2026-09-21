@@ -9,7 +9,7 @@ Turn a scheduling request into a conflict-checked, auditable NavoPath change wit
 
 ## Connection
 
-Use the MCP server named `navopath`. If it is unavailable or unauthenticated, stop before changing data and ask the user to install the skill and configure the account-specific MCP connection from NavoPath **Settings → Advanced → Calendar & Integrations → MCP**. Never request the user's NavoPath password.
+Use the MCP server named `navopath`. If it is unavailable or unauthenticated, stop before changing data and ask the user to install the skill and configure the account-specific MCP connection from NavoPath **Settings → Calendar & Integrations → MCP**. Never request the user's NavoPath password.
 
 Treat the MCP bearer token as a secret. Do not repeat it, log it, save it in a project, or commit it to version control.
 
