@@ -589,7 +589,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     },
     listMcpTokens: async () => {
       await requireUser();
-      const { data, error } = await supabase.rpc("list_mcp_tokens");
+      const { data, error } = await retryTransientRequest(() => supabase.rpc("list_mcp_tokens"));
       if (error) throw new Error(error.message);
       return (data || []).map(tokenMetadata);
     },
@@ -597,17 +597,18 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       await requireUser();
       const bytes = crypto.getRandomValues(new Uint8Array(32));
       const token = `nvp_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
-      const { data, error } = await supabase.rpc("create_mcp_token", {
+      const tokenDigest = await sha256(token);
+      const { data, error } = await retryTransientRequest(() => supabase.rpc("create_mcp_token", {
         token_name: name.trim() || "MCP client",
-        token_digest: await sha256(token),
+        token_digest: tokenDigest,
         token_label_prefix: token.slice(0, 12),
-      });
+      }));
       if (error) throw new Error(error.message);
       return { token, metadata: tokenMetadata(data?.[0]) };
     },
     revokeMcpToken: async (id) => {
       await requireUser();
-      const { error } = await supabase.rpc("revoke_mcp_token", { token_id: id });
+      const { error } = await retryTransientRequest(() => supabase.rpc("revoke_mcp_token", { token_id: id }));
       if (error) throw new Error(error.message);
     },
     listCalendarFeedTokens: async () => {
