@@ -185,6 +185,8 @@ const SAVE_DEBOUNCE_MS = 750;
 const REMOTE_REVISION_POLL_MS = 30_000;
 const SYNC_RETRY_DELAYS = [1000, 3000, 8000, 20000, 30000];
 const SYNC_FAILURE_NOTICE_AFTER = 3;
+const isJevModelVersion = (modelVersion: string | undefined) =>
+  /^(?:typesafe-ai\/jev|~?typesafe\/jev|jev-)/i.test(modelVersion?.trim() || "");
 
 /** Map a task priority to the shared TaskBlock priority vocabulary. */
 function taskBlockPriorityFor(priority: NullablePriority | undefined): TaskBlockPriority {
@@ -3060,18 +3062,17 @@ function App() {
 
   function enrichTaskInBackground(task: Task): Promise<Task | undefined> {
     const currentSettings = settingsRef.current;
-    const hasJevDuration = task.aiInference?.duration?.source === "ai"
-      && task.aiInference.duration.modelVersion.startsWith("typesafe-ai/jev");
-    const hasJevProjectSuggestion = task.aiInference?.project?.source === "ai"
-      && task.aiInference.project.modelVersion.startsWith("typesafe-ai/jev")
-      && task.aiInference.project.confidence >= 0.45;
+    const hasJevDurationPrediction = task.aiInference?.duration?.source === "ai"
+      && isJevModelVersion(task.aiInference.duration.modelVersion);
+    const hasJevProjectPrediction = task.aiInference?.project?.source === "ai"
+      && isJevModelVersion(task.aiInference.project.modelVersion);
     const requestDuration = currentSettings?.autoEstimateTaskDuration !== false
       && !task.aiInference?.duration?.userOverridden
-      && !hasJevDuration;
+      && !hasJevDurationPrediction;
     const requestProject = currentSettings?.autoAssignTaskProject !== false
       && !task.projectId
       && !task.aiInference?.project?.userOverridden
-      && !hasJevProjectSuggestion;
+      && !hasJevProjectPrediction;
     if (!requestDuration && !requestProject) return Promise.resolve(task);
 
     const requestKey = `${task.id}|${task.title}|${task.estimatedHours || 0}|${task.projectId || ""}|${requestDuration ? 1 : 0}${requestProject ? 1 : 0}`;
@@ -3112,6 +3113,8 @@ function App() {
         ? Math.max(0, Math.min(1, rawProjectConfidence))
         : commonConfidence;
       const durationMinutes = Math.max(15, Math.min(240, Math.round(Number(result.enrichment.durationMinutes) / 15) * 15));
+      const modelVersion = result.enrichment.modelVersion || (result.enrichment.provider === "jev" ? "typesafe-ai/jev" : "gateway-enrich-v1");
+      const isJevPrediction = result.enrichment.provider === "jev" || isJevModelVersion(modelVersion);
       const hasActiveSchedule = Boolean(currentTask.scheduledDate)
         || (currentTask.timelineRecords || []).some((record) => record.executionStatus === "scheduled");
       const canApplyDuration = requestDuration
@@ -3129,18 +3132,30 @@ function App() {
         && typeof projectId === "string"
         && latest.projects.some((project) => project.id === projectId && !project.completed);
       const canApplyProject = canSuggestProject && projectConfidence >= 0.78;
-      if (!canApplyDuration && !canSuggestProject) return currentTask;
+      const shouldCacheJevDuration = isJevPrediction
+        && requestDuration
+        && Number.isFinite(durationMinutes)
+        && !currentTask.aiInference?.duration?.userOverridden
+        && currentTask.estimatedHours === task.estimatedHours;
+      const shouldCacheJevProject = isJevPrediction
+        && requestProject
+        && !currentTask.projectId
+        && !currentTask.aiInference?.project?.userOverridden;
+      if (!canApplyDuration && !canSuggestProject && !shouldCacheJevDuration && !shouldCacheJevProject) return currentTask;
 
       const inferredAt = new Date().toISOString();
-      const modelVersion = result.enrichment.modelVersion || (result.enrichment.provider === "jev" ? "typesafe-ai/jev" : "gateway-enrich-v1");
+      const validProjectId = typeof projectId === "string"
+        && latest.projects.some((project) => project.id === projectId && !project.completed)
+        ? projectId
+        : "";
       const updatedTask: Task = {
         ...currentTask,
         ...(canApplyDuration ? { estimatedHours: durationMinutes / 60 } : {}),
         ...(canApplyProject ? { projectId } : {}),
         aiInference: {
           ...currentTask.aiInference,
-          ...(canApplyDuration ? { duration: { minutes: durationMinutes, confidence: durationConfidence, source: "ai" as const, inferredAt, modelVersion } } : {}),
-          ...(canSuggestProject ? { project: { projectId: projectId!, confidence: projectConfidence, source: "ai" as const, inferredAt, modelVersion } } : {}),
+          ...(canApplyDuration || shouldCacheJevDuration ? { duration: { minutes: durationMinutes, confidence: durationConfidence, source: "ai" as const, inferredAt, modelVersion } } : {}),
+          ...(canSuggestProject || shouldCacheJevProject ? { project: { projectId: validProjectId, confidence: projectConfidence, source: "ai" as const, inferredAt, modelVersion } } : {}),
         },
         updatedAt: inferredAt,
       };
@@ -11972,6 +11987,14 @@ function TaskCard({
             <button className={`df-icon-button ${isMoreOpen ? "icon-collapse" : "icon-expand"}`} title={isMoreOpen ? t(lang, "taskCard.collapseMore") : t(lang, "taskCard.expandMore")} aria-label={isMoreOpen ? t(lang, "taskCard.collapseMore") : t(lang, "taskCard.expandMore")} aria-expanded={isMoreOpen} onClick={(event) => { event.stopPropagation(); setPopoverOpen(null); setMorePopover(null); setSchedulePanelOpen(false); if (isPlacementArmed) onCancelPlacementPreview(); setOpenPanel((current) => current === "more" ? null : "more"); }}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{isMoreOpen ? <path d="M5 12l5-5 5 5" /> : <path d="M5 8l5 5 5-5" />}</svg></button>
           </TaskActions>}
         </TaskBlockRow>
+
+        {isPlacementArmed && placementPreview && <div className="df-candidate-placement-hint" role="status" aria-live="polite">
+          <span>{lang === "zh" ? `建议时段：${formatCandidateDate(placementPreview.date, lang)} ${placementPreview.startTime}` : `Suggested: ${formatCandidateDate(placementPreview.date, lang)} ${placementPreview.startTime}`}</span>
+          <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => {
+            event.stopPropagation();
+            onFocusSchedule?.({ date: placementPreview.date, startTime: placementPreview.startTime, label: `${placementPreview.date} ${placementPreview.startTime}` });
+          }}>{lang === "zh" ? "定位" : "Locate"}</button>
+        </div>}
 
         {!isEvent && onToggleSubtask && hasSubtasks && subtasksOpen && <div className="df-candidate-subtasks"><div className="df-candidate-subtask-list-head"><span>{lang === "zh" ? "子任务" : "Subtasks"}</span><small>{countDoneSubtasks(task.subtasks)}/{countSubtasks(task.subtasks)}</small></div>{(task.subtasks || []).map((subtask) => <CandidateSubtaskItem key={subtask.id} subtask={subtask} lang={lang} onToggleSubtask={onToggleSubtask} onSubtaskDragStart={onSubtaskDragStart} />)}</div>}
 

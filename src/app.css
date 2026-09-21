@@ -38377,6 +38377,55 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   animation: dfCandidateScheduleReveal var(--motion-base) cubic-bezier(.2, .75, .25, 1) both;
 }
 
+#root .df-app.mode-execute .df-candidate-placement-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  margin: 4px 0 0 32px;
+  padding-top: 4px;
+  border-top: 1px solid var(--paper-rule);
+  color: var(--text-muted);
+  font: 11px/1.35 var(--paper-sans);
+}
+
+#root .df-app.mode-execute .df-candidate-placement-hint > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#root .df-app.mode-execute .df-candidate-placement-hint > button {
+  flex: 0 0 auto;
+  min-width: 38px;
+  min-height: 34px;
+  padding: 3px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--accent-active);
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent-active);
+  font: 650 11px/1.2 var(--paper-sans);
+  cursor: pointer;
+}
+
+#root .df-app.mode-execute .df-candidate-placement-hint > button:hover {
+  border-bottom-width: 2px;
+  color: var(--text-main);
+}
+
+#root .df-app.mode-execute .df-candidate-placement-hint > button:focus-visible {
+  outline: 1px solid var(--accent-active);
+  outline-offset: 2px;
+}
+
+@media (hover: none), (pointer: coarse) {
+  #root .df-app.mode-execute .df-candidate-placement-hint > button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
 @keyframes dfCandidateScheduleReveal {
   from {
     opacity: .45;
