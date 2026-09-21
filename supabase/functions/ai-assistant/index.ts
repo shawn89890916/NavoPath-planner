@@ -26,7 +26,7 @@ function validIsoDate(value: unknown): value is string {
 }
 import { buildConversationContinuation } from "./conversation.ts";
 import { runCloudDecision } from "./cloudDecision.ts";
-import { predictTaskWithJev, predictTaskWithOpenRouter, type JevTaskPrediction } from "./jevPrediction.ts";
+import { predictTaskWithJev, predictTaskWithOpenRouter, predictTaskWithTypeSafe, type JevTaskPrediction } from "./jevPrediction.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -693,10 +693,11 @@ serve(async (req: Request) => {
     }
 
     const apiKey = Deno.env.get("DEEPSEEK_API_KEY");
+    const typeSafeApiKey = Deno.env.get("TYPESAFE_API_KEY")?.trim() || "";
     const openRouterApiKey = Deno.env.get("OPENROUTER_API_KEY")?.trim() || "";
     const jevApiKey = Deno.env.get("AI_GATEWAY_API_KEY")?.trim() || "";
     const localProviderKey = typeof providerConfig?.apiKey === "string" && providerConfig.apiKey.length <= 512 ? providerConfig.apiKey.trim() : "";
-    const configuredProviders = [localProviderKey ? "local" : "", apiKey ? "deepseek" : "", openRouterApiKey ? "openrouter-jev" : "", jevApiKey ? "vercel-jev" : ""].filter(Boolean);
+    const configuredProviders = [localProviderKey ? "local" : "", apiKey ? "deepseek" : "", typeSafeApiKey ? "typesafe-jev" : "", openRouterApiKey ? "openrouter-jev" : "", jevApiKey ? "vercel-jev" : ""].filter(Boolean);
     const hasGenerativeProvider = Boolean(localProviderKey || apiKey);
 
     if (mode === "cloud_decision") {
@@ -748,14 +749,23 @@ serve(async (req: Request) => {
       }
     }
 
-    if (mode === "enrich_task" && (openRouterApiKey || jevApiKey)) {
+    if (mode === "enrich_task" && (typeSafeApiKey || openRouterApiKey || jevApiKey)) {
       if (!message) {
         return new Response(JSON.stringify({ error: "Missing mode or message" }), { status: 400, headers: corsHeaders });
       }
       const predictionContext = (context || {}) as Record<string, unknown>;
       const zeroDataRetention = Deno.env.get("AI_GATEWAY_ZERO_DATA_RETENTION") === "true";
       let enrichment: JevTaskPrediction | undefined;
-      if (openRouterApiKey) {
+      if (typeSafeApiKey) {
+        try {
+          enrichment = await predictTaskWithTypeSafe(typeSafeApiKey, predictionContext);
+        } catch (error) {
+          console.warn("TypeSafe Jev task prediction failed", {
+            error: error instanceof Error ? error.message.slice(0, 160) : "unknown",
+          });
+        }
+      }
+      if (!enrichment && openRouterApiKey) {
         try {
           enrichment = await predictTaskWithOpenRouter(openRouterApiKey, predictionContext, { zeroDataRetention });
         } catch (error) {

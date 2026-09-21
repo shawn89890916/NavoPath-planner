@@ -2,6 +2,9 @@
 
 ## 2026-09-21 · 时间轴视图内建议
 
+### 改进
+- 新增 TypeSafe 官方 Jev API 作为任务用时与项目归类的首选预测通道；密钥保存在 Supabase 服务端，未配置或调用失败时继续使用 OpenRouter、Vercel Jev 与 DeepSeek 降级。
+
 ### 修复
 - Jev 候选建议严格限制在当前日、三日或周视图覆盖的日期内；切换视图时保留画面中心对应的日期与时间，当前范围无空档时明确提示，不再跳到截止日期或未来日期。
 - 逾期或退回候选区的未完成任务在悬停时始终显示上次实际安排的日期时间，建议时间只出现在时间轴预览中。
@@ -173,6 +176,9 @@
 # NavoPath Changelog
 
 ## 2026-09-21 · In-view timeline suggestions
+
+### Improved
+- Added TypeSafe's official Jev API as the primary task-duration and project-classification route. Its key stays in Supabase server secrets, with OpenRouter, Vercel Jev, and DeepSeek fallbacks when the key is missing or the request fails.
 
 ### Fixed
 - Jev candidate suggestions are strictly limited to dates covered by the current Day, 3-day, or Week view. View changes preserve the date and time at the viewport center, and an unavailable range reports no slot instead of jumping to a due date or future date.

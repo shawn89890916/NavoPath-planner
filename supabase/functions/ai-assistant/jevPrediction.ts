@@ -1,6 +1,8 @@
 export const JEV_MODEL = "typesafe-ai/jev";
 export const JEV_MODEL_VERSION = JEV_MODEL;
+export const TYPESAFE_JEV_MODEL = "jev-latest";
 export const OPENROUTER_JEV_MODEL = "~typesafe/jev-latest";
+const TYPESAFE_EVALUATION_URL = "https://api.typesafe.ai/v1/systemone";
 const OPENROUTER_DECISIONS_URL = "https://openrouter.ai/api/alpha/decisions";
 
 const DURATION_MINUTES = [15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240] as const;
@@ -191,6 +193,37 @@ export function normalizeJevTaskEvaluation(
     modelVersion,
     provider: "jev",
   };
+}
+
+export async function predictTaskWithTypeSafe(
+  apiKey: string,
+  context: JevContext,
+  options: JevPredictionOptions = {},
+): Promise<JevTaskPrediction> {
+  if (!apiKey.trim()) throw new Error("TYPESAFE_API_KEY is missing");
+  const evaluation = buildJevTaskEvaluation(context);
+  const response = await (options.fetcher || fetch)(TYPESAFE_EVALUATION_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: TYPESAFE_JEV_MODEL,
+      state: evaluation.state,
+      questions: evaluation.questions,
+    }),
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) {
+    const detail = (await response.text()).replace(/\s+/g, " ").slice(0, 240);
+    throw new Error(`TypeSafe Jev ${response.status}: ${detail || response.statusText}`);
+  }
+  const result = await response.json() as EvaluationResult;
+  const modelVersion = typeof result.model === "string" && result.model.trim()
+    ? result.model.trim().slice(0, 120)
+    : TYPESAFE_JEV_MODEL;
+  return normalizeJevTaskEvaluation(result, evaluation.projectIdByChoice, modelVersion);
 }
 
 export async function predictTaskWithOpenRouter(
