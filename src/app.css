@@ -22228,6 +22228,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-mcp-token button { min-height:30px; padding:4px 2px; border:0; border-bottom:1px solid var(--paper-rule); border-radius:0; color:var(--text-muted); background:transparent; cursor:pointer; }
 .df-mcp-token-row button { min-height:30px; padding:4px 2px; border:0; border-bottom:1px solid var(--paper-rule); border-radius:0; color:var(--text-muted); background:transparent; cursor:pointer; }
 .df-mcp-doc-head button:hover { color:var(--accent-active); border-bottom-color:var(--accent-active); }
+.df-mcp-doc-head button:disabled { opacity:.45; cursor:not-allowed; }
 .df-mcp-token button:hover { color:var(--accent-active); border-bottom-color:var(--accent-active); }
 .df-mcp-token-row button:hover { color:var(--accent-active); border-bottom-color:var(--accent-active); }
 .df-mcp-docs code { margin:0; overflow:auto; color:var(--text-main); background:transparent; font:500 11px/1.6 var(--paper-mono); white-space:pre-wrap; overflow-wrap:anywhere; }

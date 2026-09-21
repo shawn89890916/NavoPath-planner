@@ -1,0 +1,11 @@
+interface:
+  display_name: "NavoPath Schedule"
+  short_description: "Add conflict-checked schedules to a NavoPath account"
+  default_prompt: "Use $navopath-schedule to add this schedule to my NavoPath account."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "navopath"
+      description: "NavoPath account task and calendar access"
+      transport: "streamable_http"
+      url: "https://navopath-mcp.shawn89890916.workers.dev/mcp"

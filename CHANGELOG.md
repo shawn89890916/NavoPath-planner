@@ -7,6 +7,7 @@
 - 时间轴预览激活时，候选任务会同步显示建议日期与时间，并提供手动“定位”入口，避免建议落在当前滚动视口之外时看起来像没有响应。
 - 登录弹窗按参考布局整理为衬线标题与更紧凑的表单，移除主题选择并默认使用浅色；密码栏右侧提供可访问的显示按钮，登录时“保存密码”与“忘记密码”左右排列，注册时要求两次输入密码、同样提供“保存密码”，并在服务端允许即时会话时注册后直接进入工作区。“保存密码”勾选后安全保留登录会话，未勾选时只在当前窗口有效。
 - 登录时优先展示当前账号的干净本机快照，并在后台核对云端版本；注册初始化的档案会被首次工作区加载复用，减少重复读取。
+- MCP 设置新增可安装的 NavoPath 日程 Skill 与“复制给 Agent”提示词；生成专用令牌后，提示词会自动带入 Skill 下载地址、当前账户端点与 Token，便于 Agent 完成连接并按 15 分钟网格安全添加日程。
 
 ### 修复
 - 识别 TypeSafe、OpenRouter 等 Jev 返回的不同模型版本格式，并缓存低置信度预测结果，避免悬停时为同一任务反复请求。
@@ -186,6 +187,7 @@
 - When a timeline preview is armed, the candidate task also shows its suggested date and time with a manual Locate action, so an off-viewport suggestion remains visible without moving the timeline unexpectedly.
 - Refined the login dialog with its serif heading and a tighter form, removed the theme picker, and made Light the default. Password fields now have an accessible visibility button; sign-in places Save password and Forgot password on opposite sides, while sign-up requires password confirmation, also offers Save password, and enters the workspace directly when the server returns an immediate session. Save password securely keeps the session when selected and limits it to the current window when clear.
 - Sign-in now displays the current account's clean local workspace snapshot first and checks the cloud revision in the background; the initial workspace load reuses a profile created during immediate sign-up to avoid a duplicate read.
+- MCP settings now provide an installable NavoPath Schedule skill and a Copy for agent prompt. After a dedicated token is created, the prompt includes the skill download, current account endpoint, and token so an agent can connect and add conflict-checked schedules on the 15-minute grid.
 
 ### Fixed
 - Recognizes Jev model-version formats returned by TypeSafe and OpenRouter, and caches low-confidence Jev predictions to prevent repeated requests when hovering the same task.

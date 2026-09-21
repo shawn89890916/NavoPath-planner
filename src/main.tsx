@@ -99,6 +99,7 @@ import { usePointerReorder } from "./usePointerReorder";
 import { DESKTOP_DOWNLOAD_URL, DESKTOP_RELEASES_URL } from "./downloads";
 import { readAutoLaunchState, toggleAutoLaunchState } from "./desktopAutoLaunch";
 import { canAcknowledgeBootstrapSave, parseBootstrapCache, recoverAccountSettings, resolveBootstrap, type BootstrapCache } from "./syncBootstrap";
+import { buildNavoPathAgentSetupPrompt } from "./mcpAgentSetup";
 
 // Preload the optional first-login permission flow without adding it to the
 // initial workspace bundle; the promise is already warm when auth completes.
@@ -14018,6 +14019,7 @@ function McpTokenManager({ lang }: { lang: Language }) {
   useEffect(() => { if (supported) void refresh(); else setLoading(false); }, [refresh, supported]);
   const configToken = rawToken || "nvp_REPLACE_ME";
   const codexConfig = `[mcp_servers.navopath]\nurl = "${MCP_ENDPOINT}"\nhttp_headers = { Authorization = "Bearer ${configToken}" }`;
+  const agentSetupPrompt = buildNavoPathAgentSetupPrompt({ endpoint: MCP_ENDPOINT, token: rawToken || "nvp_GENERATE_A_NEW_TOKEN_FIRST", language: lang });
   const copyText = async (value: string) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -14062,6 +14064,13 @@ function McpTokenManager({ lang }: { lang: Language }) {
       {error && <p className="df-mcp-status error" role="alert">{error}</p>}
       {notice && <p className="df-mcp-status" role="status">{notice}</p>}
       {rawToken && <div className="df-mcp-token"><small>{lang === "zh" ? "请立即保存，关闭设置后无法再次查看" : "Save this now; it cannot be viewed again"}</small><code>{rawToken}</code><button type="button" onClick={() => void copyText(rawToken)}>{lang === "zh" ? "复制令牌" : "Copy token"}</button></div>}
+      <div className="df-mcp-docs">
+        <div className="df-mcp-doc-head"><span>{lang === "zh" ? "安装日程 Skill" : "Install schedule skill"}</span><button type="button" disabled={!rawToken} onClick={() => void copyText(agentSetupPrompt)}>{lang === "zh" ? "复制给 Agent" : "Copy for agent"}</button></div>
+        <p>{rawToken
+          ? (lang === "zh" ? "提示词已带入当前账户的 MCP Token。仅粘贴到你信任的 Agent；泄露后请立即撤销。" : "The prompt includes this account's MCP token. Paste it only into an agent you trust and revoke it immediately if exposed.")
+          : (lang === "zh" ? "先生成一个专用于 Agent 的新令牌，提示词会自动带入下载地址和账户连接信息。" : "Create a new agent-specific token first; the prompt will then include the download and account connection details.")}</p>
+        {rawToken && <pre>{agentSetupPrompt}</pre>}
+      </div>
       {loading && <p className="df-mcp-status">{lang === "zh" ? "正在读取令牌…" : "Loading tokens…"}</p>}
       {!loading && supported && tokens.length === 0 && !error && <p className="df-mcp-status muted">{lang === "zh" ? "还没有有效令牌。" : "No active tokens yet."}</p>}
       {tokens.map((token) => <div className="df-mcp-token-row" key={token.id}><span><strong>{token.name}</strong><small>{token.tokenPrefix}… · {new Date(token.createdAt).toLocaleDateString()}</small></span><button type="button" disabled={busy} onClick={async () => { if (!api.revokeMcpToken) return; setBusy(true); setError(""); try { await api.revokeMcpToken(token.id); await refresh(); } catch (caught) { setError(caught instanceof Error ? caught.message : String(caught)); } finally { setBusy(false); } }}>{lang === "zh" ? "撤销" : "Revoke"}</button></div>)}
