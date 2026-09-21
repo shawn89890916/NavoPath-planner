@@ -5,6 +5,7 @@
 ### 改进
 - 新增 TypeSafe 官方 Jev API 作为任务用时与项目归类的首选预测通道；密钥保存在 Supabase 服务端，未配置或调用失败时继续使用 OpenRouter、Vercel Jev 与 DeepSeek 降级。
 - 时间轴预览激活时，候选任务会同步显示建议日期与时间，并提供手动“定位”入口，避免建议落在当前滚动视口之外时看起来像没有响应。
+- 登录弹窗按参考布局整理为衬线标题与更紧凑的表单，移除主题选择并默认使用浅色；密码栏右侧提供可访问的显示按钮，登录时“保存密码”与“忘记密码”左右排列，注册时要求两次输入密码、同样提供“保存密码”，并在服务端允许即时会话时注册后直接进入工作区。“保存密码”勾选后安全保留登录会话，未勾选时只在当前窗口有效。
 
 ### 修复
 - 识别 TypeSafe、OpenRouter 等 Jev 返回的不同模型版本格式，并缓存低置信度预测结果，避免悬停时为同一任务反复请求。
@@ -182,6 +183,7 @@
 ### Improved
 - Added TypeSafe's official Jev API as the primary task-duration and project-classification route. Its key stays in Supabase server secrets, with OpenRouter, Vercel Jev, and DeepSeek fallbacks when the key is missing or the request fails.
 - When a timeline preview is armed, the candidate task also shows its suggested date and time with a manual Locate action, so an off-viewport suggestion remains visible without moving the timeline unexpectedly.
+- Refined the login dialog with its serif heading and a tighter form, removed the theme picker, and made Light the default. Password fields now have an accessible visibility button; sign-in places Save password and Forgot password on opposite sides, while sign-up requires password confirmation, also offers Save password, and enters the workspace directly when the server returns an immediate session. Save password securely keeps the session when selected and limits it to the current window when clear.
 
 ### Fixed
 - Recognizes Jev model-version formats returned by TypeSafe and OpenRouter, and caches low-confidence Jev predictions to prevent repeated requests when hovering the same task.

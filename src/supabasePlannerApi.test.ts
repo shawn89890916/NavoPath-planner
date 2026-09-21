@@ -51,8 +51,17 @@ function profileRow(userId: string, title: string, revision = 1) {
 
 beforeEach(() => {
   createClientMock.mockReset();
+  const localValues = new Map<string, string>();
+  const sessionValues = new Map<string, string>();
+  const storage = (values: Map<string, string>) => ({
+    getItem: vi.fn((key: string) => values.get(key) ?? null),
+    setItem: vi.fn((key: string, value: string) => { values.set(key, value); }),
+    removeItem: vi.fn((key: string) => { values.delete(key); }),
+  });
   vi.stubGlobal("window", {
     desktopApi: undefined,
+    localStorage: storage(localValues),
+    sessionStorage: storage(sessionValues),
     location: { origin: "https://navopath.test", href: "https://navopath.test/app" },
     history: { replaceState: vi.fn() },
     setTimeout,

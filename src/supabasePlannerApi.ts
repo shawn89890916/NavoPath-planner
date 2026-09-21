@@ -1,4 +1,5 @@
 import { createClient, type User } from "@supabase/supabase-js";
+import { createAuthSessionStorage } from "./authSessionStorage";
 import type { AiAction, CalendarFeedTokenMetadata, ExternalCalendarOccurrence, ExternalCalendarSource, McpTokenMetadata, PlannerApi, PlannerData, Settings } from "./types";
 import { fallbackData, normalizeData } from "./browserFallback";
 import { getDefaultSettings, normalizeSettings } from "./defaultSettings";
@@ -104,6 +105,7 @@ function clearAuthCallbackUrl() {
 export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: string): PlannerApi {
   const desktopStorage = window.desktopApi?.authStorage;
   const authStorageKey = `sb-${new URL(supabaseUrl).hostname.split(".")[0]}-auth-token`;
+  const authSessionStorage = createAuthSessionStorage(desktopStorage ?? window.localStorage, window.sessionStorage);
   const upstreamOrigin = new URL(supabaseUrl).origin;
   const pageUrl = new URL(window.location.href);
   const useSameOriginProxy = pageUrl.protocol === "https:"
@@ -125,7 +127,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       persistSession: true,
       autoRefreshToken: true,
       storageKey: authStorageKey,
-      ...(desktopStorage ? { storage: desktopStorage } : {})
+      storage: authSessionStorage,
     },
     global: { fetch: cloudFetch },
   });
@@ -432,9 +434,8 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       } catch {
         // Session removal below is the authoritative local sign-out step.
       }
-      const storage = desktopStorage ?? window.localStorage;
-      await storage.removeItem(authStorageKey);
-      await storage.removeItem(`${authStorageKey}-code-verifier`);
+      await authSessionStorage.removeItem(authStorageKey);
+      await authSessionStorage.removeItem(`${authStorageKey}-code-verifier`);
       setCachedUser(null);
       // With storage already cleared this normally stays local. Ignore a late
       // network error because the user's session is already removed here.

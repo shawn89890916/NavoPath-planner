@@ -21,6 +21,7 @@ function createPathIcon(path: string) {
   };
 }
 
+export const UiEyeIcon = createPathIcon("M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z");
 export const UiCalendarCheckIcon = createPathIcon("M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Zm3 10 2 2 5-5");
 export const UiCalendarClockIcon = createPathIcon("M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v4M4 9v11h7m5-7v4l2 1m3-1a5 5 0 1 1-10 0 5 5 0 0 1 10 0Z");
 export const UiFlagIcon = createPathIcon("M5 21V4m0 0h11l-2 4 2 4H5");

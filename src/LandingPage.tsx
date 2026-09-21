@@ -1,7 +1,9 @@
 import { type CSSProperties, useEffect, useState } from "react";
 import { ProductIcon } from "./main";
 import { DESKTOP_DOWNLOAD_URL } from "./downloads";
-import { CloseButton } from "./components/UiPrimitives";
+import { CloseButton, IconButton } from "./components/UiPrimitives";
+import { UiEyeIcon } from "./components/UiIcons";
+import { setAuthPersistencePreference } from "./authSessionStorage";
 import "./landing.css";
 
 type AuthIntent = "signin" | "signup";
@@ -98,18 +100,18 @@ function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, 
   const [displayName, setDisplayName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [preferredTheme, setPreferredTheme] = useState<"light" | "dark">("light");
+  const [savePassword, setSavePassword] = useState(false);
   const text = lang === "zh" ? {
-    account: "NavoPath 账号", welcome: "欢迎回来。", begin: "今天，也可以从现在开始。", signIn: "登录", signUp: "注册", name: "怎么称呼你", email: "邮箱", password: "密码（至少 6 位）", confirm: "再输一次密码", show: "显示密码", inbox: "去收件箱看看", inboxBody: "确认邮件已经发到这个邮箱。点开链接确认后，再来登录。", resend: "再发一封", continue: "去登录", mismatch: "两次密码没有输一样。", working: "正在处理…", open: "打开 NavoPath", create: "注册 NavoPath", theme: "想用什么主题？", light: "浅色纸张", dark: "深色纸张", forgot: "想不起密码了？", forgotTitle: "重设密码", forgotBody: "填一下注册邮箱，我们把重置链接发给你。", sendReset: "把重置链接发给我", sentTitle: "重置链接已发出", sentBody: "去收件箱点开链接，设个新密码就好了。", backToLogin: "回到登录", resendReset: "再发一次",
+    account: "NavoPath 账号", welcome: "欢迎回来。", begin: "今天，也可以从现在开始。", signIn: "登录", signUp: "注册", name: "怎么称呼你", email: "邮箱", password: "密码（至少 6 位）", confirm: "再输一次密码", show: "显示密码", hide: "隐藏密码", save: "保存密码", inbox: "去收件箱看看", inboxBody: "确认邮件已经发到这个邮箱。点开链接确认后，再来登录。", resend: "再发一封", continue: "去登录", mismatch: "两次密码没有输一样。", working: "正在处理…", open: "打开 NavoPath", create: "注册 NavoPath", forgot: "想不起密码了？", forgotTitle: "重设密码", forgotBody: "填一下注册邮箱，我们把重置链接发给你。", sendReset: "把重置链接发给我", sentTitle: "重置链接已发出", sentBody: "去收件箱点开链接，设个新密码就好了。", backToLogin: "回到登录", resendReset: "再发一次",
   } : {
-    account: "NavoPath account", welcome: "Welcome back.", begin: "Start your path.", signIn: "Sign in", signUp: "Sign up", name: "Display name", email: "Email", password: "Password (6+ characters)", confirm: "Confirm password", show: "Show password", inbox: "Check your inbox", inboxBody: "Confirm the email sent to this address, then return to sign in.", resend: "Resend email", continue: "Continue to sign in", mismatch: "Passwords do not match.", working: "Working...", open: "Open workspace", create: "Create account", theme: "Open workspace in", light: "Light paper", dark: "Dark paper", forgot: "Forgot password?", forgotTitle: "Reset password", forgotBody: "Enter your registered email and we will send a reset link.", sendReset: "Send reset link", sentTitle: "Email sent", sentBody: "Check your inbox and click the link to set a new password.", backToLogin: "Back to login", resendReset: "Resend",
+    account: "NavoPath account", welcome: "Welcome back.", begin: "Start your path.", signIn: "Sign in", signUp: "Sign up", name: "Display name", email: "Email", password: "Password (6+ characters)", confirm: "Confirm password", show: "Show password", hide: "Hide password", save: "Save password", inbox: "Check your inbox", inboxBody: "Confirm the email sent to this address, then return to sign in.", resend: "Resend email", continue: "Continue to sign in", mismatch: "Passwords do not match.", working: "Working...", open: "Open workspace", create: "Create account", forgot: "Forgot password?", forgotTitle: "Reset password", forgotBody: "Enter your registered email and we will send a reset link.", sendReset: "Send reset link", sentTitle: "Email sent", sentBody: "Check your inbox and click the link to set a new password.", backToLogin: "Back to login", resendReset: "Resend",
   };
   const passwordMismatch = authIntent === "signup" && password.length > 0 && confirmPassword.length > 0 && password !== confirmPassword;
 
   return <div className="landing-auth-overlay" onMouseDown={onClose}>
     <section className="landing-auth-card" onMouseDown={(event) => event.stopPropagation()}>
       <CloseButton className="landing-auth-close" label={lang === "zh" ? "关闭" : "Close"} onClick={onClose} />
-      <ProductIcon /><span className="landing-auth-label">{text.account}</span>
+      <div className="landing-auth-brand"><ProductIcon /><span className="landing-auth-label">{text.account}</span></div>
       {authView !== "login" ? <>
         <h2>{authView === "forgot" ? text.forgotTitle : text.sentTitle}</h2>
         {authView === "forgot" ? <form onSubmit={async (event) => { event.preventDefault(); setForgotBusy(true); try { await onForgotPassword(email.trim()); setAuthView("forgotSent"); } finally { setForgotBusy(false); } }}>
@@ -121,14 +123,21 @@ function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, 
       </> : <>
         <h2>{authIntent === "signin" ? text.welcome : text.begin}</h2>
         <div className="landing-auth-tabs"><button className={authIntent === "signin" ? "active" : ""} onClick={() => setAuthIntent("signin")}>{text.signIn}</button><button className={authIntent === "signup" ? "active" : ""} onClick={() => setAuthIntent("signup")}>{text.signUp}</button></div>
-        <form onSubmit={(event) => { event.preventDefault(); if (!passwordMismatch) onLogin(email.trim(), password, displayName.trim(), authIntent, preferredTheme); }}>
-          {authIntent === "signup" && <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder={text.name} maxLength={64} />}
-          <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder={text.email} required />
-          <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={text.password} minLength={6} required />
-          {authIntent === "signup" && <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder={text.confirm} minLength={6} required />}
-          <fieldset className="landing-auth-theme"><legend>{text.theme}</legend><button type="button" className={preferredTheme === "light" ? "active" : ""} onClick={() => setPreferredTheme("light")}><i className="light" /><span>{text.light}</span></button><button type="button" className={preferredTheme === "dark" ? "active" : ""} onClick={() => setPreferredTheme("dark")}><i className="dark" /><span>{text.dark}</span></button></fieldset>
-          <label className="landing-auth-check"><input type="checkbox" checked={showPassword} onChange={(event) => setShowPassword(event.target.checked)} />{text.show}</label>
-          {authIntent === "signin" && <button type="button" className="landing-forgot-link" onClick={() => setAuthView("forgot")}>{text.forgot}</button>}
+        <form autoComplete="on" onSubmit={(event) => { event.preventDefault(); if (!passwordMismatch) { setAuthPersistencePreference(savePassword); onLogin(email.trim(), password, displayName.trim(), authIntent, "light"); } }}>
+          {authIntent === "signup" && <input name="name" autoComplete="name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder={text.name} maxLength={64} />}
+          <input name="email" autoComplete="username" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder={text.email} required />
+          <div className="landing-auth-password-field">
+            <input name="password" autoComplete={authIntent === "signin" ? "current-password" : "new-password"} type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={text.password} minLength={6} required />
+            <IconButton className="landing-password-visibility" icon={<UiEyeIcon />} label={showPassword ? text.hide : text.show} onClick={() => setShowPassword((visible) => !visible)} />
+          </div>
+          {authIntent === "signup" && <div className="landing-auth-password-field">
+            <input name="confirm-password" autoComplete="new-password" type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder={text.confirm} minLength={6} required />
+            <IconButton className="landing-password-visibility" icon={<UiEyeIcon />} label={showPassword ? text.hide : text.show} onClick={() => setShowPassword((visible) => !visible)} />
+          </div>}
+          <div className="landing-auth-account-actions">
+            <label className="landing-auth-check"><input type="checkbox" checked={savePassword} onChange={(event) => setSavePassword(event.target.checked)} />{text.save}</label>
+            {authIntent === "signin" && <button type="button" className="landing-forgot-link" onClick={() => setAuthView("forgot")}>{text.forgot}</button>}
+          </div>
           {notice && <div className="landing-auth-notice"><strong>{text.inbox}</strong><p>{text.inboxBody}<br />{notice.email}</p><button type="button" onClick={() => onResend(notice.email)}>{text.resend}</button><button type="button" onClick={() => onContinueAfterConfirm(notice.email)}>{text.continue}</button></div>}
           {passwordMismatch && <p className="landing-auth-error">{text.mismatch}</p>}{error && <p className="landing-auth-error">{error}</p>}
           <button className="landing-button primary full" disabled={busy || passwordMismatch}>{busy ? text.working : authIntent === "signin" ? text.open : text.create}</button>
