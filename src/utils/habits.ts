@@ -60,7 +60,7 @@ export function migrateLegacyHabitTracker(
   const habits: Habit[] = titles.map((title, index) => ({
     id: uid("habit", title),
     title,
-    defaultDurationMinutes: 20,
+    defaultDurationMinutes: 15,
     activeWeekdays: [1, 2, 3, 4, 5],
     archived: false,
     order: index,
@@ -109,7 +109,7 @@ export function normalizeHabits(data: PlannerData, now = new Date().toISOString(
   const habits: Habit[] = titles.map((title, index) => ({
     id: uid("habit", title),
     title,
-    defaultDurationMinutes: 20,
+    defaultDurationMinutes: 15,
     activeWeekdays: [1, 2, 3, 4, 5],
     archived: false,
     order: index,
@@ -144,7 +144,7 @@ export function scheduleHabitRecord(data: PlannerData, habitId: string, date: st
   if (!habit) throw new Error(`Habit not found: ${habitId}`);
   const taskId = `habit-task-${habit.id}-${date}`;
   const recordId = `habit-record-${habit.id}-${date}-${start.replace(":", "")}`;
-  const duration = Math.max(5, habit.defaultDurationMinutes || 20);
+  const duration = Math.max(5, habit.defaultDurationMinutes || 15);
   const end = addMinutes(date, start, duration);
   const task: Task = {
     id: taskId,
@@ -284,7 +284,7 @@ export function buildHabitMetrics(data: PlannerData, today: string): HabitMetric
   const plannedMinutes = todayStates.reduce((sum, s) => {
     if (!s.timelineRecordId) return sum;
     const habit = habits.find((h) => h.id === s.habitId);
-    return sum + (habit?.defaultDurationMinutes || 20);
+    return sum + (habit?.defaultDurationMinutes || 15);
   }, 0);
 
   const days7 = dateRange(today, 7);
@@ -306,7 +306,7 @@ export function buildHabitMetrics(data: PlannerData, today: string): HabitMetric
     const completed30 = days30.filter((date) => states.some((s) => s.habitId === habit.id && s.date === date && s.completed)).length;
     const due7 = days7.filter((date) => isHabitDueOnDate(habit, date)).length;
     const plannedCount = days7.filter((date) => states.some((s) => s.habitId === habit.id && s.date === date && s.timelineRecordId)).length;
-    const habitPlannedMinutes = plannedCount * (habit.defaultDurationMinutes || 20);
+    const habitPlannedMinutes = plannedCount * (habit.defaultDurationMinutes || 15);
     return {
       habit,
       completedToday: Boolean(todayState?.completed),

@@ -5754,7 +5754,7 @@ function App() {
     const habit: Habit = {
       id: uid("habit"),
       title: lang === "zh" ? "新习惯" : "New habit",
-      defaultDurationMinutes: 20,
+      defaultDurationMinutes: 15,
       frequencyRule: "daily",
       activeWeekdays: [1, 2, 3, 4, 5],
       order: Date.now(),
@@ -5777,6 +5777,17 @@ function App() {
     const next = archiveHabit(data, habitId, archived);
     void saveData(next);
     showToast(archived ? (lang === "zh" ? "习惯已归档" : "Habit archived") : (lang === "zh" ? "习惯已恢复" : "Habit restored"));
+  }
+
+  function deleteHabitPermanently(habitId: string) {
+    if (!data) return;
+    void saveData({
+      ...data,
+      habits: (data.habits || []).filter((habit) => habit.id !== habitId),
+      habitDailyStates: (data.habitDailyStates || []).filter((state) => state.habitId !== habitId),
+    });
+    setEditingHabitId(null);
+    setHabitPanel("overview");
   }
 
   function unscheduleHabit(habitId: string, date: string) {
@@ -10044,7 +10055,7 @@ function App() {
       {aiOpen && <AiPanel docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />}
       <CommandPalette open={commandOpen} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
       {utilityPanel && settings && <UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} />}
-      {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
+      {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
       {focusOverlayMode && (
         <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: focusProject.color } as React.CSSProperties : undefined}>
           <div className="df-focus-topbar">
@@ -11067,7 +11078,7 @@ function habitDragTaskId(habitId: string) {
 }
 
 function habitDragTask(habit: Habit, dueDate: string): Task {
-  const duration = Math.max(habit.defaultDurationMinutes || 20, 5);
+  const duration = Math.max(habit.defaultDurationMinutes || 15, 5);
   return {
     id: habitDragTaskId(habit.id),
     title: habit.title,
@@ -11222,7 +11233,7 @@ function HabitCandidateCard(props: {
                   >
                     {props.lang === "zh" ? "已规划" : "Planned"}
                   </button>
-                ) : (`${habit.defaultDurationMinutes || 20}m`)}
+                ) : (`${habit.defaultDurationMinutes || 15}m`)}
               </TaskBlockDuration>
             </TaskBlockRow>
           </TaskBlock>
@@ -11244,6 +11255,7 @@ function HabitPanel(props: {
   onSave: (habitId: string, patch: Partial<Habit>) => void;
   onArchive: (habitId: string, archived: boolean) => void;
   onToggleDay: (habitId: string, date: string, completed: boolean) => void;
+  onDeleteHabit: (habitId: string) => void;
   onCreateHabit: () => void;
   onConvertTo: (habit: Habit, targetType: "task" | "project") => void;
 }) {
@@ -11269,7 +11281,7 @@ function HabitPanel(props: {
           {props.mode === "overview" ? (
             <HabitOverviewBody metrics={metrics} archivedHabits={archivedHabits} dailyStates={props.data.habitDailyStates || []} zh={zh} today={props.today} onEditHabit={props.onEditHabit} onArchive={props.onArchive} onToggleDay={props.onToggleDay} onCreateHabit={props.onCreateHabit} />
           ) : detailHabit ? (
-            <Suspense fallback={<p className="df-habit-empty">{zh ? "正在打开习惯…" : "Opening habit…"}</p>}><HabitDetailBodyLazy habit={detailHabit} dailyStates={props.data.habitDailyStates || []} today={props.today} zh={zh} weekdays={weekdays} onSave={(patch) => props.onSave(detailHabit.id, patch)} onArchive={(archived) => props.onArchive(detailHabit.id, archived)} onBack={props.onBack} onConvertTo={(targetType) => props.onConvertTo(detailHabit, targetType)} /></Suspense>
+            <Suspense fallback={<p className="df-habit-empty">{zh ? "正在打开习惯…" : "Opening habit…"}</p>}><HabitDetailBodyLazy habit={detailHabit} dailyStates={props.data.habitDailyStates || []} today={props.today} zh={zh} weekdays={weekdays} onSave={(patch) => props.onSave(detailHabit.id, patch)} onArchive={(archived) => props.onArchive(detailHabit.id, archived)} onToggleDay={(date, completed) => props.onToggleDay(detailHabit.id, date, completed)} onDelete={() => props.onDeleteHabit(detailHabit.id)} onBack={props.onBack} onConvertTo={(targetType) => props.onConvertTo(detailHabit, targetType)} /></Suspense>
           ) : (
             <p className="df-habit-empty">{zh ? "未找到该习惯。" : "Habit not found."}</p>
           )}
@@ -11347,7 +11359,7 @@ function HabitOverviewBody(props: {
             <div key={item.habit.id} className="df-habit-overview-trow" role="row">
               <button type="button" className="df-habit-overview-name" onClick={() => props.onEditHabit(item.habit.id)}>
                 <span className="df-habit-overview-name-text">{item.habit.title}</span>
-                <small className="df-habit-overview-duration">{item.habit.defaultDurationMinutes || 20}m</small>
+                <small className="df-habit-overview-duration">{item.habit.defaultDurationMinutes || 15}m</small>
               </button>
               {weekDays.map((day) => {
                 const state = props.dailyStates.find((entry) => entry.habitId === item.habit.id && entry.date === day);
@@ -11387,7 +11399,7 @@ function HabitOverviewBody(props: {
                 <li key={habit.id} className="df-habit-overview-archived-row">
                   <button type="button" className="df-habit-overview-archived-name" onClick={() => props.onEditHabit(habit.id)} title={zh ? "查看 / 编辑" : "View / Edit"}>
                     <span className="df-habit-overview-archived-title">{habit.title}</span>
-                    <small>{habit.defaultDurationMinutes || 20}m</small>
+                    <small>{habit.defaultDurationMinutes || 15}m</small>
                   </button>
                   <div className="df-habit-overview-archived-tools">
                     <button
@@ -11432,7 +11444,7 @@ function LegacyHabitDetailBody(props: {
   const { habit, dailyStates, today, zh, weekdays } = props;
   const [title, setTitle] = useState(habit.title);
   const [notes, setNotes] = useState(habit.notes || "");
-  const [duration, setDuration] = useState(String(habit.defaultDurationMinutes || 20));
+  const [duration, setDuration] = useState(String(habit.defaultDurationMinutes || 15));
   const [activeWeekdays, setActiveWeekdays] = useState<number[]>(habit.activeWeekdays ?? [1, 2, 3, 4, 5]);
   const [targetCount, setTargetCount] = useState(String(habit.targetCount || ""));
   const [trackingType, setTrackingType] = useState<HabitTrackingType>(habit.trackingType || "click-counter");
@@ -11444,7 +11456,7 @@ function LegacyHabitDetailBody(props: {
   useEffect(() => {
     setTitle(habit.title);
     setNotes(habit.notes || "");
-    setDuration(String(habit.defaultDurationMinutes || 20));
+    setDuration(String(habit.defaultDurationMinutes || 15));
     setActiveWeekdays(habit.activeWeekdays ?? [1, 2, 3, 4, 5]);
     setTargetCount(String(habit.targetCount || ""));
     setTrackingType(habit.trackingType || "click-counter");

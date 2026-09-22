@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-09-23 · 习惯详情改进
+
+### 改进
+- 习惯详情支持直接勾选每个应检查日期，并将完成控件改为方框；新习惯默认时长为 15 分钟，类型切换与启用开关在缩放时保持清晰稳定。
+- 整理详情操作区，将返回与保存并排放置，并把归档和二次确认的永久删除收进更多菜单。
+
 ## 2026-09-22 · MCP 连接整理
 
 ### 改进
@@ -187,6 +193,12 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-23 · Habit detail improvements
+
+### Improvements
+- Habit details now let users mark each scheduled date complete with square checkboxes. New habits default to 15 minutes, and the type selector and enabled switch remain clear and stable when zoomed.
+- Reorganized detail actions with Back and Save side by side; Archive and two-step permanent deletion are available in the More menu.
 
 ## 2026-09-22 · Cleaner MCP connection
 
