@@ -130,7 +130,7 @@ describe("habits", () => {
       scheduledDate: "2026-07-01",
       scheduledStart: "23:50",
       scheduledEndDate: "2026-07-02",
-      scheduledEnd: "00:10",
+      scheduledEnd: "00:05",
     });
 
     const yearEnd = scheduleHabitRecord(
@@ -201,7 +201,7 @@ describe("habits", () => {
     expect(metrics.active).toBe(2);
     expect(metrics.todayCompleted).toBe(1);
     expect(metrics.todayPlanned).toBe(1);
-    expect(metrics.plannedMinutes).toBe(20); // default 20 min
+    expect(metrics.plannedMinutes).toBe(15); // default 15 min
     expect(metrics.completionRate7d).toBeGreaterThan(0);
     const habitMetric = metrics.perHabit.find((m) => m.habit.id === habitId);
     expect(habitMetric?.completedToday).toBe(true);
