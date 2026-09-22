@@ -20921,7 +20921,8 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   position: relative;
 
-  width: 40px;
+  width: max-content;
+  min-width: 52px;
 
   height: 36px;
   border: 0; border-radius: 0; background: transparent; box-shadow: none;
@@ -20935,7 +20936,9 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   transition: var(--nv-transition); padding: 3px 2px;
 
   line-height: 1;
-  min-width: 34px; min-height: 26px; border-bottom: 1px solid transparent; font-family: var(--paper-mono);
+  min-height: 26px; border-bottom: 1px solid transparent; font-family: var(--paper-mono);
+  white-space: nowrap;
+  text-align: center;
   pointer-events: auto;
 }
 .df-view-switch-vertical button:hover { color: var(--text-main); }
@@ -37746,6 +37749,97 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app.mode-execute button { min-height: 44px; }
   #root .df-app.mode-execute [role="button"] { min-height: 44px; }
   #root .df-app.mode-execute .df-candidate-list { overflow-x: hidden; }
+}
+
+/* Browser zoom can cross the narrow viewport breakpoint while the workspace
+   is still a desktop landscape. Reflow candidate metadata and keep timeline
+   checks square; coarse pointers retain a square 44px target below. */
+@media (max-width: 980px) {
+  #root .df-app.mode-execute .df-task-card .df-candidate-row {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-rows: minmax(44px, auto) auto;
+    column-gap: 6px;
+    row-gap: 2px;
+  }
+
+  #root .df-app.mode-execute .df-task-card .df-task-checkbox-wrap {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+  }
+
+  #root .df-app.mode-execute .df-task-card .df-block-check {
+    position: relative;
+    inset: auto;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    min-height: 24px;
+    transform: none;
+  }
+
+  #root .df-app.mode-execute .df-task-card .df-block-check::before {
+    content: "";
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  #root .df-app.mode-execute .df-task-card .df-task-block-duration {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  #root .df-app.mode-execute .df-task-card .df-task-actions {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    min-width: 44px;
+    justify-content: flex-end;
+    gap: 0;
+  }
+
+  #root .df-app.mode-execute .df-task-card .df-task-actions .df-icon-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
+
+  #root .df-app.mode-execute .df-task-card .df-task-block-title {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  #root .df-app.mode-execute .df-time-block .df-block-check {
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    min-height: 20px;
+    flex: 0 0 20px;
+    aspect-ratio: 1;
+  }
+}
+
+@media (max-width: 980px) and (hover: none) and (pointer: coarse) {
+  #root .df-app.mode-execute .df-time-block .df-block-check {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
+    aspect-ratio: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
