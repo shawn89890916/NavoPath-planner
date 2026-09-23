@@ -11,6 +11,7 @@
 
 ### 修复
 - 浏览器缩放不再把设置开关拉高变形；习惯启用开关改用统一的中性色设置开关样式。
+- 刷新后时间轴将当前时刻定位在视口上方约三分之一处；工作区数据更新时会保留当前时间轴滚动位置。
 
 ## 2026-09-22 · MCP 连接整理
 
@@ -211,6 +212,7 @@
 
 ### Fixes
 - Browser zoom no longer stretches settings switches; the habit enabled switch uses the shared neutral-toned settings switch style.
+- After refresh, the timeline places the current time about one-third down from the top of the viewport; workspace data updates preserve the current timeline scroll position.
 
 ## 2026-09-22 · Cleaner MCP connection
 

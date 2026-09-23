@@ -1792,11 +1792,35 @@ function App() {
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const timelineCanvasRef = useRef<HTMLDivElement | null>(null);
   const timelineMutationScrollRef = useRef<{ top: number; left: number } | null>(null);
+  const lastTimelineScrollRef = useRef<{ top: number; left: number }>({ top: 0, left: 0 });
+  const previousTimelineDataRef = useRef(data);
   const [nowInTimelineViewport, setNowInTimelineViewport] = useState(true);
+  useEffect(() => {
+    const element = timelineRef.current;
+    if (!element) return;
+    const rememberTimelineScroll = () => {
+      lastTimelineScrollRef.current = { top: element.scrollTop, left: element.scrollLeft };
+    };
+    rememberTimelineScroll();
+    element.addEventListener("scroll", rememberTimelineScroll, { passive: true });
+    return () => element.removeEventListener("scroll", rememberTimelineScroll);
+  }, [data, mode]);
+  useLayoutEffect(() => {
+    const previousData = previousTimelineDataRef.current;
+    previousTimelineDataRef.current = data;
+    if (!previousData || !data || previousData === data || mode !== "execute" || timelineView === "month" || pendingTimelineFocus || continuousPrependLockRef.current) return;
+    const element = timelineRef.current;
+    if (!element) return;
+    const scroll = lastTimelineScrollRef.current;
+    element.scrollTop = scroll.top;
+    element.scrollLeft = scroll.left;
+  }, [data, mode, timelineView, pendingTimelineFocus]);
   const preserveTimelineViewportOnNextDataChange = useCallback(() => {
     const element = timelineRef.current;
     if (!element) return;
-    timelineMutationScrollRef.current = { top: element.scrollTop, left: element.scrollLeft };
+    const scroll = { top: element.scrollTop, left: element.scrollLeft };
+    timelineMutationScrollRef.current = scroll;
+    lastTimelineScrollRef.current = scroll;
   }, []);
   useLayoutEffect(() => {
     const anchor = timelineMutationScrollRef.current;
@@ -2685,7 +2709,8 @@ function App() {
       const targetTop = effectEnabled
         ? bandIndex * ((24 * 60 / SLOT_MINUTES) * timelineSlotHeight) + (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight
         : (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight;
-      container.scrollTop = Math.max(0, targetTop - container.clientHeight * 0.5);
+      container.scrollTop = Math.max(0, targetTop - container.clientHeight / 3);
+      lastTimelineScrollRef.current = { top: container.scrollTop, left: container.scrollLeft };
       timelineInitialFocusCompleteRef.current = true;
       settled = true;
       observer?.disconnect();
@@ -2754,6 +2779,7 @@ function App() {
     const nextScrollTop = Math.max(0, targetTop - container.clientHeight * 0.5);
     const frame = window.requestAnimationFrame(() => {
       container.scrollTo({ top: nextScrollTop, behavior: pendingTimelineFocus.behavior || "auto" });
+      lastTimelineScrollRef.current = { top: container.scrollTop, left: container.scrollLeft };
       setPendingTimelineFocus(null);
     });
     return () => window.cancelAnimationFrame(frame);
