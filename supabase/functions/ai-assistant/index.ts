@@ -36,9 +36,10 @@ const corsHeaders = {
 };
 
 const STABLE_MODEL = "deepseek-v4-flash";
-const AI_GATEWAY_VERSION = "2026-09-19.2";
+const AI_GATEWAY_VERSION = "2026-09-24.1";
 const AGENT_MAX_ROUNDS = 10;
 const AGENT_MAX_TOOL_CALLS = 64;
+const AGENT_RUN_TIMEOUT_MS = 120_000;
 const FALLBACK_MODELS = [
   STABLE_MODEL,
   "deepseek-v4-pro",
@@ -131,6 +132,7 @@ async function callDeepSeek(
   reasoningMode: "instant" | "high" | "xhigh" = "instant",
   signal?: AbortSignal,
   providerConfig?: { provider?: string; apiKey?: string; baseUrl?: string; model?: string },
+  requestId?: string,
 ): Promise<string> {
   if (signal?.aborted) throw new DOMException("aborted", "AbortError");
   const providers: AiProviderConfig[] = [];
@@ -158,10 +160,10 @@ async function callDeepSeek(
     messages,
     maxTokens,
     reasoningMode,
-    perProviderTimeoutMs: 10_000,
-    totalTimeoutMs: 24_000,
+    perProviderTimeoutMs: 25_000,
+    totalTimeoutMs: 30_000,
     signal,
-    onAttempt: (attempt) => console.log("AI gateway attempt", attempt),
+    onAttempt: (attempt) => console.log("AI gateway attempt", { requestId, ...attempt }),
   });
   return result.content;
 }
@@ -380,6 +382,7 @@ async function runGlobalAgent(req: Request, params: {
   attachmentText?: string;
   attachmentName?: string;
   providerConfig?: { provider?: string; apiKey?: string; baseUrl?: string; model?: string };
+  requestId: string;
 }) {
   const workspace = await authenticatedWorkspace(req);
   const ctx = agentPromptContext(workspace.profile, params.context, params.message);
@@ -416,8 +419,10 @@ async function runGlobalAgent(req: Request, params: {
   let toolProtocolRepairs = 0;
   const readResultCache = new Map<string, { ok: boolean; data?: unknown; error?: string }>();
   let recordedRunId = "";
+  let roundsCompleted = 0;
   const runController = new AbortController();
-  const runTimeout = setTimeout(() => runController.abort(), 60_000);
+  const runStartedAt = Date.now();
+  const runTimeout = setTimeout(() => runController.abort(), AGENT_RUN_TIMEOUT_MS);
   const recordReadOnlyFailure = async (summary: string) => {
     const run = await insertAgentRun({
       admin: workspace.admin,
@@ -438,7 +443,8 @@ async function runGlobalAgent(req: Request, params: {
   try {
   const unrestricted = workspace.profile.settings.aiSafetyLevel === "full";
   for (let round = 0; round < (unrestricted ? 24 : AGENT_MAX_ROUNDS); round += 1) {
-    const content = await callDeepSeek(params.apiKey, params.model, messages, 2_400, params.reasoningMode, runController.signal, params.providerConfig);
+    roundsCompleted = round + 1;
+    const content = await callDeepSeek(params.apiKey, params.model, messages, 2_400, params.reasoningMode, runController.signal, params.providerConfig, params.requestId);
     let parsed: Record<string, any>;
     try {
       parsed = extractJsonObject(content) as Record<string, any>;
@@ -576,6 +582,16 @@ async function runGlobalAgent(req: Request, params: {
   const runId = await recordReadOnlyFailure(reply);
   return { reply, format: "markdown" as const, steps: trace.map((item) => ({ label: item.name, status: item.status })), actions: [], agent: { runId, trace, applied: [], pending: [] } };
   } catch (error) {
+    const gatewayError = error instanceof AiGatewayError ? error : null;
+    console.error("Global agent run failed", {
+      requestId: params.requestId,
+      code: gatewayError?.code || (runController.signal.aborted ? "AI_TIMEOUT" : "AI_PROVIDER"),
+      elapsedMs: Date.now() - runStartedAt,
+      rounds: roundsCompleted,
+      toolCalls: trace.length,
+      providerAttempts: gatewayError?.attempts.map(({ provider, code, status, elapsedMs }) => ({ provider, code, status, elapsedMs })) || [],
+    });
+    if (error && typeof error === "object") (error as Error & { requestId?: string }).requestId = params.requestId;
     try {
       if (recordedRunId) {
         await workspace.admin.from("navopath_agent_runs").update({ status: "failed", tool_log: trace, updated_at: new Date().toISOString() }).eq("id", recordedRunId).eq("user_id", workspace.userId);
@@ -829,8 +845,10 @@ serve(async (req: Request) => {
     const selectedReasoning = supportedReasoning && (reasoningMode === "high" || reasoningMode === "xhigh") ? reasoningMode : "instant";
 
     if (mode === "agent") {
+      const requestId = crypto.randomUUID();
       try {
         const agentResult = await runGlobalAgent(req, {
+          requestId,
           apiKey: localProviderKey || apiKey,
           model: selectedModel,
           reasoningMode: selectedReasoning,
@@ -849,8 +867,9 @@ serve(async (req: Request) => {
         const code = rawMessage === "AI_AUTH" ? "AI_AUTH" : /PROFILE_REVISION_CONFLICT/.test(rawMessage) ? "AI_PLAN_EXPIRED" : rawMessage === "SCHEDULE_CONFLICT" ? "AI_BAD_RESPONSE" : gatewayError?.code || "AI_PROVIDER";
         const detail = gatewayError?.attempts[gatewayError.attempts.length - 1]?.detail;
         const publicMessage = rawMessage === "AI_AUTH" ? "请先登录云端账号后使用全局 AI。" : code === "AI_PLAN_EXPIRED" ? "工作区已变化，请重新发送请求。" : rawMessage === "SCHEDULE_CONFLICT" ? "目标时间与现有排程或外部日历冲突，未执行任何写入。" : gatewayError ? gatewayErrorMessage(gatewayError.code, detail) : workspaceFailureMessage(rawMessage);
-        console.error("Global agent failed", { code, detail: rawMessage.slice(0, 120) });
-        return new Response(JSON.stringify({ ok: false, reply: publicMessage, actions: [], error: { code, retryable: gatewayError?.retryable ?? (code !== "AI_AUTH" && rawMessage !== "SCHEDULE_CONFLICT"), requestId: crypto.randomUUID(), message: publicMessage } }), { status: code === "AI_AUTH" ? 401 : code === "AI_RATE_LIMIT" ? 429 : code === "AI_PLAN_EXPIRED" || rawMessage === "SCHEDULE_CONFLICT" ? 409 : 503, headers: corsHeaders });
+        const failureRequestId = error && typeof error === "object" && typeof (error as Error & { requestId?: unknown }).requestId === "string" ? (error as Error & { requestId: string }).requestId : requestId;
+        console.error("Global agent failed", { requestId: failureRequestId, code, detail: rawMessage.slice(0, 120) });
+        return new Response(JSON.stringify({ ok: false, reply: publicMessage, actions: [], error: { code, retryable: gatewayError?.retryable ?? (code !== "AI_AUTH" && rawMessage !== "SCHEDULE_CONFLICT"), requestId: failureRequestId, message: publicMessage } }), { status: code === "AI_AUTH" ? 401 : code === "AI_RATE_LIMIT" ? 429 : code === "AI_PLAN_EXPIRED" || rawMessage === "SCHEDULE_CONFLICT" ? 409 : 503, headers: corsHeaders });
       }
     }
 

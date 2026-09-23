@@ -55,6 +55,13 @@ describe("AI assistant client", () => {
     if (!result.ok) expect(result.error.code).toBe("AI_TIMEOUT");
   });
 
+  it("waits for a global Agent below the Edge Function request limit", async () => {
+    const invoke = vi.fn().mockResolvedValue({ data: { ok: true, reply: "ok", actions: [] }, error: null });
+    const client = { functions: { invoke } } as any;
+    await invokeAiAssistant(client, { mode: "agent", message: "hello" });
+    expect(invoke.mock.calls[0][1].timeout).toBe(135_000);
+  });
+
   it("lets the user cancel a hanging request", async () => {
     const controller = new AbortController();
     const client = { functions: { invoke: vi.fn((_name: string, options: { signal: AbortSignal }) => new Promise((_resolve, reject) => {

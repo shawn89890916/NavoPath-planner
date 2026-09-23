@@ -85,6 +85,9 @@ export type AiAssistantResponse =
 export type AiHealthResponse = { ok: boolean; status: "ready" | "degraded" | "unavailable"; version?: string; configuredProviders?: string[] };
 
 const AI_REQUEST_TIMEOUT_MS = 25_000;
+// Supabase Edge Functions return a gateway timeout at 150s. Leave time for
+// authentication refresh, server cleanup, and audit persistence before that.
+const AI_AGENT_REQUEST_TIMEOUT_MS = 135_000;
 
 function failure(error: AiServiceError): AiAssistantResponse {
   return { ok: false, reply: error.message, actions: [], steps: [{ label: error.message, status: "error" }], error };
@@ -188,7 +191,7 @@ export async function invokeAiAssistant(client: SupabaseClient, params: {
   timeoutMs?: number;
   providerConfig?: ReturnType<typeof readLocalAiProviderConfig>;
 }): Promise<AiAssistantResponse> {
-  const timeoutMs = params.timeoutMs || (params.mode.startsWith("agent") ? 65_000 : AI_REQUEST_TIMEOUT_MS);
+  const timeoutMs = params.timeoutMs || (params.mode === "agent" ? AI_AGENT_REQUEST_TIMEOUT_MS : AI_REQUEST_TIMEOUT_MS);
   const controller = new AbortController();
   let timedOut = false;
   const timeoutId = window.setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);

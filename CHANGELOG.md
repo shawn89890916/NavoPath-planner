@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-09-24 · AI 响应稳定性
+
+### 修复
+- 延长全局 AI 等待时间，避免较慢的模型响应被提前中断。
+
 ## 2026-09-23 · 习惯详情改进
 
 ### 改进
@@ -204,6 +209,11 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-24 · AI response reliability
+
+### Fixed
+- Extended the global AI response window to prevent slower model replies from being cut off early.
 
 ## 2026-09-23 · Habit detail improvements
 
