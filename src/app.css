@@ -32466,8 +32466,12 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 
 .df-app .df-habit-overview {
+  position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   gap: 14px;
 }
 
@@ -32496,6 +32500,51 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   color: var(--paper-ink);
   letter-spacing: -.005em;
   line-height: 1.2;
+}
+
+.df-app .df-habit-overview-range-trigger,
+.df-app .df-habit-detail-progress-range {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 5px;
+  min-width: 0;
+  min-height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  font: 700 21px/1.1 var(--paper-display);
+  letter-spacing: -.01em;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.df-app .df-habit-overview-range-trigger:hover,
+.df-app .df-habit-detail-progress-range:hover {
+  color: var(--text-main);
+}
+
+.df-app .df-habit-overview > .df-mobile-date-picker,
+.df-app .df-habit-detail-progress > .df-mobile-date-picker {
+  display: block;
+  position: absolute;
+  z-index: 40;
+  top: 54px;
+  left: 0;
+  right: auto;
+  width: min(360px, 100%);
+  padding: 8px 12px 12px;
+  border: 1px solid var(--paper-rule-strong);
+  background: var(--surface-raised);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--text-main) 8%, transparent);
+}
+
+.df-app .df-habit-overview-range-trigger:focus-visible,
+.df-app .df-habit-detail-progress-range:focus-visible {
+  outline: 1px solid var(--accent-active);
+  outline-offset: 2px;
 }
 
 .df-app .df-habit-overview-range span {
@@ -32569,7 +32618,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 .df-app .df-habit-overview-table {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
 }
 
 .df-app .df-habit-overview-thead {
@@ -32577,11 +32630,20 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   grid-template-columns: minmax(140px, 1.6fr) repeat(7, minmax(34px, 1fr));
   align-items: center;
   gap: 2px;
+  min-width: 438px;
   padding: 0 0 8px;
   border-bottom: 1px solid var(--paper-rule-strong, var(--paper-rule));
 }
 
 .df-app .df-habit-overview-th-label {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  background: var(--bg-app);
+  box-shadow: 1px 0 var(--paper-rule);
   font-family: var(--paper-sans);
   font-size: 11px;
   font-weight: 600;
@@ -32626,6 +32688,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   grid-template-columns: minmax(140px, 1.6fr) repeat(7, minmax(34px, 1fr));
   align-items: center;
   gap: 2px;
+  min-width: 438px;
   padding: 6px 0;
   border-bottom: 1px solid var(--paper-rule);
 }
@@ -32636,11 +32699,15 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 /* Habit name cell */
 .df-app .df-habit-overview-name {
+  position: sticky;
+  left: 0;
+  z-index: 1;
   display: flex;
   align-items: baseline;
   gap: 8px;
   min-width: 0;
-  background: transparent;
+  background: var(--bg-app);
+  box-shadow: 1px 0 var(--paper-rule);
   border: 0;
   padding: 4px 6px 4px 0;
   font-family: var(--paper-task);
@@ -32698,12 +32765,13 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: color-mix(in srgb, var(--accent-active) 12%, transparent);
 }
 
-/* Circular dot — the completion unit */
+/* Square completion unit matches the habit detail date strip. */
 .df-app .df-habit-overview-dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1.5px solid var(--paper-rule-strong, var(--paper-rule));
+  width: 25px;
+  height: 25px;
+  box-sizing: border-box;
+  border-radius: 3px;
+  border: 2px solid var(--paper-rule-strong, var(--paper-rule));
   background: transparent;
   transition: background 150ms, border-color 150ms;
 }
@@ -32902,8 +32970,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     font-size: 12.5px;
   }
   .df-app .df-habit-overview-dot {
-    width: 16px;
-    height: 16px;
+    width: 25px;
+    height: 25px;
   }
 }
 

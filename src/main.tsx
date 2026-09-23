@@ -89,6 +89,7 @@ import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, Candid
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDivider, SettingDescription } from "./components/SettingsControls";
 import { ActionDisclosure, Button, CloseButton, IconButton } from "./components/UiPrimitives";
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
+import { DateQuickPicker } from "./components/DateQuickPicker";
 
 const COMPACT_LAYOUT_MEDIA_QUERY = "(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)";
 import { UiBellIcon, UiCalendarCheckIcon, UiCalendarClockIcon, UiCopyIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiPencilIcon, UiPlusIcon, UiReturnIcon, UiSearchIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
@@ -8825,7 +8826,7 @@ function App() {
             )}
           </div>
           {compactExecuteView === "schedule" && mobileDatePickerOpen && (
-            <MobileDateQuickPicker
+            <DateQuickPicker
               month={mobileDatePickerMonth}
               selectedDate={timelineWindowAnchorDate}
               today={today}
@@ -9764,7 +9765,7 @@ function App() {
                       <span className={`df-date-title-chevron${mobileDatePickerOpen ? " open" : ""}`} aria-hidden="true">⌄</span>
                     </button>
                     {!compactLayout && mobileDatePickerOpen && (
-                      <MobileDateQuickPicker
+                      <DateQuickPicker
                         month={mobileDatePickerMonth}
                         selectedDate={timelineWindowAnchorDate}
                         today={today}
@@ -11360,6 +11361,8 @@ function HabitOverviewBody(props: {
   const { metrics, zh } = props;
   const [weekOffset, setWeekOffset] = useState(0);
   const [listOpen, setListOpen] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [datePickerMonth, setDatePickerMonth] = useState(props.today.slice(0, 7));
   const baseDay = addDays(props.today, weekOffset * 7);
   const baseDate = new Date(`${baseDay}T00:00:00`);
   const mondayOffset = (baseDate.getDay() + 6) % 7;
@@ -11367,6 +11370,13 @@ function HabitOverviewBody(props: {
   const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
   const fmt = (iso: string) => iso.slice(5).replace("-", "/");
   const weekRange = `${fmt(weekDays[0])} - ${fmt(weekDays[6])}`;
+  const selectDate = (date: string) => {
+    const dateWeekStart = addDays(date, -((new Date(`${date}T00:00:00`).getDay() + 6) % 7));
+    const todayWeekStart = addDays(props.today, -((new Date(`${props.today}T00:00:00`).getDay() + 6) % 7));
+    const offset = Math.round((Date.parse(`${dateWeekStart}T00:00:00Z`) - Date.parse(`${todayWeekStart}T00:00:00Z`)) / 604800000);
+    setWeekOffset(offset);
+    setDatePickerOpen(false);
+  };
   const weekdayShort = (iso: string) => {
     const d = new Date(`${iso}T00:00:00`);
     return zh
@@ -11379,7 +11389,7 @@ function HabitOverviewBody(props: {
       <section className="df-habit-overview" aria-label={zh ? "习惯周视图" : "Habit week view"}>
         <header className="df-habit-overview-toolbar">
           <div className="df-habit-overview-range">
-            <strong>{weekRange}</strong>
+            <button type="button" className="df-habit-overview-range-trigger" aria-expanded={datePickerOpen} onClick={() => { setDatePickerMonth(weekDays[0].slice(0, 7)); setDatePickerOpen((open) => !open); }}>{weekRange}<span className="df-date-title-chevron" aria-hidden="true">⌄</span></button>
             <span>{zh ? `${metrics.todayCompleted}/${metrics.active} 今日完成` : `${metrics.todayCompleted}/${metrics.active} complete today`}</span>
           </div>
           <div className="df-habit-overview-actions">
@@ -11389,6 +11399,8 @@ function HabitOverviewBody(props: {
             <button type="button" className="df-habit-overview-add" onClick={props.onCreateHabit}>{zh ? "+ 新增习惯" : "+ New habit"}</button>
           </div>
         </header>
+
+        {datePickerOpen && <DateQuickPicker month={datePickerMonth} selectedDate={weekDays[0]} today={props.today} weekStartsOn={1} lang={zh ? "zh" : "en"} onMonthChange={setDatePickerMonth} onSelect={selectDate} />}
 
         <div className="df-habit-overview-table" role="grid">
           <div className="df-habit-overview-thead" role="row">
@@ -11428,6 +11440,7 @@ function HabitOverviewBody(props: {
                     className={`df-habit-overview-cell${day === props.today ? " is-today" : ""}${completed ? " is-done" : ""}${planned ? " is-planned" : ""}${due ? " is-due" : ""}`}
                     aria-pressed={completed}
                     aria-label={`${completed ? (zh ? "取消完成" : "Mark incomplete") : (zh ? "完成" : "Mark complete")} ${item.habit.title} ${day}`}
+                    disabled={!due}
                     onClick={() => props.onToggleDay(item.habit.id, day, !completed)}
                   >
                     <span className="df-habit-overview-dot" aria-hidden="true" />
@@ -12170,59 +12183,6 @@ function formatMinutes(minutes: number) {
 
 function formatDuration(hours: number) {
   return formatMinutes(Math.round(hours * 60));
-}
-
-function MobileDateQuickPicker({ month, selectedDate, today, weekStartsOn, lang, onMonthChange, onSelect }: {
-  month: string;
-  selectedDate: string;
-  today: string;
-  weekStartsOn: 0 | 1;
-  lang: Language;
-  onMonthChange: (month: string) => void;
-  onSelect: (date: string) => void;
-}) {
-  const [year, monthNumber] = month.split("-").map(Number);
-  const first = new Date(year, monthNumber - 1, 1);
-  const offset = (first.getDay() - weekStartsOn + 7) % 7;
-  const days = Array.from({ length: 42 }, (_, index) => {
-    const date = new Date(year, monthNumber - 1, index - offset + 1);
-    return localIsoDate(date);
-  });
-  const weekdayLabels = lang === "zh"
-    ? ["日", "一", "二", "三", "四", "五", "六"]
-    : ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-  const orderedWeekdays = Array.from({ length: 7 }, (_, index) => weekdayLabels[(index + weekStartsOn) % 7]);
-  const moveMonth = (delta: number) => {
-    const date = new Date(year, monthNumber - 1 + delta, 1);
-    onMonthChange(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
-  };
-  return (
-    <section className="df-mobile-date-picker" aria-label={lang === "zh" ? "快速选择日期" : "Quick date picker"}>
-      <header>
-        <button type="button" onClick={() => moveMonth(-1)} aria-label={lang === "zh" ? "上个月" : "Previous month"}>‹</button>
-        <strong>{monthTitle(lang, year, monthNumber)}</strong>
-        <button type="button" onClick={() => moveMonth(1)} aria-label={lang === "zh" ? "下个月" : "Next month"}>›</button>
-      </header>
-      <div className="df-mobile-date-weekdays" aria-hidden="true">
-        {orderedWeekdays.map((label) => <span key={label}>{label}</span>)}
-      </div>
-      <div className="df-mobile-date-grid">
-        {days.map((date) => {
-          const currentMonth = date.slice(0, 7) === month;
-          const selected = date === selectedDate;
-          const isToday = date === today;
-          return <button
-            key={date}
-            data-date={date}
-            type="button"
-            className={`${currentMonth ? "" : "outside"}${selected ? " selected" : ""}${isToday ? " today" : ""}`}
-            aria-pressed={selected}
-            onClick={() => onSelect(date)}
-          >{Number(date.slice(8, 10))}</button>;
-        })}
-      </div>
-    </section>
-  );
 }
 
 /** Quick‑add input shown on top of a drag‑created preview block. */

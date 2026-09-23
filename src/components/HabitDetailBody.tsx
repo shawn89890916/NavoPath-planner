@@ -4,6 +4,7 @@ import { isHabitDueOnDate } from "../utils/habits";
 import { addDays } from "../utils/recurrence";
 import { ActionDisclosure, Button } from "./UiPrimitives";
 import { SettingToggle } from "./SettingsControls";
+import { DateQuickPicker } from "./DateQuickPicker";
 import "./habit-detail.css";
 
 const STEP_MINUTES = 15;
@@ -31,28 +32,35 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
   const [trackingType, setTrackingType] = useState<HabitTrackingType>(habit.trackingType || "click-counter");
   const [enabled, setEnabled] = useState(!habit.archived);
   const [weekOffset, setWeekOffset] = useState(0);
-  const [windowStartOffset, setWindowStartOffset] = useState(-14);
-  const [windowDayCount, setWindowDayCount] = useState(35);
+  const [windowStartOffset, setWindowStartOffset] = useState(-1);
+  const [windowDayCount, setWindowDayCount] = useState(14);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [todayHighlighted, setTodayHighlighted] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [datePickerMonth, setDatePickerMonth] = useState(today.slice(0, 7));
+  const [visibleRange, setVisibleRange] = useState<[string, string]>(() => [addDays(today, -1), addDays(today, 5)]);
   const progressDaysRef = useRef<HTMLDivElement>(null);
   const todayHighlightTimerRef = useRef<number | undefined>(undefined);
-  const windowStartOffsetRef = useRef(-14);
+  const windowStartOffsetRef = useRef(-1);
   const prependScrollWidthRef = useRef<number | null>(null);
   const prependPendingRef = useRef(false);
   const appendPendingRef = useRef(false);
+  const ignoreProgrammaticScrollRef = useRef(false);
 
-  const scrollTodayIntoView = useCallback((instant = false) => {
+  const updateVisibleRange = useCallback(() => {
     const container = progressDaysRef.current;
     if (!container) return;
-    const button = container.querySelector<HTMLButtonElement>(".df-habit-detail-progress-day.is-today");
-    if (!button) return;
     const containerRect = container.getBoundingClientRect();
-    const buttonRect = button.getBoundingClientRect();
-    const left = container.scrollLeft + buttonRect.left - containerRect.left - (container.clientWidth - buttonRect.width) / 2;
-    const behavior = instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-    container.scrollTo({ left, behavior });
-  }, []);
+    const visible = Array.from(container.querySelectorAll<HTMLButtonElement>(".df-habit-detail-progress-day"))
+      .filter((day) => {
+        const rect = day.getBoundingClientRect();
+        return rect.left >= containerRect.left - 1 && rect.right <= containerRect.right + 1;
+      });
+    if (visible.length === 0) return;
+    const first = addDays(today, Number(visible[0].dataset.dayOffset));
+    const last = addDays(today, Number(visible[visible.length - 1].dataset.dayOffset));
+    setVisibleRange((current) => current[0] === first && current[1] === last ? current : [first, last]);
+  }, [today]);
 
   useEffect(() => {
     setTitle(habit.title);
@@ -63,12 +71,13 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
     setTrackingType(habit.trackingType || "click-counter");
     setEnabled(!habit.archived);
     setWeekOffset(0);
-    windowStartOffsetRef.current = -14;
+    windowStartOffsetRef.current = -1;
     prependPendingRef.current = false;
     appendPendingRef.current = false;
     prependScrollWidthRef.current = null;
-    setWindowStartOffset(-14);
-    setWindowDayCount(35);
+    setWindowStartOffset(-1);
+    setWindowDayCount(14);
+    setDatePickerOpen(false);
     setConfirmDelete(false);
   }, [habit.id]);
 
@@ -79,41 +88,64 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
     if (!container || previousWidth === null) return;
     container.scrollLeft += container.scrollWidth - previousWidth;
     prependScrollWidthRef.current = null;
+    updateVisibleRange();
     window.setTimeout(() => { prependPendingRef.current = false; }, 240);
-  }, [windowStartOffset]);
+  }, [windowStartOffset, updateVisibleRange]);
 
   useEffect(() => {
     appendPendingRef.current = false;
   }, [windowDayCount]);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => scrollTodayIntoView(true));
+    const frame = window.requestAnimationFrame(() => {
+      if (progressDaysRef.current) progressDaysRef.current.scrollLeft = 0;
+      updateVisibleRange();
+    });
     return () => window.cancelAnimationFrame(frame);
-  }, [habit.id, scrollTodayIntoView]);
+  }, [habit.id, updateVisibleRange]);
 
   useEffect(() => () => window.clearTimeout(todayHighlightTimerRef.current), []);
 
   const toggleWeekday = (day: number) => setActiveWeekdays((days) => days.includes(day) ? days.filter((item) => item !== day) : [...days, day].sort());
+  const positionDateAtSecond = (date: string) => {
+    const dateOffset = Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86400000);
+    const weekStart = addDays(date, -((new Date(`${date}T00:00:00`).getDay() + 6) % 7));
+    const todayWeekStart = addDays(today, -((new Date(`${today}T00:00:00`).getDay() + 6) % 7));
+    const nextWeekOffset = Math.round((Date.parse(`${weekStart}T00:00:00Z`) - Date.parse(`${todayWeekStart}T00:00:00Z`)) / 604800000);
+    windowStartOffsetRef.current = dateOffset - 1;
+    prependPendingRef.current = false;
+    appendPendingRef.current = false;
+    prependScrollWidthRef.current = null;
+    setWeekOffset(nextWeekOffset);
+    setWindowStartOffset(dateOffset - 1);
+    setWindowDayCount(14);
+    setVisibleRange([addDays(today, dateOffset - 1), addDays(today, dateOffset + 5)]);
+    setDatePickerOpen(false);
+    ignoreProgrammaticScrollRef.current = true;
+    window.requestAnimationFrame(() => {
+      const container = progressDaysRef.current;
+      if (container) {
+        container.scrollLeft = 0;
+        updateVisibleRange();
+      }
+      window.requestAnimationFrame(() => { ignoreProgrammaticScrollRef.current = false; });
+    });
+  };
   const goToToday = () => {
     window.clearTimeout(todayHighlightTimerRef.current);
     setTodayHighlighted(true);
     todayHighlightTimerRef.current = window.setTimeout(() => setTodayHighlighted(false), 900);
-    setWeekOffset(0);
-    window.requestAnimationFrame(() => scrollTodayIntoView());
+    positionDateAtSecond(today);
   };
   const navigateWeek = (direction: -1 | 1) => {
     const nextOffset = weekOffset + direction;
-    setWeekOffset(nextOffset);
-    const container = progressDaysRef.current;
-    const target = container?.querySelector<HTMLButtonElement>(`[data-day-offset="${nextOffset * 7}"]`);
-    if (!container || !target) return;
-    const left = container.scrollLeft + target.getBoundingClientRect().left - container.getBoundingClientRect().left - (container.clientWidth - target.offsetWidth) / 2;
-    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-    container.scrollTo({ left, behavior });
+    positionDateAtSecond(addDays(today, nextOffset * 7));
   };
   const handleProgressScroll = () => {
     const container = progressDaysRef.current;
     if (!container) return;
+    updateVisibleRange();
+    if (ignoreProgrammaticScrollRef.current) return;
     const midpoint = container.getBoundingClientRect().left + container.clientWidth / 2;
     const dates = Array.from(container.querySelectorAll<HTMLButtonElement>(".df-habit-detail-progress-day"));
     const centerDay = dates.reduce<HTMLButtonElement | null>((closest, item) => {
@@ -164,11 +196,14 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
   });
   const dueDays = weekDays.filter((date) => isHabitDueOnDate(habit, date));
   const completedDates = new Set(dailyStates.filter((state) => state.habitId === habit.id && state.completed).map((state) => state.date));
-  const range = `${weekDays[0].slice(5).replace("-", "/")} - ${weekDays[6].slice(5).replace("-", "/")}`;
+  const startYear = visibleRange[0].slice(0, 4);
+  const endYear = visibleRange[1].slice(0, 4);
+  const range = `${startYear !== endYear ? `${startYear}/` : ""}${visibleRange[0].slice(5).replace("-", "/")} - ${startYear !== endYear ? `${endYear}/` : ""}${visibleRange[1].slice(5).replace("-", "/")}`;
 
   return <>
     <section className="df-habit-detail-progress" aria-label={zh ? "习惯完成情况" : "Habit completion"}>
-      <header><div><strong>{range}</strong><span>{zh ? `本周完成 ${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length}` : `${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length} complete this week`}</span></div><div className="df-habit-detail-progress-actions"><button type="button" aria-label={zh ? "上一周" : "Previous week"} onClick={() => navigateWeek(-1)}>‹</button><button type="button" onClick={goToToday}>{zh ? "今天" : "Today"}</button><button type="button" aria-label={zh ? "下一周" : "Next week"} onClick={() => navigateWeek(1)}>›</button></div></header>
+      <header><div><button type="button" className="df-habit-detail-progress-range" aria-expanded={datePickerOpen} onClick={() => { setDatePickerMonth(visibleRange[0].slice(0, 7)); setDatePickerOpen((open) => !open); }}>{range}<span className="df-date-title-chevron" aria-hidden="true">⌄</span></button><span>{zh ? `本周完成 ${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length}` : `${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length} complete this week`}</span></div><div className="df-habit-detail-progress-actions"><button type="button" aria-label={zh ? "上一周" : "Previous week"} onClick={() => navigateWeek(-1)}>‹</button><button type="button" onClick={goToToday}>{zh ? "今天" : "Today"}</button><button type="button" aria-label={zh ? "下一周" : "Next week"} onClick={() => navigateWeek(1)}>›</button></div></header>
+      {datePickerOpen && <DateQuickPicker month={datePickerMonth} selectedDate={visibleRange[0]} today={today} weekStartsOn={1} lang={zh ? "zh" : "en"} onMonthChange={setDatePickerMonth} onSelect={positionDateAtSecond} />}
       <div className="df-habit-detail-progress-days" ref={progressDaysRef} onScroll={handleProgressScroll}>{progressDays.map(({ date, dayOffset }) => {
         const day = new Date(`${date}T00:00:00`).getDay();
         const due = isHabitDueOnDate(habit, date);
