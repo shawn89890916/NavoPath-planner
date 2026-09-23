@@ -28776,8 +28776,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-right: 0;
 }
 
-.df-settings-rail .df-settings-mobile-category { display: none; }
-
 .df-settings-disclosure-toggle {
   display: flex;
   width: 100%;
@@ -28854,18 +28852,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
     border-bottom: 1px solid var(--paper-rule);
   }
 
-  .df-settings-rail .df-settings-mobile-category { display: block; }
-  .df-settings-mobile-category select {
-    width: 100%;
-    min-height: 44px;
-    padding: 0 34px 0 12px;
-    border: 1px solid var(--paper-rule-strong);
-    border-radius: var(--paper-radius);
-    color: var(--text-main);
-    background: var(--surface-card);
-    font: 600 13px/1 var(--paper-sans);
-  }
-  .df-settings-mobile-category select:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
   .df-settings-content { padding-right: 1px; }
   .df-settings-disclosure-toggle { min-height: 64px; }
   .df-settings-subtabs button { min-height: 44px; }
@@ -36862,23 +36848,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: var(--surface-main);
   }
 
-  #root .df-app:where(.mode-execute, .mode-planning) .df-settings-shell .df-settings-mobile-category select {
-    width: 100%;
-    height: 44px;
-    min-height: 44px;
-    padding: 0 34px 0 12px;
-    border: 1px solid var(--paper-rule-strong);
-    border-radius: 12px;
-    color: var(--text-main);
-    background-color: var(--surface-card);
-    box-shadow: none;
-    font-size: 16px;
-  }
-
-  #root .df-app .df-settings-mobile-category {
-    display: block;
-  }
-
   #root .df-app .df-settings-nav {
     display: none;
   }
@@ -39238,12 +39207,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     width: auto;
   }
 
-  #root .df-app:where(.mode-execute, .mode-planning) .df-settings-mobile-category select {
-    padding-right: 26px;
-    padding-left: 10px;
-    font-size: 14px;
-  }
-
   #root .df-app .df-utility-panel .df-utility-body.df-settings-shell > .df-settings-content {
     grid-column: 1;
     grid-row: 3;
@@ -39326,15 +39289,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     padding: 0 16px 16px;
     border-bottom: 0;
     background: var(--bg-app);
-  }
-
-   #root .df-app .df-settings-shell > .df-settings-rail .df-settings-mobile-category select {
-    height: 46px;
-    min-height: 46px;
-    border-color: var(--paper-rule-strong);
-    border-radius: 12px;
-    background: var(--surface-card);
-    font-size: 14px;
   }
 
   #root .df-app .df-settings-shell > .df-settings-content {
@@ -39706,8 +39660,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 
 /* Settings details start at the utility header; the profile hero belongs to
-   the home surface only. Keep the existing desktop rail and mobile category
-   selector as the single navigation owners. */
+   the home surface only. Compact layouts return to the home surface when
+   switching settings categories. */
 #root .df-app .df-utility-head-leading {
   display: flex;
   min-width: 0;
@@ -39786,25 +39740,15 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 @media (max-width: 899.98px) and (orientation: portrait),
        (max-width: 760px) and (orientation: landscape) {
   #root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell {
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
   }
 
   #root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell > .df-settings-rail {
-    grid-column: 1;
-    grid-row: 1;
+    display: none;
   }
 
   #root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell > .df-settings-content {
     grid-column: 1;
-    grid-row: 2;
-  }
-
-  #root .df-app .df-settings-detail-shell > .df-settings-rail .df-settings-mobile-category {
-    height: 46px;
-    align-self: start;
-  }
-
-  #root .df-app .df-settings-detail-shell > .df-settings-content {
-    grid-row: 2;
+    grid-row: 1;
   }
 }

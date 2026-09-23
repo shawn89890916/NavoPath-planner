@@ -20,6 +20,7 @@
 
 ### 改进
 - MCP 设置改为“生成专用令牌、复制给 Agent”的两步连接流程；手动端点配置与有效令牌分别收起和归组，减少首屏信息干扰。
+- 竖屏设置详情移除重复的分类下拉列表，基础信息直接上移；返回设置主页后仍可切换其他设置分区。
 
 ### 修复
 - MCP 令牌读取、生成与撤销会自动恢复数据库 schema cache 的瞬时失步，并在部署时主动刷新缓存，避免生成操作直接失败。
@@ -224,6 +225,7 @@
 
 ### Improvements
 - MCP settings now use a two-step flow—generate a dedicated token, then copy it for an agent—while manual endpoint details and active tokens are grouped separately to reduce first-screen clutter.
+- Removed the duplicate category selector from portrait settings details so the information starts higher; users can return to the Settings home to switch sections.
 
 ### Fixes
 - MCP token listing, creation, and revocation now recover automatically from transient database schema-cache desynchronization, with deployment also refreshing the cache so generation does not fail immediately.

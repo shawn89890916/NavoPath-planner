@@ -31,10 +31,12 @@ describe("portrait interaction contracts", () => {
     expect(main).not.toContain("Sync hardware");
   });
 
-  it("uses the portrait settings switch style in narrow landscape mode", () => {
-    expect(appCss).toContain("(max-width: 899.98px) and (orientation: portrait),");
-    expect(appCss).toContain("(max-width: 1180px) and (orientation: landscape)");
-    expect(appCss).toContain("/* Touch settings use the same system switch in portrait and landscape. */");
+  it("uses the settings home as the compact category switcher", () => {
+    expect(main).not.toContain("df-settings-mobile-category");
+    expect(main).toContain('className="df-settings-back-button"');
+    expect(appCss).toContain("grid-template-rows: minmax(0, 1fr);");
+    expect(appCss).toContain(".df-settings-shell.df-settings-detail-shell > .df-settings-rail {");
+    expect(appCss).toContain("display: none;");
   });
 
   it("keeps desktop settings navigation beside the detail content", () => {

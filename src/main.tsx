@@ -15014,12 +15014,6 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
               </div>
             ) : <>
             <div className="df-settings-rail">
-              <label className="df-settings-mobile-category">
-                <span className="df-visually-hidden">{lang === "zh" ? "设置分类" : "Settings category"}</span>
-                <select value={settingsTarget.category} onChange={(event) => navigateSettings({ category: event.target.value as SettingsCategory })}>
-                  {SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => <option key={category.id} value={category.id}>{lang === "zh" ? category.labelZh : category.labelEn}</option>)}
-                </select>
-              </label>
               <nav className="df-settings-nav ui-choice-list" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
                 {SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => (
                   <button type="button" key={category.id} className={`ui-choice-item${settingsTarget.category === category.id ? " active" : ""}`} aria-current={settingsTarget.category === category.id ? "page" : undefined} onClick={() => navigateSettings({ category: category.id })}>{lang === "zh" ? category.labelZh : category.labelEn}</button>
