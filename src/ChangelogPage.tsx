@@ -1,18 +1,61 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import changelog from "../CHANGELOG.md?raw";
 import type { Language } from "./types";
 import "./changelog.css";
 
-type Block = { type: "h1" | "h2" | "h3" | "li" | "p"; text: string };
+type Block = { type: "h1" | "h2" | "h3" | "li" | "p"; text: string; id?: string };
 type LanguageStorage = Pick<Storage, "getItem" | "key" | "length">;
 type StoredLanguage = { language: Language; savedAt: string };
+
+const hasChinese = (value: string) => /\p{Script=Han}/u.test(value);
+
+function localizedSource(language: Language) {
+  const lines = changelog.split(/\r?\n/);
+  const sectionStarts = lines.flatMap((line, index) => line.startsWith("## ") ? [index] : []);
+  const sections = sectionStarts.map((start, index) => {
+    const end = sectionStarts[index + 1] ?? lines.length;
+    return { heading: lines[start].slice(3).trim(), body: lines.slice(start + 1, end).join("\n").trim() };
+  });
+  const seen = new Set<string>();
+  const selected = sections.flatMap(({ heading, body }) => {
+    if (heading === "本轮补充 / Current update") {
+      const bodyLines = body.split("\n");
+      const subsectionStarts = bodyLines.flatMap((line, index) => line.startsWith("### ") ? [index] : []);
+      const subsections = subsectionStarts.flatMap((start, index) => {
+        const end = subsectionStarts[index + 1] ?? bodyLines.length;
+        const title = bodyLines[start].slice(4).trim();
+        if (hasChinese(title) !== (language === "zh")) return [];
+        return [bodyLines.slice(start, end).join("\n").trim()];
+      });
+      if (!subsections.length) return [];
+      const localizedHeading = language === "zh" ? "历史补充" : "Earlier updates";
+      return [`## ${localizedHeading}\n\n${subsections.join("\n\n")}`];
+    }
+
+    if (hasChinese(heading) !== (language === "zh")) return [];
+    const section = `## ${heading}\n\n${body}`.trim();
+    if (seen.has(section)) return [];
+    seen.add(section);
+    return [section];
+  });
+  const title = language === "zh" ? "# NavoPath 更新日志" : "# NavoPath Changelog";
+  return [title, ...selected].join("\n\n");
+}
+
+function headingId(text: string) {
+  const slug = text.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "");
+  return `release-${slug}`;
+}
 
 function parseMarkdown(source: string): Block[] {
   return source.split(/\r?\n/).flatMap((line): Block[] => {
     const value = line.trim();
     if (!value) return [];
     if (value.startsWith("### ")) return [{ type: "h3", text: value.slice(4) }];
-    if (value.startsWith("## ")) return [{ type: "h2", text: value.slice(3) }];
+    if (value.startsWith("## ")) {
+      const text = value.slice(3);
+      return [{ type: "h2", text, id: headingId(text) }];
+    }
     if (value.startsWith("# ")) return [{ type: "h1", text: value.slice(2) }];
     if (value.startsWith("- ")) return [{ type: "li", text: value.slice(2) }];
     return [{ type: "p", text: value }];
@@ -83,16 +126,10 @@ function accountLanguage(): Language {
   }
 }
 
-function localizedSource(language: Language) {
-  const englishHeading = "# NavoPath Changelog";
-  const englishStart = changelog.indexOf(englishHeading);
-  if (englishStart === -1) return changelog;
-  return language === "zh" ? changelog.slice(0, englishStart).trim() : changelog.slice(englishStart).trim();
-}
-
 export default function ChangelogPage() {
   const [language, setLanguage] = useState<Language>(accountLanguage);
   const blocks = parseMarkdown(localizedSource(language));
+  const navigation = blocks.filter((block): block is Block & { id: string } => block.type === "h2" && Boolean(block.id));
 
   useEffect(() => {
     document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
@@ -109,12 +146,28 @@ export default function ChangelogPage() {
         </div>
       </div>
     </nav>
-    <article>{blocks.map((block, index) => {
-      if (block.type === "h1") return <h1 key={index}>{block.text}</h1>;
-      if (block.type === "h2") return <h2 key={index}>{block.text}</h2>;
-      if (block.type === "h3") return <h3 key={index}>{block.text}</h3>;
-      if (block.type === "li") return <p className="entry" key={index}>{block.text}</p>;
-      return <p key={index}>{block.text}</p>;
-    })}</article>
+    <div className="np-changelog-layout">
+      <article>{blocks.map((block, index) => {
+        if (block.type === "h1") return <Fragment key={index}>
+          <h1>{block.text}</h1>
+          <details className="np-changelog-mobile-toc">
+            <summary>{language === "zh" ? "本页目录" : "On this page"}</summary>
+            <nav aria-label={language === "zh" ? "更新日志目录" : "Changelog contents"}>
+              {navigation.map(({ id, text }) => <a key={id} href={`#${id}`}>{text}</a>)}
+            </nav>
+          </details>
+        </Fragment>;
+        if (block.type === "h2") return <h2 id={block.id} key={index}>{block.text}</h2>;
+        if (block.type === "h3") return <h3 key={index}>{block.text}</h3>;
+        if (block.type === "li") return <p className="entry" key={index}>{block.text}</p>;
+        return <p key={index}>{block.text}</p>;
+      })}</article>
+      <aside className="np-changelog-toc">
+        <nav className="np-changelog-desktop-toc" aria-label={language === "zh" ? "更新日志目录" : "Changelog contents"}>
+          <span>{language === "zh" ? "本页内容" : "ON THIS PAGE"}</span>
+          {navigation.map(({ id, text }) => <a key={id} href={`#${id}`}>{text}</a>)}
+        </nav>
+      </aside>
+    </div>
   </main>;
 }

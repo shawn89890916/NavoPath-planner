@@ -3,6 +3,7 @@
 ## 2026-09-23 · 习惯详情改进
 
 ### 改进
+- 更新日志页面补齐历史中英文记录，并新增可滚动的右侧目录；窄屏下目录收进可展开列表。
 - 习惯详情支持直接勾选每个应检查日期，并将完成控件改为方框；新习惯默认时长为 15 分钟，类型切换与启用开关在缩放时保持清晰稳定。
 - 习惯总览与编辑页统一为方框日期格和横向滚动；编辑页默认完整显示 7 天、将今天排在第二位，日期范围会随滚动更新，点击范围可用月份选择器快速跳转。
 - 习惯新增 Start From（默认习惯创建日期）和可选 Till；范围外的日期在完成情况和快速选择中置灰并禁用。网页缩放时收紧候选任务与习惯勾选区留白，并将候选任务时长与“安排”“更多”并排。
@@ -206,6 +207,7 @@
 ## 2026-09-23 · Habit detail improvements
 
 ### Improvements
+- Restored the localized historical changelog entries and added a scrollable right-side contents list, with a collapsible version on narrow screens.
 - Habit details now let users mark each scheduled date complete with square checkboxes. New habits default to 15 minutes, and the type selector and enabled switch remain clear and stable when zoomed.
 - Habit overview and editing now share square date cells and horizontal scrolling. Editing shows seven full days with today second by default; the visible range tracks scrolling, and clicking it opens the month picker for quick jumps.
 - Habits now have a Start From date (defaulting to creation date) and an optional Till date; dates outside that range are dimmed and disabled in completion views and quick selection. Browser-zoom layouts use less checkbox space, with candidate task duration aligned beside Arrange and More.
