@@ -1,4 +1,5 @@
 import type { Habit, HabitDailyState, HabitFrequency, PlannerData, Task, TimelineRecord } from "../types";
+import { localIsoDate } from "./localDate";
 
 const MAX_LEGACY_HABITS = 1_000;
 const MAX_LEGACY_HABIT_TEXT_LENGTH = 60_000;
@@ -124,6 +125,8 @@ export function habitStateForDate(data: PlannerData, habitId: string, date: stri
 }
 
 export function toggleHabitCompletion(data: PlannerData, habitId: string, date: string, completed: boolean, now = new Date().toISOString()): PlannerData {
+  const habit = (data.habits || []).find((item) => item.id === habitId);
+  if (!habit || !isHabitDueOnDate(habit, date)) return data;
   const states = data.habitDailyStates || [];
   const existing = states.find((state) => state.habitId === habitId && state.date === date);
   const nextState: HabitDailyState = {
@@ -186,8 +189,20 @@ export function weekdayLabels(lang: "zh" | "en"): string[] {
   return lang === "zh" ? WEEKDAY_LABELS_ZH : WEEKDAY_LABELS_EN;
 }
 
+export function habitStartDate(habit: Pick<Habit, "startDate" | "createdAt">): string {
+  if (habit.startDate) return habit.startDate;
+  const createdAt = new Date(habit.createdAt);
+  return Number.isNaN(createdAt.getTime()) ? habit.createdAt.slice(0, 10) : localIsoDate(createdAt);
+}
+
+export function isHabitWithinDateRange(habit: Pick<Habit, "startDate" | "endDate" | "createdAt">, date: string): boolean {
+  const start = habitStartDate(habit);
+  return (!start || date >= start) && (!habit.endDate || date <= habit.endDate);
+}
+
 export function isHabitDueOnDate(habit: Habit, date: string): boolean {
   if (habit.archived) return false;
+  if (!isHabitWithinDateRange(habit, date)) return false;
   const rule: HabitFrequency = habit.frequencyRule || "daily";
   if (rule === "daily") return true;
   if (rule === "weekly") {
@@ -277,21 +292,21 @@ export function buildHabitMetrics(data: PlannerData, today: string): HabitMetric
   const archived = habits.filter((h) => h.archived);
 
   const todayStates = states.filter((s) => s.date === today);
-  const todayCompleted = todayStates.filter((s) => s.completed).length;
-  const todayPlanned = todayStates.filter((s) => s.timelineRecordId).length;
+  const todayCompleted = todayStates.filter((state) => state.completed && active.some((habit) => habit.id === state.habitId && isHabitDueOnDate(habit, today))).length;
+  const todayPlanned = todayStates.filter((state) => state.timelineRecordId && active.some((habit) => habit.id === state.habitId && isHabitDueOnDate(habit, today))).length;
   const todayDue = active.filter((h) => isHabitDueOnDate(h, today)).length;
 
   const plannedMinutes = todayStates.reduce((sum, s) => {
     if (!s.timelineRecordId) return sum;
     const habit = habits.find((h) => h.id === s.habitId);
-    return sum + (habit?.defaultDurationMinutes || 15);
+    return habit && isHabitDueOnDate(habit, today) ? sum + (habit.defaultDurationMinutes || 15) : sum;
   }, 0);
 
   const days7 = dateRange(today, 7);
   const days30 = dateRange(today, 30);
 
   const completedIn = (days: string[]) => days.filter((date) =>
-    states.some((s) => s.date === date && s.completed && active.some((h) => h.id === s.habitId))
+    states.some((state) => state.date === date && state.completed && active.some((habit) => habit.id === state.habitId && isHabitDueOnDate(habit, date)))
   ).length;
   const dueIn = (days: string[]) => days.filter((date) =>
     active.some((h) => isHabitDueOnDate(h, date))
@@ -302,15 +317,15 @@ export function buildHabitMetrics(data: PlannerData, today: string): HabitMetric
 
   const perHabit = active.map((habit) => {
     const todayState = states.find((s) => s.habitId === habit.id && s.date === today);
-    const completed7 = days7.filter((date) => states.some((s) => s.habitId === habit.id && s.date === date && s.completed)).length;
-    const completed30 = days30.filter((date) => states.some((s) => s.habitId === habit.id && s.date === date && s.completed)).length;
+    const completed7 = days7.filter((date) => isHabitDueOnDate(habit, date) && states.some((s) => s.habitId === habit.id && s.date === date && s.completed)).length;
+    const completed30 = days30.filter((date) => isHabitDueOnDate(habit, date) && states.some((s) => s.habitId === habit.id && s.date === date && s.completed)).length;
     const due7 = days7.filter((date) => isHabitDueOnDate(habit, date)).length;
-    const plannedCount = days7.filter((date) => states.some((s) => s.habitId === habit.id && s.date === date && s.timelineRecordId)).length;
+    const plannedCount = days7.filter((date) => isHabitDueOnDate(habit, date) && states.some((s) => s.habitId === habit.id && s.date === date && s.timelineRecordId)).length;
     const habitPlannedMinutes = plannedCount * (habit.defaultDurationMinutes || 15);
     return {
       habit,
-      completedToday: Boolean(todayState?.completed),
-      plannedToday: Boolean(todayState?.timelineRecordId),
+      completedToday: isHabitDueOnDate(habit, today) && Boolean(todayState?.completed),
+      plannedToday: isHabitDueOnDate(habit, today) && Boolean(todayState?.timelineRecordId),
       completed7d: completed7,
       completed30d: completed30,
       due7d: due7,

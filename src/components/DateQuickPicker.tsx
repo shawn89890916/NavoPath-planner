@@ -6,13 +6,15 @@ export type DateQuickPickerProps = {
   month: string;
   selectedDate: string;
   today: string;
+  minDate?: string;
+  maxDate?: string;
   weekStartsOn: 0 | 1;
   lang: Language;
   onMonthChange: (month: string) => void;
   onSelect: (date: string) => void;
 };
 
-export function DateQuickPicker({ month, selectedDate, today, weekStartsOn, lang, onMonthChange, onSelect }: DateQuickPickerProps) {
+export function DateQuickPicker({ month, selectedDate, today, minDate, maxDate, weekStartsOn, lang, onMonthChange, onSelect }: DateQuickPickerProps) {
   const [year, monthNumber] = month.split("-").map(Number);
   const first = new Date(year, monthNumber - 1, 1);
   const offset = (first.getDay() - weekStartsOn + 7) % 7;
@@ -41,12 +43,14 @@ export function DateQuickPicker({ month, selectedDate, today, weekStartsOn, lang
           const currentMonth = date.slice(0, 7) === month;
           const selected = date === selectedDate;
           const isToday = date === today;
+          const outsideRange = Boolean((minDate && date < minDate) || (maxDate && date > maxDate));
           return <button
             key={date}
             data-date={date}
             type="button"
             className={`${currentMonth ? "" : "outside"}${selected ? " selected" : ""}${isToday ? " today" : ""}`}
             aria-pressed={selected}
+            disabled={outsideRange}
             onClick={() => onSelect(date)}
           >{Number(date.slice(8, 10))}</button>;
         })}

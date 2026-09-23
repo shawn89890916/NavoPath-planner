@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Habit, HabitDailyState, HabitTrackingType } from "../types";
-import { isHabitDueOnDate } from "../utils/habits";
+import { habitStartDate, isHabitDueOnDate, isHabitWithinDateRange } from "../utils/habits";
 import { addDays } from "../utils/recurrence";
 import { ActionDisclosure, Button } from "./UiPrimitives";
 import { SettingToggle } from "./SettingsControls";
@@ -27,6 +27,8 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
   const [title, setTitle] = useState(habit.title);
   const [notes, setNotes] = useState(habit.notes || "");
   const [duration, setDuration] = useState(String(habit.defaultDurationMinutes || 15));
+  const [startDate, setStartDate] = useState(habitStartDate(habit));
+  const [endDate, setEndDate] = useState(habit.endDate || "");
   const [activeWeekdays, setActiveWeekdays] = useState<number[]>(habit.activeWeekdays ?? [1, 2, 3, 4, 5]);
   const [targetCount, setTargetCount] = useState(String(habit.targetCount || ""));
   const [trackingType, setTrackingType] = useState<HabitTrackingType>(habit.trackingType || "click-counter");
@@ -66,6 +68,8 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
     setTitle(habit.title);
     setNotes(habit.notes || "");
     setDuration(String(habit.defaultDurationMinutes || 15));
+    setStartDate(habitStartDate(habit));
+    setEndDate(habit.endDate || "");
     setActiveWeekdays(habit.activeWeekdays ?? [1, 2, 3, 4, 5]);
     setTargetCount(String(habit.targetCount || ""));
     setTrackingType(habit.trackingType || "click-counter");
@@ -133,8 +137,9 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
   };
   const goToToday = () => {
     window.clearTimeout(todayHighlightTimerRef.current);
-    setTodayHighlighted(true);
-    todayHighlightTimerRef.current = window.setTimeout(() => setTodayHighlighted(false), 900);
+    const todayIsInRange = isHabitWithinDateRange(rangeHabit, today);
+    setTodayHighlighted(todayIsInRange);
+    if (todayIsInRange) todayHighlightTimerRef.current = window.setTimeout(() => setTodayHighlighted(false), 900);
     positionDateAtSecond(today);
   };
   const navigateWeek = (direction: -1 | 1) => {
@@ -176,11 +181,14 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
   const saveChanges = () => {
     const parsedDuration = Number(duration);
     const parsedTarget = Number(targetCount);
+    const savedStartDate = startDate || habitStartDate(habit);
     onSave({
       title: title.trim() || habit.title,
       notes,
       trackingType,
       defaultDurationMinutes: parsedDuration >= STEP_MINUTES && parsedDuration <= 480 && parsedDuration % STEP_MINUTES === 0 ? parsedDuration : (habit.defaultDurationMinutes || 15),
+      startDate: savedStartDate,
+      endDate: endDate && endDate >= savedStartDate ? endDate : undefined,
       activeWeekdays,
       targetCount: targetCount.trim() && parsedTarget >= 0 ? parsedTarget : undefined,
       archived: !enabled,
@@ -194,7 +202,8 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
     const dayOffset = windowStartOffset + index;
     return { date: addDays(today, dayOffset), dayOffset };
   });
-  const dueDays = weekDays.filter((date) => isHabitDueOnDate(habit, date));
+  const rangeHabit = { ...habit, startDate: startDate || habitStartDate(habit), endDate: endDate || undefined };
+  const dueDays = weekDays.filter((date) => isHabitDueOnDate(rangeHabit, date));
   const completedDates = new Set(dailyStates.filter((state) => state.habitId === habit.id && state.completed).map((state) => state.date));
   const startYear = visibleRange[0].slice(0, 4);
   const endYear = visibleRange[1].slice(0, 4);
@@ -203,11 +212,11 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
   return <>
     <section className="df-habit-detail-progress" aria-label={zh ? "习惯完成情况" : "Habit completion"}>
       <header><div><button type="button" className="df-habit-detail-progress-range" aria-expanded={datePickerOpen} onClick={() => { setDatePickerMonth(visibleRange[0].slice(0, 7)); setDatePickerOpen((open) => !open); }}>{range}<span className="df-date-title-chevron" aria-hidden="true">⌄</span></button><span>{zh ? `本周完成 ${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length}` : `${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length} complete this week`}</span></div><div className="df-habit-detail-progress-actions"><button type="button" aria-label={zh ? "上一周" : "Previous week"} onClick={() => navigateWeek(-1)}>‹</button><button type="button" onClick={goToToday}>{zh ? "今天" : "Today"}</button><button type="button" aria-label={zh ? "下一周" : "Next week"} onClick={() => navigateWeek(1)}>›</button></div></header>
-      {datePickerOpen && <DateQuickPicker month={datePickerMonth} selectedDate={visibleRange[0]} today={today} weekStartsOn={1} lang={zh ? "zh" : "en"} onMonthChange={setDatePickerMonth} onSelect={positionDateAtSecond} />}
+      {datePickerOpen && <DateQuickPicker month={datePickerMonth} selectedDate={visibleRange[0]} today={today} minDate={rangeHabit.startDate} maxDate={rangeHabit.endDate} weekStartsOn={1} lang={zh ? "zh" : "en"} onMonthChange={setDatePickerMonth} onSelect={positionDateAtSecond} />}
       <div className="df-habit-detail-progress-days" ref={progressDaysRef} onScroll={handleProgressScroll}>{progressDays.map(({ date, dayOffset }) => {
         const day = new Date(`${date}T00:00:00`).getDay();
-        const due = isHabitDueOnDate(habit, date);
-        const completed = completedDates.has(date);
+        const due = isHabitDueOnDate(rangeHabit, date);
+        const completed = due && completedDates.has(date);
         const label = `${zh ? `周${weekdays[day]}` : weekdays[day]} ${date.slice(8)}`;
         return <button key={date} data-day-offset={dayOffset} type="button" className={`df-habit-detail-progress-day${due ? " is-due" : ""}${completed ? " is-complete" : ""}${date === today ? " is-today" : ""}${date === today && todayHighlighted ? " is-highlighted" : ""}`} title={label} aria-label={`${label}: ${completed ? (zh ? "已完成" : "Completed") : due ? (zh ? "未完成" : "Not completed") : (zh ? "无需检查" : "Not scheduled")}`} aria-pressed={completed} disabled={!due} onClick={() => onToggleDay(date, !completed)}><b>{zh ? `周${weekdays[day]}` : weekdays[day]}</b><small>{date.slice(8)}</small><i aria-hidden="true">{completed && <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l2.5 2.5L10 3" /></svg>}</i></button>;
       })}</div>
@@ -217,6 +226,8 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
       <div className="df-habit-setting-field df-habit-setting-toggle"><span>{zh ? "启用" : "Enabled"}</span><SettingToggle checked={enabled} ariaLabel={zh ? "启用习惯" : "Enable habit"} onChange={(next) => { setEnabled(next); onSave({ archived: !next }); }} /></div>
       <div className="df-habit-setting-field df-habit-type-field"><span>{zh ? "类型" : "Type"}</span><div className="df-habit-type-options" role="group" aria-label={zh ? "习惯类型" : "Habit type"}><button type="button" className={trackingType === "click-counter" ? "is-selected" : ""} aria-pressed={trackingType === "click-counter"} onClick={() => setTrackingType("click-counter")}>{zh ? "点击计数" : "Click Counter"}</button><button type="button" className={trackingType === "duration" ? "is-selected" : ""} aria-pressed={trackingType === "duration"} onClick={() => setTrackingType("duration")}>{zh ? "累积时长" : "Duration"}</button></div></div>
       {trackingType === "click-counter" ? <label className="df-habit-setting-field"><span>{zh ? "目标次数" : "Target Count"}</span><input type="number" min={0} value={targetCount} onChange={(event) => setTargetCount(event.target.value)} /></label> : <label className="df-habit-setting-field"><span>{zh ? "时长" : "Duration"}</span><input type="number" min={STEP_MINUTES} max={480} step={STEP_MINUTES} value={duration} onChange={(event) => setDuration(event.target.value)} /><small>{zh ? "以 15 分钟为单位" : "Set in 15-minute increments"}</small></label>}
+      <label className="df-habit-setting-field df-habit-date-field"><span>{zh ? "开始于" : "Start From"}</span><input type="date" value={startDate} onChange={(event) => { const next = event.target.value; setStartDate(next); if (endDate && next && endDate < next) setEndDate(""); }} /></label>
+      <label className="df-habit-setting-field df-habit-date-field"><span>{zh ? "截止于" : "Till"}</span><input type="date" value={endDate} min={rangeHabit.startDate} onChange={(event) => setEndDate(event.target.value)} /></label>
       <div className="df-habit-setting-field df-habit-weekday-field"><span>{zh ? "检查连续的星期几 *" : "Weekdays to check *"}</span><div className="df-habit-weekday-checks">{weekOrder.map((day) => <button key={day} type="button" className={`df-habit-weekday-check${activeWeekdays.includes(day) ? " is-selected" : ""}`} onClick={() => toggleWeekday(day)} aria-pressed={activeWeekdays.includes(day)}><i aria-hidden="true">{activeWeekdays.includes(day) && <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l2.5 2.5L10 3" /></svg>}</i><strong>{zh ? `星期${weekdays[day]}` : weekdays[day]}</strong></button>)}</div></div>
       <label className="df-habit-setting-field"><span>{zh ? "备注" : "Notes"}</span><textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
     </section>

@@ -334,6 +334,8 @@ export interface Habit {
   id: string;
   title: string;
   defaultDurationMinutes: number;
+  startDate?: string;
+  endDate?: string;
   trackingType?: HabitTrackingType;
   notes?: string;
   frequencyRule?: HabitFrequency;

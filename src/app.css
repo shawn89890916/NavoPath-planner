@@ -11393,6 +11393,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 
 .df-mobile-date-grid button.outside { color: color-mix(in srgb, var(--text-muted) 48%, transparent); }
+.df-mobile-date-grid button:disabled { color: var(--text-muted); opacity: .4; cursor: not-allowed; }
 .df-mobile-date-grid button.today::after {
   content: "";
   position: absolute;
@@ -11411,6 +11412,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   font-weight: 700;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-active) 42%, transparent);
 }
+.df-mobile-date-grid button.selected:disabled { background: transparent; color: var(--text-muted); font-weight: 500; box-shadow: none; }
+.df-mobile-date-grid button.today:disabled::after { background: var(--text-muted); }
 
 .df-timeline-draft-time {
   position: absolute;
@@ -32765,6 +32768,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: color-mix(in srgb, var(--accent-active) 12%, transparent);
 }
 
+.df-app .df-habit-overview-cell:disabled { cursor: default; opacity: .42; }
+
 /* Square completion unit matches the habit detail date strip. */
 .df-app .df-habit-overview-dot {
   width: 25px;
@@ -37818,17 +37823,17 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
    checks square; coarse pointers retain a square 44px target below. */
 @media (max-width: 980px) {
   #root .df-app.mode-execute .df-task-card .df-candidate-row {
-    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-columns: 28px minmax(0, 1fr);
     grid-template-rows: minmax(44px, auto) auto;
-    column-gap: 6px;
+    column-gap: 4px;
     row-gap: 2px;
   }
 
   #root .df-app.mode-execute .df-task-card .df-task-checkbox-wrap {
     grid-column: 1;
     grid-row: 1 / 3;
-    width: 44px;
-    min-width: 44px;
+    width: 28px;
+    min-width: 28px;
     height: 44px;
     display: grid;
     place-items: center;
@@ -37847,7 +37852,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app.mode-execute .df-task-card .df-block-check::before {
     content: "";
     position: absolute;
-    width: 44px;
+    width: 32px;
     height: 44px;
     left: 50%;
     top: 50%;
@@ -37861,11 +37866,33 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app.mode-execute .df-task-card .df-task-actions {
-    grid-column: 3;
-    grid-row: 1 / 3;
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
     min-width: 44px;
     justify-content: flex-end;
     gap: 0;
+  }
+
+  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-row {
+    --task-grid-template: 28px minmax(0, 1fr) auto;
+    --task-gap: 4px;
+  }
+
+  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-checkbox-wrap {
+    width: 28px;
+    min-width: 28px;
+    height: 44px;
+  }
+
+  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check::before {
+    content: "";
+    position: absolute;
+    width: 32px;
+    height: 44px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
 
   #root .df-app.mode-execute .df-task-card .df-task-actions .df-icon-button {
@@ -37894,6 +37921,27 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 
 @media (max-width: 980px) and (hover: none) and (pointer: coarse) {
+  #root .df-app.mode-execute .df-task-card .df-candidate-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+    column-gap: 6px;
+  }
+
+  #root .df-app.mode-execute .df-task-card .df-task-checkbox-wrap,
+  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-checkbox-wrap {
+    width: 44px;
+    min-width: 44px;
+  }
+
+  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-row {
+    --task-grid-template: 44px minmax(0, 1fr) auto;
+    --task-gap: 6px;
+  }
+
+  #root .df-app.mode-execute .df-task-card .df-task-block-check::before,
+  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check::before {
+    width: 44px;
+  }
+
   #root .df-app.mode-execute .df-time-block .df-block-check {
     width: 44px;
     min-width: 44px;
@@ -38869,12 +38917,19 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app.mode-execute .df-candidate-list .df-task-block .df-task-checkbox-wrap {
-    width: 44px;
-    min-width: 44px;
+    width: 28px;
+    min-width: 28px;
     min-height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    #root .df-app.mode-execute .df-candidate-list .df-task-block .df-task-checkbox-wrap {
+      width: 44px;
+      min-width: 44px;
+    }
   }
 
   #root .df-app.mode-execute .df-candidate-list .df-task-block .df-task-block-check {

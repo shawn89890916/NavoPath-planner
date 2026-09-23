@@ -255,6 +255,7 @@ export function TaskCheckbox({
   checked,
   tone = "muted",
   returned,
+  disabled,
   priority,
   children,
   className,
@@ -267,6 +268,7 @@ export function TaskCheckbox({
   checked?: boolean;
   tone?: string;
   returned?: boolean;
+  disabled?: boolean;
   priority?: "high" | "medium" | "low" | null;
   children?: ReactNode;
   className?: string;
@@ -291,6 +293,7 @@ export function TaskCheckbox({
         title={title}
         aria-label={ariaLabel}
         aria-pressed={checked}
+        disabled={disabled}
         onClick={onClick}
         onMouseDown={onMouseDown}
         onPointerDown={onPointerDown}

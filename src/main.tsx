@@ -45,7 +45,7 @@ import {
 } from "./timelineGeometry";
 import { t, detectSystemLanguage, catLabels, priLabels, viewLabel, monthTitle, weekdayName } from "./i18n";
 import { term } from "./terminology";
-import { migrateLegacyHabitTracker, scheduleHabitRecord, toggleHabitCompletion, unscheduleHabitRecord, updateHabit, archiveHabit, buildHabitMetrics, isHabitDueOnDate, weekdayLabels, type HabitMetrics } from "./utils/habits";
+import { migrateLegacyHabitTracker, scheduleHabitRecord, toggleHabitCompletion, unscheduleHabitRecord, updateHabit, archiveHabit, buildHabitMetrics, isHabitDueOnDate, isHabitWithinDateRange, weekdayLabels, type HabitMetrics } from "./utils/habits";
 import { shouldShowHabitCandidates } from "./utils/habitCandidateVisibility";
 import { normalizeAiReply } from "./utils/aiReply";
 import { candidateReturnedScheduleSummary, candidateScheduleSummary, type CandidateScheduleSummary } from "./utils/candidateSchedule";
@@ -5811,6 +5811,7 @@ function App() {
       id: uid("habit"),
       title: lang === "zh" ? "新习惯" : "New habit",
       defaultDurationMinutes: 15,
+      startDate: today,
       frequencyRule: "daily",
       activeWeekdays: [1, 2, 3, 4, 5],
       order: Date.now(),
@@ -11233,7 +11234,7 @@ function HabitCandidateCard(props: {
   const active = props.habits
     .filter((habit) => !habit.archived)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
-  const completed = active.filter((habit) => props.habitDailyStates.some((state) => state.habitId === habit.id && state.date === props.today && state.completed)).length;
+  const completed = active.filter((habit) => isHabitWithinDateRange(habit, props.today) && props.habitDailyStates.some((state) => state.habitId === habit.id && state.date === props.today && state.completed)).length;
   if (active.length === 0) return null;
 
   return (
@@ -11250,7 +11251,8 @@ function HabitCandidateCard(props: {
     >
       {active.map((habit) => {
         const state = props.habitDailyStates.find((item) => item.habitId === habit.id && item.date === props.today);
-        const isDone = Boolean(state?.completed);
+        const inDateRange = isHabitWithinDateRange(habit, props.today);
+        const isDone = inDateRange && Boolean(state?.completed);
         return (
           <TaskBlock
             as="article"
@@ -11260,17 +11262,17 @@ function HabitCandidateCard(props: {
             selected={Boolean(state?.timelineRecordId)}
             projectColor="var(--accent-active)"
             key={habit.id}
-            className={`df-habit-candidate-row${isDone ? " completed" : ""}${state?.timelineRecordId ? " scheduled" : ""}`}
+            className={`df-habit-candidate-row${isDone ? " completed" : ""}${state?.timelineRecordId ? " scheduled" : ""}${inDateRange ? "" : " is-out-of-range"}`}
             dragState={props.draggedHabitId === habitDragTaskId(habit.id) ? "source-placeholder" : undefined}
-            onPointerDown={(event) => props.onPointerDragStart(event, habit)}
+            onPointerDown={inDateRange ? (event) => props.onPointerDragStart(event, habit) : undefined}
             onClick={(event) => { event.stopPropagation(); if (!props.isClickSuppressed?.()) props.onEditHabit(habit.id); }}
             title={props.lang === "zh" ? "点击编辑，拖动安排到时间轴" : "Click to edit, drag to schedule"}
           >
             <TaskBlockRow>
               <TaskCheckbox
                 checked={isDone}
+                disabled={!inDateRange}
                 tone="muted"
-                title={isDone ? (props.lang === "zh" ? "取消完成" : "Mark incomplete") : (props.lang === "zh" ? "完成习惯" : "Complete habit")}
                 onMouseDown={(event) => event.stopPropagation()}
                 onPointerDown={(event) => event.stopPropagation()}
                 onClick={(event) => { event.stopPropagation(); props.onToggle(habit.id, !isDone); }}
@@ -11390,7 +11392,7 @@ function HabitOverviewBody(props: {
         <header className="df-habit-overview-toolbar">
           <div className="df-habit-overview-range">
             <button type="button" className="df-habit-overview-range-trigger" aria-expanded={datePickerOpen} onClick={() => { setDatePickerMonth(weekDays[0].slice(0, 7)); setDatePickerOpen((open) => !open); }}>{weekRange}<span className="df-date-title-chevron" aria-hidden="true">⌄</span></button>
-            <span>{zh ? `${metrics.todayCompleted}/${metrics.active} 今日完成` : `${metrics.todayCompleted}/${metrics.active} complete today`}</span>
+            <span>{zh ? `${metrics.todayCompleted}/${metrics.todayDue} 今日完成` : `${metrics.todayCompleted}/${metrics.todayDue} complete today`}</span>
           </div>
           <div className="df-habit-overview-actions">
             <button type="button" className="df-habit-nav" aria-label={zh ? "上一周" : "Previous week"} onClick={() => setWeekOffset((value) => value - 1)}>‹</button>
@@ -11430,16 +11432,16 @@ function HabitOverviewBody(props: {
               </button>
               {weekDays.map((day) => {
                 const state = props.dailyStates.find((entry) => entry.habitId === item.habit.id && entry.date === day);
-                const completed = Boolean(state?.completed);
-                const planned = Boolean(state?.timelineRecordId);
                 const due = isHabitDueOnDate(item.habit, day);
+                const completed = due && Boolean(state?.completed);
+                const planned = due && Boolean(state?.timelineRecordId);
                 return (
                   <button
                     type="button"
                     key={`${item.habit.id}-${day}`}
                     className={`df-habit-overview-cell${day === props.today ? " is-today" : ""}${completed ? " is-done" : ""}${planned ? " is-planned" : ""}${due ? " is-due" : ""}`}
                     aria-pressed={completed}
-                    aria-label={`${completed ? (zh ? "取消完成" : "Mark incomplete") : (zh ? "完成" : "Mark complete")} ${item.habit.title} ${day}`}
+                    aria-label={`${!due ? (zh ? "无需检查" : "Not scheduled") : completed ? (zh ? "取消完成" : "Mark incomplete") : (zh ? "完成" : "Mark complete")} ${item.habit.title} ${day}`}
                     disabled={!due}
                     onClick={() => props.onToggleDay(item.habit.id, day, !completed)}
                   >
