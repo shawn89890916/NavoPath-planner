@@ -9,7 +9,7 @@
 - 横屏缩放时，候选任务标题保留足够阅读宽度，时长信息移到下一行；日历勾选控件保持方正，视图切换标签不再折行。
 
 ### 修复
-- 浏览器缩放不再把设置开关拉高变形；习惯启用开关改用统一的设置开关样式。
+- 浏览器缩放不再把设置开关拉高变形；习惯启用开关改用统一的中性色设置开关样式。
 
 ## 2026-09-22 · MCP 连接整理
 
@@ -208,7 +208,7 @@
 - In landscape browser zoom, candidate titles retain readable width with durations on a separate line; calendar checkboxes stay square and view-switch labels stay on one line.
 
 ### Fixes
-- Browser zoom no longer stretches settings switches; the habit enabled switch now uses the shared settings switch style.
+- Browser zoom no longer stretches settings switches; the habit enabled switch uses the shared neutral-toned settings switch style.
 
 ## 2026-09-22 · Cleaner MCP connection
 

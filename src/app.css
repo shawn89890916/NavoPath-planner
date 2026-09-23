@@ -21436,13 +21436,9 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-settings-row[data-disabled="true"] .df-settings-row-desc { color: var(--text-faint); }
 .df-settings-row[data-disabled="true"] .df-settings-row-control { opacity: .55; pointer-events: none; }
 
-/* SettingToggle: a hand-drawn paper switch. Both the track AND the
-   thumb take the state color — off = deep brick red, on = deep olive
-   green — so the state is obvious at a glance, not read from a faint
-   border. The thumb is a slightly brighter shade of the same hue so
-   it reads as a solid colored bead against the track, never a white
-   circle. A faint diagonal hatch (::before) gives a crayon/paper
-   tooth without becoming noise. */
+/* SettingToggle: a paper switch using neutral ink and paper tones.
+   State is conveyed by the dark track and thumb position; a faint
+   diagonal hatch (::before) keeps the track consistent with the UI. */
 .df-settings-toggle {
   position: relative;
   flex: 0 0 auto;
@@ -21452,9 +21448,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-radius: 999px;
   cursor: pointer;
   padding: 0;
-  /* Off = deep brick red. The track uses a vertical gradient (lighter
-     top, denser bottom) so the fill has depth instead of being a flat
-     block, plus two fine radial speckle layers for paper grain. */
+  /* Fine speckle layers add a subtle paper grain to the neutral track. */
   background-color: var(--toggle-off-fill);
   background-image:
     radial-gradient(circle at 22% 38%, rgba(255,255,255,.10) 0 .6px, transparent .8px),
@@ -21523,7 +21517,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  /* Thumb takes the OFF state color (brighter brick red) — never white. */
+  /* The paper-colored thumb stays neutral in both states. */
   background: var(--toggle-off-thumb);
   border: 1px solid var(--toggle-off-thumb-border);
   /* A whisper of paper grain on the thumb so it does not look like a
@@ -21537,7 +21531,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   z-index: 1;
   transition: transform var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion);
 }
-/* Thumb takes the ON state color (brighter olive green) and slides right. */
+/* The thumb slides right to indicate the on state. */
 .df-settings-toggle[data-state="on"] .df-settings-toggle-knob {
   transform: translateX(20px);
   background: var(--toggle-on-thumb);
@@ -31891,16 +31885,16 @@ body.df-planning-native-dragging [contenteditable] * {
   --paper-note: color-mix(in srgb, var(--accent-active) 8%, transparent);
   --paper-note-strong: color-mix(in srgb, var(--accent-active) 14%, transparent);
   --paper-float-shadow: 0 20px 48px rgba(20,18,15,.18);
-  --toggle-off-fill: #D68169;
-  --toggle-off-fill-deep: #B86A52;
-  --toggle-off-thumb: #E0967E;
-  --toggle-off-thumb-border: #9A5740;
-  --toggle-on-fill: #7EA071;
-  --toggle-on-fill-deep: #6A8F5E;
-  --toggle-on-thumb: #92B685;
-  --toggle-on-thumb-border: #5A7350;
+  --toggle-off-fill: color-mix(in srgb, var(--text-muted) 28%, var(--surface-main));
+  --toggle-off-fill-deep: color-mix(in srgb, var(--text-muted) 38%, var(--surface-main));
+  --toggle-off-thumb: var(--surface-main);
+  --toggle-off-thumb-border: var(--paper-rule-strong);
+  --toggle-on-fill: var(--text-main);
+  --toggle-on-fill-deep: color-mix(in srgb, var(--text-main) 84%, var(--surface-main));
+  --toggle-on-thumb: var(--surface-main);
+  --toggle-on-thumb-border: var(--text-main);
   --toggle-border: var(--paper-rule-strong);
-  --toggle-border-hover: var(--accent-active);
+  --toggle-border-hover: var(--paper-rule-strong);
   background-color: var(--bg-app);
   background-image:
     radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--text-main) 2.2%, transparent) 0 .55px, transparent .75px),
@@ -39552,8 +39546,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app .df-settings-toggle[data-state="on"]::before {
-    background: var(--accent-active);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-active) 75%, var(--text-main));
+    background: var(--text-main);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-main) 75%, var(--surface-main));
   }
 
   #root .df-app .df-settings-toggle-knob {
@@ -39570,7 +39564,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
   #root .df-app .df-settings-toggle[data-state="on"] .df-settings-toggle-knob {
     transform: translate(20px, -50%);
-    background: #fff;
+    background: var(--surface-main);
     border: 0;
   }
 }
