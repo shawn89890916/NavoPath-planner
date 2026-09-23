@@ -10,7 +10,7 @@
 - 整理详情操作区，将返回与保存并排放置，并把归档和二次确认的永久删除收进更多菜单。
 - 周进度日期栏可无限向前后横向滚动，滚动到边缘会自动延展；点击“今天”会平滑定位并短暂高亮。习惯类型选择和星期选择去除多余卡框，增强选中、悬停反馈并保持右对齐。
 - 横屏缩放时，候选任务标题保留足够阅读宽度，时长信息移到下一行；日历勾选控件保持方正，视图切换标签不再折行。
-- 候选任务的安排按钮悬停约 300 毫秒后才生成时间预览，旁侧操作切换为“定位/返回”；定位会平滑聚焦时间轴，返回则回到原滚动位置。
+- 普通与逾期候选任务均可在安排入口悬停约 300 毫秒后预览建议时段，并从右侧“定位/返回”平滑聚焦时间轴或恢复原位置；未定位的预览在指针离开任务卡后收起。
 
 ### 修复
 - 浏览器缩放不再把设置开关拉高变形；习惯启用开关改用统一的中性色设置开关样式。
@@ -215,7 +215,7 @@
 - Reorganized detail actions with Back and Save side by side; Archive and two-step permanent deletion are available in the More menu.
 - The weekly progress strip extends horizontally in either direction as users reach its edges, without day cards; Today smoothly returns to the current date and briefly highlights it. Habit type and weekday choices lose their extra card borders, gain clearer selected and hover states, and remain right-aligned.
 - In landscape browser zoom, candidate titles retain readable width with durations on a separate line; calendar checkboxes stay square and view-switch labels stay on one line.
-- Candidate scheduling previews now wait about 300 ms of hover before activating. The adjacent action switches to Locate/Back, smoothly focusing the timeline and returning to its previous scroll position.
+- Regular and overdue candidates now preview suggested times after about 300 ms of hover. The right-side Locate/Back action smoothly focuses the timeline or restores its previous position; an unlocated preview closes when the pointer leaves the task card.
 
 ### Fixes
 - Browser zoom no longer stretches settings switches; the habit enabled switch uses the shared neutral-toned settings switch style.
