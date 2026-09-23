@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Habit, HabitDailyState, HabitTrackingType } from "../types";
 import { isHabitDueOnDate } from "../utils/habits";
 import { addDays } from "../utils/recurrence";
@@ -30,7 +30,28 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
   const [trackingType, setTrackingType] = useState<HabitTrackingType>(habit.trackingType || "click-counter");
   const [enabled, setEnabled] = useState(!habit.archived);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [windowStartOffset, setWindowStartOffset] = useState(-14);
+  const [windowDayCount, setWindowDayCount] = useState(35);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [todayHighlighted, setTodayHighlighted] = useState(false);
+  const progressDaysRef = useRef<HTMLDivElement>(null);
+  const todayHighlightTimerRef = useRef<number | undefined>(undefined);
+  const windowStartOffsetRef = useRef(-14);
+  const prependScrollWidthRef = useRef<number | null>(null);
+  const prependPendingRef = useRef(false);
+  const appendPendingRef = useRef(false);
+
+  const scrollTodayIntoView = useCallback((instant = false) => {
+    const container = progressDaysRef.current;
+    if (!container) return;
+    const button = container.querySelector<HTMLButtonElement>(".df-habit-detail-progress-day.is-today");
+    if (!button) return;
+    const containerRect = container.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+    const left = container.scrollLeft + buttonRect.left - containerRect.left - (container.clientWidth - buttonRect.width) / 2;
+    const behavior = instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    container.scrollTo({ left, behavior });
+  }, []);
 
   useEffect(() => {
     setTitle(habit.title);
@@ -41,10 +62,84 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
     setTrackingType(habit.trackingType || "click-counter");
     setEnabled(!habit.archived);
     setWeekOffset(0);
+    windowStartOffsetRef.current = -14;
+    prependPendingRef.current = false;
+    appendPendingRef.current = false;
+    prependScrollWidthRef.current = null;
+    setWindowStartOffset(-14);
+    setWindowDayCount(35);
     setConfirmDelete(false);
   }, [habit.id]);
 
+  useEffect(() => {
+    if (!prependPendingRef.current) return;
+    const container = progressDaysRef.current;
+    const previousWidth = prependScrollWidthRef.current;
+    if (!container || previousWidth === null) return;
+    container.scrollLeft += container.scrollWidth - previousWidth;
+    prependScrollWidthRef.current = null;
+    window.setTimeout(() => { prependPendingRef.current = false; }, 240);
+  }, [windowStartOffset]);
+
+  useEffect(() => {
+    appendPendingRef.current = false;
+  }, [windowDayCount]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => scrollTodayIntoView(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [habit.id, scrollTodayIntoView]);
+
+  useEffect(() => () => window.clearTimeout(todayHighlightTimerRef.current), []);
+
   const toggleWeekday = (day: number) => setActiveWeekdays((days) => days.includes(day) ? days.filter((item) => item !== day) : [...days, day].sort());
+  const goToToday = () => {
+    window.clearTimeout(todayHighlightTimerRef.current);
+    setTodayHighlighted(true);
+    todayHighlightTimerRef.current = window.setTimeout(() => setTodayHighlighted(false), 900);
+    setWeekOffset(0);
+    window.requestAnimationFrame(() => scrollTodayIntoView());
+  };
+  const navigateWeek = (direction: -1 | 1) => {
+    const nextOffset = weekOffset + direction;
+    setWeekOffset(nextOffset);
+    const container = progressDaysRef.current;
+    const target = container?.querySelector<HTMLButtonElement>(`[data-day-offset="${nextOffset * 7}"]`);
+    if (!container || !target) return;
+    const left = container.scrollLeft + target.getBoundingClientRect().left - container.getBoundingClientRect().left - (container.clientWidth - target.offsetWidth) / 2;
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    container.scrollTo({ left, behavior });
+  };
+  const handleProgressScroll = () => {
+    const container = progressDaysRef.current;
+    if (!container) return;
+    const midpoint = container.getBoundingClientRect().left + container.clientWidth / 2;
+    const dates = Array.from(container.querySelectorAll<HTMLButtonElement>(".df-habit-detail-progress-day"));
+    const centerDay = dates.reduce<HTMLButtonElement | null>((closest, item) => {
+      if (!closest) return item;
+      return Math.abs(item.getBoundingClientRect().left + item.offsetWidth / 2 - midpoint) < Math.abs(closest.getBoundingClientRect().left + closest.offsetWidth / 2 - midpoint) ? item : closest;
+    }, null);
+    if (centerDay) {
+      const dateOffset = Number(centerDay.dataset.dayOffset);
+      const date = addDays(today, dateOffset);
+      const currentWeekStart = addDays(today, -((new Date(`${today}T00:00:00`).getDay() + 6) % 7));
+      const centerWeekStart = addDays(date, -((new Date(`${date}T00:00:00`).getDay() + 6) % 7));
+      const nextWeekOffset = Math.round((Date.parse(`${centerWeekStart}T00:00:00Z`) - Date.parse(`${currentWeekStart}T00:00:00Z`)) / 604800000);
+      setWeekOffset((current) => current === nextWeekOffset ? current : nextWeekOffset);
+    }
+    if (container.scrollLeft < 220 && !prependPendingRef.current) {
+      prependScrollWidthRef.current = container.scrollWidth;
+      prependPendingRef.current = true;
+      const nextStart = windowStartOffsetRef.current - 28;
+      windowStartOffsetRef.current = nextStart;
+      setWindowStartOffset(nextStart);
+      setWindowDayCount((count) => count + 28);
+    }
+    if (container.scrollLeft + container.clientWidth > container.scrollWidth - 220 && !appendPendingRef.current) {
+      appendPendingRef.current = true;
+      setWindowDayCount((count) => count + 28);
+    }
+  };
   const saveChanges = () => {
     const parsedDuration = Number(duration);
     const parsedTarget = Number(targetCount);
@@ -62,19 +157,23 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
   const baseDay = addDays(today, weekOffset * 7);
   const weekStart = addDays(baseDay, -((new Date(`${baseDay}T00:00:00`).getDay() + 6) % 7));
   const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  const progressDays = Array.from({ length: windowDayCount }, (_, index) => {
+    const dayOffset = windowStartOffset + index;
+    return { date: addDays(today, dayOffset), dayOffset };
+  });
   const dueDays = weekDays.filter((date) => isHabitDueOnDate(habit, date));
   const completedDates = new Set(dailyStates.filter((state) => state.habitId === habit.id && state.completed).map((state) => state.date));
   const range = `${weekDays[0].slice(5).replace("-", "/")} - ${weekDays[6].slice(5).replace("-", "/")}`;
 
   return <>
     <section className="df-habit-detail-progress" aria-label={zh ? "习惯完成情况" : "Habit completion"}>
-      <header><div><strong>{range}</strong><span>{zh ? `本周完成 ${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length}` : `${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length} complete this week`}</span></div><div className="df-habit-detail-progress-actions"><button type="button" aria-label={zh ? "上一周" : "Previous week"} onClick={() => setWeekOffset((value) => value - 1)}>‹</button><button type="button" onClick={() => setWeekOffset(0)}>{zh ? "今天" : "Today"}</button><button type="button" aria-label={zh ? "下一周" : "Next week"} onClick={() => setWeekOffset((value) => value + 1)}>›</button></div></header>
-      <div className="df-habit-detail-progress-days">{weekDays.map((date) => {
+      <header><div><strong>{range}</strong><span>{zh ? `本周完成 ${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length}` : `${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length} complete this week`}</span></div><div className="df-habit-detail-progress-actions"><button type="button" aria-label={zh ? "上一周" : "Previous week"} onClick={() => navigateWeek(-1)}>‹</button><button type="button" onClick={goToToday}>{zh ? "今天" : "Today"}</button><button type="button" aria-label={zh ? "下一周" : "Next week"} onClick={() => navigateWeek(1)}>›</button></div></header>
+      <div className="df-habit-detail-progress-days" ref={progressDaysRef} onScroll={handleProgressScroll}>{progressDays.map(({ date, dayOffset }) => {
         const day = new Date(`${date}T00:00:00`).getDay();
         const due = isHabitDueOnDate(habit, date);
         const completed = completedDates.has(date);
         const label = `${zh ? `周${weekdays[day]}` : weekdays[day]} ${date.slice(8)}`;
-        return <button key={date} type="button" className={`df-habit-detail-progress-day${due ? " is-due" : ""}${completed ? " is-complete" : ""}${date === today ? " is-today" : ""}`} title={label} aria-label={`${label}: ${completed ? (zh ? "已完成" : "Completed") : due ? (zh ? "未完成" : "Not completed") : (zh ? "无需检查" : "Not scheduled")}`} aria-pressed={completed} disabled={!due} onClick={() => onToggleDay(date, !completed)}><b>{zh ? `周${weekdays[day]}` : weekdays[day]}</b><small>{date.slice(8)}</small><i aria-hidden="true">{completed && <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l2.5 2.5L10 3" /></svg>}</i></button>;
+        return <button key={date} data-day-offset={dayOffset} type="button" className={`df-habit-detail-progress-day${due ? " is-due" : ""}${completed ? " is-complete" : ""}${date === today ? " is-today" : ""}${date === today && todayHighlighted ? " is-highlighted" : ""}`} title={label} aria-label={`${label}: ${completed ? (zh ? "已完成" : "Completed") : due ? (zh ? "未完成" : "Not completed") : (zh ? "无需检查" : "Not scheduled")}`} aria-pressed={completed} disabled={!due} onClick={() => onToggleDay(date, !completed)}><b>{zh ? `周${weekdays[day]}` : weekdays[day]}</b><small>{date.slice(8)}</small><i aria-hidden="true">{completed && <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l2.5 2.5L10 3" /></svg>}</i></button>;
       })}</div>
     </section>
     <section className="df-habit-settings-form">

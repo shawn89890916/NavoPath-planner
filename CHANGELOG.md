@@ -5,6 +5,7 @@
 ### 改进
 - 习惯详情支持直接勾选每个应检查日期，并将完成控件改为方框；新习惯默认时长为 15 分钟，类型切换与启用开关在缩放时保持清晰稳定。
 - 整理详情操作区，将返回与保存并排放置，并把归档和二次确认的永久删除收进更多菜单。
+- 周进度日期栏可无限向前后横向滚动，滚动到边缘会自动延展；点击“今天”会平滑定位并短暂高亮。习惯类型选择和星期选择去除多余卡框，增强选中、悬停反馈并保持右对齐。
 - 横屏缩放时，候选任务标题保留足够阅读宽度，时长信息移到下一行；日历勾选控件保持方正，视图切换标签不再折行。
 
 ## 2026-09-22 · MCP 连接整理
@@ -200,6 +201,7 @@
 ### Improvements
 - Habit details now let users mark each scheduled date complete with square checkboxes. New habits default to 15 minutes, and the type selector and enabled switch remain clear and stable when zoomed.
 - Reorganized detail actions with Back and Save side by side; Archive and two-step permanent deletion are available in the More menu.
+- The weekly progress strip extends horizontally in either direction as users reach its edges, without day cards; Today smoothly returns to the current date and briefly highlights it. Habit type and weekday choices lose their extra card borders, gain clearer selected and hover states, and remain right-aligned.
 - In landscape browser zoom, candidate titles retain readable width with durations on a separate line; calendar checkboxes stay square and view-switch labels stay on one line.
 
 ## 2026-09-22 · Cleaner MCP connection
