@@ -37746,7 +37746,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app.mode-execute .df-candidate-panel { padding: 10px 10px 0; }
-  #root .df-app.mode-execute button { min-height: 44px; }
+  #root .df-app.mode-execute button:not([role="switch"]) { min-height: 44px; }
   #root .df-app.mode-execute [role="button"] { min-height: 44px; }
   #root .df-app.mode-execute .df-candidate-list { overflow-x: hidden; }
 }
@@ -39493,13 +39493,16 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 
 /* The final application button reset must not erase the desktop switch track. */
-@media (min-width: 900px) {
+@media (hover: hover) and (pointer: fine) {
   #root .df-app .df-settings-toggle {
     box-sizing: border-box;
     min-width: 44px;
     min-height: 24px;
     width: 44px;
     height: 24px;
+    padding: 0;
+    border: 1px solid var(--toggle-border);
+    border-radius: 999px;
     background-color: var(--toggle-off-fill);
     background-image:
       radial-gradient(circle at 22% 38%, rgba(255,255,255,.10) 0 .6px, transparent .8px),
@@ -39521,32 +39524,40 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 
  /* Touch settings use the same system switch in portrait and landscape. */
-@media (max-width: 899.98px) and (orientation: portrait),
-       (max-width: 1180px) and (orientation: landscape) {
+@media (pointer: coarse) and (max-width: 899.98px) and (orientation: portrait),
+       (pointer: coarse) and (max-width: 1180px) and (orientation: landscape) {
   #root .df-app .df-settings-toggle {
     box-sizing: border-box;
     width: 51px;
     min-width: 51px;
-    height: 31px;
-    min-height: 31px;
+    height: 44px;
+    min-height: 44px;
     border: 0;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--text-muted) 28%, var(--surface-main));
+    background: transparent;
     background-image: none;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-muted) 22%, transparent);
+    box-shadow: none;
+    overflow: visible;
   }
 
   #root .df-app .df-settings-toggle::before {
-    display: none;
+    display: block;
+    inset: 50% 0 auto;
+    height: 31px;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text-muted) 28%, var(--surface-main));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-muted) 22%, transparent);
+    opacity: 1;
   }
 
-  #root .df-app .df-settings-toggle[data-state="on"] {
+  #root .df-app .df-settings-toggle[data-state="on"]::before {
     background: var(--accent-active);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-active) 75%, var(--text-main));
   }
 
   #root .df-app .df-settings-toggle-knob {
-    top: 2px;
+    top: 50%;
     left: 2px;
     width: 27px;
     height: 27px;
@@ -39554,10 +39565,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: #fff;
     background-image: none;
     box-shadow: 0 1px 3px rgba(22, 19, 15, .26);
+    transform: translateY(-50%);
   }
 
   #root .df-app .df-settings-toggle[data-state="on"] .df-settings-toggle-knob {
-    transform: translateX(20px);
+    transform: translate(20px, -50%);
     background: #fff;
     border: 0;
   }

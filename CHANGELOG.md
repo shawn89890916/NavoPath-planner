@@ -8,6 +8,9 @@
 - 周进度日期栏可无限向前后横向滚动，滚动到边缘会自动延展；点击“今天”会平滑定位并短暂高亮。习惯类型选择和星期选择去除多余卡框，增强选中、悬停反馈并保持右对齐。
 - 横屏缩放时，候选任务标题保留足够阅读宽度，时长信息移到下一行；日历勾选控件保持方正，视图切换标签不再折行。
 
+### 修复
+- 浏览器缩放不再把设置开关拉高变形；习惯启用开关改用统一的设置开关样式。
+
 ## 2026-09-22 · MCP 连接整理
 
 ### 改进
@@ -203,6 +206,9 @@
 - Reorganized detail actions with Back and Save side by side; Archive and two-step permanent deletion are available in the More menu.
 - The weekly progress strip extends horizontally in either direction as users reach its edges, without day cards; Today smoothly returns to the current date and briefly highlights it. Habit type and weekday choices lose their extra card borders, gain clearer selected and hover states, and remain right-aligned.
 - In landscape browser zoom, candidate titles retain readable width with durations on a separate line; calendar checkboxes stay square and view-switch labels stay on one line.
+
+### Fixes
+- Browser zoom no longer stretches settings switches; the habit enabled switch now uses the shared settings switch style.
 
 ## 2026-09-22 · Cleaner MCP connection
 
