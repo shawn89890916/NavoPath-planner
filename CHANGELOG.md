@@ -4,7 +4,7 @@
 
 ### 修复
 - 修复任务编辑页的 AI 子任务拆解：使用专用生成流程，将有效结果直接追加到当前任务并保留已有子任务。
-- 修复今日候选中勾选子任务会误切换父任务的问题，并避免展开列表挤压习惯区。
+- 修复今日候选中勾选子任务会误切换父任务的问题；展开子任务时父卡片会按内容扩展，避免与下方任务和习惯区重叠。
 
 ### 改进
 - 为 AI 子任务生成加入动态反馈和逐项显现效果；收紧规划树子任务缩进，并让编辑页保留所有子任务的同时统一复选框样式。
@@ -224,7 +224,7 @@
 
 ### Fixed
 - Fixed AI subtask breakdown in task editing: generated subtasks now append directly to the focused task while preserving existing subtasks.
-- Fixed candidate subtask checkboxes toggling their parent task and prevented expanded lists from compressing the Habits section.
+- Fixed candidate subtask checkboxes toggling their parent task; expanded parent cards now grow with their subtasks to prevent overlap with lower tasks and the Habits section.
 
 ### Improved
 - Added motion feedback and a staggered reveal for AI-generated subtasks; reduced planning tree indentation and matched edit page checkbox styling while keeping completed subtasks visible.

@@ -26930,6 +26930,9 @@ body.df-timeline-pointer-drag * {
   overflow: visible;
   transition: background var(--motion-instant) var(--motion-ease), max-height var(--motion-base) var(--motion-ease), opacity var(--motion-fade) var(--motion-ease), transform var(--motion-base) var(--motion-ease);
 }
+.df-app .df-candidate-task-row:not(.is-completing):has(.df-candidate-subtasks) {
+  max-height: none;
+}
 .df-app .df-candidate-task-row.is-completing {
   max-height: 0;
   overflow: clip;

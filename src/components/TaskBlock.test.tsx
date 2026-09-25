@@ -200,6 +200,8 @@ describe("TaskBlock shared component contract", () => {
     expect(main).toContain('variant="habit-child"');
     expect(main).toContain("df-candidate-subtask-nest");
     expect(main.match(/closest\("\.df-candidate-row \.df-block-check"\)/g)).toHaveLength(2);
+    expect(css).toContain(".df-app .df-candidate-task-row:not(.is-completing):has(.df-candidate-subtasks)");
+    expect(css).toContain("max-height: none;");
     expect(css).toContain("#root .df-app.mode-execute .df-candidate-list .df-habit-candidate-card {");
     expect(css).toContain(".df-app .df-candidate-subtask-toggle {");
     expect(css).toContain("border: 0;");
