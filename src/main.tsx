@@ -78,7 +78,7 @@ import {
   parseRecurrenceOccurrenceId,
   startOfWeekIso,
 } from "./utils/recurrence";
-import { appendAiSubtasks } from "./utils/aiSubtasks";
+import { appendAiSubtasks, getAiSubtaskSuggestions } from "./utils/aiSubtasks";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
 import { countSubtasks, countDoneSubtasks, addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree } from "./utils/treeOrder";
 import { promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToToday, toggleTodayCandidate } from "./utils/todayCandidates";
@@ -8118,24 +8118,43 @@ function App() {
     if (!snapshot || !task || subtaskAiBusyId) return;
     setSubtaskAiBusyId(taskId);
     try {
-      if (!authStateRef.current?.user) throw new Error(lang === "zh" ? "全局 AI 需要先登录云端账号" : "Sign in to use the global AI agent");
-      await flushPendingSave({ urgent: true });
       const result = await callAiAssistant({
-        mode: "agent",
+        mode: "suggest_subtasks",
         model: settings?.model,
         reasoningMode: settings?.reasoningMode || "instant",
-        message: lang === "zh" ? `请把现有任务“${task.title}”（ID: ${task.id}）拆解为 3–8 个可执行子任务，并直接追加到这个任务。` : `Break the existing task “${task.title}” (ID: ${task.id}) into 3–8 actionable subtasks and append them to that task.`,
-        context: { language: lang, currentViewDate: selectedDate, page: mode },
+        message: lang === "zh" ? `请将当前任务“${task.title}”（ID: ${task.id}）拆解为 3–8 个可执行子任务。只返回针对这个任务的 create_subtasks 动作，不要创建新任务。` : `Break down the focused task “${task.title}” (ID: ${task.id}) into 3–8 actionable subtasks. Return only a create_subtasks action for this task; do not create a new task.`,
+        context: {
+          language: lang,
+          currentViewDate: selectedDate,
+          page: mode,
+          taskId: task.id,
+          taskTitle: task.title,
+          focusTask: {
+            id: task.id,
+            title: task.title,
+            notes: task.notes,
+            projectId: task.projectId,
+            subtasks: (task.subtasks || []).map((subtask) => `${subtask.completed || subtask.done ? "done" : "todo"}: ${subtask.title}`),
+          },
+        },
       });
       if (!result.ok) throw new Error(result.error.message);
-      if (result.agent?.pending.length) throw new Error(lang === "zh" ? "拆解计划需要在 AI 对话中确认" : "Confirm the breakdown in the AI conversation");
-      queuedRemoteRefreshRef.current = true;
-      await refreshQueuedRemote();
-      const addedCount = Math.max(0, (dataRef.current?.tasks.find((item) => item.id === taskId)?.subtasks || []).length - (task.subtasks || []).length);
-      if (!addedCount) throw new Error(result.reply || "AI did not add subtasks");
-      showToast(addedCount > 0
-        ? (lang === "zh" ? `AI 已添加 ${addedCount} 个子任务` : `AI added ${addedCount} subtasks`)
-        : (lang === "zh" ? "没有新的子任务可添加" : "No new subtasks to add"));
+      const suggestions = getAiSubtaskSuggestions(result.actions, taskId);
+      if (!suggestions.length) throw new Error(lang === "zh" ? "AI 没有返回当前任务的有效子任务，请重试" : "AI returned no valid subtasks for this task. Please try again.");
+      const latestData = dataRef.current;
+      const latestTask = latestData?.tasks.find((item) => item.id === taskId);
+      if (!latestData || !latestTask) throw new Error(lang === "zh" ? "任务已不存在，未添加子任务" : "This task no longer exists; no subtasks were added.");
+      const subtasks = appendAiSubtasks(latestTask.subtasks, suggestions, () => uid("subtask"), new Date().toISOString());
+      const addedCount = subtasks.length - (latestTask.subtasks || []).length;
+      if (!addedCount) {
+        showToast(lang === "zh" ? "没有新的子任务可添加" : "No new subtasks to add");
+        return;
+      }
+      await saveData({
+        ...latestData,
+        tasks: latestData.tasks.map((item) => item.id === taskId ? { ...item, subtasks, updatedAt: new Date().toISOString() } : item),
+      });
+      showToast(lang === "zh" ? `AI 已添加 ${addedCount} 个子任务` : `AI added ${addedCount} subtasks`);
     } catch (error) {
       showToast(error instanceof Error ? error.message : (lang === "zh" ? "AI 拆解失败，请重试" : "AI breakdown failed. Please retry."));
     } finally {

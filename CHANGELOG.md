@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-09-25 · 任务 AI 拆解修复
+
+### 修复
+- 修复任务编辑页的 AI 子任务拆解：使用专用生成流程，将有效结果直接追加到当前任务并保留已有子任务。
+
 ## 2026-09-24 · AI 响应稳定性
 
 ### 修复
@@ -209,6 +214,11 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-25 · Task AI breakdown fix
+
+### Fixed
+- Fixed AI subtask breakdown in task editing: generated subtasks now append directly to the focused task while preserving existing subtasks.
 
 ## 2026-09-24 · AI response reliability
 
