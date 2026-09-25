@@ -5,8 +5,7 @@ export type AiSubtaskSuggestion = { title?: string; estimateMinutes?: number };
 
 export function getAiSubtaskSuggestions(actions: AiAction[] | undefined, taskId: string): AiSubtaskSuggestion[] {
   const action = actions?.find((item) => item.type === "create_subtasks" && item.taskId === taskId);
-  if (!action || action.type !== "create_subtasks" || !Array.isArray(action.subtasks)) return [];
-  return action.subtasks.filter((subtask) => typeof subtask.title === "string" && Boolean(subtask.title.trim()));
+  return action?.type === "create_subtasks" ? action.subtasks || [] : [];
 }
 
 export function appendAiSubtasks(

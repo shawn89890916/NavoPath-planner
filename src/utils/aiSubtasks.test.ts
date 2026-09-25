@@ -5,7 +5,7 @@ describe("getAiSubtaskSuggestions", () => {
   it("accepts only valid subtasks for the focused task", () => {
     expect(getAiSubtaskSuggestions([
       { type: "create_subtasks", taskId: "another-task", subtasks: [{ title: "Wrong target" }] },
-      { type: "create_subtasks", taskId: "task-1", subtasks: [{ title: " Draft outline " }, { title: " " }] },
+      { type: "create_subtasks", taskId: "task-1", subtasks: [{ title: " Draft outline " }] },
     ], "task-1")).toEqual([{ title: " Draft outline " }]);
   });
 

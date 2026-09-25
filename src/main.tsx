@@ -8122,19 +8122,14 @@ function App() {
         mode: "suggest_subtasks",
         model: settings?.model,
         reasoningMode: settings?.reasoningMode || "instant",
-        message: lang === "zh" ? `请将当前任务“${task.title}”（ID: ${task.id}）拆解为 3–8 个可执行子任务。只返回针对这个任务的 create_subtasks 动作，不要创建新任务。` : `Break down the focused task “${task.title}” (ID: ${task.id}) into 3–8 actionable subtasks. Return only a create_subtasks action for this task; do not create a new task.`,
+        message: lang === "zh" ? "请将当前任务拆解为 3–8 个可执行子任务，只返回子任务拆解结果。" : "Break down the focused task into 3–8 actionable subtasks and return only the breakdown.",
         context: {
           language: lang,
-          currentViewDate: selectedDate,
-          page: mode,
-          taskId: task.id,
-          taskTitle: task.title,
           focusTask: {
             id: task.id,
             title: task.title,
             notes: task.notes,
-            projectId: task.projectId,
-            subtasks: (task.subtasks || []).map((subtask) => `${subtask.completed || subtask.done ? "done" : "todo"}: ${subtask.title}`),
+            subtasks: (task.subtasks || []).map((subtask) => subtask.title),
           },
         },
       });
@@ -8144,16 +8139,14 @@ function App() {
       const latestData = dataRef.current;
       const latestTask = latestData?.tasks.find((item) => item.id === taskId);
       if (!latestData || !latestTask) throw new Error(lang === "zh" ? "任务已不存在，未添加子任务" : "This task no longer exists; no subtasks were added.");
-      const subtasks = appendAiSubtasks(latestTask.subtasks, suggestions, () => uid("subtask"), new Date().toISOString());
+      const now = new Date().toISOString();
+      const subtasks = appendAiSubtasks(latestTask.subtasks, suggestions, () => uid("subtask"), now);
       const addedCount = subtasks.length - (latestTask.subtasks || []).length;
       if (!addedCount) {
         showToast(lang === "zh" ? "没有新的子任务可添加" : "No new subtasks to add");
         return;
       }
-      await saveData({
-        ...latestData,
-        tasks: latestData.tasks.map((item) => item.id === taskId ? { ...item, subtasks, updatedAt: new Date().toISOString() } : item),
-      });
+      updateTask(taskId, { subtasks });
       showToast(lang === "zh" ? `AI 已添加 ${addedCount} 个子任务` : `AI added ${addedCount} subtasks`);
     } catch (error) {
       showToast(error instanceof Error ? error.message : (lang === "zh" ? "AI 拆解失败，请重试" : "AI breakdown failed. Please retry."));
