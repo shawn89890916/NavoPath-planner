@@ -462,6 +462,7 @@ function PlanningSubtaskNode(props: {
               {hasChildren && (
                 <button
                   className="df-task-chevron df-subtask-chevron"
+                  aria-expanded={!collapsed}
                   onClick={(event) => {
                     event.stopPropagation();
                     setCollapsed((v) => !v);
@@ -626,6 +627,7 @@ function PlanningTaskNode(props: {
               {hasSubtasks && (
                 <button
                   className="df-task-chevron"
+                  aria-expanded={!props.collapsed}
                   onClick={(event) => {
                     event.stopPropagation();
                     props.onToggleCollapse();

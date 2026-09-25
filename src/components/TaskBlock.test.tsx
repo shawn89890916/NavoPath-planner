@@ -193,11 +193,32 @@ describe("TaskBlock shared component contract", () => {
 
   it("renders candidate subtasks as collapsible TaskBlock child rows", () => {
     const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     expect(main).toContain("function CandidateSubtaskItem");
     expect(main).toContain("df-candidate-subtask-toggle");
     expect(main).toContain('variant="habit-child"');
     expect(main).toContain("df-candidate-subtask-nest");
+    expect(main.match(/closest\("\.df-candidate-row \.df-block-check"\)/g)).toHaveLength(2);
+    expect(css).toContain("#root .df-app.mode-execute .df-candidate-list .df-habit-candidate-card {");
+    expect(css).toContain(".df-app .df-candidate-subtask-toggle {");
+    expect(css).toContain("border: 0;");
+  });
+
+  it("keeps edit subtasks visible while matching planning checkbox and AI motion", () => {
+    const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
+
+    expect(main).toContain("function renderSubtaskRows(subtasks: Subtask[]");
+    expect(main).toContain('className={`df-subtask-check${done ? " done" : ""}`}');
+    expect(main).toContain("subtaskAiRevealIds.includes(subtask.id)");
+    expect(main).toContain("aria-busy={props.subtaskAiLoading}");
+    expect(css).toContain("@keyframes df-subtask-ai-orbit");
+    expect(css).toContain("@keyframes df-subtask-ai-arrive");
+    expect(css).toContain("@media (prefers-reduced-motion:reduce)");
+    expect(css).toContain(".df-app.mode-planning .df-subtask-list");
+    expect(css).toContain("margin-left: 16px;");
+    expect(css).toContain("width: min(420px, 100%)");
   });
 
   it("exposes a clear habit settings entry and weekly overview toolbar", () => {

@@ -1534,6 +1534,8 @@ function App() {
   const [fullscreen, setFullscreen] = useState(false);
   const [clarifyLoading, setClarifyLoading] = useState(false);
   const [subtaskAiBusyId, setSubtaskAiBusyId] = useState("");
+  const [subtaskAiRevealIds, setSubtaskAiRevealIds] = useState<string[]>([]);
+  const subtaskAiRevealTimeoutRef = useRef<number | null>(null);
   const [collapsedBranches, setCollapsedBranches] = useState<Record<string, boolean>>({});
   const [yearOverviewOpen, setYearOverviewOpen] = useState(false);
   const [overviewYear, setOverviewYear] = useState(() => new Date(`${todayIso()}T00:00:00`).getFullYear());
@@ -1557,6 +1559,7 @@ function App() {
     completionHandlesRef.current.forEach((handle) => handle?.cancel());
     layerExitHandlesRef.current.clear();
     completionHandlesRef.current.clear();
+    if (subtaskAiRevealTimeoutRef.current !== null) window.clearTimeout(subtaskAiRevealTimeoutRef.current);
   }, []);
 
   useEffect(() => {
@@ -8146,6 +8149,14 @@ function App() {
         showToast(lang === "zh" ? "没有新的子任务可添加" : "No new subtasks to add");
         return;
       }
+      const existingIds = new Set((latestTask.subtasks || []).map((subtask) => subtask.id));
+      const addedIds = subtasks.filter((subtask) => !existingIds.has(subtask.id)).map((subtask) => subtask.id);
+      setSubtaskAiRevealIds(addedIds);
+      if (subtaskAiRevealTimeoutRef.current !== null) window.clearTimeout(subtaskAiRevealTimeoutRef.current);
+      subtaskAiRevealTimeoutRef.current = window.setTimeout(() => {
+        setSubtaskAiRevealIds([]);
+        subtaskAiRevealTimeoutRef.current = null;
+      }, 1500);
       updateTask(taskId, { subtasks });
       showToast(lang === "zh" ? `AI 已添加 ${addedCount} 个子任务` : `AI added ${addedCount} subtasks`);
     } catch (error) {
@@ -9027,7 +9038,7 @@ function App() {
                               className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}${dropHere ? ` is-candidate-drop is-${candidateDropTarget?.kind === "task" ? candidateDropTarget.position : "after"}` : ""}`}
                               data-candidate-task-id={isEventDisplayTask(task) ? undefined : task.id}
                               onClickCapture={(event) => {
-                                if (!(event.target as HTMLElement).closest(".df-block-check")) return;
+                                if (!(event.target as HTMLElement).closest(".df-candidate-row .df-block-check")) return;
                                 event.stopPropagation();
                                 toggleCandidateTaskDone(task);
                               }}
@@ -9050,7 +9061,7 @@ function App() {
                   className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}${dropHere ? ` is-candidate-drop is-${candidateDropTarget?.kind === "task" ? candidateDropTarget.position : "after"}` : ""}`}
                   data-candidate-task-id={isEventDisplayTask(task) ? undefined : task.id}
                   onClickCapture={(event) => {
-                    if (!(event.target as HTMLElement).closest(".df-block-check")) return;
+                    if (!(event.target as HTMLElement).closest(".df-candidate-row .df-block-check")) return;
                     event.stopPropagation();
                     toggleCandidateTaskDone(task);
                   }}
@@ -10120,7 +10131,7 @@ function App() {
       ><UiPlusIcon size={20} /></button>}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
+      {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
       {aiOpen && <AiPanel docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />}
       <CommandPalette open={commandOpen} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
       {utilityPanel && settings && <UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} />}
@@ -11793,7 +11804,9 @@ function CandidateSubtaskItem({
           <TaskCheckbox
             checked={done}
             tone={done ? "done" : "muted"}
+            className={`df-subtask-check${done ? " done" : ""}`}
             title={done ? (lang === "zh" ? "Mark incomplete" : "Mark incomplete") : (lang === "zh" ? "Mark complete" : "Mark complete")}
+            ariaLabel={done ? (lang === "zh" ? "标记为未完成" : "Mark incomplete") : (lang === "zh" ? "标记为完成" : "Mark complete")}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
@@ -12739,7 +12752,7 @@ function NowLine({ extraStyle, dayStartHour = 0, hourHeight = HOUR_HEIGHT }: { e
 
 function EditDrawer(props: {
   type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; event?: CalendarEvent; today: string; onClose: () => void; onSave: () => void; onDelete: () => void; onCopy: () => void; onConvertToEvent: () => void; onConvertToTask: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
-  editingRecordId?: string; setEditingRecordId?: (id: string | undefined) => void; editingOccurrence?: EditingOccurrence; data?: PlannerData | null; saveData?: (next: PlannerData) => Promise<void>; onSaveRecurrence: (taskId: string, recurrence?: TaskRecurrence) => void; onCancelOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onReplanOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onCancelAllRecurrence: (taskId: string, cutoffDate: string) => void; aiEnabled: boolean; subtaskAiLoading: boolean; onGenerateSubtasks: (taskId: string) => void; lang: Language; compactSummary?: boolean; onShowMore?: () => void;
+  editingRecordId?: string; setEditingRecordId?: (id: string | undefined) => void; editingOccurrence?: EditingOccurrence; data?: PlannerData | null; saveData?: (next: PlannerData) => Promise<void>; onSaveRecurrence: (taskId: string, recurrence?: TaskRecurrence) => void; onCancelOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onReplanOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onCancelAllRecurrence: (taskId: string, cutoffDate: string) => void; aiEnabled: boolean; subtaskAiLoading: boolean; subtaskAiRevealIds: string[]; onGenerateSubtasks: (taskId: string) => void; lang: Language; compactSummary?: boolean; onShowMore?: () => void;
 }) {
   const dialog = useInAppDialog(props.lang);
   const [newProjectTitle, setNewProjectTitle] = useState("");
@@ -12881,24 +12894,47 @@ function EditDrawer(props: {
     props.onTaskUpdate(props.task.id, { subtasks: recurse(props.task.subtasks || []) });
   }
   function renderSubtaskRows(subtasks: Subtask[], depth = 0): React.ReactNode {
-    return subtasks.map((subtask) => (
-      <div className={`df-subtask-tree-item${depth > 0 ? " nested" : ""}`} key={subtask.id} style={{ "--subtask-depth": depth } as CSSProperties}>
-        <label className={`df-subtask-row-new ${subtask.completed || subtask.done ? "completed" : ""}`}>
-          <input type="checkbox" checked={Boolean(subtask.completed || subtask.done)} onChange={(event) => updateSubtask(subtask.id, { completed: event.target.checked })} />
-          <input className="df-subtask-title-input" value={subtask.title} onChange={(event) => updateSubtask(subtask.id, { title: event.target.value })} />
-          <button
-            type="button"
-            className="df-subtask-add-child"
-            title={props.lang === "zh" ? "添加下一级子任务" : "Add nested subtask"}
-            aria-label={props.lang === "zh" ? `在 ${subtask.title} 下添加子任务` : `Add a subtask under ${subtask.title}`}
-            onClick={(event) => { event.preventDefault(); void addSubtask(subtask.id); }}
-          >
-            <svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 2v8M2 6h8" /></svg>
-          </button>
-        </label>
+    return subtasks.map((subtask, index) => {
+      const done = Boolean(subtask.completed || subtask.done);
+      const aiGenerated = props.subtaskAiRevealIds.includes(subtask.id);
+      return (
+      <div className={`df-subtask-tree-item${depth > 0 ? " nested" : ""}${aiGenerated ? " ai-generated" : ""}`} key={subtask.id} style={{ "--subtask-depth": depth, "--subtask-reveal-index": index } as CSSProperties}>
+        <TaskBlock
+          as="div"
+          variant="habit-child"
+          appearance="calm"
+          checked={done}
+          projectColor={props.task?.projectId ? props.projects.find((project) => String(project.id) === String(props.task?.projectId))?.color : undefined}
+          className={`df-subtask-row-new${done ? " completed" : ""}`}
+        >
+          <TaskBlockRow className="df-subtask-row-inner">
+            <TaskCheckbox
+              checked={done}
+              tone={done ? "done" : "muted"}
+              className={`df-subtask-check${done ? " done" : ""}`}
+              ariaLabel={done ? (props.lang === "zh" ? "标记为未完成" : "Mark incomplete") : (props.lang === "zh" ? "标记为完成" : "Mark complete")}
+              onClick={() => updateSubtask(subtask.id, { completed: !done })}
+            >
+              {done ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 6l3 3 5-6" /></svg> : null}
+            </TaskCheckbox>
+            <TaskBlockContent className="df-subtask-edit-content">
+              <input className="df-subtask-title-input" value={subtask.title} aria-label={props.lang === "zh" ? "子任务名称" : "Subtask title"} onChange={(event) => updateSubtask(subtask.id, { title: event.target.value })} />
+            </TaskBlockContent>
+            <button
+              type="button"
+              className="df-subtask-add-child"
+              title={props.lang === "zh" ? "添加下一级子任务" : "Add nested subtask"}
+              aria-label={props.lang === "zh" ? `在 ${subtask.title} 下添加子任务` : `Add a subtask under ${subtask.title}`}
+              onClick={() => void addSubtask(subtask.id)}
+            >
+              <svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 2v8M2 6h8" /></svg>
+            </button>
+          </TaskBlockRow>
+        </TaskBlock>
         {(subtask.subtasks || []).length > 0 && <div className="df-subtask-tree-children">{renderSubtaskRows(subtask.subtasks || [], depth + 1)}</div>}
       </div>
-    ));
+    );
+    });
   }
   function scheduleText(task: Task) {
     const activeRecord = props.editingRecordId
@@ -13379,6 +13415,7 @@ function EditDrawer(props: {
                 className={`df-detail-add-btn df-detail-icon-tool df-detail-ai-subtasks${props.subtaskAiLoading ? " loading" : ""}`}
                 title={props.lang === "zh" ? "AI 自动拆解" : "Break down with AI"}
                 aria-label={props.lang === "zh" ? `使用 AI 拆解“${props.task.title}”` : `Break down “${props.task.title}” with AI`}
+                aria-busy={props.subtaskAiLoading}
                 disabled={props.subtaskAiLoading}
                 onClick={() => props.onGenerateSubtasks(props.task!.id)}
               >
