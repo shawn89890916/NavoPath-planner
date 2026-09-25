@@ -22332,13 +22332,18 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   min-height:38px;
   padding:var(--task-padding-y) var(--task-padding-x);
   border-bottom:0;
+  border:1px solid var(--paper-rule);
+  border-radius:6px;
 }
-.df-app .df-detail-subtasks-new .df-subtask-row-inner {
-  --task-grid-template:16px minmax(0,1fr) 34px;
-  --task-gap:8px;
+.df-app .df-detail-subtasks-new .df-subtask-row-new {
+  display:grid;
+  grid-template-columns:16px minmax(0,1fr) 34px;
+  gap:8px;
+  align-items:center;
 }
-.df-app .df-detail-subtasks-new .df-subtask-edit-content { min-width:0; }
-.df-app .df-subtask-title-input { min-height:20px; padding:0; line-height:20px; }
+.df-app .df-detail-subtasks-new .df-task-checkbox-wrap { width:16px; height:20px; }
+.df-app .df-detail-subtasks-new .df-task-checkbox-wrap .df-block-check { left:50%; top:50%; transform:translate(-50%,-50%); }
+.df-app .df-detail-subtasks-new .df-subtask-title-input { min-width:0; min-height:20px; padding:0; line-height:20px; }
 .df-app .df-subtask-row-new.completed .df-subtask-title-input { text-decoration:line-through; color:var(--text-muted); }
 .df-app .df-subtask-tree-item.ai-generated {
   animation:df-subtask-ai-arrive 360ms cubic-bezier(.2,.75,.25,1) both;

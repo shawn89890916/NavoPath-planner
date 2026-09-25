@@ -12899,38 +12899,21 @@ function EditDrawer(props: {
       const aiGenerated = props.subtaskAiRevealIds.includes(subtask.id);
       return (
       <div className={`df-subtask-tree-item${depth > 0 ? " nested" : ""}${aiGenerated ? " ai-generated" : ""}`} key={subtask.id} style={{ "--subtask-depth": depth, "--subtask-reveal-index": index } as CSSProperties}>
-        <TaskBlock
-          as="div"
-          variant="habit-child"
-          appearance="calm"
-          checked={done}
-          projectColor={props.task?.projectId ? props.projects.find((project) => String(project.id) === String(props.task?.projectId))?.color : undefined}
-          className={`df-subtask-row-new${done ? " completed" : ""}`}
-        >
-          <TaskBlockRow className="df-subtask-row-inner">
-            <TaskCheckbox
-              checked={done}
-              tone={done ? "done" : "muted"}
-              className={`df-subtask-check${done ? " done" : ""}`}
-              ariaLabel={done ? (props.lang === "zh" ? "标记为未完成" : "Mark incomplete") : (props.lang === "zh" ? "标记为完成" : "Mark complete")}
-              onClick={() => updateSubtask(subtask.id, { completed: !done })}
-            >
-              {done ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 6l3 3 5-6" /></svg> : null}
-            </TaskCheckbox>
-            <TaskBlockContent className="df-subtask-edit-content">
-              <input className="df-subtask-title-input" value={subtask.title} aria-label={props.lang === "zh" ? "子任务名称" : "Subtask title"} onChange={(event) => updateSubtask(subtask.id, { title: event.target.value })} />
-            </TaskBlockContent>
-            <button
-              type="button"
-              className="df-subtask-add-child"
-              title={props.lang === "zh" ? "添加下一级子任务" : "Add nested subtask"}
-              aria-label={props.lang === "zh" ? `在 ${subtask.title} 下添加子任务` : `Add a subtask under ${subtask.title}`}
-              onClick={() => void addSubtask(subtask.id)}
-            >
-              <svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 2v8M2 6h8" /></svg>
-            </button>
-          </TaskBlockRow>
-        </TaskBlock>
+        <div className={`df-subtask-row-new${done ? " completed" : ""}`}>
+          <TaskCheckbox checked={done} tone={done ? "done" : "muted"} className={`df-subtask-check${done ? " done" : ""}`} ariaLabel={done ? (props.lang === "zh" ? "标记为未完成" : "Mark incomplete") : (props.lang === "zh" ? "标记为完成" : "Mark complete")} onClick={() => updateSubtask(subtask.id, { completed: !done })}>
+            {done ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 6l3 3 5-6" /></svg> : null}
+          </TaskCheckbox>
+          <input className="df-subtask-title-input" value={subtask.title} aria-label={props.lang === "zh" ? "子任务名称" : "Subtask title"} onChange={(event) => updateSubtask(subtask.id, { title: event.target.value })} />
+          <button
+            type="button"
+            className="df-subtask-add-child"
+            title={props.lang === "zh" ? "添加下一级子任务" : "Add nested subtask"}
+            aria-label={props.lang === "zh" ? `在 ${subtask.title} 下添加子任务` : `Add a subtask under ${subtask.title}`}
+            onClick={() => void addSubtask(subtask.id)}
+          >
+            <svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 2v8M2 6h8" /></svg>
+          </button>
+        </div>
         {(subtask.subtasks || []).length > 0 && <div className="df-subtask-tree-children">{renderSubtaskRows(subtask.subtasks || [], depth + 1)}</div>}
       </div>
     );
