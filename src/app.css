@@ -38185,6 +38185,13 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   line-height: 1;
   cursor: pointer;
 }
+#root .df-app.mode-execute .df-quick-add-submit:disabled {
+  color: #77716a;
+  cursor: not-allowed;
+}
+#root .df-app.mode-execute.theme-dark .df-quick-add-submit:disabled {
+  color: #9a9893;
+}
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-body,
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-content,
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-daily,

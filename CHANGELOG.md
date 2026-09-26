@@ -8,7 +8,7 @@
 - 根据反馈保留浅色模式的执行页布局与候选分组，在深色模式恢复轻微交错的时间轴时段纹理和项目色标记；将近白色交互高亮与明亮描边改为柔和石色，移除荧光感。浅色强调色设置继续保留。
 - 深色与浅色共用宽屏执行页工作区结构、候选浮层层级和缩放手柄，颜色通过主题 token 区分。
 - 移除已停用的 Neumorphic 主题样式、永久隐藏的旧执行顶部栏及重复控件，减少样式表和执行页组件体积。
-- 今日候选快速添加按钮改为 Add，加粗放大并响应手形悬停；浅色使用白底黑字、深色使用黑底白字，禁用时仍保持填充。
+- 今日候选快速添加按钮改为 Add，加粗放大并响应手形悬停；浅色使用白底黑字、深色使用黑底白字，禁用时保留填充并明确显示禁用状态。
 - 深色模式左上角产品图标使用反色并保留原有明暗细节，避免变成整块纯白；快速添加 ADD 按钮加宽并采用与界面一致的 squircle 圆角。
 - 执行工作区改为按横竖屏切换布局，统一时间轴外围底板颜色并保留交错时段纹理。
   - 移除窄横屏的额外双栏状态；宽度不超过 980px 时使用紧凑单面板，981px 起切换到完整双栏。
@@ -245,7 +245,7 @@
 - Preserved the light-mode Execute layout and candidate grouping in dark mode, restoring subtle alternating timeline bands and restrained project-color markers. Replaced near-white interaction accents and bright outlines with muted stone tones to remove the fluorescent look. Saved custom accents remain available in light mode.
 - Reused the same wide-screen Execute workspace structure, floating candidate-panel layer, and resize handle in both themes; only their theme tokens differ.
 - Removed inactive Neumorphic theme rules and the permanently hidden legacy Execute toolbar with its duplicate controls, reducing stylesheet and Execute component size.
-- Changed the Today’s Candidates quick-add button to uppercase ADD and gave it a filled theme accent in both light and dark modes, including its disabled state.
+- Changed the Today’s Candidates quick-add button to Add with bold type and a pointer cursor on hover. It uses white with black text in light mode and black with white text in dark mode, while retaining its fill and clearly showing its disabled state.
 - Inverted the top-left product mark in dark mode while preserving its light and dark details. The quick-add button now reads Add in bold type, shows a pointer cursor, and uses white with black text in light mode and black with white text in dark mode.
 - Switched the Execute workspace between landscape and portrait layouts, unified the timeline surround, and retained the alternating time bands.
   - Removed the extra narrow-landscape split state; use the compact single-panel layout through 980px and the full two-column layout from 981px.
