@@ -92,6 +92,11 @@ import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
 import { DateQuickPicker } from "./components/DateQuickPicker";
 
 const COMPACT_LAYOUT_MEDIA_QUERY = "(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)";
+const INCOMPLETE_OUTCOMES = ["unfinished-return", "unfinished-stay", "skipped-return", "skipped-stay"] as const;
+const INCOMPLETE_LABELS = {
+  en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
+  zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
+};
 import { UiBellIcon, UiCalendarCheckIcon, UiCalendarClockIcon, UiCopyIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiPencilIcon, UiPlusIcon, UiReturnIcon, UiSearchIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { SETTINGS_CATEGORIES, normalizeSettingsTarget, settingsCategoryLabel, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { getDefaultSettings, normalizeSettings } from "./defaultSettings";
@@ -13191,6 +13196,11 @@ function EditDrawer(props: {
       const showInPlanning = outcome === "unfinished-return" || outcome === "skipped-return";
       const wasDone = outcome === "skipped-return" || outcome === "skipped-stay";
       const executionStatus = wasDone ? "skipped" : showInPlanning ? "returned_unfinished" : "scheduled";
+      const taskPatch: Partial<Task> = {
+        completed: false,
+        plannedForDate: showInPlanning ? props.today : undefined,
+        executionLane: showInPlanning ? "candidate" : undefined,
+      };
       setIncompleteMenuOpen(false);
       if (props.editingRecordId && props.data && props.saveData) {
         const now = new Date().toISOString();
@@ -13199,9 +13209,7 @@ function EditDrawer(props: {
           tasks: props.data.tasks.map((task) => task.id === props.task!.id
             ? {
                 ...task,
-                completed: false,
-                plannedForDate: showInPlanning ? props.today : undefined,
-                executionLane: showInPlanning ? "candidate" as const : undefined,
+                ...taskPatch,
                 executionStatus: undefined,
                 timelineRecords: (task.timelineRecords || []).map((record) => record.id === props.editingRecordId
                   ? { ...record, executionStatus }
@@ -13212,12 +13220,7 @@ function EditDrawer(props: {
         });
         return;
       }
-      props.onTaskUpdate(props.task.id, {
-        completed: false,
-        plannedForDate: showInPlanning ? props.today : undefined,
-        executionLane: showInPlanning ? "candidate" : undefined,
-        executionStatus,
-      });
+      props.onTaskUpdate(props.task.id, { ...taskPatch, executionStatus });
     }
     const statusText = props.task.completed
       ? t(props.lang, "drawer.completed")
@@ -13301,10 +13304,7 @@ function EditDrawer(props: {
               <svg className="df-detail-incomplete-chevron" viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 2l4 3-4 3" /></svg>
             </button>
             {incompleteMenuOpen && <div className="df-detail-incomplete-options" role="menu" aria-label={props.lang === "zh" ? "未完成处理方式" : "Incomplete options"}>
-              <button type="button" role="menuitem" onClick={() => chooseIncompleteOutcome("unfinished-return")}>{props.lang === "zh" ? "没完成，还会做" : "Not finished — will continue"}</button>
-              <button type="button" role="menuitem" onClick={() => chooseIncompleteOutcome("unfinished-stay")}>{props.lang === "zh" ? "没完成，不会做" : "Not finished — won't continue"}</button>
-              <button type="button" role="menuitem" onClick={() => chooseIncompleteOutcome("skipped-return")}>{props.lang === "zh" ? "没做，还会做" : "Not done — will do later"}</button>
-              <button type="button" role="menuitem" onClick={() => chooseIncompleteOutcome("skipped-stay")}>{props.lang === "zh" ? "没做，不会做" : "Not done — won't do it"}</button>
+              {INCOMPLETE_OUTCOMES.map((outcome, index) => <button key={outcome} type="button" role="menuitem" onClick={() => chooseIncompleteOutcome(outcome)}>{INCOMPLETE_LABELS[props.lang === "zh" ? "zh" : "en"][index]}</button>)}
             </div>}
           </div>}
           <ActionDisclosure label={props.lang === "zh" ? "更多" : "More"}>
