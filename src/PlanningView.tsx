@@ -1453,6 +1453,13 @@ export default function PlanningView(props: {
     const startX = event.clientX;
     const startY = event.clientY;
     let active = false;
+    let holdReady = !(props.compact && event.pointerType === "touch");
+    let holdCancelled = false;
+    const holdTimer = holdReady ? undefined : window.setTimeout(() => {
+      holdReady = true;
+      dragElement.classList.add("is-drag-armed");
+      window.navigator.vibrate?.(8);
+    }, 260);
 
     const cleanup = () => {
       window.removeEventListener("pointermove", move);
@@ -1460,7 +1467,8 @@ export default function PlanningView(props: {
       window.removeEventListener("pointercancel", cancel);
       window.removeEventListener("keydown", keydown);
       document.body.classList.remove("df-unified-dragging");
-      dragElement.classList.remove("is-dragging-source");
+      dragElement.classList.remove("is-dragging-source", "is-drag-armed");
+      if (holdTimer !== undefined) window.clearTimeout(holdTimer);
       setPlanningDragTask(null);
       setKanbanDragTaskId(null);
       setKanbanDropStatus(null);
@@ -1551,7 +1559,17 @@ export default function PlanningView(props: {
 
     const move = (pointerEvent: PointerEvent) => {
       if (pointerEvent.pointerId !== pointerId) return;
-      if (!active && Math.hypot(pointerEvent.clientX - startX, pointerEvent.clientY - startY) < DRAG_START_THRESHOLD_PX) return;
+      const distance = Math.hypot(pointerEvent.clientX - startX, pointerEvent.clientY - startY);
+      if (!holdReady) {
+        if (distance >= 9) {
+          holdCancelled = true;
+          if (holdTimer !== undefined) window.clearTimeout(holdTimer);
+          dragElement.classList.remove("is-drag-armed");
+        }
+        return;
+      }
+      if (holdCancelled) return;
+      if (!active && distance < DRAG_START_THRESHOLD_PX) return;
       if (!active) {
         active = true;
         pointerEvent.preventDefault();
@@ -1634,7 +1652,7 @@ export default function PlanningView(props: {
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
-  }, [handleKanbanDrop, handleQuadrantDrop, handleListDrop, orderPlanningTasks, planningContainerTasks, reorderPlanningTasks, suppressPostDragClick, viewFilteredTasks]);
+  }, [handleKanbanDrop, handleQuadrantDrop, handleListDrop, orderPlanningTasks, planningContainerTasks, props.compact, reorderPlanningTasks, suppressPostDragClick, viewFilteredTasks]);
 
   /**
    * Shared pointer-event drag for Tree view.

@@ -37568,16 +37568,46 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check {
-    flex: 0 0 18px;
-    width: 18px;
-    min-width: 18px;
-    height: 18px;
-    min-height: 18px;
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
     aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
   }
 
-  #root .df-app.mode-execute .df-task-card .df-task-block-check::before,
+  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check.completed {
+    border: 0;
+    background: transparent;
+  }
+
   #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check::before {
+    left: 50%;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    box-sizing: border-box;
+    border: 2px solid var(--task-checkbox-color);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--task-checkbox-color) 14%, transparent);
+    transform: translate(-50%, -50%);
+  }
+
+  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check.completed::before {
+    border-color: var(--task-checkbox-color);
+    background: var(--task-checkbox-color);
+  }
+
+  #root .df-app.mode-execute .df-task-card .df-task-block-check::before {
     width: 44px;
   }
 
