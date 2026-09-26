@@ -6,9 +6,9 @@ body { background:var(--cl-paper); color:var(--cl-ink); }
 .np-changelog a { color:inherit; text-decoration:none; border-bottom:1px solid currentColor; }
 .np-changelog-tools { display:flex; align-items:center; gap:18px; }
 .np-changelog-language { display:flex; gap:10px; }
-.np-changelog-language button { min-height:34px; padding:0 2px; border:0; border-bottom:1px solid transparent; background:transparent; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; }
+.np-changelog-language button { min-height:34px; padding:0 8px; border:1px solid var(--cl-rule); border-radius:4px; background:transparent; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; }
 .np-changelog-language button:hover,
-.np-changelog-language button.active { border-bottom-color:currentColor; }
+.np-changelog-language button.active { border-color:currentColor; }
 .np-changelog-language button:active { transform:translateY(1px); }
 .np-changelog-language button:focus-visible { outline:1px solid currentColor; outline-offset:3px; }
 .np-changelog-layout { display:grid; grid-template-columns:minmax(0,720px) minmax(220px,260px); gap:clamp(36px,6vw,100px); align-items:start; }

@@ -7,6 +7,7 @@ import { useInAppDialog } from "./InAppDialog";
 import { localIsoDate } from "./utils/localDate";
 import { buildTaskMetaBadges } from "./utils/taskMetaBadges";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
+import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
 import { kanbanGroups, WORKFLOW_LABELS } from "./utils/productivity";
 import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch, type UiWorkflowStatus, type StateFilterValue } from "./utils/productivityModel";
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
@@ -1067,7 +1068,7 @@ export default function PlanningView(props: {
   const [listDropTargetId, setListDropTargetId] = useState<string | null>(null);
   const [listDropPosition, setListDropPosition] = useState<"before" | "after">("before");
   const [listDropAtEnd, setListDropAtEnd] = useState(false);
-  const [guideDismissed, setGuideDismissed] = useState(false);
+  const [guideDismissed, setGuideDismissed] = useState(() => isGuideDismissed("planning"));
   const [planningDragTask, setPlanningDragTask] = useState<{
     task: Task;
     variant: TaskBlockVariant;
@@ -1384,8 +1385,7 @@ export default function PlanningView(props: {
   const svgLines = useTreeLines(treeRef, safeProjects, viewFilteredTasks, props.collapsed, collapsedSubtasks);
 
   const kanbanTasks = viewFilteredTasks;
-  // This is the Planning entry note, not an empty-state message: show it when
-  // the workspace first opens and let the user dismiss it for this visit.
+  // This entry note stays dismissed after the user closes it.
   const showLongRangeGuide = !guideDismissed;
 
   const treeDropSlot = (kind: TreeNodeKind, id: string, position: TreeDropTarget["position"], suppress = false) => {
@@ -2253,7 +2253,7 @@ export default function PlanningView(props: {
           <div className="df-tree-wrap">
             {showLongRangeGuide && (
               <aside className="df-planning-longrange-guide" role="note">
-                <CloseButton className="df-planning-guide-close" label={props.lang === "zh" ? "关闭规划说明" : "Dismiss planning note"} onClick={() => setGuideDismissed(true)} />
+                <CloseButton className="df-planning-guide-close" label={props.lang === "zh" ? "关闭规划说明" : "Dismiss planning note"} onClick={() => { dismissGuide("planning"); setGuideDismissed(true); }} />
                 <span>{props.lang === "zh" ? "长期任务，从这里开始规划" : "Plan long-range work here"}</span>
                 <strong>{props.lang === "zh" ? "先建立项目，再拆成任务，最后排进日程。" : "Create a project, break it into tasks, then schedule it."}</strong>
                 <div aria-hidden="true"><b>01 {props.lang === "zh" ? "项目" : "Project"}</b><i>→</i><b>02 {props.lang === "zh" ? "任务" : "Tasks"}</b><i>→</i><b>03 {props.lang === "zh" ? "排程" : "Schedule"}</b></div>

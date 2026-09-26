@@ -75,10 +75,9 @@
 }
 #root .df-app .df-ai-conversation-rename button {
   min-height: 38px;
-  padding: 0 2px !important;
-  border: 0 !important;
-  border-bottom: 1px solid transparent !important;
-  border-radius: 0 !important;
+  padding: 0 8px !important;
+  border: 1px solid var(--paper-rule-strong) !important;
+  border-radius: var(--radius-control) !important;
   color: var(--text-muted) !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -86,5 +85,5 @@
 }
 #root .df-app .df-ai-conversation-rename button[type="submit"] { color: var(--accent-active) !important; }
 #root .df-app .df-ai-conversation-rename button:hover,
-#root .df-app .df-ai-conversation-rename button:focus-visible { border-bottom-color: currentColor !important; }
+#root .df-app .df-ai-conversation-rename button:focus-visible { border-color: currentColor !important; }
 .df-app.theme-dark .df-ai-conversation-menu { box-shadow: 0 14px 34px rgba(0, 0, 0, .42); }

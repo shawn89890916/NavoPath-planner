@@ -45,27 +45,13 @@
 .ui-action-disclosure-panel [aria-pressed="true"]::after { content: "✓"; }
 #root .df-app .ui-action-disclosure-panel [class~="ui-button--danger"] { color: var(--danger, #b14a42); }
 
-.ui-button {
-  font: inherit;
-  transition: color var(--motion-base) var(--motion-ease), background-color var(--motion-base) var(--motion-ease), border-color var(--motion-base) var(--motion-ease), opacity var(--motion-base) var(--motion-ease), transform var(--motion-instant) ease-out;
-  min-height: 34px;
-  padding: 0 var(--space-2);
-  border: 0;
-  border-bottom: 1px solid transparent;
-  border-radius: var(--radius-control);
-  color: var(--color-muted, #7b7062);
-  background: transparent;
-  cursor: pointer;
-  corner-shape: var(--corner-shape, squircle);
-}
-
+.ui-button,
 #root .df-app .ui-button {
   font: inherit;
   transition: color var(--motion-base) var(--motion-ease), background-color var(--motion-base) var(--motion-ease), border-color var(--motion-base) var(--motion-ease), opacity var(--motion-base) var(--motion-ease), transform var(--motion-instant) ease-out;
   min-height: 34px;
   padding: 0 var(--space-2);
-  border: 0;
-  border-bottom: 1px solid transparent;
+  border: 1px solid var(--paper-rule-strong, var(--border-default, rgba(88, 77, 61, .21)));
   border-radius: var(--radius-control);
   color: var(--color-muted, #7b7062);
   background: transparent;
@@ -73,9 +59,10 @@
   corner-shape: var(--corner-shape, squircle);
 }
 
-.ui-button:hover:not(:disabled) {
+.ui-button:hover:not(:disabled),
+#root .df-app .ui-button:hover:not(:disabled) {
   color: var(--color-ink, #584d3d);
-  border-bottom-color: var(--border-default, rgba(88, 77, 61, .21));
+  border-color: var(--accent-active, var(--border-default, rgba(88, 77, 61, .21)));
   background: var(--paper-note, rgba(88, 77, 61, .08));
 }
 
@@ -87,9 +74,10 @@
   transform: translateY(1px);
 }
 
-.ui-button:focus-visible {
+.ui-button:focus-visible,
+#root .df-app .ui-button:focus-visible {
   color: var(--color-ink, #584d3d);
-  border-bottom-color: var(--border-default, rgba(88, 77, 61, .21));
+  border-color: var(--accent-active, var(--border-default, rgba(88, 77, 61, .21)));
   background: var(--paper-note, rgba(88, 77, 61, .08));
   outline: 1px solid var(--border-focus, currentColor);
   outline-offset: 2px;
@@ -425,22 +413,22 @@
 /* Application: secondary text, tabs, and toggles */
 .df-app .df-tabs button.active:hover {
   color: var(--navo-action-accent);
-  border-bottom-color: var(--navo-action-accent);
+  border-color: var(--navo-action-accent);
   background: transparent;
 }
 .df-app .df-view-switch-vertical button.active:hover {
   color: var(--navo-action-accent);
-  border-bottom-color: var(--navo-action-accent);
+  border-color: var(--navo-action-accent);
   background: transparent;
 }
 .df-app .df-segment button.active:hover {
   color: var(--navo-action-accent);
-  border-bottom-color: var(--navo-action-accent);
+  border-color: var(--navo-action-accent);
   background: transparent;
 }
 .df-app .df-auth-tabs button.active:hover {
   color: var(--navo-action-accent);
-  border-bottom-color: var(--navo-action-accent);
+  border-color: var(--navo-action-accent);
   background: transparent;
 }
 
@@ -451,7 +439,6 @@
 .df-app .df-ai-plan {
   color: var(--navo-action-ink);
   border: 1px solid var(--navo-action-rule);
-  border-bottom: 1px solid var(--navo-action-accent);
   border-radius: var(--paper-radius, 4px);
   background: transparent;
   background-image: none;
@@ -596,14 +583,13 @@
   min-height: 42px;
   padding: 0 16px;
   color: var(--navo-action-muted);
-  border: 0;
-  border-bottom: 1px solid var(--navo-action-rule);
-  border-radius: 0;
+  border: 1px solid var(--navo-action-rule);
+  border-radius: var(--radius-control);
   background: transparent;
 }
 .landing .landing-button.primary {
   color: var(--navo-action-accent);
-  border-bottom-color: var(--navo-action-accent);
+  border-color: var(--navo-action-accent);
   background: var(--navo-action-note);
 }
 .landing .landing-button:hover {
@@ -611,13 +597,13 @@
   text-shadow: none;
   transform: none;
   color: var(--navo-action-ink);
-  border-bottom-color: var(--navo-action-accent);
+  border-color: var(--navo-action-accent);
   background: var(--navo-action-note);
   box-shadow: none;
 }
 .landing .landing-lang {
   color: var(--navo-action-muted);
-  border-color: transparent;
+  border-color: var(--navo-action-rule);
   border-radius: 2px;
   background: transparent;
   box-shadow: none;
@@ -625,7 +611,7 @@
 }
 .landing .landing-auth-close {
   color: var(--navo-action-muted);
-  border-color: transparent;
+  border-color: var(--navo-action-rule);
   border-radius: 2px;
   background: transparent;
   box-shadow: none;
@@ -650,21 +636,19 @@
 }
 .landing .landing-auth-tabs button {
   color: var(--navo-action-muted);
-  border: 0;
-  border-bottom: 1px solid transparent;
-  border-radius: 0;
+  border: 1px solid var(--navo-action-rule);
+  border-radius: var(--radius-control);
   background: transparent;
 }
 .landing .landing-auth-notice button {
   color: var(--navo-action-muted);
-  border: 0;
-  border-bottom: 1px solid transparent;
-  border-radius: 0;
+  border: 1px solid var(--navo-action-rule);
+  border-radius: var(--radius-control);
   background: transparent;
 }
 .landing .landing-auth-tabs button.active {
   color: var(--navo-action-accent);
-  border-bottom-color: var(--navo-action-accent);
+  border-color: var(--navo-action-accent);
   background: transparent;
 }
 
@@ -914,17 +898,25 @@
     repeating-linear-gradient(12deg, rgba(0,0,0,.06) 0 1px, transparent 1px 4px);
 }
 
-/* Icon controls use graphite underlines instead of curved bottom shadows. */
+/* Standalone tools and view controls use the same complete paper outline. */
 #root .df-app :is(
   .df-panel-title .df-icon-action,
   .df-icon-button,
   .df-tabs button,
   .df-view-switch-vertical button
 ) {
-  border: 0;
-  border-bottom: 1px solid transparent;
-  border-radius: 0;
+  border: 1px solid var(--paper-rule-strong);
+  border-radius: var(--radius-control);
   box-shadow: none;
+}
+#root .df-app :is(
+  .df-panel-title .df-icon-action,
+  .df-icon-button,
+  .df-tabs button,
+  .df-view-switch-vertical button
+):hover:not(:disabled) {
+  border-color: var(--accent-active);
+  background: var(--paper-note);
 }
 #root .df-app :is(
   .df-panel-title .df-icon-action.active,
@@ -935,32 +927,7 @@
   .df-panel-title .df-icon-action[aria-pressed="true"],
   .df-icon-button[aria-pressed="true"]
 ) {
-  border-bottom-width: 2px;
-  border-bottom-color: var(--pencil-rule-strong);
-}
-#root .df-app .df-task-card .df-icon-button {
-  border: 0;
-  border-bottom-color: transparent;
-}
-#root .df-app .df-task-card .df-icon-button:hover {
-  border: 0;
-  border-bottom-color: transparent;
-}
-#root .df-app .df-task-card .df-icon-button:focus-visible {
-  border: 0;
-  border-bottom-color: transparent;
-}
-#root .df-app .df-panel-title .df-icon-action:not(.active) {
-  border-bottom-color: transparent;
-}
-#root .df-app .df-panel-title .df-icon-action:not(.active):hover {
-  border-bottom-color: transparent;
-}
-#root .df-app .df-view-switch-vertical button:not(.active) {
-  border-bottom-color: transparent;
-}
-#root .df-app .df-view-switch-vertical button:not(.active):hover {
-  border-bottom-color: transparent;
+  border-color: var(--accent-active);
 }
 #root .df-app .df-date-arrow {
   display: grid;

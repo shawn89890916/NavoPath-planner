@@ -318,7 +318,7 @@ annotation texture.
 Use for the single most important action in a local context, such as Add, Save,
 Register, or Adopt.
 
-- Light active-accent paper tint, active-accent text, and a fine bottom rule.
+- Light active-accent paper tint, active-accent text, and a fine complete outline.
 - Never use a fully filled purple/lime rectangle.
 - No gradient, glow, colored shadow, or hover lift.
 - Primary controls should still feel like paper annotations, not SaaS buttons.
@@ -327,16 +327,16 @@ Register, or Adopt.
 
 Use for cancel, navigation, filters, and low-priority actions.
 
-- Transparent by default.
-- Hover changes ink color and reveals or strengthens a fine rule.
-- Do not wrap ordinary secondary actions in pills.
+- Transparent by default, with a fine complete outline for action buttons.
+- Hover changes ink color and strengthens the outline.
+- Keep ordinary secondary actions compact, with the control radius rather than a pill.
 - Keep secondary controls visually quiet.
 
 ### Icon Tool
 
 Use for compact workspace tools, close controls, arrows, and utility actions.
 
-- No visible container at rest unless the boundary is required for clarity.
+- Standalone icon actions with an old bottom-only rule use a complete hairline outline. Embedded handles can remain borderless.
 - Hover may use a faint annotation wash and hairline border.
 - Icon-only touch targets remain at least 34px on desktop and 44px on touch layouts.
 - Icons should be line-based, quiet, and functional.
@@ -345,7 +345,7 @@ Use for compact workspace tools, close controls, arrows, and utility actions.
 ### Toggle And Tab
 
 - Option lists, tabs, and view switchers use the shared `ui-choice-list` / `ui-choice-item` pattern.
-- Selected state uses a complete, low-contrast neutral paper highlight with a consistent rounded rectangle; do not use a bottom-only or partially wrapped underline treatment.
+- Selected state uses a complete, low-contrast neutral paper highlight and outline with a consistent rounded rectangle; do not use a bottom-only or partially wrapped underline treatment.
 - Keep selection fills neutral. Accent colors remain annotations and focus indicators, not structural fills.
 - Avoid hard or saturated filled capsules. Selection should stay quiet, readable, and visible through both shape and tone.
 - On/off switches retain their dedicated switch treatment and do not use the option-list row pattern.
@@ -447,7 +447,7 @@ visual values.
 - Page sections and ordinary task cards are borderless by default.
 - Inputs, popovers, and modals may use a subtle or default border to express structure.
 - Selected and drag-and-drop states may use the active accent as a one-pixel ring.
-- A border must communicate structure or state; do not add one only for decoration.
+- A button outline communicates its clickable boundary; other borders must communicate structure or state.
 
 ### Shared Component Rules
 

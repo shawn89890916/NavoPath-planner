@@ -26,6 +26,7 @@
 - 修复窄屏规划页被过高的最小高度裁切，四种任务视图可在可见区域内滚动；习惯勾选框的方形样式也适用于桌面浏览器模拟竖屏。
 - 竖屏时间分配图改为上方显示总时长或选中项目的名称与时长、圆环中心固定显示总时长、下方用颜色圆点标示各项目；点击扇区或图例可切换项目，底部内容可滚动到导航栏上方。
 - 重新绘制规划页五种视图的图标，用分支、分栏、四象限、勾选列表和圆环表示各自功能；竖屏切换栏仅显示图标，并保留读屏名称与 44px 点击区域。
+- 关闭规划说明或今日候选的拖拽提示后会在当前设备记住选择；修正提示关闭图标被示意图样式拉伸，并将底线式操作按钮改为完整细描边，清理旧的下划线规则。
 
 ## 2026-09-25 · 任务与子任务体验改进
 
@@ -273,6 +274,7 @@
 - Fixed a narrow Planning page minimum height that clipped all four task views outside the visible viewport. Habit checks now keep their square shape when a desktop browser simulates a narrow portrait window.
 - Reworked the portrait allocation chart with a total or selected project summary above the ring, the total duration in its center, and a color-dot project legend below. Tap a segment or legend item to select a project, and scroll the bottom content clear of the navigation dock.
 - Redrew the five Planning view icons as a branch, columns, quadrants, a checked list, and a ring. The portrait switcher now shows icons alone while keeping accessible names and 44px touch targets.
+- Dismissing the Planning note or Today's Candidates drag hint now persists on this device. Fixed the hint's stretched close icon, replaced underline-only action buttons with complete hairline outlines, and removed obsolete underline rules.
 
 ## 2026-09-25 · Task and subtask improvements
 

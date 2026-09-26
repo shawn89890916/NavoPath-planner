@@ -48,9 +48,9 @@
 
 .df-doc-language button {
   min-height: 34px;
-  padding: 0 2px;
-  border: 0;
-  border-bottom: 1px solid transparent;
+  padding: 0 8px;
+  border: 1px solid var(--doc-rule);
+  border-radius: 4px;
   color: inherit;
   background: transparent;
   font: inherit;
@@ -60,7 +60,7 @@
 
 .df-doc-language button:hover,
 .df-doc-language button.active {
-  border-bottom-color: currentColor;
+  border-color: currentColor;
 }
 
 .df-doc-page.changelog-like .df-doc-content {
@@ -344,9 +344,9 @@
 
 .df-doc-code-block button {
   min-height: 34px;
-  padding: 0 2px;
-  border: 0;
-  border-bottom: 1px solid transparent;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--doc-code-ink) 25%, transparent);
+  border-radius: 4px;
   color: var(--doc-code-ink);
   background: transparent;
   font: inherit;
@@ -355,7 +355,7 @@
 
 .df-doc-code-block button:hover {
   color: var(--doc-accent);
-  border-bottom-color: var(--doc-accent);
+  border-color: var(--doc-accent);
 }
 
 .df-doc-code-block button:active {

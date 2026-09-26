@@ -14,7 +14,7 @@
 .df-proactive-center-close:hover { color: var(--text-muted); background: transparent !important; box-shadow: none !important; }
 .df-proactive-center-item-copy { display: grid; gap: 5px; }
 .df-proactive-center-item-copy p { margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.5; white-space: pre-wrap; }
-.df-proactive-center-action { width: fit-content; min-height: 36px; padding: 0 2px; border: 0; border-bottom: 1px solid var(--accent-active); color: var(--accent-active); background: transparent; cursor: pointer; font: 600 12px var(--paper-sans); }
+.df-proactive-center-action { width: fit-content; min-height: 36px; padding: 0 8px; border: 1px solid var(--accent-active); border-radius: var(--radius-control); color: var(--accent-active); background: transparent; cursor: pointer; font: 600 12px var(--paper-sans); }
 .df-proactive-center-gap { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .df-proactive-center-gap select { min-height: 36px; min-width: 0; flex: 1 1 210px; border: 0; border-bottom: 1px solid var(--paper-rule); color: var(--text-main); background: transparent; }
 .df-proactive-center-empty { margin: 0; padding: 28px 0; color: var(--text-muted); font-size: 13px; }

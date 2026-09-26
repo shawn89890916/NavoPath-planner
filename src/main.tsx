@@ -80,6 +80,7 @@ import {
 } from "./utils/recurrence";
 import { appendAiSubtasks, getAiSubtaskSuggestions } from "./utils/aiSubtasks";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
+import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
 import { countSubtasks, countDoneSubtasks, addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree } from "./utils/treeOrder";
 import { promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToToday, toggleTodayCandidate } from "./utils/todayCandidates";
 import { reconcileOverdueTasks } from "./utils/overdueTasks";
@@ -1520,7 +1521,7 @@ function App() {
   const toastTimerRef = useRef<number | null>(null);
   const undoSnapshotRef = useRef<{ committedTaskIds: string[]; clearedSourceTaskIds: string[]; removedFromCandidate: Set<string> } | null>(null);
   const [showCompletedCandidates, setShowCompletedCandidates] = useState(false);
-  const [scheduleGuideOpen, setScheduleGuideOpen] = useState(true);
+  const [scheduleGuideOpen, setScheduleGuideOpen] = useState(() => !isGuideDismissed("schedule"));
   const [completingTaskIds, setCompletingTaskIds] = useState<Set<string>>(() => new Set());
   const completionHandlesRef = useRef(new Map<string, ReturnType<typeof scheduleMotionCommit> | null>());
   const [groupByProject, setGroupByProject] = useState(true);
@@ -8978,7 +8979,7 @@ function App() {
                   <span>09:30</span><i /><i /><i />
                 </div>
                 <span className="df-schedule-drop-guide-copy">{lang === "zh" ? "拖到日程" : "Drag to Schedule"}</span>
-                  <CloseButton label={lang === "zh" ? "关闭提示" : "Dismiss hint"} onClick={() => setScheduleGuideOpen(false)} />
+                  <CloseButton label={lang === "zh" ? "关闭提示" : "Dismiss hint"} onClick={() => { dismissGuide("schedule"); setScheduleGuideOpen(false); }} />
               </aside>
             )}
             {(dailyCapacityRisk.level !== "comfortable" || schedulePreviews.length > 0 || scheduleUnscheduled.length > 0) && (
