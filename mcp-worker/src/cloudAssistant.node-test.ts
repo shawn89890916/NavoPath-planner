@@ -41,6 +41,48 @@ test("accepts only quarter-hour task schedule times", () => {
   assert.equal(isQuarterHourTime("09:07"), false);
 });
 
+test("creates an unscheduled task without inventing a due date", () => {
+  const preview = previewTaskOperations({ tasks: [] }, [{ type: "create_task", title: "Unscheduled task" }]);
+  assert.equal(preview.changes.length, 1);
+  assert.equal(preview.data.tasks[0].dueDate, undefined);
+  assert.equal(preview.data.tasks[0].timelineRecords, undefined);
+});
+
+test("creates a scheduled task with a separate schedule date and correct next-day end", () => {
+  const preview = previewTaskOperations({ tasks: [] }, [{
+    type: "create_task",
+    title: "Late study block",
+    date: "2026-08-29",
+    startTime: "23:45",
+    durationMinutes: 30,
+  }]);
+  assert.equal(preview.data.tasks[0].dueDate, undefined);
+  assert.deepEqual(preview.data.tasks[0].timelineRecords[0], {
+    id: preview.data.tasks[0].timelineRecords[0].id,
+    taskId: preview.data.tasks[0].id,
+    scheduledDate: "2026-08-29",
+    scheduledStart: "23:45",
+    scheduledEndDate: "2026-08-30",
+    scheduledEnd: "00:15",
+    executionStatus: "scheduled",
+    createdAt: preview.data.tasks[0].timelineRecords[0].createdAt,
+  });
+});
+
+test("checks create-task schedule conflicts against blocks on the following day", () => {
+  const nextDayBlock = task({
+    id: "task-next-day",
+    timelineRecords: [{ id: "record-next-day", taskId: "task-next-day", scheduledDate: "2026-08-30", scheduledStart: "00:00", scheduledEndDate: "2026-08-30", scheduledEnd: "00:30", executionStatus: "scheduled", createdAt: "now" }],
+  });
+  assert.throws(() => previewTaskOperations({ tasks: [nextDayBlock] }, [{
+    type: "create_task",
+    title: "Late study block",
+    date: "2026-08-29",
+    startTime: "23:45",
+    durationMinutes: 30,
+  }]), /SCHEDULE_CONFLICT/);
+});
+
 test("reschedules an existing block across midnight and records exact before and after values", () => {
   const preview = previewTaskOperations({ tasks: [task()] }, [{ type: "reschedule_task", taskId: "task-1", date: "2026-08-29", startTime: "23:45", durationMinutes: 30, reason: "Prepare tomorrow" }]);
   assert.equal(preview.confirmationRequired.length, 0);

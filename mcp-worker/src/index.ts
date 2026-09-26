@@ -141,18 +141,18 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return result(item);
     });
 
-    this.server.registerTool("create_task", { description: "Create a task and optionally schedule it. Scheduled times and durations must use 15-minute increments.", inputSchema: { title: z.string().trim().min(1).max(300), projectId: z.string().optional(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(), durationMinutes: z.number().int().min(15).max(1440).default(30), notes: z.string().max(10000).optional() } }, async ({ title, projectId, dueDate, startTime, durationMinutes, notes }) => {
+    this.server.registerTool("create_task", { description: "Create a task and optionally schedule it. dueDate is a deadline; date is the schedule date. Scheduled times and durations must use 15-minute increments.", inputSchema: { title: z.string().trim().min(1).max(300), projectId: z.string().optional(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(), durationMinutes: z.number().int().min(15).max(1440).default(30), notes: z.string().max(10000).optional(), idempotency_key: z.string().min(8).max(240) } }, async ({ title, projectId, dueDate, date, startTime, durationMinutes, notes, idempotency_key }) => {
       if (startTime && !isQuarterHourTime(startTime)) throw new Error("SCHEDULE_TIME_MUST_USE_15_MINUTE_GRID");
       if (durationMinutes % 15 !== 0) throw new Error("SCHEDULE_DURATION_MUST_USE_15_MINUTE_GRID");
-      const profile = await getProfile(this.env, this.userId());
-      const date = dueDate || today();
-      const id = uid("task");
-      const endMinutes = startTime ? Number(startTime.slice(0, 2)) * 60 + Number(startTime.slice(3)) + durationMinutes : 0;
-      const endTime = startTime ? `${String(Math.floor(endMinutes / 60) % 24).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}` : undefined;
-      const item: Json = { id, title, projectId, dueDate: date, category: "personal", priority: "medium", notes: notes || "", goalId: "", completed: false, estimatedHours: durationMinutes / 60, order: Date.now(), createdAt: now(), updatedAt: now(), subtasks: [] };
-      if (startTime && endTime) item.timelineRecords = [{ id: uid("record"), taskId: id, scheduledDate: date, scheduledStart: startTime, scheduledEnd: endTime, executionStatus: "scheduled", createdAt: now() }];
-      await saveProfile(this.env, this.userId(), profile, { data: { ...profile.data, tasks: [...(profile.data.tasks || []), item], events: [] } });
-      return result(item);
+      const outcome = await batchUpdateTasks(this.env, this.userId(), {
+        operations: [{ type: "create_task", title, projectId, dueDate, date: date || (startTime ? today() : undefined), startTime, durationMinutes, notes }],
+        dryRun: false,
+        commit: true,
+        idempotencyKey: idempotency_key,
+        source: "mcp",
+        summary: `Created task: ${title}`,
+      });
+      return result(outcome.changes?.find((change: Json) => change.entity === "task")?.after || outcome);
     });
 
     this.server.registerTool("update_task", { description: "Update safe task fields, including user-controlled cloud schedule and hard-deadline locks.", inputSchema: { taskId: z.string(), patch: z.object({ title: z.string().trim().min(1).max(300).optional(), projectId: z.string().nullable().optional(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), notes: z.string().max(10000).optional(), completed: z.boolean().optional(), scheduleLocked: z.boolean().optional(), hardDeadline: z.boolean().optional() }) } }, async ({ taskId, patch }) => {
@@ -181,7 +181,7 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
 
     const batchOperation = z.object({
       type: z.enum(["create_task", "update_task", "split_task", "reschedule_task", "upsert_schedule_block"]),
-      taskId: z.string().optional(), blockId: z.string().optional(), title: z.string().optional(), projectId: z.string().nullable().optional(), dueDate: z.string().optional(), startTime: z.string().optional(), durationMinutes: z.number().optional(), notes: z.string().optional(), patch: z.record(z.string(), z.unknown()).optional(), subtasks: z.array(z.object({ title: z.string(), estimateMinutes: z.number().optional() })).optional(), reason: z.string().optional(),
+      taskId: z.string().optional(), blockId: z.string().optional(), title: z.string().optional(), projectId: z.string().nullable().optional(), dueDate: z.string().optional(), date: z.string().optional(), startTime: z.string().optional(), durationMinutes: z.number().optional(), notes: z.string().optional(), patch: z.record(z.string(), z.unknown()).optional(), subtasks: z.array(z.object({ title: z.string(), estimateMinutes: z.number().optional() })).optional(), reason: z.string().optional(),
     });
     this.server.registerTool("batch_update_tasks", { description: "Preview or atomically commit a validated batch of task changes. Every committed batch is idempotent, audited, and undoable.", inputSchema: { operations: z.array(batchOperation).min(1).max(30), dry_run: z.boolean(), commit: z.boolean(), idempotency_key: z.string().min(8).max(240), summary: z.string().max(1200).optional(), reason: z.string().max(1200).optional() } }, async ({ operations, dry_run, commit, idempotency_key, summary, reason }) => {
       return result(await batchUpdateTasks(this.env, this.userId(), { operations, dryRun: dry_run, commit, idempotencyKey: idempotency_key, source: "mcp", summary, reason }));

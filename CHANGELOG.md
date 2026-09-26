@@ -17,6 +17,10 @@
 
 ### 修复
 - AI 处理失败时显示请求编号，便于定位对应服务日志。
+- 更新 DOCX、PDF 和构建工具依赖，修复安全公告中列出的漏洞。
+- 外部日历刷新改为事务替换，刷新失败时保留现有事件；首次同步失败会清理未完成的日历来源。
+- MCP 新建任务不再自动设置截止日期；排程与其他任务共用冲突校验，并正确处理跨日结束时间。
+- iOS 定位权限会说明用途；移动端页面恢复浏览器缩放支持。
 
 ## 2026-09-25 · 任务与子任务体验改进
 
@@ -255,6 +259,10 @@
 
 ### Fixed
 - Failed AI requests now show a request ID for matching server diagnostics.
+- Updated DOCX, PDF, and build-tool dependencies to address the vulnerabilities in published advisories.
+- Replaced external calendar occurrences transactionally so a failed refresh preserves existing events; clean up a calendar source when its initial sync fails.
+- MCP-created tasks no longer receive an automatic due date; scheduling uses shared conflict checks and handles end times that cross midnight.
+- Explained location access on iOS and restored browser zoom on mobile.
 
 ## 2026-09-25 · Task and subtask improvements
 

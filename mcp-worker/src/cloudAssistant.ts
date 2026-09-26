@@ -15,7 +15,7 @@ export type AssistantMessage = {
 };
 
 export type TaskOperation =
-  | { type: "create_task"; title: string; projectId?: string; dueDate?: string; startTime?: string; durationMinutes?: number; notes?: string; reason?: string }
+  | { type: "create_task"; title: string; projectId?: string; dueDate?: string; date?: string; startTime?: string; durationMinutes?: number; notes?: string; reason?: string }
   | { type: "update_task"; taskId: string; patch: Json; reason?: string }
   | { type: "split_task"; taskId: string; subtasks: Array<{ title: string; estimateMinutes?: number }>; reason?: string }
   | { type: "reschedule_task"; taskId: string; date: string; startTime: string; durationMinutes: number; reason?: string }
@@ -333,7 +333,8 @@ export function normalizeTaskOperations(value: unknown): TaskOperation[] {
       if ((hasStartTime && !isQuarterHourTime(item.startTime)) || (hasDuration && (!Number.isInteger(Number(item.durationMinutes)) || Number(item.durationMinutes) < 15 || Number(item.durationMinutes) > 1440 || Number(item.durationMinutes) % 15 !== 0))) continue;
       const startTime = isQuarterHourTime(item.startTime) ? item.startTime : undefined;
       const dueDate = ISO_DATE.test(item.dueDate || "") ? item.dueDate : undefined;
-      operations.push({ type: "create_task", title, projectId: SAFE_ID.test(item.projectId || "") ? item.projectId : undefined, dueDate, startTime, durationMinutes: quarterHourDuration(item.durationMinutes), notes: cleanText(item.notes, 4000), reason });
+      const date = ISO_DATE.test(item.date || "") ? item.date : undefined;
+      operations.push({ type: "create_task", title, projectId: SAFE_ID.test(item.projectId || "") ? item.projectId : undefined, dueDate, date, startTime, durationMinutes: quarterHourDuration(item.durationMinutes), notes: cleanText(item.notes, 4000), reason });
       continue;
     }
     const taskId = cleanText(item.taskId, 200);
@@ -380,12 +381,13 @@ export function previewTaskOperations(data: Json, input: unknown, options: { all
     if (operation.type === "create_task") {
       const timestamp = isoNow();
       const id = generatedId("task");
-      const task: Json = { id, title: operation.title, dueDate: operation.dueDate || shanghaiDate(), category: "personal", priority: "medium", notes: operation.notes || "", goalId: "", projectId: operation.projectId, completed: false, estimatedHours: (operation.durationMinutes || 30) / 60, order: Date.now(), subtasks: [], createdAt: timestamp, updatedAt: timestamp };
+      const task: Json = { id, title: operation.title, dueDate: operation.dueDate, category: "personal", priority: "medium", notes: operation.notes || "", goalId: "", projectId: operation.projectId, completed: false, estimatedHours: (operation.durationMinutes || 30) / 60, order: Date.now(), subtasks: [], createdAt: timestamp, updatedAt: timestamp };
       if (operation.startTime) {
-        const conflict = scheduleConflict(next, id, undefined, task.dueDate, operation.startTime, operation.durationMinutes || 30);
+        const scheduledDate = operation.date || operation.dueDate || shanghaiDate();
+        const conflict = scheduleConflict(next, id, undefined, scheduledDate, operation.startTime, operation.durationMinutes || 30);
         if (conflict) throw new Error(`SCHEDULE_CONFLICT:${conflict.taskId}:${conflict.blockId}`);
-        const end = addMinutes(task.dueDate, operation.startTime, operation.durationMinutes || 30);
-        task.timelineRecords = [{ id: generatedId("record"), taskId: id, scheduledDate: task.dueDate, scheduledStart: operation.startTime, ...end, executionStatus: "scheduled", createdAt: timestamp }];
+        const end = addMinutes(scheduledDate, operation.startTime, operation.durationMinutes || 30);
+        task.timelineRecords = [{ id: generatedId("record"), taskId: id, scheduledDate, scheduledStart: operation.startTime, ...end, executionStatus: "scheduled", createdAt: timestamp }];
       }
       tasks.push(task);
       changes.push({ entity: "task", taskId: id, before: null, after: task, reason: operation.reason || "Created by the cloud assistant" });
@@ -666,7 +668,7 @@ const resultTool = {
       properties: {
         summary: { type: "string", maxLength: 1200 },
         reason: { type: "string", maxLength: 1200 },
-        operations: { type: "array", maxItems: 30, items: { type: "object", additionalProperties: false, required: ["type", "taskId", "title", "projectId", "dueDate", "startTime", "durationMinutes", "notes", "blockId", "patch", "subtasks", "reason"], properties: { type: { type: "string", enum: ["create_task", "update_task", "split_task", "reschedule_task", "upsert_schedule_block"] }, taskId: { type: ["string", "null"] }, title: { type: ["string", "null"] }, projectId: { type: ["string", "null"] }, dueDate: { type: ["string", "null"] }, startTime: { type: ["string", "null"] }, durationMinutes: { type: ["integer", "null"] }, notes: { type: ["string", "null"] }, blockId: { type: ["string", "null"] }, patch: { type: ["object", "null"], additionalProperties: false, required: ["title", "notes", "projectId", "completed", "dueDate", "estimatedHours"], properties: { title: { type: ["string", "null"] }, notes: { type: ["string", "null"] }, projectId: { type: ["string", "null"] }, completed: { type: ["boolean", "null"] }, dueDate: { type: ["string", "null"] }, estimatedHours: { type: ["number", "null"] } } }, subtasks: { type: ["array", "null"], maxItems: 12, items: { type: "object", additionalProperties: false, required: ["title", "estimateMinutes"], properties: { title: { type: "string" }, estimateMinutes: { type: "integer" } } } }, reason: { type: "string" } } } },
+        operations: { type: "array", maxItems: 30, items: { type: "object", additionalProperties: false, required: ["type", "taskId", "title", "projectId", "dueDate", "date", "startTime", "durationMinutes", "notes", "blockId", "patch", "subtasks", "reason"], properties: { type: { type: "string", enum: ["create_task", "update_task", "split_task", "reschedule_task", "upsert_schedule_block"] }, taskId: { type: ["string", "null"] }, title: { type: ["string", "null"] }, projectId: { type: ["string", "null"] }, dueDate: { type: ["string", "null"] }, date: { type: ["string", "null"] }, startTime: { type: ["string", "null"] }, durationMinutes: { type: ["integer", "null"] }, notes: { type: ["string", "null"] }, blockId: { type: ["string", "null"] }, patch: { type: ["object", "null"], additionalProperties: false, required: ["title", "notes", "projectId", "completed", "dueDate", "estimatedHours"], properties: { title: { type: ["string", "null"] }, notes: { type: ["string", "null"] }, projectId: { type: ["string", "null"] }, completed: { type: ["boolean", "null"] }, dueDate: { type: ["string", "null"] }, estimatedHours: { type: ["number", "null"] } } }, subtasks: { type: ["array", "null"], maxItems: 12, items: { type: "object", additionalProperties: false, required: ["title", "estimateMinutes"], properties: { title: { type: "string" }, estimateMinutes: { type: "integer" } } } }, reason: { type: "string" } } } },
         notification: { type: ["object", "null"], additionalProperties: false, required: ["kind", "title", "body", "urgency"], properties: { kind: { type: "string", enum: ["summary", "material_change", "deadline_risk", "weather", "needs_input"] }, title: { type: "string" }, body: { type: "string" }, urgency: { type: "string", enum: ["normal", "urgent"] } } },
       },
     },

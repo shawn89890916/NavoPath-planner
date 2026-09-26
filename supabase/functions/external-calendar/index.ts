@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { parseIcsOccurrences } from "./ics.ts";
+import { removeSourceAfterInitialSyncFailure, replaceOccurrences } from "./occurrences.ts";
 import { assertPublicCalendarHost, validateCalendarUrl } from "./security.ts";
 
 const corsHeaders = {
@@ -129,16 +130,6 @@ function publicSource(row: Record<string, any>) {
   return { id: row.id, name: row.name, displayUrl: row.display_url, color: row.color || undefined, enabled: row.enabled, syncStatus: row.sync_status, syncError: row.sync_error || undefined, lastSyncedAt: row.last_synced_at || undefined, nextSyncAt: row.next_sync_at || undefined };
 }
 
-async function replaceOccurrences(admin: ReturnType<typeof createClient>, userId: string, sourceId: string, occurrences: Awaited<ReturnType<typeof parseIcsOccurrences>>) {
-  const { error: deleteError } = await admin.from("navopath_calendar_occurrences").delete().eq("source_id", sourceId).eq("user_id", userId);
-  if (deleteError) throw deleteError;
-  for (let offset = 0; offset < occurrences.length; offset += 500) {
-    const batch = occurrences.slice(offset, offset + 500).map((occurrence) => ({ ...occurrence, user_id: userId, source_id: sourceId }));
-    const { error } = await admin.from("navopath_calendar_occurrences").insert(batch);
-    if (error) throw error;
-  }
-}
-
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
   if (req.method !== "POST") return response({ error: "Method not allowed" }, 405);
@@ -186,7 +177,19 @@ serve(async (req: Request) => {
       const host = new URL(rawUrl).hostname;
       const { data: source, error } = await admin.from("navopath_calendar_sources").insert({ user_id: userId, name, url_ciphertext: encrypted.ciphertext, url_iv: encrypted.iv, url_hash: await digest(rawUrl), display_url: `https://${host}/…`, color: typeof body.color === "string" ? body.color.slice(0, 64) : null, etag: fetched.etag, last_modified: fetched.lastModified, sync_status: "ready", sync_error: null, last_synced_at: new Date().toISOString(), next_sync_at: new Date(Date.now() + 15 * 60_000).toISOString() }).select().single();
       if (error) throw error;
-      await replaceOccurrences(admin, userId, source.id, occurrences);
+      try {
+        await replaceOccurrences(admin, userId, source.id, occurrences);
+      } catch (syncError) {
+        try {
+          await removeSourceAfterInitialSyncFailure(admin, userId, source.id);
+        } catch (cleanupError) {
+          console.error("Failed to clean up external calendar after initial sync failure", {
+            sourceId: source.id,
+            name: cleanupError instanceof Error ? cleanupError.name : "unknown",
+          });
+        }
+        throw syncError;
+      }
       return response({ ok: true, source: publicSource(source), occurrenceCount: occurrences.length });
     }
 
