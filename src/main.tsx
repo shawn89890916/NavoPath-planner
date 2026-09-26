@@ -2639,8 +2639,8 @@ function App() {
 
   useEffect(() => {
     const flushForLifecycle = () => {
-      void flushPendingSave({ urgent: true });
-      void flushPendingSettings({ urgent: true });
+      void flushPendingSave({ urgent: true }).catch(() => undefined);
+      void flushPendingSettings({ urgent: true }).catch(() => undefined);
     };
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") flushForLifecycle();
@@ -2996,7 +2996,7 @@ function App() {
             }
             scheduleSnapshotWrite();
           }
-        } catch {
+        } catch (caught) {
           const latestPending = pendingDataSaveRef.current as QueuedDataSave | null;
           const shouldRetry = shouldRequeueFailedSave(job.version, dataSaveVersionRef.current, latestPending?.version);
           if (shouldRetry) {
@@ -3005,6 +3005,7 @@ function App() {
             maybeShowSyncFailureNotice("data");
             scheduleDataRetry();
           }
+          if (options.urgent) throw caught;
           break;
         }
       }
@@ -3053,7 +3054,7 @@ function App() {
             if (saved.activeMode) setModeState(saved.activeMode as Mode);
             scheduleSnapshotWrite();
           }
-        } catch {
+        } catch (caught) {
           const latestPending = pendingSettingsSaveRef.current as QueuedSettingsSave | null;
           const shouldRetry = shouldRequeueFailedSave(job.version, settingsSaveVersionRef.current, latestPending?.version);
           if (shouldRetry) {
@@ -3062,6 +3063,7 @@ function App() {
             maybeShowSyncFailureNotice("settings");
             scheduleSettingsRetry();
           }
+          if (options.urgent) throw caught;
           break;
         }
       }
