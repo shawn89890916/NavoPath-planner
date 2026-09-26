@@ -117,6 +117,8 @@ Keep the current-time line behind scheduled blocks so it never obscures their la
 The dark interaction accent is fixed muted stone. Avoid pure-white control fills,
 bright outlines, and neon glows. Saved custom accent values remain
 stored and resume in light mode; hide accent selectors while dark mode is active.
+Primary quick-add actions use a filled theme accent in both modes, with text that
+contrasts against the fill. Keep the fill visible when the action is disabled.
 
 ## Paper Expression
 

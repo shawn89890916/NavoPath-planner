@@ -38129,11 +38129,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: var(--task-bg);
 }
 #root .df-app.mode-execute .df-quick-add-submit {
-  background: rgb(245, 241, 232);
-  opacity: 1;
-}
-#root .df-app.mode-execute .df-quick-add-submit:disabled {
-  background: rgb(245, 241, 232);
+  background: var(--accent-active);
+  color: var(--bg-app);
   opacity: 1;
 }
 
@@ -38174,11 +38171,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   place-items: center;
   min-width: 48px;
   padding: 0;
-}
-#root .df-app .df-quick-add-submit::before {
-  content: "↑";
-  font-size: 16px;
-  line-height: 1;
 }
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-body,
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-content,
