@@ -66,7 +66,7 @@ describe("portrait interaction contracts", () => {
   });
 
   it("uses the compact workbench before a narrow landscape timeline collapses", () => {
-    expect(main).toContain("const COMPACT_LAYOUT_MEDIA_QUERY = \"(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)\";");
+    expect(main).toContain("const COMPACT_LAYOUT_MEDIA_QUERY = \"(orientation: portrait), (max-width: 760px) and (orientation: landscape)\";");
     expect(appCss).toContain("@media (min-width: 761px) and (max-width: 980px) and (orientation: landscape)");
   });
 
