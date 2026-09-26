@@ -32,11 +32,12 @@ NavoPath is not:
 
 - Core palette: brown `#584D3D`, sage `#7EA172`, coral `#D7816A`, aubergine `#0F0326`, and neutral paper `#F8F7F3`.
 - Light mode uses charcoal `#27231E` as the primary text and ink color. It is not a large filled accent.
-- Dark mode uses warm ivory `#EEE9DF` as primary text and as the default interaction accent.
-- Execute coral `#D7816A` and Planning sage `#7EA172` are annotation colors for rules, checks, focus, and small status details only.
+- Dark mode uses a graphite interface with softened white text and a fixed soft-white interaction accent.
+- Execute coral `#D7816A`, Planning sage `#7EA172`, and custom project colors remain data markers; they do not tint dark-mode controls or large surfaces.
+- Keep the current-time marker coral as a small temporal cue; interaction emphasis remains soft white.
 - Shared application controls must use the active page theme variables, especially `--accent-active`, rather than hard-coded purple or lime.
 - Light mode uses charcoal ink on warm soft-white paper.
-- Dark mode uses warm ivory ink on charcoal paper.
+- Dark mode uses softened neutral ink on layered charcoal surfaces.
 - Legacy purple and lime remain optional custom accents only.
 - Product and portfolio pages map their local accent variables to the shared interaction tokens.
 
@@ -76,12 +77,44 @@ hierarchy.
 
 ## Paper Surfaces
 
-- Dark mode uses charcoal paper with warm off-white ink.
+- Dark mode uses a charcoal ground with softened neutral ink and clear surface steps.
 - Light mode uses warm ivory paper with charcoal ink.
 - Texture is allowed only on large surfaces and must remain extremely subtle.
 - Separate regions with whitespace, fine rules, and small tonal shifts.
 - Avoid stacked rounded cards, glassmorphism, neon glow, colored shadows, and decorative gradients on controls.
 - Paper feeling should come from layout, rules, quiet surfaces, and typography, not from heavy decoration.
+
+### Dark Mode Tokens And Contrast
+
+Dark-mode surfaces use this graphite hierarchy:
+
+- App ground: `#1A1B1D`
+- Subtle ground: `#1D1E20`
+- Main surface: `#202124`
+- Task/card surface: `#242528`
+- Raised surface: `#28292C`
+- Primary text: `#D5D6D8`
+- Secondary text: `#B0B1B3`
+- Supporting text: `#949598`
+- Subtle rule: `#3C3D40`
+- Interactive control boundary: `#6F7178`
+- Interaction accent: `#DFE0E2`, with `#1A1B1D` text on soft-white primary actions
+
+Normal text must meet WCAG AA contrast of at least 4.5:1. Large text, meaningful
+control boundaries, icons, and focus indicators must reach at least 3:1. Keyboard
+focus uses a 2px soft-white outline with a visible offset. Keep muted text readable;
+do not use opacity alone to communicate a disabled or secondary state.
+
+Dark mode uses flat graphite surfaces without paper grain, warm hour bands, accent
+glows, or colored control fills. Keep large white areas out of the interface. Use
+surface steps and visible rules to separate the candidate list, schedule, planning tree,
+settings, inputs, dialogs, and mobile
+sheets. Schedule blocks use the raised surface and neutral rules; project colors
+may mark the project itself but must not color the block outline or fill. Keep
+the current-time line behind scheduled blocks so it never obscures their labels.
+
+The dark interaction accent is fixed soft white. Saved custom accent values remain
+stored and resume in light mode; hide accent selectors while dark mode is active.
 
 ## Paper Expression
 

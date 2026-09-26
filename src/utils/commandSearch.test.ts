@@ -31,4 +31,14 @@ describe("command search", () => {
     expect(titles).toContain("Stretch");
     expect(searchCommands(buildCommandSearchIndex(data, {} as Settings), "shortcuts")[0].kind).toBe("setting");
   });
+
+  it("keeps saved accent settings searchable in light mode but hides the entry in dark mode", () => {
+    const lightSettings = { theme: "light", language: "en" } as Settings;
+    const darkSettings = { theme: "dark", language: "en" } as Settings;
+    const lightSettingsIndex = buildCommandSearchIndex(data, lightSettings).filter((item) => item.kind === "setting");
+    const darkSettingsIndex = buildCommandSearchIndex(data, darkSettings).filter((item) => item.kind === "setting");
+
+    expect(lightSettingsIndex.some((item) => item.id === "setting:accent-colors")).toBe(true);
+    expect(darkSettingsIndex.some((item) => item.id === "setting:accent-colors")).toBe(false);
+  });
 });

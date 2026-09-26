@@ -407,35 +407,33 @@ function themeVars(settings: Settings, mode: Mode) {
   // Timeline font scale: clamp to safe range, default 1
   const fontScale = Math.max(0.85, Math.min(1.3, settings.timelineFontScale ?? 1));
   if (isDark) {
-    const darkAccent = settings.executeAccentColor || settings.planningAccentColor ? activeAccent : "#EEE9DF";
-    const darkAccentRgb = hexToRgb(darkAccent);
     return {
       "--execute-primary": execute,
       "--execute-on-primary": executeLight ? "#111827" : "#FFFFFF",
       "--planning-primary": planning,
       "--planning-on-primary": planningLight ? "#111827" : "#FFFFFF",
-      "--accent-active": darkAccent,
-      "--accent-rgb": `${darkAccentRgb.r}, ${darkAccentRgb.g}, ${darkAccentRgb.b}`,
-      "--accent-on": isLightColor(darkAccent) ? "#27231E" : "#EEE9DF",
-      "--bg-app": "#1A1A1A",
-      "--bg-app-soft": "#1E1E1E",
-      "--surface-main": "#252525",
-      "--surface-raised": "#2A2A2A",
-      "--surface-card": "#222222",
-      "--text-main": "#E8E8E8",
-      "--text-muted": "#999999",
-      "--text-faint": "#666666",
-      "--border-soft": "rgba(255,255,255,0.08)",
-      "--border-subtle": "rgba(255,255,255,0.04)",
-      "--shadow-soft": "0 12px 28px rgba(0,0,0,0.28)",
+      "--accent-active": "#DFE0E2",
+      "--accent-rgb": "223, 224, 226",
+      "--accent-on": "#1A1B1D",
+      "--bg-app": "#1A1B1D",
+      "--bg-app-soft": "#1D1E20",
+      "--surface-main": "#202124",
+      "--surface-raised": "#28292C",
+      "--surface-card": "#242528",
+      "--text-main": "#D5D6D8",
+      "--text-muted": "#B0B1B3",
+      "--text-faint": "#949598",
+      "--border-soft": "#6F7178",
+      "--border-subtle": "#3C3D40",
+      "--shadow-soft": "0 18px 48px rgba(0,0,0,0.34)",
       "--shadow-hl": "none",
-      "--header-bg": "rgba(26,26,26,0.94)",
-      "--header-border": "rgba(255,255,255,0.06)",
-      "--header-fg": "#F0F0F0",
-      "--header-fg-muted": "#999999",
-      "--input-bg": "#252525",
-      "--input-border": "rgba(255,255,255,0.10)",
-      "--timeline-paper": "#252525",
+      "--header-bg": "rgba(26,27,29,0.96)",
+      "--header-border": "#3C3D40",
+      "--header-fg": "#D5D6D8",
+      "--header-fg-muted": "#B0B1B3",
+      "--input-bg": "#202124",
+      "--input-border": "#6F7178",
+      "--timeline-paper": "#202124",
       "--timeline-font-scale": String(fontScale),
     } as CSSProperties;
   }
@@ -14657,10 +14655,12 @@ function PluginRuntimePanel({ settings, data, onSave, onSaveData, lang }: { sett
   );
 }
 
-function settingsCategoryDescription(category: SettingsCategory, lang: Language): string {
+function settingsCategoryDescription(category: SettingsCategory, lang: Language, isDark: boolean): string {
   const descriptions: Record<SettingsCategory, [string, string]> = {
     general: ["语言、时间边界与快捷键。", "Language, time boundaries, and shortcuts."],
-    appearance: ["界面模式、字体与强调色。", "Interface mode, typography, and accent color."],
+    appearance: isDark
+      ? ["深色交互高亮使用柔和白色；浅色模式可继续使用已保存的强调色。", "Dark mode uses a softened white interaction accent; saved accents remain available in light mode."]
+      : ["界面模式、字体与强调色。", "Interface mode, typography, and accent color."],
     workflow: ["规划视图、智能排程与工作习惯。", "Planning views, smart scheduling, and work habits."],
     "account-data": ["账户、同步、导入导出与数据控制。", "Account, sync, imports, exports, and data controls."],
     ai: ["Navo AI 的模型、记忆与主动助理。", "Navo AI models, memory, and proactive assistant."],
@@ -15031,7 +15031,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
                         options={[{ value: "light", label: t(lang, "settings.light") }, { value: "dark", label: t(lang, "settings.dark") }]}
                       />
                     </div>
-                    <div className="df-settings-home-quick-row df-settings-home-quick-row--accent">
+                    {settings.theme !== "dark" && <div className="df-settings-home-quick-row df-settings-home-quick-row--accent">
                       <div className="df-settings-home-quick-label"><UiCopyIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "强调色" : "Accent color"}</span></div>
                       <div className="df-settings-accent-native">
                         <span className="df-settings-accent-dot" style={{ backgroundColor: selectedAccent }} />
@@ -15043,7 +15043,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
                         />
                         <span className="df-settings-accent-arrows" aria-hidden="true"><span>⌃</span><span>⌄</span></span>
                       </div>
-                    </div>
+                    </div>}
                     <div className="df-settings-home-quick-row">
                       <div className="df-settings-home-quick-label"><UiBellIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "语言" : "Language"}</span></div>
                       <SettingSelect<Language>
@@ -15066,7 +15066,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
                         <span className="df-settings-home-entry-icon"><SettingsCategoryIcon category={category.id} /></span>
                         <span className="df-settings-home-entry-copy">
                           <strong>{lang === "zh" ? category.labelZh : category.labelEn}</strong>
-                          <small>{settingsCategoryDescription(category.id, lang)}</small>
+                          <small>{settingsCategoryDescription(category.id, lang, settings.theme === "dark")}</small>
                         </span>
                         <span className="df-settings-home-entry-chevron" aria-hidden="true">›</span>
                       </button>
@@ -15105,7 +15105,9 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
               />
             </SettingSection>}
 
-            {settingsTarget.category === "appearance" && <SettingSection title={lang === "zh" ? "外观" : "Appearance"} description={lang === "zh" ? "纸面风格、字体与克制的点缀色。" : "Paper surface, typography, and restrained accent color."}>
+            {settingsTarget.category === "appearance" && <SettingSection title={lang === "zh" ? "外观" : "Appearance"} description={settings.theme === "dark"
+              ? (lang === "zh" ? "深色模式使用柔和白色交互高亮；已保存的强调色会在浅色模式下继续生效。" : "Dark mode uses a softened white interaction accent. Your saved accent returns in light mode.")
+              : (lang === "zh" ? "纸面风格、字体与克制的点缀色。" : "Paper surface, typography, and restrained accent color.")}>
               <SettingRow
                 anchor="theme"
                 title={t(lang, "settings.uiMode")}
@@ -15153,17 +15155,17 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
                   </span>
                 }
               />
-              <div className="df-settings-accent-colors" data-settings-anchor="accent-colors" tabIndex={-1}>
+              {settings.theme !== "dark" && <div className="df-settings-accent-colors" data-settings-anchor="accent-colors" tabIndex={-1}>
                 <SettingDescription>{lang === "zh" ? "点缀色用于细线、勾选与当前时间标记，不会作为大面积填充。" : "Accent colors are used for fine rules, checks, and the current-time marker, never as dominant fills."}</SettingDescription>
                 <div className="df-settings-accent-row">
                   <ThemeAccentSetting
                     label={lang === "zh" ? "强调色" : "Accent color"}
-                    presets={settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT}
+                    presets={EXECUTE_THEME_PRESETS_LIGHT}
                     value={selectedAccent}
                     onChange={(color) => onSave({ executeAccentColor: color, planningAccentColor: color })}
                   />
                 </div>
-              </div>
+              </div>}
             </SettingSection>}
 
             {settingsTarget.category === "general" && <SettingSection anchor="execution-defaults" title={lang === "zh" ? "执行默认项" : "Execution defaults"} description={lang === "zh" ? "时间轴与完成任务的默认行为。" : "Default timeline and completed-task behavior."}>

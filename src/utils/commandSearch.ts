@@ -45,7 +45,8 @@ export function buildCommandSearchIndex(data: PlannerData, settings: Settings): 
     actions: ["open", "schedule_now"],
   }));
   const language = settings.language || "en";
-  const settingResults: CommandSearchResult[] = SETTINGS_SEARCH_ENTRIES.map((item) => ({
+  const visibleSettings = SETTINGS_SEARCH_ENTRIES.filter((item) => !(settings.theme === "dark" && item.id === "accent-colors"));
+  const settingResults: CommandSearchResult[] = visibleSettings.map((item) => ({
     id: `setting:${item.id}`,
     kind: "setting",
     title: language === "zh" ? item.labelZh : item.labelEn,
