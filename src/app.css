@@ -24845,7 +24845,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 }
 
 /* Keep the daily timeline at a stable reading width until the layout stacks. */
-@media (max-width: 980px) and (orientation: portrait) {
+@media (orientation: portrait) {
   body {
     min-width: 0;
   }
@@ -34628,7 +34628,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app.mode-planning .df-planning .df-tree-wrap { padding: 16px 12px 24px; }
 }
 
-@media (max-width: 899.98px) and (orientation: portrait),
+@media (orientation: portrait),
        (max-width: 760px) and (orientation: landscape) {
   #root .df-app:where(.mode-execute, .mode-planning) .df-utility-panel .df-utility-body.df-settings-shell {
     grid-template-columns: minmax(0, 1fr);
@@ -35299,7 +35299,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
     flex-direction: column;
 
-    background: var(--surface-main);
+    background: var(--bg-app);
 
   }
 
@@ -38462,15 +38462,28 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 
 #root .df-app.mode-execute .df-timeline-content {
-  background: var(--surface-main);
+  background: var(--bg-app);
 }
 
 #root .df-app.mode-execute .df-timeline-scroll {
-  background: var(--surface-main);
+  background: var(--bg-app);
 }
 
 #root .df-app.mode-execute .df-timeline-3day-scroll {
-  background: var(--surface-main);
+  background: var(--bg-app);
+}
+
+#root .df-app.theme-dark.mode-execute :is(
+  .df-timeline-panel,
+  .df-timeline-body,
+  .df-timeline-content,
+  .df-timeline-daily,
+  .df-timeline-scroll,
+  .df-timeline-3day-top,
+  .df-timeline-3day-allday,
+  .df-timeline-3day-scroll
+) {
+  background-color: var(--bg-app);
 }
 
 @media (max-width: 980px) {
@@ -38484,7 +38497,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     min-width: 0;
     padding: 8px 8px calc(78px + env(safe-area-inset-bottom));
     gap: 0;
-    background: var(--surface-main);
+    background: var(--bg-app);
   }
 
   #root .df-app.mode-execute :is(.df-candidate-panel, .df-timeline-panel) {
@@ -38697,7 +38710,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   .df-ai-progress.thinking .df-ai-progress-icon { animation: none; }
   .df-ai-reference-suggestions button { transition: none; }
 }/* Final Execute refinements are imported after the legacy workspace sheets. */
-#root .df-app:not(.theme-dark).mode-execute .df-execute { background: rgb(250, 249, 245); }
+#root .df-app:not(.theme-dark).mode-execute .df-execute { background: rgb(248, 247, 243); }
 #root .df-app:not(.theme-dark).mode-execute .df-candidate-panel { background: rgb(248, 247, 243); }
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-panel { background: rgb(248, 247, 243); }
 
@@ -38881,7 +38894,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   backdrop-filter: none;
   box-shadow: none;
 }
-@media (min-width: 981px) {
+@media (min-width: 981px) and (orientation: landscape) {
   #root .df-app:not(.theme-dark).mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) {
     position: relative;
     isolation: isolate;
@@ -38902,7 +38915,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border: 1px solid var(--paper-rule);
     border-top: 0;
     border-radius: 20px;
-    background: rgb(250, 249, 245);
+    background: rgb(248, 247, 243);
     corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app.mode-execute > .df-execute:not(.df-template-shell) .df-candidate-panel:not(.collapsed) {
@@ -39064,7 +39077,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app.mode-execute .df-timeline-panel {
     border: 1px solid color-mix(in srgb, var(--accent-active) 28%, var(--paper-rule-strong));
     border-radius: 6px;
-    background: var(--surface-main);
+    background: var(--bg-app);
     box-shadow: none;
     corner-shape: var(--corner-shape, squircle);
   }
@@ -39203,7 +39216,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   stroke-width: 2;
 }
 
-@media (min-width: 981px) {
+@media (min-width: 981px) and (orientation: landscape) {
   #root .df-app.mode-execute > .df-add-fab {
     position: fixed;
     right: 24px;
@@ -39595,7 +39608,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     grid-template-columns: clamp(330px, 40%, 390px) minmax(0, 1fr);
     gap: 12px;
     padding: 12px 16px 16px;
-    background: var(--surface-main);
+    background: var(--bg-app);
   }
 
   #root .df-app.mode-execute .df-candidate-panel {
@@ -39615,7 +39628,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     max-width: none;
     border: 1px solid var(--paper-rule);
     border-radius: 14px;
-    background: var(--surface-main);
+    background: var(--bg-app);
     box-shadow: none;
     corner-shape: var(--corner-shape, squircle);
   }
@@ -39886,7 +39899,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   box-shadow: none;
 }
 
-@media (max-width: 899.98px) and (orientation: portrait),
+@media (orientation: portrait),
        (max-width: 760px) and (orientation: landscape) {
   #root .df-app:where(.mode-execute, .mode-planning) .df-mobile-dock {
     display: grid;
@@ -39992,7 +40005,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 /* Compact settings follow the reference pattern: a quiet page ground, a
    readable account header, section labels outside white row groups, and one
    stable full-width dock. */
-@media (max-width: 899.98px) and (orientation: portrait),
+@media (orientation: portrait),
        (max-width: 760px) and (orientation: landscape) {
   #root .df-app .df-utility-panel:has(.df-settings-shell) {
     background: var(--bg-app);
@@ -40499,7 +40512,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   min-height: 78px;
 }
 
-@media (max-width: 899.98px) and (orientation: portrait),
+@media (orientation: portrait),
        (max-width: 760px) and (orientation: landscape) {
   #root .df-app .df-utility-panel .df-utility-body.df-settings-shell.df-settings-detail-shell {
     grid-template-rows: minmax(0, 1fr);

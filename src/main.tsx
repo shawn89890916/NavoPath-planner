@@ -91,7 +91,7 @@ import { ActionDisclosure, Button, CloseButton, IconButton } from "./components/
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
 import { DateQuickPicker } from "./components/DateQuickPicker";
 
-const COMPACT_LAYOUT_MEDIA_QUERY = "(max-width: 899.98px) and (orientation: portrait), (max-width: 760px) and (orientation: landscape)";
+const COMPACT_LAYOUT_MEDIA_QUERY = "(orientation: portrait), (max-width: 760px) and (orientation: landscape)";
 const INCOMPLETE_OUTCOMES = ["unfinished-return", "unfinished-stay", "skipped-return", "skipped-stay"] as const;
 const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
