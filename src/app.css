@@ -24554,6 +24554,9 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-app.theme-dark .dayflow-icon img {
   filter: invert(1) brightness(1.08) contrast(.96);
 }
+.df-app.theme-dark .df-header .df-brand-ai-button .dayflow-icon img {
+  filter: brightness(0) invert(1);
+}
 
 .df-app.mode-planning.theme-dark .df-plan-project-node {
   min-height: 36px;

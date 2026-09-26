@@ -9,6 +9,7 @@
 - 深色与浅色共用宽屏执行页工作区结构、候选浮层层级和缩放手柄，颜色通过主题 token 区分。
 - 移除已停用的 Neumorphic 主题样式、永久隐藏的旧执行顶部栏及重复控件，减少样式表和执行页组件体积。
 - 今日候选快速添加按钮改为大写 ADD，并在浅色和深色模式使用有颜色填充的主题强调色，禁用时仍保持填充。
+- 深色模式左上角产品图标改为单色浅色轮廓，提升在深色页眉上的识别度。
 - 执行工作区改为按横竖屏切换布局，统一时间轴外围底板颜色并保留交错时段纹理。
   - 移除窄横屏的额外双栏状态；宽度不超过 980px 时使用紧凑单面板，981px 起切换到完整双栏。
   - 深色与浅色模式共用候选栏宽度，避免横屏比例下深色模式挤窄任务内容。
@@ -245,6 +246,7 @@
 - Reused the same wide-screen Execute workspace structure, floating candidate-panel layer, and resize handle in both themes; only their theme tokens differ.
 - Removed inactive Neumorphic theme rules and the permanently hidden legacy Execute toolbar with its duplicate controls, reducing stylesheet and Execute component size.
 - Changed the Today’s Candidates quick-add button to uppercase ADD and gave it a filled theme accent in both light and dark modes, including its disabled state.
+- Changed the top-left product mark to a light monochrome silhouette in dark mode for clear contrast against the header.
 - Switched the Execute workspace between landscape and portrait layouts, unified the timeline surround, and retained the alternating time bands.
   - Removed the extra narrow-landscape split state; use the compact single-panel layout through 980px and the full two-column layout from 981px.
   - Shared the candidate-column width between dark and light themes to keep task content readable at landscape aspect ratios.
