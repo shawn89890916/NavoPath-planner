@@ -392,7 +392,7 @@ describe("WidgetPopoverView", () => {
     expect(css).toMatch(/\.df-widget-opacity-row input::\-webkit-slider-thumb\s*\{[^}]*\-webkit-appearance:\s*none[^}]*background:\s*var\(--widget-ink\)/);
     expect(css).toMatch(/\.df-widget-right\s*\{[^}]*align-items:\s*center/);
     expect(css).toMatch(/\.df-widget-mode-tooltip\s*\{[^}]*border:\s*0/);
-    expect(css).toMatch(/\.df-widget-mode-switch button\.is-selected\s*\{[^}]*border-bottom:\s*1px solid var\(--widget-ink\)/);
+    expect(css).toMatch(/\.df-widget-mode-switch button\.is-selected\s*\{[^}]*border-color:\s*var\(--widget-ink\)/);
     expect(css).toMatch(/\.df-widget-mode-details\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.df-widget-timer-settings-view\s*\{[^}]*min-height:\s*0/);
     expect(css).toMatch(/\.df-widget-timer-settings-view > \.df-widget-mode-switch\s*\{[^}]*flex:\s*0 0 auto/);
