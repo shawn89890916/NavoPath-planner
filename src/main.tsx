@@ -9149,35 +9149,6 @@ function App() {
                 }}
               />
             ) : <>
-            <div className="df-execute-top-legacy" style={{ display: "none" }} aria-hidden="true">
-              {!settings.hideAi && <div className="df-ai-planner" aria-hidden={compactLayout}>
-                <button className={`df-ai-plan ${autoScheduleState === "generating" ? "thinking" : ""} ${autoScheduleState === "committing" ? "committing" : ""}`} data-tip={drawerOpen ? t(lang, "timeline.aiPlanToday") : t(lang, "timeline.planningSuggestion")} aria-label={t(lang, "timeline.aiPlanToday")} disabled={autoScheduleState === "generating" || autoScheduleState === "committing" || drawerOpen} onClick={() => void planMyDay()}>
-                  {autoScheduleState === "generating" ? <><i />{t(lang, "timeline.analyzing")}</>
-                    : autoScheduleState === "committing" ? <><i />{t(lang, "timeline.adopting")}</>
-                    : autoScheduleState === "preview" ? t(lang, "timeline.regenerate")
-                    : t(lang, "timeline.planningSuggestion")}
-                </button>
-                <button className={`df-ai-plan-toggle ${aiPlanMenuOpen ? "active" : ""}`} aria-label={t(lang, "timeline.aiPlanningSettings")} onClick={(event) => {
-                  event.stopPropagation();
-                  setAiPlanMenuOpen((open) => !open);
-                }}><span className="df-ai-plan-chevron" aria-hidden="true" /></button>
-                {schedulePreviews.length > 0 && autoScheduleState === "preview" && <>
-                  <button className="df-ai-plan-confirm" onClick={() => acceptAllPreviews()} title={t(lang, "timeline.adoptAll")}>✓</button>
-                  <CloseButton className="df-ai-plan-cancel" onClick={() => cancelAutoSchedule()} label={t(lang, "timeline.cancelPreview")} />
-                </>}
-                {aiPlanMenuOpen && <span className="df-ai-plan-menu open" onClick={(event) => event.stopPropagation()}>
-                  <label>{t(lang, "timeline.source")}<select value={aiPlanPrefs.source} onChange={(event) => setAiPlanPrefs((current) => ({ ...current, source: event.target.value as AiPlanPrefs["source"] }))}><option value="today">{t(lang, "timeline.fromCandidates")}</option><option value="all">{t(lang, "timeline.allUnfinished")}</option></select></label>
-                  <label>{t(lang, "timeline.scope")}<select value={aiPlanPrefs.scope} onChange={(event) => setAiPlanPrefs((current) => ({ ...current, scope: event.target.value as AiPlanPrefs["scope"] }))}><option value="day">{viewLabel(lang, "daily")}</option><option value="3day">{viewLabel(lang, "3day")}</option><option value="week">{lang === "zh" ? "本周" : "This week"}</option></select></label>
-                  <label>{t(lang, "timeline.strategy")}<select value={aiPlanPrefs.strategy} onChange={(event) => setAiPlanPrefs((current) => ({ ...current, strategy: event.target.value as AiPlanPrefs["strategy"] }))}><option value="alternativeProject">{t(lang, "timeline.alternateByProject")}</option><option value="byProject">{t(lang, "timeline.scheduleByProject")}</option><option value="longShort">{t(lang, "timeline.alternateLongShort")}</option><option value="random">{t(lang, "timeline.random")}</option></select></label>
-                </span>}
-              </div>}
-              <div className="df-timeline-actions">
-                {autoScheduleState === "preview" && schedulePreviews.length > 0 && (
-                  <span className="df-ai-plan-summary">{`${t(lang, "timeline.previewPlan").replace("X", String(schedulePreviews.length))}`}</span>
-                )}
-                {scheduleUnscheduled.length > 0 && <details className="df-ai-plan-unscheduled"><summary>{lang === "zh" ? `${scheduleUnscheduled.length} 项暂未安排` : `${scheduleUnscheduled.length} not scheduled`}</summary>{scheduleUnscheduled.map((item) => <div key={item.taskId}><strong>{item.title}</strong><small>{item.reason}</small></div>)}</details>}
-              </div>
-            </div>
             <div className="df-timeline-body">
               {!compactLayout && <>
                 <button className="df-date-arrow left" aria-label={t(lang, "timeline.prevSegment")} onClick={() => shiftTimeline(-1)}>‹</button>

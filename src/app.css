@@ -24,14 +24,6 @@
 
 
 
-/* 锟斤拷锟斤拷 Neumorphic Planning Layout 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Wizard 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-
-
 /* 锟斤拷锟斤拷 Planning Layout 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
 
 
@@ -261,65 +253,7 @@
 
 }
 
-
-
-/* 锟斤拷锟斤拷 Neumorphic Calendar 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-
-
-.theme-neumorphic .df-month-cell:hover {
-
-  box-shadow: var(--neu-convex-sm);
-
-}
-
-
-
-.theme-neumorphic .df-month-cell.today {
-
-  box-shadow: var(--neu-convex-sm), inset 0 0 0 2px var(--mode-primary);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Month Task Pill 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic .df-month-task {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: 8px;
-
-  box-shadow: var(--neu-flat);
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Animation Polish 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
 /* Unified transition duration across all interactive elements */
-
-.theme-neumorphic .df-month-cell {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: var(--neu-radius-xs, 8px);
-
-  box-shadow: var(--neu-flat);
-
-  transition: all .18s ease;
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
 
 
 
@@ -1160,73 +1094,11 @@
 
 
 
-/* 锟斤拷锟斤拷 Neumorphic Toast / Notification 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-.theme-neumorphic .df-toast {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: var(--neu-radius-sm, 12px);
-
-  box-shadow: var(--neu-convex);
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Tooltip 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic .df-icon-action[data-tip]:hover::after {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  color: var(--df-text);
-
-  box-shadow: var(--neu-convex-sm);
-
-  border: 0;
-
-}
-
-
-
 /* 锟斤拷锟斤拷 Toast / Notification 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
 
 
 
 /* Final contrast guard: operation feedback must stay readable in every theme. */
-
-.theme-neumorphic.df-app .df-toast {
-
-  color: #111827;
-
-  background: rgba(255, 255, 255, .98);
-
-  border: 1px solid color-mix(in srgb, var(--mode-primary) 62%, #CBD5E1);
-
-  border-left: 4px solid var(--mode-primary);
-
-  border-radius: 10px;
-
-  box-shadow:
-
-    0 10px 28px rgba(17, 24, 39, .15),
-
-    0 0 0 1px color-mix(in srgb, var(--mode-primary) 10%, transparent);
-
-  font-weight: 650;
-
-  line-height: 1.35;
-
-  text-shadow: none;
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
 
 
 
@@ -1885,449 +1757,7 @@
 
 
 
-/* ================================================================
-
-   THEME: NEUMORPHIC (Soft 3D) 锟斤�?Activated via .theme-neumorphic
-
-   ================================================================
-
-   This entire block is scoped under .theme-neumorphic.
-
-   Toggle by adding/removing the class on .df-app root element.
-
-   Light: #e0e5ec base, Dark: #1a1a2e base
-
-   ================================================================ */
-
-
-
-.theme-neumorphic {
-
-  --neu-bg: #e0e5ec;
-
-  --neu-light: #ffffff;
-
-  --neu-dark: #a3b1c6;
-
-  --neu-radius: 16px;
-
-  --neu-radius-sm: 12px;
-
-  --neu-radius-xs: 8px;
-
-  --neu-convex: 6px 6px 12px var(--neu-dark), -6px -6px 12px var(--neu-light);
-
-  --neu-convex-sm: 4px 4px 8px var(--neu-dark), -4px -4px 8px var(--neu-light);
-
-  --neu-concave: inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light);
-
-  --neu-concave-sm: inset 2px 2px 5px var(--neu-dark), inset -2px -2px 5px var(--neu-light);
-
-  --neu-pressed: inset 3px 3px 6px var(--neu-dark), inset -3px -3px 6px var(--neu-light);
-
-  --neu-flat: 2px 2px 4px var(--neu-dark), -2px -2px 4px var(--neu-light);
-
-  --neu-transition: all .18s ease;
-
-  background: #e0e5ec;
-
-  --bg: #e0e5ec;
-
-  --surface: #e0e5ec;
-
-  --df-bg: #e0e5ec;
-
-  --df-surface: #e0e5ec;
-
-  --mode-bg-b: #e0e5ec;
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Buttons 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic.df-app button {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: var(--neu-radius-sm, 12px);
-
-  box-shadow: var(--neu-convex-sm);
-
-  color: var(--df-text);
-
-  transition: var(--neu-transition);
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-.theme-neumorphic.df-app button:hover {
-
-  box-shadow: 7px 7px 14px var(--neu-dark, #a3b1c6), -7px -7px 14px var(--neu-light, #ffffff);
-
-  border-color: transparent;
-
-}
-
-
-
-.theme-neumorphic.df-app button:active {
-
-  box-shadow: var(--neu-pressed);
-
-  transform: translateY(1px);
-
-}
-
-
-
-.theme-neumorphic.df-app button:disabled {
-
-  box-shadow: none;
-
-  opacity: .45;
-
-  transform: none;
-
-}
-
-
-
 /* Icon action with active state */
-
-.theme-neumorphic .df-icon-action.active {
-
-  background: var(--mode-primary-soft);
-
-  box-shadow: var(--neu-convex-sm);
-
-  border: 0;
-
-}
-
-
-
-.theme-neumorphic.df-app textarea:focus {
-
-  box-shadow: var(--neu-concave), 0 0 0 2px color-mix(in srgb, var(--mode-primary) 36%, transparent);
-
-  outline: none;
-
-}
-
-
-
-.theme-neumorphic.df-app textarea::placeholder {
-
-  color: var(--df-muted);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Panels & Cards 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Tabs 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-.theme-neumorphic .df-tabs {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: var(--neu-radius-sm, 12px);
-
-  box-shadow: var(--neu-concave-sm);
-
-  padding: 4px;
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Mode Switch 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Stat Chips 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic AI Panel & Dock 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic .df-ai-panel {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Color Picker 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-.theme-neumorphic .ProjectColorPicker {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: var(--neu-radius, 16px);
-
-  box-shadow: var(--neu-convex);
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-.theme-neumorphic .ProjectColorPicker button {
-
-  box-shadow: var(--neu-flat);
-
-  border: 0;
-
-}
-
-
-
-.theme-neumorphic .ProjectColorPicker button:hover {
-
-  box-shadow: var(--neu-convex-sm);
-
-  transform: scale(1.08);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Execute Layout 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-.theme-neumorphic .df-execute {
-
-  background:
-
-    radial-gradient(circle at 72% 8%, color-mix(in srgb, var(--mode-primary) 12%, transparent), transparent 30%),
-
-    linear-gradient(135deg, var(--mode-bg-a) 0%, var(--mode-bg-b) 46%, var(--mode-bg-c) 100%);
-
-  border-radius: 28px 28px 0 0;
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Tree Nodes 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Settings 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Empty State 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic .df-empty {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: var(--neu-radius, 16px);
-
-  box-shadow: var(--neu-concave-sm);
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Event Pill 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Note Card 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic no-theme-gradient override 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Dark Theme Fine-tuning 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-.theme-neumorphic.theme-dark {
-
-  --neu-bg: #1a1a2e;
-
-  --neu-light: #23233a;
-
-  --neu-dark: #111122;
-
-  --neu-convex: 6px 6px 12px #111122, -6px -6px 12px #23233a;
-
-  --neu-convex-sm: 4px 4px 8px #111122, -4px -4px 8px #23233a;
-
-  --neu-concave: inset 4px 4px 8px #111122, inset -4px -4px 8px #23233a;
-
-  --neu-concave-sm: inset 2px 2px 5px #111122, inset -2px -2px 5px #23233a;
-
-  --neu-pressed: inset 3px 3px 6px #111122, inset -3px -3px 6px #23233a;
-
-  --neu-flat: 2px 2px 4px #111122, -2px -2px 4px #23233a;
-
-  --bg: #1a1a2e;
-
-  --surface: #1a1a2e;
-
-  --df-bg: #1a1a2e;
-
-  --df-surface: #1a1a2e;
-
-  --mode-bg-b: #1a1a2e;
-
-  background: #1a1a2e;
-
-}
-
-
-
-.theme-neumorphic.theme-dark .df-task-card {
-
-  background: var(--neu-bg);
-
-  box-shadow: var(--neu-convex-sm);
-
-}
-
-
-
-.theme-neumorphic.theme-dark .df-app button {
-
-  background: var(--neu-bg);
-
-  box-shadow: var(--neu-convex-sm);
-
-}
-
-
-
-.theme-neumorphic.theme-dark .df-app input {
-
-  background: var(--neu-bg);
-
-  box-shadow: var(--neu-concave-sm);
-
-}
-
-
-
-.theme-neumorphic.theme-dark .df-app select {
-
-  background: var(--neu-bg);
-
-  box-shadow: var(--neu-concave-sm);
-
-}
-
-
-
-.theme-neumorphic.theme-dark .df-app textarea {
-
-  background: var(--neu-bg);
-
-  box-shadow: var(--neu-concave-sm);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Glass Coexistence 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-/* When glass mode is enabled, keep neumorphic shadows but add subtle blur */
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Close Button 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic User Avatar Menu 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Panel Title Buttons 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic .df-panel-title button {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: var(--neu-radius-xs, 8px);
-
-  box-shadow: var(--neu-flat);
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-.theme-neumorphic .df-panel-title button:hover {
-
-  box-shadow: var(--neu-convex-sm);
-
-}
-
-
-
-.theme-neumorphic .df-panel-title button:active {
-
-  box-shadow: var(--neu-pressed);
-
-}
-
-
-
-.theme-neumorphic .df-panel-title button.light {
-
-  background: var(--neu-bg, #e0e5ec);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Quick Time Select 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic All Day Bar 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Brand Icon Shadow 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic .dayflow-icon {
-
-  filter: drop-shadow(3px 3px 6px var(--neu-dark, #a3b1c6)) drop-shadow(-1px -1px 3px var(--neu-light, #ffffff));
-
-}
 
 
 
@@ -3331,20 +2761,6 @@ h3 { margin: 0;
 
 
 /* 锟斤拷锟斤拷 AI Planning Mode 锟斤拷锟斤拷 */
-
-
-
-.ai-plan-toggle {
-
-  font-size: 11px;
-
-  padding: 3px 8px;
-
-  border-radius: 6px;
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
 
 
 
@@ -5797,7 +5213,7 @@ body.df-resizing * {
 
 .ProjectColorPicker button.active {
 
-  box-shadow: var(--neu-pressed), 0 0 0 2px var(--mode-primary);
+  box-shadow: 0 0 0 2px var(--mode-primary);
 
   transform: scale(.96);
 
@@ -6156,34 +5572,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-/* 锟斤拷锟斤拷 Neumorphic Scrollbar 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic *::-webkit-scrollbar-thumb {
-
-  background: color-mix(in srgb, var(--neu-dark, #a3b1c6) 50%, transparent);
-
-  border: 2px solid transparent;
-
-  border-radius: 999px;
-
-  background-clip: content-box;
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-.theme-neumorphic *::-webkit-scrollbar-thumb:hover {
-
-  background: color-mix(in srgb, var(--neu-dark, #a3b1c6) 70%, transparent);
-
-  background-clip: content-box;
-
-}
-
-
-
 
 
 /* ============================================================ */
@@ -6219,18 +5607,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-panel > div { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
 
   overflow: visible;
-
-}
-
-
-
-.df-timeline-actions {
-
-  display: flex;
-
-  align-items: stretch;
-
-  gap: 10px;
 
 }
 
@@ -6406,43 +5782,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.theme-neumorphic .df-tabs button {
-
-  background: transparent;
-
-  border: 0;
-
-  box-shadow: none;
-
-  border-radius: var(--neu-radius-xs, 8px);
-
-  transition: var(--neu-transition);
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-.theme-neumorphic .df-tabs button:hover:not(.active) {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  box-shadow: var(--neu-flat);
-
-}
-
-
-
 /* Header tabs 锟斤�?keep special dark treatment */
-
-.theme-neumorphic .df-header .df-tabs {
-
-  background: #F3ECFD;
-
-  box-shadow: none;
-
-}
 
 
 
@@ -7099,14 +6439,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 .df-app.is-timeline-fullscreen .df-header-fade {
-
-  display: none;
-
-}
-
-
-
-.df-app.is-timeline-fullscreen .df-execute-top {
 
   display: none;
 
@@ -7820,53 +7152,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.theme-neumorphic .df-candidate-panel {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: 28px;
-
-  box-shadow: var(--neu-convex);
-
-  transition: var(--neu-transition);
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Task Cards 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-
-
-.theme-neumorphic .df-task-card.overdue {
-
-  box-shadow: var(--neu-convex-sm), inset 3px 0 0 #EF4444;
-
-}
-
-
-
 /* Ghost / flat buttons */
-
-.theme-neumorphic .df-icon-action {
-
-  background: transparent;
-
-  border: 0;
-
-  box-shadow: none;
-
-  transition: var(--neu-transition);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Popover 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
 
 /* Gentle scale on active for tactile feedback */
 
@@ -8438,10 +7724,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   corner-shape: var(--corner-shape, squircle);
 
 }
-
-
-
-.df-ai-planner:hover .df-ai-plan-toggle { opacity: 1; transform: translateX(0); }
 
 .df-ai-plan-confirm:hover { background: color-mix(in srgb, var(--accent-active) 8%, transparent); }
 
@@ -10113,52 +9395,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-/* 锟斤拷锟斤拷 Neumorphic Time Slots / Ruler 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-.theme-neumorphic .df-slot {
-
-  border-top-color: color-mix(in srgb, var(--neu-dark, #a3b1c6) 60%, transparent);
-
-}
-
-
-
-.theme-neumorphic .df-slot.major {
-
-  border-top-color: color-mix(in srgb, var(--neu-dark, #a3b1c6) 90%, transparent);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Time Block (3Day) 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic .df-time-block {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: var(--neu-radius-xs, 8px);
-
-  box-shadow: var(--neu-flat);
-
-  transition: var(--neu-transition);
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-.theme-neumorphic .df-time-block:hover {
-
-  box-shadow: var(--neu-convex-sm);
-
-}
-
-
-
 /* 锟斤拷锟斤拷 Time Slots 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
 
 
@@ -10309,86 +9545,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.theme-neumorphic .df-view-switch {
-
-  border: 1px solid color-mix(in srgb, var(--mode-primary) 24%, #d8dee9);
-
-  background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--mode-primary) 6%, #ffffff));
-
-  box-shadow:
-
-    10px 10px 22px rgba(15, 23, 42, 0.08),
-
-    -10px -10px 22px rgba(255, 255, 255, 0.86);
-
-}
-
-
-
-.theme-neumorphic .df-view-switch-vertical {
-
-  border: 1px solid color-mix(in srgb, var(--mode-primary) 24%, #d8dee9);
-
-  background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--mode-primary) 6%, #ffffff));
-
-  box-shadow:
-
-    10px 10px 22px rgba(15, 23, 42, 0.08),
-
-    -10px -10px 22px rgba(255, 255, 255, 0.86);
-
-}
-
-
-
-.theme-neumorphic .df-ai-plan {
-
-  border: 1px solid color-mix(in srgb, var(--mode-primary) 24%, #d8dee9);
-
-  background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--mode-primary) 6%, #ffffff));
-
-  box-shadow:
-
-    10px 10px 22px rgba(15, 23, 42, 0.08),
-
-    -10px -10px 22px rgba(255, 255, 255, 0.86);
-
-}
-
-
-
-.theme-neumorphic .df-add-fab {
-
-  border: 1px solid color-mix(in srgb, var(--mode-primary) 24%, #d8dee9);
-
-  background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--mode-primary) 6%, #ffffff));
-
-  box-shadow:
-
-    10px 10px 22px rgba(15, 23, 42, 0.08),
-
-    -10px -10px 22px rgba(255, 255, 255, 0.86);
-
-}
-
-
-
-.theme-neumorphic .df-ai-fab {
-
-  border: 1px solid color-mix(in srgb, var(--mode-primary) 24%, #d8dee9);
-
-  background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--mode-primary) 6%, #ffffff));
-
-  box-shadow:
-
-    10px 10px 22px rgba(15, 23, 42, 0.08),
-
-    -10px -10px 22px rgba(255, 255, 255, 0.86);
-
-}
-
-
-
 .df-timeline-3day-date {
 
   flex: 1 1 0;
@@ -10438,38 +9594,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-week-view .df-day-col .df-quick-schedule {
 
   grid-template-columns: minmax(0, 1fr);
-
-}
-
-
-
-.theme-neumorphic .df-timeline-panel {
-
-  border: 1px solid color-mix(in srgb, var(--mode-primary) 28%, transparent);
-
-  background: var(--neu-bg, #e0e5ec);
-
-  box-shadow: var(--neu-convex);
-
-  border-radius: 28px;
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
-.theme-neumorphic .df-mindmap {
-
-  border: 1px solid color-mix(in srgb, var(--mode-primary) 28%, transparent);
-
-  background: var(--neu-bg, #e0e5ec);
-
-  box-shadow: var(--neu-convex);
-
-  border-radius: 28px;
-
-  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -11725,36 +10849,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-/* Primary / accent buttons 锟斤�?colored neumorphic style */
-
-
-
-.df-tabs button.active:hover {
-
-  box-shadow: 6px 6px 14px var(--neu-dark, #a3b1c6), -6px -6px 14px var(--neu-light, #ffffff),
-
-    0 0 18px color-mix(in srgb, var(--mode-primary-strong) 40%, transparent);
-
-  transform: translateY(-1px);
-
-}
-
-
-
-.df-tabs button.active:active {
-
-  box-shadow: inset 3px 3px 6px rgba(0,0,0,.18), inset -3px -3px 6px rgba(255,255,255,.08);
-
-  transform: translateY(1px);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Inputs 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?*/
-
-/* Override neumorphic on popover inputs 锟斤�?must come AFTER to win cascade */
-
 .drag-create-quick-add input {
 
   flex: 1 1 auto;
@@ -11776,26 +10870,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: 0;
 
   box-shadow: none;
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Quick Add 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic .df-quick-add {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: var(--neu-radius-sm, 12px);
-
-  box-shadow: var(--neu-concave-sm);
-
-  padding: 8px 12px;
-
-  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -12749,24 +11823,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-color: color-mix(in srgb, var(--mode-primary) 62%, transparent);
 
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--mode-primary) 14%, transparent);
-
-}
-
-
-
-/* 锟斤拷锟斤拷 Neumorphic Utility Panel 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 */
-
-.theme-neumorphic .df-drawer {
-
-  background: var(--neu-bg, #e0e5ec);
-
-  border: 0;
-
-  border-radius: 14px;
-
-  box-shadow: var(--neu-convex);
-
-  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -18856,20 +17912,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 /* Plan Suggestions: move left, don't block dates */
 
-.df-ai-planner {
-
-  position: relative;
-
-  display: inline-flex;
-
-  align-items: stretch;
-
-  z-index: 40;
-
-  margin-right: auto;
-
-}
-
 
 
 /* Timeline date arrows: full height hover area */
@@ -19056,18 +18098,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 }
 
-.df-app.theme-dark .df-execute-top {
-
-  color: var(--text-main);
-
-}
-
-.df-app.theme-dark .df-timeline-actions {
-
-  color: var(--text-main);
-
-}
-
 .df-app.theme-dark .df-ai-plan {
 
   border-color: color-mix(in srgb, var(--accent-active) 38%, var(--border-soft));
@@ -19243,18 +18273,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 
 .df-app.theme-dark .df-ai-plan-menu label {
-
-  color: var(--text-main);
-
-}
-
-.df-app.theme-dark .df-ai-plan-toggle {
-
-  color: var(--text-main);
-
-}
-
-.df-app.theme-dark .df-ai-plan-chevron {
 
   color: var(--text-main);
 
@@ -21056,21 +20074,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 }
 
 /* Timeline as the main paper canvas */
-.df-execute-top {
-
-  overflow: visible;
-
-  display: flex;
-
-  justify-content: space-between;
-
-  align-items: flex-start;
-
-  min-height: 0;
-
-  padding: 2px 14px 0;
-  border-bottom: 1px solid var(--paper-rule); background: var(--surface-main); box-shadow: none;
-}
 .df-timeline-3day-top {
 
   display: flex;
@@ -21511,22 +20514,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   margin: 0 12px 8px;
   border-color: var(--paper-rule); filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
-.df-ai-plan-toggle {
-
-  width: 28px;
-
-  margin-left: 2px;
-
-  border: 1px solid var(--border-soft); border-radius: var(--paper-radius);
-  background: transparent; box-shadow: none; color: var(--text-main);
-
-  opacity: 0;
-
-  transform: translateX(-6px);
-
-  transition: opacity .14s ease, transform .14s ease;
-  border-color: var(--paper-rule); filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
-}
 .df-ai-plan-confirm {
 
   width: 28px;
@@ -21580,7 +20567,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-color: var(--paper-rule); box-shadow: none; filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-ai-plan:hover { box-shadow: none; transform: none; border-color: var(--paper-accent-rule); background: var(--paper-note); color: var(--accent-active); }
-.df-ai-plan-toggle:hover { color: var(--accent-active); border-color: var(--paper-accent-rule); background: var(--paper-note); box-shadow: none; transform: none; }
 .df-ai-plan.thinking {
 
   width: 150px;
@@ -21605,7 +20591,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   pointer-events: none;
 
   opacity: 0.7; color: var(--accent-active); border-color: var(--paper-accent-rule); background: var(--paper-note); box-shadow: none; transform: none; }
-.df-ai-plan-toggle.active { opacity: 1; transform: none; color: var(--accent-active); border-color: var(--paper-accent-rule); background: var(--paper-note); box-shadow: none; }
 .df-utility-backdrop {
 
   position: fixed;
@@ -24779,18 +23764,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
 
 /* The planning action belongs to the timeline heading, not a separate toolbar. */
-.df-app .df-execute-top {
-  position: absolute;
-  top: 3px;
-  left: 14px;
-  z-index: 30;
-  width: auto;
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
 .df-app .df-ai-plan {
   min-width: 0;
   border: 0;
@@ -24802,40 +23775,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   font-weight: 700;
   letter-spacing: .01em;
   border-bottom: 1px solid var(--pencil-rule);
-}
-.df-app .df-ai-plan-toggle {
-  box-shadow: none; filter: none;
-  width: 26px;
-  margin-left: 4px;
-  border: 0;
-  border-bottom: 1px solid transparent;
-  border-radius: 0;
-  color: var(--text-muted);
-  background: transparent;
-}
-.df-app .df-ai-plan-toggle:hover {
-  color: var(--text-main); border-color: var(--paper-accent-rule);
-  background: transparent; transform: none; box-shadow: none; filter: none;
-  border-bottom-color: var(--pencil-rule);
-}
-.df-app .df-ai-plan-toggle.active {
-  color: var(--text-main);
-  border-bottom-color: var(--pencil-rule);
-  background: transparent;
-}
-.df-app .df-ai-plan-chevron {
-  width: 7px;
-  height: 7px;
-  display: block;
-  margin: -3px auto 0;
-  border-right: 1px solid currentColor;
-  border-bottom: 1px solid currentColor;
-  transform: rotate(45deg);
-  transition: transform 160ms ease, margin 160ms ease;
-}
-.df-app .df-ai-plan-toggle.active .df-ai-plan-chevron {
-  margin: 3px auto 0;
-  transform: rotate(225deg);
 }
 
 /* Keep the daily timeline at a stable reading width until the layout stacks. */
@@ -29756,18 +28695,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
     min-width: 28px;
     min-height: 28px;
     width: 28px;
-  }
-
-  .df-app[data-timeline-view="3day"] .df-ai-planner {
-    min-width: 34px;
-    width: 34px;
-    flex: 0 0 34px;
-  }
-
-  .df-app[data-timeline-view="weekly"] .df-ai-planner {
-    min-width: 34px;
-    width: 34px;
-    flex: 0 0 34px;
   }
 
   .df-app[data-timeline-view="3day"] .df-ai-plan {
@@ -35322,14 +34249,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 
 
-  .df-timeline-panel.compact-active .df-ai-planner {
-
-    display: none;
-
-  }
-
-
-
   .df-month-body {
 
     min-height: 0;
@@ -35377,16 +34296,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   .df-view-switch-vertical {
 
     display: none;
-
-  }
-
-
-
-  .df-execute-top {
-
-    min-height: 2px;
-
-    padding: 0;
 
   }
 
