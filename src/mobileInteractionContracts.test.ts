@@ -65,9 +65,11 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toContain("/* Multi-day views share the Day view's paper and hour-band rhythm. */");
   });
 
-  it("uses the compact workbench before a narrow landscape timeline collapses", () => {
-    expect(main).toContain("const COMPACT_LAYOUT_MEDIA_QUERY = \"(orientation: portrait), (max-width: 760px) and (orientation: landscape)\";");
-    expect(appCss).toContain("@media (min-width: 761px) and (max-width: 980px) and (orientation: landscape)");
+  it("uses the compact workbench until landscape has room for the two-column layout", () => {
+    expect(main).toContain("const COMPACT_LAYOUT_MEDIA_QUERY = \"(orientation: portrait), (max-width: 980px) and (orientation: landscape)\";");
+    expect(appCss).not.toContain("grid-template-columns: clamp(330px, 40%, 390px)");
+    expect(appCss).toContain("@media (min-width: 981px) and (orientation: landscape)");
+    expect(appCss).toContain("#root .df-app.mode-execute > .df-execute {\n    grid-template-columns: minmax(0, 1fr);");
   });
 
   it("keeps the landscape candidate list as the native vertical touch scroller", () => {

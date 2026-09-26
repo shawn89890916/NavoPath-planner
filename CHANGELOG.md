@@ -6,6 +6,7 @@
 - 将任务编辑页的“转换为”移到备注下方；悬停“未完成”可分别选择任务是否继续、是否回到 Planning，并用时间轴叉号区分已经跳过的安排。
 - 将任务块、UI 边框、按钮和弹层统一为 squircle 圆角；编辑页并排操作按钮统一为完整描边。
 - 执行工作区改为按横竖屏切换布局，统一时间轴外围底板颜色并保留交错时段纹理。
+  - 移除窄横屏的额外双栏状态；宽度不超过 980px 时使用紧凑单面板，981px 起切换到完整双栏。
 
 ## 2026-09-25 · 任务与子任务体验改进
 
@@ -233,6 +234,7 @@
 - Moved Convert to below Notes in task editing. Hovering Incomplete now lets users choose whether unfinished or skipped work returns to Planning, with an X distinguishing skipped timeline items.
 - Unified task blocks, interface borders, buttons, and overlays with squircle corners; edit-page side-by-side actions now use complete outlines.
 - Switched the Execute workspace between landscape and portrait layouts, unified the timeline surround, and retained the alternating time bands.
+  - Removed the extra narrow-landscape split state; use the compact single-panel layout through 980px and the full two-column layout from 981px.
 
 ## 2026-09-25 · Task and subtask improvements
 
