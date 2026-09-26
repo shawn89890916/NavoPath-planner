@@ -23,6 +23,7 @@
 - iOS 定位权限会说明用途；移动端页面恢复浏览器缩放支持。
 - 网页立即同步会在网络短暂中断或云端网关异常时有限重试；仍失败时明确显示失败状态并继续后台重试。
 - 修复竖屏规划视图将滑动误判为任务拖动的问题，拖动前需先长按；iOS 主屏幕模式的工作区底栏避开安全区；习惯勾选按钮固定为 44px 方形，内部勾选框保持 18px。
+- 修复窄屏规划页被过高的最小高度裁切，四种任务视图可在可见区域内滚动；习惯勾选框的方形样式也适用于桌面浏览器模拟竖屏。
 
 ## 2026-09-25 · 任务与子任务体验改进
 
@@ -267,6 +268,7 @@
 - Explained location access on iOS and restored browser zoom on mobile.
 - Added bounded retries for temporary web sync network and gateway failures; persistent failures now show accurately while background retry continues.
 - Fixed portrait Planning rows interpreting a scroll gesture as a task drag; touch drag now starts after a long press. Kept the workspace dock clear of the iOS safe area in Home Screen mode, and made habit checkbox buttons square 44px targets with an 18px visual check.
+- Fixed a narrow Planning page minimum height that clipped all four task views outside the visible viewport. Habit checks now keep their square shape when a desktop browser simulates a narrow portrait window.
 
 ## 2026-09-25 · Task and subtask improvements
 

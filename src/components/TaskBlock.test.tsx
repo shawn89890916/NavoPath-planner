@@ -273,16 +273,19 @@ describe("TaskBlock shared component contract", () => {
     expect(move).toContain("if (distance >= 9)");
   });
 
-  it("keeps portrait habit checkbox buttons square at the mobile hit-target size", () => {
+  it("keeps narrow habit checkbox buttons square for mouse and touch input", () => {
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
-    const mobileRules = css.slice(css.indexOf("@media (max-width: 980px) and (hover: none) and (pointer: coarse)"));
-    const habitCheck = mobileRules.match(/#root \.df-app\.mode-execute \.df-candidate-list \.df-habit-candidate-row \.df-task-block-check \{[^}]+\}/)?.[0] || "";
+    const narrowRules = css.slice(
+      css.indexOf("@media (max-width: 980px) {", css.indexOf("/* Browser zoom can cross")),
+      css.indexOf("@media (max-width: 980px) and (hover: none) and (pointer: coarse)")
+    );
+    const habitCheck = narrowRules.match(/#root \.df-app\.mode-execute \.df-candidate-list \.df-habit-candidate-row \.df-task-block-check \{[^}]+\}/)?.[0] || "";
 
     expect(habitCheck).toContain("width: 44px;");
     expect(habitCheck).toContain("height: 44px;");
     expect(habitCheck).toContain("flex: 0 0 44px;");
-    expect(mobileRules).toContain("width: 18px;");
-    expect(mobileRules).toContain("height: 18px;");
+    expect(narrowRules).toContain("width: 18px;");
+    expect(narrowRules).toContain("height: 18px;");
   });
 
   it("keeps Planning tree drag UX stable with the always-visible tools sidebar", () => {

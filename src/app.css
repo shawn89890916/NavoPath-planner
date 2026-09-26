@@ -33564,7 +33564,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 6px;
     corner-shape: var(--corner-shape, squircle);
   }
-  #root .df-app.mode-planning .df-planning { height: auto; min-height: calc(100vh - 58px); padding: 6px; }
+  #root .df-app.mode-planning .df-planning { height: 100%; min-height: 0; padding: 6px; }
   #root .df-app.mode-planning .df-planning .df-mindmap.no-root { grid-template-columns: 76px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
   #root .df-app.mode-planning .df-planning .df-planning-sidebar { width: 76px; min-width: 76px; padding-inline: 6px; flex-wrap: wrap; min-height: 48px; padding: 6px 8px; }
   #root .df-app.mode-planning .df-planning .df-view-btn { grid-template-columns: 1fr; justify-items: center; padding: 0 5px; min-width: 38px; }
@@ -37505,24 +37505,56 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-row {
-    --task-grid-template: 28px minmax(0, 1fr) auto;
-    --task-gap: 4px;
+    --task-grid-template: 44px minmax(0, 1fr) auto;
+    --task-gap: 6px;
   }
 
   #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-checkbox-wrap {
-    width: 28px;
-    min-width: 28px;
+    width: 44px;
+    min-width: 44px;
     height: 44px;
+  }
+
+  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+  }
+
+  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check.completed {
+    border: 0;
+    background: transparent;
   }
 
   #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check::before {
     content: "";
     position: absolute;
-    width: 32px;
-    height: 44px;
     left: 50%;
     top: 50%;
+    width: 18px;
+    height: 18px;
+    box-sizing: border-box;
+    border: 2px solid var(--task-checkbox-color);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--task-checkbox-color) 14%, transparent);
     transform: translate(-50%, -50%);
+  }
+
+  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check.completed::before {
+    border-color: var(--task-checkbox-color);
+    background: var(--task-checkbox-color);
   }
 
   #root .df-app.mode-execute .df-task-card .df-task-actions .df-icon-button {
@@ -37556,55 +37588,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     column-gap: 6px;
   }
 
-  #root .df-app.mode-execute .df-task-card .df-task-checkbox-wrap,
-  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-checkbox-wrap {
+  #root .df-app.mode-execute .df-task-card .df-task-checkbox-wrap {
     width: 44px;
     min-width: 44px;
-  }
-
-  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-row {
-    --task-grid-template: 44px minmax(0, 1fr) auto;
-    --task-gap: 6px;
-  }
-
-  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check {
-    position: relative;
-    display: grid;
-    place-items: center;
-    flex: 0 0 44px;
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
-    aspect-ratio: 1;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    transform: none;
-  }
-
-  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check.completed {
-    border: 0;
-    background: transparent;
-  }
-
-  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check::before {
-    left: 50%;
-    top: 50%;
-    width: 18px;
-    height: 18px;
-    box-sizing: border-box;
-    border: 2px solid var(--task-checkbox-color);
-    border-radius: 4px;
-    background: color-mix(in srgb, var(--task-checkbox-color) 14%, transparent);
-    transform: translate(-50%, -50%);
-  }
-
-  #root .df-app.mode-execute .df-candidate-list .df-habit-candidate-row .df-task-block-check.completed::before {
-    border-color: var(--task-checkbox-color);
-    background: var(--task-checkbox-color);
   }
 
   #root .df-app.mode-execute .df-task-card .df-task-block-check::before {
