@@ -105,10 +105,12 @@ control boundaries, icons, and focus indicators must reach at least 3:1. Keyboar
 focus uses a 2px muted-stone outline with a visible offset, without a glow. Keep muted
 text readable; do not use opacity alone to communicate a disabled or secondary state.
 
-Dark mode preserves the light-mode page geometry, task order, candidate grouping, and
-timeline scale. Use graphite surfaces, fine neutral rules, and very subtle alternating
-hour bands to retain the timeline's time structure. Candidate groups keep their headers
-and project-color markers. Schedule blocks use the raised surface with restrained
+Dark mode preserves the light-mode page geometry, task order, candidate grouping,
+desktop panel layering, resize handle, and timeline scale. The two themes share the
+same layout and pointer interactions; theme switching changes their visual tokens.
+Use graphite surfaces, fine neutral rules, and very subtle alternating hour bands to
+retain the timeline's time structure. Candidate groups keep their headers and
+project-color markers. Schedule blocks use the raised surface with restrained
 project-color edges; project colors remain data markers and do not fill large areas.
 Keep the current-time line behind scheduled blocks so it never obscures their labels.
 
