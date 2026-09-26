@@ -9114,7 +9114,7 @@ function App() {
                 lang={lang}
               />
               <button className="df-quick-add-submit" type="submit" aria-label={t(lang, "candidate.add")} disabled={!quickTitle.trim()}>
-                ADD
+                Add
               </button>
             </form>
             <span className="df-candidate-resize-zone" aria-hidden="true" onPointerDown={startCandidatePanelResize} />

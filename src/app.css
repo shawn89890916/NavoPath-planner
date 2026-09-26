@@ -38129,9 +38129,15 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: var(--task-bg);
 }
 #root .df-app.mode-execute .df-quick-add-submit {
-  background: var(--accent-active);
-  color: var(--bg-app);
+  background: #fff;
+  color: #000;
+  border: 1px solid #8A8174;
   opacity: 1;
+}
+#root .df-app.mode-execute.theme-dark .df-quick-add-submit {
+  background: #000;
+  color: #fff;
+  border-color: #5C5A56;
 }
 
 /* Browser review follow-up: keep compact controls in the viewport and let the
@@ -38173,9 +38179,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   height: 34px;
   padding: 0 8px;
   border-radius: 10px;
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: 800;
   letter-spacing: .1em;
   line-height: 1;
+  cursor: pointer;
 }
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-body,
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-content,

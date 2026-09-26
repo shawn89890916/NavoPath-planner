@@ -119,8 +119,9 @@ bright outlines, and neon glows. Saved custom accent values remain
 stored and resume in light mode; hide accent selectors while dark mode is active.
 Invert the original top-left product mark in dark mode, preserving its internal
 light and dark details so its outline stays legible without becoming a solid-white shape.
-Primary quick-add actions use a filled theme accent in both modes, with text that
-contrasts against the fill. Keep the fill visible when the action is disabled.
+The Execute quick-add action uses a white fill with black text in light mode and a
+black fill with white text in dark mode. Keep its fill visible when disabled, retain
+a fine boundary against the surrounding surface, and use a pointer cursor on hover.
 
 ## Paper Expression
 
