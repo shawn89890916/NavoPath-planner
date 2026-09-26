@@ -26,6 +26,7 @@
   border-radius: var(--paper-radius-soft);
   background: var(--surface-raised);
   box-shadow: var(--paper-float-shadow);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-ai-conversation-actions.opens-up .df-ai-conversation-menu { top: auto; bottom: calc(50% + 19px); }
 #root .df-app .df-ai-conversation-menu > button {
@@ -44,6 +45,7 @@
   font: 560 12px/1.2 var(--paper-sans);
   text-align: left;
   cursor: pointer;
+  corner-shape: var(--corner-shape, squircle);
 }
 #root .df-app .df-ai-conversation-menu > button:hover,
 #root .df-app .df-ai-conversation-menu > button:focus-visible { background: var(--paper-note) !important; }

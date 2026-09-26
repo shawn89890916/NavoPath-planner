@@ -15,11 +15,11 @@ html:has(.df-widget-popover-root), body:has(.df-widget-popover-root), #root:has(
 .df-widget-card {
   position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; gap: clamp(6px, 8cqh, 16px);
   width: 100%; height: 100%; min-width: 0; padding: clamp(2px, 4cqh, 10px) clamp(8px, 13cqh, 22px);
-  overflow: hidden; border-radius: clamp(12px, 18cqh, 24px); -webkit-app-region: drag;
+  overflow: hidden; border-radius: clamp(12px, 18cqh, 24px); -webkit-app-region: drag; corner-shape: var(--corner-shape, squircle);
 }
 .df-widget-card::before {
   content: ""; position: absolute; inset: 0; z-index: 0; border: 1px solid var(--widget-border); border-radius: inherit;
-  background: rgb(var(--widget-bg-rgb)); opacity: var(--widget-opacity); pointer-events: none;
+  background: rgb(var(--widget-bg-rgb)); opacity: var(--widget-opacity); pointer-events: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-widget-card > * { position: relative; z-index: 1; }
 .df-widget-resize-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
@@ -54,6 +54,7 @@ html:has(.df-widget-popover-root), body:has(.df-widget-popover-root), #root:has(
   border: 1px solid transparent; border-radius: clamp(9px, 13cqh, 15px); background: transparent;
   color: var(--widget-muted); cursor: pointer; touch-action: manipulation; -webkit-app-region: no-drag;
   transition: color 160ms ease, background 160ms ease, border-color 160ms ease, transform 160ms ease;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-widget-close-widget-btn { color: var(--widget-muted); }
 .df-widget-root[data-density="timerControls"] .df-widget-card, .df-widget-root[data-density="timerOnly"] .df-widget-card { grid-template-columns: minmax(0, 1fr); }
@@ -75,13 +76,13 @@ html:has(.df-widget-popover-root), body:has(.df-widget-popover-root), #root:has(
 .df-widget-popover-surface {
   display: flex; flex-direction: column; gap: 6px; width: 100%; height: 100%; padding: 8px;
   overflow: hidden; border: 1px solid var(--widget-border); border-radius: 10px;
-  background: rgb(var(--widget-bg-rgb)); -webkit-app-region: no-drag;
+  background: rgb(var(--widget-bg-rgb)); -webkit-app-region: no-drag; corner-shape: var(--corner-shape, squircle);
 }
 .df-widget-popover-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; margin-top: -8px; }
 .df-widget-opacity-heading { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .df-widget-opacity-heading output { color: var(--widget-muted); font: 12px "Cascadia Mono", Consolas, monospace; }
 .df-widget-popover-utilities { display: flex; justify-content: flex-end; gap: 2px; min-height: 44px; }
-.df-widget-popover-utilities .df-widget-icon-btn { width: 44px; height: 44px; border-radius: 8px; }
+.df-widget-popover-utilities .df-widget-icon-btn { width: 44px; height: 44px; border-radius: 8px; corner-shape: var(--corner-shape, squircle); }
 .df-widget-mode-switch { display: grid; grid-template-columns: repeat(3, 1fr); flex: 0 0 auto; min-width: 0; border-bottom: 1px solid var(--widget-border); }
 .df-widget-mode-switch button {
   position: relative; min-width: 0; min-height: 44px; padding: 7px 3px; border: 0; border-bottom: 1px solid transparent;
@@ -90,25 +91,25 @@ html:has(.df-widget-popover-root), body:has(.df-widget-popover-root), #root:has(
 }
 .df-widget-mode-switch button.is-selected { color: var(--widget-ink); border-bottom: 1px solid var(--widget-ink); }
 .df-widget-mode-switch button:hover { color: var(--widget-ink); }
-.df-widget-mode-tooltip { position: fixed; z-index: 10; width: max-content; max-width: min(210px, calc(100vw - 12px)); max-height: calc(100vh - 12px); padding: 6px 8px; overflow: hidden; border: 0; border-radius: 7px; background: rgb(var(--widget-bg-rgb)); color: var(--widget-muted); font-size: 11px; line-height: 1.4; pointer-events: none; }
+.df-widget-mode-tooltip { position: fixed; z-index: 10; width: max-content; max-width: min(210px, calc(100vw - 12px)); max-height: calc(100vh - 12px); padding: 6px 8px; overflow: hidden; border: 0; border-radius: 7px; background: rgb(var(--widget-bg-rgb)); color: var(--widget-muted); font-size: 11px; line-height: 1.4; pointer-events: none; corner-shape: var(--corner-shape, squircle); }
 .df-widget-timer-mode-label { color: var(--widget-muted); font-size: 12px; line-height: 1.3; }
 .df-widget-mode-details { display: none; }
 .df-widget-mode-settings { min-height: 44px; padding: 4px 2px; border-bottom: 1px solid var(--widget-border); }
 .df-widget-no-duration { margin: 0; padding: 11px 8px; color: var(--widget-muted); font-size: 13px; }
 .df-widget-number-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 12px; min-height: 44px; padding: 4px 8px; font-size: 13px; font-weight: 600; }
-.df-widget-number-row input { width: 74px; min-height: 44px; padding: 4px 7px; border: 1px solid var(--widget-border); border-radius: 7px; background: transparent; color: var(--widget-ink); font: 13px "Cascadia Mono", Consolas, monospace; }
-.df-widget-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-bottom: 4px; border: 1px solid var(--widget-border); border-radius: 9px; overflow: hidden; }
+.df-widget-number-row input { width: 74px; min-height: 44px; padding: 4px 7px; border: 1px solid var(--widget-border); border-radius: 7px; background: transparent; color: var(--widget-ink); font: 13px "Cascadia Mono", Consolas, monospace; corner-shape: var(--corner-shape, squircle); }
+.df-widget-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-bottom: 4px; border: 1px solid var(--widget-border); border-radius: 9px; overflow: hidden; corner-shape: var(--corner-shape, squircle); }
 .df-widget-presets button { min-height: 44px; border: 0; border-right: 1px solid var(--widget-border); background: transparent; color: var(--widget-muted); cursor: pointer; }
 .df-widget-presets button:last-child { border-right: 0; }
 .df-widget-presets button.is-selected { color: var(--widget-ink); border-bottom: 2px solid var(--widget-ink); }
 .df-widget-opacity-row { display: flex; align-items: center; width: 100%; min-height: 44px; padding: 0; }
 .df-widget-opacity-row input { width: 100%; min-width: 0; min-height: 44px; margin: 0; -webkit-appearance: none; appearance: none; background: transparent; color: var(--widget-ink); accent-color: var(--widget-ink); cursor: pointer; touch-action: pan-x; }
-.df-widget-opacity-row input::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--widget-ink); }
+.df-widget-opacity-row input::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--widget-ink); corner-shape: var(--corner-shape, squircle); }
 .df-widget-opacity-row input::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -6px; -webkit-appearance: none; border: 0; border-radius: 50%; background: var(--widget-ink); }
-.df-widget-opacity-row input::-moz-range-track { height: 4px; border: 0; border-radius: 2px; background: var(--widget-ink); }
-.df-widget-opacity-row input::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--widget-ink); }
+.df-widget-opacity-row input::-moz-range-track { height: 4px; border: 0; border-radius: 2px; background: var(--widget-ink); corner-shape: var(--corner-shape, squircle); }
+.df-widget-opacity-row input::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--widget-ink); corner-shape: var(--corner-shape, squircle); }
 .df-widget-opacity-row input::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--widget-ink); }
-.df-widget-popover-action { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 8px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--widget-ink); font: 600 13px inherit; cursor: pointer; }
+.df-widget-popover-action { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 8px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--widget-ink); font: 600 13px inherit; cursor: pointer; corner-shape: var(--corner-shape, squircle); }
 .df-widget-timer-settings-view { display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; gap: 8px; }
 .df-widget-timer-settings-view > .df-widget-mode-switch { flex: 0 0 auto; }
 .df-widget-schedule-guidance { padding: 6px 0; border-block: 1px solid var(--widget-border); }

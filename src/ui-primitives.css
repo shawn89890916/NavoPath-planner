@@ -31,6 +31,7 @@
   color: var(--text-main);
   box-shadow: var(--paper-float-shadow);
   font: 500 13px/1.4 var(--paper-sans);
+  corner-shape: var(--corner-shape, squircle);
 }
 #root .df-app .ui-action-disclosure-panel .ui-button {
   display: flex;
@@ -55,6 +56,7 @@
   color: var(--color-muted, #7b7062);
   background: transparent;
   cursor: pointer;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .ui-button {
@@ -68,6 +70,7 @@
   color: var(--color-muted, #7b7062);
   background: transparent;
   cursor: pointer;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .ui-button:hover:not(:disabled) {
@@ -130,6 +133,7 @@
   color: var(--color-muted, #7b7062);
   background: transparent;
   cursor: pointer;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .ui-icon-button {
@@ -145,6 +149,7 @@
   color: var(--color-muted, #7b7062);
   background: transparent;
   cursor: pointer;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .ui-icon-button:hover:not(:disabled) {
@@ -165,6 +170,7 @@
   border-radius: var(--radius-control);
   color: var(--color-ink, #584d3d);
   background: var(--surface-default, #faf9f5);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .ui-input {
@@ -176,6 +182,7 @@
   border-radius: var(--radius-control);
   color: var(--color-ink, #584d3d);
   background: var(--surface-default, #faf9f5);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .ui-input:hover { border-color: var(--border-default, rgba(88, 77, 61, .21)); }
@@ -189,6 +196,7 @@
   border-radius: var(--radius-overlay);
   background: var(--surface-elevated, #fdfcf8);
   box-shadow: var(--shadow-floating);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .ui-modal {
@@ -196,6 +204,7 @@
   border-radius: var(--radius-overlay);
   background: var(--surface-elevated, #fdfcf8);
   box-shadow: var(--shadow-floating);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .ui-modal-overlay {
@@ -447,6 +456,7 @@
   background: transparent;
   background-image: none;
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-ai-plan:hover:not(:disabled) {
   color: var(--navo-action-ink);
@@ -456,6 +466,7 @@
   transform: none;
   border: 1px solid var(--navo-action-rule);
   border-radius: var(--paper-radius, 4px);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Execute floating add follows the same quiet tool treatment as Ask Navo. */
@@ -467,6 +478,7 @@
   box-shadow: none;
   filter: none;
   transform: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-add-fab:hover:not(:disabled) {
   color: var(--navo-action-accent);
@@ -476,6 +488,7 @@
   box-shadow: none;
   filter: none;
   transform: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-add-fab {
   color: var(--navo-action-muted);
@@ -517,6 +530,7 @@
   box-shadow: none;
   filter: none;
   transform: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-ai-fab {
   color: var(--navo-action-muted);
@@ -526,6 +540,7 @@
   box-shadow: none;
   filter: none;
   transform: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-ai-fab:hover:not(:disabled) {
   color: var(--navo-action-muted);
@@ -535,6 +550,7 @@
   box-shadow: none;
   filter: none;
   transform: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-ai-fab:hover:not(:disabled) {
   color: var(--navo-action-muted);
@@ -544,6 +560,7 @@
   box-shadow: none;
   filter: none;
   transform: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-add-fab.i-plus::before {
   font-size: 24px;
@@ -604,6 +621,7 @@
   border-radius: 2px;
   background: transparent;
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .landing .landing-auth-close {
   color: var(--navo-action-muted);
@@ -611,6 +629,7 @@
   border-radius: 2px;
   background: transparent;
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .landing .landing-lang:hover {
   color: var(--navo-action-accent);
@@ -655,6 +674,7 @@
   border-color: transparent;
   border-radius: 2px;
   background: transparent;
+  corner-shape: var(--corner-shape, squircle);
 }
 .portfolio .portfolio-nav button:hover {
   color: var(--navo-action-accent);
@@ -705,6 +725,7 @@
   border-color: transparent;
   border-radius: 2px;
   background: transparent;
+  corner-shape: var(--corner-shape, squircle);
 }
 .portfolio .portfolio-projects a:hover {
   filter: none;
@@ -1013,6 +1034,7 @@
   color: var(--text-muted);
   box-shadow: none;
   transition: color var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease), transform var(--motion-instant) ease-out;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .ui-choice-list.ui-choice-list > .ui-choice-item:hover:not(:disabled) {
@@ -1070,6 +1092,7 @@
   background: var(--surface-raised);
   color: var(--text-main);
   box-shadow: var(--shadow-overlay, var(--paper-float-shadow));
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .ui-narrow-menu-layer .ui-narrow-menu > button,
@@ -1087,6 +1110,7 @@
   box-shadow: none;
   font: 600 12px/1.25 var(--paper-sans);
   text-align: left;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .ui-narrow-menu-layer .ui-narrow-menu > button:hover,

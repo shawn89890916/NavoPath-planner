@@ -241,6 +241,8 @@
 
   background: var(--cat, var(--accent-active));
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -293,6 +295,8 @@
 
   box-shadow: var(--neu-flat);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -312,6 +316,8 @@
   box-shadow: var(--neu-flat);
 
   transition: all .18s ease;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -368,6 +374,8 @@
   box-shadow: none;
 
   transition: all .15s ease;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -496,6 +504,8 @@
 
   border-radius: var(--radius-sm);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -557,6 +567,8 @@
   border: 1.5px solid color-mix(in srgb, var(--project-color, var(--accent-active)) 50%, var(--text-faint));
 
   box-shadow: 0 0 0 2px var(--bg-surface);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -664,6 +676,8 @@
 
   box-shadow: var(--shadow-soft);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -707,6 +721,8 @@
   box-shadow: none;
 
   transition: outline .12s ease, box-shadow .12s ease;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -819,6 +835,8 @@
   transition: outline .12s ease, box-shadow .12s ease;
 
   border-style: dashed;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -1132,6 +1150,8 @@
 
   box-shadow: 0 10px 24px rgba(17, 24, 39, .18);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -1151,6 +1171,8 @@
   border-radius: var(--neu-radius-sm, 12px);
 
   box-shadow: var(--neu-convex);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -1201,6 +1223,8 @@
   line-height: 1.35;
 
   text-shadow: none;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -1256,6 +1280,8 @@
 
   transition: border-color .15s, background .15s;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -1275,6 +1301,8 @@
   color: var(--df-text);
 
   transition: border-color .15s, background .15s;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -1442,6 +1470,8 @@
 
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--project-color) 22%, transparent);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -1487,6 +1517,8 @@
 
   flex-shrink: 0;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -1517,6 +1549,8 @@
 
   border-radius: 14px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -1540,6 +1574,8 @@
   font-size: 12px;
 
   font-weight: 800;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -1586,6 +1622,8 @@
   background: color-mix(in srgb, var(--accent-active) 12%, transparent);
 
   color: var(--mode-primary-strong);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -1923,6 +1961,8 @@
 
   transition: var(--neu-transition);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -2009,6 +2049,8 @@
 
   padding: 4px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -2044,6 +2086,8 @@
   border-radius: var(--neu-radius, 16px);
 
   box-shadow: var(--neu-convex);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -2081,6 +2125,8 @@
 
   border-radius: 28px 28px 0 0;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -2104,6 +2150,8 @@
   border-radius: var(--neu-radius, 16px);
 
   box-shadow: var(--neu-concave-sm);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -2234,6 +2282,8 @@
   border-radius: var(--neu-radius-xs, 8px);
 
   box-shadow: var(--neu-flat);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -3073,6 +3123,8 @@ h3 { margin: 0;
 
   background: var(--surface-subtle);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -3094,6 +3146,8 @@ h3 { margin: 0;
   font-size: 12px;
 
   font-weight: 760;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -3248,6 +3302,8 @@ h3 { margin: 0;
 
   transition: background 0.15s, transform 0.15s;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -3283,6 +3339,8 @@ h3 { margin: 0;
   padding: 3px 8px;
 
   border-radius: 6px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -3355,6 +3413,8 @@ h3 { margin: 0;
   flex-direction: column;
 
   gap: 6px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -3450,6 +3510,8 @@ h3 { margin: 0;
 
   overflow: hidden;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -3469,6 +3531,8 @@ h3 { margin: 0;
   box-shadow: var(--shadow);
 
   overflow: hidden;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -3523,6 +3587,8 @@ h3 { margin: 0;
   padding: 10px 10px 10px 14px;
 
   border-left: 4px solid var(--border);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -3612,6 +3678,8 @@ h3 { margin: 0;
 
   line-height: 1.25;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -3640,6 +3708,8 @@ input { font: inherit;
 
   outline: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -3660,6 +3730,8 @@ select { font: inherit;
 
   outline: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -3679,6 +3751,8 @@ textarea { font: inherit;
   padding: 9px 10px;
 
   outline: none;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -3753,6 +3827,8 @@ textarea:focus {
 
   border-radius: 8px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -3783,6 +3859,8 @@ textarea:focus {
   border-radius: 8px;
 
   pointer-events: none;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -3899,6 +3977,8 @@ textarea:focus {
   border-radius: 999px;
 
   background: var(--color-primary-strong, var(--mode-primary));
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -4028,6 +4108,8 @@ textarea:focus {
 
   box-shadow: var(--shadow-strong);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -4156,6 +4238,8 @@ input[type="range"] {
 
   box-shadow: 0 12px 28px rgba(17, 24, 39, 0.06);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -4173,6 +4257,8 @@ input[type="range"] {
   border-radius: 61% 39% 45% 55% / 42% 48% 52% 58%;
 
   transform: rotate(-8deg);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -4315,6 +4401,8 @@ input[type="range"] {
   gap: 1px;
 
   box-shadow: none;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -4836,7 +4924,7 @@ body.df-resizing * {
 
 
 
-.df-segment { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; margin: 14px 0; border: 1px solid var(--df-border); border-radius: 12px; }
+.df-segment { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; margin: 14px 0; border: 1px solid var(--df-border); border-radius: 12px; corner-shape: var(--corner-shape, squircle); }
 
 
 
@@ -4866,11 +4954,11 @@ body.df-resizing * {
 
 
 
-.df-ai-panel textarea { width: 100%; min-height: 96px; border: 1px solid var(--df-border); border-radius: 10px; padding: 10px; }
+.df-ai-panel textarea { width: 100%; min-height: 96px; border: 1px solid var(--df-border); border-radius: 10px; padding: 10px; corner-shape: var(--corner-shape, squircle); }
 
 
 
-.df-ai-panel pre { white-space: pre-wrap; background: color-mix(in srgb, var(--mode-primary) 4%, #FFFFFF); border: 1px solid color-mix(in srgb, var(--mode-primary) 18%, var(--df-border)); border-radius: 10px; padding: 10px; max-height: 240px; overflow: auto; }
+.df-ai-panel pre { white-space: pre-wrap; background: color-mix(in srgb, var(--mode-primary) 4%, #FFFFFF); border: 1px solid color-mix(in srgb, var(--mode-primary) 18%, var(--df-border)); border-radius: 10px; padding: 10px; max-height: 240px; overflow: auto; corner-shape: var(--corner-shape, squircle); }
 
 
 
@@ -4903,6 +4991,8 @@ body.df-resizing * {
   border-radius: 2px;
 
   background: #FFFDF8;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -5086,6 +5176,8 @@ body.df-resizing * {
 
   outline: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -5142,6 +5234,8 @@ body.df-resizing * {
 
   background: color-mix(in srgb, var(--mode-primary) 6%, white);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -5185,6 +5279,8 @@ body.df-resizing * {
   font-size: 12px;
 
   font-weight: 700;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -5239,6 +5335,8 @@ body.df-resizing * {
   color: #b91c1c;
 
   font-size: 12px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -5313,6 +5411,8 @@ body.df-resizing * {
   gap: 10px;
 
   font-size: 13px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -5546,6 +5646,8 @@ body.df-resizing * {
 
   display: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -5665,6 +5767,8 @@ body.df-resizing * {
   border-radius: 10px;
 
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -5989,6 +6093,8 @@ body.df-resizing * {
 
   border-radius: 999px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .is-scrolling::-webkit-scrollbar-thumb {
@@ -6060,6 +6166,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: 999px;
 
   background-clip: content-box;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -6143,6 +6251,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   padding: 10px 14px 10px 44px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -6174,6 +6284,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, var(--mode-primary-strong), var(--mode-primary));
 
   color: var(--mode-on-primary);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -6304,6 +6416,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: var(--neu-radius-xs, 8px);
 
   transition: var(--neu-transition);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -6569,6 +6683,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   transition: background .15s ease, color .15s ease, border-color .15s ease;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -6598,6 +6714,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   justify-content: center;
 
   transition: background .15s ease, color .15s ease, border-color .15s ease, transform .15s ease;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -7127,6 +7245,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   border-radius: 8px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -7261,6 +7381,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -7336,6 +7458,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--accent-active) 4%, var(--surface-card));
 
   cursor: pointer;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -7617,6 +7741,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   transition: background 120ms ease, border-color 120ms ease;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -7704,6 +7830,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   box-shadow: var(--neu-convex);
 
   transition: var(--neu-transition);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -7831,6 +7959,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   border-color: color-mix(in srgb, var(--mode-primary) 16%, #E5E7EB);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -7862,6 +7992,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   user-select: none;
 
   font-family: var(--df-font-task);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -8301,6 +8433,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   animation: df-spin .8s linear infinite;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -8353,6 +8487,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   box-shadow: var(--shadow-soft);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -8392,6 +8528,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   color: var(--df-text);
 
   font-size: 14px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -8951,6 +9089,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   opacity: 0;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -9082,6 +9222,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   box-shadow: none;
 
   opacity: 0.82;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -9593,6 +9735,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   right: 8px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-event-blocks-layer .df-resize-dot { width: 7px; height: 7px; }
@@ -9669,6 +9813,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   border: 1px solid rgba(255,255,255,0.10);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-week-view .df-event-blocks-layer .df-time-block {
@@ -9684,6 +9830,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: rgba(24, 30, 42, 0.92);
 
   border: 1px solid rgba(255,255,255,0.10);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -9761,6 +9909,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   display: grid;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-week-view .df-event-blocks-layer .df-time-block .df-block-check {
@@ -9784,6 +9934,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   pointer-events: auto;
 
   display: grid;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -9819,6 +9971,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   border-radius: 18px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -9828,6 +9982,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   padding: 6px 8px 6px 30px;
 
   border-radius: 18px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -9987,6 +10143,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   transition: var(--neu-transition);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -10046,6 +10204,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   box-shadow: none;
 
   z-index: 4;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -10291,6 +10451,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   border-radius: 28px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -10304,6 +10466,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   box-shadow: var(--neu-convex);
 
   border-radius: 28px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -10358,6 +10522,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   right: 10px;
 
   border-radius: 6px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -10677,6 +10843,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   overflow: hidden;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -10783,6 +10951,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   background: color-mix(in srgb, var(--accent-active) 4%, var(--bg-surface));
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -10838,6 +11008,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   place-items: center;
 
   box-shadow: none;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -11173,6 +11345,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   font-weight: 600;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -11228,6 +11402,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   box-shadow: var(--shadow-soft);
 
   animation: dfPopoverIn .14s ease-out;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -11299,6 +11475,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   overflow: visible;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -11318,6 +11496,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: inherit;
   background: color-mix(in srgb, var(--cat, var(--accent-active)) 4%, var(--bg-surface));
   color: var(--text-main);
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -11390,6 +11569,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   justify-self: center;
   width: 42px;
   border-radius: 12px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-mobile-date-grid button.outside { color: color-mix(in srgb, var(--text-muted) 48%, transparent); }
@@ -11517,6 +11697,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   box-sizing: border-box;
   border: 1px solid var(--cat, var(--accent-active));
   border-radius: 3px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .drag-create-project-menu {
@@ -11529,6 +11710,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: var(--radius-sm);
   background: var(--surface-raised);
   box-shadow: var(--shadow-soft);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 
@@ -11611,6 +11793,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   padding: 8px 12px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -11630,6 +11814,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border: 1px solid transparent;
 
   border-radius: 8px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -11682,6 +11868,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   padding: 7px 10px;
 
   transition: all .15s ease;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -11809,6 +11997,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   opacity: .9;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -11840,6 +12030,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   transition: all .15s ease;
 
   padding-left: 16px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -11895,6 +12087,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   padding: 0;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -11928,6 +12122,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   height: 44px;
 
   padding: 0;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -11972,6 +12168,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   flex-shrink: 0;
 
   transition: opacity .15s, transform .1s;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -12036,6 +12234,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-quick-add-project-menu button:last-child {
 
   border-radius: 0 0 14px 14px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -12103,6 +12303,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   box-shadow: 0 16px 36px rgba(17,24,39,0.12);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -12135,15 +12337,15 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.df-drawer input { border: 1px solid var(--df-border); border-radius: 10px; padding: 9px 10px; background: var(--input-bg); color: var(--df-text); }
+.df-drawer input { border: 1px solid var(--df-border); border-radius: 10px; padding: 9px 10px; background: var(--input-bg); color: var(--df-text); corner-shape: var(--corner-shape, squircle); }
 
 
 
-.df-drawer select { border: 1px solid var(--df-border); border-radius: 10px; padding: 9px 10px; background: var(--input-bg); color: var(--df-text); }
+.df-drawer select { border: 1px solid var(--df-border); border-radius: 10px; padding: 9px 10px; background: var(--input-bg); color: var(--df-text); corner-shape: var(--corner-shape, squircle); }
 
 
 
-.df-drawer textarea { border: 1px solid var(--df-border); border-radius: 10px; padding: 9px 10px; background: var(--input-bg); color: var(--df-text); }
+.df-drawer textarea { border: 1px solid var(--df-border); border-radius: 10px; padding: 9px 10px; background: var(--input-bg); color: var(--df-text); corner-shape: var(--corner-shape, squircle); }
 
 
 
@@ -12176,6 +12378,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: var(--surface-raised);
 
   box-shadow: 0 16px 34px color-mix(in srgb, var(--mode-primary-strong) 14%, transparent);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -12236,6 +12440,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: 14px;
 
   background: var(--surface-card);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -12320,6 +12526,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: 14px;
 
   background: var(--surface-card);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -12556,6 +12764,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   box-shadow: var(--neu-convex);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -12768,6 +12978,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   pointer-events: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app.theme-dark .df-plan-project-node::before {
@@ -12794,6 +13006,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   pointer-events: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app:not(.theme-dark) .df-plan-project-node::before {
@@ -12819,6 +13033,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   opacity: 0.85;
 
   pointer-events: none;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -12916,6 +13132,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   flex-shrink: 0;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app.theme-dark .df-project-badge {
@@ -12946,6 +13164,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   color: color-mix(in srgb, var(--project-color, var(--accent-active)) 85%, white);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app:not(.theme-dark) .df-project-badge {
@@ -12975,6 +13195,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border: 1px solid color-mix(in srgb, var(--project-color, var(--accent-active)) 24%, #E5E7EB);
 
   color: color-mix(in srgb, var(--project-color, var(--accent-active)) 70%, #374151);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -13202,6 +13424,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   pointer-events: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app.theme-dark .df-task-node-inner::before {
@@ -13228,6 +13452,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   pointer-events: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app:not(.theme-dark) .df-task-node-inner::before {
@@ -13253,6 +13479,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   opacity: 0.7;
 
   pointer-events: none;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -13324,6 +13552,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   flex-shrink: 0;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app.theme-dark .df-subtask-progress {
@@ -13354,6 +13584,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   color: #AAB0BD;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app:not(.theme-dark) .df-subtask-progress {
@@ -13383,6 +13615,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border: 1px solid rgba(0,0,0,0.08);
 
   color: #6B7280;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -13458,6 +13692,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   transition: color .14s ease, background .14s ease;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app.theme-dark .df-tree-icon-button {
@@ -13490,6 +13726,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   color: rgba(255,255,255,0.35);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app:not(.theme-dark) .df-tree-icon-button {
@@ -13521,6 +13759,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   transition: color .14s ease, background .14s ease;
 
   color: rgba(0,0,0,0.30);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -13588,6 +13828,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   opacity: 1;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -13624,6 +13866,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   opacity: 1;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -13659,6 +13903,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   color: rgba(0,0,0,0.30);
 
   opacity: 1;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -14094,6 +14340,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   pointer-events: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app.theme-dark .df-plan-subtask-node::before {
@@ -14118,6 +14366,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   pointer-events: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app:not(.theme-dark) .df-plan-subtask-node::before {
@@ -14141,6 +14391,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--project-color, var(--accent-active)) 45%, transparent);
 
   pointer-events: none;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -14450,6 +14702,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   max-width: 360px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app.theme-dark .df-tree-tooltip {
@@ -14481,6 +14735,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   color: #F5F7FA;
 
   box-shadow: 0 8px 24px rgba(0,0,0,0.40);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -14514,6 +14770,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -14535,6 +14793,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   padding: 4px;
 
   border-radius: 12px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -14560,6 +14820,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   box-shadow: 0 16px 36px rgba(0,0,0,0.32);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app:not(.theme-dark) .df-tree-menu {
@@ -14583,6 +14845,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border: 1px solid #E5E7EB;
 
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -14610,6 +14874,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   transition: background .1s ease;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app:not(.theme-dark) .df-tree-menu button {
@@ -14632,7 +14898,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   cursor: pointer;
 
-  transition: background .1s ease; color: #111827; }
+  transition: background .1s ease; color: #111827; corner-shape: var(--corner-shape, squircle); }
 
 .df-app.theme-dark .df-tree-menu button:hover {
 
@@ -15100,6 +15366,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   transition: background .14s ease;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app.theme-dark .df-splitter::before {
@@ -15122,6 +15390,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   transition: background .14s ease;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app:not(.theme-dark) .df-splitter::before {
@@ -15143,6 +15413,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: 2px;
 
   transition: background .14s ease;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -15265,6 +15537,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   z-index: 2;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -15297,6 +15571,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   overflow-y: auto;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-mobile-quick-add-sheet {
@@ -15442,6 +15717,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   transition: background .14s ease, transform .12s ease;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-time-block .df-preview-action:hover { transform: scale(1.08); }
@@ -15530,6 +15807,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   max-width: 360px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app:not(.theme-dark) .df-toast.df-toast-undo {
@@ -15589,6 +15868,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   flex-shrink: 0;
 
   transition: opacity .14s ease, transform .12s ease;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -15811,6 +16092,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   flex-shrink: 0;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -15883,6 +16166,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   color: #FCA5A5;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-ai-task-cancel:hover {
@@ -15930,6 +16215,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: 8px;
 
   padding: 6px 10px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -16119,6 +16406,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   min-height: 0;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-ai-panel > .df-ai-panel-head {
@@ -16202,6 +16491,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   word-break: break-word;
 
   border-color: color-mix(in srgb, var(--mode-primary) 30%, var(--border-soft));
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -16383,6 +16674,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   border: 1px solid color-mix(in srgb, var(--mode-primary) 14%, var(--border-soft));
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-ai-actions {
@@ -16414,6 +16707,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   margin-left: 38px;
 
   border-color: color-mix(in srgb, var(--mode-primary) 16%, var(--border-soft));
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -16452,6 +16747,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border: 1px solid color-mix(in srgb, var(--mode-primary) 14%, var(--border-soft));
 
   font-size: 9px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -16551,7 +16848,9 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   padding: 1px 6px;
 
-  border-radius: 4px; }
+  border-radius: 4px;
+
+  corner-shape: var(--corner-shape, squircle); }
 
 .df-ai-chip-button {
 
@@ -16707,6 +17006,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   color: var(--mode-on-primary);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-ai-import-bulk .primary {
@@ -16773,6 +17074,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   border: 1px solid color-mix(in srgb, var(--mode-primary) 20%, var(--border-soft));
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-ai-action-outcome > div { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
@@ -16788,6 +17091,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--mode-primary) 8%, var(--surface-card));
 
   border: 1px solid color-mix(in srgb, var(--mode-primary) 24%, var(--border-soft));
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -16813,6 +17118,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   background: color-mix(in srgb, var(--mode-primary) 7%, var(--surface-card));
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-ai-file-icon {
@@ -16827,6 +17134,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   border: 1px solid color-mix(in srgb, var(--mode-primary) 24%, var(--border-soft));
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-ai-attachment-card > div { min-width: 0; display: grid; gap: 2px; }
@@ -16837,7 +17146,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 .df-ai-attachment-card p { color: var(--text-muted); font-size: 10px; margin: 3px 0 0; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-.df-ai-attachment-card button { width: 26px; height: 26px; border-radius: 8px; }
+.df-ai-attachment-card button { width: 26px; height: 26px; border-radius: 8px; corner-shape: var(--corner-shape, squircle); }
 
 .df-ai-attachment-card.error { border-color: color-mix(in srgb, var(--danger, #ef4444) 38%, var(--border-soft)); }
 
@@ -16877,6 +17186,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   border-left: 2px solid var(--mode-primary);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-ai-panel-foot .df-ai-attachment-card { width: 100%; }
@@ -16907,6 +17218,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   box-sizing: border-box;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-ai-panel-foot textarea {
@@ -16934,6 +17247,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   grid-column: 1;
 
   grid-row: 1 / 3;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -17069,7 +17384,9 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   background: color-mix(in srgb, var(--mode-primary) 8%, var(--df-surface));
 
-  font-size: 11px; }
+  font-size: 11px;
+
+  corner-shape: var(--corner-shape, squircle); }
 
 
 
@@ -17265,6 +17582,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   background: color-mix(in srgb, var(--accent-active) 4%, var(--surface-card));
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -17303,6 +17622,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   font-weight: 600;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -17320,6 +17641,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   padding: 16px 18px;
 
   border-radius: 24px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -17429,7 +17752,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   transition: all .15s ease; position: fixed; top: 0; right: 0; bottom: 0;
 
-  width: min(460px, 94vw); z-index: 40; padding: 18px; overflow: auto; animation: dfSlideIn .2s ease-out;
+  width: min(460px, 94vw); z-index: 40; padding: 18px; overflow: auto; animation: dfSlideIn .2s ease-out; corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -17509,6 +17832,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   cursor: pointer;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-detail-add-btn:hover { color: var(--text-main); border-color: var(--border-soft); }
@@ -17585,6 +17910,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   box-shadow: -28px 0 80px rgba(10, 15, 24, .2);
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -17632,6 +17959,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 .df-detail-status-row {
+
+  position: relative;
 
   display: flex;
 
@@ -17710,6 +18039,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   font-size: 13px; color: var(--text-main); line-height: 1.5;
 
   border-radius: 16px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -17795,6 +18126,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   text-align: left;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -17844,6 +18177,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   text-align: center;
 
   cursor: pointer;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -18085,6 +18420,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   border-radius: 5px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -18096,6 +18433,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   pointer-events: none;
 
   border-radius: 5px;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -18150,6 +18489,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   line-height: 1.4;
 
   text-transform: uppercase;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -18366,6 +18707,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: 999px;
 
   box-shadow: none;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -18684,6 +19027,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   transition: background .1s ease;
 
   color: var(--text-main);
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -19105,6 +19450,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   border-radius: 12px;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app.theme-dark .df-quick-schedule {
@@ -19213,6 +19560,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   filter: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 .df-app:not(.theme-dark) .df-quick-add-confirm:not(:disabled) {
@@ -19250,6 +19599,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   box-shadow: none;
 
   filter: none;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -19807,6 +20158,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   pointer-events: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -19841,6 +20194,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   pointer-events: none;
 
+  corner-shape: var(--corner-shape, squircle);
+
 }
 
 
@@ -19874,6 +20229,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: 1px;
 
   pointer-events: none;
+
+  corner-shape: var(--corner-shape, squircle);
 
 }
 
@@ -20000,10 +20357,87 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: var(--surface-main);
   color: var(--text-main);
   font: 600 12px/1.2 var(--paper-sans);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-project-detail .df-detail-project-color {
   margin-top: 4px;
+}
+
+.df-task-detail > .df-detail-convert {
+  margin: 0 4px;
+  padding-top: 16px;
+}
+
+.df-detail-incomplete-menu {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1 1 150px;
+  min-width: 0;
+  transition: transform 120ms ease;
+}
+
+.df-detail-incomplete-menu.open {
+  z-index: 50;
+  transform: scale(1.04);
+}
+
+.df-detail-incomplete-trigger {
+  width: 100%;
+  min-width: 0;
+}
+
+.df-detail-incomplete-chevron {
+  flex: 0 0 auto;
+}
+
+.df-detail-incomplete-options {
+  position: absolute;
+  z-index: 51;
+  right: 0;
+  bottom: calc(100% + 10px);
+  display: grid;
+  width: max-content;
+  min-width: min(280px, calc(100vw - 40px));
+  max-width: min(340px, calc(100vw - 40px));
+  padding: 6px;
+  border: 1px solid var(--paper-rule-strong);
+  border-radius: var(--paper-radius);
+  background: var(--surface-main);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--text-main) 16%, transparent);
+  transform: scale(0.96);
+  transform-origin: bottom right;
+  animation: df-incomplete-options-enter 120ms ease-out forwards;
+  corner-shape: var(--corner-shape, squircle);
+}
+
+.df-detail-incomplete-options button {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--paper-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-main);
+  text-align: left;
+  font: 600 12px/1.3 var(--paper-sans);
+  cursor: pointer;
+}
+
+.df-detail-incomplete-options button:last-child {
+  border-bottom: 0;
+}
+
+.df-detail-incomplete-options button:hover,
+.df-detail-incomplete-options button:focus-visible {
+  background: var(--paper-note);
+  color: var(--accent-active);
+  outline: 0;
+}
+
+@keyframes df-incomplete-options-enter {
+  to { transform: scale(1); }
 }
 
 /* Resize controls must remain visible outside the task border. Content owns
@@ -20012,6 +20446,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-app .df-time-block .df-time-card-shell {
   overflow: hidden;
   border-radius: inherit;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-time-block.show-resize-hint .df-resize-dot {
@@ -20024,14 +20459,14 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.df-detail-due-date .df-detail-pill-trevor{display:flex;align-items:center;gap:7px;min-width:0;flex:1 1 278px}.df-detail-due-date input[type="date"]{width:auto;min-width:0;flex:1;padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer}.df-detail-due-date input[type="date"]:focus{outline:0}.df-detail-due-reset{flex:0 0 auto;align-self:center;min-height:30px;padding:5px 9px;border:0;border-bottom:1px solid var(--paper-rule-strong);background:transparent;color:var(--text-muted);font:600 11px/1 var(--paper-sans);cursor:pointer}.df-detail-due-reset:hover{color:var(--accent-active);border-bottom-color:var(--accent-active)}.df-detail-type-segment{margin:0 52px 16px 0}.df-detail-importance-row{display:flex;justify-content:flex-start;padding:7px 4px;border-top:1px solid color-mix(in srgb,var(--text-muted) 10%,transparent)}.df-task-detail .df-detail-tag-row{padding-top:8px;padding-bottom:8px}.df-task-detail .df-detail-status-row{padding-top:8px;padding-bottom:8px}.df-task-detail .df-detail-schedule-row{padding-top:8px;padding-bottom:8px}.df-detail-split-action{position:relative;display:flex;min-width:0;flex:1 1 150px}.df-detail-split-arrow{flex:0 0 32px;min-width:32px;margin-left:-1px;padding:0;border-left-color:var(--paper-rule);border-radius:0 var(--paper-radius) var(--paper-radius) 0;color:var(--text-muted)}.df-detail-split-action .df-detail-pill-trevor.action{min-width:0;flex:1 1 auto;border-radius:var(--paper-radius) 0 0 var(--paper-radius)}.df-detail-quick-menu{position:absolute;z-index:40;top:calc(100% + 5px);left:0;min-width:176px;padding:5px;border:1px solid var(--paper-rule-strong);border-radius:var(--paper-radius);background:var(--surface-main);box-shadow:0 10px 20px color-mix(in srgb,var(--text-main) 10%,transparent)}.df-detail-quick-menu button{display:block;width:100%;min-height:32px;padding:6px 9px;border:0;border-bottom:1px solid var(--paper-rule);border-radius:0;background:transparent;color:var(--text-main);text-align:start;font:600 12px/1.2 var(--paper-sans);cursor:pointer}.df-detail-quick-menu button:last-child{border-bottom:0}.df-detail-quick-menu button:hover{color:var(--accent-active);background:var(--paper-note)}.df-reschedule-editor{display:flex;align-items:end;justify-content:space-between;gap:12px}.df-reschedule-editor label{display:grid;gap:6px;flex:1;color:var(--text-muted);font:600 12px/1.2 var(--paper-sans)}.df-reschedule-editor input{min-height:36px;padding:6px 9px;border:1px solid var(--paper-rule);border-radius:var(--paper-radius);background:transparent;color:var(--text-main);font:inherit}
+.df-detail-due-date .df-detail-pill-trevor{display:flex;align-items:center;gap:7px;min-width:0;flex:1 1 278px}.df-detail-due-date input[type="date"]{width:auto;min-width:0;flex:1;padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer}.df-detail-due-date input[type="date"]:focus{outline:0}.df-detail-due-reset{flex:0 0 auto;align-self:center;min-height:30px;padding:5px 9px;border:0;border-bottom:1px solid var(--paper-rule-strong);background:transparent;color:var(--text-muted);font:600 11px/1 var(--paper-sans);cursor:pointer}.df-detail-due-reset:hover{color:var(--accent-active);border-bottom-color:var(--accent-active)}.df-detail-type-segment{margin:0 52px 16px 0}.df-detail-importance-row{display:flex;justify-content:flex-start;padding:7px 4px;border-top:1px solid color-mix(in srgb,var(--text-muted) 10%,transparent)}.df-task-detail .df-detail-tag-row{padding-top:8px;padding-bottom:8px}.df-task-detail .df-detail-status-row{padding-top:8px;padding-bottom:8px}.df-task-detail .df-detail-schedule-row{padding-top:8px;padding-bottom:8px}.df-detail-split-action{position:relative;display:flex;min-width:max-content;flex:1 1 150px;gap: 6px}.df-detail-split-arrow{flex:0 0 32px;min-width:40px;padding:0;border-radius:var(--paper-radius);color:var(--text-muted);corner-shape: var(--corner-shape, squircle);flex-basis: 40px;margin: 0;border: 1px solid var(--paper-rule-strong)}.df-detail-split-action .df-detail-pill-trevor.action{min-width:0;flex:1 1 auto;border-radius:var(--paper-radius);corner-shape: var(--corner-shape, squircle);border: 1px solid var(--paper-rule-strong)}.df-detail-quick-menu{position:absolute;z-index:40;top:calc(100% + 5px);left:0;min-width:176px;padding:5px;border:1px solid var(--paper-rule-strong);border-radius:var(--paper-radius);background:var(--surface-main);box-shadow:0 10px 20px color-mix(in srgb,var(--text-main) 10%,transparent);corner-shape: var(--corner-shape, squircle)}.df-detail-quick-menu button{display:block;width:100%;min-height:32px;padding:6px 9px;border:0;border-bottom:1px solid var(--paper-rule);border-radius:0;background:transparent;color:var(--text-main);text-align:start;font:600 12px/1.2 var(--paper-sans);cursor:pointer}.df-detail-quick-menu button:last-child{border-bottom:0}.df-detail-quick-menu button:hover{color:var(--accent-active);background:var(--paper-note)}.df-reschedule-editor{display:flex;align-items:end;justify-content:space-between;gap:12px}.df-reschedule-editor label{display:grid;gap:6px;flex:1;color:var(--text-muted);font:600 12px/1.2 var(--paper-sans)}.df-reschedule-editor input{min-height:36px;padding:6px 9px;border:1px solid var(--paper-rule);border-radius:var(--paper-radius);background:transparent;color:var(--text-main);font:inherit;corner-shape: var(--corner-shape, squircle)}
 /* Local AI provider settings */
 .df-ai-provider-settings label { display: grid; gap: 4px; font-size: 12px; }
 .df-ai-provider-advanced label { display: grid; gap: 4px; font-size: 12px; }
-.df-ai-provider-settings input { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--paper); color: var(--ink); }
-.df-ai-provider-settings select { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--paper); color: var(--ink); }
+.df-ai-provider-settings input { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--paper); color: var(--ink); corner-shape: var(--corner-shape, squircle); }
+.df-ai-provider-settings select { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--paper); color: var(--ink); corner-shape: var(--corner-shape, squircle); }
 .df-ai-provider-advanced { display: grid; gap: 8px; }
-.df-ai-provider-advanced textarea { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--paper); color: var(--ink); min-height: 130px; font: 12px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.df-ai-provider-advanced textarea { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--paper); color: var(--ink); min-height: 130px; font: 12px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; corner-shape: var(--corner-shape, squircle); }
 .df-ai-provider-settings button { justify-self: start; }/* NavoPath UI tokens. Theme-specific values continue to resolve from the
  * active .df-app theme through the paper aliases below. *//* NavoPath paper editorial application layer. Shared accents follow --accent-active. */
 
@@ -20104,6 +20539,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   padding: 7px 10px;
   transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion), transform var(--paper-motion);
   font-family: inherit;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app select { font: inherit;
 
@@ -20120,6 +20556,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   padding: 7px 10px;
   transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion), transform var(--paper-motion);
   font-family: inherit;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app textarea { font: inherit;
 
@@ -20136,6 +20573,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   padding: 7px 10px;
   transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion), transform var(--paper-motion);
   font-family: inherit;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app button { font: inherit;
 
@@ -20153,7 +20591,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion), transform var(--paper-motion);
 
   box-shadow: none;
-  font-family: inherit; filter: none; text-shadow: none; }
+  font-family: inherit; filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle); }
 .df-app button:active:not(:disabled) { transform: translateY(1px); filter: none; }
 .df-app button:disabled { opacity: .42; cursor: not-allowed;
 
@@ -20297,7 +20735,9 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   --df-scrollbar-gutter: 12px;
 
-  transform: none; }
+  transform: none;
+
+  corner-shape: var(--corner-shape, squircle); }
 .df-panel-title {
 
   display: flex;
@@ -20318,7 +20758,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-color: color-mix(in srgb, var(--accent-active) 42%, var(--border-soft));
   border: 1px solid transparent; border-radius: var(--paper-radius); box-shadow: none;
 
-  transition: all .15s ease; filter: none;
+  transition: all .15s ease; filter: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-icon-action {
 
@@ -20336,7 +20776,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   position: relative;
   color: var(--text-muted); background: transparent;
-  border: 1px solid transparent; box-shadow: none; border-radius: var(--paper-radius); filter: none;
+  border: 1px solid transparent; box-shadow: none; border-radius: var(--paper-radius); filter: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-icon-button {
 
@@ -20358,7 +20798,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   line-height: 1;
 
-  transition: all .15s ease; border-radius: var(--paper-radius); filter: none;
+  transition: all .15s ease; border-radius: var(--paper-radius); filter: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-date-arrow {
 
@@ -20394,11 +20834,11 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   box-sizing: border-box;
 
-  min-width: 44px; border-radius: var(--paper-radius); filter: none;
+  min-width: 44px; border-radius: var(--paper-radius); filter: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-back-to-now {
   border: 1px solid transparent; border-radius: var(--paper-radius);
-  color: var(--text-muted); background: transparent; box-shadow: none; filter: none;
+  color: var(--text-muted); background: transparent; box-shadow: none; filter: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-exit-fullscreen-btn {
 
@@ -20426,7 +20866,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   animation: dfFullscreenControlIn .22s cubic-bezier(.22, 1, .36, 1);
 
-  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease, opacity .16s ease; filter: none;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease, opacity .16s ease; filter: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-panel-title button:hover { background: var(--paper-note); border-color: var(--paper-rule);
   color: var(--text-main); transform: none;
@@ -20561,7 +21001,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   border-top: 1px solid #E5E7EB; border-radius: var(--paper-radius-soft);
   background: var(--surface-raised);
-  border: 1px solid var(--paper-rule-strong); box-shadow: var(--paper-float-shadow); backdrop-filter: none;
+  border: 1px solid var(--paper-rule-strong); box-shadow: var(--paper-float-shadow); backdrop-filter: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-project-popover {
 
@@ -20585,11 +21025,11 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   padding: 10px;
   border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius-soft);
-  background: var(--surface-raised); box-shadow: var(--paper-float-shadow); backdrop-filter: none;
+  background: var(--surface-raised); box-shadow: var(--paper-float-shadow); backdrop-filter: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-project-popover-portal {
   border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius-soft);
-  background: var(--surface-raised); box-shadow: var(--paper-float-shadow); backdrop-filter: none;
+  background: var(--surface-raised); box-shadow: var(--paper-float-shadow); backdrop-filter: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-floating-unschedule {
 
@@ -20603,7 +21043,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: var(--surface-raised);
   border: 1px solid var(--paper-rule-strong); box-shadow: var(--paper-float-shadow);
 
-  pointer-events: none; backdrop-filter: none;
+  pointer-events: none; backdrop-filter: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-drop-preview.placement-preview {
   grid-template-columns: 24px minmax(0, 1fr) auto;
@@ -20620,6 +21060,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   text-align: left;
   opacity: .96;
   transition: border-color var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Timeline as the main paper canvas */
@@ -20687,7 +21128,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   border-radius: 14px;
 
-  background: var(--surface-card); background-color: var(--surface-main); box-shadow: none; }
+  background: var(--surface-card); background-color: var(--surface-main); box-shadow: none; corner-shape: var(--corner-shape, squircle); }
 .df-timeline-canvas {
 
   position: relative;
@@ -20797,7 +21238,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   box-shadow: none;
 
-  transition: all .15s ease; border-color: var(--paper-rule); }
+  transition: all .15s ease; border-color: var(--paper-rule); corner-shape: var(--corner-shape, squircle); }
 .df-slot-ruler {
 
   position: absolute;
@@ -20899,7 +21340,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   border-radius: 999px;
 
-  font-size: 11px; box-shadow: none; border: 0; font-family: var(--paper-mono); text-shadow: none; }
+  font-size: 11px; box-shadow: none; border: 0; font-family: var(--paper-mono); text-shadow: none; corner-shape: var(--corner-shape, squircle); }
 .df-view-switch-vertical {
 
   border-color: color-mix(in srgb, var(--mode-primary) 34%, #d1d5db);
@@ -20991,7 +21432,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   flex-shrink: 0;
 
-  line-height: 1.2; font-family: var(--paper-task); }
+  line-height: 1.2; font-family: var(--paper-task); corner-shape: var(--corner-shape, squircle); }
 .df-time-block[data-preview="true"] { opacity: .9; border-style: dashed;
 
   border-width: 1.5px; background: var(--paper-note); box-shadow: none; }
@@ -21019,7 +21460,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   display: grid;
 
-  align-content: center; border-style: dashed; box-shadow: none; opacity: .9; }
+  align-content: center; border-style: dashed; box-shadow: none; opacity: .9; corner-shape: var(--corner-shape, squircle); }
 
 /* Planning as an editorial outline */
 .df-tree-line { opacity: .48; stroke: var(--paper-rule-strong); filter: none; }
@@ -21076,7 +21517,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   letter-spacing: .03em;
 
   margin: 0 12px 8px;
-  border-color: var(--paper-rule); filter: none; text-shadow: none;
+  border-color: var(--paper-rule); filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-ai-plan-toggle {
 
@@ -21092,7 +21533,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   transform: translateX(-6px);
 
   transition: opacity .14s ease, transform .14s ease;
-  border-color: var(--paper-rule); filter: none; text-shadow: none;
+  border-color: var(--paper-rule); filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-ai-plan-confirm {
 
@@ -21118,7 +21559,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   transition: background .14s ease, color .14s ease;
   background: transparent; color: var(--text-main);
-  border-color: var(--paper-rule); box-shadow: none; filter: none; text-shadow: none;
+  border-color: var(--paper-rule); box-shadow: none; filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-ai-plan-cancel {
 
@@ -21144,7 +21585,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   transition: background .14s ease, color .14s ease;
   background: transparent; color: var(--text-main);
-  border-color: var(--paper-rule); box-shadow: none; filter: none; text-shadow: none;
+  border-color: var(--paper-rule); box-shadow: none; filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-ai-plan:hover { box-shadow: none; transform: none; border-color: var(--paper-accent-rule); background: var(--paper-note); color: var(--accent-active); }
 .df-ai-plan-toggle:hover { color: var(--accent-active); border-color: var(--paper-accent-rule); background: var(--paper-note); box-shadow: none; transform: none; }
@@ -21212,7 +21653,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   color: var(--text-main); box-shadow: var(--paper-float-shadow);
 
-  animation: dfPopoverIn .14s ease-out; backdrop-filter: none;
+  animation: dfPopoverIn .14s ease-out; backdrop-filter: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-utility-head h2 { margin: 0; font-size: 18px; font-weight: 600; font-family: var(--paper-display); }
 
@@ -21247,7 +21688,9 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   box-shadow: 0 8px 32px rgba(0,0,0,.08);
 
-  animation: dfPanelPop .18s ease-out; }
+  animation: dfPanelPop .18s ease-out;
+
+  corner-shape: var(--corner-shape, squircle); }
 .df-utility-panel:has(.df-settings-shell) { width:min(760px,100vw); }
 .df-utility-head {
 
@@ -21353,7 +21796,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: inherit;
 
   transition: border-color .15s, background .15s;
-  border-color: var(--paper-rule); box-shadow: none;
+  border-color: var(--paper-rule); box-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-notes-editor textarea {
 
@@ -21364,7 +21807,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   padding: 10px 12px; resize: vertical; outline: none; line-height: 1.5;
 
   min-height: 92px;
-  border-color: var(--paper-rule); box-shadow: none;
+  border-color: var(--paper-rule); box-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 
 /* ============================================================
@@ -21461,6 +21904,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background-repeat: repeat, repeat, no-repeat;
   transition: border-color var(--paper-motion), background-color var(--paper-motion), transform var(--paper-motion);
   overflow: hidden;
+  corner-shape: var(--corner-shape, squircle);
 }
 /* Diagonal hatch layer for a light crayon/paper tooth. Kept very
    faint (opacity .26) and clipped to the track so it never reads as
@@ -21479,6 +21923,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   );
   opacity: .26;
   pointer-events: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-settings-toggle:hover {
   border-color: var(--toggle-border-hover);
@@ -21576,6 +22021,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
     calc(100% - 11px) calc(50% - 2px);
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-settings-select:hover { border-color: var(--accent-active); }
 .df-settings-select:focus-visible {
@@ -21614,6 +22060,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   -webkit-appearance: none;
   -moz-appearance: none;
   cursor: pointer;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-utility-panel .df-settings-select:hover {
   border-color: var(--accent-active);
@@ -21639,6 +22086,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-main);
   font: 500 14px/36px var(--paper-sans);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-settings-number.df-utility-input {
@@ -21651,6 +22099,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-main);
   font: 500 14px/36px var(--paper-sans);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-utility-panel .df-settings-input {
   min-width: 96px;
@@ -21662,6 +22111,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-main);
   font: 500 14px/36px var(--paper-sans);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-utility-panel .df-settings-number {
   min-width: 96px;
@@ -21673,6 +22123,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-main);
   font: 500 14px/36px var(--paper-sans);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-utility-panel .df-settings-input:hover { border-color: var(--accent-active); }
 .df-app .df-utility-panel .df-settings-number:hover { border-color: var(--accent-active); }
@@ -21706,6 +22157,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   letter-spacing: .02em;
   cursor: pointer;
   transition: border-color var(--paper-motion), color var(--paper-motion), background-color var(--paper-motion);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-settings-action:hover { border-color: var(--accent-active); color: var(--accent-active); }
 .df-settings-action:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
@@ -21719,6 +22171,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-radius: 10px;
   background: var(--surface-card);
   cursor: pointer;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-settings-color-input:hover { border-color: var(--accent-active); }
 .df-settings-color-input:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
@@ -21753,6 +22206,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius);
   background: var(--surface-card); color: var(--text-main);
   font: 500 13px/1 var(--paper-mono);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Danger dialog button: muted coral, no fill. */
@@ -21771,7 +22225,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 }
 .df-app .df-task-detail.df-drawer {
   width: min(560px,94vw); padding: 30px 28px; border-radius: var(--paper-radius-soft) 0 0 var(--paper-radius-soft);
-  background: var(--surface-main); border-color: var(--paper-rule-strong); box-shadow: var(--paper-float-shadow);
+  background: var(--surface-main); border-color: var(--paper-rule-strong); box-shadow: var(--paper-float-shadow); corner-shape: var(--corner-shape, squircle);
 }
 .df-detail-title-trevor {
 
@@ -21882,7 +22336,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   white-space: nowrap;
   min-height: 38px;
 
-  border-color: color-mix(in srgb, var(--text-muted) 14%, transparent); box-shadow: none;
+  border-color: color-mix(in srgb, var(--text-muted) 14%, transparent); box-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-detail-pill-trevor:hover { background: var(--paper-note); border-color: var(--paper-accent-rule); color: var(--accent-active); box-shadow: none; }
 .df-detail-pill-trevor.active { background: var(--paper-note); border-color: var(--paper-accent-rule); color: var(--accent-active); box-shadow: none; }
@@ -21932,6 +22386,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-main);
   font: 600 14px/1 var(--paper-mono);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-detail-time-range input:focus-visible {
   outline: 1px solid var(--accent-active);
@@ -21953,6 +22408,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   overflow: hidden;
   background: var(--paper-bg);   /* warm clean paper, no gray fill */
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-level-selector .df-level-option {
   position: relative;
@@ -22026,6 +22482,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 }
 .df-app .df-level-selector .df-level-option:first-child:last-child[data-selected="true"]::after {
   border-radius: 11px;
+  corner-shape: var(--corner-shape, squircle);
 }
 /* Unselected option: quiet paper background. */
 .df-app .df-level-selector .df-level-option[data-selected="false"] {
@@ -22101,7 +22558,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   left: 50%;
 
-  transform: translateX(-50%); backdrop-filter: none; }
+  transform: translateX(-50%); backdrop-filter: none; corner-shape: var(--corner-shape, squircle); }
 
 /* Restrained floating actions */
 .df-add-fab:hover {
@@ -22145,7 +22602,9 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   border-radius: 10px;
 
-  box-shadow: none; }
+  box-shadow: none;
+
+  corner-shape: var(--corner-shape, squircle); }
 .df-empty .blob-accent { width: 40px; height: 40px; opacity: .16; border: 1px solid var(--paper-accent-rule); border-radius: 50%; background: transparent; transform: none; }
 .df-empty .blob-accent::after { display: none; }
 .df-empty strong { color: var(--df-text); position: relative; margin-top: 14px; font-family: var(--paper-display); font-size: 15px; font-weight: 600; }
@@ -22310,11 +22769,12 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-detail-subtask-tools { display:flex; align-items:center; gap:2px; }
 .df-app .df-detail-subtask-tools .df-detail-add-btn {
   width:34px; height:34px; min-width:34px; padding:0; display:grid; place-items:center;
-  border:0; border-bottom:1px solid transparent; border-radius:0;
+  border:1px solid var(--paper-rule); border-radius:var(--paper-radius);
+  corner-shape:var(--corner-shape, squircle);
   color:var(--paper-ink-muted); background:transparent; box-shadow:none;
 }
 .df-app .df-detail-subtask-tools .df-detail-add-btn:hover:not(:disabled) {
-  color:var(--accent-active); border-bottom-color:var(--accent-active);
+  color:var(--accent-active); border-color:var(--accent-active);
   background:color-mix(in srgb,var(--accent-active) 6%,transparent); box-shadow:none;
 }
 .df-app .df-detail-subtask-tools .df-detail-add-btn:focus-visible { outline:1px solid var(--accent-active); outline-offset:2px; }
@@ -22334,6 +22794,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-bottom:0;
   border:1px solid var(--paper-rule);
   border-radius:6px;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-detail-subtasks-new .df-subtask-row-new {
   display:grid;
@@ -22366,9 +22827,9 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   .df-app .df-subtask-tree-item.ai-generated { animation:none; }
 }
 @keyframes treeDropIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-.df-tree-drop-preview.before { margin-bottom:3px; border-bottom:1px dashed color-mix(in srgb,var(--accent-active) 40%,transparent); border-radius:8px 8px 0 0; }
-.df-tree-drop-preview.after { margin-top:3px; border-top:1px dashed color-mix(in srgb,var(--accent-active) 40%,transparent); border-radius:0 0 8px 8px; }
-.df-tree-drop-preview.inside { margin-inline-start:28px; border-inline-start:2px solid var(--accent-active); border-radius:4px 8px 8px 4px; }
+.df-tree-drop-preview.before { margin-bottom:3px; border-bottom:1px dashed color-mix(in srgb,var(--accent-active) 40%,transparent); border-radius:8px 8px 0 0; corner-shape: var(--corner-shape, squircle); }
+.df-tree-drop-preview.after { margin-top:3px; border-top:1px dashed color-mix(in srgb,var(--accent-active) 40%,transparent); border-radius:0 0 8px 8px; corner-shape: var(--corner-shape, squircle); }
+.df-tree-drop-preview.inside { margin-inline-start:28px; border-inline-start:2px solid var(--accent-active); border-radius:4px 8px 8px 4px; corner-shape: var(--corner-shape, squircle); }
 /* Drag targets use ink and rules only; no lift or scale. */
 .df-app.mode-planning .df-subtask-children {
   gap: 6px;
@@ -22413,10 +22874,10 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-app .df-detail-floating-popover { animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; }
 .df-app .df-repeat-modal {
   border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius-soft);
-  background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; }
+  background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; corner-shape: var(--corner-shape, squircle); }
 .df-app .df-ai-panel {
   border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius-soft);
-  background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; }
+  background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; corner-shape: var(--corner-shape, squircle); }
 .df-app .df-toast {
 
   color: #111827;
@@ -22439,7 +22900,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   line-height: 1.35;
 
-  text-shadow: none; animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; }
+  text-shadow: none; animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; corner-shape: var(--corner-shape, squircle); }
 .df-app .df-modal-backdrop { animation: dfFadeIn var(--motion-fade) var(--motion-ease) both; }
 .df-app .df-drawer-backdrop { animation: dfFadeIn var(--motion-fade) var(--motion-ease) both; }
 .df-app .df-utility-backdrop { animation: dfFadeIn var(--motion-fade) var(--motion-ease) both; }
@@ -22588,10 +23049,10 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   .df-mindmap { padding: 14px; }
   .df-date-title { font-size: 26px; }
   .df-view-switch-vertical { top: 7px; right: 6px; }
-  .df-utility-panel { width: 100vw; border-radius: var(--paper-radius-soft) var(--paper-radius-soft) 0 0; }
-  .df-task-detail.df-drawer { width: 100vw; border-radius: var(--paper-radius-soft) var(--paper-radius-soft) 0 0; }
+  .df-utility-panel { width: 100vw; border-radius: var(--paper-radius-soft) var(--paper-radius-soft) 0 0; corner-shape: var(--corner-shape, squircle); }
+  .df-task-detail.df-drawer { width: 100vw; border-radius: var(--paper-radius-soft) var(--paper-radius-soft) 0 0; corner-shape: var(--corner-shape, squircle); }
 
-  .df-ai-panel { right: 8px; bottom: 76px; width: calc(100vw - 16px); height: min(76vh, 720px); border-radius: 20px; }
+  .df-ai-panel { right: 8px; bottom: 76px; width: calc(100vw - 16px); height: min(76vh, 720px); border-radius: 20px; corner-shape: var(--corner-shape, squircle); }
 
   .df-ai-panel-body { padding: 14px; }
 
@@ -22638,6 +23099,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   color: var(--text-main); box-shadow: none;
   border-color: var(--paper-rule);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-timeline-panel { border-radius: var(--paper-radius);
   background: var(--surface-main);
@@ -22650,16 +23112,17 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   color: var(--text-main); box-shadow: none;
   border-color: var(--paper-rule);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-candidate-panel {
   background: var(--surface-main);
 
   border: 1px solid rgba(15,23,42,0.10); box-shadow: none;
-  border-color: var(--paper-rule); border-radius: var(--paper-radius);
+  border-color: var(--paper-rule); border-radius: var(--paper-radius); corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-timeline-panel {
   border-color: var(--paper-rule); border-radius: var(--paper-radius);
-  background: var(--surface-main); box-shadow: none;
+  background: var(--surface-main); box-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-month-task {
 
@@ -22668,10 +23131,10 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-color: color-mix(in srgb, var(--accent-active) 18%, var(--border-subtle));
 
   color: var(--text-main);
-  border-radius: 2px; box-shadow: none; filter: none; text-shadow: none;
+  border-radius: 2px; box-shadow: none; filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-month-task {
-  border-radius: 2px; box-shadow: none; filter: none; text-shadow: none;
+  border-radius: 2px; box-shadow: none; filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-ai-panel { background: var(--surface-main);
 
@@ -23003,6 +23466,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background-color: var(--surface-main); background-image: none;
   box-shadow: none; filter: none;
   background: var(--surface-main);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Floating actions read as compact editorial marks, not raised circular FABs. */
@@ -23273,6 +23737,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background-color: var(--surface-main);
   background-image: none; filter: none;
   border-color: var(--paper-rule);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-mindmap.no-root {
 
@@ -23309,6 +23774,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   display: block;
   border-color: var(--paper-rule);
   background-image: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-mindmap.no-root {
 
@@ -23339,6 +23805,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border: 1px solid rgba(15,23,42,0.10);
   border-color: var(--paper-rule);
   background-image: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-mindmap.no-root {
 
@@ -23382,6 +23849,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   box-shadow: none;
   filter: none; transform: none;
   border-color: var(--paper-rule);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-task-node-inner {
 
@@ -23407,6 +23875,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   box-shadow: none;
   filter: none; transform: none;
   border-color: var(--paper-rule);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-plan-subtask-node {
 
@@ -23440,6 +23909,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   box-shadow: none;
   filter: none; transform: none;
   border-color: var(--paper-rule);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-plan-project-node {
 
@@ -23474,6 +23944,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-main);
   border-color: var(--paper-rule);
   filter: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-task-node-inner {
 
@@ -23502,6 +23973,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   box-shadow: none;
   border-color: var(--paper-rule);
   filter: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-plan-subtask-node {
 
@@ -23538,6 +24010,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-color: var(--paper-rule);
   box-shadow: none;
   filter: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-plan-project-node {
 
@@ -23570,6 +24043,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   box-shadow: none;
   border-color: var(--paper-rule);
   filter: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-task-node-inner {
 
@@ -23598,6 +24072,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   box-shadow: none;
   border-color: var(--paper-rule);
   filter: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-plan-subtask-node {
 
@@ -23632,6 +24107,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-color: var(--paper-rule);
   box-shadow: none;
   filter: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Planning controls and project nodes use quiet project-tinted paper. */
@@ -23772,6 +24248,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   justify-content: center;
   padding: 8px 12px 8px 28px;
   border-color: color-mix(in srgb, var(--cat, #8b6f47) 62%, var(--paper-rule-strong));
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-time-block {
   background: var(--surface-main);
@@ -23784,6 +24261,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   justify-content: center;
   padding: 8px 12px 8px 28px;
   border-color: color-mix(in srgb, var(--cat, #8b6f47) 62%, var(--paper-rule-strong));
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-time-block {
   border-radius: 2px;
@@ -23794,6 +24272,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   justify-content: center;
   padding: 8px 12px 8px 28px;
   border-color: color-mix(in srgb, var(--cat, #8b6f47) 62%, var(--paper-rule-strong));
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-time-block:hover {
   border-color: color-mix(in srgb, var(--cat, #8b6f47) 78%, var(--paper-rule-strong));
@@ -23830,6 +24309,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   align-items: center;
   padding: 0 12px 0 28px;
   border-color: color-mix(in srgb, var(--cat, #8b6f47) 62%, var(--paper-rule-strong));
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-all-day-block {
   background: var(--surface-main);
@@ -23840,6 +24320,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   align-items: center;
   padding: 0 12px 0 28px;
   border-color: color-mix(in srgb, var(--cat, #8b6f47) 62%, var(--paper-rule-strong));
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-timeline-3day-allday .df-all-day-block {
   align-items: center;
@@ -23879,6 +24360,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-radius: 7px 4px 8px 3px;
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-project-popover-portal { animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top;
   gap: 2px;
@@ -23887,6 +24369,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-radius: 7px 4px 8px 3px;
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-drawer-project-list {
   gap: 2px;
@@ -23895,6 +24378,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-radius: 7px 4px 8px 3px;
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-project-popover > button {
   min-height: 34px;
@@ -23945,6 +24429,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-radius: 6px 3px 7px 2px;
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-project-color-custom {
   width: 24px;
@@ -23974,6 +24459,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   font-size: 17px;
   font-weight: 700;
   letter-spacing: .01em;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-ai-plan::before {
   content: none;
@@ -24035,6 +24521,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background-color: transparent;
   background-image: none;
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app button:not(.df-resize-dot):not(.df-level-option):hover:not(:disabled) {
   border-color: var(--pencil-rule-strong);
@@ -24092,6 +24579,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   transform: translateY(-50%);
   transition: opacity var(--paper-motion), color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), box-shadow 90ms ease-out, transform 90ms ease-out;
   border-color: var(--pencil-rule-strong);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-subtask-check {
 
@@ -24136,6 +24624,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   transform: none;
   width: 16px;
   height: 16px;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-project-color-picker button {
   border: 1px solid color-mix(in srgb, var(--project-color) 54%, var(--paper-rule-strong));
@@ -24150,6 +24639,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   height: 24px;
   min-width: 24px;
   min-height: 24px;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-project-color-picker button:hover {
   background-color: var(--project-color);
@@ -24166,6 +24656,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
     repeating-linear-gradient(12deg, rgba(0,0,0,.06) 0 1px, transparent 1px 4px);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
   transform: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Planning canvas follows Execute's integrated list hierarchy. */
@@ -24503,6 +24994,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: var(--surface-main);
   position: relative;
   min-height: 0;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-timeline-daily .df-date-title { padding-left: var(--df-daily-time-gutter); }
 .df-app .df-timeline-body {
@@ -24584,6 +25076,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   box-shadow: none;
   cursor: pointer;
   overflow: hidden;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-settings-avatar span {
   font-family: var(--paper-display);
@@ -24635,6 +25128,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-drawer-in var(--motion-base) var(--motion-ease) both;
   --field-paper: color-mix(in srgb, var(--surface-main) 88%, var(--bg-app) 12%);
   --field-paper-hover: color-mix(in srgb, var(--surface-main) 80%, var(--accent-active) 5%);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-utility-panel {
@@ -24642,6 +25136,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-drawer-in var(--motion-base) var(--motion-ease) both;
   --field-paper: color-mix(in srgb, var(--surface-main) 88%, var(--bg-app) 12%);
   --field-paper-hover: color-mix(in srgb, var(--surface-main) 80%, var(--accent-active) 5%);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-drawer label {
@@ -24832,6 +25327,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-radius: 3px;
   background: transparent;
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-utility-panel input[type="checkbox"] {
@@ -24844,6 +25340,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border-radius: 3px;
   background: transparent;
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-drawer input[type="checkbox"]::before {
@@ -25019,6 +25516,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-main);
   font-size: 13px;
   font-family: inherit;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-plugin-config-field select {
   padding: 6px 8px;
@@ -25028,6 +25526,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-main);
   font-size: 13px;
   font-family: inherit;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-plugin-config-field textarea {
   padding: 6px 8px;
@@ -25039,6 +25538,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   font-family: inherit;
   resize: vertical;
   min-height: 60px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* First-use guide: a quiet editorial annotation tied to real workspace actions. */
@@ -25052,6 +25552,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-main);
   background: var(--surface-main);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-onboarding-guide::after {
   content: "";
@@ -25184,6 +25685,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: var(--surface-main, #f7f2e9);
   color: var(--text-main, #211d18);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-dialog form {
@@ -25469,6 +25971,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: var(--surface-main);
   color: var(--text-main);
   pointer-events: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-all-day-drop-preview strong {
   overflow: hidden;
@@ -25487,6 +25990,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: var(--surface-raised);
   border-color: var(--paper-rule-strong);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-floating-shelf-drag span {
   color: var(--accent-active);
@@ -25574,6 +26078,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-main);
   cursor: pointer;
   transition: border-color var(--motion-instant) var(--motion-ease), color var(--motion-instant) var(--motion-ease), background-color var(--motion-instant) var(--motion-ease);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-habit-back-btn:hover {
   border-color: var(--accent-active);
@@ -25596,6 +26101,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   cursor: pointer;
   transition: border-color var(--motion-instant) var(--motion-ease), color var(--motion-instant) var(--motion-ease), background-color var(--motion-instant) var(--motion-ease);
   border-color: color-mix(in srgb, var(--accent-active) 30%, var(--paper-rule));
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-command-backdrop {
@@ -25624,6 +26130,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: var(--timeline-paper, var(--surface-main));
   color: var(--text-main);
   box-shadow: var(--paper-float-shadow);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-command-input-row {
@@ -25670,6 +26177,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: color-mix(in srgb, var(--surface-main) 94%, var(--text-main) 6%);
   color: var(--text-muted);
   font: 650 10px/1.2 var(--paper-mono);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-shortcut-row kbd {
@@ -25683,6 +26191,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: color-mix(in srgb, var(--surface-main) 94%, var(--text-main) 6%);
   color: var(--text-muted);
   font: 650 10px/1.2 var(--paper-mono);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-command-results {
@@ -25832,7 +26341,7 @@ body.df-timeline-pointer-drag * {
   box-shadow: none;
   filter: none; text-shadow: none; transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion);
   padding: 8px 12px 8px 28px;
-  border-color: color-mix(in srgb, var(--cat, #8b6f47) 62%, var(--paper-rule-strong)); touch-action:none; }
+  border-color: color-mix(in srgb, var(--cat, #8b6f47) 62%, var(--paper-rule-strong)); touch-action:none; corner-shape: var(--corner-shape, squircle); }
 .df-app .df-drop-preview {
   transition: top var(--motion-instant) var(--motion-ease), height var(--motion-instant) var(--motion-ease), opacity var(--motion-instant) var(--motion-ease), background-color var(--motion-instant) var(--motion-ease);
 }
@@ -25856,7 +26365,7 @@ body.df-timeline-pointer-drag * {
 
   transform: translateY(-50%);
 
-  background: color-mix(in srgb, var(--cat, var(--accent-active)) 65%, white); display:none; animation:none; }
+  background: color-mix(in srgb, var(--cat, var(--accent-active)) 65%, white); display:none; animation:none; corner-shape: var(--corner-shape, squircle); }
 .df-app .df-drop-preview.moving-block::after {
 
   content: "";
@@ -25895,7 +26404,7 @@ body.df-timeline-pointer-drag * {
 
   -webkit-mask-composite: xor;
 
-  mask-composite: exclude; display:none; }
+  mask-composite: exclude; display:none; corner-shape: var(--corner-shape, squircle); }
 .df-floating-drag-block::before {
 
   content: "";
@@ -25916,7 +26425,7 @@ body.df-timeline-pointer-drag * {
 
   transform: translateY(-50%);
 
-  background: color-mix(in srgb, var(--cat, var(--accent-active)) 65%, white); display:none; animation:none; }
+  background: color-mix(in srgb, var(--cat, var(--accent-active)) 65%, white); display:none; animation:none; corner-shape: var(--corner-shape, squircle); }
 .df-floating-drag-block::after { display:none; animation:none; }
 .df-app.is-dragging .df-all-day-block { user-select:none; -webkit-user-select:none; }
 .df-app.is-dragging .df-task-card { user-select:none; -webkit-user-select:none; }
@@ -26050,6 +26559,7 @@ body.df-timeline-pointer-drag * {
   background: color-mix(in srgb, var(--surface-raised) 74%, var(--surface-main));
   overflow: hidden;
   scroll-snap-align: start;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-year-month-title {
@@ -26199,6 +26709,7 @@ body.df-timeline-pointer-drag * {
     min-height: 540px;
     margin-bottom: 96px;
     border-radius: 18px;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   .df-year-month-title { min-height: 84px; font-size: 28px; }
@@ -26245,12 +26756,12 @@ body.df-timeline-pointer-drag * {
 .df-app .df-ai-clarification legend { display: flex; align-items: flex-start; gap: 7px; width: 100%; padding: 0; color: var(--text-main); font: 600 12px/1.4 var(--paper-sans); }
 .df-app .df-ai-clarification legend span { flex: 0 0 auto; color: var(--accent-active); font: 700 10px/1.5 var(--paper-mono); }
 .df-app .df-ai-clarification-options { display: flex; flex-wrap: wrap; gap: 6px; }
-.df-app .df-ai-clarification-options button { min-height: 28px; padding: 4px 8px; border: 1px solid var(--paper-rule); border-radius: 2px; color: var(--text-muted); background: transparent; font: 600 11px/1.3 var(--paper-sans); text-align: left; }
+.df-app .df-ai-clarification-options button { min-height: 28px; padding: 4px 8px; border: 1px solid var(--paper-rule); border-radius: 2px; color: var(--text-muted); background: transparent; font: 600 11px/1.3 var(--paper-sans); text-align: left; corner-shape: var(--corner-shape, squircle); }
 .df-app .df-ai-clarification-options button:hover:not(:disabled) { color: var(--accent-active); border-color: var(--accent-active); background: color-mix(in srgb, var(--paper-note) 82%, var(--accent-active) 18%); }
 .df-app .df-ai-clarification-options button.selected { color: var(--accent-active); border-color: var(--accent-active); background: color-mix(in srgb, var(--paper-note) 82%, var(--accent-active) 18%); }
 .df-app .df-ai-clarification input { width: 100%; min-height: 30px; padding: 6px 8px; border: 0; border-bottom: 1px solid var(--paper-rule); border-radius: 0; color: var(--text-main); background: transparent; font: 500 12px/1.35 var(--paper-sans); }
 .df-app .df-ai-clarification input:focus { border-bottom-color: var(--accent-active); outline: 0; }
-.df-app .df-ai-clarification-submit { justify-self: start; min-height: 30px; padding: 5px 10px; border: 1px solid var(--accent-active); border-radius: 2px; color: var(--accent-active); background: transparent; font: 700 11px/1.3 var(--paper-sans); }
+.df-app .df-ai-clarification-submit { justify-self: start; min-height: 30px; padding: 5px 10px; border: 1px solid var(--accent-active); border-radius: 2px; color: var(--accent-active); background: transparent; font: 700 11px/1.3 var(--paper-sans); corner-shape: var(--corner-shape, squircle); }
 .df-app .df-ai-clarification-submit:hover:not(:disabled) { color: var(--paper-note); background: var(--accent-active); }
 .df-app .df-ai-clarification-submit:disabled { opacity: .42; cursor: not-allowed; }
 
@@ -26872,6 +27383,7 @@ body.df-timeline-pointer-drag * {
   overflow: hidden;
   animation: paper-sheet-in 170ms cubic-bezier(.2,.75,.25,1) both;
   transform-origin: center top;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-template-close:hover {
@@ -26987,6 +27499,7 @@ body.df-timeline-pointer-drag * {
   background: var(--surface-raised);
   border-color: var(--paper-rule-strong);
   box-shadow: var(--paper-float-shadow);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-ai-plan-menu-visible select {
@@ -27039,6 +27552,7 @@ body.df-timeline-pointer-drag * {
   background: transparent;
   font: 650 11px/1.2 var(--paper-sans);
   cursor: pointer;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-ai-plan-feedback {
@@ -27086,6 +27600,7 @@ body.df-timeline-pointer-drag * {
   background: transparent;
   font: inherit;
   cursor: pointer;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* List-level gap controls spacing between candidate task cards.
@@ -27161,6 +27676,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--surface-main);
   color: var(--text-main);
   font: 600 13px/1.3 var(--paper-sans);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Compact name editing bar — replaces the old big-title chrome. Sits at the
@@ -27195,6 +27711,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--surface-main);
   color: var(--text-main);
   font: 600 13px/1.3 var(--paper-sans);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-template-name-readonly {
@@ -27241,6 +27758,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   font: 600 12px/1.2 var(--paper-sans);
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-template-new-btn:hover {
@@ -27329,6 +27847,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--surface-main);
   color: var(--text-main);
   font: 600 12px/1.25 var(--paper-sans);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-template-period-delete {
@@ -27347,6 +27866,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   box-shadow: none;
   opacity: 0;
   transition: opacity 120ms ease;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-template-period-block:hover .df-template-period-delete {
@@ -27403,6 +27923,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   min-height: 38px;
   padding: 0 14px;
   border-radius: var(--paper-radius);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-template-modal-actions button.secondary {
@@ -27485,6 +28006,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--paper-motion);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-header-current-task:hover > .df-header-task-project-dot::after {
   opacity: 1;
@@ -27534,6 +28056,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--paper-motion);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-header-task-more button:hover::after {
   opacity: 1;
@@ -27570,6 +28093,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--accent-active);
   font: 700 9px/12px var(--paper-mono);
   text-align: center;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-month-title {
 
@@ -27621,6 +28145,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
     linear-gradient(currentColor 0 0) 4px 0 / 1px 100% no-repeat,
     linear-gradient(currentColor 0 0) 0 5px / 100% 1px no-repeat;
   opacity: .86;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-candidate-template-btn:hover::before { opacity: 1; }
 .df-candidate-template-btn:focus-visible::before { opacity: 1; }
@@ -27835,6 +28360,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   box-shadow: 0 6px 20px rgba(0,0,0,0.1);
   padding: 4px;
   margin-top: 2px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* ===== Kanban ===== */
@@ -27867,6 +28393,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--df-surface, #fff);
   cursor: pointer;
   transition: box-shadow 0.15s;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-kanban-card:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
 .df-kanban-card-title {
@@ -27887,6 +28414,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   padding: 1px 5px;
   border-radius: 2px;
   font-size: 10px;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-kanban-empty {
   text-align: center;
@@ -27895,6 +28423,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--df-ink-muted, #aaa);
   border: 1px dashed var(--df-hairline, rgba(0,0,0,0.06));
   border-radius: 4px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* ===== Eisenhower matrix ===== */
@@ -28062,6 +28591,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-bottom-width: 6px;
   background: var(--navo-task-rest-bg, rgb(250, 249, 245));
   color: var(--text-main);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-focus-task-prefix {
   font-size: 12px;
@@ -28360,6 +28890,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: 8px;
   background: color-mix(in srgb, var(--surface-main) 97%, var(--text-main) 3%);
   transition: border-color 0.15s;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-eisenhower-quadrant {
   border: 1px solid var(--paper-rule);
@@ -28368,6 +28899,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   flex-direction: column;
   background: color-mix(in srgb, var(--surface-main) 97%, var(--text-main) 3%);
   transition: border-color 0.15s;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-kanban-card:active {
   cursor: grabbing;
@@ -28418,6 +28950,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   opacity: 1;
   pointer-events: auto;
   color: var(--navo-card-project);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-all-day-block {
   border: 1px solid rgba(0, 0, 0, .18);
@@ -28431,6 +28964,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   min-height: 44px;
   display: inline-flex;
   gap: 10px;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-month-task {
   border: 1px solid color-mix(in srgb, var(--cat, var(--accent-active)) 38%, var(--paper-rule));
@@ -28447,6 +28981,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   padding: 6px 8px 8px;
   font-size: 11px;
   line-height: 1.15;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-month-task time {
   color: var(--text-muted);
@@ -28469,6 +29004,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-app .df-planning .df-mindmap.no-root {
   padding: 14px 18px;
   border-radius: 10px;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-planning .df-planning-body {
   display: flex;
@@ -28573,6 +29109,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   font: 500 11px/1.3 var(--paper-sans);
   cursor: pointer;
   transition: border-color .14s ease, color .14s ease, background .14s ease;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-active-filter-chip:hover {
   border-color: color-mix(in srgb, var(--accent-active) 56%, var(--paper-rule));
@@ -28641,6 +29178,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--text-main);
   box-shadow: var(--paper-float-shadow);
   flex-direction: column;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-filter-search {
   display: flex;
@@ -28651,6 +29189,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: 6px;
   background: color-mix(in srgb, var(--surface-main) 96%, var(--text-main) 4%);
   margin-bottom: 4px;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-filter-search svg { width: 13px; height: 13px; color: var(--text-muted); flex-shrink: 0; }
 .df-filter-search input {
@@ -28682,6 +29221,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   text-align: left;
   cursor: pointer;
   transition: background .12s ease;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-filter-cat-row:hover {
   background: color-mix(in srgb, var(--surface-main) 94%, var(--text-main) 6%);
@@ -28700,7 +29240,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
   background: color-mix(in srgb, var(--accent-active) 22%, transparent);
-  color: var(--accent-active); font: 600 10px/1 var(--paper-sans);
+  color: var(--accent-active); font: 600 10px/1 var(--paper-sans); corner-shape: var(--corner-shape, squircle);
 }
 .df-filter-cat-chevron { width: 7px; height: 11px; color: var(--text-muted); opacity: .6; }
 .df-filter-cat-row:hover .df-filter-cat-chevron { opacity: 1; }
@@ -28731,7 +29271,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-bottom-color: var(--paper-rule);
   color: var(--text-muted);
   font-size: 11px; border-radius: 5px; font: 500 12px/1.3 var(--paper-sans);
-  cursor: pointer; transition: background .12s ease, color .12s ease;
+  cursor: pointer; transition: background .12s ease, color .12s ease; corner-shape: var(--corner-shape, squircle);
 }
 .df-filter-option:hover {
   color: var(--text-main);
@@ -28769,6 +29309,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--accent-active);
   pointer-events: none;
   animation: dfFadeIn var(--motion-instant) var(--motion-ease) both;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Kanban column + Matrix quadrant duration summary. */
@@ -28780,6 +29321,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--text-muted);
   font: 500 10px/1.4 var(--paper-mono);
   font-style: normal;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-eisenhower-quadrant-duration {
   margin-left: auto;
@@ -28789,6 +29331,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--text-muted);
   font: 500 10px/1.4 var(--paper-mono);
   font-style: normal;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Settings information architecture: quiet top-level destinations with
@@ -29068,6 +29611,8 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 
     border-radius: 24px 24px 0 0;
 
+    corner-shape: var(--corner-shape, squircle);
+
   }
 
 
@@ -29124,6 +29669,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
     max-height: calc(100dvh - 18px);
     border-inline: 0;
     border-radius: var(--paper-radius-soft) var(--paper-radius-soft) 0 0;
+    corner-shape: var(--corner-shape, squircle);
   }
   .df-app .df-template-modal-actions {
     grid-template-columns: 1fr 1fr;
@@ -29424,6 +29970,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   transition: background-color 160ms var(--paper-ease, ease), border-color 160ms var(--paper-ease, ease), opacity 160ms var(--paper-ease, ease);
   --cat: var(--task-project-color, var(--accent-active));
   --navo-card-project: var(--task-project-color, var(--accent-active));
+  corner-shape: var(--corner-shape, squircle);
 }
 .navo-demo-app .df-task-block[data-task-appearance] {
   position: relative;
@@ -29446,6 +29993,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   transition: background-color 160ms var(--paper-ease, ease), border-color 160ms var(--paper-ease, ease), opacity 160ms var(--paper-ease, ease);
   --cat: var(--task-project-color, var(--accent-active));
   --navo-card-project: var(--task-project-color, var(--accent-active));
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Project accent layer — separate from content.
@@ -29456,6 +30004,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--task-project-color, var(--accent-active));
   opacity: .55;
   border-radius: inherit;
+  corner-shape: var(--corner-shape, squircle);
 }
 .navo-demo-app .df-task-block[data-task-appearance] > .df-task-block-accent {
   position: absolute;
@@ -29463,6 +30012,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--task-project-color, var(--accent-active));
   opacity: .55;
   border-radius: inherit;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--bottom {
@@ -29471,6 +30021,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   bottom: -1px;
   height: var(--task-project-accent-size, 2px);
   border-radius: 0 0 var(--task-radius) var(--task-radius);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .navo-demo-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--bottom {
@@ -29479,6 +30030,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   bottom: -1px;
   height: var(--task-project-accent-size, 2px);
   border-radius: 0 0 var(--task-radius) var(--task-radius);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--left {
@@ -29488,6 +30040,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   width: 4px;
   height: auto;
   border-radius: var(--task-radius) 0 0 var(--task-radius);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .navo-demo-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--left {
@@ -29497,6 +30050,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   width: 4px;
   height: auto;
   border-radius: var(--task-radius) 0 0 var(--task-radius);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--full {
@@ -29504,6 +30058,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   height: auto;
   border-radius: inherit;
   opacity: .08;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .navo-demo-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--full {
@@ -29511,6 +30066,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   height: auto;
   border-radius: inherit;
   opacity: .08;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Hover — slightly stronger neutral border + slightly stronger bottom accent.
@@ -30108,6 +30664,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-task-block[data-task-appearance] .df-block-check {
   flex: 0 0 18px;
@@ -30131,6 +30688,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  corner-shape: var(--corner-shape, squircle);
 }
 .navo-demo-app .df-task-block[data-task-appearance] .df-task-block-check {
   flex: 0 0 18px;
@@ -30154,6 +30712,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-task-block[data-task-appearance] .df-task-block-check.completed {
@@ -30606,6 +31165,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --task-align-items: center;
   --task-grid-template: auto minmax(0, 1fr) auto;
   border-radius: 4px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .navo-demo-app .df-task-block[data-task-appearance][data-task-variant="habit-child"] {
@@ -30616,6 +31176,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --task-align-items: center;
   --task-grid-template: auto minmax(0, 1fr) auto;
   border-radius: 4px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* ============================================================
@@ -30635,6 +31196,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-left-color: var(--task-project-color, var(--accent-active));
   border-radius: 4px;
   margin-bottom: 4px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .navo-demo-app .df-habit-candidate-card .df-task-block[data-task-appearance] {
@@ -30643,6 +31205,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-left-color: var(--task-project-color, var(--accent-active));
   border-radius: 4px;
   margin-bottom: 4px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-habit-candidate-card .df-task-block[data-task-appearance]:last-child {
@@ -30712,6 +31275,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--task-action-color);
   padding: 0;
   transition: color 140ms var(--paper-ease, ease), border-color 140ms var(--paper-ease, ease), background-color 140ms var(--paper-ease, ease);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-task-block[data-task-appearance] .df-task-block-actions .df-icon-button {
   flex: 0 0 auto;
@@ -30728,6 +31292,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--task-action-color);
   padding: 0;
   transition: color 140ms var(--paper-ease, ease), border-color 140ms var(--paper-ease, ease), background-color 140ms var(--paper-ease, ease);
+  corner-shape: var(--corner-shape, squircle);
 }
 .navo-demo-app .df-task-block[data-task-appearance] .df-icon-button {
   flex: 0 0 auto;
@@ -30744,6 +31309,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--task-action-color);
   padding: 0;
   transition: color 140ms var(--paper-ease, ease), border-color 140ms var(--paper-ease, ease), background-color 140ms var(--paper-ease, ease);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-task-block[data-task-appearance] .df-icon-button:hover {
@@ -30775,6 +31341,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   padding: 2px 8px;
   line-height: 1.2;
   transition: color 140ms var(--paper-ease, ease), border-color 140ms var(--paper-ease, ease);
+  corner-shape: var(--corner-shape, squircle);
 }
 .navo-demo-app .df-task-block[data-task-appearance] .df-duration-pill {
   border: 1px solid transparent;
@@ -30787,6 +31354,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   padding: 2px 8px;
   line-height: 1.2;
   transition: color 140ms var(--paper-ease, ease), border-color 140ms var(--paper-ease, ease);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-task-block[data-task-appearance] .df-duration-pill:hover {
@@ -30835,6 +31403,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   font-size: 10px;
   font-weight: 600;
   padding: 2px 8px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .navo-demo-app .df-task-block[data-task-appearance][data-task-variant="scheduled"] .df-block-project {
@@ -30846,6 +31415,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   font-size: 10px;
   font-weight: 600;
   padding: 2px 8px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* ============================================================
@@ -30863,6 +31433,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border: 1px solid var(--task-border);
   border-radius: var(--task-radius);
   background: color-mix(in srgb, var(--task-bg) 96%, var(--paper-rule, #E7E2D8));
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-task-group-header {
@@ -30898,9 +31469,11 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
  * ============================================================ */
 .df-app .df-task-group .df-task-block[data-task-appearance][data-task-variant="habit-child"] {
   border-radius: 4px;
+  corner-shape: var(--corner-shape, squircle);
 }
 .navo-demo-app .df-task-group .df-task-block[data-task-appearance][data-task-variant="habit-child"] {
   border-radius: 4px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-task-group .df-task-block[data-task-appearance][data-task-variant="habit-child"]:last-child {
@@ -31156,6 +31729,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: color-mix(in srgb, var(--surface-main) 96%, transparent);
   color: var(--text-muted);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app.mode-planning .df-planning .df-filter-trigger svg {
@@ -31176,6 +31750,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--accent-active);
   color: var(--surface-main);
   font: 700 9px/1 var(--paper-sans);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app.mode-planning .df-planning .df-filter-trigger:hover {
@@ -31210,6 +31785,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: 6px;
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app.mode-planning .df-planning .df-filter-categories {
@@ -31240,6 +31816,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--paper-muted);
   font: 500 11px/1.25 var(--paper-sans);
   text-align: left;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app.mode-planning .df-planning .df-filter-cat-row:hover {
@@ -31294,6 +31871,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--accent-active);
   font: 700 9px/1.2 var(--paper-sans);
   text-align: center;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app.mode-planning .df-planning .df-filter-flyout-panel {
@@ -31309,6 +31887,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
   overflow-y: auto;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app.mode-planning .df-planning .df-filter-options-view {
@@ -31335,6 +31914,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: 4px;
   color: var(--paper-muted);
   font: 500 11px/1.25 var(--paper-sans);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app.mode-planning .df-planning .df-filter-option:hover {
@@ -31360,6 +31940,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   width: 8px;
   height: 8px;
   border-radius: 999px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app.mode-planning .df-planning .df-filter-reset {
@@ -31372,6 +31953,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--paper-muted);
   font: 500 11px/1.25 var(--paper-sans);
   text-align: center;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app.mode-planning .df-planning .df-filter-empty {
@@ -31384,6 +31966,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--paper-muted);
   font: 500 11px/1.25 var(--paper-sans);
   text-align: center;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app.mode-planning .df-planning .df-filter-search {
@@ -31447,6 +32030,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-right: 2px solid transparent;
   border-radius: 4px;
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-planning .df-kanban-board {
@@ -31478,6 +32062,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: 6px;
   background: color-mix(in srgb, var(--paper-bg) 96%, var(--paper-rule) 4%);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-planning .df-eisenhower-quadrant {
@@ -31485,6 +32070,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: 6px;
   background: color-mix(in srgb, var(--paper-bg) 96%, var(--paper-rule) 4%);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-planning .df-kanban-card {
@@ -31493,6 +32079,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--task-bg);
   box-shadow: none;
   transform: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-planning .df-eisenhower-task {
@@ -31501,6 +32088,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--task-bg);
   box-shadow: none;
   transform: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-planning .df-planning-list-row {
@@ -31509,6 +32097,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: var(--task-bg);
   box-shadow: none;
   transform: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-planning .df-kanban-card:hover {
@@ -31755,6 +32344,8 @@ body.df-planning-native-dragging [contenteditable] * {
   --radius-lg: 18px;
 
   --radius-xl: 24px;
+
+  --corner-shape: squircle;
 
 
 
@@ -32078,6 +32669,7 @@ body.df-unified-dragging [contenteditable] * {
   box-shadow: 0 6px 20px rgba(40, 36, 31, 0.12), 0 1px 3px rgba(40, 36, 31, 0.08);
   overflow: hidden;
   animation: df-drag-ink-in 90ms cubic-bezier(.2, 0, 0, 1) both;
+  corner-shape: var(--corner-shape, squircle);
 }
 @keyframes df-drag-ink-in {
   from { opacity: .88; box-shadow: 0 2px 8px rgba(40, 36, 31, 0.08); }
@@ -32085,6 +32677,7 @@ body.df-unified-dragging [contenteditable] * {
 }
 .df-unified-drag-overlay .is-drag-overlay-clone {
   border-radius: inherit;
+  corner-shape: var(--corner-shape, squircle);
 }
 body.df-unified-dragging .df-unified-drag-overlay {
   pointer-events: none;
@@ -32187,6 +32780,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   pointer-events: none;
   top: -1px;
   box-shadow: -3px 0 0 0 var(--accent-active);
+  corner-shape: var(--corner-shape, squircle);
 }
 .is-insertion-after::after {
   content: "";
@@ -32199,6 +32793,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   pointer-events: none;
   bottom: -1px;
   box-shadow: -3px 0 0 0 var(--accent-active);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Drop placeholder slot: a muted, dashed slot shown inside a container
@@ -32208,6 +32803,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: var(--drag-placeholder-bg);
   border-radius: var(--task-radius, 10px);
   min-height: 36px;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-kanban-drop-placeholder {
   height: 44px;
@@ -32216,6 +32812,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: var(--task-radius, 10px);
   background: var(--drag-placeholder-bg);
   pointer-events: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* ============================================================
@@ -32287,9 +32884,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: var(--task-radius, 6px);
   overflow: visible;
   animation: df-drag-ink-in 90ms cubic-bezier(.2, 0, 0, 1) both;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-task-drag-layer .df-task-block {
   border-radius: var(--task-radius, 6px);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-task-drag-layer > .df-task-block {
   width: 100%;
@@ -32428,6 +33027,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   min-height: 34px;
   border-radius: 4px;
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-candidate-subtask-row-inner {
@@ -32481,6 +33081,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: transparent;
   color: var(--paper-muted);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-candidate-subtask-toggle svg {
@@ -32619,6 +33220,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   cursor: pointer;
   box-shadow: none;
   transition: color 150ms, border-color 150ms, background 150ms;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-habit-nav[aria-label] {
@@ -32656,6 +33258,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   transition: color 150ms, border-color 150ms, background 150ms;
   margin-left: 6px;
   border-color: color-mix(in srgb, var(--accent-active) 30%, var(--paper-rule));
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* ===== Week table: editorial borderless grid ===== */
@@ -32795,6 +33398,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   box-shadow: none;
   border-radius: 6px;
   transition: background 150ms;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-habit-overview-cell.is-today {
@@ -32820,6 +33424,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 2px solid var(--paper-rule-strong, var(--paper-rule));
   background: transparent;
   transition: background 150ms, border-color 150ms;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Due but not done: subtle ring */
@@ -32865,6 +33470,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: 6px;
   color: var(--paper-muted);
   font-size: 13px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* ===== Archived / disabled section ===== */
@@ -32989,6 +33595,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   cursor: pointer;
   box-shadow: none;
   transition: color 150ms, border-color 150ms, background 150ms;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-habit-overview-tool:hover {
@@ -33101,6 +33708,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   color: var(--ink, var(--paper-ink));
   padding: 0 10px;
   font: inherit;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-planning .df-metrics-text-action {
@@ -33163,6 +33771,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 1px solid color-mix(in srgb, var(--line, var(--paper-rule)) 86%, transparent);
   border-radius: 8px;
   background: transparent;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-planning .df-metrics-summary > div {
@@ -33206,6 +33815,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: 8px;
   background: color-mix(in srgb, var(--paper, var(--paper-bg)) 97%, var(--ink, var(--paper-ink)) 3%);
   padding: 16px;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-planning .df-metrics-panel-head {
@@ -33376,6 +33986,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: color-mix(in srgb, var(--paper, var(--paper-bg)) 97%, var(--ink, var(--paper-ink)) 3%);
   padding: 42px 24px;
   text-align: center;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-app .df-planning .df-metrics-empty h3 {
@@ -33513,16 +34124,19 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-left: 1px solid var(--paper-rule, var(--line));
   background: color-mix(in srgb, var(--paper, var(--paper-bg)) 99%, var(--paper-ink, #27231E) 1%);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .df-planning .df-metrics-filter-panel .df-filter-cat-row {
   border-radius: 4px;
   background: transparent;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .df-planning .df-metrics-filter-flyout .df-filter-option {
   border-radius: 4px;
   background: transparent;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .df-planning .df-metrics-filter-panel .df-filter-cat-row.active {
@@ -33664,6 +34278,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: var(--drag-placeholder-bg, color-mix(in srgb, var(--accent-active) 4%, transparent));
   pointer-events: none;
   animation: df-reorder-preview-in 120ms var(--paper-ease, ease) both;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-reorder-preview-slot::after {
@@ -33690,6 +34305,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 1px solid var(--paper-rule);
   border-radius: 22px;
   background: var(--timeline-paper, rgb(248, 247, 243));
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.mode-planning .df-planning .df-mindmap.no-root {
@@ -33699,6 +34315,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 0;
   border-radius: inherit;
   background: transparent;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.mode-planning .df-planning .df-planning-sidebar {
@@ -33778,6 +34395,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 1px solid var(--paper-rule-strong);
   border-radius: 7px;
   background: var(--surface-card);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.mode-planning .df-planning .df-planning-longrange-guide {
@@ -33822,6 +34440,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 2px solid var(--paper-rule-strong);
   border-radius: 8px;
   background: var(--surface-card);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.mode-planning .df-planning .df-project-color-bar {
@@ -33833,6 +34452,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   width: 4px;
   border-radius: 3px;
   background: var(--project-color);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.mode-planning .df-planning .df-task-node-inner[data-task-variant="candidate"] {
@@ -33950,6 +34570,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: var(--task-radius);
   background: var(--surface-card);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 /* Tree dragging shows a real empty destination slot, never an instruction
@@ -33969,6 +34590,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: var(--task-radius);
   background: var(--surface-card);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.mode-planning .df-planning .df-tree-drop-preview::before {
@@ -33998,6 +34620,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     margin-top: 8px;
     border: 1px solid var(--paper-rule, var(--line));
     border-radius: 6px;
+    corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app.mode-planning .df-planning { height: auto; min-height: calc(100vh - 58px); padding: 6px; }
   #root .df-app.mode-planning .df-planning .df-mindmap.no-root { grid-template-columns: 76px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
@@ -34077,6 +34700,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border: 2px solid var(--task-checkbox-color);
     border-radius: 4px;
     background: color-mix(in srgb, var(--task-checkbox-color) 12%, transparent);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app.mode-planning .df-planning .df-eisenhower-task .df-task-checkbox-wrap .df-block-check.completed::before {
@@ -34530,6 +35154,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     color: var(--text-main);
     font-family: inherit;
     pointer-events: auto;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   .df-compact-date-picker-trigger[aria-expanded="true"] {
@@ -34773,6 +35398,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     min-height: 54px;
     border-radius: 12px;
     -webkit-tap-highlight-color: transparent;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   .df-date-title-button[aria-expanded="true"] {
@@ -35130,6 +35756,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
     -webkit-backdrop-filter: blur(18px) saturate(1.15);
 
+    corner-shape: var(--corner-shape, squircle);
+
   }
 
 
@@ -35145,6 +35773,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border: 0;
 
     border-radius: 16px;
+
+    corner-shape: var(--corner-shape, squircle);
 
   }
 
@@ -35239,6 +35869,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     color: var(--text-main);
 
     box-shadow: 0 2px 8px color-mix(in srgb, var(--text-main) 12%, transparent);
+
+    corner-shape: var(--corner-shape, squircle);
 
   }
 
@@ -35770,6 +36402,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border: 1px solid var(--paper-rule);
     border-radius: 7px;
     background: var(--surface-main);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app.mode-execute .df-compact-execute-tabs {
@@ -35779,6 +36412,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border: 0;
     border-radius: 6px;
     background: transparent;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app.mode-execute .df-compact-execute-tabs button {
@@ -35798,6 +36432,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     gap: 0;
     overflow: hidden;
     font: 700 12px/1 var(--paper-sans);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app.mode-execute .df-compact-execute-tabs button.active {
@@ -35854,6 +36489,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     box-shadow: none;
     transition: transform 180ms var(--paper-ease, cubic-bezier(.2, .75, .25, 1));
     will-change: transform;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app.mode-execute .df-compact-execute-tabs button.schedule-state .df-compact-mode-logo {
@@ -35913,6 +36549,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     box-shadow: none;
     color: var(--text-main);
     font: 650 10px/1 var(--paper-sans);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app.mode-execute .df-compact-view-trigger {
@@ -35927,7 +36564,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: transparent;
     box-shadow: none;
     color: var(--text-main);
-    font: 650 10px/1 var(--paper-sans); gap: 2px; }
+    font: 650 10px/1 var(--paper-sans); gap: 2px; corner-shape: var(--corner-shape, squircle); }
   #root .df-app.mode-execute .df-compact-view-trigger svg { width: 11px; height: 11px; }
 
   #root .df-app.mode-execute .df-candidate-panel > .df-panel-title {
@@ -36063,9 +36700,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     font: 650 11px/1 var(--paper-sans);
   }
 
-  #root .df-app .df-candidate-planning-return-hint{position:fixed;z-index:100004;left:8px;top:50%;width:112px;min-height:50px;display:grid;place-items:center;padding:8px;border:1px solid var(--accent-active);border-radius:14px;background:var(--surface-raised);color:var(--accent-active);box-shadow:0 10px 26px color-mix(in srgb,var(--text-main) 16%,transparent);font:750 11px/1.25 var(--paper-sans);text-align:center;transform:translateY(-50%)}
+  #root .df-app .df-candidate-planning-return-hint{position:fixed;z-index:100004;left:8px;top:50%;width:112px;min-height:50px;display:grid;place-items:center;padding:8px;border:1px solid var(--accent-active);border-radius:14px;background:var(--surface-raised);color:var(--accent-active);box-shadow:0 10px 26px color-mix(in srgb,var(--text-main) 16%,transparent);font:750 11px/1.25 var(--paper-sans);text-align:center;transform:translateY(-50%);corner-shape: var(--corner-shape, squircle)}
   #root .df-app .df-ai-plan-mobile-preview{display:grid;gap:4px;width:100%;margin-top:6px}
-  #root .df-app .df-ai-plan-mobile-preview button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-height:38px;padding:6px 8px;border:1px solid var(--paper-rule);border-radius:8px;background:transparent;text-align:left}
+  #root .df-app .df-ai-plan-mobile-preview button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-height:38px;padding:6px 8px;border:1px solid var(--paper-rule);border-radius:8px;background:transparent;text-align:left;corner-shape: var(--corner-shape, squircle)}
   #root .df-app .df-ai-plan-mobile-preview strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
   #root .df-app .df-ai-plan-mobile-preview small{font:650 9px/1.2 var(--paper-mono);color:var(--text-muted);white-space:nowrap}
 
@@ -36243,6 +36880,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 8px;
     color: color-mix(in srgb, var(--accent-active) 56%, var(--text-muted));
     background: transparent;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-schedule-drop-guide svg {
@@ -36266,6 +36904,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border: 1px solid color-mix(in srgb, var(--accent-active) 35%, var(--paper-rule));
     border-radius: 6px;
     background: color-mix(in srgb, var(--surface-main) 92%, var(--accent-active) 8%);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-schedule-drop-guide-check {
@@ -36273,6 +36912,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     height: 14px;
     border: 1.5px solid currentColor;
     border-radius: 4px;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-schedule-drop-guide-source strong {
@@ -36386,6 +37026,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border: 1px solid var(--paper-rule-strong);
     border-radius: 7px;
     background: color-mix(in srgb, var(--surface-main) 90%, var(--text-main) 10%);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app.mode-planning .df-planning .df-view-btn {
@@ -36407,6 +37048,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     align-items: center;
     gap: 5px;
     overflow: hidden;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-planning .df-view-btn svg {
@@ -36577,6 +37219,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: var(--task-bg);
     border: 1px solid var(--task-border);
     border-left: var(--task-project-accent-size) solid var(--accent-active);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .drag-create-quick-add {
@@ -36735,6 +37378,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     box-sizing: border-box;
     border-radius: 18px 18px 0 0;
     overflow-x: hidden;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-task-detail.df-drawer.df-mobile-short-sheet {
@@ -36750,6 +37394,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     overflow-y: auto;
     transform:translateY(calc(var(--mobile-sheet-drag-y, 0px) - var(--mobile-keyboard-lift, 0px)));
     transition:transform 180ms cubic-bezier(.22,.72,.2,1);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-task-detail.df-drawer.df-mobile-short-sheet.is-sheet-dragging{transition:none}
@@ -36773,6 +37418,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     box-sizing: border-box;
     transform: translateY(var(--mobile-sheet-drag-y, 0px));
     transition: transform 180ms cubic-bezier(.22, .72, .2, 1);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-settings-detail-link[data-settings-detail="widget"]{display:none}
@@ -36826,6 +37472,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 999px;
     background: color-mix(in srgb, var(--text-muted) 42%, transparent);
     transform: translateX(-50%);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-mobile-sheet-dismiss-handle:active {
@@ -36857,6 +37504,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 12px;
     background: transparent;
     box-shadow: none;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-utility-panel .df-utility-head .df-icon-action:active {
@@ -36879,6 +37527,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     transition: transform 180ms cubic-bezier(.22, .72, .2, 1);
     display: flex;
     flex-direction: column;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-utility-panel .df-utility-body.df-settings-shell {
@@ -36923,6 +37572,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border: 1px solid var(--paper-rule);
     border-radius: 16px;
     background: var(--surface-card);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-settings-group-head {
@@ -36965,6 +37615,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     height: 40px;
     border-radius: 10px;
     font-size: 14px;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-settings-action {
@@ -36973,6 +37624,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 12px;
     background: var(--surface-raised);
     font-size: 13px;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-settings-disclosure-toggle {
@@ -37002,6 +37654,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: 18px;
   background: var(--surface-main);
   box-shadow: 0 18px 50px rgba(39, 35, 30, .14);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.theme-dark .df-ai-panel-reference {
@@ -37062,6 +37715,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   box-shadow: none;
   cursor: pointer;
   list-style: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 .df-ai-reference-tool::-webkit-details-marker { display: none; }
@@ -37104,6 +37758,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: 10px;
   background: var(--surface-raised);
   box-shadow: var(--paper-float-shadow);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-ai-head-menu button {
   min-height: 38px;
@@ -37114,6 +37769,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: transparent;
   text-align: left;
   cursor: pointer;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-ai-head-menu button:hover { background: var(--paper-note); }
 .df-ai-head-menu button.active { background: var(--paper-note); }
@@ -37333,6 +37989,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   box-shadow: none;
   line-height: 1.55;
   white-space: pre-wrap;
+  corner-shape: var(--corner-shape, squircle);
 }
 #root .df-app .df-ai-msg-bubble.user > span { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 
@@ -37418,13 +38075,13 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 .df-ai-markdown li::marker { color: var(--text-muted); }
 .df-ai-markdown blockquote { margin: 1em 0; padding: .15em 0 .15em 15px; border-left: 2px solid var(--accent-active); color: var(--text-muted); }
 .df-ai-markdown a { color: var(--accent-active); text-decoration-thickness: 1px; text-underline-offset: 3px; }
-.df-ai-markdown code { padding: .12em .36em; border-radius: 4px; background: color-mix(in srgb, var(--text-main) 8%, transparent); font: .88em/1.5 var(--paper-mono); }
+.df-ai-markdown code { padding: .12em .36em; border-radius: 4px; background: color-mix(in srgb, var(--text-main) 8%, transparent); font: .88em/1.5 var(--paper-mono); corner-shape: var(--corner-shape, squircle); }
 .df-ai-markdown table { width: 100%; margin: 1em 0; border-collapse: collapse; font-size: 13px; }
 .df-ai-markdown :is(th, td) { padding: 8px 10px; border: 1px solid var(--paper-rule); text-align: left; vertical-align: top; }
 .df-ai-markdown th { background: color-mix(in srgb, var(--surface-main) 94%, var(--text-main) 6%); font-weight: 650; }
 .df-ai-markdown input[type="checkbox"] { margin-right: 8px; accent-color: var(--accent-active); }
 
-.df-ai-code-block { max-width: 100%; margin: 1em 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: 8px; background: color-mix(in srgb, var(--surface-main) 88%, var(--text-main) 12%); }
+.df-ai-code-block { max-width: 100%; margin: 1em 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: 8px; background: color-mix(in srgb, var(--surface-main) 88%, var(--text-main) 12%); corner-shape: var(--corner-shape, squircle); }
 .df-ai-code-head { min-height: 34px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 13px; border-bottom: 1px solid var(--paper-rule); color: var(--text-muted); font: 550 10px/1 var(--paper-mono); }
 .df-ai-code-head button { min-height: 28px; padding: 0 6px; border: 0; color: inherit; background: transparent; cursor: pointer; }
 .df-ai-code-block pre { max-width: 100%; margin: 0; padding: 14px; overflow-x: auto; }
@@ -37436,7 +38093,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 1px solid var(--paper-rule);
   background: color-mix(in srgb, var(--surface-raised) 92%, var(--accent-active) 8%);
   padding: 11px 12px; margin-top: 22px; }
-.df-agent-run-card :is(.df-agent-applied, .df-agent-confirm-card) { margin-top: 16px; border-radius: 8px; box-shadow: none; }
+.df-agent-run-card :is(.df-agent-applied, .df-agent-confirm-card) { margin-top: 16px; border-radius: 8px; box-shadow: none; corner-shape: var(--corner-shape, squircle); }
 .df-agent-applied {
   display: grid;
   gap: 8px;
@@ -37482,6 +38139,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: 18px;
   background: color-mix(in srgb, var(--surface-main) 98%, var(--text-main) 2%);
   box-shadow: 0 10px 26px rgba(39, 35, 30, .1);
+  corner-shape: var(--corner-shape, squircle);
 }
 #root .df-app.theme-dark .df-ai-panel-reference .df-ai-composer-row {
   box-shadow: 0 12px 32px rgba(0, 0, 0, .32);
@@ -37594,7 +38252,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   opacity: .64;
 }
 #root .df-app .df-ai-panel-reference .df-ai-send-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.df-ai-stop-icon { width: 8px; height: 8px; border-radius: 2px; background: currentColor; }
+.df-ai-stop-icon { width: 8px; height: 8px; border-radius: 2px; background: currentColor; corner-shape: var(--corner-shape, squircle); }
 
 #root .df-app .df-ai-panel-reference .df-ai-attach-menu.df-ai-composer-menu {
   position: absolute;
@@ -37606,6 +38264,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: 10px;
   background: var(--surface-raised);
   box-shadow: var(--paper-float-shadow);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-ai-composer-setting { min-height: 46px; display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; gap: 8px; padding: 4px 9px; color: var(--text-main); }
 .df-ai-composer-menu-model { display: none; }
@@ -37632,6 +38291,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     display: flex;
     flex-direction: column;
     transition: height 180ms ease, transform 180ms ease;
+    corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app .df-ai-panel-reference.is-mobile-collapsed {
     top: auto;
@@ -37707,6 +38367,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-bottom: 0;
     border-radius: 14px 0 0;
     box-shadow: -12px 0 30px color-mix(in srgb, var(--text-main) 10%, transparent);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-ai-panel-reference.is-docked .df-ai-panel-head,
@@ -37768,6 +38429,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: var(--task-radius);
   background: var(--task-bg);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.mode-execute .df-candidate-list .df-candidate-task-row .df-task-card {
@@ -37780,6 +38442,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: var(--task-radius);
   background: var(--task-bg);
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.mode-execute .df-candidate-task-row::before {
@@ -38120,6 +38783,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 1px solid var(--paper-rule-strong);
   border-radius: var(--paper-radius-soft);
   background: color-mix(in srgb, var(--surface-raised) 94%, var(--accent-active) 6%);
+  corner-shape: var(--corner-shape, squircle);
 }
 #root .df-app .df-recurrence-editor .df-repeat-form { padding-top: 0; }
 #root .df-app .df-recurrence-editor-actions {
@@ -38139,6 +38803,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: var(--surface-main);
   font: 600 12px var(--paper-sans);
   cursor: pointer;
+  corner-shape: var(--corner-shape, squircle);
 }
 #root .df-app .df-recurrence-editor-actions button.primary {
   color: var(--accent-on);
@@ -38168,7 +38833,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 1px solid var(--paper-rule-strong);
   border-radius: var(--paper-radius);
   background: var(--surface-raised);
-  box-shadow: 0 5px 15px color-mix(in srgb, var(--text-main) 10%, transparent); color: var(--text-muted); }
+  box-shadow: 0 5px 15px color-mix(in srgb, var(--text-main) 10%, transparent); color: var(--text-muted); corner-shape: var(--corner-shape, squircle); }
 #root .df-app .df-ai-fab {
   display: grid;
   place-items: center;
@@ -38177,7 +38842,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 1px solid var(--paper-rule-strong);
   border-radius: var(--paper-radius);
   background: var(--surface-raised);
-  box-shadow: 0 5px 15px color-mix(in srgb, var(--text-main) 10%, transparent); color: var(--text-muted); }
+  box-shadow: 0 5px 15px color-mix(in srgb, var(--text-main) 10%, transparent); color: var(--text-muted); corner-shape: var(--corner-shape, squircle); }
 #root .df-app .df-add-fab:hover {
   background: var(--surface-raised);
   border-color: var(--paper-rule-strong);
@@ -38240,6 +38905,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-top: 0;
     border-radius: 20px;
     background: rgb(250, 249, 245);
+    corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app.mode-execute > .df-execute:not(.df-template-shell) .df-candidate-panel:not(.collapsed) {
     grid-column: 1;
@@ -38251,6 +38917,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     box-shadow: 0 12px 28px color-mix(in srgb, var(--text-main) 11%, transparent);
     z-index: 2;
     overflow: visible;
+    corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) .df-timeline-panel {
     grid-column: 2;
@@ -38261,6 +38928,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: transparent;
     z-index: 1;
     overflow: hidden;
+    corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app.mode-execute .df-view-switch-vertical {
     top: 0;
@@ -38352,6 +39020,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border: 1px solid color-mix(in srgb, var(--surface-raised) 72%, transparent);
     border-radius: 999px;
     box-shadow: 0 0 0 2px var(--surface-raised);
+    corner-shape: var(--corner-shape, squircle);
   }
   .df-app .df-timeline-scroll {
     width: 500px;
@@ -38391,6 +39060,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 6px;
     background: color-mix(in srgb, var(--surface-main) 97%, var(--text-main) 3%);
     box-shadow: none;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app.mode-execute .df-timeline-panel {
@@ -38398,6 +39068,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 6px;
     background: var(--surface-main);
     box-shadow: none;
+    corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app.mode-execute .df-candidate-panel .df-candidate-resize-zone {
     display: block;
@@ -38463,6 +39134,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 1px solid var(--paper-rule-strong);
   border-radius: 8px;
   background: var(--surface-main);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .df-drawer .df-segment button {
@@ -38474,6 +39146,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   color: var(--text-muted);
   background: transparent;
   font-weight: 650;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .df-drawer .df-segment button.active {
@@ -38604,6 +39277,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: var(--radius-control);
   background: transparent;
   color: var(--text-muted);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.mode-execute .df-project-group-action.ui-icon-button:hover,
@@ -38712,6 +39386,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   color: var(--text-main);
   box-shadow: none;
   font: 650 11px/1.2 var(--paper-sans);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.mode-execute .df-candidate-schedule-panel button:hover,
@@ -38808,6 +39483,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   color: var(--text-muted);
   box-shadow: none;
   font: 650 10px/1.15 var(--paper-sans);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app.mode-execute .df-candidate-more-toolbar > button:hover,
@@ -38933,6 +39609,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 14px;
     background: var(--surface-card);
     box-shadow: 0 12px 28px color-mix(in srgb, var(--text-main) 11%, transparent);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app.mode-execute .df-timeline-panel {
@@ -38942,6 +39619,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 14px;
     background: var(--surface-main);
     box-shadow: none;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app.mode-execute .df-timeline-content,
@@ -39130,6 +39808,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: 12px;
   background: var(--surface-card);
   box-shadow: 0 2px 0 color-mix(in srgb, var(--text-main) 5%, transparent);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .df-settings-group-head {
@@ -39186,6 +39865,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: 12px;
   background: color-mix(in srgb, var(--surface-main) 88%, var(--bg-app));
   box-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .df-theme-accent-setting .df-project-color-picker > button,
@@ -39294,6 +39974,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     margin-bottom: 18px;
     padding: 16px 14px 4px;
     border-radius: 14px;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app:where(.mode-execute, .mode-planning) .df-settings-row {
@@ -39318,6 +39999,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-utility-panel:has(.df-settings-shell) {
     background: var(--bg-app);
     border-radius: 22px 22px 0 0;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-utility-panel:has(.df-settings-shell) .df-utility-head {
@@ -39406,6 +40088,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 16px;
     background: var(--surface-card);
     box-shadow: 0 1px 2px color-mix(in srgb, var(--text-main) 6%, transparent);
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-settings-shell > .df-settings-content .df-settings-group--danger > .df-settings-group-body {
@@ -39479,6 +40162,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-radius: 16px;
   background: var(--surface-card);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--text-main) 6%, transparent);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .df-settings-home-quick-card {
@@ -39644,6 +40328,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
       radial-gradient(circle at 22% 38%, rgba(255,255,255,.10) 0 .6px, transparent .8px),
       radial-gradient(circle at 70% 66%, rgba(0,0,0,.12) 0 .5px, transparent .7px),
       linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.12));
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-settings-toggle[data-state="on"] {
@@ -39674,6 +40359,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background-image: none;
     box-shadow: none;
     overflow: visible;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-settings-toggle::before {
@@ -39685,6 +40371,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: color-mix(in srgb, var(--text-muted) 28%, var(--surface-main));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-muted) 22%, transparent);
     opacity: 1;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-settings-toggle[data-state="on"]::before {
@@ -39801,6 +40488,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   color: var(--text-main);
   background: var(--surface-card);
   font: 700 18px/1.2 var(--paper-display);
+  corner-shape: var(--corner-shape, squircle);
 }
 
 #root .df-app .df-settings-profile-name-input:focus {
@@ -39827,4 +40515,22 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     grid-column: 1;
     grid-row: 1;
   }
+}
+
+.df-time-block.skipped .df-block-check,
+.df-all-day-block.skipped .df-block-check {
+  opacity: 1;
+  pointer-events: auto;
+  background: var(--cat, var(--accent-active));
+  border-color: var(--cat, var(--accent-active));
+  color: #1f2430;
+}
+
+.df-time-block.skipped .df-block-check svg,
+.df-all-day-block.skipped .df-block-check svg {
+  display: block;
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.8;
+  color: #1f2430;
 }

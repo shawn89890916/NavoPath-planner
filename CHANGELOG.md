@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-09-26 · UI 圆角与按钮描边
+
+### 改进
+- 将任务块、UI 边框、按钮和弹层统一为 squircle 圆角；编辑页并排操作按钮统一为完整描边。
+
 ## 2026-09-25 · 任务与子任务体验改进
 
 ### 修复
@@ -219,6 +224,11 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-26 · Squircle corners and button outlines
+
+### Improved
+- Unified task blocks, interface borders, buttons, and overlays with squircle corners; edit-page side-by-side actions now use complete outlines.
 
 ## 2026-09-25 · Task and subtask improvements
 
