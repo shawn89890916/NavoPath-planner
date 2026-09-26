@@ -250,6 +250,48 @@ function metricViewLabel(lang: Language, mode: PlanningViewMode) {
   return lang === "zh" ? "列表" : "List";
 }
 
+function PlanningModeIcon({ mode }: { mode: PlanningViewMode }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {mode === "tree" && (
+        <>
+          <rect x="2" y="9" width="6" height="6" rx="1.2" />
+          <rect x="16" y="2.5" width="6" height="6" rx="1.2" />
+          <rect x="16" y="15.5" width="6" height="6" rx="1.2" />
+          <path d="M8 12h4m0-6.5v13m0-13h4m-4 13h4" />
+        </>
+      )}
+      {mode === "kanban" && (
+        <>
+          <rect x="2.5" y="3" width="19" height="18" rx="1.6" />
+          <path d="M8.8 3v18M15.2 3v18" />
+          <path d="M4.7 7h1.9m-1.9 3.5h1.9M11 7h2m-2 3.5h2M17.5 7h1.7" strokeWidth="2" />
+        </>
+      )}
+      {mode === "eisenhower" && (
+        <>
+          <rect x="3" y="3" width="18" height="18" rx="1.6" />
+          <path d="M12 3v18M3 12h18" />
+          <rect x="14.5" y="5.5" width="4" height="4" rx=".6" fill="currentColor" stroke="none" />
+        </>
+      )}
+      {mode === "list" && (
+        <>
+          <path d="M3.5 5.6 5 7.1l2.5-3M10 5.5h11M10 12h9M10 18.5h11" />
+          <rect x="3" y="10" width="4" height="4" rx=".6" />
+          <rect x="3" y="16.5" width="4" height="4" rx=".6" />
+        </>
+      )}
+      {mode === "metrics" && (
+        <>
+          <circle cx="12" cy="12" r="8" strokeWidth="3.4" opacity=".45" />
+          <path d="M12 4a8 8 0 0 1 8 8" strokeWidth="3.4" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 function planningTaskPriority(task: Pick<Task, "priority">) {
   return task.priority || "normal";
 }
@@ -2200,12 +2242,8 @@ export default function PlanningView(props: {
             {availableModes.length > 1 && (
               <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare">
                 {availableModes.map((m) => (
-                  <button type="button" key={m} className={`df-view-btn ui-choice-item${viewMode === m ? " active" : ""}`} aria-pressed={viewMode === m} onClick={() => setViewMode(m)} title={metricViewLabel(props.lang, m)}>
-                      {m === "tree" && <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3v10M3 5h4M3 9h6M3 13h5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>}
-                      {m === "kanban" && <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="3.5" height="10" rx="1" fill="none" stroke="currentColor" strokeWidth="1.3" /><rect x="6.5" y="3" width="3.5" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="1.3" /><rect x="11" y="3" width="3.5" height="5" rx="1" fill="none" stroke="currentColor" strokeWidth="1.3" /></svg>}
-                      {m === "eisenhower" && <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5.5" height="5.5" rx="1" fill="none" stroke="currentColor" strokeWidth="1.3" /><rect x="8.5" y="2" width="5.5" height="5.5" rx="1" fill="none" stroke="currentColor" strokeWidth="1.3" /><rect x="2" y="8.5" width="5.5" height="5.5" rx="1" fill="none" stroke="currentColor" strokeWidth="1.3" /><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1" fill="none" stroke="currentColor" strokeWidth="1.3" /></svg>}
-                      {m === "list" && <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4h10M3 8h10M3 12h7" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>}
-                      {m === "metrics" && <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 12V8M7 12V4M11 12V6M2 13h12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>}
+                  <button type="button" key={m} className={`df-view-btn ui-choice-item${viewMode === m ? " active" : ""}`} aria-label={metricViewLabel(props.lang, m)} aria-pressed={viewMode === m} onClick={() => setViewMode(m)} title={metricViewLabel(props.lang, m)}>
+                      <PlanningModeIcon mode={m} />
                       <span>{metricViewLabel(props.lang, m)}</span>
                   </button>
                 ))}

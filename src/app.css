@@ -33314,7 +33314,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   gap: 5px;
   font: 650 11px/1 var(--paper-sans);
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr);
+  grid-template-columns: 20px minmax(0, 1fr);
   justify-content: start;
   text-align: left;
   border-left: 2px solid transparent;
@@ -39577,5 +39577,39 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app.mode-planning .df-planning .df-metrics-donut-legend button > span:last-child {
     min-width: 0;
     overflow-wrap: anywhere;
+  }
+}
+
+/* Portrait planning modes keep a clear icon for each view and a full touch target. */
+#root .df-app.mode-planning .df-planning .df-view-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (orientation: portrait) {
+  #root .df-app.mode-planning .df-planning .df-mindmap.no-root {
+    grid-template-rows: 56px minmax(0, 1fr);
+  }
+
+  #root .df-app.mode-planning .df-planning .df-planning-sidebar {
+    height: 56px;
+    min-height: 56px;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-planning-view-switch {
+    height: 46px;
+    padding: 0;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-view-btn {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-view-btn span {
+    display: none;
   }
 }
