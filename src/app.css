@@ -18006,8 +18006,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 }
 
-
-
 .df-detail-schedule-row .df-detail-pill-trevor.action {
 
   flex: 1 1 150px;
@@ -20367,6 +20365,73 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-task-detail > .df-detail-convert {
   margin: 0 4px;
   padding-top: 16px;
+}
+
+.df-detail-incomplete-menu {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1 1 150px;
+  min-width: 0;
+  transition: transform 120ms ease;
+}
+
+.df-detail-incomplete-menu.open {
+  z-index: 50;
+  transform: scale(1.04);
+}
+
+.df-detail-incomplete-trigger {
+  width: 100%;
+  min-width: 0;
+}
+
+.df-detail-incomplete-chevron {
+  flex: 0 0 auto;
+}
+
+.df-detail-incomplete-options {
+  position: absolute;
+  z-index: 51;
+  right: 0;
+  bottom: calc(100% + 10px);
+  display: grid;
+  width: max-content;
+  min-width: min(280px, calc(100vw - 40px));
+  max-width: min(340px, calc(100vw - 40px));
+  padding: 6px;
+  border: 1px solid var(--paper-rule-strong);
+  border-radius: var(--paper-radius);
+  background: var(--surface-main);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--text-main) 16%, transparent);
+  transform: scale(0.96);
+  transform-origin: bottom right;
+  animation: df-incomplete-options-enter 120ms ease-out forwards;
+  corner-shape: var(--corner-shape, squircle);
+}
+
+.df-detail-incomplete-options button {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--paper-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-main);
+  text-align: left;
+  font: 600 12px/1.3 var(--paper-sans);
+  cursor: pointer;
+}
+
+.df-detail-incomplete-options button:last-child {
+  border-bottom: 0;
+}
+
+.df-detail-incomplete-options button:hover,
+.df-detail-incomplete-options button:focus-visible {
+  background: var(--paper-note);
+  color: var(--accent-active);
+  outline: 0;
 }
 
 @keyframes df-incomplete-options-enter {

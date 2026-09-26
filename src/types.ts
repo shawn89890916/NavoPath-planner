@@ -56,7 +56,7 @@ export interface TimelineRecord {
   scheduledStart: string;
   scheduledEndDate?: string;
   scheduledEnd: string;
-  executionStatus: "scheduled" | "completed" | "returned_unfinished" | "cancelled";
+  executionStatus: "scheduled" | "completed" | "returned_unfinished" | "skipped" | "cancelled";
   createdAt: string;
 }
 
@@ -186,7 +186,7 @@ export interface Task {
   plannedForDate?: string;
   executionLane?: ExecutionLane;
   /** [DEPRECATED] Use timelineRecords[].executionStatus instead */
-  executionStatus?: "scheduled" | "completed" | "returned_unfinished" | "cancelled";
+  executionStatus?: "scheduled" | "completed" | "returned_unfinished" | "skipped" | "cancelled";
   /** 时间轴排程记录 — 每条记录独立管理，同一任务可同时有 scheduled + returned_unfinished 等多条记录 */
   timelineRecords?: TimelineRecord[];
   recurrence?: TaskRecurrence;

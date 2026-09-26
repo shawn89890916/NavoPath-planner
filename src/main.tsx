@@ -3637,6 +3637,7 @@ function App() {
             (record.executionStatus === "scheduled" ||
               record.executionStatus === "completed" ||
               record.executionStatus === "returned_unfinished" ||
+              record.executionStatus === "skipped" ||
               record.executionStatus === "cancelled")
           )
           .map((record) => record.scheduledDate)
@@ -12452,6 +12453,7 @@ function TimeBlock({ task, preview, projectName, projects, hovered, showResizeHi
       ? "scheduled"
       : undefined);
   const isReturnedUnfinished = currentRecordStatus === "returned_unfinished";
+  const isSkipped = currentRecordStatus === "skipped";
   const isRecurring = Boolean(
     task.recurrence &&
     task.recurrence.frequency !== "none" &&
@@ -12471,9 +12473,9 @@ function TimeBlock({ task, preview, projectName, projects, hovered, showResizeHi
     : suppliedTop ?? top;
 
   return (
-    <TaskBlock as="div" variant="scheduled" appearance="calm" priority={taskBlockPriorityFor(task.priority)} density={height < 56 ? "compact" : "normal"} checked={!isEvent && task.completed} selected={Boolean(showResizeHint || projectOpen || preview)} dragState={dragState} projectColor={stripeColor} className={`df-time-block priority-${task.priority} ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${preview ? "resizing" : ""} ${showResizeHint ? "show-resize-hint" : ""} ${projectOpen ? "project-open" : ""} ${isPreview ? "df-time-block-preview" : ""} ${isWeekView ? "df-time-block-week" : ""} ${isRecurring ? "recurring" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", preview: isPreview ? "true" : undefined, "view-mode": viewMode, "schedule-size": sizeClass, "timeline-event-id": eventId, "task-id": task.id, readonly: isExternalEvent ? "true" : undefined }} style={{ ...extraStyle, top: resolvedTop, height, bottom: "auto", "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px", "--recurring-text": recurringTextColor } as CSSProperties} onMouseEnter={() => onHover(task.id)} onMouseLeave={() => {
+    <TaskBlock as="div" variant="scheduled" appearance="calm" priority={taskBlockPriorityFor(task.priority)} density={height < 56 ? "compact" : "normal"} checked={!isEvent && task.completed} selected={Boolean(showResizeHint || projectOpen || preview)} dragState={dragState} projectColor={stripeColor} className={`df-time-block priority-${task.priority} ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${preview ? "resizing" : ""} ${showResizeHint ? "show-resize-hint" : ""} ${projectOpen ? "project-open" : ""} ${isPreview ? "df-time-block-preview" : ""} ${isWeekView ? "df-time-block-week" : ""} ${isRecurring ? "recurring" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", preview: isPreview ? "true" : undefined, "view-mode": viewMode, "schedule-size": sizeClass, "timeline-event-id": eventId, "task-id": task.id, readonly: isExternalEvent ? "true" : undefined }} style={{ ...extraStyle, top: resolvedTop, height, bottom: "auto", "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px", "--recurring-text": recurringTextColor } as CSSProperties} onMouseEnter={() => onHover(task.id)} onMouseLeave={() => {
       onHover("");
-    }} onPointerDown={isExternalEvent || isReturnedUnfinished ? undefined : onDragStart} onClick={(event) => { event.stopPropagation(); onSelect(); }} onDoubleClick={(event) => { event.stopPropagation(); onEdit(); }} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? t(lang, "timeBlock.returnedHint") : undefined}>
+    }} onPointerDown={isExternalEvent || isReturnedUnfinished || isSkipped ? undefined : onDragStart} onClick={(event) => { event.stopPropagation(); onSelect(); }} onDoubleClick={(event) => { event.stopPropagation(); onEdit(); }} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? t(lang, "timeBlock.returnedHint") : undefined}>
       {isPreview && <span className="df-preview-badge">{t(lang, "timeBlock.pending")}</span>}
       <TaskRecurrenceIndicator recurrence={task.recurrence} lang={lang} />
       {canResize && (hovered || showResizeHint || preview) && resizeEdges?.start !== false && <button type="button" className="df-resize-dot top" aria-label={t(lang, "timeBlock.adjustStart")} onPointerDown={(event) => onResizeStart(event, "start")} onClick={(event) => event.stopPropagation()} />}
@@ -12482,11 +12484,11 @@ function TimeBlock({ task, preview, projectName, projects, hovered, showResizeHi
         {isEvent ? (
           <span className="df-task-block-check df-time-card-event-mark" title={t(lang, "timeBlock.eventTooltip")} aria-label={t(lang, "timeBlock.eventTooltip")} />
         ) : (
-          <TaskCheckbox checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority} returned={isReturnedUnfinished} onMouseDown={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => {
+          <TaskCheckbox checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority} returned={isReturnedUnfinished || isSkipped} onMouseDown={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => {
             event.stopPropagation();
             onToggleDone();
           }} ariaLabel={task.completed ? t(lang, "timeBlock.markIncomplete") : t(lang, "timeBlock.markComplete")}>
-            {task.completed ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-6" /></svg> : isReturnedUnfinished ? <ReturnedToPlanIcon /> : ""}
+            {task.completed ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-6" /></svg> : isSkipped ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l6 6M9 3L3 9" /></svg> : isReturnedUnfinished ? <ReturnedToPlanIcon /> : ""}
           </TaskCheckbox>
         )}
         <TaskBlockContent className="df-time-card-main" title={task.title}>
@@ -12680,6 +12682,7 @@ function AllDayBlock({ task, dragging, projectName, projects, onEdit, onToggleDo
   const isExternalEvent = isExternalCalendarDisplayTask(task);
   const isShortName = task.title.length <= 6;
   const isReturnedUnfinished = task.executionStatus === "returned_unfinished";
+  const isSkipped = task.executionStatus === "skipped";
   const [badgeWidth, setBadgeWidth] = useState(0);
   useLayoutEffect(() => {
     if (hovered && projectBtnRef.current) {
@@ -12689,13 +12692,13 @@ function AllDayBlock({ task, dragging, projectName, projects, onEdit, onToggleDo
     }
   }, [hovered]);
   return (
-    <TaskBlock as="article" variant="allDay" appearance="calm" priority={taskBlockPriorityFor(task.priority)} checked={!isEvent && task.completed} selected={projectOpen} dragging={dragging} projectColor={stripeColor} className={`df-all-day-block ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${projectOpen ? "project-open" : ""} ${isShortName ? "short-name" : ""}${dragging ? " is-dragging" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", readonly: isExternalEvent ? "true" : undefined }} style={{ "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px" } as CSSProperties} onPointerDown={isEvent || isReturnedUnfinished ? undefined : onPointerDragStart} onClick={onEdit} onMouseEnter={() => setHovered(true)} onMouseLeave={() => { setProjectOpen(false); setHovered(false); }} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? "已回到规划，可重新安排" : undefined}>
+    <TaskBlock as="article" variant="allDay" appearance="calm" priority={taskBlockPriorityFor(task.priority)} checked={!isEvent && task.completed} selected={projectOpen} dragging={dragging} projectColor={stripeColor} className={`df-all-day-block ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${projectOpen ? "project-open" : ""} ${isShortName ? "short-name" : ""}${dragging ? " is-dragging" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", readonly: isExternalEvent ? "true" : undefined }} style={{ "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px" } as CSSProperties} onPointerDown={isEvent || isReturnedUnfinished || isSkipped ? undefined : onPointerDragStart} onClick={onEdit} onMouseEnter={() => setHovered(true)} onMouseLeave={() => { setProjectOpen(false); setHovered(false); }} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? "已回到规划，可重新安排" : undefined}>
       <TaskRecurrenceIndicator recurrence={task.recurrence} lang={lang} />
       <TaskBlockRow className="df-all-day-row">
-        {!isEvent && <TaskCheckbox checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority} returned={isReturnedUnfinished} onClick={(event) => {
+        {!isEvent && <TaskCheckbox checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority} returned={isReturnedUnfinished || isSkipped} onClick={(event) => {
           event.stopPropagation();
           onToggleDone();
-        }}>{task.completed ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-6" /></svg> : isReturnedUnfinished ? <ReturnedToPlanIcon /> : ""}</TaskCheckbox>}
+        }}>{task.completed ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-6" /></svg> : isSkipped ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l6 6M9 3L3 9" /></svg> : isReturnedUnfinished ? <ReturnedToPlanIcon /> : ""}</TaskCheckbox>}
         <TaskBlockContent className="df-all-day-main" title={task.title}>
           {isEvent ? <span className="df-event-kind-label">{isExternalEvent ? (lang === "zh" ? "外部日历" : "External") : t(lang, "form.event")}</span> : null}
         </TaskBlockContent>
@@ -12770,6 +12773,7 @@ function EditDrawer(props: {
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [quickActionMenu, setQuickActionMenu] = useState<"reschedule" | null>(null);
+  const [incompleteMenuOpen, setIncompleteMenuOpen] = useState(false);
   const [cancelAllConfirm, setCancelAllConfirm] = useState(false);
   const f = props.form;
   const set = (key: keyof FormState, value: FormState[keyof FormState]) => props.setForm((current) => ({ ...current, [key]: value }));
@@ -12788,6 +12792,7 @@ function EditDrawer(props: {
     setRecurrenceDraft(null);
     setRescheduleOpen(false);
     setQuickActionMenu(null);
+    setIncompleteMenuOpen(false);
     setCancelAllConfirm(false);
   }, [props.task?.id, props.task?.notes, props.project?.id, props.project?.notes, props.habit?.id, props.habit?.notes, props.editingOccurrence?.scheduledDate, props.editingRecordId]);
   useLayoutEffect(() => {
@@ -13181,37 +13186,38 @@ function EditDrawer(props: {
       props.task.completed ||
       (isScheduled && recordStatus !== "returned_unfinished")
     );
-    function handleUncomplete() {
-      if (!props.task || !props.data || !props.saveData) return;
-      if (props.editingRecordId) {
-        const restore = recordStatus === "returned_unfinished";
+    function chooseIncompleteOutcome(outcome: "unfinished-return" | "unfinished-stay" | "skipped-return" | "skipped-stay") {
+      if (!props.task) return;
+      const showInPlanning = outcome === "unfinished-return" || outcome === "skipped-return";
+      const wasDone = outcome === "skipped-return" || outcome === "skipped-stay";
+      const executionStatus = wasDone ? "skipped" : showInPlanning ? "returned_unfinished" : "scheduled";
+      setIncompleteMenuOpen(false);
+      if (props.editingRecordId && props.data && props.saveData) {
         const now = new Date().toISOString();
         void props.saveData({
           ...props.data,
-          tasks: props.data.tasks.map((t) =>
-            t.id === props.task!.id
-              ? {
-                  ...t,
-                  completed: false,
-                  plannedForDate: props.task!.plannedForDate || props.today,
-                  executionLane: restore ? undefined : "candidate",
-                  timelineRecords: (t.timelineRecords || []).map((r) =>
-                    r.id === props.editingRecordId ? { ...r, executionStatus: restore ? "scheduled" as const : "returned_unfinished" as const } : r
-                  ),
-                  updatedAt: now,
-                }
-              : t
-          ),
+          tasks: props.data.tasks.map((task) => task.id === props.task!.id
+            ? {
+                ...task,
+                completed: false,
+                plannedForDate: showInPlanning ? props.today : undefined,
+                executionLane: showInPlanning ? "candidate" as const : undefined,
+                executionStatus: undefined,
+                timelineRecords: (task.timelineRecords || []).map((record) => record.id === props.editingRecordId
+                  ? { ...record, executionStatus }
+                  : record),
+                updatedAt: now,
+              }
+            : task),
         });
-      } else {
-        const restore = props.task.executionStatus === "returned_unfinished";
-        props.onTaskUpdate(props.task.id, {
-          completed: false,
-          plannedForDate: props.task.plannedForDate || props.today,
-          executionLane: restore ? undefined : "candidate",
-          executionStatus: restore ? "scheduled" : "returned_unfinished",
-        });
+        return;
       }
+      props.onTaskUpdate(props.task.id, {
+        completed: false,
+        plannedForDate: showInPlanning ? props.today : undefined,
+        executionLane: showInPlanning ? "candidate" : undefined,
+        executionStatus,
+      });
     }
     const statusText = props.task.completed
       ? t(props.lang, "drawer.completed")
@@ -13253,7 +13259,7 @@ function EditDrawer(props: {
       return (
         <>
           {dialog.host}
-          <Suspense fallback={null}><MobileTaskSummary lang={props.lang} task={props.task} form={f} setForm={props.setForm} projects={props.projects} record={activeRecord} occurrence={activeOccurrence} today={props.today} onClose={props.onClose} onMore={props.onShowMore} onUpdate={props.onTaskUpdate} /></Suspense>
+          <Suspense fallback={null}><MobileTaskSummary lang={props.lang} task={props.task} form={f} setForm={props.setForm} projects={props.projects} record={activeRecord} occurrence={activeOccurrence} today={props.today} onClose={props.onClose} onMore={props.onShowMore} onIncomplete={() => { props.onShowMore?.(); setIncompleteMenuOpen(true); }} onUpdate={props.onTaskUpdate} /></Suspense>
         </>
       );
     }
@@ -13288,14 +13294,22 @@ function EditDrawer(props: {
             <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 6l3 3 5-6"/></svg>
             <span>{t(props.lang, "drawer.complete")}</span>
           </button>
-          {showUncomplete && <button className="df-detail-pill-trevor action" onClick={handleUncomplete}>
-            <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3l-6 6M3 3l6 6"/></svg>
-            <span>{t(props.lang, "drawer.unfinished")}</span>
-          </button>}
+          {showUncomplete && <div className={`df-detail-incomplete-menu${incompleteMenuOpen ? " open" : ""}`} onMouseEnter={() => setIncompleteMenuOpen(true)} onMouseLeave={() => setIncompleteMenuOpen(false)} onFocus={() => setIncompleteMenuOpen(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIncompleteMenuOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") { setIncompleteMenuOpen(false); event.currentTarget.querySelector("button")?.focus(); } }}>
+            <button type="button" className="df-detail-pill-trevor action df-detail-incomplete-trigger" aria-haspopup="menu" aria-expanded={incompleteMenuOpen} onClick={() => setIncompleteMenuOpen(true)}>
+              <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3l-6 6M3 3l6 6"/></svg>
+              <span>{t(props.lang, "drawer.unfinished")}</span>
+              <svg className="df-detail-incomplete-chevron" viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 2l4 3-4 3" /></svg>
+            </button>
+            {incompleteMenuOpen && <div className="df-detail-incomplete-options" role="menu" aria-label={props.lang === "zh" ? "未完成处理方式" : "Incomplete options"}>
+              <button type="button" role="menuitem" onClick={() => chooseIncompleteOutcome("unfinished-return")}>{props.lang === "zh" ? "没完成，还会做" : "Not finished — will continue"}</button>
+              <button type="button" role="menuitem" onClick={() => chooseIncompleteOutcome("unfinished-stay")}>{props.lang === "zh" ? "没完成，不会做" : "Not finished — won't continue"}</button>
+              <button type="button" role="menuitem" onClick={() => chooseIncompleteOutcome("skipped-return")}>{props.lang === "zh" ? "没做，还会做" : "Not done — will do later"}</button>
+              <button type="button" role="menuitem" onClick={() => chooseIncompleteOutcome("skipped-stay")}>{props.lang === "zh" ? "没做，不会做" : "Not done — won't do it"}</button>
+            </div>}
+          </div>}
           <ActionDisclosure label={props.lang === "zh" ? "更多" : "More"}>
             <Button onClick={() => { setQuickActionMenu(null); setRecurrenceDraft({ ...fixedRecurrence, mode: "scheduled" }); setRecurrenceOpen(true); }}>{t(props.lang, "drawer.setRepeat")}</Button>
             <Button onClick={props.onCopy}>{t(props.lang, "drawer.duplicate")}</Button>
-            {convertControl("task")}
             <Button variant="danger" onClick={props.onDelete}>{t(props.lang, "drawer.remove")}</Button>
           </ActionDisclosure>
         </section>
@@ -13442,6 +13456,7 @@ function EditDrawer(props: {
             </div>
           )}
         </section>
+        {convertControl("task")}
       </aside>
       </>
     );

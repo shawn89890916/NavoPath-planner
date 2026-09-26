@@ -155,6 +155,7 @@ export default function MobileTaskSummary(props: {
   today: string;
   onClose: () => void;
   onMore?: () => void;
+  onIncomplete?: () => void;
   onUpdate: (taskId: string, patch: Partial<Task>) => void;
 }) {
   const zh = props.lang === "zh";
@@ -217,7 +218,7 @@ export default function MobileTaskSummary(props: {
     <div className="df-mobile-summary-actions df-mobile-summary-status-actions">
       <button type="button" className="df-mobile-add-subtask" onClick={() => setAddingSubtask(true)}>＋ {zh ? "添加子任务" : "Add subtask"}</button>
       <button type="button" aria-pressed={props.task.completed} className={props.task.completed ? "active" : ""} onClick={() => props.onUpdate(props.task.id, { completed: true })}>✓ {zh ? "完成" : "Complete"}</button>
-      <button type="button" aria-pressed={!props.task.completed} className={!props.task.completed ? "active" : ""} onClick={() => props.onUpdate(props.task.id, { completed: false })}>↩ {zh ? "未完成" : "Incomplete"}</button>
+      <button type="button" aria-pressed={!props.task.completed} className={!props.task.completed ? "active" : ""} onClick={() => props.onIncomplete ? props.onIncomplete() : props.onUpdate(props.task.id, { completed: false })}>↩ {zh ? "未完成" : "Incomplete"}</button>
     </div>
     {addingSubtask && <form className="df-mobile-summary-subtask-add" onSubmit={(event) => { event.preventDefault(); addSubtask(); }}>
       <input autoFocus value={subtaskTitle} onChange={(event) => setSubtaskTitle(event.target.value)} placeholder={zh ? "输入子任务名称" : "Subtask title"} onKeyDown={(event) => { if (event.key === "Escape") { setAddingSubtask(false); setSubtaskTitle(""); } }} />

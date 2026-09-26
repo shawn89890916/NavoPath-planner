@@ -498,7 +498,7 @@ function normalizeTimelineRecords(value: unknown, taskId: string): TimelineRecor
       scheduledStart,
       scheduledEndDate: candidateEndDate < scheduledDate ? scheduledDate : candidateEndDate,
       scheduledEnd,
-      executionStatus: ["scheduled", "completed", "returned_unfinished", "cancelled"].includes(String(record.executionStatus))
+      executionStatus: ["scheduled", "completed", "returned_unfinished", "skipped", "cancelled"].includes(String(record.executionStatus))
         ? record.executionStatus
         : "scheduled",
       createdAt: typeof record.createdAt === "string" && record.createdAt ? record.createdAt : now(),

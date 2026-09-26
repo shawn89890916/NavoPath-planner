@@ -1,8 +1,9 @@
 # NavoPath 更新日志
 
-## 2026-09-26 · UI 圆角与按钮描边
+## 2026-09-26 · UI 圆角、任务编辑与时间轴状态
 
 ### 改进
+- 将任务编辑页的“转换为”移到备注下方；悬停“未完成”可分别选择任务是否继续、是否回到 Planning，并用时间轴叉号区分已经跳过的安排。
 - 将任务块、UI 边框、按钮和弹层统一为 squircle 圆角；编辑页并排操作按钮统一为完整描边。
 
 ## 2026-09-25 · 任务与子任务体验改进
@@ -225,9 +226,10 @@
 
 # NavoPath Changelog
 
-## 2026-09-26 · Squircle corners and button outlines
+## 2026-09-26 · Squircle corners, task editing, and timeline status
 
-### Improved
+### Improvements
+- Moved Convert to below Notes in task editing. Hovering Incomplete now lets users choose whether unfinished or skipped work returns to Planning, with an X distinguishing skipped timeline items.
 - Unified task blocks, interface borders, buttons, and overlays with squircle corners; edit-page side-by-side actions now use complete outlines.
 
 ## 2026-09-25 · Task and subtask improvements

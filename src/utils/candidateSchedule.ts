@@ -13,12 +13,12 @@ function scheduleSummary(date: string, startTime: string): CandidateScheduleSumm
   return { date, startTime, label: `${datePart} ${weekday} ${startTime}` };
 }
 
-/** Returned or cancelled placements must never be offered as timeline links. */
+/** Returned, skipped, or cancelled placements must never be offered as timeline links. */
 export function candidateScheduleSummary(task: Task, focusDate: string): CandidateScheduleSummary | null {
   const records = task.timelineRecords?.filter((record) => record.executionStatus === "scheduled" || task.completed && record.executionStatus === "completed") || [];
   const record = records.find((item) => item.scheduledDate === focusDate)
     || (task.completed ? records.at(-1) : records.find((item) => item.scheduledDate >= focusDate) || records[0]);
-  const placement = record || (!records.length && task.executionStatus !== "returned_unfinished" && task.executionStatus !== "cancelled" ? task : null);
+  const placement = record || (!records.length && task.executionStatus !== "returned_unfinished" && task.executionStatus !== "skipped" && task.executionStatus !== "cancelled" ? task : null);
   if (!placement?.scheduledDate || !placement.scheduledStart) return null;
   return scheduleSummary(placement.scheduledDate, placement.scheduledStart);
 }
