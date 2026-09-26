@@ -77,8 +77,17 @@ function authErrorMessage(message: string) {
   return message || "账号请求失败，请稍后再试。";
 }
 
-function isRetryableProfileError(message = "") {
-  return /schema cache|Could not query the database|time(?:d )?out|connection pool|temporarily|PGRST/i.test(message);
+type CloudRequestError = { message?: string; code?: string; status?: number; statusCode?: number };
+
+function isRetryableProfileError(error: CloudRequestError | string = "", retryNetworkFailures = false) {
+  const message = typeof error === "string" ? error : error.message || "";
+  if (/schema cache|Could not query the database|time(?:d )?out|connection pool|temporarily|PGRST/i.test(message)) return true;
+  if (!retryNetworkFailures) return false;
+  const status = typeof error === "string" ? undefined : Number(error.status ?? error.statusCode);
+  if ([408, 425, 429, 500, 502, 503, 504].includes(status || 0)) return true;
+  const code = typeof error === "string" ? "" : error.code || "";
+  return /^(?:08|57P0[123])/.test(code)
+    || /failed to fetch|fetch failed|network error|network request failed|networkerror|load failed|connection (?:reset|closed|refused|timed out)|socket|econnreset|econnrefused|enetunreach|ehostunreach|eai_again|aborted|bad gateway|service unavailable/i.test(message);
 }
 
 function wait(ms: number) {
@@ -219,12 +228,13 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     }
   }
 
-  async function retryTransientRequest(call: () => any) {
+  async function retryTransientRequest(call: () => any, options: { retryNetworkFailures?: boolean } = {}) {
     let result: any;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    const maxAttempts = options.retryNetworkFailures ? 3 : 2;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       result = await runCloudRequest(call);
-      if (!result.error || !isRetryableProfileError(result.error.message)) return result;
-      if (attempt === 0) await wait(260);
+      if (!result.error || !isRetryableProfileError(result.error, options.retryNetworkFailures)) return result;
+      if (attempt < maxAttempts - 1) await wait(options.retryNetworkFailures ? 300 * (2 ** attempt) : 260);
     }
     return result;
   }
@@ -244,7 +254,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
         .from(PROFILE_TABLE)
         .select("data, settings, revision")
         .eq("user_id", user.id)
-        .maybeSingle());
+        .maybeSingle(), { retryNetworkFailures: true });
 
       if (error) {
         throw new Error(`Cloud profile load failed: ${error.message}`);
@@ -300,7 +310,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
         expected_revision: current.revision,
         next_data: nextData,
         next_settings: nextSettings,
-      }));
+      }), { retryNetworkFailures: true });
       if (!error && rows?.[0]) {
         if (!isCurrentAuth(user.id, requestAuthVersion)) throw new Error("Account changed while syncing");
         profileCache = { userId: user.id, data: normalizeData(rows[0].data), settings: mergeSettings(rows[0].settings), revision: Number(rows[0].revision) };
@@ -344,7 +354,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
         .from(PROFILE_TABLE)
         .select("revision")
         .eq("user_id", user.id)
-        .maybeSingle());
+        .maybeSingle(), { retryNetworkFailures: true });
       if (error) throw new Error(error.message);
       const revision = Number(row?.revision || 0);
       return Number.isFinite(revision) && revision >= 0 ? revision : undefined;
@@ -571,7 +581,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
             .from(PROFILE_TABLE)
             .select("data, settings, revision")
             .eq("user_id", user.id)
-            .maybeSingle());
+            .maybeSingle(), { retryNetworkFailures: true });
           if (!disposed && !error) emitIfNewer(row);
         };
         channel = supabase.channel(`dayflow-profile-${user.id}`)

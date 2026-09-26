@@ -21,7 +21,7 @@
 - 外部日历刷新改为事务替换，刷新失败时保留现有事件；首次同步失败会清理未完成的日历来源。
 - MCP 新建任务不再自动设置截止日期；排程与其他任务共用冲突校验，并正确处理跨日结束时间。
 - iOS 定位权限会说明用途；移动端页面恢复浏览器缩放支持。
-- 网页立即同步遇到云端写入失败时会正确显示失败状态，同时保留自动重试。
+- 网页立即同步会在网络短暂中断或云端网关异常时有限重试；仍失败时明确显示失败状态并继续后台重试。
 
 ## 2026-09-25 · 任务与子任务体验改进
 
@@ -264,7 +264,7 @@
 - Replaced external calendar occurrences transactionally so a failed refresh preserves existing events; clean up a calendar source when its initial sync fails.
 - MCP-created tasks no longer receive an automatic due date; scheduling uses shared conflict checks and handles end times that cross midnight.
 - Explained location access on iOS and restored browser zoom on mobile.
-- Fixed web manual sync reporting success after a cloud write failed; the failed state now surfaces while automatic retry remains scheduled.
+- Added bounded retries for temporary web sync network and gateway failures; persistent failures now show accurately while background retry continues.
 
 ## 2026-09-25 · Task and subtask improvements
 
