@@ -8,6 +8,7 @@
 - 根据反馈保留浅色模式的执行页布局与候选分组，在深色模式恢复轻微交错的时间轴时段纹理和项目色标记；将近白色交互高亮与明亮描边改为柔和石色，移除荧光感。浅色强调色设置继续保留。
 - 执行工作区改为按横竖屏切换布局，统一时间轴外围底板颜色并保留交错时段纹理。
   - 移除窄横屏的额外双栏状态；宽度不超过 980px 时使用紧凑单面板，981px 起切换到完整双栏。
+  - 深色与浅色模式共用候选栏宽度，避免横屏比例下深色模式挤窄任务内容。
 
 ### 修复
 - AI 处理失败时显示请求编号，便于定位对应服务日志。
@@ -240,6 +241,7 @@
 - Preserved the light-mode Execute layout and candidate grouping in dark mode, restoring subtle alternating timeline bands and restrained project-color markers. Replaced near-white interaction accents and bright outlines with muted stone tones to remove the fluorescent look. Saved custom accents remain available in light mode.
 - Switched the Execute workspace between landscape and portrait layouts, unified the timeline surround, and retained the alternating time bands.
   - Removed the extra narrow-landscape split state; use the compact single-panel layout through 980px and the full two-column layout from 981px.
+  - Shared the candidate-column width between dark and light themes to keep task content readable at landscape aspect ratios.
 
 ### Fixed
 - Failed AI requests now show a request ID for matching server diagnostics.

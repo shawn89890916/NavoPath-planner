@@ -72,6 +72,11 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toContain("#root .df-app.mode-execute > .df-execute {\n    grid-template-columns: minmax(0, 1fr);");
   });
 
+  it("keeps the dark landscape candidate column at the shared readable width", () => {
+    expect(appCss).not.toContain("grid-template-columns: clamp(300px, 29vw, 390px)");
+    expect(appCss).toContain("grid-template-columns: var(--df-candidate-width, clamp(400px, 32vw, 470px)) minmax(0, 1fr);");
+  });
+
   it("keeps the landscape candidate list as the native vertical touch scroller", () => {
     expect(appCss).toContain("#root .df-app .df-candidate-list {");
     expect(appCss).toContain("touch-action: pan-y;");
