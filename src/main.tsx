@@ -412,28 +412,28 @@ function themeVars(settings: Settings, mode: Mode) {
       "--execute-on-primary": executeLight ? "#111827" : "#FFFFFF",
       "--planning-primary": planning,
       "--planning-on-primary": planningLight ? "#111827" : "#FFFFFF",
-      "--accent-active": "#DFE0E2",
-      "--accent-rgb": "223, 224, 226",
+      "--accent-active": "#A9A49B",
+      "--accent-rgb": "169, 164, 155",
       "--accent-on": "#1A1B1D",
-      "--bg-app": "#1A1B1D",
-      "--bg-app-soft": "#1D1E20",
-      "--surface-main": "#202124",
-      "--surface-raised": "#28292C",
-      "--surface-card": "#242528",
-      "--text-main": "#D5D6D8",
-      "--text-muted": "#B0B1B3",
-      "--text-faint": "#949598",
-      "--border-soft": "#6F7178",
-      "--border-subtle": "#3C3D40",
-      "--shadow-soft": "0 18px 48px rgba(0,0,0,0.34)",
+      "--bg-app": "#1B1B1B",
+      "--bg-app-soft": "#1E1E1E",
+      "--surface-main": "#202020",
+      "--surface-raised": "#292929",
+      "--surface-card": "#252525",
+      "--text-main": "#D9D6CF",
+      "--text-muted": "#B1AEA7",
+      "--text-faint": "#898781",
+      "--border-soft": "#555452",
+      "--border-subtle": "#393939",
+      "--shadow-soft": "0 18px 48px rgba(0,0,0,0.28)",
       "--shadow-hl": "none",
-      "--header-bg": "rgba(26,27,29,0.96)",
-      "--header-border": "#3C3D40",
-      "--header-fg": "#D5D6D8",
-      "--header-fg-muted": "#B0B1B3",
-      "--input-bg": "#202124",
-      "--input-border": "#6F7178",
-      "--timeline-paper": "#202124",
+      "--header-bg": "rgba(27,27,27,0.96)",
+      "--header-border": "#393939",
+      "--header-fg": "#D9D6CF",
+      "--header-fg-muted": "#B1AEA7",
+      "--input-bg": "#202020",
+      "--input-border": "#5B5955",
+      "--timeline-paper": "#202020",
       "--timeline-font-scale": String(fontScale),
     } as CSSProperties;
   }
@@ -7037,11 +7037,14 @@ function App() {
         signal: requestController.signal,
       });
       if (!result.ok) {
+        const failureMessage = result.error.requestId
+          ? `${result.error.message}\n\n${lang === "zh" ? "请求编号" : "Request ID"}: ${result.error.requestId}`
+          : result.error.message;
         setAiInput((current) => current || msg);
         setAiMessages((current) => current.map((message) => message.id === assistantId ? {
           ...message,
           status: "error",
-          content: result.error.message,
+          content: failureMessage,
           steps: [{ label: result.error.message, status: "error" }],
         } : message));
         return false;

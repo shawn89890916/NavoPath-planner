@@ -5,7 +5,7 @@
 ### 改进
 - 将任务编辑页的“转换为”移到备注下方；悬停“未完成”可分别选择任务是否继续、是否回到 Planning，并用时间轴叉号区分已经跳过的安排。
 - 将任务块、UI 边框、按钮和弹层统一为 squircle 圆角；编辑页并排操作按钮统一为完整描边。
-- 根据可读性反馈将深色模式调整为中灰石墨层次、柔和白色交互高亮与灰白文字，并将珊瑚色当前时间线置于日程块下方；浅色模式继续保留已保存的自定义强调色。
+- 根据反馈保留浅色模式的执行页布局与候选分组，在深色模式恢复轻微交错的时间轴时段纹理和项目色标记；将近白色交互高亮与明亮描边改为柔和石色，移除荧光感。浅色强调色设置继续保留。
 - 执行工作区改为按横竖屏切换布局，统一时间轴外围底板颜色并保留交错时段纹理。
   - 移除窄横屏的额外双栏状态；宽度不超过 980px 时使用紧凑单面板，981px 起切换到完整双栏。
 
@@ -234,7 +234,7 @@
 ### Improvements
 - Moved Convert to below Notes in task editing. Hovering Incomplete now lets users choose whether unfinished or skipped work returns to Planning, with an X distinguishing skipped timeline items.
 - Unified task blocks, interface borders, buttons, and overlays with squircle corners; edit-page side-by-side actions now use complete outlines.
-- Refined dark mode across the signed-in app with mid-charcoal surfaces, softened white interaction accents, and gray-white text; the coral current-time marker now sits beneath schedule blocks. Saved custom accents remain available in light mode.
+- Preserved the light-mode Execute layout and candidate grouping in dark mode, restoring subtle alternating timeline bands and restrained project-color markers. Replaced near-white interaction accents and bright outlines with muted stone tones to remove the fluorescent look. Saved custom accents remain available in light mode.
 - Switched the Execute workspace between landscape and portrait layouts, unified the timeline surround, and retained the alternating time bands.
   - Removed the extra narrow-landscape split state; use the compact single-panel layout through 980px and the full two-column layout from 981px.
 

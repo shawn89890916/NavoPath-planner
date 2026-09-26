@@ -10571,7 +10571,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   background: var(--surface-raised);
 
-  border-color: var(--paper-rule-strong);
+  border-color: color-mix(in srgb, var(--cat, #8b6f47) 34%, var(--paper-rule-strong));
 
   box-shadow: none;
 
@@ -10581,7 +10581,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   background: var(--surface-raised);
 
-  border-color: var(--paper-rule-strong);
+  border-color: color-mix(in srgb, var(--cat, #8b6f47) 34%, var(--paper-rule-strong));
 
   box-shadow: none;
 
@@ -10621,7 +10621,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   background: var(--surface-raised);
 
-  border-color: var(--paper-rule-strong);
+  border-color: color-mix(in srgb, var(--cat, #8b6f47) 34%, var(--paper-rule-strong));
 
   box-shadow: none;
 
@@ -10633,7 +10633,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   background: var(--surface-raised);
 
-  border-color: var(--paper-rule-strong);
+  border-color: color-mix(in srgb, var(--cat, #8b6f47) 34%, var(--paper-rule-strong));
 
   box-shadow: none;
 
@@ -10645,7 +10645,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   background: var(--surface-raised);
 
-  border-color: var(--border-soft);
+  border-color: color-mix(in srgb, var(--cat, #8b6f47) 48%, var(--paper-rule-strong));
 
 }
 
@@ -10655,7 +10655,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   background: var(--surface-raised);
 
-  border-color: var(--border-soft);
+  border-color: color-mix(in srgb, var(--cat, #8b6f47) 48%, var(--paper-rule-strong));
 
 }
 
@@ -18368,7 +18368,13 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 .df-app.theme-dark .df-time-grid {
 
-  background: var(--surface-main);
+  background: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) 0,
+    color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) var(--timeline-hour-height, 80px),
+    var(--surface-main) var(--timeline-hour-height, 80px),
+    var(--surface-main) calc(2 * var(--timeline-hour-height, 80px))
+  );
 
 }
 
@@ -24246,7 +24252,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   filter: none; text-shadow: none;
   justify-content: center;
   padding: 8px 12px 8px 28px;
-  border-color: var(--paper-rule-strong);
+  border-color: color-mix(in srgb, var(--cat, #8b6f47) 34%, var(--paper-rule-strong));
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-time-block {
@@ -24273,7 +24279,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   transform: none;
 }
 .df-app.theme-dark .df-time-block:hover {
-  border-color: var(--border-soft);
+  border-color: color-mix(in srgb, var(--cat, #8b6f47) 48%, var(--paper-rule-strong));
   box-shadow: none;
   background: var(--surface-main);
   transform: none;
@@ -24294,7 +24300,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   box-shadow: none; filter: none; text-shadow: none;
   align-items: center;
   padding: 0 12px 0 28px;
-  border-color: var(--paper-rule-strong);
+  border-color: color-mix(in srgb, var(--cat, var(--accent-active)) 34%, var(--paper-rule-strong));
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-all-day-block {
@@ -25761,11 +25767,25 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 }
 
 .df-app.theme-dark .df-timeline-scroll > .df-timeline-canvas {
-  background: var(--surface-main);
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) 0,
+      color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) var(--timeline-hour-height, 80px),
+      var(--surface-main) var(--timeline-hour-height, 80px),
+      var(--surface-main) calc(2 * var(--timeline-hour-height, 80px))
+    );
 }
 
 .df-app.theme-dark .df-timeline-3day-cols {
-  background: var(--surface-main);
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) 0,
+      color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) var(--timeline-hour-height, 80px),
+      var(--surface-main) var(--timeline-hour-height, 80px),
+      var(--surface-main) calc(2 * var(--timeline-hour-height, 80px))
+    );
 }
 
 /* The multi-day ruler is part of the same paper, not a separate white rail. */
@@ -25776,7 +25796,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-app.theme-dark .df-timeline-3day-ruler {
   background: transparent;
 
-  border-right-color: rgba(255,255,255,0.06);
+  border-right-color: var(--border-subtle);
   box-shadow: none;
 }
 .df-app:not(.theme-dark) .df-timeline-3day-ruler {
@@ -25832,7 +25852,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 }
 
 .df-app.theme-dark .df-month-week-row:nth-child(odd) {
-  background: color-mix(in srgb, var(--surface-raised) 14%, transparent);
+  background: color-mix(in srgb, var(--text-main) 3%, var(--surface-main));
 }
 
 .df-app .df-month-week-row:nth-child(even) {
@@ -32530,26 +32550,26 @@ body.df-planning-native-dragging [contenteditable] * {
 .df-app.theme-dark {
 
   background: var(--bg-app);
-  --bg-app: #1A1B1D;
-  --bg-app-soft: #1D1E20;
-  --surface-main: #202124;
-  --surface-raised: #28292C;
-  --surface-card: #242528;
-  --text-main: #D5D6D8;
-  --text-muted: #B0B1B3;
-  --text-faint: #949598;
-  --border-soft: #6F7178;
-  --border-subtle: #3C3D40;
-  --accent-active: #DFE0E2;
-  --accent-rgb: 223, 224, 226;
+  --bg-app: #1B1B1B;
+  --bg-app-soft: #1E1E1E;
+  --surface-main: #202020;
+  --surface-raised: #292929;
+  --surface-card: #252525;
+  --text-main: #D9D6CF;
+  --text-muted: #B1AEA7;
+  --text-faint: #898781;
+  --border-soft: #555452;
+  --border-subtle: #393939;
+  --accent-active: #A9A49B;
+  --accent-rgb: 169, 164, 155;
   --accent-on: #1A1B1D;
-  --mode-primary: #DFE0E2;
-  --mode-primary-strong: #DFE0E2;
-  --mode-primary-soft: color-mix(in srgb, #DFE0E2 10%, var(--surface-main));
+  --mode-primary: #A9A49B;
+  --mode-primary-strong: #A9A49B;
+  --mode-primary-soft: color-mix(in srgb, #A9A49B 10%, var(--surface-main));
   --mode-on-primary: #1A1B1D;
   --paper-rule: var(--border-subtle);
   --paper-rule-strong: var(--border-soft);
-  --paper-accent-rule: #DFE0E2;
+  --paper-accent-rule: #A9A49B;
   --paper-note: rgba(255,255,255,.08);
   --paper-note-strong: rgba(255,255,255,.14);
   --paper-float-shadow: 0 18px 48px rgba(0,0,0,.34);
@@ -32566,11 +32586,11 @@ body.df-planning-native-dragging [contenteditable] * {
   --navo-task-rest-bg: var(--surface-main);
   --navo-card-rest-bg: var(--surface-main);
   --drag-placeholder-bg: rgba(255, 255, 255, 0.10);
-  --drag-placeholder-border: rgba(255, 255, 255, 0.32);
+  --drag-placeholder-border: rgba(217, 214, 207, 0.22);
 }
 
 #root .df-app.theme-dark :focus-visible {
-  outline: 2px solid var(--accent-active, #DFE0E2);
+  outline: 2px solid color-mix(in srgb, var(--accent-active, #A9A49B) 72%, var(--surface-raised));
   outline-offset: 2px;
   box-shadow: none;
 }

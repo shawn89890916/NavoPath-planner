@@ -88,32 +88,32 @@ hierarchy.
 
 Dark-mode surfaces use this graphite hierarchy:
 
-- App ground: `#1A1B1D`
-- Subtle ground: `#1D1E20`
-- Main surface: `#202124`
-- Task/card surface: `#242528`
-- Raised surface: `#28292C`
-- Primary text: `#D5D6D8`
-- Secondary text: `#B0B1B3`
-- Supporting text: `#949598`
-- Subtle rule: `#3C3D40`
-- Interactive control boundary: `#6F7178`
-- Interaction accent: `#DFE0E2`, with `#1A1B1D` text on soft-white primary actions
+- App ground: `#1B1B1B`
+- Subtle ground: `#1E1E1E`
+- Main surface: `#202020`
+- Task/card surface: `#252525`
+- Raised surface: `#292929`
+- Primary text: `#D9D6CF`
+- Secondary text: `#B1AEA7`
+- Supporting text: `#898781`
+- Subtle rule: `#393939`
+- Interactive control boundary: `#555452`
+- Interaction accent: muted stone `#A9A49B`, with `#1B1B1B` text on accent-filled actions
 
 Normal text must meet WCAG AA contrast of at least 4.5:1. Large text, meaningful
 control boundaries, icons, and focus indicators must reach at least 3:1. Keyboard
-focus uses a 2px soft-white outline with a visible offset. Keep muted text readable;
-do not use opacity alone to communicate a disabled or secondary state.
+focus uses a 2px muted-stone outline with a visible offset, without a glow. Keep muted
+text readable; do not use opacity alone to communicate a disabled or secondary state.
 
-Dark mode uses flat graphite surfaces without paper grain, warm hour bands, accent
-glows, or colored control fills. Keep large white areas out of the interface. Use
-surface steps and visible rules to separate the candidate list, schedule, planning tree,
-settings, inputs, dialogs, and mobile
-sheets. Schedule blocks use the raised surface and neutral rules; project colors
-may mark the project itself but must not color the block outline or fill. Keep
-the current-time line behind scheduled blocks so it never obscures their labels.
+Dark mode preserves the light-mode page geometry, task order, candidate grouping, and
+timeline scale. Use graphite surfaces, fine neutral rules, and very subtle alternating
+hour bands to retain the timeline's time structure. Candidate groups keep their headers
+and project-color markers. Schedule blocks use the raised surface with restrained
+project-color edges; project colors remain data markers and do not fill large areas.
+Keep the current-time line behind scheduled blocks so it never obscures their labels.
 
-The dark interaction accent is fixed soft white. Saved custom accent values remain
+The dark interaction accent is fixed muted stone. Avoid pure-white control fills,
+bright outlines, and neon glows. Saved custom accent values remain
 stored and resume in light mode; hide accent selectors while dark mode is active.
 
 ## Paper Expression
