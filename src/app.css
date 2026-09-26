@@ -32922,6 +32922,20 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   color: inherit;
 }
 
+.df-app .df-planning .df-metrics-donut-center-desktop {
+  display: grid;
+  justify-items: center;
+}
+
+.df-app .df-planning .df-metrics-donut-focus,
+.df-app .df-planning .df-metrics-donut-legend {
+  display: none;
+}
+
+#root .df-app .df-planning .df-metrics-donut-center > .df-metrics-donut-center-portrait {
+  display: none;
+}
+
 .df-app .df-planning .df-metrics-empty {
   border: 1px solid color-mix(in srgb, var(--line, var(--paper-rule)) 86%, transparent);
   border-radius: 8px;
@@ -36000,7 +36014,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    padding: 8px 6px calc(16px + env(safe-area-inset-bottom));
+    padding: 8px 6px calc(72px + env(safe-area-inset-bottom));
   }
 
   #root .df-app.mode-planning .df-planning .df-project-tasks{padding-left:8px;margin:5px 0 0;gap:5px}
@@ -39434,5 +39448,134 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 @media (min-width: 761px) and (max-width: 980px) and (orientation: landscape) {
   #root .df-app.mode-execute > .df-execute {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Keep the allocation ring and its labels inside one portrait paper panel. */
+@media (orientation: portrait) {
+  #root .df-app.mode-planning .df-planning .df-metrics-view {
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    padding: 14px 12px 16px;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-panel .df-metrics-panel-head {
+    margin-bottom: 4px;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-focus {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 12px;
+    min-height: 42px;
+    padding: 9px 2px 10px;
+    border-bottom: 1px solid var(--paper-rule);
+    color: var(--text-main);
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-focus span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font: 600 13px/1.3 var(--paper-sans);
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-focus strong {
+    white-space: nowrap;
+    font: 700 17px/1.2 var(--paper-sans);
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-wrap {
+    position: relative;
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 1;
+    overflow: hidden;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 165%;
+    height: auto;
+    max-width: none;
+    transform: translate(-50%, -50%);
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-label-layer {
+    display: none;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-center {
+    width: 76%;
+    min-height: 0;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-center-desktop {
+    display: none;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-center-portrait {
+    display: block;
+    max-width: none;
+    overflow: visible;
+    white-space: nowrap;
+    font-size: clamp(18px, 5vw, 23px);
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--paper-rule);
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-legend button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 44px;
+    padding: 7px 2px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-muted);
+    box-shadow: none;
+    font: 550 12px/1.3 var(--paper-sans);
+    text-align: left;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-legend button.is-active {
+    color: var(--text-main);
+    font-weight: 700;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-legend-dot {
+    flex: 0 0 9px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-main) 20%, transparent);
+  }
+
+  #root .df-app.mode-planning .df-planning .df-metrics-donut-legend button > span:last-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 }

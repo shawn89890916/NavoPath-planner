@@ -1010,6 +1010,7 @@ export default function PlanningView(props: {
   const [metricsFilterCategory, setMetricsFilterCategory] = useState<"range" | "group" | "habit" | "completion" | "metric" | "project">("range");
   const [metricsProjectFilter, setMetricsProjectFilter] = useState<string[]>([]);
   const [hoveredMetricGroupId, setHoveredMetricGroupId] = useState<string | null>(null);
+  const [selectedMetricGroupId, setSelectedMetricGroupId] = useState<string | null>(null);
   const [filterProjects, setFilterProjects] = useState<string[]>([]);
   const [filterWorkflows, setFilterWorkflows] = useState<UiWorkflowStatus[]>([]);
   const [filterImportances, setFilterImportances] = useState<StateFilterValue[]>([]);
@@ -2078,6 +2079,7 @@ export default function PlanningView(props: {
   const setMetricGroup = useCallback((value: MetricGroupBy) => {
     setMetricsGroupBy(value);
     setHoveredMetricGroupId(null);
+    setSelectedMetricGroupId(null);
     updateMetricsSetting({ metricsGroupBy: value });
   }, [updateMetricsSetting]);
 
@@ -2111,8 +2113,12 @@ export default function PlanningView(props: {
     completion: metricsCompletion,
     projectIds: metricsProjectFilter,
   }), [props.data, metricsRangePreset, today, metricsCustomStart, metricsCustomEnd, dayStartMinutes, metricsGroupBy, metricsHabitMode, metricsCompletion, metricsProjectFilter]);
+  useEffect(() => {
+    setSelectedMetricGroupId((id) => id && metricsResult.groups.some((group) => group.id === id) ? id : null);
+  }, [metricsResult.groups]);
+  const selectedMetricGroup = metricsResult.groups.find((group) => group.id === selectedMetricGroupId) || null;
   const hoveredMetricGroup = metricsResult.groups.find((group) => group.id === hoveredMetricGroupId) || null;
-  const activeDonutGroup = hoveredMetricGroup;
+  const activeDonutGroup = hoveredMetricGroup || selectedMetricGroup;
   const donutSegments = metricsResult.groups.reduce<Array<{ group: TimeAllocationGroup; startAngle: number; endAngle: number }>>((segments, group) => {
     const startAngle = segments.length > 0 ? segments[segments.length - 1].endAngle : 0;
     const endAngle = startAngle + (group.percentage / 100) * 360;
@@ -2462,6 +2468,10 @@ export default function PlanningView(props: {
                         <h3>{props.lang === "zh" ? "项目时间占比图" : "Allocation chart"}</h3>
                         <span>{metricsResult.range.label}</span>
                       </div>
+                      <div className="df-metrics-donut-focus" aria-live="polite">
+                        <span>{selectedMetricGroup?.label || (props.lang === "zh" ? "项目总时长" : "Total project time")}</span>
+                        <strong>{formatMinutesZh(selectedMetricGroup?.durationMinutes ?? metricsResult.summary.plannedMinutes)}</strong>
+                      </div>
                       <div className="df-metrics-donut-wrap">
                         <svg ref={donutSvgRef} className="df-metrics-donut" viewBox="-70 0 380 240" role="img" aria-label={props.lang === "zh" ? "项目时间占比图" : "Project time allocation chart"}>
                           <circle className="df-metrics-donut-rule" cx="120" cy="120" r="82" />
@@ -2523,10 +2533,20 @@ export default function PlanningView(props: {
                             r={98}
                             tabIndex={0}
                             role="application"
-                            aria-label={props.lang === "zh" ? "项目时间占比圆环图，移动鼠标查看各项目时长" : "Project time allocation donut, move pointer to explore"}
+                            aria-label={props.lang === "zh" ? "项目时间占比圆环图，点击扇区查看项目时长" : "Project time allocation donut, select a segment to view its duration"}
                             onPointerMove={(e) => setHoveredMetricGroupId(computeHoveredSegment(e.clientX, e.clientY))}
                             onPointerLeave={() => setHoveredMetricGroupId(null)}
-                            onClick={(e) => setHoveredMetricGroupId(computeHoveredSegment(e.clientX, e.clientY))}
+                            onClick={(e) => {
+                              const groupId = computeHoveredSegment(e.clientX, e.clientY);
+                              setSelectedMetricGroupId((current) => current === groupId ? null : groupId);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                const groupId = hoveredMetricGroupId || donutSegments[0]?.group.id || null;
+                                setSelectedMetricGroupId((current) => current === groupId ? null : groupId);
+                              }
+                            }}
                             onFocus={() => {
                               if (donutSegments.length > 0 && !hoveredMetricGroupId) {
                                 setHoveredMetricGroupId(donutSegments[0].group.id);
@@ -2536,21 +2556,38 @@ export default function PlanningView(props: {
                           />
                         </svg>
                         <div className="df-metrics-donut-center">
-                          {activeDonutGroup ? (
-                            <>
-                              <div className="df-metrics-donut-center-label">
-                                <span>{activeDonutGroup.label}</span>
-                              </div>
-                              <strong>{formatMinutesZh(activeDonutGroup.durationMinutes)}</strong>
-                              <span>{Math.round(activeDonutGroup.percentage)}%</span>
-                            </>
-                          ) : (
-                            <>
-                              <strong>{formatMinutesZh(metricsResult.summary.plannedMinutes)}</strong>
-                              <span>{metricsResult.range.label}</span>
-                            </>
-                          )}
+                          <div className="df-metrics-donut-center-desktop">
+                            {activeDonutGroup ? (
+                              <>
+                                <div className="df-metrics-donut-center-label"><span>{activeDonutGroup.label}</span></div>
+                                <strong>{formatMinutesZh(activeDonutGroup.durationMinutes)}</strong>
+                                <span>{Math.round(activeDonutGroup.percentage)}%</span>
+                              </>
+                            ) : (
+                              <>
+                                <strong>{formatMinutesZh(metricsResult.summary.plannedMinutes)}</strong>
+                                <span>{metricsResult.range.label}</span>
+                              </>
+                            )}
+                          </div>
+                          <strong className="df-metrics-donut-center-portrait">{formatMinutesZh(metricsResult.summary.plannedMinutes)}</strong>
                         </div>
+                      </div>
+                      <div className="df-metrics-donut-legend" role="group" aria-label={props.lang === "zh" ? "项目图例" : "Allocation legend"}>
+                        {metricsResult.groups.map((group) => (
+                          <button
+                            key={group.id}
+                            type="button"
+                            className={selectedMetricGroupId === group.id ? "is-active" : ""}
+                            aria-pressed={selectedMetricGroupId === group.id}
+                            aria-label={`${group.label}${props.lang === "zh" ? "，" : ", "}${formatMinutesZh(group.durationMinutes)}`}
+                            title={`${group.label} · ${formatMinutesZh(group.durationMinutes)}`}
+                            onClick={() => setSelectedMetricGroupId((current) => current === group.id ? null : group.id)}
+                          >
+                            <span className="df-metrics-donut-legend-dot" style={{ backgroundColor: group.color }} aria-hidden="true" />
+                            <span>{group.label}</span>
+                          </button>
+                        ))}
                       </div>
                     </section>
                     <aside className="df-metrics-summary" aria-label={props.lang === "zh" ? "指标摘要" : "Metrics summary"}>
