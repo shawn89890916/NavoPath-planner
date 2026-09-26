@@ -24554,9 +24554,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-app.theme-dark .dayflow-icon img {
   filter: invert(1) brightness(1.08) contrast(.96);
 }
-.df-app.theme-dark .df-header .df-brand-ai-button .dayflow-icon img {
-  filter: brightness(0) invert(1);
-}
 
 .df-app.mode-planning.theme-dark .df-plan-project-node {
   min-height: 36px;
@@ -38172,8 +38169,13 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app .df-quick-add-submit {
   display: grid;
   place-items: center;
-  min-width: 48px;
-  padding: 0;
+  min-width: 58px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  letter-spacing: .1em;
+  line-height: 1;
 }
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-body,
 #root .df-app:not(.theme-dark).mode-execute .df-timeline-content,

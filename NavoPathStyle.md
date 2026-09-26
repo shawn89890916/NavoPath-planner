@@ -117,7 +117,8 @@ Keep the current-time line behind scheduled blocks so it never obscures their la
 The dark interaction accent is fixed muted stone. Avoid pure-white control fills,
 bright outlines, and neon glows. Saved custom accent values remain
 stored and resume in light mode; hide accent selectors while dark mode is active.
-Render the top-left product mark as a light monochrome silhouette in dark mode.
+Invert the original top-left product mark in dark mode, preserving its internal
+light and dark details so its outline stays legible without becoming a solid-white shape.
 Primary quick-add actions use a filled theme accent in both modes, with text that
 contrasts against the fill. Keep the fill visible when the action is disabled.
 
