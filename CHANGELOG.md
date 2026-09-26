@@ -22,6 +22,7 @@
 - MCP 新建任务不再自动设置截止日期；排程与其他任务共用冲突校验，并正确处理跨日结束时间。
 - iOS 定位权限会说明用途；移动端页面恢复浏览器缩放支持。
 - 网页立即同步会在网络短暂中断或云端网关异常时有限重试；仍失败时明确显示失败状态并继续后台重试。
+- 修复竖屏规划树无法触摸滚动的问题，并让 iOS 主屏幕模式的工作区底栏避开安全区；习惯勾选框保持方形，扩大的是可点击区域。
 
 ## 2026-09-25 · 任务与子任务体验改进
 
@@ -265,6 +266,7 @@
 - MCP-created tasks no longer receive an automatic due date; scheduling uses shared conflict checks and handles end times that cross midnight.
 - Explained location access on iOS and restored browser zoom on mobile.
 - Added bounded retries for temporary web sync network and gateway failures; persistent failures now show accurately while background retry continues.
+- Restored touch scrolling in portrait Planning, kept the workspace dock clear of the iOS safe area in Home Screen mode, and kept habit checkboxes square while enlarging their hit area.
 
 ## 2026-09-25 · Task and subtask improvements
 
