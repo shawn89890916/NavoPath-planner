@@ -38189,6 +38189,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   color: #77716a;
   cursor: not-allowed;
 }
+#root .df-app.mode-execute .df-quick-add-submit:disabled:hover,
+#root .df-app.mode-execute .df-quick-add-submit:disabled:active {
+  transform: none;
+}
 #root .df-app.mode-execute.theme-dark .df-quick-add-submit:disabled {
   color: #9a9893;
 }
