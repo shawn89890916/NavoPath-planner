@@ -5920,7 +5920,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
   background: rgba(255,255,255,0.07);
 
-  border: 1px solid color-mix(in srgb, var(--accent-active) 46%, rgba(255,255,255,0.10));
+  border: 0;
 
   color: var(--header-fg, #F5F7FA);
 
@@ -20322,7 +20322,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   transition: var(--nv-transition); padding: 3px 2px;
 
   line-height: 1;
-  min-height: 26px; border: 1px solid var(--paper-rule-strong); font-family: var(--paper-mono);
+  min-height: 26px; border: 0; font-family: var(--paper-mono);
   white-space: nowrap;
   text-align: center;
   pointer-events: auto;
@@ -20332,7 +20332,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 
   color: var(--accent-active); box-shadow: none;
 
-  pointer-events: none; border-color: var(--accent-active); }
+  pointer-events: none; border: 0; }
 .df-app .df-month-task:hover {
   border-color: color-mix(in srgb, var(--cat, var(--accent-active)) 62%, var(--paper-rule-strong));
   background: color-mix(in srgb, var(--cat, var(--accent-active)) 11%, var(--surface-raised));
@@ -22261,14 +22261,13 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-app.theme-dark .df-view-switch-vertical button.active {
   background: transparent;
 
-  border: 1px solid color-mix(in srgb, var(--accent-active) 35%, rgba(255,255,255,0.08));
+  border: 0;
   color: var(--text-main);
-  border-color: var(--paper-rule-strong);
   box-shadow: none;
 }
 .df-app:not(.theme-dark) .df-view-switch-vertical button.active {
   color: var(--text-main);
-  border-color: var(--paper-rule-strong);
+  border: 0;
   background: transparent;
   box-shadow: none;
 }
@@ -22289,6 +22288,10 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-app:not(.theme-dark) .df-header .df-tabs {
   border-color: transparent;
   background: transparent;
+  box-shadow: none;
+}
+.df-app .df-header .df-tabs button {
+  border: 0;
   box-shadow: none;
 }
 .df-app .dayflow-icon.compact {
@@ -30072,7 +30075,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid transparent;
+  border: 0;
   border-radius: 4px;
   background: transparent;
   color: var(--task-action-color);
@@ -30089,7 +30092,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid transparent;
+  border: 0;
   border-radius: 4px;
   background: transparent;
   color: var(--task-action-color);
@@ -30106,7 +30109,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid transparent;
+  border: 0;
   border-radius: 4px;
   background: transparent;
   color: var(--task-action-color);
@@ -30117,13 +30120,13 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 
 .df-app .df-task-block[data-task-appearance] .df-icon-button:hover {
   color: var(--task-title-color);
-  border-color: var(--task-border-hover);
+  border: 0;
   background: color-mix(in srgb, var(--task-project-color, var(--accent-active)) 6%, transparent);
 }
 
 .navo-demo-app .df-task-block[data-task-appearance] .df-icon-button:hover {
   color: var(--task-title-color);
-  border-color: var(--task-border-hover);
+  border: 0;
   background: color-mix(in srgb, var(--task-project-color, var(--accent-active)) 6%, transparent);
 }
 
@@ -38096,11 +38099,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app .df-quick-add-submit {
   display: grid;
   place-items: center;
-  min-width: 58px;
-  height: 34px;
-  padding: 0 8px;
+  min-width: 66px;
+  height: 40px;
+  padding: 0 10px;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .1em;
   line-height: 1;
@@ -38183,7 +38186,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   align-items: center;
   gap: 5px;
   padding: 0 3px;
-  border: 1px solid var(--paper-rule-strong);
+  border: 0;
   border-radius: var(--radius-control);
   background: transparent;
   color: var(--danger-ink, #b4232f);
@@ -38195,7 +38198,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app.mode-execute .df-overdue-time:hover,
 #root .df-app.mode-execute .df-overdue-time:focus-visible,
 #root .df-app.mode-execute .df-overdue-time.is-previewing {
-  border-color: currentColor;
+  border: 0;
   background: color-mix(in srgb, var(--danger-ink, #b4232f) 5%, transparent);
 }
 

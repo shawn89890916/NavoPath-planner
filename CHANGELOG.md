@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-09-27 · 今日候选控件微调
+
+### 改进
+- 移除今日候选任务右侧按钮、执行/规划切换和时间范围切换的描边；子任务尚未完成时隐藏进度计数，并放大 Add 按钮。
+
 ## 2026-09-26 · UI 圆角、任务编辑与时间轴状态
 
 ### 改进
@@ -247,6 +252,11 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-27 · Today’s Candidates control refinements
+
+### Improvements
+- Remove outlines from Today’s Candidates task actions and the Execute/Planning and timeline range switches; hide subtask progress until one is complete and enlarge the Add button.
 
 ## 2026-09-26 · Squircle corners, task editing, and timeline status
 

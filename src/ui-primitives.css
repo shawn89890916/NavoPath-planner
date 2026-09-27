@@ -929,6 +929,13 @@
 ) {
   border-color: var(--accent-active);
 }
+
+/* Today’s Candidates actions and its two primary view controls are text-first. */
+#root .df-app .df-candidate-list .df-task-card .df-icon-button,
+#root .df-app .df-header .df-tabs button,
+#root .df-app .df-timeline-panel .df-view-switch-vertical button {
+  border: 0;
+}
 #root .df-app .df-date-arrow {
   display: grid;
   place-items: center;

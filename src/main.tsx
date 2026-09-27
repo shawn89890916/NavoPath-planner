@@ -12097,7 +12097,7 @@ function TaskCard({
           {isEvent ? <span className="df-task-block-check df-candidate-kind" aria-hidden="true" /> : null}
           <TaskBlockContent className="df-candidate-main" title={displayTitle}>
             {isEvent ? <span className="df-candidate-kind">EVENT</span> : null}
-            {!isEvent && hasSubtasks && <span className="df-candidate-subtask-count" title={lang === "zh" ? "子任务进度" : "Subtask progress"}>{countDoneSubtasks(task.subtasks)}/{countSubtasks(task.subtasks)}</span>}
+            {!isEvent && hasSubtasks && countDoneSubtasks(task.subtasks) > 0 && <span className="df-candidate-subtask-count" title={lang === "zh" ? "子任务进度" : "Subtask progress"}>{countDoneSubtasks(task.subtasks)}/{countSubtasks(task.subtasks)}</span>}
           </TaskBlockContent>
           {suggestedProject && <button type="button" className="df-ai-project-suggestion" title={lang === "zh" ? `建议归入「${suggestedProject.title}」` : `Suggested project: ${suggestedProject.title}`} onClick={(event) => { event.stopPropagation(); onProjectChange(suggestedProject.id); }}>↗ {suggestedProject.title}</button>}
 
