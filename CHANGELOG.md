@@ -4,6 +4,7 @@
 
 ### 改进
 - 移除今日候选任务右侧按钮、执行/规划切换和时间范围切换的描边；子任务尚未完成时隐藏进度计数，并放大 Add 按钮。
+- 在今日候选与规划的含子任务任务块底部加入可点击的进度栏，显示已完成数和总数，并提供展开/收起悬停提示。
 
 ## 2026-09-26 · UI 圆角、任务编辑与时间轴状态
 
@@ -257,6 +258,7 @@
 
 ### Improvements
 - Remove outlines from Today’s Candidates task actions and the Execute/Planning and timeline range switches; hide subtask progress until one is complete and enlarge the Add button.
+- Add a clickable subtask progress shelf to task blocks in Today’s Candidates and Planning, showing completed and total counts with expand/collapse tooltips.
 
 ## 2026-09-26 · Squircle corners, task editing, and timeline status
 

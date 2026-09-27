@@ -11,7 +11,7 @@ import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
 import { kanbanGroups, WORKFLOW_LABELS } from "./utils/productivity";
 import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch, type UiWorkflowStatus, type StateFilterValue } from "./utils/productivityModel";
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
-import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, type TaskBlockVariant } from "./components/TaskBlock";
+import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockVariant } from "./components/TaskBlock";
 import { CloseButton } from "./components/UiPrimitives";
 import { TaskDragLayer } from "./unifiedDrag";
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricCompletionFilter, type MetricDisplayMetric, type MetricGroupBy, type MetricHabitMode, type MetricRangePreset, type TimeAllocationGroup } from "./metrics/timeAllocation";
@@ -657,29 +657,15 @@ function PlanningTaskNode(props: {
                 </span>
               )}
             >
-              {(metaBadges.length > 0 || hasSubtasks) && (
+              {metaBadges.length > 0 && (
                 <span className="df-task-meta-badges" aria-label={props.lang === "zh" ? "Task status" : "Task status"}>
                   {metaBadges.map((badge) => (
                     <span key={badge.key} className={badge.className}>{badge.label}</span>
                   ))}
-                  {hasSubtasks && <span className="df-subtask-progress">{doneCount}/{totalCount}</span>}
                 </span>
               )}
             </TaskBlockContent>
             <TaskActions className="df-task-node-actions">
-              {hasSubtasks && (
-                <button
-                  className="df-task-chevron"
-                  aria-expanded={!props.collapsed}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    props.onToggleCollapse();
-                  }}
-                  aria-label={props.collapsed ? t(props.lang, "planning.expandSubtasks") : t(props.lang, "planning.collapseSubtasks")}
-                >
-                  <ChevronIcon open={!props.collapsed} />
-                </button>
-              )}
               {!isPlanned && <button
                 className="df-tree-icon-button"
                 onClick={(event) => {
@@ -703,6 +689,14 @@ function PlanningTaskNode(props: {
               </button>
             </TaskActions>
           </TaskBlockRow>
+          {hasSubtasks && <TaskSubtaskShelf
+            label={props.lang === "zh" ? "子任务" : "Subtasks"}
+            progress={`${doneCount}/${totalCount}`}
+            expanded={!props.collapsed}
+            expandLabel={t(props.lang, "planning.expandSubtasks")}
+            collapseLabel={t(props.lang, "planning.collapseSubtasks")}
+            onToggle={props.onToggleCollapse}
+          />}
           <TreeMenu
             open={menuOpen}
             onClose={() => setMenuOpen(false)}

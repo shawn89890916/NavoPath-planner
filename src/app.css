@@ -2916,24 +2916,6 @@ h3 { margin: 0;
 
 
 
-.subtask-progress {
-
-  height: 2px;
-
-  background: var(--border);
-
-  border-radius: 1px;
-
-  margin: 6px 0 2px;
-
-  overflow: hidden;
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
 /* Action buttons row inside preview */
 
 
@@ -12552,98 +12534,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 /* Subtask progress badge */
 
-.df-app .df-subtask-progress {
-
-  display: inline-flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  height: 20px;
-
-  min-width: 20px;
-
-  padding: 2px 7px;
-
-  border-radius: 999px;
-
-  font-size: 11px;
-
-  font-weight: 600;
-
-  flex-shrink: 0;
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-.df-app.theme-dark .df-subtask-progress {
-
-  display: inline-flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  height: 20px;
-
-  min-width: 20px;
-
-  padding: 2px 7px;
-
-  border-radius: 999px;
-
-  font-size: 11px;
-
-  font-weight: 600;
-
-  flex-shrink: 0;
-
-  background: rgba(255,255,255,0.04);
-
-  border: 1px solid rgba(255,255,255,0.08);
-
-  color: #AAB0BD;
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-.df-app:not(.theme-dark) .df-subtask-progress {
-
-  display: inline-flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  height: 20px;
-
-  min-width: 20px;
-
-  padding: 2px 7px;
-
-  border-radius: 999px;
-
-  font-size: 11px;
-
-  font-weight: 600;
-
-  flex-shrink: 0;
-
-  background: rgba(0,0,0,0.03);
-
-  border: 1px solid rgba(0,0,0,0.08);
-
-  color: #6B7280;
-
-  corner-shape: var(--corner-shape, squircle);
-
-}
-
-
-
 /* Task actions */
 
 .df-app .df-task-node-actions {
@@ -14140,18 +14030,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 /* Planning filter bar (show added toggle) */
-
-.df-app:not(.theme-dark) .df-planning .df-subtask-progress {
-
-  background: #FFFFFF;
-
-  border-color: rgba(15,23,42,0.10);
-
-  color: #4B5563;
-
-}
-
-
 
 /* ===== �
 色模式�
@@ -19933,17 +19811,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   padding: 3px 2px;
 
   min-width: 46px; border-radius: 0; font-family: var(--paper-mono);
-}
-.df-candidate-subtask-count {
-  border: 0; border-radius: 0; background: transparent; box-shadow: none; font-family: var(--paper-mono);
-  position: absolute;
-  top: 9px;
-  right: 12px;
-  z-index: 3;
-  font-size: 11px;
-  color: var(--text-muted);
-  opacity: .8;
-  pointer-events: none;
 }
 .df-quick-add-project-menu {
 
@@ -29384,12 +29251,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   font-size: 11px;
   font-weight: 550;
 }
-.df-app .df-task-block[data-task-appearance] .df-candidate-subtask-count {
-  color: var(--task-meta-color);
-  font-family: var(--paper-ui, var(--paper-sans, inherit));
-  font-size: 11px;
-  font-weight: 550;
-}
 .df-app .df-task-block[data-task-appearance] .df-candidate-repeat-badge {
   color: var(--task-meta-color);
   font-family: var(--paper-ui, var(--paper-sans, inherit));
@@ -30053,6 +29914,37 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .navo-demo-app .df-task-block[data-task-appearance] .df-candidate-subtasks {
   grid-column: 1 / -1;
   margin-top: 6px;
+}
+
+.df-app .df-task-block[data-task-appearance] .df-task-subtask-shelf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 38px;
+  margin-top: 8px;
+  padding: 8px 2px 0 36px;
+  border: 0;
+  border-top: 1px solid var(--paper-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--task-meta-color);
+  box-shadow: none;
+  font: 650 12px/1.25 var(--paper-ui, var(--paper-sans, inherit));
+  text-align: left;
+  cursor: pointer;
+  transition: color 140ms var(--paper-ease, ease);
+}
+.df-app .df-task-block[data-task-appearance] .df-task-subtask-shelf:hover {
+  color: var(--task-title-color);
+}
+.df-app .df-task-block[data-task-appearance] .df-task-subtask-shelf:focus-visible {
+  outline: 2px solid var(--accent-active);
+  outline-offset: 2px;
+}
+.df-app .df-task-subtask-shelf-progress {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
 }
 
 .df-app .df-task-block[data-task-appearance]:not(:has(.df-candidate-subtasks)) .df-candidate-row {
@@ -31831,18 +31723,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  margin: 7px 0 0;
-  padding: 8px 0 0 18px;
-  border-top: 1px solid var(--paper-rule);
-}
-
-.df-app .df-candidate-subtask-list-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--task-meta-color);
-  font-size: 11px;
-  font-weight: 650;
+  margin: 2px 0 0;
+  padding: 6px 0 0 18px;
 }
 
 .df-app .df-candidate-subtask-item {

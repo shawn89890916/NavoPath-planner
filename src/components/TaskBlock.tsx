@@ -211,6 +211,41 @@ export function TaskActions({ children, className, onClick }: { children?: React
   return <span className={["df-task-actions", "df-task-block-actions", className || ""].filter(Boolean).join(" ")} onClick={onClick}>{children}</span>;
 }
 
+export function TaskSubtaskShelf({
+  label,
+  progress,
+  expanded,
+  expandLabel,
+  collapseLabel,
+  onToggle,
+}: {
+  label: string;
+  progress: string;
+  expanded: boolean;
+  expandLabel: string;
+  collapseLabel: string;
+  onToggle: () => void;
+}) {
+  const actionLabel = expanded ? collapseLabel : expandLabel;
+  return (
+    <button
+      type="button"
+      className="df-task-subtask-shelf"
+      aria-expanded={expanded}
+      aria-label={`${label}: ${progress}`}
+      title={actionLabel}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => {
+        event.stopPropagation();
+        onToggle();
+      }}
+    >
+      <span className="df-task-subtask-shelf-label">{label}</span>
+      <span className="df-task-subtask-shelf-progress">{progress}</span>
+    </button>
+  );
+}
+
 /**
  * TaskBlockAccent — project accent visual layer (bottom line / full border / left rule).
  * Rendered separately from content so project color never dominates title/duration/icons.

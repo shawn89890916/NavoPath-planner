@@ -85,7 +85,7 @@ import { countSubtasks, countDoneSubtasks, addSubtaskToTree, findSubtaskInTree, 
 import { promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToToday, toggleTodayCandidate } from "./utils/todayCandidates";
 import { reconcileOverdueTasks } from "./utils/overdueTasks";
 import { useInAppDialog } from "./InAppDialog";
-import { TaskActions, TaskBlock, TaskBlockAccent, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskGroup, type TaskBlockDragState } from "./components/TaskBlock";
+import { TaskActions, TaskBlock, TaskBlockAccent, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskGroup, TaskSubtaskShelf, type TaskBlockDragState } from "./components/TaskBlock";
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, CandidateBlock, TimelineCanvas, TimelineEventBlock } from "./components/ExecutionSharedLayout";
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDivider, SettingDescription } from "./components/SettingsControls";
 import { ActionDisclosure, Button, CloseButton, IconButton } from "./components/UiPrimitives";
@@ -12097,7 +12097,6 @@ function TaskCard({
           {isEvent ? <span className="df-task-block-check df-candidate-kind" aria-hidden="true" /> : null}
           <TaskBlockContent className="df-candidate-main" title={displayTitle}>
             {isEvent ? <span className="df-candidate-kind">EVENT</span> : null}
-            {!isEvent && hasSubtasks && countDoneSubtasks(task.subtasks) > 0 && <span className="df-candidate-subtask-count" title={lang === "zh" ? "子任务进度" : "Subtask progress"}>{countDoneSubtasks(task.subtasks)}/{countSubtasks(task.subtasks)}</span>}
           </TaskBlockContent>
           {suggestedProject && <button type="button" className="df-ai-project-suggestion" title={lang === "zh" ? `建议归入「${suggestedProject.title}」` : `Suggested project: ${suggestedProject.title}`} onClick={(event) => { event.stopPropagation(); onProjectChange(suggestedProject.id); }}>↗ {suggestedProject.title}</button>}
 
@@ -12111,7 +12110,6 @@ function TaskCard({
           </TaskBlockDuration>}
 
           {!isEvent && <TaskActions>
-            {!compact && hasSubtasks && onToggleSubtask ? <button type="button" className="df-candidate-subtask-toggle" aria-label={subtasksOpen ? (lang === "zh" ? "收起子任务" : "Collapse subtasks") : (lang === "zh" ? "展开子任务" : "Expand subtasks")} aria-expanded={subtasksOpen} onClick={(event) => { event.stopPropagation(); setSubtasksOpen((value) => !value); }}><svg viewBox="0 0 16 16" aria-hidden="true"><path d={subtasksOpen ? "M4 9.5 8 5.5l4 4" : "M5.5 4 9.5 8l-4 4"} /></svg></button> : null}
             {!scheduleSummary && !isOverdueCandidate && <div className="df-candidate-schedule-actions" onMouseLeave={() => { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); } }}>
               <IconButton className={`df-icon-button icon-schedule${schedulePanelOpen ? " is-active" : ""}`} icon={<UiCalendarClockIcon size={18} />} label={t(lang, "taskCard.openScheduling")} aria-expanded={schedulePanelOpen} onMouseEnter={queuePlacementPreview} onFocus={previewPlacement} onClick={toggleSchedulePanel} />
               {renderPlacementLocateAction()}
@@ -12122,8 +12120,16 @@ function TaskCard({
             {!isPlacementArmed && <button className={`df-icon-button ${isMoreOpen ? "icon-collapse" : "icon-expand"}`} title={isMoreOpen ? t(lang, "taskCard.collapseMore") : t(lang, "taskCard.expandMore")} aria-label={isMoreOpen ? t(lang, "taskCard.collapseMore") : t(lang, "taskCard.expandMore")} aria-expanded={isMoreOpen} onClick={(event) => { event.stopPropagation(); setPopoverOpen(null); setMorePopover(null); setSchedulePanelOpen(false); setOpenPanel((current) => current === "more" ? null : "more"); }}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{isMoreOpen ? <path d="M5 12l5-5 5 5" /> : <path d="M5 8l5 5 5-5" />}</svg></button>}
           </TaskActions>}
         </TaskBlockRow>
+        {!isEvent && onToggleSubtask && hasSubtasks && <TaskSubtaskShelf
+          label={lang === "zh" ? "子任务" : "Subtasks"}
+          progress={`${countDoneSubtasks(task.subtasks)}/${countSubtasks(task.subtasks)}`}
+          expanded={subtasksOpen}
+          expandLabel={lang === "zh" ? "展开子任务" : "Expand subtasks"}
+          collapseLabel={lang === "zh" ? "收起子任务" : "Collapse subtasks"}
+          onToggle={() => setSubtasksOpen((value) => !value)}
+        />}
 
-        {!isEvent && onToggleSubtask && hasSubtasks && subtasksOpen && <div className="df-candidate-subtasks"><div className="df-candidate-subtask-list-head"><span>{lang === "zh" ? "子任务" : "Subtasks"}</span><small>{countDoneSubtasks(task.subtasks)}/{countSubtasks(task.subtasks)}</small></div>{(task.subtasks || []).map((subtask) => <CandidateSubtaskItem key={subtask.id} subtask={subtask} lang={lang} onToggleSubtask={onToggleSubtask} onSubtaskDragStart={onSubtaskDragStart} />)}</div>}
+        {!isEvent && onToggleSubtask && hasSubtasks && subtasksOpen && <div className="df-candidate-subtasks">{(task.subtasks || []).map((subtask) => <CandidateSubtaskItem key={subtask.id} subtask={subtask} lang={lang} onToggleSubtask={onToggleSubtask} onSubtaskDragStart={onSubtaskDragStart} />)}</div>}
 
         {schedulePanelOpen && (isOverdueCandidate ? <div ref={schedulePanelRef} className="df-candidate-schedule-panel is-overdue-actions" onClick={stop}>
           <button type="button" className="df-candidate-schedule-primary" disabled={!scheduleFocusTarget} onClick={() => scheduleFocusTarget && onFocusSchedule?.(scheduleFocusTarget)}><span aria-hidden="true">→</span><span>{lang === "zh" ? "显示到时间轴" : "Show in schedule"}</span></button>
