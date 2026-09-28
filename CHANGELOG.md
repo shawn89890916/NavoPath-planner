@@ -1,5 +1,17 @@
 # NavoPath 更新日志
 
+## 2026-09-28 · 今日候选拖动改进
+
+### 改进
+- 今日候选按项目分类时，跨项目拖动以整组作为归属目标；项目内仍可精确调整顺序。
+
+# NavoPath Changelog
+
+## 2026-09-28 · Today candidate drag improvement
+
+### Improved
+- When Today's Candidates are grouped by project, cross-project dragging assigns the project as a whole; tasks can still be precisely reordered within a project.
+
 ## 2026-09-27 · 今日候选控件微调
 
 ### 改进

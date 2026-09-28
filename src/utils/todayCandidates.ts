@@ -6,6 +6,22 @@ export type TodayCandidateResult = {
   taskId: string;
 };
 
+export function moveTodayCandidateToProject(
+  data: PlannerData,
+  taskId: string,
+  projectId: string | undefined,
+  now = new Date().toISOString(),
+): PlannerData {
+  const task = data.tasks.find((item) => item.id === taskId);
+  if (!task || task.projectId === projectId) return data;
+  return {
+    ...data,
+    tasks: data.tasks.map((item) => item.id === taskId
+      ? { ...item, projectId, updatedAt: now }
+      : item),
+  };
+}
+
 export function reorderTodayCandidates(
   data: PlannerData,
   visibleIds: string[],

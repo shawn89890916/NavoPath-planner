@@ -82,7 +82,7 @@ import { appendAiSubtasks, getAiSubtaskSuggestions } from "./utils/aiSubtasks";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
 import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
 import { countSubtasks, countDoneSubtasks, addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree } from "./utils/treeOrder";
-import { promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToToday, toggleTodayCandidate } from "./utils/todayCandidates";
+import { moveTodayCandidateToProject, promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToToday, toggleTodayCandidate } from "./utils/todayCandidates";
 import { reconcileOverdueTasks } from "./utils/overdueTasks";
 import { useInAppDialog } from "./InAppDialog";
 import { TaskActions, TaskBlock, TaskBlockAccent, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskGroup, TaskSubtaskShelf, type TaskBlockDragState } from "./components/TaskBlock";
@@ -345,6 +345,9 @@ type CandidateDropTarget = {
   taskId: string;
   position: "before" | "after";
   intent: Extract<DropIntent, "reorder-before" | "reorder-after">;
+} | {
+  kind: "project";
+  projectId: string | null;
 } | null;
 type CandidateDragOptions = {
   allowCandidateReorder?: boolean;
@@ -4114,6 +4117,14 @@ function App() {
     if (next !== current) void saveData(next);
   }
 
+  function moveTodayCandidateToProjectGroup(taskId: string, projectId: string | undefined) {
+    const current = dataRef.current;
+    if (!current) return;
+    const sourceId = resolveOwningTask(taskId)?.id || taskId;
+    const next = moveTodayCandidateToProject(current, sourceId, projectId);
+    if (next !== current) void saveData(next);
+  }
+
   function deleteSubtaskById(subtaskId: string) {
     const current = dataRef.current;
     if (!current) return;
@@ -7563,11 +7574,16 @@ function App() {
     let dropTime = "";
     let candidateTarget: CandidateDropTarget = null;
     const setCandidateReorderTarget = (nextTarget: CandidateDropTarget) => {
-      const unchanged = (candidateTarget === null && nextTarget === null)
-        || (candidateTarget?.kind === "task" && nextTarget?.kind === "task"
-          && candidateTarget.taskId === nextTarget.taskId
-          && candidateTarget.position === nextTarget.position
-          && candidateTarget.intent === nextTarget.intent);
+      const previousTarget = candidateTarget;
+      const sameTaskTarget = previousTarget?.kind === "task" && nextTarget?.kind === "task"
+        ? previousTarget.taskId === nextTarget.taskId
+          && previousTarget.position === nextTarget.position
+          && previousTarget.intent === nextTarget.intent
+        : false;
+      const sameProjectTarget = previousTarget?.kind === "project" && nextTarget?.kind === "project"
+        ? previousTarget.projectId === nextTarget.projectId
+        : false;
+      const unchanged = (previousTarget === null && nextTarget === null) || sameTaskTarget || sameProjectTarget;
       candidateTarget = nextTarget;
       if (!unchanged) setCandidateDropTarget(nextTarget);
     };
@@ -7626,7 +7642,7 @@ function App() {
           const slot = candidateRow.querySelector<HTMLElement>(".df-reorder-preview-slot")?.getBoundingClientRect();
           const overSlot = slot && pointerEvent.clientY >= slot.top && pointerEvent.clientY <= slot.bottom;
           const rect = (candidateRow.querySelector<HTMLElement>(".df-task-card") || candidateRow).getBoundingClientRect();
-          const position = overSlot && candidateTarget?.taskId === targetTaskId
+          const position = overSlot && candidateTarget?.kind === "task" && candidateTarget.taskId === targetTaskId
             ? candidateTarget.position
             : (pointerEvent.clientY - rect.top) < rect.height / 2 ? "before" : "after";
           setCandidateReorderTarget({
@@ -7635,9 +7651,25 @@ function App() {
             position,
             intent: position === "before" ? "reorder-before" : "reorder-after",
           });
+        } else if (targetTask && targetTaskId !== task.id && groupByProject && targetTask.projectId !== task.projectId) {
+          setCandidateReorderTarget({ kind: "project", projectId: targetTask.projectId || null });
         } else {
           setCandidateReorderTarget(null);
         }
+        setCandidateDropActive(false);
+        setAllDayDragOver(false);
+        setAllDayDragDate("");
+        dropTime = "";
+        setHoverSlot("");
+        dragTargetDateRef.current = "";
+        return;
+      }
+      const candidateProjectGroup = source === "candidate" && groupByProject
+        ? pointedElement?.closest<HTMLElement>("[data-candidate-project-id]")
+        : null;
+      if (candidateProjectGroup) {
+        const projectId = candidateProjectGroup.dataset.candidateProjectId || null;
+        setCandidateReorderTarget(projectId === (task.projectId || null) ? null : { kind: "project", projectId });
         setCandidateDropActive(false);
         setAllDayDragOver(false);
         setAllDayDragDate("");
@@ -7763,8 +7795,13 @@ function App() {
         // pointer has left the candidate list or moved onto the timeline.
         updateTarget(pointerEvent);
         const pointedElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
-        if (candidateTarget) {
+        if (candidateTarget?.kind === "task") {
           reorderTodayCandidate(task.id, candidateTarget.taskId, candidateTarget.position);
+          cleanup();
+          return;
+        }
+        if (candidateTarget?.kind === "project") {
+          moveTodayCandidateToProjectGroup(task.id, candidateTarget.projectId || undefined);
           cleanup();
           return;
         }
@@ -9018,11 +9055,19 @@ function App() {
                     const project = gid === "__unassigned__" || gid === "__events__" ? null : projects.find(p => String(p.id) === String(gid));
                     const projectColor = gid === "__events__" ? "var(--accent-active)" : project?.color || "var(--accent-active)";
                     const projectTitle = gid === "__events__" ? "EVENTS" : project?.title || t(lang, "candidate.unassigned");
+                    const projectDropHere = drag?.source === "candidate"
+                      && candidateDropTarget?.kind === "project"
+                      && candidateDropTarget.projectId === (gid === "__unassigned__" ? null : gid);
                     return (
-                      <div key={gid} className="df-project-group">
+                      <div
+                        key={gid}
+                        className={`df-project-group${projectDropHere ? " is-candidate-project-drop" : ""}`}
+                        data-candidate-project-id={gid === "__events__" ? undefined : gid === "__unassigned__" ? "" : gid}
+                      >
                         <div className="df-project-group-header">
                           <span className="df-project-group-dot" style={{ background: projectColor }} />
                           <span className="df-project-group-name">{projectTitle}</span>
+                          {projectDropHere && <span className="df-project-drop-hint">{lang === "zh" ? "松手后归属此项目" : "Release to assign to this project"}</span>}
                           {gid !== "__events__" && <span className="df-project-group-actions">
                             <IconButton
                               className="df-project-group-action"

@@ -26320,6 +26320,19 @@ body.df-timeline-pointer-drag * {
   margin-bottom: 0;
 }
 
+.df-app .df-candidate-list .df-project-group.is-candidate-project-drop {
+  outline: 1px solid var(--accent-active);
+  outline-offset: 4px;
+  border-radius: var(--paper-radius-soft);
+  background: color-mix(in srgb, var(--accent-active) 5%, transparent);
+}
+
+.df-app .df-project-drop-hint {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font: 500 11px/1.2 var(--paper-ui);
+}
+
 /* Defensive: guarantee no stray dashed/outline/border on the candidate list
    in normal (non-dragging, non-onboarding) state. Any dashed visual must be
    gated by an explicit state class (.onboarding-step-drag, .is-dragging,
