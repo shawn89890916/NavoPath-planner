@@ -348,7 +348,6 @@ type CandidateDropTarget = {
 } | {
   kind: "project";
   projectId: string | null;
-  targetTaskId?: string;
 } | null;
 type CandidateDragOptions = {
   allowCandidateReorder?: boolean;
@@ -7590,7 +7589,6 @@ function App() {
         : false;
       const sameProjectTarget = previousTarget?.kind === "project" && nextTarget?.kind === "project"
         ? previousTarget.projectId === nextTarget.projectId
-          && previousTarget.targetTaskId === nextTarget.targetTaskId
         : false;
       const unchanged = (previousTarget === null && nextTarget === null) || sameTaskTarget || sameProjectTarget;
       candidateTarget = nextTarget;
@@ -7661,7 +7659,7 @@ function App() {
             intent: position === "before" ? "reorder-before" : "reorder-after",
           });
         } else if (targetTask && targetTaskId !== task.id && groupByProject && targetTask.projectId !== task.projectId) {
-          setCandidateReorderTarget({ kind: "project", projectId: targetTask.projectId || null, targetTaskId });
+          setCandidateReorderTarget({ kind: "project", projectId: targetTask.projectId || null });
         } else {
           setCandidateReorderTarget(null);
         }
@@ -9067,9 +9065,6 @@ function App() {
                     const projectDropHere = drag?.source === "candidate"
                       && candidateDropTarget?.kind === "project"
                       && candidateDropTarget.projectId === (gid === "__unassigned__" ? null : gid);
-                    const projectHintTaskId = projectDropHere && candidateDropTarget?.kind === "project"
-                      ? candidateDropTarget.targetTaskId || tasks.find((item) => !isEventDisplayTask(item))?.id
-                      : undefined;
                     return (
                       <div
                         key={gid}
@@ -9097,12 +9092,11 @@ function App() {
                         </div>
                         {tasks.map((task) => {
                           const dropHere = drag?.source === "candidate" && candidateDropTarget?.kind === "task" && candidateDropTarget.taskId === task.id;
-                          const projectTaskDropHere = projectDropHere && projectHintTaskId === task.id;
                           const isReorderSource = drag?.source === "candidate" && drag.taskId === task.id;
                           return (
                             <div
                               key={task.id}
-                              className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}${dropHere ? ` is-candidate-drop is-${candidateDropTarget?.kind === "task" ? candidateDropTarget.position : "after"}` : ""}${projectTaskDropHere ? " is-candidate-project-drop-target" : ""}`}
+                              className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}${dropHere ? ` is-candidate-drop is-${candidateDropTarget?.kind === "task" ? candidateDropTarget.position : "after"}` : ""}`}
                               data-candidate-task-id={isEventDisplayTask(task) ? undefined : task.id}
                               onClickCapture={(event) => {
                                 if (!(event.target as HTMLElement).closest(".df-candidate-row .df-block-check")) return;
@@ -9111,8 +9105,7 @@ function App() {
                               }}
                             >
                               {dropHere && candidateDropTarget?.kind === "task" && candidateDropTarget.position === "before" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${drag?.sourceRect?.height || 64}px` } as CSSProperties} aria-hidden="true" />}
-                              {!isReorderSource && <TaskCard task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onStartPlacementPreview={() => startPlacementPreview(task.id)} onCancelPlacementPreview={cancelPlacementPreview} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
-                              {projectTaskDropHere && <span className="df-project-drop-hint" role="status">{lang === "zh" ? "松手后归属此项目" : "Release to assign to this project"}</span>}
+                              <TaskCard task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onStartPlacementPreview={() => startPlacementPreview(task.id)} onCancelPlacementPreview={cancelPlacementPreview} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />
                               {dropHere && candidateDropTarget?.kind === "task" && candidateDropTarget.position === "after" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${drag?.sourceRect?.height || 64}px` } as CSSProperties} aria-hidden="true" />}
                             </div>
                           );
@@ -10280,6 +10273,7 @@ function App() {
             dragState="overlay"
             lang={lang}
           />
+          {candidateDropTarget?.kind === "project" && <span className="df-project-drop-hint" role="status">{lang === "zh" ? "松手后归属此项目" : "Release to assign to this project"}</span>}
         </TaskDragLayer>
       )}
       {dragOverlay && dragOverlayTask && drag?.source !== "candidate" && !timelineSnapActive && (
