@@ -8,6 +8,8 @@
 - 手动同步在页面切到后台后仍会继续执行；上次同步时间不再重复显示相同的日期。
 - 今日候选同项目拖动不插入空槽，并在拖动任务块下方提示放置方向；跨项目拖动时以完整细框标出目标项目，归属提示与项目色条右侧对齐。移除拖动卡片下方多余的半透明方框，源任务占位不显示方框，拖动卡片的按钮不描边，勾选框保持垂直居中。
 - 竖屏任务页把快速添加移入顶部工具区，避免悬浮按钮遮住任务；日程页保留加号并与底部导航拉开间距。拖拽提示现在演示长按后自动切到日程并放置任务，支持减少动态效果和记忆关闭状态；日期切换与视图选择控件扩大到 44px。
+- 竖屏触控页面不再因长按普通文字触发文本选择，输入框和可编辑区域仍可选择文字。
+- 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏统一贴合屏幕底边，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
 
@@ -19,6 +21,8 @@
 - Manual sync continues if the page moves to the background, and identical last-synced timestamps no longer appear twice.
 - Same-project candidate dragging keeps the list still and shows a placement-direction hint below the dragged task; cross-project dragging marks the target project with a complete fine frame and aligns the assignment hint with the right edge of its project-color stripe. The extra translucent frame below the dragged task is removed, the source slot has no visible box, action buttons remain borderless, and the checkbox stays vertically centered.
 - On portrait phones, task quick-add moves into the top toolbar so it no longer covers tasks; Schedule keeps its plus button with more clearance above the dock. The guide demonstrates holding a task, switching to Schedule, and placing it, with reduced-motion and remembered-dismissal support; date and view controls grow to 44px.
+- On portrait touch screens, long-pressing ordinary text no longer selects it; inputs and editable regions remain selectable.
+- On portrait touch screens, the Planning filter clears the top safe area; the Execute and Planning docks share the same screen-edge position, and Execute schedule checkboxes use a smaller visible square while keeping a 44px touch target.
 
 ## 2026-09-27 · 今日候选控件微调
 

@@ -52,6 +52,22 @@ describe("portrait interaction contracts", () => {
     expect(main).toContain('data-cross-day-scroll={settings.continuousCrossDayScroll !== false ? "true" : "false"}');
   });
 
+  it("disables long-press text selection only in portrait touch layouts and keeps editors selectable", () => {
+    expect(appCss).toContain("@media (pointer: coarse) and (orientation: portrait) {");
+    expect(appCss).toMatch(/#root \.df-app,\s*#root \.df-app \*\s*\{\s*user-select: none;/);
+    expect(appCss).toContain("-webkit-touch-callout: none;");
+    expect(appCss).toContain('input, textarea, select, [contenteditable]:not([contenteditable="false"])');
+    expect(appCss).toContain("user-select: text;");
+    expect(appCss).toContain("-webkit-touch-callout: default;");
+  });
+
+  it("keeps portrait Planning filter visible, checkbox visuals compact, and the dock on the screen edge", () => {
+    expect(appCss).toContain("top: max(calc(env(safe-area-inset-top) + 4px), 52px);");
+    expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check\s*\{[^}]*width:\s*18px;[^}]*height:\s*18px;/);
+    expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check::before\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/);
+    expect(appCss).toMatch(/\.df-app:where\(\.mode-execute, \.mode-planning\) \.df-mobile-dock\s*\{[^}]*bottom:\s*0;/);
+  });
+
   it("dismisses the AI plus menu outside and omits hardware sync", () => {
     expect(main).toContain('document.addEventListener("pointerdown", closeComposerMenu)');
     expect(main).not.toContain("同步硬件");
