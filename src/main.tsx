@@ -10269,6 +10269,9 @@ function App() {
             lang={lang}
           />
           {candidateDropTarget?.kind === "project" && <span className="df-project-drop-hint" role="status">{lang === "zh" ? "松手后归属此项目" : "Release to assign to this project"}</span>}
+          {candidateDropTarget?.kind === "task" && <span className="df-project-drop-hint" role="status">{lang === "zh"
+            ? `松手后放到目标${candidateDropTarget.position === "before" ? "上方" : "下方"}`
+            : `Release to place ${candidateDropTarget.position === "before" ? "above" : "below"}`}</span>}
         </TaskDragLayer>
       )}
       {drag?.source === "candidate" && candidateProjectDropFrame && (

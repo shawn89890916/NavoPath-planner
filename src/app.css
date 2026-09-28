@@ -31637,7 +31637,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 .df-task-drag-layer {
   border-radius: var(--task-radius, 6px);
   overflow: visible;
-  animation: df-drag-ink-in 90ms cubic-bezier(.2, 0, 0, 1) both;
   corner-shape: var(--corner-shape, squircle);
 }
 .df-task-drag-layer .df-task-block {
