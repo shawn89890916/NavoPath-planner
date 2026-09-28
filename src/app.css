@@ -26328,7 +26328,7 @@ body.df-timeline-pointer-drag * {
 
 #root .df-app .df-project-drop-hint {
   position: absolute;
-  top: calc(100% + 5px);
+  top: calc(100% + 3.5px);
   left: 0;
   z-index: 1;
   padding: 3px 7px;
@@ -26338,6 +26338,8 @@ body.df-timeline-pointer-drag * {
   color: var(--text-secondary);
   font: 500 10px/1.2 var(--paper-ui);
   white-space: nowrap;
+  transform: rotate(-1deg);
+  transform-origin: top left;
 }
 
 /* Defensive: guarantee no stray dashed/outline/border on the candidate list
@@ -33285,6 +33287,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   transform: rotate(-1.1deg);
   transform-origin: center;
   box-shadow: 0 10px 24px rgb(39 35 30 / 18%);
+  padding-block: 4px;
 }
 
 /* Project branches leave the tree completely while their card is in the
@@ -37901,6 +37904,14 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
    even after it leaves the candidate-list selector above. */
 #root .df-app.mode-execute:not(.theme-dark) .df-task-drag-layer .df-task-card[data-task-appearance][data-drag-state="overlay"] {
   background: #fff;
+}
+
+/* Keep dragged candidate action controls as quiet and unboxed as the row. */
+#root .df-app .df-task-drag-layer > .df-task-block[data-drag-state="overlay"] .df-task-actions .df-icon-button,
+#root .df-app .df-task-drag-layer > .df-task-block[data-drag-state="overlay"] .df-task-block-actions .df-icon-button {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 /* The add drawer is a true three-way switch, not a two-column action grid. */
