@@ -82,7 +82,7 @@ import { appendAiSubtasks, getAiSubtaskSuggestions } from "./utils/aiSubtasks";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
 import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
 import { countSubtasks, countDoneSubtasks, addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree } from "./utils/treeOrder";
-import { moveTodayCandidateToProject, promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToToday, toggleTodayCandidate } from "./utils/todayCandidates";
+import { promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToToday, toggleTodayCandidate } from "./utils/todayCandidates";
 import { reconcileOverdueTasks } from "./utils/overdueTasks";
 import { useInAppDialog } from "./InAppDialog";
 import { TaskActions, TaskBlock, TaskBlockAccent, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskGroup, TaskSubtaskShelf, type TaskBlockDragState } from "./components/TaskBlock";
@@ -4129,11 +4129,8 @@ function App() {
   }
 
   function moveTodayCandidateToProjectGroup(taskId: string, projectId: string | undefined) {
-    const current = dataRef.current;
-    if (!current) return;
     const sourceId = resolveOwningTask(taskId)?.id || taskId;
-    const next = moveTodayCandidateToProject(current, sourceId, projectId);
-    if (next !== current) void saveData(next);
+    updateTask(sourceId, { projectId });
   }
 
   function deleteSubtaskById(subtaskId: string) {
