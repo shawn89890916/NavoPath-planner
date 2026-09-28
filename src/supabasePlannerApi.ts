@@ -131,11 +131,18 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
   const cloudFetch: typeof fetch = (input, init) => {
     const inputUrl = input instanceof Request ? input.url : input.toString();
     const requestUrl = new URL(inputUrl);
-    if (!useSameOriginProxy || requestUrl.origin !== upstreamOrigin) return nativeFetch(input, init);
-    requestUrl.protocol = pageUrl.protocol;
-    requestUrl.host = pageUrl.host;
-    requestUrl.pathname = `/api/supabase${requestUrl.pathname}`;
-    const request = input instanceof Request ? new Request(requestUrl, input) : requestUrl;
+    let request: RequestInfo | URL = input;
+    if (useSameOriginProxy && requestUrl.origin === upstreamOrigin) {
+      requestUrl.protocol = pageUrl.protocol;
+      requestUrl.host = pageUrl.host;
+      requestUrl.pathname = `/api/supabase${requestUrl.pathname}`;
+      request = input instanceof Request ? new Request(requestUrl, input) : requestUrl;
+    }
+    if (requestUrl.pathname.includes("/auth/v1/")) {
+      const timeoutSignal = AbortSignal.timeout(CLOUD_REQUEST_TIMEOUT_MS);
+      const signal = init?.signal ? AbortSignal.any([init.signal, timeoutSignal]) : timeoutSignal;
+      return nativeFetch(request, { ...init, signal });
+    }
     return nativeFetch(request, init);
   };
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {

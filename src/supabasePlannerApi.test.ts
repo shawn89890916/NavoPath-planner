@@ -129,11 +129,14 @@ describe("createSupabasePlannerApi", () => {
     createSupabasePlannerApi("https://project.supabase.co", "anon");
     const options = createClientMock.mock.calls[0][2];
     await options.global.fetch("https://project.supabase.co/rest/v1/dayflow_profiles?select=revision");
+    await options.global.fetch("https://project.supabase.co/auth/v1/token?grant_type=refresh_token");
 
-    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     const [requestUrl, requestInit] = fetchMock.mock.calls[0];
     expect(String(requestUrl)).toBe("https://navopath.com/api/supabase/rest/v1/dayflow_profiles?select=revision");
     expect(requestInit).toBeUndefined();
+    expect(String(fetchMock.mock.calls[1][0])).toBe("https://navopath.com/api/supabase/auth/v1/token?grant_type=refresh_token");
+    expect(fetchMock.mock.calls[1][1].signal).toBeInstanceOf(AbortSignal);
     vi.unstubAllGlobals();
   });
 
