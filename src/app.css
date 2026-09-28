@@ -17974,18 +17974,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 }
 
-.df-app.theme-dark .df-mobile-dock {
-
-  color: var(--text-main);
-
-}
-
-.df-app.theme-dark .df-mobile-mode-switch button {
-
-  color: var(--text-main);
-
-}
-
 .df-app.theme-dark .df-mobile-add {
 
   color: var(--text-main);
@@ -25410,8 +25398,6 @@ body.df-timeline-pointer-drag * {
   .df-year-days { grid-auto-rows: minmax(64px, 1fr); padding: 6px; }
   .df-year-day-empty { min-height: 64px; }
   .df-year-day { min-height: 64px; font-size: clamp(22px, 7vw, 31px); }
-
-  #root .df-app.is-year-overview .df-mobile-dock { display: grid; }
 
   #root .df-app .df-task-detail .df-detail-close {
     position: sticky;
@@ -34429,52 +34415,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 
 
-  .df-mobile-dock {
-
-    position: fixed;
-
-    z-index: 70;
-
-    left: 50%;
-
-    bottom: calc(10px + env(safe-area-inset-bottom));
-
-    transform: translateX(-50%);
-
-    width: min(420px, calc(100% - 32px));
-
-    min-height: 58px;
-
-    display: grid;
-
-    grid-template-columns: minmax(0, 1fr) 52px;
-
-    align-items: center;
-
-    gap: 8px;
-
-    padding: 5px 6px 5px 10px;
-
-    border: 0;
-
-    border-radius: 20px;
-
-    background: color-mix(in srgb, var(--surface-main) 88%, transparent);
-
-    color: var(--text-main);
-
-    box-shadow: 0 8px 26px color-mix(in srgb, var(--text-main) 14%, transparent), 0 1px 1px color-mix(in srgb, var(--surface-card) 70%, transparent) inset;
-
-    backdrop-filter: blur(18px) saturate(1.15);
-
-    -webkit-backdrop-filter: blur(18px) saturate(1.15);
-
-    corner-shape: var(--corner-shape, squircle);
-
-  }
-
-
-
   .df-mobile-mode-switch {
 
     display: grid;
@@ -34734,60 +34674,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     top: 0;
   }
 
-  #root .df-app:not(.theme-dark) .df-mobile-dock {
-    background: #fff;
-    color: var(--text-main);
-  }
-
-  #root .df-app:not(.theme-dark) .df-mobile-dock-action {
-    color: var(--text-main);
-  }
-
-  #root .df-app:not(.theme-dark) .df-mobile-mode-switch button {
-    color: var(--text-main);
-  }
-
-  #root .df-app:not(.theme-dark) .df-mobile-mode-switch button.active {
-    color: var(--text-main);
-  }
-
-  #root .df-app .df-mobile-dock-action {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
-    display: grid;
-    place-items: center;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--surface-main);
-    box-shadow: none;
-  }
-
-  #root .df-app .df-mobile-dock-action:hover {
-    background: color-mix(in srgb, var(--surface-main) 16%, transparent);
-  }
-
-  #root .df-app .df-mobile-dock-action:focus-visible {
-    background: color-mix(in srgb, var(--surface-main) 16%, transparent);
-  }
-
-  #root .df-app .df-mobile-dock-action svg {
-    width: 19px;
-    height: 19px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  #root .df-app .df-mobile-dock-spacer {
-    width: 44px;
-    height: 44px;
-  }
-
   #root .df-app .df-mobile-quick-add-fab {
     position: fixed;
     right: 16px;
@@ -34820,12 +34706,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-mobile-quick-add-fab:active {
     transform: translateY(1px);
     box-shadow: none;
-  }
-
-  #root .df-app .df-mobile-mode-switch button.active {
-    color: var(--surface-main);
-    border-color: var(--paper-rule);
-    background: color-mix(in srgb, var(--accent-active) 5%, var(--surface-main));
   }
 
   #root .df-app .df-header {
@@ -34878,7 +34758,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     height: 32px;
   }
 
-  #root .df-app .df-mobile-mode-switch {
+  .df-mobile-dock--viewport .df-mobile-mode-switch {
     height: 44px;
     align-self: center;
     gap: 3px;
@@ -34888,7 +34768,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: transparent;
   }
 
-  #root .df-app .df-mobile-mode-switch button {
+  .df-mobile-dock--viewport .df-mobile-mode-switch button {
     min-height: 44px;
     border: 1px solid transparent;
     border-radius: var(--radius-control);
@@ -34900,48 +34780,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 50%;
     background: transparent;
     box-shadow: none;
-  }
-
-  #root .df-app .df-mobile-dock {
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: auto;
-    min-height: calc(56px + env(safe-area-inset-bottom));
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
-    gap: 4px;
-    padding: 2px 8px calc(2px + env(safe-area-inset-bottom));
-    transform: none;
-    border: 0;
-    border-top: 1px solid var(--paper-rule-strong);
-    border-radius: 0;
-    background: var(--bg-app);
-    color: var(--surface-main);
-    box-shadow: none;
-    backdrop-filter: none;
-    z-index: 30;
-  }
-
-  #root .df-app.theme-dark .df-mobile-dock {
-    background: var(--bg-app);
-    color: var(--text-main);
-    border-top-color: color-mix(in srgb, var(--surface-main) 24%, transparent);
-  }
-
-  #root .df-app.theme-dark .df-mobile-dock-action {
-    color: var(--text-main);
-  }
-
-  #root .df-app.theme-dark .df-mobile-mode-switch button {
-    color: var(--text-main);
-  }
-
-  #root .df-app.theme-dark .df-mobile-mode-switch button.active {
-    color: var(--text-main);
-  }
-
-  #root .df-app.theme-dark .df-mobile-mode-switch {
-    border-inline-color: color-mix(in srgb, var(--surface-main) 24%, transparent);
   }
 
   #root .df-app .df-date-title-compact {
@@ -35095,7 +34933,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
   #root .df-app.is-mobile-sheet-open .df-compact-execute-controls { filter:none; opacity:1; pointer-events:none; }
 
-  #root .df-app.is-mobile-sheet-open .df-mobile-dock { filter:none; opacity:1; pointer-events:none; }
 
   #root .df-app.is-mobile-sheet-open .df-mobile-quick-add-fab { filter:none; opacity:1; pointer-events:none; }
 
@@ -38663,23 +38500,77 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     overflow: hidden;
   }
 
-  #root .df-app:where(.mode-execute, .mode-planning) .df-mobile-dock {
+  .df-mobile-dock--viewport {
     display: grid;
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    transform: none;
+    z-index: 100;
     grid-template-columns: 44px minmax(0, 1fr) 44px;
     width: 100%;
     min-height: calc(56px + env(safe-area-inset-bottom));
     gap: 6px;
     padding: 5px 6px calc(5px + env(safe-area-inset-bottom));
+    border: 0;
+    border-top: 1px solid var(--border-soft);
     border-radius: 0;
     box-sizing: border-box;
+    background: var(--bg-app);
+    color: var(--text-main);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
-  #root .df-app .df-mobile-profile {
+  .df-mobile-dock--viewport.theme-dark {
+    border-top-color: color-mix(in srgb, var(--surface-main) 24%, transparent);
+  }
+
+  .df-mobile-dock--viewport.is-mobile-sheet-open {
+    pointer-events: none;
+  }
+
+  .df-mobile-dock--viewport .df-mobile-dock-action {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-main);
+    box-shadow: none;
+  }
+
+  .df-mobile-dock--viewport .df-mobile-dock-action:hover,
+  .df-mobile-dock--viewport .df-mobile-dock-action:focus-visible {
+    background: color-mix(in srgb, var(--text-main) 8%, transparent);
+  }
+
+  .df-mobile-dock--viewport .df-mobile-dock-action svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .df-mobile-dock--viewport .df-mobile-mode-switch button {
+    color: var(--text-main);
+  }
+
+  .df-mobile-dock--viewport .df-mobile-mode-switch button.active {
+    color: var(--text-main);
+  }
+
+  .df-mobile-dock--viewport .df-mobile-profile {
     position: relative;
     overflow: visible;
     padding: 0;
@@ -38689,13 +38580,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     color: var(--text-main);
   }
 
-  #root .df-app .df-mobile-profile:hover,
-  #root .df-app .df-mobile-profile:focus-visible {
-    background: color-mix(in srgb, var(--accent-active) 8%, transparent);
-  }
-
-  #root .df-app .df-mobile-profile > img,
-  #root .df-app .df-mobile-profile > span:not(.df-proactive-notification-count) {
+  .df-mobile-dock--viewport .df-mobile-profile > img,
+  .df-mobile-dock--viewport .df-mobile-profile > span:not(.df-proactive-notification-count) {
     width: 30px;
     min-width: 30px;
     height: 30px;
@@ -38706,15 +38592,15 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     object-fit: cover;
     background: var(--text-main);
     color: var(--surface-main);
-    font: 700 14px/1 var(--paper-display);
+    font: 700 14px/1 var(--paper-display, Georgia, serif);
   }
 
-  #root .df-app .df-mobile-profile .df-proactive-notification-count {
+  .df-mobile-dock--viewport .df-proactive-notification-count {
+    position: absolute;
     top: -4px;
     right: -4px;
     min-width: 16px;
     height: 16px;
-    line-height: 14px;
   }
 
   #root .df-app .df-settings-shell {

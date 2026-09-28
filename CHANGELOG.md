@@ -3,26 +3,26 @@
 ## 2026-09-28 · 移动端导航与同步修复
 
 ### 修复
-- 移动端工作区底栏抬高到安全区上方，完整显示；执行/规划切换改为低对比度的单组选择样式。
+- 移动端工作区底栏移到应用容器外并固定在视口底边；执行页与规划页共用同一定位规则，安全区留白由底栏内部承接。
 - 手动同步遇到 Supabase JWT 401 时会刷新会话并重试；工作区云端读写设有 15 秒上限，令牌仍被拒绝时会提示重新登录。
 - 手动同步在页面切到后台后仍会继续执行；上次同步时间不再重复显示相同的日期。
 - 今日候选同项目拖动不插入空槽，并在拖动任务块下方提示放置方向；跨项目拖动时以完整细框标出目标项目，归属提示与项目色条右侧对齐。移除拖动卡片下方多余的半透明方框，源任务占位不显示方框，拖动卡片的按钮不描边，勾选框保持垂直居中。
 - 竖屏任务页把快速添加移入顶部工具区，避免悬浮按钮遮住任务；日程页保留加号并与底部导航拉开间距。拖拽提示现在演示长按后自动切到日程并放置任务，支持减少动态效果和记忆关闭状态；日期切换与视图选择控件扩大到 44px。
 - 竖屏触控页面不再因长按普通文字触发文本选择，输入框和可编辑区域仍可选择文字。
-- 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏统一贴合屏幕底边，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
+- 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
 
 ## 2026-09-28 · Mobile navigation and sync fixes
 
 ### Fixed
-- Lifted the mobile workspace dock above the bottom safe area and restyled Execute/Planning as one quiet segmented control.
+- Moved the mobile workspace dock outside the transformed app shell and fixed it to the viewport edge; Execute and Planning share one positioning rule, with the safe area handled inside the dock.
 - Supabase JWT 401 responses trigger a session refresh and retry; workspace cloud reads and writes are capped at 15 seconds, with a sign-in prompt if the token remains rejected.
 - Manual sync continues if the page moves to the background, and identical last-synced timestamps no longer appear twice.
 - Same-project candidate dragging keeps the list still and shows a placement-direction hint below the dragged task; cross-project dragging marks the target project with a complete fine frame and aligns the assignment hint with the right edge of its project-color stripe. The extra translucent frame below the dragged task is removed, the source slot has no visible box, action buttons remain borderless, and the checkbox stays vertically centered.
 - On portrait phones, task quick-add moves into the top toolbar so it no longer covers tasks; Schedule keeps its plus button with more clearance above the dock. The guide demonstrates holding a task, switching to Schedule, and placing it, with reduced-motion and remembered-dismissal support; date and view controls grow to 44px.
 - On portrait touch screens, long-pressing ordinary text no longer selects it; inputs and editable regions remain selectable.
-- On portrait touch screens, the Planning filter clears the top safe area; the Execute and Planning docks share the same screen-edge position, and Execute schedule checkboxes use a smaller visible square while keeping a 44px touch target.
+- On portrait touch screens, the Planning filter clears the top safe area; both docks now sit outside the transformed app shell and use the same viewport-edge rule, and Execute schedule checkboxes use a smaller visible square while keeping a 44px touch target.
 
 ## 2026-09-27 · 今日候选控件微调
 

@@ -61,11 +61,14 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toContain("-webkit-touch-callout: default;");
   });
 
-  it("keeps portrait Planning filter visible, checkbox visuals compact, and the dock on the screen edge", () => {
+  it("keeps portrait Planning filter visible, checkbox visuals compact, and portals the dock to the viewport edge", () => {
     expect(appCss).toContain("top: max(calc(env(safe-area-inset-top) + 4px), 52px);");
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check\s*\{[^}]*width:\s*18px;[^}]*height:\s*18px;/);
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check::before\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/);
-    expect(appCss).toMatch(/\.df-app:where\(\.mode-execute, \.mode-planning\) \.df-mobile-dock\s*\{[^}]*bottom:\s*0;/);
+    expect(main).toContain('createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport');
+    expect(main).toContain('</nav>, document.body)');
+    expect(appCss).toMatch(/\.df-mobile-dock--viewport\s*\{[^}]*position:\s*fixed;[^}]*bottom:\s*0;/);
+    expect(appCss).not.toContain("bottom: calc(10px + env(safe-area-inset-bottom));");
   });
 
   it("dismisses the AI plus menu outside and omits hardware sync", () => {
