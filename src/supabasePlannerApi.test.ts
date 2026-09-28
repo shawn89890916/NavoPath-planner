@@ -70,6 +70,28 @@ beforeEach(() => {
 });
 
 describe("createSupabasePlannerApi", () => {
+  it("refreshes the auth session once after a JWT 401 and retries the profile request", async () => {
+    const user = { id: "user_1", email: "user@example.com" };
+    const maybeSingle = vi.fn()
+      .mockResolvedValueOnce({ data: null, error: { message: "Invalid JWT", status: 401 } })
+      .mockResolvedValueOnce({ data: { revision: 12 }, error: null });
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const auth = {
+      getSession: vi.fn().mockResolvedValue({ data: { session: { user } }, error: null }),
+      refreshSession: vi.fn().mockResolvedValue({ data: { session: { user } }, error: null }),
+      onAuthStateChange: vi.fn(),
+    };
+    createClientMock.mockReturnValue({ auth, from: vi.fn(() => ({ select })) });
+
+    const { createSupabasePlannerApi } = await import("./supabasePlannerApi");
+    const api = createSupabasePlannerApi("https://supabase.test", "anon");
+
+    await expect(api.getRemoteRevision?.()).resolves.toBe(12);
+    expect(auth.refreshSession).toHaveBeenCalledOnce();
+    expect(maybeSingle).toHaveBeenCalledTimes(2);
+  });
+
   it("checks the cloud revision without downloading the workspace", async () => {
     const user = { id: "user_1", email: "user@example.com" };
     const maybeSingle = vi.fn().mockResolvedValue({ data: { revision: 12 }, error: null });
@@ -108,10 +130,10 @@ describe("createSupabasePlannerApi", () => {
     const options = createClientMock.mock.calls[0][2];
     await options.global.fetch("https://project.supabase.co/rest/v1/dayflow_profiles?select=revision");
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.objectContaining({ href: "https://navopath.com/api/supabase/rest/v1/dayflow_profiles?select=revision" }),
-      undefined,
-    );
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [requestUrl, requestInit] = fetchMock.mock.calls[0];
+    expect(String(requestUrl)).toBe("https://navopath.com/api/supabase/rest/v1/dayflow_profiles?select=revision");
+    expect(requestInit).toBeUndefined();
     vi.unstubAllGlobals();
   });
 

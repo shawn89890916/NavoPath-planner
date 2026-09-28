@@ -258,7 +258,7 @@ export class SyncScheduler {
     const wantPush = direction !== "pull" && Boolean(push);
     const wantPull = direction !== "push" && Boolean(pull);
 
-    if (busy?.() || paused?.() || (!wantPush && !wantPull)) {
+    if (busy?.() || (reason !== "manual" && paused?.()) || (!wantPush && !wantPull)) {
       const result: SyncTickResult = { ok: true, syncedAt: startedAt, pushedLocal: false, pulledRemote: false };
       this.options.onTick?.(result);
       return result;

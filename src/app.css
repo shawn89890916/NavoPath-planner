@@ -34819,8 +34819,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
   #root .df-app .df-mobile-mode-switch button.active {
     color: var(--surface-main);
-    border-color: var(--accent-active);
-    background: transparent;
+    border-color: var(--paper-rule);
+    background: color-mix(in srgb, var(--accent-active) 5%, var(--surface-main));
   }
 
   #root .df-app .df-header {
@@ -34876,13 +34876,16 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-mobile-mode-switch {
     height: 44px;
     align-self: center;
-    border-inline: 1px solid var(--paper-rule);
+    gap: 3px;
+    padding: 3px;
     border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
   }
 
   #root .df-app .df-mobile-mode-switch button {
     min-height: 44px;
-    border: 1px solid var(--paper-rule-strong);
+    border: 1px solid transparent;
     border-radius: var(--radius-control);
     background: transparent;
   }
@@ -38575,7 +38578,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
     transform: none;
     grid-template-columns: 44px minmax(0, 1fr) 44px;
     width: 100%;

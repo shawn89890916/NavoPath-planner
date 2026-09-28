@@ -79,6 +79,13 @@ function authErrorMessage(message: string) {
 
 type CloudRequestError = { message?: string; code?: string; status?: number; statusCode?: number };
 
+function isAuthTokenRejected(error: CloudRequestError | string = "") {
+  const message = typeof error === "string" ? error : error.message || "";
+  const code = typeof error === "string" ? "" : error.code || "";
+  const status = typeof error === "string" ? 0 : Number(error.status ?? error.statusCode ?? 0);
+  return status === 401 || /^PGRST30[12]$/i.test(code) || /JWT/i.test(message);
+}
+
 function isRetryableProfileError(error: CloudRequestError | string = "", retryNetworkFailures = false) {
   const message = typeof error === "string" ? error : error.message || "";
   if (/schema cache|Could not query the database|time(?:d )?out|connection pool|temporarily|PGRST/i.test(message)) return true;
@@ -160,6 +167,17 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
   const isCurrentAuth = (userId: string, version: number) =>
     authVersion === version && cachedUser?.id === userId;
 
+  async function refreshSessionAfterAuthRejection() {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error || !data.session) return false;
+      setCachedUser(data.session.user);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   const initialAuthVersion = authVersion;
   void supabase.auth.getSession().then(({ data }) => {
     if (authVersion === initialAuthVersion && cachedUser === undefined) {
@@ -230,10 +248,19 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
 
   async function retryTransientRequest(call: () => any, options: { retryNetworkFailures?: boolean } = {}) {
     let result: any;
+    let authRecoveryAttempted = false;
     const maxAttempts = options.retryNetworkFailures ? 3 : 2;
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       result = await runCloudRequest(call);
-      if (!result.error || !isRetryableProfileError(result.error, options.retryNetworkFailures)) return result;
+      if (!result.error) return result;
+      if (options.retryNetworkFailures && !authRecoveryAttempted && isAuthTokenRejected(result.error)) {
+        authRecoveryAttempted = true;
+        if (await refreshSessionAfterAuthRejection()) {
+          continue;
+        }
+        return result;
+      }
+      if (!isRetryableProfileError(result.error, options.retryNetworkFailures)) return result;
       if (attempt < maxAttempts - 1) await wait(options.retryNetworkFailures ? 300 * (2 ** attempt) : 260);
     }
     return result;

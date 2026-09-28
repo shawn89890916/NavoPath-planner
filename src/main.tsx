@@ -2925,6 +2925,16 @@ function App() {
     return lang === "zh" ? "同步稍后自动重试" : "Sync will retry automatically";
   }
 
+  function manualSyncFailureMessage(error: unknown) {
+    const message = String((error as Error)?.message || error);
+    if (/PGRST30[12]|JWT|401/i.test(message)) {
+      return lang === "zh"
+        ? "云端令牌无效（401），请重新登录。"
+        : "Cloud token rejected (401). Sign in again.";
+    }
+    return t(lang, "sync.failure");
+  }
+
   function maybeShowSyncFailureNotice(kind: "data" | "settings") {
     const retryCount = kind === "data" ? dataSaveRetryCountRef.current : settingsSaveRetryCountRef.current;
     const shown = kind === "data" ? dataSaveNoticeShownRef.current : settingsSaveNoticeShownRef.current;
@@ -3289,7 +3299,7 @@ function App() {
           : await scheduler.runNow();
       if (!silent) {
         if (!result.ok) {
-          showToast(t(lang, "sync.failure"));
+          showToast(manualSyncFailureMessage(result.error));
         } else if (direction === "push") {
           showToast(result.pushedLocal
             ? (lang === "zh" ? "已推送本地数据到云端。" : "Pushed local data to cloud.")
@@ -3306,7 +3316,7 @@ function App() {
       }
       return result.ok;
     } catch (error) {
-      if (!silent) showToast(t(lang, "sync.failure"));
+      if (!silent) showToast(manualSyncFailureMessage(error));
       console.warn("Manual sync failed", error);
       return false;
     } finally {
@@ -14342,7 +14352,7 @@ function SyncSettingsControl({
         <span>
           <strong>{t(lang, "sync.lastSynced")}</strong>
           <small>{lastSyncedLabel}</small>
-          {lastSyncedAbsolute && <small className="df-settings-sync-absolute">{lastSyncedAbsolute}</small>}
+          {lastSyncedAbsolute !== lastSyncedLabel && <small className="df-settings-sync-absolute">{lastSyncedAbsolute}</small>}
         </span>
         <button
           type="button"
