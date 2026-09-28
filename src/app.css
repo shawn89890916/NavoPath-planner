@@ -38562,14 +38562,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     stroke-linejoin: round;
   }
 
-  .df-mobile-dock--viewport .df-mobile-mode-switch button {
-    color: var(--text-main);
-  }
-
-  .df-mobile-dock--viewport .df-mobile-mode-switch button.active {
-    color: var(--text-main);
-  }
-
   .df-mobile-dock--viewport .df-mobile-profile {
     position: relative;
     overflow: visible;
