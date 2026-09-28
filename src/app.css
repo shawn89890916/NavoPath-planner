@@ -26321,9 +26321,25 @@ body.df-timeline-pointer-drag * {
 }
 
 .df-app .df-candidate-list .df-project-group.is-candidate-project-drop {
-  outline: 1px solid var(--accent-active);
-  outline-offset: 3px;
+  position: relative;
   border-radius: var(--paper-radius-soft);
+}
+.df-app .df-candidate-list .df-project-group.is-candidate-project-drop::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  z-index: 1;
+  border: 1px solid var(--accent-active);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Keep the source slot's space stable without leaving a visible ghost card. */
+.df-app .df-candidate-list .df-project-group .df-task-card[data-drag-state="source-placeholder"] {
+  visibility: hidden;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
 }
 
 #root .df-app .df-project-drop-hint {
