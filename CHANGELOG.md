@@ -6,7 +6,7 @@
 - 移动端工作区底栏抬高到安全区上方，完整显示；执行/规划切换改为低对比度的单组选择样式。
 - 手动同步遇到 Supabase JWT 401 时会刷新会话并重试；工作区云端读写设有 15 秒上限，令牌仍被拒绝时会提示重新登录。
 - 手动同步在页面切到后台后仍会继续执行；上次同步时间不再重复显示相同的日期。
-- 今日候选跨项目拖动时，项目组以不影响布局的完整细框标出；源任务的占位保持布局但不再显示方框；归属提示贴在拖动任务块下方并左对齐，带轻微倾斜；拖动卡片的按钮不描边，勾选框保持垂直居中，项目内仍可精确调整顺序。
+- 今日候选同项目拖动不再插入空槽或重复预览层；跨项目拖动时以完整细框标出目标项目，列表保持稳定；归属提示贴在拖动任务块下方，与项目色条右侧对齐并轻微倾斜。源任务占位不显示方框，拖动卡片的按钮不描边，勾选框保持垂直居中。
 
 # NavoPath Changelog
 
@@ -16,7 +16,7 @@
 - Lifted the mobile workspace dock above the bottom safe area and restyled Execute/Planning as one quiet segmented control.
 - Supabase JWT 401 responses trigger a session refresh and retry; workspace cloud reads and writes are capped at 15 seconds, with a sign-in prompt if the token remains rejected.
 - Manual sync continues if the page moves to the background, and identical last-synced timestamps no longer appear twice.
-- When dragging a candidate across projects, a complete fine frame marks the project group without changing layout; the source task keeps its layout slot without a visible box; a quiet, slightly tilted assignment hint sits flush below and aligns left with the dragged task; action buttons remain borderless, the checkbox stays vertically centered, and precise within-project sorting remains available.
+- Same-project candidate dragging no longer inserts an empty slot or duplicate preview layer; cross-project dragging marks the target project with a complete fine frame while the list stays still; the quiet, slightly tilted assignment hint sits below the dragged task and aligns with the right edge of its project-color stripe. The source slot has no visible box, action buttons remain borderless, and the checkbox stays vertically centered.
 
 ## 2026-09-27 · 今日候选控件微调
 

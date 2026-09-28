@@ -26320,20 +26320,6 @@ body.df-timeline-pointer-drag * {
   margin-bottom: 0;
 }
 
-.df-app .df-candidate-list .df-project-group.is-candidate-project-drop {
-  position: relative;
-  border-radius: var(--paper-radius-soft);
-}
-.df-app .df-candidate-list .df-project-group.is-candidate-project-drop::after {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  z-index: 1;
-  border: 1px solid var(--accent-active);
-  border-radius: inherit;
-  pointer-events: none;
-}
-
 /* Keep the source slot's space stable without leaving a visible ghost card. */
 .df-app .df-candidate-list .df-project-group .df-task-card[data-drag-state="source-placeholder"] {
   visibility: hidden;
@@ -26342,10 +26328,19 @@ body.df-timeline-pointer-drag * {
   box-shadow: none;
 }
 
+#root .df-app .df-project-drop-outline {
+  position: fixed;
+  z-index: 99998;
+  box-sizing: border-box;
+  border: 1px solid var(--accent-active);
+  border-radius: var(--paper-radius-soft);
+  pointer-events: none;
+}
+
 #root .df-app .df-project-drop-hint {
   position: absolute;
   top: calc(100% + 3.5px);
-  left: 0;
+  left: var(--task-project-accent-size, 4px);
   z-index: 1;
   padding: 3px 7px;
   border: 1px solid var(--paper-rule-strong);
@@ -33251,21 +33246,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 #root .df-app .df-candidate-panel header > * {
   flex-shrink: 0;
-}
-
-/* Candidate sorting reserves a complete row at the intended destination.
-   The source is represented by the floating white TaskBlock, so no second
-   gray ghost remains in the list. */
-#root .df-app.mode-execute .df-candidate-task-row.is-candidate-drop {
-  flex-wrap: wrap;
-  align-items: stretch;
-}
-
-#root .df-app.mode-execute .df-candidate-task-row .df-reorder-preview-slot {
-  flex: 0 0 100%;
-  width: 100%;
-  min-height: var(--reorder-preview-height, 56px);
-  background: #fff;
 }
 
 /* Every reordering surface uses one quiet, four-sided empty slot.  It is a
