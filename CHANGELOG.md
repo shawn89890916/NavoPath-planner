@@ -7,6 +7,7 @@
 - 手动同步遇到 Supabase JWT 401 时会刷新会话并重试；工作区云端读写设有 15 秒上限，令牌仍被拒绝时会提示重新登录。
 - 手动同步在页面切到后台后仍会继续执行；上次同步时间不再重复显示相同的日期。
 - 今日候选同项目拖动不插入空槽，并在拖动任务块下方提示放置方向；跨项目拖动时以完整细框标出目标项目，归属提示与项目色条右侧对齐。移除拖动卡片下方多余的半透明方框，源任务占位不显示方框，拖动卡片的按钮不描边，勾选框保持垂直居中。
+- 竖屏任务页把快速添加移入顶部工具区，避免悬浮按钮遮住任务；日程页保留加号并与底部导航拉开间距。拖拽提示现在演示长按后自动切到日程并放置任务，支持减少动态效果和记忆关闭状态；日期切换与视图选择控件扩大到 44px。
 
 # NavoPath Changelog
 
@@ -17,6 +18,7 @@
 - Supabase JWT 401 responses trigger a session refresh and retry; workspace cloud reads and writes are capped at 15 seconds, with a sign-in prompt if the token remains rejected.
 - Manual sync continues if the page moves to the background, and identical last-synced timestamps no longer appear twice.
 - Same-project candidate dragging keeps the list still and shows a placement-direction hint below the dragged task; cross-project dragging marks the target project with a complete fine frame and aligns the assignment hint with the right edge of its project-color stripe. The extra translucent frame below the dragged task is removed, the source slot has no visible box, action buttons remain borderless, and the checkbox stays vertically centered.
+- On portrait phones, task quick-add moves into the top toolbar so it no longer covers tasks; Schedule keeps its plus button with more clearance above the dock. The guide demonstrates holding a task, switching to Schedule, and placing it, with reduced-motion and remembered-dismissal support; date and view controls grow to 44px.
 
 ## 2026-09-27 · 今日候选控件微调
 

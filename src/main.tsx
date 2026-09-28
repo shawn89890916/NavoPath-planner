@@ -8962,6 +8962,12 @@ function App() {
             <CandidatePanelHeader
               title={term(lang, "todayCandidates")}
               actions={<>
+                {compactLayout && <IconButton
+                  className="df-candidate-quick-add-top"
+                  icon={<UiPlusIcon size={20} />}
+                  label={t(lang, "candidate.add")}
+                  onClick={() => { setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
+                />}
                 {(timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
                   <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }} style={{ fontSize: "14px", lineHeight: 1, padding: "0 2px" }}>«</button>
                 )}
@@ -9013,22 +9019,25 @@ function App() {
               </div>
             )}
             {compactLayout && compactExecuteView === "tasks" && scheduleGuideOpen && visibleCandidates.length > 0 && (
-              <aside className="df-schedule-drop-guide" aria-label={lang === "zh" ? "将任务拖入时间轴的提示" : "Drag tasks into the timeline hint"}>
-                <div className="df-schedule-drop-guide-source" aria-hidden="true">
-                  <span className="df-schedule-drop-guide-check" />
-                  <strong>{lang === "zh" ? "探索 NavoPath" : "Explore NavoPath"}</strong>
-                  <small>{lang === "zh" ? "15 分钟" : "15 min"}</small>
+              <aside className="df-schedule-drop-guide" aria-label={lang === "zh" ? "手机端拖拽排程说明" : "Mobile drag-to-schedule guide"}>
+                <div className="df-schedule-drop-guide-content">
+                  <p className="df-schedule-drop-guide-copy">
+                    <strong>{lang === "zh" ? "长按任务，松手后完成排程" : "Hold a task, then release to schedule"}</strong>
+                    <span>{lang === "zh" ? "页面会自动切到日程" : "The view switches to Schedule automatically"}</span>
+                  </p>
+                  <div className="df-schedule-drop-guide-demo" aria-hidden="true">
+                    <div className="df-schedule-drop-guide-source">
+                      <small>{lang === "zh" ? "任务" : "TASK"}</small>
+                      <strong>{lang === "zh" ? "探索 NavoPath" : "Explore NavoPath"}</strong>
+                    </div>
+                    <div className="df-schedule-drop-guide-route"><span /></div>
+                    <div className="df-schedule-drop-guide-target">
+                      <small>{lang === "zh" ? "日程 · 09:30" : "SCHEDULE · 09:30"}</small>
+                      <i />
+                    </div>
+                  </div>
                 </div>
-                <svg viewBox="0 0 90 52" aria-hidden="true">
-                  <path d="M3 17C24 7 37 8 50 22s20 18 34 13" />
-                  <path d="m78 31 6 4-7 2" />
-                  <circle cx="50" cy="22" r="2.5" />
-                </svg>
-                <div className="df-schedule-drop-guide-target" aria-hidden="true">
-                  <span>09:30</span><i /><i /><i />
-                </div>
-                <span className="df-schedule-drop-guide-copy">{lang === "zh" ? "拖到日程" : "Drag to Schedule"}</span>
-                  <CloseButton label={lang === "zh" ? "关闭提示" : "Dismiss hint"} onClick={() => { dismissGuide("schedule"); setScheduleGuideOpen(false); }} />
+                <CloseButton label={lang === "zh" ? "关闭提示" : "Dismiss hint"} onClick={() => { dismissGuide("schedule"); setScheduleGuideOpen(false); }} />
               </aside>
             )}
             {(dailyCapacityRisk.level !== "comfortable" || schedulePreviews.length > 0 || scheduleUnscheduled.length > 0) && (
@@ -10150,7 +10159,7 @@ function App() {
 
       {!compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
       {!compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
-      {compactLayout && !drawerOpen && <button
+      {compactLayout && !drawerOpen && (mode !== "execute" || compactExecuteView === "schedule") && <button
         type="button"
         className="df-mobile-quick-add-fab"
         aria-label={lang === "zh" ? "快速添加任务" : "Quick add task"}

@@ -34791,7 +34791,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-mobile-quick-add-fab {
     position: fixed;
     right: 16px;
-    bottom: calc(68px + env(safe-area-inset-bottom));
+    bottom: calc(80px + env(safe-area-inset-bottom));
     z-index: 31;
     display: grid;
     place-items: center;
@@ -35109,7 +35109,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     display: flex;
     align-items: center;
     gap: 0;
-    padding: 3px 2px;
+    padding: 0;
     border: 1px solid var(--paper-rule);
     border-radius: 7px;
     background: var(--surface-main);
@@ -35251,9 +35251,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 22px;
-    height: 28px;
-    padding: 0 2px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
     border: 0;
     border-radius: 4px;
     background: transparent;
@@ -35267,9 +35269,12 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 22px;
-    height: 28px;
-    padding: 0 2px;
+    position: relative;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
     border: 0;
     border-radius: 4px;
     background: transparent;
@@ -35277,6 +35282,14 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     color: var(--text-main);
     font: 650 10px/1 var(--paper-sans); gap: 2px; corner-shape: var(--corner-shape, squircle); }
   #root .df-app.mode-execute .df-compact-view-trigger svg { width: 11px; height: 11px; }
+  #root .df-app.mode-execute .df-compact-view-trigger select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
 
   #root .df-app.mode-execute .df-candidate-panel > .df-panel-title {
     position: absolute;
@@ -35339,10 +35352,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-candidate-panel .df-candidate-quick-add-top {
     display: grid;
     place-items: center;
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
+    width: 46px;
+    min-width: 46px;
+    height: 46px;
+    min-height: 46px;
     padding: 0;
     border: 1px solid color-mix(in srgb, var(--accent-active) 48%, var(--paper-rule-strong));
     border-radius: 50%;
@@ -35481,6 +35494,13 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     font: 650 12px/1 var(--paper-sans);
   }
 
+  @media (max-width: 374px) {
+    #root .df-app.mode-execute .df-compact-date-display {
+      gap: 2px;
+      padding-inline: 0;
+    }
+  }
+
   #root .df-app .df-timeline-daily > .df-date-title {
     display: none;
   }
@@ -35582,92 +35602,113 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-schedule-drop-guide {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 76px 58px 44px;
+    grid-template-columns: minmax(0, 1fr) 44px;
     align-items: center;
-    min-height: 68px;
+    min-height: 88px;
     margin: 0 4px 8px;
-    padding: 7px 4px 7px 8px;
-    border: 1px dashed color-mix(in srgb, var(--accent-active) 28%, var(--paper-rule));
+    padding: 7px 4px 7px 10px;
+    border: 1px solid var(--paper-rule);
     border-radius: 8px;
-    color: color-mix(in srgb, var(--accent-active) 56%, var(--text-muted));
-    background: transparent;
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--surface-main) 96%, var(--accent-active) 4%);
     corner-shape: var(--corner-shape, squircle);
   }
 
-  #root .df-app .df-schedule-drop-guide > svg {
-    width: 76px;
-    height: 52px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.35;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  #root .df-app .df-schedule-drop-guide-source {
+  #root .df-app .df-schedule-drop-guide-content {
     display: grid;
-    grid-template-columns: 18px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 6px;
     min-width: 0;
-    height: 42px;
-    padding: 0 8px;
-    border: 1px solid color-mix(in srgb, var(--accent-active) 35%, var(--paper-rule));
-    border-radius: 6px;
-    background: color-mix(in srgb, var(--surface-main) 92%, var(--accent-active) 8%);
+    gap: 6px;
+  }
+
+  #root .df-app .df-schedule-drop-guide-copy {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+  }
+
+  #root .df-app .df-schedule-drop-guide-copy strong {
+    color: var(--text-main);
+    font: 650 10px/1.3 var(--paper-sans);
+  }
+
+  #root .df-app .df-schedule-drop-guide-copy span {
+    color: var(--text-muted);
+    font: 500 9px/1.3 var(--paper-sans);
+  }
+
+  #root .df-app .df-schedule-drop-guide-demo {
+    display: grid;
+    grid-template-columns: minmax(82px, .95fr) minmax(42px, 1fr) minmax(86px, .95fr);
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  #root .df-app .df-schedule-drop-guide-source,
+  #root .df-app .df-schedule-drop-guide-target {
+    display: grid;
+    align-content: center;
+    gap: 3px;
+    min-width: 0;
+    height: 30px;
+    padding: 0 7px;
+    border: 1px solid var(--paper-rule-strong);
+    border-radius: 5px;
+    background: var(--surface-main);
     corner-shape: var(--corner-shape, squircle);
   }
 
-  #root .df-app .df-schedule-drop-guide-check {
-    width: 14px;
-    height: 14px;
-    border: 1.5px solid currentColor;
-    border-radius: 4px;
-    corner-shape: var(--corner-shape, squircle);
+  #root .df-app .df-schedule-drop-guide-source small,
+  #root .df-app .df-schedule-drop-guide-target small {
+    color: var(--text-muted);
+    font: 600 7px/1 var(--paper-mono);
   }
 
   #root .df-app .df-schedule-drop-guide-source strong {
     overflow: hidden;
     color: var(--text-main);
-    font: 650 12px/1.2 var(--paper-sans);
+    font: 650 8px/1 var(--paper-sans);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  #root .df-app .df-schedule-drop-guide-source small {
-    color: var(--text-muted);
-    font: 600 9px/1 var(--paper-mono);
+  #root .df-app .df-schedule-drop-guide-route {
+    position: relative;
+    height: 1px;
+    min-width: 0;
+    background: var(--paper-rule-strong);
   }
 
-  #root .df-app .df-schedule-drop-guide-target {
-    display: grid;
-    grid-template-columns: 24px 1fr;
-    grid-template-rows: repeat(3, 1fr);
-    column-gap: 5px;
-    height: 40px;
-    padding: 4px 0;
-    border-left: 1px solid color-mix(in srgb, var(--accent-active) 40%, var(--paper-rule));
+  #root .df-app .df-schedule-drop-guide-route::after {
+    content: "";
+    position: absolute;
+    top: -3px;
+    right: -1px;
+    width: 6px;
+    height: 6px;
+    border-top: 1px solid var(--text-muted);
+    border-right: 1px solid var(--text-muted);
+    transform: rotate(45deg);
   }
 
-  #root .df-app .df-schedule-drop-guide-target span {
-    grid-row: 1 / -1;
-    align-self: center;
-    color: var(--text-muted);
-    font: 600 8px/1 var(--paper-mono);
+  #root .df-app .df-schedule-drop-guide-route span {
+    position: absolute;
+    z-index: 1;
+    top: -5px;
+    left: 0;
+    width: 11px;
+    height: 11px;
+    border: 1px solid var(--accent-active);
+    border-radius: 3px;
+    background: var(--surface-main);
+    animation: dfScheduleGuideMove 2.6s cubic-bezier(.2, 0, 0, 1) 1 both;
+    corner-shape: var(--corner-shape, squircle);
   }
 
   #root .df-app .df-schedule-drop-guide-target i {
-    align-self: center;
     height: 1px;
-    background: color-mix(in srgb, var(--accent-active) 38%, var(--paper-rule));
-  }
-
-  #root .df-app .df-schedule-drop-guide-copy {
-    position: absolute;
-    right: 49px;
-    bottom: 4px;
-    color: var(--text-muted);
-    font: 600 9px/1 var(--paper-sans);
+    background: var(--paper-rule-strong);
+    animation: dfScheduleGuideSlot 2.6s ease-out 1 both;
   }
 
   #root .df-app .df-schedule-drop-guide > .ui-icon-button--close {
@@ -35685,6 +35726,28 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-schedule-drop-guide > .ui-icon-button--close:hover {
     border-color: var(--accent-active);
     color: var(--accent-active);
+  }
+
+  @keyframes dfScheduleGuideMove {
+    0%, 12% { left: 0; }
+    74%, 100% { left: calc(100% - 11px); }
+  }
+
+  @keyframes dfScheduleGuideSlot {
+    0%, 72% { background: var(--paper-rule-strong); }
+    86%, 100% { background: var(--accent-active); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #root .df-app .df-schedule-drop-guide-route span {
+      left: calc(100% - 11px);
+      animation: none;
+    }
+
+    #root .df-app .df-schedule-drop-guide-target i {
+      background: var(--accent-active);
+      animation: none;
+    }
   }
 
   #root .df-app .df-task-drag-layer {
