@@ -6,7 +6,7 @@
 - 移动端工作区底栏抬高到安全区上方，完整显示；执行/规划切换改为低对比度的单组选择样式。
 - 手动同步遇到 Supabase JWT 401 时会刷新会话并重试；工作区云端读写设有 15 秒上限，令牌仍被拒绝时会提示重新登录。
 - 手动同步在页面切到后台后仍会继续执行；上次同步时间不再重复显示相同的日期。
-- 今日候选按项目分类时，跨项目拖动以整组作为归属目标；项目内仍可精确调整顺序。
+- 今日候选跨项目拖动时，项目组描边环绕完整区域；归属提示显示在悬停任务块下方，项目内仍可精确调整顺序。
 
 # NavoPath Changelog
 
@@ -16,7 +16,7 @@
 - Lifted the mobile workspace dock above the bottom safe area and restyled Execute/Planning as one quiet segmented control.
 - Supabase JWT 401 responses trigger a session refresh and retry; workspace cloud reads and writes are capped at 15 seconds, with a sign-in prompt if the token remains rejected.
 - Manual sync continues if the page moves to the background, and identical last-synced timestamps no longer appear twice.
-- When Today's Candidates are grouped by project, cross-project dragging assigns the project as a whole; tasks can still be precisely reordered within a project.
+- When dragging a candidate across projects, the outline frames the full project group and the assignment hint sits below the hovered task; precise within-project sorting remains available.
 
 ## 2026-09-27 · 今日候选控件微调
 
