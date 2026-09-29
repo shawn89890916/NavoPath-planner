@@ -62,7 +62,7 @@ describe("portrait interaction contracts", () => {
   });
 
   it("keeps portrait Planning filter visible, checkbox visuals compact, and portals the dock to the viewport edge", () => {
-    expect(appCss).toContain("top: max(calc(env(safe-area-inset-top) + 8px), 52px);");
+    expect(appCss).toContain("top: max(calc(env(safe-area-inset-top) + 6px), 6px);");
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check\s*\{[^}]*width:\s*18px;[^}]*height:\s*18px;/);
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check::before\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/);
     expect(main).toContain('createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport');
@@ -143,9 +143,33 @@ describe("portrait interaction contracts", () => {
     expect(main).toContain('window.matchMedia("(orientation: portrait)")');
     expect(main).toContain("window.innerHeight / 3 - containerTop");
     expect(main).toContain("targetTop - timelineFocusViewportOffset(container)");
+    expect(main).toContain("alignAfterLayoutSettles");
     expect(main.slice(previewStart, previewEnd)).not.toContain("setPendingTimelineFocus");
     expect(main).toContain("preserveTimelineViewportOnNextDataChange();\n    applyCandidateTimeSettings");
     expect(main).toContain("focusTimeline: false");
+  });
+
+  it("keeps the now action beside All Day and animates the return in both orientations", () => {
+    expect(main).toContain('{showBackToNow && <button className="df-back-to-now"');
+    expect(main).toContain("回到现在");
+    expect(main).toContain('behavior: "smooth"');
+    expect(main).toContain("setNowLineReturnPulse(true)");
+    expect(main).toContain('is-return-highlighted');
+    expect(appCss).toContain("@keyframes dfNowReturnPulse");
+    expect(appCss).toContain("prefers-reduced-motion: reduce");
+  });
+
+  it("uses a bottom-right quick-add on every compact Execute and Planning view", () => {
+    expect(main).toContain("{compactLayout && !drawerOpen && !utilityPanel && !aiOpen && <button");
+    expect(main).not.toContain('(mode !== "execute" || compactExecuteView === "schedule") && <button');
+    expect(appCss).toContain("bottom: calc(96px + env(safe-area-inset-bottom));");
+  });
+
+  it("awaits profile-name persistence and scrolls the profile with Settings home", () => {
+    expect(main).toContain("onSaveProfileName={async (name) => { await saveSettings({ displayName: name }); await flushPendingSettings({ urgent: true }); }}");
+    expect(main.indexOf('<div className="df-settings-home">')).toBeLessThan(main.indexOf('className="df-settings-profile-hero"'));
+    expect(main).toContain('utilityPanel !== "settings"');
+    expect(appCss).toContain(".df-settings-shell:not(.df-settings-detail-shell)");
   });
 
   it("keeps candidate suggestions inside the dates visible in the current timeline view", () => {
@@ -207,7 +231,7 @@ describe("portrait interaction contracts", () => {
 describe("portrait timeline and Planning control contracts", () => {
   it("keeps task action buttons borderless and the Planning filter at the portrait top right", () => {
     expect(appCss).toMatch(/\.df-plan-task-node \.df-task-node-actions \.df-tree-icon-button\s*\{[^}]*border:\s*0;/);
-    expect(appCss).toContain("top: max(calc(env(safe-area-inset-top) + 8px), 52px);");
+    expect(appCss).toContain("top: max(calc(env(safe-area-inset-top) + 6px), 6px);");
     expect(appCss).toContain("width: 44px;");
   });
 });

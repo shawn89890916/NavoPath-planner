@@ -1814,6 +1814,11 @@ function App() {
   const lastTimelineScrollRef = useRef<{ top: number; left: number }>({ top: 0, left: 0 });
   const previousTimelineDataRef = useRef(data);
   const [nowInTimelineViewport, setNowInTimelineViewport] = useState(true);
+  const [nowLineReturnPulse, setNowLineReturnPulse] = useState(false);
+  const nowLineReturnPulseTimerRef = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (nowLineReturnPulseTimerRef.current !== null) window.clearTimeout(nowLineReturnPulseTimerRef.current);
+  }, []);
   useEffect(() => {
     const element = timelineRef.current;
     if (!element) return;
@@ -2711,6 +2716,7 @@ function App() {
     }
     let observer: ResizeObserver | null = null;
     let settled = false;
+    let stableAlignTimer: number | null = null;
     const alignTimeline = () => {
       const container = timelineRef.current;
       if (!container || container.clientHeight <= 0 || container.scrollHeight <= container.clientHeight) return false;
@@ -2735,16 +2741,28 @@ function App() {
       observer?.disconnect();
       return true;
     };
+    const alignAfterLayoutSettles = () => {
+      const container = timelineRef.current;
+      if (!container || !alignTimeline()) return false;
+      const alignedScrollTop = container.scrollTop;
+      stableAlignTimer = window.setTimeout(() => {
+        const currentContainer = timelineRef.current;
+        if (!currentContainer || Math.abs(currentContainer.scrollTop - alignedScrollTop) > 3) return;
+        alignTimeline();
+      }, 260);
+      return true;
+    };
     const frame = window.requestAnimationFrame(() => {
-      if (alignTimeline()) return;
+      if (alignAfterLayoutSettles()) return;
       const container = timelineRef.current;
       if (!container) return;
-      observer = new ResizeObserver(() => { if (!settled) alignTimeline(); });
+      observer = new ResizeObserver(() => { if (!settled) alignAfterLayoutSettles(); });
       observer.observe(container);
       if (timelineCanvasRef.current) observer.observe(timelineCanvasRef.current);
     });
     return () => {
       window.cancelAnimationFrame(frame);
+      if (stableAlignTimer !== null) window.clearTimeout(stableAlignTimer);
       observer?.disconnect();
     };
   }, [mode, data, selectedDate, timelineView, pendingTimelineFocus, dayStartHour, settings?.continuousCrossDayScroll, timelineSlotHeight]);
@@ -4434,6 +4452,16 @@ function App() {
     }, 5000);
   }
 
+  function showToastWithAction(message: string, actionLabel: string, onAction: () => void) {
+    setToast(message);
+    setToastAction({ label: actionLabel, onClick: () => { onAction(); dismissToast(); } });
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast("");
+      setToastAction(null);
+    }, 5000);
+  }
+
   function dismissToast() {
     setToast("");
     setToastAction(null);
@@ -5150,6 +5178,67 @@ function App() {
       if (!hasScheduleConflict(today, start, end)) return start;
     }
     return minutesToTime(Math.max(TIMELINE_START * 60, latestStart));
+  }
+
+  function quickRescheduleTask(taskId: string, date: string, recordId?: string) {
+    const current = dataRef.current;
+    const task = current?.tasks.find((item) => item.id === taskId);
+    if (!current || !task) return;
+    const record = (task.timelineRecords || []).find((item) => item.id === recordId)
+      || (task.timelineRecords || []).find((item) => item.executionStatus === "scheduled");
+    const duration = record ? timelineRecordDurationMinutes(record) : taskDuration(task);
+    const earliest = Math.ceil((dayStartHour * 60) / SLOT_MINUTES) * SLOT_MINUTES;
+    const latestStart = TIMELINE_END * 60 - duration;
+    let startTime = "";
+    for (let cursor = earliest; cursor <= latestStart; cursor += SLOT_MINUTES) {
+      const candidate = minutesToTime(cursor);
+      if (!hasScheduleConflict(date, candidate, minutesToTime(cursor + duration), record?.id || taskId)) {
+        startTime = candidate;
+        break;
+      }
+    }
+    if (!startTime) {
+      const dateLabel = date === addDays(today, 1) ? (lang === "zh" ? "明天" : "tomorrow") : shortDate(date);
+      showToast(lang === "zh" ? `${dateLabel}没有足够的空档安排这项任务` : `There is no open slot on ${dateLabel} long enough for this task`);
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const nextTasks = current.tasks.map((item) => {
+      if (item.id !== task.id) return item;
+      const records = item.timelineRecords || [];
+      const target = records.find((entry) => entry.id === record?.id);
+      return {
+        ...item,
+        completed: false,
+        plannedForDate: date,
+        executionLane: undefined,
+        scheduledDate: undefined,
+        scheduledStart: undefined,
+        scheduledEnd: undefined,
+        executionStatus: undefined,
+        timelineRecords: target
+          ? records.map((entry) => entry.id === target.id
+              ? { ...rescheduleTimelineRecord(entry, date, startTime, duration), executionStatus: "scheduled" as const }
+              : entry)
+          : [...records.filter((entry) => entry.executionStatus !== "scheduled"), createScheduledRecord(item, date, startTime, duration)],
+        updatedAt: now,
+      };
+    });
+    void saveData({ ...current, tasks: nextTasks });
+    const dateLabel = date === addDays(today, 1) ? (lang === "zh" ? "明天" : "tomorrow") : shortDate(date);
+    showToastWithAction(
+      lang === "zh" ? `已安排到${dateLabel} ${startTime}` : `Scheduled for ${dateLabel} at ${startTime}`,
+      lang === "zh" ? "查看日程" : "View schedule",
+      () => {
+        setModeState("execute");
+        setCompactExecuteView("schedule");
+        setSelectedDate(date);
+        setVisibleTimelineDate(date);
+        closeTaskDrawer();
+        requestTimelineFocus({ date, startTime, taskId, source: "schedule", behavior: "smooth" });
+      },
+    );
   }
 
   // Show scrollbar only when actually scrolling
@@ -8513,7 +8602,13 @@ function App() {
     setCompactExecuteView("schedule");
     setMobileDatePickerOpen(false);
     setTimelineView("daily");
-    setPendingTimelineFocus({ date: nowDate, startTime: nowTime, source: "schedule" });
+    setPendingTimelineFocus({ date: nowDate, startTime: nowTime, source: "schedule", behavior: "smooth" });
+    if (nowLineReturnPulseTimerRef.current !== null) window.clearTimeout(nowLineReturnPulseTimerRef.current);
+    setNowLineReturnPulse(true);
+    nowLineReturnPulseTimerRef.current = window.setTimeout(() => {
+      setNowLineReturnPulse(false);
+      nowLineReturnPulseTimerRef.current = null;
+    }, 1400);
   }
 
   function openSettingsSection(section: SettingsTargetInput) {
@@ -9234,12 +9329,6 @@ function App() {
                     </svg>
                   </button>
                 )}
-                {showBackToNow && (
-                  <button className="df-back-to-now" type="button" onClick={goToNow} title={lang === "zh" ? "回到现在" : "Back to now"} aria-label={lang === "zh" ? "回到现在" : "Back to now"}>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></svg>
-                    <span>{lang === "zh" ? "现在" : "Now"}</span>
-                  </button>
-                )}
                 {(timelineView === "3day" || timelineView === "weekly") ? (() => {
                   const threeDates = getVisibleDays(timelineView === "weekly" ? "weekly" : "3day", timelineWindowAnchorDate);
                   const weekdayShort = lang === "zh" ? ["周日", "周一", "周二", "周三", "周四", "周五", "周六"] : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -9629,7 +9718,7 @@ function App() {
                                   const todayIdx = continuousTimelineEnabled ? ((todayOffset % timelineColumnCount) + timelineColumnCount) % timelineColumnCount : threeDates.indexOf(today);
                                   if (todayIdx === -1) return null;
                                   const now = new Date();
-                                  return <NowLine extraStyle={{ left: todayIdx * multiColWidth, width: multiColWidth, top: continuousTimelineEnabled ? continuousTimedTop(today, `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`) : undefined }} lang={lang} dayStartHour={dayStartHour} hourHeight={timelineHourHeight} />;
+                                  return <NowLine highlighted={nowLineReturnPulse} extraStyle={{ left: todayIdx * multiColWidth, width: multiColWidth, top: continuousTimelineEnabled ? continuousTimedTop(today, `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`) : undefined }} lang={lang} dayStartHour={dayStartHour} hourHeight={timelineHourHeight} />;
                                 })()}
                                 {/* Empty state */}
                                 {multiDayScheduledTasks.length === 0 && !drag && <div className="df-timeline-empty small"><div className="blob-accent" />--</div>}
@@ -9869,6 +9958,10 @@ function App() {
                       }}
                     >
                       <span className="df-timeline-allday-label">{t(lang, "timeline.allDay")}</span>
+                      {showBackToNow && <button className="df-back-to-now" type="button" onClick={goToNow} title={lang === "zh" ? "回到现在" : "Back to now"} aria-label={lang === "zh" ? "回到现在" : "Back to now"}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></svg>
+                        <span>{lang === "zh" ? "回到现在" : "Back to now"}</span>
+                      </button>}
                       <div className="df-timeline-allday-content"
                         onClick={(event) => {
                           if (drawerOpen || drag || resizePreview || autoScheduleState === "generating") return;
@@ -10044,7 +10137,7 @@ function App() {
                             range is the 7-day vertical canvas. Position uses `dayStartHour`
                             in non-continuous mode (via NowLine's internal timeBlockTop) and
                             the continuous absolute coordinate in continuous mode. */}
-                        {continuousTimelineDates.includes(today) && (() => { const now = new Date(); return <NowLine lang={lang} dayStartHour={dayStartHour} hourHeight={timelineHourHeight} extraStyle={{ top: continuousTimelineEnabled ? continuousTimedTop(today, `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`) : undefined }} />; })()}
+                        {continuousTimelineDates.includes(today) && (() => { const now = new Date(); return <NowLine highlighted={nowLineReturnPulse} lang={lang} dayStartHour={dayStartHour} hourHeight={timelineHourHeight} extraStyle={{ top: continuousTimelineEnabled ? continuousTimedTop(today, `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`) : undefined }} />; })()}
                         {hoverSlot && drag && !drag.outsideTimeline && <SnappedTimelineDragBlock task={draggedTask} startTime={hoverSlot} duration={drag.duration} projectName={draggedTask ? projectName(draggedTask) : ""} projects={projects} viewMode="daily" lang={lang} dayStartHour={dayStartHour} hourHeight={timelineHourHeight} extraStyle={continuousTimelineEnabled ? { top: continuousTimedTop(dragTargetDateRef.current || timelineWindowAnchorDate, hoverSlot) } : undefined} />}
                         {placementPreviewTask && placementPreview && placementChoices.filter((choice) => continuousTimelineDates.includes(choice.date)).map((choice) => (
                           <PreviewBlock
@@ -10148,7 +10241,7 @@ function App() {
         />
       )}
 
-      {compactLayout && !drawerOpen && (
+      {compactLayout && !drawerOpen && utilityPanel !== "settings" && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, mode)} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {!settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
@@ -10166,7 +10259,7 @@ function App() {
 
       {!compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
       {!compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
-      {compactLayout && !drawerOpen && (mode !== "execute" || compactExecuteView === "schedule") && <button
+      {compactLayout && !drawerOpen && !utilityPanel && !aiOpen && <button
         type="button"
         className="df-mobile-quick-add-fab"
         aria-label={lang === "zh" ? "快速添加任务" : "Quick add task"}
@@ -10175,10 +10268,10 @@ function App() {
       ><UiPlusIcon size={20} /></button>}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
+      {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
       {aiOpen && <AiPanel docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />}
       <CommandPalette open={commandOpen} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
-      {utilityPanel && settings && <UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} />}
+      {utilityPanel && settings && <UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfileName={async (name) => { await saveSettings({ displayName: name }); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} />}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
       {focusOverlayMode && (
         <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: focusProject.color } as React.CSSProperties : undefined}>
@@ -12791,7 +12884,7 @@ function AllDayBlock({ task, dragging, projectName, projects, onEdit, onToggleDo
   );
 }
 
-function NowLine({ extraStyle, dayStartHour = 0, hourHeight = HOUR_HEIGHT }: { extraStyle?: CSSProperties; lang?: Language; dayStartHour?: number; hourHeight?: number }) {
+function NowLine({ extraStyle, dayStartHour = 0, hourHeight = HOUR_HEIGHT, highlighted = false }: { extraStyle?: CSSProperties; lang?: Language; dayStartHour?: number; hourHeight?: number; highlighted?: boolean }) {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60000);
@@ -12806,11 +12899,11 @@ function NowLine({ extraStyle, dayStartHour = 0, hourHeight = HOUR_HEIGHT }: { e
   // top is used.
   const mergedStyle: CSSProperties = { ...extraStyle };
   if (mergedStyle.top === undefined) mergedStyle.top = top;
-  return <div className="df-now-line" style={mergedStyle} />;
+  return <div className={`df-now-line${highlighted ? " is-return-highlighted" : ""}`} style={mergedStyle} />;
 }
 
 function EditDrawer(props: {
-  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; event?: CalendarEvent; today: string; onClose: () => void; onSave: () => void; onDelete: () => void; onCopy: () => void; onConvertToEvent: () => void; onConvertToTask: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
+  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; event?: CalendarEvent; today: string; onClose: () => void; onSave: () => void; onDelete: () => void; onCopy: () => void; onConvertToEvent: () => void; onConvertToTask: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => void; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
   editingRecordId?: string; setEditingRecordId?: (id: string | undefined) => void; editingOccurrence?: EditingOccurrence; data?: PlannerData | null; saveData?: (next: PlannerData) => Promise<void>; onSaveRecurrence: (taskId: string, recurrence?: TaskRecurrence) => void; onCancelOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onReplanOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onCancelAllRecurrence: (taskId: string, cutoffDate: string) => void; aiEnabled: boolean; subtaskAiLoading: boolean; subtaskAiRevealIds: string[]; onGenerateSubtasks: (taskId: string) => void; lang: Language; compactSummary?: boolean; onShowMore?: () => void;
 }) {
   const dialog = useInAppDialog(props.lang);
@@ -12830,6 +12923,8 @@ function EditDrawer(props: {
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [quickActionMenu, setQuickActionMenu] = useState<"reschedule" | null>(null);
   const [incompleteMenuOpen, setIncompleteMenuOpen] = useState(false);
+  const incompleteMenuHoverTimer = useRef<number | null>(null);
+  const quickRescheduleHoverTimer = useRef<number | null>(null);
   const [cancelAllConfirm, setCancelAllConfirm] = useState(false);
   const f = props.form;
   const set = (key: keyof FormState, value: FormState[keyof FormState]) => props.setForm((current) => ({ ...current, [key]: value }));
@@ -12849,6 +12944,8 @@ function EditDrawer(props: {
     setRescheduleOpen(false);
     setQuickActionMenu(null);
     setIncompleteMenuOpen(false);
+    if (incompleteMenuHoverTimer.current !== null) window.clearTimeout(incompleteMenuHoverTimer.current);
+    if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
     setCancelAllConfirm(false);
   }, [props.task?.id, props.task?.notes, props.project?.id, props.project?.notes, props.habit?.id, props.habit?.notes, props.editingOccurrence?.scheduledDate, props.editingRecordId]);
   useLayoutEffect(() => {
@@ -13291,14 +13388,7 @@ function EditDrawer(props: {
     };
     const recurrenceEditor = recurrenceDraft || fixedRecurrence;
     const setCandidateReschedule = (date: string) => {
-      props.onTaskUpdate(props.task!.id, {
-        plannedForDate: date,
-        executionLane: "candidate",
-        scheduledDate: undefined,
-        scheduledStart: undefined,
-        scheduledEnd: undefined,
-        timelineRecords: (props.task!.timelineRecords || []).filter((record) => record.executionStatus !== "scheduled"),
-      });
+      props.onQuickReschedule(props.task!.id, date, activeRecord?.id);
       setRescheduleOpen(false);
       setQuickActionMenu(null);
     };
@@ -13348,8 +13438,19 @@ function EditDrawer(props: {
             <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 6l3 3 5-6"/></svg>
             <span>{t(props.lang, "drawer.complete")}</span>
           </button>
-          {showUncomplete && <div className={`df-detail-incomplete-menu${incompleteMenuOpen ? " open" : ""}`} onMouseEnter={() => setIncompleteMenuOpen(true)} onMouseLeave={() => setIncompleteMenuOpen(false)} onFocus={() => setIncompleteMenuOpen(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIncompleteMenuOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") { setIncompleteMenuOpen(false); event.currentTarget.querySelector("button")?.focus(); } }}>
-            <button type="button" className="df-detail-pill-trevor action df-detail-incomplete-trigger" aria-haspopup="menu" aria-expanded={incompleteMenuOpen} onClick={() => setIncompleteMenuOpen(true)}>
+          {showUncomplete && <div className={`df-detail-incomplete-menu${incompleteMenuOpen ? " open" : ""}`} onMouseEnter={() => {
+            if (incompleteMenuHoverTimer.current !== null) window.clearTimeout(incompleteMenuHoverTimer.current);
+            incompleteMenuHoverTimer.current = window.setTimeout(() => { setIncompleteMenuOpen(true); incompleteMenuHoverTimer.current = null; }, 100);
+          }} onMouseLeave={() => {
+            if (incompleteMenuHoverTimer.current !== null) window.clearTimeout(incompleteMenuHoverTimer.current);
+            incompleteMenuHoverTimer.current = null;
+            setIncompleteMenuOpen(false);
+          }} onFocus={() => setIncompleteMenuOpen(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIncompleteMenuOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") { setIncompleteMenuOpen(false); event.currentTarget.querySelector("button")?.focus(); } }}>
+            <button type="button" className="df-detail-pill-trevor action df-detail-incomplete-trigger" aria-haspopup="menu" aria-expanded={incompleteMenuOpen} onClick={() => {
+              if (incompleteMenuHoverTimer.current !== null) window.clearTimeout(incompleteMenuHoverTimer.current);
+              incompleteMenuHoverTimer.current = null;
+              setIncompleteMenuOpen(true);
+            }}>
               <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3l-6 6M3 3l6 6"/></svg>
               <span>{t(props.lang, "drawer.unfinished")}</span>
               <svg className="df-detail-incomplete-chevron" viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 2l4 3-4 3" /></svg>
@@ -13376,13 +13477,27 @@ function EditDrawer(props: {
 
         {/* ── Scheduling: shown only for a task currently on the timeline ── */}
         {isScheduled && <section className="df-detail-schedule-row">
-          <div className="df-detail-split-action">
-            <button className={`df-detail-pill-trevor action ${rescheduleOpen ? "active" : ""}`} onClick={() => { setQuickActionMenu(null); setRescheduleDate(props.task!.plannedForDate || props.today); setRescheduleOpen((open) => !open); }}>
+          <div className={`df-detail-incomplete-menu${quickActionMenu === "reschedule" ? " open" : ""}`} onMouseEnter={() => {
+            if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
+            quickRescheduleHoverTimer.current = window.setTimeout(() => { setQuickActionMenu("reschedule"); quickRescheduleHoverTimer.current = null; }, 100);
+          }} onMouseLeave={() => {
+            if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
+            quickRescheduleHoverTimer.current = null;
+            setQuickActionMenu(null);
+          }} onFocus={() => setQuickActionMenu("reschedule")} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setQuickActionMenu(null); }} onKeyDown={(event) => { if (event.key === "Escape") { setQuickActionMenu(null); event.currentTarget.querySelector("button")?.focus(); } }}>
+            <button type="button" className="df-detail-pill-trevor action df-detail-incomplete-trigger" aria-haspopup="menu" aria-expanded={quickActionMenu === "reschedule"} onClick={() => {
+              if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
+              quickRescheduleHoverTimer.current = null;
+              setQuickActionMenu((open) => open === "reschedule" ? null : "reschedule");
+            }}>
               <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v4l2 2"/><circle cx="6" cy="6" r="5"/></svg>
               <span>{t(props.lang, "drawer.quickReschedule")}</span>
+              <svg className="df-detail-incomplete-chevron" viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 2l4 3-4 3" /></svg>
             </button>
-            <button className="df-detail-split-arrow" type="button" aria-label={props.lang === "zh" ? "快速改期选项" : "Quick reschedule options"} aria-expanded={quickActionMenu === "reschedule"} onClick={() => { setRescheduleOpen(false); setQuickActionMenu((open) => open === "reschedule" ? null : "reschedule"); }}><svg viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M2 4l3 3 3-3" /></svg></button>
-            {quickActionMenu === "reschedule" && <div className="df-detail-quick-menu">{quickRescheduleOptions.map((option) => <button key={option.date} type="button" onClick={() => setCandidateReschedule(option.date)}>{props.lang === "zh" ? option.zh : option.en}</button>)}</div>}
+            {quickActionMenu === "reschedule" && <div className="df-detail-incomplete-options" role="menu" aria-label={props.lang === "zh" ? "快速改期选项" : "Quick reschedule options"}>
+              {quickRescheduleOptions.map((option) => <button key={option.date} type="button" role="menuitem" onClick={() => setCandidateReschedule(option.date)}>{props.lang === "zh" ? option.zh : option.en}</button>)}
+              <button type="button" role="menuitem" onClick={() => { setQuickActionMenu(null); setRescheduleDate(props.task!.plannedForDate || props.today); setRescheduleOpen(true); }}>{props.lang === "zh" ? "选择日期…" : "Choose a date…"}</button>
+            </div>}
           </div>
           <button className="df-detail-pill-trevor action" onClick={() => props.onTaskUpdate(props.task!.id, { scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, timelineRecords: (props.task!.timelineRecords || []).filter((record) => record.executionStatus !== "scheduled") })}>
             <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3l-6 6M3 3l6 6"/></svg>
@@ -14736,7 +14851,7 @@ function SettingsCategoryIcon({ category }: { category: SettingsCategory }) {
   }
 }
 
-function UtilityPanel({ kind, settings, initialSection, compactLayout, data, authEmail, onClose, onSave, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang, onOpenScheduleTemplates }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language; onOpenScheduleTemplates?: () => void }) {
+function UtilityPanel({ kind, settings, initialSection, compactLayout, data, authEmail, onClose, onSave, onSaveProfileName, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang, onOpenScheduleTemplates }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfileName: (name: string) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language; onOpenScheduleTemplates?: () => void }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
   const isDesktopRuntime = Boolean(window.desktopApi);
   const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
@@ -14749,6 +14864,9 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [profileNameEditing, setProfileNameEditing] = useState(false);
   const [profileNameDraft, setProfileNameDraft] = useState(settings.displayName || "");
+  const [profileNameError, setProfileNameError] = useState("");
+  const [profileNameSaving, setProfileNameSaving] = useState(false);
+  const profileNameSaveInFlightRef = useRef(false);
   useEffect(() => {
     setSettingsTarget(resolveRuntimeTarget(normalizeSettingsTarget(initialSection)));
     setSettingsHome(!initialSection && compactLayout);
@@ -14813,10 +14931,26 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
     setSettingsHome(true);
     if (settingsContentRef.current) settingsContentRef.current.scrollTop = 0;
   }
-  function commitProfileName() {
+  async function commitProfileName() {
+    if (profileNameSaveInFlightRef.current) return;
     const nextName = profileNameDraft.trim();
-    if (nextName && nextName !== settings.displayName) onSave({ displayName: nextName });
-    setProfileNameEditing(false);
+    if (!nextName || nextName === settings.displayName) {
+      setProfileNameEditing(false);
+      setProfileNameError("");
+      return;
+    }
+    profileNameSaveInFlightRef.current = true;
+    setProfileNameSaving(true);
+    setProfileNameError("");
+    try {
+      await onSaveProfileName(nextName);
+      setProfileNameEditing(false);
+    } catch {
+      setProfileNameError(lang === "zh" ? "保存失败，请重试。" : "Could not save. Please try again.");
+    } finally {
+      profileNameSaveInFlightRef.current = false;
+      setProfileNameSaving(false);
+    }
   }
   function openNotifications() {
     onClose();
@@ -15045,22 +15179,23 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
         </div>
         {kind === "settings" ? (
           <div className={`df-utility-body df-settings-shell${settingsHome ? "" : " df-settings-detail-shell"}`}>
-            {settingsHome && <section className="df-settings-profile-hero" aria-label={lang === "zh" ? "当前账户" : "Current account"}>
+            {settingsHome ? (
+              <div className="df-settings-home">
+                <section className="df-settings-profile-hero" aria-label={lang === "zh" ? "当前账户" : "Current account"}>
               <label className="df-settings-avatar" title={lang === "zh" ? "点击编辑头像" : "Click to edit avatar"}>
                 {settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span>{(settings.displayName || "N").slice(0, 1).toUpperCase()}</span>}
                 <span className="df-settings-avatar-edit" aria-hidden="true"><UiPencilIcon size={12} strokeWidth={2} /></span>
                 <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { void uploadAvatar(event.target.files?.[0]); event.currentTarget.value = ""; }} />
               </label>
               <div className="df-settings-profile-hero-copy">
-                {profileNameEditing ? <input className="df-settings-profile-name-input" value={profileNameDraft} onChange={(event) => setProfileNameDraft(event.target.value)} onBlur={commitProfileName} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); commitProfileName(); } if (event.key === "Escape") { setProfileNameDraft(settings.displayName || ""); setProfileNameEditing(false); } }} autoFocus maxLength={64} aria-label={lang === "zh" ? "用户名" : "Username"} /> : <button type="button" className="df-settings-profile-name" onClick={() => setProfileNameEditing(true)} aria-label={lang === "zh" ? "编辑用户名" : "Edit username"}>
+                {profileNameEditing ? <input className="df-settings-profile-name-input" value={profileNameDraft} onChange={(event) => setProfileNameDraft(event.target.value)} onBlur={() => { void commitProfileName(); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void commitProfileName(); } if (event.key === "Escape") { setProfileNameDraft(settings.displayName || ""); setProfileNameError(""); setProfileNameEditing(false); } }} disabled={profileNameSaving} autoFocus maxLength={64} aria-label={lang === "zh" ? "用户名" : "Username"} /> : <button type="button" className="df-settings-profile-name" onClick={() => { setProfileNameError(""); setProfileNameEditing(true); }} aria-label={lang === "zh" ? "编辑用户名" : "Edit username"}>
                   <strong>{settings.displayName || (lang === "zh" ? "NavoPath 用户" : "NavoPath user")}</strong>
                   <UiPencilIcon size={13} strokeWidth={1.8} aria-hidden="true" />
                 </button>}
                 {authEmail && <span>{authEmail}</span>}
+                {profileNameError && <span className="df-settings-profile-error" role="alert">{profileNameError}</span>}
               </div>
-            </section>}
-            {settingsHome ? (
-              <div className="df-settings-home">
+                </section>
                 <section className="df-settings-home-card df-settings-home-notification-card">
                   <button type="button" className="df-settings-home-entry" onClick={openNotifications}>
                     <span className="df-settings-home-entry-icon"><UiBellIcon size={19} strokeWidth={1.8} /></span>
@@ -15746,7 +15881,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
             </SettingSection>}
             </div>
             </>}
-          </div>
+              </div>
         ) : (
           <div className="df-utility-body">
             <strong>{t(lang, "settings.version")}</strong>

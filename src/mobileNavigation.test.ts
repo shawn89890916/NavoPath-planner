@@ -5,15 +5,11 @@ const mainSource = readFileSync(new URL("./main.tsx", import.meta.url), "utf8");
 const mobileStyles = readFileSync(new URL("./app.css", import.meta.url), "utf8");
 
 describe("portrait mobile navigation", () => {
-  it("keeps task quick-add in the candidate toolbar and reserves the schedule FAB for the timeline", () => {
+  it("keeps the quick-add FAB available across compact Execute and Planning views", () => {
     expect(mainSource).toContain('className="df-mobile-dock-action df-mobile-ai"');
     expect(mainSource).toContain('className="df-mobile-quick-add-fab"');
-    expect(mainSource).toContain('className="df-candidate-quick-add-top"');
-    expect(mainSource).toContain('(mode !== "execute" || compactExecuteView === "schedule")');
-    expect(mobileStyles).toContain(".df-candidate-quick-add-top {");
-    expect(mobileStyles).toContain("min-width: 46px;");
-    expect(mobileStyles).toContain("min-height: 46px;");
-    expect(mobileStyles).toContain("bottom: calc(80px + env(safe-area-inset-bottom));");
+    expect(mainSource).toContain("{compactLayout && !drawerOpen && !utilityPanel && !aiOpen && <button");
+    expect(mobileStyles).toContain("bottom: calc(96px + env(safe-area-inset-bottom));");
   });
 
   it("keeps AI and Settings in dismissible task-detail-sized sheets", () => {
