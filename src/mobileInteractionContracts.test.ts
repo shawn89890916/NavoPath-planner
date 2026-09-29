@@ -62,7 +62,7 @@ describe("portrait interaction contracts", () => {
   });
 
   it("keeps portrait Planning filter visible, checkbox visuals compact, and portals the dock to the viewport edge", () => {
-    expect(appCss).toContain("top: max(calc(env(safe-area-inset-top) + 4px), 52px);");
+    expect(appCss).toContain("top: max(calc(env(safe-area-inset-top) + 8px), 52px);");
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check\s*\{[^}]*width:\s*18px;[^}]*height:\s*18px;/);
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check::before\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/);
     expect(main).toContain('createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport');
