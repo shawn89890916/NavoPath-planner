@@ -292,13 +292,6 @@
 
 # NavoPath Changelog
 
-## 2026-09-29 · Portrait timeline and Planning controls
-
-### Fixed
-- On portrait screens, refresh and “Back to now” align the target time at one third of the full viewport height.
-- The Planning filter stays at the top right clear of the safe area; task-card action buttons lose their borders while keeping a visible keyboard focus indicator.
-- “Back to now” uses a restrained borderless icon with a 44 px touch target.
-
 ## 2026-09-27 · Today’s Candidates control refinements
 
 ### Improvements
