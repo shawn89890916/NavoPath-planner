@@ -21494,15 +21494,23 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-mcp-docs small { color:var(--text-faint); font-size:10px; line-height:1.55; }
 .df-mcp-token-row button:disabled { opacity:.5; cursor:not-allowed; }
 .df-mcp-token { display:grid; gap:8px; }
-.df-sync-bridge { display:grid; gap:22px; min-width:0; }
-.df-sync-bridge-setup,
+.df-sync-bridge { display:grid; gap:16px; min-width:0; }
+.df-sync-bridge-path { display:grid; gap:0; border-block:1px solid var(--paper-rule); }
+.df-sync-bridge-path p { display:grid; grid-template-columns:minmax(100px, 130px) minmax(0, 1fr); gap:12px; margin:0; padding:10px 0; line-height:1.5; }
+.df-sync-bridge-path p + p { border-block-start:1px solid var(--paper-rule); }
+.df-sync-bridge-path span { color:var(--text-muted); font:600 11px/1.5 var(--paper-mono); }
+.df-sync-bridge-path strong { color:var(--text-main); font-weight:500; overflow-wrap:anywhere; }
+.df-sync-bridge-note { margin:0; color:var(--text-muted); font-size:12px; line-height:1.6; }
 .df-sync-bridge-status { display:grid; gap:10px; min-width:0; padding-block:14px; border-block-start:1px solid var(--paper-rule); }
-.df-sync-bridge-setup > label { color:var(--text-muted); font:600 11px/1.5 var(--paper-mono); }
-.df-sync-bridge-setup > p { margin:0; color:var(--text-muted); line-height:1.6; }
+.df-sync-bridge-setup { min-width:0; border-block-start:1px solid var(--paper-rule); }
+.df-sync-bridge-setup-body { display:grid; gap:12px; padding-bottom:14px; }
+.df-sync-bridge-setup-body > label { color:var(--text-muted); font:600 11px/1.5 var(--paper-mono); }
+.df-sync-bridge-setup-body ol { margin:0; padding-left:22px; color:var(--text-main); line-height:1.6; }
+.df-sync-bridge-setup-body li + li { margin-top:8px; }
 .df-sync-bridge-actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
 .df-sync-bridge-actions select { width:min(100%, 250px); min-height:44px; }
 .df-sync-bridge-actions button { min-height:44px; }
-.df-sync-bridge-setup textarea { width:100%; min-height:150px; padding:10px; color:var(--text-main); background:var(--surface-main); border:1px solid var(--paper-rule); border-radius:var(--radius-control); }
+.df-sync-bridge-setup-body textarea { width:100%; min-height:150px; padding:10px; color:var(--text-main); background:var(--surface-main); border:1px solid var(--paper-rule); border-radius:var(--radius-control); }
 .df-sync-bridge-device { display:grid; gap:4px; padding:11px 0; border-block-start:1px solid var(--paper-rule); }
 .df-sync-bridge-device > div { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; }
 .df-sync-bridge-device > div span,
@@ -21512,6 +21520,10 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-sync-bridge-manual ol { margin:0; padding:4px 0 10px 22px; color:var(--text-main); line-height:1.65; }
 .df-sync-bridge-manual li + li { margin-top:9px; }
 .df-sync-bridge-manual p { margin:0; padding-bottom:14px; color:var(--text-muted); line-height:1.6; }
+@media (max-width:600px) {
+  .df-sync-bridge-path p { grid-template-columns:1fr; gap:3px; }
+  .df-sync-bridge-actions select, .df-sync-bridge-actions button { width:100%; }
+}
 .df-mcp-step-body > .df-mcp-token { grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px 12px; margin-top:4px; }
 .df-mcp-step-body > .df-mcp-token small { grid-column:1 / -1; color:var(--text-muted); }
 .df-mcp-token code { overflow-wrap:anywhere; padding:10px 0; border-block:1px solid var(--paper-rule); color:var(--accent-active); }

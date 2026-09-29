@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-09-30 · 同步配置说明
+
+### 改进
+- “同步”页先展示账户、手机与云盘镜像的双向路径和桥接状态；已配置时收起首次安装步骤，并说明隐藏令牌输入、常见配置失败及云盘上传状态的查看位置。
+
 ## 2026-09-29 · 竖屏控件与云盘同步
 
 ### 新增
@@ -25,6 +30,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-09-30 · Sync setup guidance
+
+### Improved
+- Sync now shows the two-way path between the account, phone, and cloud folder mirror before setup instructions, collapses first-time setup when a bridge is connected, and explains hidden token input, common setup failures, and where to check cloud uploads.
 
 ## 2026-09-29 · Portrait controls and cloud folder sync
 
