@@ -30416,17 +30416,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   overflow: auto;
 }
 
-.df-app.mode-planning .df-planning .df-planning-filter-corner {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-start;
-  min-height: 0;
-  height: 0;
-  pointer-events: none;
-}
 
 .df-app.mode-planning .df-planning .df-filter-popover-anchor {
   position: relative;
@@ -32953,6 +32942,31 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   box-shadow: none;
 }
 
+#root .df-app.mode-planning .df-planning .df-plan-task-node .df-task-node-actions .df-tree-icon-button {
+  border: 0;
+  background: transparent;
+}
+
+#root .df-app.mode-planning .df-planning .df-plan-task-node .df-task-node-actions .df-tree-icon-button:hover {
+  border: 0;
+  background: color-mix(in srgb, var(--accent-active) 5%, transparent);
+}
+
+#root .df-app.mode-planning .df-planning .df-plan-task-node .df-task-node-actions .df-tree-icon-button:focus-visible {
+  border: 0;
+  outline: 2px solid var(--accent-active);
+  outline-offset: 2px;
+}
+
+#root .df-app.mode-planning .df-planning .df-planning-filter-corner {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  z-index: 30;
+  height: auto;
+  pointer-events: auto;
+}
+
 #root .df-app.mode-planning .df-planning .df-view-btn:hover {
   color: var(--accent-active);
   background: color-mix(in srgb, var(--accent-active) 5%, transparent);
@@ -33115,14 +33129,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: var(--timeline-paper, rgb(248, 247, 243));
 }
 
-#root .df-app.mode-planning .df-planning .df-planning-filter-corner {
-  top: 18px;
-  right: 22px;
-  position: absolute;
-  z-index: 30;
-  height: auto;
-  pointer-events: auto;
-}
 
 #root .df-app.mode-planning .df-planning .df-filter-trigger {
   width: 38px;
@@ -35270,17 +35276,33 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-back-to-now {
     top: 66px;
     right: 4px;
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-    min-height: 32px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
     padding: 0;
     font-size: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-muted);
+    box-shadow: none;
+    opacity: .8;
+  }
+
+  #root .df-app .df-back-to-now:hover,
+  #root .df-app .df-back-to-now:focus-visible {
+    border: 0;
+    background: color-mix(in srgb, var(--accent-active) 6%, transparent);
+    color: var(--accent-active);
+    opacity: 1;
+    outline: 2px solid var(--accent-active);
+    outline-offset: 1px;
   }
 
   #root .df-app .df-back-to-now svg {
-    width: 15px;
-    height: 15px;
+    width: 19px;
+    height: 19px;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.7;
@@ -35745,23 +35767,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app.mode-planning .df-planning .df-planning-longrange-guide b { font: inherit; }
   #root .df-app.mode-planning .df-planning .df-planning-longrange-guide i { color: var(--accent-active); font-style: normal; }
 
-  #root .df-app.mode-planning .df-planning .df-planning-filter-corner {
-    position: fixed;
-    top: max(calc(env(safe-area-inset-top) + 4px), 52px);
-    right: 6px;
-    z-index: 30;
-  }
 
-  #root .df-app.mode-planning .df-planning .df-filter-trigger {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
 
   #root .df-app .df-task-node-actions {
     width: auto;
@@ -39337,10 +39343,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     -webkit-touch-callout: default;
   }
 
-  #root .df-app.mode-planning .df-planning .df-planning-filter-corner {
-    top: max(calc(env(safe-area-inset-top) + 4px), 52px);
-    right: 6px;
-  }
 
   #root .df-app.mode-execute .df-time-block .df-block-check {
     position: relative;
@@ -39396,5 +39398,24 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
   #root .df-app.mode-planning .df-planning .df-view-btn span {
     display: none;
+  }
+}
+
+@media (orientation: portrait) {
+  #root .df-app.mode-planning .df-planning .df-planning-filter-corner {
+    position: fixed;
+    top: max(calc(env(safe-area-inset-top) + 8px), 52px);
+    right: 6px;
+    z-index: 30;
+  }
+
+  #root .df-app.mode-planning .df-planning .df-filter-trigger {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
   }
 }

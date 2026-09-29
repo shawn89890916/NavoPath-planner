@@ -1,5 +1,12 @@
 # NavoPath 更新日志
 
+## 2026-09-29 · 竖屏时间轴与规划控件
+
+### 修复
+- 刷新及“回到现在”时，竖屏时间轴将目标时间对齐到整个视口高度的 1/3 处。
+- 规划页筛选按钮固定在右上方并避开顶部安全区；任务框右侧操作按钮取消描边，保留键盘焦点提示。
+- “回到现在”改为轻量无边框图标按钮，并保留 44px 触控区域。
+
 ## 2026-09-28 · 移动端导航与同步修复
 
 ### 修复
@@ -12,6 +19,13 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-09-29 · Portrait timeline and Planning controls
+
+### Fixed
+- On portrait screens, refresh and “Back to now” align the target time at one third of the full viewport height.
+- The Planning filter stays at the top right clear of the safe area; task-card action buttons lose their borders while keeping a visible keyboard focus indicator.
+- “Back to now” uses a restrained borderless icon with a 44 px touch target.
 
 ## 2026-09-28 · Mobile navigation and sync fixes
 
@@ -277,6 +291,13 @@
 - 修复三天和周视图的全屏模式仍继承候选栏窄列的问题；全屏现在只保留完整时间轴与退出入口，不会再出现被压缩或空白的画布。
 
 # NavoPath Changelog
+
+## 2026-09-29 · Portrait timeline and Planning controls
+
+### Fixed
+- On portrait screens, refresh and “Back to now” align the target time at one third of the full viewport height.
+- The Planning filter stays at the top right clear of the safe area; task-card action buttons lose their borders while keeping a visible keyboard focus indicator.
+- “Back to now” uses a restrained borderless icon with a 44 px touch target.
 
 ## 2026-09-27 · Today’s Candidates control refinements
 

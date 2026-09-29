@@ -296,6 +296,12 @@ type SchedulePreview = {
 type AutoScheduleState = "idle" | "generating" | "preview" | "committing" | "error";
 type TimelineFocusSource = "schedule" | "autoschedule" | "recurrence" | "placement";
 type TimelineFocusTarget = { date: string; startTime?: string; taskId?: string; source: TimelineFocusSource; behavior?: ScrollBehavior };
+
+function timelineFocusViewportOffset(container: HTMLElement): number {
+  if (!window.matchMedia("(orientation: portrait)").matches) return container.clientHeight / 3;
+  const containerTop = container.getBoundingClientRect().top;
+  return Math.max(0, Math.min(container.clientHeight, window.innerHeight / 3 - containerTop));
+}
 const PLACEMENT_PREVIEW_HOVER_DELAY_MS = 300;
 type PlacementPreview = {
   taskId: string;
@@ -2721,7 +2727,7 @@ function App() {
       const targetTop = effectEnabled
         ? bandIndex * ((24 * 60 / SLOT_MINUTES) * timelineSlotHeight) + (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight
         : (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight;
-      container.scrollTop = Math.max(0, targetTop - container.clientHeight / 3);
+      container.scrollTop = Math.max(0, targetTop - timelineFocusViewportOffset(container));
       lastTimelineScrollRef.current = { top: container.scrollTop, left: container.scrollLeft };
       timelineInitialFocusCompleteRef.current = true;
       settled = true;
@@ -2788,7 +2794,7 @@ function App() {
     const targetTop = effectEnabled
       ? effectTop(targetDate, minutesToTime(targetMinutes))
       : ((targetMinutes - TIMELINE_START * 60) / SLOT_MINUTES) * timelineSlotHeight;
-    const nextScrollTop = Math.max(0, targetTop - container.clientHeight * 0.5);
+    const nextScrollTop = Math.max(0, targetTop - timelineFocusViewportOffset(container));
     const frame = window.requestAnimationFrame(() => {
       container.scrollTo({ top: nextScrollTop, behavior: pendingTimelineFocus.behavior || "auto" });
       lastTimelineScrollRef.current = { top: container.scrollTop, left: container.scrollLeft };

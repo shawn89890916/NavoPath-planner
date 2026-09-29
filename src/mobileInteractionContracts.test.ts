@@ -135,11 +135,14 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toMatch(/\.df-app \.df-candidate-list\s*\{[\s\S]*?flex:\s*1 1 0;[\s\S]*?min-height:\s*0;[\s\S]*?overflow-y:\s*auto;/);
   });
 
-  it("centers the timeline on now once and keeps scheduling previews in place", () => {
+  it("aligns refresh and focus targets to the portrait viewport upper third", () => {
     const previewStart = main.indexOf("function startPlacementPreview");
     const previewEnd = main.indexOf("function confirmPlacementPreview", previewStart);
 
     expect(main).toContain("timelineInitialFocusCompleteRef");
+    expect(main).toContain('window.matchMedia("(orientation: portrait)")');
+    expect(main).toContain("window.innerHeight / 3 - containerTop");
+    expect(main).toContain("targetTop - timelineFocusViewportOffset(container)");
     expect(main.slice(previewStart, previewEnd)).not.toContain("setPendingTimelineFocus");
     expect(main).toContain("preserveTimelineViewportOnNextDataChange();\n    applyCandidateTimeSettings");
     expect(main).toContain("focusTimeline: false");
@@ -198,5 +201,13 @@ describe("portrait interaction contracts", () => {
     expect(toastActionRule).toBeGreaterThan(globalButtonReset);
     expect(appCss.slice(toastActionRule)).toMatch(/color:\s*var\(--accent-active\)/);
     expect(main).toContain('lang === "zh" ? "撤销归属" : "Undo assignment"');
+  });
+});
+
+describe("portrait timeline and Planning control contracts", () => {
+  it("keeps task action buttons borderless and the Planning filter at the portrait top right", () => {
+    expect(appCss).toMatch(/\.df-plan-task-node \.df-task-node-actions \.df-tree-icon-button\s*\{[^}]*border:\s*0;/);
+    expect(appCss).toContain("top: max(calc(env(safe-area-inset-top) + 8px), 52px);");
+    expect(appCss).toContain("width: 44px;");
   });
 });
