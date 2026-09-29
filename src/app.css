@@ -29347,6 +29347,8 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
  * Checkbox — priority is shown by checkbox color.
  * ============================================================ */
 .df-app .df-task-block[data-task-appearance] .df-task-block-check {
+  box-sizing: border-box;
+  aspect-ratio: 1;
   flex: 0 0 18px;
   grid-column: 1 / 2;
   align-self: center;
@@ -29371,6 +29373,8 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-task-block[data-task-appearance] .df-block-check {
+  box-sizing: border-box;
+  aspect-ratio: 1;
   flex: 0 0 18px;
   grid-column: 1 / 2;
   align-self: center;
@@ -29395,6 +29399,8 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   corner-shape: var(--corner-shape, squircle);
 }
 .navo-demo-app .df-task-block[data-task-appearance] .df-task-block-check {
+  box-sizing: border-box;
+  aspect-ratio: 1;
   flex: 0 0 18px;
   grid-column: 1 / 2;
   align-self: center;
@@ -37188,7 +37194,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app.mode-execute .df-candidate-panel { padding: 10px 10px 0; }
-  #root .df-app.mode-execute button:not([role="switch"]) { min-height: 44px; }
+  #root .df-app.mode-execute button:not([role="switch"]):not(.df-task-block-check) { min-height: 44px; }
   #root .df-app.mode-execute [role="button"] { min-height: 44px; }
   #root .df-app.mode-execute .df-candidate-list { overflow-x: hidden; }
 }

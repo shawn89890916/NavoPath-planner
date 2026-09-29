@@ -9,7 +9,7 @@
 - 刷新及“回到现在”时，竖屏时间轴将目标时间对齐到整个视口高度的 1/3 处。
 - 规划页筛选按钮固定在右上方并避开顶部安全区；任务框右侧操作按钮取消描边，保留键盘焦点提示。
 - “回到现在”改为轻量无边框图标按钮，并保留 44px 触控区域。
-- 恢复任务勾选框的优先级提示：无优先级为黑框，低优先级为蓝框并带淡蓝底色，中、高优先级分别使用橙框和红框。
+- 恢复任务勾选框的优先级提示：无优先级为黑框，低优先级为蓝框并带淡蓝底色，中、高优先级分别使用橙框和红框。；浏览器缩放时保持方框比例。
 
 ## 2026-09-28 · 移动端导航与同步修复
 
@@ -33,7 +33,7 @@
 - On portrait screens, refresh and “Back to now” align the target time at one third of the full viewport height.
 - The Planning filter stays at the top right clear of the safe area; task-card action buttons lose their borders while keeping a visible keyboard focus indicator.
 - “Back to now” uses a restrained borderless icon with a 44 px touch target.
-- Restored task-priority cues on checkboxes: black for unset, blue with a faint blue fill for low, orange for medium, and red for high.
+- Restored task-priority cues on checkboxes: black for unset, blue with a faint blue fill for low, orange for medium, and red for high; checkbox outlines remain square when the browser is zoomed.
 
 ## 2026-09-28 · Mobile navigation and sync fixes
 
