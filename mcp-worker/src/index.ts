@@ -36,6 +36,11 @@ const result = (value: unknown) => ({ content: [{ type: "text" as const, text: J
 const now = () => new Date().toISOString();
 const uid = (prefix: string) => `${prefix}_${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`;
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai" }).format(new Date());
+const tokenLookupUnavailable = Symbol("tokenLookupUnavailable");
+const tokenLookupUnavailableResponse = () => new Response(JSON.stringify({ error: "MCP token validation is temporarily unavailable. Please retry shortly." }), {
+  status: 503,
+  headers: { "content-type": "application/json", "cache-control": "no-store" },
+});
 
 async function db(env: Env, path: string, init?: RequestInit) {
   return fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
@@ -52,8 +57,13 @@ async function sha256(value: string) {
 async function authenticate(request: Request, env: Env) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token?.startsWith("nvp_")) return null;
-  const query = await db(env, `navopath_mcp_tokens?select=id,user_id&token_hash=eq.${await sha256(token)}&revoked_at=is.null&limit=1`);
-  if (!query.ok) return null;
+  let query: Response;
+  try {
+    query = await db(env, `navopath_mcp_tokens?select=id,user_id&token_hash=eq.${await sha256(token)}&revoked_at=is.null&limit=1`);
+  } catch {
+    return tokenLookupUnavailable;
+  }
+  if (!query.ok) return tokenLookupUnavailable;
   const match = (await query.json() as Array<{ id: string; user_id: string }>)[0];
   if (!match) return null;
   void db(env, `navopath_mcp_tokens?id=eq.${match.id}`, { method: "PATCH", body: JSON.stringify({ last_used_at: now() }) });
@@ -312,6 +322,7 @@ export default {
       const contentLength = Number(request.headers.get("content-length") || 0);
       if (contentLength > 64_000) return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: { "content-type": "application/json" } });
       const auth = await authenticate(request, env);
+      if (auth === tokenLookupUnavailable) return tokenLookupUnavailableResponse();
       if (!auth) return new Response(JSON.stringify({ error: "Invalid or revoked bearer token" }), { status: 401, headers: { "content-type": "application/json" } });
       const rawBody = await request.text();
       if (new TextEncoder().encode(rawBody).byteLength > 64_000) return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: { "content-type": "application/json" } });
@@ -325,6 +336,7 @@ export default {
     if (url.pathname === "/api/notifications") {
       if (request.method !== "GET") return new Response("Method not allowed", { status: 405, headers: { allow: "GET" } });
       const auth = await authenticate(request, env);
+      if (auth === tokenLookupUnavailable) return tokenLookupUnavailableResponse();
       if (!auth) return new Response(JSON.stringify({ error: "Invalid or revoked bearer token" }), { status: 401, headers: { "content-type": "application/json" } });
       const response = await db(env, `navopath_notifications?select=id,kind,title,body,urgency,status,deliver_after,sent_at,read_at,metadata,created_at&user_id=eq.${auth.userId}&deliver_after=lte.${encodeURIComponent(now())}&order=created_at.desc&limit=50`);
       return new Response(await response.text(), { status: response.status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
@@ -335,6 +347,7 @@ export default {
         return new Response("Method not allowed", { status: 405 });
       }
       const auth = await authenticate(request, env);
+      if (auth === tokenLookupUnavailable) return tokenLookupUnavailableResponse();
       if (!auth) return new Response(JSON.stringify({ error: "Invalid or revoked bearer token" }), { status: 401, headers: { "content-type": "application/json", "cache-control": "no-store" } });
       try {
         if (request.method === "GET") return new Response(JSON.stringify(snapshot(await getProfile(env, auth.userId), auth.userId)), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
@@ -355,6 +368,7 @@ export default {
     }
     if (url.pathname !== "/mcp") return new Response("Not found", { status: 404 });
     const auth = await authenticate(request, env);
+    if (auth === tokenLookupUnavailable) return tokenLookupUnavailableResponse();
     if (!auth) return new Response(JSON.stringify({ error: "Invalid or revoked bearer token" }), { status: 401, headers: { "content-type": "application/json", "www-authenticate": "Bearer" } });
     (ctx as ExecutionContext & { props?: AgentProps }).props = { userId: auth.userId };
     return mcpHandler.fetch(request, env, ctx);
