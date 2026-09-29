@@ -1,6 +1,9 @@
 # NavoPath 更新日志
 
-## 2026-09-29 · 竖屏时间轴与规划控件
+## 2026-09-29 · 竖屏控件与云盘同步
+
+### 新增
+- 「日历与集成」新增“同步”：可复制 Agent 配置提示词，让常开电脑把工作区与自己的云盘文件夹双向同步，并查看运行状态；另有手动备份教程。
 
 ### 修复
 - 刷新及“回到现在”时，竖屏时间轴将目标时间对齐到整个视口高度的 1/3 处。
@@ -20,7 +23,10 @@
 
 # NavoPath Changelog
 
-## 2026-09-29 · Portrait timeline and Planning controls
+## 2026-09-29 · Portrait controls and cloud folder sync
+
+### Added
+- Calendar & Integrations now includes Sync: copy an Agent setup prompt to connect an always-on computer with your own cloud folder, monitor its status, or follow the manual backup guide.
 
 ### Fixed
 - On portrait screens, refresh and “Back to now” align the target time at one third of the full viewport height.

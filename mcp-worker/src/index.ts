@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { McpAgent } from "agents/mcp";
 import { z } from "zod";
+import { combineSyncSnapshot } from "./syncSnapshot";
 import { buildCalendarFeed } from "./calendarFeed";
 import {
   batchUpdateTasks,
@@ -27,7 +28,7 @@ interface Env extends CloudAssistantEnv {
 }
 
 type Json = Record<string, any>;
-type Profile = { data: Json; settings: Json; revision: number };
+type Profile = { data: Json; settings: Json; revision: number; updated_at?: string };
 type AgentProps = { userId: string };
 
 const allowedSettings = ["language", "defaultTimelineView", "planningView", "theme", "typographyStyle", "executeAccentColor", "planningAccentColor", "hideCompleted", "taskNoteDisplay", "aiTone", "aiMemoryEnabled", "hideAi", "model", "reasoningMode"];
@@ -70,7 +71,7 @@ async function authenticateCalendarToken(token: string, env: Env, ctx: Execution
 }
 
 async function getProfile(env: Env, userId: string): Promise<Profile> {
-  const response = await db(env, `dayflow_profiles?select=data,settings,revision&user_id=eq.${userId}&limit=1`);
+  const response = await db(env, `dayflow_profiles?select=data,settings,revision,updated_at&user_id=eq.${userId}&limit=1`);
   const rows = await response.json() as Profile[];
   if (!response.ok || !rows[0]) throw new Error("Workspace not found");
   return rows[0];
@@ -86,6 +87,50 @@ async function saveProfile(env: Env, userId: string, profile: Profile, patch: Pa
   return rows[0];
 }
 
+const snapshot = (profile: Profile, userId: string) => ({
+  version: 1,
+  accountId: userId,
+  revision: profile.revision,
+  updatedAt: profile.updated_at || profile.data.savedAt || now(),
+  data: profile.data,
+  settings: profile.settings,
+});
+
+async function mergeSyncSnapshot(env: Env, userId: string, input: Json) {
+  if (new TextEncoder().encode(JSON.stringify(input)).byteLength > 20 * 1024 * 1024) throw new Error("Sync snapshot exceeds 20 MB");
+  const profile = await getProfile(env, userId);
+  const merged = combineSyncSnapshot(profile, input, userId, now());
+  if (!merged.changed) {
+    return { ...snapshot(profile, userId), changed: false };
+  }
+  const saved = await saveProfile(env, userId, profile, { data: merged.data, settings: merged.settings });
+  return { ...snapshot({ ...saved, updated_at: now() }, userId), changed: true };
+}
+
+async function reportSyncBridgeStatus(env: Env, userId: string, input: Json) {
+  if (!/^[A-Za-z0-9._:-]{1,100}$/.test(input.deviceId || "")
+    || typeof input.deviceName !== "string" || input.deviceName.length > 100
+    || typeof input.folderPath !== "string" || input.folderPath.length > 500
+    || !["running", "error", "stopped"].includes(input.status)) throw new Error("Invalid sync bridge status");
+  const payload = {
+    user_id: userId,
+    device_id: input.deviceId,
+    device_name: input.deviceName,
+    folder_path: input.folderPath,
+    status: input.status,
+    last_seen_at: now(),
+    last_success_at: typeof input.lastSuccessAt === "string" && Number.isFinite(Date.parse(input.lastSuccessAt)) ? input.lastSuccessAt : null,
+    error: typeof input.error === "string" ? input.error.slice(0, 300) : null,
+  };
+  const response = await db(env, "navopath_sync_bridge_status?on_conflict=user_id,device_id", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error("Could not report sync bridge status");
+  return payload;
+}
+
 export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
   server = new McpServer({ name: "NavoPath", version: "2.0.0" });
 
@@ -99,6 +144,22 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       const { data } = await getProfile(this.env, this.userId());
       const tasks = data.tasks || [];
       return result({ projects: (data.projects || []).length, openTasks: tasks.filter((task: Json) => !task.completed).length, completedTasks: tasks.filter((task: Json) => task.completed).length });
+    });
+
+    this.server.registerTool("sync_get_snapshot", { description: "Read the complete workspace for a user-owned folder sync bridge. The result contains private planner data; keep it in the user's chosen sync folder only.", inputSchema: {} }, async () => {
+      return result(snapshot(await getProfile(this.env, this.userId()), this.userId()));
+    });
+
+    this.server.registerTool("sync_merge_snapshot", { description: "Merge a versioned folder snapshot into this workspace by record modification time and deletion tombstones.", inputSchema: {
+      version: z.literal(1), accountId: z.string(), updatedAt: z.string(), data: z.record(z.string(), z.unknown()), settings: z.record(z.string(), z.unknown()),
+    } }, async (input) => {
+      return result(await mergeSyncSnapshot(this.env, this.userId(), input));
+    });
+
+    this.server.registerTool("sync_report_status", { description: "Report the health of a local folder sync bridge.", inputSchema: {
+      deviceId: z.string(), deviceName: z.string(), folderPath: z.string(), status: z.enum(["running", "error", "stopped"]), lastSuccessAt: z.string().optional(), error: z.string().optional(),
+    } }, async (input) => {
+      return result(await reportSyncBridgeStatus(this.env, this.userId(), input));
     });
 
     this.server.registerTool("list_projects", { description: "List projects in display order.", inputSchema: {} }, async () => {
@@ -267,6 +328,30 @@ export default {
       if (!auth) return new Response(JSON.stringify({ error: "Invalid or revoked bearer token" }), { status: 401, headers: { "content-type": "application/json" } });
       const response = await db(env, `navopath_notifications?select=id,kind,title,body,urgency,status,deliver_after,sent_at,read_at,metadata,created_at&user_id=eq.${auth.userId}&deliver_after=lte.${encodeURIComponent(now())}&order=created_at.desc&limit=50`);
       return new Response(await response.text(), { status: response.status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+    }
+    if (url.pathname === "/api/sync/snapshot" || url.pathname === "/api/sync/status") {
+      const syncSnapshot = url.pathname.endsWith("/snapshot");
+      if (syncSnapshot ? !["GET", "POST"].includes(request.method) : request.method !== "POST") {
+        return new Response("Method not allowed", { status: 405 });
+      }
+      const auth = await authenticate(request, env);
+      if (!auth) return new Response(JSON.stringify({ error: "Invalid or revoked bearer token" }), { status: 401, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+      try {
+        if (request.method === "GET") return new Response(JSON.stringify(snapshot(await getProfile(env, auth.userId), auth.userId)), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+        const maxBytes = syncSnapshot ? 20 * 1024 * 1024 : 4_096;
+        if (Number(request.headers.get("content-length") || 0) > maxBytes) return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: { "content-type": "application/json" } });
+        const raw = await request.text();
+        if (new TextEncoder().encode(raw).byteLength > maxBytes) return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: { "content-type": "application/json" } });
+        const input = JSON.parse(raw);
+        const output = syncSnapshot
+          ? await mergeSyncSnapshot(env, auth.userId, input)
+          : await reportSyncBridgeStatus(env, auth.userId, input);
+        return new Response(JSON.stringify(output), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Sync failed";
+        const status = /revision|concurrent|changed/i.test(message) ? 409 : 400;
+        return new Response(JSON.stringify({ error: message }), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+      }
     }
     if (url.pathname !== "/mcp") return new Response("Not found", { status: 404 });
     const auth = await authenticate(request, env);

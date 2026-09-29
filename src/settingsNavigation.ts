@@ -179,6 +179,7 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
 
   entry("plugins", { category: "integrations" }, "插件", "Plugins", "extension local built-in 扩展 本地 内置"),
   entry("mcp", { category: "integrations" }, "MCP", "MCP", "token server integration 令牌 服务"),
+  entry("sync-bridge", { category: "integrations" }, "同步", "Sync", "iCloud Drive OneDrive Dropbox 云盘 文件夹 桥接 备份"),
   entry("reset-settings", { category: "account-data" }, "重置所有设置", "Reset all settings", "restore defaults danger 恢复默认 危险"),
 ];
 

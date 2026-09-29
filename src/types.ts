@@ -48,6 +48,16 @@ export interface McpTokenMetadata {
   revokedAt?: string;
 }
 
+export interface SyncBridgeStatus {
+  deviceId: string;
+  deviceName: string;
+  folderPath: string;
+  status: "running" | "error" | "stopped";
+  lastSuccessAt?: string;
+  lastSeenAt?: string;
+  error?: string;
+}
+
 /** 时间轴排程记录 — 支持同一任务多次排程，每条记录独立管理状态 */
 export interface TimelineRecord {
   id: string;
@@ -693,6 +703,7 @@ export interface PlannerApi {
   listMcpTokens?: () => Promise<McpTokenMetadata[]>;
   createMcpToken?: (name: string) => Promise<{ token: string; metadata: McpTokenMetadata }>;
   revokeMcpToken?: (id: string) => Promise<void>;
+  listSyncBridgeStatuses?: () => Promise<SyncBridgeStatus[]>;
   listCalendarFeedTokens?: () => Promise<CalendarFeedTokenMetadata[]>;
   createCalendarFeedToken?: () => Promise<{ token: string; metadata: CalendarFeedTokenMetadata }>;
   revokeCalendarFeedToken?: (id: string) => Promise<void>;

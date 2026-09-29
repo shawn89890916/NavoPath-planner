@@ -159,6 +159,7 @@ const ProactiveAssistantSettings = lazy(() => import("./components/ProactiveAssi
 const ProactiveNotificationCenter = lazy(() => import("./components/ProactiveNotificationCenter").then((module) => ({ default: module.ProactiveNotificationCenter })));
 const UnfinishedTasksDialog = lazy(() => import("./components/UnfinishedTasksDialog").then((module) => ({ default: module.UnfinishedTasksDialog })));
 const McpTokenManager = lazy(() => import("./components/McpTokenManager"));
+const SyncBridgeManager = lazy(() => import("./components/SyncBridgeManager"));
 
 const todayIso = () => localIsoDate();
 const TIMELINE_START = 0;
@@ -14717,7 +14718,7 @@ function settingsCategoryDescription(category: SettingsCategory, lang: Language,
     "account-data": ["账户、同步、导入导出与数据控制。", "Account, sync, imports, exports, and data controls."],
     ai: ["Navo AI 的模型、记忆与主动助理。", "Navo AI models, memory, and proactive assistant."],
     widget: ["桌面窗口的外观与计时器。", "Desktop window appearance and timer."],
-    integrations: ["日历订阅、外部日历、插件与 MCP。", "Calendar subscriptions, plugins, and MCP."],
+    integrations: ["日历订阅、外部日历、插件、MCP 与云盘同步。", "Calendar subscriptions, external calendars, plugins, MCP, and cloud-folder sync."],
     advanced: ["高级设置与恢复选项。", "Advanced and recovery options."],
   };
   return descriptions[category][lang === "zh" ? 0 : 1];
@@ -14743,7 +14744,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
   const [settingsHome, setSettingsHome] = useState(!initialSection && compactLayout);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [widgetThemeOpen, setWidgetThemeOpen] = useState<"light" | "dark">("light");
-  const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "plugins" | "mcp">("calendar");
+  const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "plugins" | "mcp" | "sync">("calendar");
   const settingsContentRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [profileNameEditing, setProfileNameEditing] = useState(false);
@@ -14774,6 +14775,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
     if (settingsTarget.anchor?.startsWith("widget-light")) setWidgetThemeOpen("light");
     if (settingsTarget.anchor?.startsWith("widget-dark")) setWidgetThemeOpen("dark");
     if (settingsTarget.anchor === "mcp") setIntegrationTab("mcp");
+    if (settingsTarget.anchor === "sync-bridge") setIntegrationTab("sync");
     if (settingsTarget.anchor === "plugins") setIntegrationTab("plugins");
     if (settingsTarget.anchor === "external-calendar") setIntegrationTab("external-calendar");
   }, [settingsTarget.anchor]);
@@ -14799,6 +14801,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
     if (target.anchor?.startsWith("widget-light")) setWidgetThemeOpen("light");
     if (target.anchor?.startsWith("widget-dark")) setWidgetThemeOpen("dark");
     if (target.anchor === "mcp") setIntegrationTab("mcp");
+    if (target.anchor === "sync-bridge") setIntegrationTab("sync");
     if (target.anchor === "plugins") setIntegrationTab("plugins");
     if (target.anchor === "calendar-feed") setIntegrationTab("calendar");
     if (target.anchor === "external-calendar") setIntegrationTab("external-calendar");
@@ -15585,10 +15588,12 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
               <button type="button" role="tab" aria-selected={integrationTab === "external-calendar"} className={`ui-choice-item${integrationTab === "external-calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("external-calendar"); setSettingsTarget({ category: "integrations", anchor: "external-calendar" }); }}>{lang === "zh" ? "外部日历" : "External"}</button>
               <button type="button" role="tab" aria-selected={integrationTab === "plugins"} className={`ui-choice-item${integrationTab === "plugins" ? " active" : ""}`} onClick={() => { setIntegrationTab("plugins"); setSettingsTarget({ category: "integrations", anchor: "plugins" }); }}>{lang === "zh" ? "插件" : "Plugins"}</button>
               <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={`ui-choice-item${integrationTab === "mcp" ? " active" : ""}`} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "integrations", anchor: "mcp" }); }}>MCP</button>
+              <button type="button" role="tab" aria-selected={integrationTab === "sync"} className={`ui-choice-item${integrationTab === "sync" ? " active" : ""}`} onClick={() => { setIntegrationTab("sync"); setSettingsTarget({ category: "integrations", anchor: "sync-bridge" }); }}>{lang === "zh" ? "同步" : "Sync"}</button>
             </div>}
             {settingsTarget.category === "integrations" && integrationTab === "calendar" && <section className="df-settings-group" data-settings-anchor="calendar-feed" tabIndex={-1}><h3>{lang === "zh" ? "日历订阅" : "Calendar Subscription"}</h3><CalendarFeedManager lang={lang} /></section>}
             {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <section className="df-settings-group" data-settings-anchor="external-calendar" tabIndex={-1}><h3>{lang === "zh" ? "外部日历" : "External Calendars"}</h3><ExternalCalendarManager lang={lang} /></section>}
             {settingsTarget.category === "integrations" && integrationTab === "mcp" && <section className="df-settings-group" data-settings-anchor="mcp" tabIndex={-1}><h3>MCP</h3><Suspense fallback={<p className="df-mcp-status">{lang === "zh" ? "正在打开 MCP…" : "Opening MCP…"}</p>}><McpTokenManager lang={lang} /></Suspense></section>}
+            {settingsTarget.category === "integrations" && integrationTab === "sync" && <section className="df-settings-group" data-settings-anchor="sync-bridge" tabIndex={-1}><h3>{lang === "zh" ? "同步" : "Sync"}</h3><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></section>}
             {settingsTarget.category === "integrations" && integrationTab === "plugins" && <section className="df-settings-group" data-settings-anchor="plugins" tabIndex={-1}>
               <h3>{lang === "zh" ? "插件" : "Plugins"}</h3>
               <p className="df-settings-desc">{lang === "zh" ? "这里会显示随应用发布的内置插件，以及桌面端用户插件目录中经过校验的本地 manifest。本地插件可保存配置，但不会加载或执行 index.js 等目录脚本。" : "This list includes built-in plugins shipped with the app and validated local manifests from the desktop plugin directory. Local plugin configuration can be stored, but directory scripts such as index.js are not loaded or executed."}</p>

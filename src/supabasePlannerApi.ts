@@ -655,6 +655,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       const { error } = await retryTransientRequest(() => supabase.rpc("revoke_mcp_token", { token_id: id }));
       if (error) throw new Error(error.message);
     },
+    listSyncBridgeStatuses: async () => (await import("./syncBridgeStatusApi")).listSyncBridgeStatuses(supabase, await requireUser()),
     listCalendarFeedTokens: async () => {
       await requireUser();
       const { data, error } = await retryTransientRequest(() => supabase.rpc("list_calendar_feed_tokens"));
