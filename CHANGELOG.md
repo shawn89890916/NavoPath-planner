@@ -6,6 +6,7 @@
 - 「日历与集成」新增“同步”：可复制 Agent 配置提示词，让常开电脑把工作区与自己的云盘文件夹双向同步，并查看运行状态；另有手动备份教程。
 
 ### 修复
+- 工作区版本冲突现在返回明确的 409，避免数据库 API 反复重试同一写入并耗尽连接池。
 - 刷新及“回到现在”时，竖屏时间轴将目标时间对齐到整个视口高度的 1/3 处。
 - 规划页筛选按钮固定在右上方并避开顶部安全区；任务框右侧操作按钮取消描边，保留键盘焦点提示。
 - “回到现在”改为轻量无边框图标按钮，并保留 44px 触控区域。
@@ -30,6 +31,7 @@
 - Calendar & Integrations now includes Sync: copy an Agent setup prompt to connect an always-on computer with your own cloud folder, monitor its status, or follow the manual backup guide.
 
 ### Fixed
+- Workspace revision conflicts now return HTTP 409, preventing repeated database retries from exhausting the API connection pool.
 - On portrait screens, refresh and “Back to now” align the target time at one third of the full viewport height.
 - The Planning filter stays at the top right clear of the safe area; task-card action buttons lose their borders while keeping a visible keyboard focus indicator.
 - “Back to now” uses a restrained borderless icon with a 44 px touch target.
