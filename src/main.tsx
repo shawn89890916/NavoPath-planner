@@ -1914,6 +1914,7 @@ function App() {
   const settingsSaveNoticeShownRef = useRef(false);
   const queuedRemoteRefreshRef = useRef(false);
   const remoteRevisionRef = useRef(0);
+  const cloudBaselineReadyRef = useRef(false);
   const remoteRevisionPollInFlightRef = useRef(false);
   const syncSchedulerRef = useRef<SyncScheduler | null>(null);
   const snapshotTimerRef = useRef<number | null>(null);
@@ -2114,7 +2115,7 @@ function App() {
       const cached = readBootstrapCache(userId);
       const hasDirtyLocal = Boolean(cached?.dataDirty || cached?.settingsDirty);
       if (workspaceKey !== loadedWorkspaceKeyRef.current) return;
-      if (!hasDirtyLocal && !shouldApplyWorkspaceRevision(workspaceKey, loadedWorkspaceKeyRef.current, remoteRevisionRef.current, incomingRevision)) return;
+      if (cloudBaselineReadyRef.current && !hasDirtyLocal && !shouldApplyWorkspaceRevision(workspaceKey, loadedWorkspaceKeyRef.current, remoteRevisionRef.current, incomingRevision)) return;
       if (pendingDataSaveRef.current || pendingSettingsSaveRef.current || dataSaveInFlightRef.current || settingsSaveInFlightRef.current) {
         queuedRemoteRefreshRef.current = true;
         return;
@@ -2123,6 +2124,7 @@ function App() {
       if (!resolved.data || !resolved.settings) return;
       const migratedData = migrateLegacyHabitTracker(resolved.data, resolved.settings.pluginConfigs);
       remoteRevisionRef.current = Math.max(remoteRevisionRef.current, incomingRevision);
+      cloudBaselineReadyRef.current = true;
       dataRef.current = migratedData;
       settingsRef.current = resolved.settings;
       setData(migratedData);
@@ -2249,6 +2251,7 @@ function App() {
     settingsSaveRetryTimerRef.current = null;
     queuedRemoteRefreshRef.current = false;
     remoteRevisionRef.current = 0;
+    cloudBaselineReadyRef.current = false;
     if (snapshotTimerRef.current) window.clearTimeout(snapshotTimerRef.current);
     snapshotTimerRef.current = null;
     setModeState("execute");
@@ -2321,6 +2324,7 @@ function App() {
       workspaceLoadVersionRef.current = loadVersion;
     }
     loadedWorkspaceKeyRef.current = workspaceKey;
+    cloudBaselineReadyRef.current = auth.mode !== "cloud";
     setAuthState(auth);
     if (auth.mode === "cloud" && !auth.user) {
       setData(null);
@@ -2328,7 +2332,6 @@ function App() {
       return;
     }
     const cached = readBootstrapCache(auth.user?.id);
-    const hasDirtyCache = Boolean(cached?.dataDirty || cached?.settingsDirty);
     if (cached?.data && cached?.settings) {
       dataRef.current = cached.data;
       settingsRef.current = cached.settings;
@@ -2338,12 +2341,9 @@ function App() {
       setModeState((cached.settings.activeMode as Mode) || "execute");
       if (cached.settings.defaultTimelineView) setTimelineView(cached.settings.defaultTimelineView);
     }
-    const cachedProfile = auth.user && cached && !hasDirtyCache
-      ? { userId: auth.user.id, data: cached.data, settings: cached.settings, revision: cached.remoteRevision }
-      : undefined;
-    if (cachedProfile) remoteRevisionRef.current = Math.max(remoteRevisionRef.current, cachedProfile.revision ?? 0);
-    const bootstrap = api.getBootstrap
-      ? await api.getBootstrap({ force: hasDirtyCache, cachedProfile })
+    if (cached?.remoteRevision) remoteRevisionRef.current = Math.max(remoteRevisionRef.current, cached.remoteRevision);
+    let bootstrap = api.getBootstrap
+      ? await api.getBootstrap({ force: auth.mode === "cloud" })
       : {
         auth,
         data: await api.getData(),
@@ -2351,8 +2351,15 @@ function App() {
       };
     if (!isCurrentWorkspaceLoad(loadVersion, workspaceLoadVersionRef.current)
       || loadedWorkspaceKeyRef.current !== workspaceKey) return;
+    if (auth.mode === "cloud" && Number(bootstrap.revision || 0) < remoteRevisionRef.current && api.getBootstrap) {
+      bootstrap = await api.getBootstrap({ force: true });
+      if (!isCurrentWorkspaceLoad(loadVersion, workspaceLoadVersionRef.current)
+        || loadedWorkspaceKeyRef.current !== workspaceKey) return;
+    }
     setAuthError("");
-    const resolved = resolveBootstrap(cached, bootstrap.data, bootstrap.settings);
+    // Edits made while the network request was in flight must remain dirty.
+    const latestCache = readBootstrapCache(auth.user?.id) || cached;
+    const resolved = resolveBootstrap(latestCache, bootstrap.data, bootstrap.settings);
     let nextData = resolved.data;
     let nextSettings = resolved.settings;
     const shouldPushCachedData = resolved.replayData;
@@ -2395,7 +2402,7 @@ function App() {
         return { ...task, timelineRecords: [record], scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, executionStatus: undefined };
       });
     }
-    remoteRevisionRef.current = bootstrap.revision || cached?.remoteRevision || 0;
+    remoteRevisionRef.current = Math.max(Number(bootstrap.revision || 0), remoteRevisionRef.current);
     writeBootstrapCache(nextData, nextSettings, auth.user?.id, {
       dataDirty: shouldPushCachedData,
       settingsDirty: shouldPushCachedSettings,
@@ -2403,6 +2410,7 @@ function App() {
     });
     dataRef.current = nextData;
     settingsRef.current = nextSettings;
+    cloudBaselineReadyRef.current = true;
     setData(nextData);
     setSettings(nextSettings);
     if (nextSettings.language) setLang(nextSettings.language);
@@ -3135,6 +3143,7 @@ function App() {
 
   useEffect(() => {
     if (!data) return;
+    if (loadedWorkspaceKeyRef.current.startsWith("cloud:") && !cloudBaselineReadyRef.current) return;
     const result = reconcileOverdueTasks(data, todayIso());
     if (!result.changed) return;
     void saveData(result.data);
@@ -7955,10 +7964,11 @@ function App() {
     const cached = readBootstrapCache(authStateRef.current?.user?.id);
     const hasDirtyLocal = Boolean(cached?.dataDirty || cached?.settingsDirty);
     if (workspaceKey !== loadedWorkspaceKeyRef.current) return;
-    if (!hasDirtyLocal && !shouldApplyWorkspaceRevision(workspaceKey, loadedWorkspaceKeyRef.current, remoteRevisionRef.current, incomingRevision)) return;
+    if (cloudBaselineReadyRef.current && !hasDirtyLocal && !shouldApplyWorkspaceRevision(workspaceKey, loadedWorkspaceKeyRef.current, remoteRevisionRef.current, incomingRevision)) return;
     const resolved = resolveBootstrap(cached, bootstrap.data, bootstrap.settings);
     if (!resolved.data || !resolved.settings) return;
     remoteRevisionRef.current = Math.max(remoteRevisionRef.current, incomingRevision);
+    cloudBaselineReadyRef.current = true;
     dataRef.current = resolved.data;
     settingsRef.current = resolved.settings;
     setData(resolved.data);
