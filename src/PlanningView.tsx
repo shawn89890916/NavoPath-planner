@@ -9,7 +9,7 @@ import { buildTaskMetaBadges } from "./utils/taskMetaBadges";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
 import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
 import { kanbanGroups, WORKFLOW_LABELS } from "./utils/productivity";
-import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch, type UiWorkflowStatus, type StateFilterValue } from "./utils/productivityModel";
+import { normalizeTaskCheckTone, normalizeWorkflowStatus, taskCheckboxPriority, workflowStatusForPatch, type UiWorkflowStatus, type StateFilterValue } from "./utils/productivityModel";
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockVariant } from "./components/TaskBlock";
 import { CloseButton } from "./components/UiPrimitives";
@@ -293,8 +293,8 @@ function PlanningModeIcon({ mode }: { mode: PlanningViewMode }) {
   );
 }
 
-function planningTaskPriority(task: Pick<Task, "priority">) {
-  return task.priority || "normal";
+function planningTaskPriority(task: Pick<Task, "priority" | "importance">) {
+  return taskCheckboxPriority(task) || "normal";
 }
 
 function isIncompletePlanningTask(task: Task) {
@@ -632,7 +632,7 @@ function PlanningTaskNode(props: {
             <TaskCheckbox
               checked={done}
               tone={normalizeTaskCheckTone(props.task)}
-              priority={props.task.priority}
+              priority={taskCheckboxPriority(props.task)}
               className="df-list-status-toggle df-planning-task-check"
               ariaLabel={done ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
               onClick={(event) => {
@@ -2675,7 +2675,7 @@ export default function PlanningView(props: {
                             <TaskCheckbox
                               checked={normalizeWorkflowStatus(task) === "done"}
                               tone={normalizeTaskCheckTone(task)}
-                              priority={task.priority}
+                              priority={taskCheckboxPriority(task)}
                               className="df-list-status-toggle"
                               ariaLabel={normalizeWorkflowStatus(task) === "done" ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
                               onClick={(e) => { e.stopPropagation(); props.onTaskUpdate(task.id, workflowStatusForPatch(normalizeWorkflowStatus(task) === "done" ? "backlog" : "done")); }}
@@ -2756,7 +2756,7 @@ export default function PlanningView(props: {
                               <TaskCheckbox
                                 checked={taskDone}
                                 tone={normalizeTaskCheckTone(task)}
-                                priority={task.priority}
+                                priority={taskCheckboxPriority(task)}
                                 className="df-list-status-toggle"
                                 ariaLabel={taskDone ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
                                 onClick={(e) => { e.stopPropagation(); props.onTaskUpdate(task.id, workflowStatusForPatch(taskDone ? "backlog" : "done")); }}
@@ -2812,7 +2812,7 @@ export default function PlanningView(props: {
                         <TaskCheckbox
                           checked={uiStatus === "done"}
                           tone={normalizeTaskCheckTone(task)}
-                          priority={task.priority}
+                          priority={taskCheckboxPriority(task)}
                           className="df-list-status-toggle"
                           ariaLabel={uiStatus === "done" ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
                           onClick={() => props.onTaskUpdate(task.id, workflowStatusForPatch(uiStatus === "done" ? "backlog" : "done"))}
@@ -3020,6 +3020,7 @@ export default function PlanningView(props: {
               <TaskCheckbox
                 checked={normalizeWorkflowStatus(planningDragTask.task) === "done"}
                 tone={normalizeTaskCheckTone(planningDragTask.task)}
+                priority={taskCheckboxPriority(planningDragTask.task)}
               />
               <TaskBlockContent
                 title={<span>{planningDragTask.task.title}</span>}

@@ -10,6 +10,7 @@
 - 时间轴偏离现在时间时，“回到现在”移至「全天」行最右侧并加粗；点击后平滑滚回当前时间，时间线短暂高亮，竖屏与横屏表现一致。刷新后，竖屏时间线准确定位在视口高度的 1/3 处。
 - 设置首页将账户资料放进可滚动区域并隐藏工作区底栏；修改姓名后立即等待持久化完成，失败时保留编辑状态并提示重试。
 - 规划页项目操作按钮去掉描边、加深图标；筛选按钮与规划顶栏对齐。
+- 各视图的任务勾选框随任务详情设置的重要程度更新；未设置时显示黑框，旧任务仍按已有等级显示。
 
 ## 2026-09-29 · 竖屏控件与云盘同步
 
@@ -47,6 +48,7 @@
 - When the timeline is away from the present, move “Back to now” to the far right of All Day and strengthen its label. Clicking it smoothly returns to the current time and briefly highlights the time line in portrait and landscape. Refresh now aligns the portrait time line precisely to one third of the viewport.
 - Put account details inside the scrollable Settings home and hide the workspace dock there. Name changes now wait for persistence; a failed save keeps the editor open and offers a retry.
 - Remove borders from Planning project actions, strengthen their icons, and align the filter with the Planning top bar.
+- Task checkbox colors now follow the importance level set in task details across views. Unset tasks show a black outline, while older tasks retain their existing level.
 
 ## 2026-09-29 · Portrait controls and cloud folder sync
 
