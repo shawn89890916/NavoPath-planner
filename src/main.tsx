@@ -9121,12 +9121,6 @@ if (cached?.data && cached?.settings) {
             <CandidatePanelHeader
               title={term(lang, "todayCandidates")}
               actions={<>
-                {compactLayout && <IconButton
-                  className="df-candidate-quick-add-top"
-                  icon={<UiPlusIcon size={20} />}
-                  label={t(lang, "candidate.add")}
-                  onClick={() => { setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
-                />}
                 {(timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
                   <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }} style={{ fontSize: "14px", lineHeight: 1, padding: "0 2px" }}>«</button>
                 )}

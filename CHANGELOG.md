@@ -6,10 +6,9 @@
 - “同步”页先展示账户、手机与云盘镜像的双向路径和桥接状态；已配置时收起首次安装步骤，并说明隐藏令牌输入、常见配置失败及云盘上传状态的查看位置。
 
 ### 修复
-
-- 手机重新打开工作区时先核对账户云端版本，再处理逾期任务；手动同步前也会读取最新云端数据，避免旧缓存将电脑端已删除的今日候选或规划任务重新写回。
 - 修正任务优先级勾选框在候选、日程和规划视图中的颜色显示；优先级菜单只更新任务优先级。
-- 执行与规划各视图统一在右下角显示快速添加按钮，并为底部导航留出更充足的空间。
+- 手机重新打开工作区时先核对账户云端版本，再处理逾期任务；手动同步前也会读取最新云端数据，避免旧缓存将电脑端已删除的今日候选或规划任务重新写回。
+- 执行页和今日候选页只在右下角保留快速添加悬浮按钮；任务编辑面板会随手机动态视口高度调整，并可在内容过长时滚动。
 - 时间轴偏离现在时间时，“回到现在”移至「全天」行最右侧并加粗；点击后平滑滚回当前时间，时间线短暂高亮，竖屏与横屏表现一致。刷新后，竖屏时间线准确定位在视口高度的 1/3 处。
 - 修正竖屏回位按钮的定位，使其与「全天」栏标签上下对齐；单击回位时暂停连续跨天重排，并在平滑滚动结束后校准到今天的当前时间。
 - 规划筛选按钮移入顶部工具栏并避开安全区；执行页快速添加按钮移至独立视口层，确保高于底栏且留有安全间距。
@@ -50,7 +49,7 @@
 ### Fixed
 - Fixed task priority checkbox colors across Candidates, Schedule, and Planning; the priority menu updates the task priority directly.
 - Reopening the workspace on a phone now checks the account's current cloud version before updating overdue tasks, and manual sync reads the latest cloud data before saving, preventing stale cached Today and Planning tasks from restoring desktop deletions.
-- Unify quick add at the bottom right across compact Execute and Planning views, with more clearance above the dock.
+- Keep quick add in the bottom-right floating control on Execute and Today’s Candidates, and make task editing fit and scroll within the phone’s dynamic viewport.
 - When the timeline is away from the present, move “Back to now” to the far right of All Day and strengthen its label. Clicking it smoothly returns to the current time and briefly highlights the time line in portrait and landscape. Refresh now aligns the portrait time line precisely to one third of the viewport.
 - Align the portrait return button vertically with the All Day label. Pause continuous day-window shifts during a return and correct the position after smooth scrolling so one tap lands on today's current time.
 - Place the Planning filter in the top toolbar clear of the safe area; render Execute quick add in a viewport layer above the dock with safe spacing.

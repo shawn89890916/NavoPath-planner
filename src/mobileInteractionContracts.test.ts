@@ -182,6 +182,13 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toContain("position: absolute;\n    top: 6px;\n    right: 6px;");
   });
 
+  it("keeps candidate quick-add in the floating control and bounds task editing to the dynamic viewport", () => {
+    expect(main).not.toContain("df-candidate-quick-add-top");
+    expect(main).toContain('className="df-mobile-quick-add-fab"');
+    expect(appCss).toContain("max-height: calc(100dvh - 4dvh);");
+    expect(appCss).toContain("overflow-y: auto;");
+  });
+
   it("awaits profile-name persistence and scrolls the profile with Settings home", () => {
     expect(main).toContain("onSaveProfileName={async (name) => { await saveSettings({ displayName: name }); await flushPendingSettings({ urgent: true }); }}");
     expect(main.indexOf('<div className="df-settings-home">')).toBeLessThan(main.indexOf('className="df-settings-profile-hero"'));

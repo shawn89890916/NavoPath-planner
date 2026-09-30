@@ -35255,26 +35255,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     flex: 0 0 auto;
   }
 
-  #root .df-app .df-candidate-panel .df-candidate-quick-add-top {
-    display: grid;
-    place-items: center;
-    width: 46px;
-    min-width: 46px;
-    height: 46px;
-    min-height: 46px;
-    padding: 0;
-    border: 1px solid color-mix(in srgb, var(--accent-active) 48%, var(--paper-rule-strong));
-    border-radius: 50%;
-    color: var(--surface-main);
-    background: var(--accent-active);
-    box-shadow: none;
-  }
-
-  #root .df-app .df-candidate-panel .df-candidate-quick-add-top span {
-    font: 400 27px/1 var(--paper-sans);
-    transform: translateY(-1px);
-  }
-
   #root .df-app.mode-execute .df-candidate-list:has(> .df-empty) {
     border: 0;
     background: transparent;
@@ -36083,7 +36063,13 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     padding: 30px 16px calc(18px + env(safe-area-inset-bottom));
     box-sizing: border-box;
     border-radius: 18px 18px 0 0;
+    height: auto;
+    min-height: 0;
+    max-height: calc(100dvh - 4dvh);
     overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scroll-padding-bottom: calc(18px + env(safe-area-inset-bottom));
     corner-shape: var(--corner-shape, squircle);
   }
 
