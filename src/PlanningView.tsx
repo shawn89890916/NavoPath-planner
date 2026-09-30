@@ -2243,16 +2243,6 @@ export default function PlanningView(props: {
                 ))}
               </div>
             )}
-          </aside>
-          <div className="df-tree-wrap">
-            {showLongRangeGuide && (
-              <aside className="df-planning-longrange-guide" role="note">
-                <CloseButton className="df-planning-guide-close" label={props.lang === "zh" ? "关闭规划说明" : "Dismiss planning note"} onClick={() => { dismissGuide("planning"); setGuideDismissed(true); }} />
-                <span>{props.lang === "zh" ? "长期任务，从这里开始规划" : "Plan long-range work here"}</span>
-                <strong>{props.lang === "zh" ? "先建立项目，再拆成任务，最后排进日程。" : "Create a project, break it into tasks, then schedule it."}</strong>
-                <div aria-hidden="true"><b>01 {props.lang === "zh" ? "项目" : "Project"}</b><i>→</i><b>02 {props.lang === "zh" ? "任务" : "Tasks"}</b><i>→</i><b>03 {props.lang === "zh" ? "排程" : "Schedule"}</b></div>
-              </aside>
-            )}
             <div className="df-planning-filter-corner">
               {viewMode !== "metrics" && (
               <div className="df-filter-popover-anchor">
@@ -2327,6 +2317,16 @@ export default function PlanningView(props: {
               )}
             </div>
 
+          </aside>
+          <div className="df-tree-wrap">
+            {showLongRangeGuide && (
+              <aside className="df-planning-longrange-guide" role="note">
+                <CloseButton className="df-planning-guide-close" label={props.lang === "zh" ? "关闭规划说明" : "Dismiss planning note"} onClick={() => { dismissGuide("planning"); setGuideDismissed(true); }} />
+                <span>{props.lang === "zh" ? "长期任务，从这里开始规划" : "Plan long-range work here"}</span>
+                <strong>{props.lang === "zh" ? "先建立项目，再拆成任务，最后排进日程。" : "Create a project, break it into tasks, then schedule it."}</strong>
+                <div aria-hidden="true"><b>01 {props.lang === "zh" ? "项目" : "Project"}</b><i>→</i><b>02 {props.lang === "zh" ? "任务" : "Tasks"}</b><i>→</i><b>03 {props.lang === "zh" ? "排程" : "Schedule"}</b></div>
+              </aside>
+            )}
           {viewMode !== "metrics" && activeFilterChips.length > 0 && (
             <div className="df-active-filter-bar" role="region" aria-label={props.lang === "zh" ? "Active filters" : "Active filters"}>
               {activeFilterChips.map((chip) => (

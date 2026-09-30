@@ -295,7 +295,7 @@ type SchedulePreview = {
 
 /** Auto-schedule state machine. */
 type AutoScheduleState = "idle" | "generating" | "preview" | "committing" | "error";
-type TimelineFocusSource = "schedule" | "autoschedule" | "recurrence" | "placement";
+type TimelineFocusSource = "schedule" | "autoschedule" | "recurrence" | "placement" | "now";
 type TimelineFocusTarget = { date: string; startTime?: string; taskId?: string; source: TimelineFocusSource; behavior?: ScrollBehavior };
 
 function timelineFocusViewportOffset(container: HTMLElement): number {
@@ -1816,8 +1816,13 @@ function App() {
   const [nowInTimelineViewport, setNowInTimelineViewport] = useState(true);
   const [nowLineReturnPulse, setNowLineReturnPulse] = useState(false);
   const nowLineReturnPulseTimerRef = useRef<number | null>(null);
+  const nowReturnNavigationRef = useRef(false);
+  const nowReturnSettleTimerRef = useRef<number | null>(null);
+  const nowReturnScrollEndCleanupRef = useRef<(() => void) | null>(null);
   useEffect(() => () => {
     if (nowLineReturnPulseTimerRef.current !== null) window.clearTimeout(nowLineReturnPulseTimerRef.current);
+    if (nowReturnSettleTimerRef.current !== null) window.clearTimeout(nowReturnSettleTimerRef.current);
+    nowReturnScrollEndCleanupRef.current?.();
   }, []);
   useEffect(() => {
     const element = timelineRef.current;
@@ -2332,7 +2337,7 @@ function App() {
       return;
     }
     const cached = readBootstrapCache(auth.user?.id);
-    if (cached?.data && cached?.settings) {
+if (cached?.data && cached?.settings) {
       dataRef.current = cached.data;
       settingsRef.current = cached.settings;
       setData(cached.data);
@@ -2358,7 +2363,7 @@ function App() {
     }
     setAuthError("");
     // Edits made while the network request was in flight must remain dirty.
-    const latestCache = readBootstrapCache(auth.user?.id) || cached;
+    const latestCache = readBootstrapCache(authStateRef.current?.user?.id) || cached;
     const resolved = resolveBootstrap(latestCache, bootstrap.data, bootstrap.settings);
     let nextData = resolved.data;
     let nextSettings = resolved.settings;
@@ -2825,6 +2830,39 @@ function App() {
     const frame = window.requestAnimationFrame(() => {
       container.scrollTo({ top: nextScrollTop, behavior: pendingTimelineFocus.behavior || "auto" });
       lastTimelineScrollRef.current = { top: container.scrollTop, left: container.scrollLeft };
+      if (pendingTimelineFocus.source === "now") {
+        if (nowReturnSettleTimerRef.current !== null) window.clearTimeout(nowReturnSettleTimerRef.current);
+        nowReturnScrollEndCleanupRef.current?.();
+        const alignToNowLine = () => {
+          const currentContainer = timelineRef.current;
+          const nowLine = timelineCanvasRef.current?.querySelector<HTMLElement>(".df-now-line");
+          if (currentContainer !== container || !nowLine) return null;
+          const desiredY = currentContainer.getBoundingClientRect().top + timelineFocusViewportOffset(currentContainer);
+          currentContainer.scrollTop += nowLine.getBoundingClientRect().top - desiredY;
+          lastTimelineScrollRef.current = { top: currentContainer.scrollTop, left: currentContainer.scrollLeft };
+          return currentContainer.scrollTop;
+        };
+        let finished = false;
+        const finishReturn = () => {
+          if (finished) return;
+          finished = true;
+          nowReturnScrollEndCleanupRef.current?.();
+          nowReturnScrollEndCleanupRef.current = null;
+          if (nowReturnSettleTimerRef.current !== null) window.clearTimeout(nowReturnSettleTimerRef.current);
+          const alignedTop = alignToNowLine();
+          nowReturnSettleTimerRef.current = window.setTimeout(() => {
+            if (alignedTop !== null && Math.abs(container.scrollTop - alignedTop) < 3) alignToNowLine();
+            nowReturnSettleTimerRef.current = null;
+            window.requestAnimationFrame(() => {
+              setVisibleTimelineDate(targetDate);
+              nowReturnNavigationRef.current = false;
+            });
+          }, 240);
+        };
+        container.addEventListener("scrollend", finishReturn, { once: true });
+        nowReturnScrollEndCleanupRef.current = () => container.removeEventListener("scrollend", finishReturn);
+        nowReturnSettleTimerRef.current = window.setTimeout(finishReturn, 1400);
+      }
       setPendingTimelineFocus(null);
     });
     return () => window.cancelAnimationFrame(frame);
@@ -2856,6 +2894,7 @@ function App() {
     // on real scroll events, never on effect init, so mount-time scrollTop=0
     // cannot trigger a setSelectedDate feedback loop.
     const handleTimelineScroll = () => {
+      if (nowReturnNavigationRef.current) return;
       updateVisibleLabel();
       if (continuousPrependLockRef.current || timelinePinchActiveRef.current) return;
       // Guard: if the container isn't scrollable (not laid out yet or content
@@ -7965,10 +8004,12 @@ function App() {
     const hasDirtyLocal = Boolean(cached?.dataDirty || cached?.settingsDirty);
     if (workspaceKey !== loadedWorkspaceKeyRef.current) return;
     if (cloudBaselineReadyRef.current && !hasDirtyLocal && !shouldApplyWorkspaceRevision(workspaceKey, loadedWorkspaceKeyRef.current, remoteRevisionRef.current, incomingRevision)) return;
-    const resolved = resolveBootstrap(cached, bootstrap.data, bootstrap.settings);
+    // Edits made while the network request was in flight must remain dirty.
+    const latestCache = readBootstrapCache(authStateRef.current?.user?.id) || cached;
+    const resolved = resolveBootstrap(latestCache, bootstrap.data, bootstrap.settings);
     if (!resolved.data || !resolved.settings) return;
     remoteRevisionRef.current = Math.max(remoteRevisionRef.current, incomingRevision);
-    cloudBaselineReadyRef.current = true;
+      cloudBaselineReadyRef.current = true;
     dataRef.current = resolved.data;
     settingsRef.current = resolved.settings;
     setData(resolved.data);
@@ -8607,12 +8648,18 @@ function App() {
     const now = new Date();
     const nowDate = todayIso();
     const nowTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    nowReturnNavigationRef.current = true;
+    continuousPrependLockRef.current = false;
+    continuousScrollRestoreRef.current = null;
+    if (nowReturnSettleTimerRef.current !== null) window.clearTimeout(nowReturnSettleTimerRef.current);
+    nowReturnScrollEndCleanupRef.current?.();
+    nowReturnScrollEndCleanupRef.current = null;
     setSelectedDate(nowDate);
     setVisibleTimelineDate(nowDate);
     setCompactExecuteView("schedule");
     setMobileDatePickerOpen(false);
     setTimelineView("daily");
-    setPendingTimelineFocus({ date: nowDate, startTime: nowTime, source: "schedule", behavior: "smooth" });
+    setPendingTimelineFocus({ date: nowDate, startTime: nowTime, source: "now", behavior: "smooth" });
     if (nowLineReturnPulseTimerRef.current !== null) window.clearTimeout(nowLineReturnPulseTimerRef.current);
     setNowLineReturnPulse(true);
     nowLineReturnPulseTimerRef.current = window.setTimeout(() => {
@@ -10269,13 +10316,14 @@ function App() {
 
       {!compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
       {!compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
-      {compactLayout && !drawerOpen && !utilityPanel && !aiOpen && <button
+      {compactLayout && !drawerOpen && !utilityPanel && !aiOpen && createPortal(<button
         type="button"
         className="df-mobile-quick-add-fab"
+        style={themeVars(settings, mode)}
         aria-label={lang === "zh" ? "快速添加任务" : "Quick add task"}
         title={lang === "zh" ? "快速添加任务" : "Quick add task"}
         onClick={() => { if (mode !== "execute") changeMode("execute"); setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
-      ><UiPlusIcon size={20} /></button>}
+      ><UiPlusIcon size={20} /></button>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
       {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}

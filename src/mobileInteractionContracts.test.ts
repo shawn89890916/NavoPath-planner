@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const main = readFileSync(resolve(__dirname, "main.tsx"), "utf8");
 const appCss = readFileSync(resolve(__dirname, "app.css"), "utf8");
 const defaults = readFileSync(resolve(__dirname, "defaultSettings.ts"), "utf8");
+const planning = readFileSync(resolve(__dirname, "PlanningView.tsx"), "utf8");
 
 describe("portrait interaction contracts", () => {
   it("opens the task short sheet on the second tap after selection", () => {
@@ -62,7 +63,7 @@ describe("portrait interaction contracts", () => {
   });
 
   it("keeps portrait Planning filter visible, checkbox visuals compact, and portals the dock to the viewport edge", () => {
-    expect(appCss).toContain("top: max(calc(env(safe-area-inset-top) + 6px), 6px);");
+    expect(appCss).toContain("position: absolute;\n    top: 6px;\n    right: 6px;");
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check\s*\{[^}]*width:\s*18px;[^}]*height:\s*18px;/);
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check::before\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/);
     expect(main).toContain('createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport');
@@ -152,17 +153,33 @@ describe("portrait interaction contracts", () => {
   it("keeps the now action beside All Day and animates the return in both orientations", () => {
     expect(main).toContain('{showBackToNow && <button className="df-back-to-now"');
     expect(main).toContain("回到现在");
-    expect(main).toContain('behavior: "smooth"');
+    expect(main).toContain('source: "now", behavior: "smooth"');
+    expect(main).toContain("nowReturnNavigationRef.current = true");
+    expect(main).toContain('container.addEventListener("scrollend", finishReturn');
+    expect(main).toContain("setVisibleTimelineDate(targetDate)");
     expect(main).toContain("setNowLineReturnPulse(true)");
     expect(main).toContain('is-return-highlighted');
     expect(appCss).toContain("@keyframes dfNowReturnPulse");
     expect(appCss).toContain("prefers-reduced-motion: reduce");
+    expect(appCss).toContain("position: relative;\n    min-height: 44px;\n    padding: 0;");
   });
 
   it("uses a bottom-right quick-add on every compact Execute and Planning view", () => {
-    expect(main).toContain("{compactLayout && !drawerOpen && !utilityPanel && !aiOpen && <button");
+    expect(main).toContain("{compactLayout && !drawerOpen && !utilityPanel && !aiOpen && createPortal(<button");
     expect(main).not.toContain('(mode !== "execute" || compactExecuteView === "schedule") && <button');
-    expect(appCss).toContain("bottom: calc(96px + env(safe-area-inset-bottom));");
+    expect(appCss).toContain("bottom: calc(72px + env(safe-area-inset-bottom));");
+    expect(appCss).toContain("z-index: 1001;");
+  });
+
+  it("keeps the Planning filter inside the mobile top toolbar safe area", () => {
+    const sidebarStart = planning.indexOf('<aside className="df-planning-sidebar"');
+    const sidebarEnd = planning.indexOf("</aside>", sidebarStart);
+    const filterPosition = planning.indexOf('<div className="df-planning-filter-corner">');
+
+    expect(sidebarStart).toBeGreaterThanOrEqual(0);
+    expect(filterPosition).toBeGreaterThan(sidebarStart);
+    expect(filterPosition).toBeLessThan(sidebarEnd);
+    expect(appCss).toContain("position: absolute;\n    top: 6px;\n    right: 6px;");
   });
 
   it("awaits profile-name persistence and scrolls the profile with Settings home", () => {
@@ -231,7 +248,7 @@ describe("portrait interaction contracts", () => {
 describe("portrait timeline and Planning control contracts", () => {
   it("keeps task action buttons borderless and the Planning filter at the portrait top right", () => {
     expect(appCss).toMatch(/\.df-plan-task-node \.df-task-node-actions \.df-tree-icon-button\s*\{[^}]*border:\s*0;/);
-    expect(appCss).toContain("top: max(calc(env(safe-area-inset-top) + 6px), 6px);");
+    expect(appCss).toContain("position: absolute;\n    top: 6px;\n    right: 6px;");
     expect(appCss).toContain("width: 44px;");
   });
 });

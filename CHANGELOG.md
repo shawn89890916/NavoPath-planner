@@ -6,12 +6,15 @@
 - “同步”页先展示账户、手机与云盘镜像的双向路径和桥接状态；已配置时收起首次安装步骤，并说明隐藏令牌输入、常见配置失败及云盘上传状态的查看位置。
 
 ### 修复
-- 执行与规划各视图统一在右下角显示快速添加按钮，并为底部导航留出更充足的空间。
-- 时间轴偏离现在时间时，“回到现在”移至「全天」行最右侧并加粗；点击后平滑滚回当前时间，时间线短暂高亮，竖屏与横屏表现一致。刷新后，竖屏时间线准确定位在视口高度的 1/3 处。
-- 设置首页将账户资料放进可滚动区域并隐藏工作区底栏；修改姓名后立即等待持久化完成，失败时保留编辑状态并提示重试。
-- 规划页项目操作按钮去掉描边、加深图标；筛选按钮与规划顶栏对齐。
 - 各视图的任务勾选框随任务详情设置的重要程度更新；未设置时显示黑框，旧任务仍按已有等级显示。
 - 手机重新打开工作区时先核对账户云端版本，再处理逾期任务；手动同步前也会读取最新云端数据，避免旧缓存将电脑端已删除的今日候选或规划任务重新写回。
+- 各视图的任务勾选框颜色随任务详情中的重要程度更新；未设置时显示黑框，旧任务仍按已有等级显示。
+- 执行与规划各视图统一在右下角显示快速添加按钮，并为底部导航留出更充足的空间。
+- 时间轴偏离现在时间时，“回到现在”移至「全天」行最右侧并加粗；点击后平滑滚回当前时间，时间线短暂高亮，竖屏与横屏表现一致。刷新后，竖屏时间线准确定位在视口高度的 1/3 处。
+- 修正竖屏回位按钮的定位，使其与「全天」栏标签上下对齐；单击回位时暂停连续跨天重排，并在平滑滚动结束后校准到今天的当前时间。
+- 规划筛选按钮移入顶部工具栏并避开安全区；执行页快速添加按钮移至独立视口层，确保高于底栏且留有安全间距。
+- 设置首页将账户资料放进可滚动区域并隐藏工作区底栏；修改姓名后立即等待持久化完成，失败时保留编辑状态并提示重试。
+- 规划页项目操作按钮去掉描边、加深图标；筛选按钮与规划顶栏对齐。
 
 ## 2026-09-29 · 竖屏控件与云盘同步
 
@@ -45,12 +48,14 @@
 - Sync now shows the two-way path between the account, phone, and cloud folder mirror before setup instructions, collapses first-time setup when a bridge is connected, and explains hidden token input, common setup failures, and where to check cloud uploads.
 
 ### Fixed
-- Unify quick add at the bottom right across compact Execute and Planning views, with more clearance above the dock.
-- When the timeline is away from the present, move “Back to now” to the far right of All Day and strengthen its label. Clicking it smoothly returns to the current time and briefly highlights the time line in portrait and landscape. Refresh now aligns the portrait time line precisely to one third of the viewport.
-- Put account details inside the scrollable Settings home and hide the workspace dock there. Name changes now wait for persistence; a failed save keeps the editor open and offers a retry.
-- Remove borders from Planning project actions, strengthen their icons, and align the filter with the Planning top bar.
 - Task checkbox colors now follow the importance level set in task details across views. Unset tasks show a black outline, while older tasks retain their existing level.
 - Reopening the workspace on a phone now checks the account's current cloud version before updating overdue tasks, and manual sync reads the latest cloud data before saving, preventing stale cached Today and Planning tasks from restoring desktop deletions.
+- Unify quick add at the bottom right across compact Execute and Planning views, with more clearance above the dock.
+- When the timeline is away from the present, move “Back to now” to the far right of All Day and strengthen its label. Clicking it smoothly returns to the current time and briefly highlights the time line in portrait and landscape. Refresh now aligns the portrait time line precisely to one third of the viewport.
+- Align the portrait return button vertically with the All Day label. Pause continuous day-window shifts during a return and correct the position after smooth scrolling so one tap lands on today's current time.
+- Place the Planning filter in the top toolbar clear of the safe area; render Execute quick add in a viewport layer above the dock with safe spacing.
+- Put account details inside the scrollable Settings home and hide the workspace dock there. Name changes now wait for persistence; a failed save keeps the editor open and offers a retry.
+- Remove borders from Planning project actions, strengthen their icons, and align the filter with the Planning top bar.
 
 ## 2026-09-29 · Portrait controls and cloud folder sync
 

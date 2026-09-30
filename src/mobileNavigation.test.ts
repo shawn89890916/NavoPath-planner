@@ -8,8 +8,8 @@ describe("portrait mobile navigation", () => {
   it("keeps the quick-add FAB available across compact Execute and Planning views", () => {
     expect(mainSource).toContain('className="df-mobile-dock-action df-mobile-ai"');
     expect(mainSource).toContain('className="df-mobile-quick-add-fab"');
-    expect(mainSource).toContain("{compactLayout && !drawerOpen && !utilityPanel && !aiOpen && <button");
-    expect(mobileStyles).toContain("bottom: calc(96px + env(safe-area-inset-bottom));");
+    expect(mainSource).toContain("{compactLayout && !drawerOpen && !utilityPanel && !aiOpen && createPortal(<button");
+    expect(mobileStyles).toContain("bottom: calc(72px + env(safe-area-inset-bottom));");
   });
 
   it("keeps AI and Settings in dismissible task-detail-sized sheets", () => {

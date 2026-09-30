@@ -24594,6 +24594,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 }
 
 .df-app .df-timeline-allday {
+  position: relative;
   border-color: var(--paper-rule);
   background: transparent;
   box-shadow: none;
@@ -34742,11 +34743,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     top: 0;
   }
 
-  #root .df-app .df-mobile-quick-add-fab {
+  .df-mobile-quick-add-fab {
     position: fixed;
     right: 16px;
-    bottom: calc(96px + env(safe-area-inset-bottom));
-    z-index: 31;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    z-index: 1001;
     display: grid;
     place-items: center;
     width: 52px;
@@ -34762,7 +34763,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     touch-action: manipulation;
   }
 
-  #root .df-app .df-mobile-quick-add-fab svg {
+  .df-mobile-quick-add-fab svg {
     width: 23px;
     height: 23px;
     fill: none;
@@ -34771,7 +34772,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     stroke-linecap: round;
   }
 
-  #root .df-app .df-mobile-quick-add-fab:active {
+  .df-mobile-quick-add-fab:active {
     transform: translateY(1px);
     box-shadow: none;
   }
@@ -35337,7 +35338,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
   #root .df-app .df-back-to-now {
     position: absolute;
-    top: 50%;
+    top: 0;
     right: 0;
     width: auto;
     min-width: 44px;
@@ -35356,7 +35357,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     box-shadow: none;
     opacity: 1;
     white-space: nowrap;
-    transform: translateY(-50%);
+    transform: none;
   }
 
   #root .df-app .df-back-to-now:hover,
@@ -39482,9 +39483,26 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 
 @media (orientation: portrait) {
+  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday {
+    position: relative;
+    min-height: 44px;
+    padding: 0;
+  }
+
+  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday-label {
+    top: 0;
+    display: flex;
+    align-items: center;
+    height: 44px;
+  }
+
+  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now) .df-timeline-allday-content {
+    padding-right: 112px;
+  }
+
   #root .df-app.mode-planning .df-planning .df-planning-filter-corner {
-    position: fixed;
-    top: max(calc(env(safe-area-inset-top) + 6px), 6px);
+    position: absolute;
+    top: 6px;
     right: 6px;
     z-index: 30;
   }
