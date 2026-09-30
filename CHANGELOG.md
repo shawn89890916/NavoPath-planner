@@ -11,6 +11,7 @@
 - 设置首页将账户资料放进可滚动区域并隐藏工作区底栏；修改姓名后立即等待持久化完成，失败时保留编辑状态并提示重试。
 - 规划页项目操作按钮去掉描边、加深图标；筛选按钮与规划顶栏对齐。
 - 各视图的任务勾选框随任务详情设置的重要程度更新；未设置时显示黑框，旧任务仍按已有等级显示。
+- 手机重新打开工作区时先核对账户云端版本，再处理逾期任务；手动同步前也会读取最新云端数据，避免旧缓存将电脑端已删除的今日候选或规划任务重新写回。
 
 ## 2026-09-29 · 竖屏控件与云盘同步
 
@@ -49,6 +50,7 @@
 - Put account details inside the scrollable Settings home and hide the workspace dock there. Name changes now wait for persistence; a failed save keeps the editor open and offers a retry.
 - Remove borders from Planning project actions, strengthen their icons, and align the filter with the Planning top bar.
 - Task checkbox colors now follow the importance level set in task details across views. Unset tasks show a black outline, while older tasks retain their existing level.
+- Reopening the workspace on a phone now checks the account's current cloud version before updating overdue tasks, and manual sync reads the latest cloud data before saving, preventing stale cached Today and Planning tasks from restoring desktop deletions.
 
 ## 2026-09-29 · Portrait controls and cloud folder sync
 

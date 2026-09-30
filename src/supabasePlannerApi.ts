@@ -335,7 +335,9 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
   async function updateProfile(patch: { data?: PlannerData; settings?: Settings }) {
     const user = await requireUser();
     const requestAuthVersion = authVersion;
-    let current = await ensureProfile(user);
+    // A different device may have deleted records since our cached revision.
+    // Read the latest profile before merging even when this tab has a profile cache.
+    let current = await ensureProfile(user, Boolean(patch.data));
     for (let attempt = 0; attempt < 3; attempt += 1) {
       if (!isCurrentAuth(user.id, requestAuthVersion)) throw new Error("Account changed while syncing");
       const nextData = patch.data ? mergePlannerData(current.data, normalizeData(patch.data)) : current.data;
