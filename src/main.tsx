@@ -61,7 +61,7 @@ import {
   dailyContinuousTargetFromContentY,
   getContinuousTimelineDateForOffset,
 } from "./utils/continuousTimeline";
-import { normalizeTaskCheckTone, normalizeTaskState, taskCheckboxPriority, taskMetaPatch, validateProjectCompletion, workflowStatusForPatch } from "./utils/productivityModel";
+import { normalizeTaskCheckTone, normalizeTaskState, taskMetaPatch, validateProjectCompletion, workflowStatusForPatch } from "./utils/productivityModel";
 import { SHORTCUTS, groupShortcutsByScope, matchShortcut, type ShortcutScope } from "./utils/shortcuts";
 import { buildTaskMetaBadges } from "./utils/taskMetaBadges";
 import { computeConflictLayout, computeConflictStyle, scheduledDateTimesOverlap, scheduledTaskIntervalsOnDate } from "./utils/conflictLayout";
@@ -12288,7 +12288,7 @@ function TaskCard({
         as="article"
         variant="candidate"
         appearance="calm"
-        priority={taskBlockPriorityFor(taskCheckboxPriority(task))}
+        priority={taskBlockPriorityFor(task.priority)}
         checked={task.completed && !isEvent}
         selected={Boolean(openPanel || schedulePanelOpen || isPlacementArmed)}
         dragState={dragState}
@@ -12308,7 +12308,7 @@ function TaskCard({
           {!isEvent && <TaskCheckbox
             checked={task.completed}
             tone={normalizeTaskCheckTone(task)}
-            priority={taskCheckboxPriority(task)}
+            priority={task.priority}
             title={task.completed ? t(lang, "taskCard.markIncomplete") : t(lang, "taskCard.markComplete")}
             onClick={(event) => { event.stopPropagation(); onToggleDone(); }}
           >
@@ -12395,7 +12395,7 @@ function TaskCard({
       <AnchoredNarrowMenu open={morePopover === "priority"} anchorRef={priorityTriggerRef} onClose={() => setMorePopover(null)} label={lang === "zh" ? "设置优先级" : "Set priority"}>
         {(["high", "medium", "low", null] as const).map((priority) => {
           const iconClass = priority === "high" ? "df-priority-high" : priority === "medium" ? "df-priority-medium" : priority === "low" ? "df-priority-low" : "df-priority-none";
-          return <button key={priority || "none"} type="button" className={taskCheckboxPriority(task) === priority ? "active" : ""} onClick={() => { onMetaUpdate?.({ priority, importance: priority }); setMorePopover(null); }}><UiFlagIcon className={iconClass} size={16} /><span>{priority === "high" ? (lang === "zh" ? "高" : "High") : priority === "medium" ? (lang === "zh" ? "中" : "Medium") : priority === "low" ? (lang === "zh" ? "低" : "Low") : (lang === "zh" ? "无" : "None")}</span></button>;
+          return <button key={priority || "none"} type="button" className={task.priority === priority ? "active" : ""} onClick={() => { onMetaUpdate?.({ priority }); setMorePopover(null); }}><UiFlagIcon className={iconClass} size={16} /><span>{priority === "high" ? (lang === "zh" ? "高" : "High") : priority === "medium" ? (lang === "zh" ? "中" : "Medium") : priority === "low" ? (lang === "zh" ? "低" : "Low") : (lang === "zh" ? "无" : "None")}</span></button>;
         })}
       </AnchoredNarrowMenu>
 
@@ -12680,7 +12680,7 @@ function TimeBlock({ task, preview, projectName, projects, hovered, showResizeHi
     : suppliedTop ?? top;
 
   return (
-    <TaskBlock as="div" variant="scheduled" appearance="calm" priority={taskBlockPriorityFor(taskCheckboxPriority(task))} density={height < 56 ? "compact" : "normal"} checked={!isEvent && task.completed} selected={Boolean(showResizeHint || projectOpen || preview)} dragState={dragState} projectColor={stripeColor} className={`df-time-block priority-${task.priority} ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${preview ? "resizing" : ""} ${showResizeHint ? "show-resize-hint" : ""} ${projectOpen ? "project-open" : ""} ${isPreview ? "df-time-block-preview" : ""} ${isWeekView ? "df-time-block-week" : ""} ${isRecurring ? "recurring" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", preview: isPreview ? "true" : undefined, "view-mode": viewMode, "schedule-size": sizeClass, "timeline-event-id": eventId, "task-id": task.id, readonly: isExternalEvent ? "true" : undefined }} style={{ ...extraStyle, top: resolvedTop, height, bottom: "auto", "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px", "--recurring-text": recurringTextColor } as CSSProperties} onMouseEnter={() => onHover(task.id)} onMouseLeave={() => {
+    <TaskBlock as="div" variant="scheduled" appearance="calm" priority={taskBlockPriorityFor(task.priority)} density={height < 56 ? "compact" : "normal"} checked={!isEvent && task.completed} selected={Boolean(showResizeHint || projectOpen || preview)} dragState={dragState} projectColor={stripeColor} className={`df-time-block priority-${task.priority} ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${preview ? "resizing" : ""} ${showResizeHint ? "show-resize-hint" : ""} ${projectOpen ? "project-open" : ""} ${isPreview ? "df-time-block-preview" : ""} ${isWeekView ? "df-time-block-week" : ""} ${isRecurring ? "recurring" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", preview: isPreview ? "true" : undefined, "view-mode": viewMode, "schedule-size": sizeClass, "timeline-event-id": eventId, "task-id": task.id, readonly: isExternalEvent ? "true" : undefined }} style={{ ...extraStyle, top: resolvedTop, height, bottom: "auto", "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px", "--recurring-text": recurringTextColor } as CSSProperties} onMouseEnter={() => onHover(task.id)} onMouseLeave={() => {
       onHover("");
     }} onPointerDown={isExternalEvent || isReturnedUnfinished || isSkipped ? undefined : onDragStart} onClick={(event) => { event.stopPropagation(); onSelect(); }} onDoubleClick={(event) => { event.stopPropagation(); onEdit(); }} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? t(lang, "timeBlock.returnedHint") : undefined}>
       {isPreview && <span className="df-preview-badge">{t(lang, "timeBlock.pending")}</span>}
@@ -12691,7 +12691,7 @@ function TimeBlock({ task, preview, projectName, projects, hovered, showResizeHi
         {isEvent ? (
           <span className="df-task-block-check df-time-card-event-mark" title={t(lang, "timeBlock.eventTooltip")} aria-label={t(lang, "timeBlock.eventTooltip")} />
         ) : (
-          <TaskCheckbox checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={taskCheckboxPriority(task)} returned={isReturnedUnfinished || isSkipped} onMouseDown={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => {
+          <TaskCheckbox checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority} returned={isReturnedUnfinished || isSkipped} onMouseDown={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => {
             event.stopPropagation();
             onToggleDone();
           }} ariaLabel={task.completed ? t(lang, "timeBlock.markIncomplete") : t(lang, "timeBlock.markComplete")}>
@@ -12899,10 +12899,10 @@ function AllDayBlock({ task, dragging, projectName, projects, onEdit, onToggleDo
     }
   }, [hovered]);
   return (
-    <TaskBlock as="article" variant="allDay" appearance="calm" priority={taskBlockPriorityFor(taskCheckboxPriority(task))} checked={!isEvent && task.completed} selected={projectOpen} dragging={dragging} projectColor={stripeColor} className={`df-all-day-block ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${projectOpen ? "project-open" : ""} ${isShortName ? "short-name" : ""}${dragging ? " is-dragging" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", readonly: isExternalEvent ? "true" : undefined }} style={{ "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px" } as CSSProperties} onPointerDown={isEvent || isReturnedUnfinished || isSkipped ? undefined : onPointerDragStart} onClick={onEdit} onMouseEnter={() => setHovered(true)} onMouseLeave={() => { setProjectOpen(false); setHovered(false); }} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? "已回到规划，可重新安排" : undefined}>
+    <TaskBlock as="article" variant="allDay" appearance="calm" priority={taskBlockPriorityFor(task.priority)} checked={!isEvent && task.completed} selected={projectOpen} dragging={dragging} projectColor={stripeColor} className={`df-all-day-block ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${projectOpen ? "project-open" : ""} ${isShortName ? "short-name" : ""}${dragging ? " is-dragging" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", readonly: isExternalEvent ? "true" : undefined }} style={{ "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px" } as CSSProperties} onPointerDown={isEvent || isReturnedUnfinished || isSkipped ? undefined : onPointerDragStart} onClick={onEdit} onMouseEnter={() => setHovered(true)} onMouseLeave={() => { setProjectOpen(false); setHovered(false); }} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? "已回到规划，可重新安排" : undefined}>
       <TaskRecurrenceIndicator recurrence={task.recurrence} lang={lang} />
       <TaskBlockRow className="df-all-day-row">
-        {!isEvent && <TaskCheckbox checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={taskCheckboxPriority(task)} returned={isReturnedUnfinished || isSkipped} onClick={(event) => {
+        {!isEvent && <TaskCheckbox checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority} returned={isReturnedUnfinished || isSkipped} onClick={(event) => {
           event.stopPropagation();
           onToggleDone();
         }}>{task.completed ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-6" /></svg> : isSkipped ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l6 6M9 3L3 9" /></svg> : isReturnedUnfinished ? <ReturnedToPlanIcon /> : ""}</TaskCheckbox>}

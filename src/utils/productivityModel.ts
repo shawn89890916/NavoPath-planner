@@ -46,11 +46,6 @@ export function normalizeTaskCheckTone(task: Pick<Task, "importance" | "urgency"
   return task.importance === "high" || task.urgency === "high" ? "attention" : "muted";
 }
 
-/** Checkbox color follows the visible importance control; older tasks may only have priority. */
-export function taskCheckboxPriority(task: Pick<Task, "importance" | "priority">): NullablePriority {
-  return normalizeNullableLevel(task.importance === undefined ? task.priority : task.importance);
-}
-
 export function taskMetaPatch(kind: "importance" | "urgency", value: unknown): Pick<Task, "importance"> | Pick<Task, "urgency"> {
   if (kind === "importance") return { importance: normalizeNullableLevel(value) };
   return { urgency: normalizeUrgency(value) };
