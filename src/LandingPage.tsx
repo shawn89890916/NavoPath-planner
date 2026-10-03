@@ -1,5 +1,6 @@
+import { ProductMenu } from "./components/ProductMenu";
 import { type CSSProperties, useEffect, useState } from "react";
-import { ProductIcon } from "./main";
+import { ProductIcon } from "./WorkspacePresentation";
 import { DESKTOP_DOWNLOAD_URL } from "./downloads";
 import { CloseButton, IconButton } from "./components/UiPrimitives";
 import { UiEyeIcon } from "./components/UiIcons";
@@ -213,7 +214,8 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
   return <div className="landing" lang={lang}>
     <nav className="landing-nav" aria-label="NavoPath">
       <a className="landing-brand" href="#top" aria-label="NavoPath"><ProductIcon compact /><span>NavoPath</span></a>
-      <div className="landing-nav-links">{c.nav.map(([label, href]) => <a key={href} href={href} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</div>
+      <div className="landing-nav-links">
+            <ProductMenu lang={lang} />{c.nav.map(([label, href]) => <a key={href} href={href} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</div>
       <div className="landing-nav-actions"><button className="landing-lang" aria-label={lang === "en" ? "切换为中文" : "Switch to English"} onClick={() => setLang(lang === "en" ? "zh" : "en")}>{lang === "en" ? "中" : "EN"}</button><button className="landing-button quiet small" onClick={() => setShowAuth(true)}>{c.login}</button></div>
     </nav>
     <main>

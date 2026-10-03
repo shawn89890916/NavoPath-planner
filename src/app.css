@@ -39543,3 +39543,21 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 @media (prefers-reduced-motion: reduce) {
   #root .df-app .df-now-line.is-return-highlighted { animation-duration: .01ms; }
 }
+
+/* The same AI panel can be embedded in a bounded workspace or product demo. */
+#root .df-app .df-ai-panel.df-ai-panel-reference.is-embedded {
+  position: relative;
+  inset: auto;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+}
+#root .df-app .df-ai-panel.df-ai-panel-reference.is-embedded::before { display: none; }

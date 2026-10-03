@@ -2,6 +2,10 @@
 
 ## 2026-10-03 · 时间轴位置稳定性
 
+### 新增
+- 新增规划、执行与 AI 三个中英文功能页，使用可操作的示例任务介绍从目标到执行的流程；首页产品菜单可直接访问。
+- 功能演示支持跟随讲解、自由探索、重置，以及安排预览的应用与撤回；示例操作独立于个人工作区。
+
 ### 修复
 - 在执行页与规划页之间反复切换时，保留时间轴的滚动位置与显示日期，覆盖开启和关闭跨天滚动的日、三日与周视图。
 
@@ -47,6 +51,10 @@
 # NavoPath Changelog
 
 ## 2026-10-03 · Timeline position stability
+
+### Added
+- Added bilingual Planning, Execute, and AI feature pages with interactive example tasks showing the path from goals to execution, accessible from the homepage Product menu.
+- Product demonstrations support following the story, free exploration, reset, and applying or undoing schedule previews; example changes stay separate from your personal workspace.
 
 ### Fixed
 - Preserve the timeline scroll position and visible date across repeated switches between Planning and Execute in daily, three-day, and weekly views, with cross-day scrolling enabled or disabled.

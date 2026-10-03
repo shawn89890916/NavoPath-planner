@@ -1,0 +1,75 @@
+import React, { lazy, Suspense } from "react";
+import { createRoot } from "react-dom/client";
+import { productFeature, siteLanguage, type ProductFeature } from "./productSite";
+
+class SiteErrorBoundary extends React.Component<
+  { children: React.ReactNode; demo: boolean },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch() {
+    if (this.props.demo && parent !== window)
+      parent.postMessage(
+        { channel: "navopath-product-demo", type: "error" },
+        location.origin,
+      );
+  }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    const zh = siteLanguage(location.search, navigator.language) === "zh";
+    return (
+      <div
+        role="alert"
+        style={{
+          padding: 32,
+          color: "#27231e",
+          background: "#f4f7f9",
+          minHeight: "100vh",
+        }}
+      >
+        <p>{zh ? "页面暂时未能加载。" : "This page could not load."}</p>
+        <button type="button" onClick={() => location.reload()}>
+          {zh ? "重新加载" : "Try again"}
+        </button>
+      </div>
+    );
+  }
+}
+
+const featureContent = {
+  planning: () => import("./features/planning"),
+  execute: () => import("./features/execute"),
+  ai: () => import("./features/ai"),
+};
+async function loadFeature(feature: ProductFeature) {
+  const [page, content] = await Promise.all([import("./ProductFeaturePage"), featureContent[feature]()]);
+  return { default: ({ feature }: { feature: ProductFeature }) => <page.default feature={feature} copy={content.default} /> };
+}
+const feature = productFeature(window.location.pathname, "features");
+const demo = productFeature(window.location.pathname, "product-demo");
+if (feature || demo) {
+  const Page = demo
+    ? lazy(() => import("./ProductDemo"))
+    : lazy(() => loadFeature(feature!));
+  createRoot(document.getElementById("root")!).render(
+    <SiteErrorBoundary demo={Boolean(demo)}>
+      <Suspense
+        fallback={
+          <div
+            role="status"
+            style={{ padding: 32, background: "#f4f7f9", color: "#27231e" }}
+          >
+            NavoPath…
+          </div>
+        }
+      >
+        <Page feature={(demo || feature)!} />
+      </Suspense>
+    </SiteErrorBoundary>,
+  );
+} else {
+  void import("./main");
+}
