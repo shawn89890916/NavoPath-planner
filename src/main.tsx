@@ -1812,6 +1812,28 @@ function App() {
   const timelineCanvasRef = useRef<HTMLDivElement | null>(null);
   const timelineMutationScrollRef = useRef<{ top: number; left: number } | null>(null);
   const lastTimelineScrollRef = useRef<{ top: number; left: number }>({ top: 0, left: 0 });
+  const detachedTimelineViewportRef = useRef<{ top: number; left: number; context: string } | null>(null);
+  const previousTimelineModeRef = useRef(mode);
+  const timelineViewportContext = `${selectedDate}:${timelineView}:${settings?.continuousCrossDayScroll !== false}:${settings?.dayStartTime}:${timelineZoom}`;
+  const attachTimelineScroll = useCallback((element: HTMLDivElement | null) => {
+    const previous = timelineRef.current;
+    if (previous) {
+      detachedTimelineViewportRef.current = { top: previous.scrollTop, left: previous.scrollLeft, context: timelineViewportContext };
+    }
+    timelineRef.current = element;
+  }, [timelineViewportContext]);
+  useLayoutEffect(() => {
+    const previousMode = previousTimelineModeRef.current;
+    previousTimelineModeRef.current = mode;
+    if (mode !== "execute" || previousMode === "execute") return;
+    const viewport = detachedTimelineViewportRef.current;
+    detachedTimelineViewportRef.current = null;
+    const element = timelineRef.current;
+    if (!element || !viewport || viewport.context !== timelineViewportContext || pendingTimelineFocus) return;
+    element.scrollTop = viewport.top;
+    element.scrollLeft = viewport.left;
+    lastTimelineScrollRef.current = { top: element.scrollTop, left: element.scrollLeft };
+  }, [mode, timelineViewportContext, pendingTimelineFocus]);
   const previousTimelineDataRef = useRef(data);
   const [nowInTimelineViewport, setNowInTimelineViewport] = useState(true);
   const [nowLineReturnPulse, setNowLineReturnPulse] = useState(false);
@@ -2871,7 +2893,8 @@ if (cached?.data && cached?.settings) {
   useEffect(() => {
     const effectColumnCount = timelineView === "weekly" ? 7 : timelineView === "3day" ? 3 : 1;
     const effectEnabled = settings?.continuousCrossDayScroll !== false && timelineView !== "month";
-    if (mode !== "execute" || !effectEnabled) {
+    if (mode !== "execute") return;
+    if (!effectEnabled) {
       setVisibleTimelineDate(selectedDate);
       return;
     }
@@ -9471,7 +9494,7 @@ if (cached?.data && cached?.settings) {
                           })}
                         </div>
                       </div>
-                      <div className="df-timeline-3day-scroll" ref={timelineRef}>
+                      <div className="df-timeline-3day-scroll" ref={attachTimelineScroll}>
                         <div className="df-timeline-3day-grid">
                           <div className="df-timeline-3day-ruler">
                             <div className="df-timeline-canvas" style={{ height: `${canvasHeight}px`, width: "52px", margin: 0, borderLeft: "none", background: "transparent" }}>
@@ -10036,7 +10059,7 @@ if (cached?.data && cached?.settings) {
                       </div>
                     </div>
                     <TimelineCanvas
-                      scrollRef={timelineRef}
+                      scrollRef={attachTimelineScroll}
                       canvasRef={timelineCanvasRef}
                       height={dailyTimelineCanvasHeight}
                       onScrollDragOver={(event) => {

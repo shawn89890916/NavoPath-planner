@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-03 · 时间轴位置稳定性
+
+### 修复
+- 从执行页切到规划页再返回时，保留时间轴的滚动位置与显示日期，覆盖开启和关闭跨天滚动的日、三日与周视图。
+
 ## 2026-09-30 · 同步配置说明
 
 ### 改进
@@ -40,6 +45,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-03 · Timeline position stability
+
+### Fixed
+- Preserve the timeline scroll position and visible date when returning from Planning to Execute in daily, three-day, and weekly views, with cross-day scrolling enabled or disabled.
 
 ## 2026-09-30 · Sync setup guidance
 
