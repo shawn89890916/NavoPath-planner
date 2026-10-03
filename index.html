@@ -33,6 +33,10 @@
       // Pre-React error handler: if the JS bundle fails to load or throws
       // before React mounts, display the error instead of a blank white page.
       window.addEventListener("error", function (event) {
+        if (/^\/product-demo\//.test(location.pathname)) {
+          if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "error" }, location.origin);
+          return;
+        }
         var el = document.createElement("div");
         el.style.cssText = "position:fixed;inset:0;padding:24px;font-family:monospace;font-size:13px;white-space:pre-wrap;color:#C96F5B;background:#fff;z-index:99999;overflow:auto;";
         var msg = (event.error && event.error.stack) ? event.error.stack : (event.message || String(event.error || event));
@@ -46,6 +50,7 @@
       // bundle whose lazy chunk no longer exists. Vite emits this event before
       // rejecting the import; reload once to move the page to the new manifest.
       window.addEventListener("vite:preloadError", function (event) {
+        if (/^\/product-demo\//.test(location.pathname)) return;
         var key = "navopath:asset-recovery";
         var lastReload = Number(sessionStorage.getItem(key) || 0);
         if (Date.now() - lastReload < 60000) return;
@@ -54,6 +59,7 @@
         location.reload();
       });
       window.addEventListener("load", function () {
+        if (/^\/product-demo\//.test(location.pathname)) return;
         window.setTimeout(function () { sessionStorage.removeItem("navopath:asset-recovery"); }, 10000);
       });
     </script>
@@ -66,6 +72,6 @@
       </div>
     </div>
     <script type="module" src="/src/nativeRuntime.ts"></script>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/siteEntry.tsx"></script>
   </body>
 </html>

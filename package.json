@@ -15,10 +15,10 @@
     "terminology:check": "node scripts/terminology-check.mjs",
     "build:portfolio": "tsc && vite build --config vite.portfolio.config.ts",
     "preview:portfolio": "vite preview --config vite.portfolio.config.ts --host 127.0.0.1",
-    "dist": "npm run build && electron-builder --win nsis portable",
+    "dist": "npm run build:navopath -- --base=./ && electron-builder --win nsis portable",
     "preview": "vite preview --host 127.0.0.1",
     "mobile:preview": "vite --host 0.0.0.0",
-    "ios:sync": "npm run build && cap sync ios && node scripts/normalize-capacitor-spm-paths.mjs",
+    "ios:sync": "npm run build:navopath -- --base=./ && cap sync ios && node scripts/normalize-capacitor-spm-paths.mjs",
     "ios:check": "node scripts/normalize-capacitor-spm-paths.mjs --check",
     "ios:open": "cap open ios",
     "ios:run": "cap run ios",
@@ -31,11 +31,13 @@
       "name": "Initial app scripts",
       "path": [
         "dist/assets/index-*.js",
+        "dist/assets/main-*.js",
+        "dist/assets/ui-primitives-*.js",
         "dist/assets/react-vendor-*.js",
         "dist/assets/supabase-vendor-*.js",
         "dist/assets/supabasePlannerApi-*.js"
       ],
-      "limit": "261 KB"
+      "limit": "270 KB"
     },
     {
       "name": "Deferred app scripts",
@@ -57,17 +59,20 @@
       "name": "Total app scripts",
       "path": [
         "dist/assets/index-*.js",
+        "dist/assets/main-*.js",
+        "dist/assets/ui-primitives-*.js",
         "dist/assets/react-vendor-*.js",
         "dist/assets/supabase-vendor-*.js",
         "dist/assets/supabasePlannerApi-*.js",
         "dist/assets/AiMarkdown-*.js",
         "dist/assets/AiClarificationQuestions-*.js",
+        "dist/assets/AiPanel-*.js",
         "dist/assets/PlanningView-*.js",
         "dist/assets/LandingPage-*.js",
         "dist/assets/WidgetApp-*.js",
         "dist/assets/MobileTaskSummary-*.js"
       ],
-      "limit": "333.5 KB"
+      "limit": "350 KB"
     },
     {
       "name": "Document parsing scripts",
@@ -79,8 +84,11 @@
     },
     {
       "name": "Core styles",
-      "path": "dist/assets/index-*.css",
-    "limit": "85 KB"
+      "path": [
+        "dist/assets/index-*.css",
+        "dist/assets/ui-primitives-*.css"
+      ],
+      "limit": "85 KB"
     },
     {
       "name": "Deferred styles",
@@ -95,11 +103,38 @@
       "name": "Total styles",
       "path": [
         "dist/assets/index-*.css",
+        "dist/assets/ui-primitives-*.css",
         "dist/assets/LandingPage-*.css",
         "dist/assets/WidgetApp-*.css",
         "dist/assets/MobileTaskSummary-*.css"
       ],
-    "limit": "94 KB"
+      "limit": "94 KB"
+    },
+    {
+      "name": "Deferred AI panel",
+      "path": "dist/assets/AiPanel-*.js",
+      "limit": "10 KB"
+    },
+    {
+      "name": "Product site scripts",
+      "path": [
+        "dist/assets/ProductFeaturePage-*.js",
+        "dist/assets/ProductDemo-*.js",
+        "dist/assets/ProductMenu-*.js",
+        "dist/assets/planning-*.js",
+        "dist/assets/execute-*.js",
+        "dist/assets/ai-*.js"
+      ],
+      "limit": "16 KB"
+    },
+    {
+      "name": "Product site styles",
+      "path": [
+        "dist/assets/ProductFeaturePage-*.css",
+        "dist/assets/ProductDemo-*.css",
+        "dist/assets/ProductMenu-*.css"
+      ],
+      "limit": "4 KB"
     }
   ],
   "build": {

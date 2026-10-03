@@ -1,0 +1,197 @@
+html.product-demo-document,
+html.product-demo-document body,
+html.product-demo-document #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+.product-demo.df-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+}
+.demo-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.demo-toolbar strong {
+  font-weight: 600;
+}
+.demo-notice {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 8px 16px;
+  background: var(--surface-main);
+  color: var(--text-main);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.demo-execution {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  padding: 12px;
+  gap: 12px;
+  grid-template-columns: minmax(190px, 0.85fr) minmax(0, 1.15fr);
+}
+.demo-execution .df-candidate-panel {
+  min-height: 0;
+  max-height: 100%;
+}
+.demo-execution .df-candidate-list {
+  min-height: 0;
+  overflow-y: auto;
+}
+.demo-timeline {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.demo-date {
+  flex: 0 0 auto;
+  padding: 12px 8px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.demo-timeline .df-timeline-scroll {
+  flex: 1;
+  min-height: 0;
+  overscroll-behavior: auto;
+}
+.demo-pane-tabs {
+  display: none;
+}
+.demo-empty {
+  padding: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.demo-task-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-soft);
+  font-size: 12px;
+}
+.demo-task-controls > span {
+  flex: 1 1 100%;
+}
+.demo-task-controls .ui-button,
+.demo-ai-controls .ui-button {
+  font-size: 12px;
+}
+.demo-candidate-count,
+.demo-ai-result {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.product-demo > .df-planning {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+}
+.product-demo .df-planning-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.product-demo .df-tree {
+  min-height: 0;
+}
+.demo-ai-controls {
+  padding: 10px 0 0;
+  font-size: 12px;
+}
+.demo-ai-controls > span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
+.demo-ai-controls > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.demo-offscreen * {
+  animation-play-state: paused;
+}
+@media (orientation: portrait), (max-width: 980px) {
+  .demo-pane-tabs {
+    display: flex;
+    gap: 12px;
+    flex: 0 0 auto;
+    padding: 4px 12px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .demo-pane-tabs button[aria-pressed="true"] {
+    border-bottom: 1px solid var(--accent-active);
+  }
+  .demo-execution {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+  }
+  .demo-execution.pane-tasks .demo-timeline,
+  .demo-execution.pane-timeline .df-candidate-panel {
+    display: none;
+  }
+  .demo-execution .demo-timeline,
+  .demo-execution .df-candidate-panel {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+  }
+  .product-demo .df-candidate-list {
+    padding: 6px;
+  }
+  .demo-task-controls {
+    padding: 6px 12px;
+    gap: 4px;
+  }
+}
+
+.demo-ai-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 12px;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.demo-ai-execution {
+  display: flex;
+  flex-direction: column;
+}
+.demo-ai-panel {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+.demo-ai-execution.pane-tasks .demo-timeline,
+.demo-ai-execution.pane-timeline .demo-ai-panel {
+  display: none;
+}
+.demo-ai-execution .demo-timeline {
+  flex: 1;
+}

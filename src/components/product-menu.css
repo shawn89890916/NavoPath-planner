@@ -1,0 +1,70 @@
+.np-product-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+.np-product-menu > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: #7b8490;
+  font:
+    620 13px "Segoe UI Variable",
+    "Segoe UI",
+    "Microsoft YaHei",
+    sans-serif;
+  cursor: pointer;
+}
+.np-product-menu > button:hover,
+.np-product-menu > button[aria-expanded="true"] {
+  color: #27231e;
+  border-bottom-color: #d7816a;
+}
+.np-product-menu > button:focus-visible,
+.np-product-menu nav a:focus-visible {
+  outline: 2px solid #584d3d;
+  outline-offset: 3px;
+}
+.np-product-menu nav {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 10px);
+  left: 0;
+  width: 190px;
+  padding: 8px 16px;
+  border: 1px solid rgba(39, 35, 30, 0.18);
+  border-radius: 4px;
+  background: #fff;
+}
+.np-product-menu nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 44px;
+  padding: 0;
+  color: #59636f;
+  border-bottom: 1px solid rgba(39, 35, 30, 0.12);
+  font-size: 14px;
+  text-decoration: none;
+}
+.np-product-menu nav a:last-child {
+  border-bottom: 0;
+}
+.np-product-menu nav a:hover {
+  color: #27231e;
+}
+@media (min-width: 641px) and (max-width: 980px) {
+  .landing-nav:has(.np-product-menu) { grid-template-columns: 1fr auto 1fr; }
+  .landing-nav-links:has(.np-product-menu) { display: flex; }
+  .landing-nav-links:has(.np-product-menu) > a { display: none; }
+}
+@media (max-width: 640px) {
+  .landing-nav-links:has(.np-product-menu) { gap: clamp(4px, 1.2vw, 6px); }
+  .landing-nav-links .np-product-menu > button { font-size: 10px; gap: 4px; }
+  .np-product-menu nav { left: 50%; transform: translateX(-50%); }
+}

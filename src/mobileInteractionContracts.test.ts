@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const main = readFileSync(resolve(__dirname, "main.tsx"), "utf8");
+const main = readFileSync(resolve(__dirname, "main.tsx"), "utf8") + readFileSync(resolve(__dirname, "WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "AiPanel.tsx"), "utf8");
 const appCss = readFileSync(resolve(__dirname, "app.css"), "utf8");
 const defaults = readFileSync(resolve(__dirname, "defaultSettings.ts"), "utf8");
 const planning = readFileSync(resolve(__dirname, "PlanningView.tsx"), "utf8");

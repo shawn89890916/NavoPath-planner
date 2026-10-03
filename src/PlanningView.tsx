@@ -245,7 +245,7 @@ function localDateInputValue(date: Date) {
 
 function metricViewLabel(lang: Language, mode: PlanningViewMode) {
   if (mode === "tree") return lang === "zh" ? "树" : "Tree";
-  if (mode === "kanban") return "Kanban";
+  if (mode === "kanban") return lang === "zh" ? "看板" : "Kanban";
   if (mode === "eisenhower") return lang === "zh" ? "矩阵" : "Matrix";
   if (mode === "metrics") return lang === "zh" ? "指标" : "Metrics";
   return lang === "zh" ? "列表" : "List";
@@ -431,6 +431,7 @@ function TreeMenu(props: {
 }
 
 function PlanningSubtaskNode(props: {
+  demo?: boolean;
   lang: Language;
   subtask: Subtask;
   projectColor: string;
@@ -525,7 +526,7 @@ function PlanningSubtaskNode(props: {
               >
                 <ArrowRightIcon />
               </button>
-              <button
+              {!props.demo && <button
                 className="df-tree-icon-button"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -534,7 +535,7 @@ function PlanningSubtaskNode(props: {
                 aria-label={t(props.lang, "planning.more")}
               >
                 <MoreIcon />
-              </button>
+              </button>}
             </TaskActions>
           </TaskBlockRow>
         </TaskBlock>
@@ -553,6 +554,7 @@ function PlanningSubtaskNode(props: {
           <div className="df-subtask-children">
             {childSubtasks.map((child) => (
               <PlanningSubtaskNode
+                demo={props.demo}
                 key={child.id}
                 lang={props.lang}
                 subtask={child}
@@ -574,6 +576,7 @@ function PlanningSubtaskNode(props: {
 }
 
 function PlanningTaskNode(props: {
+  demo?: boolean;
   lang: Language;
   task: Task;
   addedToToday: boolean;
@@ -666,7 +669,7 @@ function PlanningTaskNode(props: {
               )}
             </TaskBlockContent>
             <TaskActions className="df-task-node-actions">
-              {!isPlanned && <button
+              {(!isPlanned || props.demo) && <button
                 className="df-tree-icon-button"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -677,7 +680,7 @@ function PlanningTaskNode(props: {
               >
                 <ArrowRightIcon />
               </button>}
-              <button
+              {!props.demo && <button
                 className="df-tree-icon-button"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -686,7 +689,7 @@ function PlanningTaskNode(props: {
                 aria-label={t(props.lang, "planning.more")}
               >
                 <MoreIcon />
-              </button>
+              </button>}
             </TaskActions>
           </TaskBlockRow>
           {hasSubtasks && <TaskSubtaskShelf
@@ -715,6 +718,7 @@ function PlanningTaskNode(props: {
 }
 
 function PlanningProjectNode(props: {
+  demo?: boolean;
   lang: Language;
   project: Project;
   taskCount: number;
@@ -773,9 +777,9 @@ function PlanningProjectNode(props: {
               <CheckIcon />
             </button>
           )}
-          <button className="df-tree-icon-button df-project-add-btn" onClick={props.onAddTask} aria-label={t(props.lang, "planning.addTask")}>
+          {!props.demo && <button className="df-tree-icon-button df-project-add-btn" onClick={props.onAddTask} aria-label={t(props.lang, "planning.addTask")}>
             <PlusIcon />
-          </button>
+          </button>}
           <button className="df-tree-icon-button df-collapse-btn" onClick={props.onToggleCollapse} aria-label={props.collapsed ? t(props.lang, "planning.expandProject") : t(props.lang, "planning.collapseProject")}>
             <ChevronIcon open={!props.collapsed} />
           </button>
@@ -974,7 +978,10 @@ function useTreeLines(
 type PlanningViewMode = "tree" | "kanban" | "eisenhower" | "list" | "metrics";
 
 export default function PlanningView(props: {
+  demo?: boolean;
   lang: Language;
+  referenceDate?: string;
+  initialViewMode?: PlanningViewMode;
   data: PlannerData;
   projects: Project[];
   tasks: Task[];
@@ -1027,7 +1034,7 @@ export default function PlanningView(props: {
     if (enableMetrics) modes.push("metrics");
     return modes;
   }, [enableKanban, enableQuadrant, enableList, enableMetrics]);
-  const [viewMode, setViewMode] = useState<PlanningViewMode>("tree");
+  const [viewMode, setViewMode] = useState<PlanningViewMode>(props.initialViewMode || "tree");
   // Safety: if the active view mode is removed from the available set (e.g. the
   // user just disabled the metrics feature while sitting on the metrics view),
   // fall back to the default tree view so the panel never renders a gated mode.
@@ -1062,7 +1069,7 @@ export default function PlanningView(props: {
   const [listDropTargetId, setListDropTargetId] = useState<string | null>(null);
   const [listDropPosition, setListDropPosition] = useState<"before" | "after">("before");
   const [listDropAtEnd, setListDropAtEnd] = useState(false);
-  const [guideDismissed, setGuideDismissed] = useState(() => isGuideDismissed("planning"));
+  const [guideDismissed, setGuideDismissed] = useState(() => props.demo ? false : isGuideDismissed("planning"));
   const [planningDragTask, setPlanningDragTask] = useState<{
     task: Task;
     variant: TaskBlockVariant;
@@ -1116,7 +1123,7 @@ export default function PlanningView(props: {
     setPlanningDragTask(null);
   }
 
-  const today = todayIso();
+  const today = props.referenceDate || todayIso();
 
   useEffect(() => setMetricsRangePreset(props.metricsRangePreset || "today"), [props.metricsRangePreset]);
   useEffect(() => setMetricsGroupBy(props.metricsGroupBy || "project"), [props.metricsGroupBy]);
@@ -2321,7 +2328,7 @@ export default function PlanningView(props: {
           <div className="df-tree-wrap">
             {showLongRangeGuide && (
               <aside className="df-planning-longrange-guide" role="note">
-                <CloseButton className="df-planning-guide-close" label={props.lang === "zh" ? "关闭规划说明" : "Dismiss planning note"} onClick={() => { dismissGuide("planning"); setGuideDismissed(true); }} />
+                <CloseButton className="df-planning-guide-close" label={props.lang === "zh" ? "关闭规划说明" : "Dismiss planning note"} onClick={() => { if (!props.demo) dismissGuide("planning"); setGuideDismissed(true); }} />
                 <span>{props.lang === "zh" ? "长期任务，从这里开始规划" : "Plan long-range work here"}</span>
                 <strong>{props.lang === "zh" ? "先建立项目，再拆成任务，最后排进日程。" : "Create a project, break it into tasks, then schedule it."}</strong>
                 <div aria-hidden="true"><b>01 {props.lang === "zh" ? "项目" : "Project"}</b><i>→</i><b>02 {props.lang === "zh" ? "任务" : "Tasks"}</b><i>→</i><b>03 {props.lang === "zh" ? "排程" : "Schedule"}</b></div>
@@ -2853,6 +2860,7 @@ export default function PlanningView(props: {
                 {treeDropSlot("project", project.id, "before")}
                 <div className="df-category-branch" data-project-id={project.id}>
                   <PlanningProjectNode
+                demo={props.demo}
                     lang={props.lang}
                     project={project}
                     taskCount={tasks.length}
@@ -2860,7 +2868,7 @@ export default function PlanningView(props: {
                     onToggleCollapse={() => props.setCollapsed((current) => ({ ...current, [project.id]: !current[project.id] }))}
                     onOpen={() => props.onProjectEdit(project)}
                     onAddTask={() => props.onTaskCreate(project.id)}
-                    onComplete={() => props.onProjectComplete?.(project.id)}
+                    onComplete={props.demo ? undefined : () => props.onProjectComplete?.(project.id)}
                     dragging={dragNode?.kind === "project" && dragNode.id === project.id}
                   />
                   {treeDropSlot("project", project.id, "inside")}
@@ -2870,6 +2878,7 @@ export default function PlanningView(props: {
                         <div className="df-task-branch" key={task.id}>
                           {treeDropSlot("task", task.id, "before")}
                         <PlanningTaskNode
+                demo={props.demo}
                           lang={props.lang}
                           task={task}
                           addedToToday={task.plannedForDate === today && task.executionLane === "candidate"}
@@ -2894,6 +2903,7 @@ export default function PlanningView(props: {
                               <React.Fragment key={subtask.id}>
                                 {treeDropSlot("subtask", subtask.id, "before")}
                                 <PlanningSubtaskNode
+                demo={props.demo}
                                   lang={props.lang}
                                   subtask={subtask}
                                   projectColor={project.color || DEFAULT_PROJECT_COLOR}
@@ -2927,6 +2937,7 @@ export default function PlanningView(props: {
                 {treeDropSlot("project", "__unassigned__", "before")}
                 <div className="df-category-branch" data-project-id="__unassigned__">
                 <PlanningProjectNode
+                demo={props.demo}
                   lang={props.lang}
                   project={createProjectShell(t(props.lang, "planning.unassignedTasks"))}
                   taskCount={unassigned.length}
@@ -2943,6 +2954,7 @@ export default function PlanningView(props: {
                       <div className="df-task-branch" key={task.id}>
                         {treeDropSlot("task", task.id, "before")}
                         <PlanningTaskNode
+                demo={props.demo}
                           lang={props.lang}
                           task={task}
                           addedToToday={task.plannedForDate === today && task.executionLane === "candidate"}
@@ -2967,6 +2979,7 @@ export default function PlanningView(props: {
                               <React.Fragment key={subtask.id}>
                                 {treeDropSlot("subtask", subtask.id, "before")}
                                 <PlanningSubtaskNode
+                demo={props.demo}
                                   lang={props.lang}
                                   subtask={subtask}
                                   projectColor={UNASSIGNED_COLOR}
