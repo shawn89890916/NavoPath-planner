@@ -1811,28 +1811,23 @@ function App() {
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const timelineCanvasRef = useRef<HTMLDivElement | null>(null);
   const timelineMutationScrollRef = useRef<{ top: number; left: number } | null>(null);
-  const lastTimelineScrollRef = useRef<{ top: number; left: number }>({ top: 0, left: 0 });
-  const detachedTimelineViewportRef = useRef<{ top: number; left: number; context: string } | null>(null);
-  const previousTimelineModeRef = useRef(mode);
+  const lastTimelineScrollRef = useRef<{ top: number; left: number; context?: string }>({ top: 0, left: 0 });
   const timelineViewportContext = `${selectedDate}:${timelineView}:${settings?.continuousCrossDayScroll !== false}:${settings?.dayStartTime}:${timelineZoom}`;
   const attachTimelineScroll = useCallback((element: HTMLDivElement | null) => {
     const previous = timelineRef.current;
     if (previous) {
-      detachedTimelineViewportRef.current = { top: previous.scrollTop, left: previous.scrollLeft, context: timelineViewportContext };
+      lastTimelineScrollRef.current = { top: previous.scrollTop, left: previous.scrollLeft, context: timelineViewportContext };
     }
     timelineRef.current = element;
   }, [timelineViewportContext]);
   useLayoutEffect(() => {
-    const previousMode = previousTimelineModeRef.current;
-    previousTimelineModeRef.current = mode;
-    if (mode !== "execute" || previousMode === "execute") return;
-    const viewport = detachedTimelineViewportRef.current;
-    detachedTimelineViewportRef.current = null;
+    if (mode !== "execute") return;
+    const viewport = lastTimelineScrollRef.current;
     const element = timelineRef.current;
-    if (!element || !viewport || viewport.context !== timelineViewportContext || pendingTimelineFocus) return;
+    if (!element || viewport.context !== timelineViewportContext || pendingTimelineFocus) return;
+    delete viewport.context;
     element.scrollTop = viewport.top;
     element.scrollLeft = viewport.left;
-    lastTimelineScrollRef.current = { top: element.scrollTop, left: element.scrollLeft };
   }, [mode, timelineViewportContext, pendingTimelineFocus]);
   const previousTimelineDataRef = useRef(data);
   const [nowInTimelineViewport, setNowInTimelineViewport] = useState(true);
