@@ -24,7 +24,9 @@ geometry. The full-window presentation is a scoped variant in canonical product 
 regular /app retains its geometry. ProductStorySlot reserves an optional native column and reports its geometry;
 ProductStory renders one semantic introduction in the parent document, aligned with
 that column. The workspace stays sticky while the paragraphs scroll normally. Each
-paragraph scales and fades continuously with distance from the column center; the
+paragraph stays enlarged and opaque within 22% of viewport height from the column
+center, easing down only toward the top and bottom edges. Enlargement is capped by
+the available column width so notes cannot spill onto native panels. The
 reduced-motion setting keeps text at full size and opacity. The outer page clips
 notes below the native header so navigation stays unobstructed. Demo CSS owns the
 slot, preset buttons, and viewport containment; feature CSS owns the scrolling notes.

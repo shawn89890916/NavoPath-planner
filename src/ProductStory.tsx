@@ -38,9 +38,13 @@ export default function ProductStory({ lang, copy, layout }: { lang: Language; c
       const focus = layout ? layout.top + layout.height / 2 : innerHeight / 2;
       for (const section of element.querySelectorAll<HTMLElement>("section")) {
         const rect = section.getBoundingClientRect();
-        const distance = Math.min(1, Math.abs(rect.top + rect.height / 2 - focus) / (innerHeight * .65));
-        section.style.setProperty("--story-opacity", String(reduced.matches ? 1 : .14 + .86 * (1 - distance) ** 1.5));
-        section.style.setProperty("--story-scale", String(reduced.matches ? 1 : 1 - .22 * distance));
+        const distance = Math.abs(rect.top + rect.height / 2 - focus);
+        // Keep a broad reading zone; ease the text out only near the viewport edges.
+        const edge = Math.max(0, Math.min(1, (distance - innerHeight * .22) / (innerHeight * .30)));
+        const fade = edge * edge * (3 - 2 * edge);
+        const peakScale = Math.min(1.14, (element.clientWidth - 8) / rect.width);
+        section.style.setProperty("--story-opacity", String(reduced.matches ? 1 : 1 - .86 * fade));
+        section.style.setProperty("--story-scale", String(reduced.matches ? 1 : peakScale - (peakScale - .78) * fade));
       }
       if (layout) {
         const rect = element.getBoundingClientRect();
