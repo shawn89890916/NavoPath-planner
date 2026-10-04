@@ -31,6 +31,18 @@ export default {
       [
         "真实使用需要怎样配置？",
         "进入正式工作区，在 Navo AI 设置中选择支持的提供商并完成配置。可用能力取决于账号、提供商和工作区设置。"
+      ],
+      [
+        "可以只应用一部分建议吗？",
+        "可以。先查看每项建议，再选择要应用的任务，其余建议可以保留或取消。"
+      ],
+      [
+        "应用建议后还能手动调整吗？",
+        "可以。应用后的任务进入时间轴，仍可使用执行页的操作调整时间、时长或完成状态。"
+      ],
+      [
+        "介绍页的示例会消耗 AI 额度吗？",
+        "不会。这里使用预设回复和示例数据，不发起真实 AI 请求，也不会修改你的个人工作区。"
       ]
     ],
     "next": "planning"
@@ -64,6 +76,18 @@ export default {
       [
         "What does real AI need?",
         "Open the workspace and configure a supported provider in Navo AI settings. Available capabilities depend on your account, provider, and workspace settings."
+      ],
+      [
+        "Can I apply only some suggestions?",
+        "Yes. Review each suggestion and select the tasks to apply. You can leave or cancel the remaining suggestions."
+      ],
+      [
+        "Can I adjust a task after applying a suggestion?",
+        "Yes. Applied tasks appear on the timeline, where Execute controls let you adjust their time, duration, or completion status."
+      ],
+      [
+        "Does this example use AI credits?",
+        "No. It uses preset responses and example data, without making real AI requests or changing your personal workspace."
       ]
     ],
     "next": "planning"

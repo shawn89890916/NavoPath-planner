@@ -22,6 +22,18 @@ export default {
       [
         "手机上怎样安排？",
         "使用任务与日程切换查看两边；长按任务可拖动安排，也可以使用安排按钮。"
+      ],
+      [
+        "不拖动，也能安排任务吗？",
+        "可以。点击候选任务的安排按钮，选择开始时间与时长，再确认安排。"
+      ],
+      [
+        "任务需要更长或更短的时间怎么办？",
+        "可以修改安排的时长，也可以拖动时间轴中任务块的边缘调整。已有安排仍会显示在时间轴中，便于检查时间是否合适。"
+      ],
+      [
+        "每个任务之间都要留空吗？",
+        "不需要。下一项任务可以接着上一项的结束时间开始；也可以按实际需要留出吃饭、休息和缓冲时间。"
       ]
     ],
     "next": "ai"
@@ -46,6 +58,18 @@ export default {
       [
         "How do I schedule on my phone?",
         "Switch between tasks and the timeline. Long-press a task to drag it, or use its Schedule button."
+      ],
+      [
+        "Can I schedule without dragging?",
+        "Yes. Use the Schedule button on a candidate, choose a start time and duration, then confirm."
+      ],
+      [
+        "What if a task needs more or less time?",
+        "Edit its scheduled duration or drag the edge of its timeline block. Existing plans stay visible so you can check whether the new timing fits."
+      ],
+      [
+        "Do I need a gap between every task?",
+        "No. A task can start when the previous one ends. Leave room for meals, rest, and a buffer when you need it."
       ]
     ],
     "next": "ai"

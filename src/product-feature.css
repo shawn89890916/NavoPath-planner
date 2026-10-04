@@ -5,7 +5,6 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-feature button { cursor: pointer; }
 .np-feature a { text-decoration: none; }
 .np-site-nav { position: sticky; z-index: 30; top: 0; display: flex; justify-content: space-between; align-items: center; height: 64px; padding: 0 32px; background: #f4f7f9; }
-.np-site-actions { display: flex; align-items: center; gap: 14px; }
 .np-feature > main { width: calc(100% - 64px); max-width: 1500px; margin: auto; }
 .np-product-intro { padding: 36px 0 30px; }
 .np-product-intro h1 { margin: 0 0 9px; font-size: var(--product-heading-size); font-weight: 660; line-height: 1.25; letter-spacing: -.045em; }
@@ -25,7 +24,9 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-faq { max-width: 920px; margin: 80px auto 64px; display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 48px; }
 .np-faq h2 { margin: 12px 0; font-size: var(--product-heading-size); letter-spacing: -.04em; font-weight: 700; }
 .np-faq details { margin: 0 0 10px; padding: 17px 22px; border-radius: 14px; background: #eef1f3; }
-.np-faq summary { cursor: pointer; font-size: 14px; font-weight: 600; list-style: none; }
+.np-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; cursor: pointer; font-size: 14px; font-weight: 600; list-style: none; }
+.np-faq-plus { flex-shrink: 0; color: #69717c; transition: transform 180ms ease; }
+.np-faq details[open] .np-faq-plus { transform: rotate(45deg); }
 .np-faq summary::-webkit-details-marker { display: none; }
 .np-faq details[open] summary { margin-bottom: 12px; }
 .np-faq p { margin: 0; color: #69717c; font-size: 14px; line-height: 1.75; }
@@ -34,25 +35,29 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-feature-footer > span { margin-left: auto; color: #92989c; font-size: 12px; }
 .np-feature :is(summary, a, button):focus-visible { outline: 2px solid #584d3d; outline-offset: 4px; }
 .np-feature--reading .np-site-nav { height: auto; padding: 8px 20px; }
-.np-site-nav--reading .df-header-inner { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 44px 44px; width: 100%; gap: 4px 12px; }
-.np-site-nav--reading .df-brand { display: flex; align-items: center; gap: 8px; color: inherit; }
-.np-site-nav--reading .df-brand img { width: 24px; height: 24px; object-fit: contain; }
-.np-site-nav--reading .df-header-right { display: flex; align-items: center; justify-content: end; gap: 10px; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
-.np-site-nav--reading .df-tabs { grid-row: 2; grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
-.np-site-nav--reading .df-tabs button, .np-site-nav--reading .df-product-principles { padding: 8px 10px; border: 0; background: none; color: #69717c; font-size: 13px; font-weight: 600; white-space: nowrap; }
-.np-site-nav--reading .df-tabs button { min-height: 44px; font-family: inherit; }
-.np-site-nav--reading .df-tabs button.active { color: #27231e; font-weight: 750; }
+.np-site-nav--product .df-header-inner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; width: 100%; gap: 12px; }
+.np-site-nav--product .df-brand { display: flex; align-items: center; gap: 8px; color: inherit; }
+.np-site-nav--product .df-brand img { width: 24px; height: 24px; object-fit: contain; }
+.np-site-nav--product .df-header-right { display: flex; align-items: center; justify-content: end; gap: 10px; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
+.np-site-nav--product .df-tabs { display: flex; justify-content: center; align-items: center; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
+.np-site-nav--product .df-tabs button, .np-site-nav--product .df-product-principles { padding: 8px 10px; border: 0; background: none; color: #69717c; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.np-site-nav--product .df-tabs button { min-height: 44px; font-family: inherit; }
+.np-site-nav--product .df-tabs button.active { color: #27231e; font-weight: 750; }
 .np-feature--reading > main { max-width: 680px; }
 .np-feature--reading .np-product-intro { padding: 40px 0 48px; }
 .np-feature--reading .np-product-intro p, .np-feature--reading .np-product-notes p { color: #55504a; font-size: 17px; line-height: 1.75; }
 .np-feature--reading .np-product-notes { display: flex; flex-direction: column; gap: 44px; padding: 0; }
 .np-feature--reading .np-faq { display: block; margin: 56px 0 40px; }
 .np-feature--reading .np-faq h2 { margin-bottom: 24px; }
-.np-feature--reading .np-faq h3 { margin: 0 0 8px; font-size: 17px; }
-.np-feature--reading .np-faq > div > div { margin-bottom: 24px; }
 .np-feature--reading .np-feature-footer { flex-wrap: wrap; gap: 18px; }
 .np-feature--reading .np-feature-footer > span:last-child { width: 100%; margin-left: 0; }
-@media (max-width: 640px) { .np-site-nav--reading .df-brand strong { display: none; } .np-site-nav--reading .df-tabs button, .np-site-nav--reading .df-product-principles { padding-inline: 8px; font-size: 12px; } }
+@media (orientation: portrait), (max-width: 980px) {
+  .np-site-nav.np-site-nav--product { height: auto; padding: 8px 20px; }
+  .np-site-nav--product .df-header-inner { grid-template-columns: auto 1fr; grid-template-rows: 44px 44px; gap: 4px 12px; }
+  .np-site-nav--product .df-header-right { justify-self: end; }
+  .np-site-nav--product .df-tabs { grid-row: 2; grid-column: 1 / -1; }
+}
+@media (max-width: 640px) { .np-site-nav--product .df-brand strong { display: none; } .np-site-nav--product .df-tabs button, .np-site-nav--product .df-product-principles { padding-inline: 6px; font-size: 12px; } }
 @media (max-width: 1050px) {
   .np-product-layout { grid-template-columns: minmax(0, 1fr); gap: 22px; }
   .np-product-notes, .np-product-layout:is(.np-product-layout--ai, .np-product-layout--execute) .np-product-notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 0; }
@@ -60,7 +65,6 @@ html.product-site-document body, html.product-site-document #root { height: auto
 }
 @media (max-width: 640px) {
   .np-site-nav { height: 58px; padding: 0 20px; }
-  .np-site-actions { gap: 8px; }
   .np-feature > main { width: calc(100% - 40px); }
   .np-product-intro { padding: 28px 0 22px; }
   .np-product-intro h1 { font-size: var(--product-heading-size); letter-spacing: -.04em; }
@@ -92,6 +96,8 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-scroll-story section > div { width: 100%; max-width: 420px; opacity: var(--story-opacity, 1); transform: scale(var(--story-scale, 1)); transform-origin: center; filter: blur(var(--story-blur, 0px)); }
 .np-feature--planning .np-scroll-story--inline { padding-inline: 12px; }
 .np-feature--planning .np-scroll-story--inline section > div { max-width: none; }
+.np-feature--execute .np-scroll-story--inline section > div { text-align: center; text-wrap: balance; }
+.np-feature--execute .np-story-scroll-cue { justify-content: center; }
 .np-scroll-story--inline .np-story-step { display: block; min-height: 76svh; padding-block: 12svh; }
 .np-scroll-story--inline .np-story-step > div { position: sticky; top: var(--story-sticky-top); margin-inline: auto; }
 .np-story-scroll-cue { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; color: #584d3d; font: 600 13px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif; }
@@ -101,6 +107,7 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-scroll-story p { margin: 0; font-size: 18px; line-height: 1.65; color: #55504a; }
 @media (max-width: 1280px) { .np-scroll-story--inline { padding-inline: 18px; } .np-feature--planning .np-scroll-story--inline { padding-inline: 9px; } .np-scroll-story--inline p { font-size: 17px; } }
 @media (prefers-reduced-motion: reduce) {
+  .np-faq-plus { transition: none; }
   .np-scroll-story section > div { transform: none; filter: none; }
   .np-scroll-story--inline .np-story-step { display: flex; min-height: 38svh; padding-block: 0; }
   .np-scroll-story--inline .np-story-step > div { position: static; }

@@ -31,6 +31,18 @@ export default {
       [
         "如何加入今日候选？",
         "在任务右侧点击加入今日候选的操作，再进入执行页，为选出的任务安排具体时间。再次操作可移出候选。"
+      ],
+      [
+        "切换视图会重新创建任务吗？",
+        "不会。树、列表、看板和矩阵展示同一份任务，切换后项目归属与完成状态都会保留。"
+      ],
+      [
+        "加入今日候选后，任务还在项目里吗？",
+        "还在。今日候选表示你准备今天推进它，任务仍属于原项目，方便从项目全貌和当天安排两边查看。"
+      ],
+      [
+        "在介绍页做的修改会保存吗？",
+        "修改只保留在当前示例中，刷新后恢复初始内容。需要保存自己的项目和任务时，请进入正式工作区。"
       ]
     ],
     "next": "execute"
@@ -64,6 +76,18 @@ export default {
       [
         "How do I add a candidate?",
         "Use the candidate action beside a task, then open Execute to schedule it. Use the action again to remove it from the candidates."
+      ],
+      [
+        "Does switching views create new tasks?",
+        "No. Tree, List, Kanban, and Matrix show the same tasks. Project assignments and completion states stay with them."
+      ],
+      [
+        "Does a candidate stay in its project?",
+        "Yes. Today's Candidates marks what you intend to work on today. The task still belongs to its project, so you can see it in both contexts."
+      ],
+      [
+        "Are changes in this introduction saved?",
+        "Changes stay in the current example and reset on refresh. Open the workspace to save your own projects and tasks."
       ]
     ],
     "next": "execute"

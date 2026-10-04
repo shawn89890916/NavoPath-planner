@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ProductMenu, SiteLanguageSwitch } from "./components/ProductMenu";
+import { ProductMenu } from "./components/ProductMenu";
+import { UiPlusIcon } from "./components/UiIcons";
 import { featureHref, featureNames, productFeature, siteLanguage, type DemoCommand, type FeatureCopy, type ProductFeature } from "./productSite";
 import ProductStory, { type StoryLayout } from "./ProductStory";
 import ProductNavigation from "./ProductNavigation";
@@ -56,11 +57,7 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
     addEventListener("message", receive); return () => removeEventListener("message", receive);
   }, [send, lang]);
   return <div className={`np-feature np-feature--${feature}${portrait ? " np-feature--reading" : ""}${immersive ? " np-feature--immersive" : ""}${immersive && !storyLayout ? " np-feature--compact" : ""}`}>
-    {portrait && <header className="np-site-nav np-site-nav--reading"><ProductNavigation feature={feature} lang={lang} icon={<img src={`${import.meta.env.BASE_URL}navopath-icon.png`} alt="" />} onLanguageChange={setLang} onNavigate={next => location.assign(featureHref(next, lang))} /></header>}
-    {!immersive && !portrait && <header className="np-site-nav">
-      <ProductMenu lang={lang} kind="brand"><img src={`${import.meta.env.BASE_URL}navopath-icon.png`} alt="" /><span>NavoPath</span></ProductMenu>
-      <div className="np-site-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><a className="np-start-link" href="/app">{zh ? "现在开始" : "Start now"}</a></div>
-    </header>}
+    {!immersive && <header className="np-site-nav np-site-nav--product"><ProductNavigation feature={feature} lang={lang} icon={<img src={`${import.meta.env.BASE_URL}navopath-icon.png`} alt="" />} onLanguageChange={setLang} onNavigate={next => location.assign(featureHref(next, lang))} /></header>}
     <main>
       {!immersive && <section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section>}
       {portrait ? <section className="np-product-notes">{c.benefits.map(([title, description]) => <section key={title}><h2>{title}</h2><p>{description}</p></section>)}</section> : <>
@@ -74,7 +71,7 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
       </section>
       {immersive && !storyLayout && <><section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section><ProductStory lang={lang} copy={c} layout={null} /></>}
       </>}
-      <section className="np-faq"><h2>{zh ? "常见问题" : "FAQ"}</h2><div>{c.faq.map(([question, answer]) => portrait ? <div key={question}><h3>{question}</h3><p>{answer}</p></div> : <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></section>
+      <section className="np-faq"><h2>{zh ? "常见问题" : "FAQ"}</h2><div>{c.faq.map(([question, answer]) => <details key={question}><summary><span>{question}</span><UiPlusIcon size={18} strokeWidth={1.2} className="np-faq-plus" /></summary><p>{answer}</p></details>)}</div></section>
       <footer className="np-feature-footer"><a href={featureHref(c.next, lang)}>{featureNames[lang][c.next]}</a>{immersive || portrait ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a><a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a><span className="np-personal-placeholder" role="link" aria-disabled="true">{zh ? "个人网页" : "Personal website"}</span></> : <ProductMenu lang={lang} kind="support" />}<span>© 2026 NavoPath</span></footer>
     </main>
   </div>;

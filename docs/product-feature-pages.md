@@ -10,10 +10,14 @@ workspaces at least 1000px wide keep an introduction column; Execute reserves
 a flexible right-aligned timeline, readable candidates, and at least 280px for the notes, reclaiming the calendar
 view rail and daily-canvas margins. Narrow landscape screens keep native compact
 layouts and show introductions below the workspace. Portrait screens on all three
-routes show only text, shared navigation, and expanded FAQ answers; no iframe or
+routes show only text, shared navigation, and expandable FAQ answers; no iframe or
 interactive product workspace is mounted. Rotating the viewport switches between
 these presentations and disposes of the old demo. Landscape AI retains its existing
-preview layout.
+preview layout. All three feature pages share five navigation items: Execute,
+Planning, Navo AI, Principles, and Support. Language and Start now remain on the right;
+the language switch track and thumb both use round pill corners. Each page has six
+bilingual FAQ questions using native details/summary controls with a thin shared plus
+icon. Execute paragraphs are centered within equal horizontal insets.
 Planning and Execute insert navigation into the real App header through an optional
 runtime slot, reusing WorkspaceModeTabs and the existing site controls. It returns
 home from the logo and links to all three features,

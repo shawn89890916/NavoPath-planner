@@ -10,9 +10,9 @@ export default function ProductNavigation({ feature, lang, icon, onLanguageChang
     <a className="df-brand" href="/" target="_top">{icon}<strong>NavoPath</strong></a>
     <WorkspaceModeTabs mode={feature} lang={lang} onChange={go} onAi={() => go("ai")} className="df-tabs df-tabs-center">
       <span className="df-product-principles" aria-disabled="true">{lang === "zh" ? "相关原理" : "Principles"}</span>
+      <ProductMenu lang={lang} kind="support" includeGitHub />
     </WorkspaceModeTabs>
     <div className="df-header-right">
-      <ProductMenu lang={lang} kind="support" includeGitHub />
       <SiteLanguageSwitch lang={lang} onChange={onLanguageChange || (next => parent.postMessage({ channel: "navopath-product-demo", type: "language", lang: next }, location.origin))} />
       <a className="np-start-link" href="/app" target="_top">{lang === "zh" ? "现在开始" : "Start now"}</a>
     </div>
