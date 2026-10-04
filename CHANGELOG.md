@@ -3,7 +3,7 @@
 ## 2026-10-04 · 产品介绍页
 
 ### 改进
-- 功能页直接运行产品工作区，保留原生规划、候选、时间轴与 AI 布局，仅在空位添加简短说明；示例操作独立于个人数据。
+- 功能页直接运行产品工作区，保留原生规划、候选、时间轴与 AI 布局；补充项目视图、时间安排、AI 建议与撤回说明，手机端介绍纵向排列，AI 体验窗口更充裕；示例操作独立于个人数据。
 - 网站导航加入滑块式语言切换、更醒目的“现在开始”、产品总览菜单与左上角快速导航；精简功能页说明与装饰。
 
 ### 修复
@@ -64,7 +64,7 @@
 ## 2026-10-04 · Product feature pages
 
 ### Improved
-- Feature pages run the product workspace with native Planning, Candidates, Timeline, and AI layouts, adding brief notes in unused space; example changes stay separate from personal data.
+- Feature pages run the product workspace with native Planning, Candidates, Timeline, and AI layouts; expanded notes explain project views, scheduling, AI suggestions, and undo, with stacked mobile descriptions and a roomier AI preview; example changes stay separate from personal data.
 - Website navigation adds a sliding language switch, a prominent Start now action, a product overview menu, and quick navigation from the logo; feature pages use less copy and decoration.
 
 ### Fixed

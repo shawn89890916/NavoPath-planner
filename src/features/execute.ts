@@ -4,8 +4,12 @@ import type { FeatureCopy } from "../productSite";
 export default {
   "zh": {
     "title": "把今天，安排明白。",
-    "description": "任务在左，时间在右。",
-    "benefits": [],
+    "description": "从今日候选中挑选任务，放进一天的空闲时段。让任务需要的时间与实际可用的时间，一起看得见。",
+    "benefits": [
+      ["给任务留出时间。", "拖动候选任务到时间轴，或使用安排按钮。根据任务时长，找到容得下它的空闲时段。"],
+      ["随一天的变化调整。", "修改开始时间或时长，让安排跟上当天的变化。时间轴按 15 分钟网格对齐，帮助看清已有安排。"],
+      ["完成，也可以改期。", "做完就标记完成。还没做完的任务可以取消安排、保留待办，或移到明天继续推进。"]
+    ],
     "faq": [
       [
         "安排时间和截止日期有什么区别？",
@@ -24,8 +28,12 @@ export default {
   },
   "en": {
     "title": "Make room for today.",
-    "description": "Your tasks and your time, together.",
-    "benefits": [],
+    "description": "Pick from Today's Candidates and place tasks into free slots. See the time your work needs alongside the time you actually have.",
+    "benefits": [
+      ["Give each task time.", "Drag a candidate onto the timeline or use its Schedule button. Find a free slot that fits the task's duration."],
+      ["Adjust as the day changes.", "Change a start time or duration as plans shift. A 15-minute grid keeps the timeline aligned and existing plans easy to read."],
+      ["Finish or reschedule.", "Mark completed work as done. Unfinished tasks can be unscheduled, kept pending, or moved to tomorrow."]
+    ],
     "faq": [
       [
         "How do schedules and deadlines differ?",

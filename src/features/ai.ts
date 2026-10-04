@@ -4,15 +4,19 @@ import type { FeatureCopy } from "../productSite";
 export default {
   "zh": {
     "title": "下一步，多一个帮手。",
-    "description": "先看建议，再决定。",
+    "description": "让 Navo AI 根据任务和空闲时间提出安排。先查看建议、调整细节，再决定哪些放进今天。",
     "benefits": [
       [
-        "先预览。",
-        "建议应用前，都可以检查和调整。"
+        "结合任务，提出安排。",
+        "从今日候选出发，参考任务时长和已有安排，为下一步找到合适的空闲时段。"
       ],
       [
-        "随时调整。",
-        "应用后仍能修改，也能撤回本轮安排。"
+        "先检查，再应用。",
+        "逐项查看建议的时间、时长和所属项目。调整后，只应用你选中的任务。"
+      ],
+      [
+        "保留调整的余地。",
+        "应用后，安排会出现在时间轴中。可以继续调整，也可以撤回本轮操作，恢复之前的状态。"
       ]
     ],
     "faq": [
@@ -33,15 +37,19 @@ export default {
   },
   "en": {
     "title": "A little help with the next step.",
-    "description": "Review the suggestions. You decide.",
+    "description": "Let Navo AI suggest a schedule from your tasks and free time. Review the details, make adjustments, and choose what belongs in your day.",
     "benefits": [
       [
-        "Preview first.",
-        "Review and adjust before applying."
+        "A plan that fits your tasks.",
+        "Start from Today's Candidates. Task durations and existing plans help find room for your next step."
       ],
       [
-        "Keep control.",
-        "Change the plan or undo the latest round."
+        "Review before applying.",
+        "Check the time, duration, and project for each suggestion. Make changes and apply only the tasks you select."
+      ],
+      [
+        "Room to change your mind.",
+        "Applied tasks appear on the timeline. Keep adjusting, or undo the latest round to restore the previous state."
       ]
     ],
     "faq": [

@@ -52,7 +52,7 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
           {mounted && <iframe key={attempt} ref={frame} src={`/product-demo/${feature}?lang=${lang}`} title={`${featureNames[lang][feature]} · ${zh ? "产品体验" : "Product preview"}`} onError={() => setFailed(true)} />}
           {(!ready || failed) && <div className="np-demo-status" role="status"><p>{failed ? (zh ? "暂时无法打开。" : "Unable to load.") : "NavoPath…"}</p>{failed && <button type="button" onClick={() => { setReady(false); setFailed(false); setAttempt(attempt + 1); }}>{zh ? "重试" : "Retry"}</button>}</div>}
         </div>
-        {feature !== "execute" && <aside className="np-product-notes">{c.benefits.slice(0, 2).map(([title, description]) => <div key={title}><h2>{title}</h2><p>{description}</p></div>)}</aside>}
+        <aside className="np-product-notes">{c.benefits.map(([title, description]) => <div key={title}><h2>{title}</h2><p>{description}</p></div>)}</aside>
       </section>
       <section className="np-faq"><h2>{zh ? "常见问题" : "FAQ"}</h2><div>{c.faq.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></section>
       <footer className="np-feature-footer"><a href={featureHref(c.next, lang)}>{featureNames[lang][c.next]}</a><ProductMenu lang={lang} kind="support" /><span>© 2026 NavoPath</span></footer>

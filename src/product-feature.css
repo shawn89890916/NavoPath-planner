@@ -9,15 +9,15 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-feature > main { width: calc(100% - 64px); max-width: 1500px; margin: auto; }
 .np-product-intro { padding: 36px 0 30px; }
 .np-product-intro h1 { margin: 0 0 9px; font-size: clamp(28px, 2.3vw, 38px); font-weight: 660; line-height: 1.25; letter-spacing: -.045em; }
-.np-product-intro p { margin: 0; color: #69717c; font-size: 15px; line-height: 1.65; }
+.np-product-intro p { max-width: 680px; margin: 0; color: #69717c; font-size: 15px; line-height: 1.75; }
 .np-product-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 36px; align-items: center; }
 .np-product-layout--execute { grid-template-columns: 1fr; }
 .np-product-layout--ai { grid-template-columns:1fr; }
-.np-product-layout--ai .np-product-notes { flex-direction:row; justify-content:center; gap:72px; }
-.np-product-layout--ai .np-product-notes > div { max-width:280px; }
+.np-product-layout--ai .np-product-window { height: clamp(700px, 80vh, 820px); }
+.np-product-layout:is(.np-product-layout--ai, .np-product-layout--execute) .np-product-notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; width: 100%; max-width: 1080px; margin-inline: auto; }
 .np-product-window { position: relative; min-width: 0; height: clamp(580px, 72vh, 750px); overflow: hidden; background: #f8f7f3; border-radius: 18px; box-shadow: 0 18px 52px rgb(39 35 30 / 4%); }
 .np-product-window iframe { display: block; width: 100%; height: 100%; border: 0; }
-.np-product-notes { display: flex; flex-direction: column; gap: 42px; padding: 16px 0; }
+.np-product-notes { display: flex; flex-direction: column; gap: 32px; padding: 16px 0; min-width: 0; }
 .np-product-notes h2 { margin: 0 0 10px; font-size: 18px; font-weight: 650; letter-spacing: -.03em; }
 .np-product-notes p { margin: 0; color: #69717c; font-size: 14px; line-height: 1.75; }
 .np-demo-status { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8f7f3; color: #69717c; }
@@ -35,8 +35,7 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-feature :is(summary, a, button):focus-visible { outline: 2px solid #584d3d; outline-offset: 4px; }
 @media (max-width: 1050px) {
   .np-product-layout { grid-template-columns: minmax(0, 1fr); gap: 22px; }
-  .np-product-notes { flex-direction: row; gap: 32px; padding: 0; }
-  .np-product-notes > div { flex: 1; }
+  .np-product-notes, .np-product-layout:is(.np-product-layout--ai, .np-product-layout--execute) .np-product-notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 0; }
   .np-product-window { height: 650px; }
 }
 @media (max-width: 640px) {
@@ -47,9 +46,10 @@ html.product-site-document body, html.product-site-document #root { height: auto
   .np-product-intro h1 { font-size: 27px; letter-spacing: -.035em; }
   .np-product-intro p { font-size: 13px; }
   .np-product-window { height: 560px; border-radius: 14px; }
-  .np-product-notes { gap: 20px; }
+  .np-product-layout--ai .np-product-window { height: 640px; }
+  .np-product-notes, .np-product-layout:is(.np-product-layout--ai, .np-product-layout--execute) .np-product-notes { grid-template-columns: 1fr; gap: 24px; }
   .np-product-notes h2 { font-size: 15px; }
-  .np-product-notes p { font-size: 12px; }
+  .np-product-notes p { font-size: 14px; }
   .np-faq { grid-template-columns: 1fr; gap: 8px; margin: 46px 0 36px; }
   .np-faq details { padding: 16px 18px; }
   .np-faq summary, .np-faq p { font-size: 13px; }

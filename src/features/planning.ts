@@ -4,15 +4,19 @@ import type { FeatureCopy } from "../productSite";
 export default {
   "zh": {
     "title": "把目标，变成能推进的任务。",
-    "description": "项目、任务和今天要做的事，放在一起。",
+    "description": "把工作、学习和生活目标整理成项目，用适合自己的视图看清进度，再选出今天值得推进的任务。",
     "benefits": [
       [
         "项目，一目了然。",
-        "工作、学习与生活，各有各的进度。"
+        "把同一目标下的任务放在一起。展开项目，就能看清还有哪些事待推进、哪些已经完成。"
+      ],
+      [
+        "同一份任务，四种视角。",
+        "树视图看结构，列表便于逐项查看；看板跟进状态，矩阵帮助判断优先顺序。"
       ],
       [
         "选出今天的下一步。",
-        "换个视角，找到值得推进的任务。"
+        "把准备推进的任务加入今日候选，再到执行页安排时间。项目中的其他任务仍留在原处。"
       ]
     ],
     "faq": [
@@ -33,15 +37,19 @@ export default {
   },
   "en": {
     "title": "Make your next step clear.",
-    "description": "Projects, tasks, and today’s next steps in one place.",
+    "description": "Organize work, learning, and life into projects. See progress in the view that suits you, then choose what to move forward today.",
     "benefits": [
       [
         "See the whole project.",
-        "Work, learning, and life, each at its own pace."
+        "Keep tasks for the same goal together. Expand a project to see what is still ahead and what is already complete."
+      ],
+      [
+        "One set of tasks, four views.",
+        "See structure in Tree, scan tasks in List, follow progress in Kanban, or compare priorities in Matrix."
       ],
       [
         "Choose today’s next step.",
-        "Switch perspectives to find what matters."
+        "Add tasks to Today's Candidates, then open Execute to give them time. The rest stay in their projects."
       ]
     ],
     "faq": [
