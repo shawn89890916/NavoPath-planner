@@ -12044,25 +12044,9 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-/* Hide old color bar span */
 
-.df-app .df-project-color-bar {
 
-  display: none;
 
-}
-
-.df-app.theme-dark .df-project-color-bar {
-
-  display: none;
-
-}
-
-.df-app:not(.theme-dark) .df-project-color-bar {
-
-  display: none;
-
-}
 
 
 
@@ -30895,9 +30879,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   box-shadow: none;
 }
 
-.df-app.mode-planning .df-planning .df-project-color-bar {
-  display: none;
-}
 
 .df-app.mode-planning .df-planning .df-task-node-inner > .df-task-block-accent {
   display: none;
@@ -33249,23 +33230,12 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   position: relative;
   min-height: 52px;
   padding-left: 20px;
-  border: 2px solid var(--paper-rule-strong);
+  border: 2px solid var(--project-color);
   border-radius: 8px;
   background: var(--surface-card);
   corner-shape: var(--corner-shape, squircle);
 }
 
-#root .df-app.mode-planning .df-planning .df-project-color-bar {
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 7px;
-  display: block;
-  width: 4px;
-  border-radius: 3px;
-  background: var(--project-color);
-  corner-shape: var(--corner-shape, squircle);
-}
 
 #root .df-app.mode-planning .df-planning .df-task-node-inner[data-task-variant="candidate"] {
   --task-padding-x: 16px;
@@ -37458,7 +37428,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-candidate-panel .df-quick-add {
     margin: 0 -14px -12px;
     padding: 8px 14px 13px;
-    grid-template-columns: minmax(0, 1fr) 64px 48px;
+    grid-template-columns: minmax(0, 1fr) 64px max-content;
     border-top: 0;
   }
   #root .df-app .df-candidate-panel .df-quick-add::before { display: none; }
@@ -39687,13 +39657,14 @@ html.product-demo-fullscreen #root .df-app :is(.df-tree-wrap, .df-candidate-list
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-eisenhower-grid { height: min(540px, 100%); min-height: 0; grid-template-rows: repeat(2, minmax(0, 1fr)); }
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-eisenhower-quadrant { min-height: 0; }
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-project-tasks { margin-left: 112px; padding-left: 0; }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-category-branch { margin-bottom: 12px; }
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-plan-task-node { width: max-content; max-width: min(360px, 100%); min-width: 260px; }
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-task-node-inner { width: 100%; min-width: 0; }
 html.product-demo-fullscreen #root .df-app.mode-execute .df-project-group-name { font-family: var(--paper-sans); font-weight: 400; text-transform: none; }
 html.product-demo-fullscreen #root .df-app.mode-execute .df-candidate-panel .df-panel-title h2 { font: 600 18px/1.4 var(--paper-task); letter-spacing: 0; }
 @media (min-width: 1000px) and (orientation: landscape) {
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-mindmap.no-root { grid-template-columns: 116px minmax(420px, 1fr) minmax(260px, 32vw); }
-  html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-tree-wrap { grid-column: 2; padding-right: 0; }
+  html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-tree-wrap { grid-column: 2; padding-top: 16px; padding-right: 0; }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-product-story { grid-column: 3; }
   html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) { --product-timeline-width: min(clamp(360px, 38vw, 620px), calc(100% - 540px)); grid-template-columns: min(clamp(340px, 26vw, 400px), calc(100% - var(--product-timeline-width) - 280px)) minmax(280px, 1fr) var(--product-timeline-width); gap: 0; padding: 12px 16px; }
   html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 3; }

@@ -67,7 +67,7 @@ Parent/iframe messages validate source windows and origin. The parent lazy mount
 near the viewport and offers retry after initialization failure. Visibility messages
 pause offscreen animations. A validated story-layout message reports the native
 column rectangle; it never replaces user changes. Planning has
-one expanded website project and two initially collapsed projects that can be expanded,
+expanded website and learning projects and an initially collapsed exercise project,
 no subtasks, and four enabled native views. Its matrix has examples in all four quadrants
 and equal quadrant heights. Examples use a
 fixed day, fifteen-minute scheduling, and the product's conflict utilities. Execute

@@ -1379,7 +1379,7 @@ function App() {
   const [subtaskAiBusyId, setSubtaskAiBusyId] = useState("");
   const [subtaskAiRevealIds, setSubtaskAiRevealIds] = useState<string[]>([]);
   const subtaskAiRevealTimeoutRef = useRef<number | null>(null);
-  const [collapsedBranches, setCollapsedBranches] = useState<Record<string, boolean>>((): Record<string, boolean> => productPresentation && productDemo?.feature === "planning" ? { learning: true, life: true } : {});
+  const [collapsedBranches, setCollapsedBranches] = useState<Record<string, boolean>>((): Record<string, boolean> => productPresentation && productDemo?.feature === "planning" ? { life: true } : {});
   const [yearOverviewOpen, setYearOverviewOpen] = useState(false);
   const [overviewYear, setOverviewYear] = useState(() => new Date(`${todayIso()}T00:00:00`).getFullYear());
 

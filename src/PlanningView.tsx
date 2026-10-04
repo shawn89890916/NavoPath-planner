@@ -749,7 +749,6 @@ function PlanningProjectNode(props: {
           "--project-color-border": alphaColor(color, 0.34),
         } as React.CSSProperties}
       >
-        <span className="df-project-color-bar" />
         <span
           className="df-project-name"
           ref={titleRef}
