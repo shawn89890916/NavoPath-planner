@@ -12,16 +12,18 @@ view rail and daily-canvas margins. Narrow landscape screens keep native compact
 layouts and show introductions below the workspace. Portrait screens on all three
 routes show only text, shared navigation, and expandable FAQ answers; no iframe or
 interactive product workspace is mounted. Rotating the viewport switches between
-these presentations and disposes of the old demo. Landscape Navo AI uses a two-column workspace: timeline on the left,
-shared embedded AiPanel on the right, with the introduction in a reserved area
-above the panel. The parent introduction is clipped to that area so scrolling
-text cannot overlap controls. Presets directly schedule all four example candidates,
-or offer three task/date choices for rescheduling. Requests apply through the same
-native action handler, fifteen-minute grid, conflict check, and undo records.
-Each round can be undone; the timeline follows the affected date. The initial
-panel stays empty with its three preset controls. No free-form input, pending
-preview cards, provider configuration, or real AI requests appear in this demo.
-Narrow screens move prose below the workspace and retain timeline-left/AI-right.
+these presentations and disposes of the old demo. Landscape Navo AI uses a two-column workspace: a wider native timeline on the left
+and the shared embedded AiPanel on the right. It has no scrolling introduction.
+The timeline starts empty, with a large cue pointing to its top-right Plan my day
+button. The right panel previews four candidates using native TaskBlock components.
+Clicking Plan my day shows a 1.2-second arranging state, then applies four longer
+sessions at 09:00, 11:00, 14:00 and 16:30, leaving lunch and rest free.
+After arranging, two secondary controls offer three task/date reschedule choices
+and native Undo. Rescheduling shows a brief 650ms pending state and follows the
+affected date; undoing all rounds restores the clean opening state.
+Requests use the native action handler, fifteen-minute grid, conflict checks and
+undo records. No free-form input, pending preview cards, provider configuration,
+or real AI requests appear. Narrow landscape screens retain timeline-left/AI-right.
 The shared panel still supports reviewing longer chat history. All three feature pages share five navigation items: Execute,
 Planning, Navo AI, Principles, and Support. Language and Start now remain on the right;
 the language switch track and thumb both use round pill corners. Each page has six

@@ -28,12 +28,19 @@ describe("workspace example boundary", () => {
     target.location.pathname = "/product-demo/ai"; installProductDemo("ai");
     expect((await window.plannerApi!.getData()).tasks[0].title).toBe(original.tasks[0].title);
   });
-  it("plans every example candidate once around existing schedules", async () => {
+  it("starts empty and spreads longer candidates across the day", async () => {
     demoWindow(); installProductDemo("ai");
     let state = await window.plannerApi!.getData();
     const runtime = getWorkspaceDemoRuntime()!;
     const suggestion = runtime.suggest(state);
+    expect(state.tasks.flatMap(task => task.timelineRecords || [])).toEqual([]);
     expect(suggestion.actions).toHaveLength(4);
+    expect(suggestion.actions).toMatchObject([
+      { taskId: "content", start: "09:00", end: "10:30" },
+      { taskId: "layout", start: "14:00", end: "15:30" },
+      { taskId: "lesson", start: "11:00", end: "12:00" },
+      { taskId: "walk", start: "16:30", end: "17:30" },
+    ]);
     for (const action of suggestion.actions || []) {
       if (action.type !== "schedule_task" || !action.taskId || !action.date || !action.start) throw new Error("Expected a scheduled task");
       const next = scheduleDemoTask(state, action.taskId, action.date, action.start);

@@ -124,6 +124,11 @@ export function createDemoData(
     plannedForDate: DEMO_DATE,
     executionLane: "candidate",
   }));
+  if (feature === "ai") {
+    const durations: Record<string, number> = { content: 90, layout: 90, lesson: 60, walk: 60 };
+    data.tasks = data.tasks.map(item => durations[item.id] ? { ...item, estimatedHours: durations[item.id] / 60 } : item);
+    return data;
+  }
   data = scheduleDemoTask(data, "notebook", DEMO_DATE, "09:00");
   if (feature === "execute" && stage === 2)
     data = scheduleDemoTask(data, "notebook", DEMO_DATE, "09:00", 60);
@@ -155,27 +160,6 @@ export function createDemoData(
           }
         : item,
     );
-  if (feature === "ai" && stage === 0)
-    data.tasks[0] = {
-      ...data.tasks[0],
-      projectId: undefined,
-      aiInference: {
-        duration: {
-          minutes: 45,
-          source: "ai",
-          confidence: 0.85,
-          inferredAt: DEMO_STAMP,
-          modelVersion: "demo",
-        },
-        project: {
-          projectId: "website",
-          source: "ai",
-          confidence: 0.7,
-          inferredAt: DEMO_STAMP,
-          modelVersion: "demo",
-        },
-      },
-    };
   return data;
 }
 

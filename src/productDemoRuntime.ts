@@ -37,7 +37,7 @@ export function installProductDemo(feature: ProductFeature) {
   let id = 0;
   installWorkspaceDemoRuntime({
     feature, date: DEMO_DATE, language, storage,
-    story: fullscreen ? createElement(ProductStorySlot, { feature }) : undefined,
+    story: fullscreen && feature !== "ai" ? createElement(ProductStorySlot, { feature }) : undefined,
     navigation: fullscreen ? icon => createElement(ProductNavigation, { feature, lang: language, icon }) : undefined,
     now: () => new Date(`${DEMO_DATE}T09:00:00`),
     ready: () => { if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "ready" }, location.origin); },
@@ -47,13 +47,16 @@ export function installProductDemo(feature: ProductFeature) {
       const date = reschedule ? addDays(DEMO_DATE, reschedule.days) : DEMO_DATE;
       const tasks = reschedule ? state.tasks.filter(task => task.id === reschedule.taskId && !task.completed) : state.tasks.filter(task => (!taskIds || taskIds.includes(task.id)) && !task.completed && !task.timelineRecords?.some(record => record.executionStatus === "scheduled") && !task.scheduledStart && task.plannedForDate === DEMO_DATE).slice(0, feature === "ai" ? 4 : 3);
       const actions: Extract<AiAction, { type: "schedule_task" }>[] = tasks.flatMap(task => {
-        const start = firstDemoSlot(working, task.id, date);
+        const preferred: Record<string, string> = { content: "09:00", lesson: "11:00", layout: "14:00", walk: "16:30" };
+        const preferredStart = !reschedule && feature === "ai" ? preferred[task.id] : undefined;
+        const placed = preferredStart ? scheduleDemoTask(working, task.id, date, preferredStart) : working;
+        const start = placed !== working ? preferredStart! : firstDemoSlot(working, task.id, date);
         if (!start) return [];
-        working = scheduleDemoTask(working, task.id, date, start);
+        working = placed !== working ? placed : scheduleDemoTask(working, task.id, date, start);
         const scheduled = working.tasks.find(item => item.id === task.id)!;
         return [{ type: "schedule_task" as const, taskId: task.id, title: task.title, date, start, end: scheduled.scheduledEnd!, durationMinutes: Math.round((task.estimatedHours || .5) * 60), projectId: task.projectId }];
       });
-      return { id: `demo-suggestion-${++id}`, role: "assistant", content: reschedule ? (language === "zh" ? `已将「${tasks[0]?.title || "任务"}」改到${reschedule.days === 1 ? "明天" : "后天"} ${actions[0]?.start || ""}。` : `Moved ${tasks[0]?.title || "the task"} to ${reschedule.days === 1 ? "tomorrow" : "the day after tomorrow"} at ${actions[0]?.start || ""}.`) : feature === "ai" ? (language === "zh" ? `已安排 ${actions.length} 项待办，保留今天已有的安排。` : `Scheduled ${actions.length} tasks around your existing plans.`) : (language === "zh" ? "给这些事留出时间。" : "Make room for these tasks."), createdAt: DEMO_STAMP, status: "done", actionState: "pending", actions };
+      return { id: `demo-suggestion-${++id}`, role: "assistant", content: reschedule ? (language === "zh" ? `已将「${tasks[0]?.title || "任务"}」改到${reschedule.days === 1 ? "明天" : "后天"} ${actions[0]?.start || ""}。` : `Moved ${tasks[0]?.title || "the task"} to ${reschedule.days === 1 ? "tomorrow" : "the day after tomorrow"} at ${actions[0]?.start || ""}.`) : feature === "ai" ? (language === "zh" ? `已安排 ${actions.length} 项待办：上午写作与学习，下午调整网站，傍晚运动。中午留给午餐和休息。` : `Your ${actions.length} tasks are spread across the day, with time for lunch and a break.`) : (language === "zh" ? "给这些事留出时间。" : "Make room for these tasks."), createdAt: DEMO_STAMP, status: "done", actionState: "pending", actions };
     },
   });
   document.documentElement.classList.add("product-demo-document");

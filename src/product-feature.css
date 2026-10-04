@@ -94,7 +94,6 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-scroll-story section > div { width: 100%; max-width: 420px; opacity: var(--story-opacity, 1); transform: scale(var(--story-scale, 1)); transform-origin: center; filter: blur(var(--story-blur, 0px)); }
 .np-feature--planning .np-scroll-story--inline { padding-inline: 12px; }
 .np-feature--planning .np-scroll-story--inline section > div { max-width: none; }
-.np-feature--ai .np-scroll-story--inline section > div { max-width: none; }
 .np-feature:is(.np-feature--execute, .np-feature--ai) .np-scroll-story--inline section > div { text-align: center; text-wrap: balance; }
 .np-feature:is(.np-feature--execute, .np-feature--ai) .np-story-scroll-cue { justify-content: center; }
 .np-scroll-story--inline .np-story-step { display: block; min-height: 76svh; padding-block: 12svh; }

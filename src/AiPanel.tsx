@@ -351,7 +351,7 @@ export default function AiPanel({ embedded = false, demoControls, docked, onDock
       followLatestRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 72;
     }}>
       {messages.length === 0 && <div className="df-ai-reference-empty">
-        <div className="df-ai-reference-prompt">{demoControls ? (lang === "zh" ? "想先安排今天，还是改期？" : "Plan today, or move a task?") : (lang === "zh" ? "今天想先推进什么？" : "What would you like to move forward today?")}</div>
+        <div className="df-ai-reference-prompt">{demoControls ? (lang === "zh" ? "今天想推进的几件事" : "A few things for today") : (lang === "zh" ? "今天想先推进什么？" : "What would you like to move forward today?")}</div>
         {demoControls}
         {!demoControls && <div className="df-ai-reference-suggestions">
           {promptSuggestions.map((suggestion) => <button key={suggestion} onClick={() => setInput(suggestion)}>{suggestion}</button>)}
@@ -381,7 +381,7 @@ export default function AiPanel({ embedded = false, demoControls, docked, onDock
               {message.steps.map((step, index) => <div className={`df-ai-step ${step.status}`} key={`${step.label}-${index}`}><span className="df-ai-step-status" aria-hidden="true">{step.status === "done" ? "✓" : step.status === "error" ? "!" : step.status === "running" ? "●" : "·"}</span><span>{aiStepLabel(step, lang)}</span></div>)}
             </div>
           </details>}
-          {message.content && <div className={`df-ai-reply ${message.status === "error" ? "error" : ""}`}>{message.streaming ? <p className="df-ai-streaming-text">{message.content}</p> : <Suspense fallback={<p>{lang === "zh" ? "正在排版答案…" : "Formatting answer…"}</p>}><AiMarkdownLazy>{message.content}</AiMarkdownLazy></Suspense>}</div>}
+          {message.content && <div className={`df-ai-reply ${message.status === "error" ? "error" : ""}`}>{message.streaming || (embedded && demoControls && message.status === "thinking") ? <p className="df-ai-streaming-text">{message.content}</p> : <Suspense fallback={<p>{lang === "zh" ? "正在排版答案…" : "Formatting answer…"}</p>}><AiMarkdownLazy>{message.content}</AiMarkdownLazy></Suspense>}</div>}
           {message.clarifications && message.clarifications.length > 0 && <Suspense fallback={<p role="status">{lang === "zh" ? "加载中…" : "Loading…"}</p>}><AiClarificationQuestionsLazy clarifications={message.clarifications} lang={lang} disabled={clarificationDisabled(message, messageIndex)} onSubmit={onSend} /></Suspense>}
           {message.agent && <div className="df-agent-run-card">
             {message.agent.applied.length > 0 && message.agent.decisionState !== "undone" && <div className="df-agent-applied executed">

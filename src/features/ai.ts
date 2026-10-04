@@ -8,7 +8,7 @@ export default {
     "benefits": [
       [
         "一句话，安排今天。",
-        "点击“帮我安排今天”，把今日待办放进空闲时段。已有安排会保留，任务时长也会一起考虑。"
+        "点击时间轴右上角的“帮我安排今天”，稍等片刻，看看写作、学习和运动如何分布在一天里。午餐和休息也留出了时间。"
       ],
       [
         "计划变了，换一天。",
@@ -26,7 +26,7 @@ export default {
       ],
       [
         "示例怎样执行和撤回？",
-        "选择预设请求后，示例安排会直接生效。点击“撤回”恢复最近一轮操作之前的状态；多轮操作可以逐轮撤回。"
+        "点击安排按钮，短暂等待后示例安排会生效。点击“撤回”恢复最近一轮操作之前的状态；多轮操作可以逐轮撤回。"
       ],
       [
         "真实使用需要怎样配置？",
@@ -53,7 +53,7 @@ export default {
     "benefits": [
       [
         "One request. A planned day.",
-        "Choose “Plan my day” to put today’s tasks into free slots, keeping existing plans and allowing enough time for each task."
+        "Choose “Plan my day” at the top right of the timeline. After a short pause, writing, learning and exercise fill the day, with room for lunch and rest."
       ],
       [
         "Plans change. Move a task.",
@@ -71,7 +71,7 @@ export default {
       ],
       [
         "How do the presets and undo work?",
-        "A preset applies the example schedule immediately. Undo restores the previous state, one round at a time."
+        "The example schedule appears after a short arranging step. Undo restores the previous state, one round at a time."
       ],
       [
         "What does real AI need?",
