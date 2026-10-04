@@ -12,14 +12,17 @@ view rail and daily-canvas margins. Narrow landscape screens keep native compact
 layouts and show introductions below the workspace. Portrait screens on all three
 routes show only text, shared navigation, and expandable FAQ answers; no iframe or
 interactive product workspace is mounted. Rotating the viewport switches between
-these presentations and disposes of the old demo. Landscape Navo AI replaces the
-candidate column with the shared embedded AiPanel. The introduction stays in the
-middle and the native timeline on the right reflects applied and undone suggestions.
-Two suggestions initially keep the preview readable; schedule, adjust, and undo
-presets remain available. Narrow AI panels use the shared panel container styles,
-also used by the native docked panel. Only the chat history can scroll for reviewing
-longer conversations; the timeline stays stationary and the introduction scrolls in
-the outer document. All three feature pages share five navigation items: Execute,
+these presentations and disposes of the old demo. Landscape Navo AI uses a two-column workspace: timeline on the left,
+shared embedded AiPanel on the right, with the introduction in a reserved area
+above the panel. The parent introduction is clipped to that area so scrolling
+text cannot overlap controls. Presets directly schedule all four example candidates,
+or offer three task/date choices for rescheduling. Requests apply through the same
+native action handler, fifteen-minute grid, conflict check, and undo records.
+Each round can be undone; the timeline follows the affected date. The initial
+panel stays empty with its three preset controls. No free-form input, pending
+preview cards, provider configuration, or real AI requests appear in this demo.
+Narrow screens move prose below the workspace and retain timeline-left/AI-right.
+The shared panel still supports reviewing longer chat history. All three feature pages share five navigation items: Execute,
 Planning, Navo AI, Principles, and Support. Language and Start now remain on the right;
 the language switch track and thumb both use round pill corners. Each page has six
 bilingual FAQ questions using native details/summary controls with a thin shared plus

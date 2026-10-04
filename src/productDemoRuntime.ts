@@ -1,3 +1,4 @@
+import { addDays } from "./timelineGeometry";
 import type { AiAction } from "./aiAssistantApi";
 import type { PlannerApi, PlannerData, Settings } from "./types";
 import { getDefaultSettings } from "./defaultSettings";
@@ -40,17 +41,19 @@ export function installProductDemo(feature: ProductFeature) {
     navigation: fullscreen ? icon => createElement(ProductNavigation, { feature, lang: language, icon }) : undefined,
     now: () => new Date(`${DEMO_DATE}T09:00:00`),
     ready: () => { if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "ready" }, location.origin); },
-    suggest: (state: PlannerData, request?: "adjust", taskIds?: string[]) => {
+    suggest: (state: PlannerData, request?: { taskId: string; days: 1 | 2 }, taskIds?: string[]) => {
       let working = state;
-      const tasks = request === "adjust" ? state.tasks.filter(task => task.id === "content") : state.tasks.filter(task => (!taskIds || taskIds.includes(task.id)) && !task.completed && !task.timelineRecords?.some(record => record.executionStatus === "scheduled") && !task.scheduledStart && task.plannedForDate === DEMO_DATE).slice(0, feature === "ai" ? 2 : 3);
-      const actions: AiAction[] = tasks.flatMap(task => {
-        const start = request === "adjust" ? "14:00" : firstDemoSlot(working, task.id);
+      const reschedule = request;
+      const date = reschedule ? addDays(DEMO_DATE, reschedule.days) : DEMO_DATE;
+      const tasks = reschedule ? state.tasks.filter(task => task.id === reschedule.taskId && !task.completed) : state.tasks.filter(task => (!taskIds || taskIds.includes(task.id)) && !task.completed && !task.timelineRecords?.some(record => record.executionStatus === "scheduled") && !task.scheduledStart && task.plannedForDate === DEMO_DATE).slice(0, feature === "ai" ? 4 : 3);
+      const actions: Extract<AiAction, { type: "schedule_task" }>[] = tasks.flatMap(task => {
+        const start = firstDemoSlot(working, task.id, date);
         if (!start) return [];
-        working = scheduleDemoTask(working, task.id, DEMO_DATE, start);
+        working = scheduleDemoTask(working, task.id, date, start);
         const scheduled = working.tasks.find(item => item.id === task.id)!;
-        return [{ type: "schedule_task" as const, taskId: task.id, title: task.title, date: DEMO_DATE, start, end: scheduled.scheduledEnd!, durationMinutes: Math.round((task.estimatedHours || .5) * 60), projectId: task.projectId }];
+        return [{ type: "schedule_task" as const, taskId: task.id, title: task.title, date, start, end: scheduled.scheduledEnd!, durationMinutes: Math.round((task.estimatedHours || .5) * 60), projectId: task.projectId }];
       });
-      return { id: `demo-suggestion-${++id}`, role: "assistant", content: language === "zh" ? "给这些事留出时间。" : "Make room for these tasks.", createdAt: DEMO_STAMP, status: "done", actionState: "pending", actions };
+      return { id: `demo-suggestion-${++id}`, role: "assistant", content: reschedule ? (language === "zh" ? `已将「${tasks[0]?.title || "任务"}」改到${reschedule.days === 1 ? "明天" : "后天"} ${actions[0]?.start || ""}。` : `Moved ${tasks[0]?.title || "the task"} to ${reschedule.days === 1 ? "tomorrow" : "the day after tomorrow"} at ${actions[0]?.start || ""}.`) : feature === "ai" ? (language === "zh" ? `已安排 ${actions.length} 项待办，保留今天已有的安排。` : `Scheduled ${actions.length} tasks around your existing plans.`) : (language === "zh" ? "给这些事留出时间。" : "Make room for these tasks."), createdAt: DEMO_STAMP, status: "done", actionState: "pending", actions };
     },
   });
   document.documentElement.classList.add("product-demo-document");

@@ -11,7 +11,7 @@ export type WorkspaceDemoRuntime = {
   language: Language;
   storage: Storage;
   now: () => Date;
-  suggest: (data: PlannerData, request?: "adjust", taskIds?: string[]) => AiSessionMessage;
+  suggest: (data: PlannerData, request?: { taskId: string; days: 1 | 2 }, taskIds?: string[]) => AiSessionMessage;
   ready: () => void;
 };
 type DemoWindow = Window & { navopathDemoRuntime?: WorkspaceDemoRuntime };

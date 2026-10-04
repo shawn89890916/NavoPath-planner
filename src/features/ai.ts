@@ -4,19 +4,19 @@ import type { FeatureCopy } from "../productSite";
 export default {
   "zh": {
     "title": "下一步，多一个帮手。",
-    "description": "让 Navo AI 根据任务和空闲时间提出安排。先查看建议、调整细节，再决定哪些放进今天。",
+    "description": "选一个示例请求，让待办安排到合适的时间，或为一项任务换一天。结果直接显示在时间轴上。",
     "benefits": [
       [
-        "结合任务，提出安排。",
-        "从今日候选出发，参考任务时长和已有安排，为下一步找到合适的空闲时段。"
+        "一句话，安排今天。",
+        "点击“帮我安排今天”，把今日待办放进空闲时段。已有安排会保留，任务时长也会一起考虑。"
       ],
       [
-        "先检查，再应用。",
-        "逐项查看建议的时间、时长和所属项目。调整后，只应用你选中的任务。"
+        "计划变了，换一天。",
+        "点击“帮我改期”，选择一项任务和预设日期。时间轴会切到那一天，直接展示新的安排。"
       ],
       [
-        "保留调整的余地。",
-        "应用后，安排会出现在时间轴中。可以继续调整，也可以撤回本轮操作，恢复之前的状态。"
+        "每一步，都能撤回。",
+        "不合适就撤回最近一轮，恢复原来的安排。这里的操作只改变示例，不影响你的个人工作区。"
       ]
     ],
     "faq": [
@@ -25,16 +25,16 @@ export default {
         "这里复用产品界面与操作组件，回复是预设示例，所有变化只保留在当前演示内。正式工作区会根据你的配置和任务请求真实 AI。"
       ],
       [
-        "建议怎样应用和撤回？",
-        "检查建议，调整时间、时长或项目，然后应用选中的项。应用后可以撤回本轮操作，恢复应用前的状态。"
+        "示例怎样执行和撤回？",
+        "选择预设请求后，示例安排会直接生效。点击“撤回”恢复最近一轮操作之前的状态；多轮操作可以逐轮撤回。"
       ],
       [
         "真实使用需要怎样配置？",
         "进入正式工作区，在 Navo AI 设置中选择支持的提供商并完成配置。可用能力取决于账号、提供商和工作区设置。"
       ],
       [
-        "可以只应用一部分建议吗？",
-        "可以。先查看每项建议，再选择要应用的任务，其余建议可以保留或取消。"
+        "改期会改变截止日期吗？",
+        "改期调整任务在哪一天执行，保留原有截止日期。示例会为任务寻找新一天的空闲时段。"
       ],
       [
         "应用建议后还能手动调整吗？",
@@ -49,19 +49,19 @@ export default {
   },
   "en": {
     "title": "A little help with the next step.",
-    "description": "Let Navo AI suggest a schedule from your tasks and free time. Review the details, make adjustments, and choose what belongs in your day.",
+    "description": "Choose an example request to schedule today’s tasks or move one to another day. See the result directly on the timeline.",
     "benefits": [
       [
-        "A plan that fits your tasks.",
-        "Start from Today's Candidates. Task durations and existing plans help find room for your next step."
+        "One request. A planned day.",
+        "Choose “Plan my day” to put today’s tasks into free slots, keeping existing plans and allowing enough time for each task."
       ],
       [
-        "Review before applying.",
-        "Check the time, duration, and project for each suggestion. Make changes and apply only the tasks you select."
+        "Plans change. Move a task.",
+        "Choose “Reschedule a task”, then pick a task and preset date. The timeline opens that day with the new arrangement."
       ],
       [
-        "Room to change your mind.",
-        "Applied tasks appear on the timeline. Keep adjusting, or undo the latest round to restore the previous state."
+        "Every step can be undone.",
+        "Undo the latest round to restore the previous arrangement. These changes stay in the example, leaving your personal workspace intact."
       ]
     ],
     "faq": [
@@ -70,16 +70,16 @@ export default {
         "The demo uses real product components with preset responses. Changes stay in this demo. The workspace uses your configuration and tasks to request real AI."
       ],
       [
-        "How do I apply and undo?",
-        "Review and edit the suggestions, then apply selected items. Undo restores the state before that batch was applied."
+        "How do the presets and undo work?",
+        "A preset applies the example schedule immediately. Undo restores the previous state, one round at a time."
       ],
       [
         "What does real AI need?",
         "Open the workspace and configure a supported provider in Navo AI settings. Available capabilities depend on your account, provider, and workspace settings."
       ],
       [
-        "Can I apply only some suggestions?",
-        "Yes. Review each suggestion and select the tasks to apply. You can leave or cancel the remaining suggestions."
+        "Does rescheduling change the due date?",
+        "Rescheduling changes the execution day and keeps the original due date. The example finds a free slot on the new day."
       ],
       [
         "Can I adjust a task after applying a suggestion?",

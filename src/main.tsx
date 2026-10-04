@@ -1247,6 +1247,9 @@ function App() {
   const aiInputRef = useRef("");
   const aiAbortRef = useRef<AbortController | null>(null);
   const [aiMessages, setAiMessages] = useState<AiSessionMessage[]>([]);
+  const [demoReschedulesOpen, setDemoReschedulesOpen] = useState(false);
+  const [demoPresetBusy, setDemoPresetBusy] = useState(false);
+  const demoPresetBusyRef = useRef(false);
   const [activeAiConversationId, setActiveAiConversationId] = useState("");
   const [aiConversationListOpen, setAiConversationListOpen] = useState(false);
   const [aiAuditOpen, setAiAuditOpen] = useState(false);
@@ -2277,7 +2280,7 @@ if (cached?.data && cached?.settings) {
     cloudBaselineReadyRef.current = true;
     setData(nextData);
     setSettings(nextSettings);
-    if (productDemo?.feature === "ai") setAiMessages([productDemo.suggest(nextData)]);
+    if (productDemo?.feature === "ai") setAiMessages([]);
     productDemo?.ready();
     if (nextSettings.language) setLang(nextSettings.language);
     setModeState((nextSettings.activeMode as Mode) || "execute");
@@ -7435,10 +7438,10 @@ if (cached?.data && cached?.settings) {
     });
   }
 
-  async function adoptSelectedAiActions(messageId: string) {
+  async function adoptSelectedAiActions(messageId: string, demoMessage?: AiSessionMessage) {
     const currentData = dataRef.current;
     if (!currentData) return;
-    const message = aiMessages.find((item) => item.id === messageId);
+    const message = demoMessage || aiMessages.find((item) => item.id === messageId);
     const patches = aiActionPatches[messageId] || {};
     const selected = (message?.actions || [])
       .map((action, index) => ({ ...action, ...(patches[index] || {}) } as AiAction))
@@ -7907,6 +7910,40 @@ if (cached?.data && cached?.settings) {
     setTimelineView("daily");
     requestTimelineFocus(commit.focus);
     if (!productAiPresentation) setAiOpen(false);
+  }
+
+  async function runProductDemoPreset(request?: "undo" | { taskId: string; days: 1 | 2 }) {
+    if (!productDemo || !dataRef.current || demoPresetBusyRef.current) return;
+    demoPresetBusyRef.current = true;
+    setDemoPresetBusy(true);
+    try {
+      if (request === "undo") {
+        const latest = [...aiMessages].reverse().find(message => message.actionState === "adopted");
+        if (!latest) return;
+        const previous = latest.importCommit?.previousTasks?.[0];
+        await undoAiImport(latest.id);
+        const date = previous?.timelineRecords?.find(record => record.executionStatus === "scheduled")?.scheduledDate || productDemo.date;
+        setSelectedDate(date);
+        setVisibleTimelineDate(date);
+      } else {
+        const message = productDemo.suggest(dataRef.current, request);
+        if (!message.actions?.length) {
+          setAiMessages(items => [...items, { ...message, content: lang === "zh" ? "当天没有足够的空闲时段。" : "There is not enough free time on that day." }]);
+          return;
+        }
+        const task = request && dataRef.current.tasks.find(item => item.id === request.taskId);
+        const prompt = request ? (lang === "zh" ? `把「${task?.title}」改到${request.days === 1 ? "明天" : "后天"}` : `Move ${task?.title} to ${request.days === 1 ? "tomorrow" : "the day after tomorrow"}`) : (lang === "zh" ? "帮我安排今天" : "Plan my day");
+        setAiMessages(items => [...items, { id: `request-${message.id}`, role: "user", content: prompt, createdAt: workspaceNow().toISOString() }, message]);
+        await adoptSelectedAiActions(message.id, message);
+        const date = message.actions[0].type === "schedule_task" ? message.actions[0].date || productDemo.date : productDemo.date;
+        setSelectedDate(date);
+        setVisibleTimelineDate(date);
+      }
+      setDemoReschedulesOpen(false);
+    } finally {
+      demoPresetBusyRef.current = false;
+      setDemoPresetBusy(false);
+    }
   }
 
   async function undoAiImport(messageId: string) {
@@ -8778,7 +8815,16 @@ if (cached?.data && cached?.settings) {
     window.addEventListener("pointercancel", end, { once: true });
   };
 
-  const aiPanel = aiOpen && <AiPanel embedded={productAiPresentation} demoControls={productDemo ? <div className="df-product-ai-presets"><Button onClick={() => { if (dataRef.current) setAiMessages((items) => [...items, productDemo.suggest(dataRef.current!)]); }}>{lang === "zh" ? "安排今天" : "Schedule today"}</Button><Button onClick={() => { if (dataRef.current) setAiMessages((items) => [...items, productDemo.suggest(dataRef.current!, "adjust")]); }}>{lang === "zh" ? "调整安排" : "Adjust"}</Button><Button disabled={!aiMessages.some(message => message.actionState === "adopted")} onClick={() => { const latest = [...aiMessages].reverse().find(message => message.actionState === "adopted"); if (latest) void undoAiImport(latest.id); }}>{lang === "zh" ? "撤回" : "Undo"}</Button></div> : undefined} docked={productAiPresentation ? false : aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
+  const aiPanel = aiOpen && <AiPanel embedded={productAiPresentation} demoControls={productDemo ? <div className="df-product-ai-presets">
+    <div className="df-product-ai-requests">
+      <Button variant="primary" disabled={demoPresetBusy || !tasks.some(task => !task.completed && task.plannedForDate === productDemo.date && !task.scheduledStart && !task.timelineRecords?.some(record => record.executionStatus === "scheduled"))} onClick={() => void runProductDemoPreset()}>{lang === "zh" ? "帮我安排今天" : "Plan my day"}</Button>
+      <Button variant="ghost" disabled={demoPresetBusy} aria-expanded={demoReschedulesOpen} aria-controls="product-ai-reschedules" onClick={() => setDemoReschedulesOpen(open => !open)}>{lang === "zh" ? "帮我改期" : "Reschedule a task"}</Button>
+      <Button variant="ghost" disabled={demoPresetBusy || !aiMessages.some(message => message.actionState === "adopted")} onClick={() => void runProductDemoPreset("undo")}>{lang === "zh" ? "撤回" : "Undo"}</Button>
+    </div>
+    {demoReschedulesOpen && <div id="product-ai-reschedules" className="df-product-ai-reschedules" role="group" aria-label={lang === "zh" ? "选择改期" : "Choose a reschedule"}>
+      {([{ taskId: "content", days: 1 }, { taskId: "layout", days: 2 }, { taskId: "walk", days: 1 }] as const).map(choice => <Button key={choice.taskId} variant="ghost" disabled={demoPresetBusy || tasks.find(task => task.id === choice.taskId)?.completed} onClick={() => void runProductDemoPreset(choice)}>{tasks.find(task => task.id === choice.taskId)?.title}<span>{lang === "zh" ? (choice.days === 1 ? "明天" : "后天") : (choice.days === 1 ? "Tomorrow" : "In two days")}</span></Button>)}
+    </div>}
+  </div> : undefined} docked={productAiPresentation ? false : aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
 
   return (
     <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-product-feature={productAiPresentation ? "ai" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>

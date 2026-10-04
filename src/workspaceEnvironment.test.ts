@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryStorage, getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./workspaceEnvironment";
 import { installProductDemo } from "./productDemoRuntime";
-import { DEMO_DATE } from "./productDemoData";
+import { DEMO_DATE, scheduleDemoTask } from "./productDemoData";
 
 afterEach(() => vi.unstubAllGlobals());
 function demoWindow() {
@@ -27,6 +27,30 @@ describe("workspace example boundary", () => {
     expect(getWorkspaceDemoRuntime()).toBeUndefined(); expect(getWorkspaceStorage()).toBe(window.localStorage);
     target.location.pathname = "/product-demo/ai"; installProductDemo("ai");
     expect((await window.plannerApi!.getData()).tasks[0].title).toBe(original.tasks[0].title);
+  });
+  it("plans every example candidate once around existing schedules", async () => {
+    demoWindow(); installProductDemo("ai");
+    let state = await window.plannerApi!.getData();
+    const runtime = getWorkspaceDemoRuntime()!;
+    const suggestion = runtime.suggest(state);
+    expect(suggestion.actions).toHaveLength(4);
+    for (const action of suggestion.actions || []) {
+      if (action.type !== "schedule_task" || !action.taskId || !action.date || !action.start) throw new Error("Expected a scheduled task");
+      const next = scheduleDemoTask(state, action.taskId, action.date, action.start);
+      expect(next).not.toBe(state);
+      state = next;
+    }
+    expect(runtime.suggest(state).actions).toEqual([]);
+  });
+  it("reschedules presets into free slots on tomorrow and the following day", async () => {
+    demoWindow(); installProductDemo("ai");
+    const initial = await window.plannerApi!.getData();
+    const state = scheduleDemoTask(initial, "notebook", "2030-10-08", "09:00", 60);
+    const runtime = getWorkspaceDemoRuntime()!;
+    expect(runtime.suggest(state, { taskId: "content", days: 1 }).actions?.[0]).toMatchObject({ type: "schedule_task", taskId: "content", date: "2030-10-08", start: "10:00" });
+    expect(runtime.suggest(state, { taskId: "layout", days: 2 }).actions?.[0]).toMatchObject({ type: "schedule_task", taskId: "layout", date: "2030-10-09", start: "09:00" });
+    expect(runtime.suggest(state, { taskId: "missing", days: 1 }).actions).toEqual([]);
+    expect(state.tasks.find(task => task.id === "content")?.plannedForDate).toBe(DEMO_DATE);
   });
   it("keeps preset suggestions clear of migrated timeline records", async () => {
     const { parent } = demoWindow(); installProductDemo("ai");

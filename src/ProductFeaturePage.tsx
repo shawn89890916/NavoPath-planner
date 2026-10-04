@@ -65,7 +65,7 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
           {mounted && <iframe key={attempt} ref={frame} src={`/product-demo/${feature}?lang=${lang}${immersive ? "&presentation=full" : ""}`} title={`${featureNames[lang][feature]} · ${zh ? "产品体验" : "Product preview"}`} onError={() => setFailed(true)} />}
           {(!ready || failed) && <div className="np-demo-status" role="status"><p>{failed ? (zh ? "暂时无法打开。" : "Unable to load.") : "NavoPath…"}</p>{failed && <button type="button" onClick={() => { setReady(false); setFailed(false); setAttempt(attempt + 1); }}>{zh ? "重试" : "Retry"}</button>}</div>}
         </div>
-        {immersive && storyLayout && <ProductStory lang={lang} copy={c} layout={storyLayout} />}
+        {immersive && storyLayout && <ProductStory lang={lang} copy={c} layout={storyLayout} bounded={feature === "ai"} />}
       </section>
       {immersive && !storyLayout && <><section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section><ProductStory lang={lang} copy={c} layout={null} /></>}
       </>}

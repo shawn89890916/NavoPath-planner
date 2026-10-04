@@ -26,7 +26,7 @@ export function ProductStorySlot({ feature }: { feature: ProductFeature }) {
   return <aside ref={host} className={`df-product-story df-product-story--${feature}`} aria-hidden="true" />;
 }
 
-export default function ProductStory({ lang, copy, layout }: { lang: Language; copy: FeatureCopy; layout: StoryLayout | null }) {
+export default function ProductStory({ lang, copy, layout, bounded = false }: { lang: Language; copy: FeatureCopy; layout: StoryLayout | null; bounded?: boolean }) {
   const host = useRef<HTMLElement>(null);
   useEffect(() => {
     let pending = 0;
@@ -42,7 +42,8 @@ export default function ProductStory({ lang, copy, layout }: { lang: Language; c
         const rect = content.getBoundingClientRect();
         const distance = Math.abs(rect.top + rect.height / 2 - focus);
         // Keep a broad reading zone; ease the text out only near the viewport edges.
-        const edge = Math.max(0, Math.min(1, (distance - innerHeight * .22) / (innerHeight * .30)));
+        const focusHeight = bounded && layout ? layout.height : innerHeight;
+        const edge = Math.max(0, Math.min(1, (distance - focusHeight * .22) / (focusHeight * .30)));
         const fade = edge * edge * (3 - 2 * edge);
         const peakScale = Math.min(1.14, (element.clientWidth - 8) / content.offsetWidth);
         section.style.setProperty("--story-opacity", String(reduced.matches ? 1 : 1 - .86 * fade));
@@ -51,13 +52,13 @@ export default function ProductStory({ lang, copy, layout }: { lang: Language; c
       }
       if (layout) {
         const rect = element.getBoundingClientRect();
-        element.style.clipPath = `inset(${Math.max(0, layout.headerHeight - rect.top)}px 0 ${Math.max(0, rect.bottom - innerHeight)}px 0)`;
+        element.style.clipPath = `inset(${Math.max(0, (bounded ? layout.top : layout.headerHeight) - rect.top)}px 0 ${Math.max(0, rect.bottom - (bounded ? layout.top + layout.height : innerHeight))}px 0)`;
       } else element.style.clipPath = "none";
     };
     const schedule = () => { if (!pending) pending = requestAnimationFrame(update); };
     addEventListener("scroll", schedule, { passive: true }); addEventListener("resize", schedule); reduced.addEventListener("change", schedule); update();
     return () => { removeEventListener("scroll", schedule); removeEventListener("resize", schedule); reduced.removeEventListener("change", schedule); cancelAnimationFrame(pending); };
-  }, [layout, copy]);
+  }, [layout, copy, bounded]);
   return <aside ref={host} className={`np-scroll-story${layout ? " np-scroll-story--inline" : ""}`} aria-label={lang === "zh" ? "功能介绍" : "Feature introduction"}
     style={layout ? { width: layout.width, marginLeft: layout.left, paddingTop: `max(0px, calc(${layout.top + layout.height / 2}px - 19svh))`, paddingBottom: `max(0px, calc(100svh - ${layout.top + layout.height / 2}px - 19svh))` } : undefined}>
     {layout && <section><div><span className="np-story-scroll-cue">{lang === "zh" ? "向下滚动了解更多" : "Scroll to explore"}<span aria-hidden="true">↓</span></span><h1>{copy.title}</h1><p>{copy.description}</p></div></section>}

@@ -351,14 +351,15 @@ export default function AiPanel({ embedded = false, demoControls, docked, onDock
       followLatestRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 72;
     }}>
       {messages.length === 0 && <div className="df-ai-reference-empty">
-        <div className="df-ai-reference-prompt">{lang === "zh" ? "今天想先推进什么？" : "What would you like to move forward today?"}</div>
-        <div className="df-ai-reference-suggestions">
+        <div className="df-ai-reference-prompt">{demoControls ? (lang === "zh" ? "想先安排今天，还是改期？" : "Plan today, or move a task?") : (lang === "zh" ? "今天想先推进什么？" : "What would you like to move forward today?")}</div>
+        {demoControls}
+        {!demoControls && <div className="df-ai-reference-suggestions">
           {promptSuggestions.map((suggestion) => <button key={suggestion} onClick={() => setInput(suggestion)}>{suggestion}</button>)}
-        </div>
-        <div className={`df-ai-capability-state ${globalAgentAvailable ? "ready" : "locked"}`}>
+        </div>}
+        {!demoControls && <div className={`df-ai-capability-state ${globalAgentAvailable ? "ready" : "locked"}`}>
           <span aria-hidden="true">{globalAgentAvailable ? "●" : "○"}</span>
           <small>{globalAgentAvailable ? (lang === "zh" ? "已连接工作区 · 写入前按安全等级确认" : "Workspace connected · writes follow your safety level") : (lang === "zh" ? "登录后可读取完整工作区" : "Sign in to access the full workspace")}</small>
-        </div>
+        </div>}
       </div>}
       {messages.map((message, messageIndex) => <section key={message.id} className={`df-ai-turn ${message.role}`}>
         {message.role === "user" ? <>
@@ -369,7 +370,7 @@ export default function AiPanel({ embedded = false, demoControls, docked, onDock
             <button type="button" onClick={() => { if (navigator.clipboard) void navigator.clipboard.writeText(message.content); }}>{lang === "zh" ? "复制" : "Copy"}</button>
           </div>}
         </> : <>
-          <div className={`df-ai-assistant-label ${message.status === "thinking" ? "active" : ""}`}><span>N</span><small>NavoPath AI</small></div>
+          {!(embedded && demoControls) && <div className={`df-ai-assistant-label ${message.status === "thinking" ? "active" : ""}`}><span>N</span><small>NavoPath AI</small></div>}
           {message.steps && message.steps.length > 0 && <details className={`df-ai-progress ${message.status === "thinking" ? "thinking" : ""}`} open={message.status === "thinking"}>
             <summary>
               <span className="df-ai-progress-icon" aria-hidden="true">{message.status === "error" ? "!" : message.status === "thinking" ? "●" : "✓"}</span>
@@ -478,10 +479,10 @@ export default function AiPanel({ embedded = false, demoControls, docked, onDock
             <button className="primary" disabled={!message.actions.some((_, index) => message.selectedActions?.[index] !== false)} onClick={() => onAdoptSelected(message.id)}>{text.addSelected}</button>
           </div>}
         </div>}
-          {message.actionState && message.actionState !== "pending" && <div className={`df-ai-action-outcome ${message.actionState}`}>
+          {message.actionState && message.actionState !== "pending" && !(embedded && demoControls && message.actionState === "adopted") && <div className={`df-ai-action-outcome ${message.actionState}`}>
           <span>{message.actionState === "adopted" ? (lang === "zh" ? `已添加 ${message.importCommit?.addedCount || 0} 项` : `Added ${message.importCommit?.addedCount || 0} items`) : message.actionState === "undone" ? (lang === "zh" ? "已撤回本次添加" : "Changes undone") : (lang === "zh" ? "已否决本轮建议" : "Suggestions dismissed")}</span>
-          {message.actionState === "adopted" && <div>
-            {message.importCommit?.focus && <button onClick={() => onViewImport(message.id)}>{lang === "zh" ? "查看时间轴" : "View timeline"}</button>}
+          {message.actionState === "adopted" && !(embedded && demoControls) && <div>
+            {message.importCommit?.focus && !(embedded && demoControls) && <button onClick={() => onViewImport(message.id)}>{lang === "zh" ? "查看时间轴" : "View timeline"}</button>}
             <button onClick={() => onUndoImport(message.id)}>{lang === "zh" ? "撤回本次操作" : "Undo changes"}</button>
           </div>}
           </div>}
@@ -492,7 +493,7 @@ export default function AiPanel({ embedded = false, demoControls, docked, onDock
         </>}
       </section>)}
     </div>
-    <div className="df-ai-panel-foot">
+    {!(demoControls && messages.length === 0) && <div className="df-ai-panel-foot">
       {!demoControls && <button className={`df-ai-panel-plan${planState === "generating" || planState === "committing" ? " thinking" : ""}`} type="button" onClick={onPlanToday} disabled={planState === "generating" || planState === "committing"}>
         <span>{lang === "zh" ? "安排建议" : "Schedule Suggestions"}</span>
         <small>{planState === "generating" ? (lang === "zh" ? "分析中" : "Analyzing") : planState === "committing" ? (lang === "zh" ? "应用中" : "Applying") : planState === "preview" ? (lang === "zh" ? "重新生成" : "Regenerate") : (lang === "zh" ? "为今天生成时间安排" : "Build today's schedule")}</small>
@@ -517,6 +518,6 @@ export default function AiPanel({ embedded = false, demoControls, docked, onDock
         ].map(([label, accept, capture]) => <label className="df-ai-composer-upload" key={label}>{label}<input type="file" accept={accept} capture={capture === "environment" ? "environment" : undefined} onChange={acceptAttachment} /></label>)}</div>}
         <button className="df-ai-send-btn" onClick={busy ? onCancel : () => void onSend()} disabled={!busy && !input.trim() && !attachment} title={busy ? (lang === "zh" ? "取消请求" : "Cancel request") : t(lang, "aiPanel.send")} aria-label={busy ? (lang === "zh" ? "停止生成" : "Stop generating") : t(lang, "aiPanel.send")}>{busy ? <span className="df-ai-stop-icon" aria-hidden="true" /> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M7 10l5-5 5 5" /></svg>}</button>
       </div>}
-    </div>
+    </div>}
   </aside>;
 }

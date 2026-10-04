@@ -1,5 +1,4 @@
 html.product-demo-document, html.product-demo-document body, html.product-demo-document #root { height:100%; margin:0; overflow:hidden; }
-.df-product-ai-presets { display:flex; flex-wrap:wrap; gap:8px; }
 .df-product-notes { margin-top:44px; max-width:240px; color:var(--text-muted); font-size:13px; line-height:1.8; }
 .df-product-notes p { margin:0 0 24px; }
 
