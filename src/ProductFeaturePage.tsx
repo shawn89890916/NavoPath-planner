@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ProductMenu } from "./components/ProductMenu";
 import { UiPlusIcon } from "./components/UiIcons";
 import { featureHref, featureNames, productFeature, siteLanguage, type DemoCommand, type FeatureCopy, type ProductFeature } from "./productSite";
 import ProductStory, { type StoryLayout } from "./ProductStory";
@@ -12,7 +11,7 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
   const [mounted, setMounted] = useState(false), [ready, setReady] = useState(false), [failed, setFailed] = useState(false), [attempt, setAttempt] = useState(0);
   const [storyLayout, setStoryLayout] = useState<StoryLayout | null>(null);
   const frame = useRef<HTMLIFrameElement>(null), host = useRef<HTMLDivElement>(null), visible = useRef(true);
-  const c = copy[lang], zh = lang === "zh", immersive = feature !== "ai" && !portrait;
+  const c = copy[lang], zh = lang === "zh", immersive = !portrait;
   const send = useCallback((type: DemoCommand["type"], inView?: boolean) => frame.current?.contentWindow?.postMessage({ channel: "navopath-product-demo", type, stage: feature === "execute" ? 2 : 1, lang, visible: inView } satisfies DemoCommand, location.origin), [feature, lang]);
   useEffect(() => {
     const media = matchMedia("(orientation: portrait)");
@@ -67,12 +66,11 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
           {(!ready || failed) && <div className="np-demo-status" role="status"><p>{failed ? (zh ? "暂时无法打开。" : "Unable to load.") : "NavoPath…"}</p>{failed && <button type="button" onClick={() => { setReady(false); setFailed(false); setAttempt(attempt + 1); }}>{zh ? "重试" : "Retry"}</button>}</div>}
         </div>
         {immersive && storyLayout && <ProductStory lang={lang} copy={c} layout={storyLayout} />}
-        {!immersive && <aside className="np-product-notes">{c.benefits.map(([title, description]) => <div key={title}><h2>{title}</h2><p>{description}</p></div>)}</aside>}
       </section>
       {immersive && !storyLayout && <><section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section><ProductStory lang={lang} copy={c} layout={null} /></>}
       </>}
       <section className="np-faq"><h2>{zh ? "常见问题" : "FAQ"}</h2><div>{c.faq.map(([question, answer]) => <details key={question}><summary><span>{question}</span><UiPlusIcon size={18} strokeWidth={1.2} className="np-faq-plus" /></summary><p>{answer}</p></details>)}</div></section>
-      <footer className="np-feature-footer"><a href={featureHref(c.next, lang)}>{featureNames[lang][c.next]}</a>{immersive || portrait ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a><a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a><span className="np-personal-placeholder" role="link" aria-disabled="true">{zh ? "个人网页" : "Personal website"}</span></> : <ProductMenu lang={lang} kind="support" />}<span>© 2026 NavoPath</span></footer>
+      <footer className="np-feature-footer"><a href={featureHref(c.next, lang)}>{featureNames[lang][c.next]}</a><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a><a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a><span className="np-personal-placeholder" role="link" aria-disabled="true">{zh ? "个人网页" : "Personal website"}</span><span>© 2026 NavoPath</span></footer>
     </main>
   </div>;
 }

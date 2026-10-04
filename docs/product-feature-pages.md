@@ -1,7 +1,7 @@
 # Product feature pages
 
 Public routes: `/features/planning`, `/features/execute`, `/features/ai`.
-Planning and Execute fill the window with the running product workspace. Planning
+Planning, Execute, and Navo AI fill the window with the running product workspace. Planning
 uses compact, clearly indented native task nodes and a right-side introduction.
 Execute uses native candidates on the left, introductions in the middle, and the
 timeline on the right. Introductions scroll in the parent document, scaling and fading according to their
@@ -12,13 +12,19 @@ view rail and daily-canvas margins. Narrow landscape screens keep native compact
 layouts and show introductions below the workspace. Portrait screens on all three
 routes show only text, shared navigation, and expandable FAQ answers; no iframe or
 interactive product workspace is mounted. Rotating the viewport switches between
-these presentations and disposes of the old demo. Landscape AI retains its existing
-preview layout. All three feature pages share five navigation items: Execute,
+these presentations and disposes of the old demo. Landscape Navo AI replaces the
+candidate column with the shared embedded AiPanel. The introduction stays in the
+middle and the native timeline on the right reflects applied and undone suggestions.
+Two suggestions initially keep the preview readable; schedule, adjust, and undo
+presets remain available. Narrow AI panels use the shared panel container styles,
+also used by the native docked panel. Only the chat history can scroll for reviewing
+longer conversations; the timeline stays stationary and the introduction scrolls in
+the outer document. All three feature pages share five navigation items: Execute,
 Planning, Navo AI, Principles, and Support. Language and Start now remain on the right;
 the language switch track and thumb both use round pill corners. Each page has six
 bilingual FAQ questions using native details/summary controls with a thin shared plus
 icon. Execute paragraphs are centered within equal horizontal insets.
-Planning and Execute insert navigation into the real App header through an optional
+All three introductions insert navigation into the real App header through an optional
 runtime slot, reusing WorkspaceModeTabs and the existing site controls. It returns
 home from the logo and links to all three features,
 with Principles and personal-site placeholders. Support includes Afdian and GitHub.
@@ -29,8 +35,8 @@ use regular sans-serif type. Today's Candidates uses the task font and a more ge
 column width. The first scrolling paragraph includes a short scroll cue. FAQ
 stays below each page. Full-window demo dates are read-only, and calendar view switching,
 date arrows/dropdowns, Back to now, and floating Add/AI launchers are omitted from the native
-Planning/Execute demo render path. Formal /app and the dedicated AI workspace keep
-these controls so its panel can be closed and reopened. Mobile task/schedule switching,
+full-window demo render path. Formal /app keeps its original controls. The
+embedded AI demo omits panel docking and close controls so it remains available. Mobile task/schedule switching,
 candidate scheduling, task duration, completion, and rescheduling remain native.
 
 `siteEntry.tsx` installs `productDemoRuntime.ts` for `/product-demo/:feature` and

@@ -12,8 +12,6 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-product-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 36px; align-items: center; }
 .np-product-layout--execute { grid-template-columns: 1fr; }
 .np-product-layout--ai { grid-template-columns:1fr; }
-.np-product-layout--ai .np-product-window { height: clamp(700px, 80vh, 820px); }
-.np-product-layout:is(.np-product-layout--ai, .np-product-layout--execute) .np-product-notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; width: 100%; max-width: 1080px; margin-inline: auto; }
 .np-product-window { position: relative; min-width: 0; height: clamp(580px, 72vh, 750px); overflow: hidden; background: #f8f7f3; border-radius: 18px; box-shadow: 0 18px 52px rgb(39 35 30 / 4%); }
 .np-product-window iframe { display: block; width: 100%; height: 100%; border: 0; }
 .np-product-notes { display: flex; flex-direction: column; gap: 32px; padding: 16px 0; min-width: 0; }
@@ -96,8 +94,8 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-scroll-story section > div { width: 100%; max-width: 420px; opacity: var(--story-opacity, 1); transform: scale(var(--story-scale, 1)); transform-origin: center; filter: blur(var(--story-blur, 0px)); }
 .np-feature--planning .np-scroll-story--inline { padding-inline: 12px; }
 .np-feature--planning .np-scroll-story--inline section > div { max-width: none; }
-.np-feature--execute .np-scroll-story--inline section > div { text-align: center; text-wrap: balance; }
-.np-feature--execute .np-story-scroll-cue { justify-content: center; }
+.np-feature:is(.np-feature--execute, .np-feature--ai) .np-scroll-story--inline section > div { text-align: center; text-wrap: balance; }
+.np-feature:is(.np-feature--execute, .np-feature--ai) .np-story-scroll-cue { justify-content: center; }
 .np-scroll-story--inline .np-story-step { display: block; min-height: 76svh; padding-block: 12svh; }
 .np-scroll-story--inline .np-story-step > div { position: sticky; top: var(--story-sticky-top); margin-inline: auto; }
 .np-story-scroll-cue { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; color: #584d3d; font: 600 13px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif; }

@@ -36310,6 +36310,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 }/* Authoritative AI conversation layer — loaded last on purpose. */
 #root .df-app .df-ai-panel-reference {
+  container-type: inline-size;
   top: 72px;
   right: 16px;
   bottom: 16px;
@@ -39534,12 +39535,25 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   max-width: none;
   max-height: 100%;
   margin: 0;
+  padding: 0;
   border: 0;
   border-radius: 0;
   box-shadow: none;
   transform: none;
 }
 #root .df-app .df-ai-panel.df-ai-panel-reference.is-embedded::before { display: none; }
+#root .df-app .df-ai-panel.is-embedded .df-ai-panel-head { cursor: default; touch-action: auto; }
+#root .df-app .df-ai-panel.is-embedded .df-ai-panel-body { overscroll-behavior: auto; }
+/* Fit the shared action preview to its panel, including the native docked sidebar. */
+@container (max-width: 500px) {
+  #root .df-app .df-ai-panel-reference .df-ai-panel-body { padding: 18px 16px 24px; }
+  #root .df-app .df-ai-panel-reference :is(.df-ai-actions, .df-ai-reply) { margin-left: 0; }
+  #root .df-app .df-ai-panel-reference .df-ai-turn:last-child { margin-bottom: 0; }
+  #root .df-app .df-ai-panel-reference .df-ai-task-row-top > strong { flex-basis: 100%; }
+  #root .df-app .df-ai-panel-reference .df-ai-chip-button { font: 500 12px/1.4 var(--paper-sans); }
+  #root .df-app .df-ai-panel-reference .df-ai-import-bulk > button { flex: 1; min-width: 0; font-size: 12px; }
+}
+
 
 .oauth-consent-page {
   min-height: 100svh;
@@ -39671,12 +39685,18 @@ html.product-demo-fullscreen #root .df-app.mode-execute .df-candidate-panel .df-
   html.product-demo-fullscreen #root .df-app.mode-execute .df-product-story { grid-column: 2; grid-row: 1; }
   html.product-demo-fullscreen #root .df-app.mode-execute .df-timeline-scroll { margin-left: auto; margin-right: 0; }
   html.product-demo-fullscreen #root .df-app.mode-execute .df-timeline-daily { --df-daily-scroll-width: 100%; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) { --product-ai-width: clamp(340px, 32vw, 460px); --product-timeline-width: min(clamp(340px, 34vw, 500px), calc(100% - var(--product-ai-width) - 280px)); grid-template-columns: var(--product-ai-width) minmax(280px, 1fr) var(--product-timeline-width); }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-panel.is-embedded { grid-column: 1; grid-row: 1; }
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) { grid-template-columns: var(--df-candidate-width) minmax(0, 1fr); }
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked .df-product-story { display: none; }
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 2; }
 }
 @media (max-width: 980px), (orientation: portrait) {
   html.product-demo-fullscreen #root .df-app { --product-header-height: 102px; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(260px, 1fr); gap: 12px; padding: 12px; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-panel.is-embedded { grid-column: 1; grid-row: 1; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute > .df-timeline-panel { grid-column: 2; grid-row: 1; }
+
   html.product-demo-fullscreen #root .df-header-inner { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 48px 40px; padding: 6px 16px; gap: 0; }
   html.product-demo-fullscreen #root .df-header .df-tabs-center { position: static; transform: none; grid-column: 1 / -1; grid-row: 2; justify-self: center; display: flex; }
   html.product-demo-fullscreen #root .df-header-right { justify-self: end; gap: 8px; }

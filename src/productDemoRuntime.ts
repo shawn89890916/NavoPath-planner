@@ -12,7 +12,7 @@ import ProductNavigation from "./ProductNavigation";
 export function installProductDemo(feature: ProductFeature) {
   if (!location.pathname.startsWith("/product-demo/")) throw new Error("Example runtime requires an example route");
   const language = siteLanguage(location.search, navigator.language);
-  const fullscreen = feature !== "ai" && new URLSearchParams(location.search).get("presentation") === "full";
+  const fullscreen = new URLSearchParams(location.search).get("presentation") === "full";
   let data = createDemoData(language, feature, feature === "execute" ? 2 : 1);
   let settings: Settings = { ...getDefaultSettings(), language, theme: "light", activeMode: feature === "planning" ? "planning" : "execute", continuousCrossDayScroll: false, dayStartTime: "08:00", dayEndTime: "18:00", featureHabitsEnabled: false, featureMetricsEnabled: false, featureKanbanViewEnabled: true, featureQuadrantViewEnabled: true, featureListViewEnabled: true, syncIntervalMinutes: 0 };
   const clone = <T,>(value: T): T => structuredClone(value);
@@ -42,7 +42,7 @@ export function installProductDemo(feature: ProductFeature) {
     ready: () => { if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "ready" }, location.origin); },
     suggest: (state: PlannerData, request?: "adjust", taskIds?: string[]) => {
       let working = state;
-      const tasks = request === "adjust" ? state.tasks.filter(task => task.id === "content") : state.tasks.filter(task => (!taskIds || taskIds.includes(task.id)) && !task.completed && !task.timelineRecords?.some(record => record.executionStatus === "scheduled") && !task.scheduledStart && task.plannedForDate === DEMO_DATE).slice(0, 3);
+      const tasks = request === "adjust" ? state.tasks.filter(task => task.id === "content") : state.tasks.filter(task => (!taskIds || taskIds.includes(task.id)) && !task.completed && !task.timelineRecords?.some(record => record.executionStatus === "scheduled") && !task.scheduledStart && task.plannedForDate === DEMO_DATE).slice(0, feature === "ai" ? 2 : 3);
       const actions: AiAction[] = tasks.flatMap(task => {
         const start = request === "adjust" ? "14:00" : firstDemoSlot(working, task.id);
         if (!start) return [];
