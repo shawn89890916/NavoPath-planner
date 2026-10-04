@@ -34,6 +34,21 @@ describe("isolated product examples", () => {
     expect(initial.tasks[0].plannedForDate).toBeUndefined();
   });
 
+  it("shows a fuller example day using ordinary, non-overlapping task records", () => {
+    for (const lang of ["zh", "en"] as const) {
+      const data = createDemoData(lang, "execute", 2);
+      expect(data.events).toEqual([]);
+      expect(data.tasks.some(task => task.id.startsWith("event_occ_"))).toBe(false);
+      const records = data.tasks.flatMap(task => task.timelineRecords || [])
+        .sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart));
+      expect(records).toHaveLength(9);
+      for (let index = 1; index < records.length; index++) {
+        expect(records[index - 1].scheduledEnd <= records[index].scheduledStart).toBe(true);
+      }
+      expect(data.tasks.filter(task => task.executionLane === "candidate" && !task.scheduledStart)).toHaveLength(3);
+    }
+  });
+
   it("rejects conflicts and times outside the fifteen minute grid without mutating state", () => {
     const initial = createDemoData("en", "execute", 0);
     for (const time of ["09:00", "09:15", "09:31", "07:45", "18:00", "25:00"]) {

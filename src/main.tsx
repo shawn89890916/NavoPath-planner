@@ -3513,7 +3513,7 @@ if (cached?.data && cached?.settings) {
     };
   }, [compactExecuteView, continuousTimelineDates, continuousTimelineEnabled, continuousTimelineStartDate, dayStartHour, mode, timelineColumnCount, timelineSlotHeight, timelineView, timelineWindowAnchorDate, today]);
 
-  const showBackToNow = !nowInTimelineViewport;
+  const showBackToNow = !productPresentation && !nowInTimelineViewport;
 
   function getTimelineRangeFor(view: TimelineView, anchorDate: string) {
     if (view === "daily") return [anchorDate];

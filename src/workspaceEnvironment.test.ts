@@ -30,9 +30,9 @@ describe("workspace example boundary", () => {
   });
   it("keeps preset suggestions clear of migrated timeline records", async () => {
     const { parent } = demoWindow(); installProductDemo("ai");
-    const state = await window.plannerApi!.getData(); const meeting = state.tasks.find(task => task.id === "event_occ_demo")!;
-    meeting.timelineRecords = [{ id: "migrated", taskId: meeting.id, scheduledDate: DEMO_DATE, scheduledStart: "09:00", scheduledEnd: "09:30", executionStatus: "scheduled", createdAt: meeting.createdAt }];
-    delete meeting.scheduledDate; delete meeting.scheduledStart; delete meeting.scheduledEnd;
+    const state = await window.plannerApi!.getData(); const morningTask = state.tasks.find(task => task.id === "notebook")!;
+    morningTask.timelineRecords = [{ id: "migrated", taskId: morningTask.id, scheduledDate: DEMO_DATE, scheduledStart: "09:00", scheduledEnd: "09:30", executionStatus: "scheduled", createdAt: morningTask.createdAt }];
+    delete morningTask.scheduledDate; delete morningTask.scheduledStart; delete morningTask.scheduledEnd;
     const runtime = getWorkspaceDemoRuntime()!; const suggestion = runtime.suggest(state);
     const action = suggestion.actions?.[0];
     expect(action?.type).toBe("schedule_task");

@@ -57,7 +57,7 @@ export default function ProductStory({ lang, copy, layout }: { lang: Language; c
   }, [layout, copy]);
   return <aside ref={host} className={`np-scroll-story${layout ? " np-scroll-story--inline" : ""}`} aria-label={lang === "zh" ? "功能介绍" : "Feature introduction"}
     style={layout ? { width: layout.width, marginLeft: layout.left, paddingTop: `max(0px, calc(${layout.top + layout.height / 2}px - 19svh))`, paddingBottom: `max(0px, calc(100svh - ${layout.top + layout.height / 2}px - 19svh))` } : undefined}>
-    {layout && <section><div><h1>{copy.title}</h1><p>{copy.description}</p></div></section>}
+    {layout && <section><div><span className="np-story-scroll-cue">{lang === "zh" ? "向下滚动了解更多" : "Scroll to explore"}<span aria-hidden="true">↓</span></span><h1>{copy.title}</h1><p>{copy.description}</p></div></section>}
     {copy.benefits.map(([title, description]) => <section key={title}><div><h2>{title}</h2><p>{description}</p></div></section>)}
   </aside>;
 }

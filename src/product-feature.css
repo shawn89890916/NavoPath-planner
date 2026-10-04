@@ -1,6 +1,6 @@
 html.product-site-document { height: auto; min-height: 100%; overflow-x: clip; overflow-y: auto; }
 html.product-site-document body, html.product-site-document #root { height: auto; min-height: 100%; margin: 0; overflow: visible; }
-.np-feature { --product-heading-size: clamp(23px, 2vw, 30px); min-height: 100vh; background: #f4f7f9; color: #27231e; font-family: "Segoe UI Variable", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+.np-feature { --product-heading-size: clamp(28px, 2.4vw, 38px); min-height: 100vh; background: #f4f7f9; color: #27231e; font-family: "Times New Roman", "Songti SC", SimSun, serif; }
 .np-feature *, .np-feature *::before, .np-feature *::after { box-sizing: border-box; }
 .np-feature button { font: inherit; cursor: pointer; }
 .np-feature a { text-decoration: none; }
@@ -68,12 +68,14 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-scroll-story { min-width: 0; max-width: 680px; margin: 0 auto; padding: 0 24px; }
 .np-scroll-story--inline { grid-area: 1 / 1; position: relative; z-index: 2; max-width: none; margin-top: 0; margin-bottom: 0; align-self: start; pointer-events: none; }
 .np-feature--immersive:has(.np-demo-status) .np-scroll-story--inline { visibility: hidden; }
-.np-scroll-story section { min-height: 38svh; display: flex; align-items: center; }
-.np-scroll-story section > div { width: 100%; opacity: var(--story-opacity, 1); transform: scale(var(--story-scale, 1)); transform-origin: center; }
+.np-scroll-story section { min-height: 38svh; display: flex; align-items: center; justify-content: center; }
+.np-scroll-story section > div { width: 100%; max-width: 420px; opacity: var(--story-opacity, 1); transform: scale(var(--story-scale, 1)); transform-origin: center; }
+.np-story-scroll-cue { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; color: #584d3d; font: 600 13px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif; }
+.np-story-scroll-cue > span { font-size: 20px; }
 .np-scroll-story h1 { margin: 0 0 16px; font-size: var(--product-heading-size); line-height: 1.35; letter-spacing: -.04em; }
 .np-scroll-story h2 { margin: 0 0 16px; font-size: var(--product-heading-size); line-height: 1.35; letter-spacing: -.04em; }
-.np-scroll-story p { margin: 0; font-size: 15px; line-height: 1.8; color: #69717c; }
-@media (max-width: 1280px) { .np-scroll-story--inline { padding-inline: 18px; } .np-scroll-story--inline p { font-size: 14px; } }
+.np-scroll-story p { margin: 0; font-size: 18px; line-height: 1.65; color: #55504a; }
+@media (max-width: 1280px) { .np-scroll-story--inline { padding-inline: 18px; } .np-scroll-story--inline p { font-size: 17px; } }
 @media (prefers-reduced-motion: reduce) { .np-scroll-story section > div { transform: none; } }
 @media (max-width: 640px) {
   .np-feature--immersive .np-feature-footer { flex-wrap: wrap; }
