@@ -7935,7 +7935,7 @@ if (cached?.data && cached?.settings) {
         const task = request && dataRef.current.tasks.find(item => item.id === request.taskId);
         const prompt = request ? (lang === "zh" ? `把「${task?.title}」改到${request.days === 1 ? "明天" : "后天"}` : `Move ${task?.title} to ${request.days === 1 ? "tomorrow" : "the day after tomorrow"}`) : (lang === "zh" ? "帮我安排今天" : "Plan my day");
         setAiMessages(items => [...items, { id: `request-${message.id}`, role: "user", content: prompt, createdAt: workspaceNow().toISOString() }, { ...message, status: "thinking", actions: undefined, actionState: undefined, content: lang === "zh" ? (request ? "正在寻找合适的新时段…" : "正在为工作、学习和运动留出时间…") : (request ? "Finding a new time…" : "Making room for work, learning and exercise…") }]);
-        await new Promise(resolve => window.setTimeout(resolve, request ? 650 : 1200));
+        await new Promise(resolve => window.setTimeout(resolve, request ? 650 : 3000));
         setAiMessages(items => items.map(item => item.id === message.id ? message : item));
         await adoptSelectedAiActions(message.id, message);
         const date = message.actions[0].type === "schedule_task" ? message.actions[0].date || productDemo.date : productDemo.date;
@@ -8821,7 +8821,7 @@ if (cached?.data && cached?.settings) {
   const demoHasSchedule = Boolean(productDemo) && tasks.some(task => task.timelineRecords?.some(record => record.executionStatus === "scheduled"));
   const demoCanUndo = aiMessages.some(message => message.actionState === "adopted");
   const demoTodayTasks = productDemo ? tasks.filter(task => task.plannedForDate === productDemo.date && !task.completed) : [];
-  const demoPlanButton = productDemo && <Button variant="primary" disabled={demoPresetBusy || !demoTodayTasks.some(task => !task.scheduledStart && !task.timelineRecords?.some(record => record.executionStatus === "scheduled"))} onClick={() => void runProductDemoPreset()}><UiSparklesIcon size={18} />{demoPresetBusy ? (lang === "zh" ? "正在安排…" : "Arranging…") : (lang === "zh" ? "帮我安排今天" : "Plan my day")}</Button>;
+  const demoPlanButton = productDemo && <Button variant="ghost" disabled={demoPresetBusy || !demoTodayTasks.some(task => !task.scheduledStart && !task.timelineRecords?.some(record => record.executionStatus === "scheduled"))} onClick={() => void runProductDemoPreset()}>{demoPresetBusy ? (lang === "zh" ? "正在安排…" : "Arranging…") : (lang === "zh" ? "帮我安排今天" : "Plan my day")}</Button>;
   const aiPanel = aiOpen && <AiPanel embedded={productAiPresentation} demoControls={productDemo ? <div className="df-product-ai-presets">
     {!productAiPresentation && demoPlanButton}
     {!demoHasSchedule && !demoPresetBusy && <div className="df-product-ai-candidates">{demoTodayTasks.map(task => <TaskBlock key={task.id} variant="candidate" projectColor={projects.find(project => project.id === task.projectId)?.color}><TaskBlockRow><TaskBlockContent title={task.title} /><TaskBlockDuration>{formatMinutes(Math.round((task.estimatedHours || .5) * 60))}</TaskBlockDuration></TaskBlockRow></TaskBlock>)}</div>}
@@ -9279,7 +9279,7 @@ if (cached?.data && cached?.settings) {
             onWheelCapture={handleTimelinePanelWheel}
           >
             {productAiPresentation && <div className="df-product-ai-toolbar"><span>{lang === "zh" ? "示例一天" : "An example day"}</span>{demoPlanButton}</div>}
-            {productAiPresentation && !demoHasSchedule && <div className="df-product-ai-guide" role="status"><span className="df-product-ai-guide-arrow" aria-hidden="true">↗</span><h1>{demoPresetBusy ? (lang === "zh" ? "让这一天，慢慢成形。" : "Your day is taking shape.") : (lang === "zh" ? "今天怎么安排？\n点一下，就有答案。" : "One click.\nYour day, arranged.")}</h1><p>{demoPresetBusy ? (lang === "zh" ? "正在安排示例任务…" : "Arranging your example tasks…") : (lang === "zh" ? "试试右上角的「帮我安排今天」" : "Try “Plan my day” in the top right")}</p></div>}
+            {productAiPresentation && !demoHasSchedule && <div className="df-product-ai-guide" role="status">{!demoPresetBusy && <span className="df-product-ai-guide-arrow" aria-hidden="true">↗</span>}<h1>{demoPresetBusy ? (lang === "zh" ? "让这一天，慢慢成形。" : "Your day is taking shape.") : (lang === "zh" ? "今天怎么安排？\n点一下，就有答案。" : "One click.\nYour day, arranged.")}</h1><p>{demoPresetBusy ? (lang === "zh" ? "让任务、休息和生活，都有自己的时间。" : "Make room for tasks, breaks and everyday life.") : (lang === "zh" ? "试试右上角的「帮我安排今天」" : "Try “Plan my day” in the top right")}</p>{demoPresetBusy && <div className="df-product-ai-arranging-notes"><p>{lang === "zh" ? "按任务估时留出完整时段，减少来回切换。" : "Give each task enough time, with fewer switches."}</p><p>{lang === "zh" ? "午餐与休息也排进去，计划才跟得上生活。" : "Lunch and breaks belong in the plan, too."}</p><p>{lang === "zh" ? "安排好后，仍可调整时间、改期或撤回。" : "Then adjust the time, move a task, or undo."}</p></div>}</div>}
             {yearOverviewOpen ? (
               <YearCalendarOverview
                 year={overviewYear}

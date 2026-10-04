@@ -15,9 +15,11 @@ interactive product workspace is mounted. Rotating the viewport switches between
 these presentations and disposes of the old demo. Landscape Navo AI uses a two-column workspace: a wider native timeline on the left
 and the shared embedded AiPanel on the right. It has no scrolling introduction.
 The timeline starts empty, with a large cue pointing to its top-right Plan my day
-button. The right panel previews four candidates using native TaskBlock components.
-Clicking Plan my day shows a 1.2-second arranging state, then applies four longer
-sessions at 09:00, 11:00, 14:00 and 16:30, leaving lunch and rest free.
+button. The right panel previews six candidates using native TaskBlock components.
+Plan my day is a quiet text button within the timeline toolbar, with no filled background
+or icon. Its three-second arranging state explains task estimates, lunch/rest and
+reversible adjustments. The six sessions start at 09:00, 11:00, 12:00, 14:00, 15:30
+and 16:30; lunch/rest and an afternoon notes session fill the requested gaps.
 After arranging, two secondary controls offer three task/date reschedule choices
 and native Undo. Rescheduling shows a brief 650ms pending state and follows the
 affected date; undoing all rounds restores the clean opening state.

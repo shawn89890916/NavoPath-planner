@@ -39701,11 +39701,14 @@ html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-ref
 html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-reference-prompt { font-size: 22px; margin: 0; }
 .df-product-ai-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 0 12px; }
 .df-product-ai-toolbar > span { color: var(--text-muted); font: 13px/1.5 var(--paper-sans); }
-#root .df-app[data-product-feature="ai"] .df-product-ai-toolbar .ui-button--primary { min-height: 44px; padding: 12px 20px; border: 0; border-radius: 12px; color: var(--surface-main); background: var(--text-main); font: 600 14px/1.4 var(--paper-sans); }
+#root .df-app[data-product-feature="ai"] .df-product-ai-toolbar .ui-button { min-height: 44px; padding: 8px 12px; border: 0; border-radius: 8px; color: var(--text-main); background: transparent; font: 500 14px/1.4 var(--paper-sans); }
+#root .df-app[data-product-feature="ai"] .df-product-ai-toolbar .ui-button:hover:not(:disabled) { background: var(--paper-note); }
+#root .df-app[data-product-feature="ai"] .df-product-ai-toolbar .ui-button:disabled { color: var(--text-muted); }
 .df-product-ai-guide { position: absolute; z-index: 8; inset: 140px 20px auto 64px; max-width: 600px; padding: 24px; background: var(--surface-main); border-radius: 16px; pointer-events: none; }
 .df-product-ai-guide-arrow { display: block; text-align: right; color: var(--accent-active); font: 400 clamp(68px, 8vw, 120px)/1 var(--paper-sans); }
 .df-product-ai-guide h1 { margin: 0 0 16px; white-space: pre-line; font: 600 clamp(28px, 3.4vw, 52px)/1.3 var(--paper-serif); letter-spacing: -.04em; }
 .df-product-ai-guide p { margin: 0; color: var(--text-muted); font: 15px/1.6 var(--paper-sans); }
+.df-product-ai-arranging-notes { display: grid; gap: 10px; margin-top: 24px; }
 .df-product-ai-presets, .df-product-ai-candidates { display: grid; gap: 12px; }
 .df-product-ai-requests { display: flex; flex-wrap: wrap; gap: 8px; }
 #root .df-app .df-product-ai-requests .ui-button { min-height: 40px; padding: 9px 16px; border: 0; border-radius: 12px; color: var(--text-main); font: 600 13px/1.4 var(--paper-sans); }
@@ -39719,6 +39722,13 @@ html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-ref
   html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-date-title-compact { display: flex; position: relative; left: auto; transform: none; margin: 0 auto 8px; }
   .df-product-ai-guide { inset: 140px 8px auto 54px; padding: 16px; }
   .df-product-ai-guide p { font-size: 13px; }
+}
+
+@media (max-height: 620px) {
+  .df-product-ai-guide:has(.df-product-ai-arranging-notes) { padding: 12px; }
+  .df-product-ai-guide:has(.df-product-ai-arranging-notes) h1 { font-size: 24px; }
+  .df-product-ai-guide:has(.df-product-ai-arranging-notes) p { font-size: 12px; line-height: 1.5; }
+  .df-product-ai-arranging-notes { gap: 6px; margin-top: 16px; }
 }
 
 @media (max-width: 980px), (orientation: portrait) {

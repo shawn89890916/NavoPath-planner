@@ -34,12 +34,14 @@ describe("workspace example boundary", () => {
     const runtime = getWorkspaceDemoRuntime()!;
     const suggestion = runtime.suggest(state);
     expect(state.tasks.flatMap(task => task.timelineRecords || [])).toEqual([]);
-    expect(suggestion.actions).toHaveLength(4);
+    expect(suggestion.actions).toHaveLength(6);
     expect(suggestion.actions).toMatchObject([
       { taskId: "content", start: "09:00", end: "10:30" },
       { taskId: "layout", start: "14:00", end: "15:30" },
       { taskId: "lesson", start: "11:00", end: "12:00" },
       { taskId: "walk", start: "16:30", end: "17:30" },
+      { taskId: "notebook", start: "15:30", end: "16:30" },
+      { taskId: "lunch", start: "12:00", end: "13:00" },
     ]);
     for (const action of suggestion.actions || []) {
       if (action.type !== "schedule_task" || !action.taskId || !action.date || !action.start) throw new Error("Expected a scheduled task");

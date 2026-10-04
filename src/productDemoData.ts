@@ -125,8 +125,9 @@ export function createDemoData(
     executionLane: "candidate",
   }));
   if (feature === "ai") {
-    const durations: Record<string, number> = { content: 90, layout: 90, lesson: 60, walk: 60 };
-    data.tasks = data.tasks.map(item => durations[item.id] ? { ...item, estimatedHours: durations[item.id] / 60 } : item);
+    data.tasks.push(task("lunch", zh ? "午餐与休息" : "Lunch and a break", "life", 60, 8));
+    const durations: Record<string, number> = { content: 90, layout: 90, lesson: 60, walk: 60, notebook: 60, lunch: 60 };
+    data.tasks = data.tasks.map(item => durations[item.id] ? { ...item, estimatedHours: durations[item.id] / 60, plannedForDate: DEMO_DATE, executionLane: "candidate" } : item);
     return data;
   }
   data = scheduleDemoTask(data, "notebook", DEMO_DATE, "09:00");

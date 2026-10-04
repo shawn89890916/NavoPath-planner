@@ -45,9 +45,9 @@ export function installProductDemo(feature: ProductFeature) {
       let working = state;
       const reschedule = request;
       const date = reschedule ? addDays(DEMO_DATE, reschedule.days) : DEMO_DATE;
-      const tasks = reschedule ? state.tasks.filter(task => task.id === reschedule.taskId && !task.completed) : state.tasks.filter(task => (!taskIds || taskIds.includes(task.id)) && !task.completed && !task.timelineRecords?.some(record => record.executionStatus === "scheduled") && !task.scheduledStart && task.plannedForDate === DEMO_DATE).slice(0, feature === "ai" ? 4 : 3);
+      const tasks = reschedule ? state.tasks.filter(task => task.id === reschedule.taskId && !task.completed) : state.tasks.filter(task => (!taskIds || taskIds.includes(task.id)) && !task.completed && !task.timelineRecords?.some(record => record.executionStatus === "scheduled") && !task.scheduledStart && task.plannedForDate === DEMO_DATE).slice(0, feature === "ai" ? 6 : 3);
       const actions: Extract<AiAction, { type: "schedule_task" }>[] = tasks.flatMap(task => {
-        const preferred: Record<string, string> = { content: "09:00", lesson: "11:00", layout: "14:00", walk: "16:30" };
+        const preferred: Record<string, string> = { content: "09:00", lesson: "11:00", lunch: "12:00", layout: "14:00", notebook: "15:30", walk: "16:30" };
         const preferredStart = !reschedule && feature === "ai" ? preferred[task.id] : undefined;
         const placed = preferredStart ? scheduleDemoTask(working, task.id, date, preferredStart) : working;
         const start = placed !== working ? preferredStart! : firstDemoSlot(working, task.id, date);
@@ -56,7 +56,7 @@ export function installProductDemo(feature: ProductFeature) {
         const scheduled = working.tasks.find(item => item.id === task.id)!;
         return [{ type: "schedule_task" as const, taskId: task.id, title: task.title, date, start, end: scheduled.scheduledEnd!, durationMinutes: Math.round((task.estimatedHours || .5) * 60), projectId: task.projectId }];
       });
-      return { id: `demo-suggestion-${++id}`, role: "assistant", content: reschedule ? (language === "zh" ? `已将「${tasks[0]?.title || "任务"}」改到${reschedule.days === 1 ? "明天" : "后天"} ${actions[0]?.start || ""}。` : `Moved ${tasks[0]?.title || "the task"} to ${reschedule.days === 1 ? "tomorrow" : "the day after tomorrow"} at ${actions[0]?.start || ""}.`) : feature === "ai" ? (language === "zh" ? `已安排 ${actions.length} 项待办：上午写作与学习，下午调整网站，傍晚运动。中午留给午餐和休息。` : `Your ${actions.length} tasks are spread across the day, with time for lunch and a break.`) : (language === "zh" ? "给这些事留出时间。" : "Make room for these tasks."), createdAt: DEMO_STAMP, status: "done", actionState: "pending", actions };
+      return { id: `demo-suggestion-${++id}`, role: "assistant", content: reschedule ? (language === "zh" ? `已将「${tasks[0]?.title || "任务"}」改到${reschedule.days === 1 ? "明天" : "后天"} ${actions[0]?.start || ""}。` : `Moved ${tasks[0]?.title || "the task"} to ${reschedule.days === 1 ? "tomorrow" : "the day after tomorrow"} at ${actions[0]?.start || ""}.`) : feature === "ai" ? (language === "zh" ? `已安排 ${actions.length} 项待办：上午写作与学习，中午午餐与休息，下午完善网站、整理课程笔记，傍晚运动。` : `Your ${actions.length} tasks are spread across the day, including lunch and an afternoon notes session.`) : (language === "zh" ? "给这些事留出时间。" : "Make room for these tasks."), createdAt: DEMO_STAMP, status: "done", actionState: "pending", actions };
     },
   });
   document.documentElement.classList.add("product-demo-document");
