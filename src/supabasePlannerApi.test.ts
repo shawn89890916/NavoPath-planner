@@ -140,6 +140,44 @@ describe("createSupabasePlannerApi", () => {
     vi.unstubAllGlobals();
   });
 
+  it("uses the direct Supabase Auth client for consent while sharing the browser session", async () => {
+    window.location = { origin: "https://navopath.com", href: "https://navopath.com/oauth/consent" } as any;
+    const authDetails = { authorization_id: "authorization_test", client: { name: "Inspector" }, scope: "openid", redirect_uri: "http://localhost/callback" };
+    const getAuthorizationDetails = vi.fn().mockResolvedValue({ data: authDetails, error: null });
+    const approveAuthorization = vi.fn().mockResolvedValue({ data: { redirect_url: "http://localhost/callback?code=redacted" }, error: null });
+    const denyAuthorization = vi.fn().mockResolvedValue({ data: { redirect_url: "http://localhost/callback?error=access_denied" }, error: null });
+    const plannerClient = {
+      auth: {
+        getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+        onAuthStateChange: vi.fn(),
+      },
+    };
+    const oauthClient = {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user_1" } }, error: null }),
+        oauth: { getAuthorizationDetails, approveAuthorization, denyAuthorization },
+      },
+    };
+    createClientMock.mockReturnValueOnce(plannerClient).mockReturnValueOnce(oauthClient);
+
+    const { createSupabasePlannerApi } = await import("./supabasePlannerApi");
+    const api = createSupabasePlannerApi("https://qplymrkgsnaaamxggwxw.supabase.co", "publishable");
+
+    await expect(api.getOAuthAuthorizationDetails?.("authorization_test")).resolves.toEqual({ data: authDetails, error: null });
+    await expect(api.approveOAuthAuthorization?.("authorization_test")).resolves.toEqual({ data: { redirect_url: "http://localhost/callback?code=redacted" }, error: null });
+    await expect(api.denyOAuthAuthorization?.("authorization_test")).resolves.toEqual({ data: { redirect_url: "http://localhost/callback?error=access_denied" }, error: null });
+    expect(oauthClient.auth.getUser).toHaveBeenCalledTimes(3);
+    expect(getAuthorizationDetails).toHaveBeenCalledWith("authorization_test");
+    expect(approveAuthorization).toHaveBeenCalledWith("authorization_test");
+    expect(denyAuthorization).toHaveBeenCalledWith("authorization_test");
+
+    const plannerOptions = createClientMock.mock.calls[0][2];
+    const oauthOptions = createClientMock.mock.calls[1][2];
+    expect(oauthOptions.auth.storageKey).toBe(plannerOptions.auth.storageKey);
+    expect(oauthOptions.auth.storage).toBe(plannerOptions.auth.storage);
+    expect(oauthOptions.global).toBeUndefined();
+  });
+
   it("retries MCP token generation when the schema cache is temporarily unavailable", async () => {
     const user = { id: "user_1", email: "user@example.com" };
     const rpc = vi.fn()

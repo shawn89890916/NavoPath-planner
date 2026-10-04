@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { McpAgent } from "agents/mcp";
+import { fromSupabaseUrl, withOAuthProtectedResource, withSupabase } from "@supabase/server";
 import { z } from "zod";
 import { combineSyncSnapshot } from "./syncSnapshot";
 import { buildCalendarFeed } from "./calendarFeed";
@@ -22,6 +24,7 @@ import {
 
 interface Env extends CloudAssistantEnv {
   SUPABASE_URL: string;
+  SUPABASE_PUBLISHABLE_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   MCP_SERVER_NAME: string;
   MCP_OBJECT: DurableObjectNamespace<NavoPathMCP>;
@@ -30,6 +33,9 @@ interface Env extends CloudAssistantEnv {
 type Json = Record<string, any>;
 type Profile = { data: Json; settings: Json; revision: number; updated_at?: string };
 type AgentProps = { userId: string };
+
+const oauthSecuritySchemes = [{ type: "oauth2", scopes: ["email"] }];
+const oauthProtectedResourcePath = "/.well-known/oauth-protected-resource";
 
 const allowedSettings = ["language", "defaultTimelineView", "planningView", "theme", "typographyStyle", "executeAccentColor", "planningAccentColor", "hideCompleted", "taskNoteDisplay", "aiTone", "aiMemoryEnabled", "hideAi", "model", "reasoningMode"];
 const result = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] });
@@ -150,6 +156,25 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
   }
 
   async init() {
+    const protocolServer = this.server.server;
+    const setRequestHandler = protocolServer.setRequestHandler.bind(protocolServer);
+    protocolServer.setRequestHandler = ((schema: any, handler: any) => {
+      if (schema === ListToolsRequestSchema) {
+        return setRequestHandler(schema, async (...args: any[]) => {
+          const response = await handler(...args);
+          return {
+            ...response,
+            tools: response.tools.map((tool: Json) => ({
+              ...tool,
+              securitySchemes: oauthSecuritySchemes,
+              _meta: { ...tool._meta, securitySchemes: oauthSecuritySchemes },
+            })),
+          };
+        });
+      }
+      return setRequestHandler(schema, handler);
+    }) as typeof protocolServer.setRequestHandler;
+
     this.server.registerTool("get_workspace_summary", { description: "Return project and task counts.", inputSchema: {} }, async () => {
       const { data } = await getProfile(this.env, this.userId());
       const tasks = data.tasks || [];
@@ -295,10 +320,65 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
 
 const mcpHandler = NavoPathMCP.serve("/mcp", { binding: "MCP_OBJECT", transport: "streamable-http" });
 
+function oauthProtectedMcp(request: Request, env: Env, ctx: ExecutionContext) {
+  const oauthHandler = withOAuthProtectedResource(
+    {
+      resourceServer: (req) => new URL(req.url).origin + "/mcp",
+      authorizationServer: fromSupabaseUrl(env.SUPABASE_URL),
+    },
+    withSupabase({
+      auth: "user",
+      env: {
+        url: env.SUPABASE_URL,
+        publishableKeys: { default: env.SUPABASE_PUBLISHABLE_KEY },
+      },
+    }, async (oauthRequest, { userClaims }) => {
+      if (!userClaims?.id) return new Response("Unauthorized", { status: 401 });
+      // Existing tools use the NavoPath profile and sync bridge service path.
+      // The user ID comes only from the verified Supabase JWT, never tool input.
+      (ctx as ExecutionContext & { props?: AgentProps }).props = { userId: userClaims.id };
+      return mcpHandler.fetch(oauthRequest, env, ctx);
+    }),
+  );
+  return oauthHandler(request, env).then((response) => {
+    if (response.status !== 401) return response;
+    const headers = new Headers(response.headers);
+    const currentChallenge = headers.get("www-authenticate") || "Bearer";
+    const metadataUrl = new URL(oauthProtectedResourcePath, new URL(request.url).origin).toString();
+    const challenge = currentChallenge.includes("resource_metadata=")
+      ? currentChallenge.replace(/resource_metadata="[^"]+"/, `resource_metadata="${metadataUrl}"`)
+      : `Bearer resource_metadata="${metadataUrl}"`;
+    headers.set("www-authenticate", challenge);
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  });
+}
+
+function protectedResourceMetadata(request: Request, env: Env) {
+  const headers = new Headers({
+    "access-control-allow-origin": "*",
+    "access-control-allow-methods": "GET, OPTIONS",
+    "access-control-allow-headers": "authorization, content-type, mcp-protocol-version",
+    "access-control-expose-headers": "WWW-Authenticate",
+    "cache-control": "public, max-age=300",
+  });
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (request.method !== "GET") {
+    headers.set("allow", "GET, OPTIONS");
+    return new Response("Method not allowed", { status: 405, headers });
+  }
+  headers.set("content-type", "application/json; charset=utf-8");
+  return new Response(JSON.stringify({
+    resource: new URL(request.url).origin + "/mcp",
+    authorization_servers: [fromSupabaseUrl(env.SUPABASE_URL)],
+    bearer_methods_supported: ["header"],
+  }), { headers });
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
     if (url.pathname === "/") return new Response(JSON.stringify({ name: env.MCP_SERVER_NAME, endpoint: "/mcp", transport: "streamable-http", version: "2.0.0" }), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+    if (url.pathname === oauthProtectedResourcePath) return protectedResourceMetadata(request, env);
     const calendarMatch = url.pathname.match(/^\/calendar\/(nvc_[a-f0-9]{64})\.ics$/);
     if (calendarMatch) {
       if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });
@@ -366,12 +446,20 @@ export default {
         return new Response(JSON.stringify({ error: message }), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
       }
     }
+    if (url.pathname === "/mcp/oauth-protected-resource") return oauthProtectedMcp(request, env, ctx);
     if (url.pathname !== "/mcp") return new Response("Not found", { status: 404 });
-    const auth = await authenticate(request, env);
-    if (auth === tokenLookupUnavailable) return tokenLookupUnavailableResponse();
-    if (!auth) return new Response(JSON.stringify({ error: "Invalid or revoked bearer token" }), { status: 401, headers: { "content-type": "application/json", "www-authenticate": "Bearer" } });
-    (ctx as ExecutionContext & { props?: AgentProps }).props = { userId: auth.userId };
-    return mcpHandler.fetch(request, env, ctx);
+    const bearer = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] || "";
+    if (/^nvp_[a-f0-9]{64}$/.test(bearer)) {
+      const auth = await authenticate(request, env);
+      if (auth === tokenLookupUnavailable) return tokenLookupUnavailableResponse();
+      if (auth) {
+        (ctx as ExecutionContext & { props?: AgentProps }).props = { userId: auth.userId };
+        return mcpHandler.fetch(request, env, ctx);
+      }
+    }
+    // Missing, invalid, or non-legacy credentials receive Supabase's user JWT
+    // verification and the standard Protected Resource challenge.
+    return oauthProtectedMcp(request, env, ctx);
   },
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(processNotificationTicks(env).then((count) => console.log("Processed NavoPath notification ticks", { count })));

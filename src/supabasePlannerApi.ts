@@ -1,4 +1,4 @@
-import { createClient, type User } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { createAuthSessionStorage } from "./authSessionStorage";
 import type { AiAction, CalendarFeedTokenMetadata, ExternalCalendarOccurrence, ExternalCalendarSource, McpTokenMetadata, PlannerApi, PlannerData, Settings } from "./types";
 import { fallbackData, normalizeData } from "./browserFallback";
@@ -155,6 +155,17 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     global: { fetch: cloudFetch },
   });
   let cachedUser: User | null | undefined;
+  // Consent uses the direct Auth URL because the same-origin proxy does not
+  // forward OAuth endpoints. Share session storage with the planner client.
+  let oauthSupabase: SupabaseClient | null = null;
+  const getOAuthSupabase = () => oauthSupabase ??= createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      storageKey: authStorageKey,
+      storage: authSessionStorage,
+    },
+  });
   let userPromise: Promise<User | null> | null = null;
   let authVersion = 0;
   let profileCache: ScopedProfile | null = null;
@@ -420,6 +431,25 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       if (error) throw new Error(authErrorMessage(error.message));
       setCachedUser(data.user ?? null);
       return { user: publicUser(data.user) };
+    },
+
+    getOAuthAuthorizationDetails: async (authorizationId) => {
+      const oauthClient = getOAuthSupabase();
+      const { error } = await oauthClient.auth.getUser();
+      if (error) return { data: null, error };
+      return oauthClient.auth.oauth.getAuthorizationDetails(authorizationId);
+    },
+    approveOAuthAuthorization: async (authorizationId) => {
+      const oauthClient = getOAuthSupabase();
+      const { error } = await oauthClient.auth.getUser();
+      if (error) return { data: null, error };
+      return oauthClient.auth.oauth.approveAuthorization(authorizationId);
+    },
+    denyOAuthAuthorization: async (authorizationId) => {
+      const oauthClient = getOAuthSupabase();
+      const { error } = await oauthClient.auth.getUser();
+      if (error) return { data: null, error };
+      return oauthClient.auth.oauth.denyAuthorization(authorizationId);
     },
 
     resendConfirmation: async (email) => {

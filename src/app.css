@@ -39543,3 +39543,94 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 @media (prefers-reduced-motion: reduce) {
   #root .df-app .df-now-line.is-return-highlighted { animation-duration: .01ms; }
 }
+
+.oauth-consent-page {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  color: var(--text-main, #27231e);
+  background: var(--bg-main, #f8f7f3);
+}
+
+.oauth-consent-content {
+  width: min(100%, 520px);
+  padding: 8px 0;
+}
+
+.oauth-consent-kicker {
+  margin: 0 0 16px;
+  color: var(--text-muted, #6d685f);
+  font: 600 11px/1.4 ui-monospace, monospace;
+  letter-spacing: .1em;
+}
+
+.oauth-consent-content h1 {
+  margin: 0 0 20px;
+  font: 500 clamp(28px, 5vw, 38px)/1.15 var(--font-display, Georgia, serif);
+}
+
+.oauth-consent-content h2 {
+  margin: 28px 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.oauth-consent-client,
+li.oauth-consent-scope,
+.oauth-consent-error {
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.oauth-consent-content ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.oauth-consent-scope {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-subtle, #dedbd3);
+}
+
+.oauth-consent-redirect {
+  margin: 16px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--text-muted, #6d685f);
+  font: 12px/1.5 ui-monospace, monospace;
+}
+
+.oauth-consent-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.oauth-consent-actions button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--border-default, #bdb8ae);
+  border-radius: 4px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.oauth-consent-actions button:focus-visible {
+  outline: 2px solid var(--accent-active, #584d3d);
+  outline-offset: 2px;
+}
+
+.oauth-consent-actions button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.oauth-consent-actions .oauth-consent-approve {
+  border-color: var(--accent-active, #584d3d);
+  color: var(--bg-main, #f8f7f3);
+  background: var(--accent-active, #584d3d);
+}

@@ -1,2 +1,3 @@
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=replace-with-service-role-key
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_replace-with-project-publishable-key
