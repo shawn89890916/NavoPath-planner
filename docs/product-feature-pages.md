@@ -8,9 +8,12 @@ timeline on the right. Introductions scroll in the parent document, scaling and 
 distance from the visual center without replacing the visitor's data. Landscape
 workspaces at least 1000px wide keep an introduction column; Execute reserves
 a flexible right-aligned timeline, readable candidates, and at least 280px for the notes, reclaiming the calendar
-view rail and daily-canvas margins. Smaller or portrait screens
-keep native compact layouts and show introductions below the workspace. AI retains
-its existing preview layout.
+view rail and daily-canvas margins. Narrow landscape screens keep native compact
+layouts and show introductions below the workspace. Portrait screens on all three
+routes show only text, shared navigation, and expanded FAQ answers; no iframe or
+interactive product workspace is mounted. Rotating the viewport switches between
+these presentations and disposes of the old demo. Landscape AI retains its existing
+preview layout.
 Planning and Execute insert navigation into the real App header through an optional
 runtime slot, reusing WorkspaceModeTabs and the existing site controls. It returns
 home from the logo and links to all three features,
@@ -41,7 +44,8 @@ paragraph stays enlarged and opaque within 22% of viewport height from the colum
 center, easing down with at most 1.8px of blur only toward the top and bottom edges. Enlargement is capped by
 the available column width so notes cannot spill onto native panels. The
 reduced-motion setting keeps text at full size and opacity, removes blur, and skips
-the extra sticky dwell space. Compact screens keep the normal paragraph flow. The outer page clips
+the extra sticky dwell space. Narrow landscape screens keep normal paragraph flow;
+portrait text does not use the scrolling-story effects. The outer page clips
 notes below the native header so navigation stays unobstructed. Demo CSS owns the
 slot, preset buttons, and viewport containment; feature CSS owns the scrolling notes.
 
@@ -65,7 +69,8 @@ three unscheduled candidates, and free slots for exploration; no legacy event is
 
 Verify native planning/execute mode switching, candidate add/remove, scheduling,
 rescheduling, AI preview apply/undo, account storage/network isolation, deep links,
-language, menus, reduced motion, and 390×844 / 360×800 layouts. Run build, targeted
+language, menus, reduced motion, text-only 390×844 / 360×800 and portrait tablet
+layouts, and orientation changes without stale or hidden demos. Run build, targeted
 or full tests as required by AGENTS.md, CSS, terminology, changelog, diff and size
 checks. Feature scripts/styles have 16 KB / 4 KB Brotli budgets. Existing workflows
 run on main and tags; a feature-branch push does not deploy production.

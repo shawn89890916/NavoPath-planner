@@ -4,7 +4,7 @@
 
 ### 改进
 - 介绍页使用 Times New Roman，说明标题统一放大，开头增加向下滚动提示；今日候选采用任务字体并留出更充裕的宽度，时间轴保持靠右，项目名使用常规字体。日期仅作展示，收起日期与视图切换、回到现在及加号、AI 快捷入口，保留任务安排与完成操作。
-- 规划与执行介绍页使用全屏产品工作区：规划任务缩进更清晰、卡片更紧凑，右侧展示说明；执行保留左侧候选、将时间轴靠右，中间说明正常滚动，后续每段在视觉中心短暂停留，到上下两端时才逐渐缩小、淡出并轻微模糊。较窄的桌面窗口仍显示说明；手机与竖屏使用产品紧凑布局，在画面下方正常阅读介绍。示例操作独立于个人数据。
+- 规划与执行介绍页使用全屏产品工作区：规划任务缩进更清晰、卡片更紧凑，右侧展示说明；执行保留左侧候选、将时间轴靠右，中间说明正常滚动，后续每段在视觉中心短暂停留，到上下两端时才逐渐缩小、淡出并轻微模糊。较窄的桌面窗口仍显示说明；三个介绍页的竖屏版本仅展示文字、导航和展开的常见问题，不加载可交互产品，横屏保留产品体验。示例操作独立于个人数据。
 - 规划与执行介绍页复用产品顶栏，可直接切换执行、规划与 Navo AI，左上角返回首页；支持入口包含爱发电、GitHub 与个人网页占位，相关原理暂保留占位。首页保持现状，AI 演示继续使用现有产品布局。
 
 ### 修复
@@ -67,7 +67,7 @@
 
 ### Improved
 - Introductions use Times New Roman, equally enlarged headings, and an opening scroll cue. Today's Candidates uses task typography and a more generous width, with the timeline aligned right and regular project names. Dates are read-only; date and calendar-view switches, Back to now, and floating Add/AI shortcuts are removed, while task scheduling and completion remain available.
-- Planning and Execute introductions fill the window with the product workspace: Planning has clearer indentation, compact task cards, and notes on the right; Execute keeps candidates on the left and the timeline on the right. Notes scroll naturally; each subsequent paragraph pauses briefly at the visual center, becoming smaller, fainter, and slightly blurred only near the top and bottom edges. Narrower desktop windows keep the notes visible; phones and portrait screens use the compact product layout with introductions below. Example changes stay separate from personal data.
+- Planning and Execute introductions fill the window with the product workspace: Planning has clearer indentation, compact task cards, and notes on the right; Execute keeps candidates on the left and the timeline on the right. Notes scroll naturally; each subsequent paragraph pauses briefly at the visual center, becoming smaller, fainter, and slightly blurred only near the top and bottom edges. Narrower desktop windows keep the notes visible; portrait versions of all three introductions show only text, navigation, and expanded FAQ answers, without loading interactive product workspaces. Landscape screens retain product previews. Example changes stay separate from personal data.
 - Planning and Execute reuse the product header to switch between Execute, Planning, and Navo AI, with the logo returning home; Support includes Afdian, GitHub, and a personal-site placeholder, alongside a Principles placeholder. The homepage stays unchanged and AI keeps its existing workspace layout.
 
 ### Fixed

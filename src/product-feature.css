@@ -2,7 +2,7 @@ html.product-site-document { height: auto; min-height: 100%; overflow-x: clip; o
 html.product-site-document body, html.product-site-document #root { height: auto; min-height: 100%; margin: 0; overflow: visible; }
 .np-feature { --product-heading-size: clamp(28px, 2.4vw, 38px); min-height: 100vh; background: #f4f7f9; color: #27231e; font-family: "Times New Roman", "Songti SC", SimSun, serif; }
 .np-feature *, .np-feature *::before, .np-feature *::after { box-sizing: border-box; }
-.np-feature button { font: inherit; cursor: pointer; }
+.np-feature button { cursor: pointer; }
 .np-feature a { text-decoration: none; }
 .np-site-nav { position: sticky; z-index: 30; top: 0; display: flex; justify-content: space-between; align-items: center; height: 64px; padding: 0 32px; background: #f4f7f9; }
 .np-site-actions { display: flex; align-items: center; gap: 14px; }
@@ -33,6 +33,26 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-feature-footer > a { color: #27231e; font-weight: 650; }
 .np-feature-footer > span { margin-left: auto; color: #92989c; font-size: 12px; }
 .np-feature :is(summary, a, button):focus-visible { outline: 2px solid #584d3d; outline-offset: 4px; }
+.np-feature--reading .np-site-nav { height: auto; padding: 8px 20px; }
+.np-site-nav--reading .df-header-inner { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 44px 44px; width: 100%; gap: 4px 12px; }
+.np-site-nav--reading .df-brand { display: flex; align-items: center; gap: 8px; color: inherit; }
+.np-site-nav--reading .df-brand img { width: 24px; height: 24px; object-fit: contain; }
+.np-site-nav--reading .df-header-right { display: flex; align-items: center; justify-content: end; gap: 10px; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
+.np-site-nav--reading .df-tabs { grid-row: 2; grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
+.np-site-nav--reading .df-tabs button, .np-site-nav--reading .df-product-principles { padding: 8px 10px; border: 0; background: none; color: #69717c; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.np-site-nav--reading .df-tabs button { min-height: 44px; font-family: inherit; }
+.np-site-nav--reading .df-tabs button.active { color: #27231e; font-weight: 750; }
+.np-feature--reading > main { max-width: 680px; }
+.np-feature--reading .np-product-intro { padding: 40px 0 48px; }
+.np-feature--reading .np-product-intro p, .np-feature--reading .np-product-notes p { color: #55504a; font-size: 17px; line-height: 1.75; }
+.np-feature--reading .np-product-notes { display: flex; flex-direction: column; gap: 44px; padding: 0; }
+.np-feature--reading .np-faq { display: block; margin: 56px 0 40px; }
+.np-feature--reading .np-faq h2 { margin-bottom: 24px; }
+.np-feature--reading .np-faq h3 { margin: 0 0 8px; font-size: 17px; }
+.np-feature--reading .np-faq > div > div { margin-bottom: 24px; }
+.np-feature--reading .np-feature-footer { flex-wrap: wrap; gap: 18px; }
+.np-feature--reading .np-feature-footer > span:last-child { width: 100%; margin-left: 0; }
+@media (max-width: 640px) { .np-site-nav--reading .df-brand strong { display: none; } .np-site-nav--reading .df-tabs button, .np-site-nav--reading .df-product-principles { padding-inline: 8px; font-size: 12px; } }
 @media (max-width: 1050px) {
   .np-product-layout { grid-template-columns: minmax(0, 1fr); gap: 22px; }
   .np-product-notes, .np-product-layout:is(.np-product-layout--ai, .np-product-layout--execute) .np-product-notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 0; }

@@ -21,7 +21,7 @@ export default {
       ],
       [
         "手机上怎样安排？",
-        "使用任务与日程切换查看两边；长按任务可拖动安排，也可以使用安排按钮。演示中同样提供按钮操作。"
+        "使用任务与日程切换查看两边；长按任务可拖动安排，也可以使用安排按钮。"
       ]
     ],
     "next": "ai"
@@ -45,7 +45,7 @@ export default {
       ],
       [
         "How do I schedule on my phone?",
-        "Switch between tasks and the timeline. Long-press a task to drag it, or use its Schedule button. The demo also includes button controls."
+        "Switch between tasks and the timeline. Long-press a task to drag it, or use its Schedule button."
       ]
     ],
     "next": "ai"

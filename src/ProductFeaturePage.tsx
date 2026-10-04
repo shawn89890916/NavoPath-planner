@@ -2,15 +2,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ProductMenu, SiteLanguageSwitch } from "./components/ProductMenu";
 import { featureHref, featureNames, productFeature, siteLanguage, type DemoCommand, type FeatureCopy, type ProductFeature } from "./productSite";
 import ProductStory, { type StoryLayout } from "./ProductStory";
+import ProductNavigation from "./ProductNavigation";
 import "./product-feature.css";
 
 export default function ProductFeaturePage({ feature, copy }: { feature: ProductFeature; copy: Record<"zh" | "en", FeatureCopy> }) {
   const [lang, setLang] = useState(() => siteLanguage(location.search, navigator.language));
+  const [portrait, setPortrait] = useState(() => matchMedia("(orientation: portrait)").matches);
   const [mounted, setMounted] = useState(false), [ready, setReady] = useState(false), [failed, setFailed] = useState(false), [attempt, setAttempt] = useState(0);
   const [storyLayout, setStoryLayout] = useState<StoryLayout | null>(null);
   const frame = useRef<HTMLIFrameElement>(null), host = useRef<HTMLDivElement>(null), visible = useRef(true);
-  const c = copy[lang], zh = lang === "zh", immersive = feature !== "ai";
+  const c = copy[lang], zh = lang === "zh", immersive = feature !== "ai" && !portrait;
   const send = useCallback((type: DemoCommand["type"], inView?: boolean) => frame.current?.contentWindow?.postMessage({ channel: "navopath-product-demo", type, stage: feature === "execute" ? 2 : 1, lang, visible: inView } satisfies DemoCommand, location.origin), [feature, lang]);
+  useEffect(() => {
+    const media = matchMedia("(orientation: portrait)");
+    const update = () => { setPortrait(media.matches); setMounted(false); setReady(false); setFailed(false); setStoryLayout(null); };
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
   useEffect(() => {
     document.documentElement.classList.add("product-site-document");
     return () => document.documentElement.classList.remove("product-site-document");
@@ -23,16 +31,16 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
     setReady(false); setFailed(false);
   }, [lang, feature, zh, c.description]);
   useEffect(() => {
-    if (!host.current) return;
+    if (portrait || !host.current) return;
     const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setMounted(true); }, { rootMargin: "400px" });
     const visibility = new IntersectionObserver(([entry]) => { visible.current = entry.isIntersecting; send("visibility", entry.isIntersecting); });
     observer.observe(host.current); visibility.observe(host.current);
     return () => { observer.disconnect(); visibility.disconnect(); };
-  }, [send]);
+  }, [send, portrait]);
   useEffect(() => {
-    if (!mounted || ready) return;
+    if (portrait || !mounted || ready) return;
     const timer = setTimeout(() => setFailed(true), 15000); return () => clearTimeout(timer);
-  }, [mounted, ready, attempt]);
+  }, [mounted, ready, attempt, portrait]);
   useEffect(() => {
     const receive = (event: MessageEvent) => {
       if (event.origin !== location.origin || event.source !== frame.current?.contentWindow || event.data?.channel !== "navopath-product-demo") return;
@@ -47,13 +55,15 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
     };
     addEventListener("message", receive); return () => removeEventListener("message", receive);
   }, [send, lang]);
-  return <div className={`np-feature np-feature--${feature}${immersive ? " np-feature--immersive" : ""}${immersive && !storyLayout ? " np-feature--compact" : ""}`}>
-    {!immersive && <header className="np-site-nav">
+  return <div className={`np-feature np-feature--${feature}${portrait ? " np-feature--reading" : ""}${immersive ? " np-feature--immersive" : ""}${immersive && !storyLayout ? " np-feature--compact" : ""}`}>
+    {portrait && <header className="np-site-nav np-site-nav--reading"><ProductNavigation feature={feature} lang={lang} icon={<img src={`${import.meta.env.BASE_URL}navopath-icon.png`} alt="" />} onLanguageChange={setLang} onNavigate={next => location.assign(featureHref(next, lang))} /></header>}
+    {!immersive && !portrait && <header className="np-site-nav">
       <ProductMenu lang={lang} kind="brand"><img src={`${import.meta.env.BASE_URL}navopath-icon.png`} alt="" /><span>NavoPath</span></ProductMenu>
       <div className="np-site-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><a className="np-start-link" href="/app">{zh ? "现在开始" : "Start now"}</a></div>
     </header>}
     <main>
       {!immersive && <section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section>}
+      {portrait ? <section className="np-product-notes">{c.benefits.map(([title, description]) => <section key={title}><h2>{title}</h2><p>{description}</p></section>)}</section> : <>
       <section className={`np-product-layout np-product-layout--${feature}${immersive ? " np-workspace-scroll" : ""}`} aria-label={featureNames[lang][feature]}>
         <div className="np-product-window" ref={host}>
           {mounted && <iframe key={attempt} ref={frame} src={`/product-demo/${feature}?lang=${lang}${immersive ? "&presentation=full" : ""}`} title={`${featureNames[lang][feature]} · ${zh ? "产品体验" : "Product preview"}`} onError={() => setFailed(true)} />}
@@ -63,8 +73,9 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
         {!immersive && <aside className="np-product-notes">{c.benefits.map(([title, description]) => <div key={title}><h2>{title}</h2><p>{description}</p></div>)}</aside>}
       </section>
       {immersive && !storyLayout && <><section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section><ProductStory lang={lang} copy={c} layout={null} /></>}
-      <section className="np-faq"><h2>{zh ? "常见问题" : "FAQ"}</h2><div>{c.faq.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></section>
-      <footer className="np-feature-footer"><a href={featureHref(c.next, lang)}>{featureNames[lang][c.next]}</a>{immersive ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a><a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a><span className="np-personal-placeholder" role="link" aria-disabled="true">{zh ? "个人网页" : "Personal website"}</span></> : <ProductMenu lang={lang} kind="support" />}<span>© 2026 NavoPath</span></footer>
+      </>}
+      <section className="np-faq"><h2>{zh ? "常见问题" : "FAQ"}</h2><div>{c.faq.map(([question, answer]) => portrait ? <div key={question}><h3>{question}</h3><p>{answer}</p></div> : <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></section>
+      <footer className="np-feature-footer"><a href={featureHref(c.next, lang)}>{featureNames[lang][c.next]}</a>{immersive || portrait ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a><a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a><span className="np-personal-placeholder" role="link" aria-disabled="true">{zh ? "个人网页" : "Personal website"}</span></> : <ProductMenu lang={lang} kind="support" />}<span>© 2026 NavoPath</span></footer>
     </main>
   </div>;
 }
