@@ -682,6 +682,12 @@ export interface PlannerApi {
     email?: string;
   }>;
   signIn?: (email: string, password: string) => Promise<{ user: { id: string; email?: string } | null }>;
+  getOAuthAuthorizationDetails?: (authorizationId: string) => Promise<{
+    data: { authorization_id: string; client: { name: string }; scope: string; redirect_uri: string } | { redirect_url: string } | null;
+    error: { message: string } | null;
+  }>;
+  approveOAuthAuthorization?: (authorizationId: string) => Promise<{ data: { redirect_url: string } | null; error: { message: string } | null }>;
+  denyOAuthAuthorization?: (authorizationId: string) => Promise<{ data: { redirect_url: string } | null; error: { message: string } | null }>;
   resendConfirmation?: (email: string) => Promise<{ message?: string }>;
   completeEmailConfirmation?: () => Promise<{
     confirmed: boolean;

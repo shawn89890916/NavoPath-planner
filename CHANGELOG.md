@@ -9,6 +9,7 @@
 ### 修复
 - 修复安排按钮首次点击被悬停预览打断的问题；AI 建议应用和调整使用时间记录，避免与已有安排冲突，并支持撤回。
 - 手机 AI 面板保持建议与操作按钮完整可见，底部导航不再遮挡弹层。
+- 恢复 ChatGPT 通过 OAuth 连接 NavoPath MCP，并修复授权确认页的加载；现有专用令牌继续兼容。
 
 ## 2026-10-03 · 时间轴位置稳定性
 
@@ -69,6 +70,7 @@
 ### Fixed
 - Prevent hover previews from interrupting the first scheduling click; applying and adjusting AI suggestions uses timeline records, avoids existing schedules, and supports undo.
 - Keep AI suggestions and action buttons visible on phones, with workspace navigation clear of open panels.
+- Restored ChatGPT OAuth connections to NavoPath MCP and authorization page loading; existing personal tokens remain compatible.
 
 ## 2026-10-03 · Timeline position stability
 

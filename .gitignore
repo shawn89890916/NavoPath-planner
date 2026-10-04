@@ -1,4 +1,6 @@
 node_modules/
+.wrangler/
+.wrangler-dry-run/
 dist/
 dist-landing/
 dist-portfolio/

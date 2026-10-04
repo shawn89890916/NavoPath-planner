@@ -468,6 +468,7 @@ type FormState = {
 
 const PlanningViewLazy = lazy(() => import("./PlanningView"));
 const LandingPageLazy = lazy(() => import("./LandingPage"));
+const OAuthConsentPageLazy = lazy(() => import("./OAuthConsentPage"));
 
 
 
@@ -1196,7 +1197,8 @@ function YearCalendarOverview({
   );
 }
 function App() {
-  const isWorkspaceRoute = Boolean(productDemo) || window.location.pathname === "/app" || window.location.pathname.startsWith("/app/") || Boolean(window.desktopApi);
+  const isOAuthConsentRoute = window.location.pathname === "/oauth/consent";
+  const isWorkspaceRoute = Boolean(productDemo) || isOAuthConsentRoute || window.location.pathname === "/app" || window.location.pathname.startsWith("/app/") || Boolean(window.desktopApi);
   const [data, setData] = useState<PlannerData | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [lang, setLang] = useState<Language>(productDemo?.language ?? detectSystemLanguage());
@@ -8654,6 +8656,13 @@ if (cached?.data && cached?.settings) {
 
   function daysInMonth(year: number, month: number): number {
     return new Date(year, month + 1, 0).getDate();
+  }
+
+  if (isOAuthConsentRoute && authState?.mode === "cloud" && authState.user) {
+    return <Suspense fallback={<ExecuteSkeleton />}><OAuthConsentPageLazy /></Suspense>;
+  }
+  if (isOAuthConsentRoute && !new URLSearchParams(window.location.search).get("authorization_id")) {
+    return <Suspense fallback={<ExecuteSkeleton />}><OAuthConsentPageLazy /></Suspense>;
   }
 
   if (!isWorkspaceRoute || (authState?.mode === "cloud" && !authState.user)) {

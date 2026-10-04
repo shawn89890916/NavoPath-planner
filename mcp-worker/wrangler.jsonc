@@ -13,5 +13,8 @@
   },
   "triggers": { "crons": ["14,29,44,59 * * * *", "0,30 * * * *"] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["NavoPathMCP"] }],
-  "vars": { "MCP_SERVER_NAME": "NavoPath" }
+  "vars": {
+    "MCP_SERVER_NAME": "NavoPath",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_KIyAcHjs4geATzn3uyiuBA_3HIN6Om-"
+  }
 }
