@@ -4,9 +4,12 @@ Public routes: `/features/planning`, `/features/execute`, `/features/ai`.
 Planning and Execute fill the window with the running product workspace. Planning
 uses compact, clearly indented native task nodes and a right-side introduction.
 Execute uses native candidates on the left, introductions in the middle, and the
-timeline on the right. Desktop scrolling continuously fades three paragraphs
-without replacing the visitor's data. Smaller screens keep native compact layouts
-and show introductions below the workspace. AI retains its existing preview layout.
+timeline on the right. Introductions scroll in the parent document, scaling and fading according to their
+distance from the visual center without replacing the visitor's data. Landscape
+workspaces at least 1000px wide keep an introduction column; Execute reserves at
+least 415px for the timeline and 240px for the notes. Smaller or portrait screens
+keep native compact layouts and show introductions below the workspace. AI retains
+its existing preview layout.
 Planning and Execute insert navigation into the real App header through an optional
 runtime slot, reusing WorkspaceModeTabs and the existing site controls. It returns
 home from the logo and links to all three features,
@@ -18,8 +21,13 @@ then imports the same `main.tsx` used by `/app`. There is no separately assemble
 workspace renderer. Native App owns layout, cards, menus, drag/drop, timeline,
 planning views, scheduling, AI previews, and undo. Product CSS determines their
 geometry. The full-window presentation is a scoped variant in canonical product CSS;
-regular /app retains its geometry. ProductStory fills an optional native layout slot.
-Demo CSS owns introduction opacity, preset buttons, and viewport containment.
+regular /app retains its geometry. ProductStorySlot reserves an optional native column and reports its geometry;
+ProductStory renders one semantic introduction in the parent document, aligned with
+that column. The workspace stays sticky while the paragraphs scroll normally. Each
+paragraph scales and fades continuously with distance from the column center; the
+reduced-motion setting keeps text at full size and opacity. The outer page clips
+notes below the native header so navigation stays unobstructed. Demo CSS owns the
+slot, preset buttons, and viewport containment; feature CSS owns the scrolling notes.
 
 The demo installs a memory PlannerApi before browser fallback initialization.
 `workspaceEnvironment.ts` supplies memory storage and a fixed example clock to App;
@@ -31,8 +39,8 @@ input, providers, attachments, and account controls are outside demo scope.
 
 Parent/iframe messages validate source windows and origin. The parent lazy mounts
 near the viewport and offers retry after initialization failure. Visibility messages
-pause offscreen animations. A validated story message selects the highlighted
-paragraph; it does not replace user changes. Planning has
+pause offscreen animations. A validated story-layout message reports the native
+column rectangle; it never replaces user changes. Planning has
 three expanded projects, no subtasks, and four enabled native views. Examples use a
 fixed day, fifteen-minute scheduling, and the product's conflict utilities.
 

@@ -6,10 +6,8 @@ import { siteLanguage, type ProductFeature } from "./productSite";
 import { createMemoryStorage, installWorkspaceDemoRuntime } from "./workspaceEnvironment";
 import "./product-demo.css";
 import { createElement } from "react";
-import ProductStory from "./ProductStory";
+import { ProductStorySlot } from "./ProductStory";
 import ProductNavigation from "./ProductNavigation";
-import planningCopy from "./features/planning";
-import executeCopy from "./features/execute";
 
 export function installProductDemo(feature: ProductFeature) {
   if (!location.pathname.startsWith("/product-demo/")) throw new Error("Example runtime requires an example route");
@@ -38,7 +36,7 @@ export function installProductDemo(feature: ProductFeature) {
   let id = 0;
   installWorkspaceDemoRuntime({
     feature, date: DEMO_DATE, language, storage,
-    story: fullscreen ? createElement(ProductStory, { feature, lang: language, copy: (feature === "planning" ? planningCopy : executeCopy)[language] }) : undefined,
+    story: fullscreen ? createElement(ProductStorySlot, { feature }) : undefined,
     navigation: fullscreen ? icon => createElement(ProductNavigation, { feature, lang: language, icon }) : undefined,
     now: () => new Date(`${DEMO_DATE}T09:00:00`),
     ready: () => { if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "ready" }, location.origin); },

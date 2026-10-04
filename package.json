@@ -125,6 +125,7 @@
       "name": "Product site scripts",
       "path": [
         "dist/assets/ProductFeaturePage-*.js",
+        "dist/assets/ProductStory-*.js",
         "dist/assets/productDemoRuntime-*.js",
         "dist/assets/ProductMenu-*.js",
         "dist/assets/planning-*.js",

@@ -56,18 +56,25 @@ html.product-site-document body, html.product-site-document #root { height: auto
   .np-feature-footer { gap: 20px; }
 }
 
-.np-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); }
 .np-feature--immersive > main { width: 100%; max-width: none; }
-.np-feature--immersive .np-workspace-scroll { display: block; height: 320svh; position: relative; }
-.np-feature--immersive .np-product-window { position: sticky; top: 0; height: 100svh; width: 100%; border-radius: 0; box-shadow: none; }
-.np-mobile-story { display: none; }
+.np-feature--immersive .np-workspace-scroll { display: grid; grid-template-columns: minmax(0, 1fr); position: relative; gap: 0; align-items: start; }
+.np-feature--immersive .np-product-window { position: sticky; top: 0; height: 100svh; width: 100%; border-radius: 0; box-shadow: none; grid-area: 1 / 1; align-self: start; }
 .np-feature--immersive .np-feature-footer { max-width: 1120px; margin: auto; padding-inline: 24px; }
 .np-feature--immersive .np-faq { width: calc(100% - 48px); }
 .np-feature-footer > .np-personal-placeholder { color: #92989c; margin-left: 0; font-size: 13px; }
-.np-feature--compact.np-feature--immersive .np-workspace-scroll { height: auto; }
+.np-feature--compact.np-feature--immersive .np-workspace-scroll { display: block; }
 .np-feature--compact.np-feature--immersive .np-product-window { position: relative; top: 0; }
-.np-feature--compact .np-mobile-story { display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 680px; margin: 44px auto; padding: 0 24px; }
-.np-mobile-story h3 { margin: 0 0 10px; font-size: 17px; }
+.np-feature--compact.np-feature--immersive .np-product-intro { padding: 24px; max-width: 720px; }
+.np-scroll-story { min-width: 0; max-width: 680px; margin: 0 auto; padding: 0 24px; }
+.np-scroll-story--inline { grid-area: 1 / 1; position: relative; z-index: 2; max-width: none; margin-top: 0; margin-bottom: 0; align-self: start; pointer-events: none; }
+.np-feature--immersive:has(.np-demo-status) .np-scroll-story--inline { visibility: hidden; }
+.np-scroll-story section { min-height: 38svh; display: flex; align-items: center; }
+.np-scroll-story section > div { width: 100%; opacity: var(--story-opacity, 1); transform: scale(var(--story-scale, 1)); transform-origin: center; }
+.np-scroll-story h1 { margin: 0 0 16px; font-size: clamp(23px, 2vw, 30px); line-height: 1.35; letter-spacing: -.04em; }
+.np-scroll-story h2 { margin: 0 0 12px; font-size: 20px; line-height: 1.5; letter-spacing: -.03em; }
+.np-scroll-story p { margin: 0; font-size: 15px; line-height: 1.8; color: #69717c; }
+@media (max-width: 1280px) { .np-scroll-story--inline { padding-inline: 18px; } .np-scroll-story--inline h2 { font-size: 18px; } .np-scroll-story--inline p { font-size: 14px; } }
+@media (prefers-reduced-motion: reduce) { .np-scroll-story section > div { transform: none; } }
 @media (max-width: 640px) {
   .np-feature--immersive .np-feature-footer { flex-wrap: wrap; }
   .np-feature--immersive .np-feature-footer > span:last-child { width: 100%; margin-left: 0; }

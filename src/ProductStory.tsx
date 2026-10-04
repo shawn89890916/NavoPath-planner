@@ -1,24 +1,59 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { Language } from "./types";
 import type { FeatureCopy, ProductFeature } from "./productSite";
 
-export default function ProductStory({ feature, lang, copy }: { feature: ProductFeature; lang: Language; copy: FeatureCopy }) {
-  const [active, setActive] = useState(0);
+export type StoryLayout = { left: number; top: number; width: number; height: number; headerHeight: number };
+
+// The native workspace owns the available column; the parent owns document scrolling.
+export function ProductStorySlot({ feature }: { feature: ProductFeature }) {
+  const host = useRef<HTMLElement>(null);
   useEffect(() => {
-    const receive = (event: MessageEvent) => {
-      if (event.source !== parent || event.origin !== location.origin || event.data?.channel !== "navopath-product-demo" || event.data.type !== "story") return;
-      const progress = event.data.progress;
-      if (typeof progress === "number" && Number.isFinite(progress) && progress >= 0 && progress <= copy.benefits.length - 1) setActive(progress);
+    const element = host.current;
+    if (!element) return;
+    let previous = "";
+    const update = () => {
+      const { left, top, width, height } = element.getBoundingClientRect();
+      const headerHeight = document.querySelector(".df-header")?.getBoundingClientRect().height || 0;
+      const next = JSON.stringify({ left, top, width, height, headerHeight });
+      if (next === previous) return;
+      previous = next;
+      if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "story-layout", layout: { left, top, width, height, headerHeight } }, location.origin);
     };
-    addEventListener("message", receive);
-    if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "story-ready" }, location.origin);
-    return () => removeEventListener("message", receive);
-  }, [copy.benefits.length]);
-  return <aside className={`df-product-story df-product-story--${feature}`} aria-label={lang === "zh" ? "功能介绍" : "Feature introduction"}>
-    <h1>{copy.title}</h1>
-    <p className="df-product-story-lead">{copy.description}</p>
-    <div>{copy.benefits.map(([title, description], index) => <section className={index === Math.round(active) ? "is-current" : ""} style={{ opacity: .32 + .68 * Math.max(0, 1 - Math.abs(index - active)) }} key={title}>
-      <h2>{title}</h2><p>{description}</p>
-    </section>)}</div>
+    const observer = new ResizeObserver(update);
+    observer.observe(element); addEventListener("resize", update); document.addEventListener("animationend", update, true); document.addEventListener("transitionend", update, true); update();
+    return () => { observer.disconnect(); removeEventListener("resize", update); document.removeEventListener("animationend", update, true); document.removeEventListener("transitionend", update, true); };
+  }, []);
+  return <aside ref={host} className={`df-product-story df-product-story--${feature}`} aria-hidden="true" />;
+}
+
+export default function ProductStory({ lang, copy, layout }: { lang: Language; copy: FeatureCopy; layout: StoryLayout | null }) {
+  const host = useRef<HTMLElement>(null);
+  useEffect(() => {
+    let pending = 0;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      pending = 0;
+      const element = host.current;
+      if (!element) return;
+      const focus = layout ? layout.top + layout.height / 2 : innerHeight / 2;
+      for (const section of element.querySelectorAll<HTMLElement>("section")) {
+        const rect = section.getBoundingClientRect();
+        const distance = Math.min(1, Math.abs(rect.top + rect.height / 2 - focus) / (innerHeight * .65));
+        section.style.setProperty("--story-opacity", String(reduced.matches ? 1 : .14 + .86 * (1 - distance) ** 1.5));
+        section.style.setProperty("--story-scale", String(reduced.matches ? 1 : 1 - .22 * distance));
+      }
+      if (layout) {
+        const rect = element.getBoundingClientRect();
+        element.style.clipPath = `inset(${Math.max(0, layout.headerHeight - rect.top)}px 0 ${Math.max(0, rect.bottom - innerHeight)}px 0)`;
+      } else element.style.clipPath = "none";
+    };
+    const schedule = () => { if (!pending) pending = requestAnimationFrame(update); };
+    addEventListener("scroll", schedule, { passive: true }); addEventListener("resize", schedule); reduced.addEventListener("change", schedule); update();
+    return () => { removeEventListener("scroll", schedule); removeEventListener("resize", schedule); reduced.removeEventListener("change", schedule); cancelAnimationFrame(pending); };
+  }, [layout, copy]);
+  return <aside ref={host} className={`np-scroll-story${layout ? " np-scroll-story--inline" : ""}`} aria-label={lang === "zh" ? "功能介绍" : "Feature introduction"}
+    style={layout ? { width: layout.width, marginLeft: layout.left, paddingTop: `max(0px, calc(${layout.top + layout.height / 2}px - 19svh))`, paddingBottom: `max(0px, calc(100svh - ${layout.top + layout.height / 2}px - 19svh))` } : undefined}>
+    {layout && <section><div><h1>{copy.title}</h1><p>{copy.description}</p></div></section>}
+    {copy.benefits.map(([title, description]) => <section key={title}><div><h2>{title}</h2><p>{description}</p></div></section>)}
   </aside>;
 }

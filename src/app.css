@@ -39684,13 +39684,13 @@ html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { he
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-project-tasks { margin-left: 112px; padding-left: 0; }
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-plan-task-node { width: max-content; max-width: min(360px, 100%); min-width: 260px; }
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-task-node-inner { width: 100%; min-width: 0; }
-@media (min-width: 1265px) and (orientation: landscape) {
+@media (min-width: 1000px) and (orientation: landscape) {
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-mindmap.no-root { grid-template-columns: 116px minmax(420px, 1fr) minmax(260px, 32vw); }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-tree-wrap { grid-column: 2; padding-right: 0; }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-product-story { grid-column: 3; }
-  html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) { grid-template-columns: min(var(--df-candidate-width, clamp(400px, 28vw, 470px)), calc(100% - clamp(500px, 38vw, 560px) - 220px)) minmax(220px, 1fr) clamp(500px, 38vw, 560px); gap: 0; padding: 12px 16px; }
+  html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) { --product-timeline-width: clamp(415px, 36vw, 560px); grid-template-columns: min(var(--df-candidate-width, clamp(400px, 28vw, 470px)), calc(100% - var(--product-timeline-width) - 240px)) minmax(240px, 1fr) var(--product-timeline-width); gap: 0; padding: 12px 16px; }
   html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 3; }
-  html.product-demo-fullscreen #root .df-app.mode-execute .df-product-story { grid-column: 2; grid-row: 1; padding: clamp(16px, 2vw, 28px); }
+  html.product-demo-fullscreen #root .df-app.mode-execute .df-product-story { grid-column: 2; grid-row: 1; }
   html.product-demo-fullscreen #root .df-app.mode-execute .df-timeline-scroll { margin-left: auto; margin-right: 0; }
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) { grid-template-columns: var(--df-candidate-width) minmax(0, 1fr); }
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked .df-product-story { display: none; }
@@ -39702,7 +39702,7 @@ html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-task-n
   html.product-demo-fullscreen #root .df-header .df-tabs-center { position: static; transform: none; grid-column: 1 / -1; grid-row: 2; justify-self: center; display: flex; }
   html.product-demo-fullscreen #root .df-header-right { justify-self: end; gap: 8px; }
   html.product-demo-fullscreen #root .df-header .df-brand strong { display: none; }
-  html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { top: var(--product-header-height); }
+  html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { top: 0; }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-project-tasks { margin-left: 40px; }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-plan-task-node { width: 100%; max-width: 360px; min-width: 0; }
 }
