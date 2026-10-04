@@ -39689,23 +39689,16 @@ html.product-demo-fullscreen #root .df-app.mode-execute .df-candidate-panel .df-
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked .df-product-story { display: none; }
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 2; }
 }
-/* AI introduction: one guided request, native timeline and conversation. */
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) { display: grid; grid-template-columns: minmax(300px, 60%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 28px; padding: 20px 32px; }
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { position: relative; grid-column: 1; grid-row: 1; padding-top: 0; }
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-panel.is-embedded { grid-column: 2; grid-row: 1; border-radius: 16px; background: var(--surface-main); }
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-panel-head { min-height: 52px; border-bottom: 0; }
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-panel-body { padding: 16px 20px; }
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-reply { margin-left: 0; }
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-action-outcome { margin: 8px 0 0; }
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-reference-empty { min-height: 180px; gap: 24px; padding: 20px 0; }
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-reference-prompt { font-size: 22px; margin: 0; }
-.df-product-ai-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 0 12px; }
-.df-product-ai-toolbar > span { color: var(--text-muted); font: 13px/1.5 var(--paper-sans); }
-#root .df-app[data-product-feature="ai"] .df-product-ai-toolbar .ui-button { min-height: 44px; padding: 8px 12px; border: 0; border-radius: 8px; color: var(--text-main); background: transparent; font: 500 14px/1.4 var(--paper-sans); }
-#root .df-app[data-product-feature="ai"] .df-product-ai-toolbar .ui-button:hover:not(:disabled) { background: var(--paper-note); }
-#root .df-app[data-product-feature="ai"] .df-product-ai-toolbar .ui-button:disabled { color: var(--text-muted); }
-.df-product-ai-guide { position: absolute; z-index: 8; inset: 140px 20px auto 64px; max-width: 600px; padding: 24px; background: var(--surface-main); border-radius: 16px; pointer-events: none; }
-.df-product-ai-guide-arrow { display: block; text-align: right; color: var(--accent-active); font: 400 clamp(68px, 8vw, 120px)/1 var(--paper-sans); }
+/* AI introduction reuses native candidates and their scheduling control. */
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) { display: grid; grid-template-columns: minmax(320px, 36%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 28px; padding: 20px 32px; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-candidate-panel { grid-column: 1; grid-row: 1; padding-top: 0; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { position: relative; grid-column: 2; grid-row: 1; padding-top: 0; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-panel > .df-panel-title { position: static; inset: auto; height: auto; width: auto; z-index: auto; flex-shrink: 0; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-panel > .df-panel-title h2 { display: block; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-panel > .df-panel-title > div { position: static; height: auto; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-list { overflow-x: clip; overflow-y: auto; }
+.df-product-ai-guide { position: absolute; z-index: 8; inset: 100px 20px auto 16px; max-width: 600px; padding: 24px; background: var(--surface-main); border-radius: 16px; pointer-events: none; }
+.df-product-ai-guide-arrow { display: block; text-align: left; color: var(--accent-active); font: 400 clamp(68px, 8vw, 120px)/1 var(--paper-sans); }
 .df-product-ai-guide h1 { margin: 0 0 16px; white-space: pre-line; font: 600 clamp(28px, 3.4vw, 52px)/1.3 var(--paper-serif); letter-spacing: -.04em; }
 .df-product-ai-guide p { margin: 0; color: var(--text-muted); font: 15px/1.6 var(--paper-sans); }
 .df-product-ai-arranging-notes { display: grid; gap: 10px; margin-top: 24px; }
@@ -39718,9 +39711,9 @@ html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-ref
 #root .df-app .df-product-ai-reschedules .ui-button { display: grid; gap: 6px; text-align: left; min-width: 0; padding: 12px; border: 0; border-radius: 12px; background: var(--paper-note); font: 500 13px/1.5 var(--paper-sans); }
 .df-product-ai-reschedules .ui-button span { color: var(--text-muted); font-size: 12px; }
 @media (max-width: 999px) {
-  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) { grid-template-columns: minmax(300px, 54%) minmax(0, 1fr); gap: 16px; padding: 12px; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) { grid-template-columns: minmax(280px, 40%) minmax(0, 1fr); gap: 16px; padding: 12px; }
   html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-date-title-compact { display: flex; position: relative; left: auto; transform: none; margin: 0 auto 8px; }
-  .df-product-ai-guide { inset: 140px 8px auto 54px; padding: 16px; }
+  .df-product-ai-guide { inset: 100px 8px auto 8px; padding: 16px; }
   .df-product-ai-guide p { font-size: 13px; }
 }
 

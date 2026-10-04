@@ -8,7 +8,7 @@ export default {
     "benefits": [
       [
         "一句话，安排今天。",
-        "点击时间轴右上角的“帮我安排今天”，稍等片刻，看看写作、学习和运动如何分布在一天里。午餐与休息、下午整理课程笔记，也一起放进时间轴。"
+        "点击左侧“今日候选”右上角的安排图标，稍等片刻，看看写作、学习和运动如何分布在一天里。午餐与休息、下午整理课程笔记，也一起放进时间轴。"
       ],
       [
         "计划变了，换一天。",
@@ -53,7 +53,7 @@ export default {
     "benefits": [
       [
         "One request. A planned day.",
-        "Choose “Plan my day” at the top right of the timeline. After a short pause, writing, learning and exercise fill the day, with lunch, rest and an afternoon notes session included."
+        "Click the scheduling icon at the top right of Today’s Candidates. After a short pause, writing, learning and exercise fill the day, with lunch, rest and an afternoon notes session included."
       ],
       [
         "Plans change. Move a task.",

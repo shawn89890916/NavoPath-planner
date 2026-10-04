@@ -1237,7 +1237,7 @@ function App() {
   const [editingId, setEditingId] = useState("");
   const [editingRecordId, setEditingRecordId] = useState<string | undefined>(undefined);
   const [form, setForm] = useState<FormState>(defaultForm());
-  const [aiOpen, setAiOpen] = useState(productDemo?.feature === "ai");
+  const [aiOpen, setAiOpen] = useState(productDemo?.feature === "ai" && !productAiPresentation);
   const [aiDocked, setAiDocked] = useState(loadAiDockedPreference);
   const freshAiConversationRef = useRef(true);
   const [referencedTaskId, setReferencedTaskId] = useState("");
@@ -8798,7 +8798,7 @@ if (cached?.data && cached?.settings) {
       ? (lang === "zh" ? `已专注 ${Math.floor(focusElapsed / 60)} 分钟，建议休息 ${flowBreakMinutes} 分钟` : `Focused ${Math.floor(focusElapsed / 60)}m, suggested break ${flowBreakMinutes}m`)
       : (lang === "zh" ? "正计时" : "Stopwatch");
   const startCandidatePanelResize = (event: React.PointerEvent<HTMLElement>) => {
-    if (compactLayout || candidatePanelCollapsed || event.button) return;
+    if (productAiPresentation || compactLayout || candidatePanelCollapsed || event.button) return;
     event.preventDefault();
     event.stopPropagation();
     const panel = event.currentTarget.closest<HTMLElement>(".df-candidate-panel");
@@ -8822,9 +8822,9 @@ if (cached?.data && cached?.settings) {
   const demoCanUndo = aiMessages.some(message => message.actionState === "adopted");
   const demoTodayTasks = productDemo ? tasks.filter(task => task.plannedForDate === productDemo.date && !task.completed) : [];
   const demoPlanButton = productDemo && <Button variant="ghost" disabled={demoPresetBusy || !demoTodayTasks.some(task => !task.scheduledStart && !task.timelineRecords?.some(record => record.executionStatus === "scheduled"))} onClick={() => void runProductDemoPreset()}>{demoPresetBusy ? (lang === "zh" ? "正在安排…" : "Arranging…") : (lang === "zh" ? "帮我安排今天" : "Plan my day")}</Button>;
-  const aiPanel = aiOpen && <AiPanel embedded={productAiPresentation} demoControls={productDemo ? <div className="df-product-ai-presets">
+  const demoAiControls = productDemo ? <div className="df-product-ai-presets">
     {!productAiPresentation && demoPlanButton}
-    {!demoHasSchedule && !demoPresetBusy && <div className="df-product-ai-candidates">{demoTodayTasks.map(task => <TaskBlock key={task.id} variant="candidate" projectColor={projects.find(project => project.id === task.projectId)?.color}><TaskBlockRow><TaskBlockContent title={task.title} /><TaskBlockDuration>{formatMinutes(Math.round((task.estimatedHours || .5) * 60))}</TaskBlockDuration></TaskBlockRow></TaskBlock>)}</div>}
+    {!productAiPresentation && !demoHasSchedule && !demoPresetBusy && <div className="df-product-ai-candidates">{demoTodayTasks.map(task => <TaskBlock key={task.id} variant="candidate" projectColor={projects.find(project => project.id === task.projectId)?.color}><TaskBlockRow><TaskBlockContent title={task.title} /><TaskBlockDuration>{formatMinutes(Math.round((task.estimatedHours || .5) * 60))}</TaskBlockDuration></TaskBlockRow></TaskBlock>)}</div>}
     {demoCanUndo && <div className="df-product-ai-requests">
       <Button variant="ghost" disabled={demoPresetBusy} aria-expanded={demoReschedulesOpen} aria-controls="product-ai-reschedules" onClick={() => setDemoReschedulesOpen(open => !open)}>{lang === "zh" ? "帮我改期" : "Reschedule a task"}</Button>
       <Button variant="ghost" disabled={demoPresetBusy} onClick={() => void runProductDemoPreset("undo")}>{lang === "zh" ? "撤回" : "Undo"}</Button>
@@ -8832,7 +8832,8 @@ if (cached?.data && cached?.settings) {
     {demoReschedulesOpen && <div id="product-ai-reschedules" className="df-product-ai-reschedules" role="group" aria-label={lang === "zh" ? "选择改期" : "Choose a reschedule"}>
       {([{ taskId: "content", days: 1 }, { taskId: "layout", days: 2 }, { taskId: "walk", days: 1 }] as const).map(choice => <Button key={choice.taskId} variant="ghost" disabled={demoPresetBusy || tasks.find(task => task.id === choice.taskId)?.completed} onClick={() => void runProductDemoPreset(choice)}>{tasks.find(task => task.id === choice.taskId)?.title}<span>{lang === "zh" ? (choice.days === 1 ? "明天" : "后天") : (choice.days === 1 ? "Tomorrow" : "In two days")}</span></Button>)}
     </div>}
-  </div> : undefined} docked={productAiPresentation ? false : aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
+  </div> : undefined;
+  const aiPanel = aiOpen && <AiPanel demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
 
   return (
     <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-product-feature={productAiPresentation ? "ai" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
@@ -9020,10 +9021,10 @@ if (cached?.data && cached?.settings) {
               }}
             />
           )}
-          {productAiPresentation ? aiPanel : <CandidatePanelShell
-            className={`${compactExecuteView === "tasks" ? "compact-active" : "compact-inactive"}${candidatePanelCollapsed ? " collapsed" : ""}${fullscreen ? " hidden" : ""}${candidateDropActive ? " drop-active" : ""}`}
+          <CandidatePanelShell
+            className={`${productAiPresentation || compactExecuteView === "tasks" ? "compact-active" : "compact-inactive"}${candidatePanelCollapsed ? " collapsed" : ""}${fullscreen ? " hidden" : ""}${candidateDropActive ? " drop-active" : ""}`}
             style={candidatePanelCollapsed ? { position: "relative", zIndex: 2, pointerEvents: "auto" } : undefined}
-            ariaHidden={compactLayout && compactExecuteView !== "tasks"}
+            ariaHidden={!productAiPresentation && compactLayout && compactExecuteView !== "tasks"}
             onPointerDown={(event) => {
               if (compactLayout || candidatePanelCollapsed || event.button) return;
               const panel = event.currentTarget;
@@ -9061,22 +9062,22 @@ if (cached?.data && cached?.settings) {
                 {(timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
                   <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }} style={{ fontSize: "14px", lineHeight: 1, padding: "0 2px" }}>«</button>
                 )}
-                <ActionDisclosure label={lang === "zh" ? "更多" : "More"}>
+                {!productAiPresentation && <ActionDisclosure label={lang === "zh" ? "更多" : "More"}>
                   <Button aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)}>{lang === "zh" ? "按项目分类" : "Group by project"}</Button>
                   <Button aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)}>{t(lang, "candidate.showCompleted")}</Button>
                   <Button disabled={!focusTask} onClick={() => { if (!focusTask) return; if (!timerTask) startTimer(focusTask.id); setFocusOverlayMode(settings.focusModeDefault || "flowtime"); }}>{lang === "zh" ? "专注" : "Focus"}</Button>
                   {settings.featureTemplatesEnabled !== false && <Button onClick={() => setScheduleTemplateOpen(true)}>{lang === "zh" ? "日程模板" : "Schedule Template"}</Button>}
                   {Boolean(window.desktopApi?.widget) && settings.featureWidgetEnabled !== false && <Button onClick={() => void window.desktopApi?.widget?.open()}>{lang === "zh" ? "桌面小组件" : "Desktop widget"}</Button>}
                   {!settings.hideAi && <Button onClick={() => setAiPlanMenuOpen((open) => !open)}>{t(lang, "timeline.aiPlanningSettings")}</Button>}
-                </ActionDisclosure>
+                </ActionDisclosure>}
                 {!settings.hideAi && (
                   <span className="df-ai-plan-title-tools">
                     <IconButton
-                      className={`df-ai-plan-title-icon ${autoScheduleState === "generating" || autoScheduleState === "committing" ? "thinking" : ""}`}
+                      className={`df-ai-plan-title-icon ${autoScheduleState === "generating" || autoScheduleState === "committing" || (productAiPresentation && demoPresetBusy) ? "thinking" : ""}`}
                       icon={<UiSparklesIcon />}
                       label={t(lang, "timeline.aiPlanToday")}
-                      disabled={autoScheduleState === "generating" || autoScheduleState === "committing" || drawerOpen}
-                      onClick={() => { setAiPlanMenuOpen(false); void planMyDay(); }}
+                      disabled={autoScheduleState === "generating" || autoScheduleState === "committing" || drawerOpen || (productAiPresentation && (demoPresetBusy || !demoTodayTasks.some(task => !task.scheduledStart && !task.timelineRecords?.some(record => record.executionStatus === "scheduled"))))}
+                      onClick={() => { setAiPlanMenuOpen(false); if (productAiPresentation) void runProductDemoPreset(); else void planMyDay(); }}
                     />
                     {schedulePreviews.length > 0 && autoScheduleState === "preview" && <>
                       <button className="df-icon-action df-ai-plan-confirm" onClick={() => acceptAllPreviews()} title={t(lang, "timeline.adoptAll")} aria-label={t(lang, "timeline.adoptAll")}>✓</button>
@@ -9143,9 +9144,9 @@ if (cached?.data && cached?.settings) {
                 </details>}
               </div>
             )}
-            <div className="df-candidate-list">
+            <div className="df-candidate-list" inert={productAiPresentation && demoPresetBusy ? true : undefined}>
               {visibleCandidates.length === 0 && !hasActiveHabits ? (
-                <div className="df-empty"><div className="blob-accent" /><strong>{t(lang, "candidate.emptyTitle")}</strong><span>{t(lang, "candidate.emptyDesc")}</span>{compactLayout && <img className="df-empty-add-guidance" src="/empty-add-guidance-v2.png" alt="" aria-hidden="true" />}</div>
+                <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.emptyTitle")}</strong><span>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "在右侧查看安排，或试试改期与撤回。" : "Explore the timeline, reschedule a task, or undo.") : t(lang, "candidate.emptyDesc")}</span>{compactLayout && !productAiPresentation && <img className="df-empty-add-guidance" src="/empty-add-guidance-v2.png" alt="" aria-hidden="true" />}</div>
               ) : groupByProject ? (
                 (() => {
                   const candidatesByProject = new Map<string, Task[]>();
@@ -9175,7 +9176,7 @@ if (cached?.data && cached?.settings) {
                         <div className="df-project-group-header">
                           <span className="df-project-group-dot" style={{ background: projectColor }} />
                           <span className="df-project-group-name">{projectTitle}</span>
-                          {gid !== "__events__" && <span className="df-project-group-actions">
+                          {!productAiPresentation && gid !== "__events__" && <span className="df-project-group-actions">
                             <IconButton
                               className="df-project-group-action"
                               icon={<UiCalendarCheckIcon size={16} />}
@@ -9241,9 +9242,9 @@ if (cached?.data && cached?.settings) {
                   draggedHabitId={drag?.source === "candidate" ? drag.taskId : null}
                 />
               )}
-              {productDemo && !productDemo.story && <aside className="df-product-notes"><p>{lang === "zh" ? "从今日候选中挑选，再放进时间轴。" : "Pick a candidate and give it time on the timeline."}</p><p>{lang === "zh" ? "一天有变化，安排也可以调整。" : "Adjust the plan as your day changes."}</p></aside>}
+              {productDemo && !productDemo.story && !productAiPresentation && <aside className="df-product-notes"><p>{lang === "zh" ? "从今日候选中挑选，再放进时间轴。" : "Pick a candidate and give it time on the timeline."}</p><p>{lang === "zh" ? "一天有变化，安排也可以调整。" : "Adjust the plan as your day changes."}</p></aside>}
             </div>
-            <form className="df-quick-add" onSubmit={(event) => {
+            {productAiPresentation ? demoAiControls : <form className="df-quick-add" onSubmit={(event) => {
               event.preventDefault();
               quickAddTask();
             }}>
@@ -9265,21 +9266,20 @@ if (cached?.data && cached?.settings) {
               <button className="df-quick-add-submit" type="submit" aria-label={t(lang, "candidate.add")} disabled={!quickTitle.trim()}>
                 Add
               </button>
-            </form>
-            <span className="df-candidate-resize-zone" aria-hidden="true" onPointerDown={startCandidatePanelResize} />
+            </form>}
+            {!productAiPresentation && <span className="df-candidate-resize-zone" aria-hidden="true" onPointerDown={startCandidatePanelResize} />}
               </>
             )}
-          </CandidatePanelShell>}
+          </CandidatePanelShell>
           {productDemo?.story}
           <section
-            className={`df-timeline-panel${compactExecuteView === "schedule" ? " compact-active" : " compact-inactive"}`}
-            aria-hidden={compactLayout && compactExecuteView !== "schedule"}
+            className={`df-timeline-panel${productAiPresentation || compactExecuteView === "schedule" ? " compact-active" : " compact-inactive"}`}
+            aria-hidden={!productAiPresentation && compactLayout && compactExecuteView !== "schedule"}
             id="df-execute-timeline"
             data-cross-day-scroll={settings.continuousCrossDayScroll !== false ? "true" : "false"}
             onWheelCapture={handleTimelinePanelWheel}
           >
-            {productAiPresentation && <div className="df-product-ai-toolbar"><span>{lang === "zh" ? "示例一天" : "An example day"}</span>{demoPlanButton}</div>}
-            {productAiPresentation && !demoHasSchedule && <div className="df-product-ai-guide" role="status">{!demoPresetBusy && <span className="df-product-ai-guide-arrow" aria-hidden="true">↗</span>}<h1>{demoPresetBusy ? (lang === "zh" ? "让这一天，慢慢成形。" : "Your day is taking shape.") : (lang === "zh" ? "今天怎么安排？\n点一下，就有答案。" : "One click.\nYour day, arranged.")}</h1><p>{demoPresetBusy ? (lang === "zh" ? "让任务、休息和生活，都有自己的时间。" : "Make room for tasks, breaks and everyday life.") : (lang === "zh" ? "试试右上角的「帮我安排今天」" : "Try “Plan my day” in the top right")}</p>{demoPresetBusy && <div className="df-product-ai-arranging-notes"><p>{lang === "zh" ? "按任务估时留出完整时段，减少来回切换。" : "Give each task enough time, with fewer switches."}</p><p>{lang === "zh" ? "午餐与休息也排进去，计划才跟得上生活。" : "Lunch and breaks belong in the plan, too."}</p><p>{lang === "zh" ? "安排好后，仍可调整时间、改期或撤回。" : "Then adjust the time, move a task, or undo."}</p></div>}</div>}
+            {productAiPresentation && !demoHasSchedule && <div className="df-product-ai-guide" role="status">{!demoPresetBusy && <span className="df-product-ai-guide-arrow" aria-hidden="true">↖</span>}<h1>{demoPresetBusy ? (lang === "zh" ? "让这一天，慢慢成形。" : "Your day is taking shape.") : (lang === "zh" ? "今天怎么安排？\n点一下，就有答案。" : "One click.\nYour day, arranged.")}</h1><p>{demoPresetBusy ? (lang === "zh" ? "让任务、休息和生活，都有自己的时间。" : "Make room for tasks, breaks and everyday life.") : (lang === "zh" ? "点击左侧「今日候选」右上角的安排图标" : "Click the scheduling icon at the top right of Today’s Candidates")}</p>{demoPresetBusy && <div className="df-product-ai-arranging-notes"><p>{lang === "zh" ? "按任务估时留出完整时段，减少来回切换。" : "Give each task enough time, with fewer switches."}</p><p>{lang === "zh" ? "午餐与休息也排进去，计划才跟得上生活。" : "Lunch and breaks belong in the plan, too."}</p><p>{lang === "zh" ? "安排好后，仍可调整时间、改期或撤回。" : "Then adjust the time, move a task, or undo."}</p></div>}</div>}
             {yearOverviewOpen ? (
               <YearCalendarOverview
                 year={overviewYear}
@@ -10227,7 +10227,7 @@ if (cached?.data && cached?.settings) {
         />
       )}
 
-      {compactLayout && !drawerOpen && utilityPanel !== "settings" && (
+      {!productAiPresentation && compactLayout && !drawerOpen && utilityPanel !== "settings" && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, mode)} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {!productPresentation && !settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
