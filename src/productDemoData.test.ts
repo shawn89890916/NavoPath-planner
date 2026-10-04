@@ -34,14 +34,17 @@ describe("isolated product examples", () => {
     expect(initial.tasks[0].plannedForDate).toBeUndefined();
   });
 
-  it("shows a fuller example day using ordinary, non-overlapping task records", () => {
+  it("leaves room for lunch and varied breaks between fewer, longer ordinary tasks", () => {
     for (const lang of ["zh", "en"] as const) {
       const data = createDemoData(lang, "execute", 2);
       expect(data.events).toEqual([]);
       expect(data.tasks.some(task => task.id.startsWith("event_occ_"))).toBe(false);
       const records = data.tasks.flatMap(task => task.timelineRecords || [])
         .sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart));
-      expect(records).toHaveLength(9);
+      expect(records).toHaveLength(6);
+      expect(data.tasks.find(task => task.id === "lunch")).toMatchObject({ scheduledStart: "12:00", scheduledEnd: "13:00" });
+      expect(data.tasks.find(task => task.id === "content")).toMatchObject({ scheduledStart: "10:00", scheduledEnd: "11:30" });
+      expect(records[0].scheduledEnd).toBe(records[1].scheduledStart);
       for (let index = 1; index < records.length; index++) {
         expect(records[index - 1].scheduledEnd <= records[index].scheduledStart).toBe(true);
       }

@@ -69,14 +69,20 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-scroll-story--inline { grid-area: 1 / 1; position: relative; z-index: 2; max-width: none; margin-top: 0; margin-bottom: 0; align-self: start; pointer-events: none; }
 .np-feature--immersive:has(.np-demo-status) .np-scroll-story--inline { visibility: hidden; }
 .np-scroll-story section { min-height: 38svh; display: flex; align-items: center; justify-content: center; }
-.np-scroll-story section > div { width: 100%; max-width: 420px; opacity: var(--story-opacity, 1); transform: scale(var(--story-scale, 1)); transform-origin: center; }
+.np-scroll-story section > div { width: 100%; max-width: 420px; opacity: var(--story-opacity, 1); transform: scale(var(--story-scale, 1)); transform-origin: center; filter: blur(var(--story-blur, 0px)); }
+.np-scroll-story--inline .np-story-step { display: block; min-height: 76svh; padding-block: 12svh; }
+.np-scroll-story--inline .np-story-step > div { position: sticky; top: var(--story-sticky-top); margin-inline: auto; }
 .np-story-scroll-cue { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; color: #584d3d; font: 600 13px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif; }
 .np-story-scroll-cue > span { font-size: 20px; }
 .np-scroll-story h1 { margin: 0 0 16px; font-size: var(--product-heading-size); line-height: 1.35; letter-spacing: -.04em; }
 .np-scroll-story h2 { margin: 0 0 16px; font-size: var(--product-heading-size); line-height: 1.35; letter-spacing: -.04em; }
 .np-scroll-story p { margin: 0; font-size: 18px; line-height: 1.65; color: #55504a; }
 @media (max-width: 1280px) { .np-scroll-story--inline { padding-inline: 18px; } .np-scroll-story--inline p { font-size: 17px; } }
-@media (prefers-reduced-motion: reduce) { .np-scroll-story section > div { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .np-scroll-story section > div { transform: none; filter: none; }
+  .np-scroll-story--inline .np-story-step { display: flex; min-height: 38svh; padding-block: 0; }
+  .np-scroll-story--inline .np-story-step > div { position: static; }
+}
 @media (max-width: 640px) {
   .np-feature--immersive .np-feature-footer { flex-wrap: wrap; }
   .np-feature--immersive .np-feature-footer > span:last-child { width: 100%; margin-left: 0; }

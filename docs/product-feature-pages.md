@@ -7,7 +7,7 @@ Execute uses native candidates on the left, introductions in the middle, and the
 timeline on the right. Introductions scroll in the parent document, scaling and fading according to their
 distance from the visual center without replacing the visitor's data. Landscape
 workspaces at least 1000px wide keep an introduction column; Execute reserves
-a flexible right-aligned timeline, compact candidates, and at least 280px for the notes, reclaiming the calendar
+a flexible right-aligned timeline, readable candidates, and at least 280px for the notes, reclaiming the calendar
 view rail and daily-canvas margins. Smaller or portrait screens
 keep native compact layouts and show introductions below the workspace. AI retains
 its existing preview layout.
@@ -18,7 +18,8 @@ with Principles and personal-site placeholders. Support includes Afdian and GitH
 Homepage content, navigation, and animation remain intact. Feature subtitles,
 including Navo AI, use the same enlarged title-size token as the main introduction.
 Introductions and native display type use Times New Roman; candidate project names
-use regular sans-serif type. The first scrolling paragraph includes a short scroll cue. FAQ
+use regular sans-serif type. Today's Candidates uses the task font and a more generous
+column width. The first scrolling paragraph includes a short scroll cue. FAQ
 stays below each page. Full-window demo dates are read-only, and calendar view switching,
 date arrows/dropdowns, Back to now, and floating Add/AI launchers are omitted from the native
 Planning/Execute demo render path. Formal /app and the dedicated AI workspace keep
@@ -32,11 +33,15 @@ planning views, scheduling, AI previews, and undo. Product CSS determines their
 geometry. The full-window presentation is a scoped variant in canonical product CSS;
 regular /app retains its geometry. ProductStorySlot reserves an optional native column and reports its geometry;
 ProductStory renders one semantic introduction in the parent document, aligned with
-that column. The workspace stays sticky while the paragraphs scroll normally. Each
+that column. The workspace stays sticky while the paragraphs scroll normally. After
+the opening paragraph, native CSS sticky positioning holds each paragraph at the
+visual center over a short stretch of document scrolling; no wheel or touch events
+are intercepted. Each
 paragraph stays enlarged and opaque within 22% of viewport height from the column
-center, easing down only toward the top and bottom edges. Enlargement is capped by
+center, easing down with at most 1.8px of blur only toward the top and bottom edges. Enlargement is capped by
 the available column width so notes cannot spill onto native panels. The
-reduced-motion setting keeps text at full size and opacity. The outer page clips
+reduced-motion setting keeps text at full size and opacity, removes blur, and skips
+the extra sticky dwell space. Compact screens keep the normal paragraph flow. The outer page clips
 notes below the native header so navigation stays unobstructed. Demo CSS owns the
 slot, preset buttons, and viewport containment; feature CSS owns the scrolling notes.
 
@@ -54,7 +59,8 @@ pause offscreen animations. A validated story-layout message reports the native
 column rectangle; it never replaces user changes. Planning has
 three expanded projects, no subtasks, and four enabled native views. Examples use a
 fixed day, fifteen-minute scheduling, and the product's conflict utilities. Execute
-starts with nine ordinary task records distributed from morning to late afternoon,
+starts with six ordinary task records, including a noon lunch/rest block and longer
+work sessions with adjacent starts and occasional short breaks,
 three unscheduled candidates, and free slots for exploration; no legacy event is seeded.
 
 Verify native planning/execute mode switching, candidate add/remove, scheduling,

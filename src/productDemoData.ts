@@ -109,10 +109,8 @@ export function createDemoData(
     return data;
   }
   if (feature === "execute") data.tasks.push(
-    task("research", zh ? "整理网站参考" : "Collect website references", "website", 30, 8),
-    task("check", zh ? "检查移动端页面" : "Check the mobile pages", "website", 45, 9),
-    task("images", zh ? "准备项目图片" : "Prepare project images", "website", 45, 10),
-    task("review", zh ? "回顾今天的进展" : "Review today's progress", "website", 30, 11),
+    task("check", zh ? "完善网站页面" : "Polish the website pages", "website", 90, 8),
+    task("lunch", zh ? "午餐与休息" : "Lunch and a break", "life", 60, 9),
   );
   data.tasks = data.tasks.map((item, index) => index >= 4 ? item : ({
     ...item,
@@ -120,18 +118,21 @@ export function createDemoData(
     executionLane: "candidate",
   }));
   data = scheduleDemoTask(data, "notebook", DEMO_DATE, "09:00");
+  if (feature === "execute" && stage === 2)
+    data = scheduleDemoTask(data, "notebook", DEMO_DATE, "09:00", 60);
   if (feature === "execute" && stage >= 1)
     data = scheduleDemoTask(
       data,
       "content",
       DEMO_DATE,
       stage === 2 ? "10:00" : "09:30",
+      90,
     );
   if (feature === "execute" && stage >= 1) {
     for (const [id, start] of [
-      ["research", "08:30"], ["check", "11:00"], ["practice", "12:00"],
-      ["images", "13:15"], ["exercise", "14:15"], ["review", "15:30"], ["publish", "16:30"],
+      ["lunch", "12:00"], ["check", "13:00"], ["publish", "16:00"],
     ]) data = scheduleDemoTask(data, id, DEMO_DATE, start);
+    data = scheduleDemoTask(data, "exercise", DEMO_DATE, "14:45", 60);
   }
   if (feature === "execute" && stage === 3)
     data.tasks = data.tasks.map((item) =>

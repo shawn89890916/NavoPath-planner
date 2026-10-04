@@ -39686,11 +39686,12 @@ html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-projec
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-plan-task-node { width: max-content; max-width: min(360px, 100%); min-width: 260px; }
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-task-node-inner { width: 100%; min-width: 0; }
 html.product-demo-fullscreen #root .df-app.mode-execute .df-project-group-name { font-family: var(--paper-sans); font-weight: 400; text-transform: none; }
+html.product-demo-fullscreen #root .df-app.mode-execute .df-candidate-panel .df-panel-title h2 { font: 600 18px/1.4 var(--paper-task); letter-spacing: 0; }
 @media (min-width: 1000px) and (orientation: landscape) {
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-mindmap.no-root { grid-template-columns: 116px minmax(420px, 1fr) minmax(260px, 32vw); }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-tree-wrap { grid-column: 2; padding-right: 0; }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-product-story { grid-column: 3; }
-  html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) { --product-timeline-width: min(clamp(360px, 38vw, 620px), calc(100% - 540px)); grid-template-columns: min(clamp(300px, 22vw, 320px), calc(100% - var(--product-timeline-width) - 280px)) minmax(280px, 1fr) var(--product-timeline-width); gap: 0; padding: 12px 16px; }
+  html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) { --product-timeline-width: min(clamp(360px, 38vw, 620px), calc(100% - 540px)); grid-template-columns: min(clamp(340px, 26vw, 400px), calc(100% - var(--product-timeline-width) - 280px)) minmax(280px, 1fr) var(--product-timeline-width); gap: 0; padding: 12px 16px; }
   html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 3; }
   html.product-demo-fullscreen #root .df-app.mode-execute .df-product-story { grid-column: 2; grid-row: 1; }
   html.product-demo-fullscreen #root .df-app.mode-execute .df-timeline-scroll { margin-left: auto; margin-right: 0; }

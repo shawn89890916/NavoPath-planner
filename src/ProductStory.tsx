@@ -37,14 +37,17 @@ export default function ProductStory({ lang, copy, layout }: { lang: Language; c
       if (!element) return;
       const focus = layout ? layout.top + layout.height / 2 : innerHeight / 2;
       for (const section of element.querySelectorAll<HTMLElement>("section")) {
-        const rect = section.getBoundingClientRect();
+        const content = section.firstElementChild as HTMLElement;
+        section.style.setProperty("--story-sticky-top", `${focus - content.offsetHeight / 2}px`);
+        const rect = content.getBoundingClientRect();
         const distance = Math.abs(rect.top + rect.height / 2 - focus);
         // Keep a broad reading zone; ease the text out only near the viewport edges.
         const edge = Math.max(0, Math.min(1, (distance - innerHeight * .22) / (innerHeight * .30)));
         const fade = edge * edge * (3 - 2 * edge);
-        const peakScale = Math.min(1.14, (element.clientWidth - 8) / rect.width);
+        const peakScale = Math.min(1.14, (element.clientWidth - 8) / content.offsetWidth);
         section.style.setProperty("--story-opacity", String(reduced.matches ? 1 : 1 - .86 * fade));
         section.style.setProperty("--story-scale", String(reduced.matches ? 1 : peakScale - (peakScale - .78) * fade));
+        section.style.setProperty("--story-blur", `${reduced.matches ? 0 : 1.8 * fade}px`);
       }
       if (layout) {
         const rect = element.getBoundingClientRect();
@@ -58,6 +61,6 @@ export default function ProductStory({ lang, copy, layout }: { lang: Language; c
   return <aside ref={host} className={`np-scroll-story${layout ? " np-scroll-story--inline" : ""}`} aria-label={lang === "zh" ? "功能介绍" : "Feature introduction"}
     style={layout ? { width: layout.width, marginLeft: layout.left, paddingTop: `max(0px, calc(${layout.top + layout.height / 2}px - 19svh))`, paddingBottom: `max(0px, calc(100svh - ${layout.top + layout.height / 2}px - 19svh))` } : undefined}>
     {layout && <section><div><span className="np-story-scroll-cue">{lang === "zh" ? "向下滚动了解更多" : "Scroll to explore"}<span aria-hidden="true">↓</span></span><h1>{copy.title}</h1><p>{copy.description}</p></div></section>}
-    {copy.benefits.map(([title, description]) => <section key={title}><div><h2>{title}</h2><p>{description}</p></div></section>)}
+    {copy.benefits.map(([title, description]) => <section key={title} className="np-story-step"><div><h2>{title}</h2><p>{description}</p></div></section>)}
   </aside>;
 }
