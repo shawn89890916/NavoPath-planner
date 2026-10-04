@@ -39661,3 +39661,48 @@ li.oauth-consent-scope,
   color: var(--bg-main, #f8f7f3);
   background: var(--accent-active, #584d3d);
 }
+/* Full-window product presentation: native components keep their controls. */
+html.product-demo-fullscreen #root .df-app {
+  --product-header-height: 58px;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+html.product-demo-fullscreen #root .df-app > .df-header { display: block; height: var(--product-header-height); min-height: var(--product-header-height); max-height: none; }
+html.product-demo-fullscreen #root .df-header-inner { height: 100%; }
+html.product-demo-fullscreen #root .df-header .df-brand { color: var(--text-main); text-decoration: none; }
+html.product-demo-fullscreen #root .df-header-right { display: flex; gap: 12px; }
+html.product-demo-fullscreen #root .df-product-principles { color: var(--text-muted); font-size: 13px; padding: 8px 10px; white-space: nowrap; }
+html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { height: calc(100% - var(--product-header-height)); min-height: 0; }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-project-tasks { margin-left: 112px; padding-left: 0; }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-plan-task-node { width: max-content; max-width: min(360px, 100%); min-width: 260px; }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-task-node-inner { width: 100%; min-width: 0; }
+@media (min-width: 1265px) and (orientation: landscape) {
+  html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-mindmap.no-root { grid-template-columns: 116px minmax(420px, 1fr) minmax(260px, 32vw); }
+  html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-tree-wrap { grid-column: 2; padding-right: 0; }
+  html.product-demo-fullscreen #root .df-app.mode-planning .df-product-story { grid-column: 3; }
+  html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) { grid-template-columns: min(var(--df-candidate-width, clamp(400px, 28vw, 470px)), calc(100% - clamp(500px, 38vw, 560px) - 220px)) minmax(220px, 1fr) clamp(500px, 38vw, 560px); gap: 0; padding: 12px 16px; }
+  html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 3; }
+  html.product-demo-fullscreen #root .df-app.mode-execute .df-product-story { grid-column: 2; grid-row: 1; padding: clamp(16px, 2vw, 28px); }
+  html.product-demo-fullscreen #root .df-app.mode-execute .df-timeline-scroll { margin-left: auto; margin-right: 0; }
+  html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) { grid-template-columns: var(--df-candidate-width) minmax(0, 1fr); }
+  html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked .df-product-story { display: none; }
+  html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 2; }
+}
+@media (max-width: 980px), (orientation: portrait) {
+  html.product-demo-fullscreen #root .df-app { --product-header-height: 102px; }
+  html.product-demo-fullscreen #root .df-header-inner { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 48px 40px; padding: 6px 16px; gap: 0; }
+  html.product-demo-fullscreen #root .df-header .df-tabs-center { position: static; transform: none; grid-column: 1 / -1; grid-row: 2; justify-self: center; display: flex; }
+  html.product-demo-fullscreen #root .df-header-right { justify-self: end; gap: 8px; }
+  html.product-demo-fullscreen #root .df-header .df-brand strong { display: none; }
+  html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { top: var(--product-header-height); }
+  html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-project-tasks { margin-left: 40px; }
+  html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-plan-task-node { width: 100%; max-width: 360px; min-width: 0; }
+}

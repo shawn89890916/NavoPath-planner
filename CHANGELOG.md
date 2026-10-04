@@ -3,8 +3,8 @@
 ## 2026-10-04 · 产品介绍页
 
 ### 改进
-- 功能页直接运行产品工作区，保留原生规划、候选、时间轴与 AI 布局；补充项目视图、时间安排、AI 建议与撤回说明，手机端介绍纵向排列，AI 体验窗口更充裕；示例操作独立于个人数据。
-- 网站导航加入滑块式语言切换、更醒目的“现在开始”、产品总览菜单与左上角快速导航；精简功能页说明与装饰。
+- 规划与执行介绍页改为全屏产品工作区：规划任务缩进更清晰、卡片更紧凑，右侧展示说明；执行保留左侧候选、将时间轴靠右，中间说明随滚动连续渐变。窄窗口使用产品原有布局，避免任务与文字被挤压；示例操作独立于个人数据。
+- 规划与执行介绍页复用产品顶栏，可直接切换执行、规划与 Navo AI，左上角返回首页；支持入口包含爱发电、GitHub 与个人网页占位，相关原理暂保留占位。首页与 AI 页保持现状。
 
 ### 修复
 - 修复安排按钮首次点击被悬停预览打断的问题；AI 建议应用和调整使用时间记录，避免与已有安排冲突，并支持撤回。
@@ -64,8 +64,8 @@
 ## 2026-10-04 · Product feature pages
 
 ### Improved
-- Feature pages run the product workspace with native Planning, Candidates, Timeline, and AI layouts; expanded notes explain project views, scheduling, AI suggestions, and undo, with stacked mobile descriptions and a roomier AI preview; example changes stay separate from personal data.
-- Website navigation adds a sliding language switch, a prominent Start now action, a product overview menu, and quick navigation from the logo; feature pages use less copy and decoration.
+- Planning and Execute introductions now fill the window with the product workspace: Planning has clearer indentation, compact task cards, and notes on the right; Execute keeps candidates on the left, the timeline on the right, and continuously fades middle notes while scrolling. Narrow windows use the original product layout to avoid squeezed tasks and text; example changes stay separate from personal data.
+- Planning and Execute reuse the product header to switch between Execute, Planning, and Navo AI, with the logo returning home; Support includes Afdian, GitHub, and a personal-site placeholder, alongside a Principles placeholder. The homepage and AI page stay unchanged.
 
 ### Fixed
 - Prevent hover previews from interrupting the first scheduling click; applying and adjusting AI suggestions uses timeline records, avoids existing schedules, and supports undo.

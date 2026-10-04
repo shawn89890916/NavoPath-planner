@@ -55,3 +55,20 @@ html.product-site-document body, html.product-site-document #root { height: auto
   .np-faq summary, .np-faq p { font-size: 13px; }
   .np-feature-footer { gap: 20px; }
 }
+
+.np-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); }
+.np-feature--immersive > main { width: 100%; max-width: none; }
+.np-feature--immersive .np-workspace-scroll { display: block; height: 320svh; position: relative; }
+.np-feature--immersive .np-product-window { position: sticky; top: 0; height: 100svh; width: 100%; border-radius: 0; box-shadow: none; }
+.np-mobile-story { display: none; }
+.np-feature--immersive .np-feature-footer { max-width: 1120px; margin: auto; padding-inline: 24px; }
+.np-feature--immersive .np-faq { width: calc(100% - 48px); }
+.np-feature-footer > .np-personal-placeholder { color: #92989c; margin-left: 0; font-size: 13px; }
+.np-feature--compact.np-feature--immersive .np-workspace-scroll { height: auto; }
+.np-feature--compact.np-feature--immersive .np-product-window { position: relative; top: 0; }
+.np-feature--compact .np-mobile-story { display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 680px; margin: 44px auto; padding: 0 24px; }
+.np-mobile-story h3 { margin: 0 0 10px; font-size: 17px; }
+@media (max-width: 640px) {
+  .np-feature--immersive .np-feature-footer { flex-wrap: wrap; }
+  .np-feature--immersive .np-feature-footer > span:last-child { width: 100%; margin-left: 0; }
+}

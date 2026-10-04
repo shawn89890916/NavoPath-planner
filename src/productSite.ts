@@ -30,10 +30,11 @@ export const featureNames = {
 };
 export type DemoCommand = {
   channel: "navopath-product-demo";
-  type: "stage" | "reset" | "visibility";
+  type: "stage" | "reset" | "visibility" | "story";
   stage: number;
   lang: Language;
   visible?: boolean;
+  progress?: number;
 };
 export type DemoEvent = {
   channel: "navopath-product-demo";
@@ -44,7 +45,7 @@ export function isDemoCommand(value: unknown): value is DemoCommand {
   const v = value as Partial<DemoCommand>;
   return (
     v.channel === "navopath-product-demo" &&
-    ["stage", "reset", "visibility"].includes(v.type || "") &&
+    ["stage", "reset", "visibility", "story"].includes(v.type || "") &&
     Number.isInteger(v.stage) &&
     Number(v.stage) >= 0 &&
     Number(v.stage) <= 3 &&

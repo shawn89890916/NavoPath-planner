@@ -8,7 +8,7 @@ const summaries = {
   en: { planning: "Turn goals into projects and tasks.", execute: "Make time for today's tasks.", ai: "Review, refine, and apply suggestions." },
 };
 
-export function ProductMenu({ lang, kind = "product", children }: { lang: Language; kind?: "product" | "support" | "brand"; children?: ReactNode }) {
+export function ProductMenu({ lang, kind = "product", children, includeGitHub = false }: { lang: Language; kind?: "product" | "support" | "brand"; children?: ReactNode; includeGitHub?: boolean }) {
   const [open, setOpen] = useState(false);
   const host = useRef<HTMLDivElement>(null), trigger = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
   const menuId = useId(), closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -37,7 +37,7 @@ export function ProductMenu({ lang, kind = "product", children }: { lang: Langua
       : <a ref={(node) => { trigger.current = node; }} className={kind === "brand" ? "np-navigation-brand" : undefined} href={kind === "brand" ? "/" : featureHref("planning", lang)} {...shared}
         onClick={(event) => { if (kind === "brand" && matchMedia("(hover: none)").matches) { event.preventDefault(); setOpen(!open); } }}>{label}</a>}
     {open && <nav id={menuId} className={kind === "product" ? "np-mega-menu" : "np-quick-menu"} aria-label={kind === "support" ? (zh ? "支持与个人网站" : "Support and personal website") : (zh ? "网站导航" : "Site navigation")}>
-      {kind === "support" ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a><span role="link" aria-disabled="true">{zh ? "个人网站" : "Personal website"}</span></>
+      {kind === "support" ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a>{includeGitHub && <a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a>}<span role="link" aria-disabled="true">{zh ? "个人网站" : "Personal website"}</span></>
         : <div className="np-menu-content">{kind === "brand" && <a href="/">{zh ? "首页" : "Home"}</a>}
           {PRODUCT_FEATURES.map((feature) => <a key={feature} href={featureHref(feature, lang)}><strong>{featureNames[lang][feature]}</strong>{kind === "product" && <span>{summaries[lang][feature]}</span>}</a>)}
           {kind === "brand" && <a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a>}

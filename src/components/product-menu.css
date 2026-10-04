@@ -1,5 +1,5 @@
 .np-product-menu { position: relative; flex-shrink: 0; }
-.np-product-menu > :is(a, button) { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; color: #27231e; font: 720 14px "Segoe UI Variable", "Segoe UI", "Microsoft YaHei", sans-serif; text-decoration: none; cursor: pointer; }
+.np-product-menu > :is(a, button), #root .df-header .np-product-menu > :is(a, button) { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; color: #27231e; font: 720 14px "Segoe UI Variable", "Segoe UI", "Microsoft YaHei", sans-serif; text-decoration: none; cursor: pointer; }
 .np-product-menu--brand > a { gap: 9px; font-size: 20px; letter-spacing: -.035em; }
 .np-product-menu--brand img { width: 27px; height: 27px; object-fit: contain; }
 .np-product-menu > :is(a, button):hover { color: #6e766d; }
@@ -14,7 +14,7 @@
 .np-quick-menu :is(a, [aria-disabled]) { display: flex; align-items: center; min-height: 44px; padding: 0; border: 0; color: #27231e; font-size: 14px; font-weight: 650; text-decoration: none; }
 .np-quick-menu [aria-disabled] { color: #92989c; cursor: default; }
 .np-product-menu nav a:hover { color: #6e766d; }
-.np-language-switch { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: space-around; flex-shrink: 0; width: 78px; height: 36px; min-height: 36px; padding: 3px; border: 0; border-radius: 24px; background: #e7ebee; color: #69717c; font: 650 12px "Segoe UI", sans-serif; cursor: pointer; }
+.np-language-switch, #root .df-header .np-language-switch { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: space-around; flex-shrink: 0; width: 78px; height: 36px; min-height: 36px; padding: 3px; border: 0; border-radius: 24px; background: #e7ebee; color: #69717c; font: 650 12px "Segoe UI", sans-serif; cursor: pointer; }
 .np-language-switch > span:not(.np-language-thumb) { z-index: 1; width: 50%; text-align: center; }
 .np-language-thumb { position: absolute; inset: 3px auto 3px 3px; width: calc(50% - 3px); border-radius: 22px; background: #fff; box-shadow: 0 2px 6px rgb(39 35 30 / 6%); transition: transform 180ms ease; }
 .np-language-switch[aria-checked="true"] .np-language-thumb { transform: translateX(100%); }

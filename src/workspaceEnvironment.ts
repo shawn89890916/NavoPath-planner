@@ -1,9 +1,12 @@
 import type { Language, PlannerData } from "./types";
 import type { AiSessionMessage } from "./WorkspacePresentation";
 import type { ProductFeature } from "./productSite";
+import type { ReactNode } from "react";
 
 export type WorkspaceDemoRuntime = {
   feature: ProductFeature;
+  story?: ReactNode;
+  navigation?: (icon: ReactNode) => ReactNode;
   date: string;
   language: Language;
   storage: Storage;

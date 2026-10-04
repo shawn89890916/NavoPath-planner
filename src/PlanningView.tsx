@@ -978,6 +978,7 @@ function useTreeLines(
 type PlanningViewMode = "tree" | "kanban" | "eisenhower" | "list" | "metrics";
 
 export default function PlanningView(props: {
+  presentationNote?: React.ReactNode;
   demo?: boolean;
   lang: Language;
   referenceDate?: string;
@@ -3010,6 +3011,7 @@ export default function PlanningView(props: {
           </div>
           )}
         </div>
+        {props.presentationNote}
       </section>
 
       {planningDragTask && (
