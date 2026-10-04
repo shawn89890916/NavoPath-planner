@@ -39688,10 +39688,11 @@ html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-task-n
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-mindmap.no-root { grid-template-columns: 116px minmax(420px, 1fr) minmax(260px, 32vw); }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-tree-wrap { grid-column: 2; padding-right: 0; }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-product-story { grid-column: 3; }
-  html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) { --product-timeline-width: clamp(415px, 36vw, 560px); grid-template-columns: min(var(--df-candidate-width, clamp(400px, 28vw, 470px)), calc(100% - var(--product-timeline-width) - 240px)) minmax(240px, 1fr) var(--product-timeline-width); gap: 0; padding: 12px 16px; }
+  html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) { --product-timeline-width: min(clamp(415px, 46vw, 780px), calc(100% - 560px)); grid-template-columns: min(var(--df-candidate-width, clamp(400px, 28vw, 470px)), calc(100% - var(--product-timeline-width) - 240px)) minmax(240px, 1fr) var(--product-timeline-width); gap: 0; padding: 12px 16px; }
   html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 3; }
   html.product-demo-fullscreen #root .df-app.mode-execute .df-product-story { grid-column: 2; grid-row: 1; }
   html.product-demo-fullscreen #root .df-app.mode-execute .df-timeline-scroll { margin-left: auto; margin-right: 0; }
+  html.product-demo-fullscreen #root .df-app.mode-execute .df-timeline-daily { --df-daily-scroll-width: 100%; }
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) { grid-template-columns: var(--df-candidate-width) minmax(0, 1fr); }
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked .df-product-story { display: none; }
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 2; }

@@ -6,15 +6,22 @@ uses compact, clearly indented native task nodes and a right-side introduction.
 Execute uses native candidates on the left, introductions in the middle, and the
 timeline on the right. Introductions scroll in the parent document, scaling and fading according to their
 distance from the visual center without replacing the visitor's data. Landscape
-workspaces at least 1000px wide keep an introduction column; Execute reserves at
-least 415px for the timeline and 240px for the notes. Smaller or portrait screens
+workspaces at least 1000px wide keep an introduction column; Execute reserves
+a flexible wider timeline and at least 240px for the notes, reclaiming the calendar
+view rail and daily-canvas margins. Smaller or portrait screens
 keep native compact layouts and show introductions below the workspace. AI retains
 its existing preview layout.
 Planning and Execute insert navigation into the real App header through an optional
 runtime slot, reusing WorkspaceModeTabs and the existing site controls. It returns
 home from the logo and links to all three features,
 with Principles and personal-site placeholders. Support includes Afdian and GitHub.
-Homepage content, navigation, and animation remain intact. FAQ stays below each page.
+Homepage content, navigation, and animation remain intact. Feature subtitles,
+including Navo AI, use the same title-size token as the main introduction. FAQ
+stays below each page. Full-window demo dates are read-only, and calendar view switching,
+date arrows/dropdowns, and floating Add/AI launchers are omitted from the native
+Planning/Execute demo render path. Formal /app and the dedicated AI workspace keep
+these controls so its panel can be closed and reopened. Mobile task/schedule switching,
+candidate scheduling, task duration, completion, and rescheduling remain native.
 
 `siteEntry.tsx` installs `productDemoRuntime.ts` for `/product-demo/:feature` and
 then imports the same `main.tsx` used by `/app`. There is no separately assembled

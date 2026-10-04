@@ -154,6 +154,8 @@ void import("./ai-history-actions.css");
 import type { MobileShortSheetKind } from "./MobileTaskSummary";
 
 const productDemo = getWorkspaceDemoRuntime();
+const productPresentation = Boolean(productDemo?.navigation);
+const TimelineDateTag = productPresentation ? "div" : "button";
 const localStorage = getWorkspaceStorage();
 const sessionStorage = productDemo?.storage ?? window.sessionStorage;
 installBrowserFallback();
@@ -8892,7 +8894,7 @@ if (cached?.data && cached?.settings) {
                 ) : (
                   <><strong>{date.getDate()}</strong><span>{weekdayName(lang, date.getDay()).replace(/^周/, "")}</span></>
                 );
-                if (compactExecuteView === "tasks") {
+                if (productPresentation || compactExecuteView === "tasks") {
                   return <div className="df-compact-date-display is-readonly" aria-label={lang === "zh" ? "当前日期" : "Current date"}>{dateContents}</div>;
                 }
                 return <button
@@ -8909,7 +8911,7 @@ if (cached?.data && cached?.settings) {
                 <span className={`df-date-title-chevron${mobileDatePickerOpen ? " open" : ""}`} aria-hidden="true">⌄</span>
               </button>;
               })()}
-            {compactExecuteView === "schedule" && (
+            {compactExecuteView === "schedule" && !productPresentation && (
               <>
               <nav className="df-compact-calendar-tabs" aria-label={t(lang, "timeline.switchView")}>
                 <button className="df-compact-date-arrow" aria-label={t(lang, "timeline.prevSegment")} onClick={() => shiftTimeline(-1)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m9.5 3-5 5 5 5" /></svg></button>
@@ -8931,7 +8933,7 @@ if (cached?.data && cached?.settings) {
               </>
             )}
           </div>
-          {compactExecuteView === "schedule" && mobileDatePickerOpen && (
+          {!productPresentation && compactExecuteView === "schedule" && mobileDatePickerOpen && (
             <DateQuickPicker
               month={mobileDatePickerMonth}
               selectedDate={timelineWindowAnchorDate}
@@ -9228,7 +9230,7 @@ if (cached?.data && cached?.settings) {
               />
             ) : <>
             <div className="df-timeline-body">
-              {!compactLayout && <>
+              {!productPresentation && !compactLayout && <>
                 <button className="df-date-arrow left" aria-label={t(lang, "timeline.prevSegment")} onClick={() => shiftTimeline(-1)}>‹</button>
                 <button className="df-date-arrow right" aria-label={t(lang, "timeline.nextSegment")} onClick={() => shiftTimeline(1)}>›</button>
               </>}
@@ -9816,12 +9818,12 @@ if (cached?.data && cached?.settings) {
                   );
                 })() : (
                   <div className="df-timeline-daily">
-                    <button
-                      type="button"
-                      className={`df-date-title df-date-title-compact df-date-title-button${timelineWindowAnchorDate === today ? " today" : ""}`}
-                      aria-expanded={mobileDatePickerOpen}
-                      aria-label={lang === "zh" ? "打开日期快选" : "Open quick date picker"}
-                      onClick={() => {
+                    <TimelineDateTag
+                      type={productPresentation ? undefined : "button"}
+                      className={`df-date-title df-date-title-compact${productPresentation ? "" : " df-date-title-button"}${timelineWindowAnchorDate === today ? " today" : ""}`}
+                      aria-expanded={productPresentation ? undefined : mobileDatePickerOpen}
+                      aria-label={productPresentation ? (lang === "zh" ? "当前日期" : "Current date") : (lang === "zh" ? "打开日期快选" : "Open quick date picker")}
+                      onClick={productPresentation ? undefined : () => {
                         if (compactLayout) return;
                         setMobileDatePickerMonth(timelineWindowAnchorDate.slice(0, 7));
                         setMobileDatePickerOpen((open) => !open);
@@ -9836,9 +9838,9 @@ if (cached?.data && cached?.settings) {
                           return weekdayShort[d.getDay()];
                         })()}
                       </span>
-                      <span className={`df-date-title-chevron${mobileDatePickerOpen ? " open" : ""}`} aria-hidden="true">⌄</span>
-                    </button>
-                    {!compactLayout && mobileDatePickerOpen && (
+                      {!productPresentation && <span className={`df-date-title-chevron${mobileDatePickerOpen ? " open" : ""}`} aria-hidden="true">⌄</span>}
+                    </TimelineDateTag>
+                    {!productPresentation && !compactLayout && mobileDatePickerOpen && (
                       <DateQuickPicker
                         month={mobileDatePickerMonth}
                         selectedDate={timelineWindowAnchorDate}
@@ -10121,14 +10123,14 @@ if (cached?.data && cached?.settings) {
                   </div>
                 )}
               </div>
-              <div className="df-view-switch-vertical" aria-label={t(lang, "timeline.switchView")}>
+              {!productPresentation && <div className="df-view-switch-vertical" aria-label={t(lang, "timeline.switchView")}>
                 {([
                   ["daily", viewLabel(lang, "daily")],
                   ["3day", viewLabel(lang, "3day")],
                   ["weekly", viewLabel(lang, "weekly")],
                   ["month", viewLabel(lang, "month")]
                 ] as Array<[TimelineView, string]>).map(([view, label]) => <button key={view} className={timelineView === view ? "active" : ""} onClick={() => changeTimelineView(view)}>{label}</button>)}
-              </div>
+              </div>}
             </div>
             </>}
           </section>
@@ -10154,7 +10156,7 @@ if (cached?.data && cached?.settings) {
 
       {compactLayout && !drawerOpen && utilityPanel !== "settings" && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, mode)} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
-          {!settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
+          {!productPresentation && !settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
           </button> : <span className="df-mobile-dock-spacer" aria-hidden="true" />}
           <WorkspaceModeTabs mode={mode} lang={lang} onChange={changeMode} className="df-mobile-mode-switch" as="div" />
@@ -10165,9 +10167,9 @@ if (cached?.data && cached?.settings) {
         </nav>, document.body)
       )}
 
-      {!compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
-      {!compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
-      {compactLayout && !drawerOpen && !utilityPanel && !aiOpen && createPortal(<button
+      {!productPresentation && !compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
+      {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
+      {!productPresentation && compactLayout && !drawerOpen && !utilityPanel && !aiOpen && createPortal(<button
         type="button"
         className="df-mobile-quick-add-fab"
         style={themeVars(settings, mode)}

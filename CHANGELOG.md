@@ -3,8 +3,9 @@
 ## 2026-10-04 · 产品介绍页
 
 ### 改进
+- 介绍页的说明标题统一为主标题字号；执行示例扩大时间轴、仅展示日期，收起日期与视图切换以及加号、AI 快捷入口，保留任务安排与完成操作。
 - 规划与执行介绍页使用全屏产品工作区：规划任务缩进更清晰、卡片更紧凑，右侧展示说明；执行保留左侧候选、将时间轴靠右，中间说明正常滚动，视觉中心附近保持更大、更清晰的文字，到上下两端时才逐渐缩小、淡出。较窄的桌面窗口仍显示说明；手机与竖屏使用产品紧凑布局，在画面下方正常阅读介绍。示例操作独立于个人数据。
-- 规划与执行介绍页复用产品顶栏，可直接切换执行、规划与 Navo AI，左上角返回首页；支持入口包含爱发电、GitHub 与个人网页占位，相关原理暂保留占位。首页与 AI 页保持现状。
+- 规划与执行介绍页复用产品顶栏，可直接切换执行、规划与 Navo AI，左上角返回首页；支持入口包含爱发电、GitHub 与个人网页占位，相关原理暂保留占位。首页保持现状，AI 演示继续使用现有产品布局。
 
 ### 修复
 - 修复安排按钮首次点击被悬停预览打断的问题；AI 建议应用和调整使用时间记录，避免与已有安排冲突，并支持撤回。
@@ -64,8 +65,9 @@
 ## 2026-10-04 · Product feature pages
 
 ### Improved
+- Introduction headings now share the main title size. Execution examples use a wider timeline and a read-only date, with date and calendar-view switches and floating Add/AI shortcuts removed; task scheduling and completion remain available.
 - Planning and Execute introductions fill the window with the product workspace: Planning has clearer indentation, compact task cards, and notes on the right; Execute keeps candidates on the left and the timeline on the right. Notes scroll naturally, keeping larger, clearer text across a broad central reading zone and becoming smaller and fainter only near the top and bottom edges. Narrower desktop windows keep the notes visible; phones and portrait screens use the compact product layout with introductions below. Example changes stay separate from personal data.
-- Planning and Execute reuse the product header to switch between Execute, Planning, and Navo AI, with the logo returning home; Support includes Afdian, GitHub, and a personal-site placeholder, alongside a Principles placeholder. The homepage and AI page stay unchanged.
+- Planning and Execute reuse the product header to switch between Execute, Planning, and Navo AI, with the logo returning home; Support includes Afdian, GitHub, and a personal-site placeholder, alongside a Principles placeholder. The homepage stays unchanged and AI keeps its existing workspace layout.
 
 ### Fixed
 - Prevent hover previews from interrupting the first scheduling click; applying and adjusting AI suggestions uses timeline records, avoids existing schedules, and supports undo.
