@@ -585,7 +585,7 @@ export function TaskCard({
           if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview();
         } : undefined}
         onClick={onClick}
-        title={compact ? (lang === "zh" ? "长按后拖到时间轴排程" : "Long press, then drag to schedule") : t(lang, "taskCard.dragHint")}
+        title={demo ? undefined : compact ? (lang === "zh" ? "长按后拖到时间轴排程" : "Long press, then drag to schedule") : t(lang, "taskCard.dragHint")}
       >
         <TaskRecurrenceIndicator recurrence={task.recurrence} lang={lang} />
         <TaskBlockRow className={`df-candidate-row${scheduleSummary ? " df-candidate-summary-row" : ""}`}>
@@ -615,7 +615,7 @@ export function TaskCard({
 
           {!isEvent && <TaskActions>
             {!scheduleSummary && !isOverdueCandidate && <div className="df-candidate-schedule-actions" onMouseLeave={() => { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); } }}>
-              <IconButton className={`df-icon-button icon-schedule${schedulePanelOpen ? " is-active" : ""}`} icon={<UiCalendarClockIcon size={18} />} label={t(lang, "taskCard.openScheduling")} aria-expanded={schedulePanelOpen} onMouseEnter={queuePlacementPreview} onFocus={previewPlacement} onClick={toggleSchedulePanel} />
+              <IconButton className={`df-icon-button icon-schedule${schedulePanelOpen ? " is-active" : ""}`} icon={<UiCalendarClockIcon size={18} />} label={t(lang, "taskCard.openScheduling")} aria-expanded={schedulePanelOpen} onMouseEnter={queuePlacementPreview} onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) previewPlacement(); }} onClick={toggleSchedulePanel} />
               {renderPlacementLocateAction()}
             </div>}
             {isOverdueCandidate && !scheduleSummary && isPlacementArmed && <div className="df-candidate-schedule-actions" onBlur={(event) => {

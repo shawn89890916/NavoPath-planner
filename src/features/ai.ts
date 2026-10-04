@@ -3,38 +3,16 @@ import type { FeatureCopy } from "../productSite";
 
 export default {
   "zh": {
-    "title": "整理与安排，多一个帮手。",
-    "description": "从任务建议到安排预览，查看、调整并应用 AI 给出的下一步。",
-    "steps": [
-      [
-        "查看估时与项目建议",
-        "创建任务时，估时和项目建议帮助你开始整理。示例里可以调整时长，或接受项目建议。"
-      ],
-      [
-        "生成安排预览",
-        "选择「安排今天」，检查任务怎样避开已有安排。这里使用固定示例，不消耗 AI 额度。"
-      ],
-      [
-        "调整并应用",
-        "在真实 AI 面板里修改建议时间、时长或项目，再选择要应用的建议。结果写入这份示例一天。"
-      ],
-      [
-        "撤回本轮操作",
-        "应用之后仍可以撤回。试试「调整一项安排」和「撤回本轮操作」，观察示例时间轴的变化。"
-      ]
-    ],
+    "title": "下一步，多一个帮手。",
+    "description": "先看建议，再决定。",
     "benefits": [
       [
-        "建议看得见",
-        "任务的用时、项目与安排位置呈现在界面中，方便检查。"
+        "先预览。",
+        "建议应用前，都可以检查和调整。"
       ],
       [
-        "应用前可调整",
-        "选择需要的建议，改好时间与时长，再应用到时间轴。"
-      ],
-      [
-        "操作有回路",
-        "确认、取消与撤回都在面板里，方便保留自己的判断。"
+        "随时调整。",
+        "应用后仍能修改，也能撤回本轮安排。"
       ]
     ],
     "faq": [
@@ -54,38 +32,16 @@ export default {
     "next": "planning"
   },
   "en": {
-    "title": "A little help with organizing and scheduling.",
-    "description": "Review, adjust, and apply the next steps suggested by AI, from task estimates to schedule previews.",
-    "steps": [
-      [
-        "Review task suggestions",
-        "Duration and project suggestions help you organize a new task. Adjust the estimate or accept a project suggestion in this example."
-      ],
-      [
-        "Preview a schedule",
-        "Choose Schedule today and review how the tasks fit around existing commitments. This fixed example uses no AI credits."
-      ],
-      [
-        "Adjust and apply",
-        "Change suggested times, durations, or projects in the real AI panel. Apply selected suggestions to the example day."
-      ],
-      [
-        "Undo the changes",
-        "You can undo after applying. Try Adjust a task and Undo this run to see the example timeline change."
-      ]
-    ],
+    "title": "A little help with the next step.",
+    "description": "Review the suggestions. You decide.",
     "benefits": [
       [
-        "See the suggestions",
-        "Estimates, projects, and suggested positions are visible and easy to review."
+        "Preview first.",
+        "Review and adjust before applying."
       ],
       [
-        "Adjust before applying",
-        "Choose the suggestions you want and refine their time and duration."
-      ],
-      [
-        "Keep your judgment",
-        "Confirm, cancel, and undo from the same panel."
+        "Keep control.",
+        "Change the plan or undo the latest round."
       ]
     ],
     "faq": [

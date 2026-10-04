@@ -14999,6 +14999,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 .df-ai-task-row-top {
+  flex-wrap: wrap;
 
   display: flex;
 
@@ -15613,6 +15614,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 
 .df-ai-action-header {
+  flex-wrap: wrap;
 
   font-size: 12px;
 
@@ -15753,6 +15755,9 @@ body:has(:active)::-webkit-scrollbar-thumb {
   corner-shape: var(--corner-shape, squircle); }
 
 .df-ai-chip-button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 
   min-height: 22px;
 
@@ -15933,6 +15938,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   padding: 0; accent-color: var(--mode-primary); }
 
 .df-ai-import-bulk {
+  flex-wrap: wrap;
 
   display: flex;
 
@@ -36647,7 +36653,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 .df-ai-capability-state > span { color: var(--accent-active); font-size: 8px; }
 .df-ai-capability-state.locked > span { color: var(--text-muted); }
 
-.df-ai-turn { display: grid; gap: 9px; width: 100%; margin: 0 0 32px; }
+.df-ai-turn { display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; width: 100%; margin: 0 0 32px; }
 .df-ai-turn.user { justify-items: end; display: grid; }
 .df-ai-message-actions {
   display: flex;
@@ -37015,6 +37021,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
   #root .df-app .df-ai-panel-reference .df-ai-attach-btn { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
   #root .df-app .df-ai-panel-reference .df-ai-send-btn { grid-column: 3; width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
+  .df-ai-task-row-top > strong { flex-basis: 100%; }
+  .df-ai-import-bulk > button { flex: 1; min-width: 0; font-size: 12px; }
   .df-ai-markdown { font-size: 15px; }
   .df-ai-markdown table { display: block; max-width: 100%; overflow-x: auto; }
 }
@@ -38599,6 +38607,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   .df-mobile-dock--viewport.is-mobile-sheet-open {
+    visibility: hidden;
     pointer-events: none;
   }
 

@@ -7,7 +7,7 @@ import {
   minutesToTime,
   timeToMinutes,
 } from "./timelineGeometry";
-import { scheduledDateTimesOverlap } from "./utils/conflictLayout";
+import { scheduledTaskIntervalsOnDate } from "./utils/conflictLayout";
 import { rescheduleTimelineRecord } from "./utils/timelineRecords";
 
 export const DEMO_DATE = "2030-10-07";
@@ -21,7 +21,7 @@ export function createDemoData(
   const projects = [
     ["website", zh ? "推进个人网站" : "Build a personal website", "#7ea172"],
     ["learning", zh ? "学习数据分析" : "Learn data analysis", "#584d3d"],
-    ["life", zh ? "运动与生活" : "Movement and life", "#d7816a"],
+    ["life", zh ? "运动" : "Exercise", "#d7816a"],
   ].map(([id, title, color], order) => ({
     id,
     title,
@@ -59,21 +59,11 @@ export function createDemoData(
   });
   const content = task(
     "content",
-    zh ? "准备网站内容" : "Prepare website content",
+    zh ? "撰写个人介绍" : "Write your introduction",
     "website",
     45,
     0,
   );
-  content.subtasks = [
-    zh ? "写一段个人介绍" : "Write an introduction",
-    zh ? "整理两个项目案例" : "Collect two case studies",
-    zh ? "补齐联系信息" : "Add contact details",
-  ].map((title, index) => ({
-    id: `sub-${index}`,
-    title,
-    completed: false,
-    createdAt: DEMO_STAMP,
-  }));
   let data: PlannerData = {
     version: 1,
     importedSeedVersion: "product-demo",
@@ -97,6 +87,10 @@ export function createDemoData(
         2,
       ),
       task("walk", zh ? "散步与拉伸" : "Walk and stretch", "life", 30, 3),
+      task("publish", zh ? "发布新版本" : "Publish the update", "website", 30, 4),
+      task("notebook", zh ? "整理课程笔记" : "Review lesson notes", "learning", 30, 5),
+      task("practice", zh ? "练习数据可视化" : "Practice data visualization", "learning", 45, 6),
+      task("exercise", zh ? "完成力量训练" : "Strength training", "life", 30, 7),
     ],
     longTasks: [],
     events: [],
@@ -114,14 +108,14 @@ export function createDemoData(
       };
     return data;
   }
-  data.tasks = data.tasks.map((item) => ({
+  data.tasks = data.tasks.map((item, index) => index >= 4 ? item : ({
     ...item,
     plannedForDate: DEMO_DATE,
     executionLane: "candidate",
   }));
   const meeting = task(
     "event_occ_demo",
-    zh ? "已有安排 · 项目交流" : "Existing commitment · Project check-in",
+    zh ? "项目交流" : "Project check-in",
     "website",
     30,
     4,
@@ -140,6 +134,10 @@ export function createDemoData(
       DEMO_DATE,
       stage === 2 ? "10:00" : "09:30",
     );
+  if (feature === "execute" && stage >= 1) {
+    data = scheduleDemoTask(data, "notebook", DEMO_DATE, "11:00");
+    data = scheduleDemoTask(data, "exercise", DEMO_DATE, "15:00");
+  }
   if (feature === "execute" && stage === 3)
     data.tasks = data.tasks.map((item) =>
       item.id === "content"
@@ -205,21 +203,7 @@ export function scheduleDemoTask(
     return data;
   const end = addMinutes(start, minutes);
   if (
-    data.tasks.some(
-      (other) =>
-        other.id !== taskId &&
-        other.scheduledDate &&
-        other.scheduledStart &&
-        other.scheduledEnd &&
-        scheduledDateTimesOverlap(
-          date,
-          start,
-          end,
-          other.scheduledDate,
-          other.scheduledStart,
-          other.scheduledEnd,
-        ),
-    )
+    scheduledTaskIntervalsOnDate(data.tasks.filter(item => item.id !== taskId), date).some(interval => timeToMinutes(start) < interval.end && timeToMinutes(end) > interval.start)
   )
     return data;
   const existing = task.timelineRecords?.find(
@@ -269,18 +253,7 @@ export function firstDemoSlot(
   const slots = getFreeSlots({
     now: new Date(`${DEMO_DATE}T08:00:00`),
     dateRange: [date],
-    scheduledEvents: data.tasks
-      .filter(
-        (item) =>
-          item.id !== taskId && item.scheduledDate && item.scheduledStart,
-      )
-      .map((item) => ({
-        id: item.id,
-        title: item.title,
-        date: item.scheduledDate!,
-        start: item.scheduledStart!,
-        end: item.scheduledEnd!,
-      })),
+    scheduledEvents: scheduledTaskIntervalsOnDate(data.tasks.filter(item => item.id !== taskId), date).map((interval, index) => ({ id: `busy-${index}`, title: "", date, start: minutesToTime(interval.start), end: minutesToTime(interval.end) })),
     settings: {
       dayStart: "09:00",
       dayEnd: "18:00",

@@ -1387,7 +1387,7 @@ export default function PlanningView(props: {
 
   const kanbanTasks = viewFilteredTasks;
   // This entry note stays dismissed after the user closes it.
-  const showLongRangeGuide = !guideDismissed;
+  const showLongRangeGuide = !props.demo && !guideDismissed;
 
   const treeDropSlot = (kind: TreeNodeKind, id: string, position: TreeDropTarget["position"], suppress = false) => {
     if (suppress || !dropTarget || dropTarget.kind !== kind || dropTarget.id !== id || dropTarget.position !== position) return null;
@@ -2251,7 +2251,7 @@ export default function PlanningView(props: {
               </div>
             )}
             <div className="df-planning-filter-corner">
-              {viewMode !== "metrics" && (
+              {!props.demo && viewMode !== "metrics" && (
               <div className="df-filter-popover-anchor">
                 <button
                   type="button"
@@ -2932,7 +2932,7 @@ export default function PlanningView(props: {
               </React.Fragment>
             ))}
 
-            {(
+            {(!props.demo || unassigned.length > 0) && (
               <React.Fragment>
                 {treeDropSlot("project", "__unassigned__", "before")}
                 <div className="df-category-branch" data-project-id="__unassigned__">

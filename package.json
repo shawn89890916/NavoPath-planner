@@ -32,6 +32,7 @@
       "path": [
         "dist/assets/index-*.js",
         "dist/assets/main-*.js",
+        "dist/assets/workspaceEnvironment-*.js",
         "dist/assets/ui-primitives-*.js",
         "dist/assets/react-vendor-*.js",
         "dist/assets/supabase-vendor-*.js",
@@ -60,6 +61,7 @@
       "path": [
         "dist/assets/index-*.js",
         "dist/assets/main-*.js",
+        "dist/assets/workspaceEnvironment-*.js",
         "dist/assets/ui-primitives-*.js",
         "dist/assets/react-vendor-*.js",
         "dist/assets/supabase-vendor-*.js",
@@ -86,6 +88,7 @@
       "name": "Core styles",
       "path": [
         "dist/assets/index-*.css",
+        "dist/assets/main-*.css",
         "dist/assets/ui-primitives-*.css"
       ],
       "limit": "85 KB"
@@ -103,6 +106,7 @@
       "name": "Total styles",
       "path": [
         "dist/assets/index-*.css",
+        "dist/assets/main-*.css",
         "dist/assets/ui-primitives-*.css",
         "dist/assets/LandingPage-*.css",
         "dist/assets/WidgetApp-*.css",
@@ -119,7 +123,7 @@
       "name": "Product site scripts",
       "path": [
         "dist/assets/ProductFeaturePage-*.js",
-        "dist/assets/ProductDemo-*.js",
+        "dist/assets/productDemoRuntime-*.js",
         "dist/assets/ProductMenu-*.js",
         "dist/assets/planning-*.js",
         "dist/assets/execute-*.js",
@@ -131,7 +135,7 @@
       "name": "Product site styles",
       "path": [
         "dist/assets/ProductFeaturePage-*.css",
-        "dist/assets/ProductDemo-*.css",
+        "dist/assets/productDemoRuntime-*.css",
         "dist/assets/ProductMenu-*.css"
       ],
       "limit": "4 KB"

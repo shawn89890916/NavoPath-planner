@@ -1,44 +1,35 @@
 # Product feature pages
 
-The public routes are `/features/planning`, `/features/execute`, and `/features/ai`.
-Their Chinese and English content loads separately from `src/features/`. The
-homepage retains its existing layout and adds the Product navigation menu.
+Public routes: `/features/planning`, `/features/execute`, `/features/ai`.
+Each page contains a short bilingual introduction, the running product workspace,
+brief notes, FAQ, and navigation to the next feature. Homepage content and animation
+remain intact; the navigation adds Product, Support, a sliding language switch, and
+Start now. Personal-site navigation stays disabled until its URL is supplied.
 
-`siteEntry.tsx` dispatches public pages and `/product-demo/:feature` before importing
-the application entry. Demo routes use an in-memory `PlannerData` fixture and never
-initialize an account, planner API, AI client, synchronization, or persistence.
+`siteEntry.tsx` installs `productDemoRuntime.ts` for `/product-demo/:feature` and
+then imports the same `main.tsx` used by `/app`. There is no separately assembled
+workspace renderer. Native App owns layout, cards, menus, drag/drop, timeline,
+planning views, scheduling, AI previews, and undo. Product CSS determines their
+geometry. Demo CSS contains only viewport containment, omitted account launchers,
+preset buttons, and notes in the unused candidate space.
 
-The workspace and examples share `PlanningView`, `TaskBlock`, `WorkspacePresentation`,
-`AiPanel`, and `ExecutionSharedLayout`. The application retains its service callbacks.
-Candidate transitions, pointer geometry, conflict detection, timeline record changes,
-free-slot calculation, and AI import undo come from the same product utilities.
-`AiPanel` loads on demand through its shared Suspense boundary.
+The demo installs a memory PlannerApi before browser fallback initialization.
+`workspaceEnvironment.ts` supplies memory storage and a fixed example clock to App;
+regular app routes retain their normal API, storage, and clock. Account services,
+real AI requests, notification onboarding, and cloud synchronization are skipped.
+Refreshing the iframe restores the fixture. Presets produce real AI messages and
+schedule actions; native App applies or undoes them using timeline records. Open AI
+input, providers, attachments, and account controls are outside demo scope.
 
-The parent and iframe validate the sender window and same-origin address. Parent
-commands contain only stage, language, reset, or visibility. Interaction pauses
-stage changes; Follow the story restores the current stage and Reset restores its
-initial fixture. The iframe reports readiness, interaction, and loading failure.
+Parent/iframe messages validate source windows and origin. The parent lazy mounts
+near the viewport and offers retry after initialization failure. Visibility messages
+pause offscreen animations. Scrolling does not replace user changes. Planning has
+three expanded projects, no subtasks, and four enabled native views. Examples use a
+fixed day, fifteen-minute scheduling, and the product's conflict utilities.
 
-The fixed example date and clock live in `productDemoData.ts`. AI presets live in
-`ProductDemo.tsx` and use the real message and action-preview structures. Each
-accepted round records previous tasks, so undo retains other rounds and edits.
-When product behavior changes, update these fixtures and the corresponding
-`src/features/` content along with the shared components.
-
-Verification covers candidate add/remove, fifteen-minute scheduling and conflicts,
-rescheduling, AI application and undo, desktop scroll stages, manual pause/resume,
-mobile layouts at 390×844 and 360×800, keyboard menus, reduced motion, loading
-retry, deep-link refresh, language switching, and browser storage/network isolation.
-Run the targeted product tests, build, CSS, terminology, changelog, and size gates.
-
-Bundle checks include the deferred workspace, shared UI, AI panel, and individual
-feature content chunks. Initial and total app budgets allow the compression cost of
-splitting the former single module; deferred views retain their existing budget.
-Feature scripts and styles have separate 16 KB and 4 KB Brotli budgets. The existing
-GitHub Actions deployment workflow runs on `main`; a feature branch does not trigger
-it. Adding a separate verification workflow requires GitHub workflow permission.
-
-Web builds use root-relative assets for deep routes. `dist` and `ios:sync` retain
-the `--base=./` build override for local-file Electron and Capacitor packaging.
-Demo guide dismissal stays in component memory, and demo loading errors bypass
-the workspace's session-storage recovery handler.
+Verify native planning/execute mode switching, candidate add/remove, scheduling,
+rescheduling, AI preview apply/undo, account storage/network isolation, deep links,
+language, menus, reduced motion, and 390×844 / 360×800 layouts. Run build, targeted
+or full tests as required by AGENTS.md, CSS, terminology, changelog, diff and size
+checks. Feature scripts/styles have 16 KB / 4 KB Brotli budgets. Existing workflows
+run on main and tags; a feature-branch push does not deploy production.

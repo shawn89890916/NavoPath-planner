@@ -1,4 +1,4 @@
-import { ProductMenu } from "./components/ProductMenu";
+import { ProductMenu, SiteLanguageSwitch } from "./components/ProductMenu";
 import { type CSSProperties, useEffect, useState } from "react";
 import { ProductIcon } from "./WorkspacePresentation";
 import { DESKTOP_DOWNLOAD_URL } from "./downloads";
@@ -213,10 +213,9 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
 
   return <div className="landing" lang={lang}>
     <nav className="landing-nav" aria-label="NavoPath">
-      <a className="landing-brand" href="#top" aria-label="NavoPath"><ProductIcon compact /><span>NavoPath</span></a>
-      <div className="landing-nav-links">
-            <ProductMenu lang={lang} />{c.nav.map(([label, href]) => <a key={href} href={href} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</div>
-      <div className="landing-nav-actions"><button className="landing-lang" aria-label={lang === "en" ? "切换为中文" : "Switch to English"} onClick={() => setLang(lang === "en" ? "zh" : "en")}>{lang === "en" ? "中" : "EN"}</button><button className="landing-button quiet small" onClick={() => setShowAuth(true)}>{c.login}</button></div>
+      <ProductMenu lang={lang} kind="brand"><ProductIcon compact /><span>NavoPath</span></ProductMenu>
+      <div className="landing-nav-links"><ProductMenu lang={lang} /><ProductMenu lang={lang} kind="support" /></div>
+      <div className="landing-nav-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><a className="np-start-link" href="/app">{lang === "zh" ? "现在开始" : "Start now"}</a></div>
     </nav>
     <main>
       <section className="landing-cover" id="top"><div className="landing-cover-content" style={coverStyle}><div className="landing-cover-logo"><ProductIcon /></div><div className="landing-brand-copy"><p className="landing-product-name">{c.productName}</p><h1 className="landing-slogan">{c.title}</h1></div></div><span className="landing-product-scroll-cue" aria-hidden="true"><i>↑</i>{c.scroll}</span></section>

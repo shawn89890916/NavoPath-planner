@@ -1,3 +1,5 @@
+import { getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./workspaceEnvironment";
+import { WorkspaceModeTabs } from "./components/WorkspaceModeTabs";
 import { undoAiImportData } from "./utils/aiImportUndo";
 import { DailyTimelineGrid } from "./components/ExecutionSharedLayout";
 import { themeVars } from "./WorkspacePresentation";
@@ -114,7 +116,7 @@ import { canAcknowledgeBootstrapSave, parseBootstrapCache, recoverAccountSetting
 
 // Preload the optional first-login permission flow without adding it to the
 // initial workspace bundle; the promise is already warm when auth completes.
-const webNotificationOnboardingPromise = import("./webNotificationOnboarding");
+const webNotificationOnboardingPromise = getWorkspaceDemoRuntime() ? Promise.resolve({ rememberNewUserNotificationRequest: () => undefined, watchForNewUserNotification: () => () => undefined }) : import("./webNotificationOnboarding");
 const rememberWebNotification = (email: string) => webNotificationOnboardingPromise.then(({ rememberNewUserNotificationRequest }) => rememberNewUserNotificationRequest(email));
 import { preparePlannerDataRestore, withDeletionTombstones } from "./syncMerge";
 import { SyncScheduler, formatLastSyncedAt, isCurrentWorkspaceLoad, presetForMinutes, readSyncInterval, shouldApplyWorkspaceRevision, shouldReconcileRemoteRevision, shouldRequeueFailedSave, SYNC_INTERVAL_PRESETS } from "./sync";
@@ -151,6 +153,9 @@ import "./ui-primitives.css";
 void import("./ai-history-actions.css");
 import type { MobileShortSheetKind } from "./MobileTaskSummary";
 
+const productDemo = getWorkspaceDemoRuntime();
+const localStorage = getWorkspaceStorage();
+const sessionStorage = productDemo?.storage ?? window.sessionStorage;
 installBrowserFallback();
 
 const ChangelogPage = lazy(() => import("./ChangelogPage"));
@@ -166,7 +171,7 @@ const UnfinishedTasksDialog = lazy(() => import("./components/UnfinishedTasksDia
 const McpTokenManager = lazy(() => import("./components/McpTokenManager"));
 const SyncBridgeManager = lazy(() => import("./components/SyncBridgeManager"));
 
-const todayIso = () => localIsoDate();
+const todayIso = () => productDemo?.date ?? localIsoDate();
 const TIMELINE_START = 0;
 const TIMELINE_END = 24;
 
@@ -243,6 +248,7 @@ const WIDGET_TIMER_REMAINDER_KEY = "navopath-widget-timer-remainder-ms";
 const AI_DOCKED_STORAGE_KEY = "navopath-ai-docked";
 
 function loadAiDockedPreference() {
+  if (productDemo) return false;
   try { return localStorage.getItem(AI_DOCKED_STORAGE_KEY) === "true"; } catch { return false; }
 }
 
@@ -671,7 +677,7 @@ function writeBootstrapCache(
     localStorage.setItem(bootstrapCacheKey(userId), JSON.stringify({
       data,
       settings,
-      savedAt: new Date().toISOString(),
+      savedAt: workspaceNow().toISOString(),
       dataDirty: sync.dataDirty ?? current?.dataDirty ?? false,
       settingsDirty: sync.settingsDirty ?? current?.settingsDirty ?? false,
       dataPendingSavedAt: sync.dataPendingSavedAt === null
@@ -708,7 +714,7 @@ function defaultForm(type: AddType = "task"): FormState {
 }
 
 function makeTask(form: FormState, intelligence?: { data: PlannerData; projects: Project[]; settings: Settings }): Task {
-  const now = new Date().toISOString();
+  const now = workspaceNow().toISOString();
   const prediction = intelligence
     ? predictTaskIntelligence({ title: form.title, projectId: form.projectId || undefined, data: intelligence.data, projects: intelligence.projects })
     : undefined;
@@ -758,7 +764,7 @@ function profileWithFeedback(data: PlannerData, key: keyof NonNullable<PlannerDa
 }
 
 function makeProject(form: FormState): Project {
-  const now = new Date().toISOString();
+  const now = workspaceNow().toISOString();
   return {
     id: uid("project"),
     title: form.title.trim(),
@@ -785,7 +791,7 @@ function makeEvent(form: FormState): CalendarEvent {
     category: form.category,
     details: form.details,
     recurrence: form.recurrence,
-    createdAt: new Date().toISOString()
+    createdAt: workspaceNow().toISOString()
   };
 }
 
@@ -818,7 +824,7 @@ function aiConversationTitle(message: string) {
 }
 
 function makeAiConversation(title = "新对话"): AiConversation {
-  const now = new Date().toISOString();
+  const now = workspaceNow().toISOString();
   return { id: uid("conversation"), title, messages: [], createdAt: now, updatedAt: now };
 }
 
@@ -846,12 +852,12 @@ function buildEventFromTask(task: Task, activeRecord?: TimelineRecord): Calendar
     category: task.category,
     details: task.notes || "",
     recurrence: task.recurrence,
-    createdAt: new Date().toISOString()
+    createdAt: workspaceNow().toISOString()
   };
 }
 
 function buildTaskFromEvent(event: CalendarEvent): Task {
-  const now = new Date().toISOString();
+  const now = workspaceNow().toISOString();
   const id = uid("task");
   const date = event.startDate || event.date || todayIso();
   const start = event.startTime || undefined;
@@ -1190,10 +1196,10 @@ function YearCalendarOverview({
   );
 }
 function App() {
-  const isWorkspaceRoute = window.location.pathname === "/app" || window.location.pathname.startsWith("/app/") || Boolean(window.desktopApi);
+  const isWorkspaceRoute = Boolean(productDemo) || window.location.pathname === "/app" || window.location.pathname.startsWith("/app/") || Boolean(window.desktopApi);
   const [data, setData] = useState<PlannerData | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [lang, setLang] = useState<Language>(detectSystemLanguage());
+  const [lang, setLang] = useState<Language>(productDemo?.language ?? detectSystemLanguage());
   const [authState, setAuthState] = useState<AuthState | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
@@ -1226,7 +1232,7 @@ function App() {
   const [editingId, setEditingId] = useState("");
   const [editingRecordId, setEditingRecordId] = useState<string | undefined>(undefined);
   const [form, setForm] = useState<FormState>(defaultForm());
-  const [aiOpen, setAiOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(productDemo?.feature === "ai");
   const [aiDocked, setAiDocked] = useState(loadAiDockedPreference);
   const freshAiConversationRef = useRef(true);
   const [referencedTaskId, setReferencedTaskId] = useState("");
@@ -1350,7 +1356,7 @@ function App() {
   const toastTimerRef = useRef<number | null>(null);
   const undoSnapshotRef = useRef<{ committedTaskIds: string[]; clearedSourceTaskIds: string[]; removedFromCandidate: Set<string> } | null>(null);
   const [showCompletedCandidates, setShowCompletedCandidates] = useState(false);
-  const [scheduleGuideOpen, setScheduleGuideOpen] = useState(() => !isGuideDismissed("schedule"));
+  const [scheduleGuideOpen, setScheduleGuideOpen] = useState(() => !productDemo && !isGuideDismissed("schedule"));
   const [completingTaskIds, setCompletingTaskIds] = useState<Set<string>>(() => new Set());
   const completionHandlesRef = useRef(new Map<string, ReturnType<typeof scheduleMotionCommit> | null>());
   const [groupByProject, setGroupByProject] = useState(true);
@@ -2042,7 +2048,7 @@ function App() {
   }, [data?.generatedAt]);
 
   useEffect(() => {
-    if (!aiOpen || !freshAiConversationRef.current || !data) return;
+    if (productDemo || !aiOpen || !freshAiConversationRef.current || !data) return;
     freshAiConversationRef.current = false;
     void startNewAiConversation();
   }, [aiOpen, data]);
@@ -2237,7 +2243,7 @@ if (cached?.data && cached?.settings) {
           scheduledStart: task.scheduledStart,
           ...calculateTimelineRecordEnd(task.scheduledDate, task.scheduledStart, taskDuration(task)),
           executionStatus: task.executionStatus || "scheduled",
-          createdAt: task.updatedAt || new Date().toISOString(),
+          createdAt: task.updatedAt || workspaceNow().toISOString(),
         };
         return { ...task, timelineRecords: [record], scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, executionStatus: undefined };
       });
@@ -2253,6 +2259,8 @@ if (cached?.data && cached?.settings) {
     cloudBaselineReadyRef.current = true;
     setData(nextData);
     setSettings(nextSettings);
+    if (productDemo?.feature === "ai") setAiMessages([productDemo.suggest(nextData)]);
+    productDemo?.ready();
     if (nextSettings.language) setLang(nextSettings.language);
     setModeState((nextSettings.activeMode as Mode) || "execute");
     if (nextSettings.defaultTimelineView) setTimelineView(nextSettings.defaultTimelineView);
@@ -2568,7 +2576,7 @@ if (cached?.data && cached?.settings) {
     const alignTimeline = () => {
       const container = timelineRef.current;
       if (!container || container.clientHeight <= 0 || container.scrollHeight <= container.clientHeight) return false;
-      const now = new Date();
+      const now = workspaceNow();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
       const targetMinutes = currentMinutes;
       const effectColumnCount = timelineView === "weekly" ? 7 : timelineView === "3day" ? 3 : 1;
@@ -2621,7 +2629,7 @@ if (cached?.data && cached?.settings) {
     if (mode !== "execute") return;
     const dayStart = settings?.dayStartTime || "00:00";
     const isInitial = !prevDayStartRef.current;
-    if (!isInitial && prevDayStartRef.current !== dayStart) {
+    if (!productDemo && !isInitial && prevDayStartRef.current !== dayStart) {
       const [h, m] = dayStart.split(":").map(Number);
       const startMinutes = (h || 0) * 60 + (m || 0);
       if (timelineRef.current) {
@@ -3000,7 +3008,7 @@ if (cached?.data && cached?.settings) {
   }
 
   async function saveData(next: PlannerData) {
-    const savedAt = new Date().toISOString();
+    const savedAt = workspaceNow().toISOString();
     const tracked = withDeletionTombstones(dataRef.current, next, savedAt);
     const optimistic = { ...tracked, aiProfile: buildAiProfile(tracked), savedAt };
     const version = dataSaveVersionRef.current + 1;
@@ -3034,6 +3042,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function enrichTaskInBackground(task: Task): Promise<Task | undefined> {
+    if (productDemo) return Promise.resolve(task);
     const currentSettings = settingsRef.current;
     const hasJevDurationPrediction = task.aiInference?.duration?.source === "ai"
       && isJevModelVersion(task.aiInference.duration.modelVersion);
@@ -3116,7 +3125,7 @@ if (cached?.data && cached?.settings) {
         && !currentTask.aiInference?.project?.userOverridden;
       if (!canApplyDuration && !canSuggestProject && !shouldCacheJevDuration && !shouldCacheJevProject) return currentTask;
 
-      const inferredAt = new Date().toISOString();
+      const inferredAt = workspaceNow().toISOString();
       const validProjectId = typeof projectId === "string"
         && latest.projects.some((project) => project.id === projectId && !project.completed)
         ? projectId
@@ -3151,7 +3160,7 @@ if (cached?.data && cached?.settings) {
     const current = settingsRef.current || settings;
     if (!current) return;
     const optimistic = normalizeSettings({ ...current, ...patch });
-    const pendingSavedAt = new Date().toISOString();
+    const pendingSavedAt = workspaceNow().toISOString();
     const version = settingsSaveVersionRef.current + 1;
     settingsSaveVersionRef.current = version;
     pendingSettingsSaveRef.current = { payload: optimistic, version, pendingSavedAt };
@@ -3364,7 +3373,7 @@ if (cached?.data && cached?.settings) {
       timerElapsedRef.current = 0; timerElapsedBaseRef.current = 0; timerStartedAtRef.current = null;
       setTimerTaskId(null); setTimerRunning(false); setTimerElapsed(0); setTimerStartedAt(null); return;
     }
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const start = new Date(Date.now() - elapsed * 1000).toISOString();
     const entry = {
       id: `te-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -3470,7 +3479,7 @@ if (cached?.data && cached?.settings) {
     if (!scrollElement) return;
 
     const updateNowVisibility = () => {
-      const now = new Date();
+      const now = workspaceNow();
       const nowDate = todayIso();
       if (!continuousTimelineDates.includes(nowDate) || scrollElement.clientHeight <= 0) {
         setNowInTimelineViewport(false);
@@ -3647,7 +3656,7 @@ if (cached?.data && cached?.settings) {
     const enabledSources = new Set(externalCalendarSources.filter((source) => source.enabled).map((source) => source.id));
     for (const occurrence of externalCalendarOccurrences) {
       if (!enabledSources.has(occurrence.source_id) || occurrence.status === "cancelled") continue;
-      const createdAt = occurrence.start_at || new Date().toISOString();
+      const createdAt = occurrence.start_at || workspaceNow().toISOString();
       if (occurrence.all_day) {
         for (const date of dates) {
           if (date < occurrence.start_date || date > occurrence.end_date) continue;
@@ -3937,7 +3946,7 @@ if (cached?.data && cached?.settings) {
     const durationChanged = existing && patch.estimatedHours !== undefined && patch.estimatedHours !== existing.estimatedHours;
     const projectChanged = existing && Object.prototype.hasOwnProperty.call(patch, "projectId") && patch.projectId !== existing.projectId;
     const titleChanged = existing && typeof patch.title === "string" && patch.title !== existing.title;
-    const inferredAt = new Date().toISOString();
+    const inferredAt = workspaceNow().toISOString();
     const nextProfile = current.aiProfile || buildAiProfile(current);
     let updatedTask: Task | undefined;
     void saveData({
@@ -3994,7 +4003,7 @@ if (cached?.data && cached?.settings) {
       beginShelfDrag(event, existing, "candidate");
       return;
     }
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const plannedTask: Task = {
       ...parentTask,
       id: uid("task"),
@@ -4049,7 +4058,7 @@ if (cached?.data && cached?.settings) {
     const nextTasks = current.tasks.map((task) => {
       if (!findSubtaskInTree(task.subtasks || [], subtaskId)) return task;
       found = true;
-      return { ...task, subtasks: removeSubtaskFromTree(task.subtasks || [], subtaskId), updatedAt: new Date().toISOString() };
+      return { ...task, subtasks: removeSubtaskFromTree(task.subtasks || [], subtaskId), updatedAt: workspaceNow().toISOString() };
     });
     if (!found) return;
     void saveData({ ...current, tasks: nextTasks });
@@ -4068,7 +4077,7 @@ if (cached?.data && cached?.settings) {
         if (idx === -1) return task;
         const updated = [...records];
         updated[idx] = { ...updated[idx], ...patch };
-        return { ...task, timelineRecords: updated, updatedAt: new Date().toISOString() };
+        return { ...task, timelineRecords: updated, updatedAt: workspaceNow().toISOString() };
       }),
     });
   }
@@ -4087,13 +4096,13 @@ if (cached?.data && cached?.settings) {
             scheduledDate: undefined,
             scheduledStart: undefined,
             scheduledEnd: undefined,
-            updatedAt: new Date().toISOString(),
+            updatedAt: workspaceNow().toISOString(),
           };
         }
         if (!records) return task;
         const filtered = records.filter((r) => r.id !== sourceRecordId);
         if (filtered.length === records.length) return task;
-        return { ...task, timelineRecords: filtered, updatedAt: new Date().toISOString() };
+        return { ...task, timelineRecords: filtered, updatedAt: workspaceNow().toISOString() };
       }),
     });
   }
@@ -4114,7 +4123,7 @@ if (cached?.data && cached?.settings) {
         scheduledStart: occurrenceMeta.scheduledStart,
         ...calculateTimelineRecordEnd(occurrenceMeta.scheduledDate, occurrenceMeta.scheduledStart, duration),
         executionStatus: "completed",
-        createdAt: new Date().toISOString(),
+        createdAt: workspaceNow().toISOString(),
       };
       updateTask(realTask.id, {
         timelineRecords: [...(realTask.timelineRecords || []), completedRecord],
@@ -4176,7 +4185,7 @@ if (cached?.data && cached?.settings) {
       const realTask = occurrenceToTaskMap.get(taskId);
       if (!realTask) return;
       // Cancel this occurrence instead of deleting the whole task
-      const now = new Date().toISOString();
+      const now = workspaceNow().toISOString();
       void saveData({
         ...data,
         tasks: data.tasks.map((task) => {
@@ -4282,7 +4291,7 @@ if (cached?.data && cached?.settings) {
       ...data,
       tasks: data.tasks.map((task) => {
         const p = map.get(task.id);
-        return p ? { ...task, ...p, updatedAt: new Date().toISOString() } : task;
+        return p ? { ...task, ...p, updatedAt: workspaceNow().toISOString() } : task;
       }),
     });
   }
@@ -4291,7 +4300,7 @@ if (cached?.data && cached?.settings) {
     if (!data) return;
     void saveData({
       ...data,
-      projects: data.projects.map((project) => project.id === projectId ? { ...project, ...patch, updatedAt: new Date().toISOString() } : project)
+      projects: data.projects.map((project) => project.id === projectId ? { ...project, ...patch, updatedAt: workspaceNow().toISOString() } : project)
     });
   }
 
@@ -4450,7 +4459,7 @@ if (cached?.data && cached?.settings) {
       void saveData({ ...data, projects: [...data.projects, project] });
       showToast(lang === "zh" ? "项目已创建" : "Project created");
     } else if (mobileQuickAddKind === "habit") {
-      const now = new Date().toISOString();
+      const now = workspaceNow().toISOString();
       const habit: Habit = { id: uid("habit"), title, defaultDurationMinutes: mobileQuickHabitMinutes, frequencyRule: "daily", activeWeekdays: [1, 2, 3, 4, 5], order: Date.now(), createdAt: now, updatedAt: now };
       void saveData({ ...data, habits: [...(data.habits || []), habit] });
       if (more) {
@@ -4867,7 +4876,7 @@ if (cached?.data && cached?.settings) {
     void saveData({
       ...data,
       projects: snapshot.projects,
-      tasks: data.tasks.map((task) => task.id === realTaskId ? { ...task, projectId: snapshot.projectId, updatedAt: new Date().toISOString() } : task)
+      tasks: data.tasks.map((task) => task.id === realTaskId ? { ...task, projectId: snapshot.projectId, updatedAt: workspaceNow().toISOString() } : task)
     });
     showToast(snapshot.created ? t(lang, "toast.createdAndAssigned") : t(lang, "toast.assignedToProject"));
     return snapshot.projectId;
@@ -4998,7 +5007,7 @@ if (cached?.data && cached?.settings) {
                     ? { ...r, scheduledDate: targetDate, scheduledStart: "", scheduledEndDate: undefined, scheduledEnd: "" }
                     : r
                 ),
-                updatedAt: new Date().toISOString(),
+                updatedAt: workspaceNow().toISOString(),
               }
             : t
         ),
@@ -5053,7 +5062,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function findNextFreeSlot(duration: number) {
-    const now = new Date();
+    const now = workspaceNow();
     const earliest = clampSlot(Math.max(now.getHours() * 60 + now.getMinutes(), TIMELINE_START * 60));
     const latestStart = TIMELINE_END * 60 - duration;
     for (let cursor = earliest; cursor <= latestStart; cursor += SLOT_MINUTES) {
@@ -5087,7 +5096,7 @@ if (cached?.data && cached?.settings) {
       return;
     }
 
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const nextTasks = current.tasks.map((item) => {
       if (item.id !== task.id) return item;
       const records = item.timelineRecords || [];
@@ -5475,7 +5484,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function createScheduledRecord(task: Task, scheduledDate: string, scheduledStart: string, durationMinutes: number): TimelineRecord {
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const startTime = normalizeTaskStartTime(scheduledStart);
     const duration = normalizeTaskDuration(durationMinutes);
     return {
@@ -5576,13 +5585,13 @@ if (cached?.data && cached?.settings) {
       scheduledStart,
       ...end,
       executionStatus,
-      createdAt: new Date().toISOString(),
+      createdAt: workspaceNow().toISOString(),
     } as TimelineRecord;
   }
 
   function cancelRecurringOccurrence(taskId: string, occurrence: EditingOccurrence) {
     if (!data || !occurrence) return;
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     void saveData({
       ...data,
       tasks: data.tasks.map((task) => {
@@ -5611,7 +5620,7 @@ if (cached?.data && cached?.settings) {
     if (!data || !occurrence) return;
     const sourceTask = data.tasks.find((task) => task.id === taskId);
     if (!sourceTask) return;
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const candidateTask: Task = {
       ...sourceTask,
       id: uid("task"),
@@ -5655,7 +5664,7 @@ if (cached?.data && cached?.settings) {
 
   function cancelAllRecurringFuture(taskId: string, cutoffDate: string) {
     if (!data) return;
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     void saveData({
       ...data,
       tasks: data.tasks.map((task) => {
@@ -5679,7 +5688,7 @@ if (cached?.data && cached?.settings) {
   function applyCandidateTimeSettings(taskId: string, settings: CandidateTimeSettings, options: { focusTimeline?: boolean } = {}) {
     const task = data?.tasks.find((item) => item.id === taskId);
     if (!task || !data) return;
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const filteredRecords = (task.timelineRecords || []).filter((record) => record.executionStatus !== "scheduled");
     const updatedTask: Task = settings.clearSchedule || settings.allDay
       ? {
@@ -5815,7 +5824,7 @@ if (cached?.data && cached?.settings) {
 
   function createHabit() {
     if (!data) return;
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const habit: Habit = {
       id: uid("habit"),
       title: lang === "zh" ? "新习惯" : "New habit",
@@ -5920,7 +5929,7 @@ if (cached?.data && cached?.settings) {
               scheduledEnd: undefined,
               executionStatus: undefined,
               timelineRecords: (t.timelineRecords || []).filter((r) => r.executionStatus === "completed"),
-              updatedAt: new Date().toISOString(),
+              updatedAt: workspaceNow().toISOString(),
             }
           : t
       ),
@@ -5934,7 +5943,7 @@ if (cached?.data && cached?.settings) {
     const current = dataRef.current;
     if (!current) return;
     preserveTimelineViewportOnNextDataChange();
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     void saveData({
       ...current,
       tasks: current.tasks.map((task) => task.id === taskId ? {
@@ -5979,7 +5988,7 @@ if (cached?.data && cached?.settings) {
   function moveTimelineRecord(recordId: string, newStart: string, newDate?: string, durationMinutes?: number) {
     if (!data) return;
     const sourceRecordId = resolveTimelineRecordId(recordId);
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     void saveData({
       ...data,
       tasks: data.tasks.map((task) => {
@@ -6375,7 +6384,7 @@ if (cached?.data && cached?.settings) {
       if (!data) { cleanup(); return; }
       const { nextStart, nextEnd, nextDuration, nextStartDate } = computeResize(upEvent.clientX, upEvent.clientY);
       const durationHours = nextDuration / 60;
-      const now = new Date().toISOString();
+      const now = workspaceNow().toISOString();
       if (isEventDisplayTask(task)) {
         resizeEventOccurrence(task.id, nextStartDate, nextStart, nextDuration);
         setResizePreview(null);
@@ -6572,7 +6581,7 @@ if (cached?.data && cached?.settings) {
 
   function saveForm() {
     if (!data || !form.title.trim()) return;
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const buildUpdatedTask = (task: Task): Task => {
       const title = form.title.trim();
       const estimatedHours = Math.max(form.estimatedHours || 0.25, 0.25);
@@ -6717,7 +6726,7 @@ if (cached?.data && cached?.settings) {
     } else if (addType === "project") {
       void saveData({ ...data, projects: [...data.projects, makeProject(form)] });
     } else if (addType === "habit") {
-      const now = new Date().toISOString();
+      const now = workspaceNow().toISOString();
       const habit: Habit = {
         id: uid("habit"),
         title: form.title.trim(),
@@ -6746,7 +6755,7 @@ if (cached?.data && cached?.settings) {
   function closeTaskDrawer(options?: { autoSave?: boolean }) {
     const autoSave = options?.autoSave ?? false;
     if (autoSave && data && editingId && addType === "task") {
-      const now = new Date().toISOString();
+      const now = workspaceNow().toISOString();
       const currentTask = data.tasks.find((task) => task.id === editingId);
       if (currentTask) {
         const safeTitle = form.title.trim() || currentTask.title;
@@ -6795,7 +6804,7 @@ if (cached?.data && cached?.settings) {
     if (!data || !editingId) return;
     const task = data.tasks.find((item) => item.id === editingId);
     if (!task) return;
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const title = form.title.trim() || task.title;
     void saveData({
       ...data,
@@ -6832,7 +6841,7 @@ if (cached?.data && cached?.settings) {
     const task = data.tasks.find((item) => item.id === taskId);
     if (!task) return;
     if (!await dialog.confirm(t(lang, "confirm.convertTaskToEvent"))) return;
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const activeRecord = editingRecordId
       ? (task.timelineRecords || []).find((record) => record.id === editingRecordId)
       : undefined;
@@ -6959,6 +6968,7 @@ if (cached?.data && cached?.settings) {
   }
 
   async function sendAi(messageOverride?: string, trigger: "manual" | "start_brief" | "end_review" = "manual") {
+    if (productDemo) { if (dataRef.current) setAiMessages((items) => [...items, productDemo.suggest(dataRef.current!)]); return; }
     if (aiBusy) return false;
     if (!(messageOverride ?? aiInput).trim() && !aiAttachment) return false;
     if (!data) return false;
@@ -6987,10 +6997,10 @@ if (cached?.data && cached?.settings) {
       statusText: aiAttachmentStatus,
       summary: aiAttachment.text.slice(0, 180).replace(/\s+/g, " ").trim(),
     } : undefined;
-    const userMessage: AiSessionMessage = { id: uid("ai_user"), role: "user", content: msg, attachment: attachmentSnapshot, createdAt: new Date().toISOString() };
+    const userMessage: AiSessionMessage = { id: uid("ai_user"), role: "user", content: msg, attachment: attachmentSnapshot, createdAt: workspaceNow().toISOString() };
     const assistantId = uid("ai_assistant");
     const assistantMessage: AiSessionMessage = {
-      id: assistantId, role: "assistant", content: "", createdAt: new Date().toISOString(), status: "thinking",
+      id: assistantId, role: "assistant", content: "", createdAt: workspaceNow().toISOString(), status: "thinking",
       steps: [{ label: aiAttachment ? (lang === "zh" ? "正在读取附件" : "Reading attachment") : (lang === "zh" ? "正在处理" : "Working"), status: "running" }],
     };
     setAiMessages((current) => [...current, userMessage, assistantMessage]);
@@ -7086,7 +7096,7 @@ if (cached?.data && cached?.settings) {
           id: assistantId,
           role: "assistant" as const,
           content: normalizeAiReply(result.reply),
-          createdAt: new Date().toISOString(),
+          createdAt: workspaceNow().toISOString(),
           saved: true,
           status: "done" as const,
           steps: result.steps && result.steps.length > 0 ? result.steps : [{ label: lang === "zh" ? "安排已生成" : "Schedule prepared", status: "done" as const }],
@@ -7237,7 +7247,7 @@ if (cached?.data && cached?.settings) {
       setAiMessages(chatToSessionMessages(existing.messages || []));
       return;
     }
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const conversation: AiConversation = { id: DAILY_REVIEW_CONVERSATION_ID, title: lang === "zh" ? "每日复盘" : "Daily review", messages: [], createdAt: now, updatedAt: now, pinned: true };
     const nextData = { ...current, aiConversations: [conversation, ...(current.aiConversations || [])], activeAiConversationId: conversation.id, chat: [] };
     dataRef.current = nextData;
@@ -7416,7 +7426,7 @@ if (cached?.data && cached?.settings) {
       .map((action, index) => ({ ...action, ...(patches[index] || {}) } as AiAction))
       .filter((_, index) => message?.selectedActions?.[index] !== false);
     if (selected.length === 0) return;
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const nextTasks = [...currentData.tasks];
     const nextEvents = [...currentData.events];
     const addedTaskIds: string[] = [];
@@ -7490,7 +7500,12 @@ if (cached?.data && cached?.settings) {
           if (!previousTasks.some((task) => task.id === nextTasks[index].id)) previousTasks.push(nextTasks[index]);
           const startTime = normalizeTaskStartTime(a.start || nextTasks[index].scheduledStart);
           const endTime = validTime(a.end) ? a.end : addMinutes(startTime, normalizeTaskDuration(taskDuration(nextTasks[index])));
-          nextTasks[index] = { ...nextTasks[index], scheduledDate: action.date, scheduledStart: startTime, scheduledEnd: endTime };
+          const duration = normalizeTaskDuration(clockTimeSpanMinutes(startTime, endTime));
+          if (scheduledTaskIntervalsOnDate(nextTasks.filter(task => task.id !== action.taskId), action.date).some(interval => timeToMinutes(startTime) < interval.end && timeToMinutes(startTime) + duration > interval.start)) {
+            showToast(lang === "zh" ? "这段时间已有安排，请调整建议时间" : "This time is already booked. Adjust the suggestion.");
+            return;
+          }
+          nextTasks[index] = { ...nextTasks[index], estimatedHours: duration / 60, projectId: typeof a.projectId === "string" ? a.projectId || undefined : nextTasks[index].projectId, plannedForDate: action.date, executionLane: undefined, scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, timelineRecords: [...(nextTasks[index].timelineRecords || []).filter(record => record.executionStatus !== "scheduled"), createScheduledRecord(nextTasks[index], action.date, startTime, clockTimeSpanMinutes(startTime, endTime))] };
           focus ||= { date: action.date, startTime, taskId: action.taskId, source: "schedule" };
         }
       }
@@ -7891,7 +7906,7 @@ if (cached?.data && cached?.settings) {
     void saveData({
       ...current,
       chat: (current.chat || []).map(update),
-      aiConversations: (current.aiConversations || []).map((conversation) => ({ ...conversation, messages: (conversation.messages || []).map(update), updatedAt: new Date().toISOString() })),
+      aiConversations: (current.aiConversations || []).map((conversation) => ({ ...conversation, messages: (conversation.messages || []).map(update), updatedAt: workspaceNow().toISOString() })),
     });
   }
 
@@ -7939,7 +7954,7 @@ if (cached?.data && cached?.settings) {
         showToast(lang === "zh" ? "未找到要拆解的任务" : "The task to break down was not found");
         return;
       }
-      const now = new Date().toISOString();
+      const now = workspaceNow().toISOString();
       const subtasks = appendAiSubtasks(target.subtasks, action.subtasks, () => uid("subtask"), now);
       await saveData({
         ...currentData,
@@ -7951,7 +7966,7 @@ if (cached?.data && cached?.settings) {
     }
     if (action.type === "import_schedule_item" && action.title && action.date) {
       const a = action as Record<string, any>;
-      const now = new Date().toISOString();
+      const now = workspaceNow().toISOString();
       if (a.kind === "event") {
         const event: CalendarEvent = {
           id: uid("event"),
@@ -8008,8 +8023,8 @@ if (cached?.data && cached?.settings) {
         scheduledEnd: endTime,
         subtasks: [],
         order: Date.now(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: workspaceNow().toISOString(),
+        updatedAt: workspaceNow().toISOString(),
       } as Task;
       const updatedTasks = [...currentData.tasks, newTask];
       await saveData({ ...currentData, version: currentData.version || 1, tasks: updatedTasks });
@@ -8022,9 +8037,17 @@ if (cached?.data && cached?.settings) {
     }
     if (action.type === "schedule_task" && action.taskId && action.date) {
       const a = action as Record<string, unknown>;
+      const target = currentData.tasks.find(task => task.id === action.taskId);
+      if (!target) return;
+      const start = normalizeTaskStartTime(a.start || target.scheduledStart);
+      const duration = validTime(a.end) ? normalizeTaskDuration(clockTimeSpanMinutes(start, a.end as string)) : normalizeTaskDuration(taskDuration(target));
+      if (scheduledTaskIntervalsOnDate(currentData.tasks.filter(task => task.id !== action.taskId), action.date).some(interval => timeToMinutes(start) < interval.end && timeToMinutes(start) + duration > interval.start)) {
+        showToast(lang === "zh" ? "这段时间已有安排，请调整建议时间" : "This time is already booked. Adjust the suggestion.");
+        return;
+      }
       const updatedTasks = currentData.tasks.map((t) =>
         t.id === action.taskId
-          ? { ...t, scheduledDate: action.date, scheduledStart: normalizeTaskStartTime(a.start || t.scheduledStart), scheduledEnd: validTime(a.end) ? a.end as string : addMinutes(normalizeTaskStartTime(a.start || t.scheduledStart), normalizeTaskDuration(taskDuration(t))) }
+          ? { ...t, estimatedHours: duration / 60, projectId: typeof a.projectId === "string" ? a.projectId || undefined : t.projectId, plannedForDate: action.date, executionLane: undefined, scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, timelineRecords: [...(t.timelineRecords || []).filter(record => record.executionStatus !== "scheduled"), createScheduledRecord(t, action.date!, normalizeTaskStartTime(a.start || t.scheduledStart), validTime(a.end) ? clockTimeSpanMinutes(normalizeTaskStartTime(a.start || t.scheduledStart), a.end as string) : normalizeTaskDuration(taskDuration(t)))] }
           : t
       );
       await saveData({ ...currentData, version: currentData.version || 1, tasks: updatedTasks });
@@ -8056,6 +8079,7 @@ if (cached?.data && cached?.settings) {
   }
 
   async function generateNextAction() {
+    if (productDemo) return;
     const task = editingId ? tasks.find((item) => item.id === editingId) : null;
     setClarifyLoading(true);
     try {
@@ -8078,6 +8102,7 @@ if (cached?.data && cached?.settings) {
   }
 
   async function planMyDay(overrides?: Partial<AiPlanPrefs>, sourceTasksOverride?: Task[]) {
+    if (productDemo) { if (dataRef.current) { setAiMessages((items) => [...items, productDemo.suggest(dataRef.current!, undefined, sourceTasksOverride?.map(task => task.id))]); setAiOpen(true); } return; }
     if (autoScheduleState === "generating" || autoScheduleState === "committing") return;
 
     const planPrefs = { ...aiPlanPrefs, ...overrides };
@@ -8153,6 +8178,7 @@ if (cached?.data && cached?.settings) {
   }
 
   async function generateTaskSubtasks(taskId: string) {
+    if (productDemo) return;
     const snapshot = dataRef.current;
     const task = snapshot?.tasks.find((item) => item.id === taskId);
     if (!snapshot || !task || subtaskAiBusyId) return;
@@ -8179,7 +8205,7 @@ if (cached?.data && cached?.settings) {
       const latestData = dataRef.current;
       const latestTask = latestData?.tasks.find((item) => item.id === taskId);
       if (!latestData || !latestTask) throw new Error(lang === "zh" ? "任务已不存在，未添加子任务" : "This task no longer exists; no subtasks were added.");
-      const now = new Date().toISOString();
+      const now = workspaceNow().toISOString();
       const subtasks = appendAiSubtasks(latestTask.subtasks, suggestions, () => uid("subtask"), now);
       const addedCount = subtasks.length - (latestTask.subtasks || []).length;
       if (!addedCount) {
@@ -8288,7 +8314,7 @@ if (cached?.data && cached?.settings) {
     const preview = schedulePreviews.find((p) => p.id === previewId);
     if (!preview) return;
     const source = data.tasks.find((t) => t.id === preview.sourceTaskId);
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
 
     // If the clonedTaskId already exists (very rare), don't duplicate
     if (data.tasks.some((t) => t.id === preview.clonedTaskId)) {
@@ -8341,7 +8367,7 @@ if (cached?.data && cached?.settings) {
     if (active.length === 0) return;
     setAutoScheduleState("committing");
 
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     const existingIds = new Set(data.tasks.map((t) => t.id));
     const toAdd: Task[] = [];
     const sourceIdsToClear: string[] = [];
@@ -8413,7 +8439,7 @@ if (cached?.data && cached?.settings) {
       .filter((t) => !idsToRemove.has(t.id))
       .map((t) => {
         if (clearedSourceTaskIds.includes(t.id) && !t.plannedForDate) {
-          return { ...t, plannedForDate: today, executionLane: "candidate" as const, updatedAt: new Date().toISOString() };
+          return { ...t, plannedForDate: today, executionLane: "candidate" as const, updatedAt: workspaceNow().toISOString() };
         }
         return t;
       });
@@ -8476,7 +8502,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function goToNow() {
-    const now = new Date();
+    const now = workspaceNow();
     const nowDate = todayIso();
     const nowTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     nowReturnNavigationRef.current = true;
@@ -8500,6 +8526,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function openSettingsSection(section: SettingsTargetInput) {
+    if (productDemo) return;
     rememberLayerTrigger("utility");
     setSettingsSectionTarget(normalizeSettingsTarget(section));
     setUtilityPanel("settings");
@@ -8563,7 +8590,7 @@ if (cached?.data && cached?.settings) {
         focusHabitSchedule(scheduled.timelineRecordId);
         return;
       }
-      const now = new Date();
+      const now = workspaceNow();
       const rounded = Math.floor((now.getHours() * 60 + now.getMinutes()) / SLOT_MINUTES) * SLOT_MINUTES;
       scheduleHabitAt(habitId, today, minutesToTime(rounded));
     }
@@ -8669,7 +8696,7 @@ if (cached?.data && cached?.settings) {
 
   if (!data || !settings) return <ExecuteSkeleton />;
 
-  const localAiConfig = readLocalAiProviderConfig();
+  const localAiConfig = productDemo ? { provider: "deepseek" as const, model: settings.model, apiKey: "", baseUrl: "" } : readLocalAiProviderConfig();
   const aiPanelModels = Array.from(new Set([
     localAiConfig.model,
     ...AI_PROVIDER_MODELS[localAiConfig.provider].map((option) => option.id),
@@ -8726,7 +8753,7 @@ if (cached?.data && cached?.settings) {
   };
 
   return (
-    <div className={`df-app mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       <header className="df-header">
         <div className="df-header-inner">
           <div className="df-brand">
@@ -8751,11 +8778,8 @@ if (cached?.data && cached?.settings) {
               <span className="df-month-year-chevron" />
             </button>
           </div>
-          <nav className="df-tabs df-tabs-center">
-            <button className={mode === "execute" ? "active" : ""} onClick={() => changeMode("execute")}>{term(lang, "execute")}</button>
-            <button className={mode === "planning" ? "active" : ""} onClick={() => changeMode("planning")}>{term(lang, "planning")}</button>
-          </nav>
-          <div className="df-header-right">
+          <WorkspaceModeTabs mode={mode} lang={lang} onChange={changeMode} className="df-tabs df-tabs-center" as="nav" />
+          {!productDemo && <div className="df-header-right">
           <button
             className="df-user-avatar"
             type="button"
@@ -8777,7 +8801,7 @@ if (cached?.data && cached?.settings) {
           <button className="df-user-avatar" onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.01A1.65 1.65 0 0 0 10.91 3H11a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
-        </div>
+        </div>}
         </div>
       </header>
       <div className="df-header-fade" />
@@ -9097,7 +9121,7 @@ if (cached?.data && cached?.settings) {
                                 toggleCandidateTaskDone(task);
                               }}
                             >
-                              <TaskCard task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onStartPlacementPreview={() => startPlacementPreview(task.id)} onCancelPlacementPreview={cancelPlacementPreview} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />
+                              <TaskCard demo={Boolean(productDemo)} task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onStartPlacementPreview={() => startPlacementPreview(task.id)} onCancelPlacementPreview={cancelPlacementPreview} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />
                             </div>
                           );
                         })}
@@ -9117,7 +9141,7 @@ if (cached?.data && cached?.settings) {
                     toggleCandidateTaskDone(task);
                   }}
                 >
-                  {!isReorderSource && <TaskCard task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onStartPlacementPreview={() => startPlacementPreview(task.id)} onCancelPlacementPreview={cancelPlacementPreview} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
+                  {!isReorderSource && <TaskCard demo={Boolean(productDemo)} task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onStartPlacementPreview={() => startPlacementPreview(task.id)} onCancelPlacementPreview={cancelPlacementPreview} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
                 </div>
               })}
               {shouldShowHabitCandidates(settings) && (
@@ -9135,6 +9159,7 @@ if (cached?.data && cached?.settings) {
                   draggedHabitId={drag?.source === "candidate" ? drag.taskId : null}
                 />
               )}
+              {productDemo && <aside className="df-product-notes"><p>{lang === "zh" ? "从今日候选中挑选，再放进时间轴。" : "Pick a candidate and give it time on the timeline."}</p><p>{lang === "zh" ? "一天有变化，安排也可以调整。" : "Adjust the plan as your day changes."}</p></aside>}
             </div>
             <form className="df-quick-add" onSubmit={(event) => {
               event.preventDefault();
@@ -9599,7 +9624,7 @@ if (cached?.data && cached?.settings) {
                                   const todayOffset = continuousDateOffset(today);
                                   const todayIdx = continuousTimelineEnabled ? ((todayOffset % timelineColumnCount) + timelineColumnCount) % timelineColumnCount : threeDates.indexOf(today);
                                   if (todayIdx === -1) return null;
-                                  const now = new Date();
+                                  const now = workspaceNow();
                                   return <NowLine highlighted={nowLineReturnPulse} extraStyle={{ left: todayIdx * multiColWidth, width: multiColWidth, top: continuousTimelineEnabled ? continuousTimedTop(today, `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`) : undefined }} lang={lang} dayStartHour={dayStartHour} hourHeight={timelineHourHeight} />;
                                 })()}
                                 {/* Empty state */}
@@ -10013,7 +10038,7 @@ if (cached?.data && cached?.settings) {
                             range is the 7-day vertical canvas. Position uses `dayStartHour`
                             in non-continuous mode (via NowLine's internal timeBlockTop) and
                             the continuous absolute coordinate in continuous mode. */}
-                        {continuousTimelineDates.includes(today) && (() => { const now = new Date(); return <NowLine highlighted={nowLineReturnPulse} lang={lang} dayStartHour={dayStartHour} hourHeight={timelineHourHeight} extraStyle={{ top: continuousTimelineEnabled ? continuousTimedTop(today, `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`) : undefined }} />; })()}
+                        {continuousTimelineDates.includes(today) && (() => { const now = workspaceNow(); return <NowLine highlighted={nowLineReturnPulse} lang={lang} dayStartHour={dayStartHour} hourHeight={timelineHourHeight} extraStyle={{ top: continuousTimelineEnabled ? continuousTimedTop(today, `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`) : undefined }} />; })()}
                         {hoverSlot && drag && !drag.outsideTimeline && <SnappedTimelineDragBlock task={draggedTask} startTime={hoverSlot} duration={drag.duration} projectName={draggedTask ? projectName(draggedTask) : ""} projects={projects} viewMode="daily" lang={lang} dayStartHour={dayStartHour} hourHeight={timelineHourHeight} extraStyle={continuousTimelineEnabled ? { top: continuousTimedTop(dragTargetDateRef.current || timelineWindowAnchorDate, hoverSlot) } : undefined} />}
                         {placementPreviewTask && placementPreview && placementChoices.filter((choice) => continuousTimelineDates.includes(choice.date)).map((choice) => (
                           <PreviewBlock
@@ -10100,7 +10125,7 @@ if (cached?.data && cached?.settings) {
         </ExecutionSplitLayout>
       ) : (
         <Suspense fallback={<div className="df-loading-inline">规划加载中...</div>}>
-          <PlanningViewLazy lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled !== false} featureQuadrant={settings.featureQuadrantViewEnabled !== false} featureList={settings.featureListViewEnabled !== false} featureMetrics={settings.featureMetricsEnabled !== false} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
+          <PlanningViewLazy demo={Boolean(productDemo)} referenceDate={productDemo?.date} lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled !== false} featureQuadrant={settings.featureQuadrantViewEnabled !== false} featureList={settings.featureListViewEnabled !== false} featureMetrics={settings.featureMetricsEnabled !== false} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
         </Suspense>
       )}
 
@@ -10122,14 +10147,11 @@ if (cached?.data && cached?.settings) {
           {!settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
           </button> : <span className="df-mobile-dock-spacer" aria-hidden="true" />}
-          <div className="df-mobile-mode-switch">
-            <button className={mode === "execute" ? "active" : ""} onClick={() => changeMode("execute")}>{term(lang, "execute")}</button>
-            <button className={mode === "planning" ? "active" : ""} onClick={() => changeMode("planning")}>{term(lang, "planning")}</button>
-          </div>
-          <button className={`df-mobile-dock-action df-mobile-profile${proactiveNotifications.length ? " has-unread" : ""}`} onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")} title={t(lang, "header.settings")}>
+          <WorkspaceModeTabs mode={mode} lang={lang} onChange={changeMode} className="df-mobile-mode-switch" as="div" />
+          {!productDemo && <button className={`df-mobile-dock-action df-mobile-profile${proactiveNotifications.length ? " has-unread" : ""}`} onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")} title={t(lang, "header.settings")}>
             {settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span aria-hidden="true">{(settings.displayName || "N").slice(0, 1).toUpperCase()}</span>}
             {proactiveNotifications.length > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{proactiveNotifications.length > 9 ? "9+" : proactiveNotifications.length}</span>}
-          </button>
+          </button>}
         </nav>, document.body)
       )}
 
@@ -10145,8 +10167,8 @@ if (cached?.data && cached?.settings) {
       ><UiPlusIcon size={20} /></button>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
-      {aiOpen && <AiPanel docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />}
+      {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
+      {aiOpen && <AiPanel demoControls={productDemo ? <div className="df-product-ai-presets"><Button onClick={() => { if (dataRef.current) setAiMessages((items) => [...items, productDemo.suggest(dataRef.current!)]); }}>{lang === "zh" ? "安排今天" : "Schedule today"}</Button><Button onClick={() => { if (dataRef.current) setAiMessages((items) => [...items, productDemo.suggest(dataRef.current!, "adjust")]); }}>{lang === "zh" ? "调整安排" : "Adjust"}</Button><Button disabled={!aiMessages.some(message => message.actionState === "adopted")} onClick={() => { const latest = [...aiMessages].reverse().find(message => message.actionState === "adopted"); if (latest) void undoAiImport(latest.id); }}>{lang === "zh" ? "撤回" : "Undo"}</Button></div> : undefined} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />}
       <CommandPalette open={commandOpen} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
       {utilityPanel && settings && <UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfileName={async (name) => { await saveSettings({ displayName: name }); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} />}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
@@ -10618,7 +10640,7 @@ function ScheduleTemplateModal({
       setTemplateNotice(zh ? "至少需要一个有效时间段。" : "Add at least one valid time block.");
       return;
     }
-    const nowIso = new Date().toISOString();
+    const nowIso = workspaceNow().toISOString();
     if (templateKey.startsWith("custom:")) {
       const id = templateKey.replace("custom:", "");
       const next = customTemplates.map((template) => template.id === id
@@ -10651,7 +10673,7 @@ function ScheduleTemplateModal({
   function duplicateCustomTemplate(id: string) {
     const template = customTemplates.find((item) => item.id === id);
     if (!template) return;
-    const nowIso = new Date().toISOString();
+    const nowIso = workspaceNow().toISOString();
     const created: ScheduleTemplate = {
       id: uid("template"),
       title: template.title + (zh ? " 副本" : " copy"),
@@ -10689,7 +10711,7 @@ function ScheduleTemplateModal({
     if (!renamingId) return;
     const nextTitle = renameDraft.trim();
     if (!nextTitle) { setRenamingId(null); return; }
-    const nowIso = new Date().toISOString();
+    const nowIso = workspaceNow().toISOString();
     onSaveCustomTemplates(customTemplates.map((t) => t.id === renamingId ? { ...t, title: nextTitle, updatedAt: nowIso } : t));
     if (templateKey === `custom:${renamingId}`) setTemplateName(nextTitle);
     setRenamingId(null);
@@ -10792,7 +10814,7 @@ function ScheduleTemplateModal({
                 <div className="df-timeline-content">
                   <div className="df-timeline-daily">
                     <div className="df-date-title df-date-title-compact today">
-                      <span className="df-date-num">{new Date().getDate()}</span>
+                      <span className="df-date-num">{workspaceNow().getDate()}</span>
                       <span className="df-date-sep" />
                       <span className="df-date-wd">{zh ? "今天" : "Today"}</span>
                     </div>
@@ -11823,7 +11845,7 @@ function DragCreateQuickAdd({ state, projects, onSave, onMore, onCancel, onRange
   function addSubtask() {
     const title = subtaskTitle.trim();
     if (!title) return;
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     setSubtasks((current) => [...current, {
       id: `subtask_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 8)}`,
       title,
@@ -12087,9 +12109,9 @@ function AllDayBlock({ task, dragging, projectName, projects, onEdit, onToggleDo
 }
 
 function NowLine({ extraStyle, dayStartHour = 0, hourHeight = HOUR_HEIGHT, highlighted = false }: { extraStyle?: CSSProperties; lang?: Language; dayStartHour?: number; hourHeight?: number; highlighted?: boolean }) {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(workspaceNow());
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 60000);
+    const timer = window.setInterval(() => setNow(workspaceNow()), 60000);
     return () => window.clearInterval(timer);
   }, []);
   const minutes = now.getHours() * 60 + now.getMinutes();
@@ -12237,7 +12259,7 @@ function EditDrawer(props: {
       done: false,
       order: Date.now(),
       subtasks: [],
-      createdAt: new Date().toISOString(),
+      createdAt: workspaceNow().toISOString(),
     };
     props.onTaskUpdate(props.task.id, {
       subtasks: addSubtaskToTree(props.task.subtasks || [], nextSubtask, parentId),
@@ -12553,7 +12575,7 @@ function EditDrawer(props: {
       };
       setIncompleteMenuOpen(false);
       if (props.editingRecordId && props.data && props.saveData) {
-        const now = new Date().toISOString();
+        const now = workspaceNow().toISOString();
         void props.saveData({
           ...props.data,
           tasks: props.data.tasks.map((task) => task.id === props.task!.id
@@ -13058,9 +13080,9 @@ function SyncSettingsControl({
   onChange: (patch: Partial<Settings>) => void;
   onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void;
 }) {
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState(() => workspaceNow());
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    const timer = window.setInterval(() => setNow(workspaceNow()), 30_000);
     return () => window.clearInterval(timer);
   }, []);
   const presetKey = presetForMinutes(settings.syncIntervalMinutes);
@@ -13400,7 +13422,7 @@ function WeatherPluginTool({ settings, lang }: { settings: Settings; lang: Langu
   const config = plugin ? resolvePluginConfig(plugin, settings.pluginConfigs?.weather) : {};
   const city = String(config.city || "Shanghai");
   const units = config.units === "f" ? "f" : "c";
-  const seed = Array.from(city).reduce((sum, char) => sum + char.charCodeAt(0), new Date().getDate());
+  const seed = Array.from(city).reduce((sum, char) => sum + char.charCodeAt(0), workspaceNow().getDate());
   const celsius = 16 + (seed % 15);
   const value = units === "f" ? Math.round(celsius * 9 / 5 + 32) : celsius;
   const condition = [lang === "zh" ? "晴朗" : "Clear", lang === "zh" ? "多云" : "Cloudy", lang === "zh" ? "有风" : "Breezy"][seed % 3];
@@ -13421,7 +13443,7 @@ function NotesPluginTool({ data, onSaveData, lang }: { data: PlannerData; onSave
     return <article className="df-plugin-tool"><header><strong>{lang === "zh" ? "笔记" : "Notes"}</strong></header><small>{lang === "zh" ? "先创建一个任务后即可写笔记。" : "Create a task first to attach notes."}</small></article>;
   }
   const saveNotes = (notes: string) => {
-    onSaveData({ ...data, tasks: data.tasks.map((item) => item.id === selected.id ? { ...item, notes, updatedAt: new Date().toISOString() } : item) });
+    onSaveData({ ...data, tasks: data.tasks.map((item) => item.id === selected.id ? { ...item, notes, updatedAt: workspaceNow().toISOString() } : item) });
   };
   return (
     <article className="df-plugin-tool wide">
@@ -13659,14 +13681,14 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
     .filter((memory) => !memory.archived)
     .sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt));
   const saveMemory = (memoryId: string, patch: Partial<AiMemory>) => {
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     onSaveData({
       ...data,
       aiMemories: (data.aiMemories || []).map((memory) => memory.id === memoryId ? { ...memory, ...patch, updatedAt: now } : memory),
     });
   };
   const addManualMemory = () => {
-    const now = new Date().toISOString();
+    const now = workspaceNow().toISOString();
     onSaveData({
       ...data,
       aiMemories: [
@@ -13784,7 +13806,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
         proactiveAssistantLocation: {
           latitude: Math.round(position.coords.latitude * 10_000) / 10_000,
           longitude: Math.round(position.coords.longitude * 10_000) / 10_000,
-          capturedAt: new Date().toISOString(),
+          capturedAt: workspaceNow().toISOString(),
         },
       }),
       () => alert(lang === "zh" ? "未获得定位权限；晨间简报会跳过天气建议。" : "Location permission was not granted; morning briefs will skip weather."),
@@ -14320,7 +14342,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
                 anchor="ai-reset"
                 title={lang === "zh" ? "AI 数据操作" : "AI data actions"}
                 description={lang === "zh" ? "重置个性化不会删除任务；清空对话只移除对话历史。" : "Resetting personalization keeps tasks; clearing conversations removes chat history only."}
-                control={<><SettingActionButton onClick={() => { const now = new Date().toISOString(); onSaveData({ ...data, aiProfile: { version: 1, updatedAt: now, historySince: now, durationByProject: {}, projectTokenWeights: {}, preferredStartHourByProject: {}, feedback: { durationCorrections: 0, projectCorrections: 0, assignmentUndos: 0, scheduleAccepts: 0, scheduleRejects: 0 } } }); }}>{lang === "zh" ? "重置个性化" : "Reset personalization"}</SettingActionButton><SettingActionButton disabled={(data.chat || []).length === 0} onClick={onClearChatHistory}>{lang === "zh" ? "清空对话" : "Clear conversations"}</SettingActionButton></>}
+                control={<><SettingActionButton onClick={() => { const now = workspaceNow().toISOString(); onSaveData({ ...data, aiProfile: { version: 1, updatedAt: now, historySince: now, durationByProject: {}, projectTokenWeights: {}, preferredStartHourByProject: {}, feedback: { durationCorrections: 0, projectCorrections: 0, assignmentUndos: 0, scheduleAccepts: 0, scheduleRejects: 0 } } }); }}>{lang === "zh" ? "重置个性化" : "Reset personalization"}</SettingActionButton><SettingActionButton disabled={(data.chat || []).length === 0} onClick={onClearChatHistory}>{lang === "zh" ? "清空对话" : "Clear conversations"}</SettingActionButton></>}
               />
               {Boolean(settings.aiMemoryEnabled) && <section className="df-ai-memory-settings" data-settings-anchor="ai-memory-list" tabIndex={-1}>
                 <div className="df-ai-memory-settings-head">
@@ -14692,6 +14714,7 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
   }
   componentDidCatch(error: Error, info: { componentStack: string }) {
     console.error("[AppErrorBoundary]", error, info);
+    if (productDemo && parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "error" }, location.origin);
   }
   render() {
     if (this.state.error) {

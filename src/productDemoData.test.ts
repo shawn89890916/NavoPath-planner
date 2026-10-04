@@ -15,10 +15,10 @@ describe("isolated product examples", () => {
     const first = createDemoData("zh", "planning", 0);
     first.tasks[0].title = "Changed";
     expect(createDemoData("zh", "planning", 0).tasks[0].title).toBe(
-      "准备网站内容",
+      "撰写个人介绍",
     );
     expect(createDemoData("en", "planning", 0).tasks[0].title).toBe(
-      "Prepare website content",
+      "Write your introduction",
     );
   });
 

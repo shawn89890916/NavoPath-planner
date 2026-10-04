@@ -162,7 +162,7 @@ export default function AiPanel({ embedded = false, demoControls, docked, onDock
     const body = bodyRef.current;
     if (!body || !followLatestRef.current) return;
     const streaming = messages.some((message) => message.streaming);
-    body.scrollTo({ top: embedded && messages.length === 1 ? 0 : body.scrollHeight, behavior: streaming || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    body.scrollTo({ top: (embedded || demoControls) && messages.length === 1 ? 0 : body.scrollHeight, behavior: streaming || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }, [messages, attachmentStatus]);
   const sortedConversations = sortAiConversations(removeEmptyAiConversations(conversations));
   const activeConversationTitle = conversations.find((conversation) => conversation.id === activeConversationId)?.title;
@@ -255,24 +255,26 @@ export default function AiPanel({ embedded = false, demoControls, docked, onDock
     {!embedded && <MobileSheetDismissHandle onDismiss={onClose} onCollapse={() => setMobileCollapsed(true)} onExpand={() => setMobileCollapsed(false)} collapsed={mobileCollapsed} lang={lang} />}
     <div className="df-ai-panel-head" onPointerDown={embedded ? undefined : (event) => beginDesktopPanelInteraction(event, "move")} onPointerMove={updateDesktopPanelInteraction} onPointerUp={endDesktopPanelInteraction} onPointerCancel={endDesktopPanelInteraction}>
       <div className="df-ai-panel-title">
-        <strong>{conversationListOpen ? text.historyTitle : (activeConversationTitle || "NavoPath AI")}</strong>
+        <strong>{conversationListOpen ? text.historyTitle : (demoControls ? (lang === "zh" ? "NavoPath AI · 示例体验" : "NavoPath AI · Example") : activeConversationTitle || "NavoPath AI")}</strong>
       </div>
-      {!demoControls && <div className="df-ai-head-actions">
+      <div className="df-ai-head-actions">
+        {!demoControls && <>
         <button className="df-ai-reference-tool new-chat" onClick={onNewConversation} aria-label={text.newChat} title={text.newChat}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" /><path d="m16.5 3.5 4 4L12 16l-4.5 1 1-4.5Z" /></svg></button>
         <button className={`df-ai-reference-tool history ${conversationListOpen ? "active" : ""}`} onClick={onToggleConversationList} aria-label={text.chats} title={text.chats}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.5 2" /></svg></button>
+        </>}
         <IconButton className={`df-ai-reference-tool dock${docked ? " active" : ""}`} icon={<UiDockSidebarIcon size={18} />} label={dockLabel} aria-pressed={docked} onClick={() => {
           desktopInteractionRef.current = null;
           onDock(!docked);
         }} />
-        <details className="df-ai-head-more">
+        {!demoControls && <details className="df-ai-head-more">
           <summary className="df-ai-reference-tool" aria-label={lang === "zh" ? "更多选项" : "More options"} title={lang === "zh" ? "更多选项" : "More options"}>•••</summary>
           <div className="df-ai-head-menu">
             <button className={auditOpen ? "active" : ""} onClick={onToggleAudit}>{lang === "zh" ? "Agent 审计" : "Agent audit"}</button>
             <button onClick={onOpenMemorySettings}>{lang === "zh" ? "AI 设置" : "AI settings"}</button>
           </div>
-        </details>
+        </details>}
         <CloseButton className="df-ai-reference-tool close" onClick={onClose} label={t(lang, "aiPanel.close")} />
-      </div>}
+      </div>
     </div>
     {conversationListOpen && <section className="df-ai-conversation-list" aria-label={text.historyTitle}>
       <header className="df-ai-history-head">
@@ -432,7 +434,7 @@ export default function AiPanel({ embedded = false, demoControls, docked, onDock
             const kind = a.kind === "event" ? "event" : "task";
             return (
             <div key={i} className={`df-ai-task-card ${isAccepted ? "accepted" : ""}`}>
-              {patchedAction.type === "import_schedule_item" && <input className="df-ai-import-check" aria-label={lang === "zh" ? `选择 ${title}` : `Select ${title}`} type="checkbox" checked={message.selectedActions?.[i] !== false} onChange={() => onToggleAction(message.id, i)} />}
+              {(patchedAction.type === "import_schedule_item" || patchedAction.type === "schedule_task") && <input className="df-ai-import-check" aria-label={lang === "zh" ? `选择 ${title}` : `Select ${title}`} type="checkbox" checked={message.selectedActions?.[i] !== false} onChange={() => onToggleAction(message.id, i)} />}
               {projColor && <span className="df-ai-task-strip" style={{ background: projColor }} />}
               <div className="df-ai-task-body">
                 {isSubtaskAction ? <>
@@ -491,10 +493,10 @@ export default function AiPanel({ embedded = false, demoControls, docked, onDock
       </section>)}
     </div>
     <div className="df-ai-panel-foot">
-      <button className={`df-ai-panel-plan${planState === "generating" || planState === "committing" ? " thinking" : ""}`} type="button" onClick={onPlanToday} disabled={planState === "generating" || planState === "committing"}>
+      {!demoControls && <button className={`df-ai-panel-plan${planState === "generating" || planState === "committing" ? " thinking" : ""}`} type="button" onClick={onPlanToday} disabled={planState === "generating" || planState === "committing"}>
         <span>{lang === "zh" ? "安排建议" : "Schedule Suggestions"}</span>
         <small>{planState === "generating" ? (lang === "zh" ? "分析中" : "Analyzing") : planState === "committing" ? (lang === "zh" ? "应用中" : "Applying") : planState === "preview" ? (lang === "zh" ? "重新生成" : "Regenerate") : (lang === "zh" ? "为今天生成时间安排" : "Build today's schedule")}</small>
-      </button>
+      </button>}
       {memoryNotice && <button className="df-ai-memory-notice" onClick={onOpenMemorySettings}>{memoryNotice} · {text.viewMemory}</button>}
       {(attachment || attachmentStatus) && <AttachmentCard attachment={attachment ? { name: attachment.name, size: attachment.size, pageCount: attachment.pageCount, truncated: attachment.truncated, status: "ready", statusText: attachmentStatus || "文本已提取", summary: attachment.text.slice(0, 120).replace(/\s+/g, " ") } : { name: "正在解析附件", size: 0, status: "error", statusText: attachmentStatus || "正在解析", summary: "" }} onRemove={onClearAttachment} />}
       {demoControls || <div className="df-ai-composer-row">

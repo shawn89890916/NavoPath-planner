@@ -53,4 +53,4 @@ export function isDemoCommand(value: unknown): value is DemoCommand {
   );
 }
 
-export type FeatureCopy = { title: string; description: string; steps: [string, string][]; benefits: [string, string][]; faq: [string, string][]; next: ProductFeature };
+export type FeatureCopy = { title: string; description: string; benefits: [string, string][]; faq: [string, string][]; next: ProductFeature };

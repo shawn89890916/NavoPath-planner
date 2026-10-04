@@ -3,38 +3,16 @@ import type { FeatureCopy } from "../productSite";
 
 export default {
   "zh": {
-    "title": "大目标，拆成今天能推进的一步。",
-    "description": "将工作、学习和生活目标整理成项目，选出今天值得推进的任务。",
-    "steps": [
-      [
-        "看清项目全貌",
-        "把个人网站、学习和生活安排放在各自的项目里。展开项目，看看接下来有哪些事。"
-      ],
-      [
-        "展开任务与子任务",
-        "从「准备网站内容」继续拆到介绍、案例和联系信息。展开任务，找到可以直接开始的小步骤。"
-      ],
-      [
-        "从不同视角整理",
-        "在树、列表、看板和矩阵之间切换。看清结构、推进状态，或比较重要与紧急。"
-      ],
-      [
-        "加入今日候选",
-        "挑选今天值得推进的任务，加入今日候选。具体几点做，接下来在执行页安排。"
-      ]
-    ],
+    "title": "把目标，变成能推进的任务。",
+    "description": "项目、任务和今天要做的事，放在一起。",
     "benefits": [
       [
-        "结构清楚",
-        "项目、任务与子任务保留上下文，回到项目时能继续推进。"
+        "项目，一目了然。",
+        "工作、学习与生活，各有各的进度。"
       ],
       [
-        "视角随你切换",
-        "同一份任务在树、列表、看板和矩阵里查看，无需重复整理。"
-      ],
-      [
-        "每天有所选择",
-        "把今天想推进的任务加入今日候选，再为它安排时间。"
+        "选出今天的下一步。",
+        "换个视角，找到值得推进的任务。"
       ]
     ],
     "faq": [
@@ -54,38 +32,16 @@ export default {
     "next": "execute"
   },
   "en": {
-    "title": "Turn a big goal into a step you can take today.",
-    "description": "Organize work, learning, and life into projects. Choose the tasks worth moving forward today.",
-    "steps": [
-      [
-        "See the whole project",
-        "Keep your personal website, learning, and life in their own projects. Expand a project to see what comes next."
-      ],
-      [
-        "Find the smaller steps",
-        "Break website content into an introduction, case studies, and contact details. Expand a task to find a step you can start."
-      ],
-      [
-        "Choose your perspective",
-        "Switch between tree, list, Kanban, and Matrix. See the structure, track progress, or compare importance and urgency."
-      ],
-      [
-        "Choose today's candidates",
-        "Bring the tasks worth advancing today into Today's Candidates. Give them a time in Execute next."
-      ]
-    ],
+    "title": "Make your next step clear.",
+    "description": "Projects, tasks, and today’s next steps in one place.",
     "benefits": [
       [
-        "Keep the context",
-        "Projects, tasks, and subtasks make it easier to pick up where you left off."
+        "See the whole project.",
+        "Work, learning, and life, each at its own pace."
       ],
       [
-        "Change your perspective",
-        "View the same tasks in a tree, list, Kanban, or Matrix without organizing them twice."
-      ],
-      [
-        "Make a daily choice",
-        "Bring selected work into Today's Candidates, then make room for it on your timeline."
+        "Choose today’s next step.",
+        "Switch perspectives to find what matters."
       ]
     ],
     "faq": [

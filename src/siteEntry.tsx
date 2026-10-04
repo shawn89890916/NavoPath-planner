@@ -50,10 +50,16 @@ async function loadFeature(feature: ProductFeature) {
 }
 const feature = productFeature(window.location.pathname, "features");
 const demo = productFeature(window.location.pathname, "product-demo");
-if (feature || demo) {
-  const Page = demo
-    ? lazy(() => import("./ProductDemo"))
-    : lazy(() => loadFeature(feature!));
+if (demo) {
+  void import("./productDemoRuntime").then(({ installProductDemo }) => {
+    installProductDemo(demo);
+    return import("./main");
+  }).catch(() => {
+    if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "error" }, location.origin);
+    document.getElementById("root")!.textContent = "NavoPath…";
+  });
+} else if (feature) {
+  const Page = lazy(() => loadFeature(feature));
   createRoot(document.getElementById("root")!).render(
     <SiteErrorBoundary demo={Boolean(demo)}>
       <Suspense
