@@ -39682,6 +39682,10 @@ html.product-demo-fullscreen #root .df-header .df-brand { color: var(--text-main
 html.product-demo-fullscreen #root .df-header-right { display: flex; gap: 12px; }
 html.product-demo-fullscreen #root .df-product-principles { color: var(--text-muted); font-size: 13px; padding: 8px 10px; white-space: nowrap; }
 html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { height: calc(100% - var(--product-header-height)); min-height: 0; }
+/* The outer feature page owns scrolling; native tasks remain interactive. */
+html.product-demo-fullscreen #root .df-app :is(.df-tree-wrap, .df-candidate-list, .df-timeline-scroll, .df-kanban-board, .df-kanban-column, .df-eisenhower-task-list, .df-planning-list) { overflow: clip; overscroll-behavior: auto; }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-eisenhower-grid { height: min(540px, 100%); min-height: 0; grid-template-rows: repeat(2, minmax(0, 1fr)); }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-eisenhower-quadrant { min-height: 0; }
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-project-tasks { margin-left: 112px; padding-left: 0; }
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-plan-task-node { width: max-content; max-width: min(360px, 100%); min-width: 260px; }
 html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-task-node-inner { width: 100%; min-width: 0; }

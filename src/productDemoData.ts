@@ -100,9 +100,16 @@ export function createDemoData(
     aiMemories: [],
   };
   if (feature === "planning") {
+    const quadrants: Record<string, [Task["importance"], Task["urgency"]]> = {
+      content: ["high", "high"], publish: ["high", "high"],
+      lesson: ["high", "low"], exercise: ["high", "low"],
+      layout: ["low", "high"], notebook: ["low", "high"],
+      practice: ["low", "low"], walk: ["low", "low"],
+    };
+    data.tasks = data.tasks.map(item => ({ ...item, importance: quadrants[item.id][0], urgency: quadrants[item.id][1] }));
     if (stage === 3)
       data.tasks[0] = {
-        ...content,
+        ...data.tasks[0],
         plannedForDate: DEMO_DATE,
         executionLane: "candidate",
       };

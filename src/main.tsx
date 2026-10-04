@@ -1379,7 +1379,7 @@ function App() {
   const [subtaskAiBusyId, setSubtaskAiBusyId] = useState("");
   const [subtaskAiRevealIds, setSubtaskAiRevealIds] = useState<string[]>([]);
   const subtaskAiRevealTimeoutRef = useRef<number | null>(null);
-  const [collapsedBranches, setCollapsedBranches] = useState<Record<string, boolean>>({});
+  const [collapsedBranches, setCollapsedBranches] = useState<Record<string, boolean>>((): Record<string, boolean> => productPresentation && productDemo?.feature === "planning" ? { learning: true, life: true } : {});
   const [yearOverviewOpen, setYearOverviewOpen] = useState(false);
   const [overviewYear, setOverviewYear] = useState(() => new Date(`${todayIso()}T00:00:00`).getFullYear());
 
@@ -1846,7 +1846,7 @@ function App() {
 
   useEffect(() => {
     const scrollElement = timelineRef.current;
-    if (!scrollElement || !compactLayout || mode !== "execute" || timelineView === "month") return;
+    if (productPresentation || !scrollElement || !compactLayout || mode !== "execute" || timelineView === "month") return;
 
     const verticalDistance = (touches: TouchList) => Math.abs(touches[0].clientY - touches[1].clientY);
     const verticalCentre = (touches: TouchList) => (touches[0].clientY + touches[1].clientY) / 2;
@@ -1922,6 +1922,19 @@ function App() {
       scrollElement.removeEventListener("touchcancel", endPinch);
     };
   }, [compactLayout, mode, timelineView, data]);
+
+  useEffect(() => {
+    const container = timelineRef.current;
+    if (!productPresentation || mode !== "execute" || !container || !settings) return;
+    // Fit the example day using the same geometry as native task dragging.
+    const minutes = timeToMinutes(settings.dayEndTime || "18:00") - timeToMinutes(settings.dayStartTime || "08:00");
+    const fit = () => {
+      if (container.clientHeight > 0 && minutes > 0) setTimelineZoom(Math.min(1, (container.clientHeight - 24) / (minutes / SLOT_MINUTES * SLOT_HEIGHT)));
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(container); fit();
+    return () => observer.disconnect();
+  }, [mode, data, settings?.dayStartTime, settings?.dayEndTime]);
 
   // Keep column width updated for multi-day overlay positioning
   useEffect(() => {
@@ -7530,6 +7543,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function handleTimelinePanelWheel(event: React.WheelEvent<HTMLElement>) {
+    if (productPresentation) return;
     if (event.ctrlKey || event.metaKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
     const target = event.target as HTMLElement;
     if (target.closest("input,textarea,select,[contenteditable=true],.df-drawer,.df-utility-panel,.df-project-popover-portal")) return;

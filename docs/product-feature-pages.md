@@ -48,6 +48,12 @@ the extra sticky dwell space. Narrow landscape screens keep normal paragraph flo
 portrait text does not use the scrolling-story effects. The outer page clips
 notes below the native header so navigation stays unobstructed. Demo CSS owns the
 slot, preset buttons, and viewport containment; feature CSS owns the scrolling notes.
+Full-window Planning and Execute have a single outer document scroll: native tree,
+candidate, board, matrix, and timeline containers are clipped rather than independently
+scrollable. Wheel input over these panels naturally scrolls the parent document. The
+sticky workspace remains in place until the notes finish, then FAQ and footer enter.
+The native timeline geometry fits the 08:00–18:00 example day to the available height;
+task dragging and resizing use those same coordinates. Regular /app retains scrolling.
 
 The demo installs a memory PlannerApi before browser fallback initialization.
 `workspaceEnvironment.ts` supplies memory storage and a fixed example clock to App;
@@ -61,7 +67,9 @@ Parent/iframe messages validate source windows and origin. The parent lazy mount
 near the viewport and offers retry after initialization failure. Visibility messages
 pause offscreen animations. A validated story-layout message reports the native
 column rectangle; it never replaces user changes. Planning has
-three expanded projects, no subtasks, and four enabled native views. Examples use a
+one expanded website project and two initially collapsed projects that can be expanded,
+no subtasks, and four enabled native views. Its matrix has examples in all four quadrants
+and equal quadrant heights. Examples use a
 fixed day, fifteen-minute scheduling, and the product's conflict utilities. Execute
 starts with six ordinary task records, including a noon lunch/rest block and longer
 work sessions with adjacent starts and occasional short breaks,

@@ -34,6 +34,15 @@ describe("isolated product examples", () => {
     expect(initial.tasks[0].plannedForDate).toBeUndefined();
   });
 
+  it("keeps examples in every planning quadrant in both languages and candidate states", () => {
+    for (const lang of ["zh", "en"] as const) for (const stage of [1, 3]) {
+      const data = createDemoData(lang, "planning", stage);
+      for (const importance of ["high", "low"]) for (const urgency of ["high", "low"]) {
+        expect(data.tasks.filter(task => task.importance === importance && task.urgency === urgency).length).toBeGreaterThan(0);
+      }
+    }
+  });
+
   it("leaves room for lunch and varied breaks between fewer, longer ordinary tasks", () => {
     for (const lang of ["zh", "en"] as const) {
       const data = createDemoData(lang, "execute", 2);
