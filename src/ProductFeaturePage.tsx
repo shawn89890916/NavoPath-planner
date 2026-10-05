@@ -3,6 +3,7 @@ import { UiPlusIcon } from "./components/UiIcons";
 import { featureHref, featureNames, productFeature, siteLanguage, type DemoCommand, type FeatureCopy, type ProductFeature } from "./productSite";
 import ProductStory, { type StoryLayout } from "./ProductStory";
 import ProductNavigation from "./ProductNavigation";
+import ProductSiteFooter from "./ProductSiteFooter";
 import "./product-feature.css";
 
 export default function ProductFeaturePage({ feature, copy }: { feature: ProductFeature; copy: Record<"zh" | "en", FeatureCopy> }) {
@@ -70,7 +71,7 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
       {immersive && feature !== "ai" && !storyLayout && <><section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section><ProductStory lang={lang} copy={c} layout={null} /></>}
       </>}
       <section className="np-faq"><h2>{zh ? "常见问题" : "FAQ"}</h2><div>{c.faq.map(([question, answer]) => <details key={question}><summary><span>{question}</span><UiPlusIcon size={18} strokeWidth={1.2} className="np-faq-plus" /></summary><p>{answer}</p></details>)}</div></section>
-      <footer className="np-feature-footer"><a href={featureHref(c.next, lang)}>{featureNames[lang][c.next]}</a><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a><a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a><span className="np-personal-placeholder" role="link" aria-disabled="true">{zh ? "个人网页" : "Personal website"}</span><span>© 2026 NavoPath</span></footer>
+      <ProductSiteFooter lang={lang} next={c.next} />
     </main>
   </div>;
 }

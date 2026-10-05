@@ -40,7 +40,7 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-site-nav--product .df-tabs { display: flex; justify-content: center; align-items: center; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
 .np-site-nav--product .df-tabs button, .np-site-nav--product .df-product-principles { padding: 8px 10px; border: 0; background: none; color: #69717c; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .np-site-nav--product .df-tabs button { min-height: 44px; font-family: inherit; }
-.np-site-nav--product .df-tabs button.active { color: #27231e; font-weight: 750; }
+.np-site-nav--product .df-tabs :is(button, .df-product-principles).active { color: #27231e; font-weight: 750; }
 .np-feature--reading > main { max-width: 680px; }
 .np-feature--reading .np-product-intro { padding: 40px 0 48px; }
 .np-feature--reading .np-product-intro p, .np-feature--reading .np-product-notes p { color: #55504a; font-size: 17px; line-height: 1.75; }

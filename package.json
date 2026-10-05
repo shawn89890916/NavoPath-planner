@@ -125,6 +125,9 @@
       "name": "Product site scripts",
       "path": [
         "dist/assets/ProductFeaturePage-*.js",
+        "dist/assets/ProductPrinciplesPage-*.js",
+        "dist/assets/ProductNavigation-*.js",
+        "dist/assets/product-feature-*.js",
         "dist/assets/ProductStory-*.js",
         "dist/assets/productDemoRuntime-*.js",
         "dist/assets/ProductMenu-*.js",
@@ -138,6 +141,8 @@
       "name": "Product site styles",
       "path": [
         "dist/assets/ProductFeaturePage-*.css",
+        "dist/assets/ProductPrinciplesPage-*.css",
+        "dist/assets/product-feature-*.css",
         "dist/assets/productDemoRuntime-*.css",
         "dist/assets/ProductMenu-*.css"
       ],

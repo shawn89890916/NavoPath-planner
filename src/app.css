@@ -39664,7 +39664,7 @@ html.product-demo-fullscreen #root .df-app > .df-header { display: block; height
 html.product-demo-fullscreen #root .df-header-inner { height: 100%; }
 html.product-demo-fullscreen #root .df-header .df-brand { color: var(--text-main); text-decoration: none; }
 html.product-demo-fullscreen #root .df-header-right { display: flex; gap: 12px; }
-html.product-demo-fullscreen #root .df-product-principles { color: var(--text-muted); font-size: 13px; padding: 8px 10px; white-space: nowrap; }
+html.product-demo-fullscreen #root .df-product-principles { color: var(--text-muted); font-size: 13px; font-weight: 600; padding: 8px 10px; white-space: nowrap; text-decoration: none; }
 html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { height: calc(100% - var(--product-header-height)); min-height: 0; }
 /* The outer feature page owns scrolling; native tasks remain interactive. */
 html.product-demo-fullscreen #root .df-app :is(.df-tree-wrap, .df-candidate-list, .df-timeline-scroll, .df-kanban-board, .df-kanban-column, .df-eisenhower-task-list, .df-planning-list) { overflow: clip; overscroll-behavior: auto; }

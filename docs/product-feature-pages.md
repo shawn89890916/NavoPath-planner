@@ -1,6 +1,16 @@
 # Product feature pages
 
-Public routes: `/features/planning`, `/features/execute`, `/features/ai`.
+Public routes: `/features/planning`, `/features/execute`, `/features/ai`, `/principles`.
+The bilingual Principles route is a lightweight reading page, lazy-loaded before
+workspace initialization. It shares the product navigation and footer without
+mounting an iframe, loading account data, or requesting AI. Four short sections
+explain the existing implementation: JEV task duration/project predictions,
+confidence and manual overrides with personal records, time-grid/free-slot rules,
+and reviewable actions with supported undo. Examples describe the process rather
+than live model results. Official TypeSafe documentation and the repository are
+linked for further reading. Update this copy when the corresponding implementation
+changes (`jevPrediction.ts`, `aiPersonalization.ts`, `autoSchedule.ts`, and native
+AI action handlers).
 Planning, Execute, and Navo AI fill the window with the running product workspace. Planning
 uses compact, clearly indented native task nodes and a right-side introduction.
 Execute uses native candidates on the left, introductions in the middle, and the
@@ -37,7 +47,7 @@ icon. Execute paragraphs are centered within equal horizontal insets.
 All three introductions insert navigation into the real App header through an optional
 runtime slot, reusing WorkspaceModeTabs and the existing site controls. It returns
 home from the logo and links to all three features,
-with Principles and personal-site placeholders. Support includes Afdian and GitHub.
+with a Principles link and a personal-site placeholder. Support includes Afdian and GitHub.
 Homepage content, navigation, and animation remain intact. Feature subtitles,
 including Navo AI, use the same enlarged title-size token as the main introduction.
 Introductions and native display type use Times New Roman; candidate project names

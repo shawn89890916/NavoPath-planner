@@ -2,6 +2,9 @@
 
 ## 2026-10-05 · AI 演示与共享产品样式
 
+### 新增
+- 新增中英文“相关原理”介绍页，从 JEV 的任务估时与项目归类、置信度和个人记录、时间安排规则、操作预览与撤回四个方面，简要说明产品体验背后的技术。可从产品页顶栏直接访问，手机端保持纯文字阅读。
+
 ### 改进
 - Navo AI 介绍页沿用执行介绍页的三列布局：左侧今日候选、中间说明、右侧时间轴。移除大箭头，安排按钮在首次点击前保持粗浅描边；等待时在中间解释估时、休息与可调整安排，任务随后按时间顺序轻轻淡入并落位。保留改期与撤回，减少动态效果时直接呈现结果。
 - 正式工作区与介绍页共用今日候选底部添加栏和规划项目样式：添加按钮完整留在容器内并居中，项目四边以项目色等宽描边，不再使用左侧色条。
@@ -70,6 +73,9 @@
 # NavoPath Changelog
 
 ## 2026-10-05 · AI demo and shared product styles
+
+### Added
+- Added a bilingual Principles page explaining the technology behind the experience: JEV duration and project predictions, confidence and personal records, scheduling rules, and action previews with undo. It is accessible from the product navigation and remains a text reading page on mobile.
 
 ### Improvements
 - Navo AI follows the Execute introduction’s three-column layout: Today’s Candidates on the left, explanations in the middle, and the timeline on the right. The large arrow is removed. The original scheduling icon keeps a thick, pale outline until first activation; the middle explains estimates, breaks and reversible changes during the wait. Tasks then fade and settle into place in time order. Reschedule and Undo remain available; reduced motion shows the result directly.

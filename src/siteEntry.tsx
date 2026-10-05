@@ -46,10 +46,11 @@ const featureContent = {
 };
 async function loadFeature(feature: ProductFeature) {
   const [page, content] = await Promise.all([import("./ProductFeaturePage"), featureContent[feature]()]);
-  return { default: ({ feature }: { feature: ProductFeature }) => <page.default feature={feature} copy={content.default} /> };
+  return { default: () => <page.default feature={feature} copy={content.default} /> };
 }
 const feature = productFeature(window.location.pathname, "features");
 const demo = productFeature(window.location.pathname, "product-demo");
+const principles = window.location.pathname.replace(/\/$/, "") === "/principles";
 if (demo) {
   void import("./productDemoRuntime").then(({ installProductDemo }) => {
     installProductDemo(demo);
@@ -58,8 +59,8 @@ if (demo) {
     if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "error" }, location.origin);
     document.getElementById("root")!.textContent = "NavoPath…";
   });
-} else if (feature) {
-  const Page = lazy(() => loadFeature(feature));
+} else if (feature || principles) {
+  const Page = lazy(feature ? () => loadFeature(feature) : () => import("./ProductPrinciplesPage"));
   createRoot(document.getElementById("root")!).render(
     <SiteErrorBoundary demo={Boolean(demo)}>
       <Suspense
@@ -72,7 +73,7 @@ if (demo) {
           </div>
         }
       >
-        <Page feature={(demo || feature)!} />
+        <Page />
       </Suspense>
     </SiteErrorBoundary>,
   );
