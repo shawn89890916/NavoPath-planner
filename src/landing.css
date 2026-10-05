@@ -63,11 +63,11 @@ html.landing-document #root {
 .landing-product-screenshot { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: rgb(248, 247, 243); object-fit: cover; }
 
 .landing-portals { position: fixed; z-index: 2; inset: calc(var(--l-nav-height) + 30px) 0 calc(var(--l-product-peek) + 58px); pointer-events: none; }
-.landing-portal { position: absolute; display: flex; flex-direction: column; width: clamp(280px, 32vw, 480px); height: clamp(184px, 30vh, 290px); overflow: hidden; border: 1px solid var(--l-rule-strong); border-radius: 12px; background: var(--l-paper); color: var(--l-ink); text-decoration: none; box-shadow: 0 18px 42px rgb(25 35 43 / 12%); pointer-events: auto; transform: perspective(1100px) rotateY(var(--portal-turn)) rotateZ(var(--portal-tilt)); transition: transform 360ms cubic-bezier(.22, 1, .36, 1), box-shadow 360ms ease; }
-.landing-portal--execute { --portal-turn: 32deg; --portal-tilt: -7deg; left: -8vw; top: 3%; }
-.landing-portal--planning { --portal-turn: 32deg; --portal-tilt: 6deg; left: -8vw; bottom: 3%; }
-.landing-portal--ai { --portal-turn: -32deg; --portal-tilt: 7deg; right: -8vw; top: 8%; }
-.landing-portal--principles { --portal-turn: -32deg; --portal-tilt: -6deg; right: -8vw; bottom: -2%; }
+.landing-portal { position: absolute; display: flex; flex-direction: column; width: clamp(280px, 32vw, 480px); height: clamp(184px, 30vh, 290px); overflow: hidden; border: 1px solid var(--l-rule-strong); border-radius: 12px; background: var(--l-paper); color: var(--l-ink); text-decoration: none; box-shadow: 0 18px 42px rgb(25 35 43 / 12%); pointer-events: auto; translate: calc(var(--portal-exit-x, 0%) * var(--portal-direction)) 0; transform: perspective(1100px) rotateY(var(--portal-turn)) rotateZ(var(--portal-tilt)); transition: transform 360ms cubic-bezier(.22, 1, .36, 1), box-shadow 360ms ease; }
+.landing-portal--execute { --portal-direction: -1; --portal-turn: 32deg; --portal-tilt: -7deg; left: -8vw; top: 3%; }
+.landing-portal--planning { --portal-direction: -1; --portal-turn: 32deg; --portal-tilt: 6deg; left: -8vw; bottom: 3%; }
+.landing-portal--ai { --portal-direction: 1; --portal-turn: -32deg; --portal-tilt: 7deg; right: -8vw; top: 8%; }
+.landing-portal--principles { --portal-direction: 1; --portal-turn: -32deg; --portal-tilt: -6deg; right: -8vw; bottom: -2%; }
 .landing-portal:hover, .landing-portal:focus-visible { z-index: 3; transform: perspective(1100px) rotateY(calc(var(--portal-turn) * .65)) rotateZ(calc(var(--portal-tilt) * .65)) translateY(-6px); box-shadow: 0 24px 56px rgb(25 35 43 / 18%); }
 .landing-portal:focus-visible { outline: 2px solid var(--l-brown); outline-offset: 5px; }
 .landing-portal-heading { display: flex; align-items: center; justify-content: space-between; flex: 0 0 44px; padding: 0 20px; border-bottom: 1px solid var(--l-rule); font-size: 15px; }
@@ -76,7 +76,7 @@ html.landing-document #root {
 .landing-portal-heading strong { font-weight: 680; }
 .landing-portal-heading > span { font-size: 19px; color: var(--l-muted); }
 .landing-portal img { display: block; flex: 1; min-height: 0; width: 100%; object-fit: cover; object-position: top; }
-.landing .landing-portal--opening { position: fixed; z-index: 100; right: auto; bottom: auto; pointer-events: none; transition: none; }
+.landing .landing-portal--opening { position: fixed; z-index: 100; right: auto; bottom: auto; pointer-events: none; translate: none; transition: none; }
 .landing-portal--opening .landing-portal-heading { padding: 0 24px; }
 
 @keyframes landing-scroll-nudge {
@@ -215,5 +215,6 @@ html.landing-document #root {
   .landing-product-rise { margin-top: calc(-100svh + var(--l-nav-height) - var(--l-product-peek)); }
 }
 @media (prefers-reduced-motion: reduce) {
+  .landing-portal { translate: none; }
   .landing *, .landing *::before, .landing *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }

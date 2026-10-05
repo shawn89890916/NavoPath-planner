@@ -161,6 +161,7 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
   const [lang, setLang] = useState<Lang>("en");
   const [showAuth, setShowAuth] = useState(false);
   const [coverRecede, setCoverRecede] = useState(0);
+  const [portalExit, setPortalExit] = useState(0);
   const c = copy[lang];
 
   useEffect(() => {
@@ -193,6 +194,8 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
       const distance = Math.min(1, Math.max(0, (window.scrollY - viewport * .1) / (viewport * 1.4)));
       const progress = distance ** .34;
       setCoverRecede((current) => Math.abs(current - progress) < .01 ? current : progress);
+      const exit = Math.min(1, Math.max(0, window.scrollY / (viewport * .58)));
+      setPortalExit(current => Math.abs(current - exit) < .004 ? current : exit);
     };
     const requestUpdate = () => { if (!frame) frame = window.requestAnimationFrame(update); };
     requestUpdate();
@@ -219,7 +222,7 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
       <div className="landing-nav-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><a className="np-start-link" href="/app">{lang === "zh" ? "现在开始" : "Start now"}</a></div>
     </nav>
     <main>
-      <section className="landing-cover" id="top"><LandingPortals lang={lang} recede={coverRecede} /><div className="landing-cover-content" style={coverStyle}><div className="landing-cover-logo"><ProductIcon /></div><div className="landing-brand-copy"><p className="landing-product-name">{c.productName}</p><h1 className="landing-slogan">{c.title}</h1></div></div><span className="landing-product-scroll-cue" aria-hidden="true"><i>↑</i>{c.scroll}</span></section>
+      <section className="landing-cover" id="top"><LandingPortals lang={lang} recede={portalExit} /><div className="landing-cover-content" style={coverStyle}><div className="landing-cover-logo"><ProductIcon /></div><div className="landing-brand-copy"><p className="landing-product-name">{c.productName}</p><h1 className="landing-slogan">{c.title}</h1></div></div><span className="landing-product-scroll-cue" aria-hidden="true"><i>↑</i>{c.scroll}</span></section>
       <ProductPreview lang={lang} />
       <section className="landing-steps" id="how-it-works"><div className="landing-steps-intro"><span>01 / {c.stepsKicker}</span><h2>{c.stepsTitle}</h2></div><ol>{c.steps.map(([number, title, body]) => <li key={number}><span>{number}</span><div><h3>{title}</h3><p>{body}</p></div></li>)}</ol></section>
       <section className="landing-planning" id="planning"><div className="landing-planning-copy"><span>02 / {c.planningKicker}</span><h2>{c.planningTitle}</h2><p>{c.planningBody}</p></div><PlanningPreview lang={lang} /></section>

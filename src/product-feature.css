@@ -17,7 +17,10 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-product-notes { display: flex; flex-direction: column; gap: 32px; padding: 16px 0; min-width: 0; }
 .np-product-notes h2 { margin: 0 0 10px; font-size: var(--product-heading-size); line-height: 1.35; font-weight: 700; letter-spacing: -.04em; }
 .np-product-notes p { margin: 0; color: #69717c; font-size: 14px; line-height: 1.75; }
-.np-demo-status { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8f7f3; color: #69717c; }
+.np-demo-status { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8f7f3; color: #69717c; opacity: 1; }
+.np-demo-status[aria-hidden="true"] { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 180ms ease, visibility 0s 180ms; }
+.np-demo-status img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.np-demo-loading-label { position: absolute; right: 20px; bottom: 16px; padding: 5px 10px; border-radius: 8px; background: #f8f7f3; color: #69717c; font: 12px/1.4 "Segoe UI", sans-serif; }
 .np-demo-status button { border: 0; border-radius: 18px; padding: 9px 18px; background: #e7ebee; color: #27231e; }
 .np-faq { max-width: 920px; margin: 80px auto 64px; display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 48px; }
 .np-faq h2 { margin: 12px 0; font-size: var(--product-heading-size); letter-spacing: -.04em; font-weight: 700; }
@@ -48,13 +51,14 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-feature--reading .np-faq h2 { margin-bottom: 24px; }
 .np-feature--reading .np-feature-footer { flex-wrap: wrap; gap: 18px; }
 .np-feature--reading .np-feature-footer > span:last-child { width: 100%; margin-left: 0; }
-@media (orientation: portrait), (max-width: 980px) {
+@media (max-width: 640px) {
   .np-site-nav.np-site-nav--product { height: auto; padding: 8px 20px; }
   .np-site-nav--product .df-header-inner { grid-template-columns: auto 1fr; grid-template-rows: 44px 44px; gap: 4px 12px; }
   .np-site-nav--product .df-header-right { justify-self: end; }
   .np-site-nav--product .df-tabs { grid-row: 2; grid-column: 1 / -1; }
 }
-@media (max-width: 640px) { .np-site-nav--product .df-brand strong { display: none; } .np-site-nav--product .df-tabs button { padding-inline: 6px; font-size: 12px; } }
+@media (max-width: 760px) { .np-site-nav--product .df-brand strong { display: none; } }
+@media (max-width: 640px) { .np-site-nav--product .df-tabs button { padding-inline: 6px; font-size: 12px; } }
 @media (max-width: 1050px) {
   .np-product-layout { grid-template-columns: minmax(0, 1fr); gap: 22px; }
   .np-product-notes, .np-product-layout:is(.np-product-layout--ai, .np-product-layout--execute) .np-product-notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 0; }
@@ -88,7 +92,7 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-feature--compact.np-feature--immersive .np-product-intro { padding: 24px; max-width: 720px; }
 .np-scroll-story { min-width: 0; max-width: 680px; margin: 0 auto; padding: 0 24px; }
 .np-scroll-story--inline { grid-area: 1 / 1; position: relative; z-index: 2; max-width: none; margin-top: 0; margin-bottom: 0; align-self: start; pointer-events: none; }
-.np-feature--immersive:has(.np-demo-status) .np-scroll-story--inline { visibility: hidden; }
+.np-feature--immersive:has(.np-demo-status:not([aria-hidden="true"])) .np-scroll-story--inline { visibility: hidden; }
 .np-scroll-story section { min-height: 38svh; display: flex; align-items: center; justify-content: center; }
 .np-scroll-story section > div { width: 100%; max-width: 420px; opacity: var(--story-opacity, 1); transform: scale(var(--story-scale, 1)); transform-origin: center; filter: blur(var(--story-blur, 0px)); }
 .np-feature--planning .np-scroll-story--inline { padding-inline: 12px; }
@@ -104,6 +108,7 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-scroll-story p { margin: 0; font-size: 18px; line-height: 1.65; color: #55504a; }
 @media (max-width: 1280px) { .np-scroll-story--inline { padding-inline: 18px; } .np-feature--planning .np-scroll-story--inline { padding-inline: 9px; } .np-scroll-story--inline p { font-size: 17px; } }
 @media (prefers-reduced-motion: reduce) {
+  .np-demo-status[aria-hidden="true"] { transition: none; }
   .np-faq-plus { transition: none; }
   .np-scroll-story section > div { transform: none; filter: none; }
   .np-scroll-story--inline .np-story-step { display: flex; min-height: 38svh; padding-block: 0; }

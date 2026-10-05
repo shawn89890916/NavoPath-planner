@@ -64,7 +64,9 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
       <section className={`np-product-layout np-product-layout--${feature}${immersive ? " np-workspace-scroll" : ""}`} aria-label={featureNames[lang][feature]}>
         <div className="np-product-window" ref={host}>
           {mounted && <iframe key={attempt} ref={frame} src={`/product-demo/${feature}?lang=${lang}${immersive ? "&presentation=full" : ""}`} title={`${featureNames[lang][feature]} · ${zh ? "产品体验" : "Product preview"}`} onError={() => setFailed(true)} />}
-          {(!ready || failed) && <div className="np-demo-status" role="status"><p>{failed ? (zh ? "暂时无法打开。" : "Unable to load.") : "NavoPath…"}</p>{failed && <button type="button" onClick={() => { setReady(false); setFailed(false); setAttempt(attempt + 1); }}>{zh ? "重试" : "Retry"}</button>}</div>}
+          <div className="np-demo-status" role={ready && !failed ? undefined : "status"} aria-hidden={ready && !failed}>
+            {failed ? <><p>{zh ? "暂时无法打开。" : "Unable to load."}</p><button type="button" onClick={() => { setReady(false); setFailed(false); setAttempt(attempt + 1); }}>{zh ? "重试" : "Retry"}</button></> : <><img src={`/product-entry-${feature}-${lang}.jpg`} width={1280} height={800} alt="" /><span className="np-demo-loading-label">{zh ? "正在打开产品体验…" : "Opening the product example…"}</span></>}
+          </div>
         </div>
         {immersive && feature !== "ai" && storyLayout && <ProductStory lang={lang} copy={c} layout={storyLayout} />}
       </section>

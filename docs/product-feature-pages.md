@@ -31,7 +31,11 @@ interactive product workspace is mounted. Rotating the viewport switches between
 these presentations and disposes of the old demo. Landscape Navo AI reuses the Execute introduction’s three-column geometry: native
 Today’s Candidates on the left, a ProductStorySlot with live explanations in the
 middle, and the unchanged native timeline on the right. The initial scheduling icon
-has a persistent 4px pale outline. There is no large arrow or timeline overlay.
+has a persistent 4px pale outline and gently breathes. A decorative cursor travels
+from the viewport center to that native icon, changes into a pointing hand and
+presses, repeating every four seconds until the first preset activation. It cannot
+intercept input, follows the button on resize, pauses offscreen, and is hidden with
+reduced motion. Undo does not restart it. There is no large arrow.
 Candidate cards use the same interactive TaskCard path as regular Execute. During
 the three-second wait, the middle explains estimates, lunch/rest and reversible
 changes. Native schedule actions then move candidates to the timeline. Each new
@@ -49,7 +53,9 @@ grid, conflict checks and undo records without real AI or account requests. All
 feature and Principles pages share three grouped menus: Product (Execute, Planning,
 Navo AI), Principles (all six topics), and Support. Both new groups use the existing
 Support-style quick menu, with hover, tap, ArrowDown, Escape and outside dismissal.
-Quick menus clamp within the viewport, including narrow screens. The homepage uses
+Quick menus clamp within the viewport, including narrow screens. Product headers
+keep all three groups on one row above 640px, hiding only the wordmark below 760px;
+phones retain two rows. Portrait tablets do not force a second row. The homepage uses
 these same three quick menus. Product lists Execute, Planning and Navo AI in that order.
 Language and Start now remain on the right;
 the language switch track and thumb both use round pill corners. Each page has six
@@ -63,12 +69,18 @@ The homepage keeps its central logo, title, original scroll treatment, lower con
 product screenshots and login flow. Four perspective links surround the logo: Execute,
 Planning, Navo AI and Principles. Lightweight bilingual JPEG captures show the real
 public pages without loading their workspaces on the homepage. To refresh these
-assets, capture each page at 1280×800; arrange the AI example before capturing it.
-Native Web Animations straighten and expand a clicked surface over 780ms, then
+assets, capture each page at 1280×800; keep AI in its initial candidates/empty-timeline
+state and hide the decorative cursor while capturing. The four entrances slide
+outwards and fade as the homepage scrolls, without changing the logo's scroll motion.
+Native Web Animations straighten and expand a clicked surface over 480ms, then
 follow its language-preserving link. Escape cancels, and back navigation clears the
 temporary surface. Reduced motion and modified/new-tab clicks use normal anchors.
 Portrait screens use two entrances above and two below the brand. Short landscape
-windows use smaller side entrances. Public introductions use a light loading canvas;
+windows use smaller side entrances. Mouse hover or keyboard focus warms only the
+selected destination's page code and copy, without mounting a demo or workspace.
+Public introductions retain the cached page capture while the native iframe boots,
+then fade it out. Loading failures still offer retry. Menu surfaces match each
+header's background token. Public introductions use a light loading canvas;
 the workspace retains its boot appearance. Feature subtitles,
 including Navo AI, use the same enlarged title-size token as the main introduction.
 Introductions and native display type use Times New Roman; candidate project names

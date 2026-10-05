@@ -13,6 +13,16 @@ export function ProductStorySlot({ feature, children }: { feature: ProductFeatur
     let previous = "";
     const update = () => {
       const { left, top, width, height } = element.getBoundingClientRect();
+      const guide = feature === "ai" ? document.querySelector<HTMLElement>(".df-product-click-guide") : null;
+      const button = guide && document.querySelector(".df-ai-plan-title-icon.needs-demo-plan");
+      if (guide && button) {
+        const target = button.getBoundingClientRect();
+        guide.style.setProperty("--guide-start-x", `${innerWidth / 2}px`);
+        guide.style.setProperty("--guide-start-y", `${innerHeight / 2}px`);
+        guide.style.setProperty("--guide-end-x", `${target.left + target.width / 2}px`);
+        guide.style.setProperty("--guide-end-y", `${target.top + target.height / 2}px`);
+        guide.dataset.ready = "true";
+      }
       const headerHeight = document.querySelector(".df-header")?.getBoundingClientRect().height || 0;
       const next = JSON.stringify({ left, top, width, height, headerHeight });
       if (next === previous) return;

@@ -124,6 +124,7 @@
     {
       "name": "Product site scripts",
       "path": [
+        "dist/assets/sitePages-*.js",
         "dist/assets/ProductFeaturePage-*.js",
         "dist/assets/ProductPrinciplesPage-*.js",
         "dist/assets/ProductNavigation-*.js",

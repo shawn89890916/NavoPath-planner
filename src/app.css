@@ -39661,7 +39661,8 @@ html.product-demo-fullscreen #root .df-app {
   border-radius: 0;
 }
 html.product-demo-fullscreen #root .df-app > .df-header { display: block; height: var(--product-header-height); min-height: var(--product-header-height); max-height: none; }
-html.product-demo-fullscreen #root .df-header-inner { height: 100%; }
+html.product-demo-fullscreen #root .df-header-inner { display: grid; height: 100%; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; }
+html.product-demo-fullscreen #root .df-header .df-tabs-center { position: static; transform: none; grid-column: 2; justify-self: center; display: flex; }
 html.product-demo-fullscreen #root .df-header .df-brand { color: var(--text-main); text-decoration: none; }
 html.product-demo-fullscreen #root .df-header-right { display: flex; gap: 12px; }
 html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { height: calc(100% - var(--product-header-height)); min-height: 0; }
@@ -39697,16 +39698,47 @@ html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-produc
 .df-product-ai-intro { width: 100%; max-width: 420px; text-align: center; text-wrap: balance; }
 .df-product-ai-intro h1 { margin: 0 0 16px; white-space: pre-line; font: 700 clamp(28px, 2.4vw, 38px)/1.35 var(--paper-serif); letter-spacing: -.04em; }
 .df-product-ai-intro p { margin: 0; color: var(--text-muted); font: 18px/1.65 var(--paper-serif); }
+.df-product-ai-intro p svg { display: inline-block; width: 18px; height: 18px; margin: 0 4px; vertical-align: -3px; color: var(--text-main); }
+.df-product-ai-intro p strong { color: var(--text-main); font-weight: 700; }
 .df-product-ai-arranging-notes { display: grid; gap: 16px; margin-top: 24px; }
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-plan-title-icon.needs-demo-plan { outline: 4px solid color-mix(in srgb, var(--accent-active) 20%, transparent); outline-offset: 3px; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-plan-title-icon.needs-demo-plan { outline: 4px solid color-mix(in srgb, var(--accent-active) 28%, transparent); outline-offset: 3px; animation: df-product-ai-start-cue 2.2s ease-in-out infinite; }
 html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-plan-title-icon.needs-demo-plan:focus-visible { outline-color: var(--accent-active); }
+@keyframes df-product-ai-start-cue {
+  0%, 100% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent-active) 8%, transparent); }
+  50% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--accent-active) 15%, transparent); }
+}
+html.product-demo-paused #root .df-app[data-product-feature="ai"] .df-ai-plan-title-icon.needs-demo-plan { animation-play-state: paused; }
+.df-product-click-guide { position: fixed; inset: 0; z-index: 30; visibility: hidden; pointer-events: none; }
+.df-product-click-guide[data-ready="true"] { visibility: visible; }
+.df-product-click-guide-motion { position: absolute; top: 0; left: 0; animation: df-product-guide-travel 4s cubic-bezier(.4,0,.2,1) infinite; }
+.df-product-click-guide-motion svg { position: absolute; top: 0; left: 0; fill: var(--bg-surface); color: var(--text-main); filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--text-main) 18%, transparent)); }
+.df-product-click-guide-cursor { translate: -5.3px -4px; animation: df-product-guide-cursor 4s linear infinite; }
+.df-product-click-guide-hand { translate: -14.7px -2.7px; transform-origin: 14.7px 2.7px; animation: df-product-guide-press 4s ease-in-out infinite; }
+@keyframes df-product-guide-travel {
+  0%, 100% { transform: translate(var(--guide-start-x), var(--guide-start-y)); opacity: 0; }
+  8% { transform: translate(var(--guide-start-x), var(--guide-start-y)); opacity: 1; }
+  43%, 78% { transform: translate(var(--guide-end-x), var(--guide-end-y)); opacity: 1; }
+  90% { transform: translate(var(--guide-end-x), var(--guide-end-y)); opacity: 0; }
+}
+@keyframes df-product-guide-cursor {
+  0%, 40% { opacity: 1; }
+  43%, 100% { opacity: 0; }
+}
+@keyframes df-product-guide-press {
+  0%, 40%, 90%, 100% { opacity: 0; transform: scale(1); }
+  43%, 50%, 66%, 78% { opacity: 1; transform: scale(1); }
+  58% { opacity: 1; transform: translateY(2px) scale(.86); }
+}
+html.product-demo-paused .df-product-click-guide-motion, html.product-demo-paused .df-product-click-guide-motion svg { animation-play-state: paused; }
 html.product-demo-fullscreen #root .df-app[data-product-revealing="true"] .df-time-block { animation: df-product-schedule-arrival 620ms cubic-bezier(.2,.75,.25,1) both; animation-delay: calc(var(--product-arrival-order, 0) * 100ms); }
 @keyframes df-product-schedule-arrival {
   from { opacity: 0; translate: -18px 10px; }
   to { opacity: 1; translate: 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .df-product-click-guide { display: none; }
   html.product-demo-fullscreen #root .df-app[data-product-revealing="true"] .df-time-block { animation: none; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-plan-title-icon.needs-demo-plan { animation: none; }
 }
 .df-product-ai-presets, .df-product-ai-candidates { display: grid; gap: 12px; }
 .df-product-ai-requests { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -39731,13 +39763,18 @@ html.product-demo-fullscreen #root .df-app[data-product-revealing="true"] .df-ti
   .df-product-ai-intro p { font-size: 13px; line-height: 1.5; }
 }
 
-@media (max-width: 980px), (orientation: portrait) {
+@media (max-width: 640px) {
   html.product-demo-fullscreen #root .df-app { --product-header-height: 102px; }
 
   html.product-demo-fullscreen #root .df-header-inner { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 48px 40px; padding: 6px 16px; gap: 0; }
   html.product-demo-fullscreen #root .df-header .df-tabs-center { position: static; transform: none; grid-column: 1 / -1; grid-row: 2; justify-self: center; display: flex; }
   html.product-demo-fullscreen #root .df-header-right { justify-self: end; gap: 8px; }
   html.product-demo-fullscreen #root .df-header .df-brand strong { display: none; }
+}
+@media (max-width: 760px) {
+  html.product-demo-fullscreen #root .df-header .df-brand strong { display: none; }
+}
+@media (max-width: 980px), (orientation: portrait) {
   html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { top: 0; }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-project-tasks { margin-left: 40px; }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-plan-task-node { width: 100%; max-width: 360px; min-width: 0; }

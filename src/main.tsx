@@ -106,7 +106,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiBellIcon, UiCalendarCheckIcon, UiCalendarClockIcon, UiCopyIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiPencilIcon, UiPlusIcon, UiReturnIcon, UiSearchIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiBellIcon, UiCalendarCheckIcon, UiCalendarClockIcon, UiCopyIcon, UiCursorIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiReturnIcon, UiSearchIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { SETTINGS_CATEGORIES, normalizeSettingsTarget, settingsCategoryLabel, settingsTargetForSearchId, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { getDefaultSettings, normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -1250,6 +1250,7 @@ function App() {
   const [aiMessages, setAiMessages] = useState<AiSessionMessage[]>([]);
   const [demoReschedulesOpen, setDemoReschedulesOpen] = useState(false);
   const [demoPresetBusy, setDemoPresetBusy] = useState(false);
+  const [demoGuideDismissed, setDemoGuideDismissed] = useState(false);
   const demoPresetBusyRef = useRef(false);
   const [demoRevealing, setDemoRevealing] = useState(false);
   const [activeAiConversationId, setActiveAiConversationId] = useState("");
@@ -7917,6 +7918,7 @@ if (cached?.data && cached?.settings) {
   async function runProductDemoPreset(request?: "undo" | { taskId: string; days: 1 | 2 }) {
     if (!productDemo || !dataRef.current || demoPresetBusyRef.current) return;
     demoPresetBusyRef.current = true;
+    setDemoGuideDismissed(true);
     setDemoPresetBusy(true);
     try {
       if (request === "undo") {
@@ -8842,6 +8844,7 @@ if (cached?.data && cached?.settings) {
 
   return (
     <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+      {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
           <div className="df-brand">
@@ -9081,6 +9084,7 @@ if (cached?.data && cached?.settings) {
                       className={`df-ai-plan-title-icon${productAiPresentation && !demoHasSchedule && !demoPresetBusy ? " needs-demo-plan" : ""} ${autoScheduleState === "generating" || autoScheduleState === "committing" || (productAiPresentation && demoPresetBusy) ? "thinking" : ""}`}
                       icon={<UiSparklesIcon />}
                       label={t(lang, "timeline.aiPlanToday")}
+                      aria-describedby={productAiPresentation && !demoHasSchedule && !demoPresetBusy ? "product-ai-start-guide" : undefined}
                       disabled={autoScheduleState === "generating" || autoScheduleState === "committing" || drawerOpen || (productAiPresentation && (demoPresetBusy || !demoTodayTasks.some(task => !task.scheduledStart && !task.timelineRecords?.some(record => record.executionStatus === "scheduled"))))}
                       onClick={() => { setAiPlanMenuOpen(false); if (productAiPresentation) void runProductDemoPreset(); else void planMyDay(); }}
                     />
@@ -9277,8 +9281,8 @@ if (cached?.data && cached?.settings) {
             )}
           </CandidatePanelShell>
           {productAiPresentation ? <ProductStorySlot feature="ai"><div className="df-product-ai-intro" role="status" aria-live="polite" aria-atomic="true">
-            <h1>{demoRevealing ? (lang === "zh" ? "一步一步，\n各就各位。" : "Step by step.\nInto place.") : demoPresetBusy ? (lang === "zh" ? "正在为今天\n留出时间。" : "Making room\nfor your day.") : demoHasSchedule ? (lang === "zh" ? "一天有了\n自己的节奏。" : "A day with\nroom to breathe.") : (lang === "zh" ? "让今天，\n自然排好。" : "Let your day\nfall into place.")}</h1>
-            <p>{demoRevealing ? (lang === "zh" ? "从上午到傍晚，每项任务都有自己的位置。" : "From morning to evening, each task finds its time.") : demoPresetBusy ? (lang === "zh" ? "让任务、休息和生活，都有自己的时间。" : "Make room for tasks, breaks and everyday life.") : demoHasSchedule ? (lang === "zh" ? "午餐与休息也在计划里。你还可以调整任务，或试试改期与撤回。" : "Lunch and breaks belong here, too. Adjust a task, reschedule it, or undo.") : (lang === "zh" ? "点击左侧「今日候选」右上角的安排图标，看看一天如何慢慢成形。" : "Click the scheduling icon at the top right of Today’s Candidates, and watch your day take shape.")}</p>
+            <h1>{demoRevealing ? (lang === "zh" ? "一步一步，\n各就各位。" : "Step by step.\nInto place.") : demoPresetBusy ? (lang === "zh" ? "正在为今天\n留出时间。" : "Making room\nfor your day.") : demoHasSchedule ? (lang === "zh" ? "一天有了\n自己的节奏。" : "A day with\nroom to breathe.") : (lang === "zh" ? "点一下，\n安排一整天。" : "Try one click.\nPlan your day.")}</h1>
+            <p id="product-ai-start-guide">{demoRevealing ? (lang === "zh" ? "从上午到傍晚，每项任务都有自己的位置。" : "From morning to evening, each task finds its time.") : demoPresetBusy ? (lang === "zh" ? "让任务、休息和生活，都有自己的时间。" : "Make room for tasks, breaks and everyday life.") : demoHasSchedule ? (lang === "zh" ? "午餐与休息也在计划里。你还可以调整任务，或试试改期与撤回。" : "Lunch and breaks belong here, too. Adjust a task, reschedule it, or undo.") : <>{lang === "zh" ? "点击左侧「今日候选」右上角的 " : "Click the pulsing "}<UiSparklesIcon /><strong>{lang === "zh" ? "AI 安排按钮" : "AI scheduling icon"}</strong>{lang === "zh" ? "，体验一次示例安排。" : " at the top right of Today’s Candidates to try the example."}</>}</p>
             {demoPresetBusy && !demoRevealing && !demoHasSchedule && <div className="df-product-ai-arranging-notes"><p>{lang === "zh" ? "按任务估时留出完整时段，减少来回切换。" : "Give each task enough time, with fewer switches."}</p><p>{lang === "zh" ? "午餐与休息也排进去，计划才跟得上生活。" : "Lunch and breaks belong in the plan, too."}</p><p>{lang === "zh" ? "安排好后，仍可调整时间、改期或撤回。" : "Then adjust the time, move a task, or undo."}</p></div>}
           </div></ProductStorySlot> : productDemo?.story}
           <section
