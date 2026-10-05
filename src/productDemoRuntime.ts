@@ -39,6 +39,17 @@ export function installProductDemo(feature: ProductFeature) {
     feature, date: DEMO_DATE, language, storage,
     story: fullscreen && feature !== "ai" ? createElement(ProductStorySlot, { feature }) : undefined,
     navigation: fullscreen ? icon => createElement(ProductNavigation, { feature, lang: language, icon }) : undefined,
+    revealSchedule: fullscreen && feature === "ai" ? async () => {
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const animations = document.getAnimations().filter(animation => animation instanceof CSSAnimation && animation.animationName === "df-product-schedule-arrival");
+      animations.forEach(animation => { animation.id = "product-schedule-arrival"; });
+      const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+      const finish = () => { if (reduced.matches) animations.forEach(animation => animation.finish()); };
+      reduced.addEventListener("change", finish);
+      try { await Promise.all(animations.map(animation => animation.finished.catch(() => undefined))); }
+      finally { reduced.removeEventListener("change", finish); }
+    } : undefined,
     now: () => new Date(`${DEMO_DATE}T09:00:00`),
     ready: () => { if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "ready" }, location.origin); },
     suggest: (state: PlannerData, request?: { taskId: string; days: 1 | 2 }, taskIds?: string[]) => {
@@ -63,6 +74,10 @@ export function installProductDemo(feature: ProductFeature) {
   if (fullscreen) document.documentElement.classList.add("product-demo-fullscreen");
   window.addEventListener("message", (event) => {
     if (event.source !== parent || event.origin !== location.origin || event.data?.channel !== "navopath-product-demo") return;
-    if (event.data.type === "visibility") document.documentElement.classList.toggle("product-demo-paused", event.data.visible === false);
+    if (event.data.type === "visibility") {
+      document.documentElement.classList.toggle("product-demo-paused", event.data.visible === false);
+      document.getAnimations().filter(animation => animation.id === "product-schedule-arrival")
+        .forEach(animation => event.data.visible === false ? animation.pause() : animation.play());
+    }
   });
 }

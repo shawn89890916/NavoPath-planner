@@ -6,4 +6,4 @@ html.product-demo-document, html.product-demo-document body, html.product-demo-d
 
 /* The introduction scrolls in the outer document; this native slot reserves its space. */
 .df-product-story { position: relative; z-index: 1; min-width: 0; min-height: 0; }
-@media (max-width: 999px), (orientation: portrait) { .df-product-story { display: none; } }
+@media (max-width: 999px), (orientation: portrait) { .df-product-story:not(.df-product-story--ai) { display: none; } }

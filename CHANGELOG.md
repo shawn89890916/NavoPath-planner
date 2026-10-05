@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-10-05 · AI 演示与共享产品样式
+
+### 改进
+- Navo AI 介绍页沿用执行介绍页的三列布局：左侧今日候选、中间说明、右侧时间轴。移除大箭头，安排按钮在首次点击前保持粗浅描边；等待时在中间解释估时、休息与可调整安排，任务随后按时间顺序轻轻淡入并落位。保留改期与撤回，减少动态效果时直接呈现结果。
+- 正式工作区与介绍页共用今日候选底部添加栏和规划项目样式：添加按钮完整留在容器内并居中，项目四边以项目色等宽描边，不再使用左侧色条。
+
 ## 2026-10-04 · 产品介绍页
 
 ### 改进
@@ -62,6 +68,12 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-05 · AI demo and shared product styles
+
+### Improvements
+- Navo AI follows the Execute introduction’s three-column layout: Today’s Candidates on the left, explanations in the middle, and the timeline on the right. The large arrow is removed. The original scheduling icon keeps a thick, pale outline until first activation; the middle explains estimates, breaks and reversible changes during the wait. Tasks then fade and settle into place in time order. Reschedule and Undo remain available; reduced motion shows the result directly.
+- The workspace and introductions share the candidate composer and planning-project styles. The add button stays centered and contained; projects use equal project-colored borders on all four sides with no left stripe.
 
 ## 2026-10-04 · Product feature pages
 

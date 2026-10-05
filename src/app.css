@@ -39689,19 +39689,26 @@ html.product-demo-fullscreen #root .df-app.mode-execute .df-candidate-panel .df-
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked .df-product-story { display: none; }
   html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 2; }
 }
-/* AI introduction reuses native candidates and their scheduling control. */
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) { display: grid; grid-template-columns: minmax(320px, 36%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 28px; padding: 20px 32px; }
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-candidate-panel { grid-column: 1; grid-row: 1; padding-top: 0; }
-html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { position: relative; grid-column: 2; grid-row: 1; padding-top: 0; }
+/* AI keeps Execute's panel geometry and uses its middle introduction column. */
 html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-panel > .df-panel-title { position: static; inset: auto; height: auto; width: auto; z-index: auto; flex-shrink: 0; }
 html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-panel > .df-panel-title h2 { display: block; }
 html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-panel > .df-panel-title > div { position: static; height: auto; }
 html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-list { overflow-x: clip; overflow-y: auto; }
-.df-product-ai-guide { position: absolute; z-index: 8; inset: 100px 20px auto 16px; max-width: 600px; padding: 24px; background: var(--surface-main); border-radius: 16px; pointer-events: none; }
-.df-product-ai-guide-arrow { display: block; text-align: left; color: var(--accent-active); font: 400 clamp(68px, 8vw, 120px)/1 var(--paper-sans); }
-.df-product-ai-guide h1 { margin: 0 0 16px; white-space: pre-line; font: 600 clamp(28px, 3.4vw, 52px)/1.3 var(--paper-serif); letter-spacing: -.04em; }
-.df-product-ai-guide p { margin: 0; color: var(--text-muted); font: 15px/1.6 var(--paper-sans); }
-.df-product-ai-arranging-notes { display: grid; gap: 10px; margin-top: 24px; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-product-story { display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
+.df-product-ai-intro { width: 100%; max-width: 420px; text-align: center; text-wrap: balance; }
+.df-product-ai-intro h1 { margin: 0 0 16px; white-space: pre-line; font: 700 clamp(28px, 2.4vw, 38px)/1.35 var(--paper-serif); letter-spacing: -.04em; }
+.df-product-ai-intro p { margin: 0; color: var(--text-muted); font: 18px/1.65 var(--paper-serif); }
+.df-product-ai-arranging-notes { display: grid; gap: 16px; margin-top: 24px; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-plan-title-icon.needs-demo-plan { outline: 4px solid color-mix(in srgb, var(--accent-active) 20%, transparent); outline-offset: 3px; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-plan-title-icon.needs-demo-plan:focus-visible { outline-color: var(--accent-active); }
+html.product-demo-fullscreen #root .df-app[data-product-revealing="true"] .df-time-block { animation: df-product-schedule-arrival 620ms cubic-bezier(.2,.75,.25,1) both; animation-delay: calc(var(--product-arrival-order, 0) * 100ms); }
+@keyframes df-product-schedule-arrival {
+  from { opacity: 0; translate: -18px 10px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.product-demo-fullscreen #root .df-app[data-product-revealing="true"] .df-time-block { animation: none; }
+}
 .df-product-ai-presets, .df-product-ai-candidates { display: grid; gap: 12px; }
 .df-product-ai-requests { display: flex; flex-wrap: wrap; gap: 8px; }
 #root .df-app .df-product-ai-requests .ui-button { min-height: 40px; padding: 9px 16px; border: 0; border-radius: 12px; color: var(--text-main); font: 600 13px/1.4 var(--paper-sans); }
@@ -39711,17 +39718,18 @@ html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candid
 #root .df-app .df-product-ai-reschedules .ui-button { display: grid; gap: 6px; text-align: left; min-width: 0; padding: 12px; border: 0; border-radius: 12px; background: var(--paper-note); font: 500 13px/1.5 var(--paper-sans); }
 .df-product-ai-reschedules .ui-button span { color: var(--text-muted); font-size: 12px; }
 @media (max-width: 999px) {
-  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) { grid-template-columns: minmax(280px, 40%) minmax(0, 1fr); gap: 16px; padding: 12px; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(170px, .85fr) minmax(0, 1.4fr); gap: 0; padding: 12px; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-product-story { grid-column: 2; grid-row: 1; padding: 12px; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute > .df-timeline-panel { grid-column: 3; grid-row: 1; padding-top: 0; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute > .df-candidate-panel { padding-top: 0; }
   html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-date-title-compact { display: flex; position: relative; left: auto; transform: none; margin: 0 auto 8px; }
-  .df-product-ai-guide { inset: 100px 8px auto 8px; padding: 16px; }
-  .df-product-ai-guide p { font-size: 13px; }
+  .df-product-ai-intro h1 { font-size: 24px; }
+  .df-product-ai-intro p { font-size: 15px; }
 }
-
 @media (max-height: 620px) {
-  .df-product-ai-guide:has(.df-product-ai-arranging-notes) { padding: 12px; }
-  .df-product-ai-guide:has(.df-product-ai-arranging-notes) h1 { font-size: 24px; }
-  .df-product-ai-guide:has(.df-product-ai-arranging-notes) p { font-size: 12px; line-height: 1.5; }
-  .df-product-ai-arranging-notes { gap: 6px; margin-top: 16px; }
+  .df-product-ai-arranging-notes { gap: 8px; margin-top: 16px; }
+  .df-product-ai-intro h1 { font-size: 22px; }
+  .df-product-ai-intro p { font-size: 13px; line-height: 1.5; }
 }
 
 @media (max-width: 980px), (orientation: portrait) {

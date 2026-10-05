@@ -1,11 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type { Language } from "./types";
 import type { FeatureCopy, ProductFeature } from "./productSite";
 
 export type StoryLayout = { left: number; top: number; width: number; height: number; headerHeight: number };
 
 // The native workspace owns the available column; the parent owns document scrolling.
-export function ProductStorySlot({ feature }: { feature: ProductFeature }) {
+export function ProductStorySlot({ feature, children }: { feature: ProductFeature; children?: ReactNode }) {
   const host = useRef<HTMLElement>(null);
   useEffect(() => {
     const element = host.current;
@@ -23,7 +23,7 @@ export function ProductStorySlot({ feature }: { feature: ProductFeature }) {
     observer.observe(element); addEventListener("resize", update); document.addEventListener("animationend", update, true); document.addEventListener("transitionend", update, true); update();
     return () => { observer.disconnect(); removeEventListener("resize", update); document.removeEventListener("animationend", update, true); document.removeEventListener("transitionend", update, true); };
   }, []);
-  return <aside ref={host} className={`df-product-story df-product-story--${feature}`} aria-hidden="true" />;
+  return <aside ref={host} className={`df-product-story df-product-story--${feature}`} aria-hidden={children ? undefined : true}>{children}</aside>;
 }
 
 export default function ProductStory({ lang, copy, layout }: { lang: Language; copy: FeatureCopy; layout: StoryLayout | null }) {

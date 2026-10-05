@@ -93,6 +93,7 @@ import { promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToTod
 import { reconcileOverdueTasks } from "./utils/overdueTasks";
 import { useInAppDialog } from "./InAppDialog";
 import { TaskActions, TaskBlock, TaskBlockAccent, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskGroup, TaskSubtaskShelf, type TaskBlockDragState } from "./components/TaskBlock";
+import { ProductStorySlot } from "./ProductStory";
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, CandidateBlock, TimelineCanvas, TimelineEventBlock } from "./components/ExecutionSharedLayout";
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDivider, SettingDescription } from "./components/SettingsControls";
 import { ActionDisclosure, Button, CloseButton, IconButton } from "./components/UiPrimitives";
@@ -1250,6 +1251,7 @@ function App() {
   const [demoReschedulesOpen, setDemoReschedulesOpen] = useState(false);
   const [demoPresetBusy, setDemoPresetBusy] = useState(false);
   const demoPresetBusyRef = useRef(false);
+  const [demoRevealing, setDemoRevealing] = useState(false);
   const [activeAiConversationId, setActiveAiConversationId] = useState("");
   const [aiConversationListOpen, setAiConversationListOpen] = useState(false);
   const [aiAuditOpen, setAiAuditOpen] = useState(false);
@@ -7937,13 +7939,16 @@ if (cached?.data && cached?.settings) {
         setAiMessages(items => [...items, { id: `request-${message.id}`, role: "user", content: prompt, createdAt: workspaceNow().toISOString() }, { ...message, status: "thinking", actions: undefined, actionState: undefined, content: lang === "zh" ? (request ? "正在寻找合适的新时段…" : "正在为工作、学习和运动留出时间…") : (request ? "Finding a new time…" : "Making room for work, learning and exercise…") }]);
         await new Promise(resolve => window.setTimeout(resolve, request ? 650 : 3000));
         setAiMessages(items => items.map(item => item.id === message.id ? message : item));
+        if (productAiPresentation && !request) setDemoRevealing(true);
         await adoptSelectedAiActions(message.id, message);
         const date = message.actions[0].type === "schedule_task" ? message.actions[0].date || productDemo.date : productDemo.date;
         setSelectedDate(date);
         setVisibleTimelineDate(date);
+        if (productAiPresentation && !request) await productDemo.revealSchedule?.();
       }
       setDemoReschedulesOpen(false);
     } finally {
+      setDemoRevealing(false);
       demoPresetBusyRef.current = false;
       setDemoPresetBusy(false);
     }
@@ -8836,7 +8841,7 @@ if (cached?.data && cached?.settings) {
   const aiPanel = aiOpen && <AiPanel demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
 
   return (
-    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-product-feature={productAiPresentation ? "ai" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
           <div className="df-brand">
@@ -9062,18 +9067,18 @@ if (cached?.data && cached?.settings) {
                 {(timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
                   <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }} style={{ fontSize: "14px", lineHeight: 1, padding: "0 2px" }}>«</button>
                 )}
-                {!productAiPresentation && <ActionDisclosure label={lang === "zh" ? "更多" : "More"}>
+                <ActionDisclosure label={lang === "zh" ? "更多" : "More"}>
                   <Button aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)}>{lang === "zh" ? "按项目分类" : "Group by project"}</Button>
                   <Button aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)}>{t(lang, "candidate.showCompleted")}</Button>
-                  <Button disabled={!focusTask} onClick={() => { if (!focusTask) return; if (!timerTask) startTimer(focusTask.id); setFocusOverlayMode(settings.focusModeDefault || "flowtime"); }}>{lang === "zh" ? "专注" : "Focus"}</Button>
-                  {settings.featureTemplatesEnabled !== false && <Button onClick={() => setScheduleTemplateOpen(true)}>{lang === "zh" ? "日程模板" : "Schedule Template"}</Button>}
-                  {Boolean(window.desktopApi?.widget) && settings.featureWidgetEnabled !== false && <Button onClick={() => void window.desktopApi?.widget?.open()}>{lang === "zh" ? "桌面小组件" : "Desktop widget"}</Button>}
-                  {!settings.hideAi && <Button onClick={() => setAiPlanMenuOpen((open) => !open)}>{t(lang, "timeline.aiPlanningSettings")}</Button>}
-                </ActionDisclosure>}
+                  {!productAiPresentation && <Button disabled={!focusTask} onClick={() => { if (!focusTask) return; if (!timerTask) startTimer(focusTask.id); setFocusOverlayMode(settings.focusModeDefault || "flowtime"); }}>{lang === "zh" ? "专注" : "Focus"}</Button>}
+                  {!productAiPresentation && settings.featureTemplatesEnabled !== false && <Button onClick={() => setScheduleTemplateOpen(true)}>{lang === "zh" ? "日程模板" : "Schedule Template"}</Button>}
+                  {!productAiPresentation && Boolean(window.desktopApi?.widget) && settings.featureWidgetEnabled !== false && <Button onClick={() => void window.desktopApi?.widget?.open()}>{lang === "zh" ? "桌面小组件" : "Desktop widget"}</Button>}
+                  {!productAiPresentation && !settings.hideAi && <Button onClick={() => setAiPlanMenuOpen((open) => !open)}>{t(lang, "timeline.aiPlanningSettings")}</Button>}
+                </ActionDisclosure>
                 {!settings.hideAi && (
                   <span className="df-ai-plan-title-tools">
                     <IconButton
-                      className={`df-ai-plan-title-icon ${autoScheduleState === "generating" || autoScheduleState === "committing" || (productAiPresentation && demoPresetBusy) ? "thinking" : ""}`}
+                      className={`df-ai-plan-title-icon${productAiPresentation && !demoHasSchedule && !demoPresetBusy ? " needs-demo-plan" : ""} ${autoScheduleState === "generating" || autoScheduleState === "committing" || (productAiPresentation && demoPresetBusy) ? "thinking" : ""}`}
                       icon={<UiSparklesIcon />}
                       label={t(lang, "timeline.aiPlanToday")}
                       disabled={autoScheduleState === "generating" || autoScheduleState === "committing" || drawerOpen || (productAiPresentation && (demoPresetBusy || !demoTodayTasks.some(task => !task.scheduledStart && !task.timelineRecords?.some(record => record.executionStatus === "scheduled"))))}
@@ -9271,7 +9276,11 @@ if (cached?.data && cached?.settings) {
               </>
             )}
           </CandidatePanelShell>
-          {productDemo?.story}
+          {productAiPresentation ? <ProductStorySlot feature="ai"><div className="df-product-ai-intro" role="status" aria-live="polite" aria-atomic="true">
+            <h1>{demoRevealing ? (lang === "zh" ? "一步一步，\n各就各位。" : "Step by step.\nInto place.") : demoPresetBusy ? (lang === "zh" ? "正在为今天\n留出时间。" : "Making room\nfor your day.") : demoHasSchedule ? (lang === "zh" ? "一天有了\n自己的节奏。" : "A day with\nroom to breathe.") : (lang === "zh" ? "让今天，\n自然排好。" : "Let your day\nfall into place.")}</h1>
+            <p>{demoRevealing ? (lang === "zh" ? "从上午到傍晚，每项任务都有自己的位置。" : "From morning to evening, each task finds its time.") : demoPresetBusy ? (lang === "zh" ? "让任务、休息和生活，都有自己的时间。" : "Make room for tasks, breaks and everyday life.") : demoHasSchedule ? (lang === "zh" ? "午餐与休息也在计划里。你还可以调整任务，或试试改期与撤回。" : "Lunch and breaks belong here, too. Adjust a task, reschedule it, or undo.") : (lang === "zh" ? "点击左侧「今日候选」右上角的安排图标，看看一天如何慢慢成形。" : "Click the scheduling icon at the top right of Today’s Candidates, and watch your day take shape.")}</p>
+            {demoPresetBusy && !demoRevealing && !demoHasSchedule && <div className="df-product-ai-arranging-notes"><p>{lang === "zh" ? "按任务估时留出完整时段，减少来回切换。" : "Give each task enough time, with fewer switches."}</p><p>{lang === "zh" ? "午餐与休息也排进去，计划才跟得上生活。" : "Lunch and breaks belong in the plan, too."}</p><p>{lang === "zh" ? "安排好后，仍可调整时间、改期或撤回。" : "Then adjust the time, move a task, or undo."}</p></div>}
+          </div></ProductStorySlot> : productDemo?.story}
           <section
             className={`df-timeline-panel${productAiPresentation || compactExecuteView === "schedule" ? " compact-active" : " compact-inactive"}`}
             aria-hidden={!productAiPresentation && compactLayout && compactExecuteView !== "schedule"}
@@ -9279,7 +9288,7 @@ if (cached?.data && cached?.settings) {
             data-cross-day-scroll={settings.continuousCrossDayScroll !== false ? "true" : "false"}
             onWheelCapture={handleTimelinePanelWheel}
           >
-            {productAiPresentation && !demoHasSchedule && <div className="df-product-ai-guide" role="status">{!demoPresetBusy && <span className="df-product-ai-guide-arrow" aria-hidden="true">↖</span>}<h1>{demoPresetBusy ? (lang === "zh" ? "让这一天，慢慢成形。" : "Your day is taking shape.") : (lang === "zh" ? "今天怎么安排？\n点一下，就有答案。" : "One click.\nYour day, arranged.")}</h1><p>{demoPresetBusy ? (lang === "zh" ? "让任务、休息和生活，都有自己的时间。" : "Make room for tasks, breaks and everyday life.") : (lang === "zh" ? "点击左侧「今日候选」右上角的安排图标" : "Click the scheduling icon at the top right of Today’s Candidates")}</p>{demoPresetBusy && <div className="df-product-ai-arranging-notes"><p>{lang === "zh" ? "按任务估时留出完整时段，减少来回切换。" : "Give each task enough time, with fewer switches."}</p><p>{lang === "zh" ? "午餐与休息也排进去，计划才跟得上生活。" : "Lunch and breaks belong in the plan, too."}</p><p>{lang === "zh" ? "安排好后，仍可调整时间、改期或撤回。" : "Then adjust the time, move a task, or undo."}</p></div>}</div>}
+
             {yearOverviewOpen ? (
               <YearCalendarOverview
                 year={overviewYear}
@@ -10161,7 +10170,7 @@ if (cached?.data && cached?.settings) {
                               if (!suppressBlockClickRef.current) openTaskEdit(task);
                             }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
                               createProjectForTask(task.id, title);
-                            }} onDragStart={(event) => beginBlockDrag(event, task)} onResizeStart={(event, edge) => beginBlockResize(event, task, edge)} resizeEdges={explicitVisibleTimeline.resizeEdges.get(task.id) || eventVisibleTimeline.resizeEdges.get(task.id)} extraStyle={{ ...extraStyle, ...(isPreview ? { ["--df-preview" as any]: "1" } as CSSProperties : {}) }}
+                            }} onDragStart={(event) => beginBlockDrag(event, task)} onResizeStart={(event, edge) => beginBlockResize(event, task, edge)} resizeEdges={explicitVisibleTimeline.resizeEdges.get(task.id) || eventVisibleTimeline.resizeEdges.get(task.id)} extraStyle={{ ...extraStyle, ...(isPreview ? { ["--df-preview" as any]: "1" } as CSSProperties : {}), ...(productAiPresentation ? { "--product-arrival-order": scheduledTasks.filter(other => (other.scheduledStart || "") < (task.scheduledStart || "")).length } as CSSProperties : {}) }}
                               onAcceptPreview={isPreview ? () => acceptOnePreview(previewIdByClonedId.get(task.id)!) : undefined}
                               onCancelPreview={isPreview ? () => cancelOnePreview(previewIdByClonedId.get(task.id)!) : undefined}
                               viewMode="daily"

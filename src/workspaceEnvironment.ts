@@ -13,6 +13,7 @@ export type WorkspaceDemoRuntime = {
   now: () => Date;
   suggest: (data: PlannerData, request?: { taskId: string; days: 1 | 2 }, taskIds?: string[]) => AiSessionMessage;
   ready: () => void;
+  revealSchedule?: () => Promise<void>;
 };
 type DemoWindow = Window & { navopathDemoRuntime?: WorkspaceDemoRuntime };
 export function getWorkspaceDemoRuntime() {

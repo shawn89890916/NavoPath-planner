@@ -12,23 +12,24 @@ view rail and daily-canvas margins. Narrow landscape screens keep native compact
 layouts and show introductions below the workspace. Portrait screens on all three
 routes show only text, shared navigation, and expandable FAQ answers; no iframe or
 interactive product workspace is mounted. Rotating the viewport switches between
-these presentations and disposes of the old demo. Landscape Navo AI uses the native two-column workspace: Today's Candidates on the
-left and a wider timeline on the right. It has no scrolling introduction or AI drawer.
-The timeline starts empty, with a large cue pointing up and left to the existing
-UiSparklesIcon scheduling control in CandidatePanelHeader. The candidate list uses
-the same interactive TaskCard path as regular Execute; there is no separate preview
-list. Unused project add/settings controls are omitted. Candidate editing pauses
-during the three-second arranging state, which explains task estimates, lunch/rest
-and reversible adjustments. The six sessions start at 09:00, 11:00, 12:00, 14:00,
-15:30 and 16:30; lunch/rest and an afternoon notes session fill the requested gaps.
-Arranged tasks leave the candidate list and appear on the timeline. The candidate
-panel then offers three task/date reschedule choices and native Undo. Rescheduling
-shows a brief 650ms pending state and follows the affected date; undoing all rounds
-restores the six candidates and clean opening state. Requests use the native action
-handler, fifteen-minute grid, conflict checks and undo records. No free-form input,
-pending preview cards, provider configuration or real AI requests appear. Narrow
-landscape screens retain candidates-left/timeline-right, with a scrollable candidate
-list so all native cards remain reachable in shorter windows. All three feature pages share five navigation items: Execute,
+these presentations and disposes of the old demo. Landscape Navo AI reuses the Execute introduction’s three-column geometry: native
+Today’s Candidates on the left, a ProductStorySlot with live explanations in the
+middle, and the unchanged native timeline on the right. The initial scheduling icon
+has a persistent 4px pale outline. There is no large arrow or timeline overlay.
+Candidate cards use the same interactive TaskCard path as regular Execute. During
+the three-second wait, the middle explains estimates, lunch/rest and reversible
+changes. Native schedule actions then move candidates to the timeline. Each new
+block fades and settles into its slot over 620ms, staggered by 100ms in time order;
+CSS animations use opacity and individual translate without changing timeline
+geometry or drag transforms. Reduced motion skips the arrival effect. Offscreen
+animations pause and resume when the example returns. After arranging, the middle
+explains the result and the candidate panel offers three task/date reschedule
+choices and native Undo. Undoing all rounds restores the six candidates and opening
+cue. Desktop columns exactly match Execute. Short landscape layouts keep three
+columns with smaller text and reachable candidate cards. Portrait remains text-only.
+The six sessions start at 09:00, 11:00, 12:00, 14:00, 15:30 and 16:30, including
+lunch/rest and afternoon course notes. Requests use native handlers, the fifteen-minute
+grid, conflict checks and undo records without real AI or account requests. All three feature pages share five navigation items: Execute,
 Planning, Navo AI, Principles, and Support. Language and Start now remain on the right;
 the language switch track and thumb both use round pill corners. Each page has six
 bilingual FAQ questions using native details/summary controls with a thin shared plus
