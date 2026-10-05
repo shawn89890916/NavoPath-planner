@@ -6,6 +6,7 @@ import { CloseButton, IconButton } from "./components/UiPrimitives";
 import { UiEyeIcon } from "./components/UiIcons";
 import { setAuthPersistencePreference } from "./authSessionStorage";
 import LandingPortals from "./LandingPortals";
+import { PERSONAL_SITE_URL, PRODUCT_FEATURES, featureHref, featureNames, principleHref } from "./productSite";
 import "./landing.css";
 
 type AuthIntent = "signin" | "signup";
@@ -31,7 +32,6 @@ const copy = {
     planningKicker: "Planning", planningTitle: "Keep even the biggest projects moving.",
     planningBody: "Keep related work together, then make room for it in a real week.",
     ctaTitle: "Do one thing well today.", ctaBody: "Open NavoPath and start a productive day.",
-    footer: "NavoPath / Plan the path. Execute today.", ctaDonate: "Support ongoing development",
   },
   zh: {
     nav: [["执行", "#how-it-works"], ["支持我们", DONATION_URL], ["GitHub", GITHUB_URL]],
@@ -49,7 +49,6 @@ const copy = {
     planningKicker: "规划", planningTitle: "项目再大，也能持续推进。",
     planningBody: "把相关的事放在一块儿，什么时候该推哪一件，就清楚了。",
     ctaTitle: "今天，先把一件事做好。", ctaBody: "打开 NavoPath，开启效率的一天",
-    footer: "NavoPath / 今天的事，今天安排。", ctaDonate: "支持我们",
   },
 } as const;
 
@@ -226,9 +225,9 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
       <ProductPreview lang={lang} />
       <section className="landing-steps" id="how-it-works"><div className="landing-steps-intro"><span>01 / {c.stepsKicker}</span><h2>{c.stepsTitle}</h2></div><ol>{c.steps.map(([number, title, body]) => <li key={number}><span>{number}</span><div><h3>{title}</h3><p>{body}</p></div></li>)}</ol></section>
       <section className="landing-planning" id="planning"><div className="landing-planning-copy"><span>02 / {c.planningKicker}</span><h2>{c.planningTitle}</h2><p>{c.planningBody}</p></div><PlanningPreview lang={lang} /></section>
-      <section className="landing-cta"><span>03 / NAVOPATH</span><h2>{c.ctaTitle}</h2><p>{c.ctaBody}</p><div className="landing-actions"><button className="landing-button primary" onClick={() => setShowAuth(true)}>{c.start}<span>→</span></button><a className="landing-button quiet" href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer">{c.download}<span>→</span></a></div></section>
+      <section className="landing-cta"><span>03 / NAVOPATH</span><h2>{c.ctaTitle}</h2><p>{c.ctaBody}</p><div className="landing-actions"><button className="np-start-link" onClick={() => setShowAuth(true)}>{c.start}</button><a className="landing-button quiet" href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer">{c.download}<span>→</span></a></div></section>
     </main>
-    <footer className="landing-footer"><span>{c.footer}</span><a href={DONATION_URL} target="_blank" rel="noreferrer">{c.ctaDonate}</a><span>© 2026 Xiaoyang Chen</span></footer>
+    <footer className="landing-footer"><nav aria-label={lang === "zh" ? "产品页面" : "Product pages"}>{PRODUCT_FEATURES.map(feature => <a key={feature} href={featureHref(feature, lang)}>{featureNames[lang][feature]}</a>)}</nav><a className="landing-footer-author" href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">© 2026 Xiaoyang Chen</a><a className="landing-footer-principles" href={principleHref("jev", lang)}>{lang === "zh" ? "相关原理" : "Principles"}</a></footer>
     {showAuth && <AuthDialog lang={lang} onClose={() => setShowAuth(false)} onLogin={onLogin} onResend={onResend} onContinueAfterConfirm={onContinueAfterConfirm} onForgotPassword={onForgotPassword} busy={busy} error={error} notice={notice} />}
   </div>;
 }

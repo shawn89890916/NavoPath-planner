@@ -39660,7 +39660,7 @@ html.product-demo-fullscreen #root .df-app {
   border: 0;
   border-radius: 0;
 }
-html.product-demo-fullscreen #root .df-app > .df-header { display: block; height: var(--product-header-height); min-height: var(--product-header-height); max-height: none; }
+html.product-demo-fullscreen #root .df-app > .df-header { display: block; height: var(--product-header-height); min-height: var(--product-header-height); max-height: none; z-index: 50; }
 html.product-demo-fullscreen #root .df-header-inner { display: grid; height: 100%; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; }
 html.product-demo-fullscreen #root .df-header .df-tabs-center { position: static; transform: none; grid-column: 2; justify-self: center; display: flex; }
 html.product-demo-fullscreen #root .df-header .df-brand { color: var(--text-main); text-decoration: none; }

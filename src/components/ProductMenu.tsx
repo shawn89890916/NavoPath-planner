@@ -1,6 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { Language } from "../types";
-import { PRINCIPLES, PRODUCT_FEATURES, featureHref, featureNames, principleHref, principleNames } from "../productSite";
+import { PERSONAL_SITE_URL, PRINCIPLES, PRODUCT_FEATURES, featureHref, featureNames, principleHref, principleNames } from "../productSite";
 import "./product-menu.css";
 import { preloadSitePage } from "../sitePages";
 
@@ -22,13 +22,22 @@ export function ProductMenu({ lang, kind = "product", includeGitHub = false, act
     const panel = host.current?.querySelector<HTMLElement>(".np-quick-menu");
     if (!open || !panel) return;
     const fit = () => {
+      const header = host.current?.closest<HTMLElement>(".df-header, .np-site-nav, .landing-nav");
+      if (header && host.current) {
+        host.current.style.setProperty("--menu-drop-y", `${Math.max(0, header.getBoundingClientRect().bottom - host.current.getBoundingClientRect().bottom)}px`);
+        if (header.matches(".df-header")) host.current.style.setProperty("--np-nav-background", getComputedStyle(header).backgroundColor);
+      }
       panel.style.removeProperty("--menu-shift");
       const rect = panel.getBoundingClientRect();
       const shift = Math.max(12 - rect.left, Math.min(0, document.documentElement.clientWidth - 12 - rect.right));
       panel.style.setProperty("--menu-shift", `${shift}px`);
+      if (parent !== window) {
+        const { left, top, width, height } = panel.getBoundingClientRect();
+        parent.postMessage({ channel: "navopath-product-demo", type: "menu-layout", id: menuId, layout: { left, top, width, height } }, location.origin);
+      }
     };
     fit(); addEventListener("resize", fit);
-    return () => removeEventListener("resize", fit);
+    return () => { removeEventListener("resize", fit); if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "menu-layout", id: menuId, layout: null }, location.origin); };
   }, [open, lang]);
   const shared = { "aria-expanded": open, "aria-controls": menuId, "aria-haspopup": true as const };
   return <div className={`np-product-menu np-product-menu--${kind}${active ? " np-product-menu--active" : ""}`} ref={host}
@@ -43,7 +52,7 @@ export function ProductMenu({ lang, kind = "product", includeGitHub = false, act
     }}>
     <button ref={trigger} type="button" {...shared} onClick={(event) => { if (event.detail === 0 || matchMedia("(hover: none)").matches) setOpen(!open); else reveal(); }}>{label}</button>
     {open && <nav id={menuId} className="np-quick-menu" aria-label={kind === "support" ? (zh ? "支持与个人网站" : "Support and personal website") : kind === "principles" ? (zh ? "相关原理主题" : "Principle topics") : (zh ? "网站导航" : "Site navigation")}>
-      {kind === "support" ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a>{includeGitHub && <a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a>}<span role="link" aria-disabled="true">{zh ? "个人网站" : "Personal website"}</span></>
+      {kind === "support" ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a>{includeGitHub && <a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a>}<a href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">{zh ? "个人网站" : "Personal website"}</a></>
         : kind === "principles" ? PRINCIPLES.map(topic => <a key={topic} href={principleHref(topic, lang)} target="_top" onPointerEnter={event => { if (event.pointerType === "mouse") preloadSitePage(event.currentTarget.href); }} onFocus={event => preloadSitePage(event.currentTarget.href)}>{principleNames[lang][topic]}</a>)
         : PRODUCT_FEATURES.map((feature) => <a key={feature} href={featureHref(feature, lang)} target="_top" onPointerEnter={event => { if (event.pointerType === "mouse") preloadSitePage(event.currentTarget.href); }} onFocus={event => preloadSitePage(event.currentTarget.href)}><strong>{featureNames[lang][feature]}</strong></a>)}
     </nav>}

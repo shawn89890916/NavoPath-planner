@@ -86,7 +86,6 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-feature--immersive .np-product-window { position: sticky; top: 0; height: 100svh; width: 100%; border-radius: 0; box-shadow: none; grid-area: 1 / 1; align-self: start; }
 .np-feature--immersive .np-feature-footer { max-width: 1120px; margin: auto; padding-inline: 24px; }
 .np-feature--immersive .np-faq { width: calc(100% - 48px); }
-.np-feature-footer > .np-personal-placeholder { color: #92989c; margin-left: 0; font-size: 13px; }
 .np-feature--compact.np-feature--immersive .np-workspace-scroll { display: block; }
 .np-feature--compact.np-feature--immersive .np-product-window { position: relative; top: 0; }
 .np-feature--compact.np-feature--immersive .np-product-intro { padding: 24px; max-width: 720px; }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { UiPlusIcon } from "./components/UiIcons";
 import { featureHref, featureNames, productFeature, siteLanguage, type DemoCommand, type FeatureCopy, type ProductFeature } from "./productSite";
-import ProductStory, { type StoryLayout } from "./ProductStory";
+import ProductStory, { type MenuBounds, type StoryLayout } from "./ProductStory";
 import ProductNavigation from "./ProductNavigation";
 import ProductSiteFooter from "./ProductSiteFooter";
 import "./product-feature.css";
@@ -11,12 +11,13 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
   const [portrait, setPortrait] = useState(() => matchMedia("(orientation: portrait)").matches);
   const [mounted, setMounted] = useState(false), [ready, setReady] = useState(false), [failed, setFailed] = useState(false), [attempt, setAttempt] = useState(0);
   const [storyLayout, setStoryLayout] = useState<StoryLayout | null>(null);
+  const [menu, setMenu] = useState<{ id: string; bounds: MenuBounds } | null>(null);
   const frame = useRef<HTMLIFrameElement>(null), host = useRef<HTMLDivElement>(null), visible = useRef(true);
   const c = copy[lang], zh = lang === "zh", immersive = !portrait;
   const send = useCallback((type: DemoCommand["type"], inView?: boolean) => frame.current?.contentWindow?.postMessage({ channel: "navopath-product-demo", type, stage: feature === "execute" ? 2 : 1, lang, visible: inView } satisfies DemoCommand, location.origin), [feature, lang]);
   useEffect(() => {
     const media = matchMedia("(orientation: portrait)");
-    const update = () => { setPortrait(media.matches); setMounted(false); setReady(false); setFailed(false); setStoryLayout(null); };
+    const update = () => { setPortrait(media.matches); setMounted(false); setReady(false); setFailed(false); setStoryLayout(null); setMenu(null); };
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
@@ -30,6 +31,7 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
     const meta = document.querySelector<HTMLMetaElement>('meta[name="description"]'); if (meta) meta.content = c.description;
     const url = new URL(location.href); url.searchParams.set("lang", lang); history.replaceState(null, "", url);
     setReady(false); setFailed(false);
+    setMenu(null);
   }, [lang, feature, zh, c.description]);
   useEffect(() => {
     if (portrait || !host.current) return;
@@ -50,6 +52,11 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
         const value = event.data.layout;
         if (value && ["left", "top", "width", "height", "headerHeight"].every(key => typeof value[key] === "number" && Number.isFinite(value[key]) && value[key] >= 0) && value.left + value.width <= innerWidth + 1 && value.top + value.height <= innerHeight + 1) setStoryLayout(value.width > 0 && value.height > 0 ? value : null);
       }
+      if (event.data.type === "menu-layout" && typeof event.data.id === "string") {
+        const { id, layout: bounds } = event.data;
+        if (bounds === null) setMenu(current => current?.id === id ? null : current);
+        else if (["left", "top", "width", "height"].every(key => typeof bounds?.[key] === "number" && Number.isFinite(bounds[key]) && bounds[key] >= 0) && bounds.left + bounds.width <= innerWidth + 1 && bounds.height <= innerHeight + 1) setMenu({ id, bounds });
+      }
       if (event.data.type === "language" && (event.data.lang === "zh" || event.data.lang === "en")) setLang(event.data.lang);
       if (event.data.type === "error") { setFailed(true); setReady(false); }
       if (event.data.type === "navigate" && productFeature(`/features/${event.data.feature}`, "features")) location.assign(featureHref(event.data.feature, lang));
@@ -68,7 +75,7 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
             {failed ? <><p>{zh ? "暂时无法打开。" : "Unable to load."}</p><button type="button" onClick={() => { setReady(false); setFailed(false); setAttempt(attempt + 1); }}>{zh ? "重试" : "Retry"}</button></> : <><img src={`/product-entry-${feature}-${lang}.jpg`} width={1280} height={800} alt="" /><span className="np-demo-loading-label">{zh ? "正在打开产品体验…" : "Opening the product example…"}</span></>}
           </div>
         </div>
-        {immersive && feature !== "ai" && storyLayout && <ProductStory lang={lang} copy={c} layout={storyLayout} />}
+        {immersive && feature !== "ai" && storyLayout && <ProductStory lang={lang} copy={c} layout={storyLayout} menu={menu?.bounds} />}
       </section>
       {immersive && feature !== "ai" && !storyLayout && <><section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section><ProductStory lang={lang} copy={c} layout={null} /></>}
       </>}

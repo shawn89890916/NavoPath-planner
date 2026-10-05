@@ -3,6 +3,7 @@ import type { Language } from "./types";
 import type { FeatureCopy, ProductFeature } from "./productSite";
 
 export type StoryLayout = { left: number; top: number; width: number; height: number; headerHeight: number };
+export type MenuBounds = Omit<StoryLayout, "headerHeight">;
 
 // The native workspace owns the available column; the parent owns document scrolling.
 export function ProductStorySlot({ feature, children }: { feature: ProductFeature; children?: ReactNode }) {
@@ -36,7 +37,7 @@ export function ProductStorySlot({ feature, children }: { feature: ProductFeatur
   return <aside ref={host} className={`df-product-story df-product-story--${feature}`} aria-hidden={children ? undefined : true}>{children}</aside>;
 }
 
-export default function ProductStory({ lang, copy, layout }: { lang: Language; copy: FeatureCopy; layout: StoryLayout | null }) {
+export default function ProductStory({ lang, copy, layout, menu }: { lang: Language; copy: FeatureCopy; layout: StoryLayout | null; menu?: MenuBounds | null }) {
   const host = useRef<HTMLElement>(null);
   useEffect(() => {
     let pending = 0;
@@ -62,13 +63,21 @@ export default function ProductStory({ lang, copy, layout }: { lang: Language; c
       }
       if (layout) {
         const rect = element.getBoundingClientRect();
-        element.style.clipPath = `inset(${Math.max(0, layout.headerHeight - rect.top)}px 0 ${Math.max(0, rect.bottom - innerHeight)}px 0)`;
+        const top = Math.max(0, layout.headerHeight - rect.top), bottom = Math.min(rect.height, innerHeight - rect.top);
+        const frame = menu && document.querySelector(".np-product-window iframe")?.getBoundingClientRect();
+        if (menu && frame) {
+          const left = Math.max(0, menu.left + frame.left - rect.left), right = Math.min(rect.width, menu.left + frame.left + menu.width - rect.left);
+          const start = Math.max(top, menu.top + frame.top - rect.top), end = Math.min(bottom, menu.top + frame.top + menu.height - rect.top);
+          // The native menu lives in the iframe; leave its rectangle above these notes.
+          const hole = right > left && end > start ? ` M${left} ${start}H${right}V${end}H${left}Z` : "";
+          element.style.clipPath = `path(evenodd, "M0 ${top}H${rect.width}V${bottom}H0Z${hole}")`;
+        } else element.style.clipPath = `inset(${top}px 0 ${Math.max(0, rect.height - bottom)}px 0)`;
       } else element.style.clipPath = "none";
     };
     const schedule = () => { if (!pending) pending = requestAnimationFrame(update); };
     addEventListener("scroll", schedule, { passive: true }); addEventListener("resize", schedule); reduced.addEventListener("change", schedule); update();
     return () => { removeEventListener("scroll", schedule); removeEventListener("resize", schedule); reduced.removeEventListener("change", schedule); cancelAnimationFrame(pending); };
-  }, [layout, copy]);
+  }, [layout, copy, menu]);
   return <aside ref={host} className={`np-scroll-story${layout ? " np-scroll-story--inline" : ""}`} aria-label={lang === "zh" ? "功能介绍" : "Feature introduction"}
     style={layout ? { width: layout.width, marginLeft: layout.left, paddingTop: `max(0px, calc(${layout.top + layout.height / 2}px - 19svh))`, paddingBottom: `max(0px, calc(100svh - ${layout.top + layout.height / 2}px - 19svh))` } : undefined}>
     {layout && <section><div><span className="np-story-scroll-cue">{lang === "zh" ? "向下滚动了解更多" : "Scroll to explore"}<span aria-hidden="true">↓</span></span><h1>{copy.title}</h1><p>{copy.description}</p></div></section>}

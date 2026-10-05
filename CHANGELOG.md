@@ -7,8 +7,9 @@
 - 新增中英文“相关原理”目录与六个独立主题页，介绍 JEV 的任务估时与项目归类、置信度和个人记录、时间安排规则、操作预览与撤回、多视图共用任务数据、任务与时间记录分离。目录采用简短摘要与宽松留白，详情以流程示意和分段短文介绍；可从产品页顶栏访问，手机端保持静态阅读。
 
 ### 改进
-- 首页与产品介绍页共用“产品、相关原理、支持”三个顶栏入口：产品菜单按执行、规划、Navo AI 排列，相关原理菜单包含六个主题；悬停、手机点击和键盘均可展开，窄屏下拉保持在窗口内，菜单底色与顶栏一致；顶栏在能容纳时保持一排，避免较窄桌面与平板提前换行。首页跳转更轻快，加载过程中保留页面预览。支持入口包含爱发电、GitHub 与个人网页占位。
+- 首页与产品介绍页共用“产品、相关原理、支持”三个顶栏入口：产品菜单按执行、规划、Navo AI 排列，相关原理菜单包含六个主题；悬停、手机点击和键盘均可展开，窄屏下拉保持在窗口内，下拉菜单与顶栏同色、贴合底边并使用小圆角，始终盖住介绍文字；顶栏在能容纳时保持一排，避免较窄桌面与平板提前换行。首页跳转更轻快，加载过程中保留页面预览。支持入口包含爱发电、GitHub 与个人网站。
 - Navo AI 介绍页沿用执行介绍页的三列布局：左侧今日候选、中间说明、右侧时间轴。移除大箭头，安排按钮在首次点击前保持粗浅描边，并有指针从画面中间移动到按钮、变成手势点按的循环引导，首次点击后停止；等待时在中间解释估时、休息与可调整安排，任务随后按时间顺序轻轻淡入并落位。保留改期与撤回，减少动态效果时直接呈现结果。
+- 首页底部开始按钮沿用顶栏的深色圆角样式；页脚左侧提供执行、规划与 Navo AI 链接，中间姓名链接到个人网站，右侧直接进入 JEV 原理介绍，移除旧标语和支持链接。
 - 正式工作区与介绍页共用今日候选底部添加栏和规划项目样式：添加按钮完整留在容器内并居中，项目四边以项目色等宽描边，不再使用左侧色条。
 
 ## 2026-10-04 · 产品介绍页
@@ -81,8 +82,9 @@
 - Added a bilingual Principles directory with six separate topic pages: JEV duration and project predictions, confidence and personal records, scheduling rules, previews and undo, shared task data across views, and separate task/time records. The directory uses short summaries and generous spacing; articles combine an illustrative flow with brief sections. All are accessible from the product navigation and remain static reading pages on mobile.
 
 ### Improvements
-- The homepage and product introductions share Product, Principles and Support navigation. Product lists Execute before Planning, followed by Navo AI; Principles contains six topics. Menus support hover, mobile taps and keyboard controls, and stay inside narrow windows, with menu backgrounds matching the header. Headers stay in one row when space allows, avoiding early wrapping on narrower desktops and tablets. Homepage transitions are shorter and keep a page preview visible while loading. Support includes Afdian, GitHub and a personal-site placeholder.
+- The homepage and product introductions share Product, Principles and Support navigation. Product lists Execute before Planning, followed by Navo AI; Principles contains six topics. Menus support hover, mobile taps and keyboard controls, and stay inside narrow windows, with dropdowns matching the header color, meeting its bottom edge and using small corners. Menus remain above introduction text. Headers stay in one row when space allows, avoiding early wrapping on narrower desktops and tablets. Homepage transitions are shorter and keep a page preview visible while loading. Support includes Afdian, GitHub and the personal website.
 - Navo AI follows the Execute introduction’s three-column layout: Today’s Candidates on the left, explanations in the middle, and the timeline on the right. The large arrow is removed. The original scheduling icon keeps a thick, pale outline, with a looping cursor that travels from the center and changes into a tapping hand until first activation; the middle explains estimates, breaks and reversible changes during the wait. Tasks then fade and settle into place in time order. Reschedule and Undo remain available; reduced motion shows the result directly.
+- The bottom homepage start button uses the same dark rounded style as the header. Footer product links sit on the left, the author links to the personal website in the center, and Principles on the right opens JEV directly; the old tagline and Support link are removed.
 - The workspace and introductions share the candidate composer and planning-project styles. The add button stays centered and contained; projects use equal project-colored borders on all four sides with no left stripe.
 
 ## 2026-10-04 · Product feature pages

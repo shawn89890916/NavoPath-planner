@@ -1,6 +1,7 @@
 import type { Language } from "./types";
 
 export type ProductFeature = "planning" | "execute" | "ai";
+export const PERSONAL_SITE_URL = "https://xiaoyang-chen-now.shawn89890916.chatgpt.site/";
 export const PRODUCT_FEATURES: ProductFeature[] = ["execute", "planning", "ai"];
 export const PRINCIPLES = ["jev", "feedback", "time", "control", "views", "records"] as const;
 export type Principle = typeof PRINCIPLES[number];

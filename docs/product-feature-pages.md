@@ -53,7 +53,12 @@ grid, conflict checks and undo records without real AI or account requests. All
 feature and Principles pages share three grouped menus: Product (Execute, Planning,
 Navo AI), Principles (all six topics), and Support. Both new groups use the existing
 Support-style quick menu, with hover, tap, ArrowDown, Escape and outside dismissal.
-Quick menus clamp within the viewport, including narrow screens. Product headers
+Quick menus clamp within the viewport, including narrow screens, meet the header's
+bottom edge, and use its color with square upper corners and 6px lower corners.
+The native menu reports its bounds through source/origin-validated messages; the
+parent clips only the overlapping introduction area so text cannot paint above
+the iframe's dropdown. Closing restores the notes, and page scrolling updates
+the cutout position. Product headers
 keep all three groups on one row above 640px, hiding only the wordmark below 760px;
 phones retain two rows. Portrait tablets do not force a second row. The homepage uses
 these same three quick menus. Product lists Execute, Planning and Navo AI in that order.
@@ -64,7 +69,7 @@ icon. Execute paragraphs are centered within equal horizontal insets.
 All three introductions insert navigation into the real App header through an optional
 runtime slot, reusing ProductMenu and the existing site controls. It returns
 home from the logo and links to all three features,
-with a Principles link and a personal-site placeholder. Support includes Afdian and GitHub.
+with Principles and the supplied personal-site link. Support includes Afdian and GitHub.
 The homepage keeps its central logo, title, original scroll treatment, lower content,
 product screenshots and login flow. Four perspective links surround the logo: Execute,
 Planning, Navo AI and Principles. Lightweight bilingual JPEG captures show the real
@@ -81,7 +86,12 @@ selected destination's page code and copy, without mounting a demo or workspace.
 Public introductions retain the cached page capture while the native iframe boots,
 then fade it out. Loading failures still offer retry. Menu surfaces match each
 header's background token. Public introductions use a light loading canvas;
-the workspace retains its boot appearance. Feature subtitles,
+the workspace retains its boot appearance. The bottom homepage start button reuses
+the header's dark pill style while preserving the existing login dialog. Its footer
+places the three language-preserving product links on the left, the author's
+personal-site link in the center and a direct JEV article link on the right. Phones
+keep product and principle links on the first row and center the author below.
+Feature subtitles,
 including Navo AI, use the same enlarged title-size token as the main introduction.
 Introductions and native display type use Times New Roman; candidate project names
 use regular sans-serif type. Today's Candidates uses the task font and a more generous
