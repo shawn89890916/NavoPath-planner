@@ -38,9 +38,8 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-site-nav--product .df-brand img { width: 24px; height: 24px; object-fit: contain; }
 .np-site-nav--product .df-header-right { display: flex; align-items: center; justify-content: end; gap: 10px; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
 .np-site-nav--product .df-tabs { display: flex; justify-content: center; align-items: center; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
-.np-site-nav--product .df-tabs button, .np-site-nav--product .df-product-principles { padding: 8px 10px; border: 0; background: none; color: #69717c; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.np-site-nav--product .df-tabs button { padding: 8px 10px; border: 0; background: none; color: #69717c; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .np-site-nav--product .df-tabs button { min-height: 44px; font-family: inherit; }
-.np-site-nav--product .df-tabs :is(button, .df-product-principles).active { color: #27231e; font-weight: 750; }
 .np-feature--reading > main { max-width: 680px; }
 .np-feature--reading .np-product-intro { padding: 40px 0 48px; }
 .np-feature--reading .np-product-intro p, .np-feature--reading .np-product-notes p { color: #55504a; font-size: 17px; line-height: 1.75; }
@@ -55,7 +54,7 @@ html.product-site-document body, html.product-site-document #root { height: auto
   .np-site-nav--product .df-header-right { justify-self: end; }
   .np-site-nav--product .df-tabs { grid-row: 2; grid-column: 1 / -1; }
 }
-@media (max-width: 640px) { .np-site-nav--product .df-brand strong { display: none; } .np-site-nav--product .df-tabs button, .np-site-nav--product .df-product-principles { padding-inline: 6px; font-size: 12px; } }
+@media (max-width: 640px) { .np-site-nav--product .df-brand strong { display: none; } .np-site-nav--product .df-tabs button { padding-inline: 6px; font-size: 12px; } }
 @media (max-width: 1050px) {
   .np-product-layout { grid-template-columns: minmax(0, 1fr); gap: 22px; }
   .np-product-notes, .np-product-layout:is(.np-product-layout--ai, .np-product-layout--execute) .np-product-notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 0; }

@@ -2,6 +2,21 @@ import type { Language } from "./types";
 
 export type ProductFeature = "planning" | "execute" | "ai";
 export const PRODUCT_FEATURES: ProductFeature[] = ["planning", "execute", "ai"];
+export const PRINCIPLES = ["jev", "feedback", "time", "control", "views", "records"] as const;
+export type Principle = typeof PRINCIPLES[number];
+export const principleNames = {
+  zh: { jev: "JEV 的小判断", feedback: "置信度与个人记录", time: "时间安排规则", control: "预览与撤回", views: "同一任务，多种视角", records: "任务与时间记录" },
+  en: { jev: "Small decisions with JEV", feedback: "Confidence and personal records", time: "Scheduling rules", control: "Previews and undo", views: "One task, several views", records: "Tasks and time records" },
+};
+export function principleRoute(path: string): Principle | "index" | null {
+  const value = path.replace(/\/$/, "").split("/");
+  if (value.length === 2 && value[1] === "principles") return "index";
+  return value.length === 3 && value[1] === "principles" && PRINCIPLES.includes(value[2] as Principle) ? value[2] as Principle : null;
+}
+export function principleHref(topic: Principle | "index", lang: Language) {
+  return `/principles${topic === "index" ? "" : `/${topic}`}?lang=${lang}`;
+}
+export type PrincipleCopy = { title: string; description: string; steps: [string, string][]; sections: [string, string][]; sources: [string, string][] };
 export function productFeature(
   path: string,
   prefix: "features" | "product-demo",

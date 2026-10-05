@@ -1,16 +1,22 @@
 # Product feature pages
 
 Public routes: `/features/planning`, `/features/execute`, `/features/ai`, `/principles`.
-The bilingual Principles route is a lightweight reading page, lazy-loaded before
-workspace initialization. It shares the product navigation and footer without
-mounting an iframe, loading account data, or requesting AI. Four short sections
-explain the existing implementation: JEV task duration/project predictions,
-confidence and manual overrides with personal records, time-grid/free-slot rules,
-and reviewable actions with supported undo. Examples describe the process rather
-than live model results. Official TypeSafe documentation and the repository are
-linked for further reading. Update this copy when the corresponding implementation
-changes (`jevPrediction.ts`, `aiPersonalization.ts`, `autoSchedule.ts`, and native
-AI action handlers).
+The bilingual Principles directory uses six short summaries in a generously spaced
+two-column desktop layout, switching to one column on phones. Separate articles
+live at `/principles/jev`, `/principles/feedback`, `/principles/time`,
+`/principles/control`, `/principles/views`, and `/principles/records`. A shared
+article layout shows a headline, static process illustration and three brief
+sections, with source links, a next-topic link and return to directory. Only the
+selected article copy is loaded; directory visits do not load article bodies.
+All routes are lazy-loaded before workspace initialization and share product
+navigation/footer without mounting an iframe, loading account data or requesting
+AI. Topics reflect existing implementation: JEV predictions, confidence/manual
+overrides and personal records, time-grid/free-slot scheduling, previews/undo,
+shared Planning views, and separation of tasks from timeline/time entries.
+Illustrations describe the process rather than live model results. Official
+TypeSafe documentation and relevant source files are linked. Update copy alongside
+the corresponding implementation (`jevPrediction.ts`, `aiPersonalization.ts`,
+`autoSchedule.ts`, `PlanningView.tsx`, task/time record types and AI handlers).
 Planning, Execute, and Navo AI fill the window with the running product workspace. Planning
 uses compact, clearly indented native task nodes and a right-side introduction.
 Execute uses native candidates on the left, introductions in the middle, and the
@@ -39,13 +45,17 @@ cue. Desktop columns exactly match Execute. Short landscape layouts keep three
 columns with smaller text and reachable candidate cards. Portrait remains text-only.
 The six sessions start at 09:00, 11:00, 12:00, 14:00, 15:30 and 16:30, including
 lunch/rest and afternoon course notes. Requests use native handlers, the fifteen-minute
-grid, conflict checks and undo records without real AI or account requests. All three feature pages share five navigation items: Execute,
-Planning, Navo AI, Principles, and Support. Language and Start now remain on the right;
+grid, conflict checks and undo records without real AI or account requests. All
+feature and Principles pages share three grouped menus: Product (Execute, Planning,
+Navo AI), Principles (all six topics), and Support. Both new groups use the existing
+Support-style quick menu, with hover, tap, ArrowDown, Escape and outside dismissal.
+Quick menus clamp within the viewport, including narrow screens. The homepage's
+existing Product mega-menu presentation is preserved. Language and Start now remain on the right;
 the language switch track and thumb both use round pill corners. Each page has six
 bilingual FAQ questions using native details/summary controls with a thin shared plus
 icon. Execute paragraphs are centered within equal horizontal insets.
 All three introductions insert navigation into the real App header through an optional
-runtime slot, reusing WorkspaceModeTabs and the existing site controls. It returns
+runtime slot, reusing ProductMenu and the existing site controls. It returns
 home from the logo and links to all three features,
 with a Principles link and a personal-site placeholder. Support includes Afdian and GitHub.
 Homepage content, navigation, and animation remain intact. Feature subtitles,

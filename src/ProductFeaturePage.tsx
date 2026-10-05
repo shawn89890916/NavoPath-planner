@@ -57,7 +57,7 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
     addEventListener("message", receive); return () => removeEventListener("message", receive);
   }, [send, lang]);
   return <div className={`np-feature np-feature--${feature}${portrait ? " np-feature--reading" : ""}${immersive ? " np-feature--immersive" : ""}${immersive && !storyLayout ? " np-feature--compact" : ""}`}>
-    {!immersive && <header className="np-site-nav np-site-nav--product"><ProductNavigation feature={feature} lang={lang} icon={<img src={`${import.meta.env.BASE_URL}navopath-icon.png`} alt="" />} onLanguageChange={setLang} onNavigate={next => location.assign(featureHref(next, lang))} /></header>}
+    {!immersive && <header className="np-site-nav np-site-nav--product"><ProductNavigation feature={feature} lang={lang} icon={<img src={`${import.meta.env.BASE_URL}navopath-icon.png`} alt="" />} onLanguageChange={setLang} /></header>}
     <main>
       {!immersive && <section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section>}
       {portrait ? <section className="np-product-notes">{c.benefits.map(([title, description]) => <section key={title}><h2>{title}</h2><p>{description}</p></section>)}</section> : <>

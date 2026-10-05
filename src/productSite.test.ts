@@ -3,10 +3,23 @@ import {
   featureHref,
   isDemoCommand,
   productFeature,
+  principleRoute,
+  principleHref,
+  PRINCIPLES,
   siteLanguage,
 } from "./productSite";
 
 describe("product site routing and protocol", () => {
+  it("keeps principle articles separate from feature and demo routes", () => {
+    expect(principleRoute("/principles/")).toBe("index");
+    for (const topic of PRINCIPLES) {
+      expect(principleRoute(`/principles/${topic}/`)).toBe(topic);
+      expect(principleHref(topic, "zh")).toBe(`/principles/${topic}?lang=zh`);
+      expect(productFeature(`/product-demo/${topic}`, "product-demo")).toBeNull();
+    }
+    expect(principleHref("index", "en")).toBe("/principles?lang=en");
+    for (const path of ["/principles/unknown", "/principles/jev/extra", "/other/jev", "/app", "/principles//jev"]) expect(principleRoute(path)).toBeNull();
+  });
   it("routes only the published feature and internal demo paths", () => {
     expect(productFeature("/features/planning", "features")).toBe("planning");
     expect(productFeature("/features/execute/", "features")).toBe("execute");

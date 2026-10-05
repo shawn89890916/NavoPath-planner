@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { productFeature, siteLanguage, type ProductFeature } from "./productSite";
+import { principleRoute, productFeature, siteLanguage, type ProductFeature } from "./productSite";
 
 class SiteErrorBoundary extends React.Component<
   { children: React.ReactNode; demo: boolean },
@@ -48,9 +48,23 @@ async function loadFeature(feature: ProductFeature) {
   const [page, content] = await Promise.all([import("./ProductFeaturePage"), featureContent[feature]()]);
   return { default: () => <page.default feature={feature} copy={content.default} /> };
 }
+const principleContent = {
+  jev: () => import("./principles/jev"),
+  feedback: () => import("./principles/feedback"),
+  time: () => import("./principles/time"),
+  control: () => import("./principles/control"),
+  views: () => import("./principles/views"),
+  records: () => import("./principles/records"),
+};
+async function loadPrinciple(topic: NonNullable<ReturnType<typeof principleRoute>>) {
+  const page = await import("./ProductPrinciplesPage");
+  if (topic === "index") return { default: () => <page.default /> };
+  const content = await principleContent[topic]();
+  return { default: () => <page.default topic={topic} copy={content.default} /> };
+}
 const feature = productFeature(window.location.pathname, "features");
 const demo = productFeature(window.location.pathname, "product-demo");
-const principles = window.location.pathname.replace(/\/$/, "") === "/principles";
+const principles = principleRoute(window.location.pathname);
 if (demo) {
   void import("./productDemoRuntime").then(({ installProductDemo }) => {
     installProductDemo(demo);
@@ -60,7 +74,7 @@ if (demo) {
     document.getElementById("root")!.textContent = "NavoPath…";
   });
 } else if (feature || principles) {
-  const Page = lazy(feature ? () => loadFeature(feature) : () => import("./ProductPrinciplesPage"));
+  const Page = lazy(feature ? () => loadFeature(feature) : () => loadPrinciple(principles!));
   createRoot(document.getElementById("root")!).render(
     <SiteErrorBoundary demo={Boolean(demo)}>
       <Suspense

@@ -10,7 +10,9 @@
 .np-mega-menu a { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 12px 0; }
 .np-mega-menu strong { font-size: 24px; letter-spacing: -.025em; }
 .np-mega-menu a span { color: #69717c; font-weight: 400; font-size: 15px; line-height: 1.6; }
-.np-quick-menu { position: absolute; top: 100%; left: -18px; width: 208px; padding: 16px 18px; border-radius: 14px; }
+.np-quick-menu { position: absolute; top: 100%; left: -18px; width: min(208px, calc(100vw - 24px)); padding: 16px 18px; border-radius: 14px; transform: translateX(var(--menu-shift, 0px)); }
+.np-product-menu--principles .np-quick-menu { width: min(260px, calc(100vw - 24px)); }
+.np-site-nav--product .df-tabs .np-product-menu--active > :is(a, button), #root .df-header .np-product-menu--active > :is(a, button) { font-weight: 750; color: #27231e; }
 .np-quick-menu :is(a, [aria-disabled]) { display: flex; align-items: center; min-height: 44px; padding: 0; border: 0; color: #27231e; font-size: 14px; font-weight: 650; text-decoration: none; }
 .np-quick-menu [aria-disabled] { color: #92989c; cursor: default; }
 .np-product-menu nav a:hover { color: #6e766d; }

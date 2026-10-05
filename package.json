@@ -138,10 +138,26 @@
       "limit": "16 KB"
     },
     {
+      "name": "Principle article scripts",
+      "path": [
+        "dist/assets/jev-*.js",
+        "dist/assets/feedback-*.js",
+        "dist/assets/time-*.js",
+        "dist/assets/control-*.js",
+        "dist/assets/views-*.js",
+        "dist/assets/records-*.js"
+      ],
+      "limit": "8 KB"
+    },
+    {
+      "name": "Principles styles",
+      "path": "dist/assets/ProductPrinciplesPage-*.css",
+      "limit": "2 KB"
+    },
+    {
       "name": "Product site styles",
       "path": [
         "dist/assets/ProductFeaturePage-*.css",
-        "dist/assets/ProductPrinciplesPage-*.css",
         "dist/assets/product-feature-*.css",
         "dist/assets/productDemoRuntime-*.css",
         "dist/assets/ProductMenu-*.css"

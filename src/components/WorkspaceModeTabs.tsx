@@ -3,7 +3,7 @@ import type { Language } from "../types";
 import type { ReactNode } from "react";
 
 export function WorkspaceModeTabs({ mode, lang, onChange, onAi, className = "df-tabs", as = "nav", children }: {
-  mode: "planning" | "execute" | "ai" | null;
+  mode: "planning" | "execute" | "ai";
   lang: Language;
   onChange: (mode: "planning" | "execute") => void;
   onAi?: () => void;
