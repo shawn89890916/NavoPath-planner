@@ -62,6 +62,23 @@ html.landing-document #root {
 .landing-product-scroll-cue i { color: #59636f; font: 16px/1 var(--l-body); font-style: normal; letter-spacing: 0; animation: landing-scroll-nudge 1.35s ease-in-out infinite; }
 .landing-product-screenshot { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: rgb(248, 247, 243); object-fit: cover; }
 
+.landing-portals { position: fixed; z-index: 2; inset: calc(var(--l-nav-height) + 30px) 0 calc(var(--l-product-peek) + 58px); pointer-events: none; }
+.landing-portal { position: absolute; display: flex; flex-direction: column; width: clamp(280px, 32vw, 480px); height: clamp(184px, 30vh, 290px); overflow: hidden; border: 1px solid var(--l-rule-strong); border-radius: 12px; background: var(--l-paper); color: var(--l-ink); text-decoration: none; box-shadow: 0 18px 42px rgb(25 35 43 / 12%); pointer-events: auto; transform: perspective(1100px) rotateY(var(--portal-turn)) rotateZ(var(--portal-tilt)); transition: transform 360ms cubic-bezier(.22, 1, .36, 1), box-shadow 360ms ease; }
+.landing-portal--execute { --portal-turn: 32deg; --portal-tilt: -7deg; left: -8vw; top: 3%; }
+.landing-portal--planning { --portal-turn: 32deg; --portal-tilt: 6deg; left: -8vw; bottom: 3%; }
+.landing-portal--ai { --portal-turn: -32deg; --portal-tilt: 7deg; right: -8vw; top: 8%; }
+.landing-portal--principles { --portal-turn: -32deg; --portal-tilt: -6deg; right: -8vw; bottom: -2%; }
+.landing-portal:hover, .landing-portal:focus-visible { z-index: 3; transform: perspective(1100px) rotateY(calc(var(--portal-turn) * .65)) rotateZ(calc(var(--portal-tilt) * .65)) translateY(-6px); box-shadow: 0 24px 56px rgb(25 35 43 / 18%); }
+.landing-portal:focus-visible { outline: 2px solid var(--l-brown); outline-offset: 5px; }
+.landing-portal-heading { display: flex; align-items: center; justify-content: space-between; flex: 0 0 44px; padding: 0 20px; border-bottom: 1px solid var(--l-rule); font-size: 15px; }
+.landing-portal--execute .landing-portal-heading, .landing-portal--planning .landing-portal-heading { padding-left: max(20px, 8vw); }
+.landing-portal--ai .landing-portal-heading, .landing-portal--principles .landing-portal-heading { padding-right: max(20px, 8vw); }
+.landing-portal-heading strong { font-weight: 680; }
+.landing-portal-heading > span { font-size: 19px; color: var(--l-muted); }
+.landing-portal img { display: block; flex: 1; min-height: 0; width: 100%; object-fit: cover; object-position: top; }
+.landing .landing-portal--opening { position: fixed; z-index: 100; right: auto; bottom: auto; pointer-events: none; transition: none; }
+.landing-portal--opening .landing-portal-heading { padding: 0 24px; }
+
 @keyframes landing-scroll-nudge {
   0%, 100% { transform: translateY(0); }
   42% { transform: translateY(-6px); }
@@ -138,7 +155,7 @@ html.landing-document #root {
     touch-action: pan-y !important;
   }
   .landing { --l-nav-height: 58px; --l-product-peek: 48px; }
-  .landing-nav { grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; min-height: 58px; padding: 0 18px; }
+  .landing-nav { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; min-height: 58px; padding: 0 12px; }
   .landing-brand { font-size: 16px; }
   .landing-brand > span { display: none; }
   .landing-brand .dayflow-icon.compact, .landing-brand .dayflow-icon.compact img { width: 24px; height: 24px; }
@@ -148,13 +165,21 @@ html.landing-document #root {
   .landing-button.small { min-height: 42px; font-size: 10px; }
   .landing-nav-actions .landing-button.quiet { font-size: 12px; font-weight: 730; }
   .landing-cover { width: calc(100% - 36px); min-height: calc(200svh - var(--l-nav-height)); }
-  .landing-cover-content { padding: 94px 0 12vh; transform: translateY(48px) scale(var(--landing-cover-scale)); }
+  .landing-cover-content { padding: 94px 0 12vh; transform: translateY(clamp(-16px, calc(60svh - 432px), 48px)) scale(var(--landing-cover-scale)); }
   .landing-cover-logo { width: clamp(138px, 40vw, 190px); height: clamp(138px, 40vw, 190px); margin-bottom: 16px; }
   .landing-brand-copy { transform: translateY(-30px); }
   .landing-product-name { font-size: 50px; }
   .landing-slogan { max-width: 305px; margin-top: 28px; font-size: 20px; }
   .landing-product-rise { width: 100%; margin-top: calc(-100svh + var(--l-nav-height) - var(--l-product-peek)); }
   .landing-product-scroll-cue { bottom: calc(var(--l-product-peek) + 16px); font-size: 9px; }
+  .landing-portals { inset: calc(var(--l-nav-height) + 22px) 12px calc(var(--l-product-peek) + 40px); }
+  .landing-portal { width: 43%; height: clamp(92px, 16vh, 136px); border-radius: 8px; }
+  .landing-portal--execute, .landing-portal--planning { left: 0; }
+  .landing-portal--ai, .landing-portal--principles { right: 0; }
+  .landing-portal--execute, .landing-portal--ai { top: 0; }
+  .landing-portal--planning, .landing-portal--principles { bottom: 0; }
+  .landing-portal .landing-portal-heading { flex-basis: 30px; padding: 0 10px; font-size: 12px; }
+  .landing-portal-heading > span { font-size: 15px; }
   .landing-product-shot { border-radius: 6px 6px 0 0; corner-shape: var(--corner-shape, squircle); }
   .landing-steps { gap: 44px; padding: 86px 24px 112px; }
   .landing-steps h2, .landing-planning-copy h2, .landing-cta h2 { font-size: 43px; }
@@ -177,8 +202,16 @@ html.landing-document #root {
   .landing-cover { min-height: calc(185svh - var(--l-nav-height)); }
   .landing-cover-content { width: min(520px, 70%); padding: 34px 0 8vh; }
   .landing-cover-logo { width: 72px; height: 72px; margin-bottom: 8px; }
+  .landing-brand-copy { transform: translateY(-12px); }
   .landing-product-name { font-size: 40px; }
-  .landing-slogan { max-width: 470px; margin-top: 14px; font-size: 17px; }
+  .landing-slogan { max-width: 340px; margin-top: 14px; font-size: 17px; }
+  .landing-portals { inset: calc(var(--l-nav-height) + 22px) 0 calc(var(--l-product-peek) + 76px); }
+  .landing-portal { width: clamp(135px, 23vw, 210px); height: clamp(96px, 24vh, 140px); }
+  .landing-portal--execute, .landing-portal--planning { left: -3vw; }
+  .landing-portal--ai, .landing-portal--principles { right: -3vw; }
+  .landing-portal--execute, .landing-portal--ai { top: 0; }
+  .landing-portal--planning, .landing-portal--principles { bottom: 0; }
+  .landing-portal .landing-portal-heading { flex-basis: 28px; padding: 0 24px; font-size: 12px; }
   .landing-product-rise { margin-top: calc(-100svh + var(--l-nav-height) - var(--l-product-peek)); }
 }
 @media (prefers-reduced-motion: reduce) {

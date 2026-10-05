@@ -7,7 +7,7 @@ export default function ProductNavigation({ feature, lang, icon, onLanguageChang
   return <div className="df-header-inner">
     <a className="df-brand" href="/" target="_top">{icon}<strong>NavoPath</strong></a>
     <nav className="df-tabs df-tabs-center" aria-label={lang === "zh" ? "产品导航" : "Product navigation"}>
-      <ProductMenu lang={lang} kind="product" compact active={feature !== "principles"} />
+      <ProductMenu lang={lang} kind="product" active={feature !== "principles"} />
       <ProductMenu lang={lang} kind="principles" active={feature === "principles"} />
       <ProductMenu lang={lang} kind="support" includeGitHub />
     </nav>

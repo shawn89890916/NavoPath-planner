@@ -1,16 +1,11 @@
-import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { Language } from "../types";
 import { PRINCIPLES, PRODUCT_FEATURES, featureHref, featureNames, principleHref, principleNames } from "../productSite";
 import "./product-menu.css";
 
-const summaries = {
-  zh: { planning: "把目标整理成项目与任务。", execute: "为今天要做的事安排时间。", ai: "检查、调整并应用建议。" },
-  en: { planning: "Turn goals into projects and tasks.", execute: "Make time for today's tasks.", ai: "Review, refine, and apply suggestions." },
-};
-
-export function ProductMenu({ lang, kind = "product", children, includeGitHub = false, compact = false, active = false }: { lang: Language; kind?: "product" | "support" | "brand" | "principles"; children?: ReactNode; includeGitHub?: boolean; compact?: boolean; active?: boolean }) {
+export function ProductMenu({ lang, kind = "product", includeGitHub = false, active = false }: { lang: Language; kind?: "product" | "support" | "principles"; includeGitHub?: boolean; active?: boolean }) {
   const [open, setOpen] = useState(false);
-  const host = useRef<HTMLDivElement>(null), trigger = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
+  const host = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null);
   const menuId = useId(), closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const zh = lang === "zh";
   const reveal = () => { clearTimeout(closeTimer.current); setOpen(true); };
@@ -21,8 +16,7 @@ export function ProductMenu({ lang, kind = "product", children, includeGitHub = 
     return () => document.removeEventListener("pointerdown", close);
   }, [open]);
   useEffect(() => () => clearTimeout(closeTimer.current), []);
-  const label = kind === "brand" ? children : kind === "support" ? (zh ? "支持" : "Support") : kind === "principles" ? (zh ? "相关原理" : "Principles") : (zh ? "产品" : "Product");
-  const quick = kind !== "product" || compact;
+  const label = kind === "support" ? (zh ? "支持" : "Support") : kind === "principles" ? (zh ? "相关原理" : "Principles") : (zh ? "产品" : "Product");
   useLayoutEffect(() => {
     const panel = host.current?.querySelector<HTMLElement>(".np-quick-menu");
     if (!open || !panel) return;
@@ -34,7 +28,7 @@ export function ProductMenu({ lang, kind = "product", children, includeGitHub = 
     };
     fit(); addEventListener("resize", fit);
     return () => removeEventListener("resize", fit);
-  }, [open, quick, lang]);
+  }, [open, lang]);
   const shared = { "aria-expanded": open, "aria-controls": menuId, "aria-haspopup": true as const };
   return <div className={`np-product-menu np-product-menu--${kind}${active ? " np-product-menu--active" : ""}`} ref={host}
     onPointerEnter={(event) => { if (event.pointerType === "mouse") reveal(); }}
@@ -46,16 +40,11 @@ export function ProductMenu({ lang, kind = "product", children, includeGitHub = 
         event.preventDefault(); reveal(); requestAnimationFrame(() => host.current?.querySelector<HTMLAnchorElement>("nav a[href]")?.focus());
       }
     }}>
-    {kind === "support" || kind === "principles" || compact ? <button ref={(node) => { trigger.current = node; }} type="button" {...shared} onClick={(event) => { if (event.detail === 0 || matchMedia("(hover: none)").matches) setOpen(!open); else reveal(); }}>{label}</button>
-      : <a ref={(node) => { trigger.current = node; }} className={kind === "brand" ? "np-navigation-brand" : undefined} href={kind === "brand" ? "/" : featureHref("planning", lang)} {...shared}
-        onClick={(event) => { if (kind === "brand" && matchMedia("(hover: none)").matches) { event.preventDefault(); setOpen(!open); } }}>{label}</a>}
-    {open && <nav id={menuId} className={quick ? "np-quick-menu" : "np-mega-menu"} aria-label={kind === "support" ? (zh ? "支持与个人网站" : "Support and personal website") : kind === "principles" ? (zh ? "相关原理主题" : "Principle topics") : (zh ? "网站导航" : "Site navigation")}>
+    <button ref={trigger} type="button" {...shared} onClick={(event) => { if (event.detail === 0 || matchMedia("(hover: none)").matches) setOpen(!open); else reveal(); }}>{label}</button>
+    {open && <nav id={menuId} className="np-quick-menu" aria-label={kind === "support" ? (zh ? "支持与个人网站" : "Support and personal website") : kind === "principles" ? (zh ? "相关原理主题" : "Principle topics") : (zh ? "网站导航" : "Site navigation")}>
       {kind === "support" ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a>{includeGitHub && <a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a>}<span role="link" aria-disabled="true">{zh ? "个人网站" : "Personal website"}</span></>
         : kind === "principles" ? PRINCIPLES.map(topic => <a key={topic} href={principleHref(topic, lang)} target="_top">{principleNames[lang][topic]}</a>)
-        : <div className="np-menu-content">{kind === "brand" && <a href="/">{zh ? "首页" : "Home"}</a>}
-          {PRODUCT_FEATURES.map((feature) => <a key={feature} href={featureHref(feature, lang)} target="_top"><strong>{featureNames[lang][feature]}</strong>{kind === "product" && !compact && <span>{summaries[lang][feature]}</span>}</a>)}
-          {kind === "brand" && <a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a>}
-        </div>}
+        : PRODUCT_FEATURES.map((feature) => <a key={feature} href={featureHref(feature, lang)} target="_top"><strong>{featureNames[lang][feature]}</strong></a>)}
     </nav>}
   </div>;
 }

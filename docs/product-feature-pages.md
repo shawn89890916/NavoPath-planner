@@ -49,8 +49,9 @@ grid, conflict checks and undo records without real AI or account requests. All
 feature and Principles pages share three grouped menus: Product (Execute, Planning,
 Navo AI), Principles (all six topics), and Support. Both new groups use the existing
 Support-style quick menu, with hover, tap, ArrowDown, Escape and outside dismissal.
-Quick menus clamp within the viewport, including narrow screens. The homepage's
-existing Product mega-menu presentation is preserved. Language and Start now remain on the right;
+Quick menus clamp within the viewport, including narrow screens. The homepage uses
+these same three quick menus. Product lists Execute, Planning and Navo AI in that order.
+Language and Start now remain on the right;
 the language switch track and thumb both use round pill corners. Each page has six
 bilingual FAQ questions using native details/summary controls with a thin shared plus
 icon. Execute paragraphs are centered within equal horizontal insets.
@@ -58,7 +59,17 @@ All three introductions insert navigation into the real App header through an op
 runtime slot, reusing ProductMenu and the existing site controls. It returns
 home from the logo and links to all three features,
 with a Principles link and a personal-site placeholder. Support includes Afdian and GitHub.
-Homepage content, navigation, and animation remain intact. Feature subtitles,
+The homepage keeps its central logo, title, original scroll treatment, lower content,
+product screenshots and login flow. Four perspective links surround the logo: Execute,
+Planning, Navo AI and Principles. Lightweight bilingual JPEG captures show the real
+public pages without loading their workspaces on the homepage. To refresh these
+assets, capture each page at 1280×800; arrange the AI example before capturing it.
+Native Web Animations straighten and expand a clicked surface over 780ms, then
+follow its language-preserving link. Escape cancels, and back navigation clears the
+temporary surface. Reduced motion and modified/new-tab clicks use normal anchors.
+Portrait screens use two entrances above and two below the brand. Short landscape
+windows use smaller side entrances. Public introductions use a light loading canvas;
+the workspace retains its boot appearance. Feature subtitles,
 including Navo AI, use the same enlarged title-size token as the main introduction.
 Introductions and native display type use Times New Roman; candidate project names
 use regular sans-serif type. Today's Candidates uses the task font and a more generous

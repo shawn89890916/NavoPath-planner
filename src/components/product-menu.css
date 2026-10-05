@@ -1,16 +1,8 @@
 .np-product-menu { position: relative; flex-shrink: 0; }
 .np-product-menu > :is(a, button), #root .df-header .np-product-menu > :is(a, button) { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; color: #27231e; font: 720 14px "Segoe UI Variable", "Segoe UI", "Microsoft YaHei", sans-serif; text-decoration: none; cursor: pointer; }
-.np-product-menu--brand > a { gap: 9px; font-size: 20px; letter-spacing: -.035em; }
-.np-product-menu--brand img { width: 27px; height: 27px; object-fit: contain; }
 .np-product-menu > :is(a, button):hover { color: #6e766d; }
 .np-product-menu :is(a, button):focus-visible, .np-language-switch:focus-visible, .np-start-link:focus-visible { outline: 2px solid #584d3d; outline-offset: 4px; }
-.np-mega-menu, .np-quick-menu { z-index: 40; background: #f4f7f9; box-shadow: 0 18px 30px rgb(39 35 30 / 6%); }
-.np-mega-menu { position: fixed; inset: 64px 0 auto; padding: 44px 32px 52px; }
-.np-mega-menu .np-menu-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; max-width: 1120px; margin: auto; }
-.np-mega-menu a { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 12px 0; }
-.np-mega-menu strong { font-size: 24px; letter-spacing: -.025em; }
-.np-mega-menu a span { color: #69717c; font-weight: 400; font-size: 15px; line-height: 1.6; }
-.np-quick-menu { position: absolute; top: 100%; left: -18px; width: min(208px, calc(100vw - 24px)); padding: 16px 18px; border-radius: 14px; transform: translateX(var(--menu-shift, 0px)); }
+.np-quick-menu { position: absolute; z-index: 40; top: 100%; left: -18px; width: min(208px, calc(100vw - 24px)); padding: 16px 18px; border-radius: 14px; background: #f4f7f9; box-shadow: 0 18px 30px rgb(39 35 30 / 6%); transform: translateX(var(--menu-shift, 0px)); }
 .np-product-menu--principles .np-quick-menu { width: min(260px, calc(100vw - 24px)); }
 .np-site-nav--product .df-tabs .np-product-menu--active > :is(a, button), #root .df-header .np-product-menu--active > :is(a, button) { font-weight: 750; color: #27231e; }
 .np-quick-menu :is(a, [aria-disabled]) { display: flex; align-items: center; min-height: 44px; padding: 0; border: 0; color: #27231e; font-size: 14px; font-weight: 650; text-decoration: none; }
@@ -30,18 +22,11 @@
   .landing-nav-links > a { display: none; }
 }
 @media (max-width: 640px) {
-  .np-mega-menu { top: 58px; padding: 20px; }
-  .np-mega-menu .np-menu-content { grid-template-columns: 1fr; gap: 12px; }
-  .np-mega-menu strong { font-size: 20px; }
-  .np-product-menu--brand > a { font-size: 15px; }
-  .np-product-menu--brand img { width: 24px; height: 24px; }
   .np-language-switch { width: 60px; height: 34px; min-height: 34px; font-size: 11px; }
   .np-start-link { min-height: 38px; padding: 0 14px; font-size: 12px; }
-  .landing-nav:has(.np-product-menu) { gap: 10px; }
-  .landing-nav-links:has(.np-product-menu) { gap: 14px; }
-  .landing-nav-links .np-product-menu > :is(a, button) { font-size: 12px; }
+  .landing-nav:has(.np-product-menu) { gap: 8px; }
+  .landing-nav-links:has(.np-product-menu) { gap: 10px; }
+  .landing-nav-links .np-product-menu > :is(a, button) { font-size: 11px; }
   .landing-nav-actions { gap: 8px; }
-  .landing-nav .np-navigation-brand > span { display: none; }
-  .landing-nav .np-product-menu--brand .np-quick-menu { left: -8px; }
 }
 @media (prefers-reduced-motion: reduce) { .np-language-thumb { transition: none; } }
