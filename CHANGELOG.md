@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-06 · 网站介绍上线
+
+### 新增
+- 发布执行、规划、Navo AI 与六项相关原理的中英文介绍；首页提供透视页面入口和清晰的产品、原理与个人网站链接。
+
 ## 2026-10-05 · 首页与产品介绍
 
 ### 新增
@@ -74,6 +79,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-06 · Product website introductions
+
+### Added
+- Published bilingual Execute, Planning, Navo AI and six Principles introductions, with perspective homepage entrances and clear product, principles and personal-site links.
 
 ## 2026-10-05 · Homepage and product introductions
 

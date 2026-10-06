@@ -165,7 +165,7 @@ describe("portrait interaction contracts", () => {
   });
 
   it("uses a bottom-right quick-add on every compact Execute and Planning view", () => {
-    expect(main).toContain("{compactLayout && !drawerOpen && !utilityPanel && !aiOpen && createPortal(<button");
+    expect(main).toContain("{!productPresentation && compactLayout && !drawerOpen && !utilityPanel && !aiOpen && createPortal(<button");
     expect(main).not.toContain('(mode !== "execute" || compactExecuteView === "schedule") && <button');
     expect(appCss).toContain("bottom: calc(72px + env(safe-area-inset-bottom));");
     expect(appCss).toContain("z-index: 1001;");
