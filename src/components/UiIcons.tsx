@@ -27,6 +27,8 @@ export const UiCalendarClockIcon = createPathIcon("M7 3v3m10-3v3M4 9h16M5 5h14a1
 export const UiFlagIcon = createPathIcon("M5 21V4m0 0h11l-2 4 2 4H5");
 export const UiFolderInputIcon = createPathIcon("M3 7h7l2 2h9v10H3V7Zm7 7h6m-2-2 2 2-2 2");
 export const UiReturnIcon = createPathIcon("m8 7-4 4 4 4m-4-4h10a6 6 0 0 1 6 6");
+export const UiCursorIcon = createPathIcon("M4 3v17l4-4 4 7 4-2-4-7h6L4 3Z");
+export const UiPointingHandIcon = createPathIcon("M9 14V4a2 2 0 0 1 4 0v7m0-1a2 2 0 0 1 4 0v2m0-1a2 2 0 0 1 4 0v6a5 5 0 0 1-5 5h-4a5 5 0 0 1-4-2l-4-5a2 2 0 0 1 3-2l3 3");
 
 export function UiDockSidebarIcon({ size = 16, strokeWidth = 1.8, absoluteStrokeWidth: _absoluteStrokeWidth, ...props }: LucideProps) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden={props["aria-label"] ? undefined : true} {...props}>

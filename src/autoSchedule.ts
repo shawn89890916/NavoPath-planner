@@ -159,13 +159,15 @@ export function getFreeSlots(params: {
   dateRange: string[];
   scheduledEvents: ScheduledEvent[];
   settings: AutoScheduleSettings;
+  /** Optional clock for deterministic previews. Live scheduling uses the current time. */
+  now?: Date;
 }): FreeSlot[] {
   const { dateRange, scheduledEvents, settings } = params;
   const snap = settings.snapMinutes || 15;
   const dayStart = settings.dayStart ? timeToMinutes(settings.dayStart) : 480;
   const dayEnd = settings.dayEnd ? timeToMinutes(settings.dayEnd) : 1320;
   const buffer = settings.bufferMinutes ?? 5;
-  const current = new Date();
+  const current = params.now ?? new Date();
   const now = current.getHours() * 60 + current.getMinutes();
   const tIso = localIsoDate(current);
 

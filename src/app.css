@@ -12044,25 +12044,9 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-/* Hide old color bar span */
 
-.df-app .df-project-color-bar {
 
-  display: none;
 
-}
-
-.df-app.theme-dark .df-project-color-bar {
-
-  display: none;
-
-}
-
-.df-app:not(.theme-dark) .df-project-color-bar {
-
-  display: none;
-
-}
 
 
 
@@ -14999,6 +14983,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 .df-ai-task-row-top {
+  flex-wrap: wrap;
 
   display: flex;
 
@@ -15613,6 +15598,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 
 .df-ai-action-header {
+  flex-wrap: wrap;
 
   font-size: 12px;
 
@@ -15753,6 +15739,9 @@ body:has(:active)::-webkit-scrollbar-thumb {
   corner-shape: var(--corner-shape, squircle); }
 
 .df-ai-chip-button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 
   min-height: 22px;
 
@@ -15933,6 +15922,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   padding: 0; accent-color: var(--mode-primary); }
 
 .df-ai-import-bulk {
+  flex-wrap: wrap;
 
   display: flex;
 
@@ -30889,9 +30879,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   box-shadow: none;
 }
 
-.df-app.mode-planning .df-planning .df-project-color-bar {
-  display: none;
-}
 
 .df-app.mode-planning .df-planning .df-task-node-inner > .df-task-block-accent {
   display: none;
@@ -33243,23 +33230,12 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   position: relative;
   min-height: 52px;
   padding-left: 20px;
-  border: 2px solid var(--paper-rule-strong);
+  border: 2px solid var(--project-color);
   border-radius: 8px;
   background: var(--surface-card);
   corner-shape: var(--corner-shape, squircle);
 }
 
-#root .df-app.mode-planning .df-planning .df-project-color-bar {
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 7px;
-  display: block;
-  width: 4px;
-  border-radius: 3px;
-  background: var(--project-color);
-  corner-shape: var(--corner-shape, squircle);
-}
 
 #root .df-app.mode-planning .df-planning .df-task-node-inner[data-task-variant="candidate"] {
   --task-padding-x: 16px;
@@ -36334,6 +36310,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 }/* Authoritative AI conversation layer — loaded last on purpose. */
 #root .df-app .df-ai-panel-reference {
+  container-type: inline-size;
   top: 72px;
   right: 16px;
   bottom: 16px;
@@ -36647,7 +36624,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 .df-ai-capability-state > span { color: var(--accent-active); font-size: 8px; }
 .df-ai-capability-state.locked > span { color: var(--text-muted); }
 
-.df-ai-turn { display: grid; gap: 9px; width: 100%; margin: 0 0 32px; }
+.df-ai-turn { display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; width: 100%; margin: 0 0 32px; }
 .df-ai-turn.user { justify-items: end; display: grid; }
 .df-ai-message-actions {
   display: flex;
@@ -37015,6 +36992,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
   #root .df-app .df-ai-panel-reference .df-ai-attach-btn { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
   #root .df-app .df-ai-panel-reference .df-ai-send-btn { grid-column: 3; width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
+  .df-ai-task-row-top > strong { flex-basis: 100%; }
+  .df-ai-import-bulk > button { flex: 1; min-width: 0; font-size: 12px; }
   .df-ai-markdown { font-size: 15px; }
   .df-ai-markdown table { display: block; max-width: 100%; overflow-x: auto; }
 }
@@ -37450,7 +37429,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-candidate-panel .df-quick-add {
     margin: 0 -14px -12px;
     padding: 8px 14px 13px;
-    grid-template-columns: minmax(0, 1fr) 64px 48px;
+    grid-template-columns: minmax(0, 1fr) 64px max-content;
     border-top: 0;
   }
   #root .df-app .df-candidate-panel .df-quick-add::before { display: none; }
@@ -38599,6 +38578,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   .df-mobile-dock--viewport.is-mobile-sheet-open {
+    visibility: hidden;
     pointer-events: none;
   }
 
@@ -39544,6 +39524,37 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-now-line.is-return-highlighted { animation-duration: .01ms; }
 }
 
+/* The same AI panel can be embedded in a bounded workspace or product demo. */
+#root .df-app .df-ai-panel.df-ai-panel-reference.is-embedded {
+  position: relative;
+  inset: auto;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+}
+#root .df-app .df-ai-panel.df-ai-panel-reference.is-embedded::before { display: none; }
+#root .df-app .df-ai-panel.is-embedded .df-ai-panel-head { cursor: default; touch-action: auto; }
+#root .df-app .df-ai-panel.is-embedded .df-ai-panel-body { overscroll-behavior: auto; }
+/* Fit the shared action preview to its panel, including the native docked sidebar. */
+@container (max-width: 500px) {
+  #root .df-app .df-ai-panel-reference .df-ai-panel-body { padding: 18px 16px 24px; }
+  #root .df-app .df-ai-panel-reference :is(.df-ai-actions, .df-ai-reply) { margin-left: 0; }
+  #root .df-app .df-ai-panel-reference .df-ai-turn:last-child { margin-bottom: 0; }
+  #root .df-app .df-ai-panel-reference .df-ai-task-row-top > strong { flex-basis: 100%; }
+  #root .df-app .df-ai-panel-reference .df-ai-chip-button { font: 500 12px/1.4 var(--paper-sans); }
+  #root .df-app .df-ai-panel-reference .df-ai-import-bulk > button { flex: 1; min-width: 0; font-size: 12px; }
+}
+
+
 .oauth-consent-page {
   min-height: 100svh;
   display: grid;
@@ -39633,4 +39644,138 @@ li.oauth-consent-scope,
   border-color: var(--accent-active, #584d3d);
   color: var(--bg-main, #f8f7f3);
   background: var(--accent-active, #584d3d);
+}
+/* Full-window product presentation: native components keep their controls. */
+html.product-demo-fullscreen #root .df-app {
+  --paper-serif: "Times New Roman", "Songti SC", SimSun, serif;
+  --product-header-height: 58px;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+html.product-demo-fullscreen #root .df-app > .df-header { display: block; height: var(--product-header-height); min-height: var(--product-header-height); max-height: none; z-index: 50; }
+html.product-demo-fullscreen #root .df-header-inner { display: grid; height: 100%; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; }
+html.product-demo-fullscreen #root .df-header .df-tabs-center { position: static; transform: none; grid-column: 2; justify-self: center; display: flex; }
+html.product-demo-fullscreen #root .df-header .df-brand { color: var(--text-main); text-decoration: none; }
+html.product-demo-fullscreen #root .df-header-right { display: flex; gap: 12px; }
+html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { height: calc(100% - var(--product-header-height)); min-height: 0; }
+/* The outer feature page owns scrolling; native tasks remain interactive. */
+html.product-demo-fullscreen #root .df-app :is(.df-tree-wrap, .df-candidate-list, .df-timeline-scroll, .df-kanban-board, .df-kanban-column, .df-eisenhower-task-list, .df-planning-list) { overflow: clip; overscroll-behavior: auto; }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-eisenhower-grid { height: min(540px, 100%); min-height: 0; grid-template-rows: repeat(2, minmax(0, 1fr)); }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-eisenhower-quadrant { min-height: 0; }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-project-tasks { margin-left: 112px; padding-left: 0; }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-category-branch { margin-bottom: 12px; }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-plan-task-node { width: max-content; max-width: min(360px, 100%); min-width: 260px; }
+html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-task-node-inner { width: 100%; min-width: 0; }
+html.product-demo-fullscreen #root .df-app.mode-execute .df-project-group-name { font-family: var(--paper-sans); font-weight: 400; text-transform: none; }
+html.product-demo-fullscreen #root .df-app.mode-execute .df-candidate-panel .df-panel-title h2 { font: 600 18px/1.4 var(--paper-task); letter-spacing: 0; }
+@media (min-width: 1000px) and (orientation: landscape) {
+  html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-mindmap.no-root { grid-template-columns: 116px minmax(420px, 1fr) minmax(260px, 32vw); }
+  html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-tree-wrap { grid-column: 2; padding-top: 16px; padding-right: 0; }
+  html.product-demo-fullscreen #root .df-app.mode-planning .df-product-story { grid-column: 3; }
+  html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) { --product-timeline-width: min(clamp(360px, 38vw, 620px), calc(100% - 540px)); grid-template-columns: min(clamp(340px, 26vw, 400px), calc(100% - var(--product-timeline-width) - 280px)) minmax(280px, 1fr) var(--product-timeline-width); gap: 0; padding: 12px 16px; }
+  html.product-demo-fullscreen #root .df-app.mode-execute > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 3; }
+  html.product-demo-fullscreen #root .df-app.mode-execute .df-product-story { grid-column: 2; grid-row: 1; }
+  html.product-demo-fullscreen #root .df-app.mode-execute .df-timeline-scroll { margin-left: auto; margin-right: 0; }
+  html.product-demo-fullscreen #root .df-app.mode-execute .df-timeline-daily { --df-daily-scroll-width: 100%; }
+  html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) { grid-template-columns: var(--df-candidate-width) minmax(0, 1fr); }
+  html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked .df-product-story { display: none; }
+  html.product-demo-fullscreen #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) > .df-timeline-panel { grid-column: 2; }
+}
+/* AI keeps Execute's panel geometry and uses its middle introduction column. */
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-panel > .df-panel-title { position: static; inset: auto; height: auto; width: auto; z-index: auto; flex-shrink: 0; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-panel > .df-panel-title h2 { display: block; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-panel > .df-panel-title > div { position: static; height: auto; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-candidate-list { overflow-x: clip; overflow-y: auto; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-product-story { display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
+.df-product-ai-intro { width: 100%; max-width: 420px; text-align: center; text-wrap: balance; }
+.df-product-ai-intro h1 { margin: 0 0 16px; white-space: pre-line; font: 700 clamp(28px, 2.4vw, 38px)/1.35 var(--paper-serif); letter-spacing: -.04em; }
+.df-product-ai-intro p { margin: 0; color: var(--text-muted); font: 18px/1.65 var(--paper-serif); }
+.df-product-ai-intro p svg { display: inline-block; width: 18px; height: 18px; margin: 0 4px; vertical-align: -3px; color: var(--text-main); }
+.df-product-ai-intro p strong { color: var(--text-main); font-weight: 700; }
+.df-product-ai-arranging-notes { display: grid; gap: 16px; margin-top: 24px; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-plan-title-icon.needs-demo-plan { outline: 4px solid color-mix(in srgb, var(--accent-active) 28%, transparent); outline-offset: 3px; animation: df-product-ai-start-cue 2.2s ease-in-out infinite; }
+html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-plan-title-icon.needs-demo-plan:focus-visible { outline-color: var(--accent-active); }
+@keyframes df-product-ai-start-cue {
+  0%, 100% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent-active) 8%, transparent); }
+  50% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--accent-active) 15%, transparent); }
+}
+html.product-demo-paused #root .df-app[data-product-feature="ai"] .df-ai-plan-title-icon.needs-demo-plan { animation-play-state: paused; }
+.df-product-click-guide { position: fixed; inset: 0; z-index: 30; visibility: hidden; pointer-events: none; }
+.df-product-click-guide[data-ready="true"] { visibility: visible; }
+.df-product-click-guide-motion { position: absolute; top: 0; left: 0; animation: df-product-guide-travel 4s cubic-bezier(.4,0,.2,1) infinite; }
+.df-product-click-guide-motion svg { position: absolute; top: 0; left: 0; fill: var(--bg-surface); color: var(--text-main); filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--text-main) 18%, transparent)); }
+.df-product-click-guide-cursor { translate: -5.3px -4px; animation: df-product-guide-cursor 4s linear infinite; }
+.df-product-click-guide-hand { translate: -14.7px -2.7px; transform-origin: 14.7px 2.7px; animation: df-product-guide-press 4s ease-in-out infinite; }
+@keyframes df-product-guide-travel {
+  0%, 100% { transform: translate(var(--guide-start-x), var(--guide-start-y)); opacity: 0; }
+  8% { transform: translate(var(--guide-start-x), var(--guide-start-y)); opacity: 1; }
+  43%, 78% { transform: translate(var(--guide-end-x), var(--guide-end-y)); opacity: 1; }
+  90% { transform: translate(var(--guide-end-x), var(--guide-end-y)); opacity: 0; }
+}
+@keyframes df-product-guide-cursor {
+  0%, 40% { opacity: 1; }
+  43%, 100% { opacity: 0; }
+}
+@keyframes df-product-guide-press {
+  0%, 40%, 90%, 100% { opacity: 0; transform: scale(1); }
+  43%, 50%, 66%, 78% { opacity: 1; transform: scale(1); }
+  58% { opacity: 1; transform: translateY(2px) scale(.86); }
+}
+html.product-demo-paused .df-product-click-guide-motion, html.product-demo-paused .df-product-click-guide-motion svg { animation-play-state: paused; }
+html.product-demo-fullscreen #root .df-app[data-product-revealing="true"] .df-time-block { animation: df-product-schedule-arrival 620ms cubic-bezier(.2,.75,.25,1) both; animation-delay: calc(var(--product-arrival-order, 0) * 100ms); }
+@keyframes df-product-schedule-arrival {
+  from { opacity: 0; translate: -18px 10px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .df-product-click-guide { display: none; }
+  html.product-demo-fullscreen #root .df-app[data-product-revealing="true"] .df-time-block { animation: none; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-ai-plan-title-icon.needs-demo-plan { animation: none; }
+}
+.df-product-ai-presets, .df-product-ai-candidates { display: grid; gap: 12px; }
+.df-product-ai-requests { display: flex; flex-wrap: wrap; gap: 8px; }
+#root .df-app .df-product-ai-requests .ui-button { min-height: 40px; padding: 9px 16px; border: 0; border-radius: 12px; color: var(--text-main); font: 600 13px/1.4 var(--paper-sans); }
+#root .df-app[data-product-feature="ai"] .df-product-ai-requests .ui-button--ghost { background: var(--paper-note); }
+#root .df-app .df-product-ai-requests .ui-button:disabled { opacity: .42; cursor: default; }
+.df-product-ai-reschedules { display: grid; grid-template-columns: 1fr; gap: 8px; }
+#root .df-app .df-product-ai-reschedules .ui-button { display: grid; gap: 6px; text-align: left; min-width: 0; padding: 12px; border: 0; border-radius: 12px; background: var(--paper-note); font: 500 13px/1.5 var(--paper-sans); }
+.df-product-ai-reschedules .ui-button span { color: var(--text-muted); font-size: 12px; }
+@media (max-width: 999px) {
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(170px, .85fr) minmax(0, 1.4fr); gap: 0; padding: 12px; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-product-story { grid-column: 2; grid-row: 1; padding: 12px; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute > .df-timeline-panel { grid-column: 3; grid-row: 1; padding-top: 0; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute > .df-candidate-panel { padding-top: 0; }
+  html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] .df-date-title-compact { display: flex; position: relative; left: auto; transform: none; margin: 0 auto 8px; }
+  .df-product-ai-intro h1 { font-size: 24px; }
+  .df-product-ai-intro p { font-size: 15px; }
+}
+@media (max-height: 620px) {
+  .df-product-ai-arranging-notes { gap: 8px; margin-top: 16px; }
+  .df-product-ai-intro h1 { font-size: 22px; }
+  .df-product-ai-intro p { font-size: 13px; line-height: 1.5; }
+}
+
+@media (max-width: 640px) {
+  html.product-demo-fullscreen #root .df-app { --product-header-height: 102px; }
+
+  html.product-demo-fullscreen #root .df-header-inner { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 48px 40px; padding: 6px 16px; gap: 0; }
+  html.product-demo-fullscreen #root .df-header .df-tabs-center { position: static; transform: none; grid-column: 1 / -1; grid-row: 2; justify-self: center; display: flex; }
+  html.product-demo-fullscreen #root .df-header-right { justify-self: end; gap: 8px; }
+  html.product-demo-fullscreen #root .df-header .df-brand strong { display: none; }
+}
+@media (max-width: 760px) {
+  html.product-demo-fullscreen #root .df-header .df-brand strong { display: none; }
+}
+@media (max-width: 980px), (orientation: portrait) {
+  html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { top: 0; }
+  html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-project-tasks { margin-left: 40px; }
+  html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-plan-task-node { width: 100%; max-width: 360px; min-width: 0; }
 }

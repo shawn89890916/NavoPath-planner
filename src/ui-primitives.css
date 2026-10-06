@@ -601,14 +601,6 @@
   background: var(--navo-action-note);
   box-shadow: none;
 }
-.landing .landing-lang {
-  color: var(--navo-action-muted);
-  border-color: var(--navo-action-rule);
-  border-radius: 2px;
-  background: transparent;
-  box-shadow: none;
-  corner-shape: var(--corner-shape, squircle);
-}
 .landing .landing-auth-close {
   color: var(--navo-action-muted);
   border-color: var(--navo-action-rule);
@@ -616,11 +608,6 @@
   background: transparent;
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
-}
-.landing .landing-lang:hover {
-  color: var(--navo-action-accent);
-  border-color: var(--navo-action-rule);
-  background: var(--navo-action-note);
 }
 .landing .landing-auth-close:hover {
   color: var(--navo-action-accent);
@@ -738,7 +725,7 @@
   .portfolio .portfolio-primary-link {
     min-height: 44px;
   }
-  .landing :is(.landing-lang, .landing-auth-close) {
+  .landing .landing-auth-close {
     min-width: 44px;
     min-height: 44px;
   }

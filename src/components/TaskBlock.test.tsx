@@ -192,7 +192,7 @@ describe("TaskBlock shared component contract", () => {
   });
 
   it("renders candidate subtasks as collapsible TaskBlock child rows", () => {
-    const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8");
+    const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8") + readFileSync(resolve(__dirname, "../WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "../AiPanel.tsx"), "utf8");
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     expect(main).toContain("function CandidateSubtaskItem");
@@ -208,7 +208,7 @@ describe("TaskBlock shared component contract", () => {
   });
 
   it("keeps edit subtasks visible while matching planning checkbox and AI motion", () => {
-    const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8");
+    const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8") + readFileSync(resolve(__dirname, "../WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "../AiPanel.tsx"), "utf8");
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     expect(main).toContain("function renderSubtaskRows(subtasks: Subtask[]");
@@ -224,7 +224,7 @@ describe("TaskBlock shared component contract", () => {
   });
 
   it("exposes a clear habit settings entry and weekly overview toolbar", () => {
-    const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8");
+    const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8") + readFileSync(resolve(__dirname, "../WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "../AiPanel.tsx"), "utf8");
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     // Habit overview was refactored from `df-habit-week-*` to the borderless
@@ -240,7 +240,7 @@ describe("TaskBlock shared component contract", () => {
   });
 
   it("renders continuous cross-day scroll as one vertical daily timeline", () => {
-    const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8");
+    const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8") + readFileSync(resolve(__dirname, "../WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "../AiPanel.tsx"), "utf8");
 
     expect(main).toContain("buildDailyContinuousDates");
     expect(main).toContain("dailyContinuousTargetFromContentY");
