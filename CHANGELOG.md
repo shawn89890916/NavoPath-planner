@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-08 · 首页入场动画
+
+### 改进
+- 首页加载时，四个透视页面从四周向内汇聚，中央 N Logo、NavoPath 与标语依次浮现；滚动或操作时立即结束入场动画，保留页面展开与原有滚动效果，减少动态效果时直接显示首页。
+
 ## 2026-10-06 · 网站介绍上线
 
 ### 新增
@@ -79,6 +84,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-08 · Homepage entrance
+
+### Improvements
+- On homepage load, the four perspective pages gather inward while the central N logo, NavoPath and tagline emerge in sequence. Scrolling or interaction ends the entrance immediately, preserving page expansion and existing scroll effects; reduced motion shows the homepage directly.
 
 ## 2026-10-06 · Product website introductions
 
