@@ -6,6 +6,7 @@ import { CloseButton, IconButton } from "./components/UiPrimitives";
 import { UiEyeIcon } from "./components/UiIcons";
 import { setAuthPersistencePreference } from "./authSessionStorage";
 import LandingPortals from "./LandingPortals";
+import { prefersReducedMotion } from "./motion";
 import { PERSONAL_SITE_URL, PRODUCT_FEATURES, featureHref, featureNames, principleHref } from "./productSite";
 import "./landing.css";
 
@@ -161,6 +162,7 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
   const [showAuth, setShowAuth] = useState(false);
   const [coverRecede, setCoverRecede] = useState(0);
   const [portalExit, setPortalExit] = useState(0);
+  const [entering, setEntering] = useState(() => !prefersReducedMotion() && window.scrollY < 1 && !location.hash);
   const c = copy[lang];
 
   useEffect(() => {
@@ -187,9 +189,12 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
 
   useEffect(() => {
     let frame = 0;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const endEntrance = () => setEntering(false);
     const update = () => {
       frame = 0;
       const viewport = Math.max(window.innerHeight, 1);
+      if (window.scrollY > 0) setEntering(false);
       const distance = Math.min(1, Math.max(0, (window.scrollY - viewport * .1) / (viewport * 1.4)));
       const progress = distance ** .34;
       setCoverRecede((current) => Math.abs(current - progress) < .01 ? current : progress);
@@ -200,10 +205,12 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
     requestUpdate();
     window.addEventListener("scroll", requestUpdate, { passive: true });
     window.addEventListener("resize", requestUpdate);
+    reduced.addEventListener("change", endEntrance);
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
+      reduced.removeEventListener("change", endEntrance);
     };
   }, []);
 
@@ -214,7 +221,7 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
     "--landing-cover-opacity": String(1 - coverRecede * .56),
   } as CSSProperties;
 
-  return <div className="landing" lang={lang}>
+  return <div className={`landing${entering ? " landing--entering" : ""}`} lang={lang} onPointerDownCapture={() => setEntering(false)} onKeyDownCapture={() => setEntering(false)} onFocusCapture={() => setEntering(false)} onAnimationEnd={event => { if (event.animationName === "landing-preview-arrive") setEntering(false); }}>
     <nav className="landing-nav" aria-label="NavoPath">
       <a className="landing-brand" href="/"><ProductIcon compact /><span>NavoPath</span></a>
       <div className="landing-nav-links"><ProductMenu lang={lang} /><ProductMenu lang={lang} kind="principles" /><ProductMenu lang={lang} kind="support" includeGitHub /></div>
