@@ -221,7 +221,7 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
     "--landing-cover-opacity": String(1 - coverRecede * .56),
   } as CSSProperties;
 
-  return <div className={`landing${entering ? " landing--entering" : ""}`} lang={lang} onPointerDownCapture={() => setEntering(false)} onKeyDownCapture={() => setEntering(false)} onAnimationEnd={event => { if (event.animationName === "landing-cue-emerge") setEntering(false); }}>
+  return <div className={`landing${entering ? " landing--entering" : ""}`} lang={lang} onPointerDownCapture={() => setEntering(false)} onKeyDownCapture={() => setEntering(false)} onFocusCapture={() => setEntering(false)} onAnimationEnd={event => { if (event.animationName === "landing-preview-arrive") setEntering(false); }}>
     <nav className="landing-nav" aria-label="NavoPath">
       <a className="landing-brand" href="/"><ProductIcon compact /><span>NavoPath</span></a>
       <div className="landing-nav-links"><ProductMenu lang={lang} /><ProductMenu lang={lang} kind="principles" /><ProductMenu lang={lang} kind="support" includeGitHub /></div>
