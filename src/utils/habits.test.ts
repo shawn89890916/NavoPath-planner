@@ -113,6 +113,51 @@ describe("habits", () => {
     expect(habitTask?.timelineRecords?.map((record) => record.scheduledStart)).toEqual(["10:00"]);
   });
 
+  it("keeps daily completion, scheduled task and record in sync without changing other dates or habits", () => {
+    const data = { ...baseData, ...normalizeHabits(baseData, "2026-07-01T00:00:00.000Z") };
+    const habitId = data.habits![0].id;
+    const first = scheduleHabitRecord(data, habitId, "2026-07-01", "23:50");
+    const otherDay = scheduleHabitRecord(first.data, habitId, "2026-07-02", "09:00");
+    const scheduled = scheduleHabitRecord(otherDay.data, data.habits![1].id, "2026-07-01", "10:00");
+    const taskId = `habit-task-${habitId}-2026-07-01`;
+    const unrelatedTasks = scheduled.data.tasks.filter((task) => task.id !== taskId);
+    const unrelatedStates = scheduled.data.habitDailyStates!.filter((state) => state.timelineRecordId !== first.recordId);
+    const now = "2026-07-01T16:00:00.000Z";
+
+    const completed = toggleHabitCompletion(scheduled.data, habitId, "2026-07-01", true, now);
+    expect(completed.tasks.find((task) => task.id === taskId)).toMatchObject({
+      completed: true,
+      updatedAt: now,
+      timelineRecords: [expect.objectContaining({ id: first.recordId, executionStatus: "completed", scheduledEndDate: "2026-07-02" })],
+    });
+    expect(completed.habitDailyStates!.find((state) => state.timelineRecordId === first.recordId)).toMatchObject({ completed: true, completedAt: now });
+    expect(completed.tasks.filter((task) => task.id !== taskId)).toEqual(unrelatedTasks);
+    expect(completed.habitDailyStates!.filter((state) => state.timelineRecordId !== first.recordId)).toEqual(unrelatedStates);
+
+    const reopened = toggleHabitCompletion(completed, habitId, "2026-07-01", false, now);
+    expect(reopened.tasks.find((task) => task.id === taskId)).toMatchObject({
+      completed: false,
+      timelineRecords: [expect.objectContaining({ id: first.recordId, executionStatus: "scheduled" })],
+    });
+    expect(reopened.habitDailyStates!.find((state) => state.timelineRecordId === first.recordId)).toMatchObject({ completed: false, completedAt: undefined });
+  });
+
+  it("preserves completion when scheduling and rescheduling a completed habit", () => {
+    const data = { ...baseData, ...normalizeHabits(baseData, "2026-07-01T00:00:00.000Z") };
+    const habitId = data.habits![0].id;
+    const completed = toggleHabitCompletion(data, habitId, "2026-07-01", true);
+    const first = scheduleHabitRecord(completed, habitId, "2026-07-01", "09:00");
+    const second = scheduleHabitRecord(first.data, habitId, "2026-07-01", "10:00");
+
+    for (const result of [first, second]) {
+      expect(result.data.tasks[0]).toMatchObject({
+        completed: true,
+        timelineRecords: [expect.objectContaining({ id: result.recordId, executionStatus: "completed" })],
+      });
+      expect(result.data.habitDailyStates![0]).toMatchObject({ completed: true, timelineRecordId: result.recordId });
+    }
+  });
+
   it("advances the end date when a scheduled habit crosses midnight", () => {
     const data = { ...baseData, ...normalizeHabits(baseData, "2026-07-01T00:00:00.000Z") };
     const result = scheduleHabitRecord(

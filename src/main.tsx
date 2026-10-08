@@ -4133,6 +4133,17 @@ if (cached?.data && cached?.settings) {
 
   function toggleTaskDone(taskId: string) {
     if (!data) return;
+    const habitSchedule = habitScheduleFromTimelineTask(taskId);
+    if (habitSchedule) {
+      const current = dataRef.current;
+      if (!current) return;
+      const sourceRecordId = resolveTimelineRecordId(taskId);
+      const owner = current.tasks.find((task) => task.id === sourceRecordId || task.timelineRecords?.some((record) => record.id === sourceRecordId));
+      const record = owner?.timelineRecords?.find((item) => item.id === sourceRecordId);
+      const completed = record ? record.executionStatus !== "completed" : !owner?.completed;
+      void saveData(toggleHabitCompletion(current, habitSchedule.habitId, habitSchedule.date, completed));
+      return;
+    }
     const occurrenceMeta = parseRecurrenceOccurrenceId(taskId);
     if (occurrenceMeta) {
       const realTask = occurrenceToTaskMap.get(taskId);
@@ -12926,21 +12937,22 @@ function EditDrawer(props: {
         <section className="df-detail-notes-new">
           <div className="df-detail-section-head">
             <h3>{t(props.lang, "drawer.notes")}</h3>
-            <button className="df-detail-add-btn" onClick={() => setNotesEditing((open) => !open)}>
-              <svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 2l2 2-6 6H2V8l6-6z"/></svg>
-              <span>{notesEditing ? t(props.lang, "drawer.cancel") : t(props.lang, "drawer.edit")}</span>
-            </button>
+            {notesEditing && noteDraft !== f.details ? (
+              <div className="df-notes-editor-actions">
+                <Button className="df-detail-add-btn" onClick={() => { set("details", noteDraft); props.onTaskUpdate(props.task!.id, { notes: noteDraft }); setNotesEditing(false); }}>{t(props.lang, "drawer.save")}</Button>
+                <Button className="df-detail-add-btn" onClick={() => { setNoteDraft(f.details); setNotesEditing(false); }}>{t(props.lang, "drawer.cancel")}</Button>
+              </div>
+            ) : (
+              <IconButton icon={<UiPencilIcon size={14} />} label={t(props.lang, "taskCard.editNotes")} className="df-detail-add-btn" onClick={() => { setNoteDraft(f.details); setNotesEditing((open) => !open); }} />
+            )}
           </div>
           {notesEditing ? (
             <div className="df-notes-editor">
-              <textarea rows={4} value={noteDraft} onChange={(event) => { setNoteDraft(event.target.value); set("details", event.target.value); }} placeholder={t(props.lang, "drawer.addNotePlaceholder")} />
-              <div className="df-notes-editor-actions">
-                <button className="df-detail-pill-trevor action" onClick={() => { set("details", noteDraft); props.onTaskUpdate(props.task!.id, { notes: noteDraft }); setNotesEditing(false); }}>{t(props.lang, "drawer.save")}</button>
-              </div>
+              <textarea autoFocus rows={4} value={noteDraft} onChange={(event) => setNoteDraft(event.target.value)} aria-label={t(props.lang, "drawer.notes")} placeholder={t(props.lang, "drawer.addNotePlaceholder")} />
             </div>
           ) : (
-            <div className="df-notes-preview" onClick={() => setNotesEditing(true)}>
-              {noteDraft ? <p>{noteDraft}</p> : <p className="placeholder">{t(props.lang, "drawer.noNotes")}</p>}
+            <div className="df-notes-preview df-notes-preview--readonly">
+              {f.details ? <p>{f.details}</p> : <p className="placeholder">{t(props.lang, "drawer.noNotes")}</p>}
             </div>
           )}
         </section>

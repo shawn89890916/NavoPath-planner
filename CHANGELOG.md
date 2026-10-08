@@ -1,9 +1,13 @@
 # NavoPath 更新日志
 
-## 2026-10-08 · 首页入场动画
+## 2026-10-08 · 首页与执行体验
 
 ### 改进
 - 首页加载时，四个透视页面从四周向内汇聚，中央 N Logo、NavoPath 与标语依次浮现，再由顶部滑入顶栏、底部滑入产品预览；滚动或操作时立即结束入场动画，保留页面展开与原有滚动效果，减少动态效果时直接显示首页。
+
+### 修复
+- 时间轴与今日候选中的习惯完成状态双向同步，勾选或取消完成会同时更新；已完成的习惯重新安排后保留完成状态，各日期独立记录。
+- 任务详情备注点击后保持只读，使用笔形按钮进入编辑；修改后显示保存与取消，取消会放弃修改，支持中英文。
 
 ## 2026-10-06 · 网站介绍上线
 
@@ -85,10 +89,14 @@
 
 # NavoPath Changelog
 
-## 2026-10-08 · Homepage entrance
+## 2026-10-08 · Homepage and execution experience
 
 ### Improvements
 - On homepage load, the four perspective pages gather inward while the central N logo, NavoPath and tagline emerge in sequence, followed by the header sliding in from above and the product preview from below. Scrolling or interaction ends the entrance immediately, preserving page expansion and existing scroll effects; reduced motion shows the homepage directly.
+
+### Fixed
+- Habit completion now syncs both ways between the timeline and Today's Candidates when checked or unchecked. Scheduling a completed habit preserves its completion, with each date recorded independently.
+- Task notes stay read-only when clicked and use a pencil button to enter editing. Changes reveal Save and Cancel actions; Cancel discards the draft. Both Chinese and English are supported.
 
 ## 2026-10-06 · Product website introductions
 

@@ -16762,7 +16762,9 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 .df-notes-editor textarea:focus { border-color: var(--accent-active); }
 
-.df-notes-editor-actions { display: flex; justify-content: flex-end; }
+.df-notes-editor-actions { display: flex; justify-content: flex-end; gap: 6px; }
+
+.df-notes-preview.df-notes-preview--readonly { cursor: text; }
 
 
 

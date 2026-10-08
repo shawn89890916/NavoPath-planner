@@ -139,7 +139,17 @@ export function toggleHabitCompletion(data: PlannerData, habitId: string, date: 
     createdAt: existing?.createdAt || now,
     updatedAt: now,
   };
-  return { ...data, habitDailyStates: [...states.filter((state) => state.id !== nextState.id), nextState] };
+  const taskId = `habit-task-${habitId}-${date}`;
+  const tasks = data.tasks.map((task) => task.id === taskId ? {
+    ...task,
+    completed,
+    timelineRecords: (task.timelineRecords || []).map((record) => record.id === existing?.timelineRecordId ? {
+      ...record,
+      executionStatus: completed ? "completed" as const : "scheduled" as const,
+    } : record),
+    updatedAt: now,
+  } : task);
+  return { ...data, tasks, habitDailyStates: [...states.filter((state) => state.id !== nextState.id), nextState] };
 }
 
 export function scheduleHabitRecord(data: PlannerData, habitId: string, date: string, start: string, now = new Date().toISOString()): { data: PlannerData; recordId: string } {
@@ -149,6 +159,7 @@ export function scheduleHabitRecord(data: PlannerData, habitId: string, date: st
   const recordId = `habit-record-${habit.id}-${date}-${start.replace(":", "")}`;
   const duration = Math.max(5, habit.defaultDurationMinutes || 15);
   const end = addMinutes(date, start, duration);
+  const completed = habitStateForDate(data, habitId, date)?.completed || false;
   const task: Task = {
     id: taskId,
     title: habit.title,
@@ -157,7 +168,7 @@ export function scheduleHabitRecord(data: PlannerData, habitId: string, date: st
     priority: null,
     notes: "",
     goalId: "",
-    completed: false,
+    completed,
     workflowStatus: "doing",
     estimatedHours: duration / 60,
     plannedForDate: date,
@@ -171,13 +182,13 @@ export function scheduleHabitRecord(data: PlannerData, habitId: string, date: st
     scheduledStart: start,
     scheduledEndDate: end.date,
     scheduledEnd: end.time,
-    executionStatus: "scheduled",
+    executionStatus: completed ? "completed" : "scheduled",
     createdAt: now,
   };
-  const stateData = toggleHabitCompletion(data, habitId, date, habitStateForDate(data, habitId, date)?.completed || false, now);
+  const stateData = toggleHabitCompletion(data, habitId, date, completed, now);
   const states = (stateData.habitDailyStates || []).map((state) => state.habitId === habitId && state.date === date ? { ...state, timelineRecordId: recordId, updatedAt: now } : state);
   const tasks = data.tasks.some((item) => item.id === taskId)
-    ? data.tasks.map((item) => item.id === taskId ? { ...item, timelineRecords: [record], updatedAt: now } : item)
+    ? data.tasks.map((item) => item.id === taskId ? { ...item, completed, timelineRecords: [record], updatedAt: now } : item)
     : [...data.tasks, { ...task, timelineRecords: [record] }];
   return { data: { ...stateData, tasks, habitDailyStates: states }, recordId };
 }
