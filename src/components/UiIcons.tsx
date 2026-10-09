@@ -1,4 +1,4 @@
-import { Bell, Copy, Ellipsis, Pencil, Plus, Search, Sparkles, Trash2, X, type LucideIcon, type LucideProps } from "lucide-react";
+import { Bell, Copy, Ellipsis, Info, Pencil, Plus, Search, Sparkles, Trash2, X, type LucideIcon, type LucideProps } from "lucide-react";
 
 function createNamedIcon(Icon: LucideIcon) {
   return function NamedUiIcon({ size = 16, strokeWidth = 1.8, ...props }: LucideProps) {
@@ -9,6 +9,7 @@ function createNamedIcon(Icon: LucideIcon) {
 export const UiBellIcon = createNamedIcon(Bell);
 export const UiCloseIcon = createNamedIcon(X);
 export const UiCopyIcon = createNamedIcon(Copy);
+export const UiInfoIcon = createNamedIcon(Info);
 export const UiPencilIcon = createNamedIcon(Pencil);
 export const UiPlusIcon = createNamedIcon(Plus);
 export const UiSearchIcon = createNamedIcon(Search);

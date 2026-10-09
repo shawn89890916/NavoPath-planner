@@ -26526,9 +26526,37 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   padding-block: 12px;
   border-block: 1px solid var(--border-soft);
 }
-.df-engagement-rating label { display: grid; gap: 6px; min-width: 0; }
-.df-engagement-heading { display: flex; justify-content: space-between; gap: 12px; }
-.df-engagement-rating input { width: 100%; min-height: 32px; accent-color: var(--accent-active); }
+.df-engagement-row {
+  display: grid;
+  grid-template-columns: 44px auto 4ch minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.df-engagement-label { color: var(--text-muted); white-space: nowrap; }
+.df-engagement-row input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--accent-active);
+}
+.df-engagement-help { position: relative; display: grid; place-items: center; }
+.df-engagement-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 4;
+  width: min(300px, calc(100vw - 40px));
+  padding: 12px;
+  box-sizing: border-box;
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+}
 .df-engagement-caption { font-size: 11px; color: var(--text-muted); }
 
 /* Period block reuses TaskBlock variant="scheduled" (df-task-block--scheduled)

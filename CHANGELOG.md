@@ -3,7 +3,7 @@
 ## 2026-10-09 · 规划与任务定位
 
 ### 新增
-- 设置中可开启投入度评分，默认关闭；已完成任务可按每次执行评 0–100%，默认 80%，时间轴以任务块不透明度表示投入度，评分仅在详情中显示，统计按时长 × 投入度计算，关闭后恢复原始时长并保留评分。
+- 设置中可开启投入度评分，默认关闭；已完成任务可按每次执行评 0–100%，默认 80%，时间轴以任务块不透明度表示投入度，评分仅在详情中显示。详情将说明图标、名称、评分与滑杆横向排列，悬停、聚焦或点击说明图标可查看含义与计算方式；统计按时长 × 投入度计算，关闭后恢复原始时长并保留评分。
 
 ### 改进
 - 快速改期保留任务原来的开始时间与时长，包括跨午夜安排；“查看日程”切换至对应日期并定位到任务时间。
@@ -107,7 +107,7 @@
 ## 2026-10-09 · Planning and task navigation
 
 ### Added
-- Optional engagement ratings in Settings, off by default. Rate each completed execution from 0–100%, defaulting to 80%; task-block opacity shows engagement, with scores displayed only in details, and statistics weight duration by engagement. Turning it off restores original durations and preserves ratings.
+- Optional engagement ratings in Settings, off by default. Rate each completed execution from 0–100%, defaulting to 80%; task-block opacity shows engagement, with scores displayed only in details. Details arrange the info icon, label, rating, and slider in one row; hover, focus, or tap the icon for an explanation and calculation. Statistics weight duration by engagement; turning it off restores original durations and preserves ratings.
 
 ### Improvements
 - Quick reschedule preserves the original start time and duration, including overnight schedules; View schedule opens the target date and scrolls to the task time.
