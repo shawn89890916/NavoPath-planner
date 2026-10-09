@@ -54,9 +54,19 @@ export async function runMotionTransition(
 
   const startViewTransition = (targetDocument as MotionDocument).startViewTransition;
   if (typeof startViewTransition === "function") {
+    let committed = false;
+    const commit = () => {
+      if (committed) return;
+      committed = true;
+      update();
+    };
     try {
-      const transition = startViewTransition.call(targetDocument, update);
+      const transition = startViewTransition.call(targetDocument, commit);
       await transition.finished;
+    } catch (error) {
+      // Browser animation cancellation must not interrupt the requested navigation.
+      if (!(error instanceof DOMException) || !["AbortError", "TimeoutError", "InvalidStateError"].includes(error.name)) throw error;
+      commit();
     } finally {
       clearTransitionState(root);
     }

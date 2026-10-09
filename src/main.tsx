@@ -170,6 +170,7 @@ const MobileTaskSummary = lazy(() => import("./MobileTaskSummary"));
 const EngagementRating = lazy(() => import("./components/EngagementRating").then(module => ({ default: module.EngagementRating })));
 const MobileQuickAddSheet = lazy(() => import("./MobileTaskSummary").then((module) => ({ default: module.MobileQuickAddSheet })));
 const MobileTimelineDraftSheet = lazy(() => import("./MobileTaskSummary").then((module) => ({ default: module.MobileTimelineDraftSheet })));
+const MonthView = lazy(() => import("./MonthView"));
 const WidgetAppLazy = lazy(() => import("./widget/WidgetApp").then((module) => ({ default: module.WidgetApp })));
 const WidgetPopoverAppLazy = lazy(() => import("./widget/WidgetApp").then((module) => ({ default: module.WidgetPopoverApp })));
 const ProactiveAssistantSettings = lazy(() => import("./components/ProactiveAssistantSettings").then((module) => ({ default: module.ProactiveAssistantSettings })));
@@ -1278,8 +1279,7 @@ function App() {
   const [aiPlanPrefs, setAiPlanPrefs] = useState<AiPlanPrefs>({ source: "today", scope: "day", strategy: "longShort" });
   const [timelineView, setTimelineView] = useState<TimelineView>("daily");
   const monthScrollRef = useRef<HTMLDivElement>(null);
-  const monthAnchorOffsetRef = useRef<number | null>(null);
-  const [monthFocus, setMonthFocus] = useState("");
+  const [monthDropDate, setMonthDropDate] = useState("");
   // Continuous-timeline infinite scroll: records the pre-shift scrollTop and the
   // number of bands shifted so a useLayoutEffect can restore the viewport after
   // the centered date window recomputes. `continuousPrependLockRef` prevents the
@@ -1290,22 +1290,6 @@ function App() {
   useEffect(() => {
     try { localStorage.setItem(AI_DOCKED_STORAGE_KEY, String(aiDocked)); } catch { /* Ignore unavailable local storage. */ }
   }, [aiDocked]);
-
-  useLayoutEffect(() => {
-    const container = monthScrollRef.current;
-    const previousOffset = monthAnchorOffsetRef.current;
-    if (!container || timelineView !== "month") return;
-    if (previousOffset !== null) {
-      monthAnchorOffsetRef.current = null;
-      const anchor = container.querySelector<HTMLElement>("[data-week-anchor]");
-      if (anchor) container.scrollTop += anchor.offsetTop - previousOffset;
-      return;
-    }
-    const selectedCell = container.querySelector<HTMLElement>(`[data-date="${selectedDate}"]`);
-    const selectedWeek = selectedCell?.closest<HTMLElement>("[data-week-anchor]");
-    if (selectedWeek) container.scrollTop = Math.max(0, selectedWeek.offsetTop - container.clientHeight * 0.32);
-    setMonthFocus(selectedDate.slice(0, 7));
-  }, [selectedDate, timelineView]);
 
   // Continuous-timeline infinite scroll: after the centered date window shifts
   // (prepend/append), restore the viewport so the user does not perceive a jump.
@@ -2702,6 +2686,7 @@ if (cached?.data && cached?.settings) {
     const nextScrollTop = Math.max(0, targetTop - timelineFocusViewportOffset(container));
     const frame = window.requestAnimationFrame(() => {
       container.scrollTo({ top: nextScrollTop, behavior: pendingTimelineFocus.behavior || "auto" });
+      setVisibleTimelineDate(targetDate);
       timelineInitialFocusCompleteRef.current = true;
       lastTimelineScrollRef.current = { top: container.scrollTop, left: container.scrollLeft };
       if (pendingTimelineFocus.highlight && pendingTimelineFocus.taskId) {
@@ -3499,7 +3484,8 @@ if (cached?.data && cached?.settings) {
   }, [continuousAnchorDate, continuousTimelineEnabled, timelineColumnCount, timelineDate, timelineView]);
   const continuousTimelineStartDate = continuousTimelineDates[0] || timelineDate;
   const continuousTimelineBandCount = Math.max(1, Math.ceil(continuousTimelineDates.length / timelineColumnCount));
-  const visibleTimelineDates = useMemo(() => new Set(continuousTimelineDates), [continuousTimelineDates]);
+  const monthWeeks = useMemo(() => buildWeekWindow(timelineDate, 20, 30, settings?.weekStartsOn), [timelineDate, settings?.weekStartsOn]);
+  const visibleTimelineDates = useMemo(() => new Set(timelineView === "month" ? monthWeeks.flat() : continuousTimelineDates), [timelineView, monthWeeks, continuousTimelineDates]);
   const dailyTimelineDates = continuousTimelineDates;
   const dailyTimelineCanvasHeight = dailyContinuousCanvasHeight(continuousTimelineBandCount, timelineSlotHeight);
   const dailyTimelineSlotCount = dailyContinuousSlotCount(continuousTimelineBandCount);
@@ -6840,6 +6826,37 @@ if (cached?.data && cached?.settings) {
     });
   }
 
+  function openMonthDate(date: string, dayTasks: Task[]) {
+    if (drawerOpen || drag || suppressBlockClickRef.current) return;
+    const firstTimed = dayTasks.find((task) => task.scheduledStart);
+    setMonthQuickAdd(null);
+    setSelectedDate(date);
+    setVisibleTimelineDate(date);
+    setTimelineView("daily");
+    setCompactExecuteView("schedule");
+    requestTimelineFocus({ date, startTime: firstTimed?.scheduledStart || minutesToTime(dayStartHour * 60), source: "schedule" });
+  }
+
+  async function moveTaskToMonthDate(display: Task, date: string) {
+    const { moveMonthTask } = await import("./utils/monthTasks");
+    const current = dataRef.current;
+    if (!current || isEventDisplayTask(display)) return;
+    if (display.id.startsWith("habit:")) {
+      scheduleHabitAt(display.id.slice("habit:".length), date, minutesToTime(dayStartHour * 60), false);
+      return;
+    }
+    const ownerId = resolveOwningTask(display)?.id || display.id;
+    const owner = current.tasks.find((task) => task.id === ownerId);
+    if (!owner) return;
+    const moved = moveMonthTask(owner, display, date, resolveTimelineRecordId(display.id), workspaceNow().toISOString());
+    if (moved === owner) return;
+    void saveData({ ...current, tasks: current.tasks.map((task) => task.id === ownerId ? moved : task) });
+  }
+
+  function monthDateAtPointer(pointer: { x: number; y: number }) {
+    return document.elementFromPoint(pointer.x, pointer.y)?.closest<HTMLElement>(".df-month-cell[data-date]")?.dataset.date || "";
+  }
+
   function locateTaskOnTimeline(date: string, startTime: string, taskId: string) {
     setYearOverviewOpen(false);
     setModeState("execute");
@@ -7687,6 +7704,7 @@ if (cached?.data && cached?.settings) {
       setCandidateDropTarget(null);
       setCandidateProjectDropFrame(null);
       dragTargetDateRef.current = "";
+      setMonthDropDate("");
       clearHold();
       if (dragElement.hasPointerCapture(pointerId)) dragElement.releasePointerCapture(pointerId);
       if (active) suppressClickAfterDrag();
@@ -7705,6 +7723,8 @@ if (cached?.data && cached?.settings) {
         return;
       }
       const pointedElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
+      const monthDate = monthDateAtPointer({ x: pointerEvent.clientX, y: pointerEvent.clientY });
+      setMonthDropDate(monthDate);
       const candidateRow = source === "candidate" && options.allowCandidateReorder !== false ? pointedElement?.closest<HTMLElement>("[data-candidate-task-id]") : null;
       if (candidateRow) {
         const targetTaskId = candidateRow.dataset.candidateTaskId || "";
@@ -7763,6 +7783,14 @@ if (cached?.data && cached?.settings) {
         dropTime = "";
         setHoverSlot("");
         dragTargetDateRef.current = "";
+        return;
+      }
+      if (monthDate) {
+        dropTime = "";
+        setHoverSlot("");
+        setAllDayDragOver(false);
+        setAllDayDragDate("");
+        dragTargetDateRef.current = monthDate;
         return;
       }
       const allDayCell = pointedElement?.closest<HTMLElement>("[data-all-day-date]");
@@ -7831,7 +7859,6 @@ if (cached?.data && cached?.settings) {
         });
         if (compactLayout && source === "candidate") {
           setCompactExecuteView("schedule");
-          if (timelineView === "month") setTimelineView("daily");
           window.requestAnimationFrame(() => updateTarget(pointerEvent));
         }
       }
@@ -7841,6 +7868,7 @@ if (cached?.data && cached?.settings) {
         document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY)?.closest<HTMLElement>(".df-candidate-list"),
         document.querySelector<HTMLElement>(".df-candidate-panel"),
         timelineRef.current,
+        monthScrollRef.current,
       ]);
       const currentRect = dragElement.getBoundingClientRect();
       const sourceRect = dragSourceRect || { width: currentRect.width, height: currentRect.height };
@@ -7883,7 +7911,10 @@ if (cached?.data && cached?.settings) {
         }
         const candidatePanel = source === "allDay" ? pointedElement?.closest<HTMLElement>(".df-candidate-panel") : null;
         const allDayCell = pointedElement?.closest<HTMLElement>("[data-all-day-date]");
-        if (candidatePanel) {
+        const monthDate = monthDateAtPointer({ x: pointerEvent.clientX, y: pointerEvent.clientY });
+        if (monthDate) {
+          moveTaskToMonthDate(task, monthDate);
+        } else if (candidatePanel) {
           applyCandidateTimeSettings(task.id, {
             date: today,
             startTime: "",
@@ -9798,155 +9829,28 @@ if (cached?.data && cached?.settings) {
                       </div>
                     </div>
                   );
-                })() : timelineView === "month" ? (() => {
-                  const weeks = buildWeekWindow(timelineDate, 20, 30, settings.weekStartsOn);
-                  const allMonthDays = weeks.flat();
-                  const visibleMonthDays = new Set(allMonthDays);
-                  const monthEvents = expandEventOccurrences(visibleMonthDays).tasks;
-                  function getPrimaryMonthDate(task: Task) {
-                    const recordDate = [...(task.timelineRecords || [])]
-                      .map((record) => record.scheduledDate)
-                      .filter((date): date is string => Boolean(date) && visibleMonthDays.has(date))
-                      .sort()[0];
-                    if (recordDate) return recordDate;
-                    if (task.scheduledDate && visibleMonthDays.has(task.scheduledDate)) return task.scheduledDate;
-                    if (task.plannedForDate && visibleMonthDays.has(task.plannedForDate)) return task.plannedForDate;
-                    if (task.dueDate && visibleMonthDays.has(task.dueDate)) return task.dueDate;
-                    return "";
-                  }
-                  const monthTaskBuckets = [...tasks, ...monthEvents].reduce((map, task) => {
-                    const primaryDate = getPrimaryMonthDate(task);
-                    if (!primaryDate) return map;
-                    const bucket = map.get(primaryDate);
-                    if (bucket) bucket.push(task);
-                    else map.set(primaryDate, [task]);
-                    return map;
-                  }, new Map<string, Task[]>());
-                  function getDayTasks(day: string) {
-                    return monthTaskBuckets.get(day) || [];
-                  }
-                  const baseDayH = 88, taskH = 28, taskGap = 6, weekPad = 18;
-                  return (
-                    <div className="df-month-view">
-                      <div className="df-month-header">
-                        <div className="df-month-title">
-                          <span className="df-month-name">{(() => { const d = new Date(`${monthFocus || timelineDate.slice(0, 7)}-01T00:00:00`); return d.toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US", { month: "long", year: "numeric" }); })()}</span>
-                        </div>
-                      </div>
-                      <div className="df-month-body">
-                        <div className="df-month-weekdays">{["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => <span key={day}>{day}</span>)}</div>
-                        <div className="df-month-scroll" ref={monthScrollRef} onScroll={(event) => {
-                          const element = event.currentTarget;
-                          const probeY = element.getBoundingClientRect().top + Math.min(180, element.clientHeight * 0.35);
-                          const focused = Array.from(element.querySelectorAll<HTMLElement>(".df-month-cell[data-date]")).find((cell) => { const rect = cell.getBoundingClientRect(); return rect.top <= probeY && rect.bottom >= probeY; });
-                          if (focused?.dataset.date) setMonthFocus(focused.dataset.date.slice(0, 7));
-                          if (element.scrollTop < 160) {
-                            const anchor = element.querySelector<HTMLElement>("[data-week-anchor]");
-                            monthAnchorOffsetRef.current = anchor?.offsetTop ?? element.scrollTop;
-                            setSelectedDate(addDays(timelineDate, -140));
-                          } else if (element.scrollTop + element.clientHeight > element.scrollHeight - 160) {
-                            const anchor = element.querySelector<HTMLElement>("[data-week-anchor]");
-                            monthAnchorOffsetRef.current = anchor?.offsetTop ?? element.scrollTop;
-                            setSelectedDate(addDays(timelineDate, 140));
-                          }
-                        }}>
-                          {weeks.map((weekDays, wi) => {
-                            const weekTaskCounts = weekDays.map((d) => getDayTasks(d).length);
-                            const maxTasks = Math.max(...weekTaskCounts, 1);
-                            const weekH = baseDayH + maxTasks * (taskH + taskGap) + weekPad;
-                            return (
-                              <div key={weekDays[0]} data-week-anchor={weekDays[0]} className="df-month-week-row" style={{ height: weekH }}>
-                                {weekDays.map((day) => {
-                                  const dateObj = new Date(`${day}T00:00:00`);
-                                  const dayTasks = getDayTasks(day);
-                                  return (
-                                    <div key={day} data-date={day} className={`df-month-cell${day.slice(0, 7) === (monthFocus || timelineDate.slice(0, 7)) ? " focus-month" : " muted"}${day === today ? " today" : ""}${drag ? " drag-active" : ""}`}
-                                      onClick={(event) => {
-                                        if (drawerOpen || drag) return;
-                                        if ((event.target as HTMLElement).closest(".df-month-task,.df-month-task *")) return;
-                                        if (compactLayout) {
-                                          setSelectedDate(day);
-                                          setTimelineView("daily");
-                                          return;
-                                        }
-                                        if ((event.target as HTMLElement).closest(".df-month-cell-strong")) {
-                                          setSelectedDate(day);
-                                          setTimelineView("daily");
-                                          return;
-                                        }
-                                        setMonthQuickAdd({ date: day, left: 0, top: 30, width: 0, dayIndex: 0 });
-                                      }}
-                                      onDragOver={(event) => {
-                                        event.preventDefault();
-                                        event.currentTarget.classList.add("drag-hover");
-                                      }}
-                                      onDragLeave={(event) => {
-                                        event.currentTarget.classList.remove("drag-hover");
-                                      }}
-                                      onDrop={(event) => {
-                                        event.preventDefault();
-                                        event.currentTarget.classList.remove("drag-hover");
-                                        const taskId = event.dataTransfer.getData("taskId") || drag?.taskId;
-                                        if (taskId) {
-                                          const t = tasks.find((x) => x.id === taskId);
-                                          if (t) {
-                                            const patch: Partial<Task> = { plannedForDate: day };
-                                            if (t.scheduledDate) patch.scheduledDate = day;
-                                            updateTask(taskId, patch);
-                                          }
-                                        }
-                                        setDrag(null);
-                                      }}
-                                    >
-                                      <strong className="df-month-cell-strong">{dateObj.getDate()}</strong>
-                                      <div className="df-month-cell-tasks">
-                                        {[...dayTasks].sort((a, b) => {
-                                          const aD = !isEventDisplayTask(a) && a.completed ? 1 : 0, bD = !isEventDisplayTask(b) && b.completed ? 1 : 0;
-                                          if (aD !== bD) return aD - bD;
-                                          const aT = a.scheduledStart || "", bT = b.scheduledStart || "";
-                                          if (aT && bT) return aT.localeCompare(bT);
-                                          if (aT) return -1; if (bT) return 1; return 0;
-                                        }).map((task) => (
-                                          <button key={task.id} className={`df-month-task${!isEventDisplayTask(task) && task.completed ? " completed" : ""}${isEventDisplayTask(task) ? " is-event" : ""}`}
-                                            data-kind={isEventDisplayTask(task) ? "event" : "task"}
-                                            draggable={!isEventDisplayTask(task)}
-                                            style={{ "--cat": projects.find((p) => String(p.id) === String(task.projectId || ""))?.color || categories[task.category].color } as CSSProperties}
-                                            onClick={(e) => { e.stopPropagation(); openTaskEdit(task); }}
-                                            onDragStart={(e) => {
-                                              if (isEventDisplayTask(task)) return;
-                                              e.dataTransfer.setData("taskId", task.id);
-                                              e.dataTransfer.effectAllowed = "move";
-                                              setDragCreate(null);
-                                              setDrag({ taskId: task.id, kind: "candidate", duration: taskDuration(task) });
-                                            }}
-                                            onDragEnd={() => { setDrag(null); setHoverSlot(""); dragTargetDateRef.current = ""; }}
-                                          ><span />{task.scheduledStart ? <time>{task.scheduledStart}</time> : null}{isEventDisplayTask(task) ? <small>{t(lang, "form.event")}</small> : null}{task.title}</button>
-                                        ))}
-                                        {monthQuickAdd && !drag && monthQuickAdd.date === day && (
-                                          <AllDayQuickAddPopover absolute add={monthQuickAdd} projects={projects}
-                                            onSave={(title, projectId) => {
-                                              if (!data || !title.trim()) return;
-                                              const estimatedMinutes = learnedTaskDurationMinutes(title, data.tasks, projectId || undefined);
-                                              const newTask = makeSmartTask({ ...defaultForm("task"), title, projectId: projectId || "", dueDate: addDays(day, 1), estimatedHours: estimatedMinutes / 60 });
-                                              void saveData({ ...data, tasks: [...data.tasks, { ...newTask, plannedForDate: day, scheduledDate: day, order: Date.now() }] });
-                                              setMonthQuickAdd(null);
-                                              showToast(t(lang, "timeline.taskAdded"));
-                                            }}
-                                            onCancel={() => setMonthQuickAdd(null)}
-                                          />
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })() : (
+                })() : timelineView === "month" ? (
+                  <Suspense fallback={null}><MonthView weeks={monthWeeks} tasks={tasks} projects={projects}
+                    schedules={[...explicitVisibleTimeline.tasks, ...recurrenceVisibleTimeline.tasks, ...allDayTimelineTasks, ...eventVisibleTimeline.tasks].map((task) => {
+                      const record = recordByIdMap.get(task.id);
+                      return record ? { ...task, completed: record.executionStatus === "completed" } : task;
+                    })}
+                    selectedDate={timelineDate} today={today} lang={lang} weekStartsOn={settings.weekStartsOn}
+                    compact={compactLayout} dragging={Boolean(drag)} dropDate={monthDropDate} scrollRef={monthScrollRef}
+                    projectColor={(task) => categories[task.category].color} isEvent={isEventDisplayTask}
+                    onSelectDate={setSelectedDate} onOpenDate={openMonthDate} onMoveTask={moveTaskToMonthDate}
+                    onEditTask={(task) => { if (!suppressBlockClickRef.current) openTaskEdit(task); }}
+                    onAddTask={(date) => setMonthQuickAdd({ date, left: 0, top: 30, width: 0, dayIndex: 0 })}
+                    onDragActivate={() => { setMonthQuickAdd(null); suppressBlockClickRef.current = true; }}
+                    onDragFinish={suppressClickAfterDrag}
+                    renderQuickAdd={(day) => monthQuickAdd?.date === day && <AllDayQuickAddPopover absolute add={monthQuickAdd} projects={projects}
+                      onSave={(title, projectId) => {
+                        if (!title.trim()) return;
+                        createAllDayTask(title, day, projectId);
+                        setMonthQuickAdd(null);
+                      }} onCancel={() => setMonthQuickAdd(null)} />}
+                  /></Suspense>
+                ) : (
                   <div className="df-timeline-daily">
                     <TimelineDateTag
                       type={productPresentation ? undefined : "button"}

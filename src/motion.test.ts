@@ -60,6 +60,17 @@ describe("motion helpers", () => {
     expect(startViewTransition).not.toHaveBeenCalled();
   });
 
+  it.each([true, false])("keeps navigation when the browser aborts its animation (committed: %s)", async (committed) => {
+    const update = vi.fn();
+    const targetDocument = motionDocument(motionWindow(false), (callback) => {
+      if (committed) callback();
+      return { finished: Promise.reject(new DOMException("DOM update timed out", "TimeoutError")) };
+    });
+    await runMotionTransition(update, { document: targetDocument });
+    expect(update).toHaveBeenCalledOnce();
+    expect(targetDocument.documentElement.dataset.motionScope).toBeUndefined();
+  });
+
   it("falls back to a timed CSS state", async () => {
     vi.useFakeTimers();
     const update = vi.fn();

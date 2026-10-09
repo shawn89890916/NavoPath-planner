@@ -198,60 +198,87 @@
 
 
 
-.df-month-task:active { cursor: grabbing; }
+/* Month tasks use the shared compact TaskBlock surface and density tokens. */
 
 
 
-/* Completed month tasks — clean styling */
-.df-month-task.completed {
-  opacity: 1;
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
+.df-app .df-task-block.df-month-task[data-task-appearance][data-task-variant="compact"] {
+  --task-padding-x: 6px;
+  --task-padding-y: 4px;
+  --task-min-height: 40px;
+  --task-gap: 0px;
+  --task-grid-template: 0px minmax(0, 1fr) 0px;
+  width: 100%;
+  text-align: left;
+  cursor: grab;
+  touch-action: pan-y;
 }
 
 
 
-.df-month-task:hover {
-
-  background: color-mix(in srgb, var(--accent-active) 10%, var(--surface-main));
-
-  border-color: color-mix(in srgb, var(--accent-active) 30%, var(--border-subtle));
-
+.df-app .df-task-block.df-month-task[data-task-appearance] .df-task-block-title {
+  font-size: 11px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 
 
-.df-month-task span {
-
-  width: 4px;
-
-  height: 12px;
-
-  border-radius: 999px;
-
-  flex-shrink: 0;
-
-  background: var(--cat, var(--accent-active));
-
-  corner-shape: var(--corner-shape, squircle);
-
+.df-month-task time, .df-month-task small {
+  font: 10px/1.2 var(--paper-mono);
+  color: var(--text-muted);
 }
 
 
 
-.df-month-task time {
-
-  font-size: 10px;
-
-  font-weight: 600;
-
-  color: var(--accent-active);
-
-  flex-shrink: 0;
-
-  opacity: .8;
-
+.df-month-cell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  margin-bottom: 4px;
 }
+
+
+
+.df-month-cell-header .df-month-cell-strong {
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 2px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+
+
+.df-month-cell-header .df-month-add {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+}
+
+
+
+@media (max-width: 640px) {
+  .df-app .df-task-block.df-month-task[data-task-appearance][data-task-variant="compact"] {
+    --task-padding-x: 3px;
+    --task-min-height: 36px;
+  }
+  .df-app .df-task-block.df-month-task[data-task-appearance] .df-task-block-title { font-size: 10px; }
+  .df-month-task time, .df-month-task small { font-size: 9px; }
+  .df-month-cell-header .df-month-cell-strong { min-width: 22px; }
+  .df-month-cell-header .df-month-add { width: 22px; }
+}
+
+
+
 
 /* Unified transition duration across all interactive elements */
 
@@ -349,20 +376,6 @@
 
 
 
-.df-app.theme-dark .df-month-task:hover {
-
-  background: color-mix(in srgb, var(--accent-active) 12%, var(--surface-main));
-
-  border-color: color-mix(in srgb, var(--accent-active) 32%, var(--border-subtle));
-
-}
-
-
-
-/* Dark mode: completed month task — clean styling */
-.df-app.theme-dark .df-month-task.completed {
-  opacity: 1;
-}
 
 
 
@@ -6994,14 +7007,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.df-app .df-execute.simple-view .df-month-task time {
-
-  display: none;
-
-}
-
-
-
 .df-app .df-execute.simple-view .df-now-line span {
 
   display: none;
@@ -8842,30 +8847,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   align-items: center;
 
   min-width: 0;
-
-}
-
-
-
-.df-month-task.is-event {
-
-  border-color: color-mix(in srgb, var(--cat, var(--accent-active)) 26%, var(--border-soft));
-
-  background: color-mix(in srgb, var(--surface-card) 90%, var(--cat, var(--accent-active)) 10%);
-
-}
-
-
-
-.df-month-task.is-event small {
-
-  margin-right: 4px;
-
-  color: var(--text-muted);
-
-  font-size: 10px;
-
-  font-weight: 600;
 
 }
 
@@ -17175,14 +17156,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-.df-app .df-month-task.is-event .df-block-check {
-
-  display: none;
-
-}
-
-
-
 .df-app .df-week-view .df-event-blocks-layer .df-time-block.is-event .df-block-check {
 
   display: none;
@@ -20178,48 +20151,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--accent-active); box-shadow: none;
 
   pointer-events: none; border: 0; }
-.df-app .df-month-task:hover {
-  border-color: color-mix(in srgb, var(--cat, var(--accent-active)) 62%, var(--paper-rule-strong));
-  background: color-mix(in srgb, var(--cat, var(--accent-active)) 11%, var(--surface-raised));
-  box-shadow: none; filter: none; transform: none;
-}
-.df-month-task {
-
-  width: 100%;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 5px;
-
-  padding: 3px 5px;
-
-  border: 1px solid #EEF0F4;
-
-  border-radius: 6px;
-
-  background: #FAFAFA;
-
-  color: var(--text-main);
-
-  box-shadow: none;
-
-  font-size: 11px; font-weight: 600;
-
-  text-align: left;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-
-  cursor: grab;
-
-  flex-shrink: 0;
-
-  line-height: 1.2; font-family: var(--paper-task); corner-shape: var(--corner-shape, squircle); }
 .df-time-block[data-preview="true"] { opacity: .9; border-style: dashed;
 
   border-width: 1.5px; background: var(--paper-note); box-shadow: none; }
@@ -21924,18 +21855,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-app:not(.theme-dark) .df-timeline-panel {
   border-color: var(--paper-rule); border-radius: var(--paper-radius);
   background: var(--surface-main); box-shadow: none; corner-shape: var(--corner-shape, squircle);
-}
-.df-app.theme-dark .df-month-task {
-
-  background: color-mix(in srgb, var(--accent-active) 6%, var(--surface-main));
-
-  border-color: color-mix(in srgb, var(--accent-active) 18%, var(--border-subtle));
-
-  color: var(--text-main);
-  border-radius: 2px; box-shadow: none; filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
-}
-.df-app:not(.theme-dark) .df-month-task {
-  border-radius: 2px; box-shadow: none; filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-ai-panel { background: var(--surface-main);
 
@@ -27757,27 +27676,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: inline-flex;
   gap: 10px;
   corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-month-task {
-  border: 1px solid color-mix(in srgb, var(--cat, var(--accent-active)) 38%, var(--paper-rule));
-  border-radius: 2px; background: color-mix(in srgb, var(--cat, var(--accent-active)) 7%, var(--surface-card));
-  box-shadow: none; filter: none; text-shadow: none; transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion);
-  font-family: var(--paper-task);
-  font-weight: 760;
-  letter-spacing: -.012em;
-  color: var(--text-main);
-  min-height: 30px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px 8px;
-  font-size: 11px;
-  line-height: 1.15;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-month-task time {
-  color: var(--text-muted);
-  font-family: var(--paper-mono);
 }
 /* ===== Status simplification: check-muted / check-attention (new) =====
    The new normalizeTaskCheckTone() helper attaches these classes to
@@ -34322,26 +34220,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   .df-month-cell {
 
     padding: 4px 2px;
-
-  }
-
-
-
-  .df-month-task {
-
-    min-height: 18px;
-
-    padding: 1px 2px;
-
-    font-size: 9px;
-
-  }
-
-
-
-  .df-month-cell-tasks .df-month-task:nth-child(n + 3) {
-
-    display: none;
 
   }
 
