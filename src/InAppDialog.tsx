@@ -50,7 +50,7 @@ export function useInAppDialog(lang: Language) {
 
   const confirm = useCallback(
     (title: string, options?: { message?: string; confirmLabel?: string; cancelLabel?: string }) =>
-      open({ kind: "confirm", title, ...options }) as Promise<boolean>,
+      open({ kind: "confirm", title, ...options }) as Promise<boolean | null>,
     [open],
   );
 
@@ -75,6 +75,16 @@ function InAppDialogHost({
 }) {
   const text = labels(lang);
   const [value, setValue] = useState(request.initialValue || "");
+  const [themeStyle] = useState(() => {
+    const app = document.querySelector(".df-app");
+    if (!app) return undefined;
+    const theme = getComputedStyle(app);
+    return Object.fromEntries([
+      "--accent-active", "--surface-main", "--text-main", "--text-muted",
+      "--paper-rule-strong", "--paper-note", "--radius-control", "--corner-shape",
+      "--color-ink", "--color-muted", "--border-focus",
+    ].map((token) => [token, theme.getPropertyValue(token)])) as React.CSSProperties;
+  });
   const inputRef = useRef<HTMLInputElement>(null);
   const isPrompt = request.kind === "prompt";
   const isAlert = request.kind === "alert";
@@ -104,6 +114,7 @@ function InAppDialogHost({
       labelledBy="df-dialog-title"
       onClose={() => onClose(isAlert ? true : null)}
       className="df-dialog"
+      style={themeStyle}
     >
         <form onSubmit={submit}>
           <h2 id="df-dialog-title">{request.title}</h2>
@@ -118,7 +129,7 @@ function InAppDialogHost({
           )}
           <div className="df-dialog-actions">
             {!isAlert && (
-              <Button type="button" variant="secondary" className="df-dialog-secondary" onClick={() => onClose(null)}>
+              <Button type="button" variant="secondary" className="df-dialog-secondary" onClick={() => onClose(isPrompt ? null : false)}>
                 {request.cancelLabel || text.cancel}
               </Button>
             )}

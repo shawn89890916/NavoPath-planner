@@ -1,6 +1,7 @@
 import { getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./workspaceEnvironment";
 import { WorkspaceModeTabs } from "./components/WorkspaceModeTabs";
 import { undoAiImportData } from "./utils/aiImportUndo";
+import { highlightTaskLocation } from "./utils/highlightTaskLocation";
 import { DailyTimelineGrid } from "./components/ExecutionSharedLayout";
 import { themeVars } from "./WorkspacePresentation";
 import { COMPACT_LAYOUT_MEDIA_QUERY, SLOT_MINUTES, DURATION_OPTIONS, ATTACHMENT_ACCEPT, DEFAULT_PROJECT_COLOR, PROJECT_COLOR_PRESETS, taskBlockPriorityFor, categories, PLACEMENT_PREVIEW_HOVER_DELAY_MS, isEventDisplayTask, isExternalCalendarDisplayTask, normalizeHexColor, hexToRgb, isLightColor, AiClarificationQuestionsLazy, AiMarkdownLoadFallback, AiMarkdownLazy, minutesToTime, timeToMinutes, addMinutes, dateDiff, taskDuration, extractNextAction, sortAiConversations, PRODUCT_ICON_SRC, ProductIcon, recurrenceOptions, recurrenceLabel, TaskRecurrenceIndicator, CandidateSubtaskItem, formatCandidateDate, candidateRelativeScheduleOptions, candidateQuickScheduleOptions, TaskCard, formatMinutes, formatDuration, ReturnedToPlanIcon, TimeBlock, PreviewBlock, ProjectColorPicker, ProjectChoice, MobileSheetDismissHandle, aiStepLabel, AiPanel, AttachmentCard, type AutoScheduleState, type TimelineFocusSource, type TimelineFocusTarget, type PlacementPreview, type PlacementChoice, type ResizePreview, type AiAttachmentSnapshot, type AiSessionMessage } from "./WorkspacePresentation";
@@ -2701,6 +2702,10 @@ if (cached?.data && cached?.settings) {
       container.scrollTo({ top: nextScrollTop, behavior: pendingTimelineFocus.behavior || "auto" });
       timelineInitialFocusCompleteRef.current = true;
       lastTimelineScrollRef.current = { top: container.scrollTop, left: container.scrollLeft };
+      if (pendingTimelineFocus.highlight && pendingTimelineFocus.taskId) {
+        const node = container.querySelector<HTMLElement>(`.df-time-block[data-task-id="${CSS.escape(pendingTimelineFocus.taskId)}"]`);
+        if (node) highlightTaskLocation(node);
+      }
       if (pendingTimelineFocus.source === "now") {
         if (nowReturnSettleTimerRef.current !== null) window.clearTimeout(nowReturnSettleTimerRef.current);
         nowReturnScrollEndCleanupRef.current?.();
@@ -6784,13 +6789,16 @@ if (cached?.data && cached?.settings) {
       if (drawerSaveConfirmRef.current) return;
       drawerSaveConfirmRef.current = true;
       const save = await dialog.confirm(lang === "zh" ? "保存新建任务？" : "Save this new task?", {
-        message: lang === "zh" ? "任务尚未保存。取消可继续编辑，保存后退出。" : "This task has not been saved. Cancel to keep editing, or save and close.",
+        message: lang === "zh" ? "任务尚未保存。取消将放弃新建任务，保存后退出。" : "This task has not been saved. Cancel to discard the new task and close, or save and close.",
         confirmLabel: lang === "zh" ? "保存" : "Save",
         cancelLabel: lang === "zh" ? "取消" : "Cancel",
       });
       drawerSaveConfirmRef.current = false;
-      if (save) saveForm();
-      return;
+      if (save === true) {
+        saveForm();
+        return;
+      }
+      if (save !== false) return;
     }
     const autoSave = options?.autoSave ?? false;
     const current = dataRef.current;
@@ -6838,7 +6846,7 @@ if (cached?.data && cached?.settings) {
     setSelectedDate(date);
     setVisibleTimelineDate(date);
     void closeTaskDrawer({ autoSave: true });
-    requestTimelineFocus({ date, startTime, taskId, source: "schedule", behavior: "auto" });
+    requestTimelineFocus({ date, startTime, taskId, source: "schedule", behavior: "auto", highlight: true });
   }
 
   function locateTaskInPlanning(task: Task) {
@@ -12689,7 +12697,7 @@ function EditDrawer(props: {
     const timelineLocation = timelineRecord
       ? { date: timelineRecord.scheduledDate, startTime: timelineRecord.scheduledStart, taskId: timelineRecord.id }
       : activeOccurrence
-        ? { date: activeOccurrence.scheduledDate, startTime: activeOccurrence.scheduledStart, taskId: props.task.id }
+        ? { date: activeOccurrence.scheduledDate, startTime: activeOccurrence.scheduledStart, taskId: buildRecurrenceOccurrenceId(props.task.id, activeOccurrence.scheduledDate, activeOccurrence.scheduledStart) }
         : props.task.scheduledDate && props.task.scheduledStart
           ? { date: props.task.scheduledDate, startTime: props.task.scheduledStart, taskId: props.task.id }
           : null;

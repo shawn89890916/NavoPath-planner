@@ -5,6 +5,7 @@ import { t, type Language } from "./i18n";
 import { term } from "./terminology";
 import { useInAppDialog } from "./InAppDialog";
 import { localIsoDate } from "./utils/localDate";
+import { highlightTaskLocation } from "./utils/highlightTaskLocation";
 import { buildTaskMetaBadges } from "./utils/taskMetaBadges";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
 import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
@@ -2030,6 +2031,7 @@ export default function PlanningView(props: {
       node.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
       node.tabIndex = -1;
       node.focus({ preventScroll: true });
+      highlightTaskLocation(node);
       props.onFocusHandled?.();
     });
     return () => window.cancelAnimationFrame(frame);
