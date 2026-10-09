@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { PlannerData, Project, Settings, Subtask, Task, WorkflowStatus } from "./types";
 import { t, type Language } from "./i18n";
@@ -977,6 +977,8 @@ function useTreeLines(
 type PlanningViewMode = "tree" | "kanban" | "eisenhower" | "list" | "metrics";
 
 export default function PlanningView(props: {
+  focusTaskId?: string | null;
+  onFocusHandled?: () => void;
   presentationNote?: React.ReactNode;
   demo?: boolean;
   lang: Language;
@@ -2009,6 +2011,29 @@ export default function PlanningView(props: {
     setFilterDueDate(null);
     setFilterScheduled(null);
   };
+
+  useEffect(() => {
+    const task = safeTasks.find((item) => item.id === props.focusTaskId);
+    if (!task) return;
+    setViewMode("tree");
+    clearAllFilters();
+    setFilterOpen(false);
+    const branch = task.projectId || "unassigned";
+    props.setCollapsed((current) => ({ ...current, [branch]: false }));
+  }, [props.focusTaskId]);
+
+  useLayoutEffect(() => {
+    if (!props.focusTaskId || viewMode !== "tree") return;
+    const frame = window.requestAnimationFrame(() => {
+      const node = treeRef.current?.querySelector<HTMLElement>(`[data-node-type="task"][data-node-id="${CSS.escape(props.focusTaskId!)}"]`);
+      if (!node) return;
+      node.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+      node.tabIndex = -1;
+      node.focus({ preventScroll: true });
+      props.onFocusHandled?.();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [props.focusTaskId, viewMode, viewFilteredTasks, props.collapsed]);
 
   // Linear-style nested filter categories. Level 1 = category list, Level 2 = options.
   const dueDateLabel = (d: "overdue" | "this-week" | "no-date") =>

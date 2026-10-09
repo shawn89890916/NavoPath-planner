@@ -1323,6 +1323,9 @@ function App() {
     return () => window.cancelAnimationFrame(frame);
   }, [selectedDate, timelineView, timelineSlotHeight]);
   const [pendingTimelineFocus, setPendingTimelineFocus] = useState<TimelineFocusTarget | null>(null);
+  const [planningFocusTaskId, setPlanningFocusTaskId] = useState<string | null>(null);
+  const drawerInitialFormRef = useRef<FormState | null>(null);
+  const drawerSaveConfirmRef = useRef(false);
   const [placementPreview, setPlacementPreview] = useState<PlacementPreview>(null);
   const [placementChoices, setPlacementChoices] = useState<PlacementChoice[]>([]);
   const [locatedPlacementTaskId, setLocatedPlacementTaskId] = useState<string | null>(null);
@@ -2696,6 +2699,7 @@ if (cached?.data && cached?.settings) {
     const nextScrollTop = Math.max(0, targetTop - timelineFocusViewportOffset(container));
     const frame = window.requestAnimationFrame(() => {
       container.scrollTo({ top: nextScrollTop, behavior: pendingTimelineFocus.behavior || "auto" });
+      timelineInitialFocusCompleteRef.current = true;
       lastTimelineScrollRef.current = { top: container.scrollTop, left: container.scrollLeft };
       if (pendingTimelineFocus.source === "now") {
         if (nowReturnSettleTimerRef.current !== null) window.clearTimeout(nowReturnSettleTimerRef.current);
@@ -2819,7 +2823,10 @@ if (cached?.data && cached?.settings) {
     if (!drawerOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
+      if ((event.target as HTMLElement | null)?.closest(".df-dialog")) return;
+      if (drawerSaveConfirmRef.current) return;
       event.preventDefault();
+      event.stopPropagation();
       if (editingId && addType === "task") {
         closeTaskDrawer({ autoSave: true });
         return;
@@ -4923,7 +4930,9 @@ if (cached?.data && cached?.settings) {
     setEditingId("");
     setEditingRecordId(undefined);
     setEditingOccurrence(null);
-    setForm({ ...defaultForm("task"), projectId });
+    const initialForm = { ...defaultForm("task"), projectId };
+    drawerInitialFormRef.current = initialForm;
+    setForm(initialForm);
     setDrawerOpen(true);
   }
 
@@ -5115,21 +5124,7 @@ if (cached?.data && cached?.settings) {
     const record = (task.timelineRecords || []).find((item) => item.id === recordId)
       || (task.timelineRecords || []).find((item) => item.executionStatus === "scheduled");
     const duration = record ? timelineRecordDurationMinutes(record) : taskDuration(task);
-    const earliest = Math.ceil((dayStartHour * 60) / SLOT_MINUTES) * SLOT_MINUTES;
-    const latestStart = TIMELINE_END * 60 - duration;
-    let startTime = "";
-    for (let cursor = earliest; cursor <= latestStart; cursor += SLOT_MINUTES) {
-      const candidate = minutesToTime(cursor);
-      if (!hasScheduleConflict(date, candidate, minutesToTime(cursor + duration), record?.id || taskId)) {
-        startTime = candidate;
-        break;
-      }
-    }
-    if (!startTime) {
-      const dateLabel = date === addDays(today, 1) ? (lang === "zh" ? "明天" : "tomorrow") : shortDate(date);
-      showToast(lang === "zh" ? `${dateLabel}没有足够的空档安排这项任务` : `There is no open slot on ${dateLabel} long enough for this task`);
-      return;
-    }
+    const startTime = record?.scheduledStart || task.scheduledStart || task.recurrence?.startTime || "09:00";
 
     const now = workspaceNow().toISOString();
     const nextTasks = current.tasks.map((item) => {
@@ -5159,12 +5154,7 @@ if (cached?.data && cached?.settings) {
       lang === "zh" ? `已安排到${dateLabel} ${startTime}` : `Scheduled for ${dateLabel} at ${startTime}`,
       lang === "zh" ? "查看日程" : "View schedule",
       () => {
-        setModeState("execute");
-        setCompactExecuteView("schedule");
-        setSelectedDate(date);
-        setVisibleTimelineDate(date);
-        closeTaskDrawer();
-        requestTimelineFocus({ date, startTime, taskId, source: "schedule", behavior: "smooth" });
+        locateTaskOnTimeline(date, startTime, record?.id || taskId);
       },
     );
   }
@@ -6504,7 +6494,8 @@ if (cached?.data && cached?.settings) {
     setEditingRecordId(undefined);
     setEditingOccurrence(null);
     setMobileTaskSummary(false);
-    setForm(defaultForm(type));
+    drawerInitialFormRef.current = defaultForm(type);
+    setForm(drawerInitialFormRef.current);
     setDrawerOpen(true);
   }
 
@@ -6787,16 +6778,30 @@ if (cached?.data && cached?.settings) {
     });
   }
 
-  function closeTaskDrawer(options?: { autoSave?: boolean }) {
+  async function closeTaskDrawer(options?: { autoSave?: boolean }) {
+    if (!editingId && addType === "task" && mode === "planning"
+      && JSON.stringify(form) !== JSON.stringify(drawerInitialFormRef.current || defaultForm("task"))) {
+      if (drawerSaveConfirmRef.current) return;
+      drawerSaveConfirmRef.current = true;
+      const save = await dialog.confirm(lang === "zh" ? "保存新建任务？" : "Save this new task?", {
+        message: lang === "zh" ? "任务尚未保存。取消可继续编辑，保存后退出。" : "This task has not been saved. Cancel to keep editing, or save and close.",
+        confirmLabel: lang === "zh" ? "保存" : "Save",
+        cancelLabel: lang === "zh" ? "取消" : "Cancel",
+      });
+      drawerSaveConfirmRef.current = false;
+      if (save) saveForm();
+      return;
+    }
     const autoSave = options?.autoSave ?? false;
-    if (autoSave && data && editingId && addType === "task") {
+    const current = dataRef.current;
+    if (autoSave && current && editingId && addType === "task") {
       const now = workspaceNow().toISOString();
-      const currentTask = data.tasks.find((task) => task.id === editingId);
+      const currentTask = current.tasks.find((task) => task.id === editingId);
       if (currentTask) {
         const safeTitle = form.title.trim() || currentTask.title;
         void saveData({
-          ...data,
-          tasks: data.tasks.map((task) => task.id === editingId ? {
+          ...current,
+          tasks: current.tasks.map((task) => task.id === editingId ? {
             ...task,
             title: safeTitle,
             dueDate: form.dueDate,
@@ -6823,6 +6828,24 @@ if (cached?.data && cached?.settings) {
       setAddType("task");
       setMobileTaskSummary(false);
     });
+  }
+
+  function locateTaskOnTimeline(date: string, startTime: string, taskId: string) {
+    setYearOverviewOpen(false);
+    setModeState("execute");
+    setCompactExecuteView("schedule");
+    if (timelineView === "month") setTimelineView("daily");
+    setSelectedDate(date);
+    setVisibleTimelineDate(date);
+    void closeTaskDrawer({ autoSave: true });
+    requestTimelineFocus({ date, startTime, taskId, source: "schedule", behavior: "auto" });
+  }
+
+  function locateTaskInPlanning(task: Task) {
+    void closeTaskDrawer({ autoSave: true });
+    setPlanningFocusTaskId(task.id);
+    setYearOverviewOpen(false);
+    setModeState("planning");
   }
 
   function deleteEditingItem() {
@@ -10234,7 +10257,7 @@ if (cached?.data && cached?.settings) {
         </ExecutionSplitLayout>
       ) : (
         <Suspense fallback={<div className="df-loading-inline">规划加载中...</div>}>
-          <PlanningViewLazy presentationNote={productDemo?.story} demo={Boolean(productDemo)} referenceDate={productDemo?.date} lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled !== false} featureQuadrant={settings.featureQuadrantViewEnabled !== false} featureList={settings.featureListViewEnabled !== false} featureMetrics={settings.featureMetricsEnabled !== false} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
+          <PlanningViewLazy focusTaskId={planningFocusTaskId} onFocusHandled={() => setPlanningFocusTaskId(null)} presentationNote={productDemo?.story} demo={Boolean(productDemo)} referenceDate={productDemo?.date} lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled !== false} featureQuadrant={settings.featureQuadrantViewEnabled !== false} featureList={settings.featureListViewEnabled !== false} featureMetrics={settings.featureMetricsEnabled !== false} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
         </Suspense>
       )}
 
@@ -10276,7 +10299,7 @@ if (cached?.data && cached?.settings) {
       ><UiPlusIcon size={20} /></button>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
+      {drawerOpen && <EditDrawer type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onLocateTimeline={locateTaskOnTimeline} onLocatePlanning={locateTaskInPlanning} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel}
       <CommandPalette open={commandOpen} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
       {utilityPanel && settings && <UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfileName={async (name) => { await saveSettings({ displayName: name }); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} />}
@@ -12236,7 +12259,7 @@ function NowLine({ extraStyle, dayStartHour = 0, hourHeight = HOUR_HEIGHT, highl
 }
 
 function EditDrawer(props: {
-  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; event?: CalendarEvent; today: string; onClose: () => void; onSave: () => void; onDelete: () => void; onCopy: () => void; onConvertToEvent: () => void; onConvertToTask: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => void; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
+  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; event?: CalendarEvent; today: string; onClose: () => void; onSave: () => void; onDelete: () => void; onCopy: () => void; onConvertToEvent: () => void; onConvertToTask: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => void; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onLocateTimeline: (date: string, startTime: string, taskId: string) => void; onLocatePlanning: (task: Task) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
   editingRecordId?: string; setEditingRecordId?: (id: string | undefined) => void; editingOccurrence?: EditingOccurrence; data?: PlannerData | null; saveData?: (next: PlannerData) => Promise<void>; onSaveRecurrence: (taskId: string, recurrence?: TaskRecurrence) => void; onCancelOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onReplanOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onCancelAllRecurrence: (taskId: string, cutoffDate: string) => void; aiEnabled: boolean; subtaskAiLoading: boolean; subtaskAiRevealIds: string[]; onGenerateSubtasks: (taskId: string) => void; lang: Language; compactSummary?: boolean; onShowMore?: () => void;
 }) {
   const dialog = useInAppDialog(props.lang);
@@ -12662,6 +12685,14 @@ function EditDrawer(props: {
       scheduledDate: activeRecord.scheduledDate,
       scheduledStart: activeRecord.scheduledStart,
     } : null);
+    const timelineRecord = activeRecord || (props.task.timelineRecords || []).find((record) => record.executionStatus === "scheduled") || (props.task.timelineRecords || []).at(-1);
+    const timelineLocation = timelineRecord
+      ? { date: timelineRecord.scheduledDate, startTime: timelineRecord.scheduledStart, taskId: timelineRecord.id }
+      : activeOccurrence
+        ? { date: activeOccurrence.scheduledDate, startTime: activeOccurrence.scheduledStart, taskId: props.task.id }
+        : props.task.scheduledDate && props.task.scheduledStart
+          ? { date: props.task.scheduledDate, startTime: props.task.scheduledStart, taskId: props.task.id }
+          : null;
     const isCandidate = props.task.plannedForDate === props.today && getExecutionLane(props.task) === "candidate" && !activeRecord && !(props.task.timelineRecords || []).some((r) => r.executionStatus === "scheduled");
     const isScheduled = activeRecord
       ? (activeRecord.scheduledDate === props.today || Boolean(activeRecord.scheduledDate && activeRecord.scheduledStart))
@@ -12793,6 +12824,8 @@ function EditDrawer(props: {
             </div>}
           </div>}
           <ActionDisclosure label={props.lang === "zh" ? "更多" : "More"}>
+            {timelineLocation && <Button onClick={() => props.onLocateTimeline(timelineLocation.date, timelineLocation.startTime, timelineLocation.taskId)}>{props.lang === "zh" ? `跳转到时间轴 · ${timelineLocation.date} ${timelineLocation.startTime}` : `Go to timeline · ${timelineLocation.date} ${timelineLocation.startTime}`}</Button>}
+            {!props.task.completed && props.task.workflowStatus !== "done" && <Button onClick={() => props.onLocatePlanning(props.task!)}>{props.lang === "zh" ? "跳转到规划中的对应位置" : "Go to task in Planning"}</Button>}
             <Button onClick={() => { setQuickActionMenu(null); setRecurrenceDraft({ ...fixedRecurrence, mode: "scheduled" }); setRecurrenceOpen(true); }}>{t(props.lang, "drawer.setRepeat")}</Button>
             <Button onClick={props.onCopy}>{t(props.lang, "drawer.duplicate")}</Button>
             <Button variant="danger" onClick={props.onDelete}>{t(props.lang, "drawer.remove")}</Button>

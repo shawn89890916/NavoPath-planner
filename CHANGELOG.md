@@ -1,5 +1,16 @@
 # NavoPath 更新日志
 
+## 2026-10-09 · 规划与任务定位
+
+### 改进
+- 快速改期保留任务原来的开始时间与时长，包括跨午夜安排；“查看日程”切换至对应日期并定位到任务时间。
+- 任务详情“更多”菜单提供时间轴与规划位置跳转，仅显示有对应任务数据的入口；规划跳转自动展开项目并显示目标任务。
+
+### 修复
+- 修复规划页滚动到底部的页面错位与添加按钮偏移，悬浮按钮保持在窗口内。
+- 任务标记选择框的选中圆角与外框保持一致。
+- 规划页新建任务有未保存修改时，点击外部、关闭或按 Escape 会提示保存；取消后保留草稿继续编辑。
+
 ## 2026-10-08 · 首页与执行体验
 
 ### 改进
@@ -88,6 +99,17 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-09 · Planning and task navigation
+
+### Improvements
+- Quick reschedule preserves the original start time and duration, including overnight schedules; View schedule opens the target date and scrolls to the task time.
+- The task detail More menu links to available timeline and Planning locations; Planning navigation expands the project and reveals the target task.
+
+### Fixes
+- Fixed Planning layout shifts at the bottom and the misplaced Add button; floating controls stay inside the viewport.
+- Task flag selection corners now follow the outer frame.
+- Unsaved new tasks in Planning prompt to save when clicking outside, closing, or pressing Escape; Cancel preserves the draft for continued editing.
 
 ## 2026-10-08 · Homepage and execution experience
 

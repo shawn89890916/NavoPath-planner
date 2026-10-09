@@ -21169,12 +21169,13 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-quick-add-detail-actions { display: flex; justify-content: flex-end; padding-top: 14px; }
 .df-quick-add-detail-actions .primary { min-width: 112px; }
 .df-app .df-level-selector {
+  --level-radius: 12px;
   display: inline-flex;
   width: max-content;
   flex: 0 0 auto;
   align-items: stretch;
   border: 1px solid var(--paper-rule);
-  border-radius: 12px;
+  border-radius: var(--level-radius);
   overflow: hidden;
   background: var(--paper-bg);   /* warm clean paper, no gray fill */
   box-shadow: none;
@@ -21227,6 +21228,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   position: absolute;
   inset: 0;
   border-radius: 0;
+  corner-shape: var(--corner-shape, squircle);
   pointer-events: none;
   opacity: 0;
   z-index: 0;
@@ -21243,15 +21245,15 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: color-mix(in srgb, var(--option-color, var(--df-option-color, #8E8478)) 6%, var(--paper-bg));
 }
 .df-app .df-level-selector .df-level-option:first-child[data-selected="true"]::after {
-  border-top-left-radius: 11px;
-  border-bottom-left-radius: 11px;
+  border-top-left-radius: calc(var(--level-radius) - 1px);
+  border-bottom-left-radius: calc(var(--level-radius) - 1px);
 }
 .df-app .df-level-selector .df-level-option:last-child[data-selected="true"]::after {
-  border-top-right-radius: 11px;
-  border-bottom-right-radius: 11px;
+  border-top-right-radius: calc(var(--level-radius) - 1px);
+  border-bottom-right-radius: calc(var(--level-radius) - 1px);
 }
 .df-app .df-level-selector .df-level-option:first-child:last-child[data-selected="true"]::after {
-  border-radius: 11px;
+  border-radius: calc(var(--level-radius) - 1px);
   corner-shape: var(--corner-shape, squircle);
 }
 /* Unselected option: quiet paper background. */
@@ -27815,6 +27817,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   overflow: auto;
 }
 .df-app .df-planning .df-tree {
+  flex: 0 0 auto;
   padding-right: 6px;
 }
 
@@ -37549,6 +37552,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app:not(.theme-dark) .df-add-fab { background: #fff; }
 #root .df-app:not(.theme-dark) .df-ai-fab { background: #fff; }
 #root .df-app .df-add-fab {
+  position: fixed;
+  left: auto;
   display: grid;
   place-items: center;
   width: 46px;
@@ -37558,6 +37563,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: var(--surface-raised);
   box-shadow: 0 5px 15px color-mix(in srgb, var(--text-main) 10%, transparent); color: var(--text-muted); corner-shape: var(--corner-shape, squircle); }
 #root .df-app .df-ai-fab {
+  position: fixed;
+  left: auto;
   display: grid;
   place-items: center;
   width: 46px;
@@ -37826,6 +37833,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 /* Keep toast actions readable after the global transparent-button layer. */
 #root .df-app .df-toast .df-toast-undo-btn {
+  pointer-events: auto;
   min-height: 30px;
   padding: 4px 8px;
   border: 1px solid currentColor;
