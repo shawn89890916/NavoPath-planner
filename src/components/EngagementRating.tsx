@@ -33,7 +33,7 @@ export function EngagementRating({ task, record, lang, onUpdate }: {
           <span className="df-engagement-help" onPointerEnter={(event) => { if (event.pointerType !== "touch") setActiveHelp(key); }} onPointerLeave={(event) => { if (!event.currentTarget.contains(document.activeElement)) setActiveHelp(null); }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setActiveHelp(null); }} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); setActiveHelp(null); } }}>
             <IconButton icon={<UiInfoIcon size={20} />} label={zh ? "了解投入度" : "About engagement"} title="" aria-describedby={activeHelp === key ? helpId : undefined} onFocus={() => setActiveHelp(key)} onClick={() => setActiveHelp(key)} />
             {activeHelp === key && <Popover role="tooltip" id={helpId} className="df-engagement-tooltip">
-              <span>{zh ? "投入度是你对这次任务专注和投入程度的自评分，范围 10–100%，默认 80%。时间轴背景按此比例显示不透明度，统计时长也按投入度加权。" : "Engagement is your self-rating of focus and effort for this execution, from 10–100%, defaulting to 80%. It controls background opacity and weights the duration used in statistics."}</span>
+              <span>{zh ? "投入度是你对这次任务专注和投入程度的自评分，范围 10–100%，默认 80%。时间轴左侧色条从顶部按此比例填充，悬停色条可查看评分，统计时长按投入度加权。" : "Engagement is your self-rating of focus and effort for this execution, from 10–100%, defaulting to 80%. The left stripe fills down from the top; hover over it to see the rating. Statistics use duration weighted by engagement."}</span>
               <span>{zh ? "投入时长" : "Engaged time"}: {minutes} × {score}% = {Math.round(engagementMinutes(minutes, score) * 10) / 10} {zh ? "分钟" : "min"}</span>
             </Popover>}
           </span>

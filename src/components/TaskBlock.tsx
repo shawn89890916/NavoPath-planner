@@ -50,7 +50,7 @@ export function taskBlockStyle(options: TaskBlockStyleOptions): CSSProperties {
     ...options.style,
     ...(options.engagement === undefined ? {} : {
       "--task-engagement": `${options.engagement}%`,
-      backgroundColor: `color-mix(in srgb, var(--task-bg) ${options.engagement}%, transparent)`,
+      borderLeftColor: "var(--task-border)",
     }),
   } as CSSProperties;
 }
@@ -75,6 +75,7 @@ type TaskBlockProps = TaskBlockClassOptions & TaskBlockStyleOptions & {
   accent?: ReactNode;
   role?: string;
   title?: string;
+  lang?: "zh" | "en";
   type?: "button" | "submit" | "reset";
   tabIndex?: number;
   draggable?: boolean;
@@ -120,7 +121,7 @@ export const TaskBlock = React.forwardRef<HTMLElement, TaskBlockProps>(function 
       className={className}
       style={style}
       role={props.role}
-      title={props.title ?? (props.engagement === undefined ? undefined : `${props.engagement}%`)}
+      title={props.title}
       type={props.type}
       tabIndex={props.tabIndex}
       draggable={props.draggable}
@@ -141,7 +142,7 @@ export const TaskBlock = React.forwardRef<HTMLElement, TaskBlockProps>(function 
       {...extraData}
       data-engagement={props.engagement}
     >
-      {accent ?? <span className="df-task-block-accent" aria-hidden="true" />}
+      {accent ?? <span className="df-task-block-accent" aria-hidden="true" title={props.engagement === undefined ? undefined : `${props.lang === "zh" ? "投入度：" : "Engagement: "}${props.engagement}%`} />}
       {children || (
         <span className="df-task-block-grid">
           {leading ? <span className="df-task-block-leading">{leading}</span> : null}

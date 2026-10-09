@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import {
+  TaskBlock,
   TaskBlockAccent,
   TaskBlockAppearance,
   TaskBlockPriority,
@@ -11,6 +14,15 @@ import {
 } from "./TaskBlock";
 
 describe("TaskBlock shared component contract", () => {
+  it("places the localized engagement tooltip on the stripe while preserving the task title", () => {
+    for (const [lang, label] of [["zh", "投入度：50%"], ["en", "Engagement: 50%"]] as const) {
+      const markup = renderToStaticMarkup(<TaskBlock lang={lang} engagement={50} title="Task details" main="Work" />);
+      expect(markup).toContain('title="Task details"');
+      expect(markup).toContain(`class="df-task-block-accent" aria-hidden="true" title="${label}"`);
+    }
+    expect(renderToStaticMarkup(<TaskBlock main="Work" />)).not.toContain('title=');
+  });
+
   it("builds one stable class contract for variant, appearance, priority, and state combinations", () => {
     expect(taskBlockClassNames({
       variant: "scheduled",

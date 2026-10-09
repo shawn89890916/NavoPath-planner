@@ -57,12 +57,15 @@ describe("engagement ratings", () => {
     expect(expanded.find(item => item.id === "second")?.engagement).toBeUndefined();
   });
 
-  it("changes only background alpha, preserving the project marker and block geometry", () => {
+  it("sets stripe fill without changing background, content opacity, or block geometry", () => {
     expect(taskBlockStyle({ projectColor: "#7EA172" }).opacity).toBeUndefined();
     const style = taskBlockStyle({ engagement: 10, projectColor: "#7EA172", style: { height: 80 } });
-    expect(style).toMatchObject({ height: 80, "--task-project-color": "#7EA172", "--task-engagement": "10%", backgroundColor: "color-mix(in srgb, var(--task-bg) 10%, transparent)" });
+    expect(style).toMatchObject({ height: 80, "--task-project-color": "#7EA172", "--task-engagement": "10%", borderLeftColor: "var(--task-border)" });
     expect(style.opacity).toBeUndefined();
-    expect(taskBlockStyle({ engagement: 80 }).backgroundColor).toBe("color-mix(in srgb, var(--task-bg) 80%, transparent)");
-    expect(taskBlockStyle({ engagement: 100 }).backgroundColor).toBe("color-mix(in srgb, var(--task-bg) 100%, transparent)");
+    for (const engagement of [10, 50, 100]) {
+      expect(taskBlockStyle({ engagement }).backgroundColor).toBeUndefined();
+      expect(taskBlockStyle({ engagement }).opacity).toBeUndefined();
+    }
+    expect(taskBlockStyle({}).borderLeftColor).toBeUndefined();
   });
 });
