@@ -24,26 +24,27 @@ describe("engagement ratings", () => {
     expect(normalizeSettings({ featureEngagementEnabled: true }).featureEngagementEnabled).toBe(true);
   });
 
-  it("defaults to 80, permits zero, bounds imported ratings, and retains precision in weighted minutes", () => {
+  it("defaults to 80, enforces the 10% minimum, and retains precision in weighted minutes", () => {
     expect(normalizeEngagement(undefined)).toBe(80);
     expect(normalizeEngagement(NaN)).toBe(80);
-    expect(normalizeEngagement(-10)).toBe(0);
+    expect(normalizeEngagement(-10)).toBe(10);
+    expect(normalizeEngagement(9)).toBe(10);
     expect(normalizeEngagement(120)).toBe(100);
     expect(engagementMinutes(15, 33)).toBe(4.95);
-    expect(engagementMinutes(60, 0)).toBe(0);
+    expect(engagementMinutes(60, 0)).toBe(6);
   });
 
   it("isolates records, keeps their default independent of task scores, and survives saved-data normalization", () => {
     const [first, second] = task.timelineRecords!;
     const updated = { ...task, ...engagementPatch(task, 0, first) };
-    expect(engagementFor(updated, updated.timelineRecords![0])).toBe(0);
+    expect(engagementFor(updated, updated.timelineRecords![0])).toBe(10);
     expect(engagementFor(updated, second)).toBe(80);
     const saved = normalizeData({ ...fallbackData(), tasks: [updated] });
-    expect(saved.tasks[0].timelineRecords![0].engagement).toBe(0);
+    expect(saved.tasks[0].timelineRecords![0].engagement).toBe(10);
     expect(saved.tasks[0].engagement).toBe(20);
     const invalid = normalizeData({ ...fallbackData(), tasks: [{ ...task, engagement: 200, timelineRecords: [{ ...first, engagement: -1 }] }] });
     expect(invalid.tasks[0].engagement).toBe(100);
-    expect(invalid.tasks[0].timelineRecords![0].engagement).toBe(0);
+    expect(invalid.tasks[0].timelineRecords![0].engagement).toBe(10);
   });
 
   it("carries record completion and score to both midnight slices while preserving the next execution", () => {
@@ -53,11 +54,12 @@ describe("engagement ratings", () => {
     expect(expanded.find(item => item.id === "second")?.engagement).toBeUndefined();
   });
 
-  it("applies engagement as whole-block opacity without adding a colored fill", () => {
+  it("changes only background alpha, preserving the project marker and block geometry", () => {
     expect(taskBlockStyle({ projectColor: "#7EA172" }).opacity).toBeUndefined();
-    expect(taskBlockStyle({ engagement: 0, style: { height: 80 } })).toMatchObject({ height: 80, opacity: 0 });
-    expect(taskBlockStyle({ engagement: 80 }).opacity).toBe(.8);
-    expect(taskBlockStyle({ engagement: 100 }).opacity).toBe(1);
-    expect(taskBlockStyle({ engagement: 50, projectColor: "#7EA172" }).backgroundColor).toBeUndefined();
+    const style = taskBlockStyle({ engagement: 10, projectColor: "#7EA172", style: { height: 80 } });
+    expect(style).toMatchObject({ height: 80, "--task-project-color": "#7EA172", backgroundColor: "color-mix(in srgb, var(--task-bg) 10%, transparent)" });
+    expect(style.opacity).toBeUndefined();
+    expect(taskBlockStyle({ engagement: 80 }).backgroundColor).toBe("color-mix(in srgb, var(--task-bg) 80%, transparent)");
+    expect(taskBlockStyle({ engagement: 100 }).backgroundColor).toBe("color-mix(in srgb, var(--task-bg) 100%, transparent)");
   });
 });

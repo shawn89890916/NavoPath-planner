@@ -49,7 +49,7 @@ export function taskBlockStyle(options: TaskBlockStyleOptions): CSSProperties {
     "--task-block-density": options.density || "normal",
     ...options.style,
     ...(options.engagement === undefined ? {} : {
-      opacity: options.engagement / 100,
+      backgroundColor: `color-mix(in srgb, var(--task-bg) ${options.engagement}%, transparent)`,
     }),
   } as CSSProperties;
 }

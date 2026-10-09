@@ -33,13 +33,16 @@ export function EngagementRating({ task, record, lang, onUpdate }: {
           <span className="df-engagement-help" onPointerEnter={(event) => { if (event.pointerType !== "touch") setActiveHelp(key); }} onPointerLeave={(event) => { if (!event.currentTarget.contains(document.activeElement)) setActiveHelp(null); }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setActiveHelp(null); }} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); setActiveHelp(null); } }}>
             <IconButton icon={<UiInfoIcon size={20} />} label={zh ? "了解投入度" : "About engagement"} title="" aria-describedby={activeHelp === key ? helpId : undefined} onFocus={() => setActiveHelp(key)} onClick={() => setActiveHelp(key)} />
             {activeHelp === key && <Popover role="tooltip" id={helpId} className="df-engagement-tooltip">
-              <span>{zh ? "投入度是你对这次任务专注和投入程度的自评分，范围 0–100%，默认 80%。时间轴按此比例显示任务块不透明度，统计时长也按投入度加权。" : "Engagement is your self-rating of focus and effort for this execution, from 0–100%, defaulting to 80%. It controls task-block opacity and weights the duration used in statistics."}</span>
+              <span>{zh ? "投入度是你对这次任务专注和投入程度的自评分，范围 10–100%，默认 80%。时间轴背景按此比例显示不透明度，统计时长也按投入度加权。" : "Engagement is your self-rating of focus and effort for this execution, from 10–100%, defaulting to 80%. It controls background opacity and weights the duration used in statistics."}</span>
               <span>{zh ? "投入时长" : "Engaged time"}: {minutes} × {score}% = {Math.round(engagementMinutes(minutes, score) * 10) / 10} {zh ? "分钟" : "min"}</span>
             </Popover>}
           </span>
           <span className="df-engagement-label">{zh ? "投入度" : "Engagement"}</span>
-          <strong>{score}%</strong>
-          <input type="range" min="0" max="100" step="1" value={score} aria-label={`${zh ? "投入度" : "Engagement"} · ${label}`} aria-valuetext={`${score}%`} onChange={(event) => onUpdate(task.id, engagementPatch(task, Number(event.target.value), item))} />
+          <select className="df-engagement-score" aria-label={`${zh ? "快速选择投入度" : "Choose engagement"} · ${label}`} value={score} onChange={(event) => onUpdate(task.id, engagementPatch(task, Number(event.target.value), item))}>
+            {score % 10 !== 0 && <option value={score} hidden>{score}%</option>}
+            {Array.from({ length: 10 }, (_, index) => (index + 1) * 10).map((value) => <option key={value} value={value}>{value}%</option>)}
+          </select>
+          <input type="range" min="10" max="100" step="1" value={score} aria-label={`${zh ? "投入度" : "Engagement"} · ${label}`} aria-valuetext={`${score}%`} onChange={(event) => onUpdate(task.id, engagementPatch(task, Number(event.target.value), item))} />
         </div>
       </div>;
     })}

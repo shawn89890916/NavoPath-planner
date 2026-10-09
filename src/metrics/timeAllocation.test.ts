@@ -66,7 +66,7 @@ describe("time allocation metrics", () => {
     expect(buildTimeAllocationMetrics({ ...options, engagementEnabled: false }).summary.plannedMinutes).toBe(180);
   });
 
-  it("weights clipped midnight durations before aggregating and preserves zero-rated task counts", () => {
+  it("weights clipped midnight durations and clamps imported sub-minimum ratings", () => {
     const task: Task = { ...baseTask, timelineRecords: [
       { id: "midnight", taskId: baseTask.id, scheduledDate: "2026-07-06", scheduledStart: "23:00", scheduledEndDate: "2026-07-07", scheduledEnd: "01:00", executionStatus: "completed", engagement: 33, createdAt: "now" },
     ] };
@@ -76,9 +76,9 @@ describe("time allocation metrics", () => {
     expect(weighted.summary.plannedMinutes).toBe(39.6);
     expect(buildTimeAllocationMetrics({ ...options, range: { preset: "today", anchorDate: "2026-07-07" } }).summary.plannedMinutes).toBe(19.8);
     const zero = buildTimeAllocationMetrics({ ...options, data: { ...baseData, tasks: [{ ...task, timelineRecords: task.timelineRecords!.map(record => ({ ...record, engagement: 0 })) }] } });
-    expect(zero.summary).toMatchObject({ plannedMinutes: 0, taskCount: 1, completedTaskCount: 1, completionRate: 1 });
+    expect(zero.summary).toMatchObject({ plannedMinutes: 12, taskCount: 1, completedTaskCount: 1, completionRate: 1 });
     expect(zero.taskEntries).toHaveLength(2);
-    expect(zero.groups[0].percentage).toBe(0);
+    expect(zero.groups[0].percentage).toBe(100);
   });
 
   it("uses task ratings for legacy schedules and defaults all-day completed records", () => {
