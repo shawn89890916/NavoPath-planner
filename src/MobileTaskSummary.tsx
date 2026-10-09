@@ -1,3 +1,4 @@
+import { EngagementRating } from "./components/EngagementRating";
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import type { Category, Language, NullablePriority, Priority, Project, Subtask, Task, TaskRecurrence, TimelineRecord } from "./types";
 import { clockTimeSpanMinutes, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
@@ -145,6 +146,7 @@ export function MobileTimelineDraftSheet(props: {
 type SummaryForm = { title: string; projectId: string; projectColor: string; dueDate: string; dueTime: string; endDate: string; endTime: string; category: Category; priority: Priority; importance: NullablePriority; urgency: NullablePriority; estimatedHours: number; details: string; recurrence?: TaskRecurrence };
 
 export default function MobileTaskSummary(props: {
+  engagementEnabled?: boolean;
   lang: Language;
   task: Task;
   form: SummaryForm;
@@ -209,6 +211,7 @@ export default function MobileTaskSummary(props: {
     props.onUpdate(props.task.id, patch);
   }
   return <MobileShortSheet lang={props.lang} title={props.form.title} titleLabel={zh ? "任务名称" : "Task title"} onTitleChange={(title) => props.setForm((current) => ({ ...current, title }))} onTitleBlur={(title) => props.onUpdate(props.task.id, { title: title.trim() || props.task.title })} onTitleEnter={() => (document.activeElement as HTMLElement | null)?.blur()} onClose={props.onClose} onMore={props.onMore} swipeDownToClose swipeUpForMore>
+    {props.engagementEnabled && <EngagementRating task={props.task} record={props.record} lang={props.lang} onUpdate={props.onUpdate} />}
     <label className="df-mobile-summary-project"><span className="df-detail-project-dot" style={{ background: project?.color || "#888" }} /><span>{zh ? "归属" : "Project"}</span><select value={props.form.projectId} onChange={(event) => { const projectId = event.target.value; props.setForm((current) => ({ ...current, projectId })); props.onUpdate(props.task.id, { projectId: projectId || undefined }); }}><option value="">{zh ? "未归属" : "Unassigned"}</option>{props.projects.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
     <div className="df-mobile-summary-times">
       <label><span>{zh ? "开始" : "Start"}</span><select aria-label={zh ? "开始时间" : "Start time"} value={startTime} onChange={(event) => commitTime("start", event.target.value)}><option value="">--:--</option>{timeOptions.map((time) => <option key={time}>{time}</option>)}</select></label>

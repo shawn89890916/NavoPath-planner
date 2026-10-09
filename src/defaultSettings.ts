@@ -84,6 +84,7 @@ export const defaultSettings: Settings = {
   featureHabitCandidatesEnabled: true,
   featureTemplatesEnabled: true,
   featureMetricsEnabled: true,
+  featureEngagementEnabled: false,
   featureWidgetEnabled: true,
   widgetAlwaysOnTop: true,
   widgetOpenOnLaunch: false,

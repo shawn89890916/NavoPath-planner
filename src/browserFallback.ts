@@ -1,5 +1,6 @@
 import type { AgentRunState, AiAction, AiPersonalizationProfile, ChatMessage, HabitDailyState, PlannerApi, PlannerData, Settings, Subtask, Task, TaskAiInference, TaskRecurrence, TimelineRecord } from "./types";
 import { normalizeSettings } from "./defaultSettings";
+import { normalizeEngagement } from "./utils/engagement";
 import { normalizeTreeOrder } from "./utils/treeOrder";
 import { inferWorkflowStatus, normalizeTimeEntry } from "./utils/productivity";
 import { normalizePlannerDataForClient } from "./utils/dataNormalization";
@@ -492,6 +493,7 @@ function normalizeTimelineRecords(value: unknown, taskId: string): TimelineRecor
     const candidateEndDate = explicitEndDate || inferredEndDate;
     records.push({
       ...record,
+      engagement: record.engagement === undefined ? undefined : normalizeEngagement(record.engagement),
       id,
       taskId,
       scheduledDate,
@@ -860,6 +862,7 @@ export function normalizeData(data: PlannerData): PlannerData {
       dueDate: persistedDate(task.dueDate) || "",
       completed,
       estimatedHours,
+      engagement: task.engagement === undefined ? undefined : normalizeEngagement(task.engagement),
       ...(typeof task.scheduleLocked === "boolean" ? { scheduleLocked: task.scheduleLocked } : {}),
       ...(typeof task.hardDeadline === "boolean" ? { hardDeadline: task.hardDeadline } : {}),
       projectId: projectId && projectIds.has(projectId) ? projectId : undefined,

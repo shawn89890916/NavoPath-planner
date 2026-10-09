@@ -26517,6 +26517,18 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
    exact same CSS as the execution timeline. */
 
 /* Period block = df-time-block language (annotated time region) */
+.df-engagement-rating {
+  display: grid;
+  gap: 12px;
+  margin-block: 12px;
+  padding-block: 12px;
+  border-block: 1px solid var(--border-soft);
+}
+.df-engagement-rating label { display: grid; gap: 6px; min-width: 0; }
+.df-engagement-heading { display: flex; justify-content: space-between; gap: 12px; }
+.df-engagement-rating input { width: 100%; min-height: 32px; accent-color: var(--accent-active); }
+.df-engagement-caption { font-size: 11px; color: var(--text-muted); }
+
 /* Period block reuses TaskBlock variant="scheduled" (df-task-block--scheduled)
    for its visual shell. Only layout + handles + delete button are customized
    here; border/fill/typography come from the shared TaskBlock CSS so the

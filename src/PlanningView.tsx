@@ -1005,6 +1005,7 @@ export default function PlanningView(props: {
   featureList?: boolean;
   /** 指标视图开关：关闭后隐藏规划页的「指标」视图入口。 */
   featureMetrics?: boolean;
+  engagementEnabled?: boolean;
   dayStartTime?: string;
   metricsRangePreset?: MetricRangePreset;
   metricsGroupBy?: MetricGroupBy;
@@ -2176,11 +2177,12 @@ export default function PlanningView(props: {
       customEnd: metricsCustomEnd,
     },
     dayStartMinutes,
+    engagementEnabled: props.engagementEnabled,
     groupBy: metricsGroupBy,
     habitMode: metricsHabitMode,
     completion: metricsCompletion,
     projectIds: metricsProjectFilter,
-  }), [props.data, metricsRangePreset, today, metricsCustomStart, metricsCustomEnd, dayStartMinutes, metricsGroupBy, metricsHabitMode, metricsCompletion, metricsProjectFilter]);
+  }), [props.data, metricsRangePreset, today, metricsCustomStart, metricsCustomEnd, dayStartMinutes, metricsGroupBy, metricsHabitMode, metricsCompletion, metricsProjectFilter, props.engagementEnabled]);
   useEffect(() => {
     setSelectedMetricGroupId((id) => id && metricsResult.groups.some((group) => group.id === id) ? id : null);
   }, [metricsResult.groups]);
@@ -2381,6 +2383,7 @@ export default function PlanningView(props: {
 
           {viewMode === "metrics" && (
             <section className="df-metrics-view" aria-label={props.lang === "zh" ? "时间占比" : "Time allocation metrics"}>
+              {props.engagementEnabled && <p className="df-engagement-caption">{props.lang === "zh" ? "已完成任务按时长 × 投入度统计（默认 80%）；未完成安排按原始时长统计。" : "Completed time is weighted by engagement (80% by default); incomplete schedules use their original duration."}</p>}
               <header className="df-metrics-header">
                 <div className="df-metrics-toolbar">
                   <div className="df-filter-popover-anchor">
@@ -2518,7 +2521,7 @@ export default function PlanningView(props: {
                 </div>
               )}
 
-              {metricsResult.summary.plannedMinutes === 0 ? (
+              {metricsResult.taskEntries.length === 0 ? (
                 <div className="df-metrics-empty">
                   <h3>{props.lang === "zh" ? "暂无时间安排" : "No scheduled time"}</h3>
                   <p>{props.lang === "zh" ? "这个时间范围内还没有安排任务。把任务拖入时间轴后，这里会显示时间占比。" : "Schedule tasks on the timeline and this report will show allocation."}</p>
@@ -2655,7 +2658,7 @@ export default function PlanningView(props: {
                       </div>
                     </section>
                     <aside className="df-metrics-summary" aria-label={props.lang === "zh" ? "指标摘要" : "Metrics summary"}>
-                      <div><span>{props.lang === "zh" ? "已安排时间" : "Planned"}</span><strong>{formatMinutesZh(metricsResult.summary.plannedMinutes)}</strong></div>
+                      <div><span>{props.engagementEnabled ? (props.lang === "zh" ? "加权时长" : "Weighted time") : (props.lang === "zh" ? "已安排时间" : "Planned")}</span><strong>{formatMinutesZh(metricsResult.summary.plannedMinutes)}</strong></div>
                       <div><span>{props.lang === "zh" ? "未安排时间" : "Unplanned"}</span><strong>{formatMinutesZh(metricsResult.summary.unplannedMinutes)}</strong></div>
                       <div><span>{props.lang === "zh" ? "任务数量" : "Tasks"}</span><strong>{metricsResult.summary.taskCount}</strong></div>
                       <div><span>{props.lang === "zh" ? "完成率" : "Done"}</span><strong>{Math.round(metricsResult.summary.completionRate * 100)}%</strong></div>

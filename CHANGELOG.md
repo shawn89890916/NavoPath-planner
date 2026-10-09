@@ -2,6 +2,9 @@
 
 ## 2026-10-09 · 规划与任务定位
 
+### 新增
+- 设置中可开启投入度评分，默认关闭；已完成任务可按每次执行评 0–100%，默认 80%，时间轴用颜色深浅显示评分，统计按时长 × 投入度计算，关闭后恢复原始时长并保留评分。
+
 ### 改进
 - 快速改期保留任务原来的开始时间与时长，包括跨午夜安排；“查看日程”切换至对应日期并定位到任务时间。
 - 任务详情“更多”菜单提供时间轴与规划位置跳转，仅显示有对应任务数据的入口；规划跳转自动展开项目并显示目标任务。
@@ -101,6 +104,9 @@
 # NavoPath Changelog
 
 ## 2026-10-09 · Planning and task navigation
+
+### Added
+- Optional engagement ratings in Settings, off by default. Rate each completed execution from 0–100%, defaulting to 80%; timeline color density shows the score and statistics weight duration by engagement. Turning it off restores original durations and preserves ratings.
 
 ### Improvements
 - Quick reschedule preserves the original start time and duration, including overnight schedules; View schedule opens the target date and scrolls to the task time.

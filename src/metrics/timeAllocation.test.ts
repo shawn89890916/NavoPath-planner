@@ -48,6 +48,48 @@ function localStamp(date: Date) {
 }
 
 describe("time allocation metrics", () => {
+  it("weights completed executions only when enabled, using record scores and an 80% default", () => {
+    const task: Task = { ...baseTask, engagement: 10, timelineRecords: [
+      { id: "rated", taskId: baseTask.id, scheduledDate: "2026-07-06", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "completed", engagement: 50, createdAt: "now" },
+      { id: "default", taskId: baseTask.id, scheduledDate: "2026-07-06", scheduledStart: "10:00", scheduledEnd: "11:00", executionStatus: "completed", createdAt: "now" },
+      { id: "pending", taskId: baseTask.id, scheduledDate: "2026-07-06", scheduledStart: "11:00", scheduledEnd: "12:00", executionStatus: "scheduled", createdAt: "now" },
+    ] };
+    const options = { data: { ...baseData, tasks: [task] }, range: { preset: "today" as const, anchorDate: "2026-07-06" } };
+    const raw = buildTimeAllocationMetrics(options);
+    const weighted = buildTimeAllocationMetrics({ ...options, engagementEnabled: true });
+    expect(raw.summary.plannedMinutes).toBe(180);
+    expect(weighted.taskEntries.map(entry => entry.durationMinutes)).toEqual([30, 48, 60]);
+    expect(weighted.summary.plannedMinutes).toBe(138);
+    expect(weighted.groups[0].durationMinutes).toBe(138);
+    expect(weighted.heatmapBuckets[0].minutes).toBe(138);
+    expect(weighted.summary.unplannedMinutes).toBe(raw.summary.unplannedMinutes);
+    expect(buildTimeAllocationMetrics({ ...options, engagementEnabled: false }).summary.plannedMinutes).toBe(180);
+  });
+
+  it("weights clipped midnight durations before aggregating and preserves zero-rated task counts", () => {
+    const task: Task = { ...baseTask, timelineRecords: [
+      { id: "midnight", taskId: baseTask.id, scheduledDate: "2026-07-06", scheduledStart: "23:00", scheduledEndDate: "2026-07-07", scheduledEnd: "01:00", executionStatus: "completed", engagement: 33, createdAt: "now" },
+    ] };
+    const options = { data: { ...baseData, tasks: [task] }, range: { preset: "custom" as const, customStart: "2026-07-06", customEnd: "2026-07-07" }, engagementEnabled: true };
+    const weighted = buildTimeAllocationMetrics(options);
+    expect(weighted.taskEntries.map(entry => entry.durationMinutes)).toEqual([19.8, 19.8]);
+    expect(weighted.summary.plannedMinutes).toBe(39.6);
+    expect(buildTimeAllocationMetrics({ ...options, range: { preset: "today", anchorDate: "2026-07-07" } }).summary.plannedMinutes).toBe(19.8);
+    const zero = buildTimeAllocationMetrics({ ...options, data: { ...baseData, tasks: [{ ...task, timelineRecords: task.timelineRecords!.map(record => ({ ...record, engagement: 0 })) }] } });
+    expect(zero.summary).toMatchObject({ plannedMinutes: 0, taskCount: 1, completedTaskCount: 1, completionRate: 1 });
+    expect(zero.taskEntries).toHaveLength(2);
+    expect(zero.groups[0].percentage).toBe(0);
+  });
+
+  it("uses task ratings for legacy schedules and defaults all-day completed records", () => {
+    const tasks: Task[] = [
+      { ...baseTask, id: "legacy", completed: true, engagement: 50, scheduledDate: "2026-07-06", scheduledStart: "09:00", scheduledEnd: "10:00" },
+      { ...baseTask, id: "all-day", estimatedHours: 1, timelineRecords: [{ id: "day", taskId: "all-day", scheduledDate: "2026-07-06", scheduledStart: "", scheduledEnd: "", executionStatus: "completed", createdAt: "now" }] },
+    ];
+    const result = buildTimeAllocationMetrics({ data: { ...baseData, tasks }, range: { preset: "today", anchorDate: "2026-07-06" }, engagementEnabled: true });
+    expect(result.summary.plannedMinutes).toBe(78);
+  });
+
   it("builds day-start aware today and week ranges", () => {
     expect(parseDayStartMinutes("04:30")).toBe(270);
 
