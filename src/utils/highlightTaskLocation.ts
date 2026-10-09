@@ -2,13 +2,14 @@ export function highlightTaskLocation(node: HTMLElement) {
   for (const animation of node.getAnimations()) {
     if (animation.id === "task-location") animation.cancel();
   }
-  const accent = getComputedStyle(node).getPropertyValue("--accent-active").trim();
+  const style = getComputedStyle(node);
+  const accent = style.getPropertyValue("--accent-active").trim() || "currentColor";
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const outline = { outline: `2px solid ${accent || "currentColor"}`, outlineOffset: "2px" };
+  const border = { borderColor: accent };
   const animation = node.animate([
-    { ...outline, offset: 0 },
-    { ...outline, offset: reducedMotion ? 1 : 0.7 },
-    ...(reducedMotion ? [] : [{ outline: "2px solid transparent", outlineOffset: "2px", offset: 1 }]),
+    { ...border, offset: 0 },
+    { ...border, offset: reducedMotion ? 1 : 0.7 },
+    ...(reducedMotion ? [] : [{ borderColor: style.borderColor, offset: 1 }]),
   ], { duration: 1800, easing: "ease-out" });
   animation.id = "task-location";
 }

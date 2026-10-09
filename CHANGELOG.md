@@ -7,7 +7,7 @@
 
 ### 改进
 - 快速改期保留任务原来的开始时间与时长，包括跨午夜安排；“查看日程”切换至对应日期并定位到任务时间。
-- 任务详情“更多”菜单提供时间轴与规划位置跳转，仅显示有对应任务数据的入口；规划跳转自动展开项目并显示目标任务，跳转后短暂高亮目标任务边框。
+- 任务详情“更多”菜单提供时间轴与规划位置跳转，仅显示有对应任务数据的入口；规划跳转自动展开项目并显示目标任务，跳转后沿目标任务自身外框与圆角短暂高亮边框。
 - 任务详情未完成与快速改期的悬停列表宽度贴近对应按钮，长选项自动换行。
 
 ### 修复
@@ -111,7 +111,7 @@
 
 ### Improvements
 - Quick reschedule preserves the original start time and duration, including overnight schedules; View schedule opens the target date and scrolls to the task time.
-- The task detail More menu links to available timeline and Planning locations; Planning navigation expands the project and reveals the target task, with a brief outline highlight after navigation.
+- The task detail More menu links to available timeline and Planning locations; Planning navigation expands the project and reveals the target task, briefly highlighting its own border and corners after navigation.
 - Task detail Incomplete and Quick reschedule hover lists stay close to their trigger widths, with longer options wrapping automatically.
 
 ### Fixes

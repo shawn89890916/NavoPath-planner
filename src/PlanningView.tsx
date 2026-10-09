@@ -2030,9 +2030,10 @@ export default function PlanningView(props: {
       const node = treeRef.current?.querySelector<HTMLElement>(`[data-node-type="task"][data-node-id="${CSS.escape(props.focusTaskId!)}"]`);
       if (!node) return;
       node.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
-      node.tabIndex = -1;
-      node.focus({ preventScroll: true });
-      highlightTaskLocation(node);
+      const block = node.querySelector<HTMLElement>(".df-task-block") || node;
+      block.tabIndex = -1;
+      block.focus({ preventScroll: true });
+      highlightTaskLocation(block);
       props.onFocusHandled?.();
     });
     return () => window.cancelAnimationFrame(frame);
