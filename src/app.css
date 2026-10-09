@@ -28790,6 +28790,11 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   corner-shape: var(--corner-shape, squircle);
 }
 
+#root .df-app .df-task-block[data-task-appearance][data-engagement] {
+  /* Keep the neutral track behind the stripe in compact multi-day views. */
+  border-left-width: var(--task-project-accent-size, 2px);
+}
+
 .df-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent {
   top: -1px;
   bottom: -1px;
