@@ -9045,7 +9045,7 @@ if (cached?.data && cached?.settings) {
             {(() => {
                 const date = new Date(`${timelineWindowAnchorDate}T00:00:00`);
                 const dateContents = timelineView === "month" ? (
-                  <strong>{monthTitle(lang, date.getFullYear(), date.getMonth() + 1)}</strong>
+                  <strong>{date.toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US", { month: "short" })}</strong>
                 ) : (
                   <><strong>{date.getDate()}</strong><span>{weekdayName(lang, date.getDay()).replace(/^周/, "")}</span></>
                 );

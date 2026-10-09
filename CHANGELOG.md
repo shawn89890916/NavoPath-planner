@@ -12,7 +12,7 @@
 - 任务详情未完成与快速改期的悬停列表宽度贴近对应按钮，长选项自动换行。
 
 ### 修复
-- 月视图任务块沿用共享样式，按实际日程显示多次执行、重复安排与跨日片段；拖动即时更新对应日程并保留时间和时长，与时间轴同步。点击日期或日期空白处进入当天时间轴并定位首项安排，添加任务使用日期旁的加号；星期顺序跟随设置，切换动画中断时仍能完成跳转。
+- 月视图任务块沿用共享样式，按实际日程显示多次执行、重复安排与跨日片段；拖动即时更新对应日程并保留时间和时长，与时间轴同步。点击日期或日期空白处进入当天时间轴并定位首项安排，添加任务使用日期旁的加号；星期顺序跟随设置，手机顶栏使用简短月份标签，切换动画中断时仍能完成跳转。
 - 修复规划页滚动到底部的页面错位与添加按钮偏移，悬浮按钮保持在窗口内。
 - 任务标记选择框的选中圆角与外框保持一致。
 - 规划页新建任务有未保存修改时，点击外部、关闭或按 Escape 会提示保存；取消会放弃新建任务并退出，保存按钮使用更明显的主题色描边与浅色底。
@@ -118,7 +118,7 @@
 - Task detail Incomplete and Quick reschedule hover lists stay close to their trigger widths, with longer options wrapping automatically.
 
 ### Fixes
-- Month tasks use shared styling and show each execution, recurring schedule, and overnight slice. Dragging immediately updates the selected schedule, preserves its time and duration, and stays in sync with the timeline. Clicking a date or its empty area opens that day's timeline at its first scheduled item; use the plus beside the date to add a task. Weekday order follows Settings, and navigation completes even if its animation is interrupted.
+- Month tasks use shared styling and show each execution, recurring schedule, and overnight slice. Dragging immediately updates the selected schedule, preserves its time and duration, and stays in sync with the timeline. Clicking a date or its empty area opens that day's timeline at its first scheduled item; use the plus beside the date to add a task. Weekday order follows Settings, the mobile toolbar uses a short month label, and navigation completes even if its animation is interrupted.
 - Fixed Planning layout shifts at the bottom and the misplaced Add button; floating controls stay inside the viewport.
 - Task flag selection corners now follow the outer frame.
 - Unsaved new tasks in Planning prompt to save when clicking outside, closing, or pressing Escape; Cancel discards the new task and closes the editor, with a clearer theme-colored outline and tint on Save.

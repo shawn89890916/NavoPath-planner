@@ -35332,6 +35332,19 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     font: 650 12px/1 var(--paper-sans);
   }
 
+  #root .df-app[data-timeline-view="month"] .df-compact-execute-controls { gap: 0; }
+
+  #root .df-app[data-timeline-view="month"] .df-compact-date-display {
+    position: static;
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    transform: none;
+  }
+
+  #root .df-app[data-timeline-view="month"] .df-compact-date-display strong { font-size: 16px; }
+  #root .df-app[data-timeline-view="month"] .df-compact-date-display .df-date-title-chevron { display: none; }
+
   @media (max-width: 374px) {
     #root .df-app.mode-execute .df-compact-date-display {
       gap: 2px;
