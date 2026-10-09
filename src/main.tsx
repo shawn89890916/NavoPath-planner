@@ -12215,7 +12215,6 @@ function AllDayBlock({ task, engagementEnabled, dragging, projectName, projects,
           onToggleDone();
         }}>{task.completed ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-6" /></svg> : isSkipped ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l6 6M9 3L3 9" /></svg> : isReturnedUnfinished ? <ReturnedToPlanIcon /> : ""}</TaskCheckbox>}
         <TaskBlockContent className="df-all-day-main" title={task.title}>
-          {engagementEnabled && !isEvent && task.completed && <span className="df-engagement-caption">{lang === "zh" ? "投入度" : "Engagement"} {normalizeEngagement(task.engagement)}%</span>}
           {isEvent ? <span className="df-event-kind-label">{isExternalEvent ? (lang === "zh" ? "外部日历" : "External") : t(lang, "form.event")}</span> : null}
         </TaskBlockContent>
         {!isEvent && hovered && <TaskActions className="df-all-day-actions" onClick={(event) => event.stopPropagation()}>
@@ -14270,7 +14269,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
             {settingsTarget.category === "workflow" && <SettingSection anchor="engagement" title={lang === "zh" ? "投入度评分" : "Engagement rating"}>
               <SettingRow
                 title={lang === "zh" ? "启用投入度评分" : "Enable engagement rating"}
-                description={lang === "zh" ? "完成后评 0–100%，默认 80%。时间轴颜色显示投入度，统计按时长 × 投入度计算；关闭后恢复原时长并保留评分。" : "Rate completed work 0–100%, default 80%. Timeline color shows engagement; statistics use duration × rating. Switching off restores original time and keeps ratings."}
+                description={lang === "zh" ? "完成后评 0–100%，默认 80%。时间轴透明度表示投入度，评分在详情中查看；统计按时长 × 投入度计算，关闭后恢复原时长并保留评分。" : "Rate completed work 0–100%, default 80%. Timeline opacity shows engagement; view ratings in details. Statistics use duration × rating. Switching off restores original time and keeps ratings."}
                 control={<SettingToggle checked={settings.featureEngagementEnabled === true} ariaLabel={lang === "zh" ? "启用投入度评分" : "Enable engagement rating"} onChange={(next) => onSave({ featureEngagementEnabled: next })} />}
               />
             </SettingSection>}

@@ -821,7 +821,6 @@ export function TimeBlock({ task, engagementEnabled, preview, projectName, proje
         )}
         <TaskBlockContent className="df-time-card-main" title={task.title}>
           {isEvent ? <span className="df-event-kind-label">{isExternalEvent ? (lang === "zh" ? "外部日历" : "External") : t(lang, "form.event")}</span> : null}
-          {engagementEnabled && !isEvent && task.completed && <span className="df-engagement-caption">{lang === "zh" ? "投入度" : "Engagement"} {normalizeEngagement(task.engagement)}%</span>}
           {next && <span className="df-next df-time-card-next">{t(lang, "timeBlock.nextStep")}：{next}</span>}
         </TaskBlockContent>
       </TaskBlockRow>

@@ -53,9 +53,11 @@ describe("engagement ratings", () => {
     expect(expanded.find(item => item.id === "second")?.engagement).toBeUndefined();
   });
 
-  it("applies color density only when requested and leaves geometry intact", () => {
-    expect(taskBlockStyle({ projectColor: "#7EA172" }).backgroundColor).toBeUndefined();
-    expect(taskBlockStyle({ engagement: 0, projectColor: "#7EA172", style: { height: 80 } })).toMatchObject({ height: 80, backgroundColor: "color-mix(in srgb, #7EA172 5%, var(--surface-raised))" });
-    expect(taskBlockStyle({ engagement: 100, projectColor: "#7EA172" }).backgroundColor).toContain("30%");
+  it("applies engagement as whole-block opacity without adding a colored fill", () => {
+    expect(taskBlockStyle({ projectColor: "#7EA172" }).opacity).toBeUndefined();
+    expect(taskBlockStyle({ engagement: 0, style: { height: 80 } })).toMatchObject({ height: 80, opacity: 0 });
+    expect(taskBlockStyle({ engagement: 80 }).opacity).toBe(.8);
+    expect(taskBlockStyle({ engagement: 100 }).opacity).toBe(1);
+    expect(taskBlockStyle({ engagement: 50, projectColor: "#7EA172" }).backgroundColor).toBeUndefined();
   });
 });
