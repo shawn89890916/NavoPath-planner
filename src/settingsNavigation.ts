@@ -143,6 +143,7 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("templates", { category: "workflow" }, "模板", "Templates", "schedule template 时间段"),
   entry("habits", { category: "workflow" }, "习惯", "Habits", "candidate metrics 每日 每周"),
   entry("metrics", { category: "workflow" }, "指标", "Metrics", "range grouping completion 统计 范围 分组 完成"),
+  entry("engagement", { category: "workflow" }, "投入度评分", "Engagement rating", "engagement effort focus density weighted 80% 投入 专注 评分 颜色 密度 时长 加权"),
 
   entry("account", { category: "account-data" }, "个人资料与账户", "Profile & account", "avatar name plan subscription 头像 用户名 方案"),
   entry("sync", { category: "account-data" }, "同步", "Sync", "cloud interval push pull 云端"),

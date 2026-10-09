@@ -1,5 +1,6 @@
 import type { PlannerData, Project, Task, TaskRecurrence, TimelineRecord } from "../types";
 import { normalizeWorkflowStatus } from "../utils/productivityModel";
+import { engagementFor, engagementMinutes } from "../utils/engagement";
 import { normalizeTimelineRecord, recordEndDateTime, recordStartDateTime } from "../utils/timelineRecords";
 
 export type MetricRangePreset = "all" | "today" | "yesterday" | "thisWeek" | "lastWeek" | "thisMonth" | "custom";
@@ -34,6 +35,7 @@ export type MetricTaskEntry = {
   scheduledEnd: Date;
   completed: boolean;
   isHabit?: boolean;
+  engagement?: number;
 };
 
 export type TimeAllocationGroup = {
@@ -327,6 +329,7 @@ function taskRecords(task: Task, range: MetricDateRange, dayStartMinutes: number
   if (task.scheduledDate && task.scheduledStart && task.scheduledEnd) {
     allRecords.push({
       id: `legacy-${task.id}`,
+      engagement: task.engagement,
       taskId: task.id,
       scheduledDate: task.scheduledDate,
       scheduledStart: task.scheduledStart,
@@ -340,6 +343,7 @@ function taskRecords(task: Task, range: MetricDateRange, dayStartMinutes: number
     const { endDate, endTime } = endForStartAndDuration(task.scheduledDate, startTime, allDayDurationMinutes(task));
     allRecords.push({
       id: `metric-all-day-${task.id}-${task.scheduledDate}`,
+      engagement: task.engagement,
       taskId: task.id,
       scheduledDate: task.scheduledDate,
       scheduledStart: startTime,
@@ -383,8 +387,9 @@ function splitByMetricDay(entry: MetricTaskEntry, dayStartMinutes: number): Metr
     const bucketStart = getMetricRange({ preset: "today", anchorDate: isoDate(cursor), dayStartMinutes }).start;
     const bucketEnd = addDays(bucketStart, 1);
     const end = new Date(Math.min(bucketEnd.getTime(), entry.scheduledEnd.getTime()));
-    const durationMinutes = minutesBetween(cursor, end);
-    if (durationMinutes > 0) pieces.push({ ...entry, scheduledStart: cursor, scheduledEnd: end, durationMinutes });
+    const rawMinutes = minutesBetween(cursor, end);
+    const durationMinutes = entry.engagement === undefined ? rawMinutes : engagementMinutes(rawMinutes, entry.engagement);
+    if (rawMinutes > 0) pieces.push({ ...entry, scheduledStart: cursor, scheduledEnd: end, durationMinutes });
     cursor = end;
   }
   return pieces;
@@ -436,6 +441,7 @@ export function buildTimeAllocationMetrics(options: {
   habitMode?: MetricHabitMode;
   completion?: MetricCompletionFilter;
   projectIds?: string[];
+  engagementEnabled?: boolean;
 }): TimeAllocationMetrics {
   const dayStartMinutes = options.dayStartMinutes || 0;
   const groupBy = options.groupBy || "project";
@@ -492,6 +498,7 @@ export function buildTimeAllocationMetrics(options: {
         completed,
         isHabit: habit,
       };
+      if (options.engagementEnabled && completed) entry.engagement = engagementFor(task, record);
       splitEntries.push(...splitByMetricDay(entry, dayStartMinutes));
     }
   }

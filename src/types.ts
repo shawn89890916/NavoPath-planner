@@ -60,6 +60,8 @@ export interface SyncBridgeStatus {
 
 /** 时间轴排程记录 — 支持同一任务多次排程，每条记录独立管理状态 */
 export interface TimelineRecord {
+  /** Self-rated engagement, 0–100; omitted values default to 80 when enabled. */
+  engagement?: number;
   id: string;
   taskId: string;
   scheduledDate: string;
@@ -164,6 +166,8 @@ export interface TaskRecurrence {
 }
 
 export interface Task {
+  /** Engagement for tasks without execution records. */
+  engagement?: number;
   id: string;
   title: string;
   dueDate: string;
@@ -590,6 +594,7 @@ export interface Settings {
   featureTemplatesEnabled?: boolean;
   /** 指标视图开关：关闭后隐藏规划页的「指标」视图入口与指标设置子项。 */
   featureMetricsEnabled?: boolean;
+  featureEngagementEnabled?: boolean;
   /** 桌面置顶小组件开关（仅 Electron 桌面端生效）。 */
   featureWidgetEnabled?: boolean;
   /** 小组件始终置顶。 */

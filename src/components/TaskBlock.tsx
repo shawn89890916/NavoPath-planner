@@ -19,6 +19,7 @@ export type TaskBlockClassOptions = {
 };
 
 export type TaskBlockStyleOptions = {
+  engagement?: number;
   projectColor?: string;
   density?: TaskBlockDensity;
   style?: CSSProperties;
@@ -47,6 +48,9 @@ export function taskBlockStyle(options: TaskBlockStyleOptions): CSSProperties {
     "--cat": projectColor,
     "--task-block-density": options.density || "normal",
     ...options.style,
+    ...(options.engagement === undefined ? {} : {
+      backgroundColor: `color-mix(in srgb, ${projectColor} ${5 + options.engagement * .25}%, var(--surface-raised))`,
+    }),
   } as CSSProperties;
 }
 
@@ -134,6 +138,7 @@ export const TaskBlock = React.forwardRef<HTMLElement, TaskBlockProps>(function 
       onDragEnd={props.onDragEnd}
       {...baseData}
       {...extraData}
+      data-engagement={props.engagement}
     >
       {accent ?? <span className="df-task-block-accent" aria-hidden="true" />}
       {children || (
