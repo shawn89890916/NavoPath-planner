@@ -72,9 +72,9 @@ describe("time allocation metrics", () => {
     ] };
     const options = { data: { ...baseData, tasks: [task] }, range: { preset: "custom" as const, customStart: "2026-07-06", customEnd: "2026-07-07" }, engagementEnabled: true };
     const weighted = buildTimeAllocationMetrics(options);
-    expect(weighted.taskEntries.map(entry => entry.durationMinutes)).toEqual([19.8, 19.8]);
-    expect(weighted.summary.plannedMinutes).toBe(39.6);
-    expect(buildTimeAllocationMetrics({ ...options, range: { preset: "today", anchorDate: "2026-07-07" } }).summary.plannedMinutes).toBe(19.8);
+    expect(weighted.taskEntries.map(entry => entry.durationMinutes)).toEqual([18, 18]);
+    expect(weighted.summary.plannedMinutes).toBe(36);
+    expect(buildTimeAllocationMetrics({ ...options, range: { preset: "today", anchorDate: "2026-07-07" } }).summary.plannedMinutes).toBe(18);
     const zero = buildTimeAllocationMetrics({ ...options, data: { ...baseData, tasks: [{ ...task, timelineRecords: task.timelineRecords!.map(record => ({ ...record, engagement: 0 })) }] } });
     expect(zero.summary).toMatchObject({ plannedMinutes: 12, taskCount: 1, completedTaskCount: 1, completionRate: 1 });
     expect(zero.taskEntries).toHaveLength(2);

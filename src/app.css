@@ -28747,6 +28747,15 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --navo-card-project: var(--task-project-color, var(--accent-active));
   corner-shape: var(--corner-shape, squircle);
 }
+.df-app .df-task-block[data-engagement]::after {
+  content: "";
+  position: absolute;
+  inset: auto 8px 3px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--text-muted) 0 var(--task-engagement), var(--paper-rule-strong) var(--task-engagement) 100%);
+  pointer-events: none;
+}
 .navo-demo-app .df-task-block[data-task-appearance] {
   position: relative;
   box-sizing: border-box;

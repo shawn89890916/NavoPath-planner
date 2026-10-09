@@ -3,7 +3,7 @@
 ## 2026-10-09 · 规划与任务定位
 
 ### 新增
-- 设置中可开启投入度评分，默认关闭；已完成任务可按每次执行评 10–100%，默认 80%，时间轴仅调整背景不透明度，边框、项目色标记与内容保持清晰，评分仅在详情中显示。详情将说明图标、名称、评分与滑杆横向排列，点击百分比可按 10% 一档快速选择，悬停、聚焦或点击说明图标可查看含义与计算方式；统计按时长 × 投入度计算，关闭后恢复原始时长并保留评分。
+- 设置中可开启投入度评分，默认关闭；已完成任务可按每次执行以 10% 为一档评 10–100%，默认 80%，滑块与快速选择使用相同十档，已有评分就近对齐。时间轴以背景不透明度与底部中性细条长度表示投入度，边框、项目色标记与内容保持清晰，悬停可查看百分比。详情将说明图标、名称、评分与滑杆横向排列，点击百分比可按 10% 一档快速选择，悬停、聚焦或点击说明图标可查看含义与计算方式；统计按时长 × 投入度计算，关闭后恢复原始时长并保留评分。
 
 ### 改进
 - 任务编辑页统一标题层级、分组间距与内容对齐，收紧操作区并移除标题下的多余空白，手机端保持清晰的纵向排布，长标题在窗口缩放时稳定调整高度。
@@ -108,7 +108,7 @@
 ## 2026-10-09 · Planning and task navigation
 
 ### Added
-- Optional engagement ratings in Settings, off by default. Rate each completed execution from 10–100%, defaulting to 80%; only the background opacity changes, keeping borders, project markers, and content clear, with scores displayed only in details. Details arrange the info icon, label, rating, and slider in one row; click the percentage for quick choices in 10% increments, or hover, focus, or tap the icon for an explanation and calculation. Statistics weight duration by engagement; turning it off restores original durations and preserves ratings.
+- Optional engagement ratings in Settings, off by default. Rate each completed execution from 10–100% in ten steps, defaulting to 80%; the slider and quick choices share the same steps, with existing ratings rounded to the nearest step. Background opacity and a thin neutral bar show engagement while borders, project markers, and content stay clear; hover to see the percentage. Details arrange the info icon, label, rating, and slider in one row; click the percentage for quick choices in 10% increments, or hover, focus, or tap the icon for an explanation and calculation. Statistics weight duration by engagement; turning it off restores original durations and preserves ratings.
 
 ### Improvements
 - Task editing aligns title hierarchy, section spacing, and content edges with the workspace; compact actions and an auto-sized title remove excess whitespace while preserving a clear mobile layout and stable long-title resizing.

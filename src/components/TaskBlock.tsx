@@ -49,6 +49,7 @@ export function taskBlockStyle(options: TaskBlockStyleOptions): CSSProperties {
     "--task-block-density": options.density || "normal",
     ...options.style,
     ...(options.engagement === undefined ? {} : {
+      "--task-engagement": `${options.engagement}%`,
       backgroundColor: `color-mix(in srgb, var(--task-bg) ${options.engagement}%, transparent)`,
     }),
   } as CSSProperties;
@@ -119,7 +120,7 @@ export const TaskBlock = React.forwardRef<HTMLElement, TaskBlockProps>(function 
       className={className}
       style={style}
       role={props.role}
-      title={props.title}
+      title={props.title ?? (props.engagement === undefined ? undefined : `${props.engagement}%`)}
       type={props.type}
       tabIndex={props.tabIndex}
       draggable={props.draggable}

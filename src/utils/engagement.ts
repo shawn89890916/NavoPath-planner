@@ -4,7 +4,7 @@ export const DEFAULT_ENGAGEMENT = 80;
 
 export function normalizeEngagement(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value)
-    ? Math.round(Math.max(10, Math.min(100, value)))
+    ? Math.round(Math.max(10, Math.min(100, value)) / 10) * 10
     : DEFAULT_ENGAGEMENT;
 }
 
