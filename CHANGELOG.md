@@ -6,7 +6,7 @@
 - 设置中可开启投入度评分，默认关闭；已完成任务可按每次执行评 10–100%，默认 80%，时间轴仅调整背景不透明度，边框、项目色标记与内容保持清晰，评分仅在详情中显示。详情将说明图标、名称、评分与滑杆横向排列，点击百分比可按 10% 一档快速选择，悬停、聚焦或点击说明图标可查看含义与计算方式；统计按时长 × 投入度计算，关闭后恢复原始时长并保留评分。
 
 ### 改进
-- 任务编辑页统一标题层级、分组间距与内容对齐，收紧操作区并移除标题下的多余空白，手机端保持清晰的纵向排布。
+- 任务编辑页统一标题层级、分组间距与内容对齐，收紧操作区并移除标题下的多余空白，手机端保持清晰的纵向排布，长标题在窗口缩放时稳定调整高度。
 - 快速改期保留任务原来的开始时间与时长，包括跨午夜安排；“查看日程”切换至对应日期并定位到任务时间。
 - 任务详情“更多”菜单提供时间轴与规划位置跳转，仅显示有对应任务数据的入口；规划跳转自动展开项目并显示目标任务，跳转后沿目标任务自身外框与圆角短暂加粗高亮边框，不影响任务块布局。
 - 任务详情未完成与快速改期的悬停列表宽度贴近对应按钮，长选项自动换行。
@@ -111,7 +111,7 @@
 - Optional engagement ratings in Settings, off by default. Rate each completed execution from 10–100%, defaulting to 80%; only the background opacity changes, keeping borders, project markers, and content clear, with scores displayed only in details. Details arrange the info icon, label, rating, and slider in one row; click the percentage for quick choices in 10% increments, or hover, focus, or tap the icon for an explanation and calculation. Statistics weight duration by engagement; turning it off restores original durations and preserves ratings.
 
 ### Improvements
-- Task editing aligns title hierarchy, section spacing, and content edges with the workspace; compact actions and an auto-sized title remove excess whitespace while preserving a clear mobile layout.
+- Task editing aligns title hierarchy, section spacing, and content edges with the workspace; compact actions and an auto-sized title remove excess whitespace while preserving a clear mobile layout and stable long-title resizing.
 - Quick reschedule preserves the original start time and duration, including overnight schedules; View schedule opens the target date and scrolls to the task time.
 - The task detail More menu links to available timeline and Planning locations; Planning navigation expands the project and reveals the target task, briefly highlighting a thicker border along its own frame and corners without shifting its layout.
 - Task detail Incomplete and Quick reschedule hover lists stay close to their trigger widths, with longer options wrapping automatically.

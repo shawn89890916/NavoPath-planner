@@ -12324,13 +12324,15 @@ function EditDrawer(props: {
     };
     resize();
     let width = textarea.clientWidth;
+    let frame = 0;
     const observer = new ResizeObserver(() => {
       if (textarea.clientWidth === width) return;
       width = textarea.clientWidth;
-      resize();
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(resize);
     });
     observer.observe(textarea);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); cancelAnimationFrame(frame); };
   }, [f.title, props.task?.id]);
   function positionDetailPopover(trigger: HTMLButtonElement | null, width: number) {
     if (!trigger) return;
@@ -14274,7 +14276,7 @@ function UtilityPanel({ kind, settings, initialSection, compactLayout, data, aut
             {settingsTarget.category === "workflow" && <SettingSection anchor="engagement" title={lang === "zh" ? "投入度评分" : "Engagement rating"}>
               <SettingRow
                 title={lang === "zh" ? "启用投入度评分" : "Enable engagement rating"}
-                description={lang === "zh" ? "完成后评 10–100%，默认 80%。点击百分比快速选择；背景透明度和统计时长按评分计算，关闭恢复时长并保留评分。" : "Rate completed work 10–100%, default 80%. Click the percentage for quick choices. Rating controls background opacity and weights time; switching off restores time and keeps ratings."}
+                description={lang === "zh" ? "完成后评 10–100%，默认 80%。点击百分比快速选择；背景透明度和统计时长按评分计算。" : "Rate completed work 10–100%, default 80%. Click the percentage to choose. Rating controls background opacity and weights time."}
                 control={<SettingToggle checked={settings.featureEngagementEnabled === true} ariaLabel={lang === "zh" ? "启用投入度评分" : "Enable engagement rating"} onChange={(next) => onSave({ featureEngagementEnabled: next })} />}
               />
             </SettingSection>}
