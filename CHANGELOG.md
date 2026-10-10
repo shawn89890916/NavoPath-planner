@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-10 · 连接器功能入口
+
+### 新增
+- NavoPath 连接器支持查看任务详情、执行与计时记录、习惯每日完成记录，以及按任务、项目或执行开始日期查询投入度与加权时长。可保存用户提供的单次已完成执行评分，并使用审计、幂等和撤回；可切换投入度功能，关闭后保留评分。
+
 ## 2026-10-09 · 规划与任务定位
 
 ### 新增
@@ -105,6 +110,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-10 · Connector capabilities
+
+### Added
+- The NavoPath connector can read task details, execution and time entries, daily habit completion records, and engagement ratings with weighted durations filtered by task, project, or execution start date. Save user-supplied ratings for individual completed executions with audit, idempotency, and undo, and toggle Engagement while retaining saved ratings when disabled.
 
 ## 2026-10-09 · Planning and task navigation
 

@@ -1,3 +1,5 @@
+import { setEngagement } from "./engagement.ts";
+
 export type Json = Record<string, any>;
 
 export interface CloudAssistantEnv {
@@ -17,6 +19,7 @@ export type AssistantMessage = {
 export type TaskOperation =
   | { type: "create_task"; title: string; projectId?: string; dueDate?: string; date?: string; startTime?: string; durationMinutes?: number; notes?: string; reason?: string }
   | { type: "update_task"; taskId: string; patch: Json; reason?: string }
+  | { type: "set_engagement"; taskId: string; recordId?: string; engagement: number; reason?: string }
   | { type: "split_task"; taskId: string; subtasks: Array<{ title: string; estimateMinutes?: number }>; reason?: string }
   | { type: "reschedule_task"; taskId: string; date: string; startTime: string; durationMinutes: number; reason?: string }
   | { type: "upsert_schedule_block"; taskId: string; blockId?: string; date: string; startTime: string; durationMinutes: number; reason?: string };
@@ -339,6 +342,12 @@ export function normalizeTaskOperations(value: unknown): TaskOperation[] {
     }
     const taskId = cleanText(item.taskId, 200);
     if (!SAFE_ID.test(taskId)) continue;
+    if (item.type === "set_engagement") {
+      if (!Number.isInteger(item.engagement) || item.engagement < 10 || item.engagement > 100 || item.engagement % 10 !== 0) throw new Error("Engagement must be 10–100 in steps of 10");
+      if (item.recordId !== undefined && !SAFE_ID.test(item.recordId)) throw new Error("Invalid execution record ID");
+      operations.push({ type: "set_engagement", taskId, recordId: item.recordId, engagement: item.engagement, reason });
+      continue;
+    }
     if (item.type === "update_task" && item.patch && typeof item.patch === "object" && !Array.isArray(item.patch)) {
       const patch: Json = {};
       if (typeof item.patch.title === "string" && cleanText(item.patch.title, 300)) patch.title = cleanText(item.patch.title, 300);
@@ -398,6 +407,14 @@ export function previewTaskOperations(data: Json, input: unknown, options: { all
     const index = tasks.findIndex((task) => task.id === operation.taskId);
     if (index < 0) throw new Error(`Task not found: ${operation.taskId}`);
     const task = tasks[index];
+    if (operation.type === "set_engagement") {
+      const before = clone(task);
+      const updated = { ...task, ...setEngagement(task as Parameters<typeof setEngagement>[0], operation.engagement, operation.recordId), updatedAt: isoNow() };
+      tasks[index] = updated;
+      changes.push({ entity: "task", taskId: task.id, before, after: updated, reason: operation.reason || "User-rated engagement via MCP" });
+      inverseOperations.unshift({ type: "restore_task", taskId: task.id, task: before });
+      continue;
+    }
     if (operation.type === "update_task") {
       if (!options.allowProtected && hardDeadline(task) && operation.patch.dueDate && operation.patch.dueDate !== task.dueDate) {
         confirmationRequired.push({ operation, reason: "Moving a hard deadline requires confirmation." });

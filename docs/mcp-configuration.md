@@ -140,7 +140,11 @@ npx @modelcontextprotocol/inspector@latest
 - `get_workspace_summary`
 - `list_projects`
 - `list_tasks`
+- `get_task`：读取任务详情、独立执行记录和计时记录。
 - `list_calendar`
+- `list_engagement`：按任务、项目或执行开始日期查询已完成执行的投入度；返回评分、原始时长、加权投入时长与汇总，支持分页。跨午夜执行完整计入开始日期；这些时长来自安排或估时，不代表实际测得的专注时间。
+- `set_engagement`：保存用户提供的 10–100% 自评分，步长 10%；有执行记录时必须提供 `recordId`，只更新指定执行，支持审计、幂等和撤回。不会自行推断评分或开启功能。
+- `list_habits`：查看习惯和指定日期范围内的每日完成记录。
 - `get_settings`
 - `update_settings`
 - `create_project`
@@ -149,6 +153,15 @@ npx @modelcontextprotocol/inspector@latest
 - `delete_task`
 
 写入操作遵循网页端相同的 profile revision 约束。遇到 `PROFILE_REVISION_CONFLICT` 时，重新读取相关数据，再重试当前写入。
+
+### Engagement 示例
+
+- “查看最近一周的投入度和投入时长。”
+- “查看这项任务每次执行的评分，把昨天那次的投入度记为 70%。”
+- “开启投入度功能。”（通过 `update_settings` 设置 `featureEngagementEnabled: true`；关闭时保留评分。）
+- “列出今天的习惯完成记录。”
+
+新工具上线后，在 ChatGPT 的 NavoPath app 设置中刷新工具列表；若仍显示旧列表，重新连接以重新发现工具。现有 OAuth、设备令牌与同步路径保持兼容。
 
 ## 快速排错
 

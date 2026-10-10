@@ -5,6 +5,7 @@ import { fromSupabaseUrl, withOAuthProtectedResource, withSupabase } from "@supa
 import { z } from "zod";
 import { combineSyncSnapshot } from "./syncSnapshot";
 import { buildCalendarFeed } from "./calendarFeed";
+import { listEngagement } from "./engagement";
 import {
   batchUpdateTasks,
   confirmChange,
@@ -37,7 +38,7 @@ type AgentProps = { userId: string };
 const oauthSecuritySchemes = [{ type: "oauth2", scopes: ["email"] }];
 const oauthProtectedResourcePath = "/.well-known/oauth-protected-resource";
 
-const allowedSettings = ["language", "defaultTimelineView", "planningView", "theme", "typographyStyle", "executeAccentColor", "planningAccentColor", "hideCompleted", "taskNoteDisplay", "aiTone", "aiMemoryEnabled", "hideAi", "model", "reasoningMode"];
+const allowedSettings = ["language", "defaultTimelineView", "planningView", "theme", "typographyStyle", "executeAccentColor", "planningAccentColor", "hideCompleted", "taskNoteDisplay", "featureEngagementEnabled", "aiTone", "aiMemoryEnabled", "hideAi", "model", "reasoningMode"];
 const result = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] });
 const now = () => new Date().toISOString();
 const uid = (prefix: string) => `${prefix}_${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`;
@@ -217,12 +218,43 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return result(blocks);
     });
 
-    this.server.registerTool("get_settings", { description: "Read safe display, AI, and planning settings.", inputSchema: {} }, async () => {
-      const { settings } = await getProfile(this.env, this.userId());
-      return result(Object.fromEntries(allowedSettings.map((key) => [key, settings[key]])));
+    this.server.registerTool("get_task", { description: "Read one task's full details, individual execution records, and recorded timer/manual time entries. Use record IDs from this result when rating engagement.", annotations: { readOnlyHint: true, openWorldHint: false }, inputSchema: { taskId: z.string() } }, async ({ taskId }) => {
+      const { data } = await getProfile(this.env, this.userId());
+      const task = (data.tasks || []).find((item: Json) => item.id === taskId);
+      if (!task) throw new Error("Task not found");
+      return result({ task, timeEntries: (data.timeEntries || []).filter((entry: Json) => entry.taskId === taskId) });
     });
 
-    this.server.registerTool("update_settings", { description: "Update allowlisted settings.", inputSchema: { patch: z.record(z.string(), z.unknown()) } }, async ({ patch }) => {
+    this.server.registerTool("list_engagement", { description: "Read completed execution engagement ratings (10–100%, default 80%) and duration-weighted totals. Date filters select executions by their START date, including a full cross-midnight execution. Undated tasks are excluded when a date filter is supplied. Summary covers all matches, entries are paginated. These are scheduled/estimated durations, not measured focus. When disabled, statisticsMinutes uses raw duration and saved ratings are retained.", annotations: { readOnlyHint: true, openWorldHint: false }, inputSchema: {
+      taskId: z.string().optional(), projectId: z.string().optional(), from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), offset: z.number().int().nonnegative().default(0), limit: z.number().int().min(1).max(200).default(100),
+    } }, async (filters) => {
+      const { data, settings } = await getProfile(this.env, this.userId());
+      return result(listEngagement(data.tasks || [], settings.featureEngagementEnabled === true, filters));
+    });
+
+    this.server.registerTool("set_engagement", { description: "Save a USER-SUPPLIED self-rating for one completed execution: 10–100 in steps of 10. Never infer a rating from task content. recordId is required when the task has execution records; only that record changes. Does not enable Engagement automatically. Supports audit, idempotency and undo_change.", annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false }, inputSchema: {
+      taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), recordId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/).optional(), engagement: z.number().int().min(10).max(100).multipleOf(10), idempotency_key: z.string().min(8).max(240),
+    } }, async ({ taskId, recordId, engagement, idempotency_key }) => {
+      return result(await batchUpdateTasks(this.env, this.userId(), { operations: [{ type: "set_engagement", taskId, recordId, engagement }], dryRun: false, commit: true, idempotencyKey: idempotency_key, source: "mcp", summary: "Updated execution engagement" }));
+    });
+
+    this.server.registerTool("list_habits", { description: "Read habits and their saved daily completion records, without changing task or habit state. Date filters apply to dailyStates; habits without matching records remain visible. Archived habits are excluded by default.", annotations: { readOnlyHint: true, openWorldHint: false }, inputSchema: {
+      habitId: z.string().optional(), includeArchived: z.boolean().default(false), from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    } }, async ({ habitId, includeArchived, from, to }) => {
+      if (from && to && from > to) throw new Error("from must be on or before to");
+      const { data } = await getProfile(this.env, this.userId());
+      const habits = (data.habits || []).filter((habit: Json) => (!habitId || habit.id === habitId) && (includeArchived || !habit.archived)).sort((a: Json, b: Json) => (a.order || 0) - (b.order || 0));
+      const ids = new Set(habits.map((habit: Json) => habit.id));
+      return result({ habits, dailyStates: (data.habitDailyStates || []).filter((state: Json) => ids.has(state.habitId) && (!from || state.date >= from) && (!to || state.date <= to)) });
+    });
+
+    this.server.registerTool("get_settings", { description: "Read safe display, AI, planning, and Engagement feature settings.", inputSchema: {} }, async () => {
+      const { settings } = await getProfile(this.env, this.userId());
+      return result({ ...Object.fromEntries(allowedSettings.map((key) => [key, settings[key]])), featureEngagementEnabled: settings.featureEngagementEnabled === true });
+    });
+
+    this.server.registerTool("update_settings", { description: "Update allowlisted settings. Set featureEngagementEnabled to a boolean to enable/disable Engagement; disabling retains saved ratings.", inputSchema: { patch: z.record(z.string(), z.unknown()) } }, async ({ patch }) => {
+      if ("featureEngagementEnabled" in patch && typeof patch.featureEngagementEnabled !== "boolean") throw new Error("featureEngagementEnabled must be a boolean");
       const profile = await getProfile(this.env, this.userId());
       const safePatch = Object.fromEntries(Object.entries(patch).filter(([key]) => allowedSettings.includes(key)));
       const saved = await saveProfile(this.env, this.userId(), profile, { settings: { ...profile.settings, ...safePatch } });
@@ -276,7 +308,8 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
     });
 
     const batchOperation = z.object({
-      type: z.enum(["create_task", "update_task", "split_task", "reschedule_task", "upsert_schedule_block"]),
+      type: z.enum(["create_task", "update_task", "split_task", "reschedule_task", "upsert_schedule_block", "set_engagement"]),
+      recordId: z.string().optional(), engagement: z.number().int().min(10).max(100).multipleOf(10).optional(),
       taskId: z.string().optional(), blockId: z.string().optional(), title: z.string().optional(), projectId: z.string().nullable().optional(), dueDate: z.string().optional(), date: z.string().optional(), startTime: z.string().optional(), durationMinutes: z.number().optional(), notes: z.string().optional(), patch: z.record(z.string(), z.unknown()).optional(), subtasks: z.array(z.object({ title: z.string(), estimateMinutes: z.number().optional() })).optional(), reason: z.string().optional(),
     });
     this.server.registerTool("batch_update_tasks", { description: "Preview or atomically commit a validated batch of task changes. Every committed batch is idempotent, audited, and undoable.", inputSchema: { operations: z.array(batchOperation).min(1).max(30), dry_run: z.boolean(), commit: z.boolean(), idempotency_key: z.string().min(8).max(240), summary: z.string().max(1200).optional(), reason: z.string().max(1200).optional() } }, async ({ operations, dry_run, commit, idempotency_key, summary, reason }) => {
