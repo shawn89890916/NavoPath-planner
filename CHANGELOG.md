@@ -4,7 +4,7 @@
 
 ### 改进
 - 手机时间轴支持从任务块上滑动滚动；点按一次选中，再次点按打开短编辑栏，选中后可拖动左上角与右下角调整时间。长按任务后显示浮起反馈，支持的设备提供轻微震动，再拖动可移动任务。
-- 通知中心右上角增加一键清除，清除全部当前提醒。
+- 通知中心右上角增加一键清除，清除全部当前提醒；打开时收起底部导航与添加按钮，避免遮挡。
 
 ### 修复
 - 修复触摸悬停与项目标签干扰任务点按的问题；编辑短栏适应可见屏幕与软键盘，底部内容可滚动到达，向上拉起或点击更多进入完整编辑页。
@@ -124,7 +124,7 @@
 
 ### Improvements
 - Scroll the mobile timeline starting on task blocks. Tap once to select, tap again for the short editor, and drag the upper-left or lower-right corner to resize. Hold a task for raised feedback and a light vibration on supported devices, then drag to move it.
-- Added Clear all beside the notification center close button to dismiss all current reminders.
+- Added Clear all beside the notification center close button to dismiss all current reminders. The bottom navigation and add button hide while the center is open to keep messages unobstructed.
 
 ### Fixes
 - Fixed touch hover and project labels interfering with task taps. The short editor fits the visible screen and keyboard, keeps bottom content reachable by scrolling, and opens the full editor by swiping up or tapping More.
