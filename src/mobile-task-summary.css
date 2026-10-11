@@ -6,7 +6,20 @@
   #root .df-app .df-mobile-summary-head input:focus{border-bottom-color:var(--accent-active)!important;outline:0!important}
   #root .df-app .df-mobile-short-sheet-kind-wrap{display:block!important;width:max-content!important;margin:0 0 2px!important}
   #root .df-app .df-mobile-short-sheet-kind{min-height:36px!important;padding:0 26px 0 4px!important;border:0!important;background-color:transparent!important;color:var(--text-main)!important;font:750 13px/1 var(--paper-sans)!important}
-  #root .df-app .df-mobile-more{min-height:36px!important;padding:0 13px!important;border:1px solid var(--paper-rule-strong)!important;border-radius:18px!important;color:var(--accent-active)!important;background:var(--surface-raised)!important;font-weight:750!important;corner-shape:var(--corner-shape, squircle)}
+  #root .df-app .df-mobile-short-sheet .df-mobile-more {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 1px solid var(--paper-rule-strong);
+    border-radius: 50%;
+    color: var(--accent-active);
+    background: var(--surface-raised);
+    corner-shape: round;
+  }
   #root .df-app .df-mobile-summary-project{display:flex!important;align-items:center!important;gap:6px!important;min-width:0!important;margin:10px 0 8px!important;color:var(--text-muted)!important;font-size:12px!important}
   #root .df-app .df-mobile-summary-project select{min-width:0!important;flex:1!important;height:36px!important;padding:0 26px 0 4px!important;border:0!important;background:transparent!important;color:var(--text-main)!important;font-weight:700!important}
   #root .df-app .df-mobile-summary-times{display:grid!important;grid-template-columns:1fr auto 1fr!important;align-items:center!important;gap:7px!important}

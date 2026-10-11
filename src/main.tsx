@@ -12194,6 +12194,8 @@ function EditDrawer(props: {
   const projectTriggerRef = useRef<HTMLButtonElement>(null);
   const durationTriggerRef = useRef<HTMLButtonElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
+  const summaryExpanded = useRef(false);
+  const showMore = () => { summaryExpanded.current = true; props.onShowMore?.(); };
   const [notesOpen, setNotesOpen] = useState(false);
   const [notesEditing, setNotesEditing] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
@@ -12698,14 +12700,14 @@ function EditDrawer(props: {
       return (
         <>
           {dialog.host}
-          <Suspense fallback={null}><MobileTaskSummary engagementEnabled={props.engagementEnabled} lang={props.lang} task={props.task} form={f} setForm={props.setForm} projects={props.projects} record={activeRecord} occurrence={activeOccurrence} today={props.today} onClose={props.onClose} onMore={props.onShowMore} onIncomplete={() => { props.onShowMore?.(); setIncompleteMenuOpen(true); }} onUpdate={props.onTaskUpdate} /></Suspense>
+          <Suspense fallback={null}><MobileTaskSummary engagementEnabled={props.engagementEnabled} lang={props.lang} task={props.task} form={f} setForm={props.setForm} projects={props.projects} record={activeRecord} occurrence={activeOccurrence} today={props.today} onClose={props.onClose} onMore={showMore} onIncomplete={() => { showMore(); setIncompleteMenuOpen(true); }} onUpdate={props.onTaskUpdate} /></Suspense>
         </>
       );
     }
     return (
       <>
       {dialog.host}
-      <aside className="df-drawer df-task-detail" onMouseDown={(event) => event.stopPropagation()}>
+      <aside className={`df-drawer df-task-detail${summaryExpanded.current ? " is-expanded-from-summary" : ""}`} onMouseDown={(event) => event.stopPropagation()}>
         <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
         {/* ── Hero title area ── */}
         <section className="df-detail-hero-trevor">

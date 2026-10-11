@@ -7,7 +7,7 @@
 - 通知中心右上角增加一键清除，清除全部当前提醒；打开时收起底部导航与添加按钮，避免遮挡。
 
 ### 修复
-- 修复触摸悬停与项目标签干扰任务点按的问题；编辑短栏适应可见屏幕与软键盘，底部内容可滚动到达，向上拉起或点击更多进入完整编辑页。
+- 修复触摸悬停与项目标签干扰任务点按的问题；编辑短栏适应可见屏幕与软键盘，底部内容可滚动到达。“更多”圆形按钮图标居中，向上拉起或点击更多时，轻微展开进入完整编辑页；减少动态效果时直接展开。
 
 ## 2026-10-10 · 连接器功能入口
 
@@ -127,7 +127,7 @@
 - Added Clear all beside the notification center close button to dismiss all current reminders. The bottom navigation and add button hide while the center is open to keep messages unobstructed.
 
 ### Fixes
-- Fixed touch hover and project labels interfering with task taps. The short editor fits the visible screen and keyboard, keeps bottom content reachable by scrolling, and opens the full editor by swiping up or tapping More.
+- Fixed touch hover and project labels interfering with task taps. The short editor fits the visible screen and keyboard and keeps bottom content reachable by scrolling. The circular More button centers its icon; swiping up or tapping More opens the full editor with a subtle expansion, or immediately when reduced motion is enabled.
 
 ## 2026-10-10 · Connector capabilities
 
