@@ -17502,13 +17502,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 
 
-  .df-mobile-add {
-
-    width: 48px;
-
-    height: 48px;
-
-  }
 
 }
 
@@ -17944,11 +17937,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 
 }
 
-.df-app.theme-dark .df-mobile-add {
-
-  color: var(--text-main);
-
-}
 
 .df-app.theme-dark .df-subtask-title {
 
@@ -34483,49 +34471,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 
 
-  .df-mobile-add svg {
-
-    width: 20px;
-
-    height: 20px;
-
-    fill: none;
-
-    stroke: currentColor;
-
-    stroke-width: 1.8;
-
-    stroke-linecap: round;
-
-    stroke-linejoin: round;
-
-  }
 
 
 
-  .df-mobile-add {
-
-    width: 52px;
-
-    height: 52px;
-
-    display: grid;
-
-    place-items: center;
-
-    border: 0;
-
-    border-radius: 999px;
-
-    background: color-mix(in srgb, var(--accent-active) 8%, var(--surface-main));
-
-    color: var(--text-main);
-
-    box-shadow: 0 2px 8px color-mix(in srgb, var(--text-main) 12%, transparent);
-
-    corner-shape: var(--corner-shape, squircle);
-
-  }
 
 
 
@@ -34779,12 +34727,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: transparent;
   }
 
-  #root .df-app .df-mobile-add {
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    box-shadow: none;
-  }
 
   #root .df-app .df-date-title-compact {
     padding: 5px 0;
@@ -35228,11 +35170,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     z-index: 1;
   }
 
-  #root .df-app.mode-execute:has(.df-empty) .df-mobile-add {
-    color: var(--text-main);
-    background: var(--surface-main);
-    box-shadow: inset 0 -2px 0 var(--accent-active);
-  }
 
   #root .df-app .df-candidate-return-hint {
     display: flex;

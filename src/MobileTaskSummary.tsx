@@ -3,7 +3,7 @@ import { Fragment, useEffect, useRef, useState, type CSSProperties, type Dispatc
 import type { Category, Language, NullablePriority, Priority, Project, Subtask, Task, TaskRecurrence, TimelineRecord } from "./types";
 import { clockTimeSpanMinutes, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { toggleSubtaskInTree } from "./utils/treeOrder";
-import { CloseButton, IconButton } from "./components/UiPrimitives";
+import { Button, CloseButton, IconButton } from "./components/UiPrimitives";
 import { UiDockSidebarIcon } from "./components/UiIcons";
 import "./mobile-task-summary.css";
 
@@ -108,7 +108,7 @@ export function MobileQuickAddSheet(props: {
     {props.kind === "task" && <label className="df-mobile-summary-project"><span className="df-detail-project-dot" style={{ background: project?.color || "#888" }} /><span>{zh ? "归属" : "Project"}</span><select value={props.projectId} onChange={(event) => props.onProjectChange(event.target.value)}><option value="">{zh ? "未归属" : "Unassigned"}</option>{props.projects.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>}
     {props.kind === "project" && <label className="df-mobile-short-sheet-field"><span>{zh ? "颜色" : "Color"}</span><input type="color" value={props.projectColor} onChange={(event) => props.onProjectColorChange(event.target.value)} /></label>}
     {props.kind === "habit" && <label className="df-mobile-short-sheet-field"><span>{zh ? "默认时长" : "Default duration"}</span><input type="number" min={5} max={480} step={5} value={props.habitMinutes} onChange={(event) => props.onHabitMinutesChange(Math.max(5, Math.min(480, Number(event.target.value) || 20)))} /><strong>min</strong></label>}
-    <div className="df-mobile-summary-actions"><button type="button" className="df-mobile-add-subtask" disabled={!props.title.trim()} onClick={props.onSubmit}>{zh ? "添加" : "Add"}</button></div>
+    <div className="df-mobile-summary-actions"><Button disabled={!props.title.trim()} onClick={props.onSubmit}>{zh ? "添加" : "Add"}</Button></div>
   </MobileShortSheet>;
 }
 
@@ -131,8 +131,8 @@ export function MobileTimelineDraftSheet(props: {
     <label className="df-mobile-summary-project df-timeline-draft-project"><span className="df-detail-project-dot" style={{ background: project?.color || "#888" }} /><span>{zh ? "归属" : "Project"}</span><select value={props.projectId} onChange={(event) => props.onProjectChange(event.target.value)}><option value="">{zh ? "未归属" : "Unassigned"}</option>{props.projects.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
     <div className="df-mobile-summary-times df-timeline-draft-times">{(["start", "end"] as const).map((edge, index) => <Fragment key={edge}>{index > 0 && <span aria-hidden="true">→</span>}<label><span>{edge === "start" ? (zh ? "开始" : "Start") : (zh ? "结束" : "End")}</span><select aria-label={edge === "start" ? (zh ? "开始时间" : "Start time") : (zh ? "结束时间" : "End time")} value={toTime(props[`${edge}Minutes`])} onChange={(event) => { const [hours, minutes] = event.target.value.split(":").map(Number); props.onRangeChange(edge, hours * 60 + minutes); }}>{timeOptions.map((time) => <option key={time}>{time}</option>)}</select></label></Fragment>)}</div>
     <time className="df-timeline-draft-date" dateTime={props.date}>{dateLabel} · {durationLabel}</time>
-    <div className="df-mobile-summary-actions"><button type="button" className="df-mobile-add-subtask" onClick={props.onStartSubtask}>＋ {zh ? "添加子任务" : "Add subtask"}</button><button type="button" className="df-mobile-submit" disabled={!props.title.trim()} onClick={props.onSubmit}>{zh ? "添加" : "Add"}</button></div>
-    {props.addingSubtask && <div className="df-mobile-summary-subtask-add"><input autoFocus value={props.subtaskTitle} onChange={(event) => props.onSubtaskTitleChange(event.target.value)} placeholder={zh ? "输入子任务名称" : "Subtask title"} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); props.onAddSubtask(); } if (event.key === "Escape") props.onCancelSubtask(); }} /><button type="button" disabled={!props.subtaskTitle.trim()} onClick={props.onAddSubtask}>{zh ? "添加" : "Add"}</button></div>}
+    <div className="df-mobile-summary-actions"><Button onClick={props.onStartSubtask}>＋ {zh ? "添加子任务" : "Add subtask"}</Button><Button disabled={!props.title.trim()} onClick={props.onSubmit}>{zh ? "添加" : "Add"}</Button></div>
+    {props.addingSubtask && <div className="df-mobile-summary-subtask-add"><input autoFocus value={props.subtaskTitle} onChange={(event) => props.onSubtaskTitleChange(event.target.value)} placeholder={zh ? "输入子任务名称" : "Subtask title"} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); props.onAddSubtask(); } if (event.key === "Escape") props.onCancelSubtask(); }} /><Button disabled={!props.subtaskTitle.trim()} onClick={props.onAddSubtask}>{zh ? "添加" : "Add"}</Button></div>}
     {props.subtasks.length > 0 && <section className="df-mobile-summary-subtasks"><header><b>{zh ? "子任务" : "Subtasks"}</b><span>{props.subtasks.length}</span></header><div className="df-mobile-summary-subtask-list">{props.subtasks.map((subtask) => <label key={subtask.id}><input type="checkbox" checked={false} readOnly /><span>{subtask.title}</span></label>)}</div></section>}
   </MobileShortSheet>;
 }
@@ -213,13 +213,13 @@ export default function MobileTaskSummary(props: {
       <label><span>{zh ? "结束" : "End"}</span><select aria-label={zh ? "结束时间" : "End time"} value={endTime} onChange={(event) => commitTime("end", event.target.value)}><option value="">--:--</option>{timeOptions.map((time) => <option key={time}>{time}</option>)}</select></label>
     </div>
     <div className="df-mobile-summary-actions df-mobile-summary-status-actions">
-      <button type="button" className="df-mobile-add-subtask" onClick={() => setAddingSubtask(true)}>＋ {zh ? "添加子任务" : "Add subtask"}</button>
-      <button type="button" aria-pressed={props.task.completed} className={props.task.completed ? "active" : ""} onClick={() => props.onUpdate(props.task.id, { completed: true })}>✓ {zh ? "完成" : "Complete"}</button>
-      <button type="button" aria-pressed={!props.task.completed} className={!props.task.completed ? "active" : ""} onClick={() => props.onIncomplete ? props.onIncomplete() : props.onUpdate(props.task.id, { completed: false })}>↩ {zh ? "未完成" : "Incomplete"}</button>
+      <Button onClick={() => setAddingSubtask(true)}>＋ {zh ? "添加子任务" : "Add subtask"}</Button>
+      <Button aria-pressed={props.task.completed} onClick={() => props.onUpdate(props.task.id, { completed: true })}>✓ {zh ? "完成" : "Complete"}</Button>
+      <Button aria-pressed={!props.task.completed} onClick={() => props.onIncomplete ? props.onIncomplete() : props.onUpdate(props.task.id, { completed: false })}>↩ {zh ? "未完成" : "Incomplete"}</Button>
     </div>
     {addingSubtask && <form className="df-mobile-summary-subtask-add" onSubmit={(event) => { event.preventDefault(); addSubtask(); }}>
       <input autoFocus value={subtaskTitle} onChange={(event) => setSubtaskTitle(event.target.value)} placeholder={zh ? "输入子任务名称" : "Subtask title"} onKeyDown={(event) => { if (event.key === "Escape") { setAddingSubtask(false); setSubtaskTitle(""); } }} />
-      <button type="submit" disabled={!subtaskTitle.trim()}>{zh ? "添加" : "Add"}</button>
+      <Button type="submit" disabled={!subtaskTitle.trim()}>{zh ? "添加" : "Add"}</Button>
     </form>}
     {subtasks.length > 0 && <section className="df-mobile-summary-subtasks" aria-label={zh ? "子任务" : "Subtasks"}><header><b>{zh ? "子任务" : "Subtasks"}</b><span>{subtasks.filter(({ item }) => item.completed || item.done).length}/{subtasks.length}</span></header><div className="df-mobile-summary-subtask-list">{subtasks.map(({ item, depth }) => <label key={item.id} style={{ "--subtask-depth": depth } as CSSProperties}><input type="checkbox" checked={Boolean(item.completed || item.done)} onChange={() => props.onUpdate(props.task.id, { subtasks: toggleSubtaskInTree(props.task.subtasks || [], item.id) })} /><span>{item.title}</span></label>)}</div></section>}
   </MobileShortSheet>;

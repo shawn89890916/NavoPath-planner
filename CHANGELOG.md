@@ -7,7 +7,7 @@
 - 通知中心右上角增加一键清除，清除全部当前提醒；打开时收起底部导航与添加按钮，避免遮挡。
 
 ### 修复
-- 修复触摸悬停与项目标签干扰任务点按的问题；编辑短栏适应可见屏幕与软键盘，底部内容可滚动到达。短栏进一步收紧，展开与关闭按钮同行对齐，展开图标沿用 AI 栏样式；向上拉起或点击展开时，面板从短栏实际高度向上展开为完整编辑页，减少动态效果时直接展开。
+- 修复触摸悬停与项目标签干扰任务点按的问题；编辑短栏适应可见屏幕与软键盘，底部内容可滚动到达。短栏进一步收紧，展开与关闭按钮同行对齐，展开图标沿用 AI 栏样式；向上拉起或点击展开时，面板从短栏实际高度向上展开为完整编辑页，减少动态效果时直接展开。短栏操作按钮统一细描边、透明底色与字重，完成和未完成状态不再加深颜色或叠加粗描边。
 
 ## 2026-10-10 · 连接器功能入口
 
@@ -127,7 +127,7 @@
 - Added Clear all beside the notification center close button to dismiss all current reminders. The bottom navigation and add button hide while the center is open to keep messages unobstructed.
 
 ### Fixes
-- Fixed touch hover and project labels interfering with task taps. The short editor fits the visible screen and keyboard and keeps bottom content reachable by scrolling. The shorter sheet aligns Expand and Close in one row and reuses the AI panel's expand icon. Swiping up or tapping Expand grows the panel upward from the sheet's actual height into the full editor, or opens it immediately when reduced motion is enabled.
+- Fixed touch hover and project labels interfering with task taps. The short editor fits the visible screen and keyboard and keeps bottom content reachable by scrolling. The shorter sheet aligns Expand and Close in one row and reuses the AI panel's expand icon. Swiping up or tapping Expand grows the panel upward from the sheet's actual height into the full editor, or opens it immediately when reduced motion is enabled. Short-sheet action buttons share thin outlines, transparent backgrounds, and consistent font weight; Complete and Incomplete no longer darken or gain a heavy outline when selected.
 
 ## 2026-10-10 · Connector capabilities
 
