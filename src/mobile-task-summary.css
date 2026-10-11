@@ -1,5 +1,4 @@
 @media (max-width:899.98px) and (orientation:portrait) {
-  #root .df-app .df-task-detail.df-drawer.df-mobile-task-summary{inset:auto 0 0!important;height:auto!important;min-height:0!important;max-height:calc(100dvh - 70px)!important;display:block!important;gap:0!important;padding:14px 14px calc(14px + env(safe-area-inset-bottom))!important;overflow-y:auto!important}
   #root .df-app .df-mobile-sheet-grabber{display:block!important;width:76px!important;height:24px!important;margin:-10px auto 2px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;touch-action:none!important}
   #root .df-app .df-mobile-sheet-grabber::before{content:""!important;display:block!important;width:38px!important;height:4px!important;margin:auto!important;border-radius:9px!important;background:var(--paper-rule-strong)!important;corner-shape:var(--corner-shape, squircle)}
   #root .df-app .df-mobile-summary-head{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;padding-right:52px!important}

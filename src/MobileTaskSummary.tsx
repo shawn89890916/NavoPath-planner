@@ -49,53 +49,44 @@ export function MobileShortSheet(props: {
   const locale = props.lang === "zh" ? sheetLabels.zh : sheetLabels.en;
   const kind = props.kind || "task";
   const kinds = props.kinds || ["task", "project", "habit"];
-  const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
   const gestureRef = useRef<{ pointerId: number; startY: number; panel: HTMLElement } | null>(null);
   useEffect(() => {
-    if (!props.autoFocus) return;
-    const input = inputRef.current;
-    const panel = input?.closest<HTMLElement>(".df-mobile-short-sheet");
-    if (!input || !panel) return;
-    let frame = 0;
+    const panel = panelRef.current;
+    if (!panel) return;
     const align = () => {
-      cancelAnimationFrame(frame);
-      panel.style.removeProperty("--mobile-keyboard-lift");
-      frame = requestAnimationFrame(() => {
       const viewport = window.visualViewport;
-        const visibleBottom = (viewport?.offsetTop || 0) + (viewport?.height || document.documentElement.clientHeight);
-        const lift = Math.max(0, input.getBoundingClientRect().bottom + 16 - visibleBottom);
-        panel.style.setProperty("--mobile-keyboard-lift", `${lift}px`);
-      });
+      const height = viewport?.height || window.innerHeight;
+      const bottom = Math.max(0, window.innerHeight - height - (viewport?.offsetTop || 0));
+      panel.style.setProperty("--mobile-viewport-bottom", `${bottom}px`);
+      panel.style.setProperty("--mobile-viewport-height", `${height}px`);
     };
     align();
     window.visualViewport?.addEventListener("resize", align);
     window.visualViewport?.addEventListener("scroll", align);
     window.addEventListener("resize", align);
-    input.addEventListener("focus", align);
     return () => {
-      cancelAnimationFrame(frame);
-      panel.style.removeProperty("--mobile-keyboard-lift");
       window.visualViewport?.removeEventListener("resize", align);
       window.visualViewport?.removeEventListener("scroll", align);
       window.removeEventListener("resize", align);
-      input.removeEventListener("focus", align);
     };
-  }, [props.autoFocus]);
+  }, []);
   const finishGesture = (event: React.PointerEvent<HTMLButtonElement>) => {
     const gesture = gestureRef.current;
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     gestureRef.current = null;
     gesture.panel.classList.remove("is-sheet-dragging");
     gesture.panel.style.removeProperty("--mobile-sheet-drag-y");
+    if (event.type === "pointercancel") return;
     const distance = event.clientY - gesture.startY;
     if (distance > 72 && props.swipeDownToClose) (props.onSwipeDown || props.onClose)();
     else if (distance < -54 && props.swipeUpForMore && props.onMore && !props.moreDisabled) props.onMore();
   };
-  return <aside className={`df-drawer df-task-detail df-mobile-task-summary df-mobile-short-sheet${props.className ? ` ${props.className}` : ""}`} onMouseDown={(event) => event.stopPropagation()}>
+  return <aside ref={panelRef} className={`df-drawer df-task-detail df-mobile-task-summary df-mobile-short-sheet${props.className ? ` ${props.className}` : ""}`} onMouseDown={(event) => event.stopPropagation()}>
     <CloseButton className="df-detail-close" type="button" label={locale.close} onClick={props.onClose} />
     <button type="button" className="df-mobile-sheet-grabber" aria-label={props.lang === "zh" ? "上下滑动短栏" : "Swipe sheet"} onPointerDown={(event) => { if (event.pointerType === "mouse" && event.button !== 0) return; const panel = event.currentTarget.parentElement; if (!panel) return; event.currentTarget.setPointerCapture(event.pointerId); panel.classList.add("is-sheet-dragging"); gestureRef.current = { pointerId: event.pointerId, startY: event.clientY, panel }; }} onPointerMove={(event) => { const gesture = gestureRef.current; if (!gesture || gesture.pointerId !== event.pointerId) return; const distance = event.clientY - gesture.startY; gesture.panel.style.setProperty("--mobile-sheet-drag-y", `${Math.max(-24, distance)}px`); }} onPointerUp={finishGesture} onPointerCancel={finishGesture} />
     {props.showKind && <label className="df-mobile-short-sheet-kind-wrap"><span className="df-visually-hidden">{locale.choose}</span><select className="df-mobile-short-sheet-kind" value={kind} aria-label={locale.choose} onChange={(event) => props.onKindChange?.(event.target.value as MobileShortSheetKind)}>{kinds.map((option) => <option key={option} value={option}>{locale[option]}</option>)}</select></label>}
-    <div className="df-mobile-summary-head"><input ref={inputRef} autoFocus={props.autoFocus} value={props.title} aria-label={props.titleLabel || (props.lang === "zh" ? "名称" : "Title")} placeholder={props.titlePlaceholder} onChange={(event) => props.onTitleChange(event.target.value)} onBlur={(event) => props.onTitleBlur?.(event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); props.onTitleEnter?.(); } }} />{props.onMore && <IconButton className="df-mobile-more" icon={<UiMoreIcon />} label={locale.more} disabled={props.moreDisabled} onClick={props.onMore} />}</div>
+    <div className="df-mobile-summary-head"><input autoFocus={props.autoFocus} value={props.title} aria-label={props.titleLabel || (props.lang === "zh" ? "名称" : "Title")} placeholder={props.titlePlaceholder} onChange={(event) => props.onTitleChange(event.target.value)} onBlur={(event) => props.onTitleBlur?.(event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); props.onTitleEnter?.(); } }} />{props.onMore && <IconButton className="df-mobile-more" icon={<UiMoreIcon />} label={locale.more} disabled={props.moreDisabled} onClick={props.onMore} />}</div>
     {props.children}
   </aside>;
 }

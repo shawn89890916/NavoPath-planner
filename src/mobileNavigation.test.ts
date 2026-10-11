@@ -8,7 +8,7 @@ describe("portrait mobile navigation", () => {
   it("keeps the quick-add FAB available across compact Execute and Planning views", () => {
     expect(mainSource).toContain('className="df-mobile-dock-action df-mobile-ai"');
     expect(mainSource).toContain('className="df-mobile-quick-add-fab"');
-    expect(mainSource).toContain("{!productPresentation && compactLayout && !drawerOpen && !utilityPanel && !aiOpen && createPortal(<button");
+    expect(mainSource).toContain("{!productPresentation && compactLayout && !drawerOpen && !notificationCenterOpen && !utilityPanel && !aiOpen && createPortal(<button");
     expect(mobileStyles).toContain("bottom: calc(72px + env(safe-area-inset-bottom));");
     expect(mainSource).not.toContain("df-candidate-quick-add-top");
     expect(mobileStyles).toContain("max-height: calc(100dvh - 4dvh);");

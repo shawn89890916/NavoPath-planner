@@ -34181,11 +34181,17 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
 
 
-  .df-time-block.is-drag-armed {
+  #root .df-app .df-time-block {
+    touch-action: pan-y;
+  }
+
+  .df-time-block[data-touch-drag-armed="true"] {
 
     outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
 
     outline-offset: 2px;
+    translate: 0 -3px;
+    box-shadow: var(--paper-float-shadow);
 
   }
 
@@ -34651,7 +34657,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: var(--surface-main);
     box-shadow: none;
     box-sizing: border-box;
-    transform: translateZ(0);
+    transform: none;
   }
 
   html.is-native-ios #root .df-app {
@@ -35916,29 +35922,33 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app .df-time-block .df-resize-dot {
-    width: 28px;
-    height: 28px;
+    width: 44px;
+    height: 44px;
     min-width: 0;
     min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
     transform: none;
     opacity: 0;
-    z-index: 6;
+    z-index: 11;
     touch-action: none;
     pointer-events:none;
   }
 
   #root .df-app .df-time-block .df-resize-dot.top {
-    left: -2px;
+    left: -22px;
     right: auto;
-    top: -14px;
+    top: -22px;
     bottom: auto;
   }
 
   #root .df-app .df-time-block .df-resize-dot.bottom {
     left: auto;
-    right: -2px;
+    right: -22px;
     top: auto;
-    bottom: -14px;
+    bottom: -22px;
   }
 
   #root .df-app .df-time-block .df-resize-dot::before {
@@ -36017,16 +36027,18 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
   #root .df-app .df-task-detail.df-drawer.df-mobile-short-sheet {
     position: fixed;
-    inset: auto 0 0;
+    inset: auto 0 var(--mobile-viewport-bottom, 0px);
     width: auto;
     max-width: none;
     height: auto;
     min-height: 0;
-    max-height: min(62dvh, 520px);
+    max-height: min(62dvh, 520px, calc(var(--mobile-viewport-height, 100dvh) - 16px));
+    display: block;
+    gap: 0;
     padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
     border-radius: 18px 18px 0 0;
     overflow-y: auto;
-    transform:translateY(calc(var(--mobile-sheet-drag-y, 0px) - var(--mobile-keyboard-lift, 0px)));
+    transform:translateY(var(--mobile-sheet-drag-y, 0px));
     transition:transform 180ms cubic-bezier(.22,.72,.2,1);
     corner-shape: var(--corner-shape, squircle);
   }
@@ -36034,7 +36046,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-task-detail.df-drawer.df-mobile-short-sheet.is-sheet-dragging{transition:none}
 
   #root .df-app .df-task-detail.df-drawer.df-mobile-quick-add-sheet {
-    bottom: calc(56px + env(safe-area-inset-bottom));
+    bottom: calc(56px + env(safe-area-inset-bottom) + var(--mobile-viewport-bottom, 0px));
     padding-bottom: 14px;
   }
 

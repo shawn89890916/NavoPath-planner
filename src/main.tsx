@@ -6137,12 +6137,20 @@ if (cached?.data && cached?.settings) {
     let holdReady = !compactLayout || event.pointerType !== "touch";
     const holdTimer = holdReady ? undefined : window.setTimeout(() => {
       holdReady = true;
-      target.classList.add("is-drag-armed");
+      revealResizeHandles(resolveTimelineRecordId(task.id));
+      target.dataset.touchDragArmed = "true";
       window.navigator.vibrate?.(8);
     }, 320);
+    // Keep native scrolling until the hold is armed. Changing touch-action
+    // mid-gesture cannot prevent the browser from cancelling pointer events.
+    const holdTouch = (touchEvent: TouchEvent) => {
+      if (holdReady && !holdCancelled && touchEvent.touches.length === 1) touchEvent.preventDefault();
+    };
+    target.addEventListener("touchmove", holdTouch, { passive: false });
     const clearHold = () => {
       if (holdTimer !== undefined) window.clearTimeout(holdTimer);
-      target.classList.remove("is-drag-armed");
+      delete target.dataset.touchDragArmed;
+      target.removeEventListener("touchmove", holdTouch);
     };
     const jumpDate = (tap: PointerEvent) => {
       if (!active || tap.pointerId === pointerId) return;
@@ -6170,7 +6178,8 @@ if (cached?.data && cached?.settings) {
       if (!active) {
         moveEvent.preventDefault();
         active = true;
-        clearHold();
+        if (holdTimer !== undefined) window.clearTimeout(holdTimer);
+        delete target.dataset.touchDragArmed;
         target.classList.add("is-dragging");
         target.classList.add("is-dragging-source");
         document.body.classList.add("df-timeline-pointer-drag");
@@ -6292,7 +6301,7 @@ if (cached?.data && cached?.settings) {
       target.classList.remove("is-dragging");
       target.classList.remove("is-dragging-source");
       document.body.classList.remove("df-timeline-pointer-drag");
-      if (active) suppressClickAfterDrag();
+      if (active || (holdTimer !== undefined && holdReady && !holdCancelled)) suppressClickAfterDrag();
     };
     const cancel = (cancelEvent: PointerEvent) => {
       if (cancelEvent.pointerId !== pointerId) return;
@@ -10188,7 +10197,7 @@ if (cached?.data && cached?.settings) {
         />
       )}
 
-      {!productAiPresentation && compactLayout && !drawerOpen && utilityPanel !== "settings" && (
+      {!productAiPresentation && compactLayout && !drawerOpen && !notificationCenterOpen && utilityPanel !== "settings" && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, mode)} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {!productPresentation && !settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
@@ -10203,7 +10212,7 @@ if (cached?.data && cached?.settings) {
 
       {!productPresentation && !compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
       {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
-      {!productPresentation && compactLayout && !drawerOpen && !utilityPanel && !aiOpen && createPortal(<button
+      {!productPresentation && compactLayout && !drawerOpen && !notificationCenterOpen && !utilityPanel && !aiOpen && createPortal(<button
         type="button"
         className="df-mobile-quick-add-fab"
         style={themeVars(settings, mode)}

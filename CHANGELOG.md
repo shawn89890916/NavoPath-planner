@@ -1,5 +1,14 @@
 # NavoPath 更新日志
 
+## 2026-10-11 · 竖屏时间轴交互
+
+### 改进
+- 手机时间轴支持从任务块上滑动滚动；点按一次选中，再次点按打开短编辑栏，选中后可拖动左上角与右下角调整时间。长按任务后显示浮起反馈，支持的设备提供轻微震动，再拖动可移动任务。
+- 通知中心右上角增加一键清除，清除全部当前提醒。
+
+### 修复
+- 修复触摸悬停与项目标签干扰任务点按的问题；编辑短栏适应可见屏幕与软键盘，底部内容可滚动到达，向上拉起或点击更多进入完整编辑页。
+
 ## 2026-10-10 · 连接器功能入口
 
 ### 新增
@@ -110,6 +119,15 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-11 · Portrait timeline interactions
+
+### Improvements
+- Scroll the mobile timeline starting on task blocks. Tap once to select, tap again for the short editor, and drag the upper-left or lower-right corner to resize. Hold a task for raised feedback and a light vibration on supported devices, then drag to move it.
+- Added Clear all beside the notification center close button to dismiss all current reminders.
+
+### Fixes
+- Fixed touch hover and project labels interfering with task taps. The short editor fits the visible screen and keyboard, keeps bottom content reachable by scrolling, and opens the full editor by swiping up or tapping More.
 
 ## 2026-10-10 · Connector capabilities
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Language, PlannerData } from "../types";
 import { recordGapActivity, type ProactiveNotification } from "../proactiveAssistant";
-import { CloseButton } from "./UiPrimitives";
+import { Button, CloseButton } from "./UiPrimitives";
 import "./ProactiveNotificationCenter.css";
 
 export function ProactiveNotificationCenter({
@@ -48,7 +48,10 @@ export function ProactiveNotificationCenter({
     <section className="df-proactive-center" role="dialog" aria-modal="true" aria-labelledby="df-proactive-center-title" onMouseDown={(event) => event.stopPropagation()}>
       <header className="df-proactive-center-head">
         <div><strong id="df-proactive-center-title">{lang === "zh" ? "主动助理" : "Proactive assistant"}</strong><small>{lang === "zh" ? `${notifications.length} 条待处理提醒` : `${notifications.length} pending message${notifications.length === 1 ? "" : "s"}`}</small></div>
-        <CloseButton className="df-proactive-center-close" onClick={onClose} label={lang === "zh" ? "关闭通知中心" : "Close notifications"} />
+        <span className="df-proactive-center-head-actions">
+          <Button variant="ghost" disabled={notifications.length === 0} onClick={() => notifications.forEach(onDismiss)}>{lang === "zh" ? "一键清除" : "Clear all"}</Button>
+          <CloseButton className="df-proactive-center-close" onClick={onClose} label={lang === "zh" ? "关闭通知中心" : "Close notifications"} />
+        </span>
       </header>
       <div className="df-proactive-center-list">
         {notifications.length === 0 && <p className="df-proactive-center-empty">{lang === "zh" ? "目前没有新的提醒。" : "No new messages."}</p>}
