@@ -36026,13 +36026,12 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 
   #root .df-app .df-task-detail.df-drawer.is-expanded-from-summary {
-    transform-origin: center bottom;
-    animation: mobile-task-detail-expand 180ms cubic-bezier(.22, .72, .2, 1);
+    animation: mobile-task-detail-expand 300ms cubic-bezier(.2, 0, .2, 1);
   }
 
   @keyframes mobile-task-detail-expand {
-    from { opacity: .7; transform: translateY(18px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { inset: var(--mobile-sheet-start-inset); }
+    to { inset: 4dvh 0 0; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -36049,7 +36048,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     max-height: min(62dvh, 520px, calc(var(--mobile-viewport-height, 100dvh) - 16px));
     display: block;
     gap: 0;
-    padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+    padding: 24px 12px calc(10px + env(safe-area-inset-bottom));
     border-radius: 18px 18px 0 0;
     overflow-y: auto;
     transform:translateY(var(--mobile-sheet-drag-y, 0px));

@@ -4,14 +4,14 @@ import type { Category, Language, NullablePriority, Priority, Project, Subtask, 
 import { clockTimeSpanMinutes, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { toggleSubtaskInTree } from "./utils/treeOrder";
 import { CloseButton, IconButton } from "./components/UiPrimitives";
-import { UiMoreIcon } from "./components/UiIcons";
+import { UiDockSidebarIcon } from "./components/UiIcons";
 import "./mobile-task-summary.css";
 
 export type MobileShortSheetKind = "task" | "project" | "habit";
 type QuickProject = { id: string; title: string; color?: string };
 const sheetLabels = {
-  zh: { task: "新任务", project: "新项目", habit: "新习惯", more: "更多", close: "关闭", choose: "选择添加类型" },
-  en: { task: "New task", project: "New project", habit: "New habit", more: "More", close: "Close", choose: "Choose what to add" },
+  zh: { task: "新任务", project: "新项目", habit: "新习惯", more: "展开", close: "关闭", choose: "选择添加类型" },
+  en: { task: "New task", project: "New project", habit: "New habit", more: "Expand", close: "Close", choose: "Choose what to add" },
 } as const;
 
 export function beginVerticalResize(event: PointerEvent, stepHeight: number, onDelta: (steps: number) => void, onFinish: () => void, captureTarget?: Element | null) {
@@ -43,7 +43,7 @@ export function MobileShortSheet(props: {
   lang: Language; kind?: MobileShortSheetKind; kinds?: MobileShortSheetKind[]; showKind?: boolean;
   title: string; titlePlaceholder?: string; titleLabel?: string; autoFocus?: boolean;
   onTitleChange: (title: string) => void; onTitleBlur?: (title: string) => void; onTitleEnter?: () => void;
-  onKindChange?: (kind: MobileShortSheetKind) => void; onClose: () => void; onMore?: () => void;
+  onKindChange?: (kind: MobileShortSheetKind) => void; onClose: () => void; onMore?: (inset: string) => void;
   onSwipeDown?: () => void; moreDisabled?: boolean; className?: string; swipeDownToClose?: boolean; swipeUpForMore?: boolean; children?: ReactNode;
 }) {
   const locale = props.lang === "zh" ? sheetLabels.zh : sheetLabels.en;
@@ -71,6 +71,10 @@ export function MobileShortSheet(props: {
       window.removeEventListener("resize", align);
     };
   }, []);
+  const expand = () => {
+    const rect = panelRef.current?.getBoundingClientRect();
+    props.onMore?.(rect ? `${rect.top}px 0 ${Math.max(0, window.innerHeight - rect.bottom)}px` : "");
+  };
   const finishGesture = (event: React.PointerEvent<HTMLButtonElement>) => {
     const gesture = gestureRef.current;
     if (!gesture || gesture.pointerId !== event.pointerId) return;
@@ -80,13 +84,12 @@ export function MobileShortSheet(props: {
     if (event.type === "pointercancel") return;
     const distance = event.clientY - gesture.startY;
     if (distance > 72 && props.swipeDownToClose) (props.onSwipeDown || props.onClose)();
-    else if (distance < -54 && props.swipeUpForMore && props.onMore && !props.moreDisabled) props.onMore();
+    else if (distance < -54 && props.swipeUpForMore && props.onMore && !props.moreDisabled) expand();
   };
   return <aside ref={panelRef} className={`df-drawer df-task-detail df-mobile-task-summary df-mobile-short-sheet${props.className ? ` ${props.className}` : ""}`} onMouseDown={(event) => event.stopPropagation()}>
-    <CloseButton className="df-detail-close" type="button" label={locale.close} onClick={props.onClose} />
     <button type="button" className="df-mobile-sheet-grabber" aria-label={props.lang === "zh" ? "上下滑动短栏" : "Swipe sheet"} onPointerDown={(event) => { if (event.pointerType === "mouse" && event.button !== 0) return; const panel = event.currentTarget.parentElement; if (!panel) return; event.currentTarget.setPointerCapture(event.pointerId); panel.classList.add("is-sheet-dragging"); gestureRef.current = { pointerId: event.pointerId, startY: event.clientY, panel }; }} onPointerMove={(event) => { const gesture = gestureRef.current; if (!gesture || gesture.pointerId !== event.pointerId) return; const distance = event.clientY - gesture.startY; gesture.panel.style.setProperty("--mobile-sheet-drag-y", `${Math.max(-24, distance)}px`); }} onPointerUp={finishGesture} onPointerCancel={finishGesture} />
     {props.showKind && <label className="df-mobile-short-sheet-kind-wrap"><span className="df-visually-hidden">{locale.choose}</span><select className="df-mobile-short-sheet-kind" value={kind} aria-label={locale.choose} onChange={(event) => props.onKindChange?.(event.target.value as MobileShortSheetKind)}>{kinds.map((option) => <option key={option} value={option}>{locale[option]}</option>)}</select></label>}
-    <div className="df-mobile-summary-head"><input autoFocus={props.autoFocus} value={props.title} aria-label={props.titleLabel || (props.lang === "zh" ? "名称" : "Title")} placeholder={props.titlePlaceholder} onChange={(event) => props.onTitleChange(event.target.value)} onBlur={(event) => props.onTitleBlur?.(event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); props.onTitleEnter?.(); } }} />{props.onMore && <IconButton className="df-mobile-more" icon={<UiMoreIcon />} label={locale.more} disabled={props.moreDisabled} onClick={props.onMore} />}</div>
+    <div className="df-mobile-summary-head"><input autoFocus={props.autoFocus} value={props.title} aria-label={props.titleLabel || (props.lang === "zh" ? "名称" : "Title")} placeholder={props.titlePlaceholder} onChange={(event) => props.onTitleChange(event.target.value)} onBlur={(event) => props.onTitleBlur?.(event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); props.onTitleEnter?.(); } }} />{props.onMore && <IconButton className="df-mobile-expand" icon={<UiDockSidebarIcon size={18} />} label={locale.more} disabled={props.moreDisabled} onClick={expand} />}<CloseButton className="df-detail-close" type="button" label={locale.close} onClick={props.onClose} /></div>
     {props.children}
   </aside>;
 }
@@ -147,7 +150,7 @@ export default function MobileTaskSummary(props: {
   occurrence?: { scheduledDate: string; scheduledStart: string } | null;
   today: string;
   onClose: () => void;
-  onMore?: () => void;
+  onMore?: (inset: string) => void;
   onIncomplete?: () => void;
   onUpdate: (taskId: string, patch: Partial<Task>) => void;
 }) {
