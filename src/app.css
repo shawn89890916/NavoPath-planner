@@ -36027,12 +36027,12 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 
   #root .df-app .df-task-detail.df-drawer.is-expanded-from-summary {
     transform-origin: center bottom;
-    animation: mobile-task-detail-expand 220ms cubic-bezier(.22, .72, .2, 1);
+    animation: mobile-task-detail-expand 180ms cubic-bezier(.22, .72, .2, 1);
   }
 
   @keyframes mobile-task-detail-expand {
-    from { opacity: .65; transform: translateY(24px) scaleY(.96); }
-    to { opacity: 1; transform: translateY(0) scaleY(1); }
+    from { opacity: .7; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   @media (prefers-reduced-motion: reduce) {
