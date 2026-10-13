@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-13 · 竖屏任务删除
+
+### 修复
+- 竖屏任务短编辑栏提供“删除任务”按钮，可直接删除任务并关闭编辑栏；删除后刷新保持结果。
+
 ## 2026-10-11 · 竖屏时间轴交互
 
 ### 改进
@@ -119,6 +124,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-13 · Portrait task deletion
+
+### Fixed
+- The portrait task short editor now includes a Delete task button that deletes the task and closes the editor; deletion persists after refresh.
 
 ## 2026-10-11 · Portrait timeline interactions
 

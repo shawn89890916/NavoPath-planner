@@ -150,6 +150,7 @@ export default function MobileTaskSummary(props: {
   occurrence?: { scheduledDate: string; scheduledStart: string } | null;
   today: string;
   onClose: () => void;
+  onDelete: () => void;
   onMore?: (inset: string) => void;
   onIncomplete?: () => void;
   onUpdate: (taskId: string, patch: Partial<Task>) => void;
@@ -216,6 +217,9 @@ export default function MobileTaskSummary(props: {
       <Button onClick={() => setAddingSubtask(true)}>＋ {zh ? "添加子任务" : "Add subtask"}</Button>
       <Button aria-pressed={props.task.completed} onClick={() => props.onUpdate(props.task.id, { completed: true })}>✓ {zh ? "完成" : "Complete"}</Button>
       <Button aria-pressed={!props.task.completed} onClick={() => props.onIncomplete ? props.onIncomplete() : props.onUpdate(props.task.id, { completed: false })}>↩ {zh ? "未完成" : "Incomplete"}</Button>
+    </div>
+    <div className="df-mobile-summary-actions">
+      <Button variant="danger" onClick={props.onDelete}>{zh ? "删除任务" : "Delete task"}</Button>
     </div>
     {addingSubtask && <form className="df-mobile-summary-subtask-add" onSubmit={(event) => { event.preventDefault(); addSubtask(); }}>
       <input autoFocus value={subtaskTitle} onChange={(event) => setSubtaskTitle(event.target.value)} placeholder={zh ? "输入子任务名称" : "Subtask title"} onKeyDown={(event) => { if (event.key === "Escape") { setAddingSubtask(false); setSubtaskTitle(""); } }} />
