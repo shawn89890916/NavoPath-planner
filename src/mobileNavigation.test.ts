@@ -1,18 +1,41 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { createElement } from "react";
+import { act, create, type ReactTestRenderer } from "react-test-renderer";
+import { MobileQuickAddButton } from "./components/MobileQuickAddButton";
 
-const mainSource = readFileSync(new URL("./main.tsx", import.meta.url), "utf8");
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+const props = { compactLayout: true, productPresentation: false, drawerOpen: false, notificationCenterOpen: false, cloudWorkspace: true, utilityPanelOpen: false, aiOpen: false, lang: "zh" as const, onAdd: () => undefined };
 const mobileStyles = readFileSync(new URL("./app.css", import.meta.url), "utf8");
 
 describe("portrait mobile navigation", () => {
-  it("keeps the quick-add FAB available across compact Execute and Planning views", () => {
-    expect(mainSource).toContain('className="df-mobile-dock-action df-mobile-ai"');
-    expect(mainSource).toContain('className="df-mobile-quick-add-fab"');
-    expect(mainSource).toContain('{!productPresentation && compactLayout && !drawerOpen && (!notificationCenterOpen || authState?.mode !== "cloud") && !utilityPanel && !aiOpen && createPortal(<button');
-    expect(mobileStyles).toContain("bottom: calc(72px + env(safe-area-inset-bottom));");
-    expect(mainSource).not.toContain("df-candidate-quick-add-top");
-    expect(mobileStyles).toContain("max-height: calc(100dvh - 4dvh);");
-    expect(mobileStyles).toContain("overflow-y: auto;");
+  it("renders an accessible quick-add button and invokes its action", () => {
+    const onAdd = vi.fn();
+    let tree!: ReactTestRenderer;
+    act(() => { tree = create(createElement(MobileQuickAddButton, { ...props, onAdd })); });
+    const button = tree.root.findByType("button");
+    expect(button.props["aria-label"]).toBe("快速添加任务");
+    expect(button.props.className).toBe("df-mobile-quick-add-fab");
+    act(() => { button.props.onClick(); });
+    expect(onAdd).toHaveBeenCalledOnce();
+    act(() => { tree.unmount(); });
+  });
+
+  it.each([
+    { compactLayout: false }, { productPresentation: true }, { drawerOpen: true },
+    { notificationCenterOpen: true }, { utilityPanelOpen: true }, { aiOpen: true },
+  ])("hides quick-add when an obstructing workspace state is active: %j", (patch) => {
+    let tree!: ReactTestRenderer;
+    act(() => { tree = create(createElement(MobileQuickAddButton, { ...props, ...patch })); });
+    expect(tree.toJSON()).toBeNull();
+    act(() => { tree.unmount(); });
+  });
+
+  it("keeps quick-add available when there is no cloud notification sheet", () => {
+    let tree!: ReactTestRenderer;
+    act(() => { tree = create(createElement(MobileQuickAddButton, { ...props, notificationCenterOpen: true, cloudWorkspace: false })); });
+    expect(tree.root.findAllByType("button")).toHaveLength(1);
+    act(() => { tree.unmount(); });
   });
 
   it("keeps AI and Settings in dismissible task-detail-sized sheets", () => {

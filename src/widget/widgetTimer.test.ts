@@ -55,7 +55,7 @@ describe("widget timer preferences", () => {
     expect(advanced).toMatchObject({ phase: "overrun", displaySeconds: 1 });
   });
   it("routes detailed settings timer Save and Reset through shared widget actions", () => {
-    const mainSource = readFileSync(new URL("../main.tsx", import.meta.url), "utf8");
+    const mainSource = readFileSync(new URL("../SettingsPanel.tsx", import.meta.url), "utf8");
     expect(mainSource).toContain('onWidgetAction({ type: "saveTimerSettings", draft: widgetTimerDraft })');
     expect(mainSource).toContain('onWidgetAction({ type: "resetWidgetTimer", draft: widgetTimerDraft })');
     expect(mainSource).toContain('onClick={() => setWidgetTimerDraft(widgetTimerSettings)}');

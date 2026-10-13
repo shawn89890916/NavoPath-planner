@@ -9,7 +9,7 @@
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && set VITE_DEV_SERVER_URL=http://127.0.0.1:5173&& electron .\"",
     "build": "npm run build:navopath",
     "build:navopath": "tsc && vite build",
-    "test": "node --test \"supabase/functions/ai-assistant/*.test.ts\" \"supabase/functions/external-calendar/*.test.ts\" \"electron/*.test.cjs\" && vitest run src",
+    "test": "node --test \"scripts/*.test.mjs\" \"supabase/functions/ai-assistant/*.test.ts\" \"supabase/functions/external-calendar/*.test.ts\" \"electron/*.test.cjs\" && vitest run src",
     "test:cloud-agent": "node scripts/cloud-agent-smoke.mjs",
     "test:calendar": "vitest run src/calendarFeed.test.ts",
     "terminology:check": "node scripts/terminology-check.mjs",
@@ -74,7 +74,8 @@
         "dist/assets/PlanningView-*.js",
         "dist/assets/LandingPage-*.js",
         "dist/assets/WidgetApp-*.js",
-        "dist/assets/MobileTaskSummary-*.js"
+        "dist/assets/MobileTaskSummary-*.js",
+        "dist/assets/SettingsPanel-*.js"
       ],
       "limit": "350 KB"
     },
@@ -164,6 +165,11 @@
         "dist/assets/ProductMenu-*.css"
       ],
       "limit": "4 KB"
+    },
+    {
+      "name": "Settings panel scripts",
+      "path": "dist/assets/SettingsPanel-*.js",
+      "limit": "24 KB"
     }
   ],
   "build": {

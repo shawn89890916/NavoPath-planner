@@ -62,7 +62,7 @@ test("does not expose or execute external plugin scripts", () => {
   const preloadSource = fs.readFileSync(path.resolve("electron", "preload.cjs"), "utf8");
   const electronMainSource = fs.readFileSync(path.resolve("electron", "main.cjs"), "utf8");
   const pluginManifestSource = fs.readFileSync(path.resolve("electron", "external-plugin-manifest.cjs"), "utf8");
-  const rendererSource = fs.readFileSync(path.resolve("src", "main.tsx"), "utf8");
+  const rendererSource = ["main.tsx", "SettingsPanel.tsx"].map((file) => fs.readFileSync(path.resolve("src", file), "utf8")).join("\n");
 
   assert.doesNotMatch(preloadSource, /readExternalPluginEntry|plugins:readExternalEntry/);
   assert.doesNotMatch(electronMainSource, /readExternalPluginEntry|plugins:readExternalEntry/);

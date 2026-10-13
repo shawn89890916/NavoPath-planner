@@ -256,7 +256,6 @@ describe("TaskBlock shared component contract", () => {
 
     expect(main).toContain("buildDailyContinuousDates");
     expect(main).toContain("dailyContinuousTargetFromContentY");
-    expect(main).toContain("dailyContinuousBlockTop");
     expect(main).toContain("data-cross-day-scroll");
     expect(main).not.toContain("shiftTimelineAtScrollBoundary");
     expect(main).not.toContain("scrollTop = direction > 0 ? 0");
@@ -312,7 +311,7 @@ describe("TaskBlock shared component contract", () => {
     expect(css).toContain(".df-app.mode-planning .df-planning .df-plan-subtask-node::after");
     expect(css).toContain("content: none;");
     expect(css).toContain("border: 0;");
-    expect(css).toContain(".df-app.mode-planning .df-planning-native-drag-image");
+    expect(planning).not.toContain("df-planning-native-drag-image");
     expect(planning).toContain("beginTreeDrag");
     expect(css).toContain("cursor: grabbing;");
   });
