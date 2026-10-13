@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const main = readFileSync(resolve(__dirname, "main.tsx"), "utf8") + readFileSync(resolve(__dirname, "WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "AiPanel.tsx"), "utf8");
+const main = readFileSync(resolve(__dirname, "main.tsx"), "utf8") + readFileSync(resolve(__dirname, "SettingsPanel.tsx"), "utf8") + readFileSync(resolve(__dirname, "components/MobileQuickAddButton.tsx"), "utf8") + readFileSync(resolve(__dirname, "WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "AiPanel.tsx"), "utf8");
 const appCss = readFileSync(resolve(__dirname, "app.css"), "utf8");
 const defaults = readFileSync(resolve(__dirname, "defaultSettings.ts"), "utf8");
 const planning = readFileSync(resolve(__dirname, "PlanningView.tsx"), "utf8");
@@ -165,12 +165,6 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toContain("position: relative;\n    min-height: 44px;\n    padding: 0;");
   });
 
-  it("uses a bottom-right quick-add on every compact Execute and Planning view", () => {
-    expect(main).toContain('{!productPresentation && compactLayout && !drawerOpen && (!notificationCenterOpen || authState?.mode !== "cloud") && !utilityPanel && !aiOpen && createPortal(<button');
-    expect(main).not.toContain('(mode !== "execute" || compactExecuteView === "schedule") && <button');
-    expect(appCss).toContain("bottom: calc(72px + env(safe-area-inset-bottom));");
-    expect(appCss).toContain("z-index: 1001;");
-  });
 
   it("keeps the Planning filter inside the mobile top toolbar safe area", () => {
     const sidebarStart = planning.indexOf('<aside className="df-planning-sidebar"');

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 
-const main = fs.readFileSync(new URL("./main.tsx", import.meta.url), "utf8");
+const main = fs.readFileSync(new URL("./SettingsPanel.tsx", import.meta.url), "utf8");
 const controls = fs.readFileSync(new URL("./components/SettingsControls.tsx", import.meta.url), "utf8");
 const appCss = fs.readFileSync(new URL("./app.css", import.meta.url), "utf8");
 

@@ -75,14 +75,14 @@ describe("WidgetView", () => {
   });
 
   it("keeps both settings reset paths aligned with the native compact default", () => {
-    const mainSource = readFileSync(new URL("../main.tsx", import.meta.url), "utf8");
+    const mainSource = readFileSync(new URL("../main.tsx", import.meta.url), "utf8") + readFileSync(new URL("../SettingsPanel.tsx", import.meta.url), "utf8");
     expect(mainSource).not.toContain('localStorage.removeItem("navopath-widget-bounds")');
     expect(mainSource.match(/setBounds\(\{ x: 80, y: 80, width: 400, height: 80 \}\)/g)).toHaveLength(2);
     expect(mainSource).not.toContain("Restore 500");
   });
 
   it("blocks legacy duration countdowns without an absolute task target", () => {
-    const mainSource = readFileSync(new URL("../main.tsx", import.meta.url), "utf8");
+    const mainSource = readFileSync(new URL("../main.tsx", import.meta.url), "utf8") + readFileSync(new URL("../SettingsPanel.tsx", import.meta.url), "utf8");
     expect(mainSource).toContain('if (current.mode === "countdown" && current.countdownTargetAt === undefined) break;');
   });
 
@@ -404,7 +404,7 @@ describe("WidgetPopoverView", () => {
   it("removes every widget shadow control and visual shadow", () => {
     const source = readFileSync(new URL("./WidgetApp.tsx", import.meta.url), "utf8");
     const css = readFileSync(new URL("./widget.css", import.meta.url), "utf8");
-    const mainSource = readFileSync(new URL("../main.tsx", import.meta.url), "utf8");
+    const mainSource = readFileSync(new URL("../main.tsx", import.meta.url), "utf8") + readFileSync(new URL("../SettingsPanel.tsx", import.meta.url), "utf8");
     expect(source).not.toContain("shadowEnabled");
     expect(source).not.toContain("setWidgetShadow");
     expect(css).not.toContain("box-shadow");
