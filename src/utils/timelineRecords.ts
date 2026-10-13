@@ -94,6 +94,20 @@ export function normalizeTimelineRecord(record: TimelineRecord): TimelineRecord 
   };
 }
 
+/** A task-only suggestion can move a sole pending execution, but cannot select among several. */
+export function findScheduledTimelineRecord(records: TimelineRecord[], recordId?: string): TimelineRecord | undefined {
+  const scheduled = records.filter((record) => record.executionStatus === "scheduled");
+  return recordId ? scheduled.find((record) => record.id === recordId) : scheduled.length === 1 ? scheduled[0] : undefined;
+}
+
+export function applyScheduledTimelineRecord(records: TimelineRecord[], nextRecord: TimelineRecord, recordId?: string): TimelineRecord[] {
+  const target = recordId ? findScheduledTimelineRecord(records, recordId) : undefined;
+  if (!target) return [...records, nextRecord];
+  return records.map((record) => record.id === target.id
+    ? rescheduleTimelineRecord(record, nextRecord.scheduledDate, nextRecord.scheduledStart, timelineRecordDurationMinutes(nextRecord))
+    : record);
+}
+
 export function recordStartDateTime(record: TimelineRecord): Date {
   return new Date(`${record.scheduledDate}T${record.scheduledStart || "00:00"}:00`);
 }

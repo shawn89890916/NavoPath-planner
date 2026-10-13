@@ -16,7 +16,7 @@ export type AiClarification = { id: string; question: string; options: string[] 
 export type AiAction =
   | { type: "create_subtasks"; taskId?: string; projectId?: string; subtasks?: { title: string; estimateMinutes?: number }[]; reason?: string }
   | { type: "create_task"; title?: string; projectId?: string; date?: string; start?: string; end?: string; durationMinutes?: number; reason?: string }
-  | { type: "schedule_task"; taskId?: string; date?: string; start?: string; end?: string; reason?: string }
+  | { type: "schedule_task"; taskId?: string; recordId?: string; date?: string; start?: string; end?: string; reason?: string }
   | { type: "create_scheduled_task"; title?: string; projectId?: string; projectName?: string; date?: string; start?: string; end?: string; durationMinutes?: number; reason?: string }
   | { type: "plan_day"; reason?: string }
   | { type: "none"; reason?: string }

@@ -27,6 +27,7 @@ export function scheduledDateTimesOverlap(
 export function scheduledTaskIntervalsOnDate(
   tasks: Task[],
   date: string,
+  ignoredRecordId?: string,
 ): Array<{ start: number; end: number }> {
   const intervals: Array<{ start: number; end: number }> = [];
   const appendRecord = (record: TimelineRecord) => {
@@ -37,9 +38,9 @@ export function scheduledTaskIntervalsOnDate(
 
   for (const task of tasks) {
     for (const record of task.timelineRecords || []) {
-      if (record.executionStatus === "scheduled") appendRecord(record);
+      if (record.executionStatus === "scheduled" && record.id !== ignoredRecordId) appendRecord(record);
     }
-    if (task.scheduledDate && task.scheduledStart && task.scheduledEnd) {
+    if (task.id !== ignoredRecordId && task.scheduledDate && task.scheduledStart && task.scheduledEnd) {
       appendRecord({
         id: `legacy_${task.id}`,
         taskId: task.id,

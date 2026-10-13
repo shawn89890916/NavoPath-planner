@@ -65,7 +65,7 @@ export function installProductDemo(feature: ProductFeature) {
         if (!start) return [];
         working = placed !== working ? placed : scheduleDemoTask(working, task.id, date, start);
         const scheduled = working.tasks.find(item => item.id === task.id)!;
-        return [{ type: "schedule_task" as const, taskId: task.id, title: task.title, date, start, end: scheduled.scheduledEnd!, durationMinutes: Math.round((task.estimatedHours || .5) * 60), projectId: task.projectId }];
+        return [{ type: "schedule_task" as const, taskId: task.id, recordId: reschedule ? task.timelineRecords?.find(record => record.executionStatus === "scheduled")?.id : undefined, title: task.title, date, start, end: scheduled.scheduledEnd!, durationMinutes: Math.round((task.estimatedHours || .5) * 60), projectId: task.projectId }];
       });
       return { id: `demo-suggestion-${++id}`, role: "assistant", content: reschedule ? (language === "zh" ? `已将「${tasks[0]?.title || "任务"}」改到${reschedule.days === 1 ? "明天" : "后天"} ${actions[0]?.start || ""}。` : `Moved ${tasks[0]?.title || "the task"} to ${reschedule.days === 1 ? "tomorrow" : "the day after tomorrow"} at ${actions[0]?.start || ""}.`) : feature === "ai" ? (language === "zh" ? `已安排 ${actions.length} 项待办：上午写作与学习，中午午餐与休息，下午完善网站、整理课程笔记，傍晚运动。` : `Your ${actions.length} tasks are spread across the day, including lunch and an afternoon notes session.`) : (language === "zh" ? "给这些事留出时间。" : "Make room for these tasks."), createdAt: DEMO_STAMP, status: "done", actionState: "pending", actions };
     },

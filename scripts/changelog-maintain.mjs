@@ -31,7 +31,24 @@ function decodeBaseline(value) {
 }
 
 try {
-  let baseline = execFileSync("git", ["show", "HEAD:CHANGELOG.md"], { encoding: "utf8" }).replace(/\r\n/g, "\n");
+  let baselineRef = "HEAD";
+  try {
+    // A stale local checkout may already contain the newer published changelog.
+    // Accept that history only when origin/main is a descendant of this HEAD.
+    execFileSync("git", ["merge-base", "--is-ancestor", "HEAD", "origin/main"], { stdio: "ignore" });
+    baselineRef = "origin/main";
+  } catch { /* Ahead or divergent branches retain their own committed baseline. */ }
+  let baseline = execFileSync("git", ["show", `${baselineRef}:CHANGELOG.md`], { encoding: "utf8" }).replace(/\r\n/g, "\n");
+  if (JSON.stringify(historicalEntries(source)) !== JSON.stringify(historicalEntries(baseline))) {
+    try {
+      // Published cherry-picks can leave a local main on a different ancestry.
+      // Only an exact match of the published history may replace its old baseline.
+      if (execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim() === "main") {
+        const published = execFileSync("git", ["show", "origin/main:CHANGELOG.md"], { encoding: "utf8" }).replace(/\r\n/g, "\n");
+        if (JSON.stringify(historicalEntries(source)) === JSON.stringify(historicalEntries(published))) baseline = published;
+      }
+    } catch { /* Missing published history cannot authorize historical edits. */ }
+  }
   if (hasMojibake(baseline)) {
     const decoded = decodeBaseline(baseline);
     if (JSON.stringify(historicalEntries(source)) !== JSON.stringify(historicalEntries(decoded))) {

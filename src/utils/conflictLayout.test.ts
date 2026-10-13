@@ -111,4 +111,15 @@ describe("scheduledTaskIntervalsOnDate", () => {
 
     expect(scheduledTaskIntervalsOnDate([task], "2026-07-27")).toEqual([{ start: 0, end: 30 }]);
   });
+
+  it("excludes only the moved record while checking other executions of the same task", () => {
+    const task = scheduledTask("multiple", "09:00", "10:00");
+    task.scheduledDate = undefined;
+    task.timelineRecords = [
+      { id: "moved", taskId: task.id, scheduledDate: "2026-07-26", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled", createdAt: "" },
+      { id: "kept", taskId: task.id, scheduledDate: "2026-07-26", scheduledStart: "14:00", scheduledEnd: "15:00", executionStatus: "scheduled", createdAt: "" },
+    ];
+
+    expect(scheduledTaskIntervalsOnDate([task], "2026-07-26", "moved")).toEqual([{ start: 840, end: 900 }]);
+  });
 });

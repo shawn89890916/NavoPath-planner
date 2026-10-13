@@ -1,8 +1,10 @@
 # NavoPath 更新日志
 
-## 2026-10-13 · 竖屏任务删除
+## 2026-10-13 · 任务操作与日程安全
 
 ### 修复
+- AI 安排保留同一任务的其他执行记录与历史记录；改期只移动明确对应的日程，多次安排不会互相覆盖。
+- 快速改期会检查目标日期的任务、重复日程与日历事件，包括跨午夜冲突；遇到已占用时段会提示调整，避免覆盖已有安排。
 - 竖屏任务短编辑栏提供“删除任务”按钮，可直接删除任务并关闭编辑栏；删除后刷新保持结果。
 
 ## 2026-10-11 · 竖屏时间轴交互
@@ -125,9 +127,11 @@
 
 # NavoPath Changelog
 
-## 2026-10-13 · Portrait task deletion
+## 2026-10-13 · Task actions and schedule safety
 
 ### Fixed
+- AI scheduling preserves other executions and history for the same task. Rescheduling moves only the identified execution, and multiple arrangements no longer overwrite one another.
+- Quick rescheduling checks tasks, recurring schedules and calendar events on the destination date, including overnight conflicts. Occupied times prompt an adjustment instead of overlapping existing plans.
 - The portrait task short editor now includes a Delete task button that deletes the task and closes the editor; deletion persists after refresh.
 
 ## 2026-10-11 · Portrait timeline interactions

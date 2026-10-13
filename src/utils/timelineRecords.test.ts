@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TimelineRecord } from "../types";
-import { calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, focusTargetForRecord, normalizeTimelineRecord, rescheduleTimelineRecord, sliceTimelineRecord } from "./timelineRecords";
+import { applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, findScheduledTimelineRecord, focusTargetForRecord, normalizeTimelineRecord, rescheduleTimelineRecord, sliceTimelineRecord } from "./timelineRecords";
 
 const record: TimelineRecord = {
   id: "record-1",
@@ -82,5 +82,46 @@ describe("timelineRecords", () => {
 
   it("creates a stable focus target", () => {
     expect(focusTargetForRecord(record)).toEqual({ date: "2026-07-01", recordId: "record-1", taskId: "task-1", time: "23:30" });
+  });
+
+  it("keeps independent executions when an AI suggestion has no record target", () => {
+    const second = { ...record, id: "record-2", scheduledDate: "2026-07-03", scheduledEndDate: "2026-07-04" };
+    const added = rescheduleTimelineRecord({ ...record, id: "record-3" }, "2026-07-10", "23:45");
+    const records = [record, second];
+
+    expect(findScheduledTimelineRecord(records)).toBeUndefined();
+    expect(applyScheduledTimelineRecord(records, added)).toEqual([record, second, added]);
+    expect(records).toEqual([record, second]);
+  });
+
+  it("moves only the explicitly selected execution and keeps its identity and history", () => {
+    const second = { ...record, id: "record-2" };
+    const completed = { ...record, id: "completed", executionStatus: "completed" as const };
+    const moved = rescheduleTimelineRecord({ ...record, id: "new-id" }, "2026-07-10", "23:45");
+    const result = applyScheduledTimelineRecord([record, second, completed], moved, record.id);
+
+    expect(result[0]).toMatchObject({ id: record.id, createdAt: record.createdAt, scheduledDate: "2026-07-10", scheduledStart: "23:45", scheduledEndDate: "2026-07-11", scheduledEnd: "07:45" });
+    expect(result[1]).toBe(second);
+    expect(result[2]).toBe(completed);
+  });
+
+  it("reschedules a sole pending execution without adding a duplicate", () => {
+    const completed = { ...record, id: "completed", executionStatus: "completed" as const };
+    const moved = rescheduleTimelineRecord({ ...record, id: "new-id" }, "2026-07-10", "10:00", 60);
+
+    expect(findScheduledTimelineRecord([completed, record])).toBe(record);
+    expect(applyScheduledTimelineRecord([completed, record], moved, record.id)).toEqual([completed, { ...record, scheduledDate: "2026-07-10", scheduledStart: "10:00", scheduledEndDate: "2026-07-10", scheduledEnd: "11:00" }]);
+  });
+
+  it("does not replace another execution when the supplied record ID is stale", () => {
+    const added = { ...record, id: "new-id" };
+    expect(findScheduledTimelineRecord([record], "missing-id")).toBeUndefined();
+    expect(applyScheduledTimelineRecord([record], added, "missing-id")).toEqual([record, added]);
+  });
+
+  it("retains multiple new time blocks for one task in the same AI batch", () => {
+    const first = { ...record, id: "new-1" };
+    const second = rescheduleTimelineRecord({ ...record, id: "new-2" }, "2026-07-03", "10:00", 60);
+    expect(applyScheduledTimelineRecord(applyScheduledTimelineRecord([], first), second)).toEqual([first, second]);
   });
 });

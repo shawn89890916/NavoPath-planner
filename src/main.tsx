@@ -147,7 +147,7 @@ import {
   scheduleWidgetCountdown,
 } from "./widget/widgetTimer";
 import { extendActiveTimelineRecord, nextOverrunExtensionEnd, resolveWidgetTimelineSelection, timelineRecordBounds } from "./widget/widgetSchedule";
-import { calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
+import { applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, findScheduledTimelineRecord, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { anchoredTimelineScrollTop, timelineZoomFromPinch } from "./utils/timelineZoom";
 import { calendarEventDurationMinutes, expandTimedCalendarEvent } from "./utils/calendarEventSlices";
 import { MOTION, runMotionTransition, scheduleMotionCommit } from "./motion";
@@ -3757,14 +3757,18 @@ if (cached?.data && cached?.settings) {
     return dates;
   }, [visibleTimelineDates]);
 
+  function expandConflictTimelineTasks(dates: Set<string>) {
+    return [
+      ...expandTimelineRecords(dates).tasks,
+      ...expandRecurrenceOccurrences(dates).tasks,
+      ...expandEventOccurrences(dates).tasks.filter((task) => task.scheduledStart),
+      ...expandExternalCalendarOccurrences(dates).tasks.filter((task) => task.scheduledStart),
+      ...previewTasks.filter((task) => dates.has(task.scheduledDate || "")),
+    ];
+  }
+
   const conflictTimelineTasks = useMemo(
-    () => [
-      ...expandTimelineRecords(conflictTimelineDates).tasks,
-      ...expandRecurrenceOccurrences(conflictTimelineDates).tasks,
-      ...expandEventOccurrences(conflictTimelineDates).tasks.filter((task) => task.scheduledStart),
-      ...expandExternalCalendarOccurrences(conflictTimelineDates).tasks.filter((task) => task.scheduledStart),
-      ...previewTasks.filter((task) => conflictTimelineDates.has(task.scheduledDate || "")),
-    ],
+    () => expandConflictTimelineTasks(conflictTimelineDates),
     [tasks, events, externalCalendarOccurrences, externalCalendarSources, conflictTimelineDates, previewTasks],
   );
 
@@ -5086,10 +5090,10 @@ if (cached?.data && cached?.settings) {
     dragTargetDateRef.current = "";
   }
 
-  function hasScheduleConflict(date: string, startTime: string, endTime: string, ignoreTaskId?: string) {
+  function hasScheduleConflict(date: string, startTime: string, endTime: string, ignoreTaskId?: string, timelineTasks = conflictTimelineTasks) {
     const ignoredRecordId = ignoreTaskId ? recordByIdMap.get(ignoreTaskId)?.id : undefined;
     const ignoredEvent = ignoreTaskId ? resolveOwningEvent(ignoreTaskId) : undefined;
-    return conflictTimelineTasks.some((task) => {
+    return timelineTasks.some((task) => {
       const sameRecord = ignoredRecordId
         && (task.id === ignoredRecordId || task.id.startsWith(`${ignoredRecordId}__day__`));
       const sameEvent = ignoredEvent && task.id.startsWith(`event_occ_${ignoredEvent.id}_`);
@@ -5118,6 +5122,14 @@ if (cached?.data && cached?.settings) {
       || (task.timelineRecords || []).find((item) => item.executionStatus === "scheduled");
     const duration = record ? timelineRecordDurationMinutes(record) : taskDuration(task);
     const startTime = record?.scheduledStart || task.scheduledStart || task.recurrence?.startTime || "09:00";
+    const dates = new Set<string>([addDays(date, -1)]);
+    const endDate = calculateTimelineRecordEnd(date, startTime, duration).scheduledEndDate || date;
+    for (let cursor = date; cursor <= endDate; cursor = addDays(cursor, 1)) dates.add(cursor);
+    const targetTimelineTasks = expandConflictTimelineTasks(dates);
+    if (hasScheduleConflict(date, startTime, addMinutes(startTime, duration), record?.id || taskId, targetTimelineTasks)) {
+      showToast(lang === "zh" ? "这段时间已有安排，请调整时间" : "This time is already booked. Adjust the time.");
+      return;
+    }
 
     const now = workspaceNow().toISOString();
     const nextTasks = current.tasks.map((item) => {
@@ -5506,7 +5518,7 @@ if (cached?.data && cached?.settings) {
     const startTime = normalizeTaskStartTime(scheduledStart);
     const duration = normalizeTaskDuration(durationMinutes);
     return {
-      id: `${task.id}_rec_${Date.now().toString(36)}`,
+      id: uid(`${task.id}_rec`),
       taskId: task.id,
       scheduledDate,
       scheduledStart: startTime,
@@ -7595,11 +7607,13 @@ if (cached?.data && cached?.settings) {
           const startTime = normalizeTaskStartTime(a.start || nextTasks[index].scheduledStart);
           const endTime = validTime(a.end) ? a.end : addMinutes(startTime, normalizeTaskDuration(taskDuration(nextTasks[index])));
           const duration = normalizeTaskDuration(clockTimeSpanMinutes(startTime, endTime));
-          if (scheduledTaskIntervalsOnDate(nextTasks.filter(task => task.id !== action.taskId), action.date).some(interval => timeToMinutes(startTime) < interval.end && timeToMinutes(startTime) + duration > interval.start)) {
-            showToast(lang === "zh" ? "这段时间已有安排，请调整建议时间" : "This time is already booked. Adjust the suggestion.");
+          const recordId = typeof a.recordId === "string" ? a.recordId : undefined;
+          const record = findScheduledTimelineRecord(currentData.tasks[index]?.timelineRecords || [], recordId);
+          if (scheduledTaskIntervalsOnDate(nextTasks, action.date, record?.id).some(interval => timeToMinutes(startTime) < interval.end && timeToMinutes(startTime) + duration > interval.start)) {
+            showToast(lang === "zh" ? "这段时间已有安排，请调整时间" : "This time is already booked. Adjust the time.");
             return;
           }
-          nextTasks[index] = { ...nextTasks[index], estimatedHours: duration / 60, projectId: typeof a.projectId === "string" ? a.projectId || undefined : nextTasks[index].projectId, plannedForDate: action.date, executionLane: undefined, scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, timelineRecords: [...(nextTasks[index].timelineRecords || []).filter(record => record.executionStatus !== "scheduled"), createScheduledRecord(nextTasks[index], action.date, startTime, clockTimeSpanMinutes(startTime, endTime))] };
+          nextTasks[index] = { ...nextTasks[index], estimatedHours: duration / 60, projectId: typeof a.projectId === "string" ? a.projectId || undefined : nextTasks[index].projectId, plannedForDate: action.date, executionLane: undefined, scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, timelineRecords: applyScheduledTimelineRecord(nextTasks[index].timelineRecords || [], createScheduledRecord(nextTasks[index], action.date, startTime, duration), record?.id), updatedAt: now };
           focus ||= { date: action.date, startTime, taskId: action.taskId, source: "schedule" };
         }
       }
@@ -8191,13 +8205,15 @@ if (cached?.data && cached?.settings) {
       if (!target) return;
       const start = normalizeTaskStartTime(a.start || target.scheduledStart);
       const duration = validTime(a.end) ? normalizeTaskDuration(clockTimeSpanMinutes(start, a.end as string)) : normalizeTaskDuration(taskDuration(target));
-      if (scheduledTaskIntervalsOnDate(currentData.tasks.filter(task => task.id !== action.taskId), action.date).some(interval => timeToMinutes(start) < interval.end && timeToMinutes(start) + duration > interval.start)) {
-        showToast(lang === "zh" ? "这段时间已有安排，请调整建议时间" : "This time is already booked. Adjust the suggestion.");
+      const recordId = typeof a.recordId === "string" ? a.recordId : undefined;
+      const record = findScheduledTimelineRecord(target.timelineRecords || [], recordId);
+      if (scheduledTaskIntervalsOnDate(currentData.tasks, action.date, record?.id).some(interval => timeToMinutes(start) < interval.end && timeToMinutes(start) + duration > interval.start)) {
+        showToast(lang === "zh" ? "这段时间已有安排，请调整时间" : "This time is already booked. Adjust the time.");
         return;
       }
       const updatedTasks = currentData.tasks.map((t) =>
         t.id === action.taskId
-          ? { ...t, estimatedHours: duration / 60, projectId: typeof a.projectId === "string" ? a.projectId || undefined : t.projectId, plannedForDate: action.date, executionLane: undefined, scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, timelineRecords: [...(t.timelineRecords || []).filter(record => record.executionStatus !== "scheduled"), createScheduledRecord(t, action.date!, normalizeTaskStartTime(a.start || t.scheduledStart), validTime(a.end) ? clockTimeSpanMinutes(normalizeTaskStartTime(a.start || t.scheduledStart), a.end as string) : normalizeTaskDuration(taskDuration(t)))] }
+          ? { ...t, estimatedHours: duration / 60, projectId: typeof a.projectId === "string" ? a.projectId || undefined : t.projectId, plannedForDate: action.date, executionLane: undefined, scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, timelineRecords: applyScheduledTimelineRecord(t.timelineRecords || [], createScheduledRecord(t, action.date!, start, duration), record?.id), updatedAt: workspaceNow().toISOString() }
           : t
       );
       await saveData({ ...currentData, version: currentData.version || 1, tasks: updatedTasks });
