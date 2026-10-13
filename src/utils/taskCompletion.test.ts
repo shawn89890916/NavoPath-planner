@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PlannerData, Task, TimelineRecord } from "../types";
 import { normalizeData } from "../browserFallback";
 import { normalizeHabits, scheduleHabitRecord, toggleHabitCompletion } from "./habits";
-import { expandTaskTimelineSlices } from "./taskTimelineSlices";
+import { expandTaskAllDayRecords, expandTaskTimelineSlices } from "./taskTimelineSlices";
 import { setTaskCompletion, toggleTaskCompletion } from "./taskCompletion";
 
 const date = "2026-10-13";
@@ -49,6 +49,9 @@ describe("atomic task completion", () => {
     const initial = data([task({ timelineRecords: [record("returned", "returned_unfinished"), record("skipped", "skipped"), record("next")] })]);
     const completed = toggleTaskCompletion(initial, "next", stamp);
     expect(completed.tasks[0].completed).toBe(true);
+    expect(expandTaskTimelineSlices(completed.tasks, [date]).tasks.map((item) => item.completed)).toEqual([false, false, true]);
+    const allDay = { ...completed.tasks[0], timelineRecords: completed.tasks[0].timelineRecords?.map((item) => ({ ...item, scheduledStart: "", scheduledEnd: "" })) };
+    expect(expandTaskAllDayRecords([allDay], [date]).map((item) => item.completed)).toEqual([false, false, true]);
     const reopened = setTaskCompletion(completed, "task", false, stamp);
     expect(reopened.tasks[0].timelineRecords?.map((item) => item.executionStatus)).toEqual(["returned_unfinished", "skipped", "scheduled"]);
   });

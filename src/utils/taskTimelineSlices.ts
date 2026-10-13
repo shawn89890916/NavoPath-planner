@@ -25,7 +25,7 @@ export function expandTaskAllDayRecords(tasks: Task[], visibleDates: string[]): 
       scheduledStart: undefined,
       scheduledEnd: undefined,
       executionStatus: record.executionStatus,
-      completed: record.executionStatus === "completed" || task.completed,
+      completed: record.executionStatus === "completed",
       engagement: record.engagement,
     })));
 }
@@ -61,7 +61,7 @@ export function expandTaskTimelineSlices(
           scheduledStart: clockTime(slice.startMinutes),
           scheduledEnd: clockTime(slice.endMinutes),
           executionStatus: record.executionStatus,
-          completed: record.executionStatus === "completed" || task.completed,
+          completed: record.executionStatus === "completed",
           engagement: record.engagement,
         });
         expansion.ownerByDisplayId.set(id, task);
