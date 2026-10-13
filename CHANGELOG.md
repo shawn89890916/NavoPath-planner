@@ -3,6 +3,7 @@
 ## 2026-10-13 · 任务操作与日程安全
 
 ### 修复
+- 修复桌面构建的图标路径，并统一新环境的云端权限配置。
 - AI 安排保留同一任务的其他执行记录与历史记录；改期只移动明确对应的日程，多次安排不会互相覆盖。
 - 快速改期会检查目标日期的任务、重复日程与日历事件，包括跨午夜冲突；遇到已占用时段会提示调整，避免覆盖已有安排。
 - 撤销候选与安排时保留随后新增的任务、笔记及编辑；多次执行任务在全部有效记录完成后标记完成，取消完成同步恢复对应状态，历史未完成与跳过记录保留各自状态和显示。
@@ -131,6 +132,7 @@
 ## 2026-10-13 · Task actions and schedule safety
 
 ### Fixed
+- Corrected icon paths in desktop builds and aligned cloud permissions for new environments.
 - AI scheduling preserves other executions and history for the same task. Rescheduling moves only the identified execution, and multiple arrangements no longer overwrite one another.
 - Quick rescheduling checks tasks, recurring schedules and calendar events on the destination date, including overnight conflicts. Occupied times prompt an adjustment instead of overlapping existing plans.
 - Undoing candidate and scheduling actions preserves later tasks, notes, and edits; tasks with multiple executions finish only after all active records are complete, and reopening an execution updates the task consistently. Historical unfinished and skipped executions retain their own status and appearance.
