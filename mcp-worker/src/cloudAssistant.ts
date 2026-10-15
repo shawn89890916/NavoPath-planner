@@ -21,7 +21,7 @@ export type TaskOperation =
   | { type: "update_task"; taskId: string; patch: Json; reason?: string }
   | { type: "set_engagement"; taskId: string; recordId?: string; engagement: number; reason?: string }
   | { type: "split_task"; taskId: string; subtasks: Array<{ title: string; estimateMinutes?: number }>; reason?: string }
-  | { type: "reschedule_task"; taskId: string; date: string; startTime: string; durationMinutes: number; reason?: string }
+  | { type: "reschedule_task"; taskId: string; recordId?: string; date: string; startTime: string; durationMinutes: number; reason?: string }
   | { type: "upsert_schedule_block"; taskId: string; blockId?: string; date: string; startTime: string; durationMinutes: number; reason?: string };
 
 type Profile = { data: Json; settings: Json; revision: number };
@@ -304,12 +304,75 @@ export function findUnrecordedGap(data: Json, input: { date: string; nowMinutes:
   return latest ? { ...latest, startTime: clockLabel(latest.start), endTime: clockLabel(latest.end) } : null;
 }
 
+function validIsoDate(value: unknown): value is string {
+  if (typeof value !== "string" || !ISO_DATE.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function previousIsoDate(value: string) {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function recurrenceOccursOnDate(recurrence: Json, date: string) {
+  if (recurrence?.mode !== "scheduled" || recurrence.frequency === "none"
+    || !validIsoDate(recurrence.startDate) || !validIsoDate(date) || date < recurrence.startDate
+    || (validIsoDate(recurrence.endDate) && date > recurrence.endDate)) return false;
+  const start = new Date(`${recurrence.startDate}T00:00:00.000Z`);
+  const target = new Date(`${date}T00:00:00.000Z`);
+  const dayOffset = Math.round((target.getTime() - start.getTime()) / 86_400_000);
+  let occurrenceNumber: number;
+  if (["daily", "weekdays", "weekends"].includes(recurrence.frequency)) {
+    if (recurrence.frequency === "weekdays" && [0, 6].includes(target.getUTCDay())) return false;
+    if (recurrence.frequency === "weekends" && ![0, 6].includes(target.getUTCDay())) return false;
+    if (recurrence.frequency === "daily") occurrenceNumber = dayOffset + 1;
+    else {
+      const matchingDays = recurrence.frequency === "weekdays" ? [1, 2, 3, 4, 5] : [0, 6];
+      occurrenceNumber = Math.floor(dayOffset / 7) * matchingDays.length;
+      const firstDayOfLastWeek = Math.floor(dayOffset / 7) * 7;
+      for (let offset = 0; offset <= dayOffset % 7; offset += 1) {
+        if (matchingDays.includes(new Date(start.getTime() + (firstDayOfLastWeek + offset) * 86_400_000).getUTCDay())) occurrenceNumber += 1;
+      }
+    }
+  } else if (recurrence.frequency === "weekly" || recurrence.frequency === "biweekly") {
+    const interval = recurrence.frequency === "weekly" ? 7 : 14;
+    if (dayOffset % interval !== 0) return false;
+    occurrenceNumber = dayOffset / interval + 1;
+  } else if (recurrence.frequency === "monthly" || recurrence.frequency === "quarterly") {
+    const months = (target.getUTCFullYear() - start.getUTCFullYear()) * 12 + target.getUTCMonth() - start.getUTCMonth();
+    const interval = recurrence.frequency === "monthly" ? 1 : 3;
+    if (months % interval !== 0) return false;
+    const month = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + months, 1));
+    const lastDay = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 0)).getUTCDate();
+    if (target.getUTCDate() !== Math.min(start.getUTCDate(), lastDay)) return false;
+    occurrenceNumber = months / interval + 1;
+  } else return false;
+  return !Number.isInteger(recurrence.count) || recurrence.count <= 0 || occurrenceNumber <= recurrence.count;
+}
+
 function scheduleConflict(data: Json, taskId: string, blockId: string | undefined, date: string, startTime: string, durationMinutes: number) {
   const requestedStart = minutesFrom(date, startTime);
   const requestedEnd = requestedStart + durationMinutes;
   for (const task of data.tasks || []) {
+    const recurrence = task.recurrence;
+    const recurrenceHasException = (task.timelineRecords || []).some((record: Json) => record.scheduledDate === date);
+    if (recurrence && CLOCK.test(recurrence.startTime || "")) {
+      const recurringDuration = Number(recurrence.durationMinutes) > 0
+        ? Number(recurrence.durationMinutes)
+        : Math.max(15, Math.round((Number(task.estimatedHours) || 0.5) * 60));
+      for (const occurrenceDate of [previousIsoDate(date), date]) {
+        if (recurrenceHasException && occurrenceDate === date) continue;
+        if (!recurrenceOccursOnDate(recurrence, occurrenceDate)) continue;
+        const recurringStart = minutesFrom(occurrenceDate, recurrence.startTime);
+        if (requestedStart < recurringStart + recurringDuration && requestedEnd > recurringStart) {
+          return { taskId: task.id, blockId: `recurrence:${occurrenceDate}` };
+        }
+      }
+    }
     for (const record of task.timelineRecords || []) {
-      if (task.id === taskId && (!blockId || record.id === blockId)) continue;
+      if (task.id === taskId && blockId && record.id === blockId) continue;
       if (record.executionStatus && record.executionStatus !== "scheduled") continue;
       if (!ISO_DATE.test(record.scheduledDate || "") || !CLOCK.test(record.scheduledStart || "") || !CLOCK.test(record.scheduledEnd || "")) continue;
       const otherStart = minutesFrom(record.scheduledDate, record.scheduledStart);
@@ -353,6 +416,8 @@ export function normalizeTaskOperations(value: unknown): TaskOperation[] {
       if (typeof item.patch.title === "string" && cleanText(item.patch.title, 300)) patch.title = cleanText(item.patch.title, 300);
       if (typeof item.patch.notes === "string") patch.notes = cleanText(item.patch.notes, 4000);
       if (typeof item.patch.completed === "boolean") patch.completed = item.patch.completed;
+      if (typeof item.patch.scheduleLocked === "boolean") patch.scheduleLocked = item.patch.scheduleLocked;
+      if (typeof item.patch.hardDeadline === "boolean") patch.hardDeadline = item.patch.hardDeadline;
       if (typeof item.patch.projectId === "string" && SAFE_ID.test(item.patch.projectId)) patch.projectId = item.patch.projectId;
       if (item.patch.projectId === null) patch.projectId = null;
       if (ISO_DATE.test(item.patch.dueDate || "")) patch.dueDate = item.patch.dueDate;
@@ -369,12 +434,76 @@ export function normalizeTaskOperations(value: unknown): TaskOperation[] {
       const date = cleanText(item.date, 10);
       const startTime = cleanText(item.startTime, 5);
       const durationMinutes = quarterHourDuration(item.durationMinutes, 0);
-      if (!ISO_DATE.test(date) || !isQuarterHourTime(startTime) || !durationMinutes) continue;
-      if (item.type === "reschedule_task") operations.push({ type: item.type, taskId, date, startTime, durationMinutes, reason });
+      if (!validIsoDate(date) || !isQuarterHourTime(startTime) || !durationMinutes) continue;
+      if (item.type === "reschedule_task") {
+        if (item.recordId !== undefined && !SAFE_ID.test(item.recordId || "")) throw new Error("Invalid execution record ID");
+        operations.push({ type: item.type, taskId, recordId: item.recordId, date, startTime, durationMinutes, reason });
+      }
       else operations.push({ type: item.type, taskId, blockId: SAFE_ID.test(item.blockId || "") ? item.blockId : undefined, date, startTime, durationMinutes, reason });
     }
   }
   return operations;
+}
+
+function applyTaskCompletion(data: Json, taskId: string, completed: boolean, updatedAt: string) {
+  const owner = (data.tasks || []).find((item: Json) => item.id === taskId
+    || (item.timelineRecords || []).some((record: Json) => record.id === taskId));
+  if (!owner) return data;
+  const selectedRecord = (owner.timelineRecords || []).find((record: Json) => record.id === taskId);
+  if (selectedRecord?.executionStatus === "cancelled") return data;
+
+  const linkedHabit = (data.habits || []).find((habit: Json) => owner.id.startsWith(`habit-task-${habit.id}-`));
+  if (linkedHabit) {
+    const date = owner.id.slice(`habit-task-${linkedHabit.id}-`.length);
+    const startDate = linkedHabit.startDate || String(linkedHabit.createdAt || "").slice(0, 10);
+    const weekday = validIsoDate(date) ? new Date(`${date}T00:00:00.000Z`).getUTCDay() : -1;
+    const due = validIsoDate(date) && (!startDate || date >= startDate) && (!linkedHabit.endDate || date <= linkedHabit.endDate)
+      && !linkedHabit.archived && (linkedHabit.frequencyRule !== "custom" || !linkedHabit.activeWeekdays?.length || linkedHabit.activeWeekdays.includes(weekday));
+    if (!due) return data;
+    const states: Json[] = Array.isArray(data.habitDailyStates) ? data.habitDailyStates : [];
+    const existing = states.find((state) => state.habitId === linkedHabit.id && state.date === date);
+    const nextState = {
+      id: existing?.id || `habit-state-${linkedHabit.id}-${date}`,
+      habitId: linkedHabit.id,
+      date,
+      completed,
+      completedAt: completed ? updatedAt : undefined,
+      timelineRecordId: existing?.timelineRecordId,
+      createdAt: existing?.createdAt || updatedAt,
+      updatedAt,
+    };
+    const linkedTaskId = `habit-task-${linkedHabit.id}-${date}`;
+    data.tasks = (data.tasks || []).map((item: Json) => item.id !== linkedTaskId ? item : {
+      ...item,
+      completed,
+      timelineRecords: (item.timelineRecords || []).map((record: Json) => record.id === existing?.timelineRecordId
+        ? { ...record, executionStatus: completed ? "completed" : "scheduled" }
+        : record),
+      updatedAt,
+    });
+    data.habitDailyStates = [...states.filter((state) => state.id !== nextState.id), nextState];
+    return data;
+  }
+
+  const records = (owner.timelineRecords || []).map((record: Json) => {
+    if (selectedRecord ? record.id !== selectedRecord.id : !["scheduled", "completed"].includes(record.executionStatus)) return record;
+    return { ...record, executionStatus: completed ? "completed" : "scheduled" };
+  });
+  const activeRecords = records.filter((record: Json) => ["scheduled", "completed"].includes(record.executionStatus));
+  const taskCompleted = selectedRecord
+    ? !owner.recurrence && activeRecords.length > 0 && activeRecords.every((record: Json) => record.executionStatus === "completed")
+    : completed;
+  const updatedOwner = {
+    ...owner,
+    completed: taskCompleted,
+    completedAt: taskCompleted ? updatedAt : undefined,
+    workflowStatus: taskCompleted ? "done" : owner.workflowStatus === "done" ? "doing" : owner.workflowStatus,
+    updatedAt,
+    ...(owner.timelineRecords ? { timelineRecords: records } : {}),
+    ...(!selectedRecord && owner.executionStatus ? { executionStatus: completed ? "completed" : "scheduled" } : {}),
+  };
+  data.tasks = data.tasks.map((item: Json) => item.id === owner.id ? updatedOwner : item);
+  return data;
 }
 
 export function previewTaskOperations(data: Json, input: unknown, options: { allowProtected?: boolean } = {}) {
@@ -424,9 +553,15 @@ export function previewTaskOperations(data: Json, input: unknown, options: { all
       const patch = { ...operation.patch };
       const clearProject = patch.projectId === null;
       if (clearProject) delete patch.projectId;
-      const updated: Json = { ...task, ...patch, updatedAt: isoNow() };
+      const updatedAt = isoNow();
+      if (typeof patch.completed === "boolean") {
+        applyTaskCompletion(next, task.id, patch.completed, updatedAt);
+        tasks[index] = (next.tasks as Json[]).find((item) => item.id === task.id) || task;
+      }
+      const updated: Json = { ...(tasks[index] || task), ...patch, updatedAt };
       if (clearProject) delete updated.projectId;
       tasks[index] = updated;
+      next.tasks = tasks;
       changes.push({ entity: "task", taskId: task.id, before, after: updated, reason: operation.reason || "Updated by the cloud assistant" });
       inverseOperations.unshift({ type: "restore_task", taskId: task.id, task: before });
       continue;
@@ -448,9 +583,18 @@ export function previewTaskOperations(data: Json, input: unknown, options: { all
       continue;
     }
     const records: Json[] = Array.isArray(task.timelineRecords) ? [...task.timelineRecords] : [];
-    const selectedIndex = operation.type === "upsert_schedule_block" && operation.blockId
-      ? records.findIndex((record) => record.id === operation.blockId)
-      : records.findIndex((record) => !record.executionStatus || record.executionStatus === "scheduled");
+    const requestedRecordId = operation.type === "upsert_schedule_block" ? operation.blockId : operation.recordId;
+    let selectedIndex = -1;
+    if (requestedRecordId) {
+      selectedIndex = records.findIndex((record) => record.id === requestedRecordId && (record.executionStatus || "scheduled") === "scheduled");
+      if (operation.type === "reschedule_task" && selectedIndex < 0) throw new Error("Scheduled execution record not found");
+      if (operation.type === "upsert_schedule_block" && records.some((record) => record.id === requestedRecordId) && selectedIndex < 0) {
+        throw new Error("Scheduled execution record not found");
+      }
+    } else {
+      const scheduledIndexes = records.flatMap((record, index) => (record.executionStatus || "scheduled") === "scheduled" ? [index] : []);
+      if (scheduledIndexes.length === 1) selectedIndex = scheduledIndexes[0];
+    }
     const existing = selectedIndex >= 0 ? records[selectedIndex] : null;
     const conflict = scheduleConflict(next, task.id, existing?.id, operation.date, operation.startTime, operation.durationMinutes);
     if (conflict) throw new Error(`SCHEDULE_CONFLICT:${conflict.taskId}:${conflict.blockId}`);

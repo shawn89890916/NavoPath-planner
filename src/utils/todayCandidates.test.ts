@@ -32,8 +32,20 @@ describe("today candidate transformations", () => {
     const source = data([task({ scheduledDate: "2026-06-21", scheduledStart: "09:00", scheduledEnd: "10:00", timelineRecords: [{ id: "r1", taskId: "task-1", scheduledDate: "2026-06-21", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled", createdAt: "now" }] })]);
     const result = toggleTodayCandidate(source, "task-1", "2026-06-20", "now");
     expect(result.action).toBe("added");
-    expect(result.data.tasks[0]).toMatchObject({ plannedForDate: "2026-06-20", executionLane: "candidate", timelineRecords: [] });
+    expect(result.data.tasks[0]).toMatchObject({ plannedForDate: "2026-06-20", executionLane: "candidate", timelineRecords: source.tasks[0].timelineRecords });
     expect(result.data.tasks[0].scheduledStart).toBeUndefined();
+  });
+
+  it("preserves historical execution records when adding a task to today", () => {
+    const history = [
+      { id: "done", taskId: "task-1", scheduledDate: "2026-06-18", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "completed" as const, createdAt: "now" },
+      { id: "skipped", taskId: "task-1", scheduledDate: "2026-06-19", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "skipped" as const, createdAt: "now" },
+    ];
+    const source = data([task({ timelineRecords: history })]);
+
+    const result = toggleTodayCandidate(source, "task-1", "2026-06-20", "now");
+
+    expect(result.data.tasks[0].timelineRecords).toEqual(history);
   });
 
   it("removes an existing today candidate without duplicating it", () => {

@@ -102,6 +102,55 @@ test("reschedules an existing block across midnight and records exact before and
   assert.equal(preview.inverseOperations[0].type, "restore_schedule_block");
 });
 
+test("reschedule appends when a task has multiple scheduled records unless recordId is explicit", () => {
+  const original = task({ timelineRecords: [
+    { id: "record-1", taskId: "task-1", scheduledDate: "2026-08-28", scheduledStart: "09:00", scheduledEndDate: "2026-08-28", scheduledEnd: "10:00", executionStatus: "scheduled", createdAt: "first" },
+    { id: "record-2", taskId: "task-1", scheduledDate: "2026-08-28", scheduledStart: "11:00", scheduledEndDate: "2026-08-28", scheduledEnd: "12:00", executionStatus: "scheduled", createdAt: "second" },
+  ] });
+  const appended = previewTaskOperations({ tasks: [original] }, [{ type: "reschedule_task", taskId: "task-1", date: "2026-08-29", startTime: "13:00", durationMinutes: 60 }]);
+  assert.deepEqual(appended.data.tasks[0].timelineRecords.map((record: Record<string, unknown>) => record.id), ["record-1", "record-2", appended.changes[0].after.id]);
+  assert.equal(appended.data.tasks[0].timelineRecords[0].scheduledStart, "09:00");
+
+  const moved = previewTaskOperations({ tasks: [original] }, [{ type: "reschedule_task", taskId: "task-1", recordId: "record-2", date: "2026-08-29", startTime: "13:00", durationMinutes: 60 }]);
+  assert.deepEqual(moved.data.tasks[0].timelineRecords.map((record: Record<string, unknown>) => record.id), ["record-1", "record-2"]);
+  assert.equal(moved.data.tasks[0].timelineRecords[0].scheduledStart, "09:00");
+  assert.equal(moved.data.tasks[0].timelineRecords[1].scheduledStart, "13:00");
+  assert.throws(() => previewTaskOperations({ tasks: [original] }, [{ type: "reschedule_task", taskId: "task-1", recordId: "missing", date: "2026-08-29", startTime: "13:00", durationMinutes: 60 }]), /record not found/);
+});
+
+test("scheduled recurrence blocks conflicts on its date and across midnight", () => {
+  const recurring = task({
+    id: "recurring-task",
+    timelineRecords: [],
+    recurrence: { mode: "scheduled", frequency: "daily", startDate: "2026-08-28", startTime: "23:30", durationMinutes: 60 },
+  });
+  assert.throws(() => previewTaskOperations({ tasks: [recurring] }, [{ type: "create_task", title: "Overlap", date: "2026-08-29", startTime: "00:00", durationMinutes: 30 }]), /SCHEDULE_CONFLICT/);
+  assert.throws(() => previewTaskOperations({ tasks: [recurring] }, [{ type: "create_task", title: "Overlap", date: "2026-08-29", startTime: "23:45", durationMinutes: 30 }]), /SCHEDULE_CONFLICT/);
+  const ended = { ...recurring, recurrence: { ...recurring.recurrence, endDate: "2026-08-28" } };
+  assert.doesNotThrow(() => previewTaskOperations({ tasks: [ended] }, [{ type: "create_task", title: "Free slot", date: "2026-08-29", startTime: "23:45", durationMinutes: 30 }]));
+});
+
+test("cloud task completion updates active execution records and preserves history", () => {
+  const source = task({ timelineRecords: [
+    { id: "record-1", taskId: "task-1", scheduledDate: "2026-08-28", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled", createdAt: "now" },
+    { id: "record-2", taskId: "task-1", scheduledDate: "2026-08-27", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "skipped", createdAt: "now" },
+    { id: "record-3", taskId: "task-1", scheduledDate: "2026-08-26", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "cancelled", createdAt: "now" },
+  ] });
+  const completed = previewTaskOperations({ tasks: [source] }, [{ type: "update_task", taskId: "task-1", patch: { completed: true } }]);
+  assert.equal(completed.data.tasks[0].completed, true);
+  assert.deepEqual(completed.data.tasks[0].timelineRecords.map((record: Record<string, unknown>) => record.executionStatus), ["completed", "skipped", "cancelled"]);
+  const reopened = previewTaskOperations(completed.data, [{ type: "update_task", taskId: "task-1", patch: { completed: false } }]);
+  assert.equal(reopened.data.tasks[0].completed, false);
+  assert.deepEqual(reopened.data.tasks[0].timelineRecords.map((record: Record<string, unknown>) => record.executionStatus), ["scheduled", "skipped", "cancelled"]);
+});
+
+test("normalizes hard-deadline fields and invalid calendar dates are ignored", () => {
+  assert.deepEqual(normalizeTaskOperations([{ type: "update_task", taskId: "task-1", patch: { scheduleLocked: true, hardDeadline: true } }])[0], {
+    type: "update_task", taskId: "task-1", patch: { scheduleLocked: true, hardDeadline: true }, reason: undefined,
+  });
+  assert.deepEqual(normalizeTaskOperations([{ type: "reschedule_task", taskId: "task-1", date: "2026-02-30", startTime: "09:00", durationMinutes: 30 }]), []);
+});
+
 test("requires confirmation for locked schedules and hard-deadline moves", () => {
   const locked = previewTaskOperations({ tasks: [task({ agentLocked: true, hardDeadline: true })] }, [
     { type: "reschedule_task", taskId: "task-1", date: "2026-08-29", startTime: "11:00", durationMinutes: 60 },

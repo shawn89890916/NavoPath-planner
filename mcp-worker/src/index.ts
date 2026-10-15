@@ -284,22 +284,25 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
     });
 
     this.server.registerTool("update_task", { description: "Update safe task fields, including user-controlled cloud schedule and hard-deadline locks.", inputSchema: { taskId: z.string(), patch: z.object({ title: z.string().trim().min(1).max(300).optional(), projectId: z.string().nullable().optional(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), notes: z.string().max(10000).optional(), completed: z.boolean().optional(), scheduleLocked: z.boolean().optional(), hardDeadline: z.boolean().optional() }) } }, async ({ taskId, patch }) => {
-      const profile = await getProfile(this.env, this.userId());
-      const tasks = profile.data.tasks || [];
-      const index = tasks.findIndex((task: Json) => task.id === taskId);
-      if (index < 0) throw new Error("Task not found");
-      const next = { ...tasks[index], ...patch, projectId: patch.projectId === null ? undefined : patch.projectId ?? tasks[index].projectId, updatedAt: now() };
-      await saveProfile(this.env, this.userId(), profile, { data: { ...profile.data, tasks: tasks.map((task: Json, i: number) => i === index ? next : task), events: [] } });
-      return result(next);
+      const outcome = await batchUpdateTasks(this.env, this.userId(), {
+        operations: [{ type: "update_task", taskId, patch }],
+        dryRun: false,
+        commit: true,
+        idempotencyKey: `update_${crypto.randomUUID()}`,
+        source: "mcp",
+        summary: `Updated task: ${taskId}`,
+      });
+      if (outcome.confirmationRequired?.length) return result({ applied: false, confirmationRequired: outcome.confirmationRequired, changeSet: outcome.changeSet });
+      return result(outcome.changes?.find((change: Json) => change.entity === "task")?.after || outcome);
     });
 
     this.server.registerTool("get_changes_since", { description: "Return audited NavoPath changes after a monotonic cursor.", inputSchema: { cursor: z.number().int().nonnegative().default(0) } }, async ({ cursor }) => {
       return result(await getChangesSince(this.env, this.userId(), cursor));
     });
 
-    this.server.registerTool("reschedule_task", { description: "Move or create the active schedule block for a task with conflict checks, audit, idempotency, and undo. Scheduled times and durations must use 15-minute increments.", inputSchema: { taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(15).max(1440), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), idempotency_key: z.string().min(8).max(240), reason: z.string().max(500).optional() } }, async ({ taskId, startTime, durationMinutes, date, idempotency_key, reason }) => {
+    this.server.registerTool("reschedule_task", { description: "Move or add a schedule block with conflict checks, audit, idempotency, and undo. Provide recordId to move one execution when a task has several. Use 15-minute increments.", inputSchema: { taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), recordId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(15).max(1440), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), idempotency_key: z.string().min(8).max(240), reason: z.string().max(500).optional() } }, async ({ taskId, recordId, startTime, durationMinutes, date, idempotency_key, reason }) => {
       if (!isQuarterHourTime(startTime) || durationMinutes % 15 !== 0) throw new Error("SCHEDULE_MUST_USE_15_MINUTE_GRID");
-      return result(await batchUpdateTasks(this.env, this.userId(), { operations: [{ type: "reschedule_task", taskId, startTime, durationMinutes, date, reason }], dryRun: false, commit: true, idempotencyKey: idempotency_key, source: "mcp", summary: "Rescheduled task", reason }));
+      return result(await batchUpdateTasks(this.env, this.userId(), { operations: [{ type: "reschedule_task", taskId, recordId, startTime, durationMinutes, date, reason }], dryRun: false, commit: true, idempotencyKey: idempotency_key, source: "mcp", summary: "Rescheduled task", reason }));
     });
 
     this.server.registerTool("upsert_schedule_block", { description: "Create or update one schedule block with conflict checks, audit, idempotency, and undo. Scheduled times and durations must use 15-minute increments.", inputSchema: { taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), blockId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(15).max(1440), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), idempotency_key: z.string().min(8).max(240), reason: z.string().max(500).optional() } }, async ({ taskId, blockId, startTime, durationMinutes, date, idempotency_key, reason }) => {

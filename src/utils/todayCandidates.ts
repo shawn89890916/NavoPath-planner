@@ -46,14 +46,13 @@ function findSubtask(subtasks: Subtask[] | undefined, id: string): Subtask | und
   return undefined;
 }
 
-function clearScheduling(task: Task): Task {
+function clearLegacyScheduling(task: Task): Task {
   return {
     ...task,
     scheduledDate: undefined,
     scheduledStart: undefined,
     scheduledEnd: undefined,
     executionStatus: undefined,
-    timelineRecords: [],
   };
 }
 
@@ -71,7 +70,7 @@ export function toggleTodayCandidate(
       ...data,
       tasks: data.tasks.map((item) => {
         if (item.id !== taskId) return item;
-        const cleared = clearScheduling(item);
+        const cleared = clearLegacyScheduling(item);
         return removing
           ? { ...cleared, plannedForDate: undefined, executionLane: undefined, updatedAt: now }
           : { ...cleared, plannedForDate: today, executionLane: "candidate", updatedAt: now };
@@ -102,7 +101,8 @@ export function promoteSubtaskToToday(
   if (existing) return { data, action: "existing", taskId: existing.id };
 
   const promoted: Task = {
-    ...clearScheduling(parent),
+    ...clearLegacyScheduling(parent),
+    timelineRecords: [],
     id: createId(),
     title: subtask.title,
     parentTaskId,

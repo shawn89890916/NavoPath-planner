@@ -1,4 +1,5 @@
 import type { PlannerData, Task } from "../types";
+import { normalizeTimelineRecord } from "./timelineRecords";
 
 export type OverdueReconciliation = {
   data: PlannerData;
@@ -20,7 +21,9 @@ export function reconcileOverdueTasks(data: PlannerData, today: string, now = ne
 
     let returnedPastSchedule = false;
     const timelineRecords = (task.timelineRecords || []).map((record) => {
-      if (record.executionStatus === "scheduled" && record.scheduledDate < today) {
+      const normalizedRecord = normalizeTimelineRecord(record);
+      const scheduledEndDate = normalizedRecord.scheduledEndDate || normalizedRecord.scheduledDate;
+      if (record.executionStatus === "scheduled" && scheduledEndDate && scheduledEndDate < today) {
         returnedPastSchedule = true;
         changed = true;
         return { ...record, executionStatus: "returned_unfinished" as const };

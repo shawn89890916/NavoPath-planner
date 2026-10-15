@@ -30,4 +30,14 @@ describe("reconcileOverdueTasks", () => {
     expect(result.data.tasks[0]).toMatchObject({ plannedForDate: "2026-09-07", executionLane: "candidate" });
     expect(result.data.tasks[0].timelineRecords?.[0].executionStatus).toBe("returned_unfinished");
   });
+
+  it("keeps a cross-midnight block scheduled until its end date has passed", () => {
+    const task = baseTask({ timelineRecords: [{ id: "record-1", taskId: "task-1", scheduledDate: "2026-09-06", scheduledStart: "23:30", scheduledEndDate: "2026-09-07", scheduledEnd: "01:30", executionStatus: "scheduled", createdAt: "now" }] });
+
+    const during = reconcileOverdueTasks(data(task), "2026-09-07", "2026-09-07T00:15:00.000Z");
+    const after = reconcileOverdueTasks(data(task), "2026-09-08", "2026-09-08T00:00:00.000Z");
+
+    expect(during.data.tasks[0].timelineRecords?.[0].executionStatus).toBe("scheduled");
+    expect(after.data.tasks[0].timelineRecords?.[0].executionStatus).toBe("returned_unfinished");
+  });
 });

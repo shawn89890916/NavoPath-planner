@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-10-15 · 更可靠的任务与日程状态
+
+### 修复
+- 将任务加入今日候选时保留已有执行历史；多次安排按指定执行记录改期，云端修改同步尊重截止日期确认并更新完成状态。
+- 日程冲突检查覆盖固定重复安排与跨午夜执行；未完成的跨午夜安排会在实际结束日期之后才返回候选。
+
 ## 2026-10-13 · 任务操作与日程安全
 
 ### 修复
@@ -128,6 +134,12 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-15 · More reliable task and schedule state
+
+### Fixed
+- Preserve execution history when adding a task to today's candidates; reschedule the selected execution, honor hard-deadline confirmation in cloud edits, and synchronize completion state.
+- Check conflicts against fixed recurring schedules and across midnight; return unfinished overnight blocks to candidates only after their actual end date.
 
 ## 2026-10-13 · Task actions and schedule safety
 
