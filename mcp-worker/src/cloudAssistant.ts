@@ -414,7 +414,7 @@ export function normalizeTaskOperations(value: unknown): TaskOperation[] {
     if (item.type === "update_task" && item.patch && typeof item.patch === "object" && !Array.isArray(item.patch)) {
       const patch: Json = {};
       if (typeof item.patch.title === "string" && cleanText(item.patch.title, 300)) patch.title = cleanText(item.patch.title, 300);
-      if (typeof item.patch.notes === "string") patch.notes = cleanText(item.patch.notes, 4000);
+      if (typeof item.patch.notes === "string") patch.notes = cleanText(item.patch.notes, 10000);
       if (typeof item.patch.completed === "boolean") patch.completed = item.patch.completed;
       if (typeof item.patch.scheduleLocked === "boolean") patch.scheduleLocked = item.patch.scheduleLocked;
       if (typeof item.patch.hardDeadline === "boolean") patch.hardDeadline = item.patch.hardDeadline;
