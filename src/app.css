@@ -21973,6 +21973,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     overscroll-behavior-y: contain;
     touch-action: pan-y;
   }
+  #root .df-app.mode-planning .df-planning .df-planning-filter-corner .df-filter-panel:not(:has(.df-filter-flyout-panel)) {
+    grid-template-columns: minmax(0, 1fr);
+    width: 164px;
+  }
   #root .df-app.mode-planning .df-planning .df-planning-filter-corner .df-filter-categories {
     grid-column: 1;
     grid-row: 1;

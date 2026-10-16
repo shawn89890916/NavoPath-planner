@@ -2298,7 +2298,7 @@ export default function PlanningView(props: {
                   aria-expanded={filterOpen}
                   aria-label={props.lang === "zh" ? "Filter" : "Filter"}
                   title={props.lang === "zh" ? "Filter" : "Filter"}
-                  onClick={() => { setFilterOpen((open) => !open); setFilterExpandedCategory(!filterOpen && props.compact ? effectiveFilterCategories[0]?.key || null : null); }}
+                  onClick={() => { setFilterOpen((open) => !open); setFilterExpandedCategory(null); }}
                 >
                   <svg viewBox="0 0 18 18" aria-hidden="true">
                     <path d="M3 4h12M5 9h8M7 14h4" />
