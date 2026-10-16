@@ -21137,7 +21137,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     height: 48px;
     min-height: 48px;
     padding: 0;
-    border: 1px solid var(--paper-rule-strong);
+    border: 1px solid var(--text-main);
     border-radius: 12px;
     color: var(--text-main);
     background: var(--surface-main);
