@@ -1075,6 +1075,7 @@ function App() {
   const isWorkspaceRoute = Boolean(productDemo) || isOAuthConsentRoute || window.location.pathname === "/app" || window.location.pathname.startsWith("/app/") || Boolean(window.desktopApi);
   const [data, setData] = useState<PlannerData | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const workspaceLoaded = Boolean(data && settings);
   const [lang, setLang] = useState<Language>(productDemo?.language ?? detectSystemLanguage());
   const [authState, setAuthState] = useState<AuthState | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
@@ -2614,8 +2615,10 @@ if (cached?.data && cached?.settings) {
     const bufferBands = Math.max(1, Math.floor(effectBandCount / 4));
     // Label-only update: safe to call on init (no state shift, no loop risk).
     const updateVisibleLabel = () => {
-      const centerY = scrollElement.scrollTop + scrollElement.clientHeight / 2;
-      const bandIndex = Math.max(0, Math.min(effectBandCount - 1, Math.floor(centerY / dayHeight)));
+      // The daily all-day shelf follows the leading visible day. Using the
+      // viewport center switches it to tomorrow while today's hours remain.
+      const labelY = scrollElement.scrollTop + (timelineView === "daily" ? 0 : scrollElement.clientHeight / 2);
+      const bandIndex = Math.max(0, Math.min(effectBandCount - 1, Math.floor(labelY / dayHeight)));
       const nextDate = getContinuousTimelineDateForOffset(effectStartDate, bandIndex, effectColumnCount);
       setVisibleTimelineDate((current) => current === nextDate ? current : nextDate);
     };
@@ -2645,7 +2648,7 @@ if (cached?.data && cached?.settings) {
     updateVisibleLabel();
     scrollElement.addEventListener("scroll", handleTimelineScroll, { passive: true });
     return () => scrollElement.removeEventListener("scroll", handleTimelineScroll);
-  }, [mode, settings?.continuousCrossDayScroll, timelineView, selectedDate, timelineSlotHeight]);
+  }, [mode, settings?.continuousCrossDayScroll, timelineView, selectedDate, timelineSlotHeight, workspaceLoaded]);
 
   useEffect(() => {
     if (!placementPreview) return;
@@ -3396,7 +3399,7 @@ if (cached?.data && cached?.settings) {
       resizeObserver.disconnect();
       scrollElement.removeEventListener("scroll", updateNowVisibility);
     };
-  }, [compactExecuteView, continuousTimelineDates, continuousTimelineEnabled, continuousTimelineStartDate, dayStartHour, mode, timelineColumnCount, timelineSlotHeight, timelineView, timelineWindowAnchorDate, today]);
+  }, [compactExecuteView, continuousTimelineDates, continuousTimelineEnabled, continuousTimelineStartDate, dayStartHour, mode, timelineColumnCount, timelineSlotHeight, timelineView, timelineWindowAnchorDate, today, workspaceLoaded]);
 
   const showBackToNow = !productPresentation && !nowInTimelineViewport;
 
@@ -8459,7 +8462,10 @@ if (cached?.data && cached?.settings) {
     const centerY = scrollElement.scrollTop + scrollElement.clientHeight / 2;
     const minutesIntoBand = ((centerY % dayHeight) + dayHeight) % dayHeight / timelineSlotHeight * SLOT_MINUTES;
     const minutes = Math.round((dayStartHour * 60 + minutesIntoBand) / SLOT_MINUTES) * SLOT_MINUTES;
-    return { date: timelineWindowAnchorDate, startTime: minutesToTime(minutes) };
+    const date = continuousTimelineEnabled
+      ? getContinuousTimelineDateForOffset(continuousTimelineStartDate, Math.floor(centerY / dayHeight), timelineColumnCount)
+      : timelineWindowAnchorDate;
+    return { date, startTime: minutesToTime(minutes) };
   }
 
   function changeTimelineView(nextView: TimelineView) {

@@ -3912,6 +3912,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 /* ============================================================ */
 .df-timeline-allday {
   width: min(530px, 56%);
+  flex-shrink: 0;
   margin: 0 auto;
   padding: 6px 16px 6px;
   display: flex;
@@ -25403,7 +25404,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
   #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now):has(.df-all-day-block) {
     display: grid;
-    flex-shrink: 0;
     grid-template-columns: 56px minmax(0, 1fr);
     align-items: center;
     row-gap: 0;
