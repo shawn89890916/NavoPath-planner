@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-16 · 竖屏拖拽排程
+
+### 修复
+- 修复竖屏端长按今日候选后拖入时间轴被中断的问题，松手可完成排程；普通滑动继续滚动候选列表。
+
 ## 2026-10-13 · 任务操作与日程安全
 
 ### 修复
@@ -128,6 +133,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-16 · Portrait drag scheduling
+
+### Fixed
+- Fixed interrupted drags from Today's Candidates to the portrait timeline. Hold and drag a task, then release to schedule; ordinary swipes continue scrolling the candidate list.
 
 ## 2026-10-13 · Task actions and schedule safety
 

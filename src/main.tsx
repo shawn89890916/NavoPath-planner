@@ -7498,6 +7498,12 @@ if (cached?.data && cached?.settings) {
       dragElement.classList.add("is-drag-armed");
       window.navigator.vibrate?.(8);
     }, CANDIDATE_TOUCH_HOLD_MS);
+    // Preserve native swipes until the hold is ready, then prevent the browser
+    // from taking over scrolling and cancelling the scheduling pointer stream.
+    const holdTouch = (touchEvent: TouchEvent) => {
+      if (holdReady && !holdCancelled && touchEvent.touches.length === 1) touchEvent.preventDefault();
+    };
+    dragElement.addEventListener("touchmove", holdTouch, { passive: false });
     const clearHold = () => {
       if (holdTimer !== undefined) window.clearTimeout(holdTimer);
       dragElement.classList.remove("is-drag-armed");
@@ -7532,6 +7538,7 @@ if (cached?.data && cached?.settings) {
       window.removeEventListener("pointercancel", cancel);
       window.removeEventListener("keydown", keydown);
       window.removeEventListener("pointerdown", jumpDate);
+      dragElement.removeEventListener("touchmove", holdTouch);
       document.body.classList.remove("df-timeline-pointer-drag");
       dragElement.classList.remove("is-dragging-source");
       setDrag(null);
