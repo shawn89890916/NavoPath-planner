@@ -1,12 +1,14 @@
 # NavoPath 更新日志
 
-## 2026-10-16 · 竖屏拖拽排程
+## 2026-10-16 · 竖屏交互
 
 ### 改进
 - 右下角快速添加按钮改用纸面底色、清晰细描边与轻量加号，去除厚重阴影；浅色使用黑色描边，深色使用浅色描边，保留足够的触控范围，并随当前页面主题显示。
+- 竖屏底栏增加全局搜索入口，可搜索任务、项目、习惯与设置；搜索面板随可见屏幕高度调整，提供直接关闭按钮。
 
 ### 修复
-- 修复竖屏端长按今日候选后拖入时间轴被中断的问题，松手可完成排程；普通滑动继续滚动候选列表。
+- 修复竖屏端长按今日候选后拖入时间轴，以及规划树、看板、矩阵与列表中的触控拖动被中断的问题；松手完成安排或调整，普通滑动继续滚动列表。
+- 竖屏规划筛选在同一面板内并排显示分类与选项，避免相互遮挡；支持直接点按切换分类，长列表可滚动。
 
 ## 2026-10-13 · 任务操作与日程安全
 
@@ -137,13 +139,15 @@
 
 # NavoPath Changelog
 
-## 2026-10-16 · Portrait drag scheduling
+## 2026-10-16 · Portrait interactions
 
 ### Improvements
 - Restyled the bottom-right quick-add button with a paper surface, a clear fine border, and a lighter plus icon, removing the heavy shadow. Light mode uses a black border and dark mode uses a light border, preserving its touch target and matching the active page theme.
+- Added global search to the portrait navigation for tasks, projects, habits, and settings. The search panel adapts to the visible screen height and includes a close button.
 
 ### Fixed
-- Fixed interrupted drags from Today's Candidates to the portrait timeline. Hold and drag a task, then release to schedule; ordinary swipes continue scrolling the candidate list.
+- Fixed interrupted touch drags from Today's Candidates to the portrait timeline and within the Planning tree, Kanban, Matrix, and List views. Release to schedule or apply an adjustment; ordinary swipes continue scrolling lists.
+- Portrait Planning filters now show categories and options side by side within one panel, preventing overlap. Tap to switch categories and scroll longer lists.
 
 ## 2026-10-13 · Task actions and schedule safety
 

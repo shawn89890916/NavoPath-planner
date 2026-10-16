@@ -15,6 +15,7 @@ import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, r
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockVariant } from "./components/TaskBlock";
 import { CloseButton } from "./components/UiPrimitives";
 import { TaskDragLayer } from "./unifiedDrag";
+import { bindHeldTouchScroll } from "./useUnifiedDrag";
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricCompletionFilter, type MetricDisplayMetric, type MetricGroupBy, type MetricHabitMode, type MetricRangePreset, type TimeAllocationGroup } from "./metrics/timeAllocation";
 
 type TreeNodeKind = "project" | "task" | "subtask";
@@ -1509,7 +1510,11 @@ export default function PlanningView(props: {
       window.navigator.vibrate?.(8);
     }, 260);
 
+    const releaseHeldTouch = event.pointerType === "touch"
+      ? bindHeldTouchScroll(dragElement, () => holdReady && !holdCancelled)
+      : undefined;
     const cleanup = () => {
+      releaseHeldTouch?.();
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", cancel);
@@ -1730,7 +1735,11 @@ export default function PlanningView(props: {
       window.navigator.vibrate?.(8);
     }, 260);
 
+    const releaseHeldTouch = event.pointerType === "touch"
+      ? bindHeldTouchScroll(dragElement, () => holdReady && !holdCancelled)
+      : undefined;
     const cleanup = () => {
+      releaseHeldTouch?.();
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", cancel);
@@ -2289,7 +2298,7 @@ export default function PlanningView(props: {
                   aria-expanded={filterOpen}
                   aria-label={props.lang === "zh" ? "Filter" : "Filter"}
                   title={props.lang === "zh" ? "Filter" : "Filter"}
-                  onClick={() => { setFilterOpen((open) => !open); setFilterExpandedCategory(null); }}
+                  onClick={() => { setFilterOpen((open) => !open); setFilterExpandedCategory(!filterOpen && props.compact ? effectiveFilterCategories[0]?.key || null : null); }}
                 >
                   <svg viewBox="0 0 18 18" aria-hidden="true">
                     <path d="M3 4h12M5 9h8M7 14h4" />
@@ -2307,6 +2316,7 @@ export default function PlanningView(props: {
                             className={`df-filter-cat-row${activeFilterCategory === cat.key ? " active" : ""}${cat.activeCount > 0 ? " has-active" : ""}`}
                             onMouseEnter={() => setFilterExpandedCategory(cat.key)}
                             onFocus={() => setFilterExpandedCategory(cat.key)}
+                            onClick={() => setFilterExpandedCategory(cat.key)}
                           >
                             <span className="df-filter-cat-icon" aria-hidden="true">
                               {cat.icon === "circle" && <svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>}
@@ -2329,25 +2339,25 @@ export default function PlanningView(props: {
                           {props.lang === "zh" ? "\u6e05\u9664\u5168\u90e8" : "Clear all"}
                         </button>
                       )}
-                    </div>
-                    {activeFilterCategory && (
-                      <div
-                        className="df-filter-flyout-panel"
-                        style={{ top: `calc(100% + 6px + ${activeFilterCategoryIndex * 31}px)` }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="df-filter-options-view">
-                          <div className="df-filter-options-title">{effectiveFilterCategories.find((cat) => cat.key === activeFilterCategory)?.label}</div>
-                          {(filterOptionsByCategory[activeFilterCategory] || []).map((option) => (
-                            <label key={option.value} className={`df-filter-option${option.checked ? " checked" : ""}`}>
-                              <input type={option.inputType || "checkbox"} checked={option.checked} onChange={option.onToggle} />
-                              {option.dotColor && <span className="df-filter-option-dot" style={{ background: option.dotColor }} />}
-                              <span>{option.label}</span>
-                            </label>
-                          ))}
+                      {activeFilterCategory && (
+                        <div
+                          className="df-filter-flyout-panel"
+                          style={props.compact ? undefined : { top: `${activeFilterCategoryIndex * 31}px` }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="df-filter-options-view">
+                            <div className="df-filter-options-title">{effectiveFilterCategories.find((cat) => cat.key === activeFilterCategory)?.label}</div>
+                            {(filterOptionsByCategory[activeFilterCategory] || []).map((option) => (
+                              <label key={option.value} className={`df-filter-option${option.checked ? " checked" : ""}`}>
+                                <input type={option.inputType || "checkbox"} checked={option.checked} onChange={option.onToggle} />
+                                {option.dotColor && <span className="df-filter-option-dot" style={{ background: option.dotColor }} />}
+                                <span>{option.label}</span>
+                              </label>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </>
                 )}
               </div>

@@ -4,6 +4,14 @@ import { UnifiedDragOverlay, type UnifiedDragConfig, type UnifiedDragController,
 const SOURCE_CLASS = "is-dragging-source";
 const BODY_CLASS = "df-unified-dragging";
 
+export function bindHeldTouchScroll(source: HTMLElement, isHeld: () => boolean) {
+  const preventScroll = (event: TouchEvent) => {
+    if (isHeld() && event.touches.length === 1 && event.cancelable) event.preventDefault();
+  };
+  source.addEventListener("touchmove", preventScroll, { passive: false });
+  return () => source.removeEventListener("touchmove", preventScroll);
+}
+
 export function useUnifiedDrag(): UnifiedDragController {
   const [snapshot, setSnapshot] = useState<UnifiedDragSnapshot | null>(null);
   const [pointer, setPointer] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -37,12 +45,9 @@ export function useUnifiedDrag(): UnifiedDragController {
     };
     // A held touch must stop native panning before it cancels the pointer drag.
     // Swipes made before the hold completes keep their normal scrolling behavior.
-    const preventHeldTouchScroll = (touchEvent: TouchEvent) => {
-      if (holdReady && !holdCancelled) touchEvent.preventDefault();
-    };
-    if (event.pointerType === "touch" && config.requireHoldMs) {
-      sourceElement.addEventListener("touchmove", preventHeldTouchScroll, { passive: false });
-    }
+    const releaseHeldTouch = event.pointerType === "touch" && config.requireHoldMs
+      ? bindHeldTouchScroll(sourceElement, () => holdReady && !holdCancelled)
+      : undefined;
 
     const baseSnapshot: Omit<UnifiedDragSnapshot, "pointer"> = {
       taskId: config.taskId,
@@ -85,7 +90,7 @@ export function useUnifiedDrag(): UnifiedDragController {
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", cancel);
       window.removeEventListener("keydown", keydown);
-      sourceElement.removeEventListener("touchmove", preventHeldTouchScroll);
+      releaseHeldTouch?.();
       sourceElement.classList.remove(SOURCE_CLASS, "is-drag-armed");
       document.body.classList.remove(BODY_CLASS);
       if (sourceElement.hasPointerCapture(pointerId)) {
