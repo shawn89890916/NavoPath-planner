@@ -10039,7 +10039,7 @@ if (cached?.data && cached?.settings) {
       {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
       {createPortal(<MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
         drawerOpen={drawerOpen} notificationCenterOpen={notificationCenterOpen} cloudWorkspace={authState?.mode === "cloud"}
-        utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang}
+        utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, mode)}
         onAdd={() => { if (mode !== "execute") changeMode("execute"); setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
       />, document.body)}
 

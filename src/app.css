@@ -21132,29 +21132,36 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     z-index: 1001;
     display: grid;
     place-items: center;
-    width: 52px;
-    min-width: 52px;
-    height: 52px;
-    min-height: 52px;
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    min-height: 48px;
     padding: 0;
-    border: 1px solid var(--accent-active);
-    border-radius: 50%;
-    color: var(--accent-on);
-    background: var(--accent-active);
-    box-shadow: 0 5px 14px color-mix(in srgb, var(--text-main) 18%, transparent);
+    border: 1px solid var(--paper-rule-strong);
+    border-radius: 12px;
+    color: var(--text-main);
+    background: var(--surface-main);
+    box-shadow: none;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease;
     touch-action: manipulation;
   }
   .df-mobile-quick-add-fab svg {
-    width: 23px;
-    height: 23px;
+    width: 22px;
+    height: 22px;
     fill: none;
     stroke: currentColor;
-    stroke-width: 1.9;
+    stroke-width: 1.6;
     stroke-linecap: round;
   }
   .df-mobile-quick-add-fab:active {
     transform: translateY(1px);
-    box-shadow: none;
+    background: var(--surface-raised);
+    border-color: var(--accent-active);
+  }
+  .df-mobile-quick-add-fab:focus-visible {
+    outline: 2px solid var(--accent-active);
+    outline-offset: 3px;
   }
   #root .df-app .df-header {
     display: none;

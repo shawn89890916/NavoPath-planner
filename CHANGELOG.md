@@ -2,6 +2,9 @@
 
 ## 2026-10-16 · 竖屏拖拽排程
 
+### 改进
+- 右下角快速添加按钮改用纸面底色、细描边与轻量加号，去除厚重阴影；保留足够的触控范围，并随当前页面和深浅主题显示。
+
 ### 修复
 - 修复竖屏端长按今日候选后拖入时间轴被中断的问题，松手可完成排程；普通滑动继续滚动候选列表。
 
@@ -135,6 +138,9 @@
 # NavoPath Changelog
 
 ## 2026-10-16 · Portrait drag scheduling
+
+### Improvements
+- Restyled the bottom-right quick-add button with a paper surface, fine border, and lighter plus icon, removing the heavy shadow while preserving its touch target and matching the active page and light or dark theme.
 
 ### Fixed
 - Fixed interrupted drags from Today's Candidates to the portrait timeline. Hold and drag a task, then release to schedule; ordinary swipes continue scrolling the candidate list.
