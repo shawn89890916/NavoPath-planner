@@ -7,6 +7,7 @@
 - 竖屏底栏增加全局搜索入口，可搜索任务、项目、习惯与设置；搜索面板随可见屏幕高度调整，提供直接关闭按钮。
 
 ### 修复
+- 修复竖屏“回到现在”出现时挤压全天任务的问题，按钮与任务分行显示；竖屏与横屏全天任务在点按或悬停时不再出现虚线外框。
 - 修复竖屏端长按今日候选后拖入时间轴，以及规划树、看板、矩阵与列表中的触控拖动被中断的问题；松手完成安排或调整，普通滑动继续滚动列表。
 - 竖屏规划筛选在同一面板内并排显示分类与选项，避免相互遮挡；支持直接点按切换分类，长列表可滚动。
 
@@ -146,6 +147,7 @@
 - Added global search to the portrait navigation for tasks, projects, habits, and settings. The search panel adapts to the visible screen height and includes a close button.
 
 ### Fixed
+- Fixed all-day tasks being squeezed when Back to now appears in portrait mode by placing the button and tasks on separate rows. Removed the dashed outline on all-day task tap or hover in both orientations.
 - Fixed interrupted touch drags from Today's Candidates to the portrait timeline and within the Planning tree, Kanban, Matrix, and List views. Release to schedule or apply an adjustment; ordinary swipes continue scrolling lists.
 - Portrait Planning filters now show categories and options side by side within one panel, preventing overlap. Tap to switch categories and scroll longer lists.
 

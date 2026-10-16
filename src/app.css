@@ -4077,13 +4077,9 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-timeline-allday-content:has(.df-all-day-block:hover) {
   background: color-mix(in srgb, var(--mode-primary) 10%, #FFFFFF);
-  outline: 1px dashed color-mix(in srgb, var(--mode-primary) 70%, transparent);
-  outline-offset: -3px;
 }
 .df-timeline-3day-allday-cell:has(.df-all-day-block:hover) {
   background: color-mix(in srgb, var(--mode-primary) 10%, #FFFFFF);
-  outline: 1px dashed color-mix(in srgb, var(--mode-primary) 70%, transparent);
-  outline-offset: -3px;
 }
 .df-app.theme-dark .df-timeline-allday-content:has(.df-all-day-block:hover) {
   background: color-mix(in srgb, var(--accent-active) 10%, rgba(255,255,255,0.04));
@@ -25405,8 +25401,23 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     align-items: center;
     height: 44px;
   }
-  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now) .df-timeline-allday-content {
-    padding-right: 112px;
+  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now):has(.df-all-day-block) {
+    display: grid;
+    flex-shrink: 0;
+    grid-template-columns: 56px minmax(0, 1fr);
+    align-items: center;
+    row-gap: 0;
+  }
+  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-all-day-block) .df-back-to-now {
+    position: static;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now):has(.df-all-day-block) .df-timeline-allday-content {
+    grid-column: 2;
+    grid-row: 2;
+    padding: 0 16px 6px 0;
   }
   #root .df-app.mode-planning .df-planning .df-planning-filter-corner {
     position: absolute;
