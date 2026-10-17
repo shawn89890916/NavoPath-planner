@@ -1064,7 +1064,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 </section>
               </div>
             ) : <>
-            {!compactLayout && profileHero}
             <div className="df-settings-rail">
               <nav className="df-settings-nav ui-choice-list" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
                 {SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => (
@@ -1616,6 +1615,9 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               <div className="df-settings-subhead">{lang === "zh" ? "已启用工具" : "Enabled tools"}</div>
               <PluginRuntimePanel settings={settings} data={data} onSave={onSave} onSaveData={onSaveData} lang={lang} />
             </section>}
+            {!compactLayout && settingsTarget.category === "account-data" && <SettingSection anchor="account-profile" title={lang === "zh" ? "个人资料" : "Profile"}>
+              {profileHero}
+            </SettingSection>}
             {settingsTarget.category === "account-data" && <SettingSection
               anchor="data-backup"
               title={lang === "zh" ? "数据与备份" : "Data & Backup"}

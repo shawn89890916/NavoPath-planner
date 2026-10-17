@@ -7,7 +7,7 @@
 
 ### 修复
 - 全天任务与“回到现在”保持同行；竖屏有任务时“回到现在”收为图标按钮，为任务留出宽度。
-- 用户名与头像在横竖屏设置顶部一致显示，修改后立即保存；调整其他设置时保留云端较新的个人资料，失败重试保留未保存的修改，并可从同一账户的浏览器缓存恢复缺失资料。
+- 用户名与头像在竖屏设置首页及横屏“账户与资料”分区显示，修改后立即保存；调整其他设置时保留云端较新的个人资料，失败重试保留未保存的修改，并可从同一账户的浏览器缓存恢复缺失资料。
 
 ## 2026-10-16 · 竖屏交互
 
@@ -156,7 +156,7 @@
 
 ### Fixed
 - All-day tasks and Back to now stay on the same row. With portrait tasks present, Back to now becomes an icon button to preserve task width.
-- Username and avatar appear consistently at the top of portrait and landscape Settings, and edits are saved promptly. Changing other settings preserves newer cloud profile details, retries retain unsaved edits, and missing profile details can be recovered from the same account's browser cache.
+- Username and avatar appear on portrait Settings home and in the landscape Account & Data section, and edits are saved promptly. Changing other settings preserves newer cloud profile details, retries retain unsaved edits, and missing profile details can be recovered from the same account's browser cache.
 
 ## 2026-10-16 · Portrait interactions
 
