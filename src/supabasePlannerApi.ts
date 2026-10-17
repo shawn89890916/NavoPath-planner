@@ -343,12 +343,12 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     }
   }
 
-  async function updateProfile(patch: { data?: PlannerData; settings?: Settings }) {
+  async function updateProfile(patch: { data?: PlannerData; settings?: Partial<Settings> }) {
     const user = await requireUser();
     const requestAuthVersion = authVersion;
     // A different device may have deleted records since our cached revision.
     // Read the latest profile before merging even when this tab has a profile cache.
-    let current = await ensureProfile(user, Boolean(patch.data));
+    let current = await ensureProfile(user, true);
     for (let attempt = 0; attempt < 3; attempt += 1) {
       if (!isCurrentAuth(user.id, requestAuthVersion)) throw new Error("Account changed while syncing");
       const nextData = patch.data ? mergePlannerData(current.data, normalizeData(patch.data)) : current.data;
@@ -615,9 +615,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     },
 
     saveSettings: async (settings) => {
-      const current = await api.getSettings();
-      const next = mergeSettings({ ...current, ...settings, hasApiKey: false, apiKeyPreview: "" });
-      return (await updateProfile({ settings: next })).settings;
+      return (await updateProfile({ settings: { ...settings, hasApiKey: false, apiKeyPreview: "" } })).settings;
     },
     subscribeToRemoteChanges: (listener) => {
       let channel: ReturnType<typeof supabase.channel> | null = null;

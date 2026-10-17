@@ -65,7 +65,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -2084,13 +2084,16 @@ if (cached?.data && cached?.settings) {
     }
     setAuthError("");
     // Edits made while the network request was in flight must remain dirty.
-    const latestCache = readBootstrapCache(authStateRef.current?.user?.id) || cached;
+    const latestCache = readBootstrapCache(auth.user?.id) || cached;
     const resolved = resolveBootstrap(latestCache, bootstrap.data, bootstrap.settings);
     let nextData = resolved.data;
     let nextSettings = resolved.settings;
     const shouldPushCachedData = resolved.replayData;
     let shouldPushCachedSettings = resolved.replaySettings;
     if (!nextData || !nextSettings) return;
+    const cachedAccountRecovery = recoverAccountSettings(nextSettings, latestCache?.settings, auth.user?.id, auth.user?.id);
+    nextSettings = cachedAccountRecovery.settings;
+    shouldPushCachedSettings ||= cachedAccountRecovery.recovered;
     if (auth.user && window.desktopApi?.readLatestSnapshot) {
       try {
         const recovery = await window.desktopApi.readLatestSnapshot();
@@ -2878,6 +2881,9 @@ if (cached?.data && cached?.settings) {
           }
         } catch (caught) {
           const latestPending = pendingSettingsSaveRef.current as QueuedSettingsSave | null;
+          if (latestPending && latestPending.version > job.version) {
+            pendingSettingsSaveRef.current = { ...latestPending, payload: { ...job.payload, ...latestPending.payload } };
+          }
           const shouldRetry = shouldRequeueFailedSave(job.version, settingsSaveVersionRef.current, latestPending?.version);
           if (shouldRetry) {
             pendingSettingsSaveRef.current = job;
@@ -3054,7 +3060,7 @@ if (cached?.data && cached?.settings) {
     const pendingSavedAt = workspaceNow().toISOString();
     const version = settingsSaveVersionRef.current + 1;
     settingsSaveVersionRef.current = version;
-    pendingSettingsSaveRef.current = { payload: optimistic, version, pendingSavedAt };
+    pendingSettingsSaveRef.current = { payload: { ...pendingSettingsSaveRef.current?.payload, ...patch }, version, pendingSavedAt };
     settingsRef.current = optimistic;
     setSettings(optimistic);
     if (optimistic.language) setLang(optimistic.language);
@@ -8834,7 +8840,7 @@ if (cached?.data && cached?.settings) {
       )}
       <div id="df-portal-target" />
       {dialog.host}
-      {authState?.mode === "cloud" && <Suspense fallback={null}><ProactiveNotificationCenter
+      {!productDemo && <Suspense fallback={null}><ProactiveNotificationCenter
         data={data}
         lang={lang}
         notifications={proactiveNotifications}
@@ -10028,24 +10034,35 @@ if (cached?.data && cached?.settings) {
         />
       )}
 
-      {!productAiPresentation && compactLayout && !drawerOpen && !commandOpen && (!notificationCenterOpen || authState?.mode !== "cloud") && utilityPanel !== "settings" && (
+      {!productAiPresentation && compactLayout && !drawerOpen && !commandOpen && !notificationCenterOpen && utilityPanel !== "settings" && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, mode)} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {!productPresentation && !settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
           </button> : <span className="df-mobile-dock-spacer" aria-hidden="true" />}
-          {!productDemo && <IconButton className="df-mobile-dock-action df-mobile-search" icon={<UiSearchIcon />} label={lang === "zh" ? "搜索" : "Search"} onClick={() => { setCommandQuery(""); setCommandOpen(true); }} />}
           <WorkspaceModeTabs mode={mode} lang={lang} onChange={changeMode} className="df-mobile-mode-switch" as="div" />
-          {!productDemo && <button className={`df-mobile-dock-action df-mobile-profile${proactiveNotifications.length ? " has-unread" : ""}`} onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")} title={t(lang, "header.settings")}>
-            {settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span aria-hidden="true">{(settings.displayName || "N").slice(0, 1).toUpperCase()}</span>}
+          {!productDemo && <label className={`df-mobile-dock-action df-mobile-more${proactiveNotifications.length ? " has-unread" : ""}`} title={lang === "zh" ? "更多" : "More"}>
+            <UiMoreIcon />
+            <select aria-label={lang === "zh" ? "更多" : "More"} value="" onChange={(event) => {
+              const action = event.target.value;
+              setQuickAddOpen(false);
+              if (action === "notifications") setNotificationCenterOpen(true);
+              if (action === "search") { setCommandQuery(""); setCommandOpen(true); }
+              if (action === "settings") { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }
+            }}>
+              <option value="" disabled hidden>{lang === "zh" ? "更多" : "More"}</option>
+              <option value="notifications">{lang === "zh" ? "通知" : "Notifications"}</option>
+              <option value="search">{lang === "zh" ? "搜索" : "Search"}</option>
+              <option value="settings">{t(lang, "header.settings")}</option>
+            </select>
             {proactiveNotifications.length > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{proactiveNotifications.length > 9 ? "9+" : proactiveNotifications.length}</span>}
-          </button>}
+          </label>}
         </nav>, document.body)
       )}
 
       {!productPresentation && !compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
       {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
       {createPortal(<MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
-        drawerOpen={drawerOpen || commandOpen} notificationCenterOpen={notificationCenterOpen} cloudWorkspace={authState?.mode === "cloud"}
+        drawerOpen={drawerOpen || commandOpen} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, mode)}
         onAdd={() => { if (mode !== "execute") changeMode("execute"); setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
       />, document.body)}
@@ -10054,7 +10071,7 @@ if (cached?.data && cached?.settings) {
       {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onLocateTimeline={locateTaskOnTimeline} onLocatePlanning={locateTaskInPlanning} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel}
       <CommandPalette open={commandOpen} compact={compactLayout} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
-      {utilityPanel && settings && <Suspense fallback={null}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfileName={async (name) => { await saveSettings({ displayName: name }); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} /></Suspense>}
+      {utilityPanel && settings && <Suspense fallback={null}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} /></Suspense>}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
       {focusOverlayMode && (
         <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: focusProject.color } as React.CSSProperties : undefined}>

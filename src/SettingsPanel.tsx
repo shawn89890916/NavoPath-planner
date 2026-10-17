@@ -647,7 +647,7 @@ function SettingsCategoryIcon({ category }: { category: SettingsCategory }) {
   }
 }
 
-export function UtilityPanel({ kind, settings, initialSection, compactLayout, data, authEmail, onClose, onSave, onSaveProfileName, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang, onOpenScheduleTemplates }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfileName: (name: string) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language; onOpenScheduleTemplates?: () => void }) {
+export function UtilityPanel({ kind, settings, initialSection, compactLayout, data, authEmail, onClose, onSave, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang, onOpenScheduleTemplates }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language; onOpenScheduleTemplates?: () => void }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
   const isDesktopRuntime = Boolean(window.desktopApi);
   const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
@@ -739,7 +739,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
     setProfileNameSaving(true);
     setProfileNameError("");
     try {
-      await onSaveProfileName(nextName);
+      await onSaveProfile({ displayName: nextName });
       setProfileNameEditing(false);
     } catch {
       setProfileNameError(lang === "zh" ? "保存失败，请重试。" : "Could not save. Please try again.");
@@ -936,7 +936,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
         const width = image.width * scale;
         const height = image.height * scale;
         context.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
-        onSave({ avatarDataUrl: canvas.toDataURL("image/jpeg", .82) });
+        try { await onSaveProfile({ avatarDataUrl: canvas.toDataURL("image/jpeg", .82) }); setProfileNameError(""); } catch { setProfileNameError(lang === "zh" ? "头像保存失败，请重试。" : "Could not save your avatar. Please try again."); }
       } finally {
         image.close();
       }
@@ -961,6 +961,23 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
       { enableHighAccuracy: false, maximumAge: 24 * 60 * 60_000, timeout: 10_000 },
     );
   };
+  const profileHero = (
+<section className="df-settings-profile-hero" aria-label={lang === "zh" ? "当前账户" : "Current account"}>
+              <label className="df-settings-avatar" title={lang === "zh" ? "点击编辑头像" : "Click to edit avatar"}>
+                {settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span>{(settings.displayName || "N").slice(0, 1).toUpperCase()}</span>}
+                <span className="df-settings-avatar-edit" aria-hidden="true"><UiPencilIcon size={12} strokeWidth={2} /></span>
+                <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { void uploadAvatar(event.target.files?.[0]); event.currentTarget.value = ""; }} />
+              </label>
+              <div className="df-settings-profile-hero-copy">
+                {profileNameEditing ? <input className="df-settings-profile-name-input" value={profileNameDraft} onChange={(event) => setProfileNameDraft(event.target.value)} onBlur={() => { void commitProfileName(); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void commitProfileName(); } if (event.key === "Escape") { setProfileNameDraft(settings.displayName || ""); setProfileNameError(""); setProfileNameEditing(false); } }} disabled={profileNameSaving} autoFocus maxLength={64} aria-label={lang === "zh" ? "用户名" : "Username"} /> : <button type="button" className="df-settings-profile-name" onClick={() => { setProfileNameError(""); setProfileNameEditing(true); }} aria-label={lang === "zh" ? "编辑用户名" : "Edit username"}>
+                  <strong>{settings.displayName || (lang === "zh" ? "NavoPath 用户" : "NavoPath user")}</strong>
+                  <UiPencilIcon size={13} strokeWidth={1.8} aria-hidden="true" />
+                </button>}
+                {authEmail && <span>{authEmail}</span>}
+                {profileNameError && <span className="df-settings-profile-error" role="alert">{profileNameError}</span>}
+              </div>
+                </section>
+  );
   return (
     <>
       <div className="df-utility-backdrop" onMouseDown={onClose} />
@@ -977,22 +994,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
           <div className={`df-utility-body df-settings-shell${settingsHome ? "" : " df-settings-detail-shell"}`}>
             {settingsHome ? (
               <div className="df-settings-home">
-                <section className="df-settings-profile-hero" aria-label={lang === "zh" ? "当前账户" : "Current account"}>
-              <label className="df-settings-avatar" title={lang === "zh" ? "点击编辑头像" : "Click to edit avatar"}>
-                {settings.avatarDataUrl ? <img src={settings.avatarDataUrl} alt="" /> : <span>{(settings.displayName || "N").slice(0, 1).toUpperCase()}</span>}
-                <span className="df-settings-avatar-edit" aria-hidden="true"><UiPencilIcon size={12} strokeWidth={2} /></span>
-                <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { void uploadAvatar(event.target.files?.[0]); event.currentTarget.value = ""; }} />
-              </label>
-              <div className="df-settings-profile-hero-copy">
-                {profileNameEditing ? <input className="df-settings-profile-name-input" value={profileNameDraft} onChange={(event) => setProfileNameDraft(event.target.value)} onBlur={() => { void commitProfileName(); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void commitProfileName(); } if (event.key === "Escape") { setProfileNameDraft(settings.displayName || ""); setProfileNameError(""); setProfileNameEditing(false); } }} disabled={profileNameSaving} autoFocus maxLength={64} aria-label={lang === "zh" ? "用户名" : "Username"} /> : <button type="button" className="df-settings-profile-name" onClick={() => { setProfileNameError(""); setProfileNameEditing(true); }} aria-label={lang === "zh" ? "编辑用户名" : "Edit username"}>
-                  <strong>{settings.displayName || (lang === "zh" ? "NavoPath 用户" : "NavoPath user")}</strong>
-                  <UiPencilIcon size={13} strokeWidth={1.8} aria-hidden="true" />
-                </button>}
-                {authEmail && <span>{authEmail}</span>}
-                {profileNameError && <span className="df-settings-profile-error" role="alert">{profileNameError}</span>}
-              </div>
-                </section>
-                <section className="df-settings-home-card df-settings-home-notification-card">
+                {profileHero}
+                {!compactLayout && <section className="df-settings-home-card df-settings-home-notification-card">
                   <button type="button" className="df-settings-home-entry" onClick={openNotifications}>
                     <span className="df-settings-home-entry-icon"><UiBellIcon size={19} strokeWidth={1.8} /></span>
                     <span className="df-settings-home-entry-copy">
@@ -1001,7 +1004,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                     </span>
                     <span className="df-settings-home-entry-chevron" aria-hidden="true">›</span>
                   </button>
-                </section>
+                </section>}
                 <section className="df-settings-home-group" aria-labelledby="df-settings-quick-title">
                   <header className="df-settings-home-heading">
                     <h3 id="df-settings-quick-title">{lang === "zh" ? "快速设置" : "Quick settings"}</h3>
@@ -1061,6 +1064,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 </section>
               </div>
             ) : <>
+            {!compactLayout && profileHero}
             <div className="df-settings-rail">
               <nav className="df-settings-nav ui-choice-list" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
                 {SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => (

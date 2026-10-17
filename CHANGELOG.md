@@ -1,5 +1,14 @@
 # NavoPath 更新日志
 
+## 2026-10-17 · 竖屏导航与个人资料
+
+### 改进
+- 竖屏底栏右下角“更多”使用系统原生选项列表，集中提供通知、搜索与设置；竖屏设置首页不再重复显示通知入口。
+
+### 修复
+- 全天任务与“回到现在”保持同行；竖屏有任务时“回到现在”收为图标按钮，为任务留出宽度。
+- 用户名与头像在横竖屏设置中一致显示，修改后立即保存；调整其他设置时保留云端较新的个人资料，失败重试保留未保存的修改，并可从同一账户的浏览器缓存恢复缺失资料。
+
 ## 2026-10-16 · 竖屏交互
 
 ### 改进
@@ -139,6 +148,15 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-17 · Portrait navigation and profile details
+
+### Improvements
+- The bottom-right More control uses a system-native option list for Notifications, Search, and Settings. Removed the duplicate notification entry from compact Settings home.
+
+### Fixed
+- All-day tasks and Back to now stay on the same row. With portrait tasks present, Back to now becomes an icon button to preserve task width.
+- Username and avatar appear consistently in portrait and landscape Settings, and edits are saved promptly. Changing other settings preserves newer cloud profile details, retries retain unsaved edits, and missing profile details can be recovered from the same account's browser cache.
 
 ## 2026-10-16 · Portrait interactions
 

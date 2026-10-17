@@ -184,9 +184,8 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toContain("overflow-y: auto;");
   });
 
-  it("awaits profile-name persistence and scrolls the profile with Settings home", () => {
-    expect(main).toContain("onSaveProfileName={async (name) => { await saveSettings({ displayName: name }); await flushPendingSettings({ urgent: true }); }}");
-    expect(main.indexOf('<div className="df-settings-home">')).toBeLessThan(main.indexOf('className="df-settings-profile-hero"'));
+  it("awaits profile persistence and scrolls the profile with Settings home", () => {
+    expect(main).toContain("onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }}");
     expect(main).toContain('utilityPanel !== "settings"');
     expect(appCss).toContain(".df-settings-shell:not(.df-settings-detail-shell)");
   });

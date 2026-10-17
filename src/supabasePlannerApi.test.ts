@@ -70,6 +70,49 @@ beforeEach(() => {
 });
 
 describe("createSupabasePlannerApi", () => {
+  it("preserves newer cloud profile details when another setting changes", async () => {
+    const user = { id: "user_1", email: "user@example.com" };
+    const stale = profileRow(user.id, "Cloud", 1);
+    const current = { ...profileRow(user.id, "Cloud", 2), settings: { language: "en", displayName: "New name", avatarDataUrl: "data:image/png;base64,AAAA" } };
+    const maybeSingle = vi.fn()
+      .mockResolvedValueOnce({ data: stale, error: null })
+      .mockResolvedValueOnce({ data: current, error: null });
+    const rpc = vi.fn(async (_name, args) => ({ data: [{ data: args.next_data, settings: args.next_settings, revision: 3 }], error: null }));
+    createClientMock.mockReturnValue({
+      auth: { getSession: vi.fn().mockResolvedValue({ data: { session: { user } }, error: null }), onAuthStateChange: vi.fn() },
+      from: vi.fn(() => ({ select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle })) })) })),
+      rpc,
+    });
+    const { createSupabasePlannerApi } = await import("./supabasePlannerApi");
+    const api = createSupabasePlannerApi("https://supabase.test", "anon");
+    await api.getBootstrap?.();
+    const saved = await api.saveSettings({ theme: "dark" });
+    expect(maybeSingle).toHaveBeenCalledTimes(2);
+    expect(saved).toMatchObject({ theme: "dark", displayName: "New name", avatarDataUrl: current.settings.avatarDataUrl });
+    expect(rpc.mock.calls[0][1].expected_revision).toBe(2);
+  });
+
+  it("reapplies only the edited fields after a settings revision conflict", async () => {
+    const user = { id: "user_1", email: "user@example.com" };
+    const current = { ...profileRow(user.id, "Cloud", 2), settings: { language: "en", displayName: "Other device", avatarDataUrl: "data:image/png;base64,AAAA" } };
+    const maybeSingle = vi.fn()
+      .mockResolvedValueOnce({ data: profileRow(user.id, "Cloud", 1), error: null })
+      .mockResolvedValueOnce({ data: current, error: null });
+    const rpc = vi.fn()
+      .mockResolvedValueOnce({ data: null, error: { message: "PROFILE_REVISION_CONFLICT" } })
+      .mockImplementationOnce(async (_name, args) => ({ data: [{ data: args.next_data, settings: args.next_settings, revision: 3 }], error: null }));
+    createClientMock.mockReturnValue({
+      auth: { getSession: vi.fn().mockResolvedValue({ data: { session: { user } }, error: null }), onAuthStateChange: vi.fn() },
+      from: vi.fn(() => ({ select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle })) })) })),
+      rpc,
+    });
+    const { createSupabasePlannerApi } = await import("./supabasePlannerApi");
+    const api = createSupabasePlannerApi("https://supabase.test", "anon");
+    const saved = await api.saveSettings({ language: "zh" });
+    expect(saved).toMatchObject({ language: "zh", displayName: "Other device", avatarDataUrl: current.settings.avatarDataUrl });
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
+
   it("refreshes the auth session once after a JWT 401 and retries the profile request", async () => {
     const user = { id: "user_1", email: "user@example.com" };
     const maybeSingle = vi.fn()

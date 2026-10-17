@@ -14657,7 +14657,8 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-header-right .df-user-avatar { order: 1; }
 .df-app .df-proactive-notification-button { position: relative; }
 .df-app .df-proactive-notification-button.has-unread { color: var(--accent-active); }
-.df-app .df-proactive-notification-count {
+.df-app .df-proactive-notification-count,
+.df-mobile-dock--viewport .df-proactive-notification-count {
   position: absolute;
   top: 1px;
   right: 0;
@@ -24637,9 +24638,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   .df-mobile-dock--viewport.theme-dark {
     border-top-color: color-mix(in srgb, var(--surface-main) 24%, transparent);
   }
-  .df-mobile-dock--viewport:has(> .df-mobile-search) {
-    grid-template-columns: 44px 44px minmax(0, 1fr) 44px;
-  }
   .df-mobile-dock--viewport.is-mobile-sheet-open {
     visibility: hidden;
     pointer-events: none;
@@ -24670,7 +24668,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-  .df-mobile-dock--viewport .df-mobile-profile {
+  .df-mobile-dock--viewport .df-mobile-more {
     position: relative;
     overflow: visible;
     padding: 0;
@@ -24679,19 +24677,18 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: transparent;
     color: var(--text-main);
   }
-  .df-mobile-dock--viewport .df-mobile-profile > img,
-  .df-mobile-dock--viewport .df-mobile-profile > span:not(.df-proactive-notification-count) {
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
-    min-height: 30px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    object-fit: cover;
-    background: var(--text-main);
-    color: var(--surface-main);
-    font: 700 14px/1 var(--paper-display, Georgia, serif);
+  .df-mobile-dock--viewport .df-mobile-more select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .df-mobile-dock--viewport .df-mobile-more:has(select:focus-visible) {
+    outline: 2px solid var(--accent-active);
+    outline-offset: -2px;
   }
   .df-mobile-dock--viewport .df-proactive-notification-count {
     position: absolute;
@@ -24699,6 +24696,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     right: -4px;
     min-width: 16px;
     height: 16px;
+    pointer-events: none;
   }
   #root .df-app .df-settings-shell {
     grid-template-columns: minmax(0, 1fr);
@@ -25403,21 +25401,24 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     height: 44px;
   }
   #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now):has(.df-all-day-block) {
-    display: grid;
-    grid-template-columns: 56px minmax(0, 1fr);
-    align-items: center;
-    row-gap: 0;
+    align-items: flex-start;
+    gap: 4px;
   }
   #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-all-day-block) .df-back-to-now {
     position: static;
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
+    order: 2;
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+  }
+  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-all-day-block) .df-back-to-now span {
+    display: none;
   }
   #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now):has(.df-all-day-block) .df-timeline-allday-content {
-    grid-column: 2;
-    grid-row: 2;
-    padding: 0 16px 6px 0;
+    order: 1;
+    min-height: 44px;
+    padding-right: 0;
   }
   #root .df-app.mode-planning .df-planning .df-planning-filter-corner {
     position: absolute;

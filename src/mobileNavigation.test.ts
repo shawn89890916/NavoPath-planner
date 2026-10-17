@@ -5,7 +5,7 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { MobileQuickAddButton } from "./components/MobileQuickAddButton";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-const props = { compactLayout: true, productPresentation: false, drawerOpen: false, notificationCenterOpen: false, cloudWorkspace: true, utilityPanelOpen: false, aiOpen: false, lang: "zh" as const, onAdd: () => undefined };
+const props = { compactLayout: true, productPresentation: false, drawerOpen: false, notificationCenterOpen: false, utilityPanelOpen: false, aiOpen: false, lang: "zh" as const, onAdd: () => undefined };
 const mobileStyles = readFileSync(new URL("./app.css", import.meta.url), "utf8");
 
 describe("portrait mobile navigation", () => {
@@ -28,13 +28,6 @@ describe("portrait mobile navigation", () => {
     let tree!: ReactTestRenderer;
     act(() => { tree = create(createElement(MobileQuickAddButton, { ...props, ...patch })); });
     expect(tree.toJSON()).toBeNull();
-    act(() => { tree.unmount(); });
-  });
-
-  it("keeps quick-add available when there is no cloud notification sheet", () => {
-    let tree!: ReactTestRenderer;
-    act(() => { tree = create(createElement(MobileQuickAddButton, { ...props, notificationCenterOpen: true, cloudWorkspace: false })); });
-    expect(tree.root.findAllByType("button")).toHaveLength(1);
     act(() => { tree.unmount(); });
   });
 
