@@ -6,6 +6,7 @@
 - 竖屏底栏右下角“更多”使用系统原生选项列表，集中提供通知、搜索与设置；竖屏设置首页不再重复显示通知入口。
 
 ### 修复
+- 竖屏长按拖动时间轴任务时，靠近顶部或底部会持续滚动时间轴，并同步更新落点时间；松手或取消拖动后停止滚动。
 - 全天任务与“回到现在”保持同行；竖屏有任务时“回到现在”收为图标按钮，为任务留出宽度。
 - 用户名与头像在竖屏设置首页及横屏“账户与资料”分区显示，修改后立即保存；调整其他设置时保留云端较新的个人资料，失败重试保留未保存的修改，并可从同一账户的浏览器缓存恢复缺失资料。
 
@@ -155,6 +156,7 @@
 - The bottom-right More control uses a system-native option list for Notifications, Search, and Settings. Removed the duplicate notification entry from compact Settings home.
 
 ### Fixed
+- Holding a timeline task near the top or bottom while dragging in portrait continuously scrolls the timeline and updates the drop time. Scrolling stops on release or cancellation.
 - All-day tasks and Back to now stay on the same row. With portrait tasks present, Back to now becomes an icon button to preserve task width.
 - Username and avatar appear on portrait Settings home and in the landscape Account & Data section, and edits are saved promptly. Changing other settings preserves newer cloud profile details, retries retain unsaved edits, and missing profile details can be recovered from the same account's browser cache.
 

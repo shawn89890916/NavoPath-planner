@@ -5975,6 +5975,8 @@ if (cached?.data && cached?.settings) {
     let active = false;
     let holdCancelled = false;
     let holdReady = !compactLayout || event.pointerType !== "touch";
+    let latestPointer = event.nativeEvent;
+    let autoScrollFrame = 0;
     const holdTimer = holdReady ? undefined : window.setTimeout(() => {
       holdReady = true;
       revealResizeHandles(resolveTimelineRecordId(task.id));
@@ -5989,6 +5991,7 @@ if (cached?.data && cached?.settings) {
     target.addEventListener("touchmove", holdTouch, { passive: false });
     const clearHold = () => {
       if (holdTimer !== undefined) window.clearTimeout(holdTimer);
+      window.cancelAnimationFrame(autoScrollFrame);
       delete target.dataset.touchDragArmed;
       target.removeEventListener("touchmove", holdTouch);
     };
@@ -6005,6 +6008,7 @@ if (cached?.data && cached?.settings) {
     suppressBlockClickRef.current = false;
     const move = (moveEvent: PointerEvent) => {
       if (moveEvent.pointerId !== pointerId) return;
+      latestPointer = moveEvent;
       const distance = Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY);
       if (!holdReady) {
         if (distance >= 8) {
@@ -6018,6 +6022,7 @@ if (cached?.data && cached?.settings) {
       if (!active) {
         moveEvent.preventDefault();
         active = true;
+        autoScrollFrame = window.requestAnimationFrame(scrollAtEdge);
         if (holdTimer !== undefined) window.clearTimeout(holdTimer);
         delete target.dataset.touchDragArmed;
         target.classList.add("is-dragging");
@@ -6058,6 +6063,14 @@ if (cached?.data && cached?.settings) {
         setHoverSlot("");
         dragTargetDateRef.current = "";
       }
+    };
+    // Keep scrolling while the held pointer stays near an edge, even when
+    // no new pointermove arrives. Recompute the preview against the moved grid.
+    const scrollAtEdge = () => {
+      if (autoScrollAtDragEdge(latestPointer.clientX, latestPointer.clientY, [timelineRef.current])) {
+        move(latestPointer);
+      }
+      autoScrollFrame = window.requestAnimationFrame(scrollAtEdge);
     };
     const up = (upEvent: PointerEvent) => {
       if (upEvent.pointerId !== pointerId) return;

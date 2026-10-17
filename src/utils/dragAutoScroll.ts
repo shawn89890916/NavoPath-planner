@@ -21,16 +21,19 @@ export function autoScrollAtDragEdge(
     const direction = topDistance < EDGE_PX ? -1 : bottomDistance < EDGE_PX ? 1 : 0;
     if (!direction) continue;
     const proximity = 1 - Math.min(EDGE_PX, direction < 0 ? topDistance : bottomDistance) / EDGE_PX;
+    const previousScroll = container.scrollTop;
     container.scrollTop = Math.max(0, Math.min(maxScroll, container.scrollTop + direction * Math.ceil(6 + proximity * MAX_STEP_PX)));
-    return;
+    return container.scrollTop !== previousScroll;
   }
 
   const root = document.scrollingElement;
-  if (!root || root.scrollHeight <= root.clientHeight) return;
+  if (!root || root.scrollHeight <= root.clientHeight) return false;
   const direction = clientY < EDGE_PX ? -1 : clientY > window.innerHeight - EDGE_PX ? 1 : 0;
-  if (!direction) return;
+  if (!direction) return false;
   const proximity = direction < 0
     ? 1 - Math.max(0, clientY) / EDGE_PX
     : 1 - Math.max(0, window.innerHeight - clientY) / EDGE_PX;
+  const previousScroll = root.scrollTop;
   root.scrollTop = Math.max(0, Math.min(root.scrollHeight - root.clientHeight, root.scrollTop + direction * Math.ceil(6 + proximity * MAX_STEP_PX)));
+  return root.scrollTop !== previousScroll;
 }
