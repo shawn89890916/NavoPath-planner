@@ -15,20 +15,18 @@ export function EngagementRating({ task, record, lang, onUpdate }: {
   const tooltipId = useId();
   const [activeHelp, setActiveHelp] = useState<string | null>(null);
   const records = record ? [record] : task.timelineRecords?.length ? task.timelineRecords : [null];
-  const completed = records.filter((item) => item
-    ? item.executionStatus === "completed" || task.completed && item.executionStatus === "scheduled"
-    : task.completed);
-  if (!completed.length) return null;
+  const rateable = records.filter((item) => item?.executionStatus !== "cancelled");
+  if (!rateable.length) return null;
   const zh = lang === "zh";
   return <section className="df-engagement-rating" aria-label={zh ? "投入度评分" : "Engagement rating"}>
-    {completed.map((item) => {
+    {rateable.map((item) => {
       const score = engagementFor(task, item);
       const minutes = item?.scheduledStart ? timelineRecordDurationMinutes(item) : (task.estimatedHours || .5) * 60;
       const label = item ? `${item.scheduledDate} ${item.scheduledStart}`.trim() : task.title;
       const key = item?.id || task.id;
       const helpId = `${tooltipId}-${key}`;
       return <div key={key}>
-        {completed.length > 1 && <span className="df-engagement-caption">{label}</span>}
+        {rateable.length > 1 && <span className="df-engagement-caption">{label}</span>}
         <div className="df-engagement-row">
           <span className="df-engagement-help" onPointerEnter={(event) => { if (event.pointerType !== "touch") setActiveHelp(key); }} onPointerLeave={(event) => { if (!event.currentTarget.contains(document.activeElement)) setActiveHelp(null); }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setActiveHelp(null); }} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); setActiveHelp(null); } }}>
             <IconButton icon={<UiInfoIcon size={20} />} label={zh ? "了解投入度" : "About engagement"} title="" aria-describedby={activeHelp === key ? helpId : undefined} onFocus={() => setActiveHelp(key)} onClick={() => setActiveHelp(key)} />

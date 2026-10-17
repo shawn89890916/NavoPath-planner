@@ -3,6 +3,7 @@
 ## 2026-10-17 · 竖屏导航与个人资料
 
 ### 改进
+- 投入度可在任务完成前选择，未完成及返回规划的执行记录同步显示投入度色条；每次执行独立评分，切换完成状态后保留。
 - 设置的“通用”分区可关闭应用内通知角标，关闭后仍可查看通知中心。
 - 竖屏底栏右下角“更多”使用系统原生选项列表，集中提供通知、搜索与设置；竖屏设置首页不再重复显示通知入口。
 - 清理候选任务、时间轴、月视图、规划树、列表、看板与矩阵中的多余拖动外框；排序落点改用单条插入线，AI 待确认任务、外部日历、模板与空状态采用简洁边界，去掉引导区域的虚线框。
@@ -156,6 +157,7 @@
 ## 2026-10-17 · Portrait navigation and profile details
 
 ### Improvements
+- Engagement can be rated before completing a task. Unfinished executions, including those returned to planning, display the same engagement stripe; each execution keeps its own rating across completion changes.
 - General settings can hide in-app notification badges while keeping the notification center available.
 - The bottom-right More control uses a system-native option list for Notifications, Search, and Settings. Removed the duplicate notification entry from compact Settings home.
 - Removed extra drag frames across candidates, timelines, month view, planning trees, lists, boards, and matrices. Reorder destinations use one insertion line; pending AI tasks, external calendars, templates, and empty states use simple boundaries, and onboarding areas no longer show dashed frames.
