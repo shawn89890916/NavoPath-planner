@@ -1290,7 +1290,7 @@ textarea:focus {
   content: '';
   position: absolute;
   inset: 0;
-  border: 2px dashed var(--accent-active, #584D3D);
+  border: 0;
   border-radius: 8px;
   pointer-events: none;
   corner-shape: var(--corner-shape, squircle);
@@ -1898,7 +1898,7 @@ body.df-resizing * {
   display: grid;
   place-items: center;
   color: var(--text-muted);
-  border: 1px dashed color-mix(in srgb, var(--accent-active) 20%, var(--border-soft));
+  border: 0;
   border-radius: 20px;
   background: color-mix(in srgb, var(--bg-surface) 80%, transparent);
   gap: 10px;
@@ -3335,7 +3335,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   overflow: hidden;
   z-index: 5;
   background: var(--surface-main);
-  border: 1px dashed var(--paper-accent-rule);
+  border: 1px solid var(--paper-accent-rule);
   display: grid;
   gap: 3px;
   color: var(--accent-active);
@@ -3356,7 +3356,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-app:not(.theme-dark) .df-suggestion {
   background: var(--surface-main);
-  border: 1px dashed var(--paper-accent-rule);
+  border: 1px solid var(--paper-accent-rule);
   opacity: 0.88;
 }
 .df-suggestion strong {
@@ -3984,7 +3984,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   gap: 8px;
   min-height: 34px;
   padding: 4px 8px 4px 14px;
-  border: 2px dashed color-mix(in srgb, var(--accent-active) 30%, var(--border-soft));
+  border: 2px solid color-mix(in srgb, var(--accent-active) 30%, var(--border-soft));
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--accent-active) 4%, var(--bg-surface));
   corner-shape: var(--corner-shape, squircle);
@@ -4068,8 +4068,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-timeline-allday-content.drop-active {
   background: color-mix(in srgb, var(--mode-primary) 10%, #FFFFFF);
-  outline: 1px dashed color-mix(in srgb, var(--mode-primary) 70%, transparent);
-  outline-offset: -3px;
 }
 .df-timeline-allday-content:has(.df-all-day-block:hover) {
   background: color-mix(in srgb, var(--mode-primary) 10%, #FFFFFF);
@@ -6006,26 +6004,26 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-time-block[style*="--df-preview:1"] {
   opacity: 0.92;
-  border-style: dashed;
+  border-style: solid;
   border-width: 1.5px;
 }
 .df-app:not(.theme-dark) .df-time-block[data-preview="true"] {
   background: #FFFFFF;
-  border: 1.5px dashed rgba(var(--accent-rgb), 0.46);
+  border: 1.5px solid rgba(var(--accent-rgb), 0.46);
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
 }
 .df-app:not(.theme-dark) .df-time-block[style*="--df-preview:1"] {
   background: #FFFFFF;
-  border: 1.5px dashed rgba(var(--accent-rgb), 0.46);
+  border: 1.5px solid rgba(var(--accent-rgb), 0.46);
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
 }
 .df-app.theme-dark .df-time-block[data-preview="true"] {
   background: rgba(var(--accent-rgb), 0.10);
-  border: 1.5px dashed rgba(var(--accent-rgb), 0.55);
+  border: 1.5px solid rgba(var(--accent-rgb), 0.55);
 }
 .df-app.theme-dark .df-time-block[style*="--df-preview:1"] {
   background: rgba(var(--accent-rgb), 0.10);
-  border: 1.5px dashed rgba(var(--accent-rgb), 0.55);
+  border: 1.5px solid rgba(var(--accent-rgb), 0.55);
 }
 .df-time-block .df-preview-badge {
   position: absolute;
@@ -8722,10 +8720,10 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   align-content: center;
   gap: 7px;
   padding: 5px 8px;
-  border-style: dashed;
+  border-style: solid;
   border-color: color-mix(in srgb, var(--accent-active) 56%, var(--border-soft));
   background: color-mix(in srgb, var(--surface-main) 96%, var(--text-main) 4%); box-shadow: none;
-  border: 1px dashed var(--paper-rule-strong); border-radius: var(--paper-radius);
+  border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius);
   pointer-events: auto;
   cursor: pointer;
   text-align: left;
@@ -8909,7 +8907,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-view-switch-vertical button.active { background: transparent;
   color: var(--accent-active); box-shadow: none;
   pointer-events: none; border: 0; }
-.df-time-block[data-preview="true"] { opacity: .9; border-style: dashed;
+.df-time-block[data-preview="true"] { opacity: .9; border-style: solid;
   border-width: 1.5px; background: var(--paper-note); box-shadow: none; }
 .df-drop-preview {
   position: absolute;
@@ -8920,10 +8918,10 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   overflow: hidden;
   pointer-events: none;
   z-index: 6; background: var(--paper-note);
-  border: 1px dashed color-mix(in srgb, var(--cat, var(--accent-active)) 40%, var(--border-soft));
+  border: 1px solid color-mix(in srgb, var(--cat, var(--accent-active)) 40%, var(--border-soft));
   color: var(--text-main);
   display: grid;
-  align-content: center; border-style: dashed; box-shadow: none; opacity: .9; corner-shape: var(--corner-shape, squircle); }
+  align-content: center; border-style: solid; box-shadow: none; opacity: .9; corner-shape: var(--corner-shape, squircle); }
 /* Planning as an editorial outline */
 .df-tree-line { opacity: .48; stroke: var(--paper-rule-strong); filter: none; }
 .df-plan-project-node::before { box-shadow: none; filter: none; }
@@ -9865,7 +9863,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   position: relative;
   overflow: hidden;
   background: #FAFAFA;
-  border: 1px dashed #D1D5DB;
+  border: 0;
   border-radius: 10px;
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle); }
@@ -10109,8 +10107,8 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   .df-app .df-subtask-tree-item.ai-generated { animation:none; }
 }
 @keyframes treeDropIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-.df-tree-drop-preview.before { margin-bottom:3px; border-bottom:1px dashed color-mix(in srgb,var(--accent-active) 40%,transparent); border-radius:8px 8px 0 0; corner-shape: var(--corner-shape, squircle); }
-.df-tree-drop-preview.after { margin-top:3px; border-top:1px dashed color-mix(in srgb,var(--accent-active) 40%,transparent); border-radius:0 0 8px 8px; corner-shape: var(--corner-shape, squircle); }
+.df-tree-drop-preview.before { margin-bottom:3px; border-bottom:0; border-radius:8px 8px 0 0; corner-shape: var(--corner-shape, squircle); }
+.df-tree-drop-preview.after { margin-top:3px; border-top:0; border-radius:0 0 8px 8px; corner-shape: var(--corner-shape, squircle); }
 .df-tree-drop-preview.inside { margin-inline-start:28px; border-inline-start:2px solid var(--accent-active); border-radius:4px 8px 8px 4px; corner-shape: var(--corner-shape, squircle); }
 /* Drag targets use ink and rules only; no lift or scale. */
 .df-app.mode-planning .df-subtask-children {
@@ -12405,22 +12403,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-app .df-onboarding-guide button.quiet {
   color: var(--text-faint);
 }
-.df-app.onboarding-step-add .df-quick-add {
-  outline: 1px dashed var(--pencil-rule-strong);
-  outline-offset: -5px;
-}
-.df-app.onboarding-step-drag .df-candidate-list {
-  outline: 1px dashed var(--pencil-rule-strong);
-  outline-offset: -5px;
-}
-.df-app.onboarding-step-drag .df-timeline-scroll {
-  outline: 1px dashed var(--pencil-rule-strong);
-  outline-offset: -5px;
-}
-.df-app.onboarding-step-planning.mode-planning .df-mindmap {
-  outline: 1px dashed var(--pencil-rule-strong);
-  outline-offset: -5px;
-}
 /* Browser comment fixes: planning rows, dark logo, and app-native dialogs. */
 .df-app.theme-dark .dayflow-icon img {
   filter: invert(1) brightness(1.08) contrast(.96);
@@ -14137,14 +14119,6 @@ body.df-timeline-pointer-drag * {
   background: transparent;
   box-shadow: none;
 }
-#root .df-app .df-project-drop-outline {
-  position: fixed;
-  z-index: 99998;
-  box-sizing: border-box;
-  border: 1px solid var(--accent-active);
-  border-radius: var(--paper-radius-soft);
-  pointer-events: none;
-}
 #root .df-app .df-project-drop-hint {
   position: absolute;
   top: calc(100% + 3.5px);
@@ -14160,10 +14134,7 @@ body.df-timeline-pointer-drag * {
   transform: rotate(-1deg);
   transform-origin: top left;
 }
-/* Defensive: guarantee no stray dashed/outline/border on the candidate list
-   in normal (non-dragging, non-onboarding) state. Any dashed visual must be
-   gated by an explicit state class (.onboarding-step-drag, .is-dragging,
-   .drop-active). Prevents leftover drop placeholders from occupying space. */
+/* Keep the candidate list free of stray frames and leftover drop slots. */
 .df-app:not(.onboarding-step-drag):not(.is-dragging) .df-candidate-list {
   outline: none;
   border: none;
@@ -14266,7 +14237,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   width: auto;
   min-width: 0;
   padding: 5px 14px;
-  border: 1px dashed var(--paper-rule);
+  border: 1px solid var(--paper-rule);
   border-radius: 8px;
   background: transparent;
   color: var(--text-muted);
@@ -14357,7 +14328,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   cursor: grabbing;
 }
 .df-app .df-template-period-creating {
-  border-style: dashed;
+  border-style: solid;
   background: color-mix(in srgb, var(--accent-active) 6%, transparent);
   pointer-events: none;
 }
@@ -14935,7 +14906,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   padding: 16px 8px;
   font-size: 11px;
   color: var(--df-ink-muted, #aaa);
-  border: 1px dashed var(--df-hairline, rgba(0,0,0,0.06));
+  border: 0;
   border-radius: 4px;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -15933,7 +15904,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-agent-run-card small { color: var(--text-muted); }
 .df-agent-run-card p { color: var(--text-muted); }
 .df-agent-run-card dd { color: var(--text-muted); }
-.df-ai-capability-state.locked { border-style: dashed; }
+.df-ai-capability-state.locked { border-style: solid; }
 .df-agent-confirm-card code { overflow-wrap: anywhere; font-size: 11px; }
 .df-agent-applied > span { font-size: 12px; }
 .df-agent-applied button { border: 1px solid var(--paper-rule-strong); background: var(--surface-raised); color: var(--text-primary); padding: 7px 10px; }
@@ -15976,10 +15947,10 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-time-block.is-external-calendar {
   cursor: default;
   opacity: .76;
-  border-style: dashed;
+  border-style: solid;
   background: color-mix(in srgb, var(--surface-raised) 88%, var(--accent-active) 12%);
 }
-.df-all-day-block.is-external-calendar { cursor: default; opacity: .76; border-style: dashed; }
+.df-all-day-block.is-external-calendar { cursor: default; opacity: .76; border-style: solid; }
 .df-time-block.is-external-calendar .df-time-card-event-mark { opacity: .55; }
 .df-time-block.is-external-calendar .df-event-kind-label { letter-spacing: .04em; }
 .df-external-calendar-settings { display: grid; gap: 12px; }
@@ -18654,23 +18625,21 @@ body.df-planning-native-dragging [contenteditable] * {
   outline-offset: 2px;
   box-shadow: none;
 }
-/* Source placeholder: the original position becomes a muted, dashed,
-   faint-paper box that preserves layout space. No opacity-only ghost,
-   no dirty gray fill, no layout jump. Applied to pointer-event drags
+/* Source placeholders preserve layout space without an extra frame. Applied to pointer-event drags
    (candidate shelf, habits, all-day, timeline blocks) and reused by
    Planning native-drag sources. */
 .df-task-block[data-task-appearance].is-dragging-source {
   opacity: 1;
-  border: 1px dashed var(--drag-placeholder-border);
-  background: var(--drag-placeholder-bg);
+  border: 1px solid transparent;
+  background: transparent;
   box-shadow: none;
   transform: none;
   color: transparent;
 }
 .df-app .df-task-block[data-task-appearance].is-dragging-source {
   opacity: 1;
-  border: 1px dashed var(--drag-placeholder-border);
-  background: var(--drag-placeholder-bg);
+  border: 1px solid transparent;
+  background: transparent;
   box-shadow: none;
   transform: none;
   color: transparent;
@@ -18687,8 +18656,7 @@ body.df-planning-native-dragging [contenteditable] * {
 .df-app .df-task-block[data-task-appearance].is-dragging-source .df-task-block-accent {
   display: none;
 }
-/* Habits keep their list slot during a drag, but should not leave the generic
-   dashed source placeholder visible beneath the floating preview. */
+/* Habits keep their list slot without an extra source frame. */
 .df-app .df-habit-candidate-row.is-dragging-source {
   visibility: hidden;
 }
@@ -18756,71 +18724,51 @@ body.df-unified-dragging .df-unified-drag-overlay {
 body.df-planning-native-dragging .df-unified-drag-overlay {
   pointer-events: none;
 }
-/* Drop container outline: restrained active-accent outline around the
+/* Drop targets use a light paper tint across the
    whole target area (kanban column, matrix quadrant, tree parent,
    timeline day, candidate panel, empty drop zone). Clean paper
    background, no dirty gray fill. */
 .df-kanban-column.is-drop-container-active {
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-  outline-offset: -2px;
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
   box-shadow: none;
 }
 .df-kanban-column.is-drop-target {
   border-color: var(--accent-active);
-  border-style: dashed;
+  border-style: solid;
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-  outline-offset: -2px;
   box-shadow: none;
 }
 .df-eisenhower-quadrant.is-drop-container-active {
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-  outline-offset: -2px;
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
   box-shadow: none;
 }
 .df-eisenhower-quadrant.is-drop-target {
   border-color: var(--accent-active);
-  border-style: dashed;
+  border-style: solid;
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-  outline-offset: -2px;
   box-shadow: none;
 }
 .df-candidate-panel.is-drop-container-active {
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-  outline-offset: -2px;
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
   box-shadow: none;
 }
 .df-candidate-panel.drop-active {
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-  outline-offset: -2px;
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
   box-shadow: none;
 }
 .df-timeline-allday.is-drop-container-active {
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-  outline-offset: -2px;
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
   box-shadow: none;
 }
 .df-timeline-3day-allday-cell.is-drop-container-active {
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-  outline-offset: -2px;
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
   box-shadow: none;
 }
 .df-timeline-3day-allday-cell.drop-active {
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-  outline-offset: -2px;
   box-shadow: none;
 }
 .df-time-grid.is-drop-container-active {
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-  outline-offset: -2px;
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
   box-shadow: none;
 }
@@ -18854,21 +18802,23 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   box-shadow: -3px 0 0 0 var(--accent-active);
   corner-shape: var(--corner-shape, squircle);
 }
-/* Drop placeholder slot: a muted, dashed slot shown inside a container
+/* Drop placeholder slot: an insertion line shown inside a container
    (kanban column, matrix quadrant) when a card would be dropped in. */
 .is-drop-placeholder {
-  border: 1px dashed var(--drag-placeholder-border);
-  background: var(--drag-placeholder-bg);
+  position: relative;
+  border: 0;
+  background: transparent;
   border-radius: var(--task-radius, 10px);
   min-height: 36px;
   corner-shape: var(--corner-shape, squircle);
 }
 .df-kanban-drop-placeholder {
+  position: relative;
   height: 44px;
   min-height: 36px;
-  border: 1px dashed var(--drag-placeholder-border);
+  border: 0;
   border-radius: var(--task-radius, 10px);
-  background: var(--drag-placeholder-bg);
+  background: transparent;
   pointer-events: none;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -18901,13 +18851,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 .df-task-block[data-drag-state="overlay"] a {
   pointer-events: none;
 }
-/* Source placeholder: the original position becomes a clean empty slot.
-   Same approximate size, light neutral dashed border, clean paper tint.
-   No purple/blue loud fill, no dirty gray, no text content. */
+/* Source placeholders keep their geometry without a visible frame. */
 .df-task-block[data-drag-state="source-placeholder"] {
   opacity: 1;
-  border: 1px dashed var(--drag-placeholder-border);
-  background: var(--drag-placeholder-bg);
+  border: 1px solid transparent;
+  background: transparent;
   box-shadow: none;
   transform: none;
   color: transparent;
@@ -18969,46 +18917,44 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 /* Drop placeholder slot: clean empty slot shown inside a container. */
 /* Insertion line: thin active-accent rule for reorder between tasks. */
-/* Drop container active: restrained active-accent outline around the
+/* Active drop targets use a light paper tint across the
    whole target area (kanban column, matrix quadrant, tree group).
    Clean paper background, no dirty gray fill. */
 .drop-container-active {
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-  outline-offset: -2px;
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
   box-shadow: none;
 }
 /* Planning native-drag source placeholder: unify with the shared
    is-dragging-source visual so all views share one placeholder look.
    Keep the is-drag-source selector (contract) but render the same
-   muted dashed box instead of an opacity-only ghost. */
+   transparent slot with the original layout space. */
 .df-app .df-planning .df-kanban-card.is-drag-source {
-  border: 1px dashed var(--drag-placeholder-border);
-  background: var(--drag-placeholder-bg);
+  border: 1px solid transparent;
+  background: transparent;
   box-shadow: none;
   transform: none;
   opacity: 1;
   color: transparent;
 }
 .df-app .df-planning .df-eisenhower-task.is-drag-source {
-  border: 1px dashed var(--drag-placeholder-border);
-  background: var(--drag-placeholder-bg);
+  border: 1px solid transparent;
+  background: transparent;
   box-shadow: none;
   transform: none;
   opacity: 1;
   color: transparent;
 }
 .df-app .df-planning .df-planning-list-row-wrap.is-drag-source .df-planning-list-row {
-  border: 1px dashed var(--drag-placeholder-border);
-  background: var(--drag-placeholder-bg);
+  border: 1px solid transparent;
+  background: transparent;
   box-shadow: none;
   transform: none;
   opacity: 1;
   color: transparent;
 }
 .df-app .df-tree [aria-grabbed="true"] {
-  border: 1px dashed var(--drag-placeholder-border);
-  background: var(--drag-placeholder-bg);
+  border: 1px solid transparent;
+  background: transparent;
   box-shadow: none;
   transform: none;
   opacity: 1;
@@ -19426,7 +19372,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   justify-content: space-between;
   gap: 10px;
   padding: 18px 12px;
-  border: 1px dashed var(--paper-rule);
+  border: 0;
   border-radius: 6px;
   color: var(--paper-muted);
   font-size: 13px;
@@ -20148,15 +20094,23 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   width: 100%;
   min-height: var(--reorder-preview-height, 56px);
   margin: 0;
-  border: 1px dashed var(--drag-placeholder-border, var(--paper-rule-strong));
+  border: 0;
   border-radius: var(--task-radius, 6px);
-  background: var(--drag-placeholder-bg, color-mix(in srgb, var(--accent-active) 4%, transparent));
+  background: transparent;
   pointer-events: none;
   animation: df-reorder-preview-in 120ms var(--paper-ease, ease) both;
   corner-shape: var(--corner-shape, squircle);
 }
-.df-reorder-preview-slot::after {
-  content: none;
+.df-reorder-preview-slot::after, .df-kanban-drop-placeholder::after, .df-tree-drop-preview::after, .is-drop-placeholder::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: var(--accent-active);
+  opacity: .5;
+  pointer-events: none;
 }
 @keyframes df-reorder-preview-in {
   from { opacity: .45; }
@@ -20325,11 +20279,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app .df-candidate-panel header > * {
   flex-shrink: 0;
 }
-/* Every reordering surface uses one quiet, four-sided empty slot.  It is a
-   destination marker, never a second task preview or an insertion line. */
+/* Reorder destinations reserve space and show one shared insertion rule. */
 #root .df-app :is(.df-reorder-preview-slot, .df-kanban-drop-placeholder, .df-tree-drop-preview) {
   box-sizing: border-box;
-  border: 1px dashed var(--paper-rule-strong);
+  border: 0;
   background: transparent;
   box-shadow: none;
   animation: none;
@@ -20394,9 +20347,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   flex: 0 0 var(--tree-drop-slot-height, 54px);
   box-sizing: border-box;
   padding: 0;
-  border: 1px dashed var(--paper-rule-strong);
+  border: 0;
   border-radius: var(--task-radius);
-  background: var(--surface-card);
+  background: transparent;
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -20866,10 +20819,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     touch-action: pan-y;
   }
   .df-time-block[data-touch-drag-armed="true"] {
-    outline: 1px solid color-mix(in srgb, var(--accent-active) 56%, transparent);
-    outline-offset: 2px;
     translate: 0 -3px;
-    box-shadow: var(--paper-float-shadow);
+    box-shadow: none;
   }
   .df-month-view {
     padding: 48px 2px 8px;
@@ -21557,7 +21508,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     min-height: 44px;
     margin: -2px 0 8px;
     padding: 0 12px;
-    border-block: 1px dashed var(--paper-rule-strong);
+    border-block: 1px solid var(--paper-rule-strong);
     color: var(--text-main);
     font: 650 11px/1 var(--paper-sans);
   }
@@ -24340,12 +24291,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 .ui-narrow-menu-layer .df-priority-high { color: var(--danger-ink, #b4232f); }
 .ui-narrow-menu-layer .df-priority-medium { color: var(--warning-ink, #b26a00); }
 .ui-narrow-menu-layer .df-priority-low { color: var(--accent-active); }
-.df-drop-preview.placement-preview:hover,
-.df-drop-preview.placement-preview:focus-visible {
+.df-drop-preview.placement-preview:hover {
   border-color: var(--accent-active);
   background: color-mix(in srgb, var(--accent-active) 7%, var(--surface-main));
-  outline: 1px solid color-mix(in srgb, var(--accent-active) 42%, transparent);
-  outline-offset: 1px;
 }
 .df-placement-preview-icon {
   position: relative;

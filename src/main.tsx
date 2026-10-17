@@ -1197,7 +1197,6 @@ function App() {
   const [candidateDropActive, setCandidateDropActive] = useState(false);
   const [candidatePlanningReturnActive, setCandidatePlanningReturnActive] = useState(false);
   const [candidateDropTarget, setCandidateDropTarget] = useState<CandidateDropTarget>(null);
-  const [candidateProjectDropFrame, setCandidateProjectDropFrame] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const [dragCreate, setDragCreate] = useState<DragCreateState>(null);
   const dragCreateSuppressClickRef = useRef(false);
   const timelineZoomRef = useRef(1);
@@ -3333,7 +3332,7 @@ if (cached?.data && cached?.settings) {
   }, [schedulePreviews, tasks]);
 
   // Map of clonedTaskId → previewId, used by TimeBlock to know which blocks
-  // are previews (and thus should show accept/cancel buttons, dashed border).
+  // are previews (and thus should show pending badges and accept/cancel buttons).
   // A clonedTaskId is a preview ONLY if it is NOT yet in data.tasks.
   const previewIdByClonedId = useMemo(() => {
     const realTaskIds = new Set(tasks.map((t) => t.id));
@@ -7559,7 +7558,6 @@ if (cached?.data && cached?.settings) {
       const unchanged = (previousTarget === null && nextTarget === null) || sameTaskTarget || sameProjectTarget;
       candidateTarget = nextTarget;
       if (!unchanged) setCandidateDropTarget(nextTarget);
-      if (nextTarget?.kind !== "project") setCandidateProjectDropFrame(null);
     };
     const jumpDate = (tap: PointerEvent) => {
       if (!active || tap.pointerId === pointerId) return;
@@ -7587,7 +7585,6 @@ if (cached?.data && cached?.settings) {
       setCandidateDropActive(false);
       setCandidatePlanningReturnActive(false);
       setCandidateDropTarget(null);
-      setCandidateProjectDropFrame(null);
       dragTargetDateRef.current = "";
       setMonthDropDate("");
       clearHold();
@@ -7648,8 +7645,6 @@ if (cached?.data && cached?.settings) {
           setCandidateReorderTarget(null);
         } else {
           setCandidateReorderTarget({ kind: "project", projectId });
-          const rect = candidateProjectGroup.getBoundingClientRect();
-          setCandidateProjectDropFrame({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
         }
         setCandidateDropActive(false);
         setAllDayDragOver(false);
@@ -10209,9 +10204,6 @@ if (cached?.data && cached?.settings) {
             ? `松手后放到目标${candidateDropTarget.position === "before" ? "上方" : "下方"}`
             : `Release to place ${candidateDropTarget.position === "before" ? "above" : "below"}`}</span>}
         </TaskDragLayer>
-      )}
-      {drag?.source === "candidate" && candidateProjectDropFrame && (
-        <div className="df-project-drop-outline" style={candidateProjectDropFrame} aria-hidden="true" />
       )}
       {dragOverlay && dragOverlayTask && drag?.source !== "candidate" && !timelineSnapActive && (
         <TaskDragLayer pointer={dragOverlayPointer} sourceRect={{ width: dragOverlay.sourceRect.width, height: dragOverlay.sourceRect.height }} offset={dragOverlay.offset}>
