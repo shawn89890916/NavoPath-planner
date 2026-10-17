@@ -25400,11 +25400,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     align-items: center;
     height: 44px;
   }
-  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now):has(.df-all-day-block) {
+  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now):has(:is(.df-all-day-block, .df-all-day-drop-preview)) {
     align-items: flex-start;
     gap: 4px;
   }
-  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-all-day-block) .df-back-to-now {
+  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(:is(.df-all-day-block, .df-all-day-drop-preview)) .df-back-to-now {
     position: static;
     order: 2;
     flex: 0 0 44px;
@@ -25412,10 +25412,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     min-width: 44px;
     padding: 0;
   }
-  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-all-day-block) .df-back-to-now span {
+  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(:is(.df-all-day-block, .df-all-day-drop-preview)) .df-back-to-now span {
     display: none;
   }
-  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now):has(.df-all-day-block) .df-timeline-allday-content {
+  #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now):has(:is(.df-all-day-block, .df-all-day-drop-preview)) .df-timeline-allday-content {
     order: 1;
     min-height: 44px;
     padding-right: 0;

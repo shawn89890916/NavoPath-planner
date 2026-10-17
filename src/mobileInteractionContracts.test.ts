@@ -230,7 +230,7 @@ describe("portrait interaction contracts", () => {
 
   it("snaps the real task block into timeline slots instead of covering a white target preview", () => {
     expect(main).toContain("function SnappedTimelineDragBlock");
-    expect(main).toContain("const timelineSnapActive = Boolean(draggedTask && hoverSlot && !drag?.outsideTimeline);");
+    expect(main).toContain("const timelineSnapActive = Boolean(draggedTask && (allDayDragDate || (hoverSlot && !drag?.outsideTimeline)));");
     expect(main).toContain("drag.pointer && draggedTask && !timelineSnapActive");
     expect(main).toContain("dragOverlayTask && drag?.source !== \"candidate\" && !timelineSnapActive");
     expect(main).not.toContain("draggingBlock conflict=");

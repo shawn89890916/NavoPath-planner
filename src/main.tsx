@@ -5992,6 +5992,8 @@ if (cached?.data && cached?.settings) {
     const clearHold = () => {
       if (holdTimer !== undefined) window.clearTimeout(holdTimer);
       window.cancelAnimationFrame(autoScrollFrame);
+      setAllDayDragOver(false);
+      setAllDayDragDate("");
       delete target.dataset.touchDragArmed;
       target.removeEventListener("touchmove", holdTouch);
     };
@@ -6048,6 +6050,15 @@ if (cached?.data && cached?.settings) {
       setDragOverlayPointer({ x: moveEvent.clientX, y: moveEvent.clientY });
       const outsideTimeline = pointerOutsideTimeline(moveEvent.clientX, moveEvent.clientY);
       setDrag((current) => current && current.taskId === task.id ? { ...current, pointer: { x: moveEvent.clientX, y: moveEvent.clientY }, outsideTimeline } : current);
+      const allDayCell = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)?.closest<HTMLElement>("[data-all-day-date]");
+      const allDayDate = allDayCell?.dataset.allDayDate || "";
+      setAllDayDragOver(Boolean(allDayDate));
+      setAllDayDragDate(allDayDate);
+      if (allDayDate) {
+        setHoverSlot("");
+        dragTargetDateRef.current = allDayDate;
+        return;
+      }
       if (!outsideTimeline) {
         // Continuous cross-day mode MUST derive the date from the Y band index
         // (continuousPointerTarget), not from currentDate/X column. The offset
@@ -6082,7 +6093,7 @@ if (cached?.data && cached?.settings) {
           const alldayRect = alldayEl.getBoundingClientRect();
           const pad = 6;
           if (upEvent.clientX >= alldayRect.left - pad && upEvent.clientX <= alldayRect.right + pad && upEvent.clientY >= alldayRect.top - pad && upEvent.clientY <= alldayRect.bottom + pad) {
-            let targetDate = timelineDate;
+            let targetDate = alldayEl.dataset.allDayDate || timelineDate;
             if (timelineView === "3day" || timelineView === "weekly") {
               const threeDates = getVisibleDays(timelineView === "weekly" ? "weekly" : "3day", timelineDate);
               const datesEl = alldayEl.querySelector(".df-timeline-3day-dates");
@@ -6094,6 +6105,8 @@ if (cached?.data && cached?.settings) {
                 targetDate = threeDates[di];
               }
             }
+            const allDayCell = document.elementFromPoint(upEvent.clientX, upEvent.clientY)?.closest<HTMLElement>("[data-all-day-date]");
+            targetDate = allDayCell?.dataset.allDayDate || targetDate;
             if (isEvent) {
               makeEventAllDay(task.id, targetDate);
             } else {
@@ -6103,6 +6116,7 @@ if (cached?.data && cached?.settings) {
             window.removeEventListener("pointerup", up);
             window.removeEventListener("pointercancel", cancel);
             window.removeEventListener("keydown", keydown);
+            window.removeEventListener("pointerdown", jumpDate);
             setDrag(null);
             setDragOverlay(null);
             setHoverSlot("");
@@ -8725,7 +8739,7 @@ if (cached?.data && cached?.settings) {
           })()
         : undefined)
     : undefined;
-  const timelineSnapActive = Boolean(draggedTask && hoverSlot && !drag?.outsideTimeline);
+  const timelineSnapActive = Boolean(draggedTask && (allDayDragDate || (hoverSlot && !drag?.outsideTimeline)));
   const focusTask = timerTask || headerTask;
   const focusProject = timerProject || headerProject;
   const focusElapsed = timerTask ? timerElapsed : 0;
