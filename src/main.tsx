@@ -2,6 +2,7 @@ import { uid } from "./utils/ids";
 import { toggleTaskCompletion, setTaskCompletion, habitScheduleForTask } from "./utils/taskCompletion";
 import { captureTaskUndo, undoTaskChanges, type TaskUndo } from "./utils/taskUndo";
 import { MobileQuickAddButton } from "./components/MobileQuickAddButton";
+import { NotificationBadge } from "./components/NotificationBadge";
 import { getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./workspaceEnvironment";
 import { normalizeEngagement } from "./utils/engagement";
 import { WorkspaceModeTabs } from "./components/WorkspaceModeTabs";
@@ -8735,6 +8736,7 @@ if (cached?.data && cached?.settings) {
         : undefined)
     : undefined;
   const timelineSnapActive = Boolean(draggedTask && (allDayDragDate || (hoverSlot && !drag?.outsideTimeline)));
+  const showNotificationBadge = settings?.showInAppNotificationBadge !== false;
   const focusTask = timerTask || headerTask;
   const focusProject = timerProject || headerProject;
   const focusElapsed = timerTask ? timerElapsed : 0;
@@ -8823,14 +8825,14 @@ if (cached?.data && cached?.settings) {
             <UiSearchIcon size={20} strokeWidth={2} />
           </button>
           {authState?.mode === "cloud" && <button
-            className={`df-user-avatar df-proactive-notification-button${proactiveNotifications.length ? " has-unread" : ""}`}
+            className={`df-user-avatar df-proactive-notification-button${showNotificationBadge && proactiveNotifications.length ? " has-unread" : ""}`}
             type="button"
             onClick={() => setNotificationCenterOpen(true)}
             aria-label={lang === "zh" ? `主动助理提醒${proactiveNotifications.length ? `，${proactiveNotifications.length} 条未读` : ""}` : `Proactive assistant messages${proactiveNotifications.length ? `, ${proactiveNotifications.length} unread` : ""}`}
             title={lang === "zh" ? "主动助理提醒" : "Proactive assistant messages"}
           >
             <UiBellIcon size={20} strokeWidth={2} />
-            {proactiveNotifications.length > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{proactiveNotifications.length > 9 ? "9+" : proactiveNotifications.length}</span>}
+            <NotificationBadge count={proactiveNotifications.length} enabled={showNotificationBadge} />
           </button>}
           <button className="df-user-avatar" onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.01A1.65 1.65 0 0 0 10.91 3H11a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -10062,7 +10064,7 @@ if (cached?.data && cached?.settings) {
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
           </button> : <span className="df-mobile-dock-spacer" aria-hidden="true" />}
           <WorkspaceModeTabs mode={mode} lang={lang} onChange={changeMode} className="df-mobile-mode-switch" as="div" />
-          {!productDemo && <label className={`df-mobile-dock-action df-mobile-more${proactiveNotifications.length ? " has-unread" : ""}`} title={lang === "zh" ? "更多" : "More"}>
+          {!productDemo && <label className={`df-mobile-dock-action df-mobile-more${showNotificationBadge && proactiveNotifications.length ? " has-unread" : ""}`} title={lang === "zh" ? "更多" : "More"}>
             <UiMoreIcon />
             <select aria-label={lang === "zh" ? "更多" : "More"} value="" onChange={(event) => {
               const action = event.target.value;
@@ -10076,7 +10078,7 @@ if (cached?.data && cached?.settings) {
               <option value="search">{lang === "zh" ? "搜索" : "Search"}</option>
               <option value="settings">{t(lang, "header.settings")}</option>
             </select>
-            {proactiveNotifications.length > 0 && <span className="df-proactive-notification-count" aria-hidden="true">{proactiveNotifications.length > 9 ? "9+" : proactiveNotifications.length}</span>}
+            <NotificationBadge count={proactiveNotifications.length} enabled={showNotificationBadge} />
           </label>}
         </nav>, document.body)
       )}
@@ -10084,7 +10086,7 @@ if (cached?.data && cached?.settings) {
       {!productPresentation && !compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
       {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
       {createPortal(<MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
-        drawerOpen={drawerOpen || commandOpen} notificationCenterOpen={notificationCenterOpen}
+        drawerOpen={drawerOpen || commandOpen || quickAddOpen} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, mode)}
         onAdd={() => { if (mode !== "execute") changeMode("execute"); setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
       />, document.body)}

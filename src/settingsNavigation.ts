@@ -124,6 +124,7 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("calendar-feed", { category: "integrations" }, "日历订阅", "Calendar subscription", "webcal ics iPhone Notion Calendar 日历 同步 订阅"),
   entry("external-calendar", { category: "integrations" }, "外部日历", "External calendars", "read only ICS busy time 只读 忙碌 冲突"),
   entry("language", { category: "general" }, "语言", "Language", "中文 English locale"),
+  entry("notification-badge", { category: "general" }, "应用内通知角标", "In-app notification badge", "unread count notifications badge 通知 未读 提醒 角标"),
   entry("day-start", { category: "general" }, "一天开始时间", "Day start time", "timeline boundary 跨天"),
   entry("default-timeline", { category: "general" }, "默认时间轴视图", "Default timeline view", "day 3-day week month 日 周 月"),
   entry("continuous-scroll", { category: "general" }, "开启无限跨天滚动", "Continuous cross-day scroll", "timeline"),

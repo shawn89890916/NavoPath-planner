@@ -61,6 +61,7 @@ export const defaultSettings: Settings = {
   aiStartBriefTime: "08:00",
   aiEndBriefTime: "21:30",
   proactiveAssistantEnabled: true,
+  showInAppNotificationBadge: true,
   proactiveAssistantIntroSeen: false,
   proactiveAssistantAutoAdjust: true,
   proactiveAssistantGapChecks: true,

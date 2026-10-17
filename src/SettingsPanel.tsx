@@ -1072,7 +1072,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               </nav>
             </div>
             <div ref={settingsContentRef} className="df-settings-content">
-            {settingsTarget.category === "general" && <SettingSection anchor="general-basics" title={lang === "zh" ? "基础" : "Basics"} description={lang === "zh" ? "语言与时间边界。" : "Language and time boundary."}>
+            {settingsTarget.category === "general" && <SettingSection anchor="general-basics" title={lang === "zh" ? "基础" : "Basics"} description={lang === "zh" ? "语言、时间边界与通知显示。" : "Language, time boundary, and notification display."}>
               <SettingRow
                 anchor="language"
                 title={lang === "zh" ? "语言" : "Language"}
@@ -1091,6 +1091,12 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 title={lang === "zh" ? "一天开始时间" : "Day start time"}
                 description={lang === "zh" ? "决定时间轴的起始分界，影响跨天滚动与统计范围。" : "Sets the boundary used by the timeline, cross-day scroll, and metric ranges."}
                 control={<SettingTextInput type="time" value={settings.dayStartTime || "00:00"} ariaLabel={lang === "zh" ? "一天开始时间" : "Day start time"} onChange={(value) => onSave({ dayStartTime: value })} />}
+              />
+              <SettingRow
+                anchor="notification-badge"
+                title={lang === "zh" ? "应用内通知角标" : "In-app notification badge"}
+                description={lang === "zh" ? "显示通知入口的未读数量。关闭后仍可在通知中心查看通知。" : "Show the unread count on the notification control. Notifications remain available in the notification center when hidden."}
+                control={<SettingToggle checked={settings.showInAppNotificationBadge !== false} ariaLabel={lang === "zh" ? "应用内通知角标" : "In-app notification badge"} onChange={(next) => onSave({ showInAppNotificationBadge: next })} />}
               />
             </SettingSection>}
 

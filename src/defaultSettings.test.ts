@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { normalizeSettings } from "./defaultSettings";
 
 describe("plugin settings normalization", () => {
+  it("keeps notification badges enabled for existing settings and preserves an explicit opt-out", () => {
+    expect(normalizeSettings({}).showInAppNotificationBadge).toBe(true);
+    expect(normalizeSettings({ showInAppNotificationBadge: false }).showInAppNotificationBadge).toBe(false);
+    expect(normalizeSettings({ showInAppNotificationBadge: "false" }).showInAppNotificationBadge).toBe(true);
+  });
   it("enables proactive AI briefs with bounded daily defaults", () => {
     const defaults = normalizeSettings({});
     expect(defaults.aiBriefsEnabled).toBe(true);

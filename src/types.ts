@@ -563,6 +563,7 @@ export interface Settings {
   aiLastEndReviewDate?: string;
   /** Cloud proactive assistant preferences, stored with the user profile for offline-safe configuration. */
   proactiveAssistantEnabled?: boolean;
+  showInAppNotificationBadge?: boolean;
   proactiveAssistantIntroSeen?: boolean;
   proactiveAssistantAutoAdjust?: boolean;
   proactiveAssistantGapChecks?: boolean;

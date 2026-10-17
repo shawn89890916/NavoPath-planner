@@ -24591,10 +24591,16 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
   .df-mobile-dock--viewport .df-proactive-notification-count {
     position: absolute;
-    top: -4px;
-    right: -4px;
-    min-width: 16px;
-    height: 16px;
+    top: 1px;
+    right: 1px;
+    z-index: 1;
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+    line-height: 1;
     pointer-events: none;
   }
   #root .df-app .df-settings-shell {

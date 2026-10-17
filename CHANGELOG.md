@@ -3,10 +3,12 @@
 ## 2026-10-17 · 竖屏导航与个人资料
 
 ### 改进
+- 设置的“通用”分区可关闭应用内通知角标，关闭后仍可查看通知中心。
 - 竖屏底栏右下角“更多”使用系统原生选项列表，集中提供通知、搜索与设置；竖屏设置首页不再重复显示通知入口。
 - 清理候选任务、时间轴、月视图、规划树、列表、看板与矩阵中的多余拖动外框；排序落点改用单条插入线，AI 待确认任务、外部日历、模板与空状态采用简洁边界，去掉引导区域的虚线框。
 
 ### 修复
+- 竖屏快速添加弹层打开时隐藏浮动添加按钮，关闭后恢复；右下角“更多”的通知角标收进按钮范围，避免被屏幕边缘裁切。
 - 竖屏长按拖动时间轴任务时，靠近顶部或底部会持续滚动时间轴，并同步更新落点时间；松手或取消拖动后停止滚动。拖入全天栏时沿用任务卡片显示放置预览，去掉额外的虚线框与外层框线，松手后安排到预览对应日期。
 - 全天任务与“回到现在”保持同行；竖屏有任务时“回到现在”收为图标按钮，为任务留出宽度。
 - 用户名与头像在竖屏设置首页及横屏“账户与资料”分区显示，修改后立即保存；调整其他设置时保留云端较新的个人资料，失败重试保留未保存的修改，并可从同一账户的浏览器缓存恢复缺失资料。
@@ -154,10 +156,12 @@
 ## 2026-10-17 · Portrait navigation and profile details
 
 ### Improvements
+- General settings can hide in-app notification badges while keeping the notification center available.
 - The bottom-right More control uses a system-native option list for Notifications, Search, and Settings. Removed the duplicate notification entry from compact Settings home.
 - Removed extra drag frames across candidates, timelines, month view, planning trees, lists, boards, and matrices. Reorder destinations use one insertion line; pending AI tasks, external calendars, templates, and empty states use simple boundaries, and onboarding areas no longer show dashed frames.
 
 ### Fixed
+- Hide the floating add button while portrait quick add is open and restore it on close. Keep the bottom-right More notification badge inside the button bounds to prevent edge clipping.
 - Holding a timeline task near the top or bottom while dragging in portrait continuously scrolls the timeline and updates the drop time. Scrolling stops on release or cancellation. Dragging into the all-day row previews the task card without extra dashed or surrounding outlines, and schedules to the previewed date on release.
 - All-day tasks and Back to now stay on the same row. With portrait tasks present, Back to now becomes an icon button to preserve task width.
 - Username and avatar appear on portrait Settings home and in the landscape Account & Data section, and edits are saved promptly. Changing other settings preserves newer cloud profile details, retries retain unsaved edits, and missing profile details can be recovered from the same account's browser cache.
