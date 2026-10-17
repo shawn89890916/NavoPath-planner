@@ -9306,7 +9306,7 @@ if (cached?.data && cached?.settings) {
                           })}
                         </div>
                       </div>
-                      <div className={`df-timeline-3day-allday${allDayDragDate && drag ? " drag-over" : ""}`}
+                      <div className="df-timeline-3day-allday"
                         onDragEnter={(e) => { e.preventDefault(); setAllDayDragOver(true); }}
                         onDragOver={(e) => { e.preventDefault(); if (!allDayDragOver) setAllDayDragOver(true); }}
                         onDragLeave={(e) => {
@@ -9364,7 +9364,7 @@ if (cached?.data && cached?.settings) {
                                 {allDayQuickAdd && !drag && allDayQuickAdd.date === colDate && (
                                   <AllDayQuickAddPopover add={allDayQuickAdd} projects={projects} onSave={(title) => createAllDayTask(title, colDate, null)} onCancel={() => setAllDayQuickAdd(null)} />
                                 )}
-                                {allDayDragDate === colDate && drag && draggedTask && <AllDayDropPreview task={draggedTask} />}
+                                {allDayDragDate === colDate && drag && draggedTask && <AllDayDropPreview task={draggedTask} projects={projects} lang={lang} />}
                                 {adTasks.map((task) => (
                                   <AllDayBlock engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
                                 ))}
@@ -9764,7 +9764,7 @@ if (cached?.data && cached?.settings) {
                       />
                     )}
                     <div
-                      className={`df-timeline-allday${allDayDragDate === timelineWindowAnchorDate && drag ? " drag-over" : ""}`}
+                      className="df-timeline-allday"
                       data-all-day-date={timelineWindowAnchorDate}
                       onDragEnter={(e) => { e.preventDefault(); setAllDayDragOver(true); }}
                       onDragOver={(e) => { e.preventDefault(); if (!allDayDragOver) setAllDayDragOver(true); }}
@@ -9800,7 +9800,7 @@ if (cached?.data && cached?.settings) {
                         {allDayQuickAdd && !drag && (
                           <AllDayQuickAddPopover add={allDayQuickAdd} projects={projects} onSave={(title) => createAllDayTask(title, allDayQuickAdd.date, null)} onCancel={() => setAllDayQuickAdd(null)} />
                         )}
-                        {allDayDragDate === timelineWindowAnchorDate && drag && draggedTask && <AllDayDropPreview task={draggedTask} />}
+                        {allDayDragDate === timelineWindowAnchorDate && drag && draggedTask && <AllDayDropPreview task={draggedTask} projects={projects} lang={lang} />}
                         {[
                           ...tasks.filter((task) => isAllDayTask(task) && task.scheduledDate === timelineWindowAnchorDate),
                           ...allDayTimelineTasks.filter((task) => task.scheduledDate === timelineWindowAnchorDate),
@@ -11960,9 +11960,15 @@ function QuickProjectPicker(props: {
   );
 }
 
-function AllDayDropPreview({ task }: { task: Task }) {
-  const color = categories[task.category]?.color || "#888";
-  return <div className="df-all-day-drop-preview" style={{ "--cat": color } as CSSProperties}><strong>{task.title}</strong></div>;
+function AllDayDropPreview({ task, projects, lang }: { task: Task; projects: Project[]; lang: Language }) {
+  const color = projects.find((project) => String(project.id) === String(task.projectId || ""))?.color || categories[task.category]?.color;
+  const isEvent = isEventDisplayTask(task);
+  return <TaskBlock as="div" variant="allDay" appearance="calm" priority={taskBlockPriorityFor(task.priority)} checked={!isEvent && task.completed} projectColor={color} dragState="overlay" className="df-all-day-block df-all-day-drop-preview" lang={lang}>
+    <TaskBlockRow className="df-all-day-row">
+      {!isEvent && <TaskCheckbox checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority}>{task.completed ? "✓" : ""}</TaskCheckbox>}
+      <TaskBlockContent className="df-all-day-main" title={task.title} />
+    </TaskBlockRow>
+  </TaskBlock>;
 }
 
 function AllDayBlock({ task, engagementEnabled, dragging, projectName, projects, onEdit, onToggleDone, onProjectChange, onProjectColorChange, onCreateProject, onPointerDragStart, lang }: { task: Task; engagementEnabled?: boolean; dragging?: boolean; projectName: string; projects: Project[]; onEdit: () => void; onToggleDone: () => void; onProjectChange: (projectId: string) => void; onProjectColorChange: (projectId: string, color: string) => void; onCreateProject: (title: string) => void; onPointerDragStart: (event: React.PointerEvent) => void; lang: Language }) {
