@@ -10058,7 +10058,7 @@ if (cached?.data && cached?.settings) {
         />
       )}
 
-      {!productAiPresentation && compactLayout && !drawerOpen && !commandOpen && !notificationCenterOpen && utilityPanel !== "settings" && (
+      {!productAiPresentation && compactLayout && !drawerOpen && !commandOpen && !notificationCenterOpen && !scheduleTemplateOpen && utilityPanel !== "settings" && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, mode)} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {!productPresentation && !settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
@@ -10086,7 +10086,7 @@ if (cached?.data && cached?.settings) {
       {!productPresentation && !compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
       {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
       {createPortal(<MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
-        drawerOpen={drawerOpen || commandOpen || quickAddOpen} notificationCenterOpen={notificationCenterOpen}
+        drawerOpen={drawerOpen || commandOpen || quickAddOpen || scheduleTemplateOpen} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, mode)}
         onAdd={() => { if (mode !== "execute") changeMode("execute"); setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
       />, document.body)}

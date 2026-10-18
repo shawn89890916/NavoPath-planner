@@ -2362,6 +2362,134 @@ export default function PlanningView(props: {
                 )}
               </div>
               )}
+              {viewMode === "metrics" && (
+                <header className="df-metrics-header">
+                  <div className="df-metrics-toolbar">
+                    <div className="df-filter-popover-anchor">
+                      <button
+                        type="button"
+                        className={`df-filter-trigger${metricsFilterOpen ? " active" : ""}${metricActiveChips.length > 0 ? " has-active" : ""}`}
+                        aria-expanded={metricsFilterOpen}
+                        aria-label={props.lang === "zh" ? "指标筛选" : "Metrics filters"}
+                        title={props.lang === "zh" ? "指标筛选" : "Metrics filters"}
+                        onClick={() => setMetricsFilterOpen((open) => !open)}
+                      >
+                        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 4h12M5 9h8M7 14h4" /></svg>
+                        {metricActiveChips.length > 0 && <b>{metricActiveChips.length}</b>}
+                      </button>
+                      {metricsFilterOpen && (
+                        <>
+                          <div className="df-filter-panel df-metrics-filter-panel" onClick={(e) => e.stopPropagation()}>
+                            <div className="df-filter-categories">
+                              {([
+                                ["range", props.lang === "zh" ? "时间范围" : "Range"],
+                                ["group", props.lang === "zh" ? "分组方式" : "Group by"],
+                                ["project", props.lang === "zh" ? "项目" : "Projects"],
+                                ["completion", props.lang === "zh" ? "完成状态" : "Completion"],
+                                ["habit", props.lang === "zh" ? "是否包含习惯" : "Habits"],
+                                ["metric", props.lang === "zh" ? "显示指标" : "Metric"],
+                              ] as Array<[typeof metricsFilterCategory, string]>).map(([key, label]) => (
+                                <button
+                                  type="button"
+                                  key={key}
+                                  className={`df-filter-cat-row${metricsFilterCategory === key ? " active" : ""}`}
+                                  onMouseEnter={() => setMetricsFilterCategory(key)}
+                                  onFocus={() => setMetricsFilterCategory(key)}
+                                  onClick={() => setMetricsFilterCategory(key)}
+                                >
+                                  <span className="df-filter-cat-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 14 14"><path d="M3 4h8M4 7h6M5 10h4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+                                  </span>
+                                  <span className="df-filter-cat-label">{label}</span>
+                                  <svg className="df-filter-cat-chevron" viewBox="0 0 8 14" aria-hidden="true"><path d="M2 2l4 5-4 5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                </button>
+                              ))}
+                            </div>
+                            {metricActiveChips.length > 0 && (
+                              <button type="button" className="df-filter-reset" onClick={() => {
+                                setMetricRange("today");
+                                setMetricGroup("project");
+                                setMetricHabit("include");
+                                setMetricCompletion("all");
+                                setMetricsProjectFilter([]);
+                              }}>
+                                {props.lang === "zh" ? "清除全部" : "Clear all"}
+                              </button>
+                            )}
+                            <div className="df-filter-flyout-panel df-metrics-filter-flyout" onClick={(e) => e.stopPropagation()}>
+                              <div className="df-filter-options-view">
+                                <div className="df-filter-options-title">
+                                  {metricsFilterCategory === "range" ? (props.lang === "zh" ? "时间范围" : "Range")
+                                    : metricsFilterCategory === "group" ? (props.lang === "zh" ? "分组方式" : "Group by")
+                                    : metricsFilterCategory === "project" ? (props.lang === "zh" ? "项目" : "Projects")
+                                    : metricsFilterCategory === "completion" ? (props.lang === "zh" ? "完成状态" : "Completion")
+                                    : metricsFilterCategory === "habit" ? (props.lang === "zh" ? "是否包含习惯" : "Habits")
+                                    : (props.lang === "zh" ? "显示指标" : "Metric")}
+                                </div>
+                                {metricsFilterCategory === "range" && (
+                                  <>
+                                    {rangeOptions.map((option) => (
+                                      <label key={option.value} className={`df-filter-option${metricsRangePreset === option.value ? " checked" : ""}`}>
+                                        <input type="radio" checked={metricsRangePreset === option.value} onChange={() => setMetricRange(option.value)} />
+                                        <span>{option.label}</span>
+                                      </label>
+                                    ))}
+                                    {metricsRangePreset === "custom" && (
+                                      <div className="df-metrics-custom-dates">
+                                        <input type="date" value={metricsCustomStart} onChange={(event) => { setMetricsCustomStart(event.target.value); updateMetricsSetting({ metricsCustomStart: event.target.value }); }} />
+                                        <input type="date" value={metricsCustomEnd} onChange={(event) => { setMetricsCustomEnd(event.target.value); updateMetricsSetting({ metricsCustomEnd: event.target.value }); }} />
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                                {metricsFilterCategory === "group" && groupOptions.map((option) => (
+                                  <label key={option.value} className={`df-filter-option${metricsGroupBy === option.value ? " checked" : ""}${option.disabled ? " disabled" : ""}`}>
+                                    <input type="radio" checked={metricsGroupBy === option.value} disabled={option.disabled} onChange={() => !option.disabled && setMetricGroup(option.value)} />
+                                    <span>{option.label}</span>
+                                  </label>
+                                ))}
+                                {metricsFilterCategory === "project" && (
+                                  <>
+                                    <label className={`df-filter-option${metricsProjectFilter.length === 0 ? " checked" : ""}`}>
+                                      <input type="checkbox" checked={metricsProjectFilter.length === 0} onChange={() => setMetricsProjectFilter([])} />
+                                      <span>{props.lang === "zh" ? "全部项目" : "All projects"}</span>
+                                    </label>
+                                    {safeProjects.map((project) => (
+                                      <label key={project.id} className={`df-filter-option${metricsProjectFilter.includes(project.id) ? " checked" : ""}`}>
+                                        <input type="checkbox" checked={metricsProjectFilter.includes(project.id)} onChange={() => toggleArray(setMetricsProjectFilter, project.id)} />
+                                        <span className="df-filter-option-dot" style={{ background: project.color || DEFAULT_PROJECT_COLOR }} />
+                                        <span>{project.title}</span>
+                                      </label>
+                                    ))}
+                                  </>
+                                )}
+                                {metricsFilterCategory === "completion" && (["all", "completed", "incomplete"] as MetricCompletionFilter[]).map((value) => (
+                                  <label key={value} className={`df-filter-option${metricsCompletion === value ? " checked" : ""}`}>
+                                    <input type="radio" checked={metricsCompletion === value} onChange={() => setMetricCompletion(value)} />
+                                    <span>{value === "all" ? (props.lang === "zh" ? "全部" : "All") : value === "completed" ? (props.lang === "zh" ? "已完成" : "Completed") : (props.lang === "zh" ? "未完成" : "Incomplete")}</span>
+                                  </label>
+                                ))}
+                                {metricsFilterCategory === "habit" && (["include", "exclude", "only"] as MetricHabitMode[]).map((value) => (
+                                  <label key={value} className={`df-filter-option${metricsHabitMode === value ? " checked" : ""}`}>
+                                    <input type="radio" checked={metricsHabitMode === value} onChange={() => setMetricHabit(value)} />
+                                    <span>{value === "include" ? (props.lang === "zh" ? "包含习惯" : "Include habits") : value === "exclude" ? (props.lang === "zh" ? "排除习惯" : "Exclude habits") : (props.lang === "zh" ? "仅习惯" : "Only habits")}</span>
+                                  </label>
+                                ))}
+                                {metricsFilterCategory === "metric" && (["percentage", "duration", "taskCount", "completionRate"] as MetricDisplayMetric[]).map((value) => (
+                                  <label key={value} className={`df-filter-option${metricsDisplayMetric === value ? " checked" : ""}`}>
+                                    <input type="radio" checked={metricsDisplayMetric === value} onChange={() => setMetricDisplay(value)} />
+                                    <span>{value === "percentage" ? (props.lang === "zh" ? "百分比" : "Percentage") : value === "duration" ? (props.lang === "zh" ? "总时长" : "Duration") : value === "taskCount" ? (props.lang === "zh" ? "任务数量" : "Task count") : (props.lang === "zh" ? "完成率" : "Completion rate")}</span>
+                                  </label>
+                                ))}
+                              </div>
+                          </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </header>
+              )}
             </div>
 
           </aside>
@@ -2397,131 +2525,7 @@ export default function PlanningView(props: {
           {viewMode === "metrics" && (
             <section className="df-metrics-view" aria-label={props.lang === "zh" ? "时间占比" : "Time allocation metrics"}>
               {props.engagementEnabled && <p className="df-engagement-caption">{props.lang === "zh" ? "已完成任务按时长 × 投入度统计（默认 80%）；未完成安排按原始时长统计。" : "Completed time is weighted by engagement (80% by default); incomplete schedules use their original duration."}</p>}
-              <header className="df-metrics-header">
-                <div className="df-metrics-toolbar">
-                  <div className="df-filter-popover-anchor">
-                    <button
-                      type="button"
-                      className={`df-filter-trigger${metricsFilterOpen ? " active" : ""}${metricActiveChips.length > 0 ? " has-active" : ""}`}
-                      aria-expanded={metricsFilterOpen}
-                      aria-label={props.lang === "zh" ? "指标筛选" : "Metrics filters"}
-                      title={props.lang === "zh" ? "指标筛选" : "Metrics filters"}
-                      onClick={() => setMetricsFilterOpen((open) => !open)}
-                    >
-                      <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 4h12M5 9h8M7 14h4" /></svg>
-                      {metricActiveChips.length > 0 && <b>{metricActiveChips.length}</b>}
-                    </button>
-                    {metricsFilterOpen && (
-                      <>
-                        <div className="df-filter-panel df-metrics-filter-panel" onClick={(e) => e.stopPropagation()}>
-                          <div className="df-filter-categories">
-                            {([
-                              ["range", props.lang === "zh" ? "时间范围" : "Range"],
-                              ["group", props.lang === "zh" ? "分组方式" : "Group by"],
-                              ["project", props.lang === "zh" ? "项目" : "Projects"],
-                              ["completion", props.lang === "zh" ? "完成状态" : "Completion"],
-                              ["habit", props.lang === "zh" ? "是否包含习惯" : "Habits"],
-                              ["metric", props.lang === "zh" ? "显示指标" : "Metric"],
-                            ] as Array<[typeof metricsFilterCategory, string]>).map(([key, label]) => (
-                              <button
-                                type="button"
-                                key={key}
-                                className={`df-filter-cat-row${metricsFilterCategory === key ? " active" : ""}`}
-                                onMouseEnter={() => setMetricsFilterCategory(key)}
-                                onFocus={() => setMetricsFilterCategory(key)}
-                              >
-                                <span className="df-filter-cat-icon" aria-hidden="true">
-                                  <svg viewBox="0 0 14 14"><path d="M3 4h8M4 7h6M5 10h4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
-                                </span>
-                                <span className="df-filter-cat-label">{label}</span>
-                                <svg className="df-filter-cat-chevron" viewBox="0 0 8 14" aria-hidden="true"><path d="M2 2l4 5-4 5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                              </button>
-                            ))}
-                          </div>
-                          {metricActiveChips.length > 0 && (
-                            <button type="button" className="df-filter-reset" onClick={() => {
-                              setMetricRange("today");
-                              setMetricGroup("project");
-                              setMetricHabit("include");
-                              setMetricCompletion("all");
-                              setMetricsProjectFilter([]);
-                            }}>
-                              {props.lang === "zh" ? "清除全部" : "Clear all"}
-                            </button>
-                          )}
-                        </div>
-                        <div className="df-filter-flyout-panel df-metrics-filter-flyout" onClick={(e) => e.stopPropagation()}>
-                          <div className="df-filter-options-view">
-                            <div className="df-filter-options-title">
-                              {metricsFilterCategory === "range" ? (props.lang === "zh" ? "时间范围" : "Range")
-                                : metricsFilterCategory === "group" ? (props.lang === "zh" ? "分组方式" : "Group by")
-                                : metricsFilterCategory === "project" ? (props.lang === "zh" ? "项目" : "Projects")
-                                : metricsFilterCategory === "completion" ? (props.lang === "zh" ? "完成状态" : "Completion")
-                                : metricsFilterCategory === "habit" ? (props.lang === "zh" ? "是否包含习惯" : "Habits")
-                                : (props.lang === "zh" ? "显示指标" : "Metric")}
-                            </div>
-                            {metricsFilterCategory === "range" && (
-                              <>
-                                {rangeOptions.map((option) => (
-                                  <label key={option.value} className={`df-filter-option${metricsRangePreset === option.value ? " checked" : ""}`}>
-                                    <input type="radio" checked={metricsRangePreset === option.value} onChange={() => setMetricRange(option.value)} />
-                                    <span>{option.label}</span>
-                                  </label>
-                                ))}
-                                {metricsRangePreset === "custom" && (
-                                  <div className="df-metrics-custom-dates">
-                                    <input type="date" value={metricsCustomStart} onChange={(event) => { setMetricsCustomStart(event.target.value); updateMetricsSetting({ metricsCustomStart: event.target.value }); }} />
-                                    <input type="date" value={metricsCustomEnd} onChange={(event) => { setMetricsCustomEnd(event.target.value); updateMetricsSetting({ metricsCustomEnd: event.target.value }); }} />
-                                  </div>
-                                )}
-                              </>
-                            )}
-                            {metricsFilterCategory === "group" && groupOptions.map((option) => (
-                              <label key={option.value} className={`df-filter-option${metricsGroupBy === option.value ? " checked" : ""}${option.disabled ? " disabled" : ""}`}>
-                                <input type="radio" checked={metricsGroupBy === option.value} disabled={option.disabled} onChange={() => !option.disabled && setMetricGroup(option.value)} />
-                                <span>{option.label}</span>
-                              </label>
-                            ))}
-                            {metricsFilterCategory === "project" && (
-                              <>
-                                <label className={`df-filter-option${metricsProjectFilter.length === 0 ? " checked" : ""}`}>
-                                  <input type="checkbox" checked={metricsProjectFilter.length === 0} onChange={() => setMetricsProjectFilter([])} />
-                                  <span>{props.lang === "zh" ? "全部项目" : "All projects"}</span>
-                                </label>
-                                {safeProjects.map((project) => (
-                                  <label key={project.id} className={`df-filter-option${metricsProjectFilter.includes(project.id) ? " checked" : ""}`}>
-                                    <input type="checkbox" checked={metricsProjectFilter.includes(project.id)} onChange={() => toggleArray(setMetricsProjectFilter, project.id)} />
-                                    <span className="df-filter-option-dot" style={{ background: project.color || DEFAULT_PROJECT_COLOR }} />
-                                    <span>{project.title}</span>
-                                  </label>
-                                ))}
-                              </>
-                            )}
-                            {metricsFilterCategory === "completion" && (["all", "completed", "incomplete"] as MetricCompletionFilter[]).map((value) => (
-                              <label key={value} className={`df-filter-option${metricsCompletion === value ? " checked" : ""}`}>
-                                <input type="radio" checked={metricsCompletion === value} onChange={() => setMetricCompletion(value)} />
-                                <span>{value === "all" ? (props.lang === "zh" ? "全部" : "All") : value === "completed" ? (props.lang === "zh" ? "已完成" : "Completed") : (props.lang === "zh" ? "未完成" : "Incomplete")}</span>
-                              </label>
-                            ))}
-                            {metricsFilterCategory === "habit" && (["include", "exclude", "only"] as MetricHabitMode[]).map((value) => (
-                              <label key={value} className={`df-filter-option${metricsHabitMode === value ? " checked" : ""}`}>
-                                <input type="radio" checked={metricsHabitMode === value} onChange={() => setMetricHabit(value)} />
-                                <span>{value === "include" ? (props.lang === "zh" ? "包含习惯" : "Include habits") : value === "exclude" ? (props.lang === "zh" ? "排除习惯" : "Exclude habits") : (props.lang === "zh" ? "仅习惯" : "Only habits")}</span>
-                              </label>
-                            ))}
-                            {metricsFilterCategory === "metric" && (["percentage", "duration", "taskCount", "completionRate"] as MetricDisplayMetric[]).map((value) => (
-                              <label key={value} className={`df-filter-option${metricsDisplayMetric === value ? " checked" : ""}`}>
-                                <input type="radio" checked={metricsDisplayMetric === value} onChange={() => setMetricDisplay(value)} />
-                                <span>{value === "percentage" ? (props.lang === "zh" ? "百分比" : "Percentage") : value === "duration" ? (props.lang === "zh" ? "总时长" : "Duration") : value === "taskCount" ? (props.lang === "zh" ? "任务数量" : "Task count") : (props.lang === "zh" ? "完成率" : "Completion rate")}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </header>
+
 
               {metricActiveChips.length > 0 && (
                 <div className="df-active-filter-bar df-metrics-chip-bar" role="region" aria-label={props.lang === "zh" ? "指标筛选" : "Metric filters"}>

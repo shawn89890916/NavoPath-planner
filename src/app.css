@@ -4037,11 +4037,11 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-week-view .df-timeline-3day-date {
   flex: 1 1 0;
-  min-width: 112px;
+  min-width: 0;
 }
 .df-week-view .df-timeline-3day-allday-cell {
   flex: 1 1 0;
-  min-width: 112px;
+  min-width: 0;
 }
 .df-timeline-allday-label {
   flex-shrink: 0;
@@ -9178,19 +9178,19 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-ai-provider-grid label { min-width: 0; }
 .df-ai-provider-grid input { width: 100%; min-width: 0; box-sizing: border-box; }
 .df-ai-provider-grid select { width: 100%; min-width: 0; box-sizing: border-box; }
+#root .df-app .df-settings-row.df-settings-row--stacked {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  row-gap: 12px;
+}
+#root .df-app .df-settings-row.df-settings-row--stacked > .df-settings-row-control {
+  max-width: none;
+  justify-content: flex-start;
+}
+#root .df-app .df-settings-row--stacked .df-ai-provider-settings {
+  max-width: none;
+}
 @media (min-width: 900px), (min-width: 761px) and (orientation: landscape) {
-  #root .df-app .df-settings-row.df-settings-row--stacked {
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
-    row-gap: 12px;
-  }
-  #root .df-app .df-settings-row.df-settings-row--stacked > .df-settings-row-control {
-    max-width: none;
-    justify-content: flex-start;
-  }
-  #root .df-app .df-settings-row--stacked .df-ai-provider-settings {
-    max-width: none;
-  }
   #root .df-app .df-settings-row--stacked .df-ai-provider-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px 12px;
@@ -14181,7 +14181,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 16px 9px 16px;
+  padding: 9px 56px 9px 16px;
   border-bottom: 1px solid var(--paper-rule);
   background: var(--surface-main);
   min-height: 38px;
@@ -16015,14 +16015,21 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   }
   .df-app .df-template-modal {
     width: 100%;
-    min-height: calc(100dvh - 18px);
+    height: calc(100dvh - 18px);
+    min-height: 0;
     max-height: calc(100dvh - 18px);
     border-inline: 0;
     border-radius: var(--paper-radius-soft) var(--paper-radius-soft) 0 0;
     corner-shape: var(--corner-shape, squircle);
   }
   .df-app .df-template-modal-actions {
+    display: grid;
     grid-template-columns: 1fr 1fr;
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
+  }
+  .df-app .df-template-modal-actions .df-template-conflict-note {
+    grid-column: 1 / -1;
+    margin-right: 0;
   }
 }
 /* Keep the direct accent controls visually flat in every theme state. */
@@ -19547,9 +19554,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 18px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid color-mix(in srgb, var(--line, var(--paper-rule)) 78%, transparent);
+  gap: 0;
 }
 .df-app .df-planning .df-metrics-header h2 {
   margin: 0 0 5px;
@@ -19877,8 +19882,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   overflow: visible;
 }
 #root .df-app .df-planning .df-metrics-header {
-  padding: 18px 0 12px;
-  border-bottom: 1px solid color-mix(in srgb, var(--paper-rule, var(--line)) 82%, transparent);
+  padding: 0;
+  border: 0;
 }
 #root .df-app .df-planning .df-metrics-header h2 {
   font-size: 21px;
@@ -19929,28 +19934,35 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   position: relative;
 }
 #root .df-app .df-planning .df-metrics-filter-panel {
-  width: 438px;
+  display: grid;
+  grid-template-columns: 156px minmax(0, 1fr);
+  width: min(438px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
   min-height: 258px;
   right: 0;
   left: auto;
-  padding: 8px 266px 42px 8px;
-  background: color-mix(in srgb, var(--paper, var(--paper-bg)) 98%, var(--paper-ink, #27231E) 2%);
+  padding: 8px;
+  background: var(--surface-main);
   border: 1px solid var(--paper-rule, var(--line));
   box-shadow: none;
 }
 #root .df-app .df-planning .df-metrics-filter-panel .df-filter-categories {
-  width: 156px;
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
 }
 #root .df-app .df-planning .df-metrics-filter-flyout {
-  top: calc(100% + 6px);
-  right: 0;
-  left: auto;
-  width: 258px;
-  min-height: 258px;
-  border-radius: 0 8px 8px 0;
+  position: static;
+  grid-column: 2;
+  grid-row: 1;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 0;
   border: 0;
   border-left: 1px solid var(--paper-rule, var(--line));
-  background: color-mix(in srgb, var(--paper, var(--paper-bg)) 99%, var(--paper-ink, #27231E) 1%);
+  background: var(--surface-main);
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -20368,17 +20380,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
   #root .df-app .df-planning .df-metrics-filter-panel {
     width: min(438px, calc(100vw - 36px));
-    padding-right: 8px;
-    padding-bottom: 8px;
   }
   #root .df-app .df-planning .df-metrics-filter-flyout {
-    position: static;
-    width: auto;
-    min-height: 0;
-    margin-top: 8px;
-    border: 1px solid var(--paper-rule, var(--line));
-    border-radius: 6px;
-    corner-shape: var(--corner-shape, squircle);
+    margin: 0;
   }
   #root .df-app.mode-planning .df-planning { height: 100%; min-height: 0; padding: 6px; }
   #root .df-app.mode-planning .df-planning .df-mindmap.no-root { grid-template-columns: 76px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
@@ -21242,7 +21246,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     right: 8px;
     width: auto;
     height: 44px;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 4px;
     align-items: center;
     z-index: 12;
   }
@@ -21421,7 +21427,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     opacity: 0;
     cursor: pointer;
   }
-  #root .df-app.mode-execute .df-candidate-panel > .df-panel-title {
+  #root .df-app.mode-execute > .df-execute .df-candidate-panel > .df-panel-title {
     position: absolute;
     inset: 4px 4px auto auto;
     min-height: 44px;
@@ -21433,10 +21439,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-bottom: 0;
     z-index: 14;
   }
-  #root .df-app.mode-execute .df-candidate-panel > .df-panel-title h2 {
+  #root .df-app.mode-execute > .df-execute .df-candidate-panel > .df-panel-title h2 {
     display: none;
   }
-  #root .df-app.mode-execute .df-candidate-panel > .df-panel-title > div {
+  #root .df-app.mode-execute > .df-execute .df-candidate-panel > .df-panel-title > div {
     position: absolute;
     top: 2px;
     right: 0;
@@ -21566,15 +21572,14 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     box-shadow: none;
   }
   #root .df-app .df-compact-date-display {
-    position: absolute;
-    left: 50%;
-    top: 0;
+    position: static;
+    min-width: 0;
+    justify-self: center;
     height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 5px;
-    transform: translateX(-50%);
     color: var(--text-main);
     white-space: nowrap;
     pointer-events: auto;
@@ -21587,6 +21592,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     box-shadow: none;
   }
   #root .df-app .df-compact-date-display.is-readonly {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
     pointer-events: none;
   }
   #root .df-app .df-compact-date-display strong {
@@ -21607,6 +21616,18 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app[data-timeline-view="month"] .df-compact-date-display strong { font-size: 16px; }
   #root .df-app[data-timeline-view="month"] .df-compact-date-display .df-date-title-chevron { display: none; }
   @media (max-width: 374px) {
+    #root .df-app.mode-execute .df-compact-execute-tabs button {
+      width: 84px;
+      min-width: 84px;
+    }
+    #root .df-app.mode-execute .df-compact-mode-logo {
+      display: none;
+    }
+    #root .df-app.mode-execute .df-compact-mode-label:is(.tasks-label, .schedule-label) {
+      left: 0;
+      width: 100%;
+      text-align: center;
+    }
     #root .df-app.mode-execute .df-compact-date-display {
       gap: 2px;
       padding-inline: 0;
@@ -21627,6 +21648,13 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-timeline-3day-date {
     min-height: 42px;
     padding: 5px 1px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+  #root .df-app .df-timeline-3day-date-sep {
+    display: none;
   }
   #root .df-app .df-timeline-3day-date-num {
     font-size: 20px;
@@ -22284,7 +22312,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     min-width: 0;
     max-width: 100%;
     overflow: visible;padding:54px 10px 28px}
-  #root .df-app.mode-planning .df-planning .df-metrics-header{position:fixed;z-index:30;top:4px;right:4px;width:44px;height:44px;padding:0;border:0}
+  #root .df-app.mode-planning .df-planning .df-metrics-header{width:44px;height:44px;padding:0;border:0}
   #root .df-app.mode-planning .df-planning .df-metrics-toolbar{display:block}
   #root .df-app.mode-planning .df-planning .df-metrics-toolbar .df-filter-trigger{width:44px;height:44px;border:0;background:transparent}
   #root .df-app.mode-planning .df-planning .df-metrics-donut-wrap{

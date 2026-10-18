@@ -1,5 +1,12 @@
 # NavoPath 更新日志
 
+## 2026-10-18 · 界面对齐
+
+### 修复
+- 修复窄屏执行顶栏日期与两侧控件重叠、周视图日期与星期挤压，以及英文首页导航重叠的问题。
+- AI 提供商设置在手机和平板上保持标题在上、表单在下；指标筛选菜单使用清晰底色，并与工具栏对齐，选项保持在屏幕内。
+- 模板窗口打开时收起底部导航与浮动添加按钮，确保取消和应用按钮完整可见。
+
 ## 2026-10-17 · 竖屏导航与个人资料
 
 ### 改进
@@ -153,6 +160,13 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-18 · Interface alignment
+
+### Fixed
+- Fixed overlapping dates and controls in the narrow Execute toolbar, crowded dates and weekdays in Week view, and overlapping English homepage navigation.
+- AI provider settings keep their heading above the form on phones and tablets; metrics filters use an opaque surface, align with the toolbar, and keep their options within the screen.
+- Opening templates hides the bottom navigation and floating add button so Cancel and Apply remain fully visible.
 
 ## 2026-10-17 · Portrait navigation and profile details
 

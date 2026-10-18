@@ -31,3 +31,9 @@
   .landing-nav-actions { gap: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { .np-language-thumb { transition: none; } }
+@media (max-width: 359px) {
+  .landing { --l-nav-height: 100px; }
+  .landing-nav:has(.np-product-menu) { grid-template-columns: 1fr auto; row-gap: 0; padding-block: 6px; }
+  .landing-nav-links:has(.np-product-menu) { grid-column: 1 / -1; grid-row: 2; justify-content: center; }
+  .landing-nav-actions { grid-column: 2; grid-row: 1; }
+}
