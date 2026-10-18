@@ -10714,7 +10714,10 @@ function ScheduleTemplateModal({
         aria-labelledby="df-template-modal-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <CloseButton className="df-template-close" onClick={onClose} label={zh ? "关闭模板模式" : "Close template mode"} />
+        <div className="df-template-header-actions">
+          <IconButton className="df-icon-template-new" icon={<UiPlusIcon size={16} />} label={zh ? "新建模板" : "New template"} onClick={createCustomTemplate} />
+          <CloseButton className="df-template-close" onClick={onClose} label={zh ? "关闭模板模式" : "Close template mode"} />
+        </div>
 
         {TEMPLATE_VISUAL_PARITY_DEBUG ? (
           <ExecutionSplitLayout className="df-template-shell">
@@ -10765,9 +10768,6 @@ function ScheduleTemplateModal({
           <CandidatePanelShell ariaLabel={zh ? "模板列表" : "Template list"}>
             <CandidatePanelHeader
               title={<span id="df-template-modal-title" ref={titleRef} tabIndex={-1}>{zh ? "模板" : "Templates"}</span>}
-              actions={
-                <button type="button" className="df-icon-action df-icon-template-new" data-tip={zh ? "新建模板" : "New template"} aria-label={zh ? "新建模板" : "New template"} onClick={createCustomTemplate}><UiPlusIcon size={14} strokeWidth={2} /></button>
-              }
             />
             <div className="df-candidate-list">
               {listRows.map((row) => {

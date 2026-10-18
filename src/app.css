@@ -13879,8 +13879,8 @@ body.df-timeline-pointer-drag * {
   min-height: min(720px, calc(100dvh - 36px));
   max-height: calc(100dvh - 36px);
   display: grid;
-  /* 3 rows: ExecutionLayoutShell (1fr) + status (auto) + footer (auto). The close
-     button is absolutely positioned so it does not take a grid row. */
+  /* 3 rows: ExecutionLayoutShell (1fr) + status (auto) + footer (auto).
+     Header actions are absolutely positioned outside the grid flow. */
   grid-template-rows: minmax(0, 1fr) auto auto;
   border: 1px solid var(--paper-rule-strong);
   border-radius: var(--paper-radius-soft);
@@ -13892,30 +13892,14 @@ body.df-timeline-pointer-drag * {
   transform-origin: center top;
   corner-shape: var(--corner-shape, squircle);
 }
-.df-app .df-template-close:hover {
-  color: var(--accent-active);
-  border-bottom-color: var(--accent-active);
-  background: var(--paper-note);
-  box-shadow: none;
-  transform: none;
-}
-.df-app .df-template-close:active { transform: translateY(1px); }
-.df-app .df-template-close:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
-.df-app .df-template-close {
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-bottom: 1px solid transparent;
-  background: transparent;
-  color: var(--text-main);
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: none;
+.df-app .df-template-header-actions {
   position: absolute;
   top: 8px;
   right: 8px;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 /* Template modal now reuses the execution-page shell directly:
    .df-template-shell overrides df-execute's viewport-bound height so it
@@ -14181,7 +14165,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 56px 9px 16px;
+  padding: 9px 96px 9px 16px;
   border-bottom: 1px solid var(--paper-rule);
   background: var(--surface-main);
   min-height: 38px;
@@ -16008,10 +15992,13 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
     grid-template-rows: auto minmax(0, 1fr);
   }
   .df-app .df-template-shell .df-candidate-panel {
-    --candidate-header-padding-right: 56px;
+    --candidate-header-padding-right: 96px;
     max-height: 220px;
     border-right: 0;
     border-bottom: 1px solid var(--paper-rule);
+  }
+  .df-app .df-template-name-bar {
+    padding-right: 16px;
   }
   .df-app .df-template-modal-backdrop {
     place-items: end stretch;
@@ -21603,7 +21590,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     pointer-events: none;
   }
   #root .df-app .df-compact-date-display strong {
-    font: 650 29px/1 var(--paper-serif);
+    font: 650 24px/1 var(--paper-serif);
   }
   #root .df-app .df-compact-date-display span {
     color: var(--text-muted);
@@ -21621,16 +21608,26 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app[data-timeline-view="month"] .df-compact-date-display .df-date-title-chevron { display: none; }
   @media (max-width: 374px) {
     #root .df-app.mode-execute .df-compact-execute-tabs button {
-      width: 84px;
-      min-width: 84px;
+      width: 108px;
+      min-width: 108px;
     }
     #root .df-app.mode-execute .df-compact-mode-logo {
-      display: none;
+      width: 34px;
+      height: 34px;
+      top: 4px;
     }
-    #root .df-app.mode-execute .df-compact-mode-label:is(.tasks-label, .schedule-label) {
-      left: 0;
-      width: 100%;
-      text-align: center;
+    #root .df-app.mode-execute .df-compact-execute-tabs button.schedule-state .df-compact-mode-logo {
+      transform: translateX(70px);
+    }
+    #root .df-app.mode-execute .df-compact-mode-label.tasks-label {
+      left: 42px;
+    }
+    #root .df-app.mode-execute .df-compact-mode-label.schedule-label {
+      left: 6px;
+    }
+    #root .df-app.mode-execute .df-compact-date-arrow {
+      width: 34px;
+      min-width: 34px;
     }
     #root .df-app.mode-execute .df-compact-date-display {
       gap: 2px;
@@ -24694,7 +24691,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: var(--surface-card);
   }
   #root .df-app .df-utility-panel:has(.df-settings-shell) .df-utility-head h2 {
-    font-size: 26px;
+    font-size: 22px;
     line-height: 1.1;
   }
   #root .df-app .df-settings-profile-hero {

@@ -206,8 +206,8 @@ html.landing-document #root {
   .landing-cover-content { padding: 94px 0 12vh; transform: translateY(clamp(-16px, calc(60svh - 432px), 48px)) scale(var(--landing-cover-scale)); }
   .landing-cover-logo { width: clamp(138px, 40vw, 190px); height: clamp(138px, 40vw, 190px); margin-bottom: 16px; }
   .landing-brand-copy { transform: translateY(-30px); }
-  .landing-product-name { font-size: 50px; }
-  .landing-slogan { max-width: 305px; margin-top: 28px; font-size: 20px; }
+  .landing-product-name { font-size: 40px; }
+  .landing-slogan { max-width: 305px; margin-top: 28px; font-size: 17px; }
   .landing-product-rise { width: 100%; margin-top: calc(-100svh + var(--l-nav-height) - var(--l-product-peek)); }
   .landing-product-scroll-cue { bottom: calc(var(--l-product-peek) + 16px); font-size: 9px; }
   .landing-portals { inset: calc(var(--l-nav-height) + 22px) 12px calc(var(--l-product-peek) + 40px); }
@@ -220,7 +220,7 @@ html.landing-document #root {
   .landing-portal-heading > span { font-size: 15px; }
   .landing-product-shot { border-radius: 6px 6px 0 0; corner-shape: var(--corner-shape, squircle); }
   .landing-steps { gap: 44px; padding: 86px 24px 112px; }
-  .landing-steps h2, .landing-planning-copy h2, .landing-cta h2 { font-size: 43px; }
+  .landing-steps h2, .landing-planning-copy h2, .landing-cta h2 { font-size: 32px; }
   .landing-planning { gap: 42px; padding: 86px 24px; }
   .landing-planning-preview { border-radius: 8px; corner-shape: var(--corner-shape, squircle); }
   .landing-cta { padding: 86px 24px; }

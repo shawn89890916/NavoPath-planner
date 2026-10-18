@@ -478,7 +478,7 @@
     margin-top: 46px;
   }
   .df-doc-page.changelog-like .df-doc-hero h1 {
-    font-size: clamp(40px, 14vw, 64px);
+    font-size: 32px;
   }
   .df-doc-page.changelog-like .df-doc-note dl div {
     grid-template-columns: 1fr;

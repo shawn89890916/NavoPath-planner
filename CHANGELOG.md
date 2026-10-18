@@ -3,9 +3,10 @@
 ## 2026-10-18 · 界面对齐
 
 ### 修复
-- 修复窄屏执行顶栏日期与两侧控件重叠、周视图日期与星期挤压，以及英文首页导航重叠的问题。
+- 窄屏执行顶栏保留滑动标志切换，日期与两侧控件互不重叠；周视图日期与星期对齐，英文首页顶栏在窄屏保持单行。
 - AI 提供商设置在手机和平板上保持标题在上、表单在下；指标筛选菜单使用清晰底色，并与工具栏对齐，选项保持在屏幕内。
-- 模板窗口打开时收起底部导航与浮动添加按钮，确保取消和应用按钮完整可见，并为新建与关闭按钮留出独立空间。
+- 模板窗口打开时收起底部导航与浮动添加按钮，确保取消和应用按钮完整可见；右上角新建与关闭按钮使用相同尺寸的图标并对齐。
+- 缩小手机首页的主标题、分区标题和宣传语，以及执行页日期、设置页、插件说明和更新日志标题，保持正文可读。
 
 ## 2026-10-17 · 竖屏导航与个人资料
 
@@ -164,9 +165,10 @@
 ## 2026-10-18 · Interface alignment
 
 ### Fixed
-- Fixed overlapping dates and controls in the narrow Execute toolbar, crowded dates and weekdays in Week view, and overlapping English homepage navigation.
+- The narrow Execute toolbar retains its sliding-logo switch without overlapping dates and controls. Week dates and weekdays align, and the English homepage header stays on one row on narrow screens.
 - AI provider settings keep their heading above the form on phones and tablets; metrics filters use an opaque surface, align with the toolbar, and keep their options within the screen.
-- Opening templates hides the bottom navigation and floating add button so Cancel and Apply remain fully visible, with separate space for the New and Close controls.
+- Opening templates hides the bottom navigation and floating add button so Cancel and Apply remain fully visible; the top-right New and Close controls use equally sized, aligned icons.
+- Reduced mobile homepage display headings, section headings, and tagline sizes, along with Execute dates and headings in Settings, the plugin guide, and release notes, while keeping body text readable.
 
 ## 2026-10-17 · Portrait navigation and profile details
 
