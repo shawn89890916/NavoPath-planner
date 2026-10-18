@@ -15996,7 +15996,10 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   .df-command-results button {
     grid-template-columns: 54px minmax(0, 1fr) auto;
   }
-  /* On narrow screens the shared df-execute grid collapses to a single
+}
+@media (orientation: portrait),
+       (max-width: 980px) and (orientation: landscape) {
+  /* On compact screens the shared df-execute grid collapses to a single
      column so the template list and the template timeline stack. The
      candidate panel keeps a bounded max-height so the timeline still has
      room below it. */
@@ -16005,6 +16008,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
     grid-template-rows: auto minmax(0, 1fr);
   }
   .df-app .df-template-shell .df-candidate-panel {
+    --candidate-header-padding-right: 56px;
     max-height: 220px;
     border-right: 0;
     border-bottom: 1px solid var(--paper-rule);
@@ -23198,7 +23202,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app.mode-execute .df-candidate-panel .df-panel-title {
   min-height: 46px;
   margin: 0;
-  padding: 0 2px 12px;
+  padding: 0 var(--candidate-header-padding-right, 2px) 12px 2px;
   border-bottom: 1px solid var(--paper-rule-strong);
 }
 #root .df-app.mode-execute .df-candidate-panel .df-panel-title h2 {

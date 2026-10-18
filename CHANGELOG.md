@@ -5,7 +5,7 @@
 ### 修复
 - 修复窄屏执行顶栏日期与两侧控件重叠、周视图日期与星期挤压，以及英文首页导航重叠的问题。
 - AI 提供商设置在手机和平板上保持标题在上、表单在下；指标筛选菜单使用清晰底色，并与工具栏对齐，选项保持在屏幕内。
-- 模板窗口打开时收起底部导航与浮动添加按钮，确保取消和应用按钮完整可见。
+- 模板窗口打开时收起底部导航与浮动添加按钮，确保取消和应用按钮完整可见，并为新建与关闭按钮留出独立空间。
 
 ## 2026-10-17 · 竖屏导航与个人资料
 
@@ -166,7 +166,7 @@
 ### Fixed
 - Fixed overlapping dates and controls in the narrow Execute toolbar, crowded dates and weekdays in Week view, and overlapping English homepage navigation.
 - AI provider settings keep their heading above the form on phones and tablets; metrics filters use an opaque surface, align with the toolbar, and keep their options within the screen.
-- Opening templates hides the bottom navigation and floating add button so Cancel and Apply remain fully visible.
+- Opening templates hides the bottom navigation and floating add button so Cancel and Apply remain fully visible, with separate space for the New and Close controls.
 
 ## 2026-10-17 · Portrait navigation and profile details
 
