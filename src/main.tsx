@@ -12592,9 +12592,10 @@ function EditDrawer(props: {
           </button>
           {recurrenceText ? <span className="df-detail-pill-trevor">↻ {recurrenceText}</span> : null}
         </section>
-        <section className="df-detail-importance-row" aria-label={props.lang === "zh" ? "任务标记" : "Task flags"}>{taskLevelSelector("importance", importanceOptions)}</section>
-
-        {props.engagementEnabled && <Suspense fallback={null}><EngagementRating task={props.task} record={activeRecord} lang={props.lang} onUpdate={props.onTaskUpdate} /></Suspense>}
+        <section className="df-detail-importance-row" aria-label={props.lang === "zh" ? "任务标记" : "Task flags"}>
+          {taskLevelSelector("importance", importanceOptions)}
+          {props.engagementEnabled && <Suspense fallback={null}><EngagementRating task={props.task} record={activeRecord} lang={props.lang} onUpdate={props.onTaskUpdate} /></Suspense>}
+        </section>
 
         {/* ── Status: COMPLETE / UNFINISHED / REMOVE ── */}
         <section className="df-detail-status-row">

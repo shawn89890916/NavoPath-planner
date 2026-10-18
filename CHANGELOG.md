@@ -7,6 +7,7 @@
 - AI 提供商设置在手机和平板上保持标题在上、表单在下；指标筛选菜单使用清晰底色，并与工具栏对齐，选项保持在屏幕内。
 - 模板窗口打开时收起底部导航与浮动添加按钮，确保取消和应用按钮完整可见；右上角新建与关闭按钮使用相同尺寸的图标并对齐。
 - 缩小手机首页的主标题、分区标题和宣传语，以及执行页日期、设置页、插件说明和更新日志标题，保持正文可读。
+- 任务编辑中的投入度移到优先级右侧，文字、滑杆和百分比保持同行；移除下拉框及信息图标，悬停或点按投入度文字即可查看说明。
 
 ## 2026-10-17 · 竖屏导航与个人资料
 
@@ -169,6 +170,7 @@
 - AI provider settings keep their heading above the form on phones and tablets; metrics filters use an opaque surface, align with the toolbar, and keep their options within the screen.
 - Opening templates hides the bottom navigation and floating add button so Cancel and Apply remain fully visible; the top-right New and Close controls use equally sized, aligned icons.
 - Reduced mobile homepage display headings, section headings, and tagline sizes, along with Execute dates and headings in Settings, the plugin guide, and release notes, while keeping body text readable.
+- Task editing places engagement to the right of priority, keeping the label, slider, and percentage on one row. Removed the dropdown and info icon; hover over or tap the Engagement label to view its explanation.
 
 ## 2026-10-17 · Portrait navigation and profile details
 

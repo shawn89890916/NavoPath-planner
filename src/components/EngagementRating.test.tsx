@@ -17,7 +17,8 @@ const record = (executionStatus: TimelineRecord["executionStatus"]): TimelineRec
 describe("engagement before completion", () => {
   it("offers the default rating on an unfinished task without execution records", () => {
     const markup = renderToStaticMarkup(<EngagementRating task={task} lang="en" onUpdate={noop} />);
-    expect(markup).toContain('aria-label="Choose engagement · Work"');
+    expect(markup).toContain('aria-label="Engagement · Work"');
+    expect(markup).not.toContain('<select');
     expect(markup).toContain('aria-valuetext="80%"');
   });
 
