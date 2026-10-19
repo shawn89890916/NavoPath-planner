@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-19 · 未完成任务拖动
+
+### 改进
+- 时间轴与全天栏中返回规划的未完成任务支持拖动，移动后保留未完成状态及该次执行的投入度，其他执行记录保持不变。
+
 ## 2026-10-18 · 界面对齐
 
 ### 修复
@@ -162,6 +167,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-19 · Drag unfinished tasks
+
+### Improvements
+- Unfinished tasks returned to planning can be dragged from the timeline and all-day area. Moving preserves their unfinished status and per-execution engagement without changing other execution records.
 
 ## 2026-10-18 · Interface alignment
 
