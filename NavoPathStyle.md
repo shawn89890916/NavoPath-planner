@@ -99,6 +99,11 @@ Dark-mode surfaces use this graphite hierarchy:
 - Subtle rule: `#2A2A2A`
 - Interactive control boundary: `#555452`
 - Interaction accent: muted stone `#A9A49B`, with `#1B1B1B` text on accent-filled actions
+- Alert text: muted rose `#B58F88`; priority marks use subdued rose, sand and slate.
+- Project display colors retain their hue with 45% of their original OKLCH chroma
+  and lightness constrained to 0.55–0.68. Saved colors and light-mode rendering
+  remain unchanged. Project names use secondary text rather than saturated ink.
+- The current-time cue uses muted coral `#9C7C72`.
 
 Normal text must meet WCAG AA contrast of at least 4.5:1. Large text, meaningful
 control boundaries, icons, and focus indicators must reach at least 3:1. Keyboard

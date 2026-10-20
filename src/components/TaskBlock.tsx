@@ -1,4 +1,5 @@
 import React, { type CSSProperties, type ReactNode } from "react";
+import { projectColorInk } from "../utils/presentationColor";
 
 export type TaskBlockVariant = "candidate" | "planning" | "scheduled" | "allDay" | "compact" | "habit-child";
 export type TaskBlockDensity = "normal" | "compact" | "dense";
@@ -42,7 +43,7 @@ export function taskBlockClassNames(options: TaskBlockClassOptions) {
 }
 
 export function taskBlockStyle(options: TaskBlockStyleOptions): CSSProperties {
-  const projectColor = options.projectColor || "var(--accent-active)";
+  const projectColor = projectColorInk(options.projectColor || "var(--accent-active)");
   return {
     "--task-project-color": projectColor,
     "--cat": projectColor,

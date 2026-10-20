@@ -49,8 +49,8 @@ describe("TaskBlock shared component contract", () => {
       density: "compact",
       style: { top: 20, height: 48 },
     })).toEqual({
-      "--task-project-color": "#D7816A",
-      "--cat": "#D7816A",
+      "--task-project-color": "oklch(from #D7816A clamp(var(--project-color-lightness-min, 0), l, var(--project-color-lightness-max, 1)) calc(c * var(--project-color-chroma, 1)) h)",
+      "--cat": "oklch(from #D7816A clamp(var(--project-color-lightness-min, 0), l, var(--project-color-lightness-max, 1)) calc(c * var(--project-color-chroma, 1)) h)",
       "--task-block-density": "compact",
       top: 20,
       height: 48,

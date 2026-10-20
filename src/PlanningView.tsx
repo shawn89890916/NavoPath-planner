@@ -6,6 +6,7 @@ import { term } from "./terminology";
 import { useInAppDialog } from "./InAppDialog";
 import { localIsoDate } from "./utils/localDate";
 import { highlightTaskLocation } from "./utils/highlightTaskLocation";
+import { projectColorInk } from "./utils/presentationColor";
 import { buildTaskMetaBadges } from "./utils/taskMetaBadges";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
 import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
@@ -462,7 +463,7 @@ function PlanningSubtaskNode(props: {
         data-node-id={props.subtask.id}
         data-node-type="subtask"
         aria-grabbed={props.dragging}
-        style={{ "--project-color": props.projectColor, "--task-project-color": props.projectColor } as React.CSSProperties}
+        style={{ "--project-color": projectColorInk(props.projectColor), "--task-project-color": projectColorInk(props.projectColor) } as React.CSSProperties}
       >
         <TaskBlock
           as="div"
@@ -617,7 +618,7 @@ function PlanningTaskNode(props: {
         data-node-id={props.task.id}
         data-node-type="task"
         aria-grabbed={props.dragging}
-        style={{ "--project-color": props.projectColor, "--task-project-color": props.projectColor } as React.CSSProperties}
+        style={{ "--project-color": projectColorInk(props.projectColor), "--task-project-color": projectColorInk(props.projectColor) } as React.CSSProperties}
       >
         <TaskBlock
           as="div"
@@ -746,9 +747,9 @@ function PlanningProjectNode(props: {
         data-planning-drag-card={props.project.id}
         aria-grabbed={props.dragging}
         style={{
-          "--project-color": color,
-          "--project-color-soft": alphaColor(color, 0.16),
-          "--project-color-border": alphaColor(color, 0.34),
+          "--project-color": projectColorInk(color),
+          "--project-color-soft": alphaColor(projectColorInk(color), 0.16),
+          "--project-color-border": alphaColor(projectColorInk(color), 0.34),
         } as React.CSSProperties}
       >
         <span
@@ -2110,7 +2111,7 @@ export default function PlanningView(props: {
         value: String(project.id),
         label: project.title,
         checked: filterProjects.includes(String(project.id)),
-        dotColor: project.color || DEFAULT_PROJECT_COLOR,
+        dotColor: projectColorInk(project.color || DEFAULT_PROJECT_COLOR),
         onToggle: () => toggleArray(setFilterProjects, String(project.id)),
       })),
     due: (["overdue", "this-week", "no-date"] as const)
@@ -2457,7 +2458,7 @@ export default function PlanningView(props: {
                                     {safeProjects.map((project) => (
                                       <label key={project.id} className={`df-filter-option${metricsProjectFilter.includes(project.id) ? " checked" : ""}`}>
                                         <input type="checkbox" checked={metricsProjectFilter.includes(project.id)} onChange={() => toggleArray(setMetricsProjectFilter, project.id)} />
-                                        <span className="df-filter-option-dot" style={{ background: project.color || DEFAULT_PROJECT_COLOR }} />
+                                        <span className="df-filter-option-dot" style={{ background: projectColorInk(project.color || DEFAULT_PROJECT_COLOR) }} />
                                         <span>{project.title}</span>
                                       </label>
                                     ))}
@@ -2569,7 +2570,7 @@ export default function PlanningView(props: {
                                   key={`arc-${group.id}`}
                                   className={`df-metrics-donut-segment${isActive ? " active" : ""}`}
                                   d={donutSegmentPath(120, 120, isActive ? 94 : 88, 50, startAngle, endAngle)}
-                                  fill={alphaColor(group.color, 0.58)}
+                                  fill={alphaColor(projectColorInk(group.color), 0.58)}
                                   aria-hidden="true"
                                 />
                               );
@@ -2668,7 +2669,7 @@ export default function PlanningView(props: {
                             title={`${group.label} · ${formatMinutesZh(group.durationMinutes)}`}
                             onClick={() => setSelectedMetricGroupId((current) => current === group.id ? null : group.id)}
                           >
-                            <span className="df-metrics-donut-legend-dot" style={{ backgroundColor: group.color }} aria-hidden="true" />
+                            <span className="df-metrics-donut-legend-dot" style={{ backgroundColor: projectColorInk(group.color) }} aria-hidden="true" />
                             <span>{group.label}</span>
                           </button>
                         ))}
@@ -2734,7 +2735,7 @@ export default function PlanningView(props: {
                             />
                             <TaskBlockContent className="df-planning-task-copy" title={<span className="df-kanban-card-title">{task.title}</span>}>
                               <span className="df-kanban-card-meta">
-                                <span className="df-kanban-project-name" style={{ color: projectColor(task.projectId) }}>{projectName(task.projectId)}</span>
+                                <span className="df-kanban-project-name" style={{ color: `var(--project-label-color, ${projectColor(task.projectId)})` }}>{projectName(task.projectId)}</span>
                                 {task.dueDate && <span className="df-kanban-tag df-tag-due" title={props.lang === "zh" ? "Due" : "Due"}>{task.dueDate.slice(5)}</span>}
                               </span>
                             </TaskBlockContent>
@@ -2815,7 +2816,7 @@ export default function PlanningView(props: {
                               />
                               <TaskBlockContent className="df-planning-task-copy" title={<span className="df-eisenhower-task-title">{task.title}</span>}>
                                 <span className="df-eisenhower-task-meta">
-                                  <span className="df-eisenhower-project-name" style={{ color: projectColor(task.projectId) }}>{projectName(task.projectId)}</span>
+                                  <span className="df-eisenhower-project-name" style={{ color: `var(--project-label-color, ${projectColor(task.projectId)})` }}>{projectName(task.projectId)}</span>
                                   {task.dueDate && <span className="df-eisenhower-due">{task.dueDate.slice(5)}</span>}
                                 </span>
                               </TaskBlockContent>

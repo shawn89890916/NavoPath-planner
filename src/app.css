@@ -2806,7 +2806,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   transform: translateY(-1px);
 }
 .df-task-card.overdue { border-color: rgba(239,68,68,.25);
-  border-left: 3px solid #EF4444;
+  border-left: 3px solid var(--danger-ink, #EF4444);
 }
 .df-task-card:active { cursor: grabbing; border-color: color-mix(in srgb, var(--cat, var(--accent-active)) 58%, var(--border-subtle));
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
@@ -5768,13 +5768,13 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--accent-active, #584D3D) 8%, transparent);
 }
 .df-app .df-tree-menu button.danger {
-  color: #EF4444;
+  color: var(--danger-ink, #EF4444);
 }
 .df-app.theme-dark .df-tree-menu button.danger {
-  color: #EF4444;
+  color: var(--danger-ink, #EF4444);
 }
 .df-app:not(.theme-dark) .df-tree-menu button.danger {
-  color: #EF4444;
+  color: var(--danger-ink, #EF4444);
 }
 @media (max-width: 1280px) {
   .df-app .df-plan-task-node {
@@ -9146,8 +9146,8 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 .df-settings-group-title { margin: 0; color: var(--text-main); font: 600 11px/1.4 var(--paper-mono); letter-spacing: .1em; text-transform: uppercase; }
 .df-settings-group-desc { margin: 4px 0 0; color: var(--text-muted); font: 400 12px/1.5 var(--paper-sans); }
 .df-settings-group-body { display: flex; flex-direction: column; }
-.df-settings-group--danger { padding: 14px 16px; border: 1px solid var(--paper-rule-strong); border-left: 2px solid #C96F5B; background: var(--paper-note); margin-top: 6px; }
-.df-settings-group--danger .df-settings-group-title { color: #C96F5B; }
+.df-settings-group--danger { padding: 14px 16px; border: 1px solid var(--paper-rule-strong); border-left: 2px solid var(--danger-ink, #C96F5B); background: var(--paper-note); margin-top: 6px; }
+.df-settings-group--danger .df-settings-group-title { color: var(--danger-ink, #C96F5B); }
 /* SettingRow: a single fine-ruled row with a label column and a
    control column. No card, no fill, no hover surface — just paper
    rhythm. The control column keeps a stable min-width so selects and
@@ -9514,8 +9514,8 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 }
 /* Danger dialog button: muted coral, no fill. */
 .df-dialog-danger {
-  border: 1px solid #C96F5B;
-  color: #C96F5B;
+  border: 1px solid var(--danger-ink, #C96F5B);
+  color: var(--danger-ink, #C96F5B);
   background: transparent;
 }
 .df-dialog-danger:hover:not(:disabled) { background: rgba(201, 111, 91, 0.08); }
@@ -18608,6 +18608,21 @@ body.df-planning-native-dragging [contenteditable] * {
   --text-main: #D9D6CF;
   --text-muted: #B1AEA7;
   --text-faint: #898781;
+  --danger-ink: #B58F88;
+  --danger: #B58F88;
+  --color-danger: #B58F88;
+  --df-danger: #B58F88;
+  --warning-ink: #A59678;
+  --navo-coral: #9C7C72;
+  --task-priority-high: #AA827B;
+  --task-priority-medium: #A59678;
+  --task-priority-low: #85949E;
+  --task-priority-normal: #898781;
+  --task-priority-unset: #898781;
+  --project-color-lightness-min: 0.55;
+  --project-color-lightness-max: 0.68;
+  --project-color-chroma: 0.45;
+  --project-label-color: var(--text-muted);
   --border-soft: #555452;
   --border-subtle: #2A2A2A;
   --accent-active: #A9A49B;
@@ -24495,8 +24510,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app .df-settings-group-title { font-size: 12px; }
 #root .df-app .df-settings-group-desc { max-width: 54ch; }
 #root .df-app .df-settings-group--danger {
-  border-color: color-mix(in srgb, #C96F5B 55%, var(--paper-rule-strong));
-  background: color-mix(in srgb, #C96F5B 5%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--danger-ink, #C96F5B) 55%, var(--paper-rule-strong));
+  background: color-mix(in srgb, var(--danger-ink, #C96F5B) 5%, var(--surface-card));
 }
 #root .df-app .df-theme-accent-setting {
   display: grid;
@@ -24780,8 +24795,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app .df-settings-shell > .df-settings-content .df-settings-group--danger > .df-settings-group-body {
-    border-color: color-mix(in srgb, #C96F5B 48%, var(--paper-rule));
-    background: color-mix(in srgb, #C96F5B 4%, var(--surface-card));
+    border-color: color-mix(in srgb, var(--danger-ink, #C96F5B) 48%, var(--paper-rule));
+    background: color-mix(in srgb, var(--danger-ink, #C96F5B) 4%, var(--surface-card));
   }
   #root .df-app .df-settings-shell > .df-settings-content .df-settings-row {
     min-height: 64px;

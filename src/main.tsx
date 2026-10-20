@@ -54,6 +54,7 @@ import { promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToTod
 import { reconcileOverdueTasks } from "./utils/overdueTasks";
 import { useInAppDialog } from "./InAppDialog";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskGroup } from "./components/TaskBlock";
+import { projectColorInk } from "./utils/presentationColor";
 import { ProductStorySlot } from "./ProductStory";
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, CandidateBlock, TimelineCanvas, TimelineEventBlock } from "./components/ExecutionSharedLayout";
 
@@ -9128,7 +9129,7 @@ if (cached?.data && cached?.settings) {
                         data-candidate-project-id={gid === "__events__" ? undefined : gid === "__unassigned__" ? "" : gid}
                       >
                         <div className="df-project-group-header">
-                          <span className="df-project-group-dot" style={{ background: projectColor }} />
+                          <span className="df-project-group-dot" style={{ background: projectColorInk(projectColor) }} />
                           <span className="df-project-group-name">{projectTitle}</span>
                           {!productAiPresentation && gid !== "__events__" && <span className="df-project-group-actions">
                             <IconButton
@@ -10098,7 +10099,7 @@ if (cached?.data && cached?.settings) {
       {utilityPanel && settings && <Suspense fallback={null}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} /></Suspense>}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
       {focusOverlayMode && (
-        <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: focusProject.color } as React.CSSProperties : undefined}>
+        <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>
           <div className="df-focus-topbar">
             <div className="df-focus-mode-switch">
               {(["stopwatch", "pomodoro", "flowtime"] as const).map((m) => (
@@ -11933,7 +11934,7 @@ function QuickProjectPicker(props: {
   return (
     <div ref={pickerRef} className="df-quick-project-picker" onMouseDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
       <button type="button" className="df-quick-project-trigger" onClick={() => props.onOpenChange(!props.open)}>
-        <span className="df-project-color-dot" style={{ "--project-color": selectedColor } as CSSProperties} />
+        <span className="df-project-color-dot" style={{ "--project-color": projectColorInk(selectedColor) } as CSSProperties} />
         <span>{selected ? `# ${selected.title}` : "#"}</span>
       </button>
       {props.open && <div className="df-project-popover df-quick-project-popover up">
@@ -11943,7 +11944,7 @@ function QuickProjectPicker(props: {
           <input value={props.newTitle} placeholder="新项目名" onChange={(event) => props.onTitleChange(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); props.onCreate(); } }} />
           <span className="df-create-color-wrap" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="df-project-color-dot-button" aria-label="新项目颜色" onClick={() => setNewColorOpen((v) => !v)}>
-              <span className="df-project-color-dot" style={{ "--project-color": props.newColor } as CSSProperties} />
+              <span className="df-project-color-dot" style={{ "--project-color": projectColorInk(props.newColor) } as CSSProperties} />
             </button>
             {newColorOpen && <ProjectColorPicker value={props.newColor} onChange={(c) => { props.onColorChange(c); }} compact />}
           </span>
@@ -12266,10 +12267,10 @@ function EditDrawer(props: {
     { value: "unset", zh: "未设置", en: "Unset" },
   ];
   const levelColors: Record<TaskLevel, string> = {
-    high: "#C96F5B",
-    medium: "#C49A32",
-    low: "#6E8DA6",
-    unset: "#8E8478",
+    high: "var(--task-priority-high, #C96F5B)",
+    medium: "var(--task-priority-medium, #C49A32)",
+    low: "var(--task-priority-low, #6E8DA6)",
+    unset: "var(--task-priority-unset, #8E8478)",
   };
   function commitTaskMeta(kind: "importance" | "urgency", value: TaskLevel) {
     set(kind, value === "unset" ? null : value);
@@ -12431,7 +12432,7 @@ function EditDrawer(props: {
 
           <section className="df-detail-tag-row">
             <button ref={projectTriggerRef} className={`df-detail-pill-trevor ${projectPickerOpen ? "active" : ""}`} onClick={toggleProjectPicker}>
-              <span className="df-detail-project-dot" style={{ background: selectedProject?.color || "#888" }} />
+              <span className="df-detail-project-dot" style={{ background: projectColorInk(selectedProject?.color || "#888") }} />
               <span># {selectedProject?.title || t(props.lang, "candidate.unassigned")}</span>
               <svg viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4l3 3 3-3" /></svg>
             </button>
@@ -12582,7 +12583,7 @@ function EditDrawer(props: {
         {/* ── Project tag + action row ── */}
         <section className="df-detail-tag-row">
           <button ref={projectTriggerRef} className={`df-detail-pill-trevor ${projectPickerOpen ? "active" : ""}`} onClick={toggleProjectPicker}>
-            <span className="df-detail-project-dot" style={{ background: props.projects.find((p) => String(p.id) === String(f.projectId))?.color || "#888" }} />
+            <span className="df-detail-project-dot" style={{ background: projectColorInk(props.projects.find((p) => String(p.id) === String(f.projectId))?.color || "#888") }} />
             <span># {selectedProjectTitle}</span>
             <svg viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4l3 3 3-3" /></svg>
           </button>

@@ -18,6 +18,7 @@ import { CloseButton, IconButton } from "./components/UiPrimitives";
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
 import { UiCalendarCheckIcon, UiCalendarClockIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiReturnIcon, UiTrashIcon } from "./components/UiIcons";
 import { clockTimeSpanMinutes } from "./utils/timelineRecords";
+import { projectColorInk } from "./utils/presentationColor";
 
 // Canonical product presentation: the workspace and isolated demos share these components.
 export const COMPACT_LAYOUT_MEDIA_QUERY = "(orientation: portrait), (max-width: 980px) and (orientation: landscape)";
@@ -686,7 +687,7 @@ export function TaskCard({
 
       <AnchoredNarrowMenu open={morePopover === "project"} anchorRef={projectTriggerRef} onClose={() => setMorePopover(null)} label={t(lang, "drawer.assignProject")}>
         <button type="button" className={!task.projectId ? "active" : ""} onClick={() => { onProjectChange(""); setMorePopover(null); }}>{t(lang, "taskCard.unassigned")}</button>
-        {projects.map((project) => <button key={project.id} type="button" className={String(project.id) === String(task.projectId || "") ? "active" : ""} onClick={() => { onProjectChange(project.id); setMorePopover(null); }}><span className="df-menu-project-dot" style={{ background: project.color }} /># {project.title}</button>)}
+        {projects.map((project) => <button key={project.id} type="button" className={String(project.id) === String(task.projectId || "") ? "active" : ""} onClick={() => { onProjectChange(project.id); setMorePopover(null); }}><span className="df-menu-project-dot" style={{ background: projectColorInk(project.color || DEFAULT_PROJECT_COLOR) }} /># {project.title}</button>)}
       </AnchoredNarrowMenu>
 
       {repeatOpen && createPortal(
@@ -876,7 +877,7 @@ export function PreviewBlock({ task, date, startTime, duration, onConfirm, lang,
   const isPlacementPreview = Boolean(extraStyle && (extraStyle as Record<string, unknown>)["--df-preview" as string]);
   const isEvent = isEventDisplayTask(task);
   const label = lang === "zh" ? `安排“${task.title}”到 ${date || ""} ${startTime}` : `Schedule “${task.title}” at ${date || ""} ${startTime}`;
-  return <button type="button" className={`df-drop-preview ${isPlacementPreview ? "placement-preview" : ""} ${isEvent ? "is-event" : ""}`} data-kind={isEvent ? "event" : "task"} data-placement-preview-task={task.id} style={{ top, height, "--cat": color, ...extraStyle } as CSSProperties} aria-label={label} title={label} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onConfirm?.(); }}>
+  return <button type="button" className={`df-drop-preview ${isPlacementPreview ? "placement-preview" : ""} ${isEvent ? "is-event" : ""}`} data-kind={isEvent ? "event" : "task"} data-placement-preview-task={task.id} style={{ top, height, "--cat": projectColorInk(color), ...extraStyle } as CSSProperties} aria-label={label} title={label} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onConfirm?.(); }}>
     <span className="df-placement-preview-icon" aria-hidden="true"><img src={PRODUCT_ICON_SRC} alt="" /><UiCalendarCheckIcon className="df-placement-preview-confirm-icon" size={16} /></span>
     <strong>{task.title}</strong>
     <span className="df-placement-preview-time">{startTime} · {formatMinutes(Math.round(duration))}</span>
@@ -902,7 +903,7 @@ export function ProjectChoice({ project, onChoose, onColorChange }: { project: P
     <div className="df-project-choice">
       <button type="button" onClick={onChoose}># {project.title}</button>
       <span className="df-project-color-menu" onClick={(event) => event.stopPropagation()}>
-        <button type="button" className="df-project-color-dot-button" aria-label={`${project.title} color`} onClick={() => setColorOpen((open) => !open)}><span className="df-project-color-dot" style={{ "--project-color": color } as CSSProperties} /></button>
+        <button type="button" className="df-project-color-dot-button" aria-label={`${project.title} color`} onClick={() => setColorOpen((open) => !open)}><span className="df-project-color-dot" style={{ "--project-color": projectColorInk(color) } as CSSProperties} /></button>
         {colorOpen && <ProjectColorPicker value={color} onChange={(nextColor) => { onColorChange(nextColor); }} compact />}
       </span>
     </div>
@@ -1029,6 +1030,21 @@ export function themeVars(settings: Settings, mode: "planning" | "execute") {
       "--text-main": "#D9D6CF",
       "--text-muted": "#B1AEA7",
       "--text-faint": "#898781",
+      "--danger-ink": "#B58F88",
+      "--danger": "#B58F88",
+      "--color-danger": "#B58F88",
+      "--df-danger": "#B58F88",
+      "--warning-ink": "#A59678",
+      "--navo-coral": "#9C7C72",
+      "--task-priority-high": "#AA827B",
+      "--task-priority-medium": "#A59678",
+      "--task-priority-low": "#85949E",
+      "--task-priority-normal": "#898781",
+      "--task-priority-unset": "#898781",
+      "--project-color-lightness-min": "0.55",
+      "--project-color-lightness-max": "0.68",
+      "--project-color-chroma": "0.45",
+      "--project-label-color": "var(--text-muted)",
       "--border-soft": "#555452",
       "--border-subtle": "#2A2A2A",
       "--shadow-soft": "0 18px 48px rgba(0,0,0,0.28)",
