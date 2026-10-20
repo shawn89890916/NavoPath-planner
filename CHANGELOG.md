@@ -4,7 +4,7 @@
 
 ### 改进
 - 深色模式采用更接近黑色的背景，统一调暗面板、任务块、时间轴和输入框底色；减轻时间条纹、弹层、规划视图与 AI 消息的灰色蒙层，保留柔和文字与清晰的表面层次。
-- 深色模式的逾期与警示改用柔和玫瑰色，优先级和项目色降低饱和度并限制亮度，项目名称使用中性文字；保留项目原始颜色及浅色模式显示。
+- 深色模式的逾期与警示改用柔和玫瑰色，优先级、项目标记和投入度色条降低饱和度并限制亮度，项目名称使用中性文字；保留项目原始颜色及浅色模式显示。
 
 ## 2026-10-19 · 未完成任务拖动
 
@@ -178,7 +178,7 @@
 
 ### Improved
 - Dark mode uses backgrounds closer to black, with darker panels, task blocks, timeline and input surfaces; reduced gray washes across hour bands, overlays, planning views and AI messages retain soft text and distinct surface layers.
-- Dark mode uses muted rose for overdue and alert text, subdued priority and project colors with controlled brightness, and neutral project names; saved project colors and light-mode appearance are preserved.
+- Dark mode uses muted rose for overdue and alert text, subdued priority marks, project markers and engagement stripes with controlled brightness, and neutral project names; saved project colors and light-mode appearance are preserved.
 
 ## 2026-10-19 · Drag unfinished tasks
 
