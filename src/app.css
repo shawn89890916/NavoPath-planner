@@ -18599,11 +18599,11 @@ body.df-planning-native-dragging [contenteditable] * {
 /* Dark mode: keep the placeholder neutral gray, never purple/lavender. */
 .df-app.theme-dark {
   background: var(--bg-app);
-  --bg-app: #1B1B1B;
-  --bg-app-soft: #1E1E1E;
-  --surface-main: #202020;
-  --surface-raised: #292929;
-  --surface-card: #252525;
+  --bg-app: #111111;
+  --bg-app-soft: #141414;
+  --surface-main: #171717;
+  --surface-raised: #232323;
+  --surface-card: #1D1D1D;
   --text-main: #D9D6CF;
   --text-muted: #B1AEA7;
   --text-faint: #898781;

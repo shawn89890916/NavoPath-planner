@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-20 · 深色背景
+
+### 改进
+- 深色模式采用更接近黑色的背景，统一调暗面板、任务块、时间轴和输入框底色，保留柔和文字与清晰的表面层次。
+
 ## 2026-10-19 · 未完成任务拖动
 
 ### 改进
@@ -167,6 +172,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-20 · Dark backgrounds
+
+### Improved
+- Dark mode uses backgrounds closer to black, with darker panels, task blocks, timeline and input surfaces while retaining soft text and distinct surface layers.
 
 ## 2026-10-19 · Drag unfinished tasks
 

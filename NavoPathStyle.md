@@ -88,11 +88,11 @@ hierarchy.
 
 Dark-mode surfaces use this graphite hierarchy:
 
-- App ground: `#1B1B1B`
-- Subtle ground: `#1E1E1E`
-- Main surface: `#202020`
-- Task/card surface: `#252525`
-- Raised surface: `#292929`
+- App ground: `#111111`
+- Subtle ground: `#141414`
+- Main surface: `#171717`
+- Task/card surface: `#1D1D1D`
+- Raised surface: `#232323`
 - Primary text: `#D9D6CF`
 - Secondary text: `#B1AEA7`
 - Supporting text: `#898781`
