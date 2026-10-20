@@ -43,6 +43,7 @@ class SiteErrorBoundary extends React.Component<
 const feature = productFeature(window.location.pathname, "features");
 const demo = productFeature(window.location.pathname, "product-demo");
 const principles = principleRoute(window.location.pathname);
+const privacy = /^\/privacy\/?$/.test(window.location.pathname);
 if (demo) {
   void import("./productDemoRuntime").then(({ installProductDemo }) => {
     installProductDemo(demo);
@@ -51,8 +52,8 @@ if (demo) {
     if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "error" }, location.origin);
     document.getElementById("root")!.textContent = "NavoPath…";
   });
-} else if (feature || principles) {
-  const Page = lazy(feature ? () => loadFeature(feature) : () => loadPrinciple(principles!));
+} else if (feature || principles || privacy) {
+  const Page = lazy(privacy ? () => import("./PrivacyPage") : feature ? () => loadFeature(feature) : () => loadPrinciple(principles!));
   createRoot(document.getElementById("root")!).render(
     <SiteErrorBoundary demo={Boolean(demo)}>
       <Suspense

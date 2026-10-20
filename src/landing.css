@@ -136,7 +136,7 @@ html.landing-document #root {
 .landing-cta p { max-width: 510px; margin: 22px 0 30px; color: var(--l-muted); font-size: 16px; line-height: 1.7; }
 .landing-actions { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
 .landing-footer { position: relative; z-index: 4; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 18px; padding: 26px clamp(16px, 2.6vw, 32px) 42px; border-top: 1px solid var(--l-rule); color: var(--l-muted); background: var(--l-paper); font: 12px var(--l-body); }
-.landing-footer nav { display: flex; gap: 18px; }
+.landing-footer nav { display: flex; flex-wrap: wrap; gap: 18px; }
 .landing-footer a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; white-space: nowrap; }
 .landing-footer a:hover { color: var(--l-ink); }
 .landing-footer-principles { justify-self: end; }

@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-10-21 · 隐私政策
+
+### 新增
+- 新增中英文隐私政策，说明账户、规划、云端同步及可选功能的数据处理方式；首页、产品页和账户设置可随时查阅。
+- 网页与桌面登录、注册须主动勾选同意隐私政策后才能提交；切换登录或注册时重新确认，邮箱确认后的继续入口遵循同一要求。
+
 ## 2026-10-20 · 深色背景
 
 ### 改进
@@ -173,6 +179,12 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-21 · Privacy Policy
+
+### Added
+- Added a bilingual Privacy Policy explaining data handling for accounts, plans, cloud sync and optional features, accessible from the home page, product pages and account settings.
+- Web and desktop sign-in and sign-up require an explicit Privacy Policy checkbox before submission; switching between them requires confirmation again, including the continue action after email confirmation.
 
 ## 2026-10-20 · Dark backgrounds
 

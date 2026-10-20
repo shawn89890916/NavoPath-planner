@@ -1,0 +1,5 @@
+.np-privacy-consent { display:flex; align-items:flex-start; gap:10px; margin:12px 0; color:inherit; font:400 13px/1.65 system-ui,sans-serif; }
+.np-privacy-consent input[type=checkbox] { flex:0 0 18px; width:18px; height:18px; min-height:18px; margin:3px 0 0; padding:0; accent-color:currentColor; cursor:pointer; }
+.np-privacy-consent .np-privacy-label { display:inline; color:inherit; font:inherit; cursor:pointer; }
+.np-privacy-consent a { color:inherit; text-decoration:underline; text-underline-offset:3px; }
+.np-privacy-consent input:focus-visible, .np-privacy-consent a:focus-visible { outline:2px solid currentColor; outline-offset:3px; }

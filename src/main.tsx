@@ -103,6 +103,7 @@ const localStorage = getWorkspaceStorage();
 const sessionStorage = productDemo?.storage ?? window.sessionStorage;
 installBrowserFallback();
 
+const AuthGate = lazy(() => import("./AuthGate"));
 const ChangelogPage = lazy(() => import("./ChangelogPage"));
 const PluginGuidePageLazy = lazy(() => import("./PluginGuidePage"));
 const UtilityPanel = lazy(() => import("./SettingsPanel").then((module) => ({ default: module.UtilityPanel })));
@@ -808,58 +809,6 @@ function ExecuteSkeleton() {
       </section>
     </main>
   </div>;
-}
-
-function AuthGate(props: {
-  busy: boolean;
-  error: string;
-  notice: AuthNotice;
-  onSubmit: (email: string, password: string, displayName: string, intent: "signin" | "signup") => Promise<void>;
-  onResend: (email: string) => Promise<void>;
-  onContinueAfterConfirm: (email: string) => Promise<void>;
-}) {
-  const [intent, setIntent] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const mismatch = intent === "signup" && password && confirmPassword && password !== confirmPassword;
-  return (
-    <main className="df-auth-shell">
-      <section className="df-auth-card">
-        <div className="df-auth-brand">
-          <ProductIcon />
-          <div>
-            <strong>NavoPath</strong>
-            <span>从长期规划里选出今天要推进的事。</span>
-          </div>
-        </div>
-        <div className="df-auth-tabs">
-          <button className={intent === "signin" ? "active" : ""} onClick={() => setIntent("signin")}>登录</button>
-          <button className={intent === "signup" ? "active" : ""} onClick={() => setIntent("signup")}>注册</button>
-        </div>
-        <form onSubmit={(event) => {
-          event.preventDefault();
-          if (mismatch) return;
-          void props.onSubmit(email.trim(), password, displayName.trim(), intent);
-        }}>
-          {intent === "signup" && <label>用户名<input type="text" value={displayName} onChange={(event) => setDisplayName(event.target.value)} autoComplete="nickname" maxLength={64} /></label>}
-          <label>邮箱<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
-          <label>密码<input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={intent === "signin" ? "current-password" : "new-password"} minLength={6} required /></label>
-          {intent === "signup" && <label>确认密码<input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" minLength={6} required /></label>}
-          <label className="df-auth-check"><input type="checkbox" checked={showPassword} onChange={(event) => setShowPassword(event.target.checked)} />显示密码</label>
-          {mismatch && <p className="df-auth-error">两次输入的密码不一致。</p>}
-          {props.error && <p className="df-auth-error">{props.error}</p>}
-          {props.notice?.type === "confirm-email" && <div className="df-auth-notice"><strong>请先确认邮箱</strong><span>确认邮件已发送到 {props.notice.email}。完成确认后再登录。</span><div className="df-auth-notice-actions"><button type="button" onClick={() => void props.onResend(props.notice!.email)}>重发邮件</button><button type="button" onClick={() => void props.onContinueAfterConfirm(props.notice!.email)}>我已确认，去登录</button></div></div>}
-          <button className="df-auth-submit" type="submit" disabled={props.busy || !email.trim() || password.length < 6 || Boolean(mismatch)}>
-            {props.busy ? "处理中..." : intent === "signin" ? "进入 NavoPath" : "创建账号"}
-          </button>
-        </form>
-        <p className="df-auth-note">每个账号的数据独立保存。已注册过请直接登录；连续注册会触发邮件安全限流。公开网页版不会保存个人 AI API Key。</p>
-      </section>
-    </main>
-  );
 }
 
 function CloudWorkspaceError(props: {
@@ -2231,7 +2180,8 @@ if (cached?.data && cached?.settings) {
     });
   }, []);
 
-  async function handleAuthSubmit(email: string, password: string, displayName: string, intent: "signin" | "signup", preferredTheme: Settings["theme"]) {
+  async function handleAuthSubmit(email: string, password: string, displayName: string, intent: "signin" | "signup", preferredTheme: Settings["theme"], privacyAccepted: boolean) {
+    if (!privacyAccepted) return;
     setAuthBusy(true);
     setAuthError("");
     setAuthNotice(null);
@@ -8676,16 +8626,16 @@ if (cached?.data && cached?.settings) {
 
   if (!isWorkspaceRoute || (authState?.mode === "cloud" && !authState.user)) {
     if (isWorkspaceRoute && window.desktopApi) {
-      return <AuthGate
+      return <Suspense fallback={<ExecuteSkeleton />}><AuthGate
         busy={authBusy}
         error={authError}
         notice={authNotice}
-        onSubmit={(email, password, displayName, intent) => (
-          handleAuthSubmit(email, password, displayName, intent, "dark")
+        onSubmit={(email, password, displayName, intent, privacyAccepted) => (
+          handleAuthSubmit(email, password, displayName, intent, "dark", privacyAccepted)
         )}
         onResend={resendConfirmation}
         onContinueAfterConfirm={continueAfterConfirm}
-      />;
+      /></Suspense>;
     }
     return <Suspense fallback={<ExecuteSkeleton />}>
       <LandingPageLazy busy={authBusy} error={authError} notice={authNotice} onLogin={handleAuthSubmit} onResend={resendConfirmation} onContinueAfterConfirm={continueAfterConfirm} onForgotPassword={handleForgotPassword} />

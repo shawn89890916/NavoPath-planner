@@ -499,6 +499,7 @@ function AccountMoreSection({ lang, onShowAbout, onDeleteAccount }: { lang: Lang
           <small>{lang === "zh" ? "将打开外部链接" : "Opens external link"}</small>
           <i aria-hidden="true">↗</i>
         </button>
+        <a href={`https://navopath.com/privacy?lang=${lang}`} target="_blank" rel="noopener noreferrer">{lang === "zh" ? "隐私政策" : "Privacy Policy"}</a>
         {onDeleteAccount && <button className="df-settings-delete-account" onClick={onDeleteAccount}>{lang === "zh" ? "删除账号和全部数据" : "Delete account and all data"}</button>}
       </div>
     </section>
