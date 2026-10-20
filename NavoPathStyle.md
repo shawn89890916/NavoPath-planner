@@ -88,15 +88,15 @@ hierarchy.
 
 Dark-mode surfaces use this graphite hierarchy:
 
-- App ground: `#111111`
-- Subtle ground: `#141414`
-- Main surface: `#171717`
-- Task/card surface: `#1D1D1D`
-- Raised surface: `#232323`
+- App ground: `#080808`
+- Subtle ground: `#0C0C0C`
+- Main surface: `#101010`
+- Task/card surface: `#141414`
+- Raised surface: `#191919`
 - Primary text: `#D9D6CF`
 - Secondary text: `#B1AEA7`
 - Supporting text: `#898781`
-- Subtle rule: `#393939`
+- Subtle rule: `#2A2A2A`
 - Interactive control boundary: `#555452`
 - Interaction accent: muted stone `#A9A49B`, with `#1B1B1B` text on accent-filled actions
 
@@ -109,7 +109,10 @@ Dark mode preserves the light-mode page geometry, task order, candidate grouping
 desktop panel layering, resize handle, and timeline scale. The two themes share the
 same layout and pointer interactions; theme switching changes their visual tokens.
 Use graphite surfaces, fine neutral rules, and very subtle alternating hour bands to
-retain the timeline's time structure. Candidate groups keep their headers and
+retain the timeline's time structure. Dark hour bands alternate between the subtle
+ground and main surface. Surface tints use `--surface-tint`, mapped to the raised
+surface in dark mode, rather than mixing foreground text into large backgrounds.
+Candidate groups keep their headers and
 project-color markers. Schedule blocks use the raised surface with restrained
 project-color edges; project colors remain data markers and do not fill large areas.
 Keep the current-time line behind scheduled blocks so it never obscures their labels.

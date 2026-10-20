@@ -3,7 +3,7 @@
 ## 2026-10-20 · 深色背景
 
 ### 改进
-- 深色模式采用更接近黑色的背景，统一调暗面板、任务块、时间轴和输入框底色，保留柔和文字与清晰的表面层次。
+- 深色模式采用更接近黑色的背景，统一调暗面板、任务块、时间轴和输入框底色；减轻时间条纹、弹层、规划视图与 AI 消息的灰色蒙层，保留柔和文字与清晰的表面层次。
 
 ## 2026-10-19 · 未完成任务拖动
 
@@ -176,7 +176,7 @@
 ## 2026-10-20 · Dark backgrounds
 
 ### Improved
-- Dark mode uses backgrounds closer to black, with darker panels, task blocks, timeline and input surfaces while retaining soft text and distinct surface layers.
+- Dark mode uses backgrounds closer to black, with darker panels, task blocks, timeline and input surfaces; reduced gray washes across hour bands, overlays, planning views and AI messages retain soft text and distinct surface layers.
 
 ## 2026-10-19 · Drag unfinished tasks
 

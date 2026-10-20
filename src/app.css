@@ -3130,7 +3130,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-time-block.project-open { z-index: 90; }
 .df-time-block.completed {
-  background: color-mix(in srgb, var(--text-main) 3%, var(--bg-surface));
+  background: color-mix(in srgb, var(--surface-tint, var(--text-main)) 3%, var(--bg-surface));
   border-color: color-mix(in srgb, var(--cat, var(--accent-active)) 10%, var(--border-subtle));
   box-shadow: none;
 }
@@ -3968,7 +3968,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-all-day-block:hover strong {
 }
 .df-all-day-block.completed {
-  background: color-mix(in srgb, var(--text-main) 3%, var(--surface-card));
+  background: color-mix(in srgb, var(--surface-tint, var(--text-main)) 3%, var(--surface-card));
   border-color: color-mix(in srgb, var(--accent-active) 14%, var(--border-subtle));
   opacity: .7;
 }
@@ -7315,11 +7315,11 @@ body:has(:active)::-webkit-scrollbar-thumb {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-active) 42%, transparent);
 }
 .df-app.theme-dark .df-task-detail.df-drawer {
-  background: color-mix(in srgb, var(--accent-active) 4%, var(--surface-main));
+  background: var(--surface-main);
   border-color: color-mix(in srgb, var(--accent-active) 20%, var(--border-subtle));
 }
 .df-app.theme-dark .df-detail-floating-popover {
-  background: color-mix(in srgb, var(--accent-active) 4%, var(--surface-main));
+  background: var(--surface-raised);
   border-color: color-mix(in srgb, var(--accent-active) 20%, var(--border-subtle));
 }
 /* Final event-as-task overrides. Keep these late because legacy event-layer
@@ -7385,8 +7385,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-app.theme-dark .df-time-grid {
   background: repeating-linear-gradient(
     to bottom,
-    color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) 0,
-    color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) var(--timeline-hour-height, 80px),
+    color-mix(in srgb, var(--surface-tint, var(--text-main)) 3%, var(--surface-main)) 0,
+    color-mix(in srgb, var(--surface-tint, var(--text-main)) 3%, var(--surface-main)) var(--timeline-hour-height, 80px),
     var(--surface-main) var(--timeline-hour-height, 80px),
     var(--surface-main) calc(2 * var(--timeline-hour-height, 80px))
   );
@@ -8722,7 +8722,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   padding: 5px 8px;
   border-style: solid;
   border-color: color-mix(in srgb, var(--accent-active) 56%, var(--border-soft));
-  background: color-mix(in srgb, var(--surface-main) 96%, var(--text-main) 4%); box-shadow: none;
+  background: color-mix(in srgb, var(--surface-main) 96%, var(--surface-tint, var(--text-main)) 4%); box-shadow: none;
   border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius);
   pointer-events: auto;
   cursor: pointer;
@@ -12550,8 +12550,8 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background:
     repeating-linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) 0,
-      color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) var(--timeline-hour-height, 80px),
+      var(--bg-app-soft) 0,
+      var(--bg-app-soft) var(--timeline-hour-height, 80px),
       var(--surface-main) var(--timeline-hour-height, 80px),
       var(--surface-main) calc(2 * var(--timeline-hour-height, 80px))
     );
@@ -12560,8 +12560,8 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background:
     repeating-linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) 0,
-      color-mix(in srgb, var(--text-main) 3%, var(--surface-main)) var(--timeline-hour-height, 80px),
+      var(--bg-app-soft) 0,
+      var(--bg-app-soft) var(--timeline-hour-height, 80px),
       var(--surface-main) var(--timeline-hour-height, 80px),
       var(--surface-main) calc(2 * var(--timeline-hour-height, 80px))
     );
@@ -12621,7 +12621,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: color-mix(in srgb, #c9a46f 10%, transparent);
 }
 .df-app.theme-dark .df-month-week-row:nth-child(odd) {
-  background: color-mix(in srgb, var(--text-main) 3%, var(--surface-main));
+  background: color-mix(in srgb, var(--surface-tint, var(--text-main)) 3%, var(--surface-main));
 }
 .df-app .df-month-week-row:nth-child(even) {
   background: transparent;
@@ -12880,7 +12880,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border: 1px solid var(--paper-rule);
   border-bottom-color: var(--paper-rule-strong);
   border-radius: 5px;
-  background: color-mix(in srgb, var(--surface-main) 94%, var(--text-main) 6%);
+  background: color-mix(in srgb, var(--surface-main) 94%, var(--surface-tint, var(--text-main)) 6%);
   color: var(--text-muted);
   font: 650 10px/1.2 var(--paper-mono);
   corner-shape: var(--corner-shape, squircle);
@@ -12893,7 +12893,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   border: 1px solid var(--paper-rule);
   border-bottom-color: var(--paper-rule-strong);
   border-radius: 5px;
-  background: color-mix(in srgb, var(--surface-main) 94%, var(--text-main) 6%);
+  background: color-mix(in srgb, var(--surface-main) 94%, var(--surface-tint, var(--text-main)) 6%);
   color: var(--text-muted);
   font: 650 10px/1.2 var(--paper-mono);
   corner-shape: var(--corner-shape, squircle);
@@ -14111,7 +14111,7 @@ body.df-timeline-pointer-drag * {
   padding: 3px 7px;
   border: 1px solid var(--paper-rule-strong);
   border-radius: 3px;
-  background: color-mix(in srgb, var(--text-main) 6%, var(--surface-main));
+  background: color-mix(in srgb, var(--surface-tint, var(--text-main)) 6%, var(--surface-main));
   color: var(--text-secondary);
   font: 500 10px/1.2 var(--paper-ui);
   white-space: nowrap;
@@ -15289,12 +15289,12 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-view-btn:hover {
   color: var(--text-main);
   border-right-color: var(--paper-rule-strong);
-  background: color-mix(in srgb, var(--surface-main) 96%, var(--text-main) 4%);
+  background: color-mix(in srgb, var(--surface-main) 96%, var(--surface-tint, var(--text-main)) 4%);
 }
 .df-view-btn:focus-visible {
   color: var(--text-main);
   border-right-color: var(--paper-rule-strong);
-  background: color-mix(in srgb, var(--surface-main) 96%, var(--text-main) 4%);
+  background: color-mix(in srgb, var(--surface-main) 96%, var(--surface-tint, var(--text-main)) 4%);
 }
 .df-view-btn.active {
   border-color: var(--accent-active);
@@ -15355,7 +15355,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   flex-direction: column;
   border: 1px solid var(--paper-rule);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--surface-main) 97%, var(--text-main) 3%);
+  background: color-mix(in srgb, var(--surface-main) 97%, var(--surface-tint, var(--text-main)) 3%);
   transition: border-color 0.15s;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -15364,7 +15364,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--surface-main) 97%, var(--text-main) 3%);
+  background: color-mix(in srgb, var(--surface-main) 97%, var(--surface-tint, var(--text-main)) 3%);
   transition: border-color 0.15s;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -15498,12 +15498,12 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-app .df-planning .df-view-btn:hover {
   color: var(--text-main);
   border-right-color: var(--paper-rule-strong);
-  background: color-mix(in srgb, var(--surface-main) 96%, var(--text-main) 4%);
+  background: color-mix(in srgb, var(--surface-main) 96%, var(--surface-tint, var(--text-main)) 4%);
 }
 .df-app .df-planning .df-view-btn:focus-visible {
   color: var(--text-main);
   border-right-color: var(--paper-rule-strong);
-  background: color-mix(in srgb, var(--surface-main) 96%, var(--text-main) 4%);
+  background: color-mix(in srgb, var(--surface-main) 96%, var(--surface-tint, var(--text-main)) 4%);
 }
 .df-app .df-planning .df-filter-trigger:hover {
   border-right-color: var(--accent-active);
@@ -15644,7 +15644,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   corner-shape: var(--corner-shape, squircle);
 }
 .df-filter-cat-row:hover {
-  background: color-mix(in srgb, var(--surface-main) 94%, var(--text-main) 6%);
+  background: color-mix(in srgb, var(--surface-main) 94%, var(--surface-tint, var(--text-main)) 6%);
 }
 .df-filter-cat-row.active {
   background: color-mix(in srgb, var(--surface-main) 92%, var(--accent-active) 8%);
@@ -15732,7 +15732,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   margin-left: auto;
   padding: 1px 6px;
   border-radius: 4px;
-  background: color-mix(in srgb, var(--surface-main) 90%, var(--text-main) 10%);
+  background: color-mix(in srgb, var(--surface-main) 90%, var(--surface-tint, var(--text-main)) 10%);
   color: var(--text-muted);
   font: 500 10px/1.4 var(--paper-mono);
   font-style: normal;
@@ -15742,7 +15742,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   margin-left: auto;
   padding: 1px 6px;
   border-radius: 4px;
-  background: color-mix(in srgb, var(--surface-main) 90%, var(--text-main) 10%);
+  background: color-mix(in srgb, var(--surface-main) 90%, var(--surface-tint, var(--text-main)) 10%);
   color: var(--text-muted);
   font: 500 10px/1.4 var(--paper-mono);
   font-style: normal;
@@ -18599,16 +18599,17 @@ body.df-planning-native-dragging [contenteditable] * {
 /* Dark mode: keep the placeholder neutral gray, never purple/lavender. */
 .df-app.theme-dark {
   background: var(--bg-app);
-  --bg-app: #111111;
-  --bg-app-soft: #141414;
-  --surface-main: #171717;
-  --surface-raised: #232323;
-  --surface-card: #1D1D1D;
+  --bg-app: #080808;
+  --bg-app-soft: #0C0C0C;
+  --surface-main: #101010;
+  --surface-raised: #191919;
+  --surface-card: #141414;
+  --surface-tint: var(--surface-raised);
   --text-main: #D9D6CF;
   --text-muted: #B1AEA7;
   --text-faint: #898781;
   --border-soft: #555452;
-  --border-subtle: #393939;
+  --border-subtle: #2A2A2A;
   --accent-active: #A9A49B;
   --accent-rgb: 169, 164, 155;
   --accent-on: #1A1B1D;
@@ -18619,8 +18620,8 @@ body.df-planning-native-dragging [contenteditable] * {
   --paper-rule: var(--border-subtle);
   --paper-rule-strong: var(--border-soft);
   --paper-accent-rule: #A9A49B;
-  --paper-note: rgba(255,255,255,.08);
-  --paper-note-strong: rgba(255,255,255,.14);
+  --paper-note: color-mix(in srgb, var(--surface-raised) 65%, transparent);
+  --paper-note-strong: var(--surface-raised);
   --paper-float-shadow: 0 18px 48px rgba(0,0,0,.34);
   --task-bg: var(--surface-card);
   --task-border: var(--border-subtle);
@@ -19557,7 +19558,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   min-height: 100%;
   padding: 28px clamp(18px, 3vw, 34px) 36px;
   color: var(--ink, var(--paper-ink));
-  background: linear-gradient(180deg, color-mix(in srgb, var(--paper, var(--paper-bg)) 96%, var(--ink, var(--paper-ink)) 4%), var(--paper, var(--paper-bg)));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--paper, var(--paper-bg)) 96%, var(--surface-tint, var(--ink, var(--paper-ink))) 4%), var(--paper, var(--paper-bg)));
   overflow: visible;
 }
 .df-app .df-planning .df-metrics-header {
@@ -19596,7 +19597,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   height: 34px;
   border: 1px solid var(--line, var(--paper-rule));
   border-radius: 6px;
-  background: color-mix(in srgb, var(--paper, var(--paper-bg)) 96%, var(--ink, var(--paper-ink)) 4%);
+  background: color-mix(in srgb, var(--paper, var(--paper-bg)) 96%, var(--surface-tint, var(--ink, var(--paper-ink))) 4%);
   color: var(--ink, var(--paper-ink));
   padding: 0 10px;
   font: inherit;
@@ -19689,7 +19690,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 .df-app .df-planning .df-metrics-panel {
   border: 1px solid color-mix(in srgb, var(--line, var(--paper-rule)) 86%, transparent);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--paper, var(--paper-bg)) 97%, var(--ink, var(--paper-ink)) 3%);
+  background: color-mix(in srgb, var(--paper, var(--paper-bg)) 97%, var(--surface-tint, var(--ink, var(--paper-ink))) 3%);
   padding: 16px;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -19850,7 +19851,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 .df-app .df-planning .df-metrics-empty {
   border: 1px solid color-mix(in srgb, var(--line, var(--paper-rule)) 86%, transparent);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--paper, var(--paper-bg)) 97%, var(--ink, var(--paper-ink)) 3%);
+  background: color-mix(in srgb, var(--paper, var(--paper-bg)) 97%, var(--surface-tint, var(--ink, var(--paper-ink))) 3%);
   padding: 42px 24px;
   text-align: center;
   corner-shape: var(--corner-shape, squircle);
@@ -21658,7 +21659,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
   #root .df-app .df-timeline-3day-top {
     margin-top: 14px;
-    background: color-mix(in srgb, var(--surface-main) 96%, var(--text-main) 4%);
+    background: color-mix(in srgb, var(--surface-main) 96%, var(--surface-tint, var(--text-main)) 4%);
   }
   #root .df-app .df-timeline-3day {
     width: 100%;
@@ -21965,7 +21966,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     padding: 3px;
     border: 1px solid var(--paper-rule-strong);
     border-radius: 7px;
-    background: color-mix(in srgb, var(--surface-main) 90%, var(--text-main) 10%);
+    background: color-mix(in srgb, var(--surface-main) 90%, var(--surface-tint, var(--text-main)) 10%);
     corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app.mode-planning .df-planning .df-view-btn {
@@ -22830,7 +22831,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 1px solid var(--paper-rule);
   border-radius: 14px 14px 4px 14px;
   color: var(--text-main);
-  background: color-mix(in srgb, var(--surface-main) 90%, var(--text-main) 10%);
+  background: color-mix(in srgb, var(--surface-main) 90%, var(--surface-tint, var(--text-main)) 10%);
   box-shadow: none;
   line-height: 1.55;
   white-space: pre-wrap;
@@ -22918,9 +22919,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 .df-ai-markdown code { padding: .12em .36em; border-radius: 4px; background: color-mix(in srgb, var(--text-main) 8%, transparent); font: .88em/1.5 var(--paper-mono); corner-shape: var(--corner-shape, squircle); }
 .df-ai-markdown table { width: 100%; margin: 1em 0; border-collapse: collapse; font-size: 13px; }
 .df-ai-markdown :is(th, td) { padding: 8px 10px; border: 1px solid var(--paper-rule); text-align: left; vertical-align: top; }
-.df-ai-markdown th { background: color-mix(in srgb, var(--surface-main) 94%, var(--text-main) 6%); font-weight: 650; }
+.df-ai-markdown th { background: color-mix(in srgb, var(--surface-main) 94%, var(--surface-tint, var(--text-main)) 6%); font-weight: 650; }
 .df-ai-markdown input[type="checkbox"] { margin-right: 8px; accent-color: var(--accent-active); }
-.df-ai-code-block { max-width: 100%; margin: 1em 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: 8px; background: color-mix(in srgb, var(--surface-main) 88%, var(--text-main) 12%); corner-shape: var(--corner-shape, squircle); }
+.df-ai-code-block { max-width: 100%; margin: 1em 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: 8px; background: color-mix(in srgb, var(--surface-main) 88%, var(--surface-tint, var(--text-main)) 12%); corner-shape: var(--corner-shape, squircle); }
 .df-ai-code-head { min-height: 34px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 13px; border-bottom: 1px solid var(--paper-rule); color: var(--text-muted); font: 550 10px/1 var(--paper-mono); }
 .df-ai-code-head button { min-height: 28px; padding: 0 6px; border: 0; color: inherit; background: transparent; cursor: pointer; }
 .df-ai-code-block pre { max-width: 100%; margin: 0; padding: 14px; overflow-x: auto; }
@@ -22974,7 +22975,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   padding: 8px 9px 9px;
   border: 1px solid var(--paper-rule-strong);
   border-radius: 18px;
-  background: color-mix(in srgb, var(--surface-main) 98%, var(--text-main) 2%);
+  background: color-mix(in srgb, var(--surface-main) 98%, var(--surface-tint, var(--text-main)) 2%);
   box-shadow: 0 10px 26px rgba(39, 35, 30, .1);
   corner-shape: var(--corner-shape, squircle);
 }
@@ -23877,7 +23878,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     grid-template-columns: var(--df-candidate-width, clamp(400px, 32vw, 470px)) minmax(0, 1fr);
     gap: 12px;
     padding: 12px 16px 16px;
-    background: color-mix(in srgb, var(--surface-main) 94%, var(--text-main) 6%);
+    background: color-mix(in srgb, var(--surface-main) 94%, var(--surface-tint, var(--text-main)) 6%);
     transition: width var(--motion-layout) var(--motion-ease-settle), grid-template-columns var(--motion-layout) var(--motion-ease-settle);
   }
   #root .df-app.mode-execute.is-ai-docked > .df-execute:not(.df-template-shell):not(.fullscreen) {
@@ -23898,7 +23899,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     padding: 17px 16px 12px;
     border: 1px solid color-mix(in srgb, var(--accent-active) 28%, var(--paper-rule-strong));
     border-radius: 6px;
-    background: color-mix(in srgb, var(--surface-main) 97%, var(--text-main) 3%);
+    background: color-mix(in srgb, var(--surface-main) 97%, var(--surface-tint, var(--text-main)) 3%);
     box-shadow: none;
     corner-shape: var(--corner-shape, squircle);
   }
