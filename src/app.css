@@ -2585,6 +2585,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-task-card strong { font-size: 14px; line-height: 1.35; font-weight: 600; }
 .df-task-card small { color: var(--df-muted); font-size: 12px; }
 .df-candidate-row {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto 28px 28px;
   align-items: center;
@@ -6115,6 +6116,22 @@ body:has(:active)::-webkit-scrollbar-thumb {
   color: var(--text-faint);
 }
 .df-ai-project-suggestion {
+  position: absolute;
+  grid-column: 3 / -1;
+  grid-row: 1;
+  inset: 0;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  background: var(--task-bg);
+}
+.df-candidate-row:has(> .df-ai-project-suggestion) > :is(.df-task-block-duration, .df-task-block-actions) {
+  visibility: hidden;
+}
+.df-ai-project-suggestion-accept {
+  min-width: 0;
   max-width: 128px;
   overflow: hidden;
   padding: 2px 5px;
@@ -23384,6 +23401,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     grid-column: 2;
     grid-row: 2;
     justify-self: start;
+  }
+  .df-ai-project-suggestion {
+    grid-column: 2;
+    grid-row: 2;
   }
   #root .df-app.mode-execute .df-task-card .df-task-actions {
     grid-column: 2;

@@ -441,6 +441,7 @@ export function TaskCard({
   const [morePopover, setMorePopover] = useState<"priority" | "project" | "schedule-more" | null>(null);
   const [repeatOpen, setRepeatOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [dismissedProjectId, setDismissedProjectId] = useState<string | null>(null);
   const [draftDueDate, setDraftDueDate] = useState(task.dueDate || focusDate);
   const [durationDraft, setDurationDraft] = useState(String(Math.round((task.estimatedHours || 0.5) * 60)));
   const durationTriggerRef = useRef<HTMLButtonElement>(null);
@@ -483,7 +484,7 @@ export function TaskCard({
     ? { date: placementPreview.date, startTime: placementPreview.startTime, label: `${placementPreview.date} ${placementPreview.startTime}` }
     : null);
   const suggestedProject = !task.projectId && !task.aiInference?.project?.userOverridden && (task.aiInference?.project?.confidence || 0) >= 0.45
-    ? projects.find((project) => project.id === task.aiInference?.project?.projectId)
+    ? projects.find((project) => project.id === task.aiInference?.project?.projectId && project.id !== dismissedProjectId)
     : undefined;
 
   useEffect(() => {
@@ -604,8 +605,6 @@ export function TaskCard({
           <TaskBlockContent className="df-candidate-main" title={displayTitle}>
             {isEvent ? <span className="df-candidate-kind">EVENT</span> : null}
           </TaskBlockContent>
-          {suggestedProject && <button type="button" className="df-ai-project-suggestion" title={lang === "zh" ? `建议归入「${suggestedProject.title}」` : `Suggested project: ${suggestedProject.title}`} onClick={(event) => { event.stopPropagation(); onProjectChange(suggestedProject.id); }}>↗ {suggestedProject.title}</button>}
-
           {!isEvent && <TaskBlockDuration>
             {scheduleSummary ? <button type="button" className="df-candidate-schedule-link" title={lang === "zh" ? `跳转到时间轴：${scheduleSummary.date} ${scheduleSummary.startTime}` : `Show on timeline: ${scheduleSummary.date} ${scheduleSummary.startTime}`} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onFocusSchedule?.(scheduleSummary); }}>{scheduleSummary.label}</button>
               : isOverdueCandidate ? <button type="button" className={`df-overdue-time${isPlacementArmed ? " is-previewing" : ""}`} title={lang === "zh" ? "原安排时间保持不变；悬停可在时间轴预览建议位置" : "Keeps the original time; hover to preview a suggestion on the timeline"} onMouseEnter={queuePlacementPreview} onMouseLeave={cancelQueuedPlacementPreview} onBlur={cancelQueuedPlacementPreview} onFocus={previewPlacement} onClick={toggleSchedulePanel}>
@@ -625,6 +624,10 @@ export function TaskCard({
             }}>{renderPlacementLocateAction()}</div>}
             {!demo && !isPlacementArmed && <button className={`df-icon-button ${isMoreOpen ? "icon-collapse" : "icon-expand"}`} title={isMoreOpen ? t(lang, "taskCard.collapseMore") : t(lang, "taskCard.expandMore")} aria-label={isMoreOpen ? t(lang, "taskCard.collapseMore") : t(lang, "taskCard.expandMore")} aria-expanded={isMoreOpen} onClick={(event) => { event.stopPropagation(); setPopoverOpen(null); setMorePopover(null); setSchedulePanelOpen(false); setOpenPanel((current) => current === "more" ? null : "more"); }}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{isMoreOpen ? <path d="M5 12l5-5 5 5" /> : <path d="M5 8l5 5 5-5" />}</svg></button>}
           </TaskActions>}
+          {suggestedProject && <span className="df-ai-project-suggestion" onPointerDown={(event) => event.stopPropagation()} onClick={stop}>
+            <button type="button" className="df-ai-project-suggestion-accept" title={lang === "zh" ? `建议归入「${suggestedProject.title}」` : `Suggested project: ${suggestedProject.title}`} onClick={() => onProjectChange(suggestedProject.id)}>↗ {suggestedProject.title}</button>
+            <CloseButton label={lang === "zh" ? "关闭项目建议" : "Dismiss project suggestion"} onClick={() => { setDismissedProjectId(suggestedProject.id); window.requestAnimationFrame(() => durationTriggerRef.current?.focus()); }} />
+          </span>}
         </TaskBlockRow>
         {!isEvent && onToggleSubtask && hasSubtasks && <TaskSubtaskShelf
           label={lang === "zh" ? "子任务" : "Subtasks"}

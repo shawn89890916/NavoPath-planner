@@ -1,10 +1,13 @@
 # NavoPath 更新日志
 
-## 2026-10-21 · 隐私政策
+## 2026-10-21 · 隐私政策与项目建议
 
 ### 新增
 - 新增中英文隐私政策，说明账户、规划、云端同步及可选功能的数据处理方式；首页、产品页和账户设置可随时查阅。
 - 网页与桌面登录、注册须主动勾选同意隐私政策后才能提交；切换登录或注册时重新确认，邮箱确认后的继续入口遵循同一要求。
+
+### 改进
+- 候选任务的项目建议覆盖右侧时长、排程与更多控件，不再撑高任务块；可点击 × 关闭并恢复原控件。
 
 ## 2026-10-20 · 深色背景
 
@@ -180,11 +183,14 @@
 
 # NavoPath Changelog
 
-## 2026-10-21 · Privacy Policy
+## 2026-10-21 · Privacy Policy and Project Suggestions
 
 ### Added
 - Added a bilingual Privacy Policy explaining data handling for accounts, plans, cloud sync and optional features, accessible from the home page, product pages and account settings.
 - Web and desktop sign-in and sign-up require an explicit Privacy Policy checkbox before submission; switching between them requires confirmation again, including the continue action after email confirmation.
+
+### Improvements
+- Candidate project suggestions overlay the duration, scheduling and more controls without increasing task height; click × to dismiss and restore the controls.
 
 ## 2026-10-20 · Dark backgrounds
 
