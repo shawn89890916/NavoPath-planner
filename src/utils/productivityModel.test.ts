@@ -40,6 +40,16 @@ describe("productivity model", () => {
     expect(normalizeTaskCheckTone({ ...baseTask, importance: "medium", urgency: "medium" })).toBe("muted");
   });
 
+  it("updates priority independently of importance and urgency, including clearing it", () => {
+    for (const priority of ["high", "medium", "low", null] as const) {
+      const updated = { ...baseTask, importance: "high", urgency: "medium", ...taskMetaPatch("priority", priority) };
+      expect(updated.priority).toBe(priority);
+      expect(updated.importance).toBe("high");
+      expect(updated.urgency).toBe("medium");
+    }
+    expect(taskMetaPatch("priority", "unset")).toEqual({ priority: null });
+  });
+
   it("builds task setting patches for importance and urgency controls", () => {
     expect(taskMetaPatch("importance", "high")).toEqual({ importance: "high" });
     expect(taskMetaPatch("importance", "")).toEqual({ importance: null });

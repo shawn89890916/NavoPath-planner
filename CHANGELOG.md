@@ -9,6 +9,9 @@
 ### 改进
 - 候选任务的项目建议覆盖右侧时长、排程与更多控件，不再撑高任务块；可点击 × 关闭并恢复原控件。
 
+### 修复
+- 任务编辑与新建中的优先级选项直接更新勾选框颜色；清空优先级后保持未设置状态，重新打开或刷新不再恢复为中优先级。
+
 ## 2026-10-20 · 深色背景
 
 ### 改进
@@ -191,6 +194,9 @@
 
 ### Improvements
 - Candidate project suggestions overlay the duration, scheduling and more controls without increasing task height; click × to dismiss and restore the controls.
+
+### Fixed
+- Priority controls in task editing and creation now update checkbox colors directly; clearing priority stays unset after reopening or refreshing instead of reverting to medium.
 
 ## 2026-10-20 · Dark backgrounds
 

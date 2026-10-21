@@ -1,6 +1,6 @@
 import { EngagementRating } from "./components/EngagementRating";
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction } from "react";
-import type { Category, Language, NullablePriority, Priority, Project, Subtask, Task, TaskRecurrence, TimelineRecord } from "./types";
+import type { Category, Language, NullablePriority, Project, Subtask, Task, TaskRecurrence, TimelineRecord } from "./types";
 import { clockTimeSpanMinutes, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { toggleSubtaskInTree } from "./utils/treeOrder";
 import { Button, CloseButton, IconButton } from "./components/UiPrimitives";
@@ -137,7 +137,7 @@ export function MobileTimelineDraftSheet(props: {
   </MobileShortSheet>;
 }
 
-type SummaryForm = { title: string; projectId: string; projectColor: string; dueDate: string; dueTime: string; endDate: string; endTime: string; category: Category; priority: Priority; importance: NullablePriority; urgency: NullablePriority; estimatedHours: number; details: string; recurrence?: TaskRecurrence };
+type SummaryForm = { title: string; projectId: string; projectColor: string; dueDate: string; dueTime: string; endDate: string; endTime: string; category: Category; priority: NullablePriority; importance: NullablePriority; urgency: NullablePriority; estimatedHours: number; details: string; recurrence?: TaskRecurrence };
 
 export default function MobileTaskSummary(props: {
   engagementEnabled?: boolean;

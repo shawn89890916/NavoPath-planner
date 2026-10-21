@@ -359,7 +359,7 @@ type FormState = {
   endDate: string;
   endTime: string;
   category: Category;
-  priority: Priority;
+  priority: NullablePriority;
   importance: NullablePriority;
   urgency: NullablePriority;
   estimatedHours: number;
@@ -5346,7 +5346,7 @@ if (cached?.data && cached?.settings) {
         endDate: date,
         endTime: scheduledRecord.scheduledEnd,
         category: task.category,
-        priority: task.priority ?? "medium",
+        priority: task.priority,
         importance: task.importance ?? null,
         urgency: task.urgency ?? null,
         estimatedHours: durationMinutes / 60,
@@ -6354,7 +6354,7 @@ if (cached?.data && cached?.settings) {
       endDate: task.scheduledDate || realTask.dueDate || today,
       endTime: task.scheduledEnd || "",
       category: realTask.category,
-      priority: realTask.priority ?? "medium",
+      priority: realTask.priority,
       importance: realTask.importance ?? null,
       urgency: realTask.urgency !== undefined ? realTask.urgency : null,
       estimatedHours: realTask.estimatedHours || 0.5,
@@ -6823,7 +6823,7 @@ if (cached?.data && cached?.settings) {
       endDate: convertedRecord?.scheduledEndDate || task.dueDate,
       endTime: convertedRecord?.scheduledEnd || "",
       category: task.category,
-      priority: task.priority ?? "medium",
+      priority: task.priority,
       importance: task.importance ?? null,
       urgency: task.urgency !== undefined ? task.urgency : null,
       estimatedHours: task.estimatedHours || 0.5,
@@ -12222,14 +12222,14 @@ function EditDrawer(props: {
     low: "var(--task-priority-low, #6E8DA6)",
     unset: "var(--task-priority-unset, #8E8478)",
   };
-  function commitTaskMeta(kind: "importance" | "urgency", value: TaskLevel) {
+  function commitTaskMeta(kind: "priority" | "importance" | "urgency", value: TaskLevel) {
     set(kind, value === "unset" ? null : value);
     if (!props.editing || props.type !== "task" || !props.task) return;
     props.onTaskUpdate(props.task.id, taskMetaPatch(kind, value));
   }
-  function taskLevelSelector(kind: "importance" | "urgency", options: Array<{ value: TaskLevel; zh: string; en: string }>) {
+  function taskLevelSelector(kind: "priority" | "importance" | "urgency", options: Array<{ value: TaskLevel; zh: string; en: string }>) {
     const selectedValue = (f[kind] ?? "unset") as TaskLevel;
-    return <div className={`df-level-selector df-level-${kind}`} role="group" aria-label={kind === "importance" ? (props.lang === "zh" ? "重要程度" : "Importance") : (props.lang === "zh" ? "紧急程度" : "Urgency")}>
+    return <div className={`df-level-selector df-level-${kind === "priority" ? "importance" : kind}`} role="group" aria-label={kind === "priority" ? (props.lang === "zh" ? "优先级" : "Priority") : kind === "importance" ? (props.lang === "zh" ? "重要程度" : "Importance") : (props.lang === "zh" ? "紧急程度" : "Urgency")}>
       {options.map((option) => <button
         key={`${kind}-${option.value}`}
         type="button"
@@ -12240,7 +12240,7 @@ function EditDrawer(props: {
         title={props.lang === "zh" ? option.zh : option.en}
         style={{ "--option-color": levelColors[option.value] } as React.CSSProperties}
       >
-        {kind === "importance"
+        {kind !== "urgency"
           ? option.value === "unset"
             ? <svg viewBox="0 0 24 24" className="df-level-icon" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/><line x1="4" y1="22" x2="4" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
             : <svg viewBox="0 0 24 24" className="df-level-icon" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" fill="currentColor"/><line x1="4" y1="22" x2="4" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
@@ -12391,7 +12391,7 @@ function EditDrawer(props: {
               <svg viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4l3 3 3-3" /></svg>
             </button>
           </section>
-          <section className="df-detail-importance-row" aria-label={props.lang === "zh" ? "任务标记" : "Task flags"}>{taskLevelSelector("importance", importanceOptions)}</section>
+          <section className="df-detail-importance-row" aria-label={props.lang === "zh" ? "任务标记" : "Task flags"}>{taskLevelSelector(props.type === "task" ? "priority" : "importance", importanceOptions)}</section>
 
           <section className="df-detail-time-range" aria-label={props.lang === "zh" ? "起止时间" : "Start and end time"}>
             <label><span>{t(props.lang, "drawer.startTime")}</span><input type="time" step={SLOT_MINUTES * 60} value={f.dueTime} onChange={(event) => setQuickAddStart(event.target.value)} /></label>
@@ -12544,7 +12544,7 @@ function EditDrawer(props: {
           {recurrenceText ? <span className="df-detail-pill-trevor">↻ {recurrenceText}</span> : null}
         </section>
         <section className="df-detail-importance-row" aria-label={props.lang === "zh" ? "任务标记" : "Task flags"}>
-          {taskLevelSelector("importance", importanceOptions)}
+          {taskLevelSelector("priority", importanceOptions)}
           {props.engagementEnabled && <Suspense fallback={null}><EngagementRating task={props.task} record={activeRecord} lang={props.lang} onUpdate={props.onTaskUpdate} /></Suspense>}
         </section>
 

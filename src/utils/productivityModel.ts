@@ -45,7 +45,8 @@ export function normalizeTaskState(
 export function normalizeTaskCheckTone(task: Pick<Task, "importance" | "urgency">): "attention" | "muted" {
   return task.importance === "high" || task.urgency === "high" ? "attention" : "muted";
 }
-export function taskMetaPatch(kind: "importance" | "urgency", value: unknown): Pick<Task, "importance"> | Pick<Task, "urgency"> {
+export function taskMetaPatch(kind: "priority" | "importance" | "urgency", value: unknown): Partial<Pick<Task, "priority" | "importance" | "urgency">> {
+  if (kind === "priority") return { priority: normalizeNullableLevel(value) };
   if (kind === "importance") return { importance: normalizeNullableLevel(value) };
   return { urgency: normalizeUrgency(value) };
 }
