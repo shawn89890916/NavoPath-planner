@@ -14,7 +14,7 @@ import { normalizeTaskCheckTone } from "./utils/productivityModel";
 import { addDays, addMonths, hasRecurringRule } from "./utils/recurrence";
 import { countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockDragState } from "./components/TaskBlock";
-import { CloseButton, IconButton } from "./components/UiPrimitives";
+import { Button, CloseButton, IconButton } from "./components/UiPrimitives";
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
 import { UiCalendarCheckIcon, UiCalendarClockIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiReturnIcon, UiTrashIcon } from "./components/UiIcons";
 import { clockTimeSpanMinutes } from "./utils/timelineRecords";
@@ -385,6 +385,7 @@ export function TaskCard({
   onToggleDone,
   onClick,
   onPointerDragStart,
+  onMobileSchedule,
   onStartPlacementPreview,
   onCancelPlacementPreview,
   onConfirmPlacementPreview,
@@ -417,6 +418,7 @@ export function TaskCard({
   onToggleDone: () => void;
   onClick: () => void;
   onPointerDragStart: (event: React.PointerEvent) => void;
+  onMobileSchedule?: () => void;
   onStartPlacementPreview: () => void;
   onCancelPlacementPreview: () => void;
   onConfirmPlacementPreview: () => void;
@@ -616,7 +618,7 @@ export function TaskCard({
 
           {!isEvent && <TaskActions>
             {!scheduleSummary && !isOverdueCandidate && <div className="df-candidate-schedule-actions" onMouseLeave={() => { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); } }}>
-              <IconButton className={`df-icon-button icon-schedule${schedulePanelOpen ? " is-active" : ""}`} icon={<UiCalendarClockIcon size={18} />} label={t(lang, "taskCard.openScheduling")} aria-expanded={schedulePanelOpen} onMouseEnter={queuePlacementPreview} onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) previewPlacement(); }} onClick={toggleSchedulePanel} />
+              <>{onMobileSchedule ? <Button className="df-candidate-mobile-schedule" onClick={(event) => { event.stopPropagation(); onMobileSchedule(); }}>{lang === "zh" ? "安排" : "Plan"}</Button> : <IconButton className={`df-icon-button icon-schedule${schedulePanelOpen ? " is-active" : ""}`} icon={<UiCalendarClockIcon size={18} />} label={t(lang, "taskCard.openScheduling")} aria-expanded={schedulePanelOpen} onMouseEnter={queuePlacementPreview} onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) previewPlacement(); }} onClick={toggleSchedulePanel} />}</>
               {renderPlacementLocateAction()}
             </div>}
             {isOverdueCandidate && !scheduleSummary && isPlacementArmed && <div className="df-candidate-schedule-actions" onBlur={(event) => {

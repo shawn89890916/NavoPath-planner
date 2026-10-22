@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-22 · 手机排程流程
+
+### 改进
+- 手机竖屏执行页以日程为主屏，底部待安排抽屉保留候选列表与滚动位置；点按安排可预览推荐空档、点选时间调整，再确认或取消，支持撤销并保留其他执行记录。
+
 ## 2026-10-21 · 隐私政策与项目建议
 
 ### 新增
@@ -185,6 +190,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-22 · Mobile Scheduling
+
+### Improvements
+- Portrait phone execution now opens on the schedule with a bottom candidate drawer that preserves its list position. Tap Plan to preview a suggested slot, choose another time, then confirm or cancel; undo and other execution records are preserved.
 
 ## 2026-10-21 · Privacy Policy and Project Suggestions
 

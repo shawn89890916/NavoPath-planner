@@ -48,7 +48,9 @@
         "dist/assets/LandingPage-*.js",
         "dist/assets/AiClarificationQuestions-*.js",
         "dist/assets/WidgetApp-*.js",
-        "dist/assets/MobileTaskSummary-*.js"
+        "dist/assets/MobileTaskSummary-*.js",
+        "dist/assets/MobileExecutionControls-*.js",
+        "dist/assets/mobilePlacement-*.js"
       ],
       "limit": "38 KB"
     },
@@ -75,9 +77,11 @@
         "dist/assets/LandingPage-*.js",
         "dist/assets/WidgetApp-*.js",
         "dist/assets/MobileTaskSummary-*.js",
-        "dist/assets/SettingsPanel-*.js"
+        "dist/assets/SettingsPanel-*.js",
+        "dist/assets/MobileExecutionControls-*.js",
+        "dist/assets/mobilePlacement-*.js"
       ],
-      "limit": "350 KB"
+      "limit": "354 KB"
     },
     {
       "name": "Document parsing scripts",

@@ -72,6 +72,9 @@ export function ExecutionSplitLayout({
  * width are identical by construction.
  */
 export function CandidatePanelShell({
+  panelRef,
+  role,
+  ariaModal,
   className,
   style,
   ariaHidden,
@@ -81,6 +84,9 @@ export function CandidatePanelShell({
   onPointerDown,
   children,
 }: {
+  panelRef?: React.Ref<HTMLElement>;
+  role?: "dialog";
+  ariaModal?: boolean;
   className?: string;
   style?: CSSProperties;
   ariaHidden?: boolean;
@@ -92,6 +98,9 @@ export function CandidatePanelShell({
 }) {
   return (
     <section
+      ref={panelRef}
+      role={role}
+      aria-modal={ariaModal}
       className={`df-candidate-panel${className ? ` ${className}` : ""}`}
       style={style}
       aria-hidden={ariaHidden}
