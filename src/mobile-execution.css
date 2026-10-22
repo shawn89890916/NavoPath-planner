@@ -9,7 +9,7 @@
   }
   #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates {
     display: flex; position: fixed; inset: auto 0 0; z-index: 141;
-    height: 60dvh; max-height: calc(100dvh - env(safe-area-inset-top) - 8px);
+    height: var(--mobile-candidate-height, 60dvh); max-height: calc(100dvh - env(safe-area-inset-top) - 8px);
     width: 100%; min-width: 0; margin: 0; box-sizing: border-box;
     flex-direction: column; padding: 0 8px calc(8px + env(safe-area-inset-bottom));
     border: 1px solid var(--paper-rule); border-bottom: 0; border-radius: 12px 12px 0 0;
@@ -31,6 +31,7 @@
   }
   #root .df-app[data-phone-execution] .df-mobile-candidate-grabber {
     width: 76px; height: 44px; border: 0; background: transparent; display: grid; place-items: center; touch-action: none;
+    cursor: ns-resize; user-select: none;
   }
   #root .df-app[data-phone-execution] .df-mobile-candidate-grabber span {
     width: 38px; height: 4px; border-radius: 4px; background: var(--text-muted);
@@ -40,7 +41,7 @@
     position: fixed; left: 8px; right: 8px; bottom: calc(60px + env(safe-area-inset-bottom)); z-index: 101;
   }
   #root .df-app[data-phone-execution] .df-mobile-candidates-trigger {
-    min-height: 44px; padding: 0 16px; background: var(--surface-main);
+    left: 16px; right: auto;
   }
   #root .df-app[data-phone-execution][data-mobile-placing] .df-mobile-execution-controls {
     bottom: 0; left: 0; right: 0;
