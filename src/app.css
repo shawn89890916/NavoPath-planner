@@ -23278,7 +23278,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app.mode-execute .df-candidate-list .df-candidate-task-row .df-task-block[data-task-variant="candidate"] {
   min-height: 56px;
   margin: 0;
-  padding-block: 7px;
+  padding-block: var(--candidate-padding-block, 7px);
   border: 1px solid var(--task-border);
   border-left-width: var(--task-project-accent-size, 2px);
   border-left-color: var(--task-project-color, var(--accent-active));
@@ -23290,7 +23290,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app.mode-execute .df-candidate-list .df-candidate-task-row .df-task-card {
   min-height: 56px;
   margin: 0;
-  padding-block: 7px;
+  padding-block: var(--candidate-padding-block, 7px);
   border: 1px solid var(--task-border);
   border-left-width: var(--task-project-accent-size, 2px);
   border-left-color: var(--task-project-color, var(--accent-active));
@@ -23364,9 +23364,12 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
    is still a desktop landscape. Reflow candidate metadata and keep timeline
    checks square; coarse pointers retain a square 44px target below. */
 @media (max-width: 980px) {
+  #root .df-app.mode-execute .df-task-card {
+    --candidate-padding-block: 4px;
+  }
   #root .df-app.mode-execute .df-task-card .df-candidate-row {
     grid-template-columns: 28px minmax(0, 1fr);
-    grid-template-rows: minmax(44px, auto) auto;
+    grid-template-rows: auto auto;
     column-gap: 4px;
     row-gap: 2px;
   }
@@ -23377,11 +23380,14 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     min-width: 28px;
     height: 44px;
     display: grid;
-    place-items: center;
+    place-items: start center;
+    align-self: start;
+    padding-top: 2px;
   }
   #root .df-app.mode-execute .df-task-card .df-block-check {
     position: relative;
     inset: auto;
+    align-self: start;
     width: 24px;
     min-width: 24px;
     height: 24px;

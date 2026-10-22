@@ -4,6 +4,7 @@
 
 ### 改进
 - 手机竖屏执行页以日程为主屏，底部待安排抽屉保留候选列表与滚动位置；点按安排可预览推荐空档、点选时间调整，再确认或取消，支持撤销并保留其他执行记录。
+- 收紧窄屏候选任务的标题行和上下留白，卡片随标题长度自然增高；复选框靠近标题，保留时长、日期与操作按钮的触控范围。
 
 ## 2026-10-21 · 隐私政策与项目建议
 
@@ -195,6 +196,7 @@
 
 ### Improvements
 - Portrait phone execution now opens on the schedule with a bottom candidate drawer that preserves its list position. Tap Plan to preview a suggested slot, choose another time, then confirm or cancel; undo and other execution records are preserved.
+- Narrow-screen candidate cards now fit their title height with less vertical whitespace. Checkboxes align near the title while duration, date, and action controls retain their touch targets.
 
 ## 2026-10-21 · Privacy Policy and Project Suggestions
 
