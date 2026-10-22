@@ -2,6 +2,10 @@ import type { Task, TimelineRecord } from "../types";
 
 export const DEFAULT_ENGAGEMENT = 80;
 
+export function canRateEngagement(record?: TimelineRecord | null): boolean {
+  return record?.executionStatus !== "cancelled";
+}
+
 export function normalizeEngagement(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value)
     ? Math.round(Math.max(10, Math.min(100, value)) / 10) * 10

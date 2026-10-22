@@ -3,6 +3,7 @@
 // only when the caller explicitly enables an auditable split preview.
 
 import { localIsoDate } from "./utils/localDate";
+import { sliceTimelineRecord } from "./utils/timelineRecords";
 
 export interface ScheduleTask {
   id: string;
@@ -25,6 +26,8 @@ export interface ScheduledEvent {
   date?: string;
   scheduledStart?: string;
   scheduledEnd?: string;
+  scheduledEndDate?: string;
+  endDate?: string;
   start?: string;
   end?: string;
   startTime?: string;
@@ -170,18 +173,25 @@ export function getFreeSlots(params: {
   const current = params.now ?? new Date();
   const now = current.getHours() * 60 + current.getMinutes();
   const tIso = localIsoDate(current);
+  const busySlices = scheduledEvents.flatMap((event) => {
+    const date = eventDate(event), start = eventStart(event), end = eventEnd(event);
+    if (!date || !start || !end) return [];
+    return sliceTimelineRecord({
+      id: event.id, taskId: event.taskId || event.id, scheduledDate: date,
+      scheduledStart: start, scheduledEnd: end, scheduledEndDate: event.scheduledEndDate || event.endDate,
+      executionStatus: "scheduled", createdAt: "",
+    }, dateRange);
+  });
 
   const slots: FreeSlot[] = [];
   for (const date of dateRange) {
     const effectiveStart = date === tIso ? Math.max(dayStart, Math.ceil((now + 5) / snap) * snap) : dayStart;
     let freeSegments: { start: number; end: number }[] = [{ start: effectiveStart, end: dayEnd }];
 
-    for (const ev of scheduledEvents) {
-      if (eventDate(ev) !== date) continue;
-      const s = eventStart(ev), e = eventEnd(ev);
-      if (!s || !e) continue;
-      const bs = Math.max(dayStart, timeToMinutes(s) - buffer);
-      const be = Math.min(dayEnd, timeToMinutes(e) + buffer);
+    for (const slice of busySlices) {
+      if (slice.date !== date) continue;
+      const bs = Math.max(dayStart, slice.startMinutes - buffer);
+      const be = Math.min(dayEnd, slice.endMinutes + buffer);
       const next: typeof freeSegments = [];
       for (const seg of freeSegments) {
         if (be <= seg.start || bs >= seg.end) { next.push(seg); }

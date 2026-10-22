@@ -1,19 +1,13 @@
-import type { Task, TimelineRecord } from "../../src/types.ts";
-import { engagementFor, engagementMinutes, engagementPatch } from "../../src/utils/engagement.ts";
+import type { Task } from "../../src/types.ts";
+import { canRateEngagement, engagementFor, engagementMinutes, engagementPatch } from "../../src/utils/engagement.ts";
 import { timelineRecordDurationMinutes } from "../../src/utils/timelineRecords.ts";
-
-export function canRateEngagement(task: Task, record?: TimelineRecord | null) {
-  return record
-    ? record.executionStatus === "completed" || task.completed && record.executionStatus === "scheduled"
-    : task.completed;
-}
 
 export function setEngagement(task: Task, score: number, recordId?: string): Partial<Task> {
   if (!Number.isInteger(score) || score < 10 || score > 100 || score % 10 !== 0) throw new Error("Engagement must be 10–100 in steps of 10");
   const record = recordId ? task.timelineRecords?.find((item) => item.id === recordId) : undefined;
   if (recordId && !record) throw new Error("Execution record not found on this task");
   if (!recordId && task.timelineRecords?.length) throw new Error("recordId is required for tasks with execution records");
-  if (!canRateEngagement(task, record)) throw new Error("Only completed executions can be rated");
+  if (!canRateEngagement(record)) throw new Error("A cancelled execution cannot be rated");
   return engagementPatch(task, score, record);
 }
 
@@ -23,14 +17,15 @@ export function listEngagement(tasks: Task[], enabled: boolean, filters: { taskI
     .filter((task) => (!filters.taskId || task.id === filters.taskId) && (!filters.projectId || task.projectId === filters.projectId))
     .flatMap((task) => {
       const records = task.timelineRecords?.length ? task.timelineRecords : [null];
-      return records.filter((record) => canRateEngagement(task, record)).map((record) => {
+      return records.filter(canRateEngagement).map((record) => {
         const date = record?.scheduledDate || task.completedAt?.slice(0, 10) || task.scheduledDate || null;
         const duration = record?.scheduledStart ? timelineRecordDurationMinutes(record) : (task.estimatedHours || .5) * 60;
         const durationMinutes = Number.isFinite(duration) ? Math.max(0, duration) : 0;
         const score = engagementFor(task, record);
+        const completed = record ? record.executionStatus === "completed" || task.completed && record.executionStatus === "scheduled" : task.completed;
         return { taskId: task.id, title: task.title, projectId: task.projectId, recordId: record?.id || null, date, startTime: record?.scheduledStart || null,
           engagement: score, explicitlyRated: typeof (record ? record.engagement : task.engagement) === "number", durationMinutes,
-          engagedMinutes: engagementMinutes(durationMinutes, score), statisticsMinutes: enabled ? engagementMinutes(durationMinutes, score) : durationMinutes };
+          engagedMinutes: engagementMinutes(durationMinutes, score), statisticsMinutes: enabled && completed ? engagementMinutes(durationMinutes, score) : durationMinutes };
       });
     })
     // Date filters select executions by their start date; do not invent dates for unscheduled tasks.
@@ -42,7 +37,7 @@ export function listEngagement(tasks: Task[], enabled: boolean, filters: { taskI
   const limit = filters.limit ?? 100;
   return { enabled, defaultEngagement: 80, dateBasis: "execution_start_date", summary: {
     executions: entries.length, explicitlyRated: entries.filter((entry) => entry.explicitlyRated).length, durationMinutes, engagedMinutes,
-    statisticsMinutes: enabled ? engagedMinutes : durationMinutes,
+    statisticsMinutes: entries.reduce((sum, entry) => sum + entry.statisticsMinutes, 0),
     durationWeightedEngagement: durationMinutes ? Math.round(engagedMinutes / durationMinutes * 1000) / 10 : null,
   }, entries: entries.slice(offset, offset + limit), nextOffset: offset + limit < entries.length ? offset + limit : null };
 }

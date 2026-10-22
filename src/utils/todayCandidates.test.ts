@@ -28,12 +28,27 @@ function data(tasks: Task[]): PlannerData {
 }
 
 describe("today candidate transformations", () => {
-  it("adds a task to today and clears scheduling", () => {
+  it("adds a task to today without removing its existing executions", () => {
     const source = data([task({ scheduledDate: "2026-06-21", scheduledStart: "09:00", scheduledEnd: "10:00", timelineRecords: [{ id: "r1", taskId: "task-1", scheduledDate: "2026-06-21", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled", createdAt: "now" }] })]);
     const result = toggleTodayCandidate(source, "task-1", "2026-06-20", "now");
     expect(result.action).toBe("added");
-    expect(result.data.tasks[0]).toMatchObject({ plannedForDate: "2026-06-20", executionLane: "candidate", timelineRecords: [] });
-    expect(result.data.tasks[0].scheduledStart).toBeUndefined();
+    expect(result.data.tasks[0]).toMatchObject({ plannedForDate: "2026-06-20", executionLane: "candidate", timelineRecords: source.tasks[0].timelineRecords });
+    expect(result.data.tasks[0].scheduledStart).toBe("09:00");
+  });
+
+  it("preserves rated history when adding and removing a candidate, including after serialization", () => {
+    const records = (["completed", "returned_unfinished", "skipped", "cancelled"] as const).map((executionStatus, index) => ({
+      id: `history-${index}`, taskId: "task-1", scheduledDate: "2026-06-19", scheduledStart: "09:00", scheduledEnd: "10:00",
+      executionStatus, engagement: 70, createdAt: "2026-06-19T00:00:00Z",
+    }));
+    const source = data([task({ timelineRecords: records }), task({ id: "other" })]);
+    const added = toggleTodayCandidate(source, "task-1", "2026-06-20", "now").data;
+    const removed = toggleTodayCandidate(JSON.parse(JSON.stringify(added)), "task-1", "2026-06-20", "later").data;
+    expect(added.tasks[0].timelineRecords).toEqual(records);
+    expect(removed.tasks[0].timelineRecords).toEqual(records);
+    expect(removed.tasks[0].plannedForDate).toBeUndefined();
+    expect(source.tasks[0].plannedForDate).toBeUndefined();
+    expect(added.tasks[1]).toBe(source.tasks[1]);
   });
 
   it("removes an existing today candidate without duplicating it", () => {

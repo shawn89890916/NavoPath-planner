@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 import type { Language } from "../i18n";
 import type { Task, TimelineRecord } from "../types";
-import { engagementFor, engagementMinutes, engagementPatch } from "../utils/engagement";
+import { canRateEngagement, engagementFor, engagementMinutes, engagementPatch } from "../utils/engagement";
 import { timelineRecordDurationMinutes } from "../utils/timelineRecords";
 import { Popover } from "./UiPrimitives";
 
@@ -14,7 +14,7 @@ export function EngagementRating({ task, record, lang, onUpdate }: {
   const tooltipId = useId();
   const [activeHelp, setActiveHelp] = useState<string | null>(null);
   const records = record ? [record] : task.timelineRecords?.length ? task.timelineRecords : [null];
-  const rateable = records.filter((item) => item?.executionStatus !== "cancelled");
+  const rateable = records.filter(canRateEngagement);
   if (!rateable.length) return null;
   const zh = lang === "zh";
   return <section className="df-engagement-rating" aria-label={zh ? "投入度评分" : "Engagement rating"}>

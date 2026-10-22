@@ -71,10 +71,10 @@ export function toggleTodayCandidate(
       ...data,
       tasks: data.tasks.map((item) => {
         if (item.id !== taskId) return item;
-        const cleared = clearScheduling(item);
+        // Candidate membership is independent of the task's execution history.
         return removing
-          ? { ...cleared, plannedForDate: undefined, executionLane: undefined, updatedAt: now }
-          : { ...cleared, plannedForDate: today, executionLane: "candidate", updatedAt: now };
+          ? { ...item, plannedForDate: undefined, executionLane: undefined, updatedAt: now }
+          : { ...item, plannedForDate: today, executionLane: "candidate", updatedAt: now };
       }),
     },
     action: removing ? "removed" : "added",

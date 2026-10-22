@@ -4119,11 +4119,6 @@ if (cached?.data && cached?.settings) {
       plannedForDate: undefined,
       executionLane: undefined,
       ...(task.dueDateSource === "automatic" ? { dueDate: "", dueDateSource: undefined } : {}),
-      scheduledDate: undefined,
-      scheduledStart: undefined,
-      scheduledEnd: undefined,
-      executionStatus: undefined,
-      timelineRecords: [],
     });
     showToast(lang === "zh" ? "已移回 Planning" : "Moved back to Planning");
   }

@@ -15,14 +15,14 @@ function task(overrides = {}) {
 
 test("engagement uses each execution's rating and a default of 80, never the task fallback", () => {
   const value = listEngagement([task()], true);
-  assert.deepEqual(value.entries.map((entry) => [entry.recordId, entry.engagement, entry.durationMinutes, entry.engagedMinutes]), [["first", 50, 120, 60], ["second", 80, 60, 48]]);
-  assert.deepEqual(value.summary, { executions: 2, explicitlyRated: 1, durationMinutes: 180, engagedMinutes: 108, statisticsMinutes: 108, durationWeightedEngagement: 60 });
+  assert.deepEqual(value.entries.map((entry) => [entry.recordId, entry.engagement, entry.durationMinutes, entry.engagedMinutes]), [["first", 50, 120, 60], ["second", 80, 60, 48], ["future", 80, 60, 48]]);
+  assert.deepEqual(value.summary, { executions: 3, explicitlyRated: 1, durationMinutes: 240, engagedMinutes: 156, statisticsMinutes: 168, durationWeightedEngagement: 65 });
 });
 
 test("disabled engagement preserves saved ratings and reports raw statistics duration", () => {
   const value = listEngagement([task()], false);
   assert.equal(value.enabled, false);
-  assert.equal(value.summary.statisticsMinutes, 180);
+  assert.equal(value.summary.statisticsMinutes, 240);
   assert.equal(value.entries[0].engagement, 50);
   assert.equal(value.entries[0].statisticsMinutes, 120);
 });
@@ -34,7 +34,7 @@ test("filters by execution start date and project, and summarizes before paginat
   assert.equal(value.summary.executions, 2);
   assert.equal(value.nextOffset, 1);
   assert.equal(listEngagement([task()], true, { from: "2026-10-10", to: "2026-10-10" }).entries[0].recordId, "second");
-  assert.equal(listEngagement([task()], true, { offset: 1, limit: 1 }).nextOffset, null);
+  assert.equal(listEngagement([task()], true, { offset: 2, limit: 1 }).nextOffset, null);
   assert.throws(() => listEngagement([task()], true, { from: "2026-10-11", to: "2026-10-09" }), /from/);
 });
 
@@ -56,11 +56,25 @@ test("rating one execution preserves siblings, task fallback and original data",
   assert.deepEqual(preview.inverseOperations, [{ type: "restore_task", taskId: "task-1", task: original }]);
 });
 
-test("rejects missing or foreign record IDs, incomplete executions and unsupported scores", () => {
+test("rates incomplete executions independently and lists their saved scores", () => {
+  for (const executionStatus of ["scheduled", "returned_unfinished", "skipped"]) {
+    const original = task({ timelineRecords: [{ ...task().timelineRecords[0], executionStatus }] });
+    const preview = previewTaskOperations({ tasks: [original] }, [{ type: "set_engagement", taskId: "task-1", recordId: "first", engagement: 70 }]);
+    assert.equal(original.timelineRecords[0].engagement, 50);
+    const saved = JSON.parse(JSON.stringify(preview.data.tasks[0]));
+    assert.equal(saved.timelineRecords[0].executionStatus, executionStatus);
+    assert.equal(saved.completed, false);
+    assert.equal(listEngagement([saved], true).entries[0].engagement, 70);
+    assert.equal(listEngagement([saved], true).summary.statisticsMinutes, 120);
+    assert.deepEqual(preview.inverseOperations, [{ type: "restore_task", taskId: "task-1", task: original }]);
+  }
+  assert.deepEqual(setEngagement(task({ timelineRecords: [] }), 70), { engagement: 70 });
+});
+
+test("rejects missing or foreign record IDs, cancelled executions and unsupported scores", () => {
   assert.throws(() => setEngagement(task(), 70), /recordId is required/);
   assert.throws(() => setEngagement(task(), 70, "another-task-record"), /not found/);
-  assert.throws(() => setEngagement(task(), 70, "future"), /completed/);
-  assert.throws(() => setEngagement(task({ timelineRecords: [] }), 70), /completed/);
+  assert.throws(() => setEngagement(task({ timelineRecords: [{ ...task().timelineRecords[0], executionStatus: "cancelled" }] }), 70, "first"), /cancelled/);
   for (const score of [0, 9, 33, 101, NaN, "70"]) {
     assert.throws(() => normalizeTaskOperations([{ type: "set_engagement", taskId: "task-1", engagement: score }]), /10–100/);
   }

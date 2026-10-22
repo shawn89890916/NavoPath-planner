@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { autoScheduleTasks, getFreeSlots } from "./autoSchedule";
+import { expandTaskTimelineSlices } from "./utils/taskTimelineSlices";
+import type { Task } from "./types";
 
 const future = "2099-01-05";
 
@@ -8,6 +10,37 @@ function task(id: string, projectId: string, estimatedMinutes = 45) {
 }
 
 describe("autoScheduleTasks", () => {
+  it("keeps the midnight-ending timeline slice occupied", () => {
+    const overnight: Task = { ...task("overnight", "study"), dueDate: "", category: "personal", notes: "", goalId: "",
+      completed: false, createdAt: "now", updatedAt: "now", timelineRecords: [{
+      id: "overnight-record", taskId: "overnight", scheduledDate: future, scheduledStart: "21:00",
+      scheduledEndDate: "2099-01-06", scheduledEnd: "01:00", executionStatus: "scheduled", createdAt: "now",
+    }] };
+    const scheduledEvents = expandTaskTimelineSlices([overnight], [future, "2099-01-06"]).tasks;
+    const settings = { dayStart: "20:00", dayEnd: "23:59", bufferMinutes: 0, allowTaskSplitting: false };
+    expect(getFreeSlots({ dateRange: [future], scheduledEvents, settings })).toEqual([
+      { date: future, startMinutes: 1200, endMinutes: 1260 },
+    ]);
+    const result = autoScheduleTasks({ tasks: [task("candidate", "study", 120)], scheduledEvents, dateRange: [future], settings });
+    expect(result.proposedEvents).toEqual([]);
+    expect(result.unscheduledTasks).toHaveLength(1);
+    expect(getFreeSlots({ dateRange: ["2099-01-06"], scheduledEvents,
+      settings: { ...settings, dayStart: "00:00", dayEnd: "02:00" } })).toEqual([
+      { date: "2099-01-06", startMinutes: 60, endMinutes: 120 },
+    ]);
+  });
+
+  it("projects raw overnight and multi-day events into every planning day with buffers", () => {
+    const scheduledEvents = [{ id: "event", title: "Overnight", scheduledDate: future, scheduledStart: "21:00", scheduledEnd: "01:00" }];
+    expect(getFreeSlots({ dateRange: ["2099-01-06"], scheduledEvents,
+      settings: { dayStart: "00:00", dayEnd: "02:00", bufferMinutes: 5 } })).toEqual([
+      { date: "2099-01-06", startMinutes: 75, endMinutes: 120 },
+    ]);
+    expect(getFreeSlots({ dateRange: ["2099-01-06"],
+      scheduledEvents: [{ ...scheduledEvents[0], scheduledEndDate: "2099-01-07" }],
+      settings: { dayStart: "08:00", dayEnd: "22:00", bufferMinutes: 0 } })).toEqual([]);
+  });
+
   it("uses the first grid slot at least five minutes after the current time", () => {
     vi.useFakeTimers();
     try {

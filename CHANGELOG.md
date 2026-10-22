@@ -8,6 +8,8 @@
 - 待安排入口改为左下角向上展开图标，与右下角添加按钮对称；拖动候选面板顶部横条可调整高度，松手后保留高度，列表仍可独立滚动。
 
 ### 修复
+- 加入或移出今日候选时保留任务的日程、执行历史与投入度评分；自动排程避开跨午夜的占用时段，跨日任务在结束前保持已安排状态。
+- MCP 投入度读取与评分支持未完成及返回规划的执行记录，与应用内规则一致；每次执行独立保存，取消的执行仍不参与评分。
 - 勾选框直接绑定任务优先级的边框与淡色填充，切换高、中、低或未设置时不再被全局按钮样式覆盖。
 - 修复开启投入度后全天项目色条被裁剪的问题；单日和多日全天栏新建任务时保留所选项目，项目色与归属在保存、刷新后保持一致。
 
@@ -205,6 +207,8 @@
 - The candidate opener is now an upward chevron in the lower-left corner, matching the lower-right Add button. Drag the panel's top handle to resize it; the chosen height remains on release while the list scrolls independently.
 
 ### Fixed
+- Adding or removing a Today's Candidate preserves its schedules, execution history and engagement ratings. Automatic scheduling avoids occupied cross-midnight time, and overnight tasks remain scheduled until they end.
+- MCP engagement queries and ratings now include unfinished and returned executions, matching the app. Each execution keeps its own rating, while cancelled executions remain excluded.
 - Checkbox borders and subtle fills now follow task priority directly, so global button styles cannot override high, medium, low or unset states.
 - Fixed clipped project stripes in the all-day shelf when Engagement is enabled. Tasks created in daily and multi-day all-day shelves retain the selected project, keeping their project color and assignment after saving and refreshing.
 
