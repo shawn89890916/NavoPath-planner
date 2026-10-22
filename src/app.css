@@ -17413,12 +17413,17 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   align-items: center;
   padding: 8px 12px;
   min-height: 36px;
+  /* The engagement stripe occupies the border; keep it inside the clip. */
+  overflow: clip;
+  overflow-clip-margin: border-box;
 }
 .navo-demo-app .df-task-block[data-task-appearance][data-task-variant="allDay"] {
   display: inline-flex;
   align-items: center;
   padding: 8px 12px;
   min-height: 36px;
+  overflow: clip;
+  overflow-clip-margin: border-box;
 }
 /* Compact — used by habits and dense lists. */
 .df-app .df-task-block[data-task-appearance][data-task-variant="compact"] {

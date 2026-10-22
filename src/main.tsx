@@ -9455,7 +9455,7 @@ if (cached?.data && cached?.settings) {
                                 }}
                               >
                                 {allDayQuickAdd && !drag && allDayQuickAdd.date === colDate && (
-                                  <AllDayQuickAddPopover add={allDayQuickAdd} projects={projects} onSave={(title) => createAllDayTask(title, colDate, null)} onCancel={() => setAllDayQuickAdd(null)} />
+                                  <AllDayQuickAddPopover add={allDayQuickAdd} projects={projects} onSave={(title, projectId) => createAllDayTask(title, colDate, projectId)} onCancel={() => setAllDayQuickAdd(null)} />
                                 )}
                                 {allDayDragDate === colDate && drag && draggedTask && <AllDayDropPreview task={draggedTask} projects={projects} lang={lang} />}
                                 {adTasks.map((task) => (
@@ -9891,7 +9891,7 @@ if (cached?.data && cached?.settings) {
                         }}
                       >
                         {allDayQuickAdd && !drag && (
-                          <AllDayQuickAddPopover add={allDayQuickAdd} projects={projects} onSave={(title) => createAllDayTask(title, allDayQuickAdd.date, null)} onCancel={() => setAllDayQuickAdd(null)} />
+                          <AllDayQuickAddPopover add={allDayQuickAdd} projects={projects} onSave={(title, projectId) => createAllDayTask(title, allDayQuickAdd.date, projectId)} onCancel={() => setAllDayQuickAdd(null)} />
                         )}
                         {allDayDragDate === timelineWindowAnchorDate && drag && draggedTask && <AllDayDropPreview task={draggedTask} projects={projects} lang={lang} />}
                         {[

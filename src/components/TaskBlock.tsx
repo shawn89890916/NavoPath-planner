@@ -321,6 +321,10 @@ export function TaskCheckbox({
   onMouseDown?: React.MouseEventHandler<HTMLButtonElement>;
   onPointerDown?: React.PointerEventHandler<HTMLButtonElement>;
 }) {
+  const priorityColor = `var(--task-priority-${priority || "normal"})`;
+  const priorityFill = priority
+    ? `color-mix(in srgb, ${priorityColor} ${priority === "medium" ? 18 : priority === "high" ? 16 : 12}%, transparent)`
+    : "transparent";
   return (
     <span className="df-task-checkbox-wrap" data-priority={priority || "normal"}>
       <button
@@ -333,6 +337,12 @@ export function TaskCheckbox({
           returned ? "returned-unfinished" : "",
           className || "",
         ].filter(Boolean).join(" ")}
+        style={{
+          "--task-checkbox-color": priorityColor,
+          borderColor: priorityColor,
+          color: priorityColor,
+          backgroundColor: priorityFill,
+        } as CSSProperties}
         title={title}
         aria-label={ariaLabel}
         aria-pressed={checked}
