@@ -1,6 +1,7 @@
 import type { Language } from "../types";
 import { monthTitle } from "../i18n";
 import { localIsoDate } from "../utils/localDate";
+import { UiChevronLeftIcon, UiChevronRightIcon } from "./UiIcons";
 
 export type DateQuickPickerProps = {
   month: string;
@@ -31,9 +32,9 @@ export function DateQuickPicker({ month, selectedDate, today, minDate, maxDate, 
   return (
     <section className="df-mobile-date-picker" aria-label={lang === "zh" ? "快速选择日期" : "Quick date picker"}>
       <header>
-        <button type="button" onClick={() => moveMonth(-1)} aria-label={lang === "zh" ? "上个月" : "Previous month"}>‹</button>
+        <button type="button" onClick={() => moveMonth(-1)} aria-label={lang === "zh" ? "上个月" : "Previous month"}><UiChevronLeftIcon size={18} /></button>
         <strong>{monthTitle(lang, year, monthNumber)}</strong>
-        <button type="button" onClick={() => moveMonth(1)} aria-label={lang === "zh" ? "下个月" : "Next month"}>›</button>
+        <button type="button" onClick={() => moveMonth(1)} aria-label={lang === "zh" ? "下个月" : "Next month"}><UiChevronRightIcon size={18} /></button>
       </header>
       <div className="df-mobile-date-weekdays" aria-hidden="true">
         {orderedWeekdays.map((label) => <span key={label}>{label}</span>)}
@@ -50,6 +51,7 @@ export function DateQuickPicker({ month, selectedDate, today, minDate, maxDate, 
             type="button"
             className={`${currentMonth ? "" : "outside"}${selected ? " selected" : ""}${isToday ? " today" : ""}`}
             aria-pressed={selected}
+            aria-label={date}
             disabled={outsideRange}
             onClick={() => onSelect(date)}
           >{Number(date.slice(8, 10))}</button>;

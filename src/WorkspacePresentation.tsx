@@ -287,7 +287,7 @@ export function CandidateSubtaskItem({
         }}
       >
         <TaskBlockRow className="df-candidate-subtask-row-inner">
-          <TaskCheckbox
+          <TaskCheckbox lang={lang}
             checked={done}
             tone={done ? "done" : "muted"}
             className={`df-subtask-check${done ? " done" : ""}`}
@@ -436,6 +436,8 @@ export function TaskCard({
   lang: Language;
 }) {
   const compact = window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches;
+  const cardRef = useRef<HTMLElement>(null);
+  const [stackedActions, setStackedActions] = useState(false);
   const [openPanel, setOpenPanel] = useState<"more" | null>(null);
   const [subtasksOpen, setSubtasksOpen] = useState(false);
   const [schedulePanelOpen, setSchedulePanelOpen] = useState(false);
@@ -474,6 +476,37 @@ export function TaskCard({
   const isOverdueCandidate = overdue > 0 || Boolean(returnedSchedule);
   const hasSubtasks = (task.subtasks || []).length > 0;
   const displayTitle = task.title.trimStart();
+  useLayoutEffect(() => {
+    const row = cardRef.current?.querySelector<HTMLElement>(".df-candidate-row");
+    const title = row?.querySelector<HTMLElement>(".df-task-block-title");
+    if (!row || !title) return;
+    if (isEvent) { setStackedActions(false); return; }
+    const narrow = window.matchMedia("(max-width: 980px)");
+    const context = document.createElement("canvas").getContext("2d");
+    let disposed = false;
+    const measure = () => {
+      if (disposed || !context || !row.clientWidth) return;
+      const titleStyle = getComputedStyle(title);
+      context.font = titleStyle.font;
+      const spacing = parseFloat(titleStyle.letterSpacing) || 0;
+      const textWidth = context.measureText(displayTitle).width + spacing * Math.max(0, displayTitle.length - 1);
+      const actions = row.querySelector<HTMLElement>(".df-task-actions");
+      // Measure the horizontal controls independently of their current direction,
+      // so widening the title for a stacked row cannot flip it back and forth.
+      const actionWidth = actions ? Array.from(actions.children).reduce((width, child) => width + child.getBoundingClientRect().width, 0) : 0;
+      const checkWidth = row.querySelector(".df-task-checkbox-wrap")?.getBoundingClientRect().width || 0;
+      const durationWidth = row.querySelector(".df-task-block-duration")?.getBoundingClientRect().width || 0;
+      const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+      const inlineTitleWidth = row.clientWidth - checkWidth - durationWidth - actionWidth - 3 * gap;
+      setStackedActions(narrow.matches && (actions?.children.length || 0) >= 2 && textWidth > inlineTitleWidth + 1);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(row);
+    narrow.addEventListener("change", measure);
+    void document.fonts.ready.then(measure);
+    return () => { disposed = true; observer.disconnect(); narrow.removeEventListener("change", measure); };
+  }, [displayTitle, isEvent, isPlacementArmed, isOverdueCandidate, scheduleSummary?.label]);
   const isMoreOpen = openPanel === "more";
   const recurrenceChoices = recurrenceOptions(lang);
   const relativeScheduleOptions = candidateRelativeScheduleOptions(focusDate, lang);
@@ -574,6 +607,7 @@ export function TaskCard({
   return (
     <>
       <TaskBlock
+        ref={cardRef}
         as="article"
         variant="candidate"
         appearance="calm"
@@ -583,7 +617,7 @@ export function TaskCard({
         dragState={dragState}
         projectColor={cardAccentColor}
         className={`df-task-card ${isOverdueCandidate && !isEvent ? "overdue" : ""} ${task.completed && !isEvent ? "completed" : ""} ${openPanel || schedulePanelOpen ? "expanded" : ""} ${isMoreOpen ? "more-open" : ""} ${isPlacementArmed ? "placement-armed" : ""} ${isEvent ? "is-event" : ""}`}
-        dataAttrs={{ "placement-card": task.id, kind: isEvent ? "event" : "task" }}
+        dataAttrs={{ "placement-card": task.id, kind: isEvent ? "event" : "task", "candidate-layout": stackedActions ? "stacked" : "inline" }}
         onPointerDown={isEvent ? undefined : onPointerDragStart}
         onMouseLeave={isOverdueCandidate && !isEvent ? () => {
           cancelQueuedPlacementPreview();
@@ -594,7 +628,7 @@ export function TaskCard({
       >
         <TaskRecurrenceIndicator recurrence={task.recurrence} lang={lang} />
         <TaskBlockRow className={`df-candidate-row${scheduleSummary ? " df-candidate-summary-row" : ""}`}>
-          {!isEvent && <TaskCheckbox
+          {!isEvent && <TaskCheckbox lang={lang}
             checked={task.completed}
             tone={normalizeTaskCheckTone(task)}
             priority={task.priority}
@@ -818,7 +852,7 @@ export function TimeBlock({ task, engagementEnabled, preview, projectName, proje
         {isEvent ? (
           <span className="df-task-block-check df-time-card-event-mark" title={t(lang, "timeBlock.eventTooltip")} aria-label={t(lang, "timeBlock.eventTooltip")} />
         ) : (
-          <TaskCheckbox checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority} returned={isReturnedUnfinished || isSkipped} onMouseDown={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => {
+          <TaskCheckbox lang={lang} checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority} returned={isReturnedUnfinished || isSkipped} onMouseDown={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => {
             event.stopPropagation();
             onToggleDone();
           }} ariaLabel={task.completed ? t(lang, "timeBlock.markIncomplete") : t(lang, "timeBlock.markComplete")}>

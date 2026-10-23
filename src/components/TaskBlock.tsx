@@ -1,4 +1,5 @@
 import React, { type CSSProperties, type ReactNode } from "react";
+import type { Language } from "../types";
 import { projectColorInk } from "../utils/presentationColor";
 
 export type TaskBlockVariant = "candidate" | "planning" | "scheduled" | "allDay" | "compact" | "habit-child";
@@ -295,6 +296,7 @@ export function TaskGroup({
 }
 
 export function TaskCheckbox({
+  lang = "en",
   checked,
   tone = "muted",
   returned,
@@ -308,6 +310,7 @@ export function TaskCheckbox({
   onMouseDown,
   onPointerDown,
 }: {
+  lang?: Language;
   checked?: boolean;
   tone?: string;
   returned?: boolean;
@@ -325,6 +328,10 @@ export function TaskCheckbox({
   const priorityFill = priority
     ? `color-mix(in srgb, ${priorityColor} ${priority === "medium" ? 18 : priority === "high" ? 16 : 12}%, transparent)`
     : "transparent";
+  const priorityLabel = priority === undefined ? undefined : lang === "zh"
+    ? `优先级：${priority === "high" ? "高" : priority === "medium" ? "中" : priority === "low" ? "低" : "未设置"}`
+    : `Priority: ${priority === "high" ? "High" : priority === "medium" ? "Medium" : priority === "low" ? "Low" : "Unset"}`;
+  const actionLabel = ariaLabel || title || (lang === "zh" ? (checked ? "标记为未完成" : "标记为完成") : (checked ? "Mark incomplete" : "Mark complete"));
   return (
     <span className="df-task-checkbox-wrap" data-priority={priority || "normal"}>
       <button
@@ -343,8 +350,8 @@ export function TaskCheckbox({
           color: priorityColor,
           backgroundColor: priorityFill,
         } as CSSProperties}
-        title={title}
-        aria-label={ariaLabel}
+        title={[title, priorityLabel].filter(Boolean).join(" · ") || undefined}
+        aria-label={[actionLabel, priorityLabel].filter(Boolean).join(" · ")}
         aria-pressed={checked}
         disabled={disabled}
         onClick={onClick}

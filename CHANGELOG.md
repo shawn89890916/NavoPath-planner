@@ -1,6 +1,11 @@
 # NavoPath 更新日志
 
-## 2026-10-23 · 动画与弹层
+## 2026-10-23 · 手机布局、规划与弹层
+
+### 改进
+- 今日候选的短任务右侧操作横排，长任务自动竖排，为多行标题留出宽度；移除顶部拉条，将规划图标、更多与关闭收进同一标题栏。习惯与任务采用一致的勾选框，优先级提示同步显示。
+- 手机两侧浮动按钮保持对称，底部提示与撤销操作显示在按钮之间；AI 对话页左右贴边，日期入口与展开月历对齐，月历底部保留圆角。
+- 规划页快速添加保留当前视图，新任务留在规划中；提前准备规划内容，首次打开时立即呈现布局占位反馈。
 
 ### 修复
 - 恢复详情抽屉与弹层的平滑动效，减少动态效果时缩短过渡；关闭详情后快速打开另一项任务，新详情不再被上一次关闭操作打断。
@@ -205,7 +210,12 @@
 
 # NavoPath Changelog
 
-## 2026-10-23 · Motion and Popovers
+## 2026-10-23 · Mobile Layout, Planning, and Popovers
+
+### Improvements
+- Today's Candidates keeps actions horizontal for short titles and stacks them vertically for long titles, leaving more room for wrapping. Removed the resize handle and placed the Plan icon, More, and Close in one header. Habits and tasks share consistent checkboxes with task priority hints.
+- Mobile floating actions remain symmetric, with notices and undo actions between them. AI chat reaches both screen edges, and the date control and expanded calendar align with rounded lower corners.
+- Quick add in Planning preserves the current view and keeps new tasks in Planning. Planning content is prepared ahead of time, with immediate layout placeholders on first open.
 
 ### Fixed
 - Restored smooth detail drawer and popover animations with shorter transitions for reduced motion. Quickly opening another task during a drawer exit now keeps the new details open.

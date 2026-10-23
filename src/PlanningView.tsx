@@ -477,7 +477,7 @@ function PlanningSubtaskNode(props: {
           ariaGrabbed={props.dragging}
         >
           <TaskBlockRow>
-            <TaskCheckbox
+            <TaskCheckbox lang={props.lang}
               checked={done}
               tone="muted"
               className={`df-subtask-check ${done ? "done" : ""}`}
@@ -635,7 +635,7 @@ function PlanningTaskNode(props: {
           onClick={props.onOpen}
         >
           <TaskBlockRow>
-            <TaskCheckbox
+            <TaskCheckbox lang={props.lang}
               checked={done}
               tone={normalizeTaskCheckTone(props.task)}
               priority={props.task.priority}
@@ -2725,7 +2725,7 @@ export default function PlanningView(props: {
                           onClick={() => openTaskFromPlanning(task)}
                         >
                           <TaskBlockRow>
-                            <TaskCheckbox
+                            <TaskCheckbox lang={props.lang}
                               checked={normalizeWorkflowStatus(task) === "done"}
                               tone={normalizeTaskCheckTone(task)}
                               priority={task.priority}
@@ -2806,7 +2806,7 @@ export default function PlanningView(props: {
                             onClick={() => openTaskFromPlanning(task)}
                           >
                             <TaskBlockRow>
-                              <TaskCheckbox
+                              <TaskCheckbox lang={props.lang}
                                 checked={taskDone}
                                 tone={normalizeTaskCheckTone(task)}
                                 priority={task.priority}
@@ -2862,7 +2862,7 @@ export default function PlanningView(props: {
                       onPointerDown={(event) => beginPlanningDrag(event, task, "candidate")}
                     >
                       <TaskBlockRow>
-                        <TaskCheckbox
+                        <TaskCheckbox lang={props.lang}
                           checked={uiStatus === "done"}
                           tone={normalizeTaskCheckTone(task)}
                           priority={task.priority}
@@ -3077,7 +3077,7 @@ export default function PlanningView(props: {
             style={{ width: "100%", height: "100%", minHeight: 0 }}
           >
             <TaskBlockRow>
-              <TaskCheckbox
+              <TaskCheckbox lang={props.lang}
                 checked={normalizeWorkflowStatus(planningDragTask.task) === "done"}
                 tone={normalizeTaskCheckTone(planningDragTask.task)}
                 priority={planningDragTask.task.priority}

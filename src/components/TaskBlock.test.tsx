@@ -8,12 +8,32 @@ import {
   TaskBlockAccent,
   TaskBlockAppearance,
   TaskBlockPriority,
+  TaskCheckbox,
   taskBlockClassNames,
   taskBlockDataAttrs,
   taskBlockStyle,
 } from "./TaskBlock";
 
 describe("TaskBlock shared component contract", () => {
+  it.each([
+    ["zh", "high", "优先级：高"],
+    ["zh", "medium", "优先级：中"],
+    ["en", "low", "Priority: Low"],
+    ["en", null, "Priority: Unset"],
+  ] as const)("exposes %s priority %s without losing the completion action", (lang, priority, label) => {
+    const markup = renderToStaticMarkup(<TaskCheckbox lang={lang} priority={priority} ariaLabel="Toggle task" title="Task status" checked />);
+    expect(markup).toContain(`aria-label="Toggle task · ${label}"`);
+    expect(markup).toContain(`title="Task status · ${label}"`);
+    expect(markup).toContain('aria-pressed="true"');
+    expect(markup).toContain(`data-priority="${priority || "normal"}"`);
+    expect(markup).toContain(`border-color:var(--task-priority-${priority || "normal"})`);
+  });
+
+  it("does not assign task priority semantics to a habit checkbox", () => {
+    const markup = renderToStaticMarkup(<TaskCheckbox lang="zh" checked={false} />);
+    expect(markup).toContain('aria-label="标记为完成"');
+    expect(markup).not.toContain("优先级");
+  });
   it("places the localized engagement tooltip on the stripe while preserving the task title", () => {
     for (const [lang, label] of [["zh", "投入度：50%"], ["en", "Engagement: 50%"]] as const) {
       const markup = renderToStaticMarkup(<TaskBlock lang={lang} engagement={50} title="Task details" main="Work" />);
@@ -290,13 +310,12 @@ describe("TaskBlock shared component contract", () => {
       css.indexOf("@media (max-width: 980px) {", css.indexOf("/* Browser zoom can cross")),
       css.indexOf("@media (max-width: 980px) and (hover: none) and (pointer: coarse)")
     );
-    const habitCheck = narrowRules.match(/#root \.df-app\.mode-execute \.df-candidate-list \.df-habit-candidate-row \.df-task-block-check \{[^}]+\}/)?.[0] || "";
-
-    expect(habitCheck).toContain("width: 44px;");
-    expect(habitCheck).toContain("height: 44px;");
-    expect(habitCheck).toContain("flex: 0 0 44px;");
-    expect(narrowRules).toContain("width: 18px;");
-    expect(narrowRules).toContain("height: 18px;");
+    const sharedCheck = narrowRules.match(/:is\(\.df-task-card, \.df-habit-candidate-row\) \.df-block-check \{[^}]+\}/)?.[0] || "";
+    const touchTarget = narrowRules.match(/:is\(\.df-task-card, \.df-habit-candidate-row\) \.df-block-check::before \{[^}]+\}/)?.[0] || "";
+    expect(sharedCheck).toContain("width: 24px;");
+    expect(sharedCheck).toContain("height: 24px;");
+    expect(touchTarget).toContain("width: 44px;");
+    expect(touchTarget).toContain("height: 44px;");
   });
 
   it("keeps Planning tree drag UX stable with the always-visible tools sidebar", () => {
