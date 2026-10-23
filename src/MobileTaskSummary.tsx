@@ -40,7 +40,7 @@ export function beginVerticalResize(event: PointerEvent, stepHeight: number, onD
 }
 
 export function MobileShortSheet(props: {
-  lang: Language; kind?: MobileShortSheetKind; kinds?: MobileShortSheetKind[]; showKind?: boolean;
+  closing?: boolean; lang: Language; kind?: MobileShortSheetKind; kinds?: MobileShortSheetKind[]; showKind?: boolean;
   title: string; titlePlaceholder?: string; titleLabel?: string; autoFocus?: boolean;
   onTitleChange: (title: string) => void; onTitleBlur?: (title: string) => void; onTitleEnter?: () => void;
   onKindChange?: (kind: MobileShortSheetKind) => void; onClose: () => void; onMore?: (inset: string) => void;
@@ -86,7 +86,7 @@ export function MobileShortSheet(props: {
     if (distance > 72 && props.swipeDownToClose) (props.onSwipeDown || props.onClose)();
     else if (distance < -54 && props.swipeUpForMore && props.onMore && !props.moreDisabled) expand();
   };
-  return <aside ref={panelRef} className={`df-drawer df-task-detail df-mobile-task-summary df-mobile-short-sheet${props.className ? ` ${props.className}` : ""}`} onMouseDown={(event) => event.stopPropagation()}>
+  return <aside ref={panelRef} data-motion-closing={props.closing || undefined} inert={props.closing} className={`df-drawer df-task-detail df-mobile-task-summary df-mobile-short-sheet${props.className ? ` ${props.className}` : ""}`} onMouseDown={(event) => event.stopPropagation()}>
     <button type="button" className="df-mobile-sheet-grabber" aria-label={props.lang === "zh" ? "上下滑动短栏" : "Swipe sheet"} onPointerDown={(event) => { if (event.pointerType === "mouse" && event.button !== 0) return; const panel = event.currentTarget.parentElement; if (!panel) return; event.currentTarget.setPointerCapture(event.pointerId); panel.classList.add("is-sheet-dragging"); gestureRef.current = { pointerId: event.pointerId, startY: event.clientY, panel }; }} onPointerMove={(event) => { const gesture = gestureRef.current; if (!gesture || gesture.pointerId !== event.pointerId) return; const distance = event.clientY - gesture.startY; gesture.panel.style.setProperty("--mobile-sheet-drag-y", `${Math.max(-24, distance)}px`); }} onPointerUp={finishGesture} onPointerCancel={finishGesture} />
     {props.showKind && <label className="df-mobile-short-sheet-kind-wrap"><span className="df-visually-hidden">{locale.choose}</span><select className="df-mobile-short-sheet-kind" value={kind} aria-label={locale.choose} onChange={(event) => props.onKindChange?.(event.target.value as MobileShortSheetKind)}>{kinds.map((option) => <option key={option} value={option}>{locale[option]}</option>)}</select></label>}
     <div className="df-mobile-summary-head"><input autoFocus={props.autoFocus} value={props.title} aria-label={props.titleLabel || (props.lang === "zh" ? "名称" : "Title")} placeholder={props.titlePlaceholder} onChange={(event) => props.onTitleChange(event.target.value)} onBlur={(event) => props.onTitleBlur?.(event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); props.onTitleEnter?.(); } }} />{props.onMore && <IconButton className="df-mobile-expand" icon={<UiDockSidebarIcon size={18} />} label={locale.more} disabled={props.moreDisabled} onClick={expand} />}<CloseButton className="df-detail-close" type="button" label={locale.close} onClick={props.onClose} /></div>
@@ -95,6 +95,7 @@ export function MobileShortSheet(props: {
 }
 
 export function MobileQuickAddSheet(props: {
+  closing?: boolean;
   lang: Language; kind: MobileShortSheetKind; kinds: MobileShortSheetKind[]; title: string; projects: QuickProject[];
   projectId: string; projectColor: string; habitMinutes: number; onTitleChange: (title: string) => void;
   onKindChange: (kind: MobileShortSheetKind) => void; onProjectChange: (projectId: string) => void;
@@ -104,7 +105,7 @@ export function MobileQuickAddSheet(props: {
   const zh = props.lang === "zh";
   const project = props.projects.find((item) => String(item.id) === String(props.projectId));
   const placeholder = props.kind === "task" ? (zh ? "任务名称" : "Task title") : props.kind === "project" ? (zh ? "项目名称" : "Project title") : (zh ? "习惯名称" : "Habit title");
-  return <MobileShortSheet lang={props.lang} kind={props.kind} kinds={props.kinds} showKind title={props.title} titlePlaceholder={placeholder} titleLabel={zh ? "名称" : "Title"} autoFocus onTitleChange={props.onTitleChange} onTitleEnter={props.onSubmit} onKindChange={props.onKindChange} onClose={props.onClose} onMore={props.onMore} moreDisabled={!props.title.trim()} swipeDownToClose swipeUpForMore className="df-mobile-quick-add-sheet">
+  return <MobileShortSheet closing={props.closing} lang={props.lang} kind={props.kind} kinds={props.kinds} showKind title={props.title} titlePlaceholder={placeholder} titleLabel={zh ? "名称" : "Title"} autoFocus onTitleChange={props.onTitleChange} onTitleEnter={props.onSubmit} onKindChange={props.onKindChange} onClose={props.onClose} onMore={props.onMore} moreDisabled={!props.title.trim()} swipeDownToClose swipeUpForMore className="df-mobile-quick-add-sheet">
     {props.kind === "task" && <label className="df-mobile-summary-project"><span className="df-detail-project-dot" style={{ background: project?.color || "#888" }} /><span>{zh ? "归属" : "Project"}</span><select value={props.projectId} onChange={(event) => props.onProjectChange(event.target.value)}><option value="">{zh ? "未归属" : "Unassigned"}</option>{props.projects.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>}
     {props.kind === "project" && <label className="df-mobile-short-sheet-field"><span>{zh ? "颜色" : "Color"}</span><input type="color" value={props.projectColor} onChange={(event) => props.onProjectColorChange(event.target.value)} /></label>}
     {props.kind === "habit" && <label className="df-mobile-short-sheet-field"><span>{zh ? "默认时长" : "Default duration"}</span><input type="number" min={5} max={480} step={5} value={props.habitMinutes} onChange={(event) => props.onHabitMinutesChange(Math.max(5, Math.min(480, Number(event.target.value) || 20)))} /><strong>min</strong></label>}

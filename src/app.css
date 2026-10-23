@@ -4220,7 +4220,11 @@ body:has(:active)::-webkit-scrollbar-thumb {
   transition: transform 160ms ease;
 }
 .df-date-title-chevron.open { transform: rotate(180deg); }
-.df-mobile-date-picker { display: none; }
+.df-mobile-date-picker { display: none; --surface-shift-y: -7px; animation: ui-surface-in var(--motion-base) var(--motion-ease) backwards; }
+.df-mobile-date-picker[data-motion-closing] {
+  pointer-events: none;
+  animation: ui-surface-out var(--motion-fade) var(--motion-ease) forwards;
+}
 .df-mobile-date-picker > header {
   display: grid;
   grid-template-columns: 44px 1fr 44px;
@@ -4246,10 +4250,12 @@ body:has(:active)::-webkit-scrollbar-thumb {
   text-align: center;
 }
 .df-mobile-date-grid {
+  animation: navo-content-in var(--motion-base) var(--motion-ease) backwards;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   text-align: center;
 }
+.df-mobile-date-grid[data-motion-direction="backward"] { --content-shift-x: -12px; }
 .df-mobile-date-weekdays span {
   padding: 5px 0 3px;
   color: var(--text-muted);
@@ -5699,6 +5705,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 /* ━━ 右键菜单 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .df-app .df-tree-menu {
+  animation: ui-surface-in var(--motion-base) var(--motion-ease) backwards;
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
@@ -5708,6 +5715,12 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: 12px;
   corner-shape: var(--corner-shape, squircle);
 }
+.df-app .df-tree-menu[data-motion-closing] {
+  pointer-events: none;
+  animation: ui-fade-out var(--motion-fade) var(--motion-ease) forwards;
+}
+.df-app .df-plan-task-node:has(.df-tree-menu),
+.df-app .df-plan-subtask-node:has(.df-tree-menu) { z-index: 3; }
 .df-app.theme-dark .df-tree-menu {
   position: absolute;
   top: calc(100% + 4px);
@@ -8375,6 +8388,10 @@ html[data-motion-scope="workspace"] .df-app > .df-planning {
 html[data-motion-scope="timeline"] .df-app .df-timeline-panel {
   view-transition-name: navo-motion-surface;
 }
+html[data-motion-scope="settings"] .df-app .df-settings-shell,
+html[data-motion-scope="planning"] .df-app > .df-planning .df-tree-wrap {
+  view-transition-name: navo-motion-surface;
+}
 ::view-transition-group(navo-motion-surface) {
   animation-duration: var(--motion-layout);
   animation-timing-function: var(--motion-ease);
@@ -8403,6 +8420,10 @@ html[data-motion-fallback][data-motion-scope="workspace"] .df-app > .df-planning
 }
 html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-panel {
   animation: navo-motion-new var(--motion-layout) var(--motion-ease) both;
+}
+html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-shell,
+html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning .df-tree-wrap {
+  animation: navo-motion-new var(--motion-layout) var(--motion-ease) backwards;
 }
 .df-app.type-balanced { --paper-task: var(--paper-sans); }
 .df-app.type-sans { --paper-display: var(--paper-sans); --paper-task: var(--paper-sans); }
@@ -9940,6 +9961,17 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   from { opacity: 1; }
   to { opacity: 0; }
 }
+@keyframes navo-sheet-in {
+  from { opacity: 0; translate: 0 100%; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes navo-sheet-out {
+  to { opacity: 0; translate: 0 calc(100% + 72px); }
+}
+@keyframes navo-content-in {
+  from { opacity: 0; translate: var(--content-shift-x, 12px) 0; }
+  to { opacity: 1; translate: 0 0; }
+}
 .df-app.is-dragging { user-select: none; -webkit-user-select: none; }
 .df-app.is-dragging .df-time-block { user-select: none; -webkit-user-select: none; }
 .df-app.is-dragging .df-time-block * { user-select: none; -webkit-user-select: none; }
@@ -10185,7 +10217,11 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; corner-shape: var(--corner-shape, squircle); }
 .df-app .df-ai-panel {
   border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius-soft);
-  background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; corner-shape: var(--corner-shape, squircle); }
+  background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-sheet-in var(--motion-base) var(--motion-ease) backwards; transform-origin: center top; corner-shape: var(--corner-shape, squircle); }
+.df-app .df-ai-panel[data-motion-closing] {
+  pointer-events: none;
+  animation: paper-fade-out var(--motion-layout) var(--motion-ease) forwards;
+}
 .df-app .df-toast {
   color: #111827;
   background: rgba(255, 255, 255, .98);
@@ -12023,14 +12059,14 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
 }
 .df-app .df-drawer {
   border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius-soft);
-  background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-drawer-in var(--motion-base) var(--motion-ease) both;
+  background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-drawer-in var(--motion-base) var(--motion-ease) backwards;
   --field-paper: color-mix(in srgb, var(--surface-main) 88%, var(--bg-app) 12%);
   --field-paper-hover: color-mix(in srgb, var(--surface-main) 80%, var(--accent-active) 5%);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-utility-panel {
   border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius-soft);
-  background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-drawer-in var(--motion-base) var(--motion-ease) both;
+  background: var(--surface-main); box-shadow: var(--paper-float-shadow); backdrop-filter: none; animation: paper-drawer-in var(--motion-base) var(--motion-ease) backwards;
   --field-paper: color-mix(in srgb, var(--surface-main) 88%, var(--bg-app) 12%);
   --field-paper-hover: color-mix(in srgb, var(--surface-main) 80%, var(--accent-active) 5%);
   corner-shape: var(--corner-shape, squircle);
@@ -12855,6 +12891,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   corner-shape: var(--corner-shape, squircle);
 }
 .df-command-backdrop {
+  animation: ui-fade-in var(--motion-fade) var(--motion-ease) backwards;
   position: fixed;
   inset: 0;
   z-index: 1200;
@@ -12863,6 +12900,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   backdrop-filter: blur(2px);
 }
 .df-command-palette {
+  animation: ui-surface-in var(--motion-base) var(--motion-ease) backwards;
   position: fixed;
   top: min(106px, 14vh);
   left: 50%;
@@ -12880,6 +12918,11 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   color: var(--text-main);
   box-shadow: var(--paper-float-shadow);
   corner-shape: var(--corner-shape, squircle);
+}
+.df-command-backdrop[data-motion-closing],
+.df-command-palette[data-motion-closing] {
+  pointer-events: none;
+  animation: ui-fade-out var(--motion-fade) var(--motion-ease) forwards;
 }
 .df-command-input-row {
   display: grid;
@@ -21439,7 +21482,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 6px;
     background: #fff;
     box-shadow: none;
-    transition: transform 180ms var(--paper-ease, cubic-bezier(.2, .75, .25, 1));
+    transition: transform var(--motion-base) var(--paper-ease, cubic-bezier(.2, .75, .25, 1));
     will-change: transform;
     corner-shape: var(--corner-shape, squircle);
   }
@@ -22364,6 +22407,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     display: none;
   }
   #root .df-app .df-task-detail.df-drawer {
+    animation: navo-sheet-in var(--motion-layout) var(--motion-ease-settle) backwards;
     position: fixed;
     inset: 4dvh 0 0;
     width: auto;
@@ -22387,6 +22431,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     from { inset: var(--mobile-sheet-start-inset); }
     to { inset: 4dvh 0 0; }
   }
+  #root .df-app .df-task-detail.df-drawer.is-closing,
+  #root .df-app .df-task-detail.df-drawer[data-motion-closing] {
+    pointer-events: none;
+    animation: navo-sheet-out var(--motion-fade) var(--motion-ease) forwards;
+  }
   @media (prefers-reduced-motion: reduce) {
     #root .df-app .df-task-detail.df-drawer.is-expanded-from-summary { animation: none; }
   }
@@ -22404,7 +22453,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     border-radius: 18px 18px 0 0;
     overflow-y: auto;
     transform:translateY(var(--mobile-sheet-drag-y, 0px));
-    transition:transform 180ms cubic-bezier(.22,.72,.2,1);
+    transition:transform var(--motion-base) cubic-bezier(.22,.72,.2,1);
     corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app .df-task-detail.df-drawer.df-mobile-short-sheet.is-sheet-dragging{transition:none}
@@ -22414,6 +22463,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
   /* AI and Settings share the task-detail bottom-sheet geometry on phones. */
   #root .df-app .df-ai-panel-reference {
+    animation: navo-sheet-in var(--motion-layout) var(--motion-ease-settle) backwards;
     position: fixed;
     inset: 4dvh 0 0;
     width: auto;
@@ -22425,7 +22475,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     overflow: hidden;
     box-sizing: border-box;
     transform: translateY(var(--mobile-sheet-drag-y, 0px));
-    transition: transform 180ms cubic-bezier(.22, .72, .2, 1);
+    transition: transform var(--motion-base) cubic-bezier(.22, .72, .2, 1);
     corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app .df-settings-detail-link[data-settings-detail="widget"]{display:none}
@@ -22505,6 +22555,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: var(--paper-note);
   }
   #root .df-app .df-utility-panel {
+    animation: navo-sheet-in var(--motion-layout) var(--motion-ease-settle) backwards;
     top: 0;
     position: fixed;
     inset: 4dvh 0 0;
@@ -22517,10 +22568,18 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     overflow: hidden;
     box-sizing: border-box;
     transform: translateY(var(--mobile-sheet-drag-y, 0px));
-    transition: transform 180ms cubic-bezier(.22, .72, .2, 1);
+    transition: transform var(--motion-base) cubic-bezier(.22, .72, .2, 1);
     display: flex;
     flex-direction: column;
     corner-shape: var(--corner-shape, squircle);
+  }
+  #root .df-app .df-utility-panel.is-closing {
+    pointer-events: none;
+    animation: navo-sheet-out var(--motion-fade) var(--motion-ease) forwards;
+  }
+  #root .df-app .df-ai-panel-reference[data-motion-closing] {
+    pointer-events: none;
+    animation: navo-sheet-out var(--motion-layout) var(--motion-ease) forwards;
   }
   #root .df-app .df-utility-panel .df-utility-body.df-settings-shell {
     flex: 1 1 auto;
@@ -23230,7 +23289,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     transform: translateY(var(--mobile-sheet-drag-y, 0px));
     display: flex;
     flex-direction: column;
-    transition: height 180ms ease, transform 180ms ease;
+    transition: height var(--motion-base) ease, transform var(--motion-base) ease;
     corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app .df-ai-panel-reference.is-mobile-collapsed {

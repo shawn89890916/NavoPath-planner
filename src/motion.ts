@@ -7,6 +7,7 @@ export const MOTION = {
 } as const;
 
 export type MotionDirection = "backward" | "forward" | "neutral";
+export type MotionScope = "timeline" | "workspace" | "settings" | "planning";
 
 type ViewTransitionLike = {
   finished: Promise<unknown>;
@@ -37,7 +38,8 @@ export async function runMotionTransition(
     direction?: MotionDirection;
     document?: Document | null;
     duration?: number;
-    scope?: "timeline" | "workspace";
+    scope?: MotionScope;
+    updates?: "latest" | "all";
   } = {},
 ) {
   const targetDocument = options.document === undefined
@@ -71,14 +73,15 @@ export async function runMotionTransition(
   root.dataset.motionDirection = direction;
   const scope = options.scope ?? "workspace";
   root.dataset.motionScope = scope;
-  const distance = scope === "workspace" && targetWindow?.matchMedia?.("(orientation: portrait)").matches ? "100%" : "6px";
+  const distance = scope === "workspace" && targetWindow?.matchMedia?.("(orientation: portrait)").matches
+    ? "100%" : scope === "settings" || scope === "planning" ? "24px" : "6px";
   root.style.setProperty("--motion-shift-x", direction === "backward" ? `-${distance}` : direction === "forward" ? distance : "0px");
 
   const startViewTransition = (targetDocument as MotionDocument).startViewTransition;
   if (typeof startViewTransition === "function") {
     let committed = false;
     const commit = () => {
-      if (committed || activeTransitions.get(targetDocument) !== active) return;
+      if (committed || (options.updates !== "all" && activeTransitions.get(targetDocument) !== active)) return;
       committed = true;
       update();
     };
@@ -86,7 +89,11 @@ export async function runMotionTransition(
       const transition = startViewTransition.call(targetDocument, commit);
       // Skipping an overlapping transition rejects ready even if finished resolves.
       void transition.ready?.catch(() => undefined);
-      active.skip = () => transition.skipTransition?.();
+      active.skip = () => {
+        // Relative commands must be applied before capturing their successor.
+        if (options.updates === "all") commit();
+        transition.skipTransition?.();
+      };
       await transition.finished;
     } catch (error) {
       // Browser animation cancellation must not interrupt the requested navigation.

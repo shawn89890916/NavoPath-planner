@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useMotionSelection } from "./useMotionSelection";
+import { useMotionPresence } from "./useMotionPresence";
 import type { PlannerData, Project, Settings, Subtask, Task, WorkflowStatus } from "./types";
 import { t, type Language } from "./i18n";
 import { term } from "./terminology";
@@ -403,6 +405,7 @@ function TreeMenu(props: {
   actions: Array<{ label: string; danger?: boolean; onClick: () => void }>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const presence = useMotionPresence(props.open);
 
   useEffect(() => {
     if (!props.open) return;
@@ -414,9 +417,9 @@ function TreeMenu(props: {
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [props.open, props]);
 
-  if (!props.open) return null;
+  if (!presence.present) return null;
   return (
-    <div className="df-tree-menu" ref={ref} onClick={(event) => event.stopPropagation()}>
+    <div className="df-tree-menu" data-motion-closing={presence.closing || undefined} inert={presence.closing} ref={ref} onClick={(event) => event.stopPropagation()}>
       {props.actions.map((action) => (
         <button
           key={action.label}
@@ -1041,6 +1044,7 @@ export default function PlanningView(props: {
     return modes;
   }, [enableKanban, enableQuadrant, enableList, enableMetrics]);
   const [viewMode, setViewMode] = useState<PlanningViewMode>(props.initialViewMode || "tree");
+  const changePlanningView = useMotionSelection(viewMode, setViewMode, "planning", availableModes);
   // Safety: if the active view mode is removed from the available set (e.g. the
   // user just disabled the metrics feature while sitting on the metrics view),
   // fall back to the default tree view so the panel never renders a gated mode.
@@ -2283,7 +2287,7 @@ export default function PlanningView(props: {
             {availableModes.length > 1 && (
               <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare">
                 {availableModes.map((m) => (
-                  <button type="button" key={m} className={`df-view-btn ui-choice-item${viewMode === m ? " active" : ""}`} aria-label={metricViewLabel(props.lang, m)} aria-pressed={viewMode === m} onClick={() => setViewMode(m)} title={metricViewLabel(props.lang, m)}>
+                  <button type="button" key={m} className={`df-view-btn ui-choice-item${viewMode === m ? " active" : ""}`} aria-label={metricViewLabel(props.lang, m)} aria-pressed={viewMode === m} onClick={() => changePlanningView(m)} title={metricViewLabel(props.lang, m)}>
                       <PlanningModeIcon mode={m} />
                       <span>{metricViewLabel(props.lang, m)}</span>
                   </button>

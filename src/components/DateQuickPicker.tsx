@@ -1,9 +1,12 @@
 import type { Language } from "../types";
+import { useEffect, useRef, useState } from "react";
+import { useMotionPresence } from "../useMotionPresence";
 import { monthTitle } from "../i18n";
 import { localIsoDate } from "../utils/localDate";
 import { UiChevronLeftIcon, UiChevronRightIcon } from "./UiIcons";
 
 export type DateQuickPickerProps = {
+  open?: boolean;
   month: string;
   selectedDate: string;
   today: string;
@@ -15,7 +18,11 @@ export type DateQuickPickerProps = {
   onSelect: (date: string) => void;
 };
 
-export function DateQuickPicker({ month, selectedDate, today, minDate, maxDate, weekStartsOn, lang, onMonthChange, onSelect }: DateQuickPickerProps) {
+export function DateQuickPicker({ open = true, month, selectedDate, today, minDate, maxDate, weekStartsOn, lang, onMonthChange, onSelect }: DateQuickPickerProps) {
+  const presence = useMotionPresence(open);
+  const monthTarget = useRef(month);
+  const [direction, setDirection] = useState("forward");
+  useEffect(() => { monthTarget.current = month; }, [month]);
   const [year, monthNumber] = month.split("-").map(Number);
   const first = new Date(year, monthNumber - 1, 1);
   const offset = (first.getDay() - weekStartsOn + 7) % 7;
@@ -25,12 +32,16 @@ export function DateQuickPicker({ month, selectedDate, today, minDate, maxDate, 
     : ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
   const orderedWeekdays = Array.from({ length: 7 }, (_, index) => weekdayLabels[(index + weekStartsOn) % 7]);
   const moveMonth = (delta: number) => {
-    const date = new Date(year, monthNumber - 1 + delta, 1);
-    onMonthChange(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
+    const [targetYear, targetMonth] = monthTarget.current.split("-").map(Number);
+    const date = new Date(targetYear, targetMonth - 1 + delta, 1);
+    monthTarget.current = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    setDirection(delta < 0 ? "backward" : "forward");
+    onMonthChange(monthTarget.current);
   };
 
+  if (!presence.present) return null;
   return (
-    <section className="df-mobile-date-picker" aria-label={lang === "zh" ? "快速选择日期" : "Quick date picker"}>
+    <section className="df-mobile-date-picker" data-motion-closing={presence.closing || undefined} inert={presence.closing} aria-label={lang === "zh" ? "快速选择日期" : "Quick date picker"}>
       <header>
         <button type="button" onClick={() => moveMonth(-1)} aria-label={lang === "zh" ? "上个月" : "Previous month"}><UiChevronLeftIcon size={18} /></button>
         <strong>{monthTitle(lang, year, monthNumber)}</strong>
@@ -39,7 +50,7 @@ export function DateQuickPicker({ month, selectedDate, today, minDate, maxDate, 
       <div className="df-mobile-date-weekdays" aria-hidden="true">
         {orderedWeekdays.map((label) => <span key={label}>{label}</span>)}
       </div>
-      <div className="df-mobile-date-grid">
+      <div key={month} className="df-mobile-date-grid" data-motion-direction={direction}>
         {days.map((date) => {
           const currentMonth = date.slice(0, 7) === month;
           const selected = date === selectedDate;

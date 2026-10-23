@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMotionPresence } from "../useMotionPresence";
 import type { Language, PlannerData } from "../types";
 import { recordGapActivity, type ProactiveNotification } from "../proactiveAssistant";
 import { Button, CloseButton } from "./UiPrimitives";
@@ -26,8 +27,9 @@ export function ProactiveNotificationCenter({
   onSaveData: (data: PlannerData) => void;
 }) {
   const [selection, setSelection] = useState<Record<string, string>>({});
+  const presence = useMotionPresence(open);
 
-  if (!open) return null;
+  if (!presence.present) return null;
   const logGap = (item: ProactiveNotification) => {
     const metadata = item.metadata;
     if (!metadata?.date || !metadata.startTime || !metadata.endTime) return;
@@ -44,7 +46,7 @@ export function ProactiveNotificationCenter({
     onDismiss(item);
   };
 
-  return <div className="df-proactive-center-layer" role="presentation" onMouseDown={onClose}>
+  return <div className="df-proactive-center-layer" data-motion-closing={presence.closing || undefined} inert={presence.closing} role="presentation" onMouseDown={onClose}>
     <section className="df-proactive-center" role="dialog" aria-modal="true" aria-labelledby="df-proactive-center-title" onMouseDown={(event) => event.stopPropagation()}>
       <header className="df-proactive-center-head">
         <div><strong id="df-proactive-center-title">{lang === "zh" ? "主动助理" : "Proactive assistant"}</strong><small>{lang === "zh" ? `${notifications.length} 条待处理提醒` : `${notifications.length} pending message${notifications.length === 1 ? "" : "s"}`}</small></div>

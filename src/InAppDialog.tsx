@@ -1,5 +1,6 @@
 import React, { lazy, Suspense, useCallback, useRef, useState } from "react";
 import type { Language } from "./i18n";
+import { useMotionPresence } from "./useMotionPresence";
 const InAppDialogHost = lazy(() => import("./InAppDialogHost"));
 
 type DialogKind = "prompt" | "confirm" | "alert";
@@ -18,6 +19,9 @@ export type DialogRequest = {
 export function useInAppDialog(lang: Language) {
   const [request, setRequest] = useState<DialogRequest | null>(null);
   const pendingRef = useRef<DialogRequest | null>(null);
+  const retainedRequestRef = useRef(request);
+  if (request) retainedRequestRef.current = request;
+  const presence = useMotionPresence(Boolean(request));
 
   const close = useCallback((value: string | boolean | null) => {
     const current = pendingRef.current;
@@ -54,7 +58,7 @@ export function useInAppDialog(lang: Language) {
     [open],
   );
 
-  const host = request ? <Suspense fallback={null}><InAppDialogHost lang={lang} request={request} onClose={close} /></Suspense> : null;
+  const host = presence.present && retainedRequestRef.current ? <Suspense fallback={null}><InAppDialogHost open={Boolean(request)} lang={lang} request={retainedRequestRef.current} onClose={close} /></Suspense> : null;
   return { prompt, confirm, alert, host };
 }
 

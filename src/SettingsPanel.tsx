@@ -21,7 +21,8 @@ import { ProjectColorPicker, MobileSheetDismissHandle } from "./WorkspacePresent
 import { CloseButton } from "./components/UiPrimitives";
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDivider, SettingDescription } from "./components/SettingsControls";
 import { reasoningModesForModel } from "./utils/aiModels";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
+import { runMotionTransition } from "./motion";
 import { getDefaultSettings } from "./defaultSettings";
 import { uid } from "./utils/ids";
 const localStorage = getWorkspaceStorage();
@@ -720,13 +721,17 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
     if (target.anchor === "plugins") setIntegrationTab("plugins");
     if (target.anchor === "calendar-feed") setIntegrationTab("calendar");
     if (target.anchor === "external-calendar") setIntegrationTab("external-calendar");
-    setSettingsTarget(resolveRuntimeTarget(target));
-    setSettingsHome(false);
+    void runMotionTransition(() => flushSync(() => {
+      setSettingsTarget(resolveRuntimeTarget(target));
+      setSettingsHome(false);
+    }), { scope: "settings", direction: "forward" });
   }
   function backToSettingsHome() {
-    setSettingsTarget(resolveRuntimeTarget({ category: "general" }));
-    setSettingsHome(true);
-    if (settingsContentRef.current) settingsContentRef.current.scrollTop = 0;
+    void runMotionTransition(() => flushSync(() => {
+      setSettingsTarget(resolveRuntimeTarget({ category: "general" }));
+      setSettingsHome(true);
+      if (settingsContentRef.current) settingsContentRef.current.scrollTop = 0;
+    }), { scope: "settings", direction: "backward" });
   }
   async function commitProfileName() {
     if (profileNameSaveInFlightRef.current) return;

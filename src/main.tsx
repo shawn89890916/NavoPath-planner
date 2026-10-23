@@ -90,6 +90,8 @@ import { applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateT
 import { anchoredTimelineScrollTop, timelineZoomFromPinch } from "./utils/timelineZoom";
 import { calendarEventDurationMinutes, expandTimedCalendarEvent } from "./utils/calendarEventSlices";
 import { MOTION, runMotionTransition, scheduleMotionCommit } from "./motion";
+import { useMotionPresence } from "./useMotionPresence";
+import { useMotionSelection } from "./useMotionSelection";
 import "./app.css";
 import "./mobile-execution.css";
 import "./ui-primitives.css";
@@ -1044,7 +1046,10 @@ function App() {
   const [authNotice, setAuthNotice] = useState<AuthNotice>(null);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [mode, setModeState] = useState<Mode>("execute");
-  const pendingModeRef = useRef<{ mode: Mode } | null>(null);
+  const changeWorkspaceMode = useMotionSelection<Mode>(mode, (next) => {
+    setYearOverviewOpen(false);
+    void saveSettings({ activeMode: next });
+  }, "workspace", ["execute", "planning"]);
   useEffect(() => {
     if (!data || !settings) return;
     const timer = window.setTimeout(preloadPlanningView, 150);
@@ -1066,6 +1071,7 @@ function App() {
   const mobilePlacementRef = useRef<MobilePlacementSession | null>(null);
   const mobileCommitRef = useRef(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const quickAddPresence = useMotionPresence(quickAddOpen, MOTION.layout);
   const [mobileQuickAddKind, setMobileQuickAddKind] = useState<MobileShortSheetKind>("task");
   const [mobileQuickHabitMinutes, setMobileQuickHabitMinutes] = useState(20);
   const [selectedDate, setSelectedDate] = useState(todayIso());
@@ -1112,6 +1118,7 @@ function App() {
   const [editingRecordId, setEditingRecordId] = useState<string | undefined>(undefined);
   const [form, setForm] = useState<FormState>(defaultForm());
   const [aiOpen, setAiOpen] = useState(productDemo?.feature === "ai" && !productAiPresentation);
+  const aiPresence = useMotionPresence(aiOpen, MOTION.layout);
   const [aiDocked, setAiDocked] = useState(loadAiDockedPreference);
   const freshAiConversationRef = useRef(true);
   const [referencedTaskId, setReferencedTaskId] = useState("");
@@ -1148,6 +1155,14 @@ function App() {
   const [aiPlanMenuOpen, setAiPlanMenuOpen] = useState(false);
   const [aiPlanPrefs, setAiPlanPrefs] = useState<AiPlanPrefs>({ source: "today", scope: "day", strategy: "longShort" });
   const [timelineView, setTimelineView] = useState<TimelineView>("daily");
+  const changeTimelineView = useMotionSelection<TimelineView>(timelineView, (nextView) => {
+    const viewportFocus = currentTimelineViewportFocus();
+    setSelectedDate(viewportFocus.date);
+    setVisibleTimelineDate(viewportFocus.date);
+    setTimelineView(nextView);
+    if (nextView !== "month") setPendingTimelineFocus({ ...viewportFocus, source: "schedule" });
+    setDragCreate(null);
+  }, "timeline", ["daily", "3day", "weekly", "month"]);
   const monthScrollRef = useRef<HTMLDivElement>(null);
   const [monthDropDate, setMonthDropDate] = useState("");
   // Continuous-timeline infinite scroll: records the pre-shift scrollTop and the
@@ -8593,29 +8608,18 @@ if (cached?.data && cached?.settings) {
 
   function shiftTimeline(direction: -1 | 1) {
     void runMotionTransition(() => {
-      setSelectedDate((date) => {
+      flushSync(() => setSelectedDate((date) => {
         if (timelineView === "3day") return addDays(date, direction * 3);
         if (timelineView === "weekly") return addDays(date, direction * 7);
         if (timelineView === "month") return addMonths(date, direction);
         return addDays(date, direction);
-      });
-    }, { direction: direction < 0 ? "backward" : "forward", scope: "timeline" });
+      }));
+    }, { direction: direction < 0 ? "backward" : "forward", scope: "timeline", updates: "all" });
   }
 
   function changeMode(nextMode: Mode) {
-    if (nextMode === (pendingModeRef.current?.mode ?? mode)) return;
-    const pending = { mode: nextMode };
-    pendingModeRef.current = pending;
     if (nextMode === "planning") preloadPlanningView();
-    void runMotionTransition(() => {
-      flushSync(() => {
-        setYearOverviewOpen(false);
-        setModeState(nextMode);
-        void saveSettings({ activeMode: nextMode });
-      });
-    }, { direction: nextMode === "planning" ? "forward" : "backward", scope: "workspace" }).finally(() => {
-      if (pendingModeRef.current === pending) pendingModeRef.current = null;
-    });
+    changeWorkspaceMode(nextMode);
   }
 
   function currentTimelineViewportFocus() {
@@ -8629,20 +8633,6 @@ if (cached?.data && cached?.settings) {
       ? getContinuousTimelineDateForOffset(continuousTimelineStartDate, Math.floor(centerY / dayHeight), timelineColumnCount)
       : timelineWindowAnchorDate;
     return { date, startTime: minutesToTime(minutes) };
-  }
-
-  function changeTimelineView(nextView: TimelineView) {
-    if (nextView === timelineView) return;
-    const order: TimelineView[] = ["daily", "3day", "weekly", "month"];
-    const direction = order.indexOf(nextView) < order.indexOf(timelineView) ? "backward" : "forward";
-    const viewportFocus = currentTimelineViewportFocus();
-    void runMotionTransition(() => {
-      setSelectedDate(viewportFocus.date);
-      setVisibleTimelineDate(viewportFocus.date);
-      setTimelineView(nextView);
-      if (nextView !== "month") setPendingTimelineFocus({ ...viewportFocus, source: "schedule" });
-      setDragCreate(null);
-    }, { direction, scope: "timeline" });
   }
 
   function goToNow() {
@@ -8919,10 +8909,10 @@ if (cached?.data && cached?.settings) {
       {([{ taskId: "content", days: 1 }, { taskId: "layout", days: 2 }, { taskId: "walk", days: 1 }] as const).map(choice => <Button key={choice.taskId} variant="ghost" disabled={demoPresetBusy || tasks.find(task => task.id === choice.taskId)?.completed} onClick={() => void runProductDemoPreset(choice)}>{tasks.find(task => task.id === choice.taskId)?.title}<span>{lang === "zh" ? (choice.days === 1 ? "明天" : "后天") : (choice.days === 1 ? "Tomorrow" : "In two days")}</span></Button>)}
     </div>}
   </div> : undefined;
-  const aiPanel = aiOpen && <AiPanel demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
+  const aiPanel = aiPresence.present && <AiPanel closing={aiPresence.closing} demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
 
   return (
-    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiPresence.present || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
@@ -8975,9 +8965,10 @@ if (cached?.data && cached?.settings) {
         </div>}
       </header>
       <div className="df-header-fade" />
-      {compactLayout && quickAddOpen && <div className="df-drawer-backdrop" onMouseDown={() => quickTitle.trim() ? finishMobileQuickAdd() : setQuickAddOpen(false)} />}
-      {compactLayout && quickAddOpen && (
+      {compactLayout && quickAddPresence.present && <div className={`df-drawer-backdrop${quickAddPresence.closing ? " is-closing" : ""}`} onMouseDown={() => quickTitle.trim() ? finishMobileQuickAdd() : setQuickAddOpen(false)} />}
+      {compactLayout && quickAddPresence.present && (
         <Suspense fallback={null}><MobileQuickAddSheet
+          closing={quickAddPresence.closing}
           lang={lang}
           kind={mobileQuickAddKind}
           kinds={settings.featureHabitsEnabled === false ? ["task", "project"] : ["task", "project", "habit"]}
@@ -9092,8 +9083,9 @@ if (cached?.data && cached?.settings) {
               </>
             )}
           </div>}
-          {!productPresentation && compactExecuteView === "schedule" && mobileDatePickerOpen && (
+          {!productPresentation && compactExecuteView === "schedule" && (
             <DateQuickPicker
+              open={mobileDatePickerOpen}
               month={mobileDatePickerMonth}
               selectedDate={timelineWindowAnchorDate}
               today={today}
@@ -9899,8 +9891,9 @@ if (cached?.data && cached?.settings) {
                       </span>
                       {!productPresentation && <UiChevronDownIcon className={`df-date-title-chevron${mobileDatePickerOpen ? " open" : ""}`} size={14} />}
                     </TimelineDateTag>
-                    {!productPresentation && !compactLayout && mobileDatePickerOpen && (
+                    {!productPresentation && !compactLayout && (
                       <DateQuickPicker
+                        open={mobileDatePickerOpen}
                         month={mobileDatePickerMonth}
                         selectedDate={timelineWindowAnchorDate}
                         today={today}
@@ -10218,7 +10211,7 @@ if (cached?.data && cached?.settings) {
       )}
 
       {!productAiPresentation && compactLayout && !candidateDrawerOpen && !mobilePlacement && !drawerOpen && !commandOpen && !notificationCenterOpen && !scheduleTemplateOpen && utilityPanel !== "settings" && (
-        createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, mode)} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
+        createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiPresence.present || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, mode)} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {!productPresentation && !settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
           </button> : <span className="df-mobile-dock-spacer" aria-hidden="true" />}
@@ -11304,6 +11297,7 @@ function CommandPalette(props: {
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLElement>(null);
+  const presence = useMotionPresence(props.open);
   useEffect(() => {
     if (props.open) window.setTimeout(() => inputRef.current?.focus(), 0);
   }, [props.open]);
@@ -11327,7 +11321,7 @@ function CommandPalette(props: {
       panel.style.removeProperty("max-height");
     };
   }, [props.open, props.compact]);
-  if (!props.open) return null;
+  if (!presence.present) return null;
   const kindLabel = (kind: CommandSearchResult["kind"]) => {
     if (props.lang === "zh") {
       if (kind === "task") return "任务";
@@ -11341,8 +11335,8 @@ function CommandPalette(props: {
   };
   return (
     <>
-      <button className="df-command-backdrop" type="button" aria-label={props.lang === "zh" ? "关闭搜索" : "Close search"} onClick={props.onClose} />
-      <section ref={panelRef} className="df-command-palette" role="dialog" aria-modal="true" aria-label={props.lang === "zh" ? "搜索" : "Search"}>
+      <button className="df-command-backdrop" data-motion-closing={presence.closing || undefined} disabled={presence.closing} type="button" aria-label={props.lang === "zh" ? "关闭搜索" : "Close search"} onClick={props.onClose} />
+      <section ref={panelRef} className="df-command-palette" data-motion-closing={presence.closing || undefined} inert={presence.closing} role="dialog" aria-modal="true" aria-label={props.lang === "zh" ? "搜索" : "Search"}>
         <div className="df-command-input-row">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
           <input
@@ -11565,7 +11559,7 @@ function HabitOverviewBody(props: {
           </div>
         </header>
 
-        {datePickerOpen && <DateQuickPicker month={datePickerMonth} selectedDate={weekDays[0]} today={props.today} weekStartsOn={1} lang={zh ? "zh" : "en"} onMonthChange={setDatePickerMonth} onSelect={selectDate} />}
+        {<DateQuickPicker open={datePickerOpen} month={datePickerMonth} selectedDate={weekDays[0]} today={props.today} weekStartsOn={1} lang={zh ? "zh" : "en"} onMonthChange={setDatePickerMonth} onSelect={selectDate} />}
 
         <div className="df-habit-overview-table" role="grid">
           <div className="df-habit-overview-thead" role="row">

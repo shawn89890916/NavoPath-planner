@@ -1,5 +1,6 @@
-import React, { forwardRef, useEffect, useRef, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
+import React, { forwardRef, useEffect, useRef, useState, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useMotionPresence } from "../useMotionPresence";
 import { UiCloseIcon, UiMoreIcon } from "./UiIcons";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
@@ -34,37 +35,40 @@ export function Popover({ className, children, ...props }: HTMLAttributes<HTMLDi
 
 export function ActionDisclosure({ label, children }: { label: string; children: ReactNode }) {
   const disclosureRef = useRef<HTMLDetailsElement>(null);
+  const [open, setOpen] = useState(false);
+  const presence = useMotionPresence(open);
   useEffect(() => {
     const closeOutside = (event: PointerEvent) => {
       const disclosure = disclosureRef.current;
-      if (disclosure?.open && !disclosure.contains(event.target as Node | null)) disclosure.open = false;
+      if (disclosure && !disclosure.contains(event.target as Node | null)) setOpen(false);
     };
     document.addEventListener("pointerdown", closeOutside);
     return () => document.removeEventListener("pointerdown", closeOutside);
   }, []);
   return (
-    <details ref={disclosureRef} className="ui-action-disclosure" onBlur={(event) => {
+    <details ref={disclosureRef} open={presence.present} className="ui-action-disclosure" onBlur={(event) => {
       // Touch browsers may blur to the body before dispatching the menu item's click.
-      if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.open = false;
+      if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false);
     }} onKeyDown={(event) => {
       if (event.key !== "Escape") return;
       event.stopPropagation();
-      event.currentTarget.open = false;
+      setOpen(false);
       event.currentTarget.querySelector("summary")?.focus();
     }}>
-      <summary aria-label={label} title={label}><UiMoreIcon /></summary>
-      <Popover role="group" aria-label={label} className="ui-action-disclosure-panel" onClick={(event) => {
+      <summary aria-label={label} title={label} aria-expanded={open} onClick={(event) => { event.preventDefault(); setOpen((current) => !current); }}><UiMoreIcon /></summary>
+      <Popover role="group" aria-label={label} className="ui-action-disclosure-panel" data-motion-closing={presence.closing || undefined} inert={!open} aria-hidden={!open || undefined} onClick={(event) => {
         const button = (event.target as HTMLElement).closest("button");
-        if (button && !button.hasAttribute("aria-pressed")) event.currentTarget.closest("details")!.open = false;
+        if (button && !button.hasAttribute("aria-pressed")) setOpen(false);
       }}>{children}</Popover>
     </details>
   );
 }
 
 export function Modal({ open = true, role = "dialog", label, labelledBy, onClose, className, children, ...props }: Omit<HTMLAttributes<HTMLElement>, "role"> & { open?: boolean; role?: "dialog" | "alertdialog"; label?: string; labelledBy?: string; onClose?: () => void; children?: ReactNode }) {
-  if (!open) return null;
+  const presence = useMotionPresence(open);
+  if (!presence.present) return null;
   const modal = (
-    <div className="ui-modal-overlay" role="presentation" onMouseDown={onClose}>
+    <div className="ui-modal-overlay" data-motion-closing={presence.closing || undefined} inert={presence.closing} role="presentation" onMouseDown={onClose}>
       <section
         {...props}
         className={["ui-modal", className || ""].filter(Boolean).join(" ")}

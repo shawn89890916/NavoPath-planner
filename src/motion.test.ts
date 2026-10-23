@@ -144,4 +144,22 @@ describe("motion helpers", () => {
     expect(targetDocument.documentElement.dataset.motionFallback).toBeUndefined();
     vi.useRealTimers();
   });
+
+  it("applies every relative command once when its animation is superseded", async () => {
+    const callbacks: (() => void)[] = [];
+    const finishes: (() => void)[] = [];
+    let date = 23;
+    const targetDocument = motionDocument(motionWindow(false), (callback) => {
+      callbacks.push(callback);
+      return { finished: new Promise<void>((resolve) => finishes.push(resolve)), skipTransition: vi.fn() };
+    });
+    const first = runMotionTransition(() => { date += 1; }, { document: targetDocument, updates: "all", scope: "timeline" });
+    const second = runMotionTransition(() => { date += 1; }, { document: targetDocument, updates: "all", scope: "timeline" });
+    expect(date).toBe(24);
+    callbacks[1]();
+    callbacks[0]();
+    expect(date).toBe(25);
+    finishes.forEach((finish) => finish());
+    await Promise.all([first, second]);
+  });
 });

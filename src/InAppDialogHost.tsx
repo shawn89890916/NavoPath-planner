@@ -9,10 +9,12 @@ function labels(lang: Language) {
 }
 
 export default function InAppDialogHost({
+  open = true,
   lang,
   request,
   onClose,
 }: {
+  open?: boolean;
   lang: Language;
   request: DialogRequest;
   onClose: (value: string | boolean | null) => void;
@@ -34,17 +36,22 @@ export default function InAppDialogHost({
   const isAlert = request.kind === "alert";
 
   useEffect(() => {
+    setValue(request.initialValue || "");
+  }, [request]);
+  useEffect(() => {
+    if (!open) return;
     const timer = window.setTimeout(() => inputRef.current?.focus(), 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [request, open]);
 
   useEffect(() => {
+    if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose(isAlert ? true : null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isAlert, onClose]);
+  }, [isAlert, onClose, open]);
 
   const submit = (event?: React.FormEvent) => {
     event?.preventDefault();
@@ -54,6 +61,7 @@ export default function InAppDialogHost({
 
   return (
     <Modal
+      open={open}
       role={isAlert ? "alertdialog" : "dialog"}
       labelledBy="df-dialog-title"
       onClose={() => onClose(isAlert ? true : null)}
