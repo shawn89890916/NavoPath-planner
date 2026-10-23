@@ -1603,10 +1603,6 @@ input[type="range"] {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-@keyframes dfPageIn {
-  from { opacity: .72; transform: translateY(8px) scale(.992); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
 @keyframes dfPanelPop {
   from { opacity: 0; transform: translateY(8px) scale(.985); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -8361,11 +8357,20 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-provider-advanced textarea { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--paper); color: var(--ink); min-height: 130px; font: 12px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; corner-shape: var(--corner-shape, squircle); }
 .df-ai-provider-settings button { justify-self: start; }/* NavoPath UI tokens. Theme-specific values continue to resolve from the
  * active .df-app theme through the paper aliases below. *//* NavoPath paper editorial application layer. Shared accents follow --accent-active. */
+/* Keep the dock and other persistent controls live outside content snapshots. */
+html[data-motion-scope] {
+  view-transition-name: none;
+}
+html[data-motion-scope]::view-transition {
+  pointer-events: none;
+}
 html[data-motion-scope="workspace"] .df-app > .df-execute {
   view-transition-name: navo-motion-surface;
+  animation: none;
 }
 html[data-motion-scope="workspace"] .df-app > .df-planning {
   view-transition-name: navo-motion-surface;
+  animation: none;
 }
 html[data-motion-scope="timeline"] .df-app .df-timeline-panel {
   view-transition-name: navo-motion-surface;
@@ -8374,14 +8379,17 @@ html[data-motion-scope="timeline"] .df-app .df-timeline-panel {
   animation-duration: var(--motion-layout);
   animation-timing-function: var(--motion-ease);
 }
+html[data-motion-scope="workspace"]::view-transition-group(navo-motion-surface) {
+  animation: none;
+}
 ::view-transition-old(navo-motion-surface) {
-  animation: navo-motion-old var(--motion-fade) var(--motion-ease) both;
+  animation: navo-motion-old var(--motion-layout) var(--motion-ease) both;
 }
 ::view-transition-new(navo-motion-surface) {
   animation: navo-motion-new var(--motion-layout) var(--motion-ease) both;
 }
 @keyframes navo-motion-old {
-  to { opacity: 0; transform: translateX(calc(var(--motion-shift-x) * -.35)); }
+  to { opacity: 0; transform: translateX(calc(var(--motion-shift-x) * -1)); }
 }
 @keyframes navo-motion-new {
   from { opacity: 0; transform: translateX(var(--motion-shift-x)); }
@@ -8512,7 +8520,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-pa
   display: grid;
   grid-template-columns: minmax(320px, 410px) minmax(0, 1fr); gap: 1px; height: calc(100vh - 58px); padding: 10px;
   overflow: hidden;
-  animation: dfPageIn .22s ease-out;
   transition: grid-template-columns .24s cubic-bezier(.22, 1, .36, 1), gap .24s ease, padding .24s ease;
   border-radius: 0; }
 .df-planning { background: rgb(250, 249, 245); }

@@ -13,7 +13,7 @@ import { themeVars } from "./WorkspacePresentation";
 import { COMPACT_LAYOUT_MEDIA_QUERY, SLOT_MINUTES, DURATION_OPTIONS, DEFAULT_PROJECT_COLOR, PROJECT_COLOR_PRESETS, taskBlockPriorityFor, categories, isEventDisplayTask, isExternalCalendarDisplayTask, hexToRgb, minutesToTime, timeToMinutes, addMinutes, taskDuration, sortAiConversations, ProductIcon, recurrenceOptions, recurrenceLabel, TaskRecurrenceIndicator, TaskCard, formatMinutes, formatDuration, ReturnedToPlanIcon, TimeBlock, PreviewBlock, ProjectColorPicker, ProjectChoice, AiPanel, type AutoScheduleState, type TimelineFocusTarget, type PlacementPreview, type PlacementChoice, type ResizePreview, type AiAttachmentSnapshot, type AiSessionMessage } from "./WorkspacePresentation";
 export { ProductIcon } from "./WorkspacePresentation";
 import React, { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import { Suspense, lazy } from "react";
@@ -1044,6 +1044,7 @@ function App() {
   const [authNotice, setAuthNotice] = useState<AuthNotice>(null);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [mode, setModeState] = useState<Mode>("execute");
+  const pendingModeRef = useRef<{ mode: Mode } | null>(null);
   useEffect(() => {
     if (!data || !settings) return;
     const timer = window.setTimeout(preloadPlanningView, 150);
@@ -8602,13 +8603,19 @@ if (cached?.data && cached?.settings) {
   }
 
   function changeMode(nextMode: Mode) {
-    if (nextMode === mode) return;
+    if (nextMode === (pendingModeRef.current?.mode ?? mode)) return;
+    const pending = { mode: nextMode };
+    pendingModeRef.current = pending;
     if (nextMode === "planning") preloadPlanningView();
-    setYearOverviewOpen(false);
-    setModeState(nextMode);
     void runMotionTransition(() => {
-      void saveSettings({ activeMode: nextMode });
-    }, { direction: nextMode === "planning" ? "forward" : "backward", scope: "workspace" });
+      flushSync(() => {
+        setYearOverviewOpen(false);
+        setModeState(nextMode);
+        void saveSettings({ activeMode: nextMode });
+      });
+    }, { direction: nextMode === "planning" ? "forward" : "backward", scope: "workspace" }).finally(() => {
+      if (pendingModeRef.current === pending) pendingModeRef.current = null;
+    });
   }
 
   function currentTimelineViewportFocus() {
@@ -9101,14 +9108,15 @@ if (cached?.data && cached?.settings) {
               }}
             />
           )}
-          {mobileExecution && candidateDrawerOpen && <div className="df-mobile-candidate-backdrop" aria-hidden="true" />}
+          {mobileExecution && <div className={`df-mobile-candidate-backdrop${candidateDrawerOpen ? " is-open" : ""}`} aria-hidden="true" />}
           <CandidatePanelShell
             panelRef={candidatePanelRef}
             role={mobileExecution && candidateDrawerOpen ? "dialog" : undefined}
             ariaLabel={mobileExecution ? (lang === "zh" ? "待安排任务" : "Tasks to schedule") : undefined}
-            className={`${mobileExecution ? (candidateDrawerOpen ? "compact-active is-mobile-candidates" : "compact-inactive") : productAiPresentation || compactExecuteView === "tasks" ? "compact-active" : "compact-inactive"}${!mobileExecution && candidatePanelCollapsed ? " collapsed" : ""}${!mobileExecution && fullscreen ? " hidden" : ""}${candidateDropActive ? " drop-active" : ""}`}
+            className={`${mobileExecution ? `is-mobile-candidates ${candidateDrawerOpen ? "compact-active" : "compact-inactive"}` : productAiPresentation || compactExecuteView === "tasks" ? "compact-active" : "compact-inactive"}${!mobileExecution && candidatePanelCollapsed ? " collapsed" : ""}${!mobileExecution && fullscreen ? " hidden" : ""}${candidateDropActive ? " drop-active" : ""}`}
             style={!mobileExecution && candidatePanelCollapsed ? { position: "relative", zIndex: 2, pointerEvents: "auto" } : undefined}
             ariaHidden={mobileExecution ? !candidateDrawerOpen : !productAiPresentation && compactLayout && compactExecuteView !== "tasks"}
+            inert={mobileExecution && !candidateDrawerOpen}
             onPointerDown={(event) => {
               if (compactLayout || candidatePanelCollapsed || event.button) return;
               const panel = event.currentTarget;

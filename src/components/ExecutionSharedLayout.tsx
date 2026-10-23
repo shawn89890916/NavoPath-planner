@@ -78,6 +78,7 @@ export function CandidatePanelShell({
   className,
   style,
   ariaHidden,
+  inert,
   ariaLabel,
   onDragOver,
   onDrop,
@@ -90,6 +91,7 @@ export function CandidatePanelShell({
   className?: string;
   style?: CSSProperties;
   ariaHidden?: boolean;
+  inert?: boolean;
   ariaLabel?: string;
   onDragOver?: React.DragEventHandler<HTMLElement>;
   onDrop?: React.DragEventHandler<HTMLElement>;
@@ -104,6 +106,7 @@ export function CandidatePanelShell({
       className={`df-candidate-panel${className ? ` ${className}` : ""}`}
       style={style}
       aria-hidden={ariaHidden}
+      inert={inert}
       aria-label={ariaLabel}
       onDragOver={onDragOver}
       onDrop={onDrop}

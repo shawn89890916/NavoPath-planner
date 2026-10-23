@@ -10,11 +10,15 @@ export type MotionDirection = "backward" | "forward" | "neutral";
 
 type ViewTransitionLike = {
   finished: Promise<unknown>;
+  ready?: Promise<unknown>;
+  skipTransition?: () => void;
 };
 
 type MotionDocument = Document & {
   startViewTransition?: (update: () => void | Promise<void>) => ViewTransitionLike;
 };
+
+const activeTransitions = new WeakMap<Document, { skip?: () => void }>();
 
 export function prefersReducedMotion(targetWindow: Window | null | undefined = typeof window === "undefined" ? undefined : window) {
   return Boolean(targetWindow?.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
@@ -41,34 +45,55 @@ export async function runMotionTransition(
     : options.document;
   const targetWindow = targetDocument?.defaultView;
 
-  if (!targetDocument || prefersReducedMotion(targetWindow)) {
+  if (!targetDocument) {
+    update();
+    return;
+  }
+
+  activeTransitions.get(targetDocument)?.skip?.();
+  const active: { skip?: () => void } = {};
+  activeTransitions.set(targetDocument, active);
+  const root = targetDocument.documentElement;
+  const finish = () => {
+    // A cancelled navigation must not clear a newer navigation's direction.
+    if (activeTransitions.get(targetDocument) !== active) return;
+    activeTransitions.delete(targetDocument);
+    clearTransitionState(root);
+  };
+  if (prefersReducedMotion(targetWindow)) {
+    finish();
     update();
     return;
   }
 
   const direction = options.direction ?? "neutral";
-  const root = targetDocument.documentElement;
+  delete root.dataset.motionFallback;
   root.dataset.motionDirection = direction;
-  root.dataset.motionScope = options.scope ?? "workspace";
-  root.style.setProperty("--motion-shift-x", direction === "backward" ? "-6px" : direction === "forward" ? "6px" : "0px");
+  const scope = options.scope ?? "workspace";
+  root.dataset.motionScope = scope;
+  const distance = scope === "workspace" && targetWindow?.matchMedia?.("(orientation: portrait)").matches ? "100%" : "6px";
+  root.style.setProperty("--motion-shift-x", direction === "backward" ? `-${distance}` : direction === "forward" ? distance : "0px");
 
   const startViewTransition = (targetDocument as MotionDocument).startViewTransition;
   if (typeof startViewTransition === "function") {
     let committed = false;
     const commit = () => {
-      if (committed) return;
+      if (committed || activeTransitions.get(targetDocument) !== active) return;
       committed = true;
       update();
     };
     try {
       const transition = startViewTransition.call(targetDocument, commit);
+      // Skipping an overlapping transition rejects ready even if finished resolves.
+      void transition.ready?.catch(() => undefined);
+      active.skip = () => transition.skipTransition?.();
       await transition.finished;
     } catch (error) {
       // Browser animation cancellation must not interrupt the requested navigation.
       if (!(error instanceof DOMException) || !["AbortError", "TimeoutError", "InvalidStateError"].includes(error.name)) throw error;
       commit();
     } finally {
-      clearTransitionState(root);
+      finish();
     }
     return;
   }
@@ -76,12 +101,12 @@ export async function runMotionTransition(
   root.dataset.motionFallback = "true";
   update();
   await new Promise<void>((resolve) => {
-    const finish = () => {
-      clearTransitionState(root);
+    const complete = () => {
+      finish();
       resolve();
     };
-    targetWindow?.setTimeout(finish, options.duration ?? MOTION.layout);
-    if (!targetWindow) finish();
+    targetWindow?.setTimeout(complete, options.duration ?? MOTION.layout);
+    if (!targetWindow) complete();
   });
 }
 

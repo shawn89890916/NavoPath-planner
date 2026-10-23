@@ -64,7 +64,10 @@ describe("motion helpers", () => {
     const update = vi.fn();
     const targetDocument = motionDocument(motionWindow(false), (callback) => {
       if (committed) callback();
-      return { finished: Promise.reject(new DOMException("DOM update timed out", "TimeoutError")) };
+      return {
+        ready: Promise.reject(new DOMException("Transition skipped", "AbortError")),
+        finished: Promise.reject(new DOMException("DOM update timed out", "TimeoutError")),
+      };
     });
     await runMotionTransition(update, { document: targetDocument });
     expect(update).toHaveBeenCalledOnce();
@@ -94,6 +97,51 @@ describe("motion helpers", () => {
     vi.advanceTimersByTime(MOTION.fade);
     scheduled.finish();
     expect(commit).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+  });
+
+  it("keeps the newest navigation and its direction when transitions overlap", async () => {
+    const callbacks: (() => void)[] = [];
+    const finishes: (() => void)[] = [];
+    const skips = [vi.fn(), vi.fn()];
+    const targetDocument = motionDocument(motionWindow(false), (callback) => {
+      callbacks.push(callback);
+      return {
+        finished: new Promise<void>((resolve) => finishes.push(resolve)),
+        skipTransition: skips[callbacks.length - 1],
+      };
+    });
+    const olderUpdate = vi.fn();
+    const latestUpdate = vi.fn();
+    const older = runMotionTransition(olderUpdate, { document: targetDocument, direction: "forward", scope: "workspace" });
+    const latest = runMotionTransition(latestUpdate, { document: targetDocument, direction: "backward", scope: "workspace" });
+    expect(skips[0]).toHaveBeenCalledOnce();
+    callbacks[0]();
+    callbacks[1]();
+    finishes[0]();
+    await older;
+    expect(olderUpdate).not.toHaveBeenCalled();
+    expect(latestUpdate).toHaveBeenCalledOnce();
+    expect(targetDocument.documentElement.dataset.motionDirection).toBe("backward");
+    expect(targetDocument.documentElement.dataset.motionScope).toBe("workspace");
+    finishes[1]();
+    await latest;
+    expect(targetDocument.documentElement.dataset.motionScope).toBeUndefined();
+  });
+
+  it("does not let an older fallback timer clear the current transition", async () => {
+    vi.useFakeTimers();
+    const targetDocument = motionDocument(motionWindow(false));
+    const older = runMotionTransition(vi.fn(), { document: targetDocument, direction: "forward", duration: 100 });
+    await vi.advanceTimersByTimeAsync(50);
+    const latest = runMotionTransition(vi.fn(), { document: targetDocument, direction: "backward", duration: 200 });
+    await vi.advanceTimersByTimeAsync(50);
+    await older;
+    expect(targetDocument.documentElement.dataset.motionDirection).toBe("backward");
+    expect(targetDocument.documentElement.dataset.motionFallback).toBe("true");
+    await vi.advanceTimersByTimeAsync(150);
+    await latest;
+    expect(targetDocument.documentElement.dataset.motionFallback).toBeUndefined();
     vi.useRealTimers();
   });
 });
