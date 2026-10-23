@@ -1142,6 +1142,7 @@ function App() {
   // ── Auto-schedule: single source of truth ──
   const [schedulePreviews, setSchedulePreviews] = useState<SchedulePreview[]>([]);
   const [scheduleUnscheduled, setScheduleUnscheduled] = useState<UnscheduledTask[]>([]);
+  const [dismissedCapacityDate, setDismissedCapacityDate] = useState("");
   const [autoScheduleState, setAutoScheduleState] = useState<AutoScheduleState>("idle");
   const [aiPlanMenuOpen, setAiPlanMenuOpen] = useState(false);
   const [aiPlanPrefs, setAiPlanPrefs] = useState<AiPlanPrefs>({ source: "today", scope: "day", strategy: "longShort" });
@@ -9100,11 +9101,10 @@ if (cached?.data && cached?.settings) {
               }}
             />
           )}
-          {mobileExecution && candidateDrawerOpen && <div className="df-mobile-candidate-backdrop" onClick={closeCandidateDrawer} />}
+          {mobileExecution && candidateDrawerOpen && <div className="df-mobile-candidate-backdrop" aria-hidden="true" />}
           <CandidatePanelShell
             panelRef={candidatePanelRef}
             role={mobileExecution && candidateDrawerOpen ? "dialog" : undefined}
-            ariaModal={mobileExecution && candidateDrawerOpen ? true : undefined}
             ariaLabel={mobileExecution ? (lang === "zh" ? "待安排任务" : "Tasks to schedule") : undefined}
             className={`${mobileExecution ? (candidateDrawerOpen ? "compact-active is-mobile-candidates" : "compact-inactive") : productAiPresentation || compactExecuteView === "tasks" ? "compact-active" : "compact-inactive"}${!mobileExecution && candidatePanelCollapsed ? " collapsed" : ""}${!mobileExecution && fullscreen ? " hidden" : ""}${candidateDropActive ? " drop-active" : ""}`}
             style={!mobileExecution && candidatePanelCollapsed ? { position: "relative", zIndex: 2, pointerEvents: "auto" } : undefined}
@@ -9217,9 +9217,9 @@ if (cached?.data && cached?.settings) {
                 <CloseButton label={lang === "zh" ? "关闭提示" : "Dismiss hint"} onClick={() => { dismissGuide("schedule"); setScheduleGuideOpen(false); }} />
               </aside>
             )}
-            {(dailyCapacityRisk.level !== "comfortable" || schedulePreviews.length > 0 || scheduleUnscheduled.length > 0) && (
+            {((dailyCapacityRisk.level !== "comfortable" && dismissedCapacityDate !== today) || schedulePreviews.length > 0 || scheduleUnscheduled.length > 0) && (
               <div className="df-ai-plan-feedback" role="status">
-                {dailyCapacityRisk.level !== "comfortable" && <span className={`df-ai-capacity-inline ${dailyCapacityRisk.level}`}>{lang === "zh" ? `容量${dailyCapacityRisk.level === "high" ? "超载" : "偏紧"}：待安排 ${formatMinutes(dailyCapacityRisk.demandMinutes)}，剩余 ${formatMinutes(dailyCapacityRisk.availableMinutes)}` : `Capacity ${dailyCapacityRisk.level === "high" ? "overloaded" : "tight"}: ${formatMinutes(dailyCapacityRisk.demandMinutes)} to place, ${formatMinutes(dailyCapacityRisk.availableMinutes)} free`}</span>}
+                {dailyCapacityRisk.level !== "comfortable" && dismissedCapacityDate !== today && <span className={`df-ai-capacity-inline ${dailyCapacityRisk.level}`}><span>{lang === "zh" ? `容量${dailyCapacityRisk.level === "high" ? "超载" : "偏紧"}：待安排 ${formatMinutes(dailyCapacityRisk.demandMinutes)}，剩余 ${formatMinutes(dailyCapacityRisk.availableMinutes)}` : `Capacity ${dailyCapacityRisk.level === "high" ? "overloaded" : "tight"}: ${formatMinutes(dailyCapacityRisk.demandMinutes)} to place, ${formatMinutes(dailyCapacityRisk.availableMinutes)} free`}</span><CloseButton label={lang === "zh" ? "关闭容量提示" : "Dismiss capacity notice"} onClick={() => setDismissedCapacityDate(today)} /></span>}
                 {schedulePreviews.length > 0 && <><span className="df-ai-plan-summary">{t(lang, "timeline.previewPlan").replace("X", String(schedulePreviews.length))}</span>{compactLayout && <div className="df-ai-plan-mobile-preview">{schedulePreviews.slice(0, 4).map((preview) => <button key={preview.id} type="button" onClick={() => { setCompactExecuteView("schedule"); setPendingTimelineFocus({ date: preview.scheduledDate, startTime: preview.scheduledStart, source: "autoschedule" }); }}><strong>{preview.title}</strong><small>{preview.scheduledDate} · {preview.scheduledStart}–{preview.scheduledEnd}</small></button>)}</div>}</>}
                 {scheduleUnscheduled.length > 0 && <details className="df-ai-plan-unscheduled">
                   <summary>{lang === "zh" ? `${scheduleUnscheduled.length} 项暂未安排` : `${scheduleUnscheduled.length} not scheduled`}</summary>
@@ -9363,7 +9363,6 @@ if (cached?.data && cached?.settings) {
             {demoPresetBusy && !demoRevealing && !demoHasSchedule && <div className="df-product-ai-arranging-notes"><p>{lang === "zh" ? "按任务估时留出完整时段，减少来回切换。" : "Give each task enough time, with fewer switches."}</p><p>{lang === "zh" ? "午餐与休息也排进去，计划才跟得上生活。" : "Lunch and breaks belong in the plan, too."}</p><p>{lang === "zh" ? "安排好后，仍可调整时间、改期或撤回。" : "Then adjust the time, move a task, or undo."}</p></div>}
           </div></ProductStorySlot> : productDemo?.story}
           <section
-            inert={mobileExecution && candidateDrawerOpen ? true : undefined}
             onPointerDownCapture={(event) => { mobileTapRef.current = { x: event.clientX, y: event.clientY, moved: false }; }}
             onPointerMoveCapture={(event) => { if (Math.hypot(event.clientX - mobileTapRef.current.x, event.clientY - mobileTapRef.current.y) > 8) mobileTapRef.current.moved = true; }}
             className={`df-timeline-panel${productAiPresentation || compactExecuteView === "schedule" ? " compact-active" : " compact-inactive"}`}

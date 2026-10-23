@@ -14044,6 +14044,15 @@ body.df-timeline-pointer-drag * {
 .df-app .df-ai-capacity-inline.high {
   color: var(--danger);
 }
+.df-app .df-ai-capacity-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.df-app .df-ai-capacity-inline .ui-icon-button {
+  flex-shrink: 0;
+}
 .df-app .df-ai-daily-tools {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -17251,7 +17260,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 /* Short scheduled block — compact, centered, minimal content. */
 .df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"][data-schedule-size="short"] {
   --task-padding-x: 6px;
-  --task-padding-y: 3px;
+  --task-padding-y: 1px;
   --task-align-items: center;
   --task-min-height: unset;
   min-height: unset;
@@ -17287,7 +17296,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   margin-top: 0;
   border-width: 1.5px;
 }
-.df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"][data-schedule-size="short"] .df-block-check {
+#root .df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"][data-schedule-size="short"] .df-block-check {
   flex: 0 0 14px;
   width: 14px;
   height: 14px;

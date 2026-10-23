@@ -5,7 +5,25 @@
   #root .df-app[data-phone-execution] .df-compact-date-display { justify-self: start; }
   #root .df-app[data-phone-execution] .df-mobile-candidate-backdrop {
     position: fixed; inset: 0; z-index: 140;
-    background: var(--modal-backdrop, rgb(0 0 0 / 30%));
+    background: rgb(0 0 0 / 10%);
+    pointer-events: none;
+  }
+  /* Extend only the hour bands into the right gutter; keep the measured
+     canvas and its task coordinates unchanged. */
+  #root .df-app[data-phone-execution] .df-timeline-panel:has(.df-timeline-daily) {
+    width: calc(100% + 8px);
+    max-width: none;
+  }
+  #root .df-app[data-phone-execution] .df-timeline-panel:has(.df-timeline-daily) .df-timeline-allday {
+    width: calc(100% - 8px);
+  }
+  #root .df-app[data-phone-execution] .df-timeline-daily .df-timeline-canvas {
+    width: calc(100% - 9px);
+  }
+  #root .df-app[data-phone-execution] .df-timeline-daily .df-timeline-canvas::after {
+    content: "";
+    position: absolute; top: 0; bottom: 0; left: 100%; width: 9px;
+    background: inherit; pointer-events: none;
   }
   #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates {
     display: flex; position: fixed; inset: auto 0 0; z-index: 141;

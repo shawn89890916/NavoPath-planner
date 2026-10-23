@@ -326,7 +326,7 @@ export function TaskCheckbox({
 }) {
   const priorityColor = `var(--task-priority-${priority || "normal"})`;
   const priorityFill = priority
-    ? `color-mix(in srgb, ${priorityColor} ${priority === "medium" ? 18 : priority === "high" ? 16 : 12}%, transparent)`
+    ? `color-mix(in srgb, ${priorityColor} ${priority === "medium" ? 10 : priority === "high" ? 9 : 6}%, transparent)`
     : "transparent";
   const priorityLabel = priority === undefined ? undefined : lang === "zh"
     ? `优先级：${priority === "high" ? "高" : priority === "medium" ? "中" : priority === "low" ? "低" : "未设置"}`
