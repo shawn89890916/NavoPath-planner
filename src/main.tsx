@@ -12,7 +12,7 @@ import { DailyTimelineGrid } from "./components/ExecutionSharedLayout";
 import { themeVars } from "./WorkspacePresentation";
 import { COMPACT_LAYOUT_MEDIA_QUERY, SLOT_MINUTES, DURATION_OPTIONS, DEFAULT_PROJECT_COLOR, PROJECT_COLOR_PRESETS, taskBlockPriorityFor, categories, isEventDisplayTask, isExternalCalendarDisplayTask, hexToRgb, minutesToTime, timeToMinutes, addMinutes, taskDuration, sortAiConversations, ProductIcon, recurrenceOptions, recurrenceLabel, TaskRecurrenceIndicator, TaskCard, formatMinutes, formatDuration, ReturnedToPlanIcon, TimeBlock, PreviewBlock, ProjectColorPicker, ProjectChoice, AiPanel, type AutoScheduleState, type TimelineFocusTarget, type PlacementPreview, type PlacementChoice, type ResizePreview, type AiAttachmentSnapshot, type AiSessionMessage } from "./WorkspacePresentation";
 export { ProductIcon } from "./WorkspacePresentation";
-import React, { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { Activity, type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { useCallback } from "react";
 import { createRoot } from "react-dom/client";
@@ -110,7 +110,8 @@ installBrowserFallback();
 const AuthGate = lazy(() => import("./AuthGate"));
 const ChangelogPage = lazy(() => import("./ChangelogPage"));
 const PluginGuidePageLazy = lazy(() => import("./PluginGuidePage"));
-const UtilityPanel = lazy(() => import("./SettingsPanel").then((module) => ({ default: module.UtilityPanel })));
+const loadSettingsPanel = () => import("./SettingsPanel");
+const UtilityPanel = lazy(() => loadSettingsPanel().then((module) => ({ default: module.UtilityPanel })));
 const MobileExecutionControls = lazy(() => import("./components/MobileExecutionControls"));
 const MobileTaskSummary = lazy(() => import("./MobileTaskSummary"));
 const EngagementRating = lazy(() => import("./components/EngagementRating").then(module => ({ default: module.EngagementRating })));
@@ -799,6 +800,18 @@ function buildTaskFromEvent(event: CalendarEvent): Task {
   };
 }
 
+function SettingsLoading({ lang, onClose }: { lang: Language; onClose: () => void }) {
+  const ref = useRef<HTMLElement>(null);
+  useModalFocus(true, ref);
+  return <>
+    <div className="df-utility-backdrop" onMouseDown={onClose} />
+    <aside ref={ref} tabIndex={-1} className="df-utility-panel" role="dialog" aria-modal="true" aria-busy="true" aria-label={lang === "zh" ? "正在打开设置" : "Opening Settings"} onKeyDown={(event) => { if (event.key === "Escape") onClose(); }}>
+      <div className="df-utility-head"><h2>{lang === "zh" ? "设置" : "Settings"}</h2><CloseButton label={t(lang, "settings.close")} onClick={onClose} /></div>
+      <div className="df-utility-body df-settings-shell" aria-hidden="true"><section>{Array.from({ length: 5 }, (_, index) => <div className="df-skeleton-task" key={index}><i /><span /><small /></div>)}</section></div>
+    </aside>
+  </>;
+}
+
 function ExecuteSkeleton() {
   return <div className="df-app df-execute-skeleton" aria-label="正在加载工作区" aria-busy="true">
     <header className="df-skeleton-header">
@@ -1053,7 +1066,15 @@ function App() {
   }, "workspace", ["execute", "planning"]);
   useEffect(() => {
     if (!data || !settings) return;
-    const timer = window.setTimeout(preloadPlanningView, 150);
+    const preload = () => {
+      preloadPlanningView();
+      void Promise.allSettled([loadSettingsPanel(), import("./MobileTaskSummary"), import("./MonthView")]);
+    };
+    if (window.requestIdleCallback) {
+      const idle = window.requestIdleCallback(preload, { timeout: 2000 });
+      return () => window.cancelIdleCallback(idle);
+    }
+    const timer = window.setTimeout(preload, 1000);
     return () => window.clearTimeout(timer);
   }, [Boolean(data), Boolean(settings)]);
   const [compactLayout, setCompactLayout] = useState(() => window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches);
@@ -3307,6 +3328,11 @@ if (cached?.data && cached?.settings) {
   const continuousTimelineEnabled = settings?.continuousCrossDayScroll !== false && timelineView !== "month";
   const timelineColumnCount = timelineView === "weekly" ? 7 : timelineView === "3day" ? 3 : 1;
   const timelineWindowAnchorDate = continuousTimelineEnabled ? visibleTimelineDate : timelineDate;
+  const changeTimelineDate = useMotionSelection(timelineWindowAnchorDate, (date: string) => {
+    setSelectedDate(date);
+    setVisibleTimelineDate(date);
+    setDragCreate(null);
+  }, "timeline", (previous, next) => next < previous ? "backward" : "forward");
   const isViewingToday = timelineWindowAnchorDate === today;
   const projects = data?.projects || [];
   const tasks = data?.tasks || [];
@@ -9027,7 +9053,7 @@ if (cached?.data && cached?.settings) {
         />
       )}
 
-      {mode === "execute" ? (
+      <Activity mode={mode === "execute" ? "visible" : "hidden"}>
         <ExecutionSplitLayout className={`${candidatePanelCollapsed ? "candidate-collapsed" : ""}${fullscreen ? " fullscreen" : ""}${simpleView ? " simple-view" : ""}`} style={candidatePanelCollapsed || candidatePanelWidth ? { "--df-candidate-width": candidatePanelCollapsed ? "44px" : `${candidatePanelWidth}px` } as CSSProperties : undefined}>
           {!productAiPresentation && <div className="df-compact-execute-controls">
             {!mobileExecution && <nav className="df-compact-execute-tabs" aria-label={lang === "zh" ? "执行视图" : "Execute view"}>
@@ -9098,10 +9124,8 @@ if (cached?.data && cached?.settings) {
               lang={lang}
               onMonthChange={setMobileDatePickerMonth}
               onSelect={(date) => {
-                setSelectedDate(date);
-                setVisibleTimelineDate(date);
+                changeTimelineDate(date);
                 setMobileDatePickerOpen(false);
-                setDragCreate(null);
               }}
             />
           )}
@@ -9400,12 +9424,12 @@ if (cached?.data && cached?.settings) {
                 events={events}
                 onYearChange={setOverviewYear}
                 onSelectDate={(date) => {
-                  setSelectedDate(date);
+                  changeTimelineDate(date);
                   setTimelineView("daily");
                   setYearOverviewOpen(false);
                 }}
                 onToday={() => {
-                  setSelectedDate(today);
+                  changeTimelineDate(today);
                   setOverviewYear(new Date(`${today}T00:00:00`).getFullYear());
                   setTimelineView("daily");
                   setYearOverviewOpen(false);
@@ -9529,6 +9553,7 @@ if (cached?.data && cached?.settings) {
                               {Array.from({ length: slotCount }).map((_, index) => {
                                 const minutes = ((dayStartHour * 60 + index * SLOT_MINUTES) % (24 * 60));
                                 const isHour = minutes % 60 === 0;
+                                if (!isHour) return null;
                                 const isMajor = minutes % (6 * 60) === 0;
                                 const label = continuousTimelineEnabled ? dailyContinuousSlotLabel({ index, anchorDate: continuousTimelineStartDate, dayStartHour, dateStep: timelineColumnCount }) : hourLabel(minutes);
                                 const boundarySeparator = label.indexOf(" ");
@@ -9709,6 +9734,7 @@ if (cached?.data && cached?.settings) {
                                 {Array.from({ length: slotCount }).map((_, index) => {
                                   const minutes = ((dayStartHour * 60 + index * SLOT_MINUTES) % (24 * 60));
                                   const isHour = minutes % 60 === 0;
+                                  if (!isHour) return null;
                                   const isMajor = minutes % (6 * 60) === 0;
                                   return <div className={`df-slot ${isHour ? "hour" : "quarter"} ${isMajor ? "major" : ""}`} style={{ top: `${index * timelineSlotHeight}px` }} key={index} />;
                                 })}
@@ -9906,10 +9932,8 @@ if (cached?.data && cached?.settings) {
                         lang={lang}
                         onMonthChange={setMobileDatePickerMonth}
                         onSelect={(date) => {
-                          setSelectedDate(date);
-                          setVisibleTimelineDate(date);
+                          changeTimelineDate(date);
                           setMobileDatePickerOpen(false);
-                          setDragCreate(null);
                         }}
                       />
                     )}
@@ -10193,14 +10217,15 @@ if (cached?.data && cached?.settings) {
             </>}
           </section>
         </ExecutionSplitLayout>
-      ) : (
+      </Activity>
+      <Activity mode={mode === "planning" ? "visible" : "hidden"}>
         <Suspense fallback={<main className="df-planning df-planning-loading" aria-busy="true" aria-label={lang === "zh" ? "正在打开规划" : "Opening Planning"}>
           <div className="df-planning-loading-toolbar" aria-hidden="true"><span className="df-skeleton-title" /><span className="df-skeleton-tab" /></div>
           <section aria-hidden="true"><span className="df-skeleton-title" />{Array.from({ length: 5 }, (_, index) => <div className="df-skeleton-task" key={index}><i /><span /><small /></div>)}</section>
         </main>}>
           <PlanningViewLazy focusTaskId={planningFocusTaskId} onFocusHandled={() => setPlanningFocusTaskId(null)} presentationNote={productDemo?.story} demo={Boolean(productDemo)} referenceDate={productDemo?.date} lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled !== false} featureQuadrant={settings.featureQuadrantViewEnabled !== false} featureList={settings.featureListViewEnabled !== false} featureMetrics={settings.featureMetricsEnabled !== false} engagementEnabled={settings.featureEngagementEnabled === true} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
         </Suspense>
-      )}
+      </Activity>
 
       {compactLayout && dragCreate?.committed && mode === "execute" && (
         <DragCreateQuickAdd
@@ -10261,7 +10286,7 @@ if (cached?.data && cached?.settings) {
       {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onLocateTimeline={locateTaskOnTimeline} onLocatePlanning={locateTaskInPlanning} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel}
       <CommandPalette open={commandOpen} compact={compactLayout} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
-      {utilityPanel && settings && <Suspense fallback={null}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} /></Suspense>}
+      {utilityPanel && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} /></Suspense>}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
       {focusOverlayMode && (
         <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>
@@ -10921,6 +10946,7 @@ function ScheduleTemplateModal({
                       {Array.from({ length: 96 }).map((_, index) => {
                         const minutes = index * SLOT_MINUTES;
                         const isHour = minutes % 60 === 0;
+                        if (!isHour) return null;
                         const isMajor = minutes % (6 * 60) === 0;
                         const hh = String(Math.floor(minutes / 60)).padStart(2, "0");
                         const mm = String(minutes % 60).padStart(2, "0");
@@ -11038,6 +11064,7 @@ function ScheduleTemplateModal({
                   {Array.from({ length: 96 }).map((_, index) => {
                     const minutes = index * SLOT_MINUTES;
                     const isHour = minutes % 60 === 0;
+                    if (!isHour) return null;
                     const isMajor = minutes % (6 * 60) === 0;
                     const hh = String(Math.floor(minutes / 60)).padStart(2, "0");
                     const mm = String(minutes % 60).padStart(2, "0");

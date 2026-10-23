@@ -73,7 +73,7 @@ export async function runMotionTransition(
   root.dataset.motionDirection = direction;
   const scope = options.scope ?? "workspace";
   root.dataset.motionScope = scope;
-  const distance = scope === "workspace" && targetWindow?.matchMedia?.("(orientation: portrait)").matches
+  const distance = scope === "timeline" || scope === "workspace" && targetWindow?.matchMedia?.("(orientation: portrait)").matches
     ? "100%" : scope === "settings" || scope === "planning" ? "24px" : "6px";
   root.style.setProperty("--motion-shift-x", direction === "backward" ? `-${distance}` : direction === "forward" ? distance : "0px");
 

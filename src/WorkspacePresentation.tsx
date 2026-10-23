@@ -340,9 +340,15 @@ export function CandidateSubtaskItem({
   );
 }
 
+const candidateDateFormatters = new Map<Language, Intl.DateTimeFormat>();
 export function formatCandidateDate(date: string, lang: Language) {
   if (!date) return lang === "zh" ? "未定" : "No date";
-  return new Intl.DateTimeFormat(lang === "zh" ? "zh-CN" : "en-GB", { month: "short", day: "numeric" }).format(new Date(`${date}T00:00:00`));
+  let formatter = candidateDateFormatters.get(lang);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(lang === "zh" ? "zh-CN" : "en-GB", { timeZone: "UTC", month: "short", day: "numeric" });
+    candidateDateFormatters.set(lang, formatter);
+  }
+  return formatter.format(new Date(`${date}T00:00:00Z`));
 }
 
 export function candidateRelativeScheduleOptions(focusDate: string, lang: Language) {

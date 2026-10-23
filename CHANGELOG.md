@@ -3,7 +3,8 @@
 ## 2026-10-23 · 手机布局、规划与弹层
 
 ### 改进
-- 执行与规划切换时底部导航保持原位，内容按页面方向左右滑动；今日候选从底部向上展开，关闭时平滑收起，并保留列表位置与键盘焦点。
+- 执行与规划切换时底部导航保持原位，内容按页面方向左右滑动；日期切换也按前后方向滑动。今日候选从底部向上展开，关闭时平滑收起，并保留列表位置与键盘焦点。
+- 常用页面提前准备，返回执行与规划时保留视图和滚动位置；减少时间轴与日期标签的重复绘制，设置首次加载时立即显示可关闭的占位反馈。
 - 手机详情、快速添加、AI 与设置面板按底部方向展开和收起；设置层级、规划视图与日期月份按方向切换，搜索、通知和操作菜单具有成对的进退反馈。
 - 今日候选的短任务右侧操作横排，长任务自动竖排，为多行标题留出宽度；移除顶部拉条，将规划图标、更多与关闭收进同一标题栏。习惯与任务采用一致的勾选框，优先级提示同步显示。
 - 手机两侧浮动按钮保持对称，底部提示与撤销操作显示在按钮之间；AI 对话页左右贴边，日期入口与展开月历对齐，月历底部保留圆角。
@@ -221,7 +222,8 @@
 ## 2026-10-23 · Mobile Layout, Planning, and Popovers
 
 ### Improvements
-- Bottom navigation stays fixed while Execute and Planning content slides in the corresponding direction. Today's Candidates slides up from the bottom and smoothly closes, preserving list position and keyboard focus.
+- Bottom navigation stays fixed while Execute and Planning content slides in the corresponding direction. Date navigation also slides forward or backward. Today's Candidates slides up from the bottom and smoothly closes, preserving list position and keyboard focus.
+- Common pages prepare ahead of time, preserving views and scroll positions when returning to Execute or Planning. Reduced repeated timeline and date-label rendering, with immediate dismissible placeholders while Settings first loads.
 - Mobile details, quick add, AI, and Settings panels enter and exit from the bottom. Settings levels, Planning views, and calendar months switch directionally, while search, notifications, and action menus have paired entrance and exit feedback.
 - Lighten checkbox fills and the portrait candidate drawer backdrop. While the drawer is open, the timeline supports scrolling and taps only dismiss the drawer without editing, completing, or scheduling tasks. Capacity notices can be dismissed from the right.
 - Today's Candidates keeps actions horizontal for short titles and stacks them vertically for long titles, leaving more room for wrapping. Removed the resize handle and placed the Plan icon, More, and Close in one header. Habits and tasks share consistent checkboxes with task priority hints.

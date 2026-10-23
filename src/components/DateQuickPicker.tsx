@@ -23,6 +23,7 @@ export function DateQuickPicker({ open = true, month, selectedDate, today, minDa
   const monthTarget = useRef(month);
   const [direction, setDirection] = useState("forward");
   useEffect(() => { monthTarget.current = month; }, [month]);
+  if (!presence.present) return null;
   const [year, monthNumber] = month.split("-").map(Number);
   const first = new Date(year, monthNumber - 1, 1);
   const offset = (first.getDay() - weekStartsOn + 7) % 7;
@@ -39,7 +40,6 @@ export function DateQuickPicker({ open = true, month, selectedDate, today, minDa
     onMonthChange(monthTarget.current);
   };
 
-  if (!presence.present) return null;
   return (
     <section className="df-mobile-date-picker" data-motion-closing={presence.closing || undefined} inert={presence.closing} aria-label={lang === "zh" ? "快速选择日期" : "Quick date picker"}>
       <header>
