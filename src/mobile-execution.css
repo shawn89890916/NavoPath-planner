@@ -3,6 +3,10 @@
     grid-template-columns: minmax(0, 1fr) auto;
   }
   #root .df-app[data-phone-execution] .df-compact-date-display { justify-self: start; }
+  #root .df-app[data-phone-execution] .df-timeline-panel[data-candidates-open],
+  #root .df-app[data-phone-execution] .df-timeline-panel[data-candidates-open] * {
+    touch-action: pan-y;
+  }
   #root .df-app[data-phone-execution] .df-mobile-candidate-backdrop {
     position: fixed; inset: 0; z-index: 140;
     background: rgb(0 0 0 / 10%);

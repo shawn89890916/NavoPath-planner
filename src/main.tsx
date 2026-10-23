@@ -9371,11 +9371,24 @@ if (cached?.data && cached?.settings) {
             {demoPresetBusy && !demoRevealing && !demoHasSchedule && <div className="df-product-ai-arranging-notes"><p>{lang === "zh" ? "按任务估时留出完整时段，减少来回切换。" : "Give each task enough time, with fewer switches."}</p><p>{lang === "zh" ? "午餐与休息也排进去，计划才跟得上生活。" : "Lunch and breaks belong in the plan, too."}</p><p>{lang === "zh" ? "安排好后，仍可调整时间、改期或撤回。" : "Then adjust the time, move a task, or undo."}</p></div>}
           </div></ProductStorySlot> : productDemo?.story}
           <section
-            onPointerDownCapture={(event) => { mobileTapRef.current = { x: event.clientX, y: event.clientY, moved: false }; }}
-            onPointerMoveCapture={(event) => { if (Math.hypot(event.clientX - mobileTapRef.current.x, event.clientY - mobileTapRef.current.y) > 8) mobileTapRef.current.moved = true; }}
+            onPointerDownCapture={(event) => {
+              mobileTapRef.current = { x: event.clientX, y: event.clientY, moved: false };
+              if (mobileExecution && candidateDrawerOpen) event.stopPropagation();
+            }}
+            onPointerMoveCapture={(event) => {
+              if (Math.hypot(event.clientX - mobileTapRef.current.x, event.clientY - mobileTapRef.current.y) > 8) mobileTapRef.current.moved = true;
+            }}
+            onMouseDownCapture={(event) => { if (mobileExecution && candidateDrawerOpen) event.stopPropagation(); }}
+            onClickCapture={(event) => {
+              if (!mobileExecution || !candidateDrawerOpen) return;
+              event.preventDefault();
+              event.stopPropagation();
+              if (!mobileTapRef.current.moved) closeCandidateDrawer();
+            }}
             className={`df-timeline-panel${productAiPresentation || compactExecuteView === "schedule" ? " compact-active" : " compact-inactive"}`}
             aria-hidden={!productAiPresentation && compactLayout && compactExecuteView !== "schedule"}
             id="df-execute-timeline"
+            data-candidates-open={mobileExecution && candidateDrawerOpen || undefined}
             data-cross-day-scroll={settings.continuousCrossDayScroll !== false ? "true" : "false"}
             onWheelCapture={handleTimelinePanelWheel}
           >

@@ -7,7 +7,7 @@
 - 今日候选的短任务右侧操作横排，长任务自动竖排，为多行标题留出宽度；移除顶部拉条，将规划图标、更多与关闭收进同一标题栏。习惯与任务采用一致的勾选框，优先级提示同步显示。
 - 手机两侧浮动按钮保持对称，底部提示与撤销操作显示在按钮之间；AI 对话页左右贴边，日期入口与展开月历对齐，月历底部保留圆角。
 - 规划页快速添加保留当前视图，新任务留在规划中；提前准备规划内容，首次打开时立即呈现布局占位反馈。
-- 减淡勾选框内部填充和竖屏候选面板遮罩；展开候选面板时仍可滚动时间轴，容量提示可从右侧关闭。
+- 减淡勾选框内部填充和竖屏候选面板遮罩；展开候选面板时，时间轴仅保留滚动，点按只收起候选，不触发任务编辑、勾选或排程；容量提示可从右侧关闭。
 
 ### 修复
 - 连续快速切换页面时保留最新选择与动画方向；减少动态效果时直接完成切换，收起的候选栏不再接收键盘焦点。
@@ -219,7 +219,7 @@
 
 ### Improvements
 - Bottom navigation stays fixed while Execute and Planning content slides in the corresponding direction. Today's Candidates slides up from the bottom and smoothly closes, preserving list position and keyboard focus.
-- Lighten checkbox fills and the portrait candidate drawer backdrop. The timeline remains scrollable while the drawer is open, and capacity notices can be dismissed from the right.
+- Lighten checkbox fills and the portrait candidate drawer backdrop. While the drawer is open, the timeline supports scrolling and taps only dismiss the drawer without editing, completing, or scheduling tasks. Capacity notices can be dismissed from the right.
 - Today's Candidates keeps actions horizontal for short titles and stacks them vertically for long titles, leaving more room for wrapping. Removed the resize handle and placed the Plan icon, More, and Close in one header. Habits and tasks share consistent checkboxes with task priority hints.
 - Mobile floating actions remain symmetric, with notices and undo actions between them. AI chat reaches both screen edges, and the date control and expanded calendar align with rounded lower corners.
 - Quick add in Planning preserves the current view and keeps new tasks in Planning. Planning content is prepared ahead of time, with immediate layout placeholders on first open.
