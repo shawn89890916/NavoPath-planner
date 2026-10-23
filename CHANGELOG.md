@@ -11,6 +11,7 @@
 - 减淡勾选框内部填充和竖屏候选面板遮罩；展开候选面板时，时间轴仅保留滚动，点按只收起候选，不触发任务编辑、勾选或排程；容量提示可从右侧关闭。
 
 ### 修复
+- 弹窗内键盘焦点保持在当前窗口，关闭后返回原入口；规划任务菜单支持 Esc 关闭。快速添加收起时保留内容，日程模板关闭时平滑退场。
 - 连续点击日期会逐次前进或后退，快速切换页面与日历视图时保留最后选择；减少动态效果时缩短位移与进退过程，收起的面板不再接收操作。
 - 手机短栏拖动时跟随手势移动，松手后平滑回位或收起；关闭面板、菜单或弹窗后立即重新打开，不再被旧的退出过程关闭。
 - 修复竖屏今日候选“更多”菜单在触屏失焦后提前关闭、选项点击无响应的问题；AI 排程设置保持在屏幕内，保留点击外部与键盘关闭操作。
@@ -228,6 +229,7 @@
 - Quick add in Planning preserves the current view and keeps new tasks in Planning. Planning content is prepared ahead of time, with immediate layout placeholders on first open.
 
 ### Fixed
+- Keyboard focus stays within the current dialog and returns to its opener after closing; Planning task menus support Escape dismissal. Quick add retains its content while closing, and schedule templates now exit smoothly.
 - Repeated date navigation applies every step, and rapid page or calendar-view changes preserve the latest selection. Reduced motion shortens movement and transitions, and collapsed panels no longer receive input.
 - Mobile short sheets follow dragging gestures and smoothly return or close on release. Reopening a panel, menu, or dialog during its exit no longer lets the previous exit close it.
 - Fixed Today's Candidates More menu dismissing before touch selections activate in portrait mode. AI scheduling settings stay within the screen, with outside-click and keyboard dismissal preserved.

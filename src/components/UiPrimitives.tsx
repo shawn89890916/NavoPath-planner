@@ -1,6 +1,7 @@
 import React, { forwardRef, useEffect, useRef, useState, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useMotionPresence } from "../useMotionPresence";
+import { useModalFocus } from "../useModalFocus";
 import { UiCloseIcon, UiMoreIcon } from "./UiIcons";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
@@ -66,11 +67,15 @@ export function ActionDisclosure({ label, children }: { label: string; children:
 
 export function Modal({ open = true, role = "dialog", label, labelledBy, onClose, className, children, ...props }: Omit<HTMLAttributes<HTMLElement>, "role"> & { open?: boolean; role?: "dialog" | "alertdialog"; label?: string; labelledBy?: string; onClose?: () => void; children?: ReactNode }) {
   const presence = useMotionPresence(open);
+  const ref = useRef<HTMLElement>(null);
+  useModalFocus(open, ref);
   if (!presence.present) return null;
   const modal = (
     <div className="ui-modal-overlay" data-motion-closing={presence.closing || undefined} inert={presence.closing} role="presentation" onMouseDown={onClose}>
       <section
         {...props}
+        ref={ref}
+        tabIndex={-1}
         className={["ui-modal", className || ""].filter(Boolean).join(" ")}
         role={role}
         aria-modal="true"

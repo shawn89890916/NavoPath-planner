@@ -91,6 +91,7 @@ import { anchoredTimelineScrollTop, timelineZoomFromPinch } from "./utils/timeli
 import { calendarEventDurationMinutes, expandTimedCalendarEvent } from "./utils/calendarEventSlices";
 import { MOTION, runMotionTransition, scheduleMotionCommit } from "./motion";
 import { useMotionPresence } from "./useMotionPresence";
+import { useModalFocus } from "./useModalFocus";
 import { useMotionSelection } from "./useMotionSelection";
 import "./app.css";
 import "./mobile-execution.css";
@@ -1208,6 +1209,7 @@ function App() {
   const [editingOccurrence, setEditingOccurrence] = useState<EditingOccurrence>(null);
   const [quickSchedule, setQuickSchedule] = useState<QuickSchedule>(null);
   const [scheduleTemplateOpen, setScheduleTemplateOpen] = useState(false);
+  const scheduleTemplatePresence = useMotionPresence(scheduleTemplateOpen, MOTION.base);
   const [allDayQuickAdd, setAllDayQuickAdd] = useState<AllDayQuickAdd>(null);
   const [monthQuickAdd, setMonthQuickAdd] = useState<AllDayQuickAdd>(null);
   const [allDayDragOver, setAllDayDragOver] = useState(false);
@@ -1497,6 +1499,10 @@ function App() {
   useEffect(() => {
     if (quickAddOpen && !compactLayout) compactQuickInputRef.current?.focus();
   }, [quickAddOpen]);
+
+  useEffect(() => {
+    if (compactLayout && !quickAddPresence.present) setQuickTitle("");
+  }, [compactLayout, quickAddPresence.present]);
 
   useEffect(() => {
     if (!quickAddOpen) return;
@@ -4349,7 +4355,7 @@ if (cached?.data && cached?.settings) {
     const createdTask: Task = { ...task, plannedForDate: mode === "execute" ? targetDate : undefined, executionLane: mode === "execute" ? "candidate" : undefined, order: Date.now() };
     void saveData({ ...data, tasks: [...data.tasks, createdTask] });
     void enrichTaskInBackground(createdTask);
-    setQuickTitle("");
+    if (!compactLayout) setQuickTitle("");
     setQuickAddOpen(false);
     if ((settings?.onboardingVersion ?? 0) < 2 && settings?.onboardingStep === "add") {
       void saveSettings({ onboardingStep: "candidates" });
@@ -4375,7 +4381,6 @@ if (cached?.data && cached?.settings) {
       quickAddTask();
       return;
     }
-    setQuickTitle("");
     setQuickAddOpen(false);
     if (more && mobileQuickAddKind !== "habit") {
       openAdd(mobileQuickAddKind === "project" ? "project" : "task");
@@ -8982,7 +8987,7 @@ if (cached?.data && cached?.settings) {
           onProjectChange={setQuickProjectId}
           onProjectColorChange={setQuickProjectColor}
           onHabitMinutesChange={setMobileQuickHabitMinutes}
-          onClose={() => { setQuickAddOpen(false); setQuickTitle(""); }}
+          onClose={() => setQuickAddOpen(false)}
           onMore={() => finishMobileQuickAdd(true)}
           onSubmit={() => finishMobileQuickAdd()}
         /></Suspense>
@@ -10210,7 +10215,7 @@ if (cached?.data && cached?.settings) {
         />
       )}
 
-      {!productAiPresentation && compactLayout && !candidateDrawerOpen && !mobilePlacement && !drawerOpen && !commandOpen && !notificationCenterOpen && !scheduleTemplateOpen && utilityPanel !== "settings" && (
+      {!productAiPresentation && compactLayout && !candidateDrawerOpen && !mobilePlacement && !drawerOpen && !commandOpen && !notificationCenterOpen && !scheduleTemplatePresence.present && utilityPanel !== "settings" && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiPresence.present || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, mode)} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {!productPresentation && !settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
@@ -10239,7 +10244,7 @@ if (cached?.data && cached?.settings) {
       {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
       {createPortal(<div className="df-mobile-floating-actions" style={themeVars(settings, mode)}>
         {mobileExecution && <Suspense fallback={null}><MobileExecutionControls
-          hidden={candidateDrawerOpen || drawerOpen || quickAddOpen || aiOpen || Boolean(utilityPanel) || commandOpen || notificationCenterOpen || scheduleTemplateOpen}
+          hidden={candidateDrawerOpen || drawerOpen || quickAddOpen || aiOpen || Boolean(utilityPanel) || commandOpen || notificationCenterOpen || scheduleTemplatePresence.present}
           drawerOpen={candidateDrawerOpen} panelRef={candidatePanelRef} scrollRef={candidateScrollRef} onClose={closeCandidateDrawer}
           lang={lang} count={visibleCandidates.filter((task) => !task.completed).length} triggerRef={candidateTriggerRef}
           title={mobilePlacement ? (tasks.find((task) => task.id === mobilePlacement.taskId)?.title || (lang === "zh" ? "任务已移除" : "Task removed")) : undefined}
@@ -10247,7 +10252,7 @@ if (cached?.data && cached?.settings) {
           conflict={Boolean(mobilePlacement && placementPreview && getScheduledEventsForRange([addDays(placementPreview.date, -1), placementPreview.date, addDays(placementPreview.date, 1)]).some((item) => item.scheduledStart && item.scheduledEnd && scheduledDateTimesOverlap(placementPreview.date, placementPreview.startTime, placementPreview.endTime, item.scheduledDate || placementPreview.date, item.scheduledStart, item.scheduledEnd)))}
           onOpen={() => { setCandidatePanelCollapsed(false); setCandidateDrawerOpen(true); }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
         <MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
-        drawerOpen={drawerOpen || commandOpen || quickAddOpen || scheduleTemplateOpen || (mobileExecution && (candidateDrawerOpen || Boolean(mobilePlacement)))} notificationCenterOpen={notificationCenterOpen}
+        drawerOpen={drawerOpen || commandOpen || quickAddOpen || scheduleTemplatePresence.present || (mobileExecution && (candidateDrawerOpen || Boolean(mobilePlacement)))} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, mode)}
         onAdd={() => { setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
       /></div>, document.body)}
@@ -10290,8 +10295,9 @@ if (cached?.data && cached?.settings) {
           </div>
         </div>
       )}
-      {scheduleTemplateOpen && data && (
+      {scheduleTemplatePresence.present && data && (
         <ScheduleTemplateModal
+          closing={scheduleTemplatePresence.closing}
           lang={lang}
           date={timelineDate}
           tasks={[...tasks, ...expandExternalCalendarOccurrences(new Set([timelineDate])).tasks.map((task) => task.scheduledStart ? task : { ...task, scheduledStart: "00:00", scheduledEnd: "23:59" })]}
@@ -10429,6 +10435,7 @@ function FloatingShelfDragPreview({ task, pointer, candidateTarget, lang }: { ta
 const TEMPLATE_VISUAL_PARITY_DEBUG = false;
 
 function ScheduleTemplateModal({
+  closing,
   lang,
   date,
   tasks,
@@ -10437,6 +10444,7 @@ function ScheduleTemplateModal({
   onApply,
   onClose,
 }: {
+  closing: boolean;
   lang: Language;
   date: string;
   tasks: Task[];
@@ -10482,6 +10490,8 @@ function ScheduleTemplateModal({
   const [dragState, setDragState] = useState<{ periodId: string; mode: "move" | "resize-top" | "resize-bottom"; originY: number; originStart: number; originDuration: number } | null>(null);
   const [creatingState, setCreatingState] = useState<{ startMinutes: number; currentMinutes: number } | null>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const modalRef = useRef<HTMLElement>(null);
+  useModalFocus(!closing, modalRef);
   const timelineRef = useRef<HTMLDivElement>(null);
 
   // ── Template list drag-to-reorder ──
@@ -10513,6 +10523,7 @@ function ScheduleTemplateModal({
   useEffect(() => { titleRef.current?.focus(); }, []);
 
   useEffect(() => {
+    if (closing) return;
     const handler = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (dragState || creatingState || renamingId || editingPeriodId) {
@@ -10529,7 +10540,7 @@ function ScheduleTemplateModal({
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [onClose, dragState, creatingState, renamingId, editingPeriodId, templateReorder.drag, templateReorder.cancelDrag]);
+  }, [closing, onClose, dragState, creatingState, renamingId, editingPeriodId, templateReorder.drag, templateReorder.cancelDrag]);
 
   // ── Period factory helpers ──
   function slotToPeriod(slot: BuiltInScheduleTemplateSlot): TemplatePeriod {
@@ -10867,8 +10878,10 @@ function ScheduleTemplateModal({
   const portalTarget = document.getElementById("df-portal-target") || document.body;
 
   return createPortal(
-    <div className="df-modal-backdrop df-template-modal-backdrop" role="presentation" onMouseDown={onClose}>
+    <div className="df-modal-backdrop df-template-modal-backdrop" data-motion-closing={closing || undefined} inert={closing} role="presentation" onMouseDown={onClose}>
       <section
+        ref={modalRef}
+        tabIndex={-1}
         className="df-template-modal"
         role="dialog"
         aria-modal="true"

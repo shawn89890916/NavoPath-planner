@@ -13953,7 +13953,7 @@ body.df-timeline-pointer-drag * {
   padding: 24px;
   background: rgba(22,19,15,.48);
   backdrop-filter: none;
-  animation: dfFadeIn 140ms ease-out both;
+  animation: ui-fade-in var(--motion-fade) var(--motion-ease) backwards;
 }
 .df-app .df-template-modal {
   width: min(1040px, calc(100vw - 36px));
@@ -13969,9 +13969,16 @@ body.df-timeline-pointer-drag * {
   color: var(--text-main);
   box-shadow: var(--paper-float-shadow);
   overflow: hidden;
-  animation: paper-sheet-in 170ms cubic-bezier(.2,.75,.25,1) both;
+  animation: paper-sheet-in var(--motion-base) var(--motion-ease) backwards;
   transform-origin: center top;
   corner-shape: var(--corner-shape, squircle);
+}
+.df-app .df-template-modal-backdrop[data-motion-closing] {
+  pointer-events: none;
+  animation: ui-fade-out var(--motion-base) var(--motion-ease) forwards;
+}
+.df-app .df-template-modal-backdrop[data-motion-closing] .df-template-modal {
+  animation: ui-surface-out var(--motion-base) var(--motion-ease) forwards;
 }
 .df-app .df-template-header-actions {
   position: absolute;

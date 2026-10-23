@@ -405,17 +405,30 @@ function TreeMenu(props: {
   actions: Array<{ label: string; danger?: boolean; onClick: () => void }>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
   const presence = useMotionPresence(props.open);
 
   useEffect(() => {
     if (!props.open) return;
+    triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const onPointerDown = (event: MouseEvent) => {
-      if (ref.current?.contains(event.target as Node)) return;
+      if (ref.current?.contains(event.target as Node) || triggerRef.current?.contains(event.target as Node)) return;
+      props.onClose();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      triggerRef.current?.focus();
       props.onClose();
     };
     document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [props.open, props]);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [props.open]);
 
   if (!presence.present) return null;
   return (
@@ -425,6 +438,7 @@ function TreeMenu(props: {
           key={action.label}
           className={action.danger ? "danger" : ""}
           onClick={() => {
+            triggerRef.current?.focus();
             action.onClick();
             props.onClose();
           }}
@@ -536,6 +550,7 @@ function PlanningSubtaskNode(props: {
                 className="df-tree-icon-button"
                 onClick={(event) => {
                   event.stopPropagation();
+                  event.currentTarget.focus();
                   setMenuOpen((open) => !open);
                 }}
                 aria-label={t(props.lang, "planning.more")}
@@ -690,6 +705,7 @@ function PlanningTaskNode(props: {
                 className="df-tree-icon-button"
                 onClick={(event) => {
                   event.stopPropagation();
+                  event.currentTarget.focus();
                   setMenuOpen((open) => !open);
                 }}
                 aria-label={t(props.lang, "planning.more")}
