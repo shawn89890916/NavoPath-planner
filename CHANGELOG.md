@@ -9,6 +9,7 @@
 - 减淡勾选框内部填充和竖屏候选面板遮罩；展开候选面板时仍可滚动时间轴，容量提示可从右侧关闭。
 
 ### 修复
+- 修复竖屏今日候选“更多”菜单在触屏失焦后提前关闭、选项点击无响应的问题；AI 排程设置保持在屏幕内，保留点击外部与键盘关闭操作。
 - 恢复详情抽屉与弹层的平滑动效，减少动态效果时缩短过渡；关闭详情后快速打开另一项任务，新详情不再被上一次关闭操作打断。
 - 项目与时长选择弹层根据可见空间调整展开方向与高度，窄屏、短视口及窗口缩放时保持选项可见并可滚动。
 - 修复时间轴上 15 分钟任务内容截断；竖屏时间轴底色延伸至右侧边缘，任务块保持原位。
@@ -221,6 +222,7 @@
 - Quick add in Planning preserves the current view and keeps new tasks in Planning. Planning content is prepared ahead of time, with immediate layout placeholders on first open.
 
 ### Fixed
+- Fixed Today's Candidates More menu dismissing before touch selections activate in portrait mode. AI scheduling settings stay within the screen, with outside-click and keyboard dismissal preserved.
 - Restored smooth detail drawer and popover animations with shorter transitions for reduced motion. Quickly opening another task during a drawer exit now keeps the new details open.
 - Project and duration pickers now adapt their direction and height to the visible space, keeping options reachable by scrolling on narrow screens, short viewports, and resized windows.
 - Prevent content clipping in 15-minute timeline tasks. Extend portrait timeline hour bands to the right edge while keeping task blocks in place.

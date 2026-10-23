@@ -1,4 +1,4 @@
-import React, { forwardRef, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
+import React, { forwardRef, useEffect, useRef, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { UiCloseIcon, UiMoreIcon } from "./UiIcons";
 
@@ -33,9 +33,19 @@ export function Popover({ className, children, ...props }: HTMLAttributes<HTMLDi
 }
 
 export function ActionDisclosure({ label, children }: { label: string; children: ReactNode }) {
+  const disclosureRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const closeOutside = (event: PointerEvent) => {
+      const disclosure = disclosureRef.current;
+      if (disclosure?.open && !disclosure.contains(event.target as Node | null)) disclosure.open = false;
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, []);
   return (
-    <details className="ui-action-disclosure" onBlur={(event) => {
-      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) event.currentTarget.open = false;
+    <details ref={disclosureRef} className="ui-action-disclosure" onBlur={(event) => {
+      // Touch browsers may blur to the body before dispatching the menu item's click.
+      if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.open = false;
     }} onKeyDown={(event) => {
       if (event.key !== "Escape") return;
       event.stopPropagation();
