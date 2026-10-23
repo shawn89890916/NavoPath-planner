@@ -15,7 +15,8 @@
     max-width: none;
   }
   #root .df-app[data-phone-execution] .df-timeline-panel:has(.df-timeline-daily) .df-timeline-allday {
-    width: calc(100% - 8px);
+    width: min(500px, calc(100% - 32px));
+    left: -4px;
   }
   #root .df-app[data-phone-execution] .df-timeline-daily .df-timeline-canvas {
     width: calc(100% - 9px);
