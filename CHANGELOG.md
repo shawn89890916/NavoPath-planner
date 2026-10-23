@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-10-23 · 动画与弹层
+
+### 修复
+- 恢复详情抽屉与弹层的平滑动效，减少动态效果时缩短过渡；关闭详情后快速打开另一项任务，新详情不再被上一次关闭操作打断。
+- 项目与时长选择弹层根据可见空间调整展开方向与高度，窄屏、短视口及窗口缩放时保持选项可见并可滚动。
+
 ## 2026-10-22 · 手机排程流程
 
 ### 改进
@@ -198,6 +204,12 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-23 · Motion and Popovers
+
+### Fixed
+- Restored smooth detail drawer and popover animations with shorter transitions for reduced motion. Quickly opening another task during a drawer exit now keeps the new details open.
+- Project and duration pickers now adapt their direction and height to the visible space, keeping options reachable by scrolling on narrow screens, short viewports, and resized windows.
 
 ## 2026-10-22 · Mobile Scheduling
 

@@ -5459,6 +5459,7 @@ if (cached?.data && cached?.settings) {
     revealResizeHandles(scheduledRecord.id);
     setDragCreate(null);
     if (openDetails) {
+      rememberLayerTrigger("drawer");
       setAddType("task");
       setEditingId(task.id);
       setEditingRecordId(scheduledRecord.id);
@@ -6414,6 +6415,10 @@ if (cached?.data && cached?.settings) {
   }
 
   function rememberLayerTrigger(key: string) {
+    layerExitHandlesRef.current.get(key)?.cancel();
+    layerExitHandlesRef.current.delete(key);
+    const selectors = key === "drawer" ? ".df-drawer-backdrop, .df-drawer" : ".df-utility-backdrop, .df-utility-panel";
+    document.querySelectorAll<HTMLElement>(selectors).forEach((element) => element.classList.remove("is-closing"));
     const active = document.activeElement;
     if (active instanceof HTMLElement) layerTriggerRef.current.set(key, active);
   }
@@ -12155,7 +12160,8 @@ function EditDrawer(props: {
   const [newProjectTitle, setNewProjectTitle] = useState("");
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const [durationPickerOpen, setDurationPickerOpen] = useState(false);
-  const [detailPopoverPosition, setDetailPopoverPosition] = useState({ top: 0, left: 0, width: 280 });
+  const [detailPopoverPosition, setDetailPopoverPosition] = useState<CSSProperties>({ top: 0, left: 0, width: 280 });
+  const detailPopoverRef = useRef<HTMLElement>(null);
   const projectTriggerRef = useRef<HTMLButtonElement>(null);
   const durationTriggerRef = useRef<HTMLButtonElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -12215,26 +12221,41 @@ function EditDrawer(props: {
     return () => { observer.disconnect(); cancelAnimationFrame(frame); };
   }, [f.title, props.task?.id]);
   function positionDetailPopover(trigger: HTMLButtonElement | null, width: number) {
-    if (!trigger) return;
+    const panel = detailPopoverRef.current;
+    if (!trigger || !panel) return;
     const rect = trigger.getBoundingClientRect();
     const gutter = 12;
+    const gap = 8;
+    const viewport = window.visualViewport;
+    const viewportTop = viewport?.offsetTop || 0;
+    const viewportLeft = viewport?.offsetLeft || 0;
+    const viewportBottom = viewportTop + (viewport?.height || window.innerHeight);
+    const viewportRight = viewportLeft + (viewport?.width || window.innerWidth);
+    const panelWidth = Math.min(width, Math.max(0, viewportRight - viewportLeft - gutter * 2));
+    const naturalHeight = Math.min(350, panel.scrollHeight + panel.offsetHeight - panel.clientHeight);
+    const below = Math.max(0, viewportBottom - gutter - rect.bottom - gap);
+    const above = Math.max(0, rect.top - gap - viewportTop - gutter);
+    const placeBelow = naturalHeight <= below || below >= above;
+    const maxHeight = Math.min(350, placeBelow ? below : above);
+    const height = Math.min(naturalHeight, maxHeight);
     setDetailPopoverPosition({
-      top: Math.min(rect.bottom + 8, window.innerHeight - 360),
-      left: Math.min(Math.max(rect.left, gutter), window.innerWidth - width - gutter),
-      width,
-    });
+      top: Math.max(viewportTop + gutter, Math.min(placeBelow ? rect.bottom + gap : rect.top - gap - height, viewportBottom - gutter - height)),
+      left: Math.max(viewportLeft + gutter, Math.min(rect.left, viewportRight - panelWidth - gutter)),
+      width: panelWidth,
+      maxHeight,
+      transformOrigin: placeBelow ? "center top" : "center bottom",
+      "--detail-popover-shift-y": placeBelow ? "-7px" : "7px",
+    } as CSSProperties);
   }
   function toggleProjectPicker() {
     const next = !projectPickerOpen;
     setDurationPickerOpen(false);
     setProjectPickerOpen(next);
-    if (next) positionDetailPopover(projectTriggerRef.current, 300);
   }
   function toggleDurationPicker() {
     const next = !durationPickerOpen;
     setProjectPickerOpen(false);
     setDurationPickerOpen(next);
-    if (next) positionDetailPopover(durationTriggerRef.current, 260);
   }
   useLayoutEffect(() => {
     if (!projectPickerOpen && !durationPickerOpen) return;
@@ -12242,11 +12263,19 @@ function EditDrawer(props: {
       projectPickerOpen ? projectTriggerRef.current : durationTriggerRef.current,
       projectPickerOpen ? 300 : 260,
     );
+    update();
+    const observer = new ResizeObserver(update);
+    if (detailPopoverRef.current) observer.observe(detailPopoverRef.current);
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
+    window.visualViewport?.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("scroll", update);
     return () => {
+      observer.disconnect();
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
+      window.visualViewport?.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("scroll", update);
     };
   }, [projectPickerOpen, durationPickerOpen]);
   function createAndSelectProject() {
@@ -12784,7 +12813,7 @@ function EditDrawer(props: {
 
         {projectPickerOpen && createPortal(
           <div className="df-detail-popover-layer" onMouseDown={() => setProjectPickerOpen(false)}>
-            <section className="df-detail-floating-popover project" style={detailPopoverPosition} onMouseDown={(event) => event.stopPropagation()}>
+            <section ref={detailPopoverRef} className="df-detail-floating-popover project" style={detailPopoverPosition} onMouseDown={(event) => event.stopPropagation()}>
               <header><strong>{t(props.lang, "drawer.assignProject")}</strong><span>{selectedProjectTitle}</span></header>
               <div className="df-drawer-project-list">
                 <button onClick={() => { set("projectId", ""); props.onTaskUpdate(props.task!.id, { projectId: undefined }); setProjectPickerOpen(false); }}>{t(props.lang, "drawer.unassigned")}</button>
@@ -12798,7 +12827,7 @@ function EditDrawer(props: {
 
         {durationPickerOpen && createPortal(
           <div className="df-detail-popover-layer" onMouseDown={() => setDurationPickerOpen(false)}>
-            <section className="df-detail-floating-popover duration" style={detailPopoverPosition} onMouseDown={(event) => event.stopPropagation()}>
+            <section ref={detailPopoverRef} className="df-detail-floating-popover duration" style={detailPopoverPosition} onMouseDown={(event) => event.stopPropagation()}>
               <header><strong>{t(props.lang, "drawer.duration")}</strong><span>{formatDuration(f.estimatedHours || 0.5)}</span></header>
               <div className="df-detail-duration-options">
                 {DURATION_OPTIONS.map((minutes) => (
