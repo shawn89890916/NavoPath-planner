@@ -19,7 +19,7 @@ type MotionDocument = Document & {
   startViewTransition?: (update: () => void | Promise<void>) => ViewTransitionLike;
 };
 
-const activeTransitions = new WeakMap<Document, { skip?: () => void }>();
+const activeTransitions = new WeakMap<Document, { skip?: (nextKey: object | MotionScope) => void }>();
 
 export function prefersReducedMotion(targetWindow: Window | null | undefined = typeof window === "undefined" ? undefined : window) {
   return Boolean(targetWindow?.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
@@ -39,6 +39,8 @@ export async function runMotionTransition(
     document?: Document | null;
     duration?: number;
     scope?: MotionScope;
+    /** Selections with different keys must each commit, even in the same scope. */
+    key?: object;
     updates?: "latest" | "all";
   } = {},
 ) {
@@ -52,8 +54,10 @@ export async function runMotionTransition(
     return;
   }
 
-  activeTransitions.get(targetDocument)?.skip?.();
-  const active: { skip?: () => void } = {};
+  const scope = options.scope ?? "workspace";
+  const key = options.key ?? scope;
+  activeTransitions.get(targetDocument)?.skip?.(key);
+  const active: { skip?: (nextKey: object | MotionScope) => void } = {};
   activeTransitions.set(targetDocument, active);
   const root = targetDocument.documentElement;
   const finish = () => {
@@ -71,7 +75,6 @@ export async function runMotionTransition(
   const direction = options.direction ?? "neutral";
   delete root.dataset.motionFallback;
   root.dataset.motionDirection = direction;
-  const scope = options.scope ?? "workspace";
   root.dataset.motionScope = scope;
   const distance = scope === "timeline" || scope === "workspace" && targetWindow?.matchMedia?.("(orientation: portrait)").matches
     ? "100%" : scope === "settings" || scope === "planning" ? "24px" : "6px";
@@ -89,9 +92,9 @@ export async function runMotionTransition(
       const transition = startViewTransition.call(targetDocument, commit);
       // Skipping an overlapping transition rejects ready even if finished resolves.
       void transition.ready?.catch(() => undefined);
-      active.skip = () => {
-        // Relative commands must be applied before capturing their successor.
-        if (options.updates === "all") commit();
+      active.skip = (nextKey) => {
+        // Apply independent and relative commands before capturing their successor.
+        if (options.updates === "all" || nextKey !== key) commit();
         transition.skipTransition?.();
       };
       await transition.finished;

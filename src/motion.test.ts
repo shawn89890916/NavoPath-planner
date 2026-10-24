@@ -145,6 +145,23 @@ describe("motion helpers", () => {
     vi.useRealTimers();
   });
 
+  it.each([false, true])("preserves independent selections when animations overlap (same scope: %s)", async (sameScope) => {
+    const callbacks: (() => void)[] = [];
+    const finishes: (() => void)[] = [];
+    const targetDocument = motionDocument(motionWindow(false), (callback) => {
+      callbacks.push(callback);
+      return { finished: new Promise<void>((resolve) => finishes.push(resolve)), skipTransition: vi.fn() };
+    });
+    const updates: string[] = [];
+    const first = runMotionTransition(() => { updates.push("view"); }, { document: targetDocument, scope: "planning", key: {} });
+    const second = runMotionTransition(() => { updates.push("workspace"); }, { document: targetDocument, scope: sameScope ? "planning" : "workspace", key: {} });
+    callbacks[1]();
+    callbacks[0]();
+    finishes.forEach((finish) => finish());
+    await Promise.all([first, second]);
+    expect(updates).toEqual(["view", "workspace"]);
+  });
+
   it("applies every relative command once when its animation is superseded", async () => {
     const callbacks: (() => void)[] = [];
     const finishes: (() => void)[] = [];

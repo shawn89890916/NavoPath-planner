@@ -25,4 +25,17 @@ describe("time-axis rendering", () => {
     expect(tree.root.findAllByType("div")[0].props.style.top).toBe("60px");
     act(() => tree.unmount());
   });
+
+  it.each([9 + 10 / 60, 9 + 1 / 60, 23 + 59 / 60])("positions all hours for an arbitrary day boundary (%s)", (dayStartHour) => {
+    let tree!: ReactTestRenderer;
+    act(() => { tree = create(<DailyTimelineGrid slotCount={97} dayStartHour={dayStartHour} slotHeight={20} anchorDate="2026-10-23" />); });
+    const hours = tree.root.findAllByType("div");
+    expect(hours).toHaveLength(24);
+    const startMinutes = Math.round(dayStartHour * 60);
+    expect(parseFloat(hours[0].props.style.top)).toBeCloseTo((60 - startMinutes % 60) / 15 * 20);
+    const midnight = hours.find((node) => node.findByType("span").children.join("") === "10.24 0:00");
+    expect(midnight).toBeDefined();
+    expect(parseFloat(midnight!.props.style.top)).toBeCloseTo((1440 - startMinutes) / 15 * 20);
+    act(() => tree.unmount());
+  });
 });

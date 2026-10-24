@@ -29,7 +29,7 @@ import { autoScheduleTasks, type UnscheduledTask } from "./autoSchedule";
 import { AI_INFERENCE_MODEL_VERSION, buildAiProfile, learnedTaskDurationMinutes, predictTaskIntelligence } from "./aiPersonalization";
 import { TaskDragLayer, UnifiedDragOverlay, type UnifiedDragSnapshot } from "./unifiedDrag";
 import { installBrowserFallback, forceLocalPreviewMode } from "./browserFallback";
-import { getVisibleDays, pointerToDateTime, timeBlockTop, timeBlockHeight, HOUR_HEIGHT } from "./timelineGeometry";
+import { getVisibleDays, pointerToDateTime, timeBlockTop, timeBlockHeight, HOUR_HEIGHT, timelineHourSlots } from "./timelineGeometry";
 import { t, detectSystemLanguage, viewLabel, weekdayName } from "./i18n";
 import { term } from "./terminology";
 import { migrateLegacyHabitTracker, scheduleHabitRecord, toggleHabitCompletion, unscheduleHabitRecord, updateHabit, archiveHabit, buildHabitMetrics, isHabitDueOnDate, isHabitWithinDateRange, weekdayLabels, type HabitMetrics } from "./utils/habits";
@@ -9550,18 +9550,15 @@ if (cached?.data && cached?.settings) {
                         <div className="df-timeline-3day-grid">
                           <div className="df-timeline-3day-ruler">
                             <div className="df-timeline-canvas" style={{ height: `${canvasHeight}px`, width: "52px", margin: 0, borderLeft: "none", background: "transparent" }}>
-                              {Array.from({ length: slotCount }).map((_, index) => {
-                                const minutes = ((dayStartHour * 60 + index * SLOT_MINUTES) % (24 * 60));
-                                const isHour = minutes % 60 === 0;
-                                if (!isHour) return null;
+                              {timelineHourSlots(slotCount, dayStartHour).map(({ index, minutes }) => {
                                 const isMajor = minutes % (6 * 60) === 0;
                                 const label = continuousTimelineEnabled ? dailyContinuousSlotLabel({ index, anchorDate: continuousTimelineStartDate, dayStartHour, dateStep: timelineColumnCount }) : hourLabel(minutes);
                                 const boundarySeparator = label.indexOf(" ");
                                 const boundaryDate = boundarySeparator > 0 ? label.slice(0, boundarySeparator) : "";
                                 const timeLabel = boundarySeparator > 0 ? label.slice(boundarySeparator + 1) : label;
                                 return (
-                                  <div className={`df-slot-ruler ${isHour ? "hour" : "quarter"} ${isMajor ? "major" : ""}`} style={{ top: `${index * timelineSlotHeight}px` }} key={index}>
-                                    {isHour ? <span className={`df-timeline-ruler-label${boundaryDate ? " day-boundary" : ""}`}>{boundaryDate && <small>{boundaryDate}</small>}<b>{timeLabel}</b></span> : null}
+                                  <div className={`df-slot-ruler hour ${isMajor ? "major" : ""}`} style={{ top: `${index * timelineSlotHeight}px` }} key={index}>
+                                    <span className={`df-timeline-ruler-label${boundaryDate ? " day-boundary" : ""}`}>{boundaryDate && <small>{boundaryDate}</small>}<b>{timeLabel}</b></span>
                                   </div>
                                 );
                               })}
@@ -9731,12 +9728,9 @@ if (cached?.data && cached?.settings) {
                             >
                               {/* Layer 1: Shared hour lines across all columns */}
                               <div className="df-hour-lines-layer" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1 }}>
-                                {Array.from({ length: slotCount }).map((_, index) => {
-                                  const minutes = ((dayStartHour * 60 + index * SLOT_MINUTES) % (24 * 60));
-                                  const isHour = minutes % 60 === 0;
-                                  if (!isHour) return null;
+                                {timelineHourSlots(slotCount, dayStartHour).map(({ index, minutes }) => {
                                   const isMajor = minutes % (6 * 60) === 0;
-                                  return <div className={`df-slot ${isHour ? "hour" : "quarter"} ${isMajor ? "major" : ""}`} style={{ top: `${index * timelineSlotHeight}px` }} key={index} />;
+                                  return <div className={`df-slot hour ${isMajor ? "major" : ""}`} style={{ top: `${index * timelineSlotHeight}px` }} key={index} />;
                                 })}
                               </div>
                               {/* Layer 2: Day column backgrounds and separators */}
@@ -10279,7 +10273,7 @@ if (cached?.data && cached?.settings) {
         <MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
         drawerOpen={drawerOpen || commandOpen || quickAddOpen || scheduleTemplatePresence.present || (mobileExecution && (candidateDrawerOpen || Boolean(mobilePlacement)))} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, mode)}
-        onAdd={() => { setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
+        onAdd={() => { setQuickTitle(""); setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}

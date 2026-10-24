@@ -18,6 +18,19 @@ export const TIMELINE_END = 24; // hour
 /** hourHeight = SLOT_HEIGHT × (60 / SLOT_MINUTES) = 80 px */
 export const HOUR_HEIGHT = SLOT_HEIGHT * (60 / SLOT_MINUTES);
 
+/** Place whole-hour ticks independently of the timeline's quarter-hour origin. */
+export function timelineHourSlots(slotCount: number, dayStartHour: number) {
+  if (slotCount <= 0) return [];
+  const start = Math.round(dayStartHour * 60);
+  const first = Math.ceil(start / 60) * 60;
+  const end = start + (slotCount - 1) * SLOT_MINUTES;
+  const count = Math.max(0, Math.floor((end - first) / 60) + 1);
+  return Array.from({ length: count }, (_, hour) => {
+    const absoluteMinutes = first + hour * 60;
+    return { index: (absoluteMinutes - start) / SLOT_MINUTES, minutes: absoluteMinutes % (24 * 60) };
+  });
+}
+
 // ── Helpers ──
 
 export function todayIso(): string {

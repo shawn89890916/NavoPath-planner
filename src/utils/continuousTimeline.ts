@@ -51,7 +51,7 @@ export function dailyContinuousSlotLabel({
   dayStartHour: number;
   dateStep?: number;
 }): string {
-  const absoluteMinutes = dayStartHour * 60 + index * SLOT_MINUTES;
+  const absoluteMinutes = Math.round(dayStartHour * 60 + index * SLOT_MINUTES);
   const minuteOfDay = ((absoluteMinutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
   if (minuteOfDay % 60 !== 0) return "";
   const date = addDays(anchorDate, Math.floor(absoluteMinutes / MINUTES_PER_DAY) * Math.max(1, dateStep));

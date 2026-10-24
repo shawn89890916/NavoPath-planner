@@ -1,5 +1,12 @@
 # NavoPath 更新日志
 
+## 2026-10-24 · 导航与时间轴
+
+### 修复
+- 快速操作不同区域的导航时保留各自的选择，切换工作区不再丢失刚选中的规划或日历视图。
+- 手机快速新增在每次打开时清空旧标题并恢复输入焦点，连续添加时避免重复提交上一次的内容，同时保留关闭时的平滑退场。
+- 一天开始时间设为任意分钟时，单日、多日与周视图仍准确显示整点刻度和跨日日期。
+
 ## 2026-10-23 · 手机布局、规划与弹层
 
 ### 改进
@@ -218,6 +225,13 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-24 · Navigation and Timeline
+
+### Fixed
+- Rapid navigation in different areas preserves each selection; switching workspaces no longer discards a newly selected planning or calendar view.
+- Mobile quick add opens with a fresh title and restored input focus, avoiding resubmission of the previous entry while keeping a smooth closing animation.
+- Day, multi-day, and week views correctly show hour ticks and day-boundary dates when the day starts at any minute.
 
 ## 2026-10-23 · Mobile Layout, Planning, and Popovers
 

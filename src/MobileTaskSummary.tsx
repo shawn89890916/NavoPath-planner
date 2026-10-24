@@ -1,5 +1,5 @@
 import { EngagementRating } from "./components/EngagementRating";
-import { Fragment, useEffect, useRef, useState, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import type { Category, Language, NullablePriority, Project, Subtask, Task, TaskRecurrence, TimelineRecord } from "./types";
 import { clockTimeSpanMinutes, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { toggleSubtaskInTree } from "./utils/treeOrder";
@@ -50,6 +50,9 @@ export function MobileShortSheet(props: {
   const kind = props.kind || "task";
   const kinds = props.kinds || ["task", "project", "habit"];
   const panelRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    if (props.autoFocus && !props.closing) panelRef.current?.querySelector<HTMLInputElement>(".df-mobile-summary-head input")?.focus({ preventScroll: true });
+  }, [props.autoFocus, props.closing]);
   const gestureRef = useRef<{ pointerId: number; startY: number; panel: HTMLElement } | null>(null);
   useEffect(() => {
     const panel = panelRef.current;

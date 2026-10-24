@@ -1,4 +1,5 @@
 import { dailyContinuousSlotLabel } from "../utils/continuousTimeline";
+import { timelineHourSlots } from "../timelineGeometry";
 import React, { memo, type CSSProperties } from "react";
 import { TaskBlock } from "./TaskBlock";
 import { CloseButton } from "./UiPrimitives";
@@ -386,12 +387,9 @@ export function TimelineEventBlock({
 }
 
 export const DailyTimelineGrid = memo(function DailyTimelineGrid({ slotCount, dayStartHour, slotHeight, anchorDate }: { slotCount: number; dayStartHour: number; slotHeight: number; anchorDate: string }) {
-  return <>{Array.from({ length: slotCount }).map((_, index) => {
-    const minutes = ((dayStartHour * 60 + index * 15) % (24 * 60));
-    const isHour = minutes % 60 === 0;
-    if (!isHour) return null;
+  return <>{timelineHourSlots(slotCount, dayStartHour).map(({ index, minutes }) => {
     const isMajor = minutes % (6 * 60) === 0;
     const label = dailyContinuousSlotLabel({ index, anchorDate, dayStartHour });
-    return <div className={`df-slot ${isHour ? "hour" : "quarter"} ${isMajor ? "major" : ""}`} style={{ top: `${index * slotHeight}px` }} key={index}><span>{label}</span></div>;
+    return <div className={`df-slot hour ${isMajor ? "major" : ""}`} style={{ top: `${index * slotHeight}px` }} key={index}><span>{label}</span></div>;
   })}</>;
 });

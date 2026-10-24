@@ -11,7 +11,7 @@ export function useMotionSelection<T extends string>(value: T, commit: (next: T)
     const pending = { value: next };
     pendingRef.current = pending;
     void runMotionTransition(() => flushSync(() => commit(next)), {
-      scope, direction: typeof order === "function" ? order(previous, next) : order.indexOf(next) < order.indexOf(previous) ? "backward" : "forward",
+      scope, key: pendingRef, direction: typeof order === "function" ? order(previous, next) : order.indexOf(next) < order.indexOf(previous) ? "backward" : "forward",
     }).finally(() => { if (pendingRef.current === pending) pendingRef.current = null; });
   };
 }
