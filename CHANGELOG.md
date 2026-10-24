@@ -3,6 +3,7 @@
 ## 2026-10-24 · 导航、时间轴与顶栏手势
 
 ### 改进
+- 竖屏展开日历后，可点按月份或年份切换为三列选择网格，快速跨月、跨年定位，再选择具体日期。
 - 手机今日候选支持在整条顶栏上下滑动：上滑展开更多候选，下滑关闭；快速添加也可从标题栏上滑展开详情，保留轻点按钮与内容滚动。
 
 ### 修复
@@ -233,6 +234,7 @@
 ## 2026-10-24 · Navigation, Timeline, and Header Gestures
 
 ### Improvements
+- In the expanded portrait calendar, tap the month or year to replace dates with a three-column picker, jump across months or years, then choose a day.
 - Swipe the full Today’s Candidates header up to expand the list or down to close it on phones. Quick Add also expands to details with an upward header swipe, while taps and content scrolling remain available.
 
 ### Fixed

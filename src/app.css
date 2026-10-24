@@ -4230,7 +4230,12 @@ body:has(:active)::-webkit-scrollbar-thumb {
   align-items: center;
   min-height: 42px;
 }
-.df-mobile-date-picker > header strong {
+.df-mobile-date-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  gap: 4px;
   text-align: center;
   font-size: 17px;
   font-weight: 650;
@@ -4242,6 +4247,16 @@ body:has(:active)::-webkit-scrollbar-thumb {
   padding: 0;
   color: var(--text-muted);
   font-size: 28px;
+}
+.df-mobile-date-picker .df-mobile-date-heading button {
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--text-main);
+  font: inherit;
+  white-space: nowrap;
+}
+.df-mobile-date-heading button[aria-pressed="true"] {
+  background: var(--surface-tint);
 }
 .df-mobile-date-weekdays {
   display: grid;
@@ -4255,6 +4270,19 @@ body:has(:active)::-webkit-scrollbar-thumb {
   text-align: center;
 }
 .df-mobile-date-grid[data-motion-direction="backward"] { --content-shift-x: -12px; }
+.df-mobile-date-grid[data-selection-mode] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(44px, 1fr));
+  min-height: 264px;
+  gap: 4px;
+}
+#root .df-app .df-mobile-date-grid[data-selection-mode] button {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  height: 100%;
+  font-size: 14px;
+}
 .df-mobile-date-weekdays span {
   padding: 5px 0 3px;
   color: var(--text-muted);
