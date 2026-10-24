@@ -10858,19 +10858,19 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   gap: 11px;
   height: 58px;
   padding: 0 18px;
-  border-bottom: 1px solid rgba(56, 54, 49, .12);
+  border-bottom: 1px solid color-mix(in srgb, var(--text-main, #383631) 12%, transparent);
 }
 .df-skeleton-brand {
   display: block;
-  background: rgba(56, 54, 49, .10);
+  background: color-mix(in srgb, var(--text-main, #383631) 10%, transparent);
   animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; width: 82px; height: 14px; }
 .df-skeleton-tab {
   display: block;
-  background: rgba(56, 54, 49, .10);
+  background: color-mix(in srgb, var(--text-main, #383631) 10%, transparent);
   animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; width: 110px; height: 10px; margin: 0 auto; }
 .df-skeleton-avatar {
   display: block;
-  background: rgba(56, 54, 49, .10);
+  background: color-mix(in srgb, var(--text-main, #383631) 10%, transparent);
   animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; width: 32px; height: 32px; border-radius: 50%; }
 .df-planning-loading {
   display: grid;
@@ -10882,39 +10882,44 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 }
 .df-planning-loading-toolbar { display: flex; align-items: center; gap: 24px; }
 .df-planning-loading > section { width: min(100%, 720px); padding: 12px 0; }
+.df-ai-loading .df-ai-reference-prompt .df-skeleton-title { width: 85%; height: 28px; margin: 0 0 10px; }
+.df-ai-loading .df-ai-reference-prompt .df-skeleton-title:last-child { width: 60%; }
+.df-ai-loading .df-skeleton-task { grid-template-columns: minmax(0, 1fr); min-height: 48px; }
+.df-ai-loading .df-ai-composer-row .df-skeleton-tab { grid-column: 1 / -1; width: 55%; margin: 10px 8px; }
+.df-ai-loading .df-ai-composer-row .df-skeleton-avatar { grid-column: -2 / -1; justify-self: end; }
 .df-skeleton-workbench { display: grid; grid-template-columns: minmax(310px, 38%) 1fr; gap: 1px; height: calc(100vh - 58px); padding: 10px; }
-.df-skeleton-timeline { position: relative; overflow: hidden; border: 1px solid rgba(56, 54, 49, .12); background: var(--surface-main); }
-.df-skeleton-candidates { position: relative; overflow: hidden; border: 1px solid rgba(56, 54, 49, .12); background: var(--surface-main); display: grid; align-content: start; gap: 0; padding: 18px 22px; }
+.df-skeleton-timeline { position: relative; overflow: hidden; border: 1px solid color-mix(in srgb, var(--text-main, #383631) 12%, transparent); background: var(--surface-main); }
+.df-skeleton-candidates { position: relative; overflow: hidden; border: 1px solid color-mix(in srgb, var(--text-main, #383631) 12%, transparent); background: var(--surface-main); display: grid; align-content: start; gap: 0; padding: 18px 22px; }
 .df-skeleton-title {
   display: block;
-  background: rgba(56, 54, 49, .10);
+  background: color-mix(in srgb, var(--text-main, #383631) 10%, transparent);
   animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; width: 148px; height: 18px; margin: 5px 0 22px; }
-.df-skeleton-task { display: grid; grid-template-columns: 17px 1fr 44px; align-items: center; gap: 14px; min-height: 60px; border-bottom: 1px solid rgba(56, 54, 49, .11); }
+.df-skeleton-task { display: grid; grid-template-columns: 17px 1fr 44px; align-items: center; gap: 14px; min-height: 60px; border-bottom: 1px solid color-mix(in srgb, var(--text-main, #383631) 11%, transparent); }
 .df-skeleton-task i {
   display: block; background: transparent;
-  animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; width: 15px; height: 15px; border: 1px solid rgba(56, 54, 49, .18); }
+  animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; width: 15px; height: 15px; border: 1px solid color-mix(in srgb, var(--text-main, #383631) 18%, transparent); }
 .df-skeleton-task span {
   display: block;
-  background: rgba(56, 54, 49, .10);
+  background: color-mix(in srgb, var(--text-main, #383631) 10%, transparent);
   animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; width: min(190px, 78%); height: 11px; }
 .df-skeleton-task small {
   display: block;
-  background: rgba(56, 54, 49, .10);
+  background: color-mix(in srgb, var(--text-main, #383631) 10%, transparent);
   animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; width: 40px; height: 10px; }
 .df-skeleton-add {
   display: block; background: transparent;
-  animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; position: absolute; right: 22px; bottom: 25px; left: 22px; height: 44px; border-top: 1px solid rgba(56, 54, 49, .12); }
-.df-skeleton-timeline-head { display: flex; justify-content: space-between; align-items: center; height: 76px; padding: 0 28px; border-bottom: 1px solid rgba(56, 54, 49, .12); }
+  animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; position: absolute; right: 22px; bottom: 25px; left: 22px; height: 44px; border-top: 1px solid color-mix(in srgb, var(--text-main, #383631) 12%, transparent); }
+.df-skeleton-timeline-head { display: flex; justify-content: space-between; align-items: center; height: 76px; padding: 0 28px; border-bottom: 1px solid color-mix(in srgb, var(--text-main, #383631) 12%, transparent); }
 .df-skeleton-timeline-head span {
   display: block;
-  background: rgba(56, 54, 49, .10);
+  background: color-mix(in srgb, var(--text-main, #383631) 10%, transparent);
   animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; width: 94px; height: 12px; }
 .df-skeleton-timeline-head span:nth-child(2) { width: 150px; height: 20px; }
 .df-skeleton-grid { position: relative; height: calc(100% - 76px); padding-top: 20px; }
-.df-skeleton-grid > i { display: block; height: 58px; border-bottom: 1px solid rgba(56, 54, 49, .08); }
+.df-skeleton-grid > i { display: block; height: 58px; border-bottom: 1px solid color-mix(in srgb, var(--text-main, #383631) 8%, transparent); }
 .df-skeleton-grid b {
-  display: block; background: rgba(56, 54, 49, .07);
-  animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; position: absolute; width: 29%; border: 1px solid rgba(56, 54, 49, .10); }
+  display: block; background: color-mix(in srgb, var(--text-main, #383631) 7%, transparent);
+  animation: dfSkeletonBreathe 1.35s ease-in-out infinite alternate; position: absolute; width: 29%; border: 1px solid color-mix(in srgb, var(--text-main, #383631) 10%, transparent); }
 .df-skeleton-grid .block-one { top: 78px; left: 7%; height: 86px; }
 .df-skeleton-grid .block-two { top: 225px; left: 38%; height: 116px; }
 .df-skeleton-grid .block-three { top: 402px; left: 68%; height: 74px; }
@@ -23722,6 +23727,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 @media (prefers-reduced-motion: reduce) {
   #root .df-app.mode-execute * { scroll-behavior: auto; }
+  .df-ai-loading *, .df-planning-loading * { animation: none; }
   #root .df-app .df-header * { scroll-behavior: auto; }
   .df-auth-tabs button {
     transition: none;

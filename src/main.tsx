@@ -10220,7 +10220,7 @@ if (cached?.data && cached?.settings) {
         </ExecutionSplitLayout>
       </Activity>
       <Activity mode={mode === "planning" ? "visible" : "hidden"}>
-        <Suspense fallback={<main className="df-planning df-planning-loading" aria-busy="true" aria-label={lang === "zh" ? "正在打开规划" : "Opening Planning"}>
+        <Suspense fallback={<main className="df-planning df-planning-loading" aria-busy="true" aria-label={lang === "zh" ? "规划" : "Planning"}>
           <div className="df-planning-loading-toolbar" aria-hidden="true"><span className="df-skeleton-title" /><span className="df-skeleton-tab" /></div>
           <section aria-hidden="true"><span className="df-skeleton-title" />{Array.from({ length: 5 }, (_, index) => <div className="df-skeleton-task" key={index}><i /><span /><small /></div>)}</section>
         </main>}>

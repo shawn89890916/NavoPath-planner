@@ -998,13 +998,19 @@ export function preloadAiPanel() { void loadAiPanel().catch(() => undefined); }
 const AiPanelModule = lazy(loadAiPanel);
 
 export function AiPanelLoading({ lang, onClose, closing = false, embedded = false, docked }: Pick<React.ComponentProps<typeof AiPanelModule>, "lang" | "onClose" | "closing" | "embedded" | "docked">) {
-  return <aside className={`df-ai-panel df-ai-panel-reference${embedded ? " is-embedded" : ""}${docked ? " is-docked" : ""}`} data-motion-closing={closing || undefined} inert={closing} aria-busy="true" aria-label="NavoPath AI" onKeyDown={(event) => { if (event.key === "Escape") onClose(); }}>
+  return <aside className={`df-ai-panel df-ai-panel-reference df-ai-loading${embedded ? " is-embedded" : ""}${docked ? " is-docked" : ""}`} data-motion-closing={closing || undefined} inert={closing} aria-busy="true" aria-label="NavoPath AI" onKeyDown={(event) => { if (event.key === "Escape") onClose(); }}>
     {!embedded && <MobileSheetDismissHandle onDismiss={onClose} lang={lang} />}
     <div className="df-ai-panel-head">
-      <div className="df-ai-panel-title"><strong>NavoPath AI</strong></div>
+      <div className="df-ai-panel-title" aria-hidden="true"><span className="df-skeleton-brand" /></div>
       <div className="df-ai-head-actions"><CloseButton className="df-ai-reference-tool close" onClick={onClose} label={t(lang, "aiPanel.close")} /></div>
     </div>
-    <div className="df-ai-panel-body"><div className="df-loading-inline" role="status">{lang === "zh" ? "正在打开 Navo AI…" : "Opening Navo AI…"}</div></div>
+    <div className="df-ai-panel-body" aria-hidden="true">
+      <div className="df-ai-reference-empty">
+        <div className="df-ai-reference-prompt"><span className="df-skeleton-title" /><span className="df-skeleton-title" /></div>
+        {Array.from({ length: 3 }, (_, index) => <div className="df-skeleton-task" key={index}><span /></div>)}
+      </div>
+    </div>
+    <div className="df-ai-panel-foot" aria-hidden="true"><div className="df-ai-composer-row"><span className="df-skeleton-tab" /><span className="df-skeleton-avatar" /></div></div>
   </aside>;
 }
 

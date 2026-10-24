@@ -12,7 +12,8 @@ describe("AI dialog while its module loads", () => {
     act(() => { tree = create(createElement(AiPanelLoading, { lang: "en", docked: false, onClose })); });
     const panel = tree.root.findByType("aside");
     expect(panel.props["aria-busy"]).toBe("true");
-    expect(tree.root.findByProps({ role: "status" }).children).toEqual(["Opening Navo AI…"]);
+    expect(tree.root.findAllByProps({ className: "df-skeleton-task" })).toHaveLength(3);
+    expect(JSON.stringify(tree.toJSON())).not.toMatch(/Opening|正在打开/);
     act(() => { tree.root.findByProps({ "aria-label": "Close" }).props.onClick(); });
     act(() => { panel.props.onKeyDown({ key: "Escape" }); });
     expect(onClose).toHaveBeenCalledTimes(2);
