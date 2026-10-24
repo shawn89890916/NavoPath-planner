@@ -1,6 +1,9 @@
 # NavoPath 更新日志
 
-## 2026-10-24 · 导航与时间轴
+## 2026-10-24 · 导航、时间轴与顶栏手势
+
+### 改进
+- 手机今日候选支持在整条顶栏上下滑动：上滑展开更多候选，下滑关闭；快速添加也可从标题栏上滑展开详情，保留轻点按钮与内容滚动。
 
 ### 修复
 - 快速操作不同区域的导航时保留各自的选择，切换工作区不再丢失刚选中的规划或日历视图。
@@ -227,7 +230,10 @@
 
 # NavoPath Changelog
 
-## 2026-10-24 · Navigation and Timeline
+## 2026-10-24 · Navigation, Timeline, and Header Gestures
+
+### Improvements
+- Swipe the full Today’s Candidates header up to expand the list or down to close it on phones. Quick Add also expands to details with an upward header swipe, while taps and content scrolling remain available.
 
 ### Fixed
 - Rapid navigation in different areas preserves each selection; switching workspaces no longer discards a newly selected planning or calendar view.

@@ -44,14 +44,21 @@
     background: var(--surface-main); color: var(--text-main); overflow: hidden;
     animation: none;
     transform: translateY(100%); visibility: hidden; pointer-events: none;
-    transition: transform var(--motion-layout) var(--motion-ease-settle), visibility 0s var(--motion-layout);
+    transition: transform var(--motion-layout) var(--motion-ease-settle), height var(--motion-layout) var(--motion-ease-settle), visibility 0s var(--motion-layout);
   }
   #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates.compact-active {
-    transform: none; visibility: visible; pointer-events: auto; transition-delay: 0s;
+    transform: translateY(var(--mobile-sheet-drag-y, 0px)); visibility: visible; pointer-events: auto; transition-delay: 0s;
+  }
+  #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates.is-expanded {
+    height: 94dvh;
+  }
+  #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates.is-sheet-dragging {
+    transition: none;
   }
   #root .df-app.mode-execute[data-phone-execution] .df-candidate-panel.is-mobile-candidates > .df-panel-title {
     position: relative; inset: auto; flex-shrink: 0; min-height: 48px;
     height: auto; padding: 0 4px; width: auto; display: flex; align-items: center;
+    touch-action: none;
   }
   #root .df-app.mode-execute[data-phone-execution] .df-candidate-panel.is-mobile-candidates > .df-panel-title h2 {
     display: block; min-width: 0; margin: 0; font: 650 16px/1.25 var(--paper-serif);

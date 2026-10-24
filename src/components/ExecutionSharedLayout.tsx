@@ -127,12 +127,13 @@ export function CandidatePanelShell({
 export function CandidatePanelHeader({
   title,
   actions,
+  ...headerProps
 }: {
   title: React.ReactNode;
   actions?: React.ReactNode;
-}) {
+} & Omit<React.HTMLAttributes<HTMLDivElement>, "title">) {
   return (
-    <div className="df-panel-title" data-reuse="candidate-panel-header">
+    <div {...headerProps} className="df-panel-title" data-reuse="candidate-panel-header">
       <h2>{title}</h2>
       {actions ? <div>{actions}</div> : null}
     </div>

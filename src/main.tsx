@@ -1,3 +1,4 @@
+import { useMobileSheetGesture } from "./useMobileSheetGesture";
 import { uid } from "./utils/ids";
 import { toggleTaskCompletion, setTaskCompletion, habitScheduleForTask } from "./utils/taskCompletion";
 import { captureTaskUndo, undoTaskChanges, type TaskUndo } from "./utils/taskUndo";
@@ -1084,9 +1085,13 @@ function App() {
   const mobileExecutionRef = useRef(mobileExecution);
   mobileExecutionRef.current = mobileExecution;
   const [candidateDrawerOpen, setCandidateDrawerOpen] = useState(false);
+  const [candidateDrawerExpanded, setCandidateDrawerExpanded] = useState(false);
   const candidatePanelRef = useRef<HTMLElement>(null);
   const candidateTriggerRef = useRef<HTMLButtonElement>(null);
   const candidateScrollRef = useRef(0);
+  const candidateHeaderGesture = useMobileSheetGesture({
+    enabled: mobileExecution && candidateDrawerOpen,
+    onSwipeUp: () => setCandidateDrawerExpanded(true), onSwipeDown: closeCandidateDrawer });
   const mobileTapRef = useRef({ x: 0, y: 0, moved: false });
   type MobilePlacementSession = { taskId: string; version: string; view: TimelineView; date: string; visibleDate: string; scrollTop: number; drawerOpen: boolean };
   const [mobilePlacement, setMobilePlacement] = useState<MobilePlacementSession | null>(null);
@@ -4401,7 +4406,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function finishMobileQuickAdd(more = false) {
-    if (!data || !quickTitle.trim()) return;
+    if (!data || (!quickTitle.trim() && (!more || mobileQuickAddKind === "habit"))) return;
     const title = quickTitle.trim();
     if (!more && mobileQuickAddKind === "task") {
       quickAddTask();
@@ -9134,7 +9139,7 @@ if (cached?.data && cached?.settings) {
             panelRef={candidatePanelRef}
             role={mobileExecution && candidateDrawerOpen ? "dialog" : undefined}
             ariaLabel={mobileExecution ? (lang === "zh" ? "待安排任务" : "Tasks to schedule") : undefined}
-            className={`${mobileExecution ? `is-mobile-candidates ${candidateDrawerOpen ? "compact-active" : "compact-inactive"}` : productAiPresentation || compactExecuteView === "tasks" ? "compact-active" : "compact-inactive"}${!mobileExecution && candidatePanelCollapsed ? " collapsed" : ""}${!mobileExecution && fullscreen ? " hidden" : ""}${candidateDropActive ? " drop-active" : ""}`}
+            className={`${mobileExecution ? `is-mobile-candidates ${candidateDrawerOpen ? "compact-active" : "compact-inactive"}${candidateDrawerExpanded ? " is-expanded" : ""}` : productAiPresentation || compactExecuteView === "tasks" ? "compact-active" : "compact-inactive"}${!mobileExecution && candidatePanelCollapsed ? " collapsed" : ""}${!mobileExecution && fullscreen ? " hidden" : ""}${candidateDropActive ? " drop-active" : ""}`}
             style={!mobileExecution && candidatePanelCollapsed ? { position: "relative", zIndex: 2, pointerEvents: "auto" } : undefined}
             ariaHidden={mobileExecution ? !candidateDrawerOpen : !productAiPresentation && compactLayout && compactExecuteView !== "tasks"}
             inert={mobileExecution && !candidateDrawerOpen}
@@ -9170,6 +9175,7 @@ if (cached?.data && cached?.settings) {
             ) : (
               <>
             <CandidatePanelHeader
+              {...candidateHeaderGesture}
               title={term(lang, "todayCandidates")}
               actions={<>
                 {!mobileExecution && (timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
@@ -10269,7 +10275,7 @@ if (cached?.data && cached?.settings) {
           title={mobilePlacement ? (tasks.find((task) => task.id === mobilePlacement.taskId)?.title || (lang === "zh" ? "任务已移除" : "Task removed")) : undefined}
           time={mobilePlacement && placementPreview ? `${placementPreview.date} · ${placementPreview.startTime}–${placementPreview.endTime}` : undefined}
           conflict={Boolean(mobilePlacement && placementPreview && getScheduledEventsForRange([addDays(placementPreview.date, -1), placementPreview.date, addDays(placementPreview.date, 1)]).some((item) => item.scheduledStart && item.scheduledEnd && scheduledDateTimesOverlap(placementPreview.date, placementPreview.startTime, placementPreview.endTime, item.scheduledDate || placementPreview.date, item.scheduledStart, item.scheduledEnd)))}
-          onOpen={() => { setCandidatePanelCollapsed(false); setCandidateDrawerOpen(true); }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
+          onOpen={() => { setCandidatePanelCollapsed(false); setCandidateDrawerExpanded(false); setCandidateDrawerOpen(true); }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
         <MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
         drawerOpen={drawerOpen || commandOpen || quickAddOpen || scheduleTemplatePresence.present || (mobileExecution && (candidateDrawerOpen || Boolean(mobilePlacement)))} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, mode)}

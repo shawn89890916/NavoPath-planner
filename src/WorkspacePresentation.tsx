@@ -1,3 +1,4 @@
+import { useMobileSheetGesture } from "./useMobileSheetGesture";
 import { normalizeEngagement } from "./utils/engagement";
 import React, { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -956,56 +957,13 @@ export function ProjectChoice({ project, onChoose, onColorChange }: { project: P
 }
 
 export function MobileSheetDismissHandle({ onDismiss, onCollapse, onExpand, collapsed = false, lang }: { onDismiss: () => void; onCollapse?: () => void; onExpand?: () => void; collapsed?: boolean; lang: Language }) {
-  const gestureRef = useRef<{ pointerId: number; startY: number; startedAt: number; panel: HTMLElement } | null>(null);
-  const finishGesture = (event: React.PointerEvent<HTMLButtonElement>, cancelled = false) => {
-    const gesture = gestureRef.current;
-    if (!gesture || gesture.pointerId !== event.pointerId) return;
-    gestureRef.current = null;
-    const signedDistance = event.clientY - gesture.startY;
-    const distance = Math.max(0, signedDistance);
-    const velocity = distance / Math.max(1, performance.now() - gesture.startedAt);
-    if (!cancelled && collapsed && signedDistance <= -54 && onExpand) {
-      gesture.panel.classList.remove("is-sheet-dragging");
-      gesture.panel.style.setProperty("--mobile-sheet-drag-y", "0px");
-      onExpand();
-      return;
-    }
-    if (!cancelled && (distance >= 88 || velocity >= 0.62) && onCollapse && !collapsed) {
-      gesture.panel.classList.remove("is-sheet-dragging");
-      gesture.panel.style.setProperty("--mobile-sheet-drag-y", "0px");
-      onCollapse();
-      return;
-    }
-    if (!cancelled && (distance >= 88 || velocity >= 0.62)) {
-      gesture.panel.classList.remove("is-sheet-dragging");
-      gesture.panel.classList.add("is-sheet-dismissing");
-      gesture.panel.style.setProperty("--mobile-sheet-drag-y", "100dvh");
-      window.setTimeout(onDismiss, 170);
-      return;
-    }
-    gesture.panel.classList.remove("is-sheet-dragging");
-    gesture.panel.style.setProperty("--mobile-sheet-drag-y", "0px");
-  };
-  return <button
+  const gesture = useMobileSheetGesture({ minDragY: collapsed ? -70 : 0,
+    onSwipeUp: collapsed ? onExpand : undefined,
+    onSwipeDown: onCollapse && !collapsed ? onCollapse : onDismiss });
+  return <button {...gesture}
     type="button"
     className="df-mobile-sheet-dismiss-handle"
     aria-label={lang === "zh" ? "下滑关闭" : "Swipe down to close"}
-    onPointerDown={(event) => {
-      if (event.pointerType === "mouse" && event.button !== 0) return;
-      const panel = event.currentTarget.parentElement;
-      if (!panel) return;
-      event.currentTarget.setPointerCapture(event.pointerId);
-      panel.classList.add("is-sheet-dragging");
-      gestureRef.current = { pointerId: event.pointerId, startY: event.clientY, startedAt: performance.now(), panel };
-    }}
-    onPointerMove={(event) => {
-      const gesture = gestureRef.current;
-      if (!gesture || gesture.pointerId !== event.pointerId) return;
-      const distance = event.clientY - gesture.startY;
-      gesture.panel.style.setProperty("--mobile-sheet-drag-y", `${collapsed ? Math.max(-70, distance) : Math.max(0, distance)}px`);
-    }}
-    onPointerUp={(event) => finishGesture(event)}
-    onPointerCancel={(event) => finishGesture(event, true)}
   />;
 }
 

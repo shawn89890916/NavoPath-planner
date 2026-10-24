@@ -30,6 +30,7 @@
     align-items: center;
     gap: 4px;
     padding-right: 0;
+    touch-action: none;
   }
   #root .df-app .df-mobile-summary-head input{min-width:0!important;height:40px!important;padding:0 2px!important;border:0!important;border-bottom:1px solid transparent!important;border-radius:0!important;background:transparent!important;color:var(--text-main)!important;font:750 17px/1.25 var(--paper-sans)!important;box-shadow:none!important}
   #root .df-app .df-mobile-summary-head input:focus{border-bottom-color:var(--accent-active)!important;outline:0!important}
