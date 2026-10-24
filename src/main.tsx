@@ -1101,6 +1101,7 @@ function App() {
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const quickAddPresence = useMotionPresence(quickAddOpen, MOTION.layout);
   const [mobileQuickAddKind, setMobileQuickAddKind] = useState<MobileShortSheetKind>("task");
+  const [mobileQuickAddDate, setMobileQuickAddDate] = useState<string | null>(null);
   const [mobileQuickHabitMinutes, setMobileQuickHabitMinutes] = useState(20);
   const [selectedDate, setSelectedDate] = useState(todayIso());
   const [visibleTimelineDate, setVisibleTimelineDate] = useState(todayIso());
@@ -4416,13 +4417,19 @@ if (cached?.data && cached?.settings) {
     if (!data || (!quickTitle.trim() && (!more || mobileQuickAddKind === "habit"))) return;
     const title = quickTitle.trim();
     if (!more && mobileQuickAddKind === "task") {
+      if (mobileQuickAddDate) {
+        createAllDayTask(title, mobileQuickAddDate, quickProjectId);
+        setQuickAddOpen(false);
+        return;
+      }
       quickAddTask();
       return;
     }
     setQuickAddOpen(false);
     if (more && mobileQuickAddKind !== "habit") {
       openAdd(mobileQuickAddKind === "project" ? "project" : "task");
-      setForm((current) => ({ ...current, title, ...(mobileQuickAddKind === "project" ? { projectColor: quickProjectColor } : { projectId: quickProjectId }) }));
+      if (mobileQuickAddKind === "task") setMobileQuickAddDate(mobileQuickAddDate);
+      setForm((current) => ({ ...current, title, ...(mobileQuickAddKind === "project" ? { projectColor: quickProjectColor } : { projectId: quickProjectId, ...(mobileQuickAddDate ? { dueDate: mobileQuickAddDate } : {}) }) }));
     } else if (mobileQuickAddKind === "project") {
       const project = makeProject({ ...defaultForm("project"), title, projectColor: quickProjectColor });
       void saveData({ ...data, projects: [...data.projects, project] });
@@ -6537,6 +6544,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function openAdd(type: AddType = "task") {
+    setMobileQuickAddDate(null);
     rememberLayerTrigger("drawer");
     setAddType(type);
     setEditingId("");
@@ -6549,6 +6557,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function openTaskEdit(task: Task) {
+    setMobileQuickAddDate(null);
     if (isExternalCalendarDisplayTask(task)) {
       showToast(lang === "zh" ? "外部日历事项为只读；请在来源日历中修改" : "External calendar events are read-only; edit them in the source calendar");
       return;
@@ -6795,7 +6804,9 @@ if (cached?.data && cached?.settings) {
         ? { ...task, plannedForDate: undefined, executionLane: undefined }
         : form.dueTime
           ? { ...task, plannedForDate: form.dueDate, executionLane: undefined, timelineRecords: [createScheduledRecord(task, form.dueDate || today, form.dueTime, durationMinutes)] }
-          : task;
+          : mobileQuickAddDate
+            ? { ...task, plannedForDate: form.dueDate || mobileQuickAddDate, scheduledDate: form.dueDate || mobileQuickAddDate, executionLane: undefined }
+            : task;
       void saveData({ ...data, tasks: [...data.tasks, createdTask] });
       void enrichTaskInBackground(createdTask);
     } else if (addType === "project") {
@@ -9898,7 +9909,15 @@ if (cached?.data && cached?.settings) {
                     projectColor={(task) => categories[task.category].color} isEvent={isEventDisplayTask}
                     onSelectDate={setSelectedDate} onOpenDate={openMonthDate} onMoveTask={moveTaskToMonthDate}
                     onEditTask={(task) => { if (!suppressBlockClickRef.current) openTaskEdit(task); }}
-                    onAddTask={(date) => setMonthQuickAdd({ date, left: 0, top: 30, width: 0, dayIndex: 0 })}
+                    onAddTask={(date) => {
+                      if (compactLayout) {
+                        setMonthQuickAdd(null);
+                        setQuickTitle("");
+                        setMobileQuickAddKind("task");
+                        setMobileQuickAddDate(date);
+                        setQuickAddOpen(true);
+                      } else setMonthQuickAdd({ date, left: 0, top: 30, width: 0, dayIndex: 0 });
+                    }}
                     onDragActivate={() => { setMonthQuickAdd(null); suppressBlockClickRef.current = true; }}
                     onDragFinish={suppressClickAfterDrag}
                     renderQuickAdd={(day) => monthQuickAdd?.date === day && <AllDayQuickAddPopover absolute add={monthQuickAdd} projects={projects}
@@ -10289,7 +10308,7 @@ if (cached?.data && cached?.settings) {
         <MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
         drawerOpen={drawerOpen || commandOpen || quickAddOpen || scheduleTemplatePresence.present || (mobileExecution && (candidateDrawerOpen || Boolean(mobilePlacement)))} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, mode)}
-        onAdd={() => { setQuickTitle(""); setMobileQuickAddKind("task"); setQuickAddOpen(true); }}
+        onAdd={() => { setQuickTitle(""); setMobileQuickAddKind("task"); setMobileQuickAddDate(null); setQuickAddOpen(true); }}
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
