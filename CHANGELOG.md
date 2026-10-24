@@ -7,6 +7,7 @@
 - 手机今日候选支持在整条顶栏上下滑动：上滑展开更多候选，下滑关闭；快速添加也可从标题栏上滑展开详情，保留轻点按钮与内容滚动。
 
 ### 修复
+- 提前准备 AI 对话窗口，首次加载时立即显示可关闭的面板；关闭 AI 时竖屏底栏及时恢复，避免退场时短暂空白。
 - 快速操作不同区域的导航时保留各自的选择，切换工作区不再丢失刚选中的规划或日历视图。
 - 手机快速新增在每次打开时清空旧标题并恢复输入焦点，连续添加时避免重复提交上一次的内容，同时保留关闭时的平滑退场。
 - 一天开始时间设为任意分钟时，单日、多日与周视图仍准确显示整点刻度和跨日日期。
@@ -238,6 +239,7 @@
 - Swipe the full Today’s Candidates header up to expand the list or down to close it on phones. Quick Add also expands to details with an upward header swipe, while taps and content scrolling remain available.
 
 ### Fixed
+- Prepare the AI dialog ahead of time and show a dismissible panel immediately during its first load. Restore the portrait bottom navigation as AI closes, avoiding a brief blank area during the exit.
 - Rapid navigation in different areas preserves each selection; switching workspaces no longer discards a newly selected planning or calendar view.
 - Mobile quick add opens with a fresh title and restored input focus, avoiding resubmission of the previous entry while keeping a smooth closing animation.
 - Day, multi-day, and week views correctly show hour ticks and day-boundary dates when the day starts at any minute.

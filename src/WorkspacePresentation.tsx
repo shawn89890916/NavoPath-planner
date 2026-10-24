@@ -987,9 +987,29 @@ export function aiStepLabel(step: AiStep, lang: Language) {
   return pair ? pair[lang === "zh" ? 0 : 1] : step.label;
 }
 
-const AiPanelModule = lazy(() => import("./AiPanel"));
+let aiPanelPromise: Promise<typeof import("./AiPanel")> | undefined;
+function loadAiPanel() {
+  return aiPanelPromise ??= import("./AiPanel").catch((error) => {
+    aiPanelPromise = undefined;
+    throw error;
+  });
+}
+export function preloadAiPanel() { void loadAiPanel().catch(() => undefined); }
+const AiPanelModule = lazy(loadAiPanel);
+
+export function AiPanelLoading({ lang, onClose, closing = false, embedded = false, docked }: Pick<React.ComponentProps<typeof AiPanelModule>, "lang" | "onClose" | "closing" | "embedded" | "docked">) {
+  return <aside className={`df-ai-panel df-ai-panel-reference${embedded ? " is-embedded" : ""}${docked ? " is-docked" : ""}`} data-motion-closing={closing || undefined} inert={closing} aria-busy="true" aria-label="NavoPath AI" onKeyDown={(event) => { if (event.key === "Escape") onClose(); }}>
+    {!embedded && <MobileSheetDismissHandle onDismiss={onClose} lang={lang} />}
+    <div className="df-ai-panel-head">
+      <div className="df-ai-panel-title"><strong>NavoPath AI</strong></div>
+      <div className="df-ai-head-actions"><CloseButton className="df-ai-reference-tool close" onClick={onClose} label={t(lang, "aiPanel.close")} /></div>
+    </div>
+    <div className="df-ai-panel-body"><div className="df-loading-inline" role="status">{lang === "zh" ? "正在打开 Navo AI…" : "Opening Navo AI…"}</div></div>
+  </aside>;
+}
+
 export function AiPanel(props: React.ComponentProps<typeof AiPanelModule>) {
-  return <Suspense fallback={<div className="df-loading-inline" role="status">{props.lang === "zh" ? "正在打开 Navo AI…" : "Opening Navo AI…"}</div>}><AiPanelModule {...props} /></Suspense>;
+  return <Suspense fallback={<AiPanelLoading {...props} />}><AiPanelModule {...props} /></Suspense>;
 }
 
 export function AttachmentCard({ attachment, referenced = false, onRemove }: { attachment: AiAttachmentSnapshot; referenced?: boolean; onRemove?: () => void }) {
