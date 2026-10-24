@@ -200,9 +200,10 @@ describe("portrait interaction contracts", () => {
     expect(choicesSource).not.toContain("fallbackRange");
     expect(main).not.toContain("function findCandidatePlacement(task:");
     expect(main).toContain("if (wasPlacementArmedRef.current && !isPlacementArmed) setSchedulePanelOpen(false)");
-    expect(main).toContain("const viewportFocus = currentTimelineViewportFocus();");
+    expect(main).toContain('timelineView === "month" ? timelineViewFocusRef.current : null');
+    expect(main).toContain('...currentTimelineViewportFocus(), source: "schedule" as const');
     expect(main).toContain("setVisibleTimelineDate(viewportFocus.date);");
-    expect(main).toContain('if (nextView !== "month") setPendingTimelineFocus({ ...viewportFocus, source: "schedule" });');
+    expect(main).toContain('if (nextView !== "month") setPendingTimelineFocus(viewportFocus);');
   });
 
   it("uses the overdue scheduling action grid with a restrained reveal", () => {

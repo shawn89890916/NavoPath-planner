@@ -7,7 +7,7 @@
 - 手机今日候选支持在整条顶栏上下滑动：上滑展开更多候选，下滑关闭；快速添加也可从标题栏上滑展开详情，保留轻点按钮与内容滚动。
 
 ### 修复
-- 竖屏三天视图的全天任务与日期列准确对齐；切换天、三天、周视图及从月视图返回时，保留正在查看的时间位置。
+- 竖屏三天视图的全天任务与日期列准确对齐；开启或关闭跨天滚动时，切换天、三天、周视图及从月视图返回均保留正在查看的时间位置。
 - 提前准备 AI 对话窗口；AI 与规划加载时使用与刷新页面一致的骨架占位，AI 保留关闭入口。关闭 AI 时竖屏底栏及时恢复，避免退场时短暂空白。
 - 快速操作不同区域的导航时保留各自的选择，切换工作区不再丢失刚选中的规划或日历视图。
 - 手机快速新增在每次打开时清空旧标题并恢复输入焦点，连续添加时避免重复提交上一次的内容，同时保留关闭时的平滑退场。
@@ -240,7 +240,7 @@
 - Swipe the full Today’s Candidates header up to expand the list or down to close it on phones. Quick Add also expands to details with an upward header swipe, while taps and content scrolling remain available.
 
 ### Fixed
-- All-day tasks align with their date columns in the portrait three-day view. Switching between day, three-day, and week views, or returning from month view, preserves the time position being viewed.
+- All-day tasks align with their date columns in the portrait three-day view. With cross-day scrolling enabled or disabled, switching between day, three-day, and week views, or returning from month view, preserves the time position being viewed.
 - Prepare the AI dialog ahead of time. AI and Planning use skeleton placeholders consistent with page refreshes, with AI remaining dismissible while loading. Restore the portrait bottom navigation as AI closes, avoiding a brief blank area during the exit.
 - Rapid navigation in different areas preserves each selection; switching workspaces no longer discards a newly selected planning or calendar view.
 - Mobile quick add opens with a fresh title and restored input focus, avoiding resubmission of the previous entry while keeping a smooth closing animation.
