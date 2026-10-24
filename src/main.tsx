@@ -1183,12 +1183,15 @@ function App() {
   const [aiPlanMenuOpen, setAiPlanMenuOpen] = useState(false);
   const [aiPlanPrefs, setAiPlanPrefs] = useState<AiPlanPrefs>({ source: "today", scope: "day", strategy: "longShort" });
   const [timelineView, setTimelineView] = useState<TimelineView>("daily");
+  const timelineViewFocusRef = useRef<TimelineFocusTarget | null>(null);
   const changeTimelineView = useMotionSelection<TimelineView>(timelineView, (nextView) => {
-    const viewportFocus = currentTimelineViewportFocus();
+    const viewportFocus = (timelineView === "month" ? timelineViewFocusRef.current : null)
+      ?? { ...currentTimelineViewportFocus(), source: "schedule" as const };
+    timelineViewFocusRef.current = viewportFocus;
     setSelectedDate(viewportFocus.date);
     setVisibleTimelineDate(viewportFocus.date);
     setTimelineView(nextView);
-    if (nextView !== "month") setPendingTimelineFocus({ ...viewportFocus, source: "schedule" });
+    if (nextView !== "month") setPendingTimelineFocus(viewportFocus);
     setDragCreate(null);
   }, "timeline", ["daily", "3day", "weekly", "month"]);
   const monthScrollRef = useRef<HTMLDivElement>(null);
@@ -1591,7 +1594,7 @@ function App() {
     rememberTimelineScroll();
     element.addEventListener("scroll", rememberTimelineScroll, { passive: true });
     return () => element.removeEventListener("scroll", rememberTimelineScroll);
-  }, [data, mode]);
+  }, [data, mode, timelineView]);
   useLayoutEffect(() => {
     const previousData = previousTimelineDataRef.current;
     previousTimelineDataRef.current = data;
@@ -2602,9 +2605,12 @@ if (cached?.data && cached?.settings) {
     };
     const targetTop = effectEnabled
       ? effectTop(targetDate, minutesToTime(targetMinutes))
-      : ((targetMinutes - TIMELINE_START * 60) / SLOT_MINUTES) * timelineSlotHeight;
-    const nextScrollTop = Math.max(0, targetTop - timelineFocusViewportOffset(container));
+      : (((targetMinutes - dayStartHour * 60 + 24 * 60) % (24 * 60)) / SLOT_MINUTES) * timelineSlotHeight;
     const frame = window.requestAnimationFrame(() => {
+      const viewportOffset = pendingTimelineFocus.viewportY === undefined
+        ? timelineFocusViewportOffset(container)
+        : pendingTimelineFocus.viewportY - container.getBoundingClientRect().top;
+      const nextScrollTop = Math.max(0, targetTop - viewportOffset);
       container.scrollTo({ top: nextScrollTop, behavior: pendingTimelineFocus.behavior || "auto" });
       setVisibleTimelineDate(targetDate);
       timelineInitialFocusCompleteRef.current = true;
@@ -2654,7 +2660,7 @@ if (cached?.data && cached?.settings) {
   useEffect(() => {
     const effectColumnCount = timelineView === "weekly" ? 7 : timelineView === "3day" ? 3 : 1;
     const effectEnabled = settings?.continuousCrossDayScroll !== false && timelineView !== "month";
-    if (mode !== "execute") return;
+    if (mode !== "execute" || pendingTimelineFocus) return;
     if (!effectEnabled) {
       setVisibleTimelineDate(selectedDate);
       return;
@@ -2702,7 +2708,7 @@ if (cached?.data && cached?.settings) {
     updateVisibleLabel();
     scrollElement.addEventListener("scroll", handleTimelineScroll, { passive: true });
     return () => scrollElement.removeEventListener("scroll", handleTimelineScroll);
-  }, [mode, settings?.continuousCrossDayScroll, timelineView, selectedDate, timelineSlotHeight, workspaceLoaded]);
+  }, [mode, settings?.continuousCrossDayScroll, timelineView, selectedDate, pendingTimelineFocus, timelineSlotHeight, workspaceLoaded]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 899.98px) and (orientation: portrait)");
@@ -8665,11 +8671,14 @@ if (cached?.data && cached?.settings) {
     const dayHeight = (24 * 60 / SLOT_MINUTES) * timelineSlotHeight;
     const centerY = scrollElement.scrollTop + scrollElement.clientHeight / 2;
     const minutesIntoBand = ((centerY % dayHeight) + dayHeight) % dayHeight / timelineSlotHeight * SLOT_MINUTES;
-    const minutes = Math.round((dayStartHour * 60 + minutesIntoBand) / SLOT_MINUTES) * SLOT_MINUTES;
+    const exactMinutes = dayStartHour * 60 + minutesIntoBand;
+    const minutes = Math.floor(exactMinutes);
+    const viewportY = scrollElement.getBoundingClientRect().top + scrollElement.clientHeight / 2
+      - (exactMinutes - minutes) / SLOT_MINUTES * timelineSlotHeight;
     const date = continuousTimelineEnabled
       ? getContinuousTimelineDateForOffset(continuousTimelineStartDate, Math.floor(centerY / dayHeight), timelineColumnCount)
       : timelineWindowAnchorDate;
-    return { date, startTime: minutesToTime(minutes) };
+    return { date, startTime: minutesToTime(minutes), viewportY };
   }
 
   function goToNow() {

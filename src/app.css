@@ -3918,7 +3918,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   height: auto;
   background: color-mix(in srgb, var(--accent-active) 8%, var(--bg-app-soft));
   border-bottom: 1px solid color-mix(in srgb, var(--accent-active) 10%, transparent);
-  transition: min-height .2s ease, background .2s ease, border-color .2s ease;
+  transition: background .2s ease, border-color .2s ease;
 }
 .df-all-day-block {
   transition: box-shadow .14s ease, background .14s ease;
@@ -4019,14 +4019,12 @@ body:has(:active)::-webkit-scrollbar-thumb {
   padding: 4px 0;
   background: linear-gradient(to bottom, color-mix(in srgb, var(--mode-primary) 11%, transparent), color-mix(in srgb, var(--mode-primary) 4%, transparent) 60%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--mode-primary) 12%, transparent);
-  transition: min-height .2s ease, background .2s ease;
+  transition: background .2s ease;
 }
 .df-timeline-3day-allday-cell:last-child {
   border-right: none;
 }
 .df-timeline-3day-allday .df-all-day-block {
-  left: 10px;
-  right: 10px;
   height: 30px;
   padding-left: 24px;
   font-size: 11px;
@@ -8924,7 +8922,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   border-top-color: #F3F4F6; border-color: var(--paper-rule); }
 .df-day-col-bg { border-color: var(--paper-rule); }
 .df-timeline-3day-allday-cell {
-  min-width: 184px;
+  min-width: 0;
   flex: 1 1 0;
   display: flex;
   flex-wrap: wrap;
@@ -25656,7 +25654,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   stroke: currentColor;
   stroke-width: 2.2;
 }
-#root .df-app.mode-execute .df-timeline-daily .df-timeline-allday:has(.df-back-to-now) {
+#root .df-app.mode-execute .df-timeline-daily .df-timeline-allday {
   min-height: 44px;
 }
 @keyframes dfNowReturnPulse {

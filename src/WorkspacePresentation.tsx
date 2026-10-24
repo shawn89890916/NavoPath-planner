@@ -55,7 +55,7 @@ export type AutoScheduleState = "idle" | "generating" | "preview" | "committing"
 
 export type TimelineFocusSource = "schedule" | "autoschedule" | "recurrence" | "placement" | "now";
 
-export type TimelineFocusTarget = { date: string; startTime?: string; taskId?: string; source: TimelineFocusSource; behavior?: ScrollBehavior; highlight?: boolean };
+export type TimelineFocusTarget = { date: string; startTime?: string; taskId?: string; source: TimelineFocusSource; behavior?: ScrollBehavior; highlight?: boolean; viewportY?: number };
 
 export const PLACEMENT_PREVIEW_HOVER_DELAY_MS = 300;
 
