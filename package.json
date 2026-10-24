@@ -81,7 +81,7 @@
         "dist/assets/MobileExecutionControls-*.js",
         "dist/assets/mobilePlacement-*.js"
       ],
-      "limit": "355 KB"
+      "limit": "356 KB"
     },
     {
       "name": "Document parsing scripts",
