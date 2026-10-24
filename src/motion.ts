@@ -110,14 +110,10 @@ export async function runMotionTransition(
 
   root.dataset.motionFallback = "true";
   update();
-  await new Promise<void>((resolve) => {
-    const complete = () => {
-      finish();
-      resolve();
-    };
-    targetWindow?.setTimeout(complete, options.duration ?? MOTION.layout);
-    if (!targetWindow) complete();
-  });
+  if (targetWindow) {
+    await new Promise<void>((resolve) => targetWindow.setTimeout(resolve, options.duration ?? MOTION.layout));
+  }
+  finish();
 }
 
 export function scheduleMotionCommit(

@@ -2818,7 +2818,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: dfPanelPop .22s ease-out;
   transition: all .15s ease;
   border-color: color-mix(in srgb, var(--mode-primary) 16%, #E5E7EB);
   corner-shape: var(--corner-shape, squircle);
@@ -8385,21 +8384,80 @@ html[data-motion-scope="workspace"] .df-app > .df-planning {
   view-transition-name: navo-motion-surface;
   animation: none;
 }
-html[data-motion-scope="timeline"] .df-app .df-timeline-panel {
+html[data-motion-scope="timeline"] #df-execute-timeline .df-timeline-content {
   view-transition-name: navo-motion-surface;
 }
 html[data-motion-scope="settings"] .df-app .df-settings-shell,
 html[data-motion-scope="planning"] .df-app > .df-planning .df-tree-wrap {
   view-transition-name: navo-motion-surface;
 }
-::view-transition-group(navo-motion-surface) {
-  animation-duration: var(--motion-layout);
-  animation-timing-function: var(--motion-ease);
+/* Fixed controls need their own upper snapshots: live DOM z-index cannot put
+   them above the browser's view-transition overlay. */
+html[data-motion-scope] .df-app > .df-header {
+  view-transition-name: navo-static-header;
 }
-html[data-motion-scope="workspace"]::view-transition-group(navo-motion-surface) {
+html[data-motion-scope] .df-compact-execute-controls {
+  view-transition-name: navo-static-date-controls;
+}
+html[data-motion-scope] #df-execute-timeline .df-date-title-compact {
+  view-transition-name: navo-static-date-tag;
+}
+html[data-motion-scope] .df-mobile-dock--viewport {
+  view-transition-name: navo-static-dock;
+}
+html[data-motion-scope] .df-mobile-floating-actions {
+  view-transition-name: navo-static-floating-actions;
+}
+html[data-motion-scope] .df-app > .df-add-fab {
+  view-transition-name: navo-static-add;
+}
+html[data-motion-scope] .df-app > .df-ai-fab {
+  view-transition-name: navo-static-ai;
+}
+html[data-motion-scope] #df-execute-timeline .df-date-arrow.left {
+  view-transition-name: navo-static-previous;
+}
+html[data-motion-scope] #df-execute-timeline .df-date-arrow.right {
+  view-transition-name: navo-static-next;
+}
+html[data-motion-scope] #df-execute-timeline .df-view-switch-vertical {
+  view-transition-name: navo-static-timeline-views;
+}
+html[data-motion-scope] #df-execute-timeline .df-exit-fullscreen-btn {
+  view-transition-name: navo-static-fullscreen-exit;
+}
+html[data-motion-scope] #df-execute-timeline .df-month-header {
+  view-transition-name: navo-static-month-heading;
+}
+:where(html[data-motion-scope])::view-transition-group(*),
+:where(html[data-motion-scope])::view-transition-new(*) {
   animation: none;
+  mix-blend-mode: normal;
+}
+:where(html[data-motion-scope])::view-transition-old(*) {
+  animation: none;
+  mix-blend-mode: normal;
+  display: none;
+}
+::view-transition-group(navo-static-header),
+::view-transition-group(navo-static-date-controls),
+::view-transition-group(navo-static-date-tag),
+::view-transition-group(navo-static-dock),
+::view-transition-group(navo-static-floating-actions),
+::view-transition-group(navo-static-add),
+::view-transition-group(navo-static-ai),
+::view-transition-group(navo-static-previous),
+::view-transition-group(navo-static-next),
+::view-transition-group(navo-static-timeline-views),
+::view-transition-group(navo-static-fullscreen-exit),
+::view-transition-group(navo-static-month-heading) {
+  z-index: 1;
+}
+::view-transition-group(navo-motion-surface) {
+  overflow: clip;
 }
 ::view-transition-old(navo-motion-surface) {
+  display: block;
   animation: navo-motion-old var(--motion-layout) var(--motion-ease) both;
 }
 ::view-transition-new(navo-motion-surface) {
@@ -8418,7 +8476,7 @@ html[data-motion-fallback][data-motion-scope="workspace"] .df-app > .df-execute 
 html[data-motion-fallback][data-motion-scope="workspace"] .df-app > .df-planning {
   animation: navo-motion-new var(--motion-layout) var(--motion-ease) both;
 }
-html[data-motion-fallback][data-motion-scope="timeline"] .df-app .df-timeline-panel {
+html[data-motion-fallback][data-motion-scope="timeline"] #df-execute-timeline :is(.df-timeline-scroll, .df-timeline-3day-scroll, .df-month-scroll) {
   animation: navo-motion-new var(--motion-layout) var(--motion-ease) both;
 }
 html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-shell,
@@ -8562,7 +8620,6 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   position: relative;
   display: flex;
   flex-direction: column; overflow: hidden;
-  animation: dfPanelPop .24s ease-out forwards;
   --df-ruler-width: 88px;
   --df-scrollbar-gutter: 12px;
   transform: none;

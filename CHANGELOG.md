@@ -6,6 +6,7 @@
 - 快速操作不同区域的导航时保留各自的选择，切换工作区不再丢失刚选中的规划或日历视图。
 - 手机快速新增在每次打开时清空旧标题并恢复输入焦点，连续添加时避免重复提交上一次的内容，同时保留关闭时的平滑退场。
 - 一天开始时间设为任意分钟时，单日、多日与周视图仍准确显示整点刻度和跨日日期。
+- 页面与日期滑动时，导航、日期控件和浮动按钮保持显示，不再被内容遮住；返回执行页时不再叠加缩放淡入，只让变化的内容滑动。
 
 ## 2026-10-23 · 手机布局、规划与弹层
 
@@ -232,6 +233,7 @@
 - Rapid navigation in different areas preserves each selection; switching workspaces no longer discards a newly selected planning or calendar view.
 - Mobile quick add opens with a fresh title and restored input focus, avoiding resubmission of the previous entry while keeping a smooth closing animation.
 - Day, multi-day, and week views correctly show hour ticks and day-boundary dates when the day starts at any minute.
+- Navigation, date controls, and floating actions stay visible during page and date slides without content covering them. Returning to Execute no longer replays scale-and-fade entrances; only changing content slides.
 
 ## 2026-10-23 · Mobile Layout, Planning, and Popovers
 
