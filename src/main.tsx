@@ -1579,6 +1579,7 @@ function App() {
   const [nowLineReturnPulse, setNowLineReturnPulse] = useState(false);
   const nowLineReturnPulseTimerRef = useRef<number | null>(null);
   const nowReturnNavigationRef = useRef(false);
+  const nowReturnOriginRef = useRef<ReturnType<typeof currentTimelineViewportFocus> | null>(null);
   const nowReturnSettleTimerRef = useRef<number | null>(null);
   const nowReturnScrollEndCleanupRef = useRef<(() => void) | null>(null);
   useEffect(() => () => {
@@ -2607,6 +2608,15 @@ if (cached?.data && cached?.settings) {
     const targetTop = effectEnabled
       ? effectTop(targetDate, minutesToTime(targetMinutes))
       : (((targetMinutes - dayStartHour * 60 + 24 * 60) % (24 * 60)) / SLOT_MINUTES) * timelineSlotHeight;
+    if (pendingTimelineFocus.source === "now" && nowReturnOriginRef.current) {
+      const origin = nowReturnOriginRef.current;
+      nowReturnOriginRef.current = null;
+      // Rebase the previous date into today's canvas before choosing the scroll direction.
+      const originOffset = origin.viewportY === undefined
+        ? timelineFocusViewportOffset(container)
+        : origin.viewportY - container.getBoundingClientRect().top;
+      container.scrollTo({ top: Math.max(0, effectTop(origin.date, origin.startTime) - originOffset), behavior: "instant" });
+    }
     const frame = window.requestAnimationFrame(() => {
       const viewportOffset = pendingTimelineFocus.viewportY === undefined
         ? timelineFocusViewportOffset(container)
@@ -8696,6 +8706,7 @@ if (cached?.data && cached?.settings) {
     const now = workspaceNow();
     const nowDate = todayIso();
     const nowTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    nowReturnOriginRef.current = timelineView === "month" ? null : currentTimelineViewportFocus();
     nowReturnNavigationRef.current = true;
     continuousPrependLockRef.current = false;
     continuousScrollRestoreRef.current = null;

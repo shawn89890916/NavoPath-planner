@@ -7,6 +7,7 @@
 - 手机今日候选支持在整条顶栏上下滑动：上滑展开更多候选，下滑关闭；快速添加也可从标题栏上滑展开详情，保留轻点按钮与内容滚动。
 
 ### 修复
+- 横屏与竖屏时间轴“回到现在”按正在查看的日期和时刻决定滚动方向：从过去向下返回，从未来向上返回，避免跨日期时方向颠倒。
 - 竖屏三天视图的全天任务与日期列准确对齐；开启或关闭跨天滚动时，切换天、三天、周视图及从月视图返回均保留正在查看的时间位置。
 - 月视图竖屏下点按日期旁的添加按钮会打开快速添加短栏，保留所选日期和项目；展开详情后也可继续添加到该日。
 - 提前准备 AI 对话窗口；AI 与规划加载时使用与刷新页面一致的骨架占位，AI 保留关闭入口。关闭 AI 时竖屏底栏及时恢复，避免退场时短暂空白。
@@ -241,6 +242,7 @@
 - Swipe the full Today’s Candidates header up to expand the list or down to close it on phones. Quick Add also expands to details with an upward header swipe, while taps and content scrolling remain available.
 
 ### Fixed
+- “Back to now” uses the date and time in view to scroll forward from the past and backward from the future in both portrait and landscape, avoiding reversed motion across dates.
 - All-day tasks align with their date columns in the portrait three-day view. With cross-day scrolling enabled or disabled, switching between day, three-day, and week views, or returning from month view, preserves the time position being viewed.
 - In portrait month view, the add button beside a date opens the quick-add sheet and retains the selected date and project, including when expanded to full details.
 - Prepare the AI dialog ahead of time. AI and Planning use skeleton placeholders consistent with page refreshes, with AI remaining dismissible while loading. Restore the portrait bottom navigation as AI closes, avoiding a brief blank area during the exit.
