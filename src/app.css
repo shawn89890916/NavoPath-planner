@@ -8393,40 +8393,40 @@ html[data-motion-scope="planning"] .df-app > .df-planning .df-tree-wrap {
 }
 /* Fixed controls need their own upper snapshots: live DOM z-index cannot put
    them above the browser's view-transition overlay. */
-html[data-motion-scope] .df-app > .df-header {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) .df-app > .df-header {
   view-transition-name: navo-static-header;
 }
-html[data-motion-scope] .df-compact-execute-controls {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) .df-compact-execute-controls {
   view-transition-name: navo-static-date-controls;
 }
-html[data-motion-scope] #df-execute-timeline .df-date-title-compact {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) #df-execute-timeline .df-date-title-compact {
   view-transition-name: navo-static-date-tag;
 }
-html[data-motion-scope] .df-mobile-dock--viewport {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) .df-mobile-dock--viewport {
   view-transition-name: navo-static-dock;
 }
-html[data-motion-scope] .df-mobile-floating-actions {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) .df-mobile-floating-actions {
   view-transition-name: navo-static-floating-actions;
 }
-html[data-motion-scope] .df-app > .df-add-fab {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) .df-app > .df-add-fab {
   view-transition-name: navo-static-add;
 }
-html[data-motion-scope] .df-app > .df-ai-fab {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) .df-app > .df-ai-fab {
   view-transition-name: navo-static-ai;
 }
-html[data-motion-scope] #df-execute-timeline .df-date-arrow.left {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) #df-execute-timeline .df-date-arrow.left {
   view-transition-name: navo-static-previous;
 }
-html[data-motion-scope] #df-execute-timeline .df-date-arrow.right {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) #df-execute-timeline .df-date-arrow.right {
   view-transition-name: navo-static-next;
 }
-html[data-motion-scope] #df-execute-timeline .df-view-switch-vertical {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) #df-execute-timeline .df-view-switch-vertical {
   view-transition-name: navo-static-timeline-views;
 }
-html[data-motion-scope] #df-execute-timeline .df-exit-fullscreen-btn {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) #df-execute-timeline .df-exit-fullscreen-btn {
   view-transition-name: navo-static-fullscreen-exit;
 }
-html[data-motion-scope] #df-execute-timeline .df-month-header {
+html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) #df-execute-timeline .df-month-header {
   view-transition-name: navo-static-month-heading;
 }
 :where(html[data-motion-scope])::view-transition-group(*),
