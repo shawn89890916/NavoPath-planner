@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-25 · 桌面版 1.4.2
+
+### 改进
+- 桌面版更新至 1.4.2，汇集近期规划、AI、手机布局与时间轴改进，包括月份和年份快速选择、月视图按日期快速添加，以及跨视图保留时间位置。
+
 ## 2026-10-24 · 导航、时间轴与顶栏手势
 
 ### 改进
@@ -234,6 +239,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-25 · Desktop 1.4.2
+
+### Improvements
+- Desktop 1.4.2 brings together recent planning, AI, mobile layout, and timeline improvements, including quick month and year selection, date-specific quick add in month view, and preserved timeline position across views.
 
 ## 2026-10-24 · Navigation, Timeline, and Header Gestures
 
