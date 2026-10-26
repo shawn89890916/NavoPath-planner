@@ -6,7 +6,7 @@
 - 桌面版可从今日候选的“更多”选择贴靠左侧或右侧，当前窗口切换为竖屏并贴合所在屏幕的可用高度；支持切换贴边方向、适应屏幕变化，退出后恢复原窗口大小、位置与最大化状态。
 
 ### 修复
-- 官网首页顶栏“现在开始”直接打开登录窗口；未登录时访问工作区也会显示登录入口，避免跳转后仍停留在首页。
+- 官网首页顶栏“现在开始”在未登录时直接打开登录窗口，已登录时进入工作区；未登录时访问工作区也会显示登录入口，避免跳转后仍停留在首页。
 
 ## 2026-10-25 · 桌面版 1.4.2
 
@@ -254,7 +254,7 @@
 - Choose Dock left or Dock right in Today's Candidates → More to turn the current desktop window into a portrait panel fitted to the current display's usable height. Switch sides, adapt to display changes, or undock to restore the previous window size, position, and maximized state.
 
 ### Fixes
-- The homepage Start now button opens the sign-in dialog directly. Opening the workspace while signed out also shows the sign-in dialog instead of leaving users on the homepage.
+- The homepage Start now button opens the sign-in dialog directly when signed out and enters the workspace when signed in. Opening the workspace while signed out also shows the sign-in dialog instead of leaving users on the homepage.
 
 ## 2026-10-25 · Desktop 1.4.2
 

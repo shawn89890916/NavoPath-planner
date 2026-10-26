@@ -14,13 +14,8 @@ import "./landing.css";
 type AuthIntent = "signin" | "signup";
 type Lang = "en" | "zh";
 
-const DONATION_URL = "https://afdian.com/a/233cxy/plan";
-const GITHUB_URL = "https://github.com/shawn89890916/NavoPath-planner";
-
 const copy = {
   en: {
-    nav: [["Execute", "#how-it-works"], ["Support", DONATION_URL], ["GitHub", GITHUB_URL]],
-    login: "Log in", donate: "Support",
     productName: "NavoPath",
     title: "See what to do today — and when to do it.",
     scroll: "Scroll to explore", start: "Start now", download: "Download for Windows",
@@ -36,8 +31,6 @@ const copy = {
     ctaTitle: "Do one thing well today.", ctaBody: "Open NavoPath and start a productive day.",
   },
   zh: {
-    nav: [["执行", "#how-it-works"], ["支持我们", DONATION_URL], ["GitHub", GITHUB_URL]],
-    login: "登录", donate: "支持",
     productName: "NavoPath",
     title: "今天的事，先安排明白",
     scroll: "继续探索", start: "直接开始", download: "下载 Windows 版",
@@ -152,7 +145,7 @@ function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, 
   </div>;
 }
 
-export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm, onForgotPassword, busy, error, notice, initialShowAuth = false }: {
+export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm, onForgotPassword, busy, error, notice, initialShowAuth = false, signedIn = false }: {
   onLogin: (email: string, password: string, displayName: string, intent: AuthIntent, theme: "light" | "dark", privacyAccepted: boolean) => void;
   onResend: (email: string) => void;
   onContinueAfterConfirm: (email: string) => void;
@@ -161,6 +154,7 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
   error: string;
   notice: { type: "confirm-email"; email: string } | null;
   initialShowAuth?: boolean;
+  signedIn?: boolean;
 }) {
   const [lang, setLang] = useState<Lang>("en");
   const [showAuth, setShowAuth] = useState(initialShowAuth);
@@ -229,7 +223,7 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
     <nav className="landing-nav" aria-label="NavoPath">
       <a className="landing-brand" href="/"><ProductIcon compact /><span>NavoPath</span></a>
       <div className="landing-nav-links"><ProductMenu lang={lang} /><ProductMenu lang={lang} kind="principles" /><ProductMenu lang={lang} kind="support" includeGitHub /></div>
-      <div className="landing-nav-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><button type="button" className="np-start-link" onClick={() => setShowAuth(true)}>{lang === "zh" ? "现在开始" : "Start now"}</button></div>
+      <div className="landing-nav-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><a className="np-start-link" href="/app" onClick={(event) => { if (!signedIn) { event.preventDefault(); setShowAuth(true); } }}>{lang === "zh" ? "现在开始" : "Start now"}</a></div>
     </nav>
     <main>
       <section className="landing-cover" id="top"><LandingPortals lang={lang} recede={portalExit} /><div className="landing-cover-content" style={coverStyle}><div className="landing-cover-logo"><ProductIcon /></div><div className="landing-brand-copy"><p className="landing-product-name">{c.productName}</p><h1 className="landing-slogan">{c.title}</h1></div></div><span className="landing-product-scroll-cue" aria-hidden="true"><i>↑</i>{c.scroll}</span></section>

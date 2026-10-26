@@ -8880,7 +8880,7 @@ if (cached?.data && cached?.settings) {
       /></Suspense>;
     }
     return <Suspense fallback={<ExecuteSkeleton />}>
-      <LandingPageLazy initialShowAuth={isWorkspaceRoute} busy={authBusy} error={authError} notice={authNotice} onLogin={handleAuthSubmit} onResend={resendConfirmation} onContinueAfterConfirm={continueAfterConfirm} onForgotPassword={handleForgotPassword} />
+      <LandingPageLazy initialShowAuth={isWorkspaceRoute} signedIn={Boolean(authState?.user)} busy={authBusy} error={authError} notice={authNotice} onLogin={handleAuthSubmit} onResend={resendConfirmation} onContinueAfterConfirm={continueAfterConfirm} onForgotPassword={handleForgotPassword} />
     </Suspense>;
   }
 
