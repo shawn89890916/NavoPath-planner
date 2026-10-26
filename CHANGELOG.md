@@ -1,9 +1,9 @@
 # NavoPath 更新日志
 
-## 2026-10-26 · 桌面贴边模式 · 1.4.3
+## 2026-10-26 · 桌面贴边悬停 · 1.4.4
 
 ### 新增
-- 桌面版可从今日候选的“更多”选择贴靠左侧或右侧，当前窗口切换为竖屏并贴合所在屏幕的可用高度；支持切换贴边方向、适应屏幕变化，退出后恢复原窗口大小、位置与最大化状态。
+- 桌面版可在今日候选“更多”中悬停 Dock 选择左侧或右侧；窗口切为竖屏并默认完全收起，鼠标靠近对应屏幕边缘时展开，离开窗口后再次收起。启用后菜单显示 Undock，退出时恢复原窗口大小、位置、置顶与最大化状态，并适应屏幕可用区域变化。
 
 ### 修复
 - 官网首页顶栏“现在开始”在未登录时直接打开登录窗口，已登录时进入工作区；未登录时访问工作区也会显示登录入口，避免跳转后仍停留在首页。
@@ -248,10 +248,10 @@
 
 # NavoPath Changelog
 
-## 2026-10-26 · Desktop Dock Mode · 1.4.3
+## 2026-10-26 · Desktop Edge Hover · 1.4.4
 
 ### Added
-- Choose Dock left or Dock right in Today's Candidates → More to turn the current desktop window into a portrait panel fitted to the current display's usable height. Switch sides, adapt to display changes, or undock to restore the previous window size, position, and maximized state.
+- Hover over Dock in Today's Candidates → More and choose Left or Right. The portrait window stays completely hidden until the pointer approaches that screen edge, and hides again when the pointer leaves the window. The menu changes to Undock while enabled; undocking restores the previous size, position, always-on-top and maximized states, while docking adapts to display work area changes.
 
 ### Fixes
 - The homepage Start now button opens the sign-in dialog directly when signed out and enters the workspace when signed in. Opening the workspace while signed out also shows the sign-in dialog instead of leaving users on the homepage.

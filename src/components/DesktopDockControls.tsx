@@ -7,6 +7,7 @@ export default function DesktopDockControls({ lang, onDock, onError }: {
 }) {
   const [side, setSide] = useState<"left" | "right" | null>(null);
   const [busy, setBusy] = useState(false);
+  const [choosing, setChoosing] = useState(false);
   useEffect(() => {
     void window.desktopApi?.dockWindow?.getSide().then(setSide).catch(() => {});
   }, []);
@@ -24,9 +25,12 @@ export default function DesktopDockControls({ lang, onDock, onError }: {
     }
   }
 
-  return <>
-    <Button aria-pressed={side === "left"} disabled={busy} onClick={() => void changeSide("left")}>{lang === "zh" ? "贴靠左侧" : "Dock left"}</Button>
-    <Button aria-pressed={side === "right"} disabled={busy} onClick={() => void changeSide("right")}>{lang === "zh" ? "贴靠右侧" : "Dock right"}</Button>
-    {side && <Button disabled={busy} onClick={() => void changeSide(null)}>{lang === "zh" ? "退出贴边" : "Undock"}</Button>}
-  </>;
+  if (side) return <Button disabled={busy} onClick={() => void changeSide(null)}>Undock</Button>;
+  return <div onMouseEnter={() => setChoosing(true)} onMouseLeave={() => setChoosing(false)}>
+    <Button disabled={busy} aria-expanded={choosing} onFocus={() => setChoosing(true)} onClick={(event) => { event.stopPropagation(); setChoosing(true); }}>Dock <span aria-hidden="true">›</span></Button>
+    {choosing && <div className="ui-choice-list ui-choice-list--inline" role="group" aria-label={lang === "zh" ? "贴边方向" : "Dock side"}>
+      <Button className="ui-choice-item" disabled={busy} onClick={() => void changeSide("left")}>{lang === "zh" ? "左侧" : "Left"}</Button>
+      <Button className="ui-choice-item" disabled={busy} onClick={() => void changeSide("right")}>{lang === "zh" ? "右侧" : "Right"}</Button>
+    </div>}
+  </div>;
 }

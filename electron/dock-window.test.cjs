@@ -12,6 +12,8 @@ class FakeWindow extends EventEmitter {
     this.maximized = maximized;
     this.fullScreen = fullScreen;
     this.resizable = this.movable = this.maximizable = this.fullScreenable = true;
+    this.visible = true;
+    this.alwaysOnTop = false;
   }
   isDestroyed() { return Boolean(this.destroyed); }
   getBounds() { return { ...this.bounds }; }
@@ -23,6 +25,13 @@ class FakeWindow extends EventEmitter {
   isMovable() { return this.movable; }
   isMaximizable() { return this.maximizable; }
   isFullScreenable() { return this.fullScreenable; }
+  isAlwaysOnTop() { return this.alwaysOnTop; }
+  isVisible() { return this.visible; }
+  setAlwaysOnTop(value) { this.alwaysOnTop = value; }
+  hide() { this.visible = false; }
+  showInactive() { this.visible = true; }
+  show() { this.visible = true; }
+  focus() { this.focused = true; }
   setResizable(value) { this.resizable = value; }
   setMovable(value) { this.movable = value; }
   setMaximizable(value) { this.maximizable = value; }
@@ -49,6 +58,9 @@ function setup(options) {
     { id: 2, workArea: { x: -1600, y: 40, width: 1600, height: 860 } },
   ];
   screen.getAllDisplays = () => screen.displays;
+  screen.point = { x: 800, y: 400 };
+  screen.getCursorScreenPoint = () => screen.point;
+  let poll = null;
   screen.getDisplayMatching = (bounds) => screen.displays.find((display) => (
     bounds.x >= display.workArea.x && bounds.x < display.workArea.x + display.workArea.width
   )) || screen.displays[0];
@@ -57,12 +69,18 @@ function setup(options) {
     screen,
     canControl: (event) => event.role === "app",
     getWindow: (event) => event.win,
+    timers: {
+      setInterval: (callback) => { poll = callback; return { unref() {} }; },
+      clearInterval: () => { poll = null; },
+    },
   });
   service.registerIpc();
   service.watchDisplays();
   const event = { role: "app", win };
   return {
     win, screen, event,
+    tick: (point) => { screen.point = point; poll?.(); },
+    polling: () => Boolean(poll),
     set: (side, sender = event) => handlers.get("dock-window:set-side")(sender, side),
     get: (sender = event) => handlers.get("dock-window:get-side")(sender),
   };
@@ -90,6 +108,7 @@ test("docks the sender window, switches sides, and restores its original geometr
   assert.equal(win.movable, false);
   assert.equal(win.maximizable, false);
   assert.equal(win.fullScreenable, false);
+  assert.equal(win.visible, false);
   set("right");
   set("right");
   assert.equal(get(), "right");
@@ -102,6 +121,59 @@ test("docks the sender window, switches sides, and restores its original geometr
   assert.equal(win.maximizable, true);
   assert.equal(win.fullScreenable, true);
   assert.equal(win.listenerCount("closed"), 0);
+  assert.equal(win.visible, true);
+  assert.equal(win.focused, true);
+});
+
+test("stays completely hidden until the pointer reaches the chosen edge and hides on leaving", () => {
+  const { win, set, tick, polling } = setup();
+  set("left");
+  assert.equal(polling(), true);
+  tick({ x: -1500, y: 100 });
+  assert.equal(win.visible, false);
+  tick({ x: -1600, y: 20 });
+  assert.equal(win.visible, false);
+  tick({ x: -1600, y: 100 });
+  assert.equal(win.visible, true);
+  assert.equal(win.focused, undefined);
+  assert.equal(win.alwaysOnTop, true);
+  tick({ x: -1300, y: 200 });
+  assert.equal(win.visible, true);
+  tick({ x: -1100, y: 200 });
+  assert.equal(win.visible, false);
+  assert.equal(win.alwaysOnTop, false);
+  set(null);
+  assert.equal(polling(), false);
+});
+
+test("right edge activation stays on its monitor and preserves an original always-on-top window", () => {
+  const { win, set, tick } = setup();
+  win.alwaysOnTop = true;
+  set("right");
+  tick({ x: 0, y: 100 });
+  assert.equal(win.visible, false);
+  tick({ x: -1, y: 100 });
+  assert.equal(win.visible, true);
+  tick({ x: -600, y: 100 });
+  assert.equal(win.visible, false);
+  assert.equal(win.alwaysOnTop, true);
+  set(null);
+  assert.equal(win.visible, true);
+  assert.equal(win.alwaysOnTop, true);
+});
+
+test("crossing a vertical taskbar from the edge into the panel does not collapse it", () => {
+  const { win, screen, set, tick } = setup();
+  screen.displays[1].bounds = { x: -1600, y: 0, width: 1600, height: 900 };
+  screen.displays[1].workArea.x = -1550;
+  screen.displays[1].workArea.width = 1550;
+  set("left");
+  tick({ x: -1600, y: 100 });
+  assert.equal(win.visible, true);
+  tick({ x: -1570, y: 100 });
+  assert.equal(win.visible, true);
+  tick({ x: -1400, y: 100 });
+  assert.equal(win.visible, true);
 });
 
 test("restores a maximized or fullscreen window after docking", () => {

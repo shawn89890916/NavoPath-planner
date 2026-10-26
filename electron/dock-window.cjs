@@ -10,13 +10,46 @@ function dockWindowBounds(workArea, side) {
   };
 }
 
-function createDockWindowService({ ipcMain, screen, getWindow, canControl }) {
+function createDockWindowService({ ipcMain, screen, getWindow, canControl, timers = { setInterval, clearInterval } }) {
   const docked = new Map();
+  let hoverTimer = null;
+
+  function stopHoverTimer() {
+    if (docked.size || hoverTimer === null) return;
+    timers.clearInterval(hoverTimer);
+    hoverTimer = null;
+  }
+
+  function checkPointer() {
+    const point = screen.getCursorScreenPoint();
+    for (const [win, state] of docked) {
+      if (win.isDestroyed()) continue;
+      const bounds = win.getBounds();
+      const monitor = state.displayBounds;
+      const edge = state.side === "left" ? monitor.x : monitor.x + monitor.width - 1;
+      const nearEdge = Math.abs(point.x - edge) <= 4
+        && point.x >= monitor.x && point.x < monitor.x + monitor.width
+        && point.y >= bounds.y && point.y < bounds.y + bounds.height;
+      // Include a vertical taskbar between the physical screen edge and the panel.
+      const left = state.side === "left" ? monitor.x : bounds.x;
+      const right = state.side === "right" ? monitor.x + monitor.width : bounds.x + bounds.width;
+      const inside = point.x >= left && point.x < right
+        && point.y >= bounds.y && point.y < bounds.y + bounds.height;
+      if (!win.isVisible() && nearEdge) {
+        win.setAlwaysOnTop(true);
+        win.showInactive();
+      } else if (win.isVisible() && !inside) {
+        win.hide();
+        win.setAlwaysOnTop(state.alwaysOnTop);
+      }
+    }
+  }
 
   function applyBounds(win, state) {
     const display = screen.getAllDisplays().find((item) => item.id === state.displayId)
       || screen.getDisplayMatching(win.getBounds());
     state.displayId = display.id;
+    state.displayBounds = display.bounds || display.workArea;
     win.setBounds(dockWindowBounds(display.workArea, state.side));
   }
 
@@ -26,7 +59,9 @@ function createDockWindowService({ ipcMain, screen, getWindow, canControl }) {
     if (side === null) {
       if (!state) return null;
       docked.delete(win);
+      stopHoverTimer();
       win.removeListener("closed", state.onClosed);
+      win.setAlwaysOnTop(state.alwaysOnTop);
       win.setResizable(state.resizable);
       win.setMovable(state.movable);
       win.setMaximizable(state.maximizable);
@@ -42,6 +77,8 @@ function createDockWindowService({ ipcMain, screen, getWindow, canControl }) {
       win.setMinimumSize(...state.minimumSize);
       if (state.maximized) win.maximize();
       if (state.fullScreen) win.setFullScreen(true);
+      win.show();
+      win.focus();
       return null;
     }
 
@@ -55,12 +92,13 @@ function createDockWindowService({ ipcMain, screen, getWindow, canControl }) {
         movable: win.isMovable(),
         maximizable: win.isMaximizable(),
         fullScreenable: win.isFullScreenable(),
+        alwaysOnTop: win.isAlwaysOnTop(),
         displayId: screen.getDisplayMatching(win.getBounds()).id,
         restoreDisplayId: screen.getDisplayMatching(win.getBounds()).id,
         side,
       };
       docked.set(win, state);
-      state.onClosed = () => docked.delete(win);
+      state.onClosed = () => { docked.delete(win); stopHoverTimer(); };
       win.once("closed", state.onClosed);
       if (state.fullScreen) win.setFullScreen(false);
       if (state.maximized) win.unmaximize();
@@ -72,6 +110,12 @@ function createDockWindowService({ ipcMain, screen, getWindow, canControl }) {
     }
     state.side = side;
     applyBounds(win, state);
+    win.hide();
+    win.setAlwaysOnTop(state.alwaysOnTop);
+    if (hoverTimer === null) {
+      hoverTimer = timers.setInterval(checkPointer, 75);
+      hoverTimer.unref?.();
+    }
     return side;
   }
 
