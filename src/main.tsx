@@ -109,6 +109,7 @@ const sessionStorage = productDemo?.storage ?? window.sessionStorage;
 installBrowserFallback();
 
 const AuthGate = lazy(() => import("./AuthGate"));
+const DesktopDockControls = lazy(() => import("./components/DesktopDockControls"));
 const ChangelogPage = lazy(() => import("./ChangelogPage"));
 const PluginGuidePageLazy = lazy(() => import("./PluginGuidePage"));
 const loadSettingsPanel = () => import("./SettingsPanel");
@@ -9219,6 +9220,7 @@ if (cached?.data && cached?.settings) {
                   {!productAiPresentation && <Button disabled={!focusTask} onClick={() => { if (!focusTask) return; if (!timerTask) startTimer(focusTask.id); setFocusOverlayMode(settings.focusModeDefault || "flowtime"); }}>{lang === "zh" ? "专注" : "Focus"}</Button>}
                   {!productAiPresentation && settings.featureTemplatesEnabled !== false && <Button onClick={() => setScheduleTemplateOpen(true)}>{lang === "zh" ? "日程模板" : "Schedule Template"}</Button>}
                   {!productAiPresentation && Boolean(window.desktopApi?.widget) && settings.featureWidgetEnabled !== false && <Button onClick={() => void window.desktopApi?.widget?.open()}>{lang === "zh" ? "桌面小组件" : "Desktop widget"}</Button>}
+                  {!productPresentation && window.desktopApi?.dockWindow && <Suspense fallback={null}><DesktopDockControls lang={lang} onDock={() => setFullscreen(false)} onError={showToast} /></Suspense>}
                   {!productAiPresentation && !settings.hideAi && <Button onClick={() => setAiPlanMenuOpen((open) => !open)}>{t(lang, "timeline.aiPlanningSettings")}</Button>}
                 </ActionDisclosure>
                 {!settings.hideAi && (

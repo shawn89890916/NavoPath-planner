@@ -38,6 +38,7 @@
   #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates {
     display: flex; position: fixed; inset: auto 0 0; z-index: 141;
     height: 60dvh; max-height: calc(100dvh - env(safe-area-inset-top) - 8px);
+    --action-menu-max-height: calc(60dvh - 64px - env(safe-area-inset-bottom));
     width: 100%; min-width: 0; margin: 0; box-sizing: border-box;
     flex-direction: column; padding: 0 8px calc(8px + env(safe-area-inset-bottom));
     border: 1px solid var(--paper-rule); border-bottom: 0; border-radius: 12px 12px 0 0;
@@ -51,6 +52,7 @@
   }
   #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates.is-expanded {
     height: 94dvh;
+    --action-menu-max-height: calc(94dvh - 64px - env(safe-area-inset-bottom));
   }
   #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates.is-sheet-dragging {
     transition: none;

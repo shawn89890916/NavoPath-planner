@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createWidgetWindowService } = require("./widget-window.cjs");
 const { createCompactWindowService } = require("./compact-window.cjs");
+const { createDockWindowService } = require("./dock-window.cjs");
 const { createRendererPolicy, resolveDevAppUrl } = require("./renderer-security.cjs");
 const {
   readSnapshotFile,
@@ -322,6 +323,7 @@ if (!gotTheLock) {
 app.whenReady().then(() => {
   // Create window first for fastest perceived startup
   createWindow();
+  dockWindowService.watchDisplays();
   
   // Defer non-critical initialization to background
   setImmediate(() => {
@@ -499,6 +501,14 @@ compactWindowService = createCompactWindowService({
   canControl: isApplicationWindowEvent,
 });
 compactWindowService.registerIpc();
+
+const dockWindowService = createDockWindowService({
+  ipcMain: trustedIpcMain,
+  screen,
+  getWindow: (event) => windowFromEvent(BrowserWindow, event),
+  canControl: isApplicationWindowEvent,
+});
+dockWindowService.registerIpc();
 
 const widgetIpcPolicy = createWidgetIpcPolicy({
   BrowserWindow,

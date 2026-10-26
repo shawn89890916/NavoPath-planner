@@ -22,7 +22,7 @@
   display: grid;
   gap: var(--space-1);
   width: min(260px, calc(100vw - 24px));
-  max-height: min(480px, 65dvh);
+  max-height: min(480px, var(--action-menu-max-height, 65dvh));
   overflow-y: auto;
   padding: var(--space-2);
   background: var(--surface-raised);

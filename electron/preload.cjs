@@ -19,6 +19,10 @@ contextBridge.exposeInMainWorld("desktopApi", {
   listExternalPlugins: () => ipcRenderer.invoke("plugins:listExternal"),
   writeSnapshot: (payload) => ipcRenderer.invoke("backup:writeSnapshot", payload),
   readLatestSnapshot: () => ipcRenderer.invoke("backup:readLatest"),
+  dockWindow: {
+    getSide: () => ipcRenderer.invoke("dock-window:get-side"),
+    setSide: (side) => ipcRenderer.invoke("dock-window:set-side", side),
+  },
   compactWindow: {
     open: (options) => ipcRenderer.invoke("compact-window:open", options),
     close: () => ipcRenderer.invoke("compact-window:close"),

@@ -834,6 +834,10 @@ declare global {
         close: () => Promise<boolean>;
         setAlwaysOnTop: (enabled: boolean) => Promise<boolean>;
       };
+      dockWindow?: {
+        getSide: () => Promise<"left" | "right" | null>;
+        setSide: (side: "left" | "right" | null) => Promise<"left" | "right" | null>;
+      };
       widget?: {
         open: () => Promise<boolean>;
         close: () => Promise<boolean>;
