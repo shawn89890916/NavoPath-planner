@@ -152,7 +152,7 @@ function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, 
   </div>;
 }
 
-export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm, onForgotPassword, busy, error, notice }: {
+export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm, onForgotPassword, busy, error, notice, initialShowAuth = false }: {
   onLogin: (email: string, password: string, displayName: string, intent: AuthIntent, theme: "light" | "dark", privacyAccepted: boolean) => void;
   onResend: (email: string) => void;
   onContinueAfterConfirm: (email: string) => void;
@@ -160,9 +160,10 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
   busy: boolean;
   error: string;
   notice: { type: "confirm-email"; email: string } | null;
+  initialShowAuth?: boolean;
 }) {
   const [lang, setLang] = useState<Lang>("en");
-  const [showAuth, setShowAuth] = useState(false);
+  const [showAuth, setShowAuth] = useState(initialShowAuth);
   const [coverRecede, setCoverRecede] = useState(0);
   const [portalExit, setPortalExit] = useState(0);
   const [entering, setEntering] = useState(() => !prefersReducedMotion() && window.scrollY < 1 && !location.hash);
@@ -228,7 +229,7 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
     <nav className="landing-nav" aria-label="NavoPath">
       <a className="landing-brand" href="/"><ProductIcon compact /><span>NavoPath</span></a>
       <div className="landing-nav-links"><ProductMenu lang={lang} /><ProductMenu lang={lang} kind="principles" /><ProductMenu lang={lang} kind="support" includeGitHub /></div>
-      <div className="landing-nav-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><a className="np-start-link" href="/app">{lang === "zh" ? "现在开始" : "Start now"}</a></div>
+      <div className="landing-nav-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><button type="button" className="np-start-link" onClick={() => setShowAuth(true)}>{lang === "zh" ? "现在开始" : "Start now"}</button></div>
     </nav>
     <main>
       <section className="landing-cover" id="top"><LandingPortals lang={lang} recede={portalExit} /><div className="landing-cover-content" style={coverStyle}><div className="landing-cover-logo"><ProductIcon /></div><div className="landing-brand-copy"><p className="landing-product-name">{c.productName}</p><h1 className="landing-slogan">{c.title}</h1></div></div><span className="landing-product-scroll-cue" aria-hidden="true"><i>↑</i>{c.scroll}</span></section>
