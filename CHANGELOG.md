@@ -3,7 +3,7 @@
 ## 2026-10-28 · 项目归属菜单
 
 ### 修复
-- 修复时间轴项目归属菜单的重复边框与颜色标记错位，隐藏菜单滚动条并保留滚动和键盘操作。
+- 修复时间轴项目归属菜单的重复边框、名称与颜色标记错位，隐藏菜单滚动条并保留滚动和键盘操作。
 
 ## 2026-10-26 · 桌面贴边悬停 · 1.4.4
 
@@ -256,7 +256,7 @@
 ## 2026-10-28 · Project Assignment Menu
 
 ### Fixed
-- Fixed nested borders and misaligned color markers in the timeline project assignment menu; hid menu scrollbars while preserving scrolling and keyboard controls.
+- Fixed nested borders and misaligned names and color markers in the timeline project assignment menu; hid menu scrollbars while preserving scrolling and keyboard controls.
 
 ## 2026-10-26 · Desktop Edge Hover · 1.4.4
 

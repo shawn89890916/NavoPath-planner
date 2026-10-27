@@ -11510,9 +11510,15 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-project-popover-portal { animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top;
+  position: fixed;
+  z-index: 99999;
+  width: 220px;
+  max-height: 260px;
+  overflow: auto;
+  display: grid;
   scrollbar-width: none;
-  gap: 2px;
-  padding: 8px;
+  gap: 4px;
+  padding: 10px;
   border: 1px solid var(--paper-rule-strong);
   border-radius: 7px 4px 8px 3px;
   background: var(--surface-main);

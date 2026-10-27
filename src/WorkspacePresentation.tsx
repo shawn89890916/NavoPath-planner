@@ -888,20 +888,8 @@ export function TimeBlock({ task, engagementEnabled, preview, projectName, proje
       {projectOpen && projectBtnRef.current && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 99998 }} onClick={() => setProjectOpen(false)}>
           <div className="df-project-popover-portal" onClick={(event) => event.stopPropagation()} style={{
-            position: 'fixed',
             top: projectBtnRef.current.getBoundingClientRect().bottom + 8,
             left: Math.max(8, projectBtnRef.current.getBoundingClientRect().right - 220),
-            zIndex: 99999,
-            width: 220,
-            maxHeight: 260,
-            overflow: 'auto',
-            display: 'grid',
-            gap: '4px',
-            padding: '10px',
-            border: '1px solid color-mix(in srgb, var(--accent-active) 26%, var(--border-soft))',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--bg-surface)',
-            boxShadow: 'var(--shadow-soft)',
           } as CSSProperties}>
             <button style={{ textAlign: 'left', border: 0, background: 'transparent', padding: '7px 8px', color: 'var(--df-text)' }} onClick={() => { onProjectChange(""); setProjectOpen(false); }}>{t(lang, "timeBlock.unassigned")}</button>
             {projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { onProjectChange(project.id); setProjectOpen(false); }} onColorChange={(color) => onProjectColorChange(project.id, color)} />)}
