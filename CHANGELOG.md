@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-28 · 项目归属菜单
+
+### 修复
+- 修复时间轴项目归属菜单的重复边框与颜色标记错位，隐藏菜单滚动条并保留滚动和键盘操作。
+
 ## 2026-10-26 · 桌面贴边悬停 · 1.4.4
 
 ### 新增
@@ -247,6 +252,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-28 · Project Assignment Menu
+
+### Fixed
+- Fixed nested borders and misaligned color markers in the timeline project assignment menu; hid menu scrollbars while preserving scrolling and keyboard controls.
 
 ## 2026-10-26 · Desktop Edge Hover · 1.4.4
 

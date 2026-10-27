@@ -179,29 +179,15 @@
   color: var(--df-text);
 }
 .df-project-popover > button:hover { background: color-mix(in srgb, var(--accent-active) 12%, var(--bg-surface)); }
-.df-project-choice {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 26px;
-  align-items: center;
-  gap: 6px;
+.df-app .df-project-choice > button {
   min-width: 0;
-  padding: 2px 4px;
-  border-radius: var(--radius-sm);
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-project-choice:hover {
-  background: color-mix(in srgb, var(--accent-active) 10%, var(--bg-surface));
-}
-.df-project-choice > button {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+  min-height: 34px;
+  width: 100%;
+  display: block;
   border: 0;
   background: transparent;
   box-shadow: none;
-  padding: 6px 4px;
+  padding: 6px 8px;
   color: var(--df-text);
   text-align: left;
   overflow: hidden;
@@ -227,9 +213,11 @@
   display: inline-grid;
   place-items: center;
 }
-.df-project-color-dot-button {
-  width: 28px;
-  height: 28px;
+.df-app .df-project-color-dot-button {
+  box-sizing: border-box;
+  width: 34px;
+  height: 34px;
+  min-width: 0;
   padding: 0;
   border: 0;
   background: transparent;
@@ -241,6 +229,10 @@
 }
 .df-project-color-dot-button:hover { transform: scale(1.18); }
 .df-project-color-dot-button:active { transform: scale(.92); }
+.df-app .df-project-choice button:focus-visible {
+  outline: 1px solid var(--border-focus);
+  outline-offset: -2px;
+}
 .df-project-color-menu .df-project-color-dot {
   width: 20px;
   height: 20px;
@@ -11508,6 +11500,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 /* Rough editorial controls: quiet paper, slightly irregular hand-drawn rules. */
 /* Project pickers share one compact paper-sheet language everywhere. */
 .df-app .df-project-popover { animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top;
+  scrollbar-width: none;
   gap: 2px;
   padding: 8px;
   border: 1px solid var(--paper-rule-strong);
@@ -11517,6 +11510,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-project-popover-portal { animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top;
+  scrollbar-width: none;
   gap: 2px;
   padding: 8px;
   border: 1px solid var(--paper-rule-strong);
@@ -11525,6 +11519,8 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   box-shadow: var(--paper-float-shadow);
   corner-shape: var(--corner-shape, squircle);
 }
+.df-app .df-project-popover::-webkit-scrollbar,
+.df-app .df-project-popover-portal::-webkit-scrollbar { display: none; }
 .df-app .df-drawer-project-list {
   gap: 2px;
   padding: 8px;
@@ -11642,6 +11638,13 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   text-shadow: none;
 }
 .df-app .df-project-choice {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px 4px;
   min-height: 34px;
   border: 1px solid var(--paper-rule);
   border-radius: var(--radius-control);
@@ -11651,6 +11654,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   background-image: none;
   filter: none;
   text-shadow: none;
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-project-choice:hover {
   border-color: var(--paper-rule-strong);
@@ -11660,6 +11664,11 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   box-shadow: none;
   filter: none;
   text-shadow: none;
+}
+@media (pointer: coarse) {
+  .df-app .df-project-choice { grid-template-columns: minmax(0, 1fr) 44px; }
+  .df-app .df-project-choice > button { min-height: 44px; }
+  .df-app .df-project-color-dot-button { width: 44px; height: 44px; }
 }
 .df-app button:not(.df-resize-dot):not(.df-level-option) {
   border-color: var(--pencil-rule);
