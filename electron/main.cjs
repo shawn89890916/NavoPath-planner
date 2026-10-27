@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, safeStorage, shell, Tray, Menu, nativeImage, screen } = require("electron");
+const { app, BrowserWindow, ipcMain, safeStorage, shell, Tray, Menu, nativeImage, nativeTheme, screen } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { createWidgetWindowService } = require("./widget-window.cjs");
@@ -47,6 +47,7 @@ function getAutoUpdater() {
 }
 
 app.setName("NavoPath");
+nativeTheme.themeSource = "light";
 
 const localIndexPath = app.isPackaged
   ? path.join(app.getAppPath(), "dist", "index.html")
@@ -272,7 +273,8 @@ function createWindow() {
     minHeight: 720,
     title: "NavoPath",
     icon: iconPath,
-    backgroundColor: "#f5f7fb",
+    autoHideMenuBar: true,
+    backgroundColor: "#F8F7F3",
     show: false, // Don't show until ready-to-show
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),

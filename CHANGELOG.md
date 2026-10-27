@@ -1,6 +1,9 @@
 # NavoPath 更新日志
 
-## 2026-10-28 · 项目归属菜单
+## 2026-10-28 · 桌面外观与项目归属 · 1.4.5
+
+### 改进
+- 桌面版启动占位与系统界面默认使用浅色，保留已保存的工作区主题；顶部菜单栏默认隐藏，按 Alt 可临时显示，减少额外占用的顶部空间。
 
 ### 修复
 - 修复时间轴项目归属菜单的重复边框、名称与颜色标记错位，隐藏菜单滚动条并保留滚动和键盘操作。
@@ -253,7 +256,10 @@
 
 # NavoPath Changelog
 
-## 2026-10-28 · Project Assignment Menu
+## 2026-10-28 · Desktop Appearance and Project Assignment · 1.4.5
+
+### Improved
+- Desktop startup placeholders and native controls default to light mode while preserving the saved workspace theme. The menu bar stays hidden until Alt is pressed, freeing up vertical space.
 
 ### Fixed
 - Fixed nested borders and misaligned names and color markers in the timeline project assignment menu; hid menu scrollbars while preserving scrolling and keyboard controls.
