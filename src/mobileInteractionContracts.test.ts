@@ -9,10 +9,10 @@ const planning = readFileSync(resolve(__dirname, "PlanningView.tsx"), "utf8");
 
 describe("portrait interaction contracts", () => {
   it("opens the task short sheet on the second tap after selection", () => {
-    expect(main).toContain("function selectTimelineTask(task: Task)");
+    expect(main).toContain("function selectTimelineTask(task: Task, event: React.MouseEvent)");
     expect(main).toContain("if (resizeHintTaskId === taskId)");
     expect(main).toContain("openTaskEdit(task);");
-    expect(main).toContain("onSelect={() => selectTimelineTask(task)}");
+    expect(main).toContain("onSelect={(event) => selectTimelineTask(task, event)}");
   });
 
   it("does not use returned-unfinished status as a resize lock", () => {

@@ -22503,7 +22503,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     opacity: 1;
     pointer-events:auto;
   }
-  #root .df-app .df-time-block.show-resize-hint .df-resize-dot {
+  #root .df-app .df-time-block.show-resize-hint .df-resize-dot,
+  #root .df-app .df-time-block[data-mouse-optimized="true"]:hover .df-resize-dot {
     opacity: 1;
     pointer-events:auto;
   }

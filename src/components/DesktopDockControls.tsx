@@ -1,23 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Language } from "../types";
 import { Button } from "./UiPrimitives";
 
-export default function DesktopDockControls({ lang, onDock, onError }: {
-  lang: Language; onDock: () => void; onError: (message: string) => void;
+export default function DesktopDockControls({ lang, side, onSideChange, onError }: {
+  lang: Language; side: "left" | "right" | null; onSideChange: (side: "left" | "right" | null) => void; onError: (message: string) => void;
 }) {
-  const [side, setSide] = useState<"left" | "right" | null>(null);
   const [busy, setBusy] = useState(false);
   const [choosing, setChoosing] = useState(false);
-  useEffect(() => {
-    void window.desktopApi?.dockWindow?.getSide().then(setSide).catch(() => {});
-  }, []);
 
   async function changeSide(next: "left" | "right" | null) {
     if (busy || !window.desktopApi?.dockWindow) return;
     setBusy(true);
     try {
-      setSide(await window.desktopApi.dockWindow.setSide(next));
-      onDock();
+      onSideChange(await window.desktopApi.dockWindow.setSide(next));
     } catch {
       onError(lang === "zh" ? "无法调整贴边窗口，请重试。" : "Could not adjust the docked window. Please try again.");
     } finally {

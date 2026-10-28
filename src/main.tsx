@@ -1081,6 +1081,15 @@ function App() {
     return () => window.clearTimeout(timer);
   }, [Boolean(data), Boolean(settings)]);
   const [compactLayout, setCompactLayout] = useState(() => window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches);
+  const [desktopDockSide, setDesktopDockSide] = useState<"left" | "right" | null>(null);
+  const dockMouseLayout = Boolean(desktopDockSide) && compactLayout;
+  useEffect(() => {
+    let cancelled = false;
+    void window.desktopApi?.dockWindow?.getSide().then((side) => {
+      if (!cancelled) setDesktopDockSide(side);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
   const [compactExecuteView, setCompactExecuteView] = useState<CompactExecuteView>("schedule");
   const [phoneLayout, setPhoneLayout] = useState(() => window.matchMedia("(max-width: 899.98px) and (orientation: portrait)").matches);
   const mobileExecution = phoneLayout && !productPresentation && mode === "execute";
@@ -6151,6 +6160,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function beginBlockDrag(event: React.PointerEvent, task: Task) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
     if ((event.target as HTMLElement).closest("button,input,textarea,select")) return;
     if (isExternalCalendarDisplayTask(task)) {
       showToast(lang === "zh" ? "外部日历事项为只读" : "External calendar events are read-only");
@@ -6619,9 +6629,10 @@ if (cached?.data && cached?.settings) {
     return true;
   }
 
-  function selectTimelineTask(task: Task) {
+  function selectTimelineTask(task: Task, event: React.MouseEvent) {
     if (suppressBlockClickRef.current) return;
-    if (!compactLayout) {
+    const dockMouseClick = dockMouseLayout && (event.detail === 0 || ("pointerType" in event.nativeEvent && event.nativeEvent.pointerType === "mouse"));
+    if (!compactLayout || dockMouseClick) {
       openTaskEdit(task);
       return;
     }
@@ -9220,7 +9231,7 @@ if (cached?.data && cached?.settings) {
                   {!productAiPresentation && <Button disabled={!focusTask} onClick={() => { if (!focusTask) return; if (!timerTask) startTimer(focusTask.id); setFocusOverlayMode(settings.focusModeDefault || "flowtime"); }}>{lang === "zh" ? "专注" : "Focus"}</Button>}
                   {!productAiPresentation && settings.featureTemplatesEnabled !== false && <Button onClick={() => setScheduleTemplateOpen(true)}>{lang === "zh" ? "日程模板" : "Schedule Template"}</Button>}
                   {!productAiPresentation && Boolean(window.desktopApi?.widget) && settings.featureWidgetEnabled !== false && <Button onClick={() => void window.desktopApi?.widget?.open()}>{lang === "zh" ? "桌面小组件" : "Desktop widget"}</Button>}
-                  {!productPresentation && window.desktopApi?.dockWindow && <Suspense fallback={null}><DesktopDockControls lang={lang} onDock={() => setFullscreen(false)} onError={showToast} /></Suspense>}
+                  {!productPresentation && window.desktopApi?.dockWindow && <Suspense fallback={null}><DesktopDockControls lang={lang} side={desktopDockSide} onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }} onError={showToast} /></Suspense>}
                   {!productAiPresentation && !settings.hideAi && <Button onClick={() => setAiPlanMenuOpen((open) => !open)}>{t(lang, "timeline.aiPlanningSettings")}</Button>}
                 </ActionDisclosure>
                 {!settings.hideAi && (
@@ -9811,7 +9822,7 @@ if (cached?.data && cached?.settings) {
                                   }
                                   const isPreview = previewIdByClonedId.has(task.id);
                                   return (
-                                    <TimeBlock engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} onSelect={() => selectTimelineTask(task)} onEdit={() => {
+                                    <TimeBlock engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
                                       if (!suppressBlockClickRef.current) openTaskEdit(task);
                                     }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
                                       createProjectForTask(task.id, title);
@@ -10208,7 +10219,7 @@ if (cached?.data && cached?.settings) {
 
                           const isPreview = previewIdByClonedId.has(task.id);
                           return (
-                            <TimeBlock engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} onSelect={() => selectTimelineTask(task)} onEdit={() => {
+                            <TimeBlock engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
                               if (!suppressBlockClickRef.current) openTaskEdit(task);
                             }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
                               createProjectForTask(task.id, title);

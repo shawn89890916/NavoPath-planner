@@ -1,9 +1,10 @@
 # NavoPath 更新日志
 
-## 2026-10-28 · 桌面外观与项目归属 · 1.4.5
+## 2026-10-28 · 桌面 Dock 鼠标交互与外观 · 1.4.6
 
 ### 改进
 - 桌面版启动占位与系统界面默认使用浅色，保留已保存的工作区主题；顶部菜单栏默认隐藏，按 Alt 可临时显示，减少额外占用的顶部空间。
+- 桌面 Dock 沿用竖屏布局，鼠标悬停时间轴任务即可显示时长调整手柄，按住直接拖动，单击展开详情短栏；保留触屏原有手势与排程逻辑。
 
 ### 修复
 - 修复时间轴项目归属菜单的重复边框、名称与颜色标记错位，隐藏菜单滚动条并保留滚动和键盘操作。
@@ -256,10 +257,11 @@
 
 # NavoPath Changelog
 
-## 2026-10-28 · Desktop Appearance and Project Assignment · 1.4.5
+## 2026-10-28 · Desktop Dock Mouse Gestures and Appearance · 1.4.6
 
 ### Improved
 - Desktop startup placeholders and native controls default to light mode while preserving the saved workspace theme. The menu bar stays hidden until Alt is pressed, freeing up vertical space.
+- Desktop Dock keeps the portrait layout with mouse gestures: hover over timeline tasks to reveal resize handles, drag directly, and click once to open the detail short sheet. Touch gestures and scheduling behavior stay consistent with portrait mode.
 
 ### Fixed
 - Fixed nested borders and misaligned names and color markers in the timeline project assignment menu; hid menu scrollbars while preserving scrolling and keyboard controls.
