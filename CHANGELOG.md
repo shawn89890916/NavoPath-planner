@@ -1,8 +1,9 @@
 # NavoPath 更新日志
 
-## 2026-10-28 · 桌面 Dock 鼠标交互与外观 · 1.4.6
+## 2026-10-28 · 桌面 Dock 鼠标交互与外观 · 1.4.7
 
 ### 改进
+- 桌面版启动后及每 24 小时自动检查更新，发现新版主动提示；自动和手动检查均只需确认一次，即可自动下载、安装并重启，稍后更新时可从设置继续。
 - 桌面版启动占位与系统界面默认使用浅色，保留已保存的工作区主题；顶部菜单栏默认隐藏，按 Alt 可临时显示，减少额外占用的顶部空间。
 - 桌面 Dock 沿用竖屏布局，鼠标悬停时间轴任务即可显示时长调整手柄，按住直接拖动，单击展开详情短栏；保留触屏原有手势与排程逻辑。
 
@@ -257,9 +258,10 @@
 
 # NavoPath Changelog
 
-## 2026-10-28 · Desktop Dock Mouse Gestures and Appearance · 1.4.6
+## 2026-10-28 · Desktop Dock Mouse Gestures and Appearance · 1.4.7
 
 ### Improved
+- Desktop checks for updates at startup and every 24 hours and prompts when a new version is available. Automatic and manual checks both need just one confirmation to download, install and restart; deferred updates remain available in Settings.
 - Desktop startup placeholders and native controls default to light mode while preserving the saved workspace theme. The menu bar stays hidden until Alt is pressed, freeing up vertical space.
 - Desktop Dock keeps the portrait layout with mouse gestures: hover over timeline tasks to reveal resize handles, drag directly, and click once to open the detail short sheet. Touch gestures and scheduling behavior stay consistent with portrait mode.
 

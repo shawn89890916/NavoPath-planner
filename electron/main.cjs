@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, safeStorage, shell, Tray, Menu, nativeImage, nativeTheme, screen } = require("electron");
+const { app, BrowserWindow, ipcMain, safeStorage, shell, Tray, Menu, nativeImage, nativeTheme, screen, dialog } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { createWidgetWindowService } = require("./widget-window.cjs");
@@ -25,6 +25,7 @@ const {
   createPrimaryWindowRegistry,
   windowFromEvent,
 } = require("./window-lifecycle.cjs");
+const { createDesktopUpdater } = require("./desktop-updater.cjs");
 // Lazy-loaded: electron-updater is not needed until autoUpdater is configured
 let _autoUpdaterModule;
 let _autoUpdater;
@@ -80,70 +81,39 @@ function isPrimaryWindowEvent(event) {
 }
 
 const UPDATE_INTERVAL_MS = 24 * 60 * 60 * 1000;
-let manualUpdateRequested = false;
-let updateState = {
-  status: app.isPackaged ? "idle" : "unsupported",
+const desktopUpdater = createDesktopUpdater({
+  isPackaged: app.isPackaged,
   currentVersion: app.getVersion(),
-  availableVersion: "",
-  progress: 0,
-  message: app.isPackaged ? "" : "Update checks are available in the installed desktop app."
-};
-
-function publishUpdateState(patch) {
-  updateState = { ...updateState, ...patch, currentVersion: app.getVersion() };
-  broadcastToLiveWindows(BrowserWindow.getAllWindows(), "updater:state", updateState);
-  return updateState;
-}
-
-async function checkForDesktopUpdate(manual = false) {
-  const autoUpdater = getAutoUpdater();
-  if (!app.isPackaged) return publishUpdateState({ status: "unsupported" });
-  if (["checking", "downloading"].includes(updateState.status)) return updateState;
-  if (manual && updateState.status === "available") {
-    manualUpdateRequested = false;
-    publishUpdateState({ status: "downloading", progress: 0 });
-    await autoUpdater.downloadUpdate();
-    return updateState;
-  }
-  manualUpdateRequested = manual;
-  publishUpdateState({ status: "checking", progress: 0, message: "" });
-  await autoUpdater.checkForUpdates();
-  return updateState;
-}
+  getUpdater: getAutoUpdater,
+  onState: (updateState) => {
+    broadcastToLiveWindows(BrowserWindow.getAllWindows(), "updater:state", updateState);
+  },
+  confirmUpdate: async (version) => {
+    const zh = app.getLocale().startsWith("zh");
+    const options = {
+      type: "info",
+      title: zh ? "NavoPath 更新" : "NavoPath update",
+      message: zh ? `发现新版本 ${version}` : `NavoPath ${version} is available`,
+      detail: zh
+        ? "确认后将自动下载并安装更新，完成后重启 NavoPath。"
+        : "Confirm to download and install the update automatically, then restart NavoPath.",
+      buttons: zh ? ["确认更新", "稍后"] : ["Update now", "Later"],
+      defaultId: 0,
+      cancelId: 1,
+      noLink: true,
+    };
+    const win = primaryWindowRegistry.get();
+    const result = await (win && win.isVisible()
+      ? dialog.showMessageBox(win, options)
+      : dialog.showMessageBox(options));
+    return result.response === 0;
+  },
+});
 
 function configureAutoUpdater() {
-  const autoUpdater = getAutoUpdater();
-  autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
-  autoUpdater.on("update-available", async (info) => {
-    publishUpdateState({ status: "available", availableVersion: info.version, progress: 0 });
-    if (!manualUpdateRequested) return;
-    manualUpdateRequested = false;
-    publishUpdateState({ status: "downloading", progress: 0 });
-    try {
-      await autoUpdater.downloadUpdate();
-    } catch (error) {
-      publishUpdateState({ status: "error", message: error instanceof Error ? error.message : String(error) });
-    }
-  });
-  autoUpdater.on("update-not-available", () => {
-    manualUpdateRequested = false;
-    publishUpdateState({ status: "current", availableVersion: "", progress: 0 });
-  });
-  autoUpdater.on("download-progress", (progress) => {
-    publishUpdateState({ status: "downloading", progress: Math.round(progress.percent || 0) });
-  });
-  autoUpdater.on("update-downloaded", (info) => {
-    publishUpdateState({ status: "downloaded", availableVersion: info.version, progress: 100 });
-  });
-  autoUpdater.on("error", (error) => {
-    manualUpdateRequested = false;
-    publishUpdateState({ status: "error", message: error instanceof Error ? error.message : String(error) });
-  });
-
   if (!app.isPackaged) return;
-  const initialTimer = setTimeout(() => void checkForDesktopUpdate(false).catch((error) => publishUpdateState({ status: "error", message: String(error) })), 30_000);
-  const interval = setInterval(() => void checkForDesktopUpdate(false).catch((error) => publishUpdateState({ status: "error", message: String(error) })), UPDATE_INTERVAL_MS);
+  const initialTimer = setTimeout(() => void desktopUpdater.check(), 5_000);
+  const interval = setInterval(() => void desktopUpdater.check(), UPDATE_INTERVAL_MS);
   initialTimer.unref?.();
   interval.unref?.();
 }
@@ -378,29 +348,9 @@ handleTrusted("auth-storage:get", (_event, key) => readAuthStorage(key));
 handleTrusted("auth-storage:set", (_event, key, value) => writeAuthStorage(key, value));
 handleTrusted("auth-storage:remove", (_event, key) => removeAuthStorage(key));
 handleTrusted("plugins:listExternal", () => readExternalPluginManifests());
-handleTrusted("updater:getState", () => updateState);
-handleTrusted("updater:check", async () => {
-  try {
-    return await checkForDesktopUpdate(true);
-  } catch (error) {
-    return publishUpdateState({ status: "error", message: error instanceof Error ? error.message : String(error) });
-  }
-});
-handleTrusted("updater:install", () => {
-  if (updateState.status !== "downloaded") return false;
-  setImmediate(() => {
-    const autoUpdater = getAutoUpdater();
-    if (typeof autoUpdater.quitAndInstall !== "function") {
-      publishUpdateState({
-        status: "error",
-        message: "The downloaded update cannot be installed automatically. Please download the latest installer manually."
-      });
-      return;
-    }
-    autoUpdater.quitAndInstall(false, true);
-  });
-  return true;
-});
+handleTrusted("updater:getState", () => desktopUpdater.getState());
+handleTrusted("updater:check", () => desktopUpdater.check(true));
+handleTrusted("updater:install", () => desktopUpdater.check(true).then(() => desktopUpdater.getState().status === "downloaded"));
 
 // Auto-launch at system startup (toggled from Settings)
 handleTrusted("autolaunch:get", () => {

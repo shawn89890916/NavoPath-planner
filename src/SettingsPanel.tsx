@@ -333,18 +333,18 @@ function DesktopUpdateControl({ lang }: { lang: Language }) {
   const statusText = (() => {
     if (!state) return lang === "zh" ? "正在读取版本…" : "Reading version…";
     if (state.status === "checking") return lang === "zh" ? "正在检查更新…" : "Checking for updates…";
-    if (state.status === "available") return lang === "zh" ? `发现 ${state.availableVersion}，点击下载` : `${state.availableVersion} is available. Click to download.`;
+    if (state.status === "available") return lang === "zh" ? `发现 ${state.availableVersion}，确认后自动更新并重启` : `${state.availableVersion} available. Confirm to update and restart.`;
     if (state.status === "downloading") return lang === "zh" ? `正在下载 ${state.progress}%` : `Downloading ${state.progress}%`;
     if (state.status === "downloaded") return lang === "zh" ? `${state.availableVersion} 已准备好安装` : `${state.availableVersion} is ready to install`;
     if (state.status === "current") return lang === "zh" ? "当前已是最新版" : "You're up to date";
     if (state.status === "error") return lang === "zh" ? `更新失败：${state.message}` : `Update failed: ${state.message}`;
-    return lang === "zh" ? "每 24 小时自动检查更新" : "Updates are checked every 24 hours";
+    return lang === "zh" ? "启动后及每天自动检查，确认即可更新" : "Checked at startup and daily. Confirm to update.";
   })();
   const busy = !state || state.status === "checking" || state.status === "downloading";
   const actionLabel = state?.status === "downloaded"
     ? (lang === "zh" ? "重启并安装" : "Restart and install")
     : state?.status === "available"
-      ? (lang === "zh" ? "下载更新" : "Download update")
+      ? (lang === "zh" ? "立即更新" : "Update now")
       : (lang === "zh" ? "立即检查更新" : "Check for updates");
 
   return <section className="df-update-card">
