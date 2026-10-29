@@ -22466,6 +22466,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     top: auto;
     bottom: -22px;
   }
+  #root .df-app .df-time-block[data-mouse-optimized="true"] .df-resize-dot {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
   #root .df-app .df-time-block .df-resize-dot::before {
     content: "";
     position: absolute;

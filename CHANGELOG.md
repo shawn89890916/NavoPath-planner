@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-29 · Dock 调整手柄 · 1.4.8
+
+### 改进
+- 桌面 Dock 竖屏时间轴的时长调整手柄移至任务块上下边缘的水平居中位置，便于鼠标拖动。
+
 ## 2026-10-28 · 桌面 Dock 鼠标交互与外观 · 1.4.7
 
 ### 改进
@@ -257,6 +262,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-29 · Dock Resize Handles · 1.4.8
+
+### Improved
+- Desktop Dock portrait timeline resize handles now sit at the horizontal center of the top and bottom task edges for easier mouse dragging.
 
 ## 2026-10-28 · Desktop Dock Mouse Gestures and Appearance · 1.4.7
 
