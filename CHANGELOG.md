@@ -1,6 +1,6 @@
 # NavoPath 更新日志
 
-## 2026-10-29 · Dock 调整手柄与竖屏时间轴添加 · 1.4.9
+## 2026-10-29 · Dock 调整手柄与竖屏时间轴添加 · 1.4.10
 
 ### 改进
 - 桌面 Dock 竖屏时间轴的时长调整手柄移至任务块上下边缘的水平居中位置，便于鼠标拖动。
@@ -264,7 +264,7 @@
 
 # NavoPath Changelog
 
-## 2026-10-29 · Dock Resize Handles and Portrait Timeline Quick Add · 1.4.9
+## 2026-10-29 · Dock Resize Handles and Portrait Timeline Quick Add · 1.4.10
 
 ### Improved
 - Desktop Dock portrait timeline resize handles now sit at the horizontal center of the top and bottom task edges for easier mouse dragging.
