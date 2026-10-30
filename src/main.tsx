@@ -2359,7 +2359,7 @@ if (cached?.data && cached?.settings) {
         return;
       }
       setAuthNotice({ type: "confirm-email", email });
-      setAuthError(confirmation?.message || "尚未检测到邮箱确认。请打开最新确认邮件中的链接，或确认后直接使用邮箱和密码登录。");
+      setAuthError(confirmation?.message || "尚未检测到邮箱验证。请点击最新确认邮件中的链接，或验证后直接使用邮箱与密码登录。");
     } catch (error) {
       setAuthNotice({ type: "confirm-email", email });
       setAuthError(error instanceof Error ? error.message : String(error));
@@ -2392,10 +2392,10 @@ if (cached?.data && cached?.settings) {
       const response = await api.resetPassword?.(newPassword);
       if (response?.success) {
         setIsRecoveryMode(false);
-        showToast(response?.message || "密码已成功更改，请用新密码登录。");
+        showToast(response?.message || "密码已更新，请使用新密码登录。");
         await handleSignOut();
       } else {
-        setAuthError(response?.message || "重置链接已过期或无效，请重新发起密码重置。");
+        setAuthError(response?.message || "重置链接已失效或过期，请重新申请密码重置。");
         setIsRecoveryMode(false);
       }
     } catch (error) {

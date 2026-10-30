@@ -28,7 +28,7 @@ function localizedSource(language: Language) {
         return [bodyLines.slice(start, end).join("\n").trim()];
       });
       if (!subsections.length) return [];
-      const localizedHeading = language === "zh" ? "历史补充" : "Earlier updates";
+      const localizedHeading = language === "zh" ? "历史补充记录" : "Earlier updates";
       return [`## ${localizedHeading}\n\n${subsections.join("\n\n")}`];
     }
 
@@ -137,10 +137,10 @@ export default function ChangelogPage() {
 
   return <main className="np-changelog">
     <nav>
-      <a href="/">&larr; {language === "zh" ? "返回 NavoPath" : "Back to NavoPath"}</a>
+      <a href="/">&larr; {language === "zh" ? "返回 NavoPath 工作区" : "Back to NavoPath"}</a>
       <div className="np-changelog-tools">
         <span>{language === "zh" ? "更新日志" : "RELEASE NOTES"}</span>
-        <div className="np-changelog-language" aria-label={language === "zh" ? "更新日志语言" : "Changelog language"}>
+        <div className="np-changelog-language" aria-label={language === "zh" ? "日志语言" : "Changelog language"}>
           <button type="button" className={language === "zh" ? "active" : ""} aria-pressed={language === "zh"} onClick={() => setLanguage("zh")}>中文</button>
           <button type="button" className={language === "en" ? "active" : ""} aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button>
         </div>
@@ -151,7 +151,7 @@ export default function ChangelogPage() {
         if (block.type === "h1") return <Fragment key={index}>
           <h1>{block.text}</h1>
           <details className="np-changelog-mobile-toc">
-            <summary>{language === "zh" ? "本页目录" : "On this page"}</summary>
+            <summary>{language === "zh" ? "本页快速目录" : "On this page"}</summary>
             <nav aria-label={language === "zh" ? "更新日志目录" : "Changelog contents"}>
               {navigation.map(({ id, text }) => <a key={id} href={`#${id}`}>{text}</a>)}
             </nav>

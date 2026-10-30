@@ -78,9 +78,9 @@ export default function ProductStory({ lang, copy, layout, menu }: { lang: Langu
     addEventListener("scroll", schedule, { passive: true }); addEventListener("resize", schedule); reduced.addEventListener("change", schedule); update();
     return () => { removeEventListener("scroll", schedule); removeEventListener("resize", schedule); reduced.removeEventListener("change", schedule); cancelAnimationFrame(pending); };
   }, [layout, copy, menu]);
-  return <aside ref={host} className={`np-scroll-story${layout ? " np-scroll-story--inline" : ""}`} aria-label={lang === "zh" ? "功能介绍" : "Feature introduction"}
+  return <aside ref={host} className={`np-scroll-story${layout ? " np-scroll-story--inline" : ""}`} aria-label={lang === "zh" ? "功能概述" : "Feature Overview"}
     style={layout ? { width: layout.width, marginLeft: layout.left, paddingTop: `max(0px, calc(${layout.top + layout.height / 2}px - 19svh))`, paddingBottom: `max(0px, calc(100svh - ${layout.top + layout.height / 2}px - 19svh))` } : undefined}>
-    {layout && <section><div><span className="np-story-scroll-cue">{lang === "zh" ? "向下滚动了解更多" : "Scroll to explore"}<span aria-hidden="true">↓</span></span><h1>{copy.title}</h1><p>{copy.description}</p></div></section>}
+    {layout && <section><div><span className="np-story-scroll-cue">{lang === "zh" ? "向下滚动浏览详情" : "Scroll down to learn more"}<span aria-hidden="true">↓</span></span><h1>{copy.title}</h1><p>{copy.description}</p></div></section>}
     {copy.benefits.map(([title, description]) => <section key={title} className="np-story-step"><div><h2>{title}</h2><p>{description}</p></div></section>)}
   </aside>;
 }

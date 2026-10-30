@@ -3,23 +3,23 @@ import type { PrincipleCopy } from "../productSite";
 
 export default {
   zh: {
-    title: "换一个视角，仍是同一份任务。", description: "树、列表、看板与矩阵，共用项目和任务数据。",
-    steps: [["数据", "项目、任务与子任务"], ["视角", "层级、状态或重要与紧急"], ["结果", "从不同角度查看同一任务"]],
+    title: "换重视角浏览，依然是同一份数据。", description: "树状图、列表、看板与矩阵视图，完全共享底层项目与任务数据。",
+    steps: [["数据本体", "统一维护的项目、任务与子任务集合"], ["组织棱镜", "层级结构、流程进度或优先级矩阵"], ["呈现结果", "满足不同思考阶段的查阅需要"]],
     sections: [
-      ["一份数据，多种组织方式", "规划页接收同一份项目和任务数据，再按视图整理。树状图呈现层级，列表方便逐项查看，看板按流程状态分组，矩阵按重要性和紧急程度定位。"],
-      ["视图不复制任务", "切换视图会改变布局和分组，不会额外创建一套任务。你查看的是同一项任务的标题、状态、所属项目和其他属性。"],
-      ["选择适合当前问题的视角", "拆解目标时用树；梳理进展时用看板；判断先做什么时用矩阵。视图负责帮助阅读，任务本身仍能继续进入今日候选与执行流程。"],
+      ["同一数据源，多元化组织形态", "规划工作区接收统一的任务流，树视图呈现父子归属，列表便于搜索，看板掌控流程，矩阵辅助权衡决策。"],
+      ["视图切换不产生任何冗余副本", "切换视图仅改变屏幕上的布局与筛选规则，绝不会在底层复制任务。在任意视图中的编辑均实时反映至全局。"],
+      ["针对当前决策选择最适视图", "拆解复杂目标时使用树；梳理今日进度时使用看板；感到事情纷繁时使用矩阵排查优先级。各取所长。"],
     ],
-    sources: [["规划视图实现", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/PlanningView.tsx"], ["任务与项目数据结构", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/types.ts"]],
+    sources: [["规划视图渲染与交互逻辑", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/PlanningView.tsx"], ["任务与项目全局数据结构模型", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/types.ts"]],
   },
   en: {
-    title: "Different views. The same tasks.", description: "Tree, list, Kanban and matrix share project and task data.",
-    steps: [["Data", "Projects, tasks and subtasks"], ["Lens", "Hierarchy, workflow or priority"], ["Result", "Another way to read the same task"]],
+    title: "Different perspectives. The same core dataset.", description: "Tree, List, Kanban, and Matrix views share a single source of truth.",
+    steps: [["Core Data", "Unified projects, tasks, and subtasks structure"], ["Perspective", "Hierarchy, workflow stage, or priority quadrants"], ["Outcome", "Inspect the same work through the right analytical lens"]],
     sections: [
-      ["Organize one dataset in several ways", "Planning receives the same projects and tasks, then organizes them by view. The tree shows hierarchy, the list supports reviewing items, Kanban groups workflow states, and the matrix uses importance and urgency."],
-      ["A view does not copy a task", "Switching views changes layout and grouping without creating a second task set. You are reading the same task’s title, state, project and other properties."],
-      ["Choose a lens for the question", "Use the tree to break down a goal, Kanban to review progress, and the matrix to consider priorities. Views help you read the work; tasks can still move into Today’s Candidates and execution."],
+      ["One dataset, multiple organizational forms", "The workspace feeds identical task items into specialized views: Tree maps parentage, List optimizes search, Kanban tracks flow, and Matrix balances urgency."],
+      ["Switching views creates zero data duplication", "Changing views reorganizes layout and grouping without duplicating records. Modifications anywhere update everywhere instantly."],
+      ["Select the optimal lens for current decision", "Use Tree to break down ambitious goals, Kanban to balance active workflow, and Matrix to cut through conflicting priorities."],
     ],
-    sources: [["Planning view implementation", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/PlanningView.tsx"], ["Task and project types", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/types.ts"]],
+    sources: [["Planning view renderers and interaction logic", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/PlanningView.tsx"], ["Task and project unified data models", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/types.ts"]],
   },
 } satisfies Record<Language, PrincipleCopy>;

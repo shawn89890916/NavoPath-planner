@@ -3,91 +3,91 @@ import type { FeatureCopy } from "../productSite";
 
 export default {
   "zh": {
-    "title": "把目标，变成能推进的任务。",
-    "description": "把工作、学习和生活目标整理成项目，用适合自己的视图看清进度，再选出今天值得推进的任务。",
+    "title": "把长期目标，拆解为可落实的行动步骤。",
+    "description": "将工作、学业与生活目标归纳为项目树，通过不同视图洞察全局进展，并挑选任务进入今日候选。",
     "benefits": [
       [
-        "项目，一目了然。",
-        "把同一目标下的任务放在一起。展开项目，就能看清还有哪些事待推进、哪些已经完成。"
+        "项目全貌，一览无余。",
+        "在同一个项目下组织相关任务。展开节点即可看清前置事项、待办细节与已完成成果。"
       ],
       [
-        "同一份任务，四种视角。",
-        "树视图看结构，列表便于逐项查看；看板跟进状态，矩阵帮助判断优先顺序。"
+        "一份数据源，四重视角自由切换。",
+        "树状图理清层级结构，列表方便快速检索，看板跟踪执行状态，四象限矩阵辅助决策优先级。"
       ],
       [
-        "选出今天的下一步。",
-        "把准备推进的任务加入今日候选，再到执行页安排时间。项目中的其他任务仍留在原处。"
+        "明确今日推进重点。",
+        "将计划今日推进的任务加入“今日候选”，再前往执行页排入时间轴；未选中的任务仍保留在项目库中。"
       ]
     ],
     "faq": [
       [
-        "应该选择哪种视图？",
-        "树适合拆解目标；列表适合逐项查看；看板适合观察推进状态；矩阵帮助比较任务的重要与紧急程度。切换视图会保留同一份数据。"
+        "日常应该如何选用不同的规划视图？",
+        "目标梳理首选树视图；待办检视推荐列表；多流程跟进使用看板；面对冲突时使用矩阵权衡轻重缓急。"
       ],
       [
-        "任务与子任务有什么区别？",
-        "任务承载一项具体工作，子任务继续拆出内部步骤。需要独立安排时，可以把子任务加入今日候选。"
+        "父任务与子任务在逻辑上有何区别？",
+        "父任务代表阶段性成果，子任务承载具体落地步骤。子任务同样支持独立设定时间并排入时间轴。"
       ],
       [
-        "如何加入今日候选？",
-        "在任务右侧点击加入今日候选的操作，再进入执行页，为选出的任务安排具体时间。再次操作可移出候选。"
+        "如何将项目中的任务加入今日候选？",
+        "点击任务卡片右侧的“加入今日候选”图标，进入执行页即可在候选列表中看到并安排入日程。"
       ],
       [
-        "切换视图会重新创建任务吗？",
-        "不会。树、列表、看板和矩阵展示同一份任务，切换后项目归属与完成状态都会保留。"
+        "切换规划视图会影响任务数据吗？",
+        "完全不会。四种视图完全共享同一底层数据，无论在何种视图下修改状态或内容，均实时全局同步。"
       ],
       [
-        "加入今日候选后，任务还在项目里吗？",
-        "还在。今日候选表示你准备今天推进它，任务仍属于原项目，方便从项目全貌和当天安排两边查看。"
+        "任务加入今日候选后，是否仍保留在原项目中？",
+        "仍在原项目中。“今日候选”仅代表当天的执行聚焦标记，不会改变任务在项目树中的归属关系。"
       ],
       [
-        "在介绍页做的修改会保存吗？",
-        "修改只保留在当前示例中，刷新后恢复初始内容。需要保存自己的项目和任务时，请进入正式工作区。"
+        "在介绍页交互演示中所做的更改会被保存吗？",
+        "演示中的操作仅保存在当前页面会话中，刷新即重置。登录个人账户后即可持久保存正式规划数据。"
       ]
     ],
     "next": "execute"
   },
   "en": {
-    "title": "Make your next step clear.",
-    "description": "Organize work, learning, and life into projects. See progress in the view that suits you, then choose what to move forward today.",
+    "title": "Turn long-term goals into clear actions.",
+    "description": "Organize goals into structured projects, inspect progress across multiple views, and choose today's candidates.",
     "benefits": [
       [
-        "See the whole project.",
-        "Keep tasks for the same goal together. Expand a project to see what is still ahead and what is already complete."
+        "See the entire project structure.",
+        "Group related tasks under common objectives to clearly see what is ahead and what is already done."
       ],
       [
-        "One set of tasks, four views.",
-        "See structure in Tree, scan tasks in List, follow progress in Kanban, or compare priorities in Matrix."
+        "One set of tasks, four distinct views.",
+        "Tree view reveals hierarchy, List aids rapid review, Kanban tracks status, and Matrix clarifies priorities."
       ],
       [
-        "Choose today’s next step.",
-        "Add tasks to Today's Candidates, then open Execute to give them time. The rest stay in their projects."
+        "Select today's next actionable steps.",
+        "Send tasks to Today's Candidates for timeline scheduling, while remaining items stay organized in the project."
       ]
     ],
     "faq": [
       [
-        "Which view should I use?",
-        "Use the tree to break down goals, the list to scan tasks, Kanban to follow progress, and Matrix to compare importance and urgency. All views use the same data."
+        "Which planning view fits which workflow?",
+        "Use Tree to break down goals, List for daily scanning, Kanban to track workflow, and Matrix to weigh urgency."
       ],
       [
-        "How do tasks and subtasks differ?",
-        "A task describes a piece of work. Subtasks describe its smaller steps. A subtask can be promoted to Today's Candidates when it needs its own time."
+        "How do parent tasks and subtasks relate?",
+        "Tasks capture specific deliverables; subtasks break down procedural steps and can be scheduled independently."
       ],
       [
-        "How do I add a candidate?",
-        "Use the candidate action beside a task, then open Execute to schedule it. Use the action again to remove it from the candidates."
+        "How do I add a project task to Today's Candidates?",
+        "Click the candidate icon beside any task, then open the Execute page to schedule it on the timeline."
       ],
       [
-        "Does switching views create new tasks?",
-        "No. Tree, List, Kanban, and Matrix show the same tasks. Project assignments and completion states stay with them."
+        "Does switching views alter or duplicate tasks?",
+        "No. All views reflect the exact same underlying task objects; edits synchronize across views instantly."
       ],
       [
-        "Does a candidate stay in its project?",
-        "Yes. Today's Candidates marks what you intend to work on today. The task still belongs to its project, so you can see it in both contexts."
+        "Does a task remain in its project after becoming a candidate?",
+        "Yes. Being a candidate simply marks intention for today; project hierarchy and context remain untouched."
       ],
       [
-        "Are changes in this introduction saved?",
-        "Changes stay in the current example and reset on refresh. Open the workspace to save your own projects and tasks."
+        "Are modifications made in the demo saved permanently?",
+        "Demo changes exist only in your current session. Sign in to your account to build persistent project workspaces."
       ]
     ],
     "next": "execute"

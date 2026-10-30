@@ -3,73 +3,73 @@ import type { FeatureCopy } from "../productSite";
 
 export default {
   "zh": {
-    "title": "把今天，安排明白。",
-    "description": "从今日候选中挑选任务，放进一天的空闲时段。让任务需要的时间与实际可用的时间，一起看得见。",
+    "title": "理清节奏，排好今天的时间轴。",
+    "description": "从今日候选中挑选核心任务，拖入时间轴的空闲时段。直观核对任务预估时长与当天可用时间。",
     "benefits": [
-      ["给任务留出时间。", "拖动候选任务到时间轴，或使用安排按钮。根据任务时长，找到容得下它的空闲时段。"],
-      ["随一天的变化调整。", "修改开始时间或时长，让安排跟上当天的变化。时间轴按 15 分钟网格对齐，帮助看清已有安排。"],
-      ["完成，也可以改期。", "做完就标记完成。还没做完的任务可以取消安排、保留待办，或移到明天继续推进。"]
+      ["为重要任务留出专属时间。", "将候选任务拖至时间轴，或点击安排按钮。系统会根据任务时长指引合适的空闲时段。"],
+      ["随日程变化灵活调整。", "随时调整开始时间或拖拽边缘缩放时长。时间轴基于 15 分钟网格对齐，清晰易读。"],
+      ["标记完成，未完随时改期。", "任务完成后直接勾选。未完成的任务可取消排程保留在待办中，或顺延至明天继续推进。"]
     ],
     "faq": [
       [
-        "安排时间和截止日期有什么区别？",
-        "安排时间回答什么时候做，截止日期回答最晚什么时候完成。任务可以先安排到时间轴，再根据需要设置截止日期。"
+        "安排时间与截止日期有何本质区别？",
+        "“安排时间”明确具体何时执行；“截止日期”界定最晚何时完成。两者独立，支持先排程后定截止期。"
       ],
       [
-        "今天没有完成怎么办？",
-        "可以保留未完成状态、取消安排或改期。移至明天时，会寻找能容纳任务的首个空闲时段。"
+        "今天安排的任务没做完怎么办？",
+        "可保持未完成、取消排程留作候选，或一键顺延至明天。移至次日时会自动寻找首个合适空档。"
       ],
       [
-        "手机上怎样安排？",
-        "使用任务与日程切换查看两边；长按任务可拖动安排，也可以使用安排按钮。"
+        "在移动端设备上如何进行排程？",
+        "通过底部视图切换任务与日程；长按任务块可拖拽至时间轴，亦可使用卡片上的“安排”按钮。"
       ],
       [
-        "不拖动，也能安排任务吗？",
-        "可以。点击候选任务的安排按钮，选择开始时间与时长，再确认安排。"
+        "除了拖拽，还有其他安排任务的方式吗？",
+        "支持点击候选卡片的安排按钮，直接选择起始时间与预估时长并确认加入时间轴。"
       ],
       [
-        "任务需要更长或更短的时间怎么办？",
-        "可以修改安排的时长，也可以拖动时间轴中任务块的边缘调整。已有安排仍会显示在时间轴中，便于检查时间是否合适。"
+        "如果任务实际所需时间发生变化怎么办？",
+        "可在面板中直接修改时长，或在时间轴中拖拽任务块底边微调，相邻安排始终保持清晰可视。"
       ],
       [
-        "每个任务之间都要留空吗？",
-        "不需要。下一项任务可以接着上一项的结束时间开始；也可以按实际需要留出吃饭、休息和缓冲时间。"
+        "任务之间必须预留间隔空隙吗？",
+        "不必预留。任务可以紧密衔接，亦可根据实际精力节奏留出用餐、小憩与机动缓冲时间。"
       ]
     ],
     "next": "ai"
   },
   "en": {
     "title": "Make room for today.",
-    "description": "Pick from Today's Candidates and place tasks into free slots. See the time your work needs alongside the time you actually have.",
+    "description": "Select from Today's Candidates and place tasks into open slots, matching needed durations against actual free time.",
     "benefits": [
-      ["Give each task time.", "Drag a candidate onto the timeline or use its Schedule button. Find a free slot that fits the task's duration."],
-      ["Adjust as the day changes.", "Change a start time or duration as plans shift. A 15-minute grid keeps the timeline aligned and existing plans easy to read."],
-      ["Finish or reschedule.", "Mark completed work as done. Unfinished tasks can be unscheduled, kept pending, or moved to tomorrow."]
+      ["Carve out dedicated focus time.", "Drag candidates directly onto the timeline or use the Schedule button to find fitting openings."],
+      ["Adjust smoothly as the day unfolds.", "Edit start times or drag edges to adjust length. The 15-minute grid keeps intervals neat and structured."],
+      ["Mark done, or reschedule when needed.", "Check off finished tasks. Uncompleted items can be unscheduled, kept pending, or moved to tomorrow."]
     ],
     "faq": [
       [
-        "How do schedules and deadlines differ?",
-        "A schedule says when you will do the work. A deadline says when it must be finished. You can schedule a task without setting a deadline."
+        "How do scheduled times differ from deadlines?",
+        "A scheduled time defines when you sit down to do the work; a deadline specifies when it must be delivered."
       ],
       [
-        "What if I don't finish today?",
-        "Keep the task incomplete, unschedule it, or reschedule it. Tomorrow finds the first free slot that fits its duration."
+        "What happens if a scheduled task is not finished today?",
+        "You can leave it pending, remove it from the timeline, or roll it over to tomorrow's next open slot."
       ],
       [
-        "How do I schedule on my phone?",
-        "Switch between tasks and the timeline. Long-press a task to drag it, or use its Schedule button."
+        "How does scheduling work on mobile devices?",
+        "Switch between task list and timeline views. Long-press to drag tasks, or use the Schedule button."
       ],
       [
-        "Can I schedule without dragging?",
-        "Yes. Use the Schedule button on a candidate, choose a start time and duration, then confirm."
+        "Can I schedule tasks without dragging?",
+        "Yes. Tap the Schedule button on any candidate, select start time and duration, and confirm."
       ],
       [
-        "What if a task needs more or less time?",
-        "Edit its scheduled duration or drag the edge of its timeline block. Existing plans stay visible so you can check whether the new timing fits."
+        "What if a task takes more or less time than planned?",
+        "Edit duration directly in the inspector or drag the task block edge on the timeline."
       ],
       [
-        "Do I need a gap between every task?",
-        "No. A task can start when the previous one ends. Leave room for meals, rest, and a buffer when you need it."
+        "Do I have to leave gaps between tasks?",
+        "No. Tasks can run back-to-back, or you can intentionally leave buffer slots for breaks and meals."
       ]
     ],
     "next": "ai"

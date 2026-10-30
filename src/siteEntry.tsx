@@ -31,9 +31,9 @@ class SiteErrorBoundary extends React.Component<
           minHeight: "100vh",
         }}
       >
-        <p>{zh ? "页面暂时未能加载。" : "This page could not load."}</p>
+        <p>{zh ? "页面未能正常加载。" : "Page could not load."}</p>
         <button type="button" onClick={() => location.reload()}>
-          {zh ? "重新加载" : "Try again"}
+          {zh ? "重新加载" : "Reload"}
         </button>
       </div>
     );
