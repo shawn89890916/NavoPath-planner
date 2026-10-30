@@ -20,30 +20,30 @@ const copy = {
     title: "See what to do today — and when to do it.",
     scroll: "Scroll to explore", start: "Start now", download: "Download for Windows",
     productKicker: "Execute / Today", productLabel: "Candidates · Timeline",
-    stepsKicker: "Execute", stepsTitle: "Get every task done on time.",
+    stepsKicker: "Execute", stepsTitle: "Shape your day and focus on the next realistic step.",
     steps: [
-      ["01", "Keep the list small", "Bring only the tasks that might genuinely fit today into view."],
-      ["02", "See the open time", "Place a task beside the commitments that already shape your day."],
-      ["03", "Follow the next step", "A clear timeline makes the next useful action easier to begin."],
+      ["01", "Pick Today's Candidates", "Focus on what actually fits today instead of crowding the screen with everything."],
+      ["02", "Find open time", "Fit tasks into real openings alongside existing commitments to keep pacing realistic."],
+      ["03", "Focus on the next action", "A clear timeline keeps the next useful action visible without second-guessing."],
     ],
-    planningKicker: "Planning", planningTitle: "Keep even the biggest projects moving.",
-    planningBody: "Keep related work together, then make room for it in a real week.",
-    ctaTitle: "Do one thing well today.", ctaBody: "Open NavoPath and start a productive day.",
+    planningKicker: "Planning", planningTitle: "Break long-term goals into clear, actionable steps.",
+    planningBody: "Organize related work into project trees so priorities stay clear over time.",
+    ctaTitle: "Do one thing well today.", ctaBody: "Open NavoPath and start planning your day.",
   },
   zh: {
     productName: "NavoPath",
-    title: "今天的事，先安排明白",
-    scroll: "继续探索", start: "直接开始", download: "下载 Windows 版",
-    productKicker: "今天的安排", productLabel: "待办 · 日程",
-    stepsKicker: "执行", stepsTitle: "任务再多，也能按时完成。",
+    title: "今天要做的事，排得清清楚楚",
+    scroll: "向下浏览", start: "立即开始", download: "下载 Windows 客户端",
+    productKicker: "今日执行", productLabel: "今日候选 · 时间轴",
+    stepsKicker: "执行", stepsTitle: "理清任务节奏，从容推进每天的安排。",
     steps: [
-      ["01", "先挑最要紧的几件", "不用什么都塞进今天。今天该做什么，先挑出来。"],
-      ["02", "再看看怎么排", "打开日历，把它们挪进空档。忙不忙、赶不赶，一眼就知道。"],
-      ["03", "照着做下去", "几点做什么，都写在眼前。接下来该做哪件，不用再想。"],
+      ["01", "筛选今日候选", "不必把所有任务堆在眼前。今天切实能推进的事，先挑出来。"],
+      ["02", "排入时间空档", "结合已有的日程安排，把任务放进合适的空闲时段，直观把握节奏。"],
+      ["03", "专注于当下", "清晰的时间轴指引下一步操作，减少反复纠结与犹豫。"],
     ],
-    planningKicker: "规划", planningTitle: "项目再大，也能持续推进。",
-    planningBody: "把相关的事放在一块儿，什么时候该推哪一件，就清楚了。",
-    ctaTitle: "今天，先把一件事做好。", ctaBody: "打开 NavoPath，开启效率的一天",
+    planningKicker: "规划", planningTitle: "把长期目标，拆解为可以落地的日常任务。",
+    planningBody: "用项目树梳理任务脉络，何时推进哪一步，一目了然。",
+    ctaTitle: "从今天开始，理清节奏。", ctaBody: "打开 NavoPath，开始规划你的每日日程。",
   },
 } as const;
 
@@ -57,7 +57,7 @@ function ProductPreview({ lang }: { lang: Lang }) {
       height={1620}
       loading="eager"
       decoding="async"
-      alt={lang === "zh" ? "NavoPath 中文执行工作区：今日候选、习惯与时间轴" : "NavoPath Execute workspace in English with today's candidates, habits, and timeline"}
+      alt={lang === "zh" ? "NavoPath 中文执行工作区：今日候选、习惯与时间轴" : "NavoPath Execute workspace in English: candidates, habits, and timeline"}
     />
   </section>;
 }
@@ -72,7 +72,7 @@ function PlanningPreview({ lang }: { lang: Lang }) {
       height={1620}
       loading="lazy"
       decoding="async"
-      alt={lang === "zh" ? "NavoPath 中文规划工作区：产品发布、数据分析课程与个人安排" : "NavoPath Planning workspace in English with product launch, coursework, and personal projects"}
+      alt={lang === "zh" ? "NavoPath 中文规划工作区：目标拆解、项目树与多视图" : "NavoPath Planning workspace in English: project trees, views, and goal decomposition"}
     />
   </section>;
 }
@@ -99,9 +99,9 @@ function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, 
   const [savePassword, setSavePassword] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const text = lang === "zh" ? {
-    account: "NavoPath 账号", welcome: "欢迎回来。", begin: "今天，也可以从现在开始。", signIn: "登录", signUp: "注册", name: "怎么称呼你", email: "邮箱", password: "密码（至少 6 位）", confirm: "再输一次密码", show: "显示密码", hide: "隐藏密码", save: "保存密码", inbox: "去收件箱看看", inboxBody: "确认邮件已经发到这个邮箱。点开链接确认后，再来登录。", resend: "再发一封", continue: "去登录", mismatch: "两次密码没有输一样。", working: "正在处理…", open: "打开 NavoPath", create: "注册 NavoPath", forgot: "想不起密码了？", forgotTitle: "重设密码", forgotBody: "填一下注册邮箱，我们把重置链接发给你。", sendReset: "把重置链接发给我", sentTitle: "重置链接已发出", sentBody: "去收件箱点开链接，设个新密码就好了。", backToLogin: "回到登录", resendReset: "再发一次",
+    account: "NavoPath 账户", welcome: "欢迎回来。", begin: "理清计划，从当下开始。", signIn: "登录", signUp: "注册", name: "用户名 / 昵称", email: "电子邮箱", password: "密码（至少 6 位）", confirm: "确认密码", show: "显示密码", hide: "隐藏密码", save: "记住密码", inbox: "请查收确认邮件", inboxBody: "验证邮件已发送至该邮箱。请点击邮件中的链接完成验证后再登录。", resend: "重新发送邮件", continue: "前往登录", mismatch: "两次输入的密码不一致。", working: "正在处理…", open: "进入工作区", create: "创建账户", forgot: "忘记密码？", forgotTitle: "重设密码", forgotBody: "请输入你的注册邮箱，我们将向你发送密码重置链接。", sendReset: "发送重置链接", sentTitle: "重置链接已发送", sentBody: "请查收邮件并点击链接，设置你的新密码。", backToLogin: "返回登录", resendReset: "重新发送",
   } : {
-    account: "NavoPath account", welcome: "Welcome back.", begin: "Start your path.", signIn: "Sign in", signUp: "Sign up", name: "Display name", email: "Email", password: "Password (6+ characters)", confirm: "Confirm password", show: "Show password", hide: "Hide password", save: "Save password", inbox: "Check your inbox", inboxBody: "Confirm the email sent to this address, then return to sign in.", resend: "Resend email", continue: "Continue to sign in", mismatch: "Passwords do not match.", working: "Working...", open: "Open workspace", create: "Create account", forgot: "Forgot password?", forgotTitle: "Reset password", forgotBody: "Enter your registered email and we will send a reset link.", sendReset: "Send reset link", sentTitle: "Email sent", sentBody: "Check your inbox and click the link to set a new password.", backToLogin: "Back to login", resendReset: "Resend",
+    account: "NavoPath Account", welcome: "Welcome back.", begin: "Start your path.", signIn: "Sign in", signUp: "Sign up", name: "Display name", email: "Email", password: "Password (6+ characters)", confirm: "Confirm password", show: "Show password", hide: "Hide password", save: "Save password", inbox: "Check your inbox", inboxBody: "A verification email has been sent. Please click the link to confirm before signing in.", resend: "Resend email", continue: "Continue to sign in", mismatch: "Passwords do not match.", working: "Working...", open: "Open workspace", create: "Create account", forgot: "Forgot password?", forgotTitle: "Reset password", forgotBody: "Enter your registered email and we will send a reset link.", sendReset: "Send reset link", sentTitle: "Reset link sent", sentBody: "Check your inbox and follow the link to set a new password.", backToLogin: "Back to sign in", resendReset: "Resend",
   };
   const passwordMismatch = authIntent === "signup" && password.length > 0 && confirmPassword.length > 0 && password !== confirmPassword;
 
@@ -223,7 +223,7 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
     <nav className="landing-nav" aria-label="NavoPath">
       <a className="landing-brand" href="/"><ProductIcon compact /><span>NavoPath</span></a>
       <div className="landing-nav-links"><ProductMenu lang={lang} /><ProductMenu lang={lang} kind="principles" /><ProductMenu lang={lang} kind="support" includeGitHub /></div>
-      <div className="landing-nav-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><a className="np-start-link" href="/app" onClick={(event) => { if (!signedIn) { event.preventDefault(); setShowAuth(true); } }}>{lang === "zh" ? "现在开始" : "Start now"}</a></div>
+      <div className="landing-nav-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><a className="np-start-link" href="/app" onClick={(event) => { if (!signedIn) { event.preventDefault(); setShowAuth(true); } }}>{lang === "zh" ? "立即开始" : "Start now"}</a></div>
     </nav>
     <main>
       <section className="landing-cover" id="top"><LandingPortals lang={lang} recede={portalExit} /><div className="landing-cover-content" style={coverStyle}><div className="landing-cover-logo"><ProductIcon /></div><div className="landing-brand-copy"><p className="landing-product-name">{c.productName}</p><h1 className="landing-slogan">{c.title}</h1></div></div><span className="landing-product-scroll-cue" aria-hidden="true"><i>↑</i>{c.scroll}</span></section>
@@ -232,7 +232,7 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
       <section className="landing-planning" id="planning"><div className="landing-planning-copy"><span>02 / {c.planningKicker}</span><h2>{c.planningTitle}</h2><p>{c.planningBody}</p></div><PlanningPreview lang={lang} /></section>
       <section className="landing-cta"><span>03 / NAVOPATH</span><h2>{c.ctaTitle}</h2><p>{c.ctaBody}</p><div className="landing-actions"><button className="np-start-link" onClick={() => setShowAuth(true)}>{c.start}</button><a className="landing-button quiet" href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer">{c.download}<span>→</span></a></div></section>
     </main>
-    <footer className="landing-footer"><nav aria-label={lang === "zh" ? "产品页面" : "Product pages"}>{PRODUCT_FEATURES.map(feature => <a key={feature} href={featureHref(feature, lang)}>{featureNames[lang][feature]}</a>)}<a href={`/privacy?lang=${lang}`}>{lang === "zh" ? "隐私政策" : "Privacy"}</a></nav><a className="landing-footer-author" href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">© 2026 Xiaoyang Chen</a><a className="landing-footer-principles" href={principleHref("jev", lang)}>{lang === "zh" ? "相关原理" : "Principles"}</a></footer>
+    <footer className="landing-footer"><nav aria-label={lang === "zh" ? "产品功能" : "Features"}>{PRODUCT_FEATURES.map(feature => <a key={feature} href={featureHref(feature, lang)}>{featureNames[lang][feature]}</a>)}<a href={`/privacy?lang=${lang}`}>{lang === "zh" ? "隐私政策" : "Privacy Policy"}</a></nav><a className="landing-footer-author" href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">© 2026 Xiaoyang Chen</a><a className="landing-footer-principles" href={principleHref("jev", lang)}>{lang === "zh" ? "设计原理" : "Principles"}</a></footer>
     {showAuth && <AuthDialog lang={lang} onClose={() => setShowAuth(false)} onLogin={onLogin} onResend={onResend} onContinueAfterConfirm={onContinueAfterConfirm} onForgotPassword={onForgotPassword} busy={busy} error={error} notice={notice} />}
   </div>;
 }

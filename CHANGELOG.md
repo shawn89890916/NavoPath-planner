@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-10-30 · 公开页面文案与多语言表达润色
+
+### 改进
+- 润色官网首页、规划、执行与 AI 功能页、设计原理、插件与 MCP 集成指南及认证流程的文案表达，使功能边界、用时预估与操作提示更加准确具体。
+- 补齐未登录入口、邮箱验证提示及密码重设界面的中英双语显示，保持注册密码与新密码确认说明清晰区分。
+
 ## 2026-10-29 · Dock 调整手柄与竖屏时间轴添加 · 1.4.10
 
 ### 改进
@@ -263,6 +269,12 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-30 · Public page copy and bilingual refinements
+
+### Improved
+- Refined bilingual copy across landing, features (Planning, Execute, AI), product principles, plugins/MCP documentation, and authentication flows for clearer guidance and realistic pacing.
+- Completed English and Chinese displays for sign-in, email verification, and password reset, with distinct confirmation labels for registration and a new password.
 
 ## 2026-10-29 · Dock Resize Handles and Portrait Timeline Quick Add · 1.4.10
 

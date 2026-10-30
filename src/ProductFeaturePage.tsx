@@ -70,16 +70,16 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
       {portrait ? <section className="np-product-notes">{c.benefits.map(([title, description]) => <section key={title}><h2>{title}</h2><p>{description}</p></section>)}</section> : <>
       <section className={`np-product-layout np-product-layout--${feature}${immersive ? " np-workspace-scroll" : ""}`} aria-label={featureNames[lang][feature]}>
         <div className="np-product-window" ref={host}>
-          {mounted && <iframe key={attempt} ref={frame} src={`/product-demo/${feature}?lang=${lang}${immersive ? "&presentation=full" : ""}`} title={`${featureNames[lang][feature]} · ${zh ? "产品体验" : "Product preview"}`} onError={() => setFailed(true)} />}
+          {mounted && <iframe key={attempt} ref={frame} src={`/product-demo/${feature}?lang=${lang}${immersive ? "&presentation=full" : ""}`} title={`${featureNames[lang][feature]} · ${zh ? "功能交互演示" : "Interactive Demo"}`} onError={() => setFailed(true)} />}
           <div className="np-demo-status" role={ready && !failed ? undefined : "status"} aria-hidden={ready && !failed}>
-            {failed ? <><p>{zh ? "暂时无法打开。" : "Unable to load."}</p><button type="button" onClick={() => { setReady(false); setFailed(false); setAttempt(attempt + 1); }}>{zh ? "重试" : "Retry"}</button></> : <><img src={`/product-entry-${feature}-${lang}.jpg`} width={1280} height={800} alt="" /><span className="np-demo-loading-label">{zh ? "正在打开产品体验…" : "Opening the product example…"}</span></>}
+            {failed ? <><p>{zh ? "演示内容暂时无法加载。" : "Unable to load preview."}</p><button type="button" onClick={() => { setReady(false); setFailed(false); setAttempt(attempt + 1); }}>{zh ? "重试" : "Retry"}</button></> : <><img src={`/product-entry-${feature}-${lang}.jpg`} width={1280} height={800} alt="" /><span className="np-demo-loading-label">{zh ? "正在加载功能演示…" : "Loading interactive demo…"}</span></>}
           </div>
         </div>
         {immersive && feature !== "ai" && storyLayout && <ProductStory lang={lang} copy={c} layout={storyLayout} menu={menu?.bounds} />}
       </section>
       {immersive && feature !== "ai" && !storyLayout && <><section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section><ProductStory lang={lang} copy={c} layout={null} /></>}
       </>}
-      <section className="np-faq"><h2>{zh ? "常见问题" : "FAQ"}</h2><div>{c.faq.map(([question, answer]) => <details key={question}><summary><span>{question}</span><UiPlusIcon size={18} strokeWidth={1.2} className="np-faq-plus" /></summary><p>{answer}</p></details>)}</div></section>
+      <section className="np-faq"><h2>{zh ? "常见问题" : "Frequently Asked Questions"}</h2><div>{c.faq.map(([question, answer]) => <details key={question}><summary><span>{question}</span><UiPlusIcon size={18} strokeWidth={1.2} className="np-faq-plus" /></summary><p>{answer}</p></details>)}</div></section>
       <ProductSiteFooter lang={lang} next={c.next} />
     </main>
   </div>;

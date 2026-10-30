@@ -3,23 +3,23 @@ import type { PrincipleCopy } from "../productSite";
 
 export default {
   zh: {
-    title: "任务是一件事，安排是一次尝试。", description: "把要做什么与什么时候做分开，计划才更容易调整。",
-    steps: [["任务", "准备个人网站内容"], ["记录", "今天安排的一段时间"], ["再安排", "保留任务，继续推进"]],
+    title: "任务代表目标本身，排程是一次执行尝试。", description: "将“要做什么”与“何时执行”解耦，让计划调整变得轻松自如。",
+    steps: [["任务本体", "定义要做的事项内容与截止日期"], ["排程记录", "分配在今日时间轴中的一段执行时间"], ["再次安排", "任务本体保留，继续安排新的时段推进"]],
     sections: [
-      ["一项任务可以有多次安排", "任务保存标题、项目、截止日期等信息，时间记录保存每次安排的日期、开始与结束时间以及执行状态。同一任务可以关联多条记录。"],
-      ["改期不用重新建任务", "取消、完成或返回未完成的安排都有各自状态。改变一次安排时，仍可保留任务本身，让后续推进继续关联到原来的工作。"],
-      ["计划与实际分别记录", "安排反映准备投入的时间，时间条目记录实际投入。这些数据可以用于后续统计与估时参考，帮助区分计划时长和真实用时。"],
+      ["单个任务支持多次执行记录", "任务负责保存标题、所属项目与最终截止日期；时间记录则保存每次投入的具体开始时间、时长与完成状态。"],
+      ["改期无需重建任务本体", "改期或取消排程仅变更当次的时间分配，不会破坏任务本身的备注、子任务或历史累计投入。"],
+      ["计划用时与实际用时分别留痕", "排程记录代表预期分配的时间段，执行条目则诚实记录真实耗时。对比两者有助于不断修正自己的时间感知。"],
     ],
-    sources: [["任务与时间记录类型", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/types.ts"], ["时间记录处理", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/utils/timelineRecords.ts"]],
+    sources: [["任务与时间记录数据模型定义", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/types.ts"], ["时间轴多段记录管理机制", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/utils/timelineRecords.ts"]],
   },
   en: {
-    title: "A task is work. A schedule is one attempt.", description: "Separate what you want to do from when you plan to do it.",
-    steps: [["Task", "Prepare personal website content"], ["Record", "A block of time planned for today"], ["Continue", "Keep the task and arrange another attempt"]],
+    title: "A task is the goal. A schedule is an attempt.", description: "Separating task definitions from calendar slots keeps your plans adaptable.",
+    steps: [["Task", "Core task title, project association, and deadline"], ["Schedule Slot", "A planned block of time on today’s timeline"], ["Reschedule", "Retain task state and schedule another session"]],
     sections: [
-      ["One task can have several arrangements", "The task holds its title, project and due date. Timeline records hold each arrangement’s date, start and end times, and execution state. A task can be associated with several records."],
-      ["Reschedule without recreating the task", "Cancelled, completed and returned-unfinished arrangements have distinct states. Changing an arrangement can preserve the task itself, keeping later work linked to the original task."],
-      ["Keep planned and actual time distinct", "Arrangements describe intended time; time entries record time actually spent. These records can inform statistics and duration references while keeping a plan separate from recorded effort."],
+      ["One task can have multiple execution blocks", "The task holds name, hierarchy, and deadline; schedule records store the actual dates, times, durations, and session status."],
+      ["Reschedule without recreating the task", "Rescheduling or cancelling a slot affects only that specific session, keeping the task notes, subtasks, and progress intact."],
+      ["Track planned allocations versus actual time", "Schedules indicate intended time blocks, while execution records capture reality. Comparing them sharpens future estimation."],
     ],
-    sources: [["Task and time record types", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/types.ts"], ["Timeline record handling", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/utils/timelineRecords.ts"]],
+    sources: [["Task and timeline record schema", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/types.ts"], ["Timeline multi-record state management", "https://github.com/shawn89890916/NavoPath-planner/blob/main/src/utils/timelineRecords.ts"]],
   },
 } satisfies Record<Language, PrincipleCopy>;

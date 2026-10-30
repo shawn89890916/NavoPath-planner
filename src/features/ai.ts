@@ -3,91 +3,91 @@ import type { FeatureCopy } from "../productSite";
 
 export default {
   "zh": {
-    "title": "下一步，多一个帮手。",
-    "description": "选一个示例请求，让待办安排到合适的时间，或为一项任务换一天。结果直接显示在时间轴上。",
+    "title": "下一步安排，有辅助可依。",
+    "description": "选择预设示例，体验 AI 如何将待办合理排入日程空档，或将任务灵活改期。排程建议可直观预览。",
     "benefits": [
       [
-        "一句话，安排今天。",
-        "点击左侧“今日候选”右上角的安排图标，稍等片刻，看看写作、学习和运动如何分布在一天里。午餐与休息、下午整理课程笔记，也一起放进时间轴。"
+        "自然语言，辅助排程。",
+        "点击“今日候选”右上角的 AI 安排图标，查看系统如何将写作、阅读与锻炼等任务依序排入空闲时段。"
       ],
       [
-        "计划变了，换一天。",
-        "点击“帮我改期”，选择一项任务和预设日期。时间轴会切到那一天，直接展示新的安排。"
+        "日程有变，从容改期。",
+        "点击“帮我改期”并选择目标任务与日期，时间轴即刻定位到对应日期，呈现调整后的位置。"
       ],
       [
-        "每一步，都能撤回。",
-        "不合适就撤回最近一轮，恢复原来的安排。这里的操作只改变示例，不影响你的个人工作区。"
+        "每项建议，皆可撤回。",
+        "如果建议不符合预期，随时可以撤回最近一轮调整，恢复原样。此处的交互仅作用于演示数据。"
       ]
     ],
     "faq": [
       [
-        "示例体验与真实 AI 有什么区别？",
-        "这里复用产品界面与操作组件，回复是预设示例，所有变化只保留在当前演示内。正式工作区会根据你的配置和任务请求真实 AI。"
+        "示例演示与真实 AI 功能有何区别？",
+        "本演示完整复用正式界面与交互组件，但采用固定的示例数据与预设逻辑，不会发起远程 AI 请求。"
       ],
       [
-        "示例怎样执行和撤回？",
-        "点击安排按钮，短暂等待后示例安排会生效。点击“撤回”恢复最近一轮操作之前的状态；多轮操作可以逐轮撤回。"
+        "示例如何进行排程与撤回操作？",
+        "点击排程按钮后，时间轴将呈现建议结果；点击“撤回”即可还原至排程前的状态。"
       ],
       [
-        "真实使用需要怎样配置？",
-        "进入正式工作区，在 Navo AI 设置中选择支持的提供商并完成配置。可用能力取决于账号、提供商和工作区设置。"
+        "在正式版中启用 AI 需要哪些配置？",
+        "在 NavoPath 设置的 Navo AI 面板中，配置所支持的模型服务商及其 API Key 即可启用。"
       ],
       [
-        "改期会改变截止日期吗？",
-        "改期调整任务在哪一天执行，保留原有截止日期。示例会为任务寻找新一天的空闲时段。"
+        "任务改期会修改任务的截止日期吗？",
+        "改期仅调整任务在时间轴上的执行时段，原有的截止日期保持不变。排程器会自动在新日期寻找可用空档。"
       ],
       [
-        "应用建议后还能手动调整吗？",
-        "可以。应用后的任务进入时间轴，仍可使用执行页的操作调整时间、时长或完成状态。"
+        "采纳 AI 建议后，还能手动微调吗？",
+        "完全可以。排入时间轴的任务始终受你控制，可随时拖拽修改时间、调整时长或标记完成。"
       ],
       [
-        "介绍页的示例会消耗 AI 额度吗？",
-        "不会。这里使用预设回复和示例数据，不发起真实 AI 请求，也不会修改你的个人工作区。"
+        "浏览本介绍页的示例会消耗 API 额度吗？",
+        "不会。本演示完全基于本地静态数据，不会产生外部网络调用或消耗任何模型额度。"
       ]
     ],
     "next": "planning"
   },
   "en": {
-    "title": "A little help with the next step.",
-    "description": "Choose an example request to schedule today’s tasks or move one to another day. See the result directly on the timeline.",
+    "title": "Thoughtful assistance with your next step.",
+    "description": "Choose a preset request to see how AI suggests fitting tasks into free slots or rescheduling them, with full preview before applying.",
     "benefits": [
       [
-        "One request. A planned day.",
-        "Click the scheduling icon at the top right of Today’s Candidates. After a short pause, writing, learning and exercise fill the day, with lunch, rest and an afternoon notes session included."
+        "One request to organize your day.",
+        "Click the AI schedule icon beside Today's Candidates to preview how tasks are placed into open hours."
       ],
       [
-        "Plans change. Move a task.",
-        "Choose “Reschedule a task”, then pick a task and preset date. The timeline opens that day with the new arrangement."
+        "Plans shift. Move a task effortlessly.",
+        "Click 'Reschedule a task' and pick a target date to see the timeline jump directly to the proposed new slot."
       ],
       [
-        "Every step can be undone.",
-        "Undo the latest round to restore the previous arrangement. These changes stay in the example, leaving your personal workspace intact."
+        "Every change remains completely reversible.",
+        "Undo the last round of adjustments at any time to restore previous plans. Demo actions affect only sample data."
       ]
     ],
     "faq": [
       [
-        "Is this a real AI request?",
-        "The demo uses real product components with preset responses. Changes stay in this demo. The workspace uses your configuration and tasks to request real AI."
+        "How does this demo differ from the real AI feature?",
+        "This demo uses the real application interface and layout but runs on preset data without sending live API requests."
       ],
       [
-        "How do the presets and undo work?",
-        "The example schedule appears after a short arranging step. Undo restores the previous state, one round at a time."
+        "How do preset scheduling and undo work in the demo?",
+        "Click the schedule button to preview timeline placements; click 'Undo' to restore your prior layout."
       ],
       [
-        "What does real AI need?",
-        "Open the workspace and configure a supported provider in Navo AI settings. Available capabilities depend on your account, provider, and workspace settings."
+        "What is required to use AI in the actual app?",
+        "Open NavoPath Settings, navigate to Navo AI, and configure your preferred provider and API key."
       ],
       [
-        "Does rescheduling change the due date?",
-        "Rescheduling changes the execution day and keeps the original due date. The example finds a free slot on the new day."
+        "Does rescheduling change a task's deadline?",
+        "Rescheduling only alters the planned execution time on the timeline, keeping original deadlines intact."
       ],
       [
-        "Can I adjust a task after applying a suggestion?",
-        "Yes. Applied tasks appear on the timeline, where Execute controls let you adjust their time, duration, or completion status."
+        "Can I manually adjust tasks after accepting suggestions?",
+        "Yes. All scheduled tasks remain under full manual control; you can drag, resize, or edit them at any time."
       ],
       [
-        "Does this example use AI credits?",
-        "No. It uses preset responses and example data, without making real AI requests or changing your personal workspace."
+        "Does trying this demo consume AI quota?",
+        "No. All interactions use local preset data and will not make external calls or use API credits."
       ]
     ],
     "next": "planning"

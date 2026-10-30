@@ -17,7 +17,7 @@ export function ProductMenu({ lang, kind = "product", includeGitHub = false, act
     return () => document.removeEventListener("pointerdown", close);
   }, [open]);
   useEffect(() => () => clearTimeout(closeTimer.current), []);
-  const label = kind === "support" ? (zh ? "支持" : "Support") : kind === "principles" ? (zh ? "相关原理" : "Principles") : (zh ? "产品" : "Product");
+  const label = kind === "support" ? (zh ? "支持与文档" : "Support & Docs") : kind === "principles" ? (zh ? "设计原理" : "Principles") : (zh ? "产品功能" : "Features");
   useLayoutEffect(() => {
     const panel = host.current?.querySelector<HTMLElement>(".np-quick-menu");
     if (!open || !panel) return;
@@ -51,8 +51,8 @@ export function ProductMenu({ lang, kind = "product", includeGitHub = false, act
       }
     }}>
     <button ref={trigger} type="button" {...shared} onClick={(event) => { if (event.detail === 0 || matchMedia("(hover: none)").matches) setOpen(!open); else reveal(); }}>{label}</button>
-    {open && <nav id={menuId} className="np-quick-menu" aria-label={kind === "support" ? (zh ? "支持与个人网站" : "Support and personal website") : kind === "principles" ? (zh ? "相关原理主题" : "Principle topics") : (zh ? "网站导航" : "Site navigation")}>
-      {kind === "support" ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a>{includeGitHub && <a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a>}<a href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">{zh ? "个人网站" : "Personal website"}</a></>
+    {open && <nav id={menuId} className="np-quick-menu" aria-label={kind === "support" ? (zh ? "支持与个人主页" : "Support & Personal Site") : kind === "principles" ? (zh ? "设计原理主题" : "Principle Topics") : (zh ? "全站导航" : "Site Navigation")}>
+      {kind === "support" ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a>{includeGitHub && <a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a>}<a href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">{zh ? "个人主页" : "Personal Website"}</a></>
         : kind === "principles" ? PRINCIPLES.map(topic => <a key={topic} href={principleHref(topic, lang)} target="_top" onPointerEnter={event => { if (event.pointerType === "mouse") preloadSitePage(event.currentTarget.href); }} onFocus={event => preloadSitePage(event.currentTarget.href)}>{principleNames[lang][topic]}</a>)
         : PRODUCT_FEATURES.map((feature) => <a key={feature} href={featureHref(feature, lang)} target="_top" onPointerEnter={event => { if (event.pointerType === "mouse") preloadSitePage(event.currentTarget.href); }} onFocus={event => preloadSitePage(event.currentTarget.href)}><strong>{featureNames[lang][feature]}</strong></a>)}
     </nav>}
@@ -60,5 +60,5 @@ export function ProductMenu({ lang, kind = "product", includeGitHub = false, act
 }
 
 export function SiteLanguageSwitch({ lang, onChange }: { lang: Language; onChange: (lang: Language) => void }) {
-  return <button className="np-language-switch" type="button" role="switch" aria-checked={lang === "zh"} aria-label={lang === "zh" ? "语言：中文，切换为英文" : "Language: English, switch to Chinese"} onClick={() => onChange(lang === "zh" ? "en" : "zh")}><span className="np-language-thumb" aria-hidden="true" /><span aria-hidden="true">EN</span><span aria-hidden="true">中</span></button>;
+  return <button className="np-language-switch" type="button" role="switch" aria-checked={lang === "zh"} aria-label={lang === "zh" ? "当前语言：中文，点击切换为英文" : "Language: English, click to switch to Chinese"} onClick={() => onChange(lang === "zh" ? "en" : "zh")}><span className="np-language-thumb" aria-hidden="true" /><span aria-hidden="true">EN</span><span aria-hidden="true">中</span></button>;
 }

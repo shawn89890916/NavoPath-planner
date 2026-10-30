@@ -3,23 +3,23 @@ import type { PrincipleCopy } from "../productSite";
 
 export default {
   zh: {
-    title: "JEV：把 AI 放进小判断。", description: "记下一项任务时，让估时和归类少一点重复填写。",
-    steps: [["输入", "任务标题与已有项目"], ["判断", "建议时长与项目选项"], ["补充", "在后台完善任务信息"]],
+    title: "JEV：将 AI 聚焦于局部的小判断。", description: "创建任务时自动推测预估用时与项目归类，减少重复的表单录入。",
+    steps: [["录入", "快速输入任务标题与关联信息"], ["研判", "估算合理时长（15分钟至4小时）与推荐分类"], ["补充", "后台静默填充，不打断输入心流"]],
     sections: [
-      ["把问题缩小", "JEV 是 TypeSafe AI 的结构化决策模型。NavoPath 分别询问任务大概需要多久、适合哪个已有项目；返回明确选项与各自的置信度，供产品处理。"],
-      ["先记下来，再补充", "创建任务无需等预测完成。任务先保存，已配置且可用的预测服务在后台补充建议；时长从 15 分钟到 4 小时中选择，项目也可以保持未归类。"],
-      ["有明确的边界", "后台结果仍要检查任务是否变化、你是否已手动修改。JEV 在这里处理估时和归类；整天安排还需要时间规则与其他 AI 操作流程。"],
+      ["聚焦明确的单点决策", "JEV 采用结构化决策机制，不负责宏观的人生大计，专注于在毫秒级内完成“该归入哪个项目、大致需要多久”这类微小判断。"],
+      ["先记录任务，后台异步完善", "创建任务瞬间完成保存，无需等待网络或模型推测返回。已启用的预测服务在后台异步计算并补齐属性。"],
+      ["严守职责范围与时间边界", "后台推测结果写入前会复核用户是否已进行手动设定，同时将时长约束在合理范围（15分钟至4小时）。"],
     ],
-    sources: [["JEV 官方文档", "https://docs.typesafe.ai/introduction"], ["任务预测实现", "https://github.com/shawn89890916/NavoPath-planner/blob/main/supabase/functions/ai-assistant/jevPrediction.ts"]],
+    sources: [["JEV 结构化决策规范文档", "https://docs.typesafe.ai/introduction"], ["任务属性预测引擎实现", "https://github.com/shawn89890916/NavoPath-planner/blob/main/supabase/functions/ai-assistant/jevPrediction.ts"]],
   },
   en: {
-    title: "JEV, for the small decisions.", description: "A little less repetitive input when estimating and organizing a task.",
-    steps: [["Input", "Task title and existing projects"], ["Decide", "Duration and project choices"], ["Enrich", "Update task details in the background"]],
+    title: "JEV: Focused AI for small decisions.", description: "Lighten repetitive entry by predicting duration and project category when capturing tasks.",
+    steps: [["Capture", "Enter task title and contextual notes"], ["Predict", "Estimate realistic duration (15m–4h) and project classification"], ["Enrich", "Enrich task metadata asynchronously without stalling input"]],
     sections: [
-      ["Ask a focused question", "JEV is TypeSafe AI’s structured decision model. NavoPath asks separately how long a task may take and which existing project it fits. Choices and separate confidence values give the product results it can process."],
-      ["Capture first, enrich later", "Task creation does not wait for prediction. When a prediction service is configured and available, suggestions follow in the background. Duration choices run from 15 minutes to four hours; a project can remain unassigned."],
-      ["Keep the scope clear", "Background results are checked against subsequent task changes and manual edits. JEV handles duration and project decisions here; arranging a day also involves scheduling rules and other AI action flows."],
+      ["Constrain questions to narrow boundaries", "JEV focuses on structured, narrow micro-decisions: determining which project a task belongs to and estimating its duration within milliseconds."],
+      ["Capture first, enrich in background", "Task saving is instantaneous. Configured prediction services run in the background without blocking the UI."],
+      ["Keep clear behavioral boundaries", "Inferences verify that the user has not manually overridden values, keeping duration estimates constrained between 15 minutes and 4 hours."],
     ],
-    sources: [["Official JEV documentation", "https://docs.typesafe.ai/introduction"], ["Task prediction implementation", "https://github.com/shawn89890916/NavoPath-planner/blob/main/supabase/functions/ai-assistant/jevPrediction.ts"]],
+    sources: [["Official JEV specification documentation", "https://docs.typesafe.ai/introduction"], ["Task prediction engine implementation", "https://github.com/shawn89890916/NavoPath-planner/blob/main/supabase/functions/ai-assistant/jevPrediction.ts"]],
   },
 } satisfies Record<Language, PrincipleCopy>;

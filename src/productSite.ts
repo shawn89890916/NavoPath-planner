@@ -6,8 +6,8 @@ export const PRODUCT_FEATURES: ProductFeature[] = ["execute", "planning", "ai"];
 export const PRINCIPLES = ["jev", "feedback", "time", "control", "views", "records"] as const;
 export type Principle = typeof PRINCIPLES[number];
 export const principleNames = {
-  zh: { jev: "JEV 的小判断", feedback: "置信度与个人记录", time: "时间安排规则", control: "预览与撤回", views: "同一任务，多种视角", records: "任务与时间记录" },
-  en: { jev: "Small decisions with JEV", feedback: "Confidence and personal records", time: "Scheduling rules", control: "Previews and undo", views: "One task, several views", records: "Tasks and time records" },
+  zh: { jev: "JEV 估时机制", feedback: "置信度与个人数据", time: "时间网格与排程规则", control: "预览确认与撤回", views: "同一份数据，多种视角", records: "任务本体与执行记录" },
+  en: { jev: "JEV Time Estimation", feedback: "Confidence & Personal Records", time: "Scheduling Rules", control: "Preview & Undo", views: "One Task, Multiple Views", records: "Tasks & Execution Records" },
 };
 export function principleRoute(path: string): Principle | "index" | null {
   const value = path.replace(/\/$/, "").split("/");

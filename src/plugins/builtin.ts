@@ -21,24 +21,24 @@ const pomodoroPlugin: NavoPlugin = {
   description:
     "Run 25/5 focus cycles with desktop notifications. The timer is local-only — no network calls.",
   descriptionI18n: {
-    zh: "运行本地专注/休息循环，不请求外部网络。适合把当前任务推进一段固定时间。",
-    en: "Run local focus and break cycles. It stays inside NavoPath and makes a timer panel available after enabling.",
+    zh: "在本地运行专注与休息计时循环，无需网络连接。帮助聚焦并推进当前时间轴任务。",
+    en: "Runs local focus and break intervals without external network calls. Helps you focus on scheduled timeline tasks.",
   },
   enabledSummaryI18n: {
-    zh: "启用后会在下方显示可直接开始、暂停和重置的番茄钟面板。",
-    en: "After enabling, a start/pause/reset timer appears in the enabled tools area.",
+    zh: "启用后，底部工具栏将提供开始、暂停和重置番茄钟的操作面板。",
+    en: "Enables a dedicated bottom toolbar panel to start, pause, and reset focus sessions.",
   },
   version: "1.0.0",
   author: "NavoPath Team",
   icon: "P",
   permissions: ["tasks", "ui"],
   configFields: [
-    { key: "focusMinutes", label: "Focus minutes", labelI18n: { zh: "专注分钟数", en: "Focus minutes" }, type: "number", min: 5, max: 90, default: 25 },
-    { key: "breakMinutes", label: "Break minutes", labelI18n: { zh: "休息分钟数", en: "Break minutes" }, type: "number", min: 1, max: 30, default: 5 },
+    { key: "focusMinutes", label: "Focus Duration (minutes)", labelI18n: { zh: "专注时长（分钟）", en: "Focus Duration (minutes)" }, type: "number", min: 5, max: 90, default: 25 },
+    { key: "breakMinutes", label: "Break Duration (minutes)", labelI18n: { zh: "休息时长（分钟）", en: "Break Duration (minutes)" }, type: "number", min: 1, max: 30, default: 5 },
     {
       key: "autoStartBreak",
-      label: "Auto start break",
-      labelI18n: { zh: "自动开始休息", en: "Auto start break" },
+      label: "Automatically start break when focus ends",
+      labelI18n: { zh: "专注结束后自动开始休息", en: "Automatically start break when focus ends" },
       type: "boolean",
       default: true,
     },
@@ -56,27 +56,27 @@ const pomodoroPlugin: NavoPlugin = {
 const habitTrackerPlugin: NavoPlugin = {
   id: "habit-tracker",
   name: "Habit Tracker",
-  nameI18n: { zh: "习惯打卡", en: "Habit Tracker" },
+  nameI18n: { zh: "习惯追踪", en: "Habit Tracker" },
   description:
     "Mark daily habits done and keep a local streak counter. Habits are stored in plugin config.",
   descriptionI18n: {
-    zh: "在 NavoPath 内记录每日习惯完成情况，习惯列表和打卡数据保存在本地设置中。",
-    en: "Mark daily habits done and keep local check-ins in plugin config.",
+    zh: "在 NavoPath 内记录每日习惯打卡情况，打卡记录与习惯清单均安全保存在本地。",
+    en: "Track daily habits inside NavoPath, storing your checklist and completions locally.",
   },
   enabledSummaryI18n: {
-    zh: "启用后会出现今日习惯清单；可在配置里一行一个习惯。",
-    en: "After enabling, today's habit checklist appears; configure one habit per line.",
+    zh: "启用后显示今日习惯列表；可在设置中按行配置习惯项。",
+    en: "Displays a daily habit checklist; configure items one per line in settings.",
   },
   version: "1.2.0",
   author: "Community",
   icon: "H",
   permissions: ["tasks", "settings"],
   configFields: [
-    { key: "habits", label: "Habit list (one per line)", labelI18n: { zh: "习惯列表（一行一个）", en: "Habit list (one per line)" }, type: "string", default: "" },
+    { key: "habits", label: "Habit List (one item per line)", labelI18n: { zh: "习惯清单（每行一项）", en: "Habit List (one item per line)" }, type: "string", default: "" },
     {
       key: "reminderHour",
-      label: "Daily reminder hour",
-      labelI18n: { zh: "每日提醒小时", en: "Daily reminder hour" },
+      label: "Daily Reminder Hour",
+      labelI18n: { zh: "每日提醒时间（小时）", en: "Daily Reminder Hour" },
       type: "number",
       min: 0,
       max: 23,
@@ -91,32 +91,32 @@ const habitTrackerPlugin: NavoPlugin = {
 /** Weather Info — placeholder that demonstrates config + events. */
 const weatherPlugin: NavoPlugin = {
   id: "weather",
-  name: "Weather Info",
-  nameI18n: { zh: "天气徽章", en: "Weather Info" },
+  name: "Weather Preview",
+  nameI18n: { zh: "天气预览", en: "Weather Preview" },
   description:
     "Display a small weather badge. The default city can be customised; no API key is required for the placeholder badge.",
   descriptionI18n: {
-    zh: "显示一个本地预览天气徽章。城市和单位可配置，不需要外部 API Key。",
-    en: "Display a local preview weather badge with configurable city and units.",
+    zh: "在界面角标展示本地天气信息。城市与温度单位支持自定义，无需配置第三方 API 密钥。",
+    en: "Displays a local weather badge. City and units are customizable without external API keys.",
   },
   enabledSummaryI18n: {
-    zh: "启用后会显示城市、温度和天气状态的本地预览徽章。",
-    en: "After enabling, a local city, temperature, and condition badge appears.",
+    zh: "启用后展示包含城市、气温与天气状态的本地预览角标。",
+    en: "Shows a subtle status badge with city name, temperature, and weather conditions.",
   },
   version: "0.9.0",
   author: "NavoPath Team",
   icon: "W",
   permissions: ["ui"],
   configFields: [
-    { key: "city", label: "City", labelI18n: { zh: "城市", en: "City" }, type: "string", default: "Shanghai" },
+    { key: "city", label: "City", labelI18n: { zh: "所在城市", en: "City" }, type: "string", default: "Shanghai" },
     {
       key: "units",
-      label: "Units",
-      labelI18n: { zh: "温度单位", en: "Units" },
+      label: "Temperature Unit",
+      labelI18n: { zh: "温度单位", en: "Temperature Unit" },
       type: "select",
       options: [
-        { value: "c", label: "Celsius", labelI18n: { zh: "摄氏度", en: "Celsius" } },
-        { value: "f", label: "Fahrenheit", labelI18n: { zh: "华氏度", en: "Fahrenheit" } },
+        { value: "c", label: "Celsius (°C)", labelI18n: { zh: "摄氏度 (°C)", en: "Celsius (°C)" } },
+        { value: "f", label: "Fahrenheit (°F)", labelI18n: { zh: "华氏度 (°F)", en: "Fahrenheit (°F)" } },
       ],
       default: "c",
     },
@@ -129,17 +129,17 @@ const weatherPlugin: NavoPlugin = {
 /** Notes Enhanced — enables a richer notes editor for tasks. */
 const notesPlugin: NavoPlugin = {
   id: "notes",
-  name: "Notes Enhanced",
-  nameI18n: { zh: "任务笔记", en: "Notes Enhanced" },
+  name: "Task Notes Enhanced",
+  nameI18n: { zh: "任务增强笔记", en: "Task Notes Enhanced" },
   description:
     "Attach a markdown-capable note panel to each task. Notes are stored with the task's own `notes` field.",
   descriptionI18n: {
-    zh: "为任务提供一个快速笔记面板，内容保存到任务自己的 notes 字段。",
-    en: "Attach a quick notes panel to tasks and save content to each task's notes field.",
+    zh: "为任务提供快速笔记编辑面板，文字内容直接关联并写入任务本身的 notes 字段。",
+    en: "Provides an inline note-taking panel that writes directly into each task's notes field.",
   },
   enabledSummaryI18n: {
-    zh: "启用后可以在插件工具区快速选择任务并编辑它的笔记。",
-    en: "After enabling, choose a task and edit its notes from the plugin tools area.",
+    zh: "启用后可在工具区快捷选择任务并实时查看与编辑其笔记。",
+    en: "Enables quick task selection to review and edit associated notes directly.",
   },
   version: "2.1.0",
   author: "Community",
@@ -148,15 +148,15 @@ const notesPlugin: NavoPlugin = {
   configFields: [
     {
       key: "enableMarkdown",
-      label: "Enable markdown rendering",
-      labelI18n: { zh: "启用 Markdown 渲染", en: "Enable markdown rendering" },
+      label: "Enable Markdown preview",
+      labelI18n: { zh: "启用 Markdown 格式预览", en: "Enable Markdown preview" },
       type: "boolean",
       default: true,
     },
     {
       key: "autoSave",
-      label: "Auto-save (ms)",
-      labelI18n: { zh: "自动保存间隔（毫秒）", en: "Auto-save (ms)" },
+      label: "Auto-save Interval (ms)",
+      labelI18n: { zh: "自动保存延迟（毫秒）", en: "Auto-save Interval (ms)" },
       type: "number",
       min: 200,
       max: 5000,

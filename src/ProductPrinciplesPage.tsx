@@ -8,27 +8,27 @@ import "./product-principles.css";
 
 const directory = {
   zh: {
-    label: "相关原理", title: "让好用，有迹可循。", description: "几个小原理，串起从任务到执行的体验。选一个你感兴趣的话题，慢慢了解。",
-    read: "了解原理", back: "所有原理", example: "处理流程 · 原理示意", sources: "继续了解", next: "接着读",
+    label: "设计原理", title: "清晰直观背后的设计思考。", description: "从目标拆解到日常落地，串联规划与执行的六个核心设计原则。",
+    read: "查阅详情", back: "所有设计原理", example: "设计原理 · 流程示意", sources: "深入了解", next: "接着读",
     topics: {
-      jev: "任务先记下来，估时与项目建议随后补充。",
-      feedback: "建议如何有分寸，手动修改为什么有优先级。",
-      time: "从空闲时段到时间网格，一项任务如何找到位置。",
-      control: "让 AI 的每一次改变，都能检查和调整。",
-      views: "树、列表、看板与矩阵如何共用一份数据。",
-      records: "把要做什么和什么时候做分开，计划更容易调整。",
+      jev: "快速记录任务本体，估时与层级归属按需细化。",
+      feedback: "AI 建议保持克制，手动安排始终具备最高优先权。",
+      time: "结合 15 分钟时间网格与空档，让任务找到合适位置。",
+      control: "AI 操作完全透明：预览确认、可微调、可撤回。",
+      views: "树状结构、列表、看板与矩阵无缝切换，数据完全同源。",
+      records: "区分“任务本体”与“日程安排”，让计划更具灵活性。",
     },
   },
   en: {
-    label: "Principles", title: "Why it feels this way.", description: "A few small ideas connect capturing a task to getting it done. Pick a topic and explore at your own pace.",
-    read: "Explore the principle", back: "All principles", example: "Process · Illustrative example", sources: "Read further", next: "Read next",
+    label: "Principles", title: "Why it works this way.", description: "Six core design principles connecting long-term goals to everyday execution.",
+    read: "Explore principle", back: "All Principles", example: "Principles · Workflow Diagram", sources: "Read further", next: "Read next",
     topics: {
-      jev: "Capture first. Duration and project suggestions follow.",
-      feedback: "How suggestions stay measured and respect manual edits.",
-      time: "How free slots and a shared time grid help a task find room.",
-      control: "Make AI changes easy to inspect and adjust.",
-      views: "How tree, list, Kanban and matrix share the same data.",
-      records: "Separate the work from its arrangements so plans can change.",
+      jev: "Capture tasks quickly; refine duration and hierarchy when needed.",
+      feedback: "AI suggestions stay measured, with manual edits taking priority.",
+      time: "How free slots and a 15-minute grid help tasks find realistic room.",
+      control: "Inspect, adjust, and undo every change proposed by AI.",
+      views: "Tree, List, Kanban, and Matrix share a single source of truth.",
+      records: "Separate task definitions from temporal schedules for flexible planning.",
     },
   },
 };
