@@ -884,7 +884,7 @@ function ResetPasswordForm({ lang, busy, error, onReset }: { lang: Language; bus
           <p style={{ fontSize: 13, color: "var(--l-muted)", marginBottom: 12 }}>{t(lang, "auth.setNewPasswordDesc")}</p>
           <form onSubmit={async (event) => { event.preventDefault(); if (isValid && !mismatch) await onReset(password); }}>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t(lang, "auth.newPassword")} minLength={8} required autoFocus />
-            <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t(lang, "auth.confirmPassword")} minLength={8} required />
+            <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t(lang, "auth.confirmNewPassword")} minLength={8} required />
             {password.length > 0 && <p style={{ fontSize: 11, margin: "-4px 0 4px", color: isValid ? "#22c55e" : "var(--l-muted)" }}>{pwHint}</p>}
             {mismatch && <p className="landing-auth-error">{t(lang, "auth.passwordMismatch")}</p>}
             {error && <p className="landing-auth-error">{error}</p>}
@@ -2359,7 +2359,7 @@ if (cached?.data && cached?.settings) {
         return;
       }
       setAuthNotice({ type: "confirm-email", email });
-      setAuthError(confirmation?.message || "尚未检测到邮箱验证。请点击最新确认邮件中的链接，或验证后直接使用邮箱与密码登录。");
+      setAuthError(confirmation?.message || (lang === "zh" ? "尚未检测到邮箱验证。请点击最新确认邮件中的链接，或验证后直接使用邮箱与密码登录。" : "Email confirmation not detected yet. Please click the link in your latest confirmation email, or sign in after confirming."));
     } catch (error) {
       setAuthNotice({ type: "confirm-email", email });
       setAuthError(error instanceof Error ? error.message : String(error));
@@ -2392,10 +2392,10 @@ if (cached?.data && cached?.settings) {
       const response = await api.resetPassword?.(newPassword);
       if (response?.success) {
         setIsRecoveryMode(false);
-        showToast(response?.message || "密码已更新，请使用新密码登录。");
+        showToast(response?.message || (lang === "zh" ? "密码已更新，请使用新密码登录。" : "Password successfully updated. Please sign in with your new password."));
         await handleSignOut();
       } else {
-        setAuthError(response?.message || "重置链接已失效或过期，请重新申请密码重置。");
+        setAuthError(response?.message || (lang === "zh" ? "重置链接已失效或过期，请重新申请密码重置。" : "Reset link has expired or is invalid. Please request a new password reset."));
         setIsRecoveryMode(false);
       }
     } catch (error) {
@@ -8880,6 +8880,7 @@ if (cached?.data && cached?.settings) {
   if (!isWorkspaceRoute || (authState?.mode === "cloud" && !authState.user)) {
     if (isWorkspaceRoute && window.desktopApi) {
       return <Suspense fallback={<ExecuteSkeleton />}><AuthGate
+        lang={lang}
         busy={authBusy}
         error={authError}
         notice={authNotice}
