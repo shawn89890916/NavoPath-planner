@@ -1,6 +1,33 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { detectManifestChanges, eventDedupeKey, isPathWatched, isValidDeviceToken, normalizeWatchedRoots, schedulingExcerpt, type BridgeManifest } from "./change-utils.ts";
+import { batchWorkspaceChanges, boundedWorkspaceFragments, detectManifestChanges, eventDedupeKey, isPathWatched, isValidDeviceToken, normalizeWatchedRoots, schedulingExcerpt, workspaceChangeMetadata, type BridgeManifest, type DetectedChange } from "./change-utils.ts";
+
+test("bounds Chinese and escaped excerpts by serialized bytes without breaking Unicode", () => {
+  const fragments = Array.from({ length: 20 }, (_, index) => ({ path: `升学/资料/${index}.md`, excerpt: '截止申请😀\\"\n'.repeat(400), content_hash: "sha256:abc" }));
+  const bounded = boundedWorkspaceFragments(fragments);
+  assert.ok(bounded.length > 0);
+  assert.ok(bounded.length < fragments.length);
+  assert.ok(new TextEncoder().encode(JSON.stringify(bounded)).byteLength <= 22_000);
+  for (const fragment of bounded) {
+    assert.doesNotMatch(fragment.excerpt, /[\uD800-\uDFFF]/u);
+    assert.ok(fragments.find((source) => source.path === fragment.path)!.excerpt.startsWith(fragment.excerpt));
+  }
+  assert.deepEqual(boundedWorkspaceFragments([{ path: "large".repeat(200), excerpt: "deadline", content_hash: "sha256:abc" }], 100), []);
+});
+
+test("batches long Unicode paths without dropping changes and leaves space for fragments", () => {
+  const changes: DetectedChange[] = Array.from({ length: 140 }, (_, index) => ({ path: `升学/资料/${"中".repeat(480)}${index}.md`, changeType: "created", current: { hash: "a".repeat(64), mtime: 1, size: 10 } }));
+  const batches = batchWorkspaceChanges(changes);
+  assert.deepEqual(batches.flat(), changes);
+  assert.ok(batches.length > 2);
+  for (const batch of batches) {
+    const fragments = boundedWorkspaceFragments(batch.slice(0, 20).map((change) => ({ path: change.path, excerpt: "截止".repeat(1800), content_hash: "sha256:abc" })));
+    const payload = { changed_files: batch.map(workspaceChangeMetadata), fragments, summary: "中".repeat(650), schedule_impact: "中".repeat(100), timestamp: new Date().toISOString(), dedupe_key: "obsidian-" + "a".repeat(64) };
+    assert.ok(new TextEncoder().encode(JSON.stringify(payload)).byteLength < 64_000);
+  }
+  assert.equal(batchWorkspaceChanges(changes.slice(0, 1)).length, 1);
+  assert.deepEqual(batchWorkspaceChanges([]), []);
+});
 
 test("accepts only complete NavoPath device tokens", () => {
   assert.equal(isValidDeviceToken(`nvp_${"a".repeat(64)}`), true);

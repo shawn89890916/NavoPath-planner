@@ -1,7 +1,7 @@
 {
   "id": "navopath-bridge",
   "name": "NavoPath Bridge",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "minAppVersion": "1.11.0",
   "description": "Send privacy-bounded incremental changes from allowlisted knowledge folders to NavoPath.",
   "author": "NavoPath",

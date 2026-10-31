@@ -13,6 +13,54 @@ export type DetectedChange = {
   current?: ManifestEntry;
 };
 
+export type WorkspaceFragment = { path: string; excerpt: string; content_hash: string };
+
+export function workspaceChangeMetadata(change: DetectedChange) {
+  return { path: change.path, change_type: change.changeType, content_hash: `sha256:${change.current?.hash || change.previous?.hash || "deleted"}` };
+}
+
+function jsonBytes(value: unknown) {
+  return new TextEncoder().encode(JSON.stringify(value)).byteLength;
+}
+
+// Reserve room for excerpts and envelope fields inside the API's 64 KB body limit.
+export function batchWorkspaceChanges(changes: DetectedChange[]) {
+  const batches: DetectedChange[][] = [];
+  let batch: DetectedChange[] = [];
+  for (const change of changes) {
+    if (jsonBytes([workspaceChangeMetadata(change)]) > 36_000) throw new Error("Workspace file path is too long to upload");
+    const next = [...batch, change];
+    if (next.length > 100 || jsonBytes(next.map(workspaceChangeMetadata)) > 36_000) {
+      batches.push(batch);
+      batch = [change];
+    } else batch = next;
+  }
+  if (batch.length) batches.push(batch);
+  return batches;
+}
+
+export function boundedWorkspaceFragments(fragments: WorkspaceFragment[], maxBytes = 22_000) {
+  const bounded: WorkspaceFragment[] = [];
+  for (const fragment of fragments.slice(0, 20)) {
+    if (jsonBytes([...bounded, fragment]) <= maxBytes) {
+      bounded.push(fragment);
+      continue;
+    }
+    // Count serialized UTF-8, including JSON escapes; preserve Unicode code points.
+    const characters = Array.from(fragment.excerpt);
+    let low = 0;
+    let high = characters.length;
+    while (low < high) {
+      const middle = Math.ceil((low + high) / 2);
+      const candidate = { ...fragment, excerpt: characters.slice(0, middle).join("") };
+      if (jsonBytes([...bounded, candidate]) <= maxBytes) low = middle;
+      else high = middle - 1;
+    }
+    if (low) bounded.push({ ...fragment, excerpt: characters.slice(0, low).join("") });
+  }
+  return bounded;
+}
+
 const SCHEDULE_LINE = /(?:\b(?:due|deadline|submit|submission|exam|test|interview|schedule|todo)\b|截止|提交|考试|模考|面试|申请|日期|时间|待办|计划|ddl|\b20\d{2}[-/.年]\d{1,2}(?:[-/.月]\d{1,2}日?)?|\b\d{1,2}:\d{2}\b|- \[ \])/i;
 
 export function normalizeVaultPath(path: string) {

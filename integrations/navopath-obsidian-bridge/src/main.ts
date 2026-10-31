@@ -1,5 +1,5 @@
 import { Notice, Platform, Plugin, PluginSettingTab, requestUrl, SecretComponent, Setting, TFile } from "obsidian";
-import { detectManifestChanges, eventDedupeKey, isPathWatched, isValidDeviceToken, normalizeVaultPath, normalizeWatchedRoots, schedulingExcerpt, sha256Hex, type BridgeManifest, type DetectedChange, type ManifestEntry } from "./change-utils.ts";
+import { batchWorkspaceChanges, boundedWorkspaceFragments, detectManifestChanges, eventDedupeKey, isPathWatched, isValidDeviceToken, normalizeVaultPath, normalizeWatchedRoots, schedulingExcerpt, sha256Hex, workspaceChangeMetadata, type BridgeManifest, type DetectedChange, type ManifestEntry } from "./change-utils.ts";
 
 type BridgeSettings = {
   watchedRoots: string[];
@@ -28,6 +28,12 @@ const TEXT_EXTENSIONS = new Set(["md", "txt", "csv", "json", "yaml", "yml", "htm
 const MAX_HASH_BYTES = 16 * 1024 * 1024;
 const DEVICE_SECRET_NAME = "navopath-obsidian-bridge-device-token";
 const DESKTOP_BOOTSTRAP_FILENAME = "navopath-obsidian-bridge.token";
+
+class WorkspaceUploadError extends Error {
+  constructor(readonly status: number) {
+    super(`workspace event rejected (${status})`);
+  }
+}
 
 function hex(bytes: ArrayBuffer) {
   return [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -219,13 +225,12 @@ export default class NavoPathBridgePlugin extends Plugin {
         return;
       }
 
-      for (let offset = 0; offset < changes.length; offset += 100) {
-        const batch = changes.slice(offset, offset + 100);
-        const fragmentCandidates = (await Promise.all(batch.slice(0, 20).map((change) => this.fragmentFor(change)))).filter((item): item is NonNullable<typeof item> => Boolean(item));
+      for (const batch of batchWorkspaceChanges(changes)) {
+        const fragmentCandidates = boundedWorkspaceFragments((await Promise.all(batch.slice(0, 20).map((change) => this.fragmentFor(change)))).filter((item): item is NonNullable<typeof item> => Boolean(item)));
         const timestamp = new Date().toISOString();
-        const watchedLabel = this.data.settings.watchedRoots.join("、");
+        const watchedLabel = this.data.settings.watchedRoots.join("、").slice(0, 600);
         const body = JSON.stringify({
-          changed_files: batch.map((change) => ({ path: change.path, change_type: change.changeType, content_hash: `sha256:${change.current?.hash || change.previous?.hash || "deleted"}` })),
+          changed_files: batch.map(workspaceChangeMetadata),
           fragments: fragmentCandidates,
           summary: `Obsidian Vault 的「${watchedLabel}」检测到 ${batch.length} 个增量变化。`,
           schedule_impact: fragmentCandidates.length ? "请仅根据所附日期、截止、待办或计划片段判断是否影响 NavoPath 日程。" : "当前只包含文件名和内容哈希；除非文件名明确表示截止风险，否则不要调整日程。",
@@ -246,7 +251,7 @@ export default class NavoPathBridgePlugin extends Plugin {
           body,
           throw: false,
         });
-        if (response.status < 200 || response.status >= 300) throw new Error(`workspace event rejected (${response.status})`);
+        if (response.status < 200 || response.status >= 300) throw new WorkspaceUploadError(response.status);
         for (const change of batch) {
           if (change.current) this.data.manifest[change.path] = change.current;
           else delete this.data.manifest[change.path];
@@ -259,8 +264,11 @@ export default class NavoPathBridgePlugin extends Plugin {
       if (showNotice) new Notice(`已向 NavoPath 发送 ${changes.length} 个增量变化。`);
     } catch (error) {
       console.error("NavoPath Bridge upload failed", error);
-      this.setStatus("发送失败，将自动重试");
-      if (showNotice) new Notice("资料变化发送失败；本地基线未推进，下次会自动重试。");
+      const failure = error instanceof WorkspaceUploadError
+        ? error.status === 401 ? "设备令牌或签名验证失败（HTTP 401）" : `云端拒绝上传（HTTP ${error.status}）`
+        : "无法完成上传，请检查网络连接";
+      this.setStatus(`${failure}，将自动重试`);
+      if (showNotice) new Notice(`${failure}；未发送的资料变化会保留并自动重试。`, 10_000);
       this.flushTimer = window.setTimeout(() => void this.flushNow(false), 60_000);
     } finally {
       this.flushing = false;

@@ -5,6 +5,7 @@
 ### 改进
 - 明确外部连接各项操作的读取、修改、删除与后台工作影响，便于连接客户端按实际行为请求授权。
 - 外部助理可按增量读取已上传的 Obsidian 资料变化和有限片段，便于在电脑离线时持续跟进，且只返回当前账户的资料。
+- Obsidian Bridge 自动按上传大小拆分积压变化并限制片段大小，避免大量中文笔记卡住同步；发送失败时显示网络或云端状态，便于排查。
 
 ## 2026-10-30 · 公开页面文案与多语言表达润色
 
@@ -282,6 +283,7 @@
 ### Improved
 - Clarified which external-connection operations read, modify or delete data, or trigger background work, so connected clients can request authorization according to their actual effects.
 - External assistants can incrementally read uploaded Obsidian material changes and bounded excerpts to keep following work while a computer is offline, with results restricted to the current account.
+- Obsidian Bridge now splits queued changes by upload size and bounds excerpts so large batches of Chinese notes keep syncing; upload failures identify network or server status to help troubleshooting.
 
 ## 2026-10-30 · Public page copy and bilingual refinements
 

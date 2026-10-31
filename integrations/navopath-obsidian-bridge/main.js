@@ -26,6 +26,46 @@ module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
 
 // src/change-utils.ts
+function workspaceChangeMetadata(change) {
+  return { path: change.path, change_type: change.changeType, content_hash: `sha256:${change.current?.hash || change.previous?.hash || "deleted"}` };
+}
+function jsonBytes(value) {
+  return new TextEncoder().encode(JSON.stringify(value)).byteLength;
+}
+function batchWorkspaceChanges(changes) {
+  const batches = [];
+  let batch = [];
+  for (const change of changes) {
+    if (jsonBytes([workspaceChangeMetadata(change)]) > 36e3) throw new Error("Workspace file path is too long to upload");
+    const next = [...batch, change];
+    if (next.length > 100 || jsonBytes(next.map(workspaceChangeMetadata)) > 36e3) {
+      batches.push(batch);
+      batch = [change];
+    } else batch = next;
+  }
+  if (batch.length) batches.push(batch);
+  return batches;
+}
+function boundedWorkspaceFragments(fragments, maxBytes = 22e3) {
+  const bounded = [];
+  for (const fragment of fragments.slice(0, 20)) {
+    if (jsonBytes([...bounded, fragment]) <= maxBytes) {
+      bounded.push(fragment);
+      continue;
+    }
+    const characters = Array.from(fragment.excerpt);
+    let low = 0;
+    let high = characters.length;
+    while (low < high) {
+      const middle = Math.ceil((low + high) / 2);
+      const candidate = { ...fragment, excerpt: characters.slice(0, middle).join("") };
+      if (jsonBytes([...bounded, candidate]) <= maxBytes) low = middle;
+      else high = middle - 1;
+    }
+    if (low) bounded.push({ ...fragment, excerpt: characters.slice(0, low).join("") });
+  }
+  return bounded;
+}
 var SCHEDULE_LINE = /(?:\b(?:due|deadline|submit|submission|exam|test|interview|schedule|todo)\b|截止|提交|考试|模考|面试|申请|日期|时间|待办|计划|ddl|\b20\d{2}[-/.年]\d{1,2}(?:[-/.月]\d{1,2}日?)?|\b\d{1,2}:\d{2}\b|- \[ \])/i;
 function normalizeVaultPath(path) {
   return path.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
@@ -92,6 +132,12 @@ var TEXT_EXTENSIONS = /* @__PURE__ */ new Set(["md", "txt", "csv", "json", "yaml
 var MAX_HASH_BYTES = 16 * 1024 * 1024;
 var DEVICE_SECRET_NAME = "navopath-obsidian-bridge-device-token";
 var DESKTOP_BOOTSTRAP_FILENAME = "navopath-obsidian-bridge.token";
+var WorkspaceUploadError = class extends Error {
+  constructor(status) {
+    super(`workspace event rejected (${status})`);
+    this.status = status;
+  }
+};
 function hex(bytes) {
   return [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
@@ -257,13 +303,12 @@ var NavoPathBridgePlugin = class extends import_obsidian.Plugin {
         if (showNotice) new import_obsidian.Notice("\u6CA1\u6709\u5F85\u53D1\u9001\u7684\u8D44\u6599\u53D8\u5316\u3002");
         return;
       }
-      for (let offset = 0; offset < changes.length; offset += 100) {
-        const batch = changes.slice(offset, offset + 100);
-        const fragmentCandidates = (await Promise.all(batch.slice(0, 20).map((change) => this.fragmentFor(change)))).filter((item) => Boolean(item));
+      for (const batch of batchWorkspaceChanges(changes)) {
+        const fragmentCandidates = boundedWorkspaceFragments((await Promise.all(batch.slice(0, 20).map((change) => this.fragmentFor(change)))).filter((item) => Boolean(item)));
         const timestamp = (/* @__PURE__ */ new Date()).toISOString();
-        const watchedLabel = this.data.settings.watchedRoots.join("\u3001");
+        const watchedLabel = this.data.settings.watchedRoots.join("\u3001").slice(0, 600);
         const body = JSON.stringify({
-          changed_files: batch.map((change) => ({ path: change.path, change_type: change.changeType, content_hash: `sha256:${change.current?.hash || change.previous?.hash || "deleted"}` })),
+          changed_files: batch.map(workspaceChangeMetadata),
           fragments: fragmentCandidates,
           summary: `Obsidian Vault \u7684\u300C${watchedLabel}\u300D\u68C0\u6D4B\u5230 ${batch.length} \u4E2A\u589E\u91CF\u53D8\u5316\u3002`,
           schedule_impact: fragmentCandidates.length ? "\u8BF7\u4EC5\u6839\u636E\u6240\u9644\u65E5\u671F\u3001\u622A\u6B62\u3001\u5F85\u529E\u6216\u8BA1\u5212\u7247\u6BB5\u5224\u65AD\u662F\u5426\u5F71\u54CD NavoPath \u65E5\u7A0B\u3002" : "\u5F53\u524D\u53EA\u5305\u542B\u6587\u4EF6\u540D\u548C\u5185\u5BB9\u54C8\u5E0C\uFF1B\u9664\u975E\u6587\u4EF6\u540D\u660E\u786E\u8868\u793A\u622A\u6B62\u98CE\u9669\uFF0C\u5426\u5219\u4E0D\u8981\u8C03\u6574\u65E5\u7A0B\u3002",
@@ -284,7 +329,7 @@ var NavoPathBridgePlugin = class extends import_obsidian.Plugin {
           body,
           throw: false
         });
-        if (response.status < 200 || response.status >= 300) throw new Error(`workspace event rejected (${response.status})`);
+        if (response.status < 200 || response.status >= 300) throw new WorkspaceUploadError(response.status);
         for (const change of batch) {
           if (change.current) this.data.manifest[change.path] = change.current;
           else delete this.data.manifest[change.path];
@@ -297,8 +342,9 @@ var NavoPathBridgePlugin = class extends import_obsidian.Plugin {
       if (showNotice) new import_obsidian.Notice(`\u5DF2\u5411 NavoPath \u53D1\u9001 ${changes.length} \u4E2A\u589E\u91CF\u53D8\u5316\u3002`);
     } catch (error) {
       console.error("NavoPath Bridge upload failed", error);
-      this.setStatus("\u53D1\u9001\u5931\u8D25\uFF0C\u5C06\u81EA\u52A8\u91CD\u8BD5");
-      if (showNotice) new import_obsidian.Notice("\u8D44\u6599\u53D8\u5316\u53D1\u9001\u5931\u8D25\uFF1B\u672C\u5730\u57FA\u7EBF\u672A\u63A8\u8FDB\uFF0C\u4E0B\u6B21\u4F1A\u81EA\u52A8\u91CD\u8BD5\u3002");
+      const failure = error instanceof WorkspaceUploadError ? error.status === 401 ? "\u8BBE\u5907\u4EE4\u724C\u6216\u7B7E\u540D\u9A8C\u8BC1\u5931\u8D25\uFF08HTTP 401\uFF09" : `\u4E91\u7AEF\u62D2\u7EDD\u4E0A\u4F20\uFF08HTTP ${error.status}\uFF09` : "\u65E0\u6CD5\u5B8C\u6210\u4E0A\u4F20\uFF0C\u8BF7\u68C0\u67E5\u7F51\u7EDC\u8FDE\u63A5";
+      this.setStatus(`${failure}\uFF0C\u5C06\u81EA\u52A8\u91CD\u8BD5`);
+      if (showNotice) new import_obsidian.Notice(`${failure}\uFF1B\u672A\u53D1\u9001\u7684\u8D44\u6599\u53D8\u5316\u4F1A\u4FDD\u7559\u5E76\u81EA\u52A8\u91CD\u8BD5\u3002`, 1e4);
       this.flushTimer = window.setTimeout(() => void this.flushNow(false), 6e4);
     } finally {
       this.flushing = false;
