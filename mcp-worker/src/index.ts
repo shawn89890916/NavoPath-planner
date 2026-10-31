@@ -176,39 +176,39 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return setRequestHandler(schema, handler);
     }) as typeof protocolServer.setRequestHandler;
 
-    this.server.registerTool("get_workspace_summary", { description: "Return project and task counts.", inputSchema: {} }, async () => {
+    this.server.registerTool("get_workspace_summary", { description: "Return project and task counts.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: {} }, async () => {
       const { data } = await getProfile(this.env, this.userId());
       const tasks = data.tasks || [];
       return result({ projects: (data.projects || []).length, openTasks: tasks.filter((task: Json) => !task.completed).length, completedTasks: tasks.filter((task: Json) => task.completed).length });
     });
 
-    this.server.registerTool("sync_get_snapshot", { description: "Read the complete workspace for a user-owned folder sync bridge. The result contains private planner data; keep it in the user's chosen sync folder only.", inputSchema: {} }, async () => {
+    this.server.registerTool("sync_get_snapshot", { description: "Read the complete workspace for a user-owned folder sync bridge. The result contains private planner data; keep it in the user's chosen sync folder only.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: {} }, async () => {
       return result(snapshot(await getProfile(this.env, this.userId()), this.userId()));
     });
 
-    this.server.registerTool("sync_merge_snapshot", { description: "Merge a versioned folder snapshot into this workspace by record modification time and deletion tombstones.", inputSchema: {
+    this.server.registerTool("sync_merge_snapshot", { description: "Merge a versioned folder snapshot into this workspace by record modification time and deletion tombstones.", annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false }, inputSchema: {
       version: z.literal(1), accountId: z.string(), updatedAt: z.string(), data: z.record(z.string(), z.unknown()), settings: z.record(z.string(), z.unknown()),
     } }, async (input) => {
       return result(await mergeSyncSnapshot(this.env, this.userId(), input));
     });
 
-    this.server.registerTool("sync_report_status", { description: "Report the health of a local folder sync bridge.", inputSchema: {
+    this.server.registerTool("sync_report_status", { description: "Report the health of a local folder sync bridge.", annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }, inputSchema: {
       deviceId: z.string(), deviceName: z.string(), folderPath: z.string(), status: z.enum(["running", "error", "stopped"]), lastSuccessAt: z.string().optional(), error: z.string().optional(),
     } }, async (input) => {
       return result(await reportSyncBridgeStatus(this.env, this.userId(), input));
     });
 
-    this.server.registerTool("list_projects", { description: "List projects in display order.", inputSchema: {} }, async () => {
+    this.server.registerTool("list_projects", { description: "List projects in display order.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: {} }, async () => {
       const { data } = await getProfile(this.env, this.userId());
       return result([...(data.projects || [])].sort((a: Json, b: Json) => Number(a.order || 0) - Number(b.order || 0)));
     });
 
-    this.server.registerTool("list_tasks", { description: "List tasks with optional project and completion filters.", inputSchema: { projectId: z.string().optional(), completed: z.boolean().optional() } }, async ({ projectId, completed }) => {
+    this.server.registerTool("list_tasks", { description: "List tasks with optional project and completion filters.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: { projectId: z.string().optional(), completed: z.boolean().optional() } }, async ({ projectId, completed }) => {
       const { data } = await getProfile(this.env, this.userId());
       return result((data.tasks || []).filter((task: Json) => (!projectId || task.projectId === projectId) && (completed === undefined || Boolean(task.completed) === completed)));
     });
 
-    this.server.registerTool("list_calendar", { description: "List scheduled task blocks in an inclusive date range.", inputSchema: { from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) } }, async ({ from, to }) => {
+    this.server.registerTool("list_calendar", { description: "List scheduled task blocks in an inclusive date range.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: { from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) } }, async ({ from, to }) => {
       const { data } = await getProfile(this.env, this.userId());
       const blocks = (data.tasks || []).flatMap((task: Json) =>
         (task.timelineRecords || [])
@@ -218,27 +218,27 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return result(blocks);
     });
 
-    this.server.registerTool("get_task", { description: "Read one task's full details, individual execution records, and recorded timer/manual time entries. Use record IDs from this result when rating engagement.", annotations: { readOnlyHint: true, openWorldHint: false }, inputSchema: { taskId: z.string() } }, async ({ taskId }) => {
+    this.server.registerTool("get_task", { description: "Read one task's full details, individual execution records, and recorded timer/manual time entries. Use record IDs from this result when rating engagement.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: { taskId: z.string() } }, async ({ taskId }) => {
       const { data } = await getProfile(this.env, this.userId());
       const task = (data.tasks || []).find((item: Json) => item.id === taskId);
       if (!task) throw new Error("Task not found");
       return result({ task, timeEntries: (data.timeEntries || []).filter((entry: Json) => entry.taskId === taskId) });
     });
 
-    this.server.registerTool("list_engagement", { description: "Read engagement ratings (10–100%, default 80%) and duration-weighted totals for all non-cancelled executions, including scheduled and unfinished executions. Date filters select executions by their START date, including a full cross-midnight execution. Undated tasks are excluded when a date filter is supplied. Summary covers all matches, entries are paginated. These are scheduled/estimated durations, not measured focus. statisticsMinutes weights completed executions when enabled; unfinished executions keep raw duration. Disabling uses raw duration for all executions and retains saved ratings.", annotations: { readOnlyHint: true, openWorldHint: false }, inputSchema: {
+    this.server.registerTool("list_engagement", { description: "Read engagement ratings (10–100%, default 80%) and duration-weighted totals for all non-cancelled executions, including scheduled and unfinished executions. Date filters select executions by their START date, including a full cross-midnight execution. Undated tasks are excluded when a date filter is supplied. Summary covers all matches, entries are paginated. These are scheduled/estimated durations, not measured focus. statisticsMinutes weights completed executions when enabled; unfinished executions keep raw duration. Disabling uses raw duration for all executions and retains saved ratings.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: {
       taskId: z.string().optional(), projectId: z.string().optional(), from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), offset: z.number().int().nonnegative().default(0), limit: z.number().int().min(1).max(200).default(100),
     } }, async (filters) => {
       const { data, settings } = await getProfile(this.env, this.userId());
       return result(listEngagement(data.tasks || [], settings.featureEngagementEnabled === true, filters));
     });
 
-    this.server.registerTool("set_engagement", { description: "Save a USER-SUPPLIED self-rating for one non-cancelled execution, including scheduled and unfinished executions: 10–100 in steps of 10. Never infer a rating from task content. recordId is required when the task has execution records; only that record changes. Tasks without execution records can also be rated before completion. Does not enable Engagement automatically. Supports audit, idempotency and undo_change.", annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false }, inputSchema: {
+    this.server.registerTool("set_engagement", { description: "Save a USER-SUPPLIED self-rating for one non-cancelled execution, including scheduled and unfinished executions: 10–100 in steps of 10. Never infer a rating from task content. recordId is required when the task has execution records; only that record changes. Tasks without execution records can also be rated before completion. Does not enable Engagement automatically. Supports audit, idempotency and undo_change.", annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false, idempotentHint: true }, inputSchema: {
       taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), recordId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/).optional(), engagement: z.number().int().min(10).max(100).multipleOf(10), idempotency_key: z.string().min(8).max(240),
     } }, async ({ taskId, recordId, engagement, idempotency_key }) => {
       return result(await batchUpdateTasks(this.env, this.userId(), { operations: [{ type: "set_engagement", taskId, recordId, engagement }], dryRun: false, commit: true, idempotencyKey: idempotency_key, source: "mcp", summary: "Updated execution engagement" }));
     });
 
-    this.server.registerTool("list_habits", { description: "Read habits and their saved daily completion records, without changing task or habit state. Date filters apply to dailyStates; habits without matching records remain visible. Archived habits are excluded by default.", annotations: { readOnlyHint: true, openWorldHint: false }, inputSchema: {
+    this.server.registerTool("list_habits", { description: "Read habits and their saved daily completion records, without changing task or habit state. Date filters apply to dailyStates; habits without matching records remain visible. Archived habits are excluded by default.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: {
       habitId: z.string().optional(), includeArchived: z.boolean().default(false), from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     } }, async ({ habitId, includeArchived, from, to }) => {
       if (from && to && from > to) throw new Error("from must be on or before to");
@@ -248,12 +248,12 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return result({ habits, dailyStates: (data.habitDailyStates || []).filter((state: Json) => ids.has(state.habitId) && (!from || state.date >= from) && (!to || state.date <= to)) });
     });
 
-    this.server.registerTool("get_settings", { description: "Read safe display, AI, planning, and Engagement feature settings.", inputSchema: {} }, async () => {
+    this.server.registerTool("get_settings", { description: "Read safe display, AI, planning, and Engagement feature settings.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: {} }, async () => {
       const { settings } = await getProfile(this.env, this.userId());
       return result({ ...Object.fromEntries(allowedSettings.map((key) => [key, settings[key]])), featureEngagementEnabled: settings.featureEngagementEnabled === true });
     });
 
-    this.server.registerTool("update_settings", { description: "Update allowlisted settings. Set featureEngagementEnabled to a boolean to enable/disable Engagement; disabling retains saved ratings.", inputSchema: { patch: z.record(z.string(), z.unknown()) } }, async ({ patch }) => {
+    this.server.registerTool("update_settings", { description: "Update allowlisted settings. Set featureEngagementEnabled to a boolean to enable/disable Engagement; disabling retains saved ratings.", annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false }, inputSchema: { patch: z.record(z.string(), z.unknown()) } }, async ({ patch }) => {
       if ("featureEngagementEnabled" in patch && typeof patch.featureEngagementEnabled !== "boolean") throw new Error("featureEngagementEnabled must be a boolean");
       const profile = await getProfile(this.env, this.userId());
       const safePatch = Object.fromEntries(Object.entries(patch).filter(([key]) => allowedSettings.includes(key)));
@@ -261,7 +261,7 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return result(Object.fromEntries(allowedSettings.map((key) => [key, saved.settings[key]])));
     });
 
-    this.server.registerTool("create_project", { description: "Create a project.", inputSchema: { title: z.string().trim().min(1).max(200), notes: z.string().max(5000).optional() } }, async ({ title, notes }) => {
+    this.server.registerTool("create_project", { description: "Create a project.", annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }, inputSchema: { title: z.string().trim().min(1).max(200), notes: z.string().max(5000).optional() } }, async ({ title, notes }) => {
       const profile = await getProfile(this.env, this.userId());
       const projects = profile.data.projects || [];
       const item = { id: uid("project"), title, category: "project", notes: notes || "", completed: false, order: projects.length, createdAt: now(), updatedAt: now() };
@@ -269,7 +269,7 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return result(item);
     });
 
-    this.server.registerTool("create_task", { description: "Create a task and optionally schedule it. dueDate is a deadline; date is the schedule date. Scheduled times and durations must use 15-minute increments.", inputSchema: { title: z.string().trim().min(1).max(300), projectId: z.string().optional(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(), durationMinutes: z.number().int().min(15).max(1440).default(30), notes: z.string().max(10000).optional(), idempotency_key: z.string().min(8).max(240) } }, async ({ title, projectId, dueDate, date, startTime, durationMinutes, notes, idempotency_key }) => {
+    this.server.registerTool("create_task", { description: "Create a task and optionally schedule it. dueDate is a deadline; date is the schedule date. Scheduled times and durations must use 15-minute increments.", annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }, inputSchema: { title: z.string().trim().min(1).max(300), projectId: z.string().optional(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(), durationMinutes: z.number().int().min(15).max(1440).default(30), notes: z.string().max(10000).optional(), idempotency_key: z.string().min(8).max(240) } }, async ({ title, projectId, dueDate, date, startTime, durationMinutes, notes, idempotency_key }) => {
       if (startTime && !isQuarterHourTime(startTime)) throw new Error("SCHEDULE_TIME_MUST_USE_15_MINUTE_GRID");
       if (durationMinutes % 15 !== 0) throw new Error("SCHEDULE_DURATION_MUST_USE_15_MINUTE_GRID");
       const outcome = await batchUpdateTasks(this.env, this.userId(), {
@@ -283,7 +283,7 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return result(outcome.changes?.find((change: Json) => change.entity === "task")?.after || outcome);
     });
 
-    this.server.registerTool("update_task", { description: "Update safe task fields, including user-controlled cloud schedule and hard-deadline locks.", inputSchema: { taskId: z.string(), patch: z.object({ title: z.string().trim().min(1).max(300).optional(), projectId: z.string().nullable().optional(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), notes: z.string().max(10000).optional(), completed: z.boolean().optional(), scheduleLocked: z.boolean().optional(), hardDeadline: z.boolean().optional() }) } }, async ({ taskId, patch }) => {
+    this.server.registerTool("update_task", { description: "Update safe task fields, including user-controlled cloud schedule and hard-deadline locks.", annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false }, inputSchema: { taskId: z.string(), patch: z.object({ title: z.string().trim().min(1).max(300).optional(), projectId: z.string().nullable().optional(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), notes: z.string().max(10000).optional(), completed: z.boolean().optional(), scheduleLocked: z.boolean().optional(), hardDeadline: z.boolean().optional() }) } }, async ({ taskId, patch }) => {
       const profile = await getProfile(this.env, this.userId());
       const tasks = profile.data.tasks || [];
       const index = tasks.findIndex((task: Json) => task.id === taskId);
@@ -293,16 +293,16 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return result(next);
     });
 
-    this.server.registerTool("get_changes_since", { description: "Return audited NavoPath changes after a monotonic cursor.", inputSchema: { cursor: z.number().int().nonnegative().default(0) } }, async ({ cursor }) => {
+    this.server.registerTool("get_changes_since", { description: "Return audited NavoPath changes after a monotonic cursor.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: { cursor: z.number().int().nonnegative().default(0) } }, async ({ cursor }) => {
       return result(await getChangesSince(this.env, this.userId(), cursor));
     });
 
-    this.server.registerTool("reschedule_task", { description: "Move or create the active schedule block for a task with conflict checks, audit, idempotency, and undo. Scheduled times and durations must use 15-minute increments.", inputSchema: { taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(15).max(1440), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), idempotency_key: z.string().min(8).max(240), reason: z.string().max(500).optional() } }, async ({ taskId, startTime, durationMinutes, date, idempotency_key, reason }) => {
+    this.server.registerTool("reschedule_task", { description: "Move or create the active schedule block for a task with conflict checks, audit, idempotency, and undo. Scheduled times and durations must use 15-minute increments.", annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }, inputSchema: { taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(15).max(1440), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), idempotency_key: z.string().min(8).max(240), reason: z.string().max(500).optional() } }, async ({ taskId, startTime, durationMinutes, date, idempotency_key, reason }) => {
       if (!isQuarterHourTime(startTime) || durationMinutes % 15 !== 0) throw new Error("SCHEDULE_MUST_USE_15_MINUTE_GRID");
       return result(await batchUpdateTasks(this.env, this.userId(), { operations: [{ type: "reschedule_task", taskId, startTime, durationMinutes, date, reason }], dryRun: false, commit: true, idempotencyKey: idempotency_key, source: "mcp", summary: "Rescheduled task", reason }));
     });
 
-    this.server.registerTool("upsert_schedule_block", { description: "Create or update one schedule block with conflict checks, audit, idempotency, and undo. Scheduled times and durations must use 15-minute increments.", inputSchema: { taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), blockId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(15).max(1440), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), idempotency_key: z.string().min(8).max(240), reason: z.string().max(500).optional() } }, async ({ taskId, blockId, startTime, durationMinutes, date, idempotency_key, reason }) => {
+    this.server.registerTool("upsert_schedule_block", { description: "Create or update one schedule block with conflict checks, audit, idempotency, and undo. Scheduled times and durations must use 15-minute increments.", annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }, inputSchema: { taskId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/), blockId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/).optional(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(15).max(1440), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), idempotency_key: z.string().min(8).max(240), reason: z.string().max(500).optional() } }, async ({ taskId, blockId, startTime, durationMinutes, date, idempotency_key, reason }) => {
       if (!isQuarterHourTime(startTime) || durationMinutes % 15 !== 0) throw new Error("SCHEDULE_MUST_USE_15_MINUTE_GRID");
       return result(await batchUpdateTasks(this.env, this.userId(), { operations: [{ type: "upsert_schedule_block", taskId, blockId, startTime, durationMinutes, date, reason }], dryRun: false, commit: true, idempotencyKey: idempotency_key, source: "mcp", summary: "Upserted schedule block", reason }));
     });
@@ -312,35 +312,35 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       recordId: z.string().optional(), engagement: z.number().int().min(10).max(100).multipleOf(10).optional(),
       taskId: z.string().optional(), blockId: z.string().optional(), title: z.string().optional(), projectId: z.string().nullable().optional(), dueDate: z.string().optional(), date: z.string().optional(), startTime: z.string().optional(), durationMinutes: z.number().optional(), notes: z.string().optional(), patch: z.record(z.string(), z.unknown()).optional(), subtasks: z.array(z.object({ title: z.string(), estimateMinutes: z.number().optional() })).optional(), reason: z.string().optional(),
     });
-    this.server.registerTool("batch_update_tasks", { description: "Preview or atomically commit a validated batch of task changes. Every committed batch is idempotent, audited, and undoable.", inputSchema: { operations: z.array(batchOperation).min(1).max(30), dry_run: z.boolean(), commit: z.boolean(), idempotency_key: z.string().min(8).max(240), summary: z.string().max(1200).optional(), reason: z.string().max(1200).optional() } }, async ({ operations, dry_run, commit, idempotency_key, summary, reason }) => {
+    this.server.registerTool("batch_update_tasks", { description: "Preview or atomically commit a validated batch of task changes. Every committed batch is idempotent, audited, and undoable.", annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }, inputSchema: { operations: z.array(batchOperation).min(1).max(30), dry_run: z.boolean(), commit: z.boolean(), idempotency_key: z.string().min(8).max(240), summary: z.string().max(1200).optional(), reason: z.string().max(1200).optional() } }, async ({ operations, dry_run, commit, idempotency_key, summary, reason }) => {
       return result(await batchUpdateTasks(this.env, this.userId(), { operations, dryRun: dry_run, commit, idempotencyKey: idempotency_key, source: "mcp", summary, reason }));
     });
 
-    this.server.registerTool("get_activity_history", { description: "Return recent audited cloud and MCP change sets.", inputSchema: { limit: z.number().int().min(1).max(100).default(30) } }, async ({ limit }) => {
+    this.server.registerTool("get_activity_history", { description: "Return recent audited cloud and MCP change sets.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: { limit: z.number().int().min(1).max(100).default(30) } }, async ({ limit }) => {
       return result(await getActivityHistory(this.env, this.userId(), limit));
     });
 
-    this.server.registerTool("undo_change", { description: "Undo an eligible change set if no later workspace revision has superseded it.", inputSchema: { changeSetId: z.string().uuid() } }, async ({ changeSetId }) => {
+    this.server.registerTool("undo_change", { description: "Undo an eligible change set if no later workspace revision has superseded it.", annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }, inputSchema: { changeSetId: z.string().uuid() } }, async ({ changeSetId }) => {
       return result(await undoChange(this.env, this.userId(), changeSetId));
     });
 
-    this.server.registerTool("confirm_change", { description: "Explicitly approve one pending protected schedule or hard-deadline change. Confirmation fails if the workspace changed after the proposal.", inputSchema: { changeSetId: z.string().uuid() } }, async ({ changeSetId }) => {
+    this.server.registerTool("confirm_change", { description: "Explicitly approve one pending protected schedule or hard-deadline change. Confirmation fails if the workspace changed after the proposal.", annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }, inputSchema: { changeSetId: z.string().uuid() } }, async ({ changeSetId }) => {
       return result(await confirmChange(this.env, this.userId(), changeSetId));
     });
 
-    this.server.registerTool("ingest_workspace_event", { description: "Ingest an incremental workspace change event. Duplicate dedupe_key values are ignored and only bounded excerpts are accepted.", inputSchema: { changed_files: z.array(z.union([z.string().max(500), z.object({ path: z.string().max(500), change_type: z.string().max(32).optional(), content_hash: z.string().max(128).optional() })])).max(100), fragments: z.array(z.object({ path: z.string().max(500), excerpt: z.string().max(4000), content_hash: z.string().max(128).optional() })).max(20).optional(), summary: z.string().max(4000), schedule_impact: z.string().max(2000), timestamp: z.string().max(64), dedupe_key: z.string().min(8).max(200) } }, async (payload) => {
+    this.server.registerTool("ingest_workspace_event", { description: "Ingest an incremental workspace change event. Duplicate dedupe_key values are ignored and only bounded excerpts are accepted.", annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true }, inputSchema: { changed_files: z.array(z.union([z.string().max(500), z.object({ path: z.string().max(500), change_type: z.string().max(32).optional(), content_hash: z.string().max(128).optional() })])).max(100), fragments: z.array(z.object({ path: z.string().max(500), excerpt: z.string().max(4000), content_hash: z.string().max(128).optional() })).max(20).optional(), summary: z.string().max(4000), schedule_impact: z.string().max(2000), timestamp: z.string().max(64), dedupe_key: z.string().min(8).max(200) } }, async (payload) => {
       return result(await ingestWorkspaceEvent(this.env, this.userId(), payload));
     });
 
-    this.server.registerTool("send_notification", { description: "Queue an in-app notification and optional email, respecting quiet hours except urgent deadline risk.", inputSchema: { kind: z.enum(["summary", "material_change", "deadline_risk", "weather", "needs_input"]), title: z.string().min(1).max(160), body: z.string().min(1).max(2000), urgency: z.enum(["normal", "urgent"]).default("normal"), idempotency_key: z.string().min(8).max(240) } }, async (payload) => {
+    this.server.registerTool("send_notification", { description: "Queue an in-app notification, respecting quiet hours except urgent deadline risk.", annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false }, inputSchema: { kind: z.enum(["summary", "material_change", "deadline_risk", "weather", "needs_input"]), title: z.string().min(1).max(160), body: z.string().min(1).max(2000), urgency: z.enum(["normal", "urgent"]).default("normal"), idempotency_key: z.string().min(8).max(240) } }, async (payload) => {
       return result(await sendNotification(this.env, this.userId(), payload));
     });
 
-    this.server.registerTool("configure_cloud_assistant", { description: "Opt the current account into or out of the 08:30/20:30 Asia/Shanghai cloud assistant and optional email delivery.", inputSchema: { enabled: z.boolean(), email_enabled: z.boolean().default(false) } }, async ({ enabled, email_enabled }) => {
+    this.server.registerTool("configure_cloud_assistant", { description: "Opt the current account into or out of the 08:30/20:30 Asia/Shanghai cloud assistant and optional email delivery.", annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true }, inputSchema: { enabled: z.boolean(), email_enabled: z.boolean().default(false) } }, async ({ enabled, email_enabled }) => {
       return result(await configureCloudAssistant(this.env, this.userId(), enabled, email_enabled));
     });
 
-    this.server.registerTool("delete_task", { description: "Delete a task.", inputSchema: { taskId: z.string() } }, async ({ taskId }) => {
+    this.server.registerTool("delete_task", { description: "Delete a task.", annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false }, inputSchema: { taskId: z.string() } }, async ({ taskId }) => {
       const profile = await getProfile(this.env, this.userId());
       const tasks = profile.data.tasks || [];
       if (!tasks.some((task: Json) => task.id === taskId)) throw new Error("Task not found");

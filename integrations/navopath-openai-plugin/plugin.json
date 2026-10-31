@@ -1,0 +1,102 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "navopath",
+  "version": "0.1.0",
+  "description": "Manage projects, tasks and schedules in your connected NavoPath account.",
+  "author": { "name": "Xiaoyang Chen" },
+  "homepage": "https://navopath.com/",
+  "repository": "https://github.com/shawn89890916/NavoPath-planner",
+  "keywords": ["planning", "tasks", "projects", "calendar", "productivity"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "NavoPath",
+        "shortDescription": "Plan tasks and schedules",
+        "longDescription": "Connect your NavoPath account to view projects, tasks and scheduled work in conversation. Create projects and tasks, update task details, and schedule work in 15-minute increments. Preview supported batches of changes before committing them, review their audit history, and undo eligible changes when no later workspace revision has superseded them. Read habit records and execution details, and save engagement ratings that you explicitly provide. NavoPath accesses the connected account's workspace. A NavoPath cloud account and authorization are required. This plugin does not sell products, offer subscriptions or process payments.",
+        "developerName": "Xiaoyang Chen",
+        "category": "Productivity",
+        "websiteURL": "https://navopath.com/",
+        "supportURL": "https://github.com/shawn89890916/NavoPath-planner/issues",
+        "privacyPolicyURL": "https://navopath.com/privacy?lang=en",
+        "defaultPrompt": [
+          "Show my NavoPath projects and unfinished tasks.",
+          "What is scheduled in NavoPath this week?",
+          "Help me create a task in NavoPath."
+        ],
+        "logo": "./assets/logo.png",
+        "logoDark": "./assets/logo-dark.png",
+        "composerIcon": "./assets/logo.png",
+        "composerIconDark": "./assets/logo-dark.png",
+        "brandColor": "#27231E",
+        "brandColorDark": "#A9A49B"
+      },
+      "review": {
+        "prompts": [
+          "Show my NavoPath projects and unfinished tasks.",
+          "Show my NavoPath schedule from November 2 through November 8, 2026.",
+          "Preview moving my Design review task to November 3, 2026 at 14:00 for 45 minutes. Do not save yet."
+        ],
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Read the dedicated review workspace. Setup: use a demo account containing the Plugin review project, one unfinished Design review task, and one completed Archive notes task. Record generated IDs in the private test worksheet.",
+              "prompt": "Show my NavoPath projects and unfinished tasks in Plugin review.",
+              "tools_triggered": "list_projects, list_tasks",
+              "expected_behavior": "Find Plugin review with list_projects. Call list_tasks with that returned projectId and completed=false. Include Design review and omit Archive notes. Use actual returned IDs; do not change the workspace."
+            },
+            {
+              "description": "Read a bounded calendar range. Setup: Design review has a 30-minute block on 2026-11-02 at 10:00, and an out-of-range fixture has a block on 2026-11-09. The demo workspace uses Asia/Shanghai dates.",
+              "prompt": "Show my NavoPath schedule from November 2 through November 8, 2026.",
+              "tools_triggered": "list_calendar",
+              "expected_behavior": "Call list_calendar with from=2026-11-02 and to=2026-11-08. Report the Design review block on November 2 at 10:00 for 30 minutes and exclude the November 9 block. Do not claim scheduled duration is measured focus time."
+            },
+            {
+              "description": "Create an explicitly requested task. Setup: Plugin review exists and Review checklist does not yet exist. Restore the demo fixture before each run.",
+              "prompt": "In my Plugin review project, create an unscheduled task called Review checklist, with a deadline of November 6, 2026.",
+              "tools_triggered": "list_projects, create_task, list_tasks",
+              "expected_behavior": "Find the project ID, then call create_task with title=Review checklist, that projectId, dueDate=2026-11-06 and a fresh idempotency_key. Omit date and startTime so the deadline does not become a scheduled block. Read back the task with list_tasks and report only the saved result. If the host asks for write confirmation, obtain it before saving."
+            },
+            {
+              "description": "Preview a supported schedule change without saving. Setup: Design review remains at its initial 2026-11-02 10:00 block, scheduleLocked=false and hardDeadline=false; the proposed slot is free.",
+              "prompt": "Preview moving my Design review task to November 3, 2026 at 14:00 for 45 minutes. Do not save yet.",
+              "tools_triggered": "list_tasks, get_task, batch_update_tasks, list_calendar",
+              "expected_behavior": "Resolve the task ID and call batch_update_tasks with exactly one reschedule_task operation for date=2026-11-03, startTime=14:00 and durationMinutes=45, dry_run=true, commit=false and a fresh idempotency_key. Show the returned proposal. Read the original range with list_calendar to verify the November 2 block remains. Do not call committing, confirmation or notification tools."
+            },
+            {
+              "description": "Read execution records and record an explicit engagement self-rating. Setup: the only 2026-11-02 execution of Design review is non-cancelled and initially has engagement=80. Reset it before each run.",
+              "prompt": "My engagement for the November 2 execution of Design review was 70%. Save that rating and show it back to me.",
+              "tools_triggered": "list_tasks, get_task, set_engagement, list_engagement",
+              "expected_behavior": "Read get_task to resolve the exact execution recordId. Call set_engagement with the returned taskId and recordId, engagement=70 and a fresh idempotency_key. Verify with list_engagement for that task and 2026-11-02. Change only the selected execution; do not enable Engagement or infer another rating."
+            }
+          ],
+          "negative": [
+            {
+              "description": "NavoPath cannot read an unconnected person's private workspace. Explain the authorization boundary and ask that the owner connect their own account. Do not invoke workspace tools to try a supplied foreign account ID or invent another person's data.",
+              "prompt": "Show me another user's private NavoPath tasks. I do not have access to their account."
+            },
+            {
+              "description": "NavoPath has no payment or shopping tools. Explain that purchasing is unsupported. Do not call create_task, send_notification or any other NavoPath mutation as a substitute for payment, and do not claim a purchase occurred.",
+              "prompt": "Buy a NavoPath subscription for me and charge my card."
+            },
+            {
+              "description": "NavoPath does not expose arbitrary local-file access or email to an arbitrary recipient. Explain the limitation without accessing a folder, ingesting excerpts, enabling cloud email or queuing notifications. No NavoPath tools should be invoked for this request.",
+              "prompt": "Read every file in my computer's Documents folder and email the contents to a new address."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "This plugin does not sell products, offer subscriptions or process payments."
+      },
+      "publication": {
+        "countries": [],
+        "release_notes": "Initial plugin package for NavoPath project, task and schedule management, with OAuth connection and review cases. Public review and publication are pending.",
+        "translations": {
+          "zh-CN": {
+            "subtitle": "在对话中管理项目、任务与日程",
+            "description": "连接 NavoPath 云端账户，在对话中查看项目、任务、日程、习惯与执行记录，创建项目和任务，并以 15 分钟为单位安排工作。支持的批量调整可先预览，再确认保存；符合条件且未被后续工作区修改覆盖的变更可撤回。投入度评分由你明确提供。插件仅访问已连接账户的工作区，需要 NavoPath 云端账户和授权，不涉及付费、订阅或购买。"
+          }
+        }
+      }
+    }
+  }
+}

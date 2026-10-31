@@ -1,0 +1,22 @@
+{
+  "evidence": [
+    { "item": "Publisher", "source": "Owner response in this Codex chat, 2026-10-31", "result": "Xiaoyang Chen; Platform identity verification remains unverified" },
+    { "item": "Countries and commerce", "source": "Owner response in this Codex chat, 2026-10-31", "result": "All platform-available countries; no payments, subscriptions or purchases" },
+    { "item": "Dark-mode assets", "source": "Owner response in this Codex chat, 2026-10-31", "result": "Include dark-mode icon and brand colors; preserve the approved transparent white-front N" },
+    { "item": "Website", "source": "Real browser at https://navopath.com/?lang=en on 2026-10-31", "result": "Public NavoPath product page identifies Xiaoyang Chen in its footer" },
+    { "item": "Privacy policy", "source": "Real browser at https://navopath.com/privacy?lang=en on 2026-10-31", "result": "Public policy loads, dated 2026-10-21; plugin/OpenAI data-sharing coverage needs clarification" },
+    { "item": "Support", "source": "Real browser at https://github.com/shawn89890916/NavoPath-planner/issues on 2026-10-31", "result": "Public project issue tracker opens with New issue; submitting feedback requires a GitHub account" },
+    { "item": "MCP and OIDC discovery", "source": "Public metadata checked on 2026-10-31", "result": "Remote resource metadata and OIDC metadata are available; openid/email, DCR and UserInfo are advertised. Full login and verified-email claims have not been tested." },
+    { "item": "Published JSON Schemas", "source": "agent-plugins.org/schemas/1.0.0/plugin.schema.json and mcp.schema.json, retrieved 2026-10-31", "result": "Full plugin.json passes the published schema. The MCP base schema rejects per-server extensions, including OpenAI's documented auth declaration. Preserve the required OpenAI auth configuration; validate the base transport separately and perform final target validation in the OpenAI portal. Do not describe the full MCP schema check as passed." }
+  ],
+  "gaps": [
+    { "id": "publisher-verification", "scope": "dashboard", "detail": "在目标 OpenAI organization 中核实个人身份验证显示 Xiaoyang Chen，并确认 Apps Management Write 权限。" },
+    { "id": "privacy-coverage", "scope": "policy", "detail": "审核插件向 OpenAI 返回的任务、日程、习惯、执行、投入度、审计及可选工作区片段等数据；确认政策补充文本并发布。" },
+    { "id": "reviewer-account", "scope": "access", "detail": "准备独立审核账户及虚构样例数据，确认无需维护者手机、邮箱验证码或私网即可登录；凭据只填后台安全字段。" },
+    { "id": "oauth-e2e", "scope": "runtime", "detail": "使用专用账户完成 DCR、PKCE、授权及断开重连；核实 UserInfo 的 email 和 email_verified=true。" },
+    { "id": "review-case-runs", "scope": "review", "detail": "按 docs/openai-plugin-submission/DEMO.md 重置样例并执行全部 8 个用例，保留实际工具调用和读回证据。" },
+    { "id": "domain-verification", "scope": "dashboard", "detail": "取得后台真实 challenge token 后，在允许的 MCP 主机或父域 HTTPS origin 返回精确文本；当前未创建 challenge。" },
+    { "id": "server-deployment", "scope": "runtime", "detail": "发布并读回本次安全标注，核对线上 tools/list；代码检查通过不能替代已部署验收。" },
+    { "id": "portal-scans-and-attestations", "scope": "dashboard", "detail": "材料齐全后上传草稿、连接服务、处理元数据和工具扫描；由开发者本人完成当前政策声明，再提交审核。" }
+  ]
+}

@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-10-31 · 外部连接操作提示
+
+### 改进
+- 明确外部连接各项操作的读取、修改、删除与后台工作影响，便于连接客户端按实际行为请求授权。
+
 ## 2026-10-30 · 公开页面文案与多语言表达润色
 
 ### 改进
@@ -270,6 +275,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-10-31 · External connection operation hints
+
+### Improved
+- Clarified which external-connection operations read, modify or delete data, or trigger background work, so connected clients can request authorization according to their actual effects.
 
 ## 2026-10-30 · Public page copy and bilingual refinements
 
