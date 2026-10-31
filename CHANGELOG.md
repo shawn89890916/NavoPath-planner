@@ -1,9 +1,10 @@
 # NavoPath 更新日志
 
-## 2026-10-31 · 外部连接操作提示
+## 2026-10-31 · 外部连接与资料变化
 
 ### 改进
 - 明确外部连接各项操作的读取、修改、删除与后台工作影响，便于连接客户端按实际行为请求授权。
+- 外部助理可按增量读取已上传的 Obsidian 资料变化和有限片段，便于在电脑离线时持续跟进，且只返回当前账户的资料。
 
 ## 2026-10-30 · 公开页面文案与多语言表达润色
 
@@ -276,10 +277,11 @@
 
 # NavoPath Changelog
 
-## 2026-10-31 · External connection operation hints
+## 2026-10-31 · External connections and material changes
 
 ### Improved
 - Clarified which external-connection operations read, modify or delete data, or trigger background work, so connected clients can request authorization according to their actual effects.
+- External assistants can incrementally read uploaded Obsidian material changes and bounded excerpts to keep following work while a computer is offline, with results restricted to the current account.
 
 ## 2026-10-30 · Public page copy and bilingual refinements
 

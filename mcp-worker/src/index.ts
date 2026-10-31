@@ -12,6 +12,7 @@ import {
   configureCloudAssistant,
   getActivityHistory,
   getChangesSince,
+  getWorkspaceEvents,
   ingestWorkspaceEvent,
   processAssistantMessage,
   processNotificationTicks,
@@ -326,6 +327,10 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
 
     this.server.registerTool("confirm_change", { description: "Explicitly approve one pending protected schedule or hard-deadline change. Confirmation fails if the workspace changed after the proposal.", annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }, inputSchema: { changeSetId: z.string().uuid() } }, async ({ changeSetId }) => {
       return result(await confirmChange(this.env, this.userId(), changeSetId));
+    });
+
+    this.server.registerTool("get_workspace_events", { description: "Read this account's uploaded Obsidian/workspace file changes and bounded excerpts. Omit cursor for a recent baseline, then use next_cursor to read only newer events. This does not access live iCloud files or unuploaded note contents.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: { cursor: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(), limit: z.number().int().min(1).max(10).default(5) } }, async ({ cursor, limit }) => {
+      return result(await getWorkspaceEvents(this.env, this.userId(), cursor, limit));
     });
 
     this.server.registerTool("ingest_workspace_event", { description: "Ingest an incremental workspace change event. Duplicate dedupe_key values are ignored and only bounded excerpts are accepted.", annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true }, inputSchema: { changed_files: z.array(z.union([z.string().max(500), z.object({ path: z.string().max(500), change_type: z.string().max(32).optional(), content_hash: z.string().max(128).optional() })])).max(100), fragments: z.array(z.object({ path: z.string().max(500), excerpt: z.string().max(4000), content_hash: z.string().max(128).optional() })).max(20).optional(), summary: z.string().max(4000), schedule_impact: z.string().max(2000), timestamp: z.string().max(64), dedupe_key: z.string().min(8).max(200) } }, async (payload) => {

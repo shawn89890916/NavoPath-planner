@@ -1,7 +1,67 @@
 // @ts-nocheck
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildBehaviorProfile, findUnrecordedGap, findUpcomingTaskStarts, findUnfinishedTasks, ingestWorkspaceEvent, isQuarterHourTime, normalizeTaskOperations, previewTaskOperations, processAssistantMessage, verifyWebhookSignature, type CloudAssistantEnv } from "./cloudAssistant.ts";
+import { buildBehaviorProfile, findUnrecordedGap, findUpcomingTaskStarts, findUnfinishedTasks, getWorkspaceEvents, ingestWorkspaceEvent, isQuarterHourTime, normalizeTaskOperations, previewTaskOperations, processAssistantMessage, verifyWebhookSignature, type CloudAssistantEnv } from "./cloudAssistant.ts";
+
+test("workspace reads start from recent account-owned events, including processed changes", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async (input, init) => {
+    const url = new URL(String(input));
+    assert.equal(url.searchParams.get("user_id"), "eq.owner-1");
+    assert.equal(url.searchParams.get("order"), "event_cursor.desc");
+    assert.equal(url.searchParams.has("status"), false);
+    assert.equal(url.searchParams.has("event_cursor"), false);
+    assert.equal(url.searchParams.get("limit"), "3");
+    assert.equal(init.method, undefined);
+    return Response.json([
+      { event_cursor: 12, status: "processed", fragments: [{ path: "升学/资料/plan.md", excerpt: "截止：明天" }] },
+      { event_cursor: 9, status: "pending" },
+      { event_cursor: 8, status: "processed" },
+    ]);
+  };
+  const result = await getWorkspaceEvents({ SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "test" }, "owner-1", undefined, 2);
+  assert.deepEqual(result.events.map(event => event.event_cursor), [9, 12]);
+  assert.equal(result.events[1].fragments[0].excerpt, "截止：明天");
+  assert.equal(result.next_cursor, 12);
+  assert.equal(result.older_events_omitted, true);
+  assert.equal(result.has_more, false);
+});
+
+test("workspace event cursors paginate without dropping or repeating changes", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async (input) => {
+    const url = new URL(String(input));
+    assert.equal(url.searchParams.get("user_id"), "eq.owner-2");
+    assert.equal(url.searchParams.get("order"), "event_cursor.asc");
+    const cursor = Number(url.searchParams.get("event_cursor").slice(3));
+    return Response.json([5, 7, 9].filter(value => value > cursor).map(event_cursor => ({ event_cursor })));
+  };
+  const env = { SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "test" };
+  const first = await getWorkspaceEvents(env, "owner-2", 3, 2);
+  assert.deepEqual(first.events.map(event => event.event_cursor), [5, 7]);
+  assert.equal(first.has_more, true);
+  const second = await getWorkspaceEvents(env, "owner-2", first.next_cursor, 2);
+  assert.deepEqual(second.events.map(event => event.event_cursor), [9]);
+  assert.equal(second.has_more, false);
+  const empty = await getWorkspaceEvents(env, "owner-2", second.next_cursor, 2);
+  assert.equal(empty.next_cursor, 9);
+  assert.deepEqual(empty.events, []);
+});
+
+test("invalid event queries never reach storage and storage failures are not reported as no changes", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; return Response.json({ message: "storage unavailable" }, { status: 503 }); };
+  const env = { SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "test" };
+  for (const cursor of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1]) await assert.rejects(getWorkspaceEvents(env, "owner", cursor), /cursor/);
+  for (const limit of [0, 11, 1.5]) await assert.rejects(getWorkspaceEvents(env, "owner", 0, limit), /limit/);
+  assert.equal(calls, 0);
+  await assert.rejects(getWorkspaceEvents(env, "owner"), /storage unavailable/);
+  assert.equal(calls, 1);
+});
 
 function task(overrides: Record<string, unknown> = {}) {
   return {

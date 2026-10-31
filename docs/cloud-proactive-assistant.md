@@ -114,6 +114,7 @@ npm run build
 - `confirm_change(changeSetId)`
 - `undo_change(changeSetId)`
 - `ingest_workspace_event`
+- `get_workspace_events(cursor?, limit?)`：只读查询当前账户已上传的变化与有限片段，不读取实时 iCloud 文件；省略 cursor 返回最近一页并建立基线，之后传入 next_cursor 按顺序读取新事件，has_more 为 true 时继续翻页。已被 NavoPath 处理的事件仍可读取，便于其他助理独立跟进。
 - `send_notification`
 - `configure_cloud_assistant(enabled, email_enabled)`
 

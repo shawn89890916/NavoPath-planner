@@ -551,6 +551,29 @@ export async function confirmChange(env: CloudAssistantEnv, userId: string, chan
   return result[0];
 }
 
+export async function getWorkspaceEvents(env: CloudAssistantEnv, userId: string, cursor?: number, limit = 5) {
+  if (cursor !== undefined && (!Number.isSafeInteger(cursor) || cursor < 0)) throw new Error("Invalid workspace event cursor");
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 10) throw new Error("Workspace event limit must be between 1 and 10");
+  const query = new URLSearchParams({
+    select: "id,event_cursor,changed_files,fragments,summary,schedule_impact,source_timestamp,created_at,status",
+    user_id: `eq.${userId}`,
+    order: `event_cursor.${cursor === undefined ? "desc" : "asc"}`,
+    limit: String(limit + 1),
+  });
+  if (cursor !== undefined) query.set("event_cursor", `gt.${cursor}`);
+  const rows = await dbJson<Json[]>(env, `navopath_workspace_events?${query}`);
+  const events = rows.slice(0, limit);
+  if (cursor === undefined) events.reverse();
+  return {
+    events,
+    next_cursor: events.length ? Number(events[events.length - 1].event_cursor) : (cursor ?? 0),
+    has_more: cursor !== undefined && rows.length > limit,
+    older_events_omitted: cursor === undefined && rows.length > limit,
+    checked_at: isoNow(),
+    content_scope: "Previously uploaded allowlisted file changes and bounded excerpts; this does not read the live iCloud vault.",
+  };
+}
+
 export async function ingestWorkspaceEvent(env: CloudAssistantEnv, userId: string, payload: Json) {
   const dedupeKey = cleanText(payload.dedupe_key, 200);
   const summary = redactSensitiveText(payload.summary, 4000);
