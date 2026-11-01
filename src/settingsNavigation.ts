@@ -41,10 +41,10 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategoryDefinition[] = [
   { id: "general", labelZh: "通用", labelEn: "General" },
   { id: "appearance", labelZh: "外观", labelEn: "Appearance" },
   { id: "workflow", labelZh: "工作流", labelEn: "Workflow" },
-  { id: "account-data", labelZh: "账户与数据", labelEn: "Account & Data" },
   { id: "ai", labelZh: "Navo AI", labelEn: "Navo AI" },
   { id: "widget", labelZh: "桌面窗口", labelEn: "Desktop Windows" },
   { id: "integrations", labelZh: "日历与集成", labelEn: "Calendar & Integrations" },
+  { id: "account-data", labelZh: "账户与数据", labelEn: "Account & Data" },
 ];
 
 const legacyTargets: Record<LegacySettingsSection, SettingsTarget> = {

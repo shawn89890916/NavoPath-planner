@@ -13,10 +13,10 @@ describe("settings navigation", () => {
       "general",
       "appearance",
       "workflow",
-      "account-data",
       "ai",
       "widget",
       "integrations",
+      "account-data",
     ]);
   });
 
