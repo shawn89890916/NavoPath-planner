@@ -459,7 +459,7 @@ const dockWindowService = createDockWindowService({
   handleIpcMain: ipcMain,
   createHandle: () => {
     const handle = new BrowserWindow({
-      width: 5, height: 64, show: false, frame: false, transparent: true,
+      width: 3, height: 64, show: false, frame: false, transparent: true,
       hasShadow: false, resizable: false, movable: false, minimizable: false,
       maximizable: false, skipTaskbar: true, alwaysOnTop: true, thickFrame: false,
       webPreferences: {

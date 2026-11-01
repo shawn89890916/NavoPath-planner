@@ -25,7 +25,7 @@ export function DesktopDockSettings({ lang }: { lang: Language }) {
   if (!api) return null;
   return <>
     <SettingRow title={lang === "zh" ? "贴边栏触发方式" : "Dock activation"}
-      description={lang === "zh" ? "在今日候选的「更多 → Dock」启用。收起时仅露出 5 像素小条；点击模式下可上下拖动小条。" : "Enable from Today’s Candidates → More → Dock. A 5 px tab remains visible when hidden; drag it vertically in click mode."}
+      description={lang === "zh" ? "在今日候选的「更多 → Dock」启用。收起时仅露出 3 像素小条；点击模式下可上下拖动小条。" : "Enable from Today’s Candidates → More → Dock. A 3 px tab remains visible when hidden; drag it vertically in click mode."}
       control={<SettingSelect value={preferences?.activation || "hover"} disabled={!preferences || busy}
         ariaLabel={lang === "zh" ? "贴边栏触发方式" : "Dock activation"}
         onChange={(activation) => void save({ activation })} options={[

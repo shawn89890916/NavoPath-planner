@@ -1,9 +1,9 @@
 # NavoPath 更新日志
 
-## 2026-11-01 · 桌面贴边小条 · 1.4.11
+## 2026-11-01 · 桌面贴边小条 · 1.4.12
 
 ### 改进
-- 桌面 Dock 收起时保留仅 5 像素宽的小条，默认位于屏幕中下部；悬停稍作停留才展开，移开后延迟收起，减少经过屏幕边缘时的误触。
+- 桌面 Dock 收起时保留仅 3 像素宽的小条，默认位于屏幕中下部，上下两端与两侧柔和渐隐；悬停 0.2 秒后展开，移开后延迟收起，减少经过屏幕边缘时的误触。
 - 设置「桌面窗口」中可切换悬停或点击打开，调整小条长度、上下位置与展开窗口高度；拖动小条可重新定位，松手后保留位置且不会误打开。
 
 ## 2026-10-31 · 外部连接与资料变化
@@ -284,10 +284,10 @@
 
 # NavoPath Changelog
 
-## 2026-11-01 · Desktop Dock tab · 1.4.11
+## 2026-11-01 · Desktop Dock tab · 1.4.12
 
 ### Improvements
-- The hidden desktop Dock now leaves a 5 px tab near the lower middle of the screen. A short hover dwell opens it and a brief exit delay closes it, reducing accidental activation along the screen edge.
+- The hidden desktop Dock now leaves a 3 px tab near the lower middle of the screen, with softly fading ends and edges. A 0.2-second hover dwell opens it and a brief exit delay closes it, reducing accidental activation along the screen edge.
 - Desktop Windows settings now offer hover or click activation, tab height and vertical position, and expanded panel height. Dragging the tab saves its new position without opening the panel on release.
 
 ## 2026-10-31 · External connections and material changes

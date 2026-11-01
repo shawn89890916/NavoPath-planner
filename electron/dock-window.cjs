@@ -28,9 +28,9 @@ function dockWindowBounds(workArea, side, preferences = DEFAULT_DOCK_PREFERENCES
 function dockHandleBounds(workArea, side, preferences) {
   const height = Math.min(preferences.handleHeight, workArea.height);
   return {
-    x: side === "left" ? workArea.x : workArea.x + workArea.width - 5,
+    x: side === "left" ? workArea.x : workArea.x + workArea.width - 3,
     y: workArea.y + Math.round((workArea.height - height) * preferences.position / 100),
-    width: 5,
+    width: 3,
     height,
   };
 }
@@ -93,7 +93,7 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
       if (!win.isVisible()) {
         if (nearEdge && preferences.activation === "hover") {
           state.hoverSince ??= now();
-          if (now() - state.hoverSince >= 300) reveal(win, state);
+          if (now() - state.hoverSince >= 200) reveal(win, state);
         } else state.hoverSince = null;
       } else if (win.isVisible() && !inside) {
         state.leaveSince ??= now();
@@ -112,7 +112,7 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
     state.handleBounds = dockHandleBounds(display.workArea, state.side, preferences);
     state.handle?.setBounds(state.handleBounds);
     // Windows enforces a native minimum width; clip painting and hit-testing to the tab.
-    state.handle?.setShape?.([{ x: 0, y: 0, width: 5, height: state.handleBounds.height }]);
+    state.handle?.setShape?.([{ x: 0, y: 0, width: state.handleBounds.width, height: state.handleBounds.height }]);
   }
 
   function updateDrag(state, point) {
