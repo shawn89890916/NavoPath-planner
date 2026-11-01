@@ -9293,6 +9293,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   min-width: 0;
   width: 100%;
 }
+.df-settings-toggle-status { color: var(--text-main); font: 650 12px/1.4 var(--paper-sans); white-space: nowrap; }
 .df-ai-provider-settings { display: grid; gap: 8px; min-width: min(100%, 420px); width: 100%; max-width: 620px; }
 .df-ai-provider-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .df-ai-provider-grid label { min-width: 0; }
@@ -12143,16 +12144,6 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   background: transparent;
   box-shadow: none;
   color: var(--text-faint);
-}
-.df-app .df-settings-delete-account {
-  justify-self: start;
-  padding: 8px 0;
-  border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--df-danger) 50%, transparent);
-  border-radius: 0;
-  color: var(--df-danger);
-  background: transparent;
-  box-shadow: none;
 }
 /* Add drawer and settings controls should read as ink on paper, not white form islands. */
 .df-app .df-icon-action.i-clarify::before {
@@ -25046,8 +25037,24 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app .df-settings-shell > .df-settings-content .df-settings-group--danger > .df-settings-group-body {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  #root .df-app .df-settings-shell > .df-settings-content .df-settings-group.df-settings-group--danger {
+    padding: 14px 16px 4px;
+    border: 1px solid;
     border-color: color-mix(in srgb, var(--danger-ink, #C96F5B) 48%, var(--paper-rule));
-    background: color-mix(in srgb, var(--danger-ink, #C96F5B) 4%, var(--surface-card));
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--danger-ink, #C96F5B) 5%, var(--surface-card));
+  }
+  #root .df-app .df-settings-shell > .df-settings-content .df-settings-group--danger > .df-settings-group-head {
+    padding: 0 0 8px;
+  }
+  #root .df-app .df-settings-shell > .df-settings-content .df-settings-group--danger .df-settings-group-title {
+    color: var(--danger-ink, #C96F5B);
   }
   #root .df-app .df-settings-shell > .df-settings-content .df-settings-row {
     min-height: 64px;

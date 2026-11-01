@@ -381,20 +381,16 @@ function AutoLaunchToggle({ lang }: { lang: Language }) {
     setLoading(false);
   };
 
-  return <section className="df-update-card">
-    <div>
-      <strong>{lang === "zh" ? "开机自启动" : "Launch at startup"}</strong>
-      <small>{lang === "zh" ? "登录系统时自动打开 NavoPath" : "Automatically open NavoPath when you sign in"}</small>
-    </div>
-    <button
-      type="button"
-      disabled={loading}
-      onClick={() => { void toggleAutoLaunch(); }}
-      aria-pressed={enabled}
-    >
-      {loading ? "…" : enabled ? (lang === "zh" ? "已开启" : "On") : (lang === "zh" ? "已关闭" : "Off")}
-    </button>
-  </section>;
+  return <SettingRow
+    title={lang === "zh" ? "开机自启动" : "Launch at startup"}
+    description={lang === "zh" ? "登录系统时自动打开 NavoPath" : "Automatically open NavoPath when you sign in"}
+    control={<>
+      <span className="df-settings-toggle-status" aria-live="polite">
+        {loading ? (lang === "zh" ? "更新中…" : "Updating…") : enabled ? (lang === "zh" ? "已开启" : "On") : (lang === "zh" ? "已关闭" : "Off")}
+      </span>
+      <SettingToggle checked={enabled} disabled={loading} ariaLabel={lang === "zh" ? "开机自启动" : "Launch at startup"} onChange={() => { void toggleAutoLaunch(); }} />
+    </>}
+  />;
 }
 
 function patchPluginConfig(settings: Settings, onSave: (patch: Partial<Settings>) => void, pluginId: string, patch: Record<string, unknown>) {
@@ -491,7 +487,7 @@ function SubscriptionPanel({ lang }: { lang: Language }) {
   );
 }
 
-function AccountMoreSection({ lang, onShowAbout, onDeleteAccount }: { lang: Language; onShowAbout: () => void; onDeleteAccount?: () => void }) {
+function AccountMoreSection({ lang, onShowAbout }: { lang: Language; onShowAbout: () => void }) {
   return (
     <section className="df-account-more" aria-label={lang === "zh" ? "账户操作" : "Account actions"}>
       <div className="df-account-more-body">
@@ -502,7 +498,6 @@ function AccountMoreSection({ lang, onShowAbout, onDeleteAccount }: { lang: Lang
           <i aria-hidden="true">↗</i>
         </button>
         <a href={`https://navopath.com/privacy?lang=${lang}`} target="_blank" rel="noopener noreferrer">{lang === "zh" ? "隐私政策" : "Privacy Policy"}</a>
-        {onDeleteAccount && <button className="df-settings-delete-account" onClick={onDeleteAccount}>{lang === "zh" ? "删除账号和全部数据" : "Delete account and all data"}</button>}
       </div>
     </section>
   );
@@ -1636,7 +1631,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             {settingsTarget.category === "account-data" && <SettingSection
               anchor="data-backup"
               title={lang === "zh" ? "数据与备份" : "Data & Backup"}
-              description={lang === "zh" ? "导出、导入与本地数据清理。导入会覆盖当前数据，请谨慎操作。" : "Export, import, and local-data cleanup. Importing overwrites current data — proceed with care."}
+              description={lang === "zh" ? "导出与导入数据。导入会覆盖当前数据，请谨慎操作。" : "Export and import data. Importing overwrites current data — proceed with care."}
             >
               <SettingRow
                 title={lang === "zh" ? "导出为 JSON" : "Export as JSON"}
@@ -1663,14 +1658,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 description={lang === "zh" ? "把 CSV 中的任务合并到当前数据。" : "Merge tasks from a CSV file into the current data."}
                 control={<SettingActionButton onClick={() => importTasksFromCsv()}>{lang === "zh" ? "导入 CSV" : "Import CSV"}</SettingActionButton>}
               />
-              <SettingSection title={lang === "zh" ? "危险操作" : "Danger zone"} tone="danger">
-                <SettingRow
-                  anchor="clear-local-data"
-                  title={lang === "zh" ? "清空本地数据" : "Clear local data"}
-                  description={lang === "zh" ? "删除当前浏览器 / 桌面端的所有本地数据（任务、项目、习惯、时间记录、设置）。云端数据不受影响。" : "Removes all local data on this browser / desktop build (tasks, projects, habits, time entries, settings). Cloud data is unaffected."}
-                  control={<SettingActionButton tone="danger" onClick={() => setConfirmClearLocalData(true)}>{lang === "zh" ? "清空…" : "Clear…"}</SettingActionButton>}
-                />
-              </SettingSection>
             </SettingSection>}
 
             {settingsTarget.category === "account-data" && <section className="df-settings-group" data-settings-anchor="account" tabIndex={-1}><h3>{lang === "zh" ? "账户" : "Account"}</h3>
@@ -1686,7 +1673,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 /></div>
               <div data-settings-anchor="updates" tabIndex={-1}><DesktopUpdateControl lang={lang} /></div>
               <div data-settings-anchor="auto-launch" tabIndex={-1}><AutoLaunchToggle lang={lang} /></div>
-              <div data-settings-anchor="delete-account" tabIndex={-1}><AccountMoreSection lang={lang} onShowAbout={onShowAbout} onDeleteAccount={onDeleteAccount} /></div>
+              <AccountMoreSection lang={lang} onShowAbout={onShowAbout} />
               {onSignOut && <SettingRow
                 title={t(lang, "settings.logout")}
                 description={lang === "zh" ? "退出当前 NavoPath 账户。" : "Sign out of the current NavoPath account."}
@@ -1694,15 +1681,25 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />}
             </section>}
 
-            {settingsTarget.category === "account-data" && <SettingSection anchor="recovery-settings" title={lang === "zh" ? "恢复与重置" : "Recovery & Reset"}>
-              <SettingSection title={lang === "zh" ? "危险操作" : "Danger zone"} tone="danger">
-                <SettingRow
-                  anchor="reset-settings"
-                  title={lang === "zh" ? "重置所有设置" : "Reset all settings"}
-                  description={lang === "zh" ? "把所有设置项恢复为默认值。任务、项目、习惯、时间记录等数据不会删除。" : "Restore every setting to its default. Tasks, projects, habits, and time entries are not affected."}
-                  control={<SettingActionButton tone="danger" onClick={() => setConfirmResetSettings(true)}>{lang === "zh" ? "重置…" : "Reset…"}</SettingActionButton>}
-                />
-              </SettingSection>
+            {settingsTarget.category === "account-data" && <SettingSection anchor="recovery-settings" title={lang === "zh" ? "危险操作" : "Danger zone"} tone="danger">
+              <SettingRow
+                anchor="reset-settings"
+                title={lang === "zh" ? "重置所有设置" : "Reset all settings"}
+                description={lang === "zh" ? "把所有设置项恢复为默认值。任务、项目、习惯、时间记录等数据不会删除。" : "Restore every setting to its default. Tasks, projects, habits, and time entries are not affected."}
+                control={<SettingActionButton tone="danger" onClick={() => setConfirmResetSettings(true)}>{lang === "zh" ? "重置…" : "Reset…"}</SettingActionButton>}
+              />
+              <SettingRow
+                anchor="clear-local-data"
+                title={lang === "zh" ? "清空本地数据" : "Clear local data"}
+                description={lang === "zh" ? "删除当前浏览器 / 桌面端的所有本地数据（任务、项目、习惯、时间记录、设置）。云端数据不受影响。" : "Removes all local data on this browser / desktop build (tasks, projects, habits, time entries, settings). Cloud data is unaffected."}
+                control={<SettingActionButton tone="danger" onClick={() => setConfirmClearLocalData(true)}>{lang === "zh" ? "清空…" : "Clear…"}</SettingActionButton>}
+              />
+              {onDeleteAccount && <SettingRow
+                anchor="delete-account"
+                title={lang === "zh" ? "删除账号和全部数据" : "Delete account and all data"}
+                description={lang === "zh" ? "永久删除当前账户及其全部数据，此操作无法撤销。" : "Permanently delete your account and all its data. This cannot be undone."}
+                control={<SettingActionButton tone="danger" onClick={onDeleteAccount}>{lang === "zh" ? "删除账户…" : "Delete account…"}</SettingActionButton>}
+              />}
             </SettingSection>}
             </div>
             </>}
