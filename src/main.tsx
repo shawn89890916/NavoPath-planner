@@ -1,3 +1,4 @@
+import { applyStudyCommand } from "./utils/coopanionBridge";
 import React, { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useCallback } from "react";
@@ -1633,6 +1634,32 @@ function App() {
   const lastTimelineAutoScrollKeyRef = useRef("");
   const dataRef = useRef<PlannerData | null>(null);
   const settingsRef = useRef<Settings | null>(null);
+  useEffect(() => {
+    const bridge=window.desktopApi?.studyBridge;
+    if(!bridge || !data) return;
+    void bridge.publish({workspace:authState?.user?.id ?? 'local',tasks:data.tasks}).catch(error=>console.error('Study bridge projection failed',error));
+  },[data,authState?.user?.id]);
+  useEffect(() => {
+    const bridge=window.desktopApi?.studyBridge;
+    if(!bridge) return;
+    let disposed=false,busy=false;
+    const poll=async()=>{
+      if(disposed||busy||!dataRef.current)return;busy=true;
+      try {
+        await bridge.publish({workspace:authState?.user?.id ?? 'local',tasks:dataRef.current.tasks});
+        for(const command of await bridge.pending()){
+          if(disposed||!dataRef.current)return;
+          if(command.workspace!==(authState?.user?.id ?? 'local'))continue;
+          const next=applyStudyCommand(dataRef.current,command,authState?.user?.id ?? 'local');
+          if(next!==dataRef.current)await saveData(next);
+          await bridge.ack(command.commandFile);
+        }
+      } catch(error){console.error('Study bridge import failed',error);}finally{busy=false;}
+    };
+    const timer=window.setInterval(()=>void poll(),2000);void poll();
+    return ()=>{disposed=true;window.clearInterval(timer);};
+  },[authState?.user?.id]);
+
   const loadedWorkspaceKeyRef = useRef("");
   const localFallbackAppliedRef = useRef(false);
   const pendingDataSaveRef = useRef<QueuedDataSave | null>(null);

@@ -1,6 +1,11 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("desktopApi", {
+  studyBridge: {
+    publish: payload => ipcRenderer.invoke("study-bridge:publish", payload),
+    pending: () => ipcRenderer.invoke("study-bridge:pending"),
+    ack: name => ipcRenderer.invoke("study-bridge:ack", name),
+  },
   authStorage: {
     getItem: (key) => ipcRenderer.invoke("auth-storage:get", key),
     setItem: (key, value) => ipcRenderer.invoke("auth-storage:set", key, value),

@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-11-01 · Coopanion 学习任务联动
+
+### 改进
+- Coopanion 学习任务可自动加入今日候选，重复同步不会重复建任务。
+- 时间轴任务的安排、改期、完成与取消可同步给 Coopanion，供 Coo 按安排时间提醒；两款应用需同时运行。
+
 ## 2026-06-29 ? ????? 1.2.32 ????
 
 ### ???
@@ -243,6 +249,12 @@
 - 修复拖动时间轴任务时意外选中文字的问题。
 
 # NavoPath Changelog
+
+## 2026-11-01 · Coopanion study task integration
+
+### Improvements
+- Coopanion study tasks can enter today's candidates without duplication on retries.
+- Timeline scheduling, rescheduling, completion and cancellation are shared with Coopanion for timed Coo reminders while both apps are running.
 
 ## 2026-06-29 ? Template mode and 1.2.32 release prep
 

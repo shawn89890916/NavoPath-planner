@@ -393,6 +393,7 @@ declare global {
   interface Window {
     plannerApi: PlannerApi;
     desktopApi?: {
+      studyBridge?: { publish(payload: {workspace:string;tasks:Task[]}):Promise<boolean>;pending():Promise<import("./utils/coopanionBridge").StudyCommand[]>;ack(name:string):Promise<boolean> };
       authStorage: {
         getItem: (key: string) => Promise<string | null>;
         setItem: (key: string, value: string) => Promise<void>;

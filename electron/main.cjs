@@ -26,6 +26,7 @@ function getAutoUpdater() {
 }
 
 app.setName("NavoPath");
+require("./study-bridge.cjs").installStudyBridge(ipcMain, app);
 
 const DEFAULT_MODEL = "deepseek-v4-flash";
 const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
