@@ -347,6 +347,7 @@ export type HabitTrackingType = "click-counter" | "duration";
 export interface Habit {
   id: string;
   title: string;
+  projectId?: string;
   defaultDurationMinutes: number;
   startDate?: string;
   endDate?: string;

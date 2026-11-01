@@ -163,6 +163,7 @@ export function scheduleHabitRecord(data: PlannerData, habitId: string, date: st
   const task: Task = {
     id: taskId,
     title: habit.title,
+    projectId: habit.projectId,
     dueDate: date,
     category: "personal",
     priority: null,
@@ -188,7 +189,7 @@ export function scheduleHabitRecord(data: PlannerData, habitId: string, date: st
   const stateData = toggleHabitCompletion(data, habitId, date, completed, now);
   const states = (stateData.habitDailyStates || []).map((state) => state.habitId === habitId && state.date === date ? { ...state, timelineRecordId: recordId, updatedAt: now } : state);
   const tasks = data.tasks.some((item) => item.id === taskId)
-    ? data.tasks.map((item) => item.id === taskId ? { ...item, completed, timelineRecords: [record], updatedAt: now } : item)
+    ? data.tasks.map((item) => item.id === taskId ? { ...item, title: habit.title, projectId: habit.projectId, completed, timelineRecords: [record], updatedAt: now } : item)
     : [...data.tasks, { ...task, timelineRecords: [record] }];
   return { data: { ...stateData, tasks, habitDailyStates: states }, recordId };
 }
@@ -230,11 +231,36 @@ export function isHabitDueOnDate(habit: Habit, date: string): boolean {
   return true;
 }
 
+function scheduledHabitId(task: Task): string | undefined {
+  return /^habit-task-(.+)-\d{4}-\d{2}-\d{2}$/.exec(task.id)?.[1];
+}
+
+export function syncHabitTaskTitles(tasks: Task[], habits: Habit[]): Task[] {
+  const habitById = new Map(habits.map((habit) => [habit.id, habit]));
+  return tasks.map((task) => {
+    const habitId = scheduledHabitId(task);
+    const habit = habitId ? habitById.get(habitId) : undefined;
+    return habit && task.title !== habit.title
+      ? { ...task, title: habit.title, updatedAt: habit.updatedAt > task.updatedAt ? habit.updatedAt : task.updatedAt }
+      : task;
+  });
+}
+
 export function updateHabit(data: PlannerData, habitId: string, patch: Partial<Habit>, now = new Date().toISOString()): PlannerData {
   const habits = (data.habits || []).map((habit) =>
     habit.id === habitId ? { ...habit, ...patch, updatedAt: now } : habit
   );
-  return { ...data, habits };
+  const habit = habits.find((item) => item.id === habitId);
+  if (!habit) return data;
+  const tasks = data.tasks.map((task) => {
+    if (scheduledHabitId(task) !== habitId) return task;
+    const title = patch.title === undefined ? task.title : habit.title;
+    const projectId = "projectId" in patch ? habit.projectId : task.projectId;
+    return title !== task.title || projectId !== task.projectId
+      ? { ...task, title, projectId, updatedAt: now }
+      : task;
+  });
+  return { ...data, habits, tasks };
 }
 
 export function archiveHabit(data: PlannerData, habitId: string, archived: boolean, now = new Date().toISOString()): PlannerData {

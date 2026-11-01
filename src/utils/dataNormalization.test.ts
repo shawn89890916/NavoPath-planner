@@ -1,8 +1,27 @@
 import { describe, expect, it } from "vitest";
 import type { PlannerData } from "../types";
 import { normalizePlannerDataForClient } from "./dataNormalization";
+import { normalizeHabits, scheduleHabitRecord } from "./habits";
+import { fallbackData, normalizeData } from "../browserFallback";
 
 describe("data normalization", () => {
+  it("repairs old habit titles on reload and retains saved project assignments", () => {
+    const initial = fallbackData();
+    const data = { ...initial, ...normalizeHabits(initial) };
+    const habitId = data.habits![0].id;
+    const scheduled = scheduleHabitRecord(data, habitId, "2026-11-02", "09:00").data;
+    const saved = {
+      ...scheduled,
+      habits: scheduled.habits!.map((habit) => habit.id === habitId ? { ...habit, title: "Renamed habit", projectId: "project-study" } : habit),
+    };
+    const normalized = normalizeData(JSON.parse(JSON.stringify(saved)));
+    const task = normalized.tasks.find((item) => item.id === `habit-task-${habitId}-2026-11-02`)!;
+    expect(task.title).toBe("Renamed habit");
+    expect(task.timelineRecords).toEqual(scheduled.tasks[scheduled.tasks.length - 1].timelineRecords);
+    expect(normalized.habits!.find((habit) => habit.id === habitId)?.projectId).toBe("project-study");
+    expect(normalizeData(normalized)).toEqual(normalized);
+  });
+
   it("keeps legacy plugin habits and backfills cross-day fields", () => {
     const legacy = {
       version: 1,

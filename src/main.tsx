@@ -4456,7 +4456,7 @@ if (cached?.data && cached?.settings) {
       showToast(lang === "zh" ? "项目已创建" : "Project created");
     } else if (mobileQuickAddKind === "habit") {
       const now = workspaceNow().toISOString();
-      const habit: Habit = { id: uid("habit"), title, defaultDurationMinutes: mobileQuickHabitMinutes, frequencyRule: "daily", activeWeekdays: [1, 2, 3, 4, 5], order: Date.now(), createdAt: now, updatedAt: now };
+      const habit: Habit = { id: uid("habit"), title, projectId: quickProjectId || undefined, defaultDurationMinutes: mobileQuickHabitMinutes, frequencyRule: "daily", activeWeekdays: [1, 2, 3, 4, 5], order: Date.now(), createdAt: now, updatedAt: now };
       void saveData({ ...data, habits: [...(data.habits || []), habit] });
       if (more) {
         setEditingHabitId(habit.id);
@@ -6668,6 +6668,7 @@ if (cached?.data && cached?.settings) {
       ...defaultForm(targetType),
       title: habit.title,
       category: "personal",
+      projectId: habit.projectId || "",
       details: habit.notes || "",
       estimatedHours: Math.max((habit.defaultDurationMinutes || 30) / 60, 0.25),
     });
@@ -6726,6 +6727,7 @@ if (cached?.data && cached?.settings) {
       const buildHabit = (source: { title: string; createdAt: string; order?: number }): Habit => ({
         id: uid("habit"),
         title: form.title.trim(),
+        projectId: form.projectId || undefined,
         notes: form.details,
         defaultDurationMinutes: Math.max(Math.round((form.estimatedHours || 0.5) * 60), SLOT_MINUTES),
         frequencyRule: "daily",
@@ -6810,7 +6812,7 @@ if (cached?.data && cached?.settings) {
       } else if (addType === "project") {
         void saveData({ ...data, projects: data.projects.map((project) => project.id === editingId ? { ...project, title: form.title.trim(), dueDate: form.dueDate || undefined, category: form.category, color: form.projectColor || categories[form.category].color, notes: form.details, importance: form.importance, updatedAt: now } : project) });
       } else if (addType === "habit") {
-        void saveData({ ...data, habits: (data.habits || []).map((habit) => habit.id === editingId ? { ...habit, title: form.title.trim(), notes: form.details, defaultDurationMinutes: Math.max(Math.round((form.estimatedHours || 0.5) * 60), SLOT_MINUTES), updatedAt: now } : habit) });
+        void saveData(updateHabit(data, editingId, { title: form.title.trim(), projectId: form.projectId || undefined, notes: form.details, defaultDurationMinutes: Math.max(Math.round((form.estimatedHours || 0.5) * 60), SLOT_MINUTES) }, now));
       } else {
         void saveData({ ...data, events: data.events.map((event) => event.id === editingId ? { ...event, title: form.title.trim(), date: form.dueDate, startDate: form.dueDate, endDate: form.endDate || form.dueDate, startTime: form.dueTime, endTime: form.endTime, category: form.category, details: form.details, recurrence: form.recurrence } : event) });
       }
@@ -6838,6 +6840,7 @@ if (cached?.data && cached?.settings) {
       const habit: Habit = {
         id: uid("habit"),
         title: form.title.trim(),
+        projectId: form.projectId || undefined,
         defaultDurationMinutes: Math.max(Math.round((form.estimatedHours || 0.5) * 60), SLOT_MINUTES),
         frequencyRule: "daily",
         activeWeekdays: [1, 2, 3, 4, 5],
@@ -11367,6 +11370,7 @@ function habitDragTask(habit: Habit, dueDate: string): Task {
   return {
     id: habitDragTaskId(habit.id),
     title: habit.title,
+    projectId: habit.projectId,
     dueDate,
     category: "personal",
     priority: null,
@@ -11590,7 +11594,7 @@ function HabitPanel(props: {
           {props.mode === "overview" ? (
             <HabitOverviewBody metrics={metrics} archivedHabits={archivedHabits} dailyStates={props.data.habitDailyStates || []} zh={zh} today={props.today} onEditHabit={props.onEditHabit} onArchive={props.onArchive} onToggleDay={props.onToggleDay} onCreateHabit={props.onCreateHabit} />
           ) : detailHabit ? (
-            <Suspense fallback={<p className="df-habit-empty">{zh ? "正在打开习惯…" : "Opening habit…"}</p>}><HabitDetailBodyLazy habit={detailHabit} dailyStates={props.data.habitDailyStates || []} today={props.today} zh={zh} weekdays={weekdays} onSave={(patch) => props.onSave(detailHabit.id, patch)} onArchive={(archived) => props.onArchive(detailHabit.id, archived)} onToggleDay={(date, completed) => props.onToggleDay(detailHabit.id, date, completed)} onDelete={() => props.onDeleteHabit(detailHabit.id)} onBack={props.onBack} onConvertTo={(targetType) => props.onConvertTo(detailHabit, targetType)} /></Suspense>
+            <Suspense fallback={<p className="df-habit-empty">{zh ? "正在打开习惯…" : "Opening habit…"}</p>}><HabitDetailBodyLazy habit={detailHabit} projects={props.data.projects} dailyStates={props.data.habitDailyStates || []} today={props.today} zh={zh} weekdays={weekdays} onSave={(patch) => props.onSave(detailHabit.id, patch)} onArchive={(archived) => props.onArchive(detailHabit.id, archived)} onToggleDay={(date, completed) => props.onToggleDay(detailHabit.id, date, completed)} onDelete={() => props.onDeleteHabit(detailHabit.id)} onBack={props.onBack} onConvertTo={(targetType) => props.onConvertTo(detailHabit, targetType)} /></Suspense>
           ) : (
             <p className="df-habit-empty">{zh ? "未找到该习惯。" : "Habit not found."}</p>
           )}
@@ -13111,6 +13115,7 @@ function EditDrawer(props: {
       <label>{t(props.lang, "form.name")}<input autoFocus={!props.editing} value={f.title} onChange={(event) => set("title", event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); props.onSave(); } }} /></label>
       {props.type === "project" && <div className="df-form-color-row"><label>{t(props.lang, "form.color")}</label><ProjectColorPicker value={f.projectColor} onChange={(color) => set("projectColor", color)} presets={COMMON_COLOR_PRESETS} /></div>}
       {props.type === "project" && <label>{props.lang === "zh" ? "截止日期" : "Due date"}<input type="date" value={f.dueDate} onChange={(event) => set("dueDate", event.target.value)} /></label>}
+      {props.type === "habit" && <label>{props.lang === "zh" ? "归属项目" : "Project"}<select value={f.projectId} onChange={(event) => set("projectId", event.target.value)}><option value="">{t(props.lang, "drawer.unassigned")}</option>{props.projects.map((project) => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>}
       {props.type === "event" && <div className="df-grid2"><label>{t(props.lang, "form.startDate")}<input type="date" value={f.dueDate} onChange={(event) => set("dueDate", event.target.value)} /></label><label>{t(props.lang, "form.startTime")}<input type="time" value={f.dueTime} onChange={(event) => set("dueTime", event.target.value)} /></label><label>{t(props.lang, "form.endDate")}<input type="date" value={f.endDate} onChange={(event) => set("endDate", event.target.value)} /></label><label>{t(props.lang, "form.endTime")}<input type="time" value={f.endTime} onChange={(event) => set("endTime", event.target.value)} /></label><label>重复<select value={f.recurrence?.frequency || "none"} onChange={(event) => {
         const frequency = event.target.value as RecurrenceFrequency;
         set("recurrence", frequency === "none" ? undefined : { mode: f.dueTime ? "scheduled" : "flexible", frequency, startDate: f.dueDate, startTime: f.dueTime || undefined, durationMinutes: f.dueTime ? Math.max(clockTimeSpanMinutes(f.dueTime, f.endTime || addMinutes(f.dueTime, 60)), 15) : undefined, endDate: f.endDate || undefined });

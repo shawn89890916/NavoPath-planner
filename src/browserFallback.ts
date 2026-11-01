@@ -763,6 +763,7 @@ export function normalizeData(data: PlannerData): PlannerData {
       ...habit,
       id: persistedId(habit.id) || uid("habit"),
       title: boundedPersistedString(habit.title, MAX_PERSISTED_TITLE_LENGTH),
+      projectId: persistedId(habit.projectId) || undefined,
       notes: boundedPersistedString(habit.notes, MAX_PERSISTED_TEXT_LENGTH) || undefined,
       defaultDurationMinutes: boundedInteger(
         habit.defaultDurationMinutes,

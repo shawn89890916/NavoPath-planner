@@ -266,6 +266,50 @@ describe("habits", () => {
     expect(habit?.updatedAt).toBe("2026-07-01T10:00:00.000Z");
   });
 
+  it("renames all dates for the exact habit and preserves timeline and completion history", () => {
+    const initial = { ...baseData, ...normalizeHabits(baseData, "2026-07-01T00:00:00.000Z") };
+    const habitId = initial.habits![0].id;
+    const first = scheduleHabitRecord(initial, habitId, "2026-07-01", "09:00").data;
+    const completed = toggleHabitCompletion(first, habitId, "2026-07-01", true);
+    const second = scheduleHabitRecord(completed, habitId, "2026-07-02", "23:50").data;
+    const other = scheduleHabitRecord(second, initial.habits![1].id, "2026-07-01", "10:00").data;
+    const unrelated = { ...other.tasks[0], id: `habit-task-${habitId}-extra-2026-07-01` };
+    const data = { ...other, tasks: [...other.tasks, unrelated] };
+    const updated = updateHabit(data, habitId, { title: "Daily reading" }, "2026-07-03T10:00:00.000Z");
+
+    expect(updated.tasks.slice(0, 2).map((task) => task.title)).toEqual(["Daily reading", "Daily reading"]);
+    for (let index = 0; index < 2; index += 1) {
+      expect(updated.tasks[index]).toEqual({ ...data.tasks[index], title: "Daily reading", updatedAt: "2026-07-03T10:00:00.000Z" });
+      expect(updated.tasks[index].timelineRecords).toBe(data.tasks[index].timelineRecords);
+    }
+    expect(updated.tasks[2]).toBe(data.tasks[2]);
+    expect(updated.tasks[3]).toBe(unrelated);
+    expect(updated.habitDailyStates).toBe(data.habitDailyStates);
+  });
+
+  it("inherits, changes and clears the project on existing and future habit schedules", () => {
+    const initial = { ...baseData, ...normalizeHabits(baseData, "2026-07-01T00:00:00.000Z") };
+    const habitId = initial.habits![0].id;
+    const assigned = updateHabit(initial, habitId, { projectId: "project-reading" });
+    const scheduled = scheduleHabitRecord(assigned, habitId, "2026-07-01", "09:00").data;
+    expect(scheduled.tasks[0].projectId).toBe("project-reading");
+
+    const moved = updateHabit(scheduled, habitId, { projectId: "project-study" });
+    expect(moved.tasks[0].projectId).toBe("project-study");
+    expect(moved.tasks[0].timelineRecords).toBe(scheduled.tasks[0].timelineRecords);
+    expect(updateHabit(moved, habitId, { notes: "Keep project" }).tasks[0]).toBe(moved.tasks[0]);
+
+    const nextDay = scheduleHabitRecord(moved, habitId, "2026-07-02", "09:00").data;
+    expect(nextDay.tasks.map((task) => task.projectId)).toEqual(["project-study", "project-study"]);
+    const cleared = updateHabit(nextDay, habitId, { projectId: undefined });
+    expect(cleared.tasks.every((task) => task.projectId === undefined)).toBe(true);
+    expect(cleared.habits![0].projectId).toBeUndefined();
+
+    const stale = { ...moved, tasks: moved.tasks.map((task) => ({ ...task, title: "Old title", projectId: "old-project" })) };
+    const rescheduled = scheduleHabitRecord(stale, habitId, "2026-07-01", "11:00").data;
+    expect(rescheduled.tasks[0]).toMatchObject({ title: "Read", projectId: "project-study" });
+  });
+
   it("archiveHabit sets archived flag", () => {
     const data = { ...baseData, ...normalizeHabits(baseData, "2026-07-01T00:00:00.000Z") };
     const habitId = data.habits![0].id;

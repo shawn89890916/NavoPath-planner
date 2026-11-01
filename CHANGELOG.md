@@ -1,5 +1,13 @@
 # NavoPath 更新日志
 
+## 2026-11-02 · 习惯名称与项目归属 · 1.4.13
+
+### 改进
+- 习惯可在新增、快速添加和详情中选择归属项目，修改归属时同步已有时间轴安排，新安排自动沿用该项目。
+
+### 修复
+- 修改习惯名称时同步所有日期里已拖到时间轴的安排；重新打开后也会校正此前残留的旧名称，保留原有时间和完成记录。
+
 ## 2026-11-01 · 桌面贴边小条 · 1.4.12
 
 ### 改进
@@ -285,6 +293,14 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-02 · Habit names and projects · 1.4.13
+
+### Improvements
+- Choose a project when creating, quickly adding or editing a habit. Changing its project updates existing timeline schedules, and new schedules inherit it.
+
+### Fixes
+- Renaming a habit updates its timeline schedules across all dates. Reopening also corrects older stale names while preserving scheduled times and completion history.
 
 ## 2026-11-01 · Desktop Dock tab · 1.4.12
 

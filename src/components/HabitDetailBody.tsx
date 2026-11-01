@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Habit, HabitDailyState, HabitTrackingType } from "../types";
+import type { Habit, HabitDailyState, HabitTrackingType, Project } from "../types";
 import { habitStartDate, isHabitDueOnDate, isHabitWithinDateRange } from "../utils/habits";
 import { addDays } from "../utils/recurrence";
 import { ActionDisclosure, Button } from "./UiPrimitives";
@@ -11,6 +11,7 @@ const STEP_MINUTES = 15;
 
 type HabitDetailBodyProps = {
   habit: Habit;
+  projects: Project[];
   dailyStates: HabitDailyState[];
   today: string;
   zh: boolean;
@@ -23,8 +24,9 @@ type HabitDetailBodyProps = {
   onConvertTo: (targetType: "task" | "project") => void;
 };
 
-export default function HabitDetailBody({ habit, dailyStates, today, zh, weekdays, onSave, onArchive, onToggleDay, onDelete, onBack, onConvertTo }: HabitDetailBodyProps) {
+export default function HabitDetailBody({ habit, projects, dailyStates, today, zh, weekdays, onSave, onArchive, onToggleDay, onDelete, onBack, onConvertTo }: HabitDetailBodyProps) {
   const [title, setTitle] = useState(habit.title);
+  const [projectId, setProjectId] = useState(habit.projectId || "");
   const [notes, setNotes] = useState(habit.notes || "");
   const [duration, setDuration] = useState(String(habit.defaultDurationMinutes || 15));
   const [startDate, setStartDate] = useState(habitStartDate(habit));
@@ -66,6 +68,7 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
 
   useEffect(() => {
     setTitle(habit.title);
+    setProjectId(habit.projectId || "");
     setNotes(habit.notes || "");
     setDuration(String(habit.defaultDurationMinutes || 15));
     setStartDate(habitStartDate(habit));
@@ -184,6 +187,7 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
     const savedStartDate = startDate || habitStartDate(habit);
     onSave({
       title: title.trim() || habit.title,
+      projectId: projectId || undefined,
       notes,
       trackingType,
       defaultDurationMinutes: parsedDuration >= STEP_MINUTES && parsedDuration <= 480 && parsedDuration % STEP_MINUTES === 0 ? parsedDuration : (habit.defaultDurationMinutes || 15),
@@ -223,6 +227,7 @@ export default function HabitDetailBody({ habit, dailyStates, today, zh, weekday
     </section>
     <section className="df-habit-settings-form">
       <label className="df-habit-setting-field df-habit-setting-field-title"><span>{zh ? "标题" : "Title"}</span><input type="text" value={title} onChange={(event) => setTitle(event.target.value)} /></label>
+      <label className="df-habit-setting-field"><span>{zh ? "归属项目" : "Project"}</span><select value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="">{zh ? "未归属" : "Unassigned"}</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>
       <div className="df-habit-setting-field df-habit-setting-toggle"><span>{zh ? "启用" : "Enabled"}</span><SettingToggle checked={enabled} ariaLabel={zh ? "启用习惯" : "Enable habit"} onChange={(next) => { setEnabled(next); onSave({ archived: !next }); }} /></div>
       <div className="df-habit-setting-field df-habit-type-field"><span>{zh ? "类型" : "Type"}</span><div className="df-habit-type-options" role="group" aria-label={zh ? "习惯类型" : "Habit type"}><button type="button" className={trackingType === "click-counter" ? "is-selected" : ""} aria-pressed={trackingType === "click-counter"} onClick={() => setTrackingType("click-counter")}>{zh ? "点击计数" : "Click Counter"}</button><button type="button" className={trackingType === "duration" ? "is-selected" : ""} aria-pressed={trackingType === "duration"} onClick={() => setTrackingType("duration")}>{zh ? "累积时长" : "Duration"}</button></div></div>
       {trackingType === "click-counter" ? <label className="df-habit-setting-field"><span>{zh ? "目标次数" : "Target Count"}</span><input type="number" min={0} value={targetCount} onChange={(event) => setTargetCount(event.target.value)} /></label> : <label className="df-habit-setting-field"><span>{zh ? "时长" : "Duration"}</span><input type="number" min={STEP_MINUTES} max={480} step={STEP_MINUTES} value={duration} onChange={(event) => setDuration(event.target.value)} /><small>{zh ? "以 15 分钟为单位" : "Set in 15-minute increments"}</small></label>}
