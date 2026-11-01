@@ -33,6 +33,7 @@ const ProactiveAssistantSettings = lazy(() => import("./components/ProactiveAssi
 const McpTokenManager = lazy(() => import("./components/McpTokenManager"));
 
 const SyncBridgeManager = lazy(() => import("./components/SyncBridgeManager"));
+const DesktopDockSettings = lazy(() => import("./components/DesktopDockControls").then((module) => ({ default: module.DesktopDockSettings })));
 
 const EXECUTE_THEME_PRESETS_LIGHT = ["#D7816A", "#584D3D", "#7EA172", "#0F0326", "#BE185D", "#D97706", "#2563EB"];
 
@@ -1365,6 +1366,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 ? (lang === "zh" ? "管理完整竖屏小窗与「正在做」小组件。" : "Manage the full portrait window and the current-task widget.")
                 : (lang === "zh" ? "桌面端启用后可用。当前环境未检测到桌面端。" : "Available on the desktop build. No desktop runtime detected in this environment.")}
             >
+              <Suspense fallback={null}><DesktopDockSettings lang={lang} /></Suspense>
+              <SettingDivider />
               <SettingRow
                 anchor="portrait-window"
                 title={lang === "zh" ? "竖屏小窗" : "Portrait window"}

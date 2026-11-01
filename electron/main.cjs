@@ -456,6 +456,32 @@ compactWindowService.registerIpc();
 
 const dockWindowService = createDockWindowService({
   ipcMain: trustedIpcMain,
+  handleIpcMain: ipcMain,
+  createHandle: () => {
+    const handle = new BrowserWindow({
+      width: 5, height: 64, show: false, frame: false, transparent: true,
+      hasShadow: false, resizable: false, movable: false, minimizable: false,
+      maximizable: false, skipTaskbar: true, alwaysOnTop: true, thickFrame: false,
+      webPreferences: {
+        preload: path.join(__dirname, "dock-handle-preload.cjs"),
+        contextIsolation: true, nodeIntegration: false, sandbox: true,
+      },
+    });
+    handle.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+    handle.webContents.on("will-navigate", (event) => event.preventDefault());
+    void handle.loadFile(path.join(__dirname, "dock-handle.html"));
+    return handle;
+  },
+  readPreferences: () => {
+    try { return JSON.parse(fs.readFileSync(path.join(app.getPath("userData"), "dock-preferences.json"), "utf8")); }
+    catch { return {}; }
+  },
+  writePreferences: (preferences) => {
+    const target = path.join(app.getPath("userData"), "dock-preferences.json");
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(`${target}.tmp`, JSON.stringify(preferences), "utf8");
+    fs.renameSync(`${target}.tmp`, target);
+  },
   screen,
   getWindow: (event) => windowFromEvent(BrowserWindow, event),
   canControl: isApplicationWindowEvent,

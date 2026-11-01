@@ -727,6 +727,13 @@ export interface PlannerApi {
   selectBackgroundImage: () => Promise<{ path: string }>;
 }
 
+export interface DesktopDockPreferences {
+  activation: "hover" | "click";
+  handleHeight: number;
+  position: number;
+  panelHeight: number;
+}
+
 export interface DesktopUpdateState {
   status: "idle" | "unsupported" | "checking" | "current" | "available" | "downloading" | "downloaded" | "error";
   currentVersion: string;
@@ -837,6 +844,8 @@ declare global {
       dockWindow?: {
         getSide: () => Promise<"left" | "right" | null>;
         setSide: (side: "left" | "right" | null) => Promise<"left" | "right" | null>;
+        getPreferences: () => Promise<DesktopDockPreferences>;
+        setPreferences: (patch: Partial<DesktopDockPreferences>) => Promise<DesktopDockPreferences>;
       };
       widget?: {
         open: () => Promise<boolean>;

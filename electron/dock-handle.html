@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+  <title>NavoPath Dock</title>
+  <style>
+    :root { color-scheme: light dark; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+    button { display: block; padding: 0; width: 5px; height: 100%; border: 1px solid #584d3d40;
+      border-radius: 4px; background: #b9b3a8; cursor: pointer; touch-action: none;
+      transition: background 140ms ease; }
+    button:hover, button:focus-visible { background: #584d3d; outline: none; }
+    button:active { cursor: ns-resize; }
+    @media (prefers-color-scheme: dark) {
+      button { background: #77746f; border-color: #eee9df40; }
+      button:hover, button:focus-visible { background: #eee9df; }
+    }
+    @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+  </style>
+</head>
+<body><button aria-label="Open NavoPath Dock" title="NavoPath · Hover or click to open · Drag to move"></button></body>
+</html>

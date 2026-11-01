@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld("desktopApi", {
   dockWindow: {
     getSide: () => ipcRenderer.invoke("dock-window:get-side"),
     setSide: (side) => ipcRenderer.invoke("dock-window:set-side", side),
+    getPreferences: () => ipcRenderer.invoke("dock-window:get-preferences"),
+    setPreferences: (patch) => ipcRenderer.invoke("dock-window:set-preferences", patch),
   },
   compactWindow: {
     open: (options) => ipcRenderer.invoke("compact-window:open", options),
