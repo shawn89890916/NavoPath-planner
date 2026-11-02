@@ -3,7 +3,7 @@
 ## 2026-11-03 · 时间轴直接输入
 
 ### 改进
-- 横屏网页及桌面端横竖屏可直接在时间块内输入任务名，保留时间文字，移除额外输入层、复选框和确认勾；上下居中的短横条可拖动调整开始与结束时间，回车或点击外部保存。
+- 横屏网页及桌面端横竖屏可直接在时间块内输入任务名，仅日视图显示时间文字，移除额外输入层、复选框和确认勾；上下居中的短横条可拖动调整开始与结束时间，调整时保留正在输入的内容，回车或点击外部保存。
 
 ## 2026-11-02 · 社区插件、主题与习惯修复 · 1.5.1
 
@@ -309,7 +309,7 @@
 ## 2026-11-03 · Direct timeline entry
 
 ### Improvements
-- Landscape web and both desktop orientations support typing directly inside a time block, alongside its start time, without a separate input surface, checkbox or confirm action. Centered bars on the top and bottom edges adjust start and end times; Enter or an outside click saves the task.
+- Landscape web and both desktop orientations support typing directly inside a time block, with a time label only in day view, without a separate input surface, checkbox or confirm action. Centered bars on the top and bottom edges adjust start and end times while preserving the draft; Enter or an outside click saves the task.
 
 ## 2026-11-02 · Community plugins, themes and habit fixes · 1.5.1
 

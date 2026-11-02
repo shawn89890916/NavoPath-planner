@@ -1563,12 +1563,8 @@ function App() {
       setPortraitLayout(portrait.matches);
     };
     sync();
-    media.addEventListener("change", sync);
-    portrait.addEventListener("change", sync);
-    return () => {
-      media.removeEventListener("change", sync);
-      portrait.removeEventListener("change", sync);
-    };
+    window.addEventListener("resize", sync);
+    return () => window.removeEventListener("resize", sync);
   }, []);
 
   useEffect(() => {
@@ -10000,7 +9996,6 @@ if (cached?.data && cached?.settings) {
                                   top: `${dragCreate.top}px`, height: `${dragCreate.height}px`,
                                   ...draftConflictStyle(dragCreate, timelineView),
                                 }}>
-                                  {(!dragCreate.committed || !inlineTimelineDraft) && <span className="df-timeline-draft-time">{minutesToTime(dragCreate.startMinutes)} – {minutesToTime(dragCreate.endMinutes)}</span>}
                                   <button type="button" className="df-timeline-draft-handle start" aria-label={lang === "zh" ? "拖动调整开始时间" : "Drag to adjust start"} onPointerDown={(event) => beginDragCreateResize(event, "start")} />
                                   <button type="button" className="df-timeline-draft-handle end" aria-label={lang === "zh" ? "拖动调整结束时间" : "Drag to adjust end"} onPointerDown={(event) => beginDragCreateResize(event, "end")} />
                                   {dragCreate.committed && inlineTimelineDraft ? (
@@ -10342,7 +10337,7 @@ if (cached?.data && cached?.settings) {
                             <button type="button" className="df-timeline-draft-handle start" aria-label={lang === "zh" ? "拖动调整开始时间" : "Drag to adjust start"} onPointerDown={(event) => beginDragCreateResize(event, "start")} />
                             <button type="button" className="df-timeline-draft-handle end" aria-label={lang === "zh" ? "拖动调整结束时间" : "Drag to adjust end"} onPointerDown={(event) => beginDragCreateResize(event, "end")} />
                             {dragCreate.committed && inlineTimelineDraft ? (
-                              <DragCreateQuickAdd state={dragCreate} projects={projects} lang={lang}
+                              <DragCreateQuickAdd state={dragCreate} projects={projects} lang={lang} showTime
                                 onSave={(title, projectId, subtasks) => commitDragCreatedTask(dragCreate, title, projectId, subtasks)}
                                 onCancel={() => setDragCreate(null)}
                               />
@@ -12064,7 +12059,7 @@ function TaskMetaIconBar({ task, lang, onUpdate }: { task: Task; lang: Language;
 }
 
 /** Quick‑add input shown on top of a drag‑created preview block. */
-function DragCreateQuickAdd({ state, projects, onSave, onMore, onCancel, onRangeChange, sheet = false, lang = "zh" }: {
+function DragCreateQuickAdd({ state, projects, onSave, onMore, onCancel, onRangeChange, sheet = false, lang = "zh", showTime = false }: {
   state: NonNullable<DragCreateState>;
   projects: Project[];
   onSave: (title: string, projectId: string | null, subtasks: Subtask[]) => void;
@@ -12073,6 +12068,7 @@ function DragCreateQuickAdd({ state, projects, onSave, onMore, onCancel, onRange
   onRangeChange?: (edge: "start" | "end", minutes: number) => void;
   sheet?: boolean;
   lang?: Language;
+  showTime?: boolean;
 }) {
   const [input, setInput] = useState("");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -12095,7 +12091,6 @@ function DragCreateQuickAdd({ state, projects, onSave, onMore, onCancel, onRange
     const handler = (e: MouseEvent) => {
       const container = sheet ? sheetRef.current : containerRef.current;
       if (!container || container.contains(e.target as Node)) return;
-      if ((e.target as HTMLElement).closest(".df-timeline-draft-handle")) return;
       if (inputRef.current?.value.replace(/#[^\s#]+/g, "").trim()) handleSave();
       else onCancel();
     };
@@ -12183,26 +12178,18 @@ function DragCreateQuickAdd({ state, projects, onSave, onMore, onCancel, onRange
   );
 
   return (
-    <form ref={containerRef} className={`drag-create-quick-add${sheet ? " df-timeline-draft-sheet" : ""}`}
+    <form ref={containerRef} className="drag-create-quick-add"
       onSubmit={(event) => { event.preventDefault(); handleSave(); }}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
       style={{ "--cat": selectedProject?.color || "var(--accent-active)" } as CSSProperties}>
       <div className="drag-create-quick-add-row">
-        <span className="df-timeline-draft-time">{minutesToTime(state.startMinutes)}</span>
+        {showTime && <span className="df-timeline-draft-time">{minutesToTime(state.startMinutes)}</span>}
         <input ref={inputRef} value={input} onChange={(e) => handleInputChange(e.target.value)}
           enterKeyHint="done"
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.nativeEvent.isComposing) {
-              event.preventDefault();
-              event.currentTarget.form?.requestSubmit();
-            }
-            if (event.key === "Escape") onCancel();
-          }}
           onBlur={() => {
             window.setTimeout(() => {
-              if (containerRef.current?.contains(document.activeElement)) return;
-              if (document.activeElement?.closest(".df-timeline-draft-handle")) return;
+              if (document.activeElement?.closest(".drag-create-quick-add,.df-timeline-draft-handle")) return;
               if (inputRef.current?.value.replace(/#[^\s#]+/g, "").trim()) handleSave();
             }, 0);
           }}
