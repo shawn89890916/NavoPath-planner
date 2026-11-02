@@ -2480,7 +2480,36 @@ function App() {
     }
   }
 
+  // 仅检查新增或改时的排程，允许用户继续整理已有的历史冲突。
+  function scheduleIntervals(source: PlannerData, dates: Set<string>) {
+    const result: { id: string; date: string; start: string; end: string }[] = [];
+    for (const task of source.tasks) {
+      for (const r of task.timelineRecords || []) if (r.executionStatus === "scheduled") result.push({ id: r.id, date: r.scheduledDate, start: r.scheduledStart, end: r.scheduledEnd });
+      if (!task.timelineRecords?.length && task.scheduledDate && task.scheduledStart && task.scheduledEnd) result.push({ id: task.id, date: task.scheduledDate, start: task.scheduledStart, end: task.scheduledEnd });
+      if (task.recurrence?.startTime) for (const date of enumerateRecurrenceDates(task.recurrence, dates)) {
+        if (!(task.timelineRecords || []).some(r => r.scheduledDate === date)) result.push({ id: `${task.id}_${date}`, date, start: task.recurrence.startTime, end: addMinutes(task.recurrence.startTime, task.recurrence.durationMinutes || taskDuration(task)) });
+      }
+    }
+    for (const event of source.events) {
+      if (!event.startTime || !event.endTime) continue;
+      const days = event.recurrence ? enumerateRecurrenceDates(event.recurrence, dates) : [...dates].filter(d => d >= (event.startDate || event.date) && d <= (event.endDate || event.date));
+      for (const date of days) result.push({ id: `${event.id}_${date}`, date, start: event.startTime, end: event.endTime });
+    }
+    return result;
+  }
+
   async function saveData(next: PlannerData) {
+    if (data) {
+      const dates = new Set<string>([timelineDate, ...next.tasks.flatMap(t => [t.scheduledDate || "", ...(t.timelineRecords || []).map(r => r.scheduledDate)]), ...next.events.map(e => e.date)].filter(Boolean));
+      const before = scheduleIntervals(data, dates);
+      const after = scheduleIntervals(next, dates);
+      const changed = after.filter(a => !before.some(b => a.id === b.id && a.date === b.date && a.start === b.start && a.end === b.end));
+      if (changed.some(a => a.end <= a.start || after.some(b => a.id !== b.id && a.date === b.date && a.start < b.end && a.end > b.start))) {
+        setData(data); dataRef.current = data;
+        showToast(lang === "zh" ? "时间冲突：请选择课程和任务之外的空闲时段。" : "Time conflict: choose a free time outside classes and tasks.");
+        return;
+      }
+    }
     const savedAt = new Date().toISOString();
     const optimistic = { ...next, savedAt };
     const version = dataSaveVersionRef.current + 1;
@@ -3540,7 +3569,7 @@ function App() {
   function makeEventCandidate(occurrenceId: string, targetDate: string = today) {
     if (!data) return;
     const event = resolveOwningEvent(occurrenceId);
-    if (!event) return;
+    if (!event || event.fixedCourse) return;
     void saveData({
       ...data,
       events: data.events.map((item) => item.id === event.id ? {
@@ -4030,7 +4059,7 @@ function App() {
   function moveEventOccurrence(occurrenceId: string, newStart: string, newDate?: string) {
     if (!data) return;
     const event = resolveOwningEvent(occurrenceId);
-    if (!event) return;
+    if (!event || event.fixedCourse) return;
     const sourceStart = event.startTime || "09:00";
     const sourceEnd = event.endTime || addMinutes(sourceStart, event.recurrence?.durationMinutes || 60);
     const duration = Math.max(timeToMinutes(sourceEnd) - timeToMinutes(sourceStart), SLOT_MINUTES);
@@ -4059,7 +4088,7 @@ function App() {
   function makeEventAllDay(occurrenceId: string, targetDate: string) {
     if (!data) return;
     const event = resolveOwningEvent(occurrenceId);
-    if (!event) return;
+    if (!event || event.fixedCourse) return;
     void saveData({
       ...data,
       events: data.events.map((item) => item.id === event.id ? {
@@ -4103,6 +4132,7 @@ function App() {
   }
 
   function beginBlockDrag(event: React.PointerEvent, task: Task) {
+    if (resolveOwningEvent(task.id)?.fixedCourse) return;
     if ((event.target as HTMLElement).closest("button,input,textarea,select")) return;
     const isEvent = isEventDisplayTask(task);
     if (!isEvent && hasRecurringRule(resolveOwningTask(task) || task)) return;
@@ -4282,6 +4312,7 @@ function App() {
   }
 
   function beginBlockResize(event: React.MouseEvent, task: Task, edge: "start" | "end") {
+    if (resolveOwningEvent(task.id)?.fixedCourse) return;
     event.preventDefault();
     event.stopPropagation();
     suppressBlockClickRef.current = true;
@@ -4440,7 +4471,21 @@ function App() {
     setDrawerOpen(true);
   }
 
+  async function importClassTimetable(file: File) {
+    try {
+      const rows = JSON.parse(await file.text());
+      if (!Array.isArray(rows) || !rows.length || rows.length > 1000) throw new Error();
+      const imported: CalendarEvent[] = rows.map((row, index) => {
+        if (typeof row.title !== "string" || !row.title.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(row.date) || !Number.isFinite(Date.parse(row.date)) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(row.startTime) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(row.endTime) || row.endTime <= row.startTime) throw new Error();
+        return { id: `course_${row.date}_${row.startTime}_${index}_${row.title}`, title: row.title.trim(), date: row.date, startDate: row.date, endDate: row.date, startTime: row.startTime, endTime: row.endTime, category: "personal", details: String(row.location || ""), imported: true, fixedCourse: true, createdAt: new Date().toISOString() };
+      });
+      if (!data) return;
+      await saveData({ ...data, events: [...data.events, ...imported.filter(e => !data.events.some(old => old.id === e.id))] });
+    } catch { showToast(lang === "zh" ? '课表格式错误：请使用 JSON 数组，每项包含 title、date (YYYY-MM-DD)、startTime、endTime (HH:mm)，可选 location。' : 'Invalid timetable: use a JSON array with title, date (YYYY-MM-DD), startTime, endTime (HH:mm), optional location.'); }
+  }
+
   function openEventEdit(event: CalendarEvent) {
+    if (event.fixedCourse) { void dialog.alert(event.title, { message: `${event.startTime}–${event.endTime}\n${event.details}` }); return; }
     setAddType("event");
     setEditingId(event.id);
     setEditingRecordId(undefined);
@@ -5835,6 +5880,10 @@ function App() {
                 }}
               />
             ) : <>
+              <label className="df-ai-plan-btn" style={{ cursor: "pointer" }}>
+                {lang === "zh" ? "导入课表 · JSON" : "Import timetable · JSON"}
+                <input type="file" accept=".json,application/json" aria-label={lang === "zh" ? "导入课表" : "Import timetable"} style={{ width: 180 }} onChange={event => { const file = event.target.files?.[0]; if (file) void importClassTimetable(file); event.target.value = ""; }} />
+              </label>
             <div className="df-execute-top">
               {!settings.hideAi && <div className="df-ai-planner" aria-hidden={compactLayout}>
                 <button className={`df-ai-plan ${autoScheduleState === "generating" ? "thinking" : ""} ${autoScheduleState === "committing" ? "committing" : ""}`} data-tip={drawerOpen ? t(lang, "timeline.aiPlanToday") : t(lang, "timeline.planningSuggestion")} aria-label={t(lang, "timeline.aiPlanToday")} disabled={autoScheduleState === "generating" || autoScheduleState === "committing" || drawerOpen} onClick={() => void planMyDay()}>

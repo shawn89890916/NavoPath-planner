@@ -119,6 +119,7 @@ export interface LongTermTask {
 }
 
 export interface CalendarEvent {
+  fixedCourse?: boolean;
   id: string;
   title: string;
   date: string;

@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-11-02 · 固定课表
+
+### 新增
+- 时间轴支持导入 JSON 固定课程，课程不可拖动，任务继续沿用现有添加和调整方式。
+- 新增或调整排程时阻止课程与任务时间冲突。
+
 ## 2026-11-01 · Coopanion 学习任务联动
 
 ### 改进
@@ -249,6 +255,12 @@
 - 修复拖动时间轴任务时意外选中文字的问题。
 
 # NavoPath Changelog
+
+## 2026-11-02 · Fixed timetable
+
+### Added
+- Import fixed classes from JSON into the existing timeline; classes cannot be dragged, and tasks retain existing creation and editing controls.
+- Prevent time conflicts when adding or changing scheduled classes and tasks.
 
 ## 2026-11-01 · Coopanion study task integration
 
