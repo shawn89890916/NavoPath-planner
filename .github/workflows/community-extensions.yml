@@ -1,0 +1,19 @@
+name: Community extensions
+on:
+  pull_request:
+    paths: ['community-plugins/**', 'public/extensions/**', 'scripts/build-extensions.mjs', 'src/extensions/**', 'integrations/navopath-*-template/**']
+  push:
+    branches: [main]
+    paths: ['community-plugins/**', 'public/extensions/**', 'scripts/build-extensions.mjs', 'src/extensions/**']
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/build-extensions.mjs --check
+      - run: npx vitest run src/extensions src/widget/widgetTimer.test.ts

@@ -64,6 +64,7 @@ jobs:
           npx supabase@2.115.0 secrets set "ICS_ENCRYPTION_KEY=$ICS_ENCRYPTION_KEY" --project-ref "$SUPABASE_PROJECT_REF"
           npx supabase@2.115.0 functions deploy ai-assistant --project-ref "$SUPABASE_PROJECT_REF" --use-api
           npx supabase@2.115.0 functions deploy external-calendar --project-ref "$SUPABASE_PROJECT_REF" --use-api
+          npx supabase@2.115.0 functions deploy extension-download --project-ref "$SUPABASE_PROJECT_REF" --use-api
 
       - name: Deploy MCP Worker
         run: npm run deploy --prefix mcp-worker
