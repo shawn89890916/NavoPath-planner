@@ -4303,16 +4303,19 @@ body:has(:active)::-webkit-scrollbar-thumb {
   font: 600 11px/1.2 var(--paper-sans);
   pointer-events: none;
 }
-.df-timeline-draft-handle {
+#root .df-app .df-timeline-draft-handle {
   position: absolute;
   width: 44px;
   height: 44px;
+  min-width: 0;
+  min-height: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
   outline: 0;
   background: transparent;
   box-shadow: none;
+  transform: none;
   appearance: none;
   -webkit-appearance: none;
   touch-action: none;
@@ -4344,6 +4347,10 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border: 0;
   outline: 0;
   box-shadow: none;
+}
+#root .df-app .df-timeline-draft-handle:focus-visible::after {
+  outline: 2px solid var(--accent-active);
+  outline-offset: 3px;
 }
 .df-cloud-error-card h1 {
   margin: 0 0 12px;
@@ -4400,10 +4407,11 @@ body:has(:active)::-webkit-scrollbar-thumb {
   box-shadow: var(--shadow-soft);
   corner-shape: var(--corner-shape, squircle);
 }
-.drag-create-quick-add input::placeholder {
-  color: #8B93A7;
+#root .df-app .drag-create-quick-add input::placeholder {
+  color: var(--text-muted);
 }
-.drag-create-quick-add input {
+#root .df-app .drag-create-quick-add input,
+#root .df-app .drag-create-quick-add input:focus {
   flex: 1 1 auto;
   min-width: 0;
   height: 30px;
@@ -4416,6 +4424,18 @@ body:has(:active)::-webkit-scrollbar-thumb {
   font: 650 calc(13px * var(--timeline-font-scale, 1))/1.25 var(--paper-sans);
   border-radius: 0;
   box-shadow: none;
+}
+#root .df-app .drag-create-quick-add .df-quick-add-confirm {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-main);
+  font: 600 16px/1 var(--paper-sans);
+  box-shadow: none;
+  transform: none;
 }
 .df-tabs button.active {
   background: var(--mode-primary-strong);

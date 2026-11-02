@@ -9,6 +9,7 @@
 - 编辑习惯后点击面板外空白区域、关闭或返回总览会自动保存；右下角新增有未保存内容时，退出前可选择保存或放弃。
 
 ### 修复
+- 时间轴拖动新建任务时，输入框与确认按钮保持紧凑的行内样式，调整时间的圆点不再出现多余方框，键盘聚焦仍清晰可见。
 - 习惯标记未完成并重新规划后，可正常勾选和撤销完成；习惯列表与时间轴同步更新，重新打开后保留完成状态及先前的未完成记录。
 - 网页与移动端可通过认证下载服务安装社区包，并保留来源完整性校验和私有网络拦截。
 - 修改习惯名称时同步所有日期里已拖到时间轴的安排；重新打开后也会校正此前残留的旧名称，保留原有时间和完成记录。
@@ -309,6 +310,7 @@
 - Clicking outside the habit editor, closing it or returning to the overview saves edits automatically. Exiting a new item with unsaved content offers Save or Discard.
 
 ### Fixes
+- Timeline drag-to-create keeps the title input and confirm action compact and inline. Time adjustment handles no longer show extra square borders, while keyboard focus remains visible.
 - Habits can be completed and reopened after being marked unfinished and replanned. The habit list and timeline stay in sync, preserving completion and earlier unfinished records after reopening the app.
 - Web and mobile can install community packages through authenticated downloads while retaining source integrity checks and private-network blocking.
 - Renaming a habit updates its timeline schedules across all dates. Reopening also corrects older stale names while preserving scheduled times and completion history.
