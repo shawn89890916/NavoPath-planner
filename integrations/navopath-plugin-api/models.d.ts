@@ -1,4 +1,4 @@
-import type { ExtensionPreferences } from "./index";
+import type { ExtensionPreferences } from "./extensions";
 export type Category = "exam" | "uk" | "us" | "essay" | "materials" | "project" | "personal";
 export type Priority = "high" | "medium" | "low";
 export type NullablePriority = Priority | null;

@@ -52,7 +52,7 @@
         ]
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/linen.navopackage.json",
-      "sha256": "28a07677d8fcf18f53a4caa7cd5f235ca77e4f83dd2653af7335b53fa96c8bd9"
+      "sha256": "7258de21080920b47cf86300087ab070a506584091dd507fd8437aae93d2603a"
     },
     {
       "manifest": {
@@ -75,7 +75,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/pomodoro.navopackage.json",
-      "sha256": "8c199e25d89993e02ecb107c0218f007db1ba315d9adea713bde70346d3d622f"
+      "sha256": "8ea76462f33880165c863cff097bd9f015a0c3818449ab1d4a5544583c26ec46"
     },
     {
       "manifest": {
@@ -98,7 +98,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/weather.navopackage.json",
-      "sha256": "1551d2145c3e148be928026962a46cfcc260d1d25080245989b7eba3bfdd1085"
+      "sha256": "c2fe153e10b15bf2938e575ffdbaac39423808ea9bd8a0906b09b633c24ab874"
     }
   ]
 }

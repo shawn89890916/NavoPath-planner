@@ -27,8 +27,8 @@ for (const folder of (await readdir(resolve(root, 'community-plugins'))).sort())
     const result = await build({ entryPoints: [resolve(dir, 'main.ts')], bundle: true, format: 'esm', platform: 'browser', target: 'es2022', minify: true, legalComments: 'none', write: false });
     files[manifest.main] = { encoding: 'utf8', data: result.outputFiles[0].text };
   }
-  if (manifest.styles) files[manifest.styles] = { encoding: 'utf8', data: await readFile(resolve(dir, manifest.styles), 'utf8') };
-  files['LICENSE'] = { encoding: 'utf8', data: await readFile(resolve(dir, 'LICENSE'), 'utf8') };
+  if (manifest.styles) files[manifest.styles] = { encoding: 'utf8', data: (await readFile(resolve(dir, manifest.styles), 'utf8')).replaceAll('\r\n', '\n') };
+  files['LICENSE'] = { encoding: 'utf8', data: (await readFile(resolve(dir, 'LICENSE'), 'utf8')).replaceAll('\r\n', '\n') };
   const data = `${JSON.stringify({ manifest, files }, null, 2)}\n`;
   const filename = `${manifest.id}.navopackage.json`;
   await emit(resolve(output, filename), data);
@@ -59,8 +59,8 @@ await emit(resolve(root, 'src/extensions/officialPackages.ts'), `${imports}\nimp
 console.log(`${check ? 'Validated' : 'Built'} ${catalog.packages.length} extension packages and catalog SHA-256 values.`);
 // Ship a standalone type-only SDK and self-contained references with each
 // copyable template. They are generated from the actual host contracts.
-const apiTypes = (await readFile(resolve(root, 'src/extensions/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"../types"', '"./models"').replaceAll('"./timers"', '"./timer"');
-const modelTypes = (await readFile(resolve(root, 'src/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"./extensions/types"', '"./index"');
+const apiTypes = (await readFile(resolve(root, 'src/extensions/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"../types"', '"./models"').replaceAll('"./timers"', '"./timer"').replaceAll('"./model"', '"./extensions"');
+const modelTypes = (await readFile(resolve(root, 'src/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"./extensions/model"', '"./extensions"');
 const timerTypes = (await readFile(resolve(root, 'src/extensions/timers.ts'), 'utf8')).replaceAll('\r\n','\n').split('const modes =')[0].replaceAll('"../types"', '"./models"');
 const apiDoc = await readFile(resolve(root, 'docs/plugin-development.md'), 'utf8');
 for (const folder of ['navopath-plugin-api', 'navopath-plugin-template', 'navopath-theme-template']) {
@@ -68,6 +68,7 @@ for (const folder of ['navopath-plugin-api', 'navopath-plugin-template', 'navopa
   await mkdir(directory, { recursive: true });
   await emit(resolve(directory, 'index.d.ts'), apiTypes + '\nexport type * from "./models";\nexport type * from "./timer";\n');
   await emit(resolve(directory, 'models.d.ts'), modelTypes);
+  await emit(resolve(directory, 'extensions.d.ts'), (await readFile(resolve(root, 'src/extensions/model.ts'), 'utf8')).replaceAll('\r\n','\n'));
   await emit(resolve(directory, 'timer.d.ts'), timerTypes.trimEnd() + '\n');
   if (folder !== 'navopath-plugin-api') await emit(resolve(directory, '../API.md'), apiDoc);
 }
