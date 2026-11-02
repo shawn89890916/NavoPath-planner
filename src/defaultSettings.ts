@@ -1,6 +1,7 @@
 import type { Settings } from "./types";
 import { DEFAULT_WIDGET_APPEARANCE, normalizeWidgetAppearance } from "./widget/widgetPreferences";
 import { DEFAULT_WIDGET_TIMER_PREFERENCES, normalizeWidgetTimerPreferences } from "./widget/widgetTimer";
+import { normalizeExtensionPreferences } from "./extensions/packages";
 
 /**
  * Canonical NavoPath default settings.
@@ -274,6 +275,17 @@ export function normalizeSettings(value: unknown): Settings {
   }
 
   const normalized = { ...defaults, ...stored } as Record<string, unknown>;
+  normalized.extensions = normalizeExtensionPreferences(stored.extensions);
+  normalized.baseMode = allowedValue(stored.baseMode, ["light", "dark", "system"], allowedValue(stored.theme, ["light", "dark"], "light"));
+  const configs: Record<string, Record<string, unknown>> = {};
+  if (isRecord(stored.extensionConfigs)) {
+    for (const [key, value] of Object.entries(stored.extensionConfigs).slice(0, 100)) {
+      if (!/^[a-z0-9][a-z0-9._-]{0,79}:[a-z0-9][a-z0-9._-]{0,79}$/.test(key) || !isRecord(value)) continue;
+      const sanitized = sanitizePluginConfigValue(value, 0, { nodes: 0 }, new WeakSet());
+      if (isRecord(sanitized) && JSON.stringify(sanitized).length <= 65536) configs[key] = sanitized;
+    }
+  }
+  normalized.extensionConfigs = configs;
   for (const [key, fallback] of Object.entries(defaults)) {
     if (typeof fallback === "boolean" && typeof normalized[key] !== "boolean") normalized[key] = fallback;
     if (typeof fallback === "number" && (typeof normalized[key] !== "number" || !Number.isFinite(normalized[key]))) {
@@ -361,6 +373,11 @@ export function normalizeSettings(value: unknown): Settings {
   normalized.widgetTimerPreferences = normalizeWidgetTimerPreferences(
     isRecord(stored.widgetTimerPreferences) ? stored.widgetTimerPreferences : undefined,
   );
+  // Installation is restored after bootstrap. Preserve extension-owned settings
+  // here; the runtime chooses a usable mode once providers have registered.
+  if (isRecord(stored.widgetTimerPreferences) && typeof stored.widgetTimerPreferences.mode === "string" && /^[a-z0-9][a-z0-9._-]{0,79}$/.test(stored.widgetTimerPreferences.mode)) {
+    normalized.widgetTimerPreferences = { ...stored.widgetTimerPreferences, ...(normalized.widgetTimerPreferences as object), mode: stored.widgetTimerPreferences.mode };
+  }
 
   if (typeof stored.lastSyncedAt !== "string") normalized.lastSyncedAt = undefined;
   if (typeof stored.aiLastStartBriefDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(stored.aiLastStartBriefDate)) normalized.aiLastStartBriefDate = undefined;

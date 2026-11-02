@@ -1,27 +1,9 @@
 import { useState } from "react";
 import { detectSystemLanguage } from "./i18n";
-import { registerBuiltinPlugins } from "./plugins/builtin";
-import { listPlugins, pluginText } from "./plugins/registry";
 import type { Language } from "./types";
 import "./plugin-guide.css";
 
 const MCP_ENDPOINT = import.meta.env.VITE_MCP_ENDPOINT || "https://navopath-mcp.shawn89890916.workers.dev/mcp";
-
-function localizedPluginName(plugin: ReturnType<typeof listPlugins>[number], lang: Language) {
-  return pluginText(plugin.name, plugin.nameI18n, lang);
-}
-
-function localizedPluginDescription(plugin: ReturnType<typeof listPlugins>[number], lang: Language) {
-  return pluginText(plugin.description, plugin.descriptionI18n, lang);
-}
-
-function localizedPluginEnabledSummary(plugin: ReturnType<typeof listPlugins>[number], lang: Language) {
-  return pluginText(
-    lang === "zh" ? "启用后，官方工具将直接显示在下方工具栏中。" : "When enabled, official tools appear directly in the toolbar below.",
-    plugin.enabledSummaryI18n,
-    lang,
-  );
-}
 
 function DocCodeBlock({ value, label, language }: { value: string; label: string; language: Language }) {
   const [copied, setCopied] = useState(false);
@@ -37,18 +19,17 @@ function DocCodeBlock({ value, label, language }: { value: string; label: string
 }
 
 export default function PluginGuidePage() {
-  registerBuiltinPlugins();
   const [language, setLanguage] = useState<Language>(detectSystemLanguage());
   const zh = language === "zh";
   const labels = {
     back: zh ? "返回工作区" : "Back to app",
-    tag: zh ? "官方插件 / MCP 协议集成" : "OFFICIAL PLUGINS / MCP",
+    tag: zh ? "社区插件 / 主题 / MCP" : "COMMUNITY PLUGINS / THEMES / MCP",
     title: zh ? "插件系统与 MCP 连接指南" : "Plugins and MCP Integration Guide",
     intro: zh
-      ? "随 NavoPath 发布的内置插件提供开箱即用的实用工具；桌面端支持通过 Model Context Protocol (MCP) 让本地 AI 客户端读取与操作你的规划数据。"
-      : "Built-in plugins shipped with NavoPath provide ready-to-use tools. The desktop client supports Model Context Protocol (MCP) to let local AI assistants inspect and interact with your planning data.",
+      ? "通过独立安装包扩展 NavoPath 的工具、计时模式与外观；通过 Model Context Protocol (MCP) 让 AI 客户端读取与操作你的规划数据。"
+      : "Extend NavoPath tools, timer modes, and appearance with independent packages. Connect AI clients to planning data through Model Context Protocol (MCP).",
     mcp: zh ? "在新设备上连接 NavoPath" : "Connect NavoPath on a New Computer",
-    plugins: zh ? "内置插件功能" : "Built-in Plugin Capabilities",
+    plugins: zh ? "安装插件与主题" : "Install plugins and themes",
     security: zh ? "安全与权限边界" : "Security & Permission Boundaries",
     host: zh ? "宿主环境能力" : "Host Environment Capabilities",
   };
@@ -95,7 +76,7 @@ export default function PluginGuidePage() {
         <p className="df-doc-lede">{zh ? "建议为每台设备生成独立令牌。完成以下三个配置步骤后，Codex 或 Claude Desktop 即可联动 NavoPath。" : "We recommend generating a dedicated token for each device. Complete the three steps below to connect Codex or Claude Desktop with NavoPath."}</p>
         <div className="df-doc-steps" aria-label={zh ? "配置步骤" : "Setup Steps"}>
           <article><span>01</span><div><h3>{zh ? "1. 登录同一云端账户" : "1. Sign in to the Same Account"}</h3><p>{zh ? "在新设备上打开 NavoPath，登录保存规划数据的云端账户。" : "Open NavoPath on the new computer and sign in to the cloud account holding your planning data."}</p></div></article>
-          <article><span>02</span><div><h3>{zh ? "2. 创建设备专属令牌" : "2. Generate Device Token"}</h3><p>{zh ? "前往“设置 → 高级 → 日历与集成 → MCP”。按设备名称生成专用令牌，并妥善复制保存。" : "Go to Settings → Advanced → Calendars & Integrations → MCP. Create a token labelled with your device name and copy it securely."}</p></div></article>
+          <article><span>02</span><div><h3>{zh ? "2. 创建设备专属令牌" : "2. Generate Device Token"}</h3><p>{zh ? "前往“设置 → 日历与集成 → MCP”。按设备名称生成专用令牌，并妥善复制保存。" : "Go to Settings → Calendar & Integrations → MCP. Create a token labelled with your device name and copy it securely."}</p></div></article>
           <article><span>03</span><div><h3>{zh ? "3. 配置客户端并验证连接" : "3. Configure Client & Verify"}</h3><p>{zh ? "根据你使用的客户端填入配置，彻底退出客户端后重新打开，并在对话中测试列出 NavoPath 任务。" : "Apply configuration for your chosen client, fully restart the client application, and test by listing your NavoPath tasks."}</p></div></article>
         </div>
         <aside className="df-doc-note"><span>{zh ? "连接参数" : "Connection Parameters"}</span><dl>
@@ -143,15 +124,22 @@ export default function PluginGuidePage() {
           <tr><th>{zh ? "Claude 无法正常启动" : "Claude Startup Issue"}</th><td>{zh ? "请确认系统中已安装 Node.js 与 npx 命令；Windows 系统中路径反斜杠需转义处理。" : "Verify that Node.js and npx are installed and accessible; ensure file paths in Windows use properly escaped backslashes."}</td></tr>
         </tbody></table>
       </section>
-      <section id="plugins" className="df-doc-section"><h2>{labels.plugins}</h2><div className="df-doc-grid">
-        {listPlugins().map((plugin) => <article key={plugin.id}><h3>{localizedPluginName(plugin, language)}</h3><p>{localizedPluginDescription(plugin, language)}</p><small>{localizedPluginEnabledSummary(plugin, language)}</small></article>)}
-      </div></section>
-      <section id="security" className="df-doc-section"><h2>{labels.security}</h2><p>{zh ? "内置插件与 NavoPath 一同打包分发。桌面端本地插件仅在本地受信任环境执行，不上传个人规划数据。" : "Built-in plugins ship directly with NavoPath. Desktop plugins run in your trusted local environment without sending personal data elsewhere."}</p></section>
+      <section id="plugins" className="df-doc-section"><h2>{labels.plugins}</h2>
+        <ol className="df-doc-checklist">
+          <li>{zh ? "插件位于“设置 → 插件”；主题位于“设置 → 外观”。点击“浏览市场”，从当前来源按插件或主题类型浏览并安装。" : "Open Settings → Plugins for plugins, or Settings → Appearance for themes. Browse market shows the matching package type from your configured sources."}</li>
+          <li>{zh ? "也可导入 ZIP 或 .navopackage.json 扩展包。来源管理支持添加 HTTPS 市场索引。移除来源会保留已安装扩展。" : "You can also import a ZIP or .navopackage.json package. Manage sources accepts HTTPS catalog indexes. Removing a source keeps installed extensions."}</li>
+          <li>{zh ? "在已安装列表中启用、停用、更新、回退或卸载。插件专属设置在插件子页面中显示；主题提供声明式颜色、数值和文字选项。" : "Enable, disable, update, roll back, or uninstall from the installed list. Plugin settings open in a dedicated subpage; themes can expose declarative color, numeric, and text options."}</li>
+          <li>{zh ? "主题叠加顺序为默认浅色/深色样式、社区主题、用户明确设置。界面模式还可选择跟随系统。" : "Theme precedence is the light/dark base, community theme, then explicit user choices. Interface mode can also follow the system."}</li>
+        </ol>
+      </section>
+      <section id="security" className="df-doc-section"><h2>{labels.security}</h2><p>{zh ? "插件代码在宿主页面中运行，具有与应用相近的访问能力；它可以读取和修改工作区、访问网络，桌面专属插件还可使用桌面桥接能力。请核实作者和来源。受限模式暂停全部插件，保留安装与配置，适合排查异常。主题只加载 CSS 和静态资源。" : "Plugin code runs in the host page with access comparable to the app. It can read and change workspace data, access the network, and use desktop bridge capabilities when available. Verify authors and sources. Restricted mode pauses all plugins while retaining packages and configuration for troubleshooting. Themes load CSS and static assets."}</p></section>
       <section id="host" className="df-doc-section"><h2>{labels.host}</h2><table><tbody>
-        <tr><th><code>getData()</code></th><td>{zh ? "读取当前规划工作区快照。" : "Read current workspace planning snapshot."}</td></tr>
-        <tr><th><code>savePluginConfig(id, patch)</code></th><td>{zh ? "持久化存储插件专属配置。" : "Persist plugin-specific settings."}</td></tr>
-        <tr><th><code>emit(event, payload)</code></th><td>{zh ? "监听并广播 NavoPath 插件事件。" : "Listen and broadcast NavoPath plugin events."}</td></tr>
-        <tr><th><code>toast(message)</code></th><td>{zh ? "在应用界面展示轻量状态提示。" : "Display lightweight status notifications in the app."}</td></tr>
+        <tr><th><code>app.getData()</code></th><td>{zh ? "读取当前规划工作区快照。" : "Read current workspace planning snapshot."}</td></tr>
+        <tr><th><code>settings.save(patch)</code></th><td>{zh ? "持久化存储插件专属配置。" : "Persist plugin-specific settings."}</td></tr>
+        <tr><th><code>events.emit(event, payload)</code></th><td>{zh ? "监听并广播 NavoPath 插件事件。" : "Listen and broadcast NavoPath plugin events."}</td></tr>
+        <tr><th><code>ui.toast(message)</code></th><td>{zh ? "在应用界面展示轻量状态提示。" : "Display lightweight status notifications in the app."}</td></tr>
+        <tr><th><code>settings.registerPage / ui.addHeaderItem</code></th><td>{zh ? "挂载插件设置或顶栏入口，并注册清理函数。" : "Mount a plugin settings page or header item and register cleanup."}</td></tr>
+        <tr><th><code>timers.registerMode(provider)</code></th><td>{zh ? "注册独立计时模式，随插件停用而清理。" : "Register an independent timer mode with plugin lifecycle cleanup."}</td></tr>
       </tbody></table></section>
     </article>
   </main>;

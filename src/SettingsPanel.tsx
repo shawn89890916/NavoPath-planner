@@ -1,7 +1,6 @@
-import { localIsoDate } from "./utils/localDate";
 import { Suspense, lazy } from "react";
 import type { AiMemory, CalendarFeedTokenMetadata, DesktopUpdateState, ExternalCalendarSource, Language, PlannerData, Settings, WidgetAction } from "./types";
-import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useCallback } from "react";
 import { getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./workspaceEnvironment";
 import { formatLastSyncedAt, presetForMinutes, SYNC_INTERVAL_PRESETS } from "./sync";
@@ -9,11 +8,12 @@ import { t, viewLabel } from "./i18n";
 import { DESKTOP_DOWNLOAD_URL, DESKTOP_RELEASES_URL } from "./downloads";
 import { readAutoLaunchState, toggleAutoLaunchState } from "./desktopAutoLaunch";
 import { AI_PROVIDER_MODELS, aiProviderPreset, readLocalAiProviderConfig, writeLocalAiProviderConfig, clearLocalAiProviderConfig, type LocalAiProviderConfig } from "./aiProviderConfig";
-import { MAX_PLUGIN_CONFIG_STRING_LENGTH, listPlugins as listRegisteredPlugins, isActive as isPluginActive, resolveConfig as resolvePluginConfig, pluginText } from "./plugins/registry";
 import { SETTINGS_CATEGORIES, normalizeSettingsTarget, settingsCategoryLabel, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon } from "./components/UiIcons";
 import { DEFAULT_WIDGET_APPEARANCE, normalizeWidgetAppearance } from "./widget/widgetPreferences";
 import { normalizeWidgetTimerPreferences } from "./widget/widgetTimer";
+const ExtensionSettings = lazy(() => import("./extensions/ExtensionSettings").then(module => ({ default: module.ExtensionSettings })));
+import { getTimerModes, subscribeTimerModes, getTimerModeRevision } from "./extensions/timers";
 import { SHORTCUTS, groupShortcutsByScope, type ShortcutScope } from "./utils/shortcuts";
 import { exportDataAsJson, exportTasksAsCsv, isImportFileSizeAllowed, parsePlannerBackupJson, parseTasksCsv } from "./dataExport";
 import { preparePlannerDataRestore } from "./syncMerge";
@@ -26,7 +26,6 @@ import { runMotionTransition } from "./motion";
 import { getDefaultSettings } from "./defaultSettings";
 import { uid } from "./utils/ids";
 const localStorage = getWorkspaceStorage();
-const todayIso = () => getWorkspaceDemoRuntime()?.date ?? localIsoDate();
 
 const ProactiveAssistantSettings = lazy(() => import("./components/ProactiveAssistantSettings").then((module) => ({ default: module.ProactiveAssistantSettings })));
 
@@ -393,11 +392,6 @@ function AutoLaunchToggle({ lang }: { lang: Language }) {
   />;
 }
 
-function patchPluginConfig(settings: Settings, onSave: (patch: Partial<Settings>) => void, pluginId: string, patch: Record<string, unknown>) {
-  const existing = settings.pluginConfigs?.[pluginId] ?? {};
-  onSave({ pluginConfigs: { ...(settings.pluginConfigs ?? {}), [pluginId]: { ...existing, ...patch } } });
-}
-
 function AiProviderSettings({ lang, onSave }: { lang: Language; onSave: (patch: Partial<Settings>) => void }) {
   const [config, setConfig] = useState<LocalAiProviderConfig>(() => readLocalAiProviderConfig());
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -430,22 +424,6 @@ function AiProviderSettings({ lang, onSave }: { lang: Language; onSave: (patch: 
     <button type="button" className="df-settings-disclosure" onClick={() => setAdvancedOpen((open) => !open)}>{advancedOpen ? "−" : "+"} {lang === "zh" ? "高级配置" : "Advanced configuration"}</button>
     {advancedOpen && <div className="df-ai-provider-advanced"><label><span>JSON</span><textarea value={jsonText} spellCheck={false} onChange={(event) => setJsonText(event.target.value)} onBlur={() => { try { save(JSON.parse(jsonText) as Partial<LocalAiProviderConfig>); } catch { /* Keep the draft visible until valid JSON is entered. */ } }} /></label><button type="button" onClick={() => { clearLocalAiProviderConfig(); const next = readLocalAiProviderConfig(); setConfig(next); setJsonText(JSON.stringify(next, null, 2)); onSave({ model: next.model, baseUrl: next.baseUrl }); }}>{lang === "zh" ? "清除本机 Key" : "Clear local key"}</button></div>}
   </div>;
-}
-
-function localizedPluginName(plugin: ReturnType<typeof listRegisteredPlugins>[number], lang: Language) {
-  return pluginText(plugin.name, plugin.nameI18n, lang);
-}
-
-function localizedPluginDescription(plugin: ReturnType<typeof listRegisteredPlugins>[number], lang: Language) {
-  return pluginText(plugin.description, plugin.descriptionI18n, lang);
-}
-
-function localizedPluginEnabledSummary(plugin: ReturnType<typeof listRegisteredPlugins>[number], lang: Language) {
-  return pluginText(
-    lang === "zh" ? "启用后会在下方工具区显示可直接使用的官方工具。" : "After enabling, its official tool appears below.",
-    plugin.enabledSummaryI18n,
-    lang,
-  );
 }
 
 function SubscriptionPanel({ lang }: { lang: Language }) {
@@ -503,120 +481,6 @@ function AccountMoreSection({ lang, onShowAbout }: { lang: Language; onShowAbout
   );
 }
 
-function PomodoroPluginTool({ settings, onSave, lang }: { settings: Settings; onSave: (patch: Partial<Settings>) => void; lang: Language }) {
-  const plugin = listRegisteredPlugins().find((p) => p.id === "pomodoro");
-  const config = plugin ? resolvePluginConfig(plugin, settings.pluginConfigs?.pomodoro) : {};
-  const focusMinutes = Number(config.focusMinutes) || 25;
-  const breakMinutes = Number(config.breakMinutes) || 5;
-  const [phase, setPhase] = useState<"focus" | "break">("focus");
-  const [seconds, setSeconds] = useState(focusMinutes * 60);
-  const [running, setRunning] = useState(false);
-  useEffect(() => {
-    if (!running) return;
-    const timer = window.setInterval(() => {
-      setSeconds((value) => {
-        if (value > 1) return value - 1;
-        const nextPhase = phase === "focus" ? "break" : "focus";
-        setPhase(nextPhase);
-        return (nextPhase === "focus" ? focusMinutes : breakMinutes) * 60;
-      });
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [running, phase, focusMinutes, breakMinutes]);
-  useEffect(() => { if (!running) setSeconds((phase === "focus" ? focusMinutes : breakMinutes) * 60); }, [focusMinutes, breakMinutes, phase, running]);
-  const mm = Math.floor(seconds / 60).toString().padStart(2, "0");
-  const ss = (seconds % 60).toString().padStart(2, "0");
-  return (
-    <article className="df-plugin-tool">
-      <header><strong>Pomodoro</strong><small>{phase === "focus" ? (lang === "zh" ? "专注" : "Focus") : (lang === "zh" ? "休息" : "Break")}</small></header>
-      <div className="df-plugin-timer">{mm}:{ss}</div>
-      <div className="df-plugin-tool-actions">
-        <button type="button" onClick={() => setRunning((value) => !value)}>{running ? (lang === "zh" ? "暂停" : "Pause") : (lang === "zh" ? "开始" : "Start")}</button>
-        <button type="button" onClick={() => { setRunning(false); setPhase("focus"); setSeconds(focusMinutes * 60); }}>{lang === "zh" ? "重置" : "Reset"}</button>
-      </div>
-      <small>{lang === "zh" ? "时长可在插件配置中调整。" : "Adjust durations in plugin configuration."}</small>
-    </article>
-  );
-}
-
-function HabitPluginTool({ settings, onSave, lang }: { settings: Settings; onSave: (patch: Partial<Settings>) => void; lang: Language }) {
-  const plugin = listRegisteredPlugins().find((p) => p.id === "habit-tracker");
-  const config = plugin ? resolvePluginConfig(plugin, settings.pluginConfigs?.["habit-tracker"]) : {};
-  const today = todayIso();
-  const habits = String(config.habits || "").split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
-  const displayHabits = habits.length > 0 ? habits : (lang === "zh" ? ["复盘今天", "整理任务", "查看明日计划"] : ["Review today", "Tidy tasks", "Check tomorrow"]);
-  const doneByDate = (config.doneByDate && typeof config.doneByDate === "object" ? config.doneByDate : {}) as Record<string, string[]>;
-  const done = new Set(doneByDate[today] || []);
-  const toggle = (habit: string) => {
-    const next = new Set(done);
-    if (next.has(habit)) next.delete(habit);
-    else next.add(habit);
-    patchPluginConfig(settings, onSave, "habit-tracker", { doneByDate: { ...doneByDate, [today]: Array.from(next) } });
-  };
-  return (
-    <article className="df-plugin-tool">
-      <header><strong>{lang === "zh" ? "习惯" : "Habits"}</strong><small>{done.size}/{displayHabits.length}</small></header>
-      <div className="df-plugin-habits">
-        {displayHabits.map((habit) => <label key={habit}><input type="checkbox" checked={done.has(habit)} onChange={() => toggle(habit)} />{habit}</label>)}
-      </div>
-    </article>
-  );
-}
-
-function WeatherPluginTool({ settings, lang }: { settings: Settings; lang: Language }) {
-  const plugin = listRegisteredPlugins().find((p) => p.id === "weather");
-  const config = plugin ? resolvePluginConfig(plugin, settings.pluginConfigs?.weather) : {};
-  const city = String(config.city || "Shanghai");
-  const units = config.units === "f" ? "f" : "c";
-  const seed = Array.from(city).reduce((sum, char) => sum + char.charCodeAt(0), workspaceNow().getDate());
-  const celsius = 16 + (seed % 15);
-  const value = units === "f" ? Math.round(celsius * 9 / 5 + 32) : celsius;
-  const condition = [lang === "zh" ? "晴朗" : "Clear", lang === "zh" ? "多云" : "Cloudy", lang === "zh" ? "有风" : "Breezy"][seed % 3];
-  return (
-    <article className="df-plugin-tool">
-      <header><strong>{lang === "zh" ? "天气" : "Weather"}</strong><small>{city}</small></header>
-      <div className="df-plugin-weather"><strong>{value}°{units.toUpperCase()}</strong><span>{condition}</span></div>
-      <small>{lang === "zh" ? "本地预览徽章，不请求外部天气 API。" : "Local preview badge. No external weather API call."}</small>
-    </article>
-  );
-}
-
-function NotesPluginTool({ data, onSaveData, lang }: { data: PlannerData; onSaveData: (next: PlannerData) => void; lang: Language }) {
-  const task = data.tasks[0];
-  const [taskId, setTaskId] = useState(task?.id || "");
-  const selected = data.tasks.find((item) => item.id === taskId) || task;
-  if (!selected) {
-    return <article className="df-plugin-tool"><header><strong>{lang === "zh" ? "笔记" : "Notes"}</strong></header><small>{lang === "zh" ? "先创建一个任务后即可写笔记。" : "Create a task first to attach notes."}</small></article>;
-  }
-  const saveNotes = (notes: string) => {
-    onSaveData({ ...data, tasks: data.tasks.map((item) => item.id === selected.id ? { ...item, notes, updatedAt: workspaceNow().toISOString() } : item) });
-  };
-  return (
-    <article className="df-plugin-tool wide">
-      <header><strong>{lang === "zh" ? "任务笔记" : "Task notes"}</strong><small>{lang === "zh" ? "保存到任务 notes 字段" : "Saved to the task notes field"}</small></header>
-      <select value={selected.id} onChange={(event) => setTaskId(event.target.value)}>
-        {data.tasks.slice(0, 80).map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
-      </select>
-      <textarea rows={4} value={selected.notes || ""} onChange={(event) => saveNotes(event.target.value)} placeholder={lang === "zh" ? "写下任务背景、材料或下一步..." : "Add context, materials, or next steps..."} />
-    </article>
-  );
-}
-
-function PluginRuntimePanel({ settings, data, onSave, onSaveData, lang }: { settings: Settings; data: PlannerData; onSave: (patch: Partial<Settings>) => void; onSaveData: (next: PlannerData) => void; lang: Language }) {
-  const enabled = new Set(settings.enabledPlugins ?? []);
-  if (enabled.size === 0) {
-    return <p className="df-plugin-empty">{lang === "zh" ? "启用上方插件后，这里会出现可直接使用的工具。" : "Enable plugins above and their tools will appear here."}</p>;
-  }
-  return (
-    <section className="df-plugin-runtime" aria-label={lang === "zh" ? "已启用插件工具" : "Enabled plugin tools"}>
-      {enabled.has("pomodoro") && <PomodoroPluginTool settings={settings} onSave={onSave} lang={lang} />}
-      {enabled.has("habit-tracker") && <HabitPluginTool settings={settings} onSave={onSave} lang={lang} />}
-      {enabled.has("weather") && <WeatherPluginTool settings={settings} lang={lang} />}
-      {enabled.has("notes") && <NotesPluginTool data={data} onSaveData={onSaveData} lang={lang} />}
-    </section>
-  );
-}
-
 function settingsCategoryDescription(category: SettingsCategory, lang: Language, isDark: boolean): string {
   const descriptions: Record<SettingsCategory, [string, string]> = {
     general: ["语言、时间边界与快捷键。", "Language, time boundaries, and shortcuts."],
@@ -627,7 +491,8 @@ function settingsCategoryDescription(category: SettingsCategory, lang: Language,
     "account-data": ["账户、同步、导入导出与数据控制。", "Account, sync, imports, exports, and data controls."],
     ai: ["Navo AI 的模型、记忆与主动助理。", "Navo AI models, memory, and proactive assistant."],
     widget: ["桌面窗口的外观与计时器。", "Desktop window appearance and timer."],
-    integrations: ["日历订阅、外部日历、插件、MCP 与云盘同步。", "Calendar subscriptions, external calendars, plugins, MCP, and cloud-folder sync."],
+    integrations: ["日历订阅、外部日历、MCP 与云盘同步。", "Calendar subscriptions, external calendars, MCP, and cloud-folder sync."],
+    plugins: ["扩展市场、插件管理与来源。", "Extension market, plugin management, and sources."],
     advanced: ["高级设置与恢复选项。", "Advanced and recovery options."],
   };
   return descriptions[category][lang === "zh" ? 0 : 1];
@@ -653,7 +518,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   const [settingsHome, setSettingsHome] = useState(!initialSection && compactLayout);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [widgetThemeOpen, setWidgetThemeOpen] = useState<"light" | "dark">("light");
-  const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "plugins" | "mcp" | "sync">("calendar");
+  const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "mcp" | "sync">("calendar");
   const settingsContentRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [profileNameEditing, setProfileNameEditing] = useState(false);
@@ -688,7 +553,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
     if (settingsTarget.anchor?.startsWith("widget-dark")) setWidgetThemeOpen("dark");
     if (settingsTarget.anchor === "mcp") setIntegrationTab("mcp");
     if (settingsTarget.anchor === "sync-bridge") setIntegrationTab("sync");
-    if (settingsTarget.anchor === "plugins") setIntegrationTab("plugins");
+
     if (settingsTarget.anchor === "external-calendar") setIntegrationTab("external-calendar");
   }, [settingsTarget.anchor]);
   useEffect(() => {
@@ -714,7 +579,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
     if (target.anchor?.startsWith("widget-dark")) setWidgetThemeOpen("dark");
     if (target.anchor === "mcp") setIntegrationTab("mcp");
     if (target.anchor === "sync-bridge") setIntegrationTab("sync");
-    if (target.anchor === "plugins") setIntegrationTab("plugins");
+
     if (target.anchor === "calendar-feed") setIntegrationTab("calendar");
     if (target.anchor === "external-calendar") setIntegrationTab("external-calendar");
     void runMotionTransition(() => flushSync(() => {
@@ -757,9 +622,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   const [confirmResetSettings, setConfirmResetSettings] = useState(false);
   const [confirmClearLocalData, setConfirmClearLocalData] = useState(false);
   const [clearLocalDataPhrase, setClearLocalDataPhrase] = useState("");
-  const [pluginConfigDialogId, setPluginConfigDialogId] = useState<string | null>(null);
-  const [pluginConfigDraft, setPluginConfigDraft] = useState<Record<string, unknown>>({});
   const widgetAppearance = normalizeWidgetAppearance(settings.widgetAppearance);
+  useSyncExternalStore(subscribeTimerModes, getTimerModeRevision);
   const widgetTimerSettings = normalizeWidgetTimerPreferences(settings.widgetTimerPreferences);
   const [widgetTimerDraft, setWidgetTimerDraft] = useState(widgetTimerSettings);
   useEffect(() => {
@@ -773,43 +637,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
     [theme]: { ...widgetAppearance[theme], ...patch },
   });
   const updateWidgetTimerDraft = (patch: Partial<typeof widgetTimerDraft>) => setWidgetTimerDraft(normalizeWidgetTimerPreferences({ ...widgetTimerDraft, ...patch }));
-  // Force a re-render of the plugin list when activation state changes (the
-  // registry holds state outside React).
-  const [, setPluginRefreshTick] = useState(0);
-
-  function togglePlugin(pluginId: string) {
-    const list = settings.enabledPlugins ?? [];
-    const enabled = list.includes(pluginId);
-    const next = enabled ? list.filter((id) => id !== pluginId) : [...list, pluginId];
-    onSave({ enabledPlugins: next });
-  }
-
-  function openPluginConfig(pluginId: string) {
-    const plugin = listRegisteredPlugins().find((p) => p.id === pluginId);
-    if (!plugin) return;
-    const resolved = resolvePluginConfig(plugin, settings.pluginConfigs?.[pluginId]);
-    setPluginConfigDraft(resolved);
-    setPluginConfigDialogId(pluginId);
-  }
-
-  function savePluginConfigField(key: string, value: unknown) {
-    setPluginConfigDraft((prev) => ({ ...prev, [key]: value }));
-  }
-
-  function commitPluginConfig() {
-    if (!pluginConfigDialogId) return;
-    const plugin = listRegisteredPlugins().find((item) => item.id === pluginConfigDialogId);
-    if (!plugin) return;
-    const existing = settings.pluginConfigs?.[pluginConfigDialogId] ?? {};
-    const normalized = resolvePluginConfig(plugin, pluginConfigDraft);
-    const merged = plugin.source === "external" ? normalized : { ...existing, ...normalized };
-    const nextConfigs = { ...(settings.pluginConfigs ?? {}), [pluginConfigDialogId]: merged };
-    onSave({ pluginConfigs: nextConfigs });
-    setPluginConfigDialogId(null);
-    setPluginConfigDraft({});
-    setPluginRefreshTick((n) => n + 1);
-  }
-
   const defaultAccent = settings.theme === "dark" ? "#EEE9DF" : "#27231E";
   const selectedAccent = settings.executeAccentColor || settings.planningAccentColor || defaultAccent;
   const accentPresets = [...(settings.theme === "dark" ? EXECUTE_THEME_PRESETS_DARK : EXECUTE_THEME_PRESETS_LIGHT), defaultAccent];
@@ -1015,11 +842,11 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                   <div className="df-settings-home-card df-settings-home-quick-card">
                     <div className="df-settings-home-quick-row">
                       <div className="df-settings-home-quick-label"><UiPencilIcon size={19} strokeWidth={1.8} /><span>{lang === "zh" ? "界面模式" : "Appearance"}</span></div>
-                      <SettingSelect<Settings["theme"]>
-                        value={settings.theme}
+                      <SettingSelect<"light" | "dark" | "system">
+                        value={settings.baseMode || settings.theme}
                         ariaLabel={lang === "zh" ? "界面模式" : "Appearance"}
-                        onChange={(value) => onSave({ theme: value })}
-                        options={[{ value: "light", label: t(lang, "settings.light") }, { value: "dark", label: t(lang, "settings.dark") }]}
+                        onChange={(value) => onSave({ baseMode: value, theme: value === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : value })}
+                        options={[{ value: "light", label: t(lang, "settings.light") }, { value: "dark", label: t(lang, "settings.dark") }, { value: "system", label: lang === "zh" ? "跟随系统" : "System" }]}
                       />
                     </div>
                     {settings.theme !== "dark" && <div className="df-settings-home-quick-row df-settings-home-quick-row--accent">
@@ -1108,13 +935,13 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               <SettingRow
                 anchor="theme"
                 title={t(lang, "settings.uiMode")}
-                control={<SettingSelect<Settings["theme"]>
-                  value={settings.theme}
+                control={<SettingSelect<"light" | "dark" | "system">
+                  value={settings.baseMode || settings.theme}
                   ariaLabel={t(lang, "settings.uiMode")}
-                  onChange={(value) => onSave({ theme: value })}
+                  onChange={(value) => onSave({ baseMode: value, theme: value === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : value })}
                   options={[
                     { value: "light", label: t(lang, "settings.light") },
-                    { value: "dark", label: t(lang, "settings.dark") },
+                    { value: "dark", label: t(lang, "settings.dark") }, { value: "system", label: lang === "zh" ? "跟随系统" : "System" },
                   ]}
                 />}
               />
@@ -1165,6 +992,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               </div>}
             </SettingSection>}
 
+            {settingsTarget.category === "appearance" && <Suspense fallback={null}><ExtensionSettings lang={lang} kind="theme" /></Suspense>}
             {settingsTarget.category === "general" && <SettingSection anchor="execution-defaults" title={lang === "zh" ? "执行默认项" : "Execution defaults"} description={lang === "zh" ? "时间轴与完成任务的默认行为。" : "Default timeline and completed-task behavior."}>
               <SettingRow
                 anchor="default-timeline"
@@ -1427,18 +1255,10 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               <SettingRow
                 anchor="widget-timer"
                 title={lang === "zh" ? "计时模式" : "Timer mode"}
-                control={<SettingSelect value={widgetTimerDraft.mode} ariaLabel={lang === "zh" ? "小组件计时模式" : "Widget timer mode"} onChange={(mode) => updateWidgetTimerDraft({ mode })} options={[
-                  { value: "stopwatch", label: lang === "zh" ? "正计时" : "Stopwatch" },
-                  { value: "pomodoro", label: lang === "zh" ? "番茄钟" : "Pomodoro" },
-                  { value: "countdown", label: lang === "zh" ? "倒计时" : "Countdown" },
-                ]} />}
+                control={<SettingSelect value={widgetTimerDraft.mode} ariaLabel={lang === "zh" ? "小组件计时模式" : "Widget timer mode"} onChange={(mode) => updateWidgetTimerDraft({ mode })} options={getTimerModes().map((provider) => ({ value: provider.mode, label: provider[lang] }))} />}
               />
-              {widgetTimerDraft.mode === "pomodoro" && <>
-                <SettingRow title={lang === "zh" ? "专注时长" : "Focus duration"} control={<SettingNumberInput value={widgetTimerDraft.focusMinutes} min={1} max={180} step={1} suffix={lang === "zh" ? "分钟" : "min"} ariaLabel={lang === "zh" ? "番茄钟专注时长" : "Pomodoro focus duration"} onChange={(focusMinutes) => updateWidgetTimerDraft({ focusMinutes })} />} />
-                <SettingRow title={lang === "zh" ? "休息时长" : "Break duration"} control={<SettingNumberInput value={widgetTimerDraft.breakMinutes} min={1} max={60} step={1} suffix={lang === "zh" ? "分钟" : "min"} ariaLabel={lang === "zh" ? "番茄钟休息时长" : "Pomodoro break duration"} onChange={(breakMinutes) => updateWidgetTimerDraft({ breakMinutes })} />} />
-                <SettingRow title={lang === "zh" ? "循环轮数" : "Pomodoro rounds"} control={<SettingNumberInput value={widgetTimerDraft.rounds} min={1} max={12} step={1} ariaLabel={lang === "zh" ? "番茄钟循环轮数" : "Pomodoro rounds"} onChange={(rounds) => updateWidgetTimerDraft({ rounds })} />} />
-              </>}
               {widgetTimerDraft.mode === "countdown" && <SettingRow title={lang === "zh" ? "倒计时时长" : "Countdown duration"} control={<SettingNumberInput value={Math.round(widgetTimerDraft.countdownSeconds / 60)} min={1} max={1440} step={1} suffix={lang === "zh" ? "分钟" : "min"} ariaLabel={lang === "zh" ? "倒计时时长" : "Countdown duration"} onChange={(minutes) => updateWidgetTimerDraft({ countdownSeconds: minutes * 60 })} />} />}
+              {!["stopwatch", "countdown"].includes(widgetTimerDraft.mode) && <SettingDescription>{lang === "zh" ? "请在插件设置页面调整此计时模式。" : "Adjust this timer mode in its plugin settings page."}</SettingDescription>}
               {widgetTimerDraft.mode === "stopwatch" && <SettingDescription>{lang === "zh" ? "正计时无需设置时长。" : "Stopwatch mode has no duration settings."}</SettingDescription>}
               <SettingRow
                 title={lang === "zh" ? "计时器操作" : "Timer actions"}
@@ -1538,7 +1358,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             {settingsTarget.category === "integrations" && <div className="df-settings-subtabs df-settings-integration-tabs ui-choice-list ui-choice-list--inline" role="tablist" aria-label={lang === "zh" ? "日历与集成" : "Calendar and integrations"}>
               <button type="button" role="tab" aria-selected={integrationTab === "calendar"} className={`ui-choice-item${integrationTab === "calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("calendar"); setSettingsTarget({ category: "integrations", anchor: "calendar-feed" }); }}>{lang === "zh" ? "日历订阅" : "Calendar"}</button>
               <button type="button" role="tab" aria-selected={integrationTab === "external-calendar"} className={`ui-choice-item${integrationTab === "external-calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("external-calendar"); setSettingsTarget({ category: "integrations", anchor: "external-calendar" }); }}>{lang === "zh" ? "外部日历" : "External"}</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "plugins"} className={`ui-choice-item${integrationTab === "plugins" ? " active" : ""}`} onClick={() => { setIntegrationTab("plugins"); setSettingsTarget({ category: "integrations", anchor: "plugins" }); }}>{lang === "zh" ? "插件" : "Plugins"}</button>
               <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={`ui-choice-item${integrationTab === "mcp" ? " active" : ""}`} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "integrations", anchor: "mcp" }); }}>MCP</button>
               <button type="button" role="tab" aria-selected={integrationTab === "sync"} className={`ui-choice-item${integrationTab === "sync" ? " active" : ""}`} onClick={() => { setIntegrationTab("sync"); setSettingsTarget({ category: "integrations", anchor: "sync-bridge" }); }}>{lang === "zh" ? "同步" : "Sync"}</button>
             </div>}
@@ -1546,85 +1365,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <section className="df-settings-group" data-settings-anchor="external-calendar" tabIndex={-1}><h3>{lang === "zh" ? "外部日历" : "External Calendars"}</h3><ExternalCalendarManager lang={lang} /></section>}
             {settingsTarget.category === "integrations" && integrationTab === "mcp" && <section className="df-settings-group" data-settings-anchor="mcp" tabIndex={-1}><h3>MCP</h3><Suspense fallback={<p className="df-mcp-status">{lang === "zh" ? "正在打开 MCP…" : "Opening MCP…"}</p>}><McpTokenManager lang={lang} /></Suspense></section>}
             {settingsTarget.category === "integrations" && integrationTab === "sync" && <section className="df-settings-group" data-settings-anchor="sync-bridge" tabIndex={-1}><h3>{lang === "zh" ? "同步" : "Sync"}</h3><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></section>}
-            {settingsTarget.category === "integrations" && integrationTab === "plugins" && <section className="df-settings-group" data-settings-anchor="plugins" tabIndex={-1}>
-              <h3>{lang === "zh" ? "插件" : "Plugins"}</h3>
-              <p className="df-settings-desc">{lang === "zh" ? "这里会显示随应用发布的内置插件，以及桌面端用户插件目录中经过校验的本地 manifest。本地插件可保存配置，但不会加载或执行 index.js 等目录脚本。" : "This list includes built-in plugins shipped with the app and validated local manifests from the desktop plugin directory. Local plugin configuration can be stored, but directory scripts such as index.js are not loaded or executed."}</p>
-
-              <div className="df-settings-divider" />
-              <div className="df-settings-subhead">{lang === "zh" ? "可用插件" : "Available plugins"}</div>
-
-              <div className="df-plugin-list">
-                {listRegisteredPlugins().map((plugin) => {
-                  const enabled = Boolean(settings?.enabledPlugins?.includes(plugin.id));
-                  const active = isPluginActive(plugin.id);
-                  const externalManifest = plugin.source === "external";
-                  return (
-                    <div key={plugin.id} className={`df-plugin-card ${enabled ? "installed" : ""}`}>
-                      <div className="df-plugin-icon">{plugin.icon}</div>
-                      <div className="df-plugin-info">
-                        <div className="df-plugin-header">
-                          <strong className="df-plugin-name">{localizedPluginName(plugin, lang)}</strong>
-                          <span className="df-plugin-version">v{plugin.version}</span>
-                        </div>
-                        <p className="df-plugin-desc">{localizedPluginDescription(plugin, lang)}</p>
-                        <p className="df-plugin-enabled-summary">{localizedPluginEnabledSummary(plugin, lang)}</p>
-                        <div className="df-plugin-meta">
-                          <span className="df-plugin-author">{plugin.author}</span>
-                          <span>{externalManifest ? (lang === "zh" ? "声明权限" : "Declared permissions") : (lang === "zh" ? "权限" : "Permissions")}: {plugin.permissions.join(", ")}</span>
-                          {enabled && (
-                            <span className="df-plugin-status">
-                              {externalManifest
-                                ? (lang === "zh" ? "配置已启用" : "Configuration enabled")
-                                : active
-                                  ? (lang === "zh" ? "运行中" : "Running")
-                                  : (lang === "zh" ? "已启用，等待刷新" : "Enabled, refreshing")}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="df-plugin-actions">
-                        {enabled ? (
-                          <>
-                            <button
-                              type="button"
-                              className="df-plugin-config"
-                              onClick={() => openPluginConfig(plugin.id)}
-                            >
-                              {lang === "zh" ? "配置" : "Configure"}
-                            </button>
-                            <button
-                              type="button"
-                              className="df-plugin-uninstall"
-                              onClick={() => togglePlugin(plugin.id)}
-                            >
-                              {lang === "zh" ? "停用" : "Disable"}
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            type="button"
-                            className="df-plugin-install"
-                            onClick={() => togglePlugin(plugin.id)}
-                          >
-                            {lang === "zh" ? "启用" : "Enable"}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="df-settings-divider" />
-              <a className="df-plugin-doc-link" href="/plugin-guide">
-                <span>{lang === "zh" ? "打开 Plugins / MCP 使用教程" : "Open Plugins / MCP guide"}</span>
-                <small>{lang === "zh" ? "查看内置插件、本地插件、MCP 配置和安全边界" : "Read built-in plugins, local plugins, MCP setup, and security boundaries"}</small>
-                <i aria-hidden="true">↗</i>
-              </a>
-              <div className="df-settings-divider" />
-              <div className="df-settings-subhead">{lang === "zh" ? "已启用工具" : "Enabled tools"}</div>
-              <PluginRuntimePanel settings={settings} data={data} onSave={onSave} onSaveData={onSaveData} lang={lang} />
-            </section>}
+            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings lang={lang} kind="plugin" /></Suspense>}
             {!compactLayout && settingsTarget.category === "account-data" && <SettingSection anchor="account-profile" title={lang === "zh" ? "个人资料" : "Profile"}>
               {profileHero}
             </SettingSection>}
@@ -1717,89 +1458,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
           </div>
         )}
       </aside>
-      {pluginConfigDialogId && (() => {
-        const plugin = listRegisteredPlugins().find((p) => p.id === pluginConfigDialogId);
-        if (!plugin) return null;
-        return createPortal(
-          <div className="df-dialog-overlay" role="presentation" onMouseDown={() => { setPluginConfigDialogId(null); }}>
-            <section
-              className="df-dialog"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="df-plugin-config-title"
-              onMouseDown={(event) => event.stopPropagation()}
-            >
-              <form onSubmit={(event) => { event.preventDefault(); commitPluginConfig(); }}>
-                <h2 id="df-plugin-config-title">{plugin.icon} {localizedPluginName(plugin, lang)}</h2>
-                <p className="df-settings-desc">{localizedPluginDescription(plugin, lang)}</p>
-                <div className="df-plugin-config-fields">
-                  {plugin.configFields.map((field) => {
-                    const value = pluginConfigDraft[field.key];
-                    if (field.type === "boolean") {
-                      return (
-                        <label key={field.key} className="df-utility-check">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(value)}
-                            onChange={(event) => savePluginConfigField(field.key, event.target.checked)}
-                          />
-                          {pluginText(field.label, field.labelI18n, lang)}
-                        </label>
-                      );
-                    }
-                    if (field.type === "select") {
-                      return (
-                        <label key={field.key} className="df-plugin-config-field">
-                          <span>{pluginText(field.label, field.labelI18n, lang)}</span>
-                          <select value={String(value ?? "")} onChange={(event) => savePluginConfigField(field.key, event.target.value)}>
-                            {(field.options ?? []).map((opt) => (
-                              <option key={opt.value} value={opt.value}>{pluginText(opt.label, opt.labelI18n, lang)}</option>
-                            ))}
-                          </select>
-                        </label>
-                      );
-                    }
-                    if (field.type === "number") {
-                      return (
-                        <label key={field.key} className="df-plugin-config-field">
-                          <span>{pluginText(field.label, field.labelI18n, lang)}</span>
-                          <input
-                            type="number"
-                            value={Number(value ?? 0)}
-                            min={field.min}
-                            max={field.max}
-                            onChange={(event) => savePluginConfigField(field.key, Number(event.target.value))}
-                          />
-                        </label>
-                      );
-                    }
-                    return (
-                      <label key={field.key} className="df-plugin-config-field">
-                        <span>{pluginText(field.label, field.labelI18n, lang)}</span>
-                        <textarea
-                          rows={3}
-                          maxLength={MAX_PLUGIN_CONFIG_STRING_LENGTH}
-                          value={String(value ?? "")}
-                          onChange={(event) => savePluginConfigField(field.key, event.target.value)}
-                        />
-                      </label>
-                    );
-                  })}
-                </div>
-                <div className="df-dialog-actions">
-                  <button type="button" className="df-dialog-secondary" onClick={() => { setPluginConfigDialogId(null); }}>
-                    {lang === "zh" ? "取消" : "Cancel"}
-                  </button>
-                  <button type="submit" className="df-dialog-primary">
-                    {lang === "zh" ? "保存" : "Save"}
-                  </button>
-                </div>
-              </form>
-            </section>
-          </div>,
-          document.body,
-        );
-      })()}
       {confirmResetSettings && createPortal(
         <div className="df-dialog-overlay" role="presentation" onMouseDown={() => setConfirmResetSettings(false)}>
           <section className="df-dialog" role="dialog" aria-modal="true" aria-labelledby="df-reset-settings-title" onMouseDown={(event) => event.stopPropagation()}>

@@ -1,0 +1,48 @@
+{
+  "author": "Your name",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "minAppVersion": "1.5.0",
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
+  "repository": "https://github.com/shawn89890916/NavoPath-planner",
+  "license": "MIT",
+  "kind": "theme",
+  "id": "my-theme",
+  "name": "My theme",
+  "description": "A CSS-only paper theme.",
+  "styles": "styles.css",
+  "options": [
+    {
+      "key": "paper",
+      "label": "Light paper",
+      "type": "color",
+      "variable": "--linen-paper",
+      "default": "#F8F7F3"
+    },
+    {
+      "key": "ink",
+      "label": "Light ink",
+      "type": "color",
+      "variable": "--linen-ink",
+      "default": "#27231E"
+    },
+    {
+      "key": "dark-paper",
+      "label": "Dark paper",
+      "type": "color",
+      "variable": "--linen-dark-paper",
+      "default": "#101010"
+    },
+    {
+      "key": "dark-ink",
+      "label": "Dark ink",
+      "type": "color",
+      "variable": "--linen-dark-ink",
+      "default": "#D9D6CF"
+    }
+  ]
+}

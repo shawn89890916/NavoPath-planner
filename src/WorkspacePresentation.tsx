@@ -1017,92 +1017,26 @@ export function AttachmentCard({ attachment, referenced = false, onRemove }: { a
 }
 
 export function themeVars(settings: Settings, mode: "planning" | "execute") {
-  const executeDefault = "#584D3D";
-  const planningDefault = "#584D3D";
-  const execute = normalizeHexColor(settings.executeAccentColor || executeDefault, executeDefault);
-  const planning = normalizeHexColor(settings.planningAccentColor || planningDefault, planningDefault);
-  const executeLight = isLightColor(execute);
-  const planningLight = isLightColor(planning);
-  const activeAccent = mode === "execute" ? execute : planning;
-  const activeLight = mode === "execute" ? executeLight : planningLight;
-  const { r, g, b } = hexToRgb(activeAccent);
-  const isDark = settings.theme === "dark";
-  // Timeline font scale: clamp to safe range, default 1
-  const fontScale = Math.max(0.85, Math.min(1.3, settings.timelineFontScale ?? 1));
-  if (isDark) {
-    return {
-      "--execute-primary": execute,
-      "--execute-on-primary": executeLight ? "#111827" : "#FFFFFF",
-      "--planning-primary": planning,
-      "--planning-on-primary": planningLight ? "#111827" : "#FFFFFF",
-      "--accent-active": "#A9A49B",
-      "--accent-rgb": "169, 164, 155",
-      "--accent-on": "#1A1B1D",
-      "--bg-app": "#080808",
-      "--bg-app-soft": "#0C0C0C",
-      "--surface-main": "#101010",
-      "--surface-raised": "#191919",
-      "--surface-card": "#141414",
-      "--surface-tint": "var(--surface-raised)",
-      "--text-main": "#D9D6CF",
-      "--text-muted": "#B1AEA7",
-      "--text-faint": "#898781",
-      "--danger-ink": "#B58F88",
-      "--danger": "#B58F88",
-      "--color-danger": "#B58F88",
-      "--df-danger": "#B58F88",
-      "--warning-ink": "#A59678",
-      "--navo-coral": "#9C7C72",
-      "--task-priority-high": "#AA827B",
-      "--task-priority-medium": "#A59678",
-      "--task-priority-low": "#85949E",
-      "--task-priority-normal": "#898781",
-      "--task-priority-unset": "#898781",
-      "--project-color-lightness-min": "0.55",
-      "--project-color-lightness-max": "0.68",
-      "--project-color-chroma": "0.45",
-      "--project-label-color": "var(--text-muted)",
-      "--border-soft": "#555452",
-      "--border-subtle": "#2A2A2A",
-      "--shadow-soft": "0 18px 48px rgba(0,0,0,0.28)",
-      "--shadow-hl": "none",
-      "--header-bg": "rgba(8,8,8,0.96)",
-      "--header-border": "#2A2A2A",
-      "--header-fg": "#D9D6CF",
-      "--header-fg-muted": "#B1AEA7",
-      "--input-bg": "#101010",
-      "--input-border": "#5B5955",
-      "--timeline-paper": "#101010",
-      "--timeline-font-scale": String(fontScale),
-    } as CSSProperties;
+  const overrides: Record<string, string> = {};
+  const execute = settings.executeAccentColor;
+  const planning = settings.planningAccentColor;
+  for (const [name, color] of [["execute", execute], ["planning", planning]] as const) {
+    if (!color) continue;
+    const normalized = normalizeHexColor(color, "#584D3D");
+    overrides[`--${name}-primary`] = normalized;
+    overrides[`--${name}-on-primary`] = isLightColor(normalized) ? "#111827" : "#FFFFFF";
   }
-  return {
-    "--execute-primary": execute,
-    "--execute-on-primary": executeLight ? "#111827" : "#FFFFFF",
-    "--planning-primary": planning,
-    "--planning-on-primary": planningLight ? "#111827" : "#FFFFFF",
-    "--accent-active": activeAccent,
-    "--accent-rgb": `${r}, ${g}, ${b}`,
-    "--accent-on": activeLight ? "#111827" : "#FFFFFF",
-    "--bg-app": "#F8F7F3",
-    "--bg-app-soft": "#F3F0E9",
-    "--surface-main": "#F8F7F3",
-    "--surface-raised": "#FCFBF8",
-    "--surface-card": "#FFFFFF",
-    "--text-main": "#27231E",
-    "--text-muted": "#7B7062",
-    "--text-faint": "#A69D92",
-    "--border-soft": "#DED8D8",
-    "--border-subtle": "#EBE6E8",
-    "--shadow-soft": "0 12px 28px rgba(88,77,61,0.10)",
-    "--shadow-hl": "none",
-    "--header-bg": "rgba(248,247,243,0.92)",
-    "--header-border": "rgba(88,77,61,0.14)",
-    "--header-fg": "#584D3D",
-    "--header-fg-muted": "#7B7062",
-    "--input-bg": "#FCFBF8",
-    "--input-border": "#DED8D8",
-    "--timeline-paper": "#F8F7F3",
-    "--timeline-font-scale": String(fontScale),
-  } as CSSProperties;
+  const active = mode === "execute" ? execute : planning;
+  if (settings.theme !== "dark" && active) {
+    const normalized = normalizeHexColor(active, "#584D3D");
+    const { r, g, b } = hexToRgb(normalized);
+    overrides["--accent-active"] = normalized;
+    overrides["--accent-rgb"] = `${r}, ${g}, ${b}`;
+    overrides["--accent-on"] = isLightColor(normalized) ? "#111827" : "#FFFFFF";
+  }
+  // Only a saved scale overrides theme CSS; the base stylesheet supplies 1.
+  if (settings.timelineFontScale != null && settings.timelineFontScale !== 1) {
+    overrides["--timeline-font-scale"] = String(Math.max(0.85, Math.min(1.3, settings.timelineFontScale)));
+  }
+  return overrides as CSSProperties;
 }

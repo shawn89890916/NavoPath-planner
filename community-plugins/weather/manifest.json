@@ -1,0 +1,19 @@
+{
+  "author": "NavoPath",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "minAppVersion": "1.5.0",
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
+  "repository": "https://github.com/shawn89890916/NavoPath-planner",
+  "license": "MIT",
+  "kind": "plugin",
+  "id": "weather",
+  "name": "Weather",
+  "description": "Real current weather and daily high, low and precipitation from Open-Meteo.",
+  "main": "main.js",
+  "styles": "styles.css"
+}

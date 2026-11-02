@@ -1,0 +1,9 @@
+.df-extensions { min-width: 0; }
+.df-extension-file { display: none; }
+.df-extension-list, .df-extension-sources { min-width: 0; }
+.df-extension-error { color: var(--danger-ink, var(--text-main)); overflow-wrap: anywhere; }
+.df-extensions .df-settings-row-desc { overflow-wrap: anywhere; }
+.df-extensions .df-settings-row-control { flex-wrap: wrap; }
+@media (max-width: 680px) {
+  .df-extensions .df-settings-row-control { justify-content: flex-start; }
+}

@@ -1,0 +1,10 @@
+body[data-navopath-base-theme="light"], .df-app.theme-light, .df-widget-root[data-theme="light"], .df-widget-popover-root[data-theme="light"] {
+  --surface-main: var(--linen-paper, #F8F7F3);
+  --timeline-paper: var(--linen-paper, #F8F7F3);
+  --text-main: var(--linen-ink, #27231E);
+}
+body[data-navopath-base-theme="dark"], .df-app.theme-dark, .df-widget-root[data-theme="dark"], .df-widget-popover-root[data-theme="dark"] {
+  --surface-main: var(--linen-dark-paper, #101010);
+  --timeline-paper: var(--linen-dark-paper, #101010);
+  --text-main: var(--linen-dark-ink, #D9D6CF);
+}

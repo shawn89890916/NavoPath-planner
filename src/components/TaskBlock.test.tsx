@@ -338,7 +338,7 @@ describe("TaskBlock shared component contract", () => {
   it("keeps Planning fallbacks bound to the active theme accent", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
     const appCss = readFileSync(resolve(__dirname, "../app.css"), "utf8");
-    const planningModeRule = appCss.match(/\.df-app\.mode-planning\s*{[\s\S]*?\n}/)?.[0] || "";
+    const theme = readFileSync(resolve(__dirname, "../WorkspacePresentation.tsx"), "utf8");
 
     expect(planning).toContain('const DEFAULT_PROJECT_COLOR = "var(--accent-active)"');
     expect(planning).toContain("color-mix(in srgb, ${color} ${alpha * 100}%, transparent)");
@@ -347,8 +347,9 @@ describe("TaskBlock shared component contract", () => {
     expect(planning).not.toContain("rgba(202, 255, 114");
     expect(appCss).not.toContain("--accent-plan");
     expect(appCss).not.toContain("#CAFF72");
-    expect(planningModeRule).toContain("--accent-active: var(--planning-primary, #584D3D);");
-    expect(planningModeRule).toContain("--accent-rgb: 88, 77, 61;");
+    expect(theme).toContain('const active = mode === "execute" ? execute : planning;');
+    expect(theme).toContain('overrides["--accent-active"] = normalized;');
+    expect(appCss).toContain('--accent-active: #584D3D;');
   });
 
   it("keeps retired purple and lime defaults out of shared app styles", () => {

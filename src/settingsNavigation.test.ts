@@ -16,6 +16,7 @@ describe("settings navigation", () => {
       "ai",
       "widget",
       "integrations",
+      "plugins",
       "account-data",
     ]);
   });
@@ -24,6 +25,8 @@ describe("settings navigation", () => {
     expect(normalizeSettingsTarget("execution")).toEqual({ category: "general", anchor: "execution-defaults" });
     expect(normalizeSettingsTarget("templates")).toEqual({ category: "workflow", anchor: "templates" });
     expect(normalizeSettingsTarget("account")).toEqual({ category: "account-data", anchor: "account" });
+    expect(normalizeSettingsTarget("plugins")).toEqual({ category: "plugins", anchor: "plugins" });
+    expect(normalizeSettingsTarget({ category: "integrations", anchor: "plugins" })).toEqual({ category: "plugins", anchor: "plugins" });
     expect(normalizeSettingsTarget("mcp")).toEqual({ category: "integrations", anchor: "mcp" });
     expect(normalizeSettingsTarget("page")).toEqual({ category: "general" });
     expect(normalizeSettingsTarget("features")).toEqual({ category: "workflow", anchor: "planning-views" });

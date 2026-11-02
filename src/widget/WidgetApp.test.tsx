@@ -2,7 +2,12 @@ import { readFileSync } from "node:fs";
 import { Children, isValidElement, type ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { describe, expect, it } from "vitest";
+import { beforeEach, afterEach, describe, expect, it } from "vitest";
+import { provider } from "../../community-plugins/pomodoro/main";
+import { registerTimerMode } from "../extensions/timers";
+let removeMode: () => void;
+beforeEach(() => { removeMode = registerTimerMode(provider); });
+afterEach(() => removeMode());
 import type { WidgetSnapshot } from "../types";
 import { TimerModeTabs, WidgetPopoverUtilities, WidgetPopoverView, WidgetTimerSettingsView, WidgetView, didWidgetPointerDrag, formatTimer, getAdjacentTimerMode, getClampedTooltipPosition, getWidgetResizeDirection, getWidgetResizeFixedEdges, opacityAction, requiresRunningTimerModeConfirmation, resizeWidgetBounds, shouldToggleTimerClick, withPopoverState } from "./WidgetApp";
 
@@ -90,7 +95,7 @@ describe("WidgetView", () => {
     const html = renderToStaticMarkup(<WidgetView snapshot={snapshot} density="full" onToggleTimer={() => undefined} onTogglePopover={() => undefined} onMove={() => undefined} onResize={() => undefined} />);
     expect(html).toContain(snapshot.taskTitle);
     expect(html).toContain("2:05");
-    expect(html).toContain('aria-label="Focusing — click to pause"');
+    expect(html).toContain('aria-label="Pause timer"');
     expect(html).toContain('aria-label="More"');
     expect(html).not.toContain("Working");
     expect(html).not.toContain("project-footer");
@@ -201,19 +206,19 @@ describe("WidgetPopoverView", () => {
     pomodoro.props.onClick();
     expect(selected).toBe("pomodoro");
     const html = renderToStaticMarkup(<WidgetTimerSettingsView snapshot={{ ...snapshot, timerPreferences: { ...snapshot.timerPreferences, mode: selected } }} onSave={() => undefined} onCancel={() => undefined} onReset={() => undefined} onSchedule={() => undefined} />);
-    expect(html).toContain("Preferred focus");
-    expect(html).toContain("Short break");
-    expect(html).toContain("Long break every");
+    expect(html).toContain("Configure this mode in community plugin settings");
+    expect(html).not.toContain("Short break");
+    expect(html).not.toContain("Long break every");
   });
 
-  it("uses Pomodoro phase icons only for a running Pomodoro and does not pause countdowns", () => {
+  it("renders authoritative running snapshots using the shared pause control", () => {
     const renderWidget = (next: WidgetSnapshot) => renderToStaticMarkup(<WidgetView snapshot={next} density="full" onToggleTimer={() => undefined} onTogglePopover={() => undefined} onMove={() => undefined} onResize={() => undefined} />);
-    expect(renderWidget(snapshot)).toContain('lucide-cherry');
-    expect(renderWidget({ ...snapshot, timerRuntime: { ...snapshot.timerRuntime, phase: "break" }, timerPhase: "break" })).toContain('lucide-sprout');
+    expect(renderWidget(snapshot)).toContain('lucide-pause');
+    expect(renderWidget({ ...snapshot, timerRuntime: { ...snapshot.timerRuntime, phase: "break" }, timerPhase: "break" })).toContain('lucide-pause');
     const countdown = renderWidget({ ...snapshot, timerPreferences: { ...snapshot.timerPreferences, mode: "countdown" }, timerRuntime: { mode: "countdown", phase: "countdown", running: true, round: 1, phaseStartedAt: 1, phaseEndsAt: 2 }, timerPhase: "countdown", timerRunning: false });
     expect(countdown).not.toContain('aria-label="Pause timer"');
     expect(countdown).not.toContain('lucide-pause');
-    expect(countdown).not.toContain('lucide-cherry');
+    expect(countdown).toContain('aria-label="More"');
   });
 
   it("previews hovered mode guidance at the pointer without changing the selected mode", async () => {
@@ -250,15 +255,15 @@ describe("WidgetPopoverView", () => {
     await act(async () => { renderer.unmount(); });
   });
 
-  it("previews a deadline-aligned Pomodoro plan inside the same popover", () => {
+  it("directs extension mode configuration to the installed plugin settings", () => {
     const start = Date.now() + 60_000;
     const end = start + 70 * 60_000;
     const endDate = new Date(end);
     const endLabel = `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`;
     const html = renderToStaticMarkup(<WidgetTimerSettingsView snapshot={{ ...snapshot, taskScheduleStartAt: start, taskScheduleEndAt: end, timerPreferences: { ...snapshot.timerPreferences, mode: "pomodoro" } } as WidgetSnapshot} onSave={() => undefined} onCancel={() => undefined} onReset={() => undefined} onSchedule={() => undefined} />);
-    expect(html).toContain("Plan preview");
-    expect(html).toContain("Focus cycles");
-    expect(html).toContain(endLabel);
+    expect(html).toContain("Configure this mode in community plugin settings");
+    expect(html).not.toContain("Focus cycles");
+    expect(html).not.toContain(endLabel);
   });
 
   it("routes reset and close utility callbacks", () => {
@@ -331,9 +336,9 @@ describe("WidgetPopoverView", () => {
     expect(html).toContain("Stopwatch");
     expect(html).toContain("Pomodoro");
     expect(html).toContain("Countdown");
-    expect(html).toContain("Preferred focus");
-    expect(html).toContain("Short break");
-    expect(html).toContain("Long break every");
+    expect(html).toContain("Configure this mode in community plugin settings");
+    expect(html).not.toContain("Short break");
+    expect(html).not.toContain("Long break every");
     expect(render(snapshot)).toContain('aria-label="Close widget"');
     expect((html.match(/tabindex="0"/g) ?? [])).toHaveLength(1);
     expect((html.match(/tabindex="-1"/g) ?? [])).toHaveLength(2);

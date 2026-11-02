@@ -117,7 +117,7 @@ describe("planner backup export", () => {
         language: 42,
         syncIntervalMinutes: -5,
         panelWidths: { left: -1, right: "wide" },
-        widgetTimerPreferences: { mode: "invalid", focusMinutes: -10 },
+        widgetTimerPreferences: { mode: "../invalid", countdownSeconds: -10 },
       },
     }));
     expect(backup.settings.activeMode).toBe("execute");
@@ -125,7 +125,7 @@ describe("planner backup export", () => {
     expect(backup.settings.syncIntervalMinutes).toBe(60);
     expect(backup.settings.panelWidths).toEqual({ left: 360, right: 390 });
     expect(backup.settings.widgetTimerPreferences?.mode).toBe("stopwatch");
-    expect(backup.settings.widgetTimerPreferences?.focusMinutes).toBe(25);
+    expect(backup.settings.widgetTimerPreferences?.countdownSeconds).toBe(1500);
   });
 
   it("rejects backups with excessive nesting before normalization", () => {

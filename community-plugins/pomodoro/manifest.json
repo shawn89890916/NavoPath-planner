@@ -1,0 +1,19 @@
+{
+  "author": "NavoPath",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "minAppVersion": "1.5.0",
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
+  "repository": "https://github.com/shawn89890916/NavoPath-planner",
+  "license": "MIT",
+  "kind": "plugin",
+  "id": "pomodoro",
+  "name": "Pomodoro",
+  "description": "Deadline-aligned focus cycles, short and long breaks, and accurate work accounting.",
+  "main": "main.js",
+  "styles": "styles.css"
+}

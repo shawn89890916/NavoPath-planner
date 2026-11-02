@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { normalizeSettings } from "./defaultSettings";
 
 describe("plugin settings normalization", () => {
+  it("preserves an extension timer mode and its opaque settings until its provider loads", () => {
+    const normalized = normalizeSettings({ widgetTimerPreferences: { mode: "pomodoro", focusMinutes: 42, longBreakEvery: 3 } });
+    expect(normalized.widgetTimerPreferences).toMatchObject({ mode: "pomodoro", focusMinutes: 42, longBreakEvery: 3 });
+    expect(normalizeSettings({ widgetTimerPreferences: { mode: "../invalid" } }).widgetTimerPreferences?.mode).toBe("stopwatch");
+  });
   it("keeps notification badges enabled for existing settings and preserves an explicit opt-out", () => {
     expect(normalizeSettings({}).showInAppNotificationBadge).toBe(true);
     expect(normalizeSettings({ showInAppNotificationBadge: false }).showInAppNotificationBadge).toBe(false);

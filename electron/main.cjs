@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, safeStorage, shell, Tray, Menu, nativeImage, nativeTheme, screen, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, safeStorage, shell, Tray, Menu, nativeImage, nativeTheme, screen, dialog, utilityProcess } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { createWidgetWindowService } = require("./widget-window.cjs");
@@ -15,7 +15,7 @@ const {
   readAuthStorageFile,
   writeAuthStorageFile,
 } = require("./auth-storage-safety.cjs");
-const { readExternalPluginManifest } = require("./external-plugin-manifest.cjs");
+const { createExtensionHost } = require("./extension-host.cjs");
 const {
   createWidgetIpcPolicy,
   sanitizeWidgetAction,
@@ -123,7 +123,7 @@ function getPaths() {
   return {
     dir,
     authSessionPath: path.join(dir, "auth-session.json"),
-    pluginsDir: path.join(dir, "plugins")
+    extensionsDir: path.join(dir, "extensions")
   };
 }
 
@@ -201,24 +201,7 @@ function removeAuthStorage(key) {
   writeAuthStorageFile(authSessionPath, stored);
 }
 
-function readExternalPluginManifests() {
-  const { pluginsDir } = getPaths();
-  if (!fs.existsSync(pluginsDir)) return { plugins: [] };
-  const plugins = [];
-  for (const entry of fs.readdirSync(pluginsDir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    const folderId = entry.name.replace(/[^a-zA-Z0-9_.-]/g, "").slice(0, 80);
-    const manifestPath = path.join(pluginsDir, entry.name, "manifest.json");
-    if (!folderId || !fs.existsSync(manifestPath)) continue;
-    try {
-      const manifest = readExternalPluginManifest(manifestPath, folderId);
-      if (manifest) plugins.push(manifest);
-    } catch (error) {
-      console.warn(`[plugins] failed to read ${manifestPath}:`, error);
-    }
-  }
-  return { plugins };
-}
+const extensionHost = createExtensionHost({ rootDirectory: () => getPaths().extensionsDir, utilityProcess, shell });
 
 let isQuitting = false;
 let tray = null;
@@ -330,7 +313,7 @@ function createTray() {
   tray.on("click", () => showMainWindow());
 }
 
-app.on("before-quit", () => { isQuitting = true; });
+app.on("before-quit", () => { isQuitting = true; extensionHost.dispose(); });
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
@@ -347,7 +330,11 @@ app.on("window-all-closed", () => {
 handleTrusted("auth-storage:get", (_event, key) => readAuthStorage(key));
 handleTrusted("auth-storage:set", (_event, key, value) => writeAuthStorage(key, value));
 handleTrusted("auth-storage:remove", (_event, key) => removeAuthStorage(key));
-handleTrusted("plugins:listExternal", () => readExternalPluginManifests());
+handleTrusted("extensions:fetch", (_event, url) => extensionHost.fetch(url));
+handleTrusted("extensions:start", (event, key, hash, files, entry) => extensionHost.start(event.sender, key, hash, files, entry));
+handleTrusted("extensions:invoke", (event, key, method, payload) => extensionHost.invoke(event.sender, key, method, payload));
+handleTrusted("extensions:stop", (event, key) => extensionHost.stop(event.sender, key));
+handleTrusted("extensions:open-directory", () => extensionHost.openDirectory());
 handleTrusted("updater:getState", () => desktopUpdater.getState());
 handleTrusted("updater:check", () => desktopUpdater.check(true));
 handleTrusted("updater:install", () => desktopUpdater.check(true).then(() => desktopUpdater.getState().status === "downloaded"));

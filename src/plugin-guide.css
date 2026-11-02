@@ -467,8 +467,7 @@
   .df-doc-platforms,
   .df-doc-transfer,
   .df-app .df-plan-choice-grid,
-  .df-app .df-plan-benefits,
-  .df-app .df-plugin-runtime {
+  .df-app .df-plan-benefits {
     grid-template-columns: 1fr;
   }
   .df-doc-language button {

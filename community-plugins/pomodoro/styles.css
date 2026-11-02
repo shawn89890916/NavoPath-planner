@@ -1,0 +1,8 @@
+.navopath-plugin-settings { display: grid; gap: 16px; color: var(--text-main); }
+.navopath-plugin-settings label { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.navopath-plugin-settings input, .navopath-plugin-settings select, .navopath-plugin-settings button { font: inherit; color: inherit; background: var(--surface-main); border: 1px solid var(--border-soft); border-radius: 4px; padding: 8px; min-height: 34px; }
+.navopath-plugin-settings input:focus-visible, .navopath-plugin-settings select:focus-visible, .navopath-plugin-settings button:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
+@media (pointer: coarse) { .navopath-plugin-settings input, .navopath-plugin-settings select, .navopath-plugin-settings button { min-height: 44px; } }
+
+.navopath-plugin-settings input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; padding: 0; flex: 0 0 auto; accent-color: var(--accent-active); }
+.navopath-plugin-settings label > input:not([type="checkbox"]), .navopath-plugin-settings label > select { width: min(220px, 55%); }

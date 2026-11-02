@@ -13,12 +13,12 @@ import { DailyTimelineGrid } from "./components/ExecutionSharedLayout";
 import { themeVars } from "./WorkspacePresentation";
 import { COMPACT_LAYOUT_MEDIA_QUERY, SLOT_MINUTES, DURATION_OPTIONS, DEFAULT_PROJECT_COLOR, PROJECT_COLOR_PRESETS, taskBlockPriorityFor, categories, isEventDisplayTask, isExternalCalendarDisplayTask, hexToRgb, minutesToTime, timeToMinutes, addMinutes, taskDuration, sortAiConversations, ProductIcon, recurrenceOptions, recurrenceLabel, TaskRecurrenceIndicator, TaskCard, formatMinutes, formatDuration, ReturnedToPlanIcon, TimeBlock, PreviewBlock, ProjectColorPicker, ProjectChoice, AiPanel, preloadAiPanel, type AutoScheduleState, type TimelineFocusTarget, type PlacementPreview, type PlacementChoice, type ResizePreview, type AiAttachmentSnapshot, type AiSessionMessage } from "./WorkspacePresentation";
 export { ProductIcon } from "./WorkspacePresentation";
-import React, { Activity, type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { Activity, type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import { Suspense, lazy } from "react";
-import type { AgentAuditEntry, AgentRunState, AiConversation, CalendarEvent, Category, DesktopExternalPlugin, ExecutionLane, ExternalCalendarOccurrence, ExternalCalendarSource, Habit, HabitDailyState, HabitTrackingType, Language, NullablePriority, PlannerApi, PlannerData, Priority, Project, RecurrenceFrequency, ScheduleTemplate, Settings, Subtask, Task, TaskLevel, TaskRecurrence, TimelineRecord, WidgetAction, WidgetSnapshot, WidgetTimerRuntime } from "./types";
+import type { AgentAuditEntry, AgentRunState, AiConversation, CalendarEvent, Category, ExecutionLane, ExternalCalendarOccurrence, ExternalCalendarSource, Habit, HabitDailyState, HabitTrackingType, Language, NullablePriority, PlannerApi, PlannerData, Priority, Project, RecurrenceFrequency, ScheduleTemplate, Settings, Subtask, Task, TaskLevel, TaskRecurrence, TimelineRecord, WidgetAction, WidgetSnapshot, WidgetTimerRuntime } from "./types";
 import { callAiAssistant, decideAgentRun, listAgentAuditRuns, type AiAction } from "./aiAssistantApi";
 import { compactText, extractLocalMemories, mergeAiMemories } from "./aiContext";
 
@@ -82,10 +82,14 @@ const webNotificationOnboardingPromise = getWorkspaceDemoRuntime() ? Promise.res
 const rememberWebNotification = (email: string) => webNotificationOnboardingPromise.then(({ rememberNewUserNotificationRequest }) => rememberNewUserNotificationRequest(email));
 import { withDeletionTombstones } from "./syncMerge";
 import { SyncScheduler, isCurrentWorkspaceLoad, readSyncInterval, shouldApplyWorkspaceRevision, shouldReconcileRemoteRevision, shouldRequeueFailedSave } from "./sync";
-import { listPlugins as listRegisteredPlugins, activate as activatePlugin, deactivate as deactivatePlugin, isActive as isPluginActive, register as registerPlugin, resolveConfig as resolvePluginConfig, type NavoPlugin, type PluginHost } from "./plugins/registry";
-import { registerBuiltinPlugins } from "./plugins/builtin";
+import { extensionService } from "./extensions/service";
+const ExtensionHeader = lazy(() => import("./extensions/ExtensionSurfaces").then(module => ({ default: module.ExtensionHeader })));
+import { emitPluginEvent } from "./extensions/runtime";
+import type { ExtensionHost } from "./extensions/types";
 import { normalizeWidgetAppearance } from "./widget/widgetPreferences";
-import { DEFAULT_WIDGET_RUNTIME, DEFAULT_WIDGET_TIMER_PREFERENCES, accumulateWidgetWorkTime, advanceTaskElapsedSeconds, advanceWidgetTimer, countsWidgetTimerPhaseAsWork, createWidgetTimerModeTransition, createDeadlineAlignedPomodoroRuntime, createWidgetTimerRuntime, getWidgetTimerNotificationDescriptor, getStopwatchTaskTimerAction, getWidgetTimerModeChangeTaskAction, getWidgetTimerSnapshotDisplaySeconds, normalizeStoredTaskTimer, normalizeWidgetTimerPreferences, normalizeWidgetTimerRuntime, resolveWidgetCountdownTarget, scheduleWidgetCountdown } from "./widget/widgetTimer";
+import { DEFAULT_WIDGET_RUNTIME, DEFAULT_WIDGET_TIMER_PREFERENCES, accumulateWidgetWorkTime, advanceTaskElapsedSeconds, advanceWidgetTimer, countsWidgetTimerPhaseAsWork, createWidgetTimerModeTransition, createDeadlineAlignedTimerRuntime, createWidgetTimerRuntime, getWidgetTimerNotificationDescriptor, getStopwatchTaskTimerAction, getWidgetTimerModeChangeTaskAction, getWidgetTimerSnapshotDisplaySeconds, normalizeStoredTaskTimer, normalizeWidgetTimerPreferences, normalizeWidgetTimerRuntime, resolveWidgetCountdownTarget, scheduleWidgetCountdown } from "./widget/widgetTimer";
+import { getTimerMode, getTimerModes, getTimerModeRevision, subscribeTimerModes, onTimerModeRemoving } from "./extensions/timers";
+import { createTimerOwner, type TimerOwner } from "./extensions/timerOwner";
 import { extendActiveTimelineRecord, nextOverrunExtensionEnd, resolveWidgetTimelineSelection, timelineRecordBounds } from "./widget/widgetSchedule";
 import { applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, findScheduledTimelineRecord, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { anchoredTimelineScrollTop, timelineZoomFromPinch } from "./utils/timelineZoom";
@@ -145,23 +149,6 @@ const isJevModelVersion = (modelVersion: string | undefined) =>
 
 /** Map a task priority to the shared TaskBlock priority vocabulary. */
 
-function externalManifestToPlugin(plugin: DesktopExternalPlugin): NavoPlugin {
-  return {
-    id: plugin.id,
-    source: "external",
-    name: plugin.name,
-    nameI18n: plugin.nameI18n,
-    description: plugin.description,
-    descriptionI18n: plugin.descriptionI18n,
-    enabledSummaryI18n: plugin.enabledSummaryI18n,
-    version: plugin.version,
-    author: plugin.author,
-    icon: plugin.icon,
-    permissions: plugin.permissions,
-    configFields: plugin.configFields,
-  };
-}
-
 const TIME_OPTIONS = Array.from({ length: ((TIMELINE_END - TIMELINE_START) * 60) / SLOT_MINUTES }, (_, index) => {
   return minutesToTime(TIMELINE_START * 60 + index * SLOT_MINUTES);
 });
@@ -182,7 +169,7 @@ function loadAiDockedPreference() {
 function loadWidgetTimerRuntime(): WidgetTimerRuntime {
   try {
     const parsed = JSON.parse(localStorage.getItem(WIDGET_TIMER_RUNTIME_KEY) || "null") as Partial<WidgetTimerRuntime> | null;
-    return normalizeWidgetTimerRuntime(parsed, { ...DEFAULT_WIDGET_TIMER_PREFERENCES, mode: parsed?.mode }, Date.now());
+    if (parsed && typeof parsed.mode === "string" && Number.isFinite(parsed.phaseStartedAt)) return parsed as WidgetTimerRuntime;
   } catch { /* Ignore malformed or unavailable local storage. */ }
   const now = Date.now();
   return { ...DEFAULT_WIDGET_RUNTIME, phaseStartedAt: now, pausedAt: now };
@@ -1311,7 +1298,7 @@ function App() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerElapsed, setTimerElapsed] = useState(0);
   const [timerStartedAt, setTimerStartedAt] = useState<number | null>(null);
-  const [focusOverlayMode, setFocusOverlayMode] = useState<null | "stopwatch" | "pomodoro" | "flowtime">(null);
+  const [focusOverlayMode, setFocusOverlayMode] = useState<string | null>(null);
   const timerIntervalRef = useRef<number | null>(null);
   const timerTaskRef = useRef<string | null>(null);
   const timerElapsedRef = useRef(0);
@@ -1319,6 +1306,9 @@ function App() {
   const timerStartedAtRef = useRef<number | null>(null);
   const timerLastActivityAtRef = useRef<number | null>(null);
   const widgetManagesTaskTimerRef = useRef(false);
+  const timerOwnerRef = useRef<TimerOwner | null>(null);
+  const [ownsTimerClock, setOwnsTimerClock] = useState(false);
+  const mirroredTimerRef = useRef<WidgetSnapshot | null>(null);
   timerElapsedRef.current = timerElapsed;
 
   useEffect(() => () => {
@@ -1346,6 +1336,7 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!timerOwnerRef.current?.isOwner()) return;
     if (timerTaskId) {
       timerTaskRef.current = timerTaskId;
       try { localStorage.setItem("navopath-active-timer", JSON.stringify({ taskId: timerTaskId, elapsed: timerElapsed, running: timerRunning })); } catch { /* ignore */ }
@@ -1356,6 +1347,7 @@ function App() {
   }, [timerTaskId, timerElapsed, timerRunning]);
 
   const startTimer = useCallback((taskId: string) => {
+    if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerStart", taskId }); return; }
     const baseElapsed = timerTaskRef.current === taskId ? timerElapsedRef.current : 0;
     const now = Date.now();
     timerElapsedBaseRef.current = baseElapsed;
@@ -1381,10 +1373,13 @@ function App() {
     setTimerStartedAt(null);
   }, []);
 
-  const pauseTimer = useCallback(() => pauseTimerAt(Date.now()), [pauseTimerAt]);
+  const pauseTimer = useCallback(() => {
+    if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerPause" }); return; }
+    pauseTimerAt(Date.now());
+  }, [pauseTimerAt]);
 
   useEffect(() => {
-    if (!timerRunning || timerStartedAt === null) {
+    if (!ownsTimerClock || !timerRunning || timerStartedAt === null) {
       if (timerIntervalRef.current) { window.clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
       return;
     }
@@ -1413,9 +1408,10 @@ function App() {
       window.removeEventListener("scroll", markTimerActivity);
       if (timerIntervalRef.current) { window.clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
     };
-  }, [lang, pauseTimerAt, settings?.idleThresholdMinutes, timerRunning, timerStartedAt]);
+  }, [lang, pauseTimerAt, settings?.idleThresholdMinutes, timerRunning, timerStartedAt, ownsTimerClock]);
 
   const resumeTimer = useCallback(() => {
+    if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerResume" }); return; }
     const now = Date.now();
     timerElapsedBaseRef.current = timerElapsedRef.current;
     timerStartedAtRef.current = now;
@@ -1425,6 +1421,7 @@ function App() {
   }, []);
 
   const discardTimer = useCallback(() => {
+    if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "discardTimer" }); return; }
     timerElapsedRef.current = 0; timerElapsedBaseRef.current = 0; timerStartedAtRef.current = null;
     setTimerTaskId(null); setTimerRunning(false); setTimerElapsed(0); setTimerStartedAt(null);
   }, []);
@@ -1436,9 +1433,17 @@ function App() {
     return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
   }, []);
 
+  const [timerModeRevision, setTimerModeRevision] = useState(getTimerModeRevision);
+  const [timerExtensionsReady, setTimerExtensionsReady] = useState(false);
+  useEffect(() => {
+    const unsubscribe = subscribeTimerModes(() => setTimerModeRevision(getTimerModeRevision()));
+    const ready = () => setTimerExtensionsReady(true);
+    window.addEventListener("navopath:extensions-ready", ready);
+    return () => { unsubscribe(); window.removeEventListener("navopath:extensions-ready", ready); };
+  }, []);
   const widgetTimerPreferences = useMemo(
     () => normalizeWidgetTimerPreferences(settings?.widgetTimerPreferences),
-    [settings?.widgetTimerPreferences],
+    [settings?.widgetTimerPreferences, timerModeRevision],
   );
   const [widgetTimerRuntime, setWidgetTimerRuntime] = useState<WidgetTimerRuntime>(loadWidgetTimerRuntime);
   const widgetTimerRuntimeRef = useRef(widgetTimerRuntime);
@@ -1458,16 +1463,17 @@ function App() {
   const [widgetPopoverOpen] = useState(false);
 
   useEffect(() => {
-    if (!settings) return;
+    if (!settings || !timerExtensionsReady) return;
     const now = Date.now();
     const normalized = normalizeWidgetTimerRuntime(widgetTimerRuntime, widgetTimerPreferences, now);
     if (JSON.stringify(normalized) !== JSON.stringify(widgetTimerRuntime)) {
       widgetTimerRuntimeRef.current = normalized;
       setWidgetTimerRuntime(normalized);
     }
-  }, [settings, widgetTimerPreferences, widgetTimerRuntime]);
+  }, [settings, widgetTimerPreferences, widgetTimerRuntime, timerExtensionsReady]);
 
   useEffect(() => {
+    if (!timerOwnerRef.current?.isOwner()) return;
     try {
       localStorage.setItem(WIDGET_TIMER_RUNTIME_KEY, JSON.stringify(widgetTimerRuntime));
       localStorage.setItem(WIDGET_TIMER_ADVANCED_AT_KEY, String(widgetTimerAdvancedAtRef.current));
@@ -1476,6 +1482,7 @@ function App() {
   }, [widgetTimerRuntime]);
 
   const advanceWidgetTimerNow = useCallback(() => {
+    if (!timerOwnerRef.current?.isOwner()) return;
     const now = Date.now();
     const current = widgetTimerRuntimeRef.current;
     const from = Math.min(now, Math.max(current.phaseStartedAt, widgetTimerAdvancedAtRef.current));
@@ -1499,9 +1506,9 @@ function App() {
         setTimerElapsed(elapsed);
       }
       widgetManagesTaskTimerRef.current = true;
-      timerStartedAtRef.current = tick.countsAsWork ? now : null;
-      setTimerStartedAt(tick.countsAsWork ? now : null);
-      setTimerRunning(tick.countsAsWork);
+      timerStartedAtRef.current = tick.runtime.running && tick.countsAsWork ? now : null;
+      setTimerStartedAt(tick.runtime.running && tick.countsAsWork ? now : null);
+      setTimerRunning(tick.runtime.running && tick.countsAsWork);
     }
     for (const transition of tick.transitions) {
       const descriptor = getWidgetTimerNotificationDescriptor(transition, lang);
@@ -1512,11 +1519,27 @@ function App() {
   }, [lang, widgetTimerPreferences]);
 
   useEffect(() => {
-    if (!widgetTimerRuntime.running) return;
+    if (!timerExtensionsReady || !widgetTimerRuntime.running) return;
     advanceWidgetTimerNow();
     const interval = window.setInterval(advanceWidgetTimerNow, 1_000);
     return () => window.clearInterval(interval);
-  }, [advanceWidgetTimerNow, widgetTimerRuntime.running]);
+  }, [advanceWidgetTimerNow, widgetTimerRuntime.running, timerExtensionsReady]);
+
+  useEffect(() => onTimerModeRemoving((mode) => {
+    if (!timerOwnerRef.current?.isOwner()) return;
+    if (widgetTimerRuntimeRef.current.mode !== mode) return;
+    advanceWidgetTimerNow();
+    const now = Date.now();
+    const runtime = { ...DEFAULT_WIDGET_RUNTIME, phaseStartedAt: now, pausedAt: now };
+    widgetTimerRuntimeRef.current = runtime;
+    widgetTimerAdvancedAtRef.current = now;
+    widgetManagesTaskTimerRef.current = false;
+    timerStartedAtRef.current = null;
+    timerElapsedBaseRef.current = timerElapsedRef.current;
+    setTimerStartedAt(null); setTimerRunning(false); setWidgetTimerRuntime(runtime);
+    setFocusOverlayMode((current) => current === mode ? "stopwatch" : current);
+    void saveSettings({ widgetTimerPreferences: { ...widgetTimerPreferences, mode: "stopwatch" } });
+  }), [advanceWidgetTimerNow, widgetTimerPreferences]);
 
   useEffect(() => {
     if (!fullscreen) return;
@@ -1699,9 +1722,8 @@ function App() {
   const syncSchedulerRef = useRef<SyncScheduler | null>(null);
   const snapshotTimerRef = useRef<number | null>(null);
   const [isManualSyncing, setIsManualSyncing] = useState(false);
-  const pluginHostRef = useRef<PluginHost | null>(null);
-  const externalPluginsLoadedRef = useRef(false);
-  const [externalPluginsRevision, setExternalPluginsRevision] = useState(0);
+  const extensionHostRef = useRef<ExtensionHost | null>(null);
+  const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const colsContainerRef = useRef<HTMLDivElement | null>(null);
   const timeGridRef = useRef<HTMLDivElement | null>(null);
   const [multiColWidth, setMultiColWidth] = useState(0);
@@ -3015,7 +3037,10 @@ if (cached?.data && cached?.settings) {
     }
   }
 
-  async function saveData(next: PlannerData) {
+  function saveData(next: PlannerData): Promise<void> {
+    return extensionHostRef.current?.internal.services.saveData(next) ?? persistData(next);
+  }
+  async function persistData(next: PlannerData) {
     const savedAt = workspaceNow().toISOString();
     const tracked = withDeletionTombstones(dataRef.current, next, savedAt);
     const optimistic = { ...tracked, aiProfile: buildAiProfile(tracked), savedAt };
@@ -3164,7 +3189,10 @@ if (cached?.data && cached?.settings) {
     return promise;
   }
 
-  async function saveSettings(patch: SettingsPatch) {
+  function saveSettings(patch: SettingsPatch): Promise<void> {
+    return extensionHostRef.current?.internal.services.saveSettings(patch) ?? persistSettings(patch);
+  }
+  async function persistSettings(patch: SettingsPatch) {
     const current = settingsRef.current || settings;
     if (!current) return;
     const optimistic = normalizeSettings({ ...current, ...patch });
@@ -3296,67 +3324,33 @@ if (cached?.data && cached?.settings) {
     scheduler.setIntervalMinutes(readSyncInterval(settings));
   }, [settings?.syncIntervalMinutes, authState?.user?.id]);
 
-  // Built-in plugins may use lifecycle hooks. External plugins contribute only
-  // validated manifest metadata and configuration; disk scripts are never run.
+  // The same live services power the application and trusted community plugins.
   useEffect(() => {
-    registerBuiltinPlugins();
-    if (!externalPluginsLoadedRef.current) {
-      externalPluginsLoadedRef.current = true;
-      void window.desktopApi?.listExternalPlugins?.()
-        .then((result) => {
-          const existingIds = new Set(listRegisteredPlugins().map((plugin) => plugin.id));
-          let added = 0;
-          for (const plugin of result?.plugins ?? []) {
-            if (existingIds.has(plugin.id)) continue;
-            registerPlugin(externalManifestToPlugin(plugin));
-            existingIds.add(plugin.id);
-            added += 1;
-          }
-          if (added > 0) setExternalPluginsRevision((revision) => revision + 1);
-        })
-        .catch((error) => {
-          console.warn("[plugins] failed to load external plugins:", error);
-        });
+    if (productDemo || !dataRef.current || !settingsRef.current) {
+      void extensionService.configure(null); return;
     }
-    if (!pluginHostRef.current) {
-      pluginHostRef.current = {
-        getData: () => dataRef.current,
-        saveData: (next) => {
-          if (!next || typeof next !== "object") return;
-          void saveData(next as PlannerData);
-        },
-        savePluginConfig: (pluginId, patch) => {
-          const current = settingsRef.current;
-          if (!current) return;
-          const existing = current.pluginConfigs?.[pluginId] ?? {};
-          const merged = { ...existing, ...patch };
-          const nextConfigs = { ...(current.pluginConfigs ?? {}), [pluginId]: merged };
-          void saveSettings({ pluginConfigs: nextConfigs });
-        },
-        emit: (event, payload) => {
-          // Lightweight local event bus — listeners registered via window events.
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent("navopath:plugin", { detail: { event, payload } }));
-          }
-        },
-        toast: (message) => showToast(message),
-      };
-    }
-    // Activate every plugin id listed in settings.enabledPlugins that is not
-    // already active. We also deactivate any plugin that has been removed.
-    const enabled = new Set(settings?.enabledPlugins ?? []);
-    const host = pluginHostRef.current;
-    for (const plugin of listRegisteredPlugins()) {
-      const should = enabled.has(plugin.id);
-      const active = isPluginActive(plugin.id);
-      if (should && !active) {
-        activatePlugin(plugin.id, host, resolvePluginConfig(plugin, settings?.pluginConfigs?.[plugin.id]));
-      } else if (!should && active) {
-        deactivatePlugin(plugin.id, host);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings?.enabledPlugins, settings?.pluginConfigs, externalPluginsRevision]);
+    if (!extensionHostRef.current) extensionHostRef.current = {
+      getData: () => dataRef.current!, saveData: next => saveData(next),
+      getSettings: () => settingsRef.current!, saveSettings: patch => saveSettings(patch),
+      getAccountId: () => authStateRef.current?.user?.id || null,
+      toast: message => showToast(message),
+      internal: { apiVersion: "1.5", services: { saveData: persistData, saveSettings: persistSettings }, plannerApi: window.plannerApi, window, document },
+    };
+    void extensionService.configure(extensionHostRef.current).catch(error => console.warn("[extensions] startup failed", error));
+  }, [Boolean(data), Boolean(settings), settings?.extensions, settings?.extensionConfigs, authState?.user?.id]);
+
+  useEffect(() => { if (data) emitPluginEvent("data:changed", data); }, [data]);
+  useEffect(() => {
+    if (!settings) return;
+    document.body.dataset.navopathBaseTheme = settings.theme;
+    document.documentElement.dataset.theme = settings.theme;
+    emitPluginEvent("settings:changed", settings);
+    if (settings.baseMode !== "system") return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => { const theme = media.matches ? "dark" : "light"; if (settingsRef.current?.theme !== theme) void saveSettings({ theme }); };
+    apply(); media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, [settings?.theme, settings?.baseMode, settings?.language]);
 
   const today = todayIso();
   const timelineDate = selectedDate;
@@ -3379,6 +3373,7 @@ if (cached?.data && cached?.settings) {
   const timerProject = useMemo(() => timerTask?.projectId ? projects.find((p) => p.id === timerTask.projectId) || null : null, [timerTask, projects]);
 
   const stopAndSaveTimer = useCallback(() => {
+    if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerStop" }); return; }
     const elapsed = timerRunning && timerStartedAtRef.current !== null
       ? advanceTaskElapsedSeconds(timerElapsedBaseRef.current, timerStartedAtRef.current, Date.now())
       : timerElapsedRef.current;
@@ -4538,6 +4533,10 @@ if (cached?.data && cached?.settings) {
       appearance: normalizeWidgetAppearance(settings?.widgetAppearance),
       appearanceConfigured: settings?.widgetAppearanceMigrated === true,
       theme: settings?.theme === "dark" ? "dark" : "light",
+      timerModes: getTimerModes(),
+      extensionTheme: extensionService.getActiveThemeDescriptor(),
+      timerCountsAsWork: widgetTimerTick.countsAsWork,
+      timerSnapshotAt: snapshotNow,
       timerPreferences: widgetTimerPreferences,
       timerRuntime: widgetTimerTick.runtime,
       timerDisplaySeconds,
@@ -4566,6 +4565,7 @@ if (cached?.data && cached?.settings) {
    * IPC listener is registered once.
    */
   function handleWidgetAction(action: WidgetAction) {
+    if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction(action); return; }
     switch (action.type) {
       case "requestSnapshot":
         window.desktopApi?.widget?.pushSnapshot(buildWidgetSnapshot());
@@ -4590,6 +4590,9 @@ if (cached?.data && cached?.settings) {
       case "timerStop":
         syncActiveTaskScheduleFromTimer(Date.now());
         stopAndSaveTimer();
+        break;
+      case "discardTimer":
+        discardTimer();
         break;
       case "complete":
         if (action.taskId) toggleTaskDone(action.taskId);
@@ -4637,7 +4640,7 @@ if (cached?.data && cached?.settings) {
           ? { ...transitionedRuntime, countdownTaskId: activeTask.id, countdownRecordId: selection.recordId }
           : transitionedRuntime;
         const scheduleEnd = selection?.endAt;
-        if (action.mode === "pomodoro" && scheduleEnd && scheduleEnd > now) runtime = createDeadlineAlignedPomodoroRuntime(now, scheduleEnd, preferences);
+        if (scheduleEnd && scheduleEnd > now) runtime = createDeadlineAlignedTimerRuntime(action.mode, now, scheduleEnd, preferences) || runtime;
         widgetTimerAdvancedAtRef.current = now;
         widgetTimerRemainderMsRef.current = 0;
         widgetTimerRuntimeRef.current = runtime;
@@ -4669,7 +4672,7 @@ if (cached?.data && cached?.settings) {
           : undefined;
         let runtime: WidgetTimerRuntime = createWidgetTimerModeTransition(preferences.mode, preferences, now, target).runtime;
         const scheduleEnd = selection?.endAt;
-        if (preferences.mode === "pomodoro" && scheduleEnd && scheduleEnd > now) runtime = createDeadlineAlignedPomodoroRuntime(now, scheduleEnd, preferences);
+        if (scheduleEnd && scheduleEnd > now) runtime = createDeadlineAlignedTimerRuntime(preferences.mode, now, scheduleEnd, preferences) || runtime;
         if (preferences.mode === "countdown" && activeTask && selection) {
           runtime.countdownTaskId = activeTask.id;
           runtime.countdownRecordId = selection.recordId;
@@ -4691,7 +4694,7 @@ if (cached?.data && cached?.settings) {
           : undefined;
         let runtime: WidgetTimerRuntime = createWidgetTimerModeTransition(preferences.mode, preferences, now, target).runtime;
         const scheduleEnd = selection?.endAt;
-        if (preferences.mode === "pomodoro" && scheduleEnd && scheduleEnd > now) runtime = createDeadlineAlignedPomodoroRuntime(now, scheduleEnd, preferences);
+        if (scheduleEnd && scheduleEnd > now) runtime = createDeadlineAlignedTimerRuntime(preferences.mode, now, scheduleEnd, preferences) || runtime;
         if (preferences.mode === "countdown" && activeTask && selection) {
           runtime.countdownTaskId = activeTask.id;
           runtime.countdownRecordId = selection.recordId;
@@ -4768,8 +4771,8 @@ if (cached?.data && cached?.settings) {
         } else {
           if (current.mode === "countdown" && current.countdownTargetAt === undefined) break;
           const scheduleEnd = selection.endAt;
-          const prepared = current.mode === "pomodoro" && scheduleEnd && scheduleEnd > now
-            ? createDeadlineAlignedPomodoroRuntime(now, scheduleEnd, widgetTimerPreferences)
+          const prepared = scheduleEnd && scheduleEnd > now && current.pausedAt === current.phaseStartedAt
+            ? createDeadlineAlignedTimerRuntime(current.mode, now, scheduleEnd, widgetTimerPreferences) || current
             : current;
           const runtime = { ...prepared, running: true };
           delete runtime.pausedAt;
@@ -4778,7 +4781,7 @@ if (cached?.data && cached?.settings) {
           setWidgetTimerRuntime(runtime);
           widgetManagesTaskTimerRef.current = true;
           if (timerTaskRef.current !== selection.task.id) startTimer(selection.task.id);
-          const countsAsWork = countsWidgetTimerPhaseAsWork(current.phase);
+          const countsAsWork = advanceWidgetTimer(runtime, widgetTimerPreferences, now).countsAsWork;
           timerElapsedBaseRef.current = timerElapsedRef.current;
           timerStartedAtRef.current = countsAsWork ? now : null;
           setTimerRunning(Boolean(timerTaskRef.current) && countsAsWork);
@@ -4799,6 +4802,37 @@ if (cached?.data && cached?.settings) {
   const widgetSnapshotBuilderRef = useRef(buildWidgetSnapshot);
   widgetSnapshotBuilderRef.current = buildWidgetSnapshot;
 
+  useEffect(() => {
+    if (!data || !settings || productDemo) return;
+    const accountId = authState?.user?.id || "preview";
+    const owner = createTimerOwner({ accountId,
+      onOwnershipChange(owns) {
+        setOwnsTimerClock(owns);
+        if (owns && mirroredTimerRef.current) {
+          const next = mirroredTimerRef.current;
+          timerElapsedBaseRef.current = next.elapsedSeconds;
+          const started = next.timerRunning && next.timerRuntime.mode === "stopwatch" ? next.timerSnapshotAt || Date.now() : null;
+          timerStartedAtRef.current = started; timerLastActivityAtRef.current = Date.now(); setTimerStartedAt(started);
+        }
+      },
+      onAction: action => widgetActionHandlerRef.current(action),
+      onSnapshot(next) {
+        if (!settingsRef.current || !dataRef.current || (authStateRef.current?.user?.id || "preview") !== accountId) return;
+        mirroredTimerRef.current = next;
+        timerTaskRef.current = next.taskId || null; timerElapsedRef.current = next.elapsedSeconds; timerElapsedBaseRef.current = next.elapsedSeconds;
+        timerStartedAtRef.current = null; setTimerStartedAt(null);
+        setTimerTaskId(next.taskId || null); setTimerElapsed(next.elapsedSeconds); setTimerRunning(next.timerRunning);
+        widgetTimerRuntimeRef.current = next.timerRuntime; widgetTimerAdvancedAtRef.current = next.timerSnapshotAt || Date.now(); setWidgetTimerRuntime(next.timerRuntime);
+        if (JSON.stringify(settingsRef.current.widgetTimerPreferences) !== JSON.stringify(next.timerPreferences)) {
+          const mirrored = { ...settingsRef.current, widgetTimerPreferences: next.timerPreferences };
+          settingsRef.current = mirrored; setSettings(mirrored);
+        }
+      },
+    });
+    timerOwnerRef.current = owner;
+    return () => { owner.dispose(); timerOwnerRef.current = null; mirroredTimerRef.current = null; setOwnsTimerClock(false); };
+  }, [Boolean(data), Boolean(settings), authState?.user?.id]);
+
   // Register the widget action listener once. Desktop-only.
   useEffect(() => {
     if (!window.desktopApi?.widget) return;
@@ -4809,8 +4843,10 @@ if (cached?.data && cached?.settings) {
   }, []);
 
   useEffect(() => {
-    if (!window.desktopApi?.widget) return;
-    const interval = window.setInterval(() => window.desktopApi?.widget?.pushSnapshot(widgetSnapshotBuilderRef.current()), 1_000);
+    const interval = window.setInterval(() => {
+      if (!timerOwnerRef.current?.isOwner()) return;
+      const snapshot = widgetSnapshotBuilderRef.current(); timerOwnerRef.current.publish(snapshot); window.desktopApi?.widget?.pushSnapshot(snapshot);
+    }, 1_000);
     return () => window.clearInterval(interval);
   }, []);
 
@@ -4819,13 +4855,13 @@ if (cached?.data && cached?.settings) {
   // quick add, candidate changes). Throttled to avoid flooding on rapid
   // timer ticks (every second).
   useEffect(() => {
-    if (!window.desktopApi?.widget) return;
-    window.desktopApi.widget.pushSnapshot(buildWidgetSnapshot());
-  }, [timerElapsed, timerRunning, timerTaskId, data, settings?.widgetAlwaysOnTop, settings?.widgetAppearance, settings?.widgetAppearanceMigrated, settings?.theme, widgetTimerPreferences, widgetTimerRuntime, widgetPopoverOpen, lang]);
+    if (!timerOwnerRef.current?.isOwner()) return;
+    const snapshot = buildWidgetSnapshot(); timerOwnerRef.current.publish(snapshot); window.desktopApi?.widget?.pushSnapshot(snapshot);
+  }, [timerElapsed, timerRunning, timerTaskId, data, settings?.widgetAlwaysOnTop, settings?.widgetAppearance, settings?.widgetAppearanceMigrated, settings?.theme, widgetTimerPreferences, widgetTimerRuntime, widgetPopoverOpen, lang, extensionSnapshot, ownsTimerClock]);
 
   useEffect(() => {
     const running = widgetTimerPreferences.mode === "stopwatch" ? timerRunning : widgetTimerRuntime.running;
-    if (running) syncActiveTaskScheduleFromTimer(Date.now());
+    if (running && timerOwnerRef.current?.isOwner()) syncActiveTaskScheduleFromTimer(Date.now());
   }, [timerElapsed, timerRunning, widgetTimerRuntime, widgetTimerPreferences.mode]);
 
   // Auto-open the widget on launch if the user opted in. Runs once.
@@ -8985,15 +9021,23 @@ if (cached?.data && cached?.settings) {
   const focusTask = timerTask || headerTask;
   const focusProject = timerProject || headerProject;
   const focusElapsed = timerTask ? timerElapsed : 0;
-  const pomodoroSeconds = 25 * 60;
-  const pomodoroRemaining = Math.max(0, pomodoroSeconds - (focusElapsed % pomodoroSeconds));
-  const focusClockDisplay = focusOverlayMode === "pomodoro" ? formatTimerDisplay(pomodoroRemaining) : formatTimerDisplay(focusElapsed);
+  const focusProvider = focusOverlayMode ? getTimerMode(focusOverlayMode) : undefined;
+  const focusTick = focusProvider ? advanceWidgetTimer(widgetTimerRuntime, widgetTimerPreferences, Date.now()) : null;
+  const focusClockDisplay = formatTimerDisplay(focusTick ? focusTick.displaySeconds : focusElapsed);
   const flowBreakMinutes = Math.max(5, Math.round(Math.max(focusElapsed / 60, 25) / 5));
-  const focusModeNote = focusOverlayMode === "pomodoro"
-    ? (lang === "zh" ? "25 分钟专注倒计时" : "25-minute focus countdown")
-    : focusOverlayMode === "flowtime"
-      ? (lang === "zh" ? `已专注 ${Math.floor(focusElapsed / 60)} 分钟，建议休息 ${flowBreakMinutes} 分钟` : `Focused ${Math.floor(focusElapsed / 60)}m, suggested break ${flowBreakMinutes}m`)
-      : (lang === "zh" ? "正计时" : "Stopwatch");
+  const focusModeNote = focusProvider ? focusProvider.label[lang]
+    : focusOverlayMode === "flowtime" ? (lang === "zh" ? `已专注 ${Math.floor(focusElapsed / 60)} 分钟，建议休息 ${flowBreakMinutes} 分钟` : `Focused ${Math.floor(focusElapsed / 60)}m, suggested break ${flowBreakMinutes}m`)
+    : (lang === "zh" ? "正计时" : "Stopwatch");
+  const chooseFocusMode = (mode: string) => {
+    const chosen = mode === "flowtime" || mode === "stopwatch" || getTimerMode(mode) ? mode : "stopwatch";
+    setFocusOverlayMode(chosen);
+    const timerMode = chosen === "flowtime" ? "stopwatch" : chosen;
+    if (widgetTimerRuntimeRef.current.mode !== timerMode) {
+      const wasRunning = timerRunning || widgetTimerRuntimeRef.current.running;
+      handleWidgetAction({ type: "setTimerMode", mode: timerMode });
+      if (wasRunning) handleWidgetAction({ type: "toggleWidgetTimer" });
+    }
+  };
   const startCandidatePanelResize = (event: React.PointerEvent<HTMLElement>) => {
     if (productAiPresentation || compactLayout || candidatePanelCollapsed || event.button) return;
     event.preventDefault();
@@ -9061,6 +9105,7 @@ if (cached?.data && cached?.settings) {
           </div>
           <WorkspaceModeTabs mode={mode} lang={lang} onChange={changeMode} onPlanningIntent={preloadPlanningView} className="df-tabs df-tabs-center" as="nav" />
           {!productDemo && <div className="df-header-right">
+          <Suspense fallback={null}><ExtensionHeader lang={lang} /></Suspense>
           <button
             className="df-user-avatar"
             type="button"
@@ -9269,7 +9314,7 @@ if (cached?.data && cached?.settings) {
                 <ActionDisclosure label={lang === "zh" ? "更多" : "More"}>
                   <Button aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)}>{lang === "zh" ? "按项目分类" : "Group by project"}</Button>
                   <Button aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)}>{t(lang, "candidate.showCompleted")}</Button>
-                  {!productAiPresentation && <Button disabled={!focusTask} onClick={() => { if (!focusTask) return; if (!timerTask) startTimer(focusTask.id); setFocusOverlayMode(settings.focusModeDefault || "flowtime"); }}>{lang === "zh" ? "专注" : "Focus"}</Button>}
+                  {!productAiPresentation && <Button disabled={!focusTask} onClick={() => { if (!focusTask) return; if (!timerTask) startTimer(focusTask.id); chooseFocusMode(settings.focusModeDefault || "flowtime"); }}>{lang === "zh" ? "专注" : "Focus"}</Button>}
                   {!productAiPresentation && settings.featureTemplatesEnabled !== false && <Button onClick={() => setScheduleTemplateOpen(true)}>{lang === "zh" ? "日程模板" : "Schedule Template"}</Button>}
                   {!productAiPresentation && Boolean(window.desktopApi?.widget) && settings.featureWidgetEnabled !== false && <Button onClick={() => void window.desktopApi?.widget?.open()}>{lang === "zh" ? "桌面小组件" : "Desktop widget"}</Button>}
                   {!productPresentation && window.desktopApi?.dockWindow && <Suspense fallback={null}><DesktopDockControls lang={lang} side={desktopDockSide} onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }} onError={showToast} /></Suspense>}
@@ -10387,9 +10432,9 @@ if (cached?.data && cached?.settings) {
         <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>
           <div className="df-focus-topbar">
             <div className="df-focus-mode-switch">
-              {(["stopwatch", "pomodoro", "flowtime"] as const).map((m) => (
-                <button key={m} className={`df-focus-mode-btn${focusOverlayMode === m ? " active" : ""}`} onClick={() => setFocusOverlayMode(m)}>
-                  {m === "stopwatch" ? (lang === "zh" ? "秒表" : "Stopwatch") : m === "pomodoro" ? "Pomodoro" : "Flowtime"}
+              {["stopwatch", ...getTimerModes().filter((item) => getTimerMode(item.mode)).map((item) => item.mode), "flowtime"].map((m) => (
+                <button key={m} className={`df-focus-mode-btn${focusOverlayMode === m ? " active" : ""}`} onClick={() => chooseFocusMode(m)}>
+                  {m === "stopwatch" ? (lang === "zh" ? "秒表" : "Stopwatch") : getTimerMode(m)?.label[lang] || "Flowtime"}
                 </button>
               ))}
             </div>
@@ -10405,13 +10450,13 @@ if (cached?.data && cached?.settings) {
             {focusProject && <div className="df-focus-project-name">{focusProject.title}</div>}
           </div>
           <div className="df-focus-controls">
-            {!timerRunning ? (
-              <button className="df-focus-play" onClick={() => timerTaskId ? resumeTimer() : focusTask ? startTimer(focusTask.id) : undefined} disabled={!focusTask}>{timerTaskId ? (lang === "zh" ? "继续" : "Resume") : (lang === "zh" ? "开始" : "Start")}</button>
+            {!(focusProvider ? widgetTimerRuntime.running : timerRunning) ? (
+              <button className="df-focus-play" onClick={() => focusProvider ? handleWidgetAction({ type: "toggleWidgetTimer" }) : timerTaskId ? resumeTimer() : focusTask ? startTimer(focusTask.id) : undefined} disabled={!focusTask}>{timerTaskId ? (lang === "zh" ? "继续" : "Resume") : (lang === "zh" ? "开始" : "Start")}</button>
             ) : (
-              <button className="df-focus-pause" onClick={pauseTimer}>{lang === "zh" ? "暂停" : "Pause"}</button>
+              <button className="df-focus-pause" onClick={() => focusProvider ? handleWidgetAction({ type: "toggleWidgetTimer" }) : pauseTimer()}>{lang === "zh" ? "暂停" : "Pause"}</button>
             )}
             <button className="df-focus-save" onClick={stopAndSaveTimer} disabled={!timerTaskId}>{lang === "zh" ? "保存" : "Save"}</button>
-            <button className="df-focus-discard" onClick={discardTimer}>{lang === "zh" ? "重置" : "Reset"}</button>
+            <button className="df-focus-discard" onClick={() => { if (focusProvider) handleWidgetAction({ type: "resetWidgetTimer", draft: widgetTimerPreferences }); discardTimer(); }}>{lang === "zh" ? "重置" : "Reset"}</button>
           </div>
         </div>
       )}

@@ -1,0 +1,852 @@
+import type { ExtensionPreferences } from "./index";
+export type Category = "exam" | "uk" | "us" | "essay" | "materials" | "project" | "personal";
+export type Priority = "high" | "medium" | "low";
+export type NullablePriority = Priority | null;
+export type TaskLevel = Priority | "unset";
+export type WorkflowStatus = "backlog" | "next" | "doing" | "waiting" | "done";
+
+export interface Goal {
+  id: string;
+  title: string;
+  description: string;
+  targetDate: string;
+  status: "active" | "done" | "paused";
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  category: Category;
+  notes: string;
+  completed: boolean;
+  color?: string;
+  /** Optional project-level deadline for long-range planning. */
+  dueDate?: string;
+  importance?: NullablePriority;
+  urgency?: NullablePriority;
+  order?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+  done?: boolean;
+  plannedTaskId?: string;
+  order?: number;
+  createdAt: string;
+  subtasks?: Subtask[];
+}
+
+export interface McpTokenMetadata {
+  id: string;
+  name: string;
+  tokenPrefix: string;
+  createdAt: string;
+  lastUsedAt?: string;
+  revokedAt?: string;
+}
+
+export interface SyncBridgeStatus {
+  deviceId: string;
+  deviceName: string;
+  folderPath: string;
+  status: "running" | "error" | "stopped";
+  lastSuccessAt?: string;
+  lastSeenAt?: string;
+  error?: string;
+}
+
+/** 时间轴排程记录 — 支持同一任务多次排程，每条记录独立管理状态 */
+export interface TimelineRecord {
+  /** Self-rated engagement, 0–100; omitted values default to 80 when enabled. */
+  engagement?: number;
+  id: string;
+  taskId: string;
+  scheduledDate: string;
+  scheduledStart: string;
+  scheduledEndDate?: string;
+  scheduledEnd: string;
+  executionStatus: "scheduled" | "completed" | "returned_unfinished" | "skipped" | "cancelled";
+  createdAt: string;
+}
+
+export type RecurrenceMode = "flexible" | "scheduled";
+export type RecurrenceFrequency =
+  | "none"
+  | "daily"
+  | "weekdays"
+  | "weekends"
+  | "weekly"
+  | "biweekly"
+  | "monthly"
+  | "quarterly";
+
+export type ExecutionLane = "candidate" | "queued";
+
+export type AiInferenceSource = "default" | "history" | "ai" | "user";
+
+export interface AiFieldInference {
+  source: AiInferenceSource;
+  confidence: number;
+  inferredAt: string;
+  modelVersion: string;
+  userOverridden?: boolean;
+}
+
+export interface CalendarFeedTokenMetadata {
+  id: string;
+  tokenPrefix: string;
+  createdAt: string;
+  lastUsedAt?: string;
+}
+
+export interface ExternalCalendarSource {
+  id: string;
+  name: string;
+  displayUrl: string;
+  color?: string;
+  enabled: boolean;
+  syncStatus: "pending" | "ready" | "error";
+  syncError?: string;
+  lastSyncedAt?: string;
+  nextSyncAt?: string;
+}
+
+export interface ExternalCalendarOccurrence {
+  id: string;
+  source_id: string;
+  external_uid: string;
+  title: string;
+  description: string;
+  location: string;
+  start_at: string;
+  end_at: string;
+  start_date: string;
+  end_date: string;
+  all_day: boolean;
+  status: string;
+}
+
+export interface TaskAiInference {
+  duration?: AiFieldInference & { minutes: number };
+  project?: AiFieldInference & { projectId: string };
+}
+
+export interface AiDurationStat {
+  minutes: number;
+  sampleCount: number;
+}
+
+export interface AiPersonalizationProfile {
+  version: 1;
+  updatedAt: string;
+  historySince?: string;
+  durationByProject: Record<string, AiDurationStat>;
+  projectTokenWeights: Record<string, Record<string, number>>;
+  preferredStartHourByProject: Record<string, number>;
+  feedback: {
+    durationCorrections: number;
+    projectCorrections: number;
+    assignmentUndos: number;
+    scheduleAccepts: number;
+    scheduleRejects: number;
+  };
+}
+
+export interface TaskRecurrence {
+  mode: RecurrenceMode;
+  frequency: RecurrenceFrequency;
+  startDate?: string;
+  startTime?: string;
+  durationMinutes?: number;
+  endDate?: string;
+  count?: number;
+}
+
+export interface Task {
+  /** Engagement for tasks without execution records. */
+  engagement?: number;
+  id: string;
+  title: string;
+  dueDate: string;
+  /** Whether the due date was explicitly set by the user or supplied by scheduling. */
+  dueDateSource?: "manual" | "automatic";
+  category: Category;
+  priority: NullablePriority;
+  notes: string;
+  goalId: string;
+  completed: boolean;
+  completedAt?: string;
+  workflowStatus?: WorkflowStatus;
+  parentTaskId?: string;
+  projectId?: string;
+  importance?: NullablePriority;
+  urgency?: NullablePriority;
+  estimatedHours?: number;
+  /** Prevent cloud assistants from moving this task's schedule without confirmation. */
+  scheduleLocked?: boolean;
+  /** Treat dueDate as a hard deadline that cloud assistants cannot move automatically. */
+  hardDeadline?: boolean;
+  aiInference?: TaskAiInference;
+  order?: number;
+  subtasks?: Subtask[];
+  /** [DEPRECATED] Use timelineRecords instead */
+  scheduledDate?: string;
+  scheduledStart?: string;
+  scheduledEnd?: string;
+  /** 计划在今天推进的日期 (ISO) — 区别于 dueDate 和 scheduledDate */
+  plannedForDate?: string;
+  executionLane?: ExecutionLane;
+  /** [DEPRECATED] Use timelineRecords[].executionStatus instead */
+  executionStatus?: "scheduled" | "completed" | "returned_unfinished" | "skipped" | "cancelled";
+  /** 时间轴排程记录 — 每条记录独立管理，同一任务可同时有 scheduled + returned_unfinished 等多条记录 */
+  timelineRecords?: TimelineRecord[];
+  recurrence?: TaskRecurrence;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LongTermTask {
+  id: string;
+  title: string;
+  targetDate: string;
+  notes: string;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  startDate?: string;
+  endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  category: Category;
+  details: string;
+  recurrence?: TaskRecurrence;
+  imported?: boolean;
+  createdAt: string;
+}
+
+export interface Note {
+  id: string;
+  content: string;
+  createdAt: string;
+  tags: string[];
+}
+
+export interface AiMemory {
+  id: string;
+  content: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  source?: "auto" | "manual" | "conversation";
+  sourceMessages?: ChatMessage[];
+  pinned?: boolean;
+  archived?: boolean;
+}
+
+export interface PlannerDraft {
+  id: string;
+  type: "task" | "event" | "project";
+  title: string;
+  projectId: string;
+  estimatedHours: number;
+  dueDate: string;
+  dueTime?: string;
+  endDate?: string;
+  endTime?: string;
+  category?: Category;
+  importance?: Priority;
+  urgency?: Priority;
+  details: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id?: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+  saved?: boolean;
+  source?: "manual" | "scheduled_summary";
+  notificationId?: string;
+  status?: "thinking" | "done" | "error";
+  steps?: Array<{ label: string; status: "pending" | "running" | "done" | "error" }>;
+  actions?: unknown[];
+  selectedActions?: Record<number, boolean>;
+  actionState?: "pending" | "adopted" | "rejected" | "undone";
+  intent?: string;
+  plan?: Array<{ taskId?: string; title: string; start: string; end: string; durationMinutes?: number; reason?: string }>;
+  format?: "text" | "markdown";
+  agent?: AgentRunState;
+  clarifications?: Array<{ id: string; question: string; options: string[] }>;
+}
+
+export type AgentEntity = "task" | "project" | "habit" | "note" | "memory" | "template" | "settings" | "integration" | "app" | "timer";
+export type AgentOperation = "create" | "update" | "schedule" | "unschedule" | "complete" | "checkin" | "append_subtasks" | "archive" | "delete" | "update_settings" | "navigate" | "start" | "pause";
+
+export interface AgentCommand {
+  id: string;
+  entity: AgentEntity;
+  operation: AgentOperation;
+  targetId?: string;
+  values?: Record<string, unknown>;
+  reason?: string;
+}
+
+export interface AgentAppliedAction {
+  commandId: string;
+  entity: AgentEntity;
+  operation: AgentOperation;
+  targetId?: string;
+  title: string;
+}
+
+export interface AgentRunState {
+  runId: string;
+  trace?: Array<{ id: string; name: string; status: "done" | "error" }>;
+  applied: AgentAppliedAction[];
+  pending: AgentCommand[];
+  forbidden?: Array<{ id: string; reason: string }>;
+  clientActions?: AgentCommand[];
+  appliedRevision?: number;
+  undoExpiresAt?: string;
+  decisionState?: "pending" | "approved" | "rejected" | "undone";
+}
+
+export interface AgentAuditEntry {
+  id: string;
+  trigger: "manual" | "start_brief" | "end_review";
+  status: "planned" | "applied" | "pending_confirmation" | "rejected" | "undone" | "failed";
+  tools: Array<{ id: string; name: string; status: "done" | "error" }>;
+  commands: Array<{ id: string; entity: AgentEntity; operation: AgentOperation; targetId?: string; risk: "auto" | "confirm" | "forbidden"; reason: string }>;
+  undoExpiresAt?: string;
+  createdAt: string;
+}
+
+export interface AiConversation {
+  id: string;
+  title: string;
+  pinned?: boolean;
+  messages: ChatMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type HabitFrequency = "daily" | "weekly" | "custom";
+export type HabitTrackingType = "click-counter" | "duration";
+
+export interface Habit {
+  id: string;
+  title: string;
+  projectId?: string;
+  defaultDurationMinutes: number;
+  startDate?: string;
+  endDate?: string;
+  trackingType?: HabitTrackingType;
+  notes?: string;
+  frequencyRule?: HabitFrequency;
+  weeklyTarget?: number;
+  activeWeekdays?: number[];
+  targetCount?: number;
+  reminder?: { enabled: boolean; time?: string };
+  archived?: boolean;
+  order?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HabitDailyState {
+  id: string;
+  habitId: string;
+  date: string;
+  completed: boolean;
+  completedAt?: string;
+  timelineRecordId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TimeEntry {
+  id: string;
+  taskId: string;
+  projectId?: string;
+  timelineRecordId?: string;
+  startAt: string;
+  endAt: string;
+  durationMinutes: number;
+  source: "timer" | "manual" | "idle_adjusted";
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScheduleTemplateSlot {
+  id: string;
+  label: string;
+  start: string;
+  end: string;
+}
+
+export interface ScheduleTemplate {
+  id: string;
+  title: string;
+  slots: ScheduleTemplateSlot[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlannerData {
+  version: number;
+  importedSeedVersion: string;
+  generatedAt: string;
+  savedAt?: string;
+  goals: Goal[];
+  projects: Project[];
+  tasks: Task[];
+  habits?: Habit[];
+  habitDailyStates?: HabitDailyState[];
+  timeEntries?: TimeEntry[];
+  longTasks: LongTermTask[];
+  events: CalendarEvent[];
+  notes: Note[];
+  drafts: PlannerDraft[];
+  chat: ChatMessage[];
+  aiConversations?: AiConversation[];
+  activeAiConversationId?: string;
+  aiMemories: AiMemory[];
+  aiProfile?: AiPersonalizationProfile;
+  scheduleTemplates?: ScheduleTemplate[];
+  taskLayouts?: Record<string, { tree?: { x: number; y: number }; matrix?: { x: number; y: number } }>;
+  sync?: { deleted: Record<string, string> };
+  pluginConfigs?: Record<string, Record<string, unknown>>;
+}
+
+export type Language = "en" | "zh";
+
+export type WidgetTimerMode = string;
+export type WidgetTimerPhase = string;
+export interface WidgetTimerPreferences {
+  mode: WidgetTimerMode;
+  countdownSeconds: number;
+  /** Opaque settings owned and validated by an installed mode provider. */
+  [key: string]: any;
+}
+export interface WidgetTimerRuntime {
+  mode: WidgetTimerMode;
+  phase: WidgetTimerPhase;
+  running: boolean;
+  round: number;
+  phaseStartedAt: number;
+  phaseEndsAt?: number;
+  pausedAt?: number;
+  countdownTargetAt?: number;
+  countdownTaskId?: string;
+  countdownRecordId?: string;
+  /** Serializable state owned by the mode provider. */
+  [key: string]: any;
+}
+export interface WidgetTimerTick {
+  runtime: WidgetTimerRuntime;
+  displaySeconds: number;
+  transitions: string[];
+  countsAsWork: boolean;
+}
+
+export interface WidgetThemeColors {
+  backgroundColor: string;
+  fontColor: string;
+  timerColor: string;
+  overrunColor: string;
+}
+
+export interface WidgetAppearance {
+  light: WidgetThemeColors;
+  dark: WidgetThemeColors;
+  opacity: number;
+  fontFamily: string;
+  fontScale: number;
+  version: number;
+}
+
+export interface WidgetBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface WidgetResizeFixedEdges {
+  horizontal?: "left" | "right";
+  vertical?: "top" | "bottom";
+}
+
+export type WidgetBoundsUpdate = Partial<WidgetBounds> & {
+  fixedEdges?: WidgetResizeFixedEdges;
+};
+
+export interface Settings {
+  activeMode: "execute" | "planning";
+  defaultTimelineView?: "daily" | "3day" | "weekly" | "month";
+  continuousCrossDayScroll?: boolean;
+  language: Language;
+  planningView: "tree" | "matrix" | "split";
+  metricsRangePreset?: "all" | "today" | "yesterday" | "thisWeek" | "lastWeek" | "thisMonth" | "custom";
+  metricsGroupBy?: "project" | "customCategory" | "tag" | "importance" | "urgency" | "completion" | "taskType";
+  metricsDisplayMetric?: "percentage" | "duration" | "taskCount" | "completionRate";
+  metricsIncludeHabits?: "include" | "exclude" | "only";
+  metricsCompletionFilter?: "all" | "completed" | "incomplete";
+  metricsCustomStart?: string;
+  metricsCustomEnd?: string;
+  aiDockOpen: boolean;
+  appTitle: string;
+  model: string;
+  reasoningMode: "instant" | "high" | "xhigh";
+  aiSafetyLevel: "ask" | "approve" | "full";
+  baseUrl: string;
+  hasApiKey: boolean;
+  apiKeyPreview: string;
+  displayName: string;
+  avatarDataUrl?: string;
+  onboardingVersion?: number;
+  onboardingStep?: "add" | "drag" | "candidates" | "schedule" | "calendar" | "planning" | "ai" | "done";
+  dailyFocusTime: string;
+  weekStartsOn: 0 | 1;
+  theme: "light" | "dark";
+  baseMode?: "light" | "dark" | "system";
+  extensions?: ExtensionPreferences;
+  extensionConfigs?: Record<string, Record<string, unknown>>;
+  extensionConfigUpdatedAt?: Record<string, string>;
+  typographyStyle: "editorial" | "balanced" | "sans";
+  accentColor: string;
+  executeAccentColor: string;
+  planningAccentColor: string;
+  aiTone: "direct" | "gentle" | "strict";
+  hideCompleted: boolean;
+  reminderLeadDays: number;
+  taskNoteDisplay: "summary" | "collapsed" | "full";
+  glassEnabled: boolean;
+  backgroundImagePath: string;
+  glassBlur: number;
+  glassOpacity: number;
+  backgroundDim: number;
+  collapsedPanels: string[];
+  collapsedSections: string[];
+  panelWidths: {
+    left: number;
+    right: number;
+  };
+  chatMessageMaxHeight: number;
+  aiMemoryEnabled: boolean;
+  hideAi: boolean;
+  aiBriefsEnabled?: boolean;
+  aiStartBriefTime?: string;
+  aiEndBriefTime?: string;
+  aiLastStartBriefDate?: string;
+  aiLastEndReviewDate?: string;
+  /** Cloud proactive assistant preferences, stored with the user profile for offline-safe configuration. */
+  proactiveAssistantEnabled?: boolean;
+  showInAppNotificationBadge?: boolean;
+  proactiveAssistantIntroSeen?: boolean;
+  proactiveAssistantAutoAdjust?: boolean;
+  proactiveAssistantGapChecks?: boolean;
+  proactiveAssistantGapThresholdMinutes?: number;
+  proactiveAssistantLocation?: { latitude: number; longitude: number; capturedAt: string };
+  addAdvancedOpen: boolean;
+  uiStyle: "gradient" | "neumorphic";
+  dayStartTime: string;
+  scheduleDayStartTime?: string;
+  dayEndTime?: string;
+  scheduleBufferMinutes?: number;
+  autoEstimateTaskDuration?: boolean;
+  autoAssignTaskProject?: boolean;
+  /** 时间轴任务标题字体缩放系数（0.85 ~ 1.3）。1 表示默认大小。 */
+  timelineFontScale?: number;
+  /** 任务块以归属项目色整块填充（true）或仅描边（false）。 */
+  taskBlockFill?: boolean;
+  /** 自动同步频率（分钟）。0 或未设置表示仅手动同步。 */
+  syncIntervalMinutes?: number;
+  idleThresholdMinutes?: number;
+  focusModeDefault?: "stopwatch" | "pomodoro" | "flowtime";
+  featureKanbanViewEnabled?: boolean;
+  featureQuadrantViewEnabled?: boolean;
+  featureListViewEnabled?: boolean;
+  featureHabitsEnabled?: boolean;
+  /** Whether habits appear in today's candidates; omitted legacy settings stay visible. */
+  featureHabitCandidatesEnabled?: boolean;
+  /** 模板功能开关：关闭后隐藏今日候选顶栏的「模板」入口与模板设置子项。 */
+  featureTemplatesEnabled?: boolean;
+  /** 指标视图开关：关闭后隐藏规划页的「指标」视图入口与指标设置子项。 */
+  featureMetricsEnabled?: boolean;
+  featureEngagementEnabled?: boolean;
+  /** 桌面置顶小组件开关（仅 Electron 桌面端生效）。 */
+  featureWidgetEnabled?: boolean;
+  /** 小组件始终置顶。 */
+  widgetAlwaysOnTop?: boolean;
+  /** 启动时自动打开小组件。 */
+  widgetOpenOnLaunch?: boolean;
+  /** Full-app portrait window always-on-top preference (desktop only). */
+  compactWindowAlwaysOnTop?: boolean;
+  widgetAppearance?: WidgetAppearance;
+  widgetTimerPreferences?: WidgetTimerPreferences;
+  widgetAppearanceMigrated?: boolean;
+  /** 最近一次成功同步时间（ISO 字符串）。 */
+  lastSyncedAt?: string;
+  /** 已启用（已安装并激活）的插件 ID 列表。 */
+  enabledPlugins?: string[];
+  /** 各插件的配置数据，key 为插件 ID。 */
+  pluginConfigs?: Record<string, Record<string, unknown>>;
+}
+
+export interface AiAction {
+  type: "add_task" | "reschedule_task" | "add_event" | "add_note" | "add_memory";
+  title?: string;
+  dueDate?: string;
+  date?: string;
+  category?: Category;
+  priority?: Priority;
+  notes?: string;
+  content?: string;
+  tags?: string[];
+  taskId?: string;
+  details?: string;
+  goalId?: string;
+  subtasks?: { title: string }[];
+}
+
+export interface AiImportAction {
+  type: "import_schedule_item";
+  kind: "task" | "event";
+  title: string;
+  date: string;
+  endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  durationMinutes?: number;
+  category?: Category;
+  priority?: Priority;
+  projectId?: string;
+  projectName?: string;
+  notes?: string;
+  recurrence?: TaskRecurrence;
+  warning?: string;
+}
+
+/** Single parsed item from AI plan output — not written until user confirms */
+export interface AiPlanItem {
+  kind: "project" | "task" | "event";
+  title: string;
+  checked: boolean;
+  category?: Category;
+  priority?: Priority;
+  dueDate?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  notes?: string;
+  details?: string;
+  projectTitle?: string; // task's parent project name (AI-suggested)
+  subtaskTitles?: string[];
+}
+
+export interface PlannerApi {
+  getAuthState?: () => Promise<{ mode: "local" | "cloud"; user: { id: string; email?: string } | null; configured: boolean }>;
+  getBootstrap?: (options?: {
+    force?: boolean;
+    cachedProfile?: { userId: string; data: PlannerData; settings: Settings; revision?: number };
+  }) => Promise<{
+    auth: { mode: "local" | "cloud"; user: { id: string; email?: string } | null; configured: boolean };
+    data: PlannerData | null;
+    settings: Settings | null;
+    revision?: number;
+  }>;
+  /** Latest revision already acknowledged by this API instance after a save. */
+  getKnownRemoteRevision?: () => number | undefined;
+  /** Lightweight cloud revision check used when Realtime is unavailable. */
+  getRemoteRevision?: () => Promise<number | undefined>;
+  signUp?: (email: string, password: string) => Promise<{
+    user: { id: string; email?: string } | null;
+    message?: string;
+    requiresEmailConfirmation?: boolean;
+    email?: string;
+  }>;
+  signIn?: (email: string, password: string) => Promise<{ user: { id: string; email?: string } | null }>;
+  getOAuthAuthorizationDetails?: (authorizationId: string) => Promise<{
+    data: { authorization_id: string; client: { name: string }; scope: string; redirect_uri: string } | { redirect_url: string } | null;
+    error: { message: string } | null;
+  }>;
+  approveOAuthAuthorization?: (authorizationId: string) => Promise<{ data: { redirect_url: string } | null; error: { message: string } | null }>;
+  denyOAuthAuthorization?: (authorizationId: string) => Promise<{ data: { redirect_url: string } | null; error: { message: string } | null }>;
+  resendConfirmation?: (email: string) => Promise<{ message?: string }>;
+  completeEmailConfirmation?: () => Promise<{
+    confirmed: boolean;
+    user: { id: string; email?: string } | null;
+    message?: string;
+  }>;
+  signOut?: () => Promise<void>;
+  deleteAccount?: () => Promise<void>;
+  sendPasswordResetEmail?: (email: string) => Promise<{ message?: string }>;
+  resetPassword?: (newPassword: string) => Promise<{ success: boolean; message?: string }>;
+  clearAuthCallbackUrl?: () => void;
+  getData: () => Promise<PlannerData>;
+  saveData: (data: PlannerData) => Promise<PlannerData>;
+  subscribeToRemoteChanges?: (listener: (payload: { data: PlannerData; settings: Settings; revision?: number }) => void) => () => void;
+  applyActions: (actions: AiAction[]) => Promise<{ data: PlannerData; applied: Array<{ type: string; id: string; title: string }> }>;
+  resetSeed: () => Promise<PlannerData>;
+  getSettings: () => Promise<Settings>;
+  saveSettings: (settings: Partial<Settings>) => Promise<Settings>;
+  listMcpTokens?: () => Promise<McpTokenMetadata[]>;
+  createMcpToken?: (name: string) => Promise<{ token: string; metadata: McpTokenMetadata }>;
+  revokeMcpToken?: (id: string) => Promise<void>;
+  listSyncBridgeStatuses?: () => Promise<SyncBridgeStatus[]>;
+  listCalendarFeedTokens?: () => Promise<CalendarFeedTokenMetadata[]>;
+  createCalendarFeedToken?: () => Promise<{ token: string; metadata: CalendarFeedTokenMetadata }>;
+  revokeCalendarFeedToken?: (id: string) => Promise<void>;
+  invokeEdgeFunction?: (name: string, body: unknown, signal?: AbortSignal) => Promise<unknown>;
+  listExternalCalendars?: (range?: { from?: string; to?: string }) => Promise<{ sources: ExternalCalendarSource[]; occurrences: ExternalCalendarOccurrence[] }>;
+  connectExternalCalendar?: (input: { name: string; url: string; color?: string }) => Promise<{ source: ExternalCalendarSource; occurrenceCount: number }>;
+  refreshExternalCalendar?: (sourceId: string, force?: boolean) => Promise<ExternalCalendarSource>;
+  removeExternalCalendar?: (sourceId: string) => Promise<void>;
+  selectBackgroundImage: () => Promise<{ path: string }>;
+}
+
+export interface DesktopDockPreferences {
+  activation: "hover" | "click";
+  handleHeight: number;
+  position: number;
+  panelHeight: number;
+}
+
+export interface DesktopUpdateState {
+  status: "idle" | "unsupported" | "checking" | "current" | "available" | "downloading" | "downloaded" | "error";
+  currentVersion: string;
+  availableVersion: string;
+  progress: number;
+  message: string;
+}
+
+/** 桌面小组件状态快照——由主窗口构建并推送到小组件窗口。 */
+export interface WidgetSnapshot {
+  /** 当前正在做/计时的任务（无则字段为空）。 */
+  taskId?: string;
+  taskTitle: string;
+  /** Current task deadline used to decide whether countdown needs scheduling. */
+  taskDueDate?: string;
+  taskScheduleRecordId?: string;
+  taskScheduleStartAt?: number;
+  taskScheduleEndAt?: number;
+  timelineState?: "active" | "upcoming" | "empty";
+  taskProjectColor?: string;
+  /** 计时累计秒数。 */
+  elapsedSeconds: number;
+  /** 计时是否运行中。 */
+  timerRunning: boolean;
+  /** 今日候选数量。 */
+  candidateCount: number;
+  /** 语言。 */
+  lang: "zh" | "en";
+  /** 小组件设置镜像。 */
+  alwaysOnTop: boolean;
+  appearance: WidgetAppearance;
+  appearanceConfigured: boolean;
+  theme: "light" | "dark";
+  timerModes?: Array<{ mode: string; zh: string; en: string; description?: { zh: string; en: string } }>;
+  timerCountsAsWork?: boolean;
+  timerSnapshotAt?: number;
+  extensionTheme?: { accountId: string; sha256: string; config: Record<string, unknown> };
+  timerPreferences: WidgetTimerPreferences;
+  timerRuntime: WidgetTimerRuntime;
+  timerDisplaySeconds: number;
+  timerPhase: WidgetTimerPhase;
+  popoverOpen: boolean;
+}
+
+/** 小组件发往主窗口的动作请求。 */
+export type WidgetAction =
+  | { type: "requestSnapshot" }
+  | { type: "quickAdd"; title: string }
+  | { type: "timerStart"; taskId?: string }
+  | { type: "timerPause" }
+  | { type: "timerResume" }
+  | { type: "timerStop" }
+  | { type: "discardTimer" }
+  | { type: "complete"; taskId?: string }
+  | { type: "setAlwaysOnTop"; enabled: boolean }
+  | { type: "updateAppearance"; patch: Partial<WidgetAppearance> }
+  | { type: "setTimerMode"; mode: WidgetTimerMode }
+  | { type: "updateTimerPreferences"; patch: Partial<Omit<WidgetTimerPreferences, "mode">> }
+  | { type: "saveTimerSettings"; draft: WidgetTimerPreferences }
+  | { type: "resetWidgetTimer"; draft: WidgetTimerPreferences }
+  | { type: "scheduleWidgetCountdown"; durationMinutes: number }
+  | { type: "toggleWidgetTimer" }
+  | { type: "updateWidgetAppearance"; patch: Partial<WidgetAppearance> }
+  | { type: "resetPosition" };
+
+declare global {
+  interface Window {
+    plannerApi: PlannerApi;
+    desktopApi?: {
+      authStorage: {
+        getItem: (key: string) => Promise<string | null>;
+        setItem: (key: string, value: string) => Promise<void>;
+        removeItem: (key: string) => Promise<void>;
+      };
+      getUpdateState: () => Promise<DesktopUpdateState>;
+      checkForUpdates: () => Promise<DesktopUpdateState>;
+      installUpdate: () => Promise<boolean>;
+      onUpdateState: (listener: (state: DesktopUpdateState) => void) => () => void;
+      getAutoLaunch: () => Promise<boolean>;
+      setAutoLaunch: (enabled: boolean) => Promise<boolean>;
+      extensions?: {
+        fetch: (url: string) => Promise<number[]>;
+        start: (key: string, sha256: string, files: Record<string, { encoding: "utf8" | "base64"; data: string }>, entry: string) => Promise<void>;
+        invoke: (key: string, method: string, payload?: unknown) => Promise<unknown>;
+        stop: (key: string) => Promise<void>;
+        openDirectory: () => Promise<void>;
+      };
+      writeSnapshot?: (payload: { data?: PlannerData | null; settings?: Partial<Settings> | null; authUser?: { id?: string; email?: string } | null }) => Promise<{ ok: boolean; path?: string; stampedPath?: string; error?: string }>;
+      readLatestSnapshot?: () => Promise<{ ok: boolean; payload?: { exportedAt?: string; appVersion?: string; data?: PlannerData | null; settings?: Settings | null; authUser?: { id?: string; email?: string } | null }; reason?: string; error?: string }>;
+      compactWindow?: {
+        open: (options?: { alwaysOnTop?: boolean }) => Promise<boolean>;
+        close: () => Promise<boolean>;
+        setAlwaysOnTop: (enabled: boolean) => Promise<boolean>;
+      };
+      dockWindow?: {
+        getSide: () => Promise<"left" | "right" | null>;
+        setSide: (side: "left" | "right" | null) => Promise<"left" | "right" | null>;
+        getPreferences: () => Promise<DesktopDockPreferences>;
+        setPreferences: (patch: Partial<DesktopDockPreferences>) => Promise<DesktopDockPreferences>;
+      };
+      widget?: {
+        open: () => Promise<boolean>;
+        close: () => Promise<boolean>;
+        togglePopover: () => Promise<boolean>;
+        closePopover: () => Promise<boolean>;
+        setAlwaysOnTop: (enabled: boolean) => Promise<boolean>;
+        getBounds: () => Promise<WidgetBounds | null>;
+        setBounds: (bounds: WidgetBoundsUpdate) => Promise<boolean>;
+        getWorkArea: () => Promise<WidgetBounds>;
+        /** Widget side: fire an action request to the main window (fire-and-forget). */
+        sendAction: (action: WidgetAction) => void;
+        /** Widget side: listen for snapshot pushes from the main window. */
+        onSnapshot: (listener: (snapshot: WidgetSnapshot) => void) => () => void;
+        /** Primary widget side: listen for the native More popover open state. */
+        onPopoverState: (listener: (open: boolean) => void) => () => void;
+        /** Main side: listen for action requests relayed from the widget. */
+        onAction: (listener: (action: WidgetAction) => void) => () => void;
+        /** Main side: push a snapshot to the widget window. */
+        pushSnapshot: (snapshot: WidgetSnapshot) => void;
+      };
+      isDesktop: () => boolean;
+    };
+  }
+}

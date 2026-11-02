@@ -1,0 +1,18 @@
+{
+  "author": "Your name",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "minAppVersion": "1.5.0",
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
+  "repository": "https://github.com/shawn89890916/NavoPath-planner",
+  "license": "MIT",
+  "kind": "plugin",
+  "id": "my-plugin",
+  "name": "My plugin",
+  "description": "Describe the useful behavior your plugin adds.",
+  "main": "main.js"
+}

@@ -1,6 +1,6 @@
 import type { Language } from "./types";
 
-export type SettingsCategory = "general" | "appearance" | "workflow" | "account-data" | "ai" | "widget" | "integrations" | "advanced";
+export type SettingsCategory = "general" | "appearance" | "workflow" | "account-data" | "ai" | "widget" | "integrations" | "plugins" | "advanced";
 export type SettingsDetail = "ai" | "widget" | "integrations" | "recovery";
 
 export type LegacySettingsSection =
@@ -44,6 +44,7 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategoryDefinition[] = [
   { id: "ai", labelZh: "Navo AI", labelEn: "Navo AI" },
   { id: "widget", labelZh: "桌面窗口", labelEn: "Desktop Windows" },
   { id: "integrations", labelZh: "日历与集成", labelEn: "Calendar & Integrations" },
+  { id: "plugins", labelZh: "插件", labelEn: "Plugins" },
   { id: "account-data", labelZh: "账户与数据", labelEn: "Account & Data" },
 ];
 
@@ -61,7 +62,7 @@ const legacyTargets: Record<LegacySettingsSection, SettingsTarget> = {
   ai: { category: "ai" },
   mcp: { category: "integrations", anchor: "mcp" },
   calendar: { category: "integrations", anchor: "calendar-feed" },
-  plugins: { category: "integrations", anchor: "plugins" },
+  plugins: { category: "plugins", anchor: "plugins" },
   account: { category: "account-data", anchor: "account" },
   advanced: { category: "account-data", anchor: "reset-settings" },
   page: { category: "general" },
@@ -77,6 +78,7 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
     if (input.detail === "integrations") return { category: "integrations", anchor: input.anchor };
     return { category: "account-data", anchor: input.anchor || "reset-settings" };
   }
+  if (input.category === "integrations" && input.anchor === "plugins") return { category: "plugins", anchor: "plugins" };
   if (!SETTINGS_CATEGORIES.some((category) => category.id === input.category)) return { category: "general" };
   if (input.detail && !["ai", "widget", "integrations", "recovery"].includes(input.detail)) {
     return { category: input.category, anchor: input.anchor };
@@ -133,6 +135,7 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("restart-onboarding", { category: "general" }, "重新开始新手指南", "Restart onboarding guide", "tutorial 引导"),
 
   entry("theme", { category: "appearance" }, "界面模式", "Interface mode", "light dark 浅色 深色 主题"),
+  entry("themes", { category: "appearance" }, "社区主题", "Community themes", "theme market import options 主题 市场 导入 选项"),
   entry("typography", { category: "appearance" }, "字体风格", "Typography", "serif sans 衬线 无衬线"),
   entry("timeline-font", { category: "appearance" }, "时间轴字体大小", "Timeline font size", "scale 字号"),
   entry("accent-colors", { category: "appearance" }, "自定义点缀色", "Customize accent colors", "execute planning color 强调色"),
@@ -176,10 +179,10 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("widget-dark-text", { category: "widget" }, "深色文字", "Dark text", "widget font color 小组件 文字颜色"),
   entry("widget-dark-timer", { category: "widget" }, "深色计时", "Dark timer", "widget timer color 小组件 计时颜色"),
   entry("widget-dark-overrun", { category: "widget" }, "深色超时", "Dark overrun", "widget overtime color 小组件 超时颜色"),
-  entry("widget-timer", { category: "widget" }, "小组件计时模式", "Widget timer mode", "stopwatch pomodoro countdown 正计时 番茄钟 倒计时"),
+  entry("widget-timer", { category: "widget" }, "小组件计时模式", "Widget timer mode", "stopwatch countdown plugin 正计时 倒计时 插件"),
   entry("widget-reset", { category: "widget" }, "重置小组件", "Reset widget", "appearance position size 外观 位置 尺寸"),
 
-  entry("plugins", { category: "integrations" }, "插件", "Plugins", "extension local built-in 扩展 本地 内置"),
+  entry("plugins", { category: "plugins" }, "插件", "Plugins", "extension market import sources update restricted 扩展 市场 导入 来源 更新 受限"),
   entry("mcp", { category: "integrations" }, "MCP", "MCP", "token server integration 令牌 服务"),
   entry("sync-bridge", { category: "integrations" }, "同步", "Sync", "iCloud Drive OneDrive Dropbox 云盘 文件夹 桥接 备份"),
   entry("reset-settings", { category: "account-data" }, "重置所有设置", "Reset all settings", "restore defaults danger 恢复默认 危险"),

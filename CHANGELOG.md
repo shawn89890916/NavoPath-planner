@@ -1,8 +1,10 @@
 # NavoPath 更新日志
 
-## 2026-11-02 · 习惯编辑与项目归属 · 1.4.14
+## 2026-11-02 · 社区插件、主题与习惯编辑 · 1.5.0
 
 ### 改进
+- 插件拥有独立设置页，支持社区市场、第三方来源、本地导入、自定义设置、更新回退及账户同步；可信插件可扩展数据、界面、命令和桌面能力，受限模式可暂停运行。
+- 外观可安装和上传社区主题，支持跟随系统、主题选项及多设备同步；天气插件提供真实顶栏天气，番茄钟可独立启停并统一作用于主界面和桌面小组件。
 - 习惯可在新增、快速添加和详情中选择归属项目，修改归属时同步已有时间轴安排，新安排自动沿用该项目。
 - 编辑习惯后点击面板外空白区域、关闭或返回总览会自动保存；右下角新增有未保存内容时，退出前可选择保存或放弃。
 
@@ -296,9 +298,11 @@
 
 # NavoPath Changelog
 
-## 2026-11-02 · Habit editing and projects · 1.4.14
+## 2026-11-02 · Community plugins, themes and habit editing · 1.5.0
 
 ### Improvements
+- Plugins have a dedicated settings page with community catalogs, custom sources, local imports, custom settings, update rollback and account sync. Trusted plugins can extend data, views, commands and desktop capabilities; restricted mode suspends execution.
+- Appearance supports imported and community themes, system mode, theme options and cross-device sync. A weather plugin shows real conditions in the header; Pomodoro is independently managed across the workspace and desktop widget.
 - Choose a project when creating, quickly adding or editing a habit. Changing its project updates existing timeline schedules, and new schedules inherit it.
 - Clicking outside the habit editor, closing it or returning to the overview saves edits automatically. Exiting a new item with unsaved content offers Save or Discard.
 

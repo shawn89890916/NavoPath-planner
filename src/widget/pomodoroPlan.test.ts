@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateDeadlineAlignedPomodoroPlan } from "./pomodoroPlan";
+import { generateDeadlineAlignedPomodoroPlan } from "../../community-plugins/pomodoro/plan";
 
 const at = (minutes: number) => new Date(Date.UTC(2026, 6, 13, 8, minutes));
 const options = (minutes: number) => ({ startAt: at(0), endAt: at(minutes), preferredWorkMinutes: 25, minWorkMinutes: 15, maxWorkMinutes: 50, preferredShortBreakMinutes: 5, minShortBreakMinutes: 2, preferredLongBreakMinutes: 15, minLongBreakMinutes: 5, longBreakEvery: 4 });

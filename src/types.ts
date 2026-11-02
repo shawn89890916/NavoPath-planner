@@ -1,3 +1,4 @@
+import type { ExtensionPreferences } from "./extensions/types";
 export type Category = "exam" | "uk" | "us" | "essay" | "materials" | "project" | "personal";
 export type Priority = "high" | "medium" | "low";
 export type NullablePriority = Priority | null;
@@ -432,27 +433,14 @@ export interface PlannerData {
 
 export type Language = "en" | "zh";
 
-export type WidgetTimerMode = "stopwatch" | "pomodoro" | "countdown";
-export type WidgetTimerPhase = "stopwatch" | "focus" | "break" | "countdown" | "overrun";
-export type WidgetPomodoroPhase = { id: string; type: "work" | "short-break" | "long-break"; startAt: number; endAt: number; durationMinutes: number; index: number };
-
+export type WidgetTimerMode = string;
+export type WidgetTimerPhase = string;
 export interface WidgetTimerPreferences {
   mode: WidgetTimerMode;
-  focusMinutes: number;
-  breakMinutes: number;
-  rounds: number;
   countdownSeconds: number;
-  minWorkMinutes?: number;
-  maxWorkMinutes?: number;
-  longBreakMinutes?: number;
-  minBreakMinutes?: number;
-  minLongBreakMinutes?: number;
-  longBreakEvery?: number;
-  autoStartNextPhase?: boolean;
-  allowWorkAdjustment?: boolean;
-  allowBreakShortening?: boolean;
+  /** Opaque settings owned and validated by an installed mode provider. */
+  [key: string]: any;
 }
-
 export interface WidgetTimerRuntime {
   mode: WidgetTimerMode;
   phase: WidgetTimerPhase;
@@ -464,14 +452,13 @@ export interface WidgetTimerRuntime {
   countdownTargetAt?: number;
   countdownTaskId?: string;
   countdownRecordId?: string;
-  pomodoroPlan?: WidgetPomodoroPhase[];
-  currentPomodoroPhaseIndex?: number;
+  /** Serializable state owned by the mode provider. */
+  [key: string]: any;
 }
-
 export interface WidgetTimerTick {
   runtime: WidgetTimerRuntime;
   displaySeconds: number;
-  transitions: Array<"focusComplete" | "breakComplete" | "countdownComplete">;
+  transitions: string[];
   countsAsWork: boolean;
 }
 
@@ -535,6 +522,10 @@ export interface Settings {
   dailyFocusTime: string;
   weekStartsOn: 0 | 1;
   theme: "light" | "dark";
+  baseMode?: "light" | "dark" | "system";
+  extensions?: ExtensionPreferences;
+  extensionConfigs?: Record<string, Record<string, unknown>>;
+  extensionConfigUpdatedAt?: Record<string, string>;
   typographyStyle: "editorial" | "balanced" | "sans";
   accentColor: string;
   executeAccentColor: string;
@@ -743,30 +734,6 @@ export interface DesktopUpdateState {
   message: string;
 }
 
-export interface DesktopExternalPlugin {
-  id: string;
-  name: string;
-  nameI18n?: Partial<Record<"zh" | "en", string>>;
-  description: string;
-  descriptionI18n?: Partial<Record<"zh" | "en", string>>;
-  enabledSummaryI18n?: Partial<Record<"zh" | "en", string>>;
-  version: string;
-  author: string;
-  icon: string;
-  permissions: Array<"tasks" | "settings" | "ui" | "events" | "calendar">;
-  configFields: Array<{
-    key: string;
-    label: string;
-    labelI18n?: Partial<Record<"zh" | "en", string>>;
-    type: "boolean" | "number" | "string" | "select";
-    options?: { value: string; label: string; labelI18n?: Partial<Record<"zh" | "en", string>> }[];
-    min?: number;
-    max?: number;
-    default: unknown;
-  }>;
-  source: "external";
-}
-
 /** 桌面小组件状态快照——由主窗口构建并推送到小组件窗口。 */
 export interface WidgetSnapshot {
   /** 当前正在做/计时的任务（无则字段为空）。 */
@@ -792,6 +759,10 @@ export interface WidgetSnapshot {
   appearance: WidgetAppearance;
   appearanceConfigured: boolean;
   theme: "light" | "dark";
+  timerModes?: Array<{ mode: string; zh: string; en: string; description?: { zh: string; en: string } }>;
+  timerCountsAsWork?: boolean;
+  timerSnapshotAt?: number;
+  extensionTheme?: { accountId: string; sha256: string; config: Record<string, unknown> };
   timerPreferences: WidgetTimerPreferences;
   timerRuntime: WidgetTimerRuntime;
   timerDisplaySeconds: number;
@@ -807,6 +778,7 @@ export type WidgetAction =
   | { type: "timerPause" }
   | { type: "timerResume" }
   | { type: "timerStop" }
+  | { type: "discardTimer" }
   | { type: "complete"; taskId?: string }
   | { type: "setAlwaysOnTop"; enabled: boolean }
   | { type: "updateAppearance"; patch: Partial<WidgetAppearance> }
@@ -834,7 +806,13 @@ declare global {
       onUpdateState: (listener: (state: DesktopUpdateState) => void) => () => void;
       getAutoLaunch: () => Promise<boolean>;
       setAutoLaunch: (enabled: boolean) => Promise<boolean>;
-      listExternalPlugins?: () => Promise<{ plugins: DesktopExternalPlugin[] }>;
+      extensions?: {
+        fetch: (url: string) => Promise<number[]>;
+        start: (key: string, sha256: string, files: Record<string, { encoding: "utf8" | "base64"; data: string }>, entry: string) => Promise<void>;
+        invoke: (key: string, method: string, payload?: unknown) => Promise<unknown>;
+        stop: (key: string) => Promise<void>;
+        openDirectory: () => Promise<void>;
+      };
       writeSnapshot?: (payload: { data?: PlannerData | null; settings?: Partial<Settings> | null; authUser?: { id?: string; email?: string } | null }) => Promise<{ ok: boolean; path?: string; stampedPath?: string; error?: string }>;
       readLatestSnapshot?: () => Promise<{ ok: boolean; payload?: { exportedAt?: string; appVersion?: string; data?: PlannerData | null; settings?: Settings | null; authUser?: { id?: string; email?: string } | null }; reason?: string; error?: string }>;
       compactWindow?: {

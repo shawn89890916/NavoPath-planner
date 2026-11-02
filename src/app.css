@@ -498,12 +498,6 @@
   border-color: var(--accent-active);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-active) 14%, transparent);
 }
-.df-utility-check span {
-  display: inline;
-}
-.df-utility-check > :not(input) {
-  display: inline;
-}
 .df-utility-select select:hover {
   border-color: var(--accent-active);
 }
@@ -2141,14 +2135,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 /* ============================================================ */
 /* 3. App Layout */
 /* ============================================================ */
-.df-app.mode-execute {
-  --accent-active: var(--execute-primary, #584D3D);
-  --accent-rgb: 88, 77, 61;
-}
-.df-app.mode-planning {
-  --accent-active: var(--planning-primary, #584D3D);
-  --accent-rgb: 88, 77, 61;
-}
 .df-ai-panel > div { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
   overflow: visible;
 }
@@ -7574,16 +7560,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   box-shadow: none;
   border: 1px solid var(--border-soft);
 }
-/* Settings divider and subhead */
-.df-settings-subhead {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-  margin-top: 4px;
-}
 /* 3-day view: fix checkbox overlapping task name */
 .df-time-block .df-block-check {
   flex-shrink: 0;
@@ -7648,9 +7624,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   color: var(--text-main);
 }
 .df-app.theme-dark .df-utility-select {
-  color: var(--text-main);
-}
-.df-app.theme-dark .df-utility-check {
   color: var(--text-main);
 }
 .df-app.theme-dark .df-theme-setting {
@@ -10465,16 +10438,6 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 }
 /* One compatibility bridge for legacy theme-qualified component rules. */
 .df-app:not(.theme-dark) {
-  --bg-app: #f5f4ee;
-  --bg-app-soft: #efeee7;
-  --surface-main: #faf9f5;
-  --surface-raised: #fdfcf8;
-  --surface-card: #fdfcf8;
-  --text-main: var(--navo-brown);
-  --text-muted: #7b7062;
-  --text-faint: #a69d92;
-  --border-soft: rgba(88,77,61,.18);
-  --border-subtle: rgba(88,77,61,.10);
   --paper-float-shadow: 0 20px 48px rgba(88,77,61,.16);
   background-color: var(--bg-app);
   background-image:
@@ -12180,10 +12143,6 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   padding-top: 14px;
   padding-bottom: 14px;
 }
-.df-app .df-utility-check {
-  padding-top: 14px;
-  padding-bottom: 14px;
-}
 .df-app .df-theme-setting {
   padding-top: 14px;
   padding-bottom: 14px;
@@ -12462,55 +12421,6 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 }
 @keyframes df-sync-spin {
   to { transform: rotate(360deg); }
-}
-/* Direction-aware sync buttons (push-only / pull-only) */
-/* Plugin config dialog fields */
-.df-app .df-plugin-config-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 12px 0 16px;
-}
-.df-app .df-plugin-config-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-}
-.df-app .df-plugin-config-field span {
-  color: var(--text-muted);
-}
-.df-app .df-plugin-config-field input {
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
-  color: var(--text-main);
-  font-size: 13px;
-  font-family: inherit;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-plugin-config-field select {
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
-  color: var(--text-main);
-  font-size: 13px;
-  font-family: inherit;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-plugin-config-field textarea {
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
-  color: var(--text-main);
-  font-size: 13px;
-  font-family: inherit;
-  resize: vertical;
-  min-height: 60px;
-  corner-shape: var(--corner-shape, squircle);
 }
 /* First-use guide: a quiet editorial annotation tied to real workspace actions. */
 .df-app .df-onboarding-guide {
@@ -13700,10 +13610,6 @@ body.df-timeline-pointer-drag * {
   color: var(--text-muted);
   font: 600 11px/1.4 var(--paper-sans);
 }
-.df-app .df-plugin-tool small {
-  color: var(--text-muted);
-  font: 600 11px/1.4 var(--paper-sans);
-}
 .df-app .df-subscription-head strong {
   color: var(--text-main);
   font-size: 18px;
@@ -13792,33 +13698,6 @@ body.df-timeline-pointer-drag * {
   gap: 8px;
   padding: 10px 0;
 }
-.df-app .df-plugin-doc-link {
-  border-block: 1px solid var(--paper-rule);
-  background: transparent;
-  box-shadow: none;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px 12px;
-  width: 100%;
-  min-height: 40px;
-  padding: 0;
-  border: 0;
-  border-bottom: 1px solid var(--paper-rule);
-  border-radius: 0;
-  color: var(--text-main);
-  text-align: left;
-  text-decoration: none;
-}
-.df-app .df-plugin-doc-link small {
-  color: var(--text-muted);
-  font: 600 11px/1.4 var(--paper-sans);
-  grid-column: 1;
-}
-.df-app .df-plugin-doc-link:hover {
-  color: var(--accent-active);
-  border-bottom-color: var(--accent-active);
-}
 .df-app .df-account-more-body {
   display: grid;
   gap: 8px;
@@ -13830,214 +13709,6 @@ body.df-timeline-pointer-drag * {
 .df-app .df-settings-about small {
   color: var(--text-muted);
   font: 600 11px/1.2 var(--paper-sans);
-}
-.df-app .df-plugin-runtime {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-.df-app .df-plugin-empty {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 13px;
-}
-.df-app .df-plugin-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
-}
-.df-app .df-plugin-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 0;
-  border: 0;
-  border-bottom: 1px solid var(--paper-rule);
-  border-radius: 0;
-  border-color: var(--paper-rule);
-  background: transparent;
-  box-shadow: none;
-}
-.df-app .df-plugin-card:hover {
-  border-color: var(--accent-active);
-  background: var(--paper-note);
-  box-shadow: none;
-}
-.df-app .df-plugin-card.installed {
-  border-color: var(--accent-active);
-  background: var(--paper-note);
-  box-shadow: none;
-}
-.df-app .df-plugin-icon {
-  flex: 0 0 38px;
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  border-radius: 0;
-  border: 1px solid var(--paper-rule);
-  background: transparent;
-  color: var(--text-main);
-  font: 700 18px/1 var(--paper-mono);
-}
-.df-app .df-plugin-info {
-  min-width: 0;
-  flex: 1;
-}
-.df-app .df-plugin-header {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-}
-.df-app .df-plugin-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-}
-.df-app .df-plugin-version {
-  color: var(--text-muted);
-  font: 600 11px/1.3 var(--paper-mono);
-}
-.df-app .df-plugin-status {
-  color: var(--accent-active);
-  font: 600 11px/1.3 var(--paper-mono);
-}
-.df-app .df-plugin-desc {
-  margin: 6px 0;
-  color: var(--text-main);
-  font-size: 13px;
-  line-height: 1.55;
-}
-.df-app .df-plugin-enabled-summary {
-  margin: -2px 0 8px;
-  color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.55;
-}
-.df-app .df-plugin-actions {
-  flex: 0 0 auto;
-  display: grid;
-  gap: 8px;
-}
-.df-app .df-plugin-install {
-  border: 0;
-  border-bottom: 1px solid var(--paper-rule);
-  border-radius: 0;
-  color: var(--text-main);
-  background: transparent;
-  box-shadow: none;
-  transform: none;
-}
-.df-app .df-plugin-uninstall {
-  border: 0;
-  border-bottom: 1px solid var(--paper-rule);
-  border-radius: 0;
-  color: var(--text-main);
-  background: transparent;
-  box-shadow: none;
-  transform: none;
-}
-.df-app .df-plugin-config {
-  border: 0;
-  border-bottom: 1px solid var(--paper-rule);
-  border-radius: 0;
-  color: var(--text-main);
-  background: transparent;
-  box-shadow: none;
-  transform: none;
-}
-.df-app .df-plugin-install:hover {
-  color: var(--accent-active);
-  border-bottom-color: var(--accent-active);
-  background: transparent;
-}
-.df-app .df-plugin-uninstall:hover {
-  color: var(--accent-active);
-  border-bottom-color: var(--accent-active);
-  background: transparent;
-}
-.df-app .df-plugin-config:hover {
-  color: var(--accent-active);
-  border-bottom-color: var(--accent-active);
-  background: transparent;
-}
-.df-app .df-plugin-tool {
-  border-block: 1px solid var(--paper-rule);
-  background: transparent;
-  box-shadow: none;
-  display: grid;
-  gap: 10px;
-  padding: 12px 0;
-}
-.df-app .df-plugin-tool.wide {
-  grid-column: 1 / -1;
-}
-.df-app .df-plugin-tool header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-}
-.df-app .df-plugin-timer {
-  color: var(--text-main);
-  font: 700 34px/1 var(--paper-mono);
-  letter-spacing: 0;
-}
-.df-app .df-plugin-tool-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-.df-app .df-plugin-tool select {
-  border: 0;
-  border-bottom: 1px solid var(--paper-rule);
-  border-radius: 0;
-  color: var(--text-main);
-  background: transparent;
-  box-shadow: none;
-}
-.df-app .df-plugin-tool textarea {
-  border: 0;
-  border-bottom: 1px solid var(--paper-rule);
-  border-radius: 0;
-  color: var(--text-main);
-  background: transparent;
-  box-shadow: none;
-}
-.df-app .df-plugin-tool button {
-  border: 1px solid var(--paper-rule);
-  border-radius: var(--radius-control);
-  color: var(--text-main);
-  background: transparent;
-  box-shadow: none;
-  min-height: 34px;
-  cursor: pointer;
-}
-.df-app .df-plugin-tool button:hover {
-  color: var(--accent-active);
-  border-color: var(--accent-active);
-}
-.df-app .df-plugin-habits {
-  display: grid;
-  gap: 8px;
-}
-.df-app .df-plugin-habits label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-main);
-  font-size: 13px;
-}
-.df-app .df-plugin-weather {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-.df-app .df-plugin-weather strong {
-  font: 700 28px/1 var(--paper-mono);
 }
 /* Schedule template modal */
 .df-app .df-template-modal-backdrop {
@@ -15307,24 +14978,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-focus-controls button:disabled {
   opacity: .42;
   cursor: not-allowed;
-}
-/* ===== Settings features ===== */
-.df-utility-check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  flex-direction: row;
-  border: 0; border-bottom: 1px solid var(--paper-rule); border-radius: 0;
-  background: transparent; box-shadow: none; min-height: 50px;
-  padding: 4px 0;
-  font-size: 13px;
-}
-.df-utility-check input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent-active);
-  cursor: pointer;
 }
 /* 2026 planning card cleanup: one paper-card language, tighter controls. */
 .df-app .df-header-inner {
@@ -18794,35 +18447,6 @@ body.df-planning-native-dragging [contenteditable] * {
 /* Dark mode: keep the placeholder neutral gray, never purple/lavender. */
 .df-app.theme-dark {
   background: var(--bg-app);
-  --bg-app: #080808;
-  --bg-app-soft: #0C0C0C;
-  --surface-main: #101010;
-  --surface-raised: #191919;
-  --surface-card: #141414;
-  --surface-tint: var(--surface-raised);
-  --text-main: #D9D6CF;
-  --text-muted: #B1AEA7;
-  --text-faint: #898781;
-  --danger-ink: #B58F88;
-  --danger: #B58F88;
-  --color-danger: #B58F88;
-  --df-danger: #B58F88;
-  --warning-ink: #A59678;
-  --navo-coral: #9C7C72;
-  --task-priority-high: #AA827B;
-  --task-priority-medium: #A59678;
-  --task-priority-low: #85949E;
-  --task-priority-normal: #898781;
-  --task-priority-unset: #898781;
-  --project-color-lightness-min: 0.55;
-  --project-color-lightness-max: 0.68;
-  --project-color-chroma: 0.45;
-  --project-label-color: var(--text-muted);
-  --border-soft: #555452;
-  --border-subtle: #2A2A2A;
-  --accent-active: #A9A49B;
-  --accent-rgb: 169, 164, 155;
-  --accent-on: #1A1B1D;
   --mode-primary: #A9A49B;
   --mode-primary-strong: #A9A49B;
   --mode-primary-soft: color-mix(in srgb, #A9A49B 10%, var(--surface-main));
@@ -25935,4 +25559,83 @@ html.product-demo-fullscreen #root .df-app[data-product-revealing="true"] .df-ti
   html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { top: 0; }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-project-tasks { margin-left: 40px; }
   html.product-demo-fullscreen #root .df-app.mode-planning .df-planning .df-plan-task-node { width: 100%; max-width: 360px; min-width: 0; }
+}
+
+/* Base palette stays below community theme CSS and explicit user choices. */
+body[data-navopath-base-theme="dark"],
+.theme-dark:where(.df-app, .df-mobile-dock, .df-mobile-floating-actions) {
+  --accent-active: #A9A49B;
+  --accent-rgb: 169, 164, 155;
+  --accent-on: #1A1B1D;
+  --bg-app: #080808;
+  --bg-app-soft: #0C0C0C;
+  --surface-main: #101010;
+  --surface-raised: #191919;
+  --surface-card: #141414;
+  --surface-tint: var(--surface-raised);
+  --text-main: #D9D6CF;
+  --text-muted: #B1AEA7;
+  --text-faint: #898781;
+  --danger-ink: #B58F88;
+  --danger: #B58F88;
+  --color-danger: #B58F88;
+  --df-danger: #B58F88;
+  --warning-ink: #A59678;
+  --navo-coral: #9C7C72;
+  --task-priority-high: #AA827B;
+  --task-priority-medium: #A59678;
+  --task-priority-low: #85949E;
+  --task-priority-normal: #898781;
+  --task-priority-unset: #898781;
+  --project-color-lightness-min: 0.55;
+  --project-color-lightness-max: 0.68;
+  --project-color-chroma: 0.45;
+  --project-label-color: var(--text-muted);
+  --border-soft: #555452;
+  --border-subtle: #2A2A2A;
+  --shadow-soft: 0 18px 48px rgba(0,0,0,0.28);
+  --shadow-hl: none;
+  --header-bg: rgba(8,8,8,0.96);
+  --header-border: #2A2A2A;
+  --header-fg: #D9D6CF;
+  --header-fg-muted: #B1AEA7;
+  --input-bg: #101010;
+  --input-border: #5B5955;
+  --timeline-paper: #101010;
+  --execute-primary: #584D3D;
+  --execute-on-primary: #FFFFFF;
+  --planning-primary: #584D3D;
+  --planning-on-primary: #FFFFFF;
+  --timeline-font-scale: 1;
+}
+
+body[data-navopath-base-theme="light"],
+.theme-light:where(.df-app, .df-mobile-dock, .df-mobile-floating-actions) {
+  --bg-app: #F8F7F3;
+  --bg-app-soft: #F3F0E9;
+  --surface-main: #F8F7F3;
+  --surface-raised: #FCFBF8;
+  --surface-card: #FFFFFF;
+  --text-main: #27231E;
+  --text-muted: #7B7062;
+  --text-faint: #A69D92;
+  --border-soft: #DED8D8;
+  --border-subtle: #EBE6E8;
+  --shadow-soft: 0 12px 28px rgba(88,77,61,0.10);
+  --shadow-hl: none;
+  --header-bg: rgba(248,247,243,0.92);
+  --header-border: rgba(88,77,61,0.14);
+  --header-fg: #584D3D;
+  --header-fg-muted: #7B7062;
+  --input-bg: #FCFBF8;
+  --input-border: #DED8D8;
+  --timeline-paper: #F8F7F3;
+  --execute-primary: #584D3D;
+  --execute-on-primary: #FFFFFF;
+  --planning-primary: #584D3D;
+  --planning-on-primary: #FFFFFF;
+  --timeline-font-scale: 1;
+  --accent-active: #584D3D;
+  --accent-rgb: 88, 77, 61;
+  --accent-on: #FFFFFF;
 }

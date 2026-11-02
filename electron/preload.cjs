@@ -16,7 +16,13 @@ contextBridge.exposeInMainWorld("desktopApi", {
   },
   getAutoLaunch: () => ipcRenderer.invoke("autolaunch:get"),
   setAutoLaunch: (enabled) => ipcRenderer.invoke("autolaunch:set", enabled),
-  listExternalPlugins: () => ipcRenderer.invoke("plugins:listExternal"),
+  extensions: {
+    fetch: (url) => ipcRenderer.invoke("extensions:fetch", url),
+    start: (key, hash, files, entry) => ipcRenderer.invoke("extensions:start", key, hash, files, entry),
+    invoke: (key, method, payload) => ipcRenderer.invoke("extensions:invoke", key, method, payload),
+    stop: (key) => ipcRenderer.invoke("extensions:stop", key),
+    openDirectory: () => ipcRenderer.invoke("extensions:open-directory"),
+  },
   writeSnapshot: (payload) => ipcRenderer.invoke("backup:writeSnapshot", payload),
   readLatestSnapshot: () => ipcRenderer.invoke("backup:readLatest"),
   dockWindow: {

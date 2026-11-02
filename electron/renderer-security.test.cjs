@@ -58,20 +58,22 @@ test("blocks untrusted navigation and new windows", () => {
   assert.deepEqual(external, ["https://example.com", "https://example.com"]);
 });
 
-test("does not expose or execute external plugin scripts", () => {
+test("runs installed desktop entries through a trusted utility-process bridge", () => {
   const preloadSource = fs.readFileSync(path.resolve("electron", "preload.cjs"), "utf8");
   const electronMainSource = fs.readFileSync(path.resolve("electron", "main.cjs"), "utf8");
-  const pluginManifestSource = fs.readFileSync(path.resolve("electron", "external-plugin-manifest.cjs"), "utf8");
-  const rendererSource = ["main.tsx", "SettingsPanel.tsx"].map((file) => fs.readFileSync(path.resolve("src", file), "utf8")).join("\n");
+  const hostSource = fs.readFileSync(path.resolve("electron", "extension-host.cjs"), "utf8");
 
   assert.doesNotMatch(preloadSource, /readExternalPluginEntry|plugins:readExternalEntry/);
   assert.doesNotMatch(electronMainSource, /readExternalPluginEntry|plugins:readExternalEntry/);
-  assert.doesNotMatch(rendererSource, /new Function\("window",\s*"navopath"/);
-  assert.doesNotMatch(rendererSource, /loads its manifest\.json and index\.js/);
-  assert.match(electronMainSource, /readExternalPluginManifest/);
-  assert.match(pluginManifestSource, /not external scripts/);
-  assert.match(rendererSource, /directory scripts such as index\.js are not loaded or executed/);
-  assert.match(rendererSource, /Configuration enabled/);
+  assert.doesNotMatch(preloadSource + electronMainSource, /plugins:listExternal|listExternalPlugins/);
+  for (const method of ["fetch", "start", "invoke", "stop"]) {
+    assert.match(preloadSource, new RegExp(`extensions:${method}`));
+    assert.match(electronMainSource, new RegExp(`handleTrusted\\("extensions:${method}"`));
+  }
+  assert.match(hostSource, /utilityProcess\.fork/);
+  assert.match(electronMainSource, /contextIsolation:\s*true/);
+  assert.match(electronMainSource, /sandbox:\s*true/);
+  assert.match(electronMainSource, /nodeIntegration:\s*false/);
 });
 
 test("does not expose retired local planner or direct AI IPC surfaces", () => {

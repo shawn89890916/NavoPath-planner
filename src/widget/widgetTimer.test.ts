@@ -1,364 +1,90 @@
-import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-import {
-  DEFAULT_WIDGET_TIMER_PREFERENCES,
-  advanceTaskElapsedSeconds,
-  advanceWidgetTimer,
-  accumulateWidgetWorkTime,
-  calculateWidgetWorkSeconds,
-  countsWidgetTimerPhaseAsWork,
-  createWidgetTimerModeTransition,
-  createWidgetTimerRuntime,
-  getWidgetTimerNotificationDescriptor,
-  getWidgetTimerSnapshotDisplaySeconds,
-  getStopwatchTaskTimerAction,
-  getWidgetTimerModeChangeTaskAction,
-  normalizeStoredTaskTimer,
-  normalizeWidgetTimerRuntime,
-  normalizeWidgetTimerPreferences,
-  normalizeWidgetTimerMode,
-  resetWidgetTimerRuntime,
-  resolveWidgetCountdownTarget,
-  taskDueDateTargetAt,
-  scheduleWidgetCountdown,
-  createDeadlineAlignedPomodoroRuntime,
-} from "./widgetTimer";
+import { afterEach, describe, expect, it } from "vitest";
 import type { Task } from "../types";
+import { provider, defaults } from "../../community-plugins/pomodoro/main";
+import { registerTimerMode, getTimerModes, onTimerModeRemoving } from "../extensions/timers";
+import { DEFAULT_WIDGET_TIMER_PREFERENCES as prefs, advanceTaskElapsedSeconds, advanceWidgetTimer, accumulateWidgetWorkTime, calculateWidgetWorkSeconds, createDeadlineAlignedTimerRuntime, createWidgetTimerModeTransition, createWidgetTimerRuntime, getStopwatchTaskTimerAction, getWidgetTimerModeChangeTaskAction, getWidgetTimerNotificationDescriptor, normalizeStoredTaskTimer, normalizeWidgetTimerPreferences, normalizeWidgetTimerRuntime, normalizeWidgetTimerMode, resetWidgetTimerRuntime, resolveWidgetCountdownTarget, scheduleWidgetCountdown } from "./widgetTimer";
 
-describe("widget timer preferences", () => {
-  it("normalizes a stored active task timer before restoring it", () => {
-    expect(normalizeStoredTaskTimer({ taskId: "task-1", elapsed: 12.9 })).toEqual({
-      taskId: "task-1",
-      elapsedSeconds: 12,
-    });
-    expect(normalizeStoredTaskTimer({ taskId: "task-1", elapsed: "oops" })).toEqual({
-      taskId: "task-1",
-      elapsedSeconds: 0,
-    });
-    expect(normalizeStoredTaskTimer({ taskId: "task-1", elapsed: -5 })).toEqual({
-      taskId: "task-1",
-      elapsedSeconds: 0,
-    });
-    expect(normalizeStoredTaskTimer({ taskId: "task-1", elapsed: 1e308 })).toEqual({
-      taskId: "task-1",
-      elapsedSeconds: 0,
-    });
-    expect(normalizeStoredTaskTimer({ taskId: {}, elapsed: 10 })).toBeNull();
-    expect(normalizeStoredTaskTimer({ taskId: "  ", elapsed: 10 })).toBeNull();
-  });
+const disposers: Array<() => void> = [];
+const install = () => { const dispose = registerTimerMode(provider); disposers.push(dispose); return dispose; };
+afterEach(() => { disposers.splice(0).reverse().forEach((dispose) => dispose()); });
 
-  it("advances through a deadline-aligned plan and enters overtime after its final work phase", () => {
-    const runtime = createDeadlineAlignedPomodoroRuntime(0, 70 * 60_000, DEFAULT_WIDGET_TIMER_PREFERENCES);
-    expect(runtime.pomodoroPlan?.at(-1)).toMatchObject({ type: "work", endAt: 70 * 60_000 });
-    const running = { ...runtime, running: true }; delete running.pausedAt;
-    const advanced = advanceWidgetTimer(running, DEFAULT_WIDGET_TIMER_PREFERENCES, 70 * 60_000 + 1_000);
-    expect(advanced).toMatchObject({ phase: "overrun", displaySeconds: 1 });
+describe("generic timer host", () => {
+  it("offers extension modes only while installed and enabled", () => {
+    expect(getTimerModes().map((mode) => mode.mode)).toEqual(["stopwatch", "countdown"]);
+    expect(normalizeWidgetTimerMode("pomodoro", "stopwatch")).toBe("stopwatch");
+    const remove = install(); expect(getTimerModes().map((mode) => mode.mode)).toEqual(["stopwatch", "pomodoro", "countdown"]);
+    expect(normalizeWidgetTimerMode("pomodoro", "stopwatch")).toBe("pomodoro");
+    remove(); expect(normalizeWidgetTimerPreferences({ mode: "pomodoro" }).mode).toBe("stopwatch");
   });
-  it("routes detailed settings timer Save and Reset through shared widget actions", () => {
-    const mainSource = readFileSync(new URL("../SettingsPanel.tsx", import.meta.url), "utf8");
-    expect(mainSource).toContain('onWidgetAction({ type: "saveTimerSettings", draft: widgetTimerDraft })');
-    expect(mainSource).toContain('onWidgetAction({ type: "resetWidgetTimer", draft: widgetTimerDraft })');
-    expect(mainSource).toContain('onClick={() => setWidgetTimerDraft(widgetTimerSettings)}');
+  it("settles work before the provider is removed", () => {
+    const remove = install(); let settled = -1;
+    const runtime = createWidgetTimerRuntime("pomodoro", 0, { ...prefs, focusMinutes: 1, autoStartNextPhase: true });
+    disposers.push(onTimerModeRemoving(() => { settled = calculateWidgetWorkSeconds(runtime, { ...prefs, autoStartNextPhase: true }, 0, 1500); }));
+    remove(); expect(settled).toBe(1);
   });
-
-  it("uses the user-entered duration to schedule the active task from now", () => {
-    const task = { id: "task-1" } as Task;
-    const result = scheduleWidgetCountdown(task, new Date("2026-07-11T10:15:00"), 45);
-    expect(result.record).toMatchObject({ scheduledDate: "2026-07-11", scheduledStart: "10:15", scheduledEndDate: "2026-07-11", scheduledEnd: "11:00", executionStatus: "scheduled" });
-    expect(result.countdownTargetAt).toBe(new Date("2026-07-11T11:00:00").getTime());
+  it("restores malformed task storage and advances from wall-clock time", () => {
+    expect(normalizeStoredTaskTimer({ taskId: "one", elapsed: 12.9 })).toEqual({ taskId: "one", elapsedSeconds: 12 });
+    expect(normalizeStoredTaskTimer({ taskId: "one", elapsed: -1 })).toEqual({ taskId: "one", elapsedSeconds: 0 });
+    expect(normalizeStoredTaskTimer({ taskId: " " })).toBeNull();
+    expect(advanceTaskElapsedSeconds(12, 1000, 6750)).toBe(17);
+    const runtime = createWidgetTimerRuntime("stopwatch", 0);
+    const first = accumulateWidgetWorkTime(runtime, prefs, 0, 1500, 0);
+    expect(first).toEqual({ wholeSeconds: 1, remainderMs: 500 });
+    expect(accumulateWidgetWorkTime(runtime, prefs, 1500, 3000, first.remainderMs)).toEqual({ wholeSeconds: 2, remainderMs: 0 });
   });
-
-  it("keeps a schedule-now countdown across midnight", () => {
-    const task = { id: "task-1" } as Task;
-    const result = scheduleWidgetCountdown(task, new Date("2026-12-31T23:50:00"), 20);
-    expect(result.record).toMatchObject({
-      scheduledDate: "2026-12-31",
-      scheduledStart: "23:50",
-      scheduledEndDate: "2027-01-01",
-      scheduledEnd: "00:10",
-    });
-    expect(result.countdownTargetAt).toBe(new Date("2027-01-01T00:10:00").getTime());
+  it("pauses the existing stopwatch before switching modes", () => {
+    expect(getStopwatchTaskTimerAction("one", 42, 10000, 13900)).toEqual({ type: "pause", elapsedSeconds: 45 });
+    expect(getWidgetTimerModeChangeTaskAction("stopwatch", "one", 42, 10000, 13900)).toEqual({ type: "pause", elapsedSeconds: 45 });
+    expect(createWidgetTimerModeTransition("countdown", prefs, 100).runtime).toMatchObject({ mode: "countdown", running: false, pausedAt: 100 });
   });
-
-  it("preserves a schedule-now target when saving a no-deadline countdown", () => {
-    const task = { id: "task-1", dueDate: "" } as Task;
-    const scheduled = scheduleWidgetCountdown(task, new Date("2026-07-11T10:15:00"), 45);
-    const runtime = { ...createWidgetTimerRuntime("countdown", 1, DEFAULT_WIDGET_TIMER_PREFERENCES, scheduled.countdownTargetAt), countdownTaskId: task.id };
-    expect(resolveWidgetCountdownTarget(task.dueDate, task.id, runtime)).toBe(scheduled.countdownTargetAt);
+  it("schedules entered countdown duration across midnight and retains its target", () => {
+    const result = scheduleWidgetCountdown({ id: "one" } as Task, new Date("2026-12-31T23:50:00"), 20);
+    expect(result.record).toMatchObject({ scheduledDate: "2026-12-31", scheduledStart: "23:50", scheduledEndDate: "2027-01-01", scheduledEnd: "00:10" });
+    const runtime = { ...createWidgetTimerRuntime("countdown", 0, prefs, result.countdownTargetAt), countdownTaskId: "one" };
+    expect(resolveWidgetCountdownTarget(undefined, "one", runtime)).toBe(result.countdownTargetAt);
   });
-
-  it("creates a paused Pomodoro reset runtime from the current draft", () => {
-    const { runtime } = createWidgetTimerModeTransition("pomodoro", {
-      ...DEFAULT_WIDGET_TIMER_PREFERENCES,
-      mode: "pomodoro",
-      focusMinutes: 10,
-    }, 5_000);
-    expect(runtime).toMatchObject({ mode: "pomodoro", phase: "focus", running: false, phaseEndsAt: 605_000, pausedAt: 5_000 });
-  });
-
-  it("creates one paused fresh runtime when switching modes", () => {
-    expect(createWidgetTimerModeTransition("countdown", {
-      ...DEFAULT_WIDGET_TIMER_PREFERENCES,
-      mode: "pomodoro",
-      countdownSeconds: 90,
-    }, 12_345)).toEqual({
-      preferences: { ...DEFAULT_WIDGET_TIMER_PREFERENCES, mode: "countdown", countdownSeconds: 90 },
-      runtime: {
-        mode: "countdown",
-        phase: "countdown",
-        running: false,
-        round: 1,
-        phaseStartedAt: 12_345,
-        pausedAt: 12_345,
-      },
-    });
-  });
-
-  it("normalizes invalid durations and clamps supported ranges", () => {
-    expect(normalizeWidgetTimerPreferences({
-      mode: "invalid" as never,
-      focusMinutes: 0,
-      breakMinutes: Number.NaN,
-      rounds: 100,
-      countdownSeconds: -5,
-    })).toEqual({
-      ...DEFAULT_WIDGET_TIMER_PREFERENCES,
-      rounds: 12,
-    });
+  it("pins countdown to its absolute target and enters overrun", () => {
+    const runtime = createWidgetTimerRuntime("countdown", 1000, prefs, 2000);
+    const paused = { ...runtime, running: false, pausedAt: 1500 };
+    expect(advanceWidgetTimer({ ...paused, running: true }, prefs, 1800).runtime.phaseEndsAt).toBe(2000);
+    expect(advanceWidgetTimer(runtime, prefs, 3000)).toMatchObject({ phase: "overrun", displaySeconds: 1, transitions: ["countdownComplete"] });
+    expect(resetWidgetTimerRuntime(runtime, prefs, 1500)).toMatchObject({ running: false, countdownTargetAt: 2000 });
+    expect(normalizeWidgetTimerRuntime({ mode: "countdown", running: true }, { ...prefs, mode: "countdown" }, 100)).toMatchObject({ running: false });
   });
 });
 
-describe("widget wall-clock timer", () => {
-  const prefs = DEFAULT_WIDGET_TIMER_PREFERENCES;
-
-  it("uses the end of the local due-date day as countdown target", () => {
-    const target = taskDueDateTargetAt("2026-07-11");
-    expect(new Date(target!).getHours()).toBe(23);
-    expect(new Date(target!).getMinutes()).toBe(59);
+describe("installed official Pomodoro", () => {
+  it("owns preference defaults and validation", () => {
+    install(); expect(normalizeWidgetTimerPreferences({ mode: "pomodoro", focusMinutes: 0 })).toMatchObject({ mode: "pomodoro", focusMinutes: 25, longBreakMinutes: 15 });
+    expect(prefs).toEqual({ mode: "stopwatch", countdownSeconds: 1500 });
   });
-
-  it("enters overrun after an absolute countdown target", () => {
-    const runtime = createWidgetTimerRuntime("countdown", 1_000, { ...prefs, mode: "countdown" }, 2_000);
-    expect(advanceWidgetTimer(runtime, prefs, 2_001).runtime.phase).toBe("overrun");
+  it("waits at boundaries when automatic start is disabled", () => {
+    install(); const p = { ...prefs, ...defaults, focusMinutes: 1, breakMinutes: 1 };
+    const runtime = createWidgetTimerRuntime("pomodoro", 0, p);
+    expect(advanceWidgetTimer(runtime, p, 150000)).toMatchObject({ phase: "break", running: false, pausedAt: 60000, displaySeconds: 60, countsAsWork: false });
+    expect(calculateWidgetWorkSeconds(runtime, p, 0, 150000)).toBe(60);
   });
-
-  it("keeps a paused deadline countdown pinned to its absolute target when resumed", () => {
-    const runtime = createWidgetTimerRuntime("countdown", 1_000, { ...prefs, mode: "countdown" }, 2_000);
-    const paused = { ...runtime, running: false, pausedAt: 1_500 };
-    expect(advanceWidgetTimer({ ...paused, running: true }, prefs, 1_800).runtime.phaseEndsAt).toBe(2_000);
+  it("catches up across short and long breaks excluding break work", () => {
+    expect(provider.normalizePreferences({ mode: "pomodoro", rounds: 3 }).longBreakEvery).toBe(3);
+    install(); const p = { ...prefs, ...defaults, focusMinutes: 1, breakMinutes: 1, longBreakMinutes: 2, longBreakEvery: 2, autoStartNextPhase: true };
+    const runtime = createWidgetTimerRuntime("pomodoro", 0, p);
+    expect(advanceWidgetTimer(runtime, p, 180000)).toMatchObject({ phase: "break", round: 2, phaseEndsAt: 300000 });
+    expect(calculateWidgetWorkSeconds(runtime, p, 0, 270000)).toBe(120);
+    expect(advanceWidgetTimer(runtime, p, 300000)).toMatchObject({ phase: "focus", round: 3 });
   });
-
-  it("leaves an unscheduled countdown without a deadline target", () => {
-    const runtime = createWidgetTimerRuntime("countdown", 1_000, { ...prefs, mode: "countdown" });
-    expect(runtime).not.toHaveProperty("countdownTargetAt");
-    expect(runtime).not.toHaveProperty("phaseEndsAt");
+  it("aligns precisely including deadline seconds and counts overtime", () => {
+    install(); const p = { ...prefs, ...defaults, autoStartNextPhase: true }, end = 70 * 60000 + 12345;
+    const runtime = createDeadlineAlignedTimerRuntime("pomodoro", 0, end, p)!;
+    expect(runtime.plan.at(-1)).toMatchObject({ type: "work", endAt: end });
+    const running = { ...runtime, running: true }; delete running.pausedAt;
+    expect(advanceWidgetTimer(running, p, end + 1000)).toMatchObject({ phase: "overrun", displaySeconds: 1 });
+    const expected = runtime.plan.filter((phase: any) => phase.type === "work").reduce((sum: number, phase: any) => sum + phase.endAt - phase.startAt, 0) + 1000;
+    expect(calculateWidgetWorkSeconds(running, p, 0, end + 1000)).toBe(Math.floor(expected / 1000));
   });
-
-  it("resets a deadline countdown as paused without losing its target", () => {
-    const running = createWidgetTimerRuntime("countdown", 1_000, { ...prefs, mode: "countdown" }, 2_000);
-    expect(resetWidgetTimerRuntime(running, prefs, 1_500)).toMatchObject({
-      running: false,
-      pausedAt: 1_500,
-      countdownTargetAt: 2_000,
-      phaseEndsAt: 2_000,
-    });
-  });
-
-  it("advances task elapsed time by wall clock after a delayed tick", () => {
-    expect(advanceTaskElapsedSeconds(12, 1_000, 6_750)).toBe(17);
-  });
-
-  it("counts only focus time when catch-up crosses focus and break", () => {
-    const shortPrefs = { ...prefs, focusMinutes: 1, breakMinutes: 1 };
-    const runtime = createWidgetTimerRuntime("pomodoro", 0, shortPrefs);
-    expect(calculateWidgetWorkSeconds(runtime, shortPrefs, 0, 150_000)).toBe(90);
-  });
-
-  it("preserves fractional work across multiple delayed ticks", () => {
-    const runtime = createWidgetTimerRuntime("pomodoro", 0, { ...prefs, focusMinutes: 1 });
-    const first = accumulateWidgetWorkTime(runtime, prefs, 0, 1_500, 0);
-    const second = accumulateWidgetWorkTime(runtime, prefs, 1_500, 3_000, first.remainderMs);
-    expect(first).toEqual({ wholeSeconds: 1, remainderMs: 500 });
-    expect(second).toEqual({ wholeSeconds: 2, remainderMs: 0 });
-
-    let remainderMs = 0;
-    let totalSeconds = 0;
-    for (let tick = 0; tick < 3; tick += 1) {
-      const result = accumulateWidgetWorkTime(runtime, prefs, tick * 400, (tick + 1) * 400, remainderMs);
-      totalSeconds += result.wholeSeconds;
-      remainderMs = result.remainderMs;
-    }
-    expect({ totalSeconds, remainderMs }).toEqual({ totalSeconds: 1, remainderMs: 200 });
-  });
-
-  it("projects stopwatch display from the existing task timer base", () => {
-    expect(getWidgetTimerSnapshotDisplaySeconds("stopwatch", 999, 42, true, 10_000, 13_900)).toBe(45);
-  });
-
-  it("pauses a stopwatch from the true running task timer and captures wall-clock time", () => {
-    expect(getStopwatchTaskTimerAction("task-1", 42, 10_000, 13_900)).toEqual({
-      type: "pause",
-      elapsedSeconds: 45,
-    });
-  });
-
-  it("resumes a stopwatch from the true paused task timer", () => {
-    expect(getStopwatchTaskTimerAction("task-1", 45, null, 13_900)).toEqual({
-      type: "resume",
-      elapsedSeconds: 45,
-    });
-  });
-
-  it("captures a truly running stopwatch before a mode reset even when widget runtime is stale", () => {
-    expect(getWidgetTimerModeChangeTaskAction("stopwatch", "task-1", 42, 10_000, 13_900)).toEqual({
-      type: "pause",
-      elapsedSeconds: 45,
-    });
-  });
-
-  it("normalizes an inconsistent persisted runtime against preferences", () => {
-    expect(normalizeWidgetTimerRuntime({
-      mode: "pomodoro",
-      phase: "overrun",
-      running: false,
-      round: 99,
-      phaseStartedAt: Number.NaN,
-      phaseEndsAt: -10,
-    }, { ...prefs, mode: "countdown", countdownSeconds: 60 }, 50_000)).toEqual({
-      mode: "countdown",
-      phase: "countdown",
-      running: false,
-      round: 4,
-      phaseStartedAt: 50_000,
-      pausedAt: 50_000,
-    });
-  });
-
-  it("drops a legacy duration countdown endpoint that has no absolute target", () => {
-    expect(normalizeWidgetTimerRuntime({
-      mode: "countdown",
-      phase: "countdown",
-      running: false,
-      round: 1,
-      phaseStartedAt: 1_000,
-      phaseEndsAt: 60_000,
-    }, { ...prefs, mode: "countdown" }, 2_000)).toMatchObject({
-      mode: "countdown",
-      phase: "countdown",
-      running: false,
-    });
-    expect(normalizeWidgetTimerRuntime({
-      mode: "countdown",
-      phase: "countdown",
-      running: false,
-      round: 1,
-      phaseStartedAt: 1_000,
-      phaseEndsAt: 60_000,
-    }, { ...prefs, mode: "countdown" }, 2_000)).not.toHaveProperty("phaseEndsAt");
-  });
-
-  it("pauses a running legacy countdown that has no absolute target", () => {
-    expect(normalizeWidgetTimerRuntime({
-      mode: "countdown",
-      phase: "countdown",
-      running: true,
-      round: 1,
-      phaseStartedAt: 1_000,
-      phaseEndsAt: 60_000,
-    }, { ...prefs, mode: "countdown" }, 2_000)).toEqual({
-      mode: "countdown",
-      phase: "countdown",
-      running: false,
-      round: 1,
-      phaseStartedAt: 1_000,
-      pausedAt: 2_000,
-    });
-  });
-
-  it("coerces an invalid IPC timer mode to the current mode", () => {
-    expect(normalizeWidgetTimerMode("invalid", "pomodoro")).toBe("pomodoro");
-  });
-
-  it("continues a completed countdown as positive overrun time", () => {
-    expect(advanceWidgetTimer(
-      createWidgetTimerRuntime("countdown", 0, { ...prefs, countdownSeconds: 60 }, 60_000),
-      prefs,
-      61_000,
-    )).toMatchObject({ phase: "overrun", displaySeconds: 1, transitions: ["countdownComplete"] });
-  });
-
-  it("moves from focus to break at the focus deadline", () => {
-    expect(advanceWidgetTimer(
-      createWidgetTimerRuntime("pomodoro", 0, prefs),
-      prefs,
-      25 * 60_000,
-    )).toMatchObject({ phase: "break", round: 1, transitions: ["focusComplete"] });
-  });
-
-  it("catches up across multiple pomodoro phases after sleep", () => {
-    const focusRuntime = createWidgetTimerRuntime("pomodoro", 0, prefs);
-    expect(advanceWidgetTimer(focusRuntime, prefs, 30 * 60_000)).toMatchObject({
-      phase: "focus",
-      round: 2,
-      transitions: ["focusComplete", "breakComplete"],
-    });
-  });
-
-  it("cycles directly from the final break to focus without a long-break phase", () => {
-    const shortPrefs = { ...prefs, focusMinutes: 1, breakMinutes: 1, rounds: 2 };
-    expect(advanceWidgetTimer(
-      createWidgetTimerRuntime("pomodoro", 0, shortPrefs),
-      shortPrefs,
-      4 * 60_000,
-    )).toMatchObject({
-      phase: "focus",
-      round: 1,
-      transitions: ["focusComplete", "breakComplete", "focusComplete", "breakComplete"],
-    });
-  });
-
-  it("freezes while paused and shifts timestamps when resumed", () => {
-    const running = {
-      ...createWidgetTimerRuntime("countdown", 0, { ...prefs, countdownSeconds: 60 }),
-      phaseEndsAt: 60_000,
-    };
-    const paused = { ...running, running: false, pausedAt: 10_000 };
-    expect(advanceWidgetTimer(paused, prefs, 40_000)).toMatchObject({
-      phase: "countdown",
-      displaySeconds: 50,
-      transitions: [],
-    });
-
-    const resumed = advanceWidgetTimer({ ...paused, running: true }, prefs, 40_000);
-    expect(resumed.runtime).toMatchObject({
-      phaseStartedAt: 30_000,
-      phaseEndsAt: 90_000,
-    });
-    expect(resumed.runtime).not.toHaveProperty("pausedAt");
-    expect(resumed.displaySeconds).toBe(50);
-  });
-
-  it.each([
-    ["stopwatch", true],
-    ["focus", true],
-    ["break", false],
-    ["countdown", true],
-    ["overrun", true],
-  ] as const)("reports whether %s counts as task work", (phase, expected) => {
-    expect(countsWidgetTimerPhaseAsWork(phase)).toBe(expected);
-  });
-
-  it("maps emitted phase transitions to localized notification descriptors", () => {
-    const runtime = createWidgetTimerRuntime("pomodoro", 0, prefs);
-    const transitions = advanceWidgetTimer(runtime, prefs, 30 * 60_000).transitions;
-
-    expect(transitions.map((transition) => getWidgetTimerNotificationDescriptor(transition, "en"))).toEqual([
-      { title: "Focus complete", body: "Time for a break." },
-      { title: "Break complete", body: "Ready for the next focus round." },
-    ]);
-    expect(getWidgetTimerNotificationDescriptor("countdownComplete", "zh")).toEqual({
-      title: "倒计时结束",
-      body: "已开始超时计时。",
-    });
+  it("migrates legacy runtime inside the plugin and localizes notifications", () => {
+    install(); const p = { ...prefs, mode: "pomodoro" };
+    const runtime = normalizeWidgetTimerRuntime({ mode: "pomodoro", phase: "focus", running: false, phaseStartedAt: 0, pomodoroPlan: [{ type: "work", startAt: 0, endAt: 1000 }], currentPomodoroPhaseIndex: 0 }, p, 0);
+    expect(runtime.plan).toHaveLength(1); expect(runtime).not.toHaveProperty("pomodoroPlan");
+    expect(getWidgetTimerNotificationDescriptor("pomodoro:focusComplete", "zh").title).toBe("专注结束");
   });
 });

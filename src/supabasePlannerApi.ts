@@ -1,9 +1,11 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { createAuthSessionStorage } from "./authSessionStorage";
+import { configureExtensionTransport, purgePrivatePackages } from "./extensions/transport";
 import type { AiAction, CalendarFeedTokenMetadata, ExternalCalendarOccurrence, ExternalCalendarSource, McpTokenMetadata, PlannerApi, PlannerData, Settings } from "./types";
 import { fallbackData, normalizeData } from "./browserFallback";
 import { getDefaultSettings, normalizeSettings } from "./defaultSettings";
 import { mergePlannerData } from "./syncMerge";
+import { mergeExtensionSettings } from "./extensions/packages";
 
 const PROFILE_TABLE = "dayflow_profiles";
 
@@ -154,6 +156,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     },
     global: { fetch: cloudFetch },
   });
+  configureExtensionTransport(supabase);
   let cachedUser: User | null | undefined;
   // Consent uses the direct Auth URL because the same-origin proxy does not
   // forward OAuth endpoints. Share session storage with the planner client.
@@ -352,7 +355,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     for (let attempt = 0; attempt < 3; attempt += 1) {
       if (!isCurrentAuth(user.id, requestAuthVersion)) throw new Error("Account changed while syncing");
       const nextData = patch.data ? mergePlannerData(current.data, normalizeData(patch.data)) : current.data;
-      const nextSettings = patch.settings ? mergeSettings({ ...current.settings, ...patch.settings }) : current.settings;
+      const nextSettings = patch.settings ? mergeSettings(mergeExtensionSettings(current.settings, patch.settings)) : current.settings;
       const { data: rows, error } = await retryTransientRequest(() => supabase.rpc("save_dayflow_profile", {
         expected_revision: current.revision,
         next_data: nextData,
@@ -523,6 +526,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     },
 
     deleteAccount: async () => {
+      await purgePrivatePackages();
       const { error } = await supabase.rpc("delete_own_account");
       if (error) throw new Error(error.message);
       setCachedUser(null);

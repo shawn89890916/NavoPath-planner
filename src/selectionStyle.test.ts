@@ -23,9 +23,9 @@ describe("shared option-list visual contract", () => {
   });
 
   it("keeps light application surfaces on the timeline paper color", () => {
-    expect(main).toContain('\"--surface-main\": \"#F8F7F3\"');
-    expect(main).toContain('\"--timeline-paper\": \"#F8F7F3\"');
-    expect(main).not.toContain('\"--surface-main\": \"#FBF9FF\"');
+    expect(appCss).toContain('--surface-main: #F8F7F3;');
+    expect(appCss).toContain('--timeline-paper: #F8F7F3;');
+    expect(appCss).not.toContain('--surface-main: #FBF9FF;');
     expect(appCss).toMatch(/\.df-command-palette\s*\{[\s\S]*?background:\s*var\(--timeline-paper, var\(--surface-main\)\)/);
     expect(notificationCss).toContain("background: var(--timeline-paper, var(--surface-main));");
   });
