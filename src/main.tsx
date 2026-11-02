@@ -1271,6 +1271,7 @@ function App() {
   const layerTriggerRef = useRef(new Map<string, HTMLElement>());
   const [habitPanel, setHabitPanel] = useState<"overview" | "detail" | null>(null);
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
+  const [newHabitDraft, setNewHabitDraft] = useState<Habit | null>(null);
   const [settingsSectionTarget, setSettingsSectionTarget] = useState<SettingsTargetInput>();
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState("");
@@ -1549,11 +1550,12 @@ function App() {
     if (!quickAddOpen) return;
     const closeCompactLayer = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      setQuickAddOpen(false);
+      if ((event.target as HTMLElement | null)?.closest(".df-dialog")) return;
+      void closeMobileQuickAdd();
     };
     document.addEventListener("keydown", closeCompactLayer);
     return () => document.removeEventListener("keydown", closeCompactLayer);
-  }, [quickAddOpen]);
+  }, [quickAddOpen, quickTitle, mobileQuickAddKind]);
 
   useEffect(() => {
     if (settings?.featureHabitsEnabled === false && habitPanel) {
@@ -4457,11 +4459,14 @@ if (cached?.data && cached?.settings) {
     } else if (mobileQuickAddKind === "habit") {
       const now = workspaceNow().toISOString();
       const habit: Habit = { id: uid("habit"), title, projectId: quickProjectId || undefined, defaultDurationMinutes: mobileQuickHabitMinutes, frequencyRule: "daily", activeWeekdays: [1, 2, 3, 4, 5], order: Date.now(), createdAt: now, updatedAt: now };
-      void saveData({ ...data, habits: [...(data.habits || []), habit] });
       if (more) {
+        setNewHabitDraft(habit);
         setEditingHabitId(habit.id);
         setHabitPanel("detail");
-      } else showToast(lang === "zh" ? "习惯已创建" : "Habit created");
+      } else {
+        void saveData({ ...data, habits: [...(data.habits || []), habit] });
+        showToast(lang === "zh" ? "习惯已创建" : "Habit created");
+      }
     }
   }
 
@@ -5885,12 +5890,14 @@ if (cached?.data && cached?.settings) {
 
   function openHabitDetail(habitId: string) {
     if (!settings || settings.featureHabitsEnabled === false) return;
+    setNewHabitDraft(null);
     setEditingHabitId(habitId);
     setHabitPanel("detail");
   }
 
   function openHabitOverview() {
     if (!settings || settings.featureHabitsEnabled === false) return;
+    setNewHabitDraft(null);
     setEditingHabitId(null);
     setHabitPanel("overview");
   }
@@ -5909,14 +5916,18 @@ if (cached?.data && cached?.settings) {
       createdAt: now,
       updatedAt: now,
     };
-    void saveData({ ...data, habits: [...(data.habits || []), habit] });
+    setNewHabitDraft(habit);
     setEditingHabitId(habit.id);
     setHabitPanel("detail");
   }
 
   function saveHabitEdit(habitId: string, patch: Partial<Habit>) {
-    if (!data) return;
-    const next = updateHabit(data, habitId, patch);
+    const current = dataRef.current;
+    if (!current) return;
+    const source = newHabitDraft?.id === habitId && !current.habits?.some((habit) => habit.id === habitId)
+      ? { ...current, habits: [...(current.habits || []), newHabitDraft] }
+      : current;
+    const next = updateHabit(source, habitId, patch);
     void saveData(next);
   }
 
@@ -5929,6 +5940,7 @@ if (cached?.data && cached?.settings) {
 
   function deleteHabitPermanently(habitId: string) {
     if (!data) return;
+    setNewHabitDraft(null);
     void saveData({
       ...data,
       habits: (data.habits || []).filter((habit) => habit.id !== habitId),
@@ -6656,6 +6668,8 @@ if (cached?.data && cached?.settings) {
   }
 
   function openHabitConvert(habit: Habit, targetType: "task" | "project") {
+    habit = dataRef.current?.habits?.find((item) => item.id === habit.id) || habit;
+    setNewHabitDraft(null);
     setHabitPanel(null);
     setEditingHabitId(null);
     rememberLayerTrigger("drawer");
@@ -6863,18 +6877,41 @@ if (cached?.data && cached?.settings) {
     });
   }
 
+  function confirmNewItemSave(type: AddType) {
+    const name = lang === "zh"
+      ? { task: "任务", project: "项目", habit: "习惯", event: "日程" }[type]
+      : { task: "task", project: "project", habit: "habit", event: "event" }[type];
+    return dialog.confirm(lang === "zh" ? `保存新建${name}？` : `Save this new ${name}?`, {
+      message: lang === "zh" ? "保存后退出，或放弃本次新增。" : "Save and close, or discard this new item.",
+      confirmLabel: lang === "zh" ? "保存" : "Save",
+      cancelLabel: lang === "zh" ? "放弃" : "Discard",
+    });
+  }
+
+  async function closeMobileQuickAdd() {
+    if (drawerSaveConfirmRef.current) return;
+    if (quickTitle.trim()) {
+      drawerSaveConfirmRef.current = true;
+      const save = await confirmNewItemSave(mobileQuickAddKind);
+      drawerSaveConfirmRef.current = false;
+      if (save === true) { finishMobileQuickAdd(); return; }
+      if (save !== false) return;
+    }
+    setQuickAddOpen(false);
+  }
+
   async function closeTaskDrawer(options?: { autoSave?: boolean }) {
-    if (!editingId && addType === "task" && mode === "planning"
-      && JSON.stringify(form) !== JSON.stringify(drawerInitialFormRef.current || defaultForm("task"))) {
+    if (!editingId
+      && JSON.stringify(form) !== JSON.stringify(drawerInitialFormRef.current || defaultForm(addType))) {
       if (drawerSaveConfirmRef.current) return;
       drawerSaveConfirmRef.current = true;
-      const save = await dialog.confirm(lang === "zh" ? "保存新建任务？" : "Save this new task?", {
-        message: lang === "zh" ? "任务尚未保存。取消将放弃新建任务，保存后退出。" : "This task has not been saved. Cancel to discard the new task and close, or save and close.",
-        confirmLabel: lang === "zh" ? "保存" : "Save",
-        cancelLabel: lang === "zh" ? "取消" : "Cancel",
-      });
+      const save = await confirmNewItemSave(addType);
       drawerSaveConfirmRef.current = false;
       if (save === true) {
+        if (!form.title.trim()) {
+          showToast(lang === "zh" ? "请先填写名称" : "Enter a name first");
+          return;
+        }
         saveForm();
         return;
       }
@@ -9049,7 +9086,7 @@ if (cached?.data && cached?.settings) {
         </div>}
       </header>
       <div className="df-header-fade" />
-      {compactLayout && quickAddPresence.present && <div className={`df-drawer-backdrop${quickAddPresence.closing ? " is-closing" : ""}`} onMouseDown={() => quickTitle.trim() ? finishMobileQuickAdd() : setQuickAddOpen(false)} />}
+      {compactLayout && quickAddPresence.present && <div className={`df-drawer-backdrop${quickAddPresence.closing ? " is-closing" : ""}`} onMouseDown={() => void closeMobileQuickAdd()} />}
       {compactLayout && quickAddPresence.present && (
         <Suspense fallback={null}><MobileQuickAddSheet
           closing={quickAddPresence.closing}
@@ -9066,7 +9103,7 @@ if (cached?.data && cached?.settings) {
           onProjectChange={setQuickProjectId}
           onProjectColorChange={setQuickProjectColor}
           onHabitMinutesChange={setMobileQuickHabitMinutes}
-          onClose={() => setQuickAddOpen(false)}
+          onClose={() => void closeMobileQuickAdd()}
           onMore={() => finishMobileQuickAdd(true)}
           onSubmit={() => finishMobileQuickAdd()}
         /></Suspense>
@@ -9400,6 +9437,7 @@ if (cached?.data && cached?.settings) {
               {shouldShowHabitCandidates(settings) && (
                 <HabitCandidateCard
                   habits={habits}
+                  projects={projects}
                   habitDailyStates={habitDailyStates}
                   today={today}
                   lang={lang}
@@ -10344,7 +10382,7 @@ if (cached?.data && cached?.settings) {
       {!productAiPresentation && aiPanel}
       <CommandPalette open={commandOpen} compact={compactLayout} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
       {utilityPanel && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} /></Suspense>}
-      {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
+      {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
       {focusOverlayMode && (
         <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>
           <div className="df-focus-topbar">
@@ -11475,6 +11513,7 @@ function CommandPalette(props: {
 
 function HabitCandidateCard(props: {
   habits: Habit[];
+  projects: Project[];
   habitDailyStates: HabitDailyState[];
   today: string;
   lang: Language;
@@ -11515,7 +11554,7 @@ function HabitCandidateCard(props: {
             appearance="calm"
             checked={isDone}
             selected={Boolean(state?.timelineRecordId)}
-            projectColor="var(--accent-active)"
+            projectColor={props.projects.find((project) => project.id === habit.projectId)?.color}
             key={habit.id}
             className={`df-habit-candidate-row${isDone ? " completed" : ""}${state?.timelineRecordId ? " scheduled" : ""}${inDateRange ? "" : " is-out-of-range"}`}
             dragState={props.draggedHabitId === habitDragTaskId(habit.id) ? "source-placeholder" : undefined}
@@ -11559,6 +11598,7 @@ function HabitCandidateCard(props: {
 function HabitPanel(props: {
   mode: "overview" | "detail";
   habitId: string | null;
+  draft: Habit | null;
   data: PlannerData;
   today: string;
   lang: Language;
@@ -11572,6 +11612,11 @@ function HabitPanel(props: {
   onCreateHabit: () => void;
   onConvertTo: (habit: Habit, targetType: "task" | "project") => void;
 }) {
+  const editorRef = useRef<{ save: () => void }>(null);
+  const close = () => {
+    editorRef.current?.save();
+    props.onClose();
+  };
   const metrics = buildHabitMetrics(props.data, props.today);
   const zh = props.lang === "zh";
   const weekdays = weekdayLabels(props.lang);
@@ -11579,22 +11624,22 @@ function HabitPanel(props: {
     .filter((habit) => habit.archived)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
   const detailHabit = props.mode === "detail" && props.habitId
-    ? (props.data.habits || []).find((h) => h.id === props.habitId) || null
+    ? (props.data.habits || []).find((h) => h.id === props.habitId) || (props.draft?.id === props.habitId ? props.draft : null)
     : null;
 
   return (
     <>
-      <div className="df-utility-backdrop" onMouseDown={props.onClose} />
+      <div className="df-utility-backdrop" onMouseDown={close} />
       <aside className="df-utility-panel df-habit-panel">
         <div className="df-utility-head">
           <h2>{props.mode === "detail" && detailHabit ? (zh ? "编辑习惯" : "Edit Habit") : (zh ? "习惯总览" : "Habits Overview")}</h2>
-          <CloseButton label={zh ? "关闭" : "Close"} onClick={props.onClose} />
+          <CloseButton label={zh ? "关闭" : "Close"} onClick={close} />
         </div>
         <div className="df-utility-body">
           {props.mode === "overview" ? (
             <HabitOverviewBody metrics={metrics} archivedHabits={archivedHabits} dailyStates={props.data.habitDailyStates || []} zh={zh} today={props.today} onEditHabit={props.onEditHabit} onArchive={props.onArchive} onToggleDay={props.onToggleDay} onCreateHabit={props.onCreateHabit} />
           ) : detailHabit ? (
-            <Suspense fallback={<p className="df-habit-empty">{zh ? "正在打开习惯…" : "Opening habit…"}</p>}><HabitDetailBodyLazy habit={detailHabit} projects={props.data.projects} dailyStates={props.data.habitDailyStates || []} today={props.today} zh={zh} weekdays={weekdays} onSave={(patch) => props.onSave(detailHabit.id, patch)} onArchive={(archived) => props.onArchive(detailHabit.id, archived)} onToggleDay={(date, completed) => props.onToggleDay(detailHabit.id, date, completed)} onDelete={() => props.onDeleteHabit(detailHabit.id)} onBack={props.onBack} onConvertTo={(targetType) => props.onConvertTo(detailHabit, targetType)} /></Suspense>
+            <Suspense fallback={<p className="df-habit-empty">{zh ? "正在打开习惯…" : "Opening habit…"}</p>}><HabitDetailBodyLazy key={detailHabit.id} ref={editorRef} habit={detailHabit} projects={props.data.projects} dailyStates={props.data.habitDailyStates || []} today={props.today} zh={zh} weekdays={weekdays} onSave={(patch) => props.onSave(detailHabit.id, patch)} onToggleDay={(date, completed) => props.onToggleDay(detailHabit.id, date, completed)} onDelete={() => props.onDeleteHabit(detailHabit.id)} onBack={() => { editorRef.current?.save(); props.onBack(); }} onConvertTo={(targetType) => { editorRef.current?.save(); props.onConvertTo(detailHabit, targetType); }} /></Suspense>
           ) : (
             <p className="df-habit-empty">{zh ? "未找到该习惯。" : "Habit not found."}</p>
           )}

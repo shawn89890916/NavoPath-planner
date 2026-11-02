@@ -1,12 +1,14 @@
 # NavoPath 更新日志
 
-## 2026-11-02 · 习惯名称与项目归属 · 1.4.13
+## 2026-11-02 · 习惯编辑与项目归属 · 1.4.14
 
 ### 改进
 - 习惯可在新增、快速添加和详情中选择归属项目，修改归属时同步已有时间轴安排，新安排自动沿用该项目。
+- 编辑习惯后点击面板外空白区域、关闭或返回总览会自动保存；右下角新增有未保存内容时，退出前可选择保存或放弃。
 
 ### 修复
 - 修改习惯名称时同步所有日期里已拖到时间轴的安排；重新打开后也会校正此前残留的旧名称，保留原有时间和完成记录。
+- 习惯候选行色条跟随归属项目更新；新建习惯直接进入可编辑的草稿，避免退出后再次打开占位习惯。
 
 ## 2026-11-01 · 桌面贴边小条 · 1.4.12
 
@@ -294,13 +296,15 @@
 
 # NavoPath Changelog
 
-## 2026-11-02 · Habit names and projects · 1.4.13
+## 2026-11-02 · Habit editing and projects · 1.4.14
 
 ### Improvements
 - Choose a project when creating, quickly adding or editing a habit. Changing its project updates existing timeline schedules, and new schedules inherit it.
+- Clicking outside the habit editor, closing it or returning to the overview saves edits automatically. Exiting a new item with unsaved content offers Save or Discard.
 
 ### Fixes
 - Renaming a habit updates its timeline schedules across all dates. Reopening also corrects older stale names while preserving scheduled times and completion history.
+- Habit candidate color strips follow the assigned project. New habits open directly as editable drafts without requiring a second click on a placeholder habit.
 
 ## 2026-11-01 · Desktop Dock tab · 1.4.12
 

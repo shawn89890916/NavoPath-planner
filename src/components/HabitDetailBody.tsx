@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import type { Habit, HabitDailyState, HabitTrackingType, Project } from "../types";
 import { habitStartDate, isHabitDueOnDate, isHabitWithinDateRange } from "../utils/habits";
 import { addDays } from "../utils/recurrence";
@@ -10,6 +10,7 @@ import "./habit-detail.css";
 const STEP_MINUTES = 15;
 
 type HabitDetailBodyProps = {
+  ref?: Ref<{ save: () => void }>;
   habit: Habit;
   projects: Project[];
   dailyStates: HabitDailyState[];
@@ -17,14 +18,13 @@ type HabitDetailBodyProps = {
   zh: boolean;
   weekdays: string[];
   onSave: (patch: Partial<Habit>) => void;
-  onArchive: (archived: boolean) => void;
   onToggleDay: (date: string, completed: boolean) => void;
   onDelete: () => void;
   onBack: () => void;
   onConvertTo: (targetType: "task" | "project") => void;
 };
 
-export default function HabitDetailBody({ habit, projects, dailyStates, today, zh, weekdays, onSave, onArchive, onToggleDay, onDelete, onBack, onConvertTo }: HabitDetailBodyProps) {
+export default function HabitDetailBody({ ref, habit, projects, dailyStates, today, zh, weekdays, onSave, onToggleDay, onDelete, onBack, onConvertTo }: HabitDetailBodyProps) {
   const [title, setTitle] = useState(habit.title);
   const [projectId, setProjectId] = useState(habit.projectId || "");
   const [notes, setNotes] = useState(habit.notes || "");
@@ -198,6 +198,8 @@ export default function HabitDetailBody({ habit, projects, dailyStates, today, z
       archived: !enabled,
     });
   };
+  useImperativeHandle(ref, () => ({ save: saveChanges }));
+  const setHabitEnabled = (next: boolean) => { setEnabled(next); onSave({ archived: !next }); };
   const weekOrder = [1, 2, 3, 4, 5, 6, 0];
   const baseDay = addDays(today, weekOffset * 7);
   const weekStart = addDays(baseDay, -((new Date(`${baseDay}T00:00:00`).getDay() + 6) % 7));
@@ -222,13 +224,13 @@ export default function HabitDetailBody({ habit, projects, dailyStates, today, z
         const due = isHabitDueOnDate(rangeHabit, date);
         const completed = due && completedDates.has(date);
         const label = `${zh ? `周${weekdays[day]}` : weekdays[day]} ${date.slice(8)}`;
-        return <button key={date} data-day-offset={dayOffset} type="button" className={`df-habit-detail-progress-day${due ? " is-due" : ""}${completed ? " is-complete" : ""}${date === today ? " is-today" : ""}${date === today && todayHighlighted ? " is-highlighted" : ""}`} title={label} aria-label={`${label}: ${completed ? (zh ? "已完成" : "Completed") : due ? (zh ? "未完成" : "Not completed") : (zh ? "无需检查" : "Not scheduled")}`} aria-pressed={completed} disabled={!due} onClick={() => onToggleDay(date, !completed)}><b>{zh ? `周${weekdays[day]}` : weekdays[day]}</b><small>{date.slice(8)}</small><i aria-hidden="true">{completed && <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l2.5 2.5L10 3" /></svg>}</i></button>;
+        return <button key={date} data-day-offset={dayOffset} type="button" className={`df-habit-detail-progress-day${due ? " is-due" : ""}${completed ? " is-complete" : ""}${date === today ? " is-today" : ""}${date === today && todayHighlighted ? " is-highlighted" : ""}`} title={label} aria-label={`${label}: ${completed ? (zh ? "已完成" : "Completed") : due ? (zh ? "未完成" : "Not completed") : (zh ? "无需检查" : "Not scheduled")}`} aria-pressed={completed} disabled={!due} onClick={() => { saveChanges(); onToggleDay(date, !completed); }}><b>{zh ? `周${weekdays[day]}` : weekdays[day]}</b><small>{date.slice(8)}</small><i aria-hidden="true">{completed && <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l2.5 2.5L10 3" /></svg>}</i></button>;
       })}</div>
     </section>
     <section className="df-habit-settings-form">
       <label className="df-habit-setting-field df-habit-setting-field-title"><span>{zh ? "标题" : "Title"}</span><input type="text" value={title} onChange={(event) => setTitle(event.target.value)} /></label>
       <label className="df-habit-setting-field"><span>{zh ? "归属项目" : "Project"}</span><select value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="">{zh ? "未归属" : "Unassigned"}</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>
-      <div className="df-habit-setting-field df-habit-setting-toggle"><span>{zh ? "启用" : "Enabled"}</span><SettingToggle checked={enabled} ariaLabel={zh ? "启用习惯" : "Enable habit"} onChange={(next) => { setEnabled(next); onSave({ archived: !next }); }} /></div>
+      <div className="df-habit-setting-field df-habit-setting-toggle"><span>{zh ? "启用" : "Enabled"}</span><SettingToggle checked={enabled} ariaLabel={zh ? "启用习惯" : "Enable habit"} onChange={setHabitEnabled} /></div>
       <div className="df-habit-setting-field df-habit-type-field"><span>{zh ? "类型" : "Type"}</span><div className="df-habit-type-options" role="group" aria-label={zh ? "习惯类型" : "Habit type"}><button type="button" className={trackingType === "click-counter" ? "is-selected" : ""} aria-pressed={trackingType === "click-counter"} onClick={() => setTrackingType("click-counter")}>{zh ? "点击计数" : "Click Counter"}</button><button type="button" className={trackingType === "duration" ? "is-selected" : ""} aria-pressed={trackingType === "duration"} onClick={() => setTrackingType("duration")}>{zh ? "累积时长" : "Duration"}</button></div></div>
       {trackingType === "click-counter" ? <label className="df-habit-setting-field"><span>{zh ? "目标次数" : "Target Count"}</span><input type="number" min={0} value={targetCount} onChange={(event) => setTargetCount(event.target.value)} /></label> : <label className="df-habit-setting-field"><span>{zh ? "时长" : "Duration"}</span><input type="number" min={STEP_MINUTES} max={480} step={STEP_MINUTES} value={duration} onChange={(event) => setDuration(event.target.value)} /><small>{zh ? "以 15 分钟为单位" : "Set in 15-minute increments"}</small></label>}
       <label className="df-habit-setting-field df-habit-date-field"><span>{zh ? "开始于" : "Start From"}</span><input type="date" value={startDate} onChange={(event) => { const next = event.target.value; setStartDate(next); if (endDate && next && endDate < next) setEndDate(""); }} /></label>
@@ -236,7 +238,7 @@ export default function HabitDetailBody({ habit, projects, dailyStates, today, z
       <div className="df-habit-setting-field df-habit-weekday-field"><span>{zh ? "检查连续的星期几 *" : "Weekdays to check *"}</span><div className="df-habit-weekday-checks">{weekOrder.map((day) => <button key={day} type="button" className={`df-habit-weekday-check${activeWeekdays.includes(day) ? " is-selected" : ""}`} onClick={() => toggleWeekday(day)} aria-pressed={activeWeekdays.includes(day)}><i aria-hidden="true">{activeWeekdays.includes(day) && <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l2.5 2.5L10 3" /></svg>}</i><strong>{zh ? `星期${weekdays[day]}` : weekdays[day]}</strong></button>)}</div></div>
       <label className="df-habit-setting-field"><span>{zh ? "备注" : "Notes"}</span><textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
     </section>
-    <section className="df-habit-detail-actions"><button type="button" className="df-habit-back-btn" onClick={onBack}>{zh ? "返回总览" : "Back to overview"}</button><button type="button" className="df-habit-save-btn" onClick={saveChanges}>{zh ? "保存" : "Save"}</button><ActionDisclosure label={zh ? "更多习惯操作" : "More habit actions"}><Button onClick={() => onArchive(!habit.archived)}>{habit.archived ? (zh ? "恢复习惯" : "Restore Habit") : (zh ? "归档习惯" : "Archive Habit")}</Button><Button variant="danger" aria-pressed={confirmDelete} onClick={() => { if (confirmDelete) onDelete(); else setConfirmDelete(true); }}>{confirmDelete ? (zh ? "确认" : "Confirm") : (zh ? "永久删除" : "Delete permanently")}</Button></ActionDisclosure><span className="df-habit-delete-status" role="status">{confirmDelete ? (zh ? "再次点击以永久删除此习惯" : "Click Confirm to permanently delete this habit") : ""}</span></section>
+    <section className="df-habit-detail-actions"><button type="button" className="df-habit-back-btn" onClick={onBack}>{zh ? "返回总览" : "Back to overview"}</button><button type="button" className="df-habit-save-btn" onClick={saveChanges}>{zh ? "保存" : "Save"}</button><ActionDisclosure label={zh ? "更多习惯操作" : "More habit actions"}><Button onClick={() => setHabitEnabled(Boolean(habit.archived))}>{habit.archived ? (zh ? "恢复习惯" : "Restore Habit") : (zh ? "归档习惯" : "Archive Habit")}</Button><Button variant="danger" aria-pressed={confirmDelete} onClick={() => { if (confirmDelete) onDelete(); else setConfirmDelete(true); }}>{confirmDelete ? (zh ? "确认" : "Confirm") : (zh ? "永久删除" : "Delete permanently")}</Button></ActionDisclosure><span className="df-habit-delete-status" role="status">{confirmDelete ? (zh ? "再次点击以永久删除此习惯" : "Click Confirm to permanently delete this habit") : ""}</span></section>
     <section className="df-habit-settings-form df-habit-convert-section"><label className="df-habit-setting-field df-habit-convert-field"><span>{zh ? "转换为" : "Convert to"}</span><select value="" onChange={(event) => { const target = event.target.value as "task" | "project" | ""; if (target) onConvertTo(target); }}><option value="">{zh ? "选择类型…" : "Choose a type…"}</option><option value="task">{zh ? "任务" : "Task"}</option><option value="project">{zh ? "项目" : "Project"}</option></select></label></section>
   </>;
 }
