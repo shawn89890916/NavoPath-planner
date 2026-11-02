@@ -1,17 +1,19 @@
 import { Suspense, lazy } from "react";
-import type { AiMemory, CalendarFeedTokenMetadata, DesktopUpdateState, ExternalCalendarSource, Language, PlannerData, Settings, WidgetAction } from "./types";
+import type { AiMemory, CalendarFeedTokenMetadata, ExternalCalendarSource, Language, PlannerData, Settings, WidgetAction } from "./types";
 import { type CSSProperties, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useCallback } from "react";
 import { getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./workspaceEnvironment";
 import { formatLastSyncedAt, presetForMinutes, SYNC_INTERVAL_PRESETS } from "./sync";
 import { t, viewLabel } from "./i18n";
-import { DESKTOP_DOWNLOAD_URL, DESKTOP_RELEASES_URL } from "./downloads";
-import { readAutoLaunchState, toggleAutoLaunchState } from "./desktopAutoLaunch";
 import { AI_PROVIDER_MODELS, aiProviderPreset, readLocalAiProviderConfig, writeLocalAiProviderConfig, clearLocalAiProviderConfig, type LocalAiProviderConfig } from "./aiProviderConfig";
-import { SETTINGS_CATEGORIES, normalizeSettingsTarget, settingsCategoryLabel, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
+import { SETTINGS_CATEGORIES, normalizeSettingsTarget, searchSettings, settingsCategoryLabel, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
+import { extensionService } from "./extensions/service";
 import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon } from "./components/UiIcons";
 import { DEFAULT_WIDGET_APPEARANCE, normalizeWidgetAppearance } from "./widget/widgetPreferences";
 import { normalizeWidgetTimerPreferences } from "./widget/widgetTimer";
+const AutoLaunchToggle = lazy(() => import("./components/DesktopUpdateSettings").then(module => ({ default: module.AutoLaunchToggle })));
+const DesktopUpdateControl = lazy(() => import("./components/DesktopUpdateSettings").then(module => ({ default: module.DesktopUpdateControl })));
+const BetaUpdatePreference = lazy(() => import("./components/DesktopUpdateSettings").then(module => ({ default: module.BetaUpdatePreference })));
 const ExtensionSettings = lazy(() => import("./extensions/ExtensionSettings").then(module => ({ default: module.ExtensionSettings })));
 import { getTimerModes, subscribeTimerModes, getTimerModeRevision } from "./extensions/timers";
 import { SHORTCUTS, groupShortcutsByScope, type ShortcutScope } from "./utils/shortcuts";
@@ -315,83 +317,6 @@ function SyncSettingsControl({
   );
 }
 
-function DesktopUpdateControl({ lang }: { lang: Language }) {
-  const api = window.desktopApi;
-  const [state, setState] = useState<DesktopUpdateState | null>(null);
-  const updaterAvailable = Boolean(api);
-
-  useEffect(() => {
-    if (!updaterAvailable || !api) return;
-    void api.getUpdateState().then(setState);
-    return api.onUpdateState(setState);
-  }, [api, updaterAvailable]);
-
-  if (!updaterAvailable) {
-    return <a className="df-download-link" href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer">{lang === "zh" ? "一键下载最新版 Windows 应用" : "Download the latest Windows app"}<span aria-hidden="true">↓</span></a>;
-  }
-
-  const statusText = (() => {
-    if (!state) return lang === "zh" ? "正在读取版本…" : "Reading version…";
-    if (state.status === "checking") return lang === "zh" ? "正在检查更新…" : "Checking for updates…";
-    if (state.status === "available") return lang === "zh" ? `发现 ${state.availableVersion}，确认后自动更新并重启` : `${state.availableVersion} available. Confirm to update and restart.`;
-    if (state.status === "downloading") return lang === "zh" ? `正在下载 ${state.progress}%` : `Downloading ${state.progress}%`;
-    if (state.status === "downloaded") return lang === "zh" ? `${state.availableVersion} 已准备好安装` : `${state.availableVersion} is ready to install`;
-    if (state.status === "current") return lang === "zh" ? "当前已是最新版" : "You're up to date";
-    if (state.status === "error") return lang === "zh" ? `更新失败：${state.message}` : `Update failed: ${state.message}`;
-    return lang === "zh" ? "启动后及每天自动检查，确认即可更新" : "Checked at startup and daily. Confirm to update.";
-  })();
-  const busy = !state || state.status === "checking" || state.status === "downloading";
-  const actionLabel = state?.status === "downloaded"
-    ? (lang === "zh" ? "重启并安装" : "Restart and install")
-    : state?.status === "available"
-      ? (lang === "zh" ? "立即更新" : "Update now")
-      : (lang === "zh" ? "立即检查更新" : "Check for updates");
-
-  return <section className="df-update-card">
-    <div><strong>{lang === "zh" ? "桌面应用更新" : "Desktop app updates"}</strong><small>{statusText}</small>{state?.currentVersion && <small>{lang === "zh" ? "当前版本" : "Current version"} {state.currentVersion}</small>}</div>
-    {state?.status === "downloading" && <progress max="100" value={state.progress} />}
-    <button type="button" disabled={busy} onClick={() => state?.status === "downloaded" ? void api?.installUpdate() : void api?.checkForUpdates().then(setState)}>{actionLabel}</button>
-    <a href={DESKTOP_RELEASES_URL}>{lang === "zh" ? "查看发布说明" : "View release notes"}</a>
-  </section>;
-}
-
-function AutoLaunchToggle({ lang }: { lang: Language }) {
-  const api = window.desktopApi;
-  const [enabled, setEnabled] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!api) { setLoading(false); return; }
-    let active = true;
-    void readAutoLaunchState(api, false).then((next) => {
-      if (!active) return;
-      setEnabled(next);
-      setLoading(false);
-    });
-    return () => { active = false; };
-  }, [api]);
-
-  if (!api) return null;
-
-  const toggleAutoLaunch = async () => {
-    setLoading(true);
-    const next = await toggleAutoLaunchState(api, enabled);
-    setEnabled(next);
-    setLoading(false);
-  };
-
-  return <SettingRow
-    title={lang === "zh" ? "开机自启动" : "Launch at startup"}
-    description={lang === "zh" ? "登录系统时自动打开 NavoPath" : "Automatically open NavoPath when you sign in"}
-    control={<>
-      <span className="df-settings-toggle-status" aria-live="polite">
-        {loading ? (lang === "zh" ? "更新中…" : "Updating…") : enabled ? (lang === "zh" ? "已开启" : "On") : (lang === "zh" ? "已关闭" : "Off")}
-      </span>
-      <SettingToggle checked={enabled} disabled={loading} ariaLabel={lang === "zh" ? "开机自启动" : "Launch at startup"} onChange={() => { void toggleAutoLaunch(); }} />
-    </>}
-  />;
-}
-
 function AiProviderSettings({ lang, onSave }: { lang: Language; onSave: (patch: Partial<Settings>) => void }) {
   const [config, setConfig] = useState<LocalAiProviderConfig>(() => readLocalAiProviderConfig());
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -516,6 +441,11 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
   const [settingsTarget, setSettingsTarget] = useState<SettingsTarget>(resolveRuntimeTarget(resolvedInitial));
   const [settingsHome, setSettingsHome] = useState(!initialSection && compactLayout);
+  const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
+  const pluginPages = extensionSnapshot.settingsPages;
+  const selectedPluginPage = pluginPages.find(page => page.id === settingsTarget.pluginPage);
+  const [navigationQuery, setNavigationQuery] = useState("");
+  const navigationResults = searchSettings(navigationQuery, lang, isDesktopRuntime);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [widgetThemeOpen, setWidgetThemeOpen] = useState<"light" | "dark">("light");
   const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "mcp" | "sync">("calendar");
@@ -538,6 +468,9 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
     if (kind !== "settings") return;
     closeButtonRef.current?.focus();
   }, [kind]);
+  useEffect(() => {
+    if (settingsTarget.pluginPage && !selectedPluginPage) setSettingsTarget({ category: "plugins" });
+  }, [settingsTarget.pluginPage, selectedPluginPage]);
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
@@ -815,7 +748,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
         <div className="df-utility-head">
           <div className="df-utility-head-leading">
             {kind === "settings" && compactLayout && !settingsHome && <button type="button" className="df-settings-back-button" onClick={backToSettingsHome} aria-label={lang === "zh" ? "返回设置" : "Back to settings"}><span aria-hidden="true">‹</span><span>{lang === "zh" ? "设置" : "Settings"}</span></button>}
-            <h2 id="df-utility-title">{kind === "settings" && !settingsHome ? settingsCategoryLabel(settingsTarget.category, lang) : kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
+            <h2 id="df-utility-title">{kind === "settings" && !settingsHome ? selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang) : kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
           </div>
           <CloseButton ref={closeButtonRef} label={t(lang, "settings.close")} onClick={onClose} />
         </div>
@@ -891,13 +824,16 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                     ))}
                   </div>
                 </section>
+                {pluginPages.length > 0 && <section className="df-settings-home-group"><header className="df-settings-home-heading"><h3>{lang === "zh" ? "插件设置" : "Plugin settings"}</h3></header><div className="df-settings-home-card df-settings-home-detail-card">{pluginPages.map(page => <button type="button" className="df-settings-home-entry" key={page.id} onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}><span className="df-settings-home-entry-copy"><strong>{page.name}</strong></span><span className="df-settings-home-entry-chevron" aria-hidden="true">›</span></button>)}</div></section>}
               </div>
             ) : <>
             <div className="df-settings-rail">
+              <SettingTextInput value={navigationQuery} placeholder={lang === "zh" ? "搜索设置…" : "Search settings…"} ariaLabel={lang === "zh" ? "搜索设置" : "Search settings"} onChange={setNavigationQuery} />
               <nav className="df-settings-nav ui-choice-list" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
-                {SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => (
-                  <button type="button" key={category.id} className={`ui-choice-item${settingsTarget.category === category.id ? " active" : ""}`} aria-current={settingsTarget.category === category.id ? "page" : undefined} onClick={() => navigateSettings({ category: category.id })}>{lang === "zh" ? category.labelZh : category.labelEn}</button>
+                {navigationQuery.trim() ? navigationResults.map(result => <button type="button" key={result.id} className="ui-choice-item" onClick={() => navigateSettings(result.target)}>{lang === "zh" ? result.labelZh : result.labelEn}</button>) : SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => (
+                  <button type="button" key={category.id} className={`ui-choice-item${settingsTarget.category === category.id && !settingsTarget.pluginPage ? " active" : ""}`} aria-current={settingsTarget.category === category.id && !settingsTarget.pluginPage ? "page" : undefined} onClick={() => navigateSettings({ category: category.id })}>{lang === "zh" ? category.labelZh : category.labelEn}</button>
                 ))}
+                {pluginPages.length > 0 && <><h3 className="df-settings-nav-heading">{lang === "zh" ? "插件设置" : "Plugin settings"}</h3>{pluginPages.filter(page => page.name.toLocaleLowerCase().includes(navigationQuery.trim().toLocaleLowerCase())).map(page => <button type="button" key={page.id} className={`ui-choice-item${settingsTarget.pluginPage === page.id ? " active" : ""}`} aria-current={settingsTarget.pluginPage === page.id ? "page" : undefined} onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}>{page.name}</button>)}</>}
               </nav>
             </div>
             <div ref={settingsContentRef} className="df-settings-content">
@@ -929,7 +865,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
             </SettingSection>}
 
-            {settingsTarget.category === "appearance" && <SettingSection title={lang === "zh" ? "外观" : "Appearance"} description={settings.theme === "dark"
+            {settingsTarget.category === "appearance" && <SettingSection presentation="plain" title={lang === "zh" ? "外观" : "Appearance"} description={settings.theme === "dark"
               ? (lang === "zh" ? "深色模式使用柔和白色交互高亮；已保存的强调色会在浅色模式下继续生效。" : "Dark mode uses a softened white interaction accent. Your saved accent returns in light mode.")
               : (lang === "zh" ? "纸面风格、字体与克制的点缀色。" : "Paper surface, typography, and restrained accent color.")}>
               <SettingRow
@@ -1365,7 +1301,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <section className="df-settings-group" data-settings-anchor="external-calendar" tabIndex={-1}><h3>{lang === "zh" ? "外部日历" : "External Calendars"}</h3><ExternalCalendarManager lang={lang} /></section>}
             {settingsTarget.category === "integrations" && integrationTab === "mcp" && <section className="df-settings-group" data-settings-anchor="mcp" tabIndex={-1}><h3>MCP</h3><Suspense fallback={<p className="df-mcp-status">{lang === "zh" ? "正在打开 MCP…" : "Opening MCP…"}</p>}><McpTokenManager lang={lang} /></Suspense></section>}
             {settingsTarget.category === "integrations" && integrationTab === "sync" && <section className="df-settings-group" data-settings-anchor="sync-bridge" tabIndex={-1}><h3>{lang === "zh" ? "同步" : "Sync"}</h3><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></section>}
-            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings lang={lang} kind="plugin" /></Suspense>}
+            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings lang={lang} kind="plugin" settingsPageId={settingsTarget.pluginPage ?? null} onSelectPage={(id) => navigateSettings({ category: "plugins", ...(id ? { pluginPage: id } : {}) })} /></Suspense>}
             {!compactLayout && settingsTarget.category === "account-data" && <SettingSection anchor="account-profile" title={lang === "zh" ? "个人资料" : "Profile"}>
               {profileHero}
             </SettingSection>}
@@ -1412,8 +1348,9 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                   onChange={(patch) => onSave(patch)}
                   onSyncNow={onSyncNow}
                 /></div>
-              <div data-settings-anchor="updates" tabIndex={-1}><DesktopUpdateControl lang={lang} /></div>
-              <div data-settings-anchor="auto-launch" tabIndex={-1}><AutoLaunchToggle lang={lang} /></div>
+              <div data-settings-anchor="updates" tabIndex={-1}><Suspense fallback={null}><DesktopUpdateControl lang={lang} /></Suspense></div>
+              <div data-settings-anchor="beta-updates" tabIndex={-1}><Suspense fallback={null}><BetaUpdatePreference lang={lang} onSave={onSave} /></Suspense></div>
+              <div data-settings-anchor="auto-launch" tabIndex={-1}><Suspense fallback={null}><AutoLaunchToggle lang={lang} /></Suspense></div>
               <AccountMoreSection lang={lang} onShowAbout={onShowAbout} />
               {onSignOut && <SettingRow
                 title={t(lang, "settings.logout")}
@@ -1450,7 +1387,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             <strong>{t(lang, "settings.version")}</strong>
             <p>{t(lang, "settings.aboutDesc")}</p>
             <small>{t(lang, "settings.lastUpdated")}</small>
-            <DesktopUpdateControl lang={lang} />
+            <Suspense fallback={null}><DesktopUpdateControl lang={lang} /></Suspense>
             <a className="df-settings-row" href="/changelog">
               <strong>{lang === "zh" ? "查看更新日志" : "View changelog"}</strong>
               <span aria-hidden="true">↗</span>

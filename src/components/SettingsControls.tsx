@@ -29,16 +29,18 @@ export function SettingSection({
   children,
   tone = "normal",
   anchor,
+  presentation = "grouped",
 }: {
   title: ReactNode;
   description?: ReactNode;
   children: ReactNode;
   tone?: "normal" | "danger";
   anchor?: string;
+  presentation?: "grouped" | "plain";
 }) {
   return (
     <section
-      className={`df-settings-group${tone === "danger" ? " df-settings-group--danger" : ""}`}
+      className={`df-settings-group${tone === "danger" ? " df-settings-group--danger" : ""}${presentation === "plain" ? " df-settings-group--plain" : ""}`}
       data-settings-anchor={anchor}
       tabIndex={anchor ? -1 : undefined}
     >
@@ -247,12 +249,13 @@ export function SettingActionButton({
   ariaLabel?: string;
 }) {
   const variant = tone === "danger" ? "danger" : tone === "primary" ? "primary" : "secondary";
+  const toneClass = { primary: "df-settings-action--primary", secondary: "df-settings-action--secondary", danger: "df-settings-action--danger" }[tone];
 
   return (
     <Button
       type="button"
       variant={variant}
-      className={`df-settings-action df-settings-action--${tone}`}
+      className={`df-settings-action ${toneClass}`}
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={onClick}

@@ -1,9 +1,67 @@
 .df-extensions { min-width: 0; }
 .df-extension-file { display: none; }
 .df-extension-list, .df-extension-sources { min-width: 0; }
-.df-extension-error { color: var(--danger-ink, var(--text-main)); overflow-wrap: anywhere; }
-.df-extensions .df-settings-row-desc { overflow-wrap: anywhere; }
-.df-extensions .df-settings-row-control { flex-wrap: wrap; }
+.df-extension-error { padding: 12px 0; color: var(--danger-ink, var(--text-main)); overflow-wrap: anywhere; white-space: pre-line; font: 400 13px/1.5 var(--paper-sans); }
+.df-extension-feedback { color: var(--text-muted); font: 400 12px/1.5 var(--paper-sans); }
+.df-extension-feedback:not(:empty) { margin-bottom: 12px; }
+.df-extension-back { margin-bottom: 16px; }
+.df-extension-meta, .df-extension-state { display: block; color: var(--text-muted); font: 400 12px/1.5 var(--paper-sans); }
+.df-extension-meta { margin-top: 6px; overflow-wrap: anywhere; }
+.df-extension-count { margin-left: 6px; font-weight: 400; color: var(--text-muted); }
+.df-extension-note { margin: 12px 0; color: var(--text-muted); font: 400 12px/1.5 var(--paper-sans); }
+.df-extension-empty { display: flex; flex-wrap: wrap; gap: 12px; padding: 22px 0; }
+.df-extension-empty > p { flex-basis: 100%; margin: 0; }
+.df-extension-empty > p:first-child { color: var(--text-main); font: 500 14px/1.5 var(--paper-sans); }
+.df-extension-form { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; }
+.df-extension-search { display: flex; align-items: center; gap: 10px; position: relative; margin: 8px 0 14px; color: var(--text-muted); }
+.df-extension-search > svg { position: absolute; left: 12px; pointer-events: none; }
+.df-extension-guide { margin: 18px 0; font: 400 12px/1.5 var(--paper-sans); }
+.df-extension-guide a { color: var(--text-muted); text-underline-offset: 3px; }
+.ui-modal.df-extension-market { display: flex; flex-direction: column; width: min(1120px, calc(100vw - 48px)); min-height: min(640px, calc(100dvh - 48px)); max-height: calc(100dvh - 48px); padding: 0; border: 1px solid var(--paper-rule-strong); border-radius: 12px; background: var(--surface-main, #faf9f5); color: var(--text-main, #25292e); font: 400 14px/1.55 var(--paper-sans, sans-serif); overflow: hidden; }
+.df-extension-market-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 24px 24px 18px; border-bottom: 1px solid var(--paper-rule); }
+.df-extension-market-head h2 { margin: 0; font: 600 21px/1.35 var(--paper-sans, sans-serif); }
+.df-extension-market-head p { margin: 6px 0 0; color: var(--text-muted); font-size: 13px; }
+.df-extension-market-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--paper-rule); }
+.df-extension-market-toolbar .df-extension-search { flex: 1 1 280px; margin: 0; }
+.df-extension-market-toolbar > .df-settings-select { width: auto; flex: 0 1 150px; appearance: auto; }
+.df-extension-market .df-settings-input { width: 100%; min-width: 0; min-height: 40px; padding-left: 38px; }
+.df-extension-market .df-settings-select { max-width: 100%; min-height: 40px; padding: 0 10px; color: var(--text-main); background: var(--surface-card); border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-control); font: inherit; }
+.df-extension-market-filter { display: flex; align-items: center; gap: 10px; font-size: 13px; white-space: nowrap; }
+.df-extension-market-count { flex-basis: 100%; color: var(--text-muted); font-size: 12px; }
+.df-extension-market-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 22px 24px 28px; }
+.df-extension-market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 18px; }
+.df-extension-market-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: 10px; background: var(--surface-card); }
+.df-extension-market-open { flex: 1; display: block; width: 100%; padding: 18px; border: 0; border-radius: 0; background: transparent; color: inherit; text-align: start; font: inherit; cursor: pointer; }
+.df-extension-market-open:focus-visible { outline: 2px solid var(--border-focus, var(--accent-active)); outline-offset: -4px; }
+.df-extension-market-open h3 { margin: 0 0 5px; font: 600 17px/1.4 var(--paper-sans, sans-serif); }
+.df-extension-market-open p { min-height: 4.6em; margin: 14px 0 0; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.df-extension-market-card footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 18px 18px; }
+.df-extension-preview { display: grid; place-items: center; aspect-ratio: 16 / 10; margin-bottom: 16px; overflow: hidden; border-radius: 6px; background: var(--surface-raised); color: var(--text-muted); font-size: 12px; }
+.df-extension-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.df-extension-detail { max-width: 780px; margin: 0 auto; }
+.df-extension-detail > .df-extension-preview { margin-top: 18px; }
+.df-extension-detail h3 { margin: 24px 0 6px; font: 600 26px/1.3 var(--paper-sans, sans-serif); }
+.df-extension-detail dl { margin: 24px 0; }
+.df-extension-detail dl > div { display: grid; grid-template-columns: minmax(100px, .4fr) minmax(0, 1fr); gap: 18px; padding: 12px 0; border-bottom: 1px solid var(--paper-rule); }
+.df-extension-detail dt { color: var(--text-muted); }
+.df-extension-detail dd { margin: 0; overflow-wrap: anywhere; }
+#root .df-app .df-extensions .df-settings-row:not(.df-settings-row--stacked) { grid-template-columns: minmax(0, 1fr) auto; column-gap: 24px; }
+#root .df-app .df-extensions .df-settings-row-control { width: auto; max-width: 100%; flex-wrap: wrap; }
+#root .df-app .df-settings-content .df-extensions .df-settings-row-desc { overflow-wrap: anywhere; font-size: 12px; line-height: 1.55; }
+#root .df-app .df-extensions .df-extension-list .df-settings-row { padding: 18px 0; }
+#root .df-app .df-extensions .df-extension-list .df-settings-row-title { font-size: 14px; }
+#root .df-app .df-extensions .df-extension-list .df-settings-row-control { gap: 10px; }
+#root .df-app .df-extensions .df-extension-form .df-settings-input { flex: 1 1 260px; width: 100%; min-width: 0; }
+#root .df-app .df-extensions .df-extension-search .df-settings-input { width: 100%; min-width: 0; min-height: 40px; padding-left: 38px; }
+#root .df-app .df-extensions .df-settings-action { white-space: nowrap; font: 500 12px/1.4 var(--paper-sans); }
 @media (max-width: 680px) {
-  .df-extensions .df-settings-row-control { justify-content: flex-start; }
+  .ui-modal.df-extension-market { width: calc(100vw - 24px); min-height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); }
+  .df-extension-market-head, .df-extension-market-toolbar, .df-extension-market-body { padding: 16px; }
+  .df-extension-market-head h2 { font-size: 18px; }
+  .df-extension-market-toolbar { gap: 12px; }
+  .df-extension-market-toolbar .df-extension-search { flex-basis: 100%; }
+  .df-extension-market-grid { grid-template-columns: minmax(0, 1fr); }
+  #root .df-app .df-extensions .df-settings-row:not(.df-settings-row--stacked) { column-gap: 14px; }
+  #root .df-app .df-extensions .df-extension-list .df-settings-row { grid-template-columns: minmax(0, 1fr); row-gap: 12px; }
+  #root .df-app .df-extensions .df-extension-list .df-settings-row-control { justify-content: flex-start; }
 }

@@ -9324,110 +9324,33 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 /* SettingToggle: a paper switch using neutral ink and paper tones.
    State is conveyed by the dark track and thumb position; a faint
    diagonal hatch (::before) keeps the track consistent with the UI. */
-.df-settings-toggle {
-  position: relative;
-  flex: 0 0 auto;
-  width: 44px;
-  height: 24px;
-  border: 1px solid var(--toggle-border);
-  border-radius: 999px;
-  cursor: pointer;
-  padding: 0;
-  /* Fine speckle layers add a subtle paper grain to the neutral track. */
-  background-color: var(--toggle-off-fill);
-  background-image:
-    radial-gradient(circle at 22% 38%, rgba(255,255,255,.10) 0 .6px, transparent .8px),
-    radial-gradient(circle at 70% 66%, rgba(0,0,0,.12) 0 .5px, transparent .7px),
-    linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.12));
-  background-size: 9px 9px, 12px 12px, 100% 100%;
-  background-repeat: repeat, repeat, no-repeat;
-  transition: border-color var(--paper-motion), background-color var(--paper-motion), transform var(--paper-motion);
-  overflow: hidden;
-  corner-shape: var(--corner-shape, squircle);
+.df-settings-toggle, #root .df-app .df-settings-toggle {
+  --switch-width: 44px; --switch-track: 24px; --switch-thumb: 20px;
+  position: relative; flex: 0 0 auto; box-sizing: border-box;
+  width: var(--switch-width); min-width: var(--switch-width); height: 44px; min-height: 44px;
+  padding: 0; border: 0; border-radius: 999px; background: transparent; box-shadow: none;
+  cursor: pointer; overflow: visible;
 }
-/* Diagonal hatch layer for a light crayon/paper tooth. Kept very
-   faint (opacity .26) and clipped to the track so it never reads as
-   noise or dirt. */
 .df-settings-toggle::before {
-  content: "";
-  position: absolute;
-  inset: 2px;
-  border-radius: inherit;
-  background: repeating-linear-gradient(
-    -12deg,
-    rgba(255,255,255,.10) 0px,
-    rgba(255,255,255,.10) 1px,
-    transparent 1px,
-    transparent 4px
-  );
-  opacity: .26;
-  pointer-events: none;
-  corner-shape: var(--corner-shape, squircle);
+  content: ""; position: absolute; inset: 50% 0 auto; height: var(--switch-track);
+  transform: translateY(-50%); border: 1px solid var(--paper-rule-strong); border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 28%, var(--surface-main));
+  transition: background-color var(--paper-motion); pointer-events: none;
 }
-.df-settings-toggle:hover {
-  border-color: var(--toggle-border-hover);
-  background-color: var(--toggle-off-fill-deep);
-}
-.df-settings-toggle:active:not(:disabled) {
-  transform: translateY(1px);
-}
-.df-settings-toggle:focus-visible {
-  outline: 1px solid var(--accent-active);
-  outline-offset: 2px;
-}
-.df-settings-toggle[data-state="on"] {
-  background-color: var(--toggle-on-fill);
-  background-image:
-    radial-gradient(circle at 22% 38%, rgba(255,255,255,.10) 0 .6px, transparent .8px),
-    radial-gradient(circle at 70% 66%, rgba(0,0,0,.12) 0 .5px, transparent .7px),
-    linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.12));
-}
-.df-settings-toggle[data-state="on"]:hover {
-  border-color: var(--toggle-on-fill);
-  background-color: var(--toggle-on-fill-deep);
-}
-/* Disabled dims but keeps the fill so you can still tell on from off. */
-.df-settings-toggle[data-disabled="true"] {
-  cursor: not-allowed;
-  opacity: .5;
-}
-.df-settings-toggle:disabled {
-  cursor: not-allowed;
-  opacity: .5;
-}
-.df-settings-toggle[data-disabled="true"]:active { transform: none; }
-.df-settings-toggle:disabled:active { transform: none; }
+.df-settings-toggle[data-state="on"]::before { background: var(--accent-active); border-color: var(--accent-active); }
+.df-settings-toggle:hover:not(:disabled)::before { border-color: var(--text-muted); }
+.df-settings-toggle:focus-visible { outline: 2px solid var(--border-focus, var(--accent-active)); outline-offset: 2px; }
+.df-settings-toggle:disabled { opacity: .5; cursor: not-allowed; }
 .df-settings-toggle-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  /* The paper-colored thumb stays neutral in both states. */
-  background: var(--toggle-off-thumb);
-  border: 1px solid var(--toggle-off-thumb-border);
-  /* A whisper of paper grain on the thumb so it does not look like a
-     plastic bead, plus a soft top highlight for a slight rounded feel. */
-  background-image:
-    radial-gradient(circle at 35% 30%, rgba(255,255,255,.14) 0 .5px, transparent .7px),
-    linear-gradient(180deg, rgba(255,255,255,.18), rgba(0,0,0,.10));
-  background-size: 6px 6px, 100% 100%;
-  background-repeat: repeat, no-repeat;
-  box-shadow: 0 1px 0 rgba(0,0,0,.10);
-  z-index: 1;
-  transition: transform var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion);
+  position: absolute; top: 50%; left: 2px; width: var(--switch-thumb); height: var(--switch-thumb);
+  box-sizing: border-box; border: 1px solid var(--paper-rule-strong); border-radius: 50%;
+  background: var(--surface-main); transform: translateY(-50%); pointer-events: none;
+  transition: transform var(--paper-motion);
 }
-/* The thumb slides right to indicate the on state. */
-.df-settings-toggle[data-state="on"] .df-settings-toggle-knob {
-  transform: translateX(20px);
-  background: var(--toggle-on-thumb);
-  border-color: var(--toggle-on-thumb-border);
-  background-image:
-    radial-gradient(circle at 35% 30%, rgba(255,255,255,.14) 0 .5px, transparent .7px),
-    linear-gradient(180deg, rgba(255,255,255,.18), rgba(0,0,0,.10));
-  background-size: 6px 6px, 100% 100%;
-  background-repeat: repeat, no-repeat;
+.df-settings-toggle[data-state="on"] .df-settings-toggle-knob { transform: translate(calc(var(--switch-width) - var(--switch-thumb) - 4px), -50%); border-color: transparent; }
+@media (pointer: coarse) {
+  .df-settings-toggle, #root .df-app .df-settings-toggle { --switch-width: 51px; --switch-track: 31px; --switch-thumb: 27px; width: 51px; }
+  .df-settings-toggle::before { height: 31px; }
 }
 /* SettingSelect / SettingTextInput / SettingNumberInput: native controls
    styled as quiet paper inputs. Selects are standalone native <select>
@@ -9580,7 +9503,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 /* SettingActionButton: secondary text action by default, primary uses
    a fine accent rule, danger uses a muted coral rule. Never a filled
    SaaS pill. */
-.df-settings-action {
+#root .df-app .df-settings-action {
   min-height: 28px;
   padding: 5px 12px;
   border: 1px solid var(--paper-rule);
@@ -15635,7 +15558,9 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   gap: 12px;
   padding-right: 18px;
   border-right: 1px solid var(--paper-rule);
+  overflow-y: auto;
 }
+.df-settings-nav-heading { margin: 20px 0 6px; color: var(--text-muted); font: 600 12px/1.5 var(--paper-sans); }
 .df-app .df-settings-nav {
   gap: 2px;
   padding: 0;
@@ -18423,16 +18348,6 @@ body.df-planning-native-dragging [contenteditable] * {
   --paper-note: color-mix(in srgb, var(--accent-active) 8%, transparent);
   --paper-note-strong: color-mix(in srgb, var(--accent-active) 14%, transparent);
   --paper-float-shadow: 0 20px 48px rgba(20,18,15,.18);
-  --toggle-off-fill: color-mix(in srgb, var(--text-muted) 28%, var(--surface-main));
-  --toggle-off-fill-deep: color-mix(in srgb, var(--text-muted) 38%, var(--surface-main));
-  --toggle-off-thumb: var(--surface-main);
-  --toggle-off-thumb-border: var(--paper-rule-strong);
-  --toggle-on-fill: var(--text-main);
-  --toggle-on-fill-deep: color-mix(in srgb, var(--text-main) 84%, var(--surface-main));
-  --toggle-on-thumb: var(--surface-main);
-  --toggle-on-thumb-border: var(--text-main);
-  --toggle-border: var(--paper-rule-strong);
-  --toggle-border-hover: var(--paper-rule-strong);
   background-color: var(--bg-app);
   background-image:
     radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--text-main) 2.2%, transparent) 0 .55px, transparent .75px),
@@ -24712,6 +24627,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     padding: 14px 0 16px;
   }
 }
+#root .df-app .df-settings-shell > .df-settings-content .df-settings-group--plain { margin: 0 0 28px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+#root .df-app .df-settings-shell > .df-settings-content .df-settings-group--plain > .df-settings-group-head { margin: 0 0 8px; padding: 0 0 8px; border: 0; }
+#root .df-app .df-settings-shell > .df-settings-content .df-settings-group--plain > .df-settings-group-body { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+#root .df-app .df-settings-shell > .df-settings-content .df-settings-group--plain .df-settings-group-title { color: var(--text-main); font: 600 14px/1.45 var(--paper-sans); letter-spacing: 0; text-transform: none; }
 /* Settings home: open with a short list of immediate controls, then route
    the rest into the existing category owners. The page keeps the same paper,
    ink, and fine-rule vocabulary on desktop and compact layouts. */
@@ -24884,83 +24803,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 #root .df-app .df-settings-home-entry-chevron {
   color: var(--text-muted);
-}
-/* The final application button reset must not erase the desktop switch track. */
-@media (hover: hover) and (pointer: fine) {
-  #root .df-app .df-settings-toggle {
-    box-sizing: border-box;
-    min-width: 44px;
-    min-height: 24px;
-    width: 44px;
-    height: 24px;
-    padding: 0;
-    border: 1px solid var(--toggle-border);
-    border-radius: 999px;
-    background-color: var(--toggle-off-fill);
-    background-image:
-      radial-gradient(circle at 22% 38%, rgba(255,255,255,.10) 0 .6px, transparent .8px),
-      radial-gradient(circle at 70% 66%, rgba(0,0,0,.12) 0 .5px, transparent .7px),
-      linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.12));
-    corner-shape: var(--corner-shape, squircle);
-  }
-  #root .df-app .df-settings-toggle[data-state="on"] {
-    background-color: var(--toggle-on-fill);
-  }
-  #root .df-app .df-settings-toggle:hover:not(:disabled) {
-    background-color: var(--toggle-off-fill-deep);
-  }
-  #root .df-app .df-settings-toggle[data-state="on"]:hover:not(:disabled) {
-    background-color: var(--toggle-on-fill-deep);
-  }
-}
- /* Touch settings use the same system switch in portrait and landscape. */
-@media (pointer: coarse) and (max-width: 899.98px) and (orientation: portrait),
-       (pointer: coarse) and (max-width: 1180px) and (orientation: landscape) {
-  #root .df-app .df-settings-toggle {
-    box-sizing: border-box;
-    width: 51px;
-    min-width: 51px;
-    height: 44px;
-    min-height: 44px;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    background-image: none;
-    box-shadow: none;
-    overflow: visible;
-    corner-shape: var(--corner-shape, squircle);
-  }
-  #root .df-app .df-settings-toggle::before {
-    display: block;
-    inset: 50% 0 auto;
-    height: 31px;
-    transform: translateY(-50%);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--text-muted) 28%, var(--surface-main));
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-muted) 22%, transparent);
-    opacity: 1;
-    corner-shape: var(--corner-shape, squircle);
-  }
-  #root .df-app .df-settings-toggle[data-state="on"]::before {
-    background: var(--text-main);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-main) 75%, var(--surface-main));
-  }
-  #root .df-app .df-settings-toggle-knob {
-    top: 50%;
-    left: 2px;
-    width: 27px;
-    height: 27px;
-    border: 0;
-    background: #fff;
-    background-image: none;
-    box-shadow: 0 1px 3px rgba(22, 19, 15, .26);
-    transform: translateY(-50%);
-  }
-  #root .df-app .df-settings-toggle[data-state="on"] .df-settings-toggle-knob {
-    transform: translate(20px, -50%);
-    background: var(--surface-main);
-    border: 0;
-  }
 }
 @media (max-width: 680px) {
   #root .df-app .df-settings-home {

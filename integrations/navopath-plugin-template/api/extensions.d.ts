@@ -4,13 +4,13 @@ export interface ThemeOption { key: string; label: string; type: "color" | "numb
 export interface ExtensionManifest {
   id: string; name: string; description: string; author: string; version: string;
   kind: ExtensionKind; apiVersion: number; minAppVersion: string; platforms: ExtensionPlatform[];
-  main?: string; desktop?: string; styles?: string; options?: ThemeOption[];
+  main?: string; desktop?: string; styles?: string; preview?: string; options?: ThemeOption[];
   repository?: string; license?: string;
 }
 export interface PackageFile { encoding: "utf8" | "base64"; data: string }
 export interface ExtensionPackage { manifest: ExtensionManifest; files: Record<string, PackageFile> }
 export interface ExtensionSource { id: string; name: string; url: string }
-export interface CatalogEntry { manifest: ExtensionManifest; downloadUrl: string; sha256: string; sourceId: string }
+export interface CatalogEntry { manifest: ExtensionManifest; downloadUrl: string; sha256: string; sourceId: string; previewUrl?: string }
 export interface InstalledExtension {
   key: string; sourceId: string; manifest: ExtensionManifest; sha256: string; downloadUrl?: string;
   enabled: boolean; installedAt: string; updatedAt?: string; previous?: { manifest: ExtensionManifest; sha256: string; downloadUrl?: string };

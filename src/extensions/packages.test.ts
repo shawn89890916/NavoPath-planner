@@ -24,6 +24,15 @@ describe("community extension packages", () => {
     const plugin = JSON.parse(officialPackageTexts.weather); delete plugin.files[plugin.manifest.main];
     expect(() => parsePackage(strToU8(JSON.stringify(plugin)))).toThrow("Missing text entry");
   });
+  it("requires packaged raster previews and rejects remote or executable preview paths", () => {
+    const pkg = JSON.parse(officialPackageTexts.linen);
+    pkg.manifest.preview = "preview.svg";
+    expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("raster image");
+    pkg.manifest.preview = "https://example.com/preview.png";
+    expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("package-relative");
+    pkg.manifest.preview = "missing.png";
+    expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("preview resource");
+  });
   it("retains incompatible installations without pretending they can run", () => {
     const manifest = JSON.parse(officialPackageTexts.weather).manifest;
     expect(compatibility({ ...manifest, platforms: ["desktop"] }, "web")).toContain("Unsupported");

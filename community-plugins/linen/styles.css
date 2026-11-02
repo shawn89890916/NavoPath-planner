@@ -1,10 +1,57 @@
-body[data-navopath-base-theme="light"], .df-app.theme-light, .df-widget-root[data-theme="light"], .df-widget-popover-root[data-theme="light"] {
-  --surface-main: var(--linen-paper, #F8F7F3);
-  --timeline-paper: var(--linen-paper, #F8F7F3);
-  --text-main: var(--linen-ink, #27231E);
+/* Linen: declarative palette; workspace geometry and annotations stay shared. */
+body[data-navopath-base-theme="light"],
+.df-app.theme-light,
+.df-mobile-dock.theme-light,
+.df-mobile-floating-actions.theme-light,
+.df-widget-root[data-theme="light"],
+.df-widget-popover-root[data-theme="light"] {
+  --bg-app: #F5F1E8;
+  --bg-app-soft: #ECE5D8;
+  --surface-main: var(--linen-paper, #FBF7EE);
+  --surface-raised: #FFFDF7;
+  --surface-card: #FFFDF7;
+  --surface-tint: #ECE5D8;
+  --timeline-paper: var(--linen-paper, #FBF7EE);
+  --text-main: var(--linen-ink, #302A22);
+  --text-muted: #746B5E;
+  --text-faint: #8D8374;
+  --border-soft: #DDD3C3;
+  --border-subtle: #E9E1D4;
+  --header-bg: #F5F1E8;
+  --header-border: #E9E1D4;
+  --header-fg: var(--linen-ink, #302A22);
+  --header-fg-muted: #746B5E;
+  --input-bg: var(--linen-paper, #FBF7EE);
+  --input-border: #DDD3C3;
+  --accent-active: #584D3D;
+  --accent-rgb: 88, 77, 61;
+  --accent-on: #FFFFFF;
 }
-body[data-navopath-base-theme="dark"], .df-app.theme-dark, .df-widget-root[data-theme="dark"], .df-widget-popover-root[data-theme="dark"] {
-  --surface-main: var(--linen-dark-paper, #101010);
-  --timeline-paper: var(--linen-dark-paper, #101010);
-  --text-main: var(--linen-dark-ink, #D9D6CF);
+body[data-navopath-base-theme="dark"],
+.df-app.theme-dark,
+.df-mobile-dock.theme-dark,
+.df-mobile-floating-actions.theme-dark,
+.df-widget-root[data-theme="dark"],
+.df-widget-popover-root[data-theme="dark"] {
+  --bg-app: #141311;
+  --bg-app-soft: #211F1B;
+  --surface-main: var(--linen-dark-paper, #1C1B18);
+  --surface-raised: #25231F;
+  --surface-card: #25231F;
+  --surface-tint: #211F1B;
+  --timeline-paper: var(--linen-dark-paper, #1C1B18);
+  --text-main: var(--linen-dark-ink, #DFD9CC);
+  --text-muted: #B9B0A0;
+  --text-faint: #908779;
+  --border-soft: #565047;
+  --border-subtle: #353028;
+  --header-bg: #141311;
+  --header-border: #353028;
+  --header-fg: var(--linen-dark-ink, #DFD9CC);
+  --header-fg-muted: #B9B0A0;
+  --input-bg: var(--linen-dark-paper, #1C1B18);
+  --input-border: #565047;
+  --accent-active: #E2DCCE;
+  --accent-rgb: 226, 220, 206;
+  --accent-on: #1C1B18;
 }

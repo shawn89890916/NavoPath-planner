@@ -21,6 +21,8 @@ function harness(options = {}) {
   const service = createDesktopUpdater({
     isPackaged: options.isPackaged ?? true,
     currentVersion: "1.4.7",
+    acceptBetaUpdates: options.acceptBetaUpdates,
+    persistAcceptBetaUpdates: options.persistAcceptBetaUpdates,
     getUpdater: () => updater,
     confirmUpdate: async (version) => {
       calls.confirmations.push(version);
@@ -31,6 +33,59 @@ function harness(options = {}) {
   });
   return { service, updater, calls, flush: () => calls.deferred.splice(0).forEach((callback) => callback()) };
 }
+
+test("Beta updates require an explicit opt-in, even with updater prerelease defaults", async () => {
+  const h = harness();
+  h.updater.allowPrerelease = true;
+  h.updater.allowDowngrade = true;
+  h.service.configure();
+  assert.equal(h.service.getAcceptBetaUpdates(), false);
+  assert.equal(h.updater.channel, "latest");
+  assert.equal(h.updater.allowPrerelease, false);
+  assert.equal(h.updater.allowDowngrade, false);
+  await h.service.setAcceptBetaUpdates(true);
+  assert.equal(h.updater.channel, "beta");
+  assert.equal(h.updater.allowPrerelease, true);
+  assert.equal(h.updater.allowDowngrade, false);
+  await h.service.setAcceptBetaUpdates(false);
+  assert.equal(h.updater.channel, "latest");
+  assert.equal(h.updater.allowPrerelease, false);
+});
+
+test("persisted device opt-in is applied before the startup check", async () => {
+  const h = harness({ acceptBetaUpdates: true, check: (updater) => {
+    assert.equal(updater.channel, "beta");
+    assert.equal(updater.allowPrerelease, true);
+    assert.equal(updater.allowDowngrade, false);
+    updater.emit("update-not-available");
+  } });
+  await h.service.check();
+  assert.equal(h.calls.checks, 1);
+});
+
+test("preference persistence errors keep the current channel and reject invalid IPC values", async () => {
+  const h = harness({ persistAcceptBetaUpdates: () => { throw new Error("disk unavailable"); } });
+  h.service.configure();
+  await assert.rejects(h.service.setAcceptBetaUpdates(true), /disk unavailable/);
+  await assert.rejects(h.service.setAcceptBetaUpdates("true"), /boolean/);
+  assert.equal(h.updater.channel, "latest");
+  assert.equal(h.service.getAcceptBetaUpdates(), false);
+});
+
+test("changing channels waits for an in-flight check and clears a deferred offer", async () => {
+  let finish;
+  const h = harness({ acceptBetaUpdates: true, confirm: () => false, check: (updater) => new Promise((resolve) => {
+    finish = () => { updater.emit("update-available", { version: "1.5.2-beta.1" }); resolve(); };
+  }) });
+  const checking = h.service.check();
+  const changing = h.service.setAcceptBetaUpdates(false);
+  assert.equal(h.updater.channel, "beta");
+  finish();
+  await Promise.all([checking, changing]);
+  assert.equal(h.updater.channel, "latest");
+  assert.equal(h.service.getState().availableVersion, "");
+  assert.equal(h.service.getState().status, "idle");
+});
 
 for (const manual of [false, true]) {
   test(`${manual ? "manual" : "automatic"} check confirms once, downloads, silently installs and restarts`, async () => {

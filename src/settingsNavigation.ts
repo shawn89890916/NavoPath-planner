@@ -27,6 +27,7 @@ export interface SettingsTarget {
   category: SettingsCategory;
   detail?: SettingsDetail;
   anchor?: string;
+  pluginPage?: string;
 }
 
 export type SettingsTargetInput = SettingsTarget | LegacySettingsSection | undefined;
@@ -83,7 +84,7 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
   if (input.detail && !["ai", "widget", "integrations", "recovery"].includes(input.detail)) {
     return { category: input.category, anchor: input.anchor };
   }
-  return { category: input.category, detail: input.detail, anchor: input.anchor };
+  return { category: input.category, detail: input.detail, anchor: input.anchor, ...(input.category === "plugins" && input.pluginPage ? { pluginPage: input.pluginPage } : {}) };
 }
 
 export function settingsCategoryLabel(category: SettingsCategory, lang: Language): string {
@@ -152,6 +153,7 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("account", { category: "account-data" }, "个人资料与账户", "Profile & account", "avatar name plan subscription 头像 用户名 方案"),
   entry("sync", { category: "account-data" }, "同步", "Sync", "cloud interval push pull 云端"),
   entry("updates", { category: "account-data" }, "应用更新", "App updates", "desktop version 桌面 版本"),
+  entry("beta-updates", { category: "account-data" }, "接受 Beta 更新", "Accept Beta updates", "beta prerelease preview 测试 预览 更新"),
   entry("auto-launch", { category: "account-data" }, "开机启动", "Launch at startup", "desktop login 开机自启"),
   entry("data-backup", { category: "account-data" }, "数据与备份", "Data & Backup", "import export json csv 导入 导出"),
   entry("clear-local-data", { category: "account-data" }, "清空本地数据", "Clear local data", "delete danger 删除 危险"),
@@ -197,6 +199,7 @@ export function searchSettings(query: string, lang: Language, desktopAvailable =
   if (tokens.length === 0) return [];
   return SETTINGS_SEARCH_ENTRIES
     .filter((item) => desktopAvailable || item.target.category !== "widget")
+    .filter((item) => desktopAvailable || item.id !== "beta-updates")
     .filter((item) => tokens.every((token) => searchableText(item).includes(token)))
     .sort((a, b) => {
       const aLabel = (lang === "zh" ? a.labelZh : a.labelEn).toLocaleLowerCase();

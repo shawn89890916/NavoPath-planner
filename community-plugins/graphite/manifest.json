@@ -1,0 +1,49 @@
+{
+  "author": "NavoPath",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "minAppVersion": "1.5.0",
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
+  "repository": "https://github.com/shawn89890916/NavoPath-planner",
+  "license": "MIT",
+  "kind": "theme",
+  "styles": "styles.css",
+  "preview": "preview.png",
+  "id": "graphite",
+  "name": "Graphite",
+  "description": "Cool off-white by day and layered graphite after dark, with precise silver ink and subtle rules.",
+  "options": [
+    {
+      "key": "paper",
+      "label": "Light paper",
+      "type": "color",
+      "variable": "--graphite-paper",
+      "default": "#F5F6F8"
+    },
+    {
+      "key": "ink",
+      "label": "Light ink",
+      "type": "color",
+      "variable": "--graphite-ink",
+      "default": "#282D36"
+    },
+    {
+      "key": "dark-paper",
+      "label": "Dark paper",
+      "type": "color",
+      "variable": "--graphite-dark-paper",
+      "default": "#1A1E25"
+    },
+    {
+      "key": "dark-ink",
+      "label": "Dark ink",
+      "type": "color",
+      "variable": "--graphite-dark-ink",
+      "default": "#E1E5ED"
+    }
+  ]
+}

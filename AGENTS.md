@@ -80,6 +80,12 @@ release gate.
   route (`/changelog`) rather than a transient GitHub asset or draft-release URL.
 - Any user-visible change requires mirrored Chinese and English `CHANGELOG.md`
   entries and a version bump before a desktop release.
+- Until the user explicitly approves stable releases, all new releases must use
+  `x.x.x-beta.N` semver tags, display `x.x.x Beta`, and be published as GitHub
+  prereleases without becoming Latest. Include both `beta.yml` and `latest.yml`
+  with the complete desktop assets. Beta updates require an explicit, default-off
+  device opt-in. Disabling Beta updates must never downgrade the installed app.
+  Follow [`docs/desktop-releases.md`](docs/desktop-releases.md).
 
 ## End-of-turn GitHub publish
 

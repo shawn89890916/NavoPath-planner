@@ -23,6 +23,8 @@ export class ExtensionService {
   private unbindStorage: Dispose = () => {};
   private ready = false;
   private lastCheck = 0;
+  private catalogRequest?: { signature: string; promise: Promise<void> };
+  private updateRequest?: Promise<void>;
   private snapshot: ExtensionSnapshot = { preferences: defaultExtensionPreferences(), catalog: [], updates: {}, status: {}, busy: false, error: "", safeMode: false, settingsPages: [], headerItems: [], views: [] };
   constructor() {
     if (typeof window !== "undefined") {
@@ -52,6 +54,7 @@ export class ExtensionService {
     if (account !== this.account) {
       const generation = ++this.generation;
       this.ready = false; this.account = account;
+      this.catalogRequest = undefined; this.updateRequest = undefined; this.lastCheck = 0;
       for (const { plugin } of this.loaded.values()) await plugin.dispose(); this.loaded.clear();
       await this.themeCleanup(); this.themeSignature = "";
       await this.unbindStorage();
@@ -59,7 +62,7 @@ export class ExtensionService {
       this.host = host;
       let safeMode = false;
       try { safeMode = new URLSearchParams(location.search).has("safe-mode") || localStorage.getItem(this.scope() + "safe-mode") === "true" || localStorage.getItem(this.scope() + "booting") === "true"; } catch { /* ephemeral sessions */ }
-      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], headerItems: [], views: [], updates: {}, error: "" });
+      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], headerItems: [], views: [], catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, error: "" });
       if (generation !== this.generation) return;
       if (account && account !== "preview") this.unbindStorage = subscribeExtensionValues((owner, key, value) => {
         const pendingKey = this.scope() + `pending:${owner}:${key}`;
@@ -142,17 +145,25 @@ export class ExtensionService {
     const { validateManifest } = await import("./packages");
     return raw.packages.map((entry: any) => {
       if (!isRecord(entry) || !/^[a-f0-9]{64}$/.test(entry.sha256)) throw new Error("Catalog requires SHA-256 hashes");
-      return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId };
+      return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId, ...(entry.previewUrl ? { previewUrl: publicHttps(entry.previewUrl) } : {}) };
     });
   }
-  private async refreshCatalogImpl() {
-    const catalog: CatalogEntry[] = [], errors: string[] = [];
-    const sources = this.snapshot.preferences.sources;
-    const results = await Promise.allSettled(sources.map(s => this.readCatalog(s.url, s.id)));
-    results.forEach((result, index) => { if (result.status === "fulfilled") catalog.push(...result.value); else errors.push(`${sources[index].name}: ${errorText(result.reason)}`); });
-    this.setSnapshot({ catalog, error: errors.join("\n") });
+  private refreshCatalogImpl(): Promise<void> {
+    const generation = this.generation, sources = this.snapshot.preferences.sources;
+    const signature = `${generation}:${JSON.stringify(sources)}`;
+    if (this.catalogRequest?.signature === signature) return this.catalogRequest.promise;
+    const request = { signature, promise: Promise.resolve().then(async () => {
+      const catalog: CatalogEntry[] = [], errors: string[] = [];
+      const results = await Promise.allSettled(sources.map(s => this.readCatalog(s.url, s.id)));
+      results.forEach((result, index) => { if (result.status === "fulfilled") catalog.push(...result.value); else errors.push(`${sources[index].name}: ${errorText(result.reason)}`); });
+      if (generation === this.generation && JSON.stringify(sources) === JSON.stringify(this.snapshot.preferences.sources)) this.setSnapshot({ catalog, error: errors.join("\n") });
+    }).finally(() => {
+      if (this.catalogRequest === request) { this.catalogRequest = undefined; this.setSnapshot({ catalogLoading: false }); }
+    }) };
+    this.catalogRequest = request; this.setSnapshot({ catalogLoading: true });
+    return request.promise;
   }
-  refreshCatalog = () => this.operation(() => this.refreshCatalogImpl());
+  refreshCatalog = () => this.refreshCatalogImpl();
   private async packageBytes(item: Pick<InstalledExtension, "sha256" | "sourceId" | "manifest" | "downloadUrl">): Promise<Uint8Array> {
     const cacheKey = this.scope() + "package:" + item.sha256;
     let bytes = await cacheGet<Uint8Array>(cacheKey);
@@ -237,15 +248,30 @@ export class ExtensionService {
     if (key && this.snapshot.preferences.installed[key]?.manifest.kind !== "theme") throw new Error("Theme is not installed");
     await this.savePreferences({ ...this.snapshot.preferences, activeTheme: key });
   });
-  checkUpdates = () => this.operation(async () => {
-    await this.refreshCatalogImpl(); this.lastCheck = Date.now(); const updates: Record<string, CatalogEntry> = {};
-    for (const item of Object.values(this.snapshot.preferences.installed)) {
-      const candidates = this.snapshot.catalog.filter(e => e.sourceId === item.sourceId && e.manifest.id === item.manifest.id && e.manifest.kind === item.manifest.kind && !compatibility(e.manifest, platform()) && compareVersions(e.manifest.version, item.manifest.version) > 0);
-      candidates.sort((a,b) => compareVersions(b.manifest.version, a.manifest.version)); if (candidates[0]) updates[item.key] = candidates[0];
-    }
-    this.setSnapshot({ updates });
-    if (this.snapshot.preferences.autoUpdate) for (const entry of Object.values(updates)) await this.installBytes(await this.packageBytes(entry), entry.sourceId, entry.downloadUrl, entry.sha256);
-  });
+  checkUpdates = (): Promise<void> => {
+    if (this.updateRequest) return this.updateRequest;
+    const generation = this.generation;
+    this.setSnapshot({ checkingUpdates: true });
+    const request = Promise.resolve().then(async () => {
+      if (generation !== this.generation) return;
+      await this.refreshCatalogImpl();
+      if (generation !== this.generation) return;
+      this.lastCheck = Date.now(); const updates: Record<string, CatalogEntry> = {};
+      for (const item of Object.values(this.snapshot.preferences.installed)) {
+        const candidates = this.snapshot.catalog.filter(e => e.sourceId === item.sourceId && e.manifest.id === item.manifest.id && e.manifest.kind === item.manifest.kind && !compatibility(e.manifest, platform()) && compareVersions(e.manifest.version, item.manifest.version) > 0);
+        candidates.sort((a,b) => compareVersions(b.manifest.version, a.manifest.version)); if (candidates[0]) updates[item.key] = candidates[0];
+      }
+      this.setSnapshot({ updates });
+      if (this.snapshot.preferences.autoUpdate) for (const key of Object.keys(updates)) {
+        if (generation !== this.generation) return;
+        await this.update(key);
+      }
+    }).catch(error => { if (generation === this.generation) this.setSnapshot({ error: errorText(error) }); throw error; }).finally(() => {
+      if (this.updateRequest === request) { this.updateRequest = undefined; this.setSnapshot({ checkingUpdates: false }); }
+    });
+    this.updateRequest = request;
+    return request;
+  };
   update = (key: string) => this.operation(async () => {
     const entry = this.snapshot.updates[key]; if (!entry) return;
     await this.installBytes(await this.packageBytes(entry), entry.sourceId, entry.downloadUrl, entry.sha256);

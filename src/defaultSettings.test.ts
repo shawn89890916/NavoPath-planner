@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 import { normalizeSettings } from "./defaultSettings";
 
 describe("plugin settings normalization", () => {
+  it("defaults Beta updates off and only preserves boolean opt-in values", () => {
+    for (const value of [undefined, null, "true", 1, {}]) {
+      expect(normalizeSettings({ acceptBetaUpdates: value }).acceptBetaUpdates).toBe(false);
+    }
+    expect(normalizeSettings({}).acceptBetaUpdates).toBe(false);
+    expect(normalizeSettings({ acceptBetaUpdates: true }).acceptBetaUpdates).toBe(true);
+    expect(normalizeSettings({ acceptBetaUpdates: false }).acceptBetaUpdates).toBe(false);
+  });
   it("preserves an extension timer mode and its opaque settings until its provider loads", () => {
     const normalized = normalizeSettings({ widgetTimerPreferences: { mode: "pomodoro", focusMinutes: 42, longBreakEvery: 3 } });
     expect(normalized.widgetTimerPreferences).toMatchObject({ mode: "pomodoro", focusMinutes: 42, longBreakEvery: 3 });

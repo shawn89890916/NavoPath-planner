@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld("desktopApi", {
     removeItem: (key) => ipcRenderer.invoke("auth-storage:remove", key)
   },
   getUpdateState: () => ipcRenderer.invoke("updater:getState"),
+  getAcceptBetaUpdates: () => ipcRenderer.invoke("updater:getAcceptBetaUpdates"),
+  setAcceptBetaUpdates: (enabled) => ipcRenderer.invoke("updater:setAcceptBetaUpdates", enabled),
   checkForUpdates: () => ipcRenderer.invoke("updater:check"),
   installUpdate: () => ipcRenderer.invoke("updater:install"),
   onUpdateState: (listener) => {

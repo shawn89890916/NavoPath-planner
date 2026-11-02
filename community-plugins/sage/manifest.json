@@ -1,0 +1,49 @@
+{
+  "author": "NavoPath",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "minAppVersion": "1.5.0",
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
+  "repository": "https://github.com/shawn89890916/NavoPath-planner",
+  "license": "MIT",
+  "kind": "theme",
+  "styles": "styles.css",
+  "preview": "preview.png",
+  "id": "sage",
+  "name": "Sage",
+  "description": "Soft sage paper, forest ink and quiet botanical annotations, paired with a neutral charcoal night palette.",
+  "options": [
+    {
+      "key": "paper",
+      "label": "Light paper",
+      "type": "color",
+      "variable": "--sage-paper",
+      "default": "#F3F6ED"
+    },
+    {
+      "key": "ink",
+      "label": "Light ink",
+      "type": "color",
+      "variable": "--sage-ink",
+      "default": "#283325"
+    },
+    {
+      "key": "dark-paper",
+      "label": "Dark paper",
+      "type": "color",
+      "variable": "--sage-dark-paper",
+      "default": "#1B1E1A"
+    },
+    {
+      "key": "dark-ink",
+      "label": "Dark ink",
+      "type": "color",
+      "variable": "--sage-dark-ink",
+      "default": "#DBE0D5"
+    }
+  ]
+}

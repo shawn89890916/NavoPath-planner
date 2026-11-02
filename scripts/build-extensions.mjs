@@ -12,10 +12,18 @@ const check = process.argv.includes('--check');
 const catalog = { version: 1, name: 'NavoPath Community', packages: [] };
 const output = resolve(root, 'public/extensions/packages');
 await mkdir(output, { recursive: true });
+const previews = resolve(root, 'public/extensions/previews');
+await mkdir(previews, { recursive: true });
 async function emit(path, data) {
   if (check) {
     const existing = await readFile(path, 'utf8').catch(() => '');
     if (existing !== data) throw new Error(`Generated extension file is stale: ${relative(root, path)}`);
+  } else await writeFile(path, data);
+}
+async function emitBinary(path, data) {
+  if (check) {
+    const existing = await readFile(path).catch(() => Buffer.alloc(0));
+    if (!existing.equals(data)) throw new Error(`Generated extension preview is stale: ${relative(root, path)}`);
   } else await writeFile(path, data);
 }
 for (const folder of (await readdir(resolve(root, 'community-plugins'))).sort()) {
@@ -28,11 +36,20 @@ for (const folder of (await readdir(resolve(root, 'community-plugins'))).sort())
     files[manifest.main] = { encoding: 'utf8', data: result.outputFiles[0].text };
   }
   if (manifest.styles) files[manifest.styles] = { encoding: 'utf8', data: (await readFile(resolve(dir, manifest.styles), 'utf8')).replaceAll('\r\n', '\n') };
+  let previewUrl;
+  if (manifest.preview) {
+    const image = await readFile(resolve(dir, manifest.preview));
+    files[manifest.preview] = { encoding: 'base64', data: image.toString('base64') };
+    const extension = manifest.preview.split('.').pop().toLowerCase();
+    const previewFile = `${manifest.id}.${extension}`;
+    await emitBinary(resolve(previews, previewFile), image);
+    previewUrl = `${base}/previews/${previewFile}`;
+  }
   files['LICENSE'] = { encoding: 'utf8', data: (await readFile(resolve(dir, 'LICENSE'), 'utf8')).replaceAll('\r\n', '\n') };
   const data = `${JSON.stringify({ manifest, files }, null, 2)}\n`;
   const filename = `${manifest.id}.navopackage.json`;
   await emit(resolve(output, filename), data);
-  catalog.packages.push({ manifest, downloadUrl: `${base}/packages/${filename}`, sha256: createHash('sha256').update(data).digest('hex') });
+  catalog.packages.push({ manifest, downloadUrl: `${base}/packages/${filename}`, sha256: createHash('sha256').update(data).digest('hex'), ...(previewUrl ? { previewUrl } : {}) });
 }
 const bundledEntries = [...catalog.packages];
 const registry = JSON.parse(await readFile(resolve(root, 'community-plugins/registry.json'), 'utf8'));
@@ -50,7 +67,7 @@ for (const entry of registry) {
     const pkg = await readPackage(new Uint8Array(bytes));
     if (JSON.stringify(pkg.manifest) !== JSON.stringify(manifest)) throw new Error(`Release manifest mismatch: ${manifest.id}`);
   }
-  catalog.packages.push({manifest,downloadUrl,sha256:entry.sha256});
+  catalog.packages.push({manifest,downloadUrl,sha256:entry.sha256,...(entry.previewUrl ? {previewUrl:publicHttps(entry.previewUrl)} : {})});
 }
 await emit(resolve(root, 'public/extensions/catalog.json'), `${JSON.stringify(catalog, null, 2)}\n`);
 // JSON imports are lazy behind the service's offline official package fallback.

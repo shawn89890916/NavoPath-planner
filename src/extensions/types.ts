@@ -10,6 +10,7 @@ export interface ExtensionContribution { id: string; owner: string; name: string
 export interface ExtensionSnapshot {
   preferences: ExtensionPreferences; catalog: CatalogEntry[]; updates: Record<string, CatalogEntry>;
   status: Record<string, string>; busy: boolean; error: string; safeMode: boolean;
+  catalogLoading?: boolean; checkingUpdates?: boolean;
   settingsPages: ExtensionContribution[]; headerItems: ExtensionContribution[]; views: ExtensionContribution[];
 }
 export interface ExtensionHost {

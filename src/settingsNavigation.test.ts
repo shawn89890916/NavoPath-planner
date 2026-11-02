@@ -8,6 +8,12 @@ import {
 } from "./settingsNavigation";
 
 describe("settings navigation", () => {
+  it("keeps plugin pages addressable and limits them to the plugin category", () => {
+    expect(normalizeSettingsTarget({ category: "plugins", pluginPage: "official:weather:options" }).pluginPage).toBe("official:weather:options");
+    expect(normalizeSettingsTarget({ category: "appearance", pluginPage: "official:weather:options" }).pluginPage).toBeUndefined();
+    expect(searchSettings("Beta", "en")[0].target.anchor).toBe("beta-updates");
+    expect(searchSettings("Beta", "en", false)).toEqual([]);
+  });
   it("exposes the requested top-level categories", () => {
     expect(SETTINGS_CATEGORIES.map((category) => category.id)).toEqual([
       "general",

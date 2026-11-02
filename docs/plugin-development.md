@@ -128,7 +128,12 @@ Use `kind: "theme"`, `styles`, optional assets and `options`. A theme has no
 (`color`, `number`, `string`, `boolean`), CSS `variable`, `default`, and optional
 `min/max`. The host applies option values as CSS variables. Preserve readable
 light/dark contrast, keyboard focus, reduced motion and mobile touch targets.
-The Linen sample in `community-plugins/linen` is a complete installable theme.
+The Linen, Minimal, Sage and Graphite samples in `community-plugins` are complete
+installable themes. Optional `preview` points to a packaged raster image
+(`.png`, `.jpg`, `.jpeg`, `.webp`, or `.avif`) stored with base64 encoding.
+Use a real, readable app screenshot without personal data, and keep thumbnails
+small. A catalog may also include a public HTTPS `previewUrl` for browsing
+before installation. Built-in previews are available offline with the app.
 
 ## Catalog and release workflow
 

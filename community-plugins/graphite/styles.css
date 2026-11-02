@@ -1,0 +1,57 @@
+/* Graphite: declarative palette; workspace geometry and annotations stay shared. */
+body[data-navopath-base-theme="light"],
+.df-app.theme-light,
+.df-mobile-dock.theme-light,
+.df-mobile-floating-actions.theme-light,
+.df-widget-root[data-theme="light"],
+.df-widget-popover-root[data-theme="light"] {
+  --bg-app: #E9EBEE;
+  --bg-app-soft: #E6E9ED;
+  --surface-main: var(--graphite-paper, #F5F6F8);
+  --surface-raised: #FCFCFD;
+  --surface-card: #FCFCFD;
+  --surface-tint: #E6E9ED;
+  --timeline-paper: var(--graphite-paper, #F5F6F8);
+  --text-main: var(--graphite-ink, #282D36);
+  --text-muted: #606A79;
+  --text-faint: #838D9C;
+  --border-soft: #CBD1DA;
+  --border-subtle: #DFE3E9;
+  --header-bg: #E9EBEE;
+  --header-border: #DFE3E9;
+  --header-fg: var(--graphite-ink, #282D36);
+  --header-fg-muted: #606A79;
+  --input-bg: var(--graphite-paper, #F5F6F8);
+  --input-border: #CBD1DA;
+  --accent-active: #434E5D;
+  --accent-rgb: 67, 78, 93;
+  --accent-on: #FFFFFF;
+}
+body[data-navopath-base-theme="dark"],
+.df-app.theme-dark,
+.df-mobile-dock.theme-dark,
+.df-mobile-floating-actions.theme-dark,
+.df-widget-root[data-theme="dark"],
+.df-widget-popover-root[data-theme="dark"] {
+  --bg-app: #111318;
+  --bg-app-soft: #21262F;
+  --surface-main: var(--graphite-dark-paper, #1A1E25);
+  --surface-raised: #262C36;
+  --surface-card: #262C36;
+  --surface-tint: #21262F;
+  --timeline-paper: var(--graphite-dark-paper, #1A1E25);
+  --text-main: var(--graphite-dark-ink, #E1E5ED);
+  --text-muted: #B2BBCB;
+  --text-faint: #8D98AB;
+  --border-soft: #505D72;
+  --border-subtle: #303A49;
+  --header-bg: #111318;
+  --header-border: #303A49;
+  --header-fg: var(--graphite-dark-ink, #E1E5ED);
+  --header-fg-muted: #B2BBCB;
+  --input-bg: var(--graphite-dark-paper, #1A1E25);
+  --input-border: #505D72;
+  --accent-active: #E1E5ED;
+  --accent-rgb: 225, 229, 237;
+  --accent-on: #1A1E25;
+}

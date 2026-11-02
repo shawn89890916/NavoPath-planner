@@ -498,6 +498,8 @@ export interface Settings {
   activeMode: "execute" | "planning";
   defaultTimelineView?: "daily" | "3day" | "weekly" | "month";
   continuousCrossDayScroll?: boolean;
+  /** Desktop Beta update opt-in; native device preference is authoritative. */
+  acceptBetaUpdates?: boolean;
   language: Language;
   planningView: "tree" | "matrix" | "split";
   metricsRangePreset?: "all" | "today" | "yesterday" | "thisWeek" | "lastWeek" | "thisMonth" | "custom";
@@ -801,6 +803,8 @@ declare global {
         removeItem: (key: string) => Promise<void>;
       };
       getUpdateState: () => Promise<DesktopUpdateState>;
+      getAcceptBetaUpdates: () => Promise<boolean>;
+      setAcceptBetaUpdates: (enabled: boolean) => Promise<boolean>;
       checkForUpdates: () => Promise<DesktopUpdateState>;
       installUpdate: () => Promise<boolean>;
       onUpdateState: (listener: (state: DesktopUpdateState) => void) => () => void;

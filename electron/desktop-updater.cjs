@@ -1,4 +1,5 @@
-function createDesktopUpdater({ isPackaged, currentVersion, getUpdater, confirmUpdate, onState, defer = setImmediate }) {
+function createDesktopUpdater({ isPackaged, currentVersion, getUpdater, confirmUpdate, onState, acceptBetaUpdates = false, persistAcceptBetaUpdates = () => {}, defer = setImmediate }) {
+  let acceptsBeta = acceptBetaUpdates === true;
   let state = {
     status: isPackaged ? "idle" : "unsupported",
     currentVersion,
@@ -29,6 +30,7 @@ function createDesktopUpdater({ isPackaged, currentVersion, getUpdater, confirmU
     configured = true;
     updater.autoDownload = false;
     updater.autoInstallOnAppQuit = false;
+    applyChannel(updater);
     updater.on("update-available", (info) => {
       publish({ status: "available", availableVersion: info.version, progress: 0 });
     });
@@ -42,6 +44,27 @@ function createDesktopUpdater({ isPackaged, currentVersion, getUpdater, confirmU
       publish({ status: "downloaded", availableVersion: info.version, progress: 100 });
     });
     updater.on("error", fail);
+  }
+
+  function applyChannel(updater) {
+    // electron-updater defaults to prereleases when the installed app is a Beta.
+    // Its channel setter also enables downgrades, so override both explicitly.
+    updater.channel = acceptsBeta ? "beta" : "latest";
+    updater.allowPrerelease = acceptsBeta;
+    updater.allowDowngrade = false;
+  }
+
+  async function setAcceptBetaUpdates(enabled) {
+    if (typeof enabled !== "boolean") throw new TypeError("Beta update preference must be a boolean.");
+    // Never change providers midway through a check, confirmation, or download.
+    while (checkPromise || confirmationPromise) await (checkPromise || confirmationPromise);
+    persistAcceptBetaUpdates(enabled);
+    if (acceptsBeta === enabled) return acceptsBeta;
+    acceptsBeta = enabled;
+    if (configured) applyChannel(getUpdater());
+    lastPromptedVersion = "";
+    if (!installScheduled) publish({ status: isPackaged ? "idle" : "unsupported", availableVersion: "", progress: 0, message: state.message });
+    return acceptsBeta;
   }
 
   function install() {
@@ -99,7 +122,7 @@ function createDesktopUpdater({ isPackaged, currentVersion, getUpdater, confirmU
     return checkPromise;
   }
 
-  return { getState: () => state, check, configure, install };
+  return { getState: () => state, check, configure, install, getAcceptBetaUpdates: () => acceptsBeta, setAcceptBetaUpdates };
 }
 
 module.exports = { createDesktopUpdater };

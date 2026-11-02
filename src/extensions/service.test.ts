@@ -28,6 +28,50 @@ beforeEach(() => {
 afterEach(async () => { await current.configure(null); vi.unstubAllGlobals(); });
 
 describe("extension installation and account reconciliation", () => {
+  it("keeps local controls available during a slow update check and shares catalog requests", async () => {
+    const f = fixture(); await current.configure(f.host);
+    await current.importFile(new File([officialPackageTexts.weather], "weather.navopackage.json"));
+    let resolve!: (response: Response) => void;
+    const fetch = vi.fn(() => new Promise<Response>(done => { resolve = done; }));
+    vi.stubGlobal("fetch", fetch);
+    const checking = current.checkUpdates();
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    const catalog = current.refreshCatalog();
+    expect(current.checkUpdates()).toBe(checking);
+    expect(current.getSnapshot()).toMatchObject({ checkingUpdates: true, catalogLoading: true, busy: false });
+    await current.toggle("imported:weather", true);
+    await current.setPreference({ autoCheckUpdates: false });
+    await current.setSafeMode(true);
+    expect(mocks.load).toHaveBeenCalledOnce();
+    expect(current.getSnapshot().safeMode).toBe(true);
+    expect(fetch).toHaveBeenCalledOnce();
+    resolve(new Response(JSON.stringify(officialCatalog)));
+    await Promise.all([checking, catalog]);
+    expect(current.getSnapshot()).toMatchObject({ checkingUpdates: false, catalogLoading: false, busy: false });
+  });
+  it("discards a catalog response from a previous account", async () => {
+    await current.configure(fixture("catalog-alice").host);
+    let resolve!: (response: Response) => void;
+    const fetch = vi.fn(() => new Promise<Response>(done => { resolve = done; }));
+    vi.stubGlobal("fetch", fetch);
+    const catalog = current.refreshCatalog();
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    await current.configure(fixture("catalog-bob").host);
+    resolve(new Response(JSON.stringify(officialCatalog)));
+    await catalog;
+    expect(current.getSnapshot()).toMatchObject({ catalog: [], catalogLoading: false, checkingUpdates: false });
+  });
+  it("keeps validated theme preview URLs in the catalog", async () => {
+    await current.configure(fixture().host);
+    const catalog = { ...officialCatalog, packages: officialCatalog.packages.map(entry => ({ ...entry, previewUrl: "https://example.com/preview.png" })) };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(catalog))));
+    await current.refreshCatalog();
+    expect(current.getSnapshot().catalog[0].previewUrl).toBe("https://example.com/preview.png");
+    catalog.packages[0].previewUrl = "javascript:alert(1)";
+    await current.refreshCatalog();
+    expect(current.getSnapshot().error).toBeTruthy();
+    expect(current.getSnapshot().catalog).toEqual([]);
+  });
   it("installs an offline bundled package with verified bytes, then enables and unloads it", async () => {
     const f = fixture(); await current.configure(f.host);
     const entry = officialCatalog.packages.find(e => e.manifest.id === "weather")!;

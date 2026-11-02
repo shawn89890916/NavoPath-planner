@@ -1,0 +1,57 @@
+/* Sage: declarative palette; workspace geometry and annotations stay shared. */
+body[data-navopath-base-theme="light"],
+.df-app.theme-light,
+.df-mobile-dock.theme-light,
+.df-mobile-floating-actions.theme-light,
+.df-widget-root[data-theme="light"],
+.df-widget-popover-root[data-theme="light"] {
+  --bg-app: #E8EDE3;
+  --bg-app-soft: #E7EDDE;
+  --surface-main: var(--sage-paper, #F3F6ED);
+  --surface-raised: #FAFCF6;
+  --surface-card: #FAFCF6;
+  --surface-tint: #E7EDDE;
+  --timeline-paper: var(--sage-paper, #F3F6ED);
+  --text-main: var(--sage-ink, #283325);
+  --text-muted: #626F5A;
+  --text-faint: #85917D;
+  --border-soft: #C9D3C0;
+  --border-subtle: #DEE6D5;
+  --header-bg: #E8EDE3;
+  --header-border: #DEE6D5;
+  --header-fg: var(--sage-ink, #283325);
+  --header-fg-muted: #626F5A;
+  --input-bg: var(--sage-paper, #F3F6ED);
+  --input-border: #C9D3C0;
+  --accent-active: #526548;
+  --accent-rgb: 82, 101, 72;
+  --accent-on: #FFFFFF;
+}
+body[data-navopath-base-theme="dark"],
+.df-app.theme-dark,
+.df-mobile-dock.theme-dark,
+.df-mobile-floating-actions.theme-dark,
+.df-widget-root[data-theme="dark"],
+.df-widget-popover-root[data-theme="dark"] {
+  --bg-app: #131513;
+  --bg-app-soft: #20231E;
+  --surface-main: var(--sage-dark-paper, #1B1E1A);
+  --surface-raised: #252923;
+  --surface-card: #252923;
+  --surface-tint: #20231E;
+  --timeline-paper: var(--sage-dark-paper, #1B1E1A);
+  --text-main: var(--sage-dark-ink, #DBE0D5);
+  --text-muted: #AFB8A7;
+  --text-faint: #8A9481;
+  --border-soft: #50594A;
+  --border-subtle: #30372C;
+  --header-bg: #131513;
+  --header-border: #30372C;
+  --header-fg: var(--sage-dark-ink, #DBE0D5);
+  --header-fg-muted: #AFB8A7;
+  --input-bg: var(--sage-dark-paper, #1B1E1A);
+  --input-border: #50594A;
+  --accent-active: #DBE0D5;
+  --accent-rgb: 219, 224, 213;
+  --accent-on: #1B1E1A;
+}

@@ -17,6 +17,7 @@ export const defaultSettings: Settings = {
   activeMode: "execute",
   defaultTimelineView: "daily",
   continuousCrossDayScroll: true,
+  acceptBetaUpdates: false,
   language: "en",
   planningView: "tree",
   metricsRangePreset: "today",

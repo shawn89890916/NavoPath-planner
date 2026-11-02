@@ -26,6 +26,7 @@ const {
   windowFromEvent,
 } = require("./window-lifecycle.cjs");
 const { createDesktopUpdater } = require("./desktop-updater.cjs");
+const { readAcceptBetaUpdates, writeAcceptBetaUpdates } = require("./update-preferences.cjs");
 // Lazy-loaded: electron-updater is not needed until autoUpdater is configured
 let _autoUpdaterModule;
 let _autoUpdater;
@@ -81,10 +82,13 @@ function isPrimaryWindowEvent(event) {
 }
 
 const UPDATE_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const updatePreferencesPath = path.join(app.getPath("userData"), "update-preferences.json");
 const desktopUpdater = createDesktopUpdater({
   isPackaged: app.isPackaged,
   currentVersion: app.getVersion(),
   getUpdater: getAutoUpdater,
+  acceptBetaUpdates: readAcceptBetaUpdates(updatePreferencesPath),
+  persistAcceptBetaUpdates: (enabled) => writeAcceptBetaUpdates(updatePreferencesPath, enabled),
   onState: (updateState) => {
     broadcastToLiveWindows(BrowserWindow.getAllWindows(), "updater:state", updateState);
   },
@@ -93,7 +97,7 @@ const desktopUpdater = createDesktopUpdater({
     const options = {
       type: "info",
       title: zh ? "NavoPath 更新" : "NavoPath update",
-      message: zh ? `发现新版本 ${version}` : `NavoPath ${version} is available`,
+      message: zh ? `发现新版本 ${version.replace(/-beta(?:\.[0-9]+)?$/, " Beta")}` : `NavoPath ${version.replace(/-beta(?:\.[0-9]+)?$/, " Beta")} is available`,
       detail: zh
         ? "确认后将自动下载并安装更新，完成后重启 NavoPath。"
         : "Confirm to download and install the update automatically, then restart NavoPath.",
@@ -336,6 +340,8 @@ handleTrusted("extensions:invoke", (event, key, method, payload) => extensionHos
 handleTrusted("extensions:stop", (event, key) => extensionHost.stop(event.sender, key));
 handleTrusted("extensions:open-directory", () => extensionHost.openDirectory());
 handleTrusted("updater:getState", () => desktopUpdater.getState());
+handleTrusted("updater:getAcceptBetaUpdates", () => desktopUpdater.getAcceptBetaUpdates());
+handleTrusted("updater:setAcceptBetaUpdates", (_event, enabled) => desktopUpdater.setAcceptBetaUpdates(enabled));
 handleTrusted("updater:check", () => desktopUpdater.check(true));
 handleTrusted("updater:install", () => desktopUpdater.check(true).then(() => desktopUpdater.getState().status === "downloaded"));
 

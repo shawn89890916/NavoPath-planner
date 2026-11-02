@@ -16,43 +16,153 @@
         "repository": "https://github.com/shawn89890916/NavoPath-planner",
         "license": "MIT",
         "kind": "theme",
+        "styles": "styles.css",
+        "preview": "preview.png",
+        "id": "graphite",
+        "name": "Graphite",
+        "description": "Cool off-white by day and layered graphite after dark, with precise silver ink and subtle rules.",
+        "options": [
+          {
+            "key": "paper",
+            "label": "Light paper",
+            "type": "color",
+            "variable": "--graphite-paper",
+            "default": "#F5F6F8"
+          },
+          {
+            "key": "ink",
+            "label": "Light ink",
+            "type": "color",
+            "variable": "--graphite-ink",
+            "default": "#282D36"
+          },
+          {
+            "key": "dark-paper",
+            "label": "Dark paper",
+            "type": "color",
+            "variable": "--graphite-dark-paper",
+            "default": "#1A1E25"
+          },
+          {
+            "key": "dark-ink",
+            "label": "Dark ink",
+            "type": "color",
+            "variable": "--graphite-dark-ink",
+            "default": "#E1E5ED"
+          }
+        ]
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/graphite.navopackage.json",
+      "sha256": "25c3310c826275ade5ab44e210c6597b78dbde5f5ece197f4884af17be3425d8",
+      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/graphite.png"
+    },
+    {
+      "manifest": {
+        "author": "NavoPath",
+        "version": "1.1.0",
+        "apiVersion": 1,
+        "minAppVersion": "1.5.0",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "repository": "https://github.com/shawn89890916/NavoPath-planner",
+        "license": "MIT",
+        "kind": "theme",
+        "styles": "styles.css",
+        "preview": "preview.png",
         "id": "linen",
         "name": "Linen",
-        "description": "A quiet warm paper theme with configurable paper and ink.",
-        "styles": "styles.css",
+        "description": "Warm linen paper, brown ink and softly layered charcoal. Configurable paper and ink in both light and dark modes.",
         "options": [
           {
             "key": "paper",
             "label": "Light paper",
             "type": "color",
             "variable": "--linen-paper",
-            "default": "#F8F7F3"
+            "default": "#FBF7EE"
           },
           {
             "key": "ink",
             "label": "Light ink",
             "type": "color",
             "variable": "--linen-ink",
-            "default": "#27231E"
+            "default": "#302A22"
           },
           {
             "key": "dark-paper",
             "label": "Dark paper",
             "type": "color",
             "variable": "--linen-dark-paper",
-            "default": "#101010"
+            "default": "#1C1B18"
           },
           {
             "key": "dark-ink",
             "label": "Dark ink",
             "type": "color",
             "variable": "--linen-dark-ink",
-            "default": "#D9D6CF"
+            "default": "#DFD9CC"
           }
         ]
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/linen.navopackage.json",
-      "sha256": "7258de21080920b47cf86300087ab070a506584091dd507fd8437aae93d2603a"
+      "sha256": "7acc721b217b8d1b3896133522e227151723ffb5365bcf268179783209434fbb",
+      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/linen.png"
+    },
+    {
+      "manifest": {
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "apiVersion": 1,
+        "minAppVersion": "1.5.0",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "repository": "https://github.com/shawn89890916/NavoPath-planner",
+        "license": "MIT",
+        "kind": "theme",
+        "styles": "styles.css",
+        "preview": "preview.png",
+        "id": "minimal",
+        "name": "Minimal",
+        "description": "Crisp neutral paper and slate ink with a restrained, distraction-free light and dark palette.",
+        "options": [
+          {
+            "key": "paper",
+            "label": "Light paper",
+            "type": "color",
+            "variable": "--minimal-paper",
+            "default": "#FFFFFF"
+          },
+          {
+            "key": "ink",
+            "label": "Light ink",
+            "type": "color",
+            "variable": "--minimal-ink",
+            "default": "#25292E"
+          },
+          {
+            "key": "dark-paper",
+            "label": "Dark paper",
+            "type": "color",
+            "variable": "--minimal-dark-paper",
+            "default": "#181B1F"
+          },
+          {
+            "key": "dark-ink",
+            "label": "Dark ink",
+            "type": "color",
+            "variable": "--minimal-dark-ink",
+            "default": "#E2E5E9"
+          }
+        ]
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/minimal.navopackage.json",
+      "sha256": "4ca90e860f6ea7d9dd26422b38ad45a6f6d9d309f512a842452b643a5f01b5ea",
+      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/minimal.png"
     },
     {
       "manifest": {
@@ -76,6 +186,60 @@
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/pomodoro.navopackage.json",
       "sha256": "8ea76462f33880165c863cff097bd9f015a0c3818449ab1d4a5544583c26ec46"
+    },
+    {
+      "manifest": {
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "apiVersion": 1,
+        "minAppVersion": "1.5.0",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "repository": "https://github.com/shawn89890916/NavoPath-planner",
+        "license": "MIT",
+        "kind": "theme",
+        "styles": "styles.css",
+        "preview": "preview.png",
+        "id": "sage",
+        "name": "Sage",
+        "description": "Soft sage paper, forest ink and quiet botanical annotations, paired with a neutral charcoal night palette.",
+        "options": [
+          {
+            "key": "paper",
+            "label": "Light paper",
+            "type": "color",
+            "variable": "--sage-paper",
+            "default": "#F3F6ED"
+          },
+          {
+            "key": "ink",
+            "label": "Light ink",
+            "type": "color",
+            "variable": "--sage-ink",
+            "default": "#283325"
+          },
+          {
+            "key": "dark-paper",
+            "label": "Dark paper",
+            "type": "color",
+            "variable": "--sage-dark-paper",
+            "default": "#1B1E1A"
+          },
+          {
+            "key": "dark-ink",
+            "label": "Dark ink",
+            "type": "color",
+            "variable": "--sage-dark-ink",
+            "default": "#DBE0D5"
+          }
+        ]
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/sage.navopackage.json",
+      "sha256": "048d0bd1d4b6bcd301543883a803af4ef7a381557babbcf8a736c7963d7de201",
+      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/sage.png"
     },
     {
       "manifest": {

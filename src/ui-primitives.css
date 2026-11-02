@@ -97,6 +97,10 @@
   opacity: .42;
   cursor: not-allowed;
 }
+.ui-button[class~="ui-button--primary"]:not(:disabled),
+#root .df-app .ui-button[class~="ui-button--primary"]:not(:disabled) { background: var(--accent-active); border-color: var(--accent-active); color: var(--accent-on, var(--surface-main)); }
+.ui-button[class~="ui-button--danger"]:not(:disabled),
+#root .df-app .ui-button[class~="ui-button--danger"]:not(:disabled) { color: var(--danger-ink); }
 
 .ui-icon-button:disabled {
   opacity: .42;
