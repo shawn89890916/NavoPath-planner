@@ -29,8 +29,18 @@ jobs:
       - name: Check changelog
         run: node scripts/changelog-maintain.mjs --check
 
+      - name: Check Beta release policy and tag
+        shell: pwsh
+        run: |
+          node scripts/prepare-desktop-release.mjs --check-policy
+          if ($LASTEXITCODE -ne 0) { throw "Beta release policy validation failed" }
+          $version = node -p "require('./package.json').version"
+          if ($env:GITHUB_REF_TYPE -eq "tag" -and $env:GITHUB_REF_NAME -ne "v$version") {
+            throw "Release tag must match package.json version v$version"
+          }
+
       - name: Build desktop release
-        run: npm run dist -- --publish never
+        run: npm run dist
 
       - name: Publish desktop release assets
         shell: pwsh
@@ -39,6 +49,7 @@ jobs:
           $tag = "v$version"
           $assets = @(
             "D:/navopath-build/latest.yml",
+            "D:/navopath-build/beta.yml",
             "D:/navopath-build/NavoPath-Setup.exe",
             "D:/navopath-build/NavoPath-Setup.exe.blockmap",
             "D:/navopath-build/NavoPath-Portable.exe"
@@ -51,10 +62,22 @@ jobs:
           }
 
           gh release view $tag *> $null
-          if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --verify-tag --title "NavoPath $tag"
+          if ($LASTEXITCODE -eq 0) {
+            throw "Release $tag already exists. Published versions and assets must not be overwritten."
           }
 
-          gh release upload $tag @assets --clobber
+          $label = $version -replace '-beta\.\d+$', ' Beta'
+          gh release create $tag @assets --verify-tag --draft --prerelease --title "NavoPath $label"
+          if ($LASTEXITCODE -ne 0) { throw "Creating the Beta draft release failed" }
+          gh release edit $tag --draft=false --prerelease --latest=false
+          if ($LASTEXITCODE -ne 0) { throw "Publishing the Beta release failed" }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify published Beta release
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          node scripts/verify-release.mjs "v$version"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
