@@ -4165,18 +4165,23 @@ body:has(:active)::-webkit-scrollbar-thumb {
   overflow: visible;
   corner-shape: var(--corner-shape, squircle);
 }
-/* Quick-add shown ON TOP of drag-create preview box (nested inside it) */
-.drag-create-quick-add {
+/* Edit directly on the selected time region. */
+#root .df-app[data-inline-timeline-draft] .drag-create-preview {
+  background: var(--surface-card);
+}
+#root .df-app[data-inline-timeline-draft] .drag-create-quick-add {
   position: absolute;
   inset: 0;
   z-index: 99999;
   box-sizing: border-box;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   min-height: 100%;
-  padding: 6px 7px 6px 28px;
+  padding: 0 12px;
+  border: 0;
   border-radius: inherit;
-  background: color-mix(in srgb, var(--cat, var(--accent-active)) 4%, var(--bg-surface));
+  background: transparent;
+  box-shadow: none;
   color: var(--text-main);
   corner-shape: var(--corner-shape, squircle);
 }
@@ -4338,6 +4343,29 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-timeline-draft-handle.start { top: -22px; left: -10px; }
 .df-timeline-draft-handle.end { right: -10px; bottom: -22px; }
+#root .df-app[data-inline-timeline-draft] .df-timeline-draft-handle {
+  left: 50%;
+  right: auto;
+  width: 56px;
+  max-width: calc(100% - 12px);
+  height: 20px;
+  transform: translateX(-50%);
+  z-index: 100001;
+}
+#root .df-app[data-inline-timeline-draft] .df-timeline-draft-handle.start {
+  top: -10px;
+}
+#root .df-app[data-inline-timeline-draft] .df-timeline-draft-handle.end {
+  bottom: -10px;
+}
+#root .df-app[data-inline-timeline-draft] .df-timeline-draft-handle::after {
+  width: min(28px, 100%);
+  height: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--text-main);
+  box-shadow: none;
+}
 #root .df-app .df-timeline-draft-handle:focus {
   border: 0;
   outline: 0;
@@ -4381,19 +4409,15 @@ body:has(:active)::-webkit-scrollbar-thumb {
   display: flex;
   align-items: center;
   width: 100%;
+  height: 100%;
   min-width: 0;
-  gap: 6px;
+  gap: 8px;
 }
-.drag-create-quick-add-check {
-  position: absolute;
-  left: 7px;
-  top: 11px;
-  width: 14px;
-  height: 14px;
-  box-sizing: border-box;
-  border: 1px solid var(--cat, var(--accent-active));
-  border-radius: 3px;
-  corner-shape: var(--corner-shape, squircle);
+#root .df-app[data-inline-timeline-draft] .drag-create-quick-add .df-timeline-draft-time {
+  position: static;
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font: 500 11px/1.2 var(--paper-sans);
 }
 .drag-create-project-menu {
   position: absolute;
@@ -4410,11 +4434,11 @@ body:has(:active)::-webkit-scrollbar-thumb {
 #root .df-app .drag-create-quick-add input::placeholder {
   color: var(--text-muted);
 }
-#root .df-app .drag-create-quick-add input,
-#root .df-app .drag-create-quick-add input:focus {
+#root .df-app[data-inline-timeline-draft] .drag-create-quick-add input {
   flex: 1 1 auto;
   min-width: 0;
-  height: 30px;
+  height: 100%;
+  max-height: 32px;
   margin: 0;
   padding: 0;
   border: none;
@@ -4424,18 +4448,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   font: 650 calc(13px * var(--timeline-font-scale, 1))/1.25 var(--paper-sans);
   border-radius: 0;
   box-shadow: none;
-}
-#root .df-app .drag-create-quick-add .df-quick-add-confirm {
-  min-width: 32px;
-  min-height: 32px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-main);
-  font: 600 16px/1 var(--paper-sans);
-  box-shadow: none;
-  transform: none;
 }
 .df-tabs button.active {
   background: var(--mode-primary-strong);
@@ -6107,10 +6119,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   min-height: 50px;
   padding-left: 28px;
   border-bottom: 1px solid var(--paper-rule);
-}
-.df-timeline-draft-sheet .drag-create-quick-add-check {
-  left: 1px;
-  top: 17px;
 }
 .df-timeline-draft-sheet input {
   height: 50px;
@@ -22039,24 +22047,12 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     color: var(--text-main);
     caret-color: var(--accent-active);
   }
-  #root .df-app .drag-create-quick-add .df-quick-add-confirm {
-    display: none;
-  }
   #root .df-app .df-time-block .df-block-check {
     width: 24px;
     min-width: 24px;
     height: 24px;
     min-height: 24px;
     border-width: 1.5px;
-  }
-  #root .df-app .drag-create-quick-add-check {
-    width: 24px;
-    min-width: 24px;
-    height: 24px;
-    min-height: 24px;
-    border-width: 1.5px;
-    left: 7px;
-    top: 9px;
   }
   #root .df-app .df-quick-add-project-menu {
     max-height: min(220px, 34dvh);
@@ -23235,7 +23231,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     box-shadow: none;
   }
   #root .df-app.mode-execute .df-candidate-panel { padding: 10px 10px 0; }
-  #root .df-app.mode-execute button:not([role="switch"]):not(.df-task-block-check) { min-height: 44px; }
+  /* Timeline edge handles own their hit area and must stay centered on the edge. */
+  #root .df-app.mode-execute button:not([role="switch"]):not(.df-task-block-check):not(.df-timeline-draft-handle) { min-height: 44px; }
   #root .df-app.mode-execute [role="button"] { min-height: 44px; }
   #root .df-app.mode-execute .df-candidate-list { overflow-x: hidden; }
 }

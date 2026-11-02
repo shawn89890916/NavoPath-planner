@@ -1068,6 +1068,8 @@ function App() {
     return () => window.clearTimeout(timer);
   }, [Boolean(data), Boolean(settings)]);
   const [compactLayout, setCompactLayout] = useState(() => window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches);
+  const [portraitLayout, setPortraitLayout] = useState(() => window.matchMedia("(orientation: portrait)").matches);
+  const inlineTimelineDraft = Boolean(window.desktopApi) || !portraitLayout;
   const [desktopDockSide, setDesktopDockSide] = useState<"left" | "right" | null>(null);
   const dockMouseLayout = Boolean(desktopDockSide) && compactLayout;
   useEffect(() => {
@@ -1555,10 +1557,18 @@ function App() {
 
   useEffect(() => {
     const media = window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY);
-    const sync = () => setCompactLayout(media.matches);
+    const portrait = window.matchMedia("(orientation: portrait)");
+    const sync = () => {
+      setCompactLayout(media.matches);
+      setPortraitLayout(portrait.matches);
+    };
     sync();
     media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
+    portrait.addEventListener("change", sync);
+    return () => {
+      media.removeEventListener("change", sync);
+      portrait.removeEventListener("change", sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -9077,7 +9087,7 @@ if (cached?.data && cached?.settings) {
   const aiPanel = aiPresence.present && <AiPanel closing={aiPresence.closing} demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
 
   return (
-    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
@@ -9990,11 +10000,11 @@ if (cached?.data && cached?.settings) {
                                   top: `${dragCreate.top}px`, height: `${dragCreate.height}px`,
                                   ...draftConflictStyle(dragCreate, timelineView),
                                 }}>
-                                  <span className="df-timeline-draft-time">{minutesToTime(dragCreate.startMinutes)} – {minutesToTime(dragCreate.endMinutes)}</span>
+                                  {(!dragCreate.committed || !inlineTimelineDraft) && <span className="df-timeline-draft-time">{minutesToTime(dragCreate.startMinutes)} – {minutesToTime(dragCreate.endMinutes)}</span>}
                                   <button type="button" className="df-timeline-draft-handle start" aria-label={lang === "zh" ? "拖动调整开始时间" : "Drag to adjust start"} onPointerDown={(event) => beginDragCreateResize(event, "start")} />
                                   <button type="button" className="df-timeline-draft-handle end" aria-label={lang === "zh" ? "拖动调整结束时间" : "Drag to adjust end"} onPointerDown={(event) => beginDragCreateResize(event, "end")} />
-                                  {dragCreate.committed && !compactLayout ? (
-                                    <DragCreateQuickAdd state={dragCreate} projects={projects}
+                                  {dragCreate.committed && inlineTimelineDraft ? (
+                                    <DragCreateQuickAdd state={dragCreate} projects={projects} lang={lang}
                                       onSave={(title, projectId, subtasks) => commitDragCreatedTask(dragCreate, title, projectId, subtasks)}
                                       onCancel={() => setDragCreate(null)}
                                     />
@@ -10328,11 +10338,11 @@ if (cached?.data && cached?.settings) {
                             top: `${dragCreate.top}px`, height: `${dragCreate.height}px`,
                             ...draftConflictStyle(dragCreate, "daily"),
                           }}>
-                            <span className="df-timeline-draft-time">{minutesToTime(dragCreate.startMinutes)} – {minutesToTime(dragCreate.endMinutes)}</span>
+                            {(!dragCreate.committed || !inlineTimelineDraft) && <span className="df-timeline-draft-time">{minutesToTime(dragCreate.startMinutes)} – {minutesToTime(dragCreate.endMinutes)}</span>}
                             <button type="button" className="df-timeline-draft-handle start" aria-label={lang === "zh" ? "拖动调整开始时间" : "Drag to adjust start"} onPointerDown={(event) => beginDragCreateResize(event, "start")} />
                             <button type="button" className="df-timeline-draft-handle end" aria-label={lang === "zh" ? "拖动调整结束时间" : "Drag to adjust end"} onPointerDown={(event) => beginDragCreateResize(event, "end")} />
-                            {dragCreate.committed && !compactLayout ? (
-                              <DragCreateQuickAdd state={dragCreate} projects={projects}
+                            {dragCreate.committed && inlineTimelineDraft ? (
+                              <DragCreateQuickAdd state={dragCreate} projects={projects} lang={lang}
                                 onSave={(title, projectId, subtasks) => commitDragCreatedTask(dragCreate, title, projectId, subtasks)}
                                 onCancel={() => setDragCreate(null)}
                               />
@@ -10367,7 +10377,7 @@ if (cached?.data && cached?.settings) {
         </Suspense>
       </Activity>
 
-      {compactLayout && dragCreate?.committed && mode === "execute" && (
+      {!inlineTimelineDraft && dragCreate?.committed && mode === "execute" && (
         <DragCreateQuickAdd
           sheet
           lang={lang}
@@ -12085,6 +12095,7 @@ function DragCreateQuickAdd({ state, projects, onSave, onMore, onCancel, onRange
     const handler = (e: MouseEvent) => {
       const container = sheet ? sheetRef.current : containerRef.current;
       if (!container || container.contains(e.target as Node)) return;
+      if ((e.target as HTMLElement).closest(".df-timeline-draft-handle")) return;
       if (inputRef.current?.value.replace(/#[^\s#]+/g, "").trim()) handleSave();
       else onCancel();
     };
@@ -12145,7 +12156,6 @@ function DragCreateQuickAdd({ state, projects, onSave, onMore, onCancel, onRange
     ? projects.filter((p) => p.title.toLowerCase().includes(projectQuery.toLowerCase()))
     : [];
 
-  const compact = state.width < 110;
   if (sheet) return (
     <div ref={sheetRef} className="df-timeline-draft-sheet-host"><Suspense fallback={null}><MobileTimelineDraftSheet
       lang={lang}
@@ -12179,7 +12189,7 @@ function DragCreateQuickAdd({ state, projects, onSave, onMore, onCancel, onRange
       onClick={(event) => event.stopPropagation()}
       style={{ "--cat": selectedProject?.color || "var(--accent-active)" } as CSSProperties}>
       <div className="drag-create-quick-add-row">
-        <span className="drag-create-quick-add-check" aria-hidden="true" />
+        <span className="df-timeline-draft-time">{minutesToTime(state.startMinutes)}</span>
         <input ref={inputRef} value={input} onChange={(e) => handleInputChange(e.target.value)}
           enterKeyHint="done"
           onKeyDown={(event) => {
@@ -12192,14 +12202,13 @@ function DragCreateQuickAdd({ state, projects, onSave, onMore, onCancel, onRange
           onBlur={() => {
             window.setTimeout(() => {
               if (containerRef.current?.contains(document.activeElement)) return;
+              if (document.activeElement?.closest(".df-timeline-draft-handle")) return;
               if (inputRef.current?.value.replace(/#[^\s#]+/g, "").trim()) handleSave();
             }, 0);
           }}
-          placeholder={sheet ? (lang === "zh" ? "任务名称" : "Task title") : compact ? "任务名" : "输入任务名，#选择项目"}
+          aria-label={lang === "zh" ? "任务名称" : "Task title"}
+          placeholder={lang === "zh" ? "任务名称" : "Task title"}
         />
-        <button type="submit"
-          disabled={!input.replace(/#[^\s#]+/g, "").trim()}
-          className="df-quick-add-confirm" aria-label="添加任务">✓</button>
       </div>
       {showProjectMenu && filtered.length > 0 && (
         <div className="df-quick-add-project-menu drag-create-project-menu"
