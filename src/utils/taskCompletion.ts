@@ -34,7 +34,7 @@ export function setTaskCompletion(data: PlannerData, taskOrRecordId: string, com
   const record = owner.timelineRecords?.find((item) => item.id === taskOrRecordId);
   if (record?.executionStatus === "cancelled") return data;
   const habit = habitScheduleForTask(data, taskOrRecordId);
-  if (habit) return toggleHabitCompletion(data, habit.habitId, habit.date, completed, now);
+  if (habit) return toggleHabitCompletion(data, habit.habitId, habit.date, completed, now, record?.id);
 
   const records = (owner.timelineRecords || []).map((item) => {
     if (record ? item.id !== record.id : !["scheduled", "completed"].includes(item.executionStatus)) return item;

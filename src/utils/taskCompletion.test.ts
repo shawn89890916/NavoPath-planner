@@ -77,4 +77,34 @@ describe("atomic task completion", () => {
     expect(toggleTaskCompletion(initial, "missing", stamp)).toBe(initial);
     expect(toggleTaskCompletion(initial, "cancelled", stamp)).toBe(initial);
   });
+
+  it.each(["stale", "missing"])("completes a replanned habit execution with a %s daily record link", (link) => {
+    const initial = data();
+    const habits = normalizeHabits({ ...initial, pluginConfigs: { "habit-tracker": { habits: "Read" } } }, stamp);
+    const habitId = habits.habits![0].id;
+    const scheduled = scheduleHabitRecord({ ...initial, ...habits }, habitId, date, "09:00", stamp);
+    const owner = scheduled.data.tasks[0];
+    const history = { ...owner.timelineRecords![0], executionStatus: "returned_unfinished" as const };
+    const nextRecord = { ...history, id: "replanned", scheduledStart: "11:00", scheduledEnd: "11:15", executionStatus: "scheduled" as const };
+    const replanned = normalizeData({
+      ...scheduled.data,
+      tasks: [{ ...owner, timelineRecords: [history, nextRecord] }],
+      habitDailyStates: scheduled.data.habitDailyStates!.map((state) => ({ ...state, timelineRecordId: link === "stale" ? history.id : undefined })),
+    });
+
+    const completed = normalizeData(toggleTaskCompletion(replanned, nextRecord.id, stamp));
+    expect(completed.tasks[0].timelineRecords).toEqual([history, { ...nextRecord, executionStatus: "completed" }]);
+    expect(completed.tasks[0].completed).toBe(true);
+    expect(completed.habitDailyStates![0]).toMatchObject({ completed: true, timelineRecordId: nextRecord.id });
+    expect(completed.tasks[0]).toMatchObject({ completedAt: stamp, workflowStatus: "done" });
+    expect(expandTaskTimelineSlices(completed.tasks, [date]).tasks.map((item) => item.completed)).toEqual([false, true]);
+
+    const reopened = normalizeData(toggleTaskCompletion(completed, nextRecord.id, stamp));
+    expect(reopened.tasks[0].timelineRecords).toEqual([history, nextRecord]);
+    expect(reopened.habitDailyStates![0].completed).toBe(false);
+    expect(reopened.tasks[0]).toMatchObject({ completed: false, completedAt: undefined, workflowStatus: "doing" });
+    const fromHabitList = toggleHabitCompletion(replanned, habitId, date, true, stamp);
+    expect(fromHabitList.tasks[0].timelineRecords).toEqual([history, { ...nextRecord, executionStatus: "completed" }]);
+    expect(fromHabitList.habitDailyStates![0].timelineRecordId).toBe(nextRecord.id);
+  });
 });

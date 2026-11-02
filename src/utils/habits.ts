@@ -124,26 +124,33 @@ export function habitStateForDate(data: PlannerData, habitId: string, date: stri
   return (data.habitDailyStates || []).find((state) => state.habitId === habitId && state.date === date) || null;
 }
 
-export function toggleHabitCompletion(data: PlannerData, habitId: string, date: string, completed: boolean, now = new Date().toISOString()): PlannerData {
+export function toggleHabitCompletion(data: PlannerData, habitId: string, date: string, completed: boolean, now = new Date().toISOString(), recordId?: string): PlannerData {
   const habit = (data.habits || []).find((item) => item.id === habitId);
   if (!habit || !isHabitDueOnDate(habit, date)) return data;
   const states = data.habitDailyStates || [];
   const existing = states.find((state) => state.habitId === habitId && state.date === date);
+  const taskId = `habit-task-${habitId}-${date}`;
+  const records = data.tasks.find((task) => task.id === taskId)?.timelineRecords || [];
+  const activeRecords = records.filter((record) => record.executionStatus === "scheduled" || record.executionStatus === "completed");
+  const targetRecord = recordId
+    ? records.find((record) => record.id === recordId && record.executionStatus !== "cancelled")
+    : activeRecords.find((record) => record.id === existing?.timelineRecordId) || activeRecords.at(-1);
   const nextState: HabitDailyState = {
     id: existing?.id || `habit-state-${habitId}-${date}`,
     habitId,
     date,
     completed,
     completedAt: completed ? now : undefined,
-    timelineRecordId: existing?.timelineRecordId,
+    timelineRecordId: targetRecord?.id,
     createdAt: existing?.createdAt || now,
     updatedAt: now,
   };
-  const taskId = `habit-task-${habitId}-${date}`;
   const tasks = data.tasks.map((task) => task.id === taskId ? {
     ...task,
     completed,
-    timelineRecords: (task.timelineRecords || []).map((record) => record.id === existing?.timelineRecordId ? {
+    completedAt: completed ? now : undefined,
+    workflowStatus: completed ? "done" as const : task.workflowStatus === "done" ? "doing" as const : task.workflowStatus,
+    timelineRecords: (task.timelineRecords || []).map((record) => record.id === targetRecord?.id ? {
       ...record,
       executionStatus: completed ? "completed" as const : "scheduled" as const,
     } : record),

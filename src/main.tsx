@@ -12876,9 +12876,10 @@ function EditDrawer(props: {
       setIncompleteMenuOpen(false);
       if (props.editingRecordId && props.data && props.saveData) {
         const now = workspaceNow().toISOString();
+        const incompleteData = setTaskCompletion(props.data, props.editingRecordId, false, now);
         void props.saveData({
-          ...props.data,
-          tasks: props.data.tasks.map((task) => task.id === props.task!.id
+          ...incompleteData,
+          tasks: incompleteData.tasks.map((task) => task.id === props.task!.id
             ? {
                 ...task,
                 ...taskPatch,
