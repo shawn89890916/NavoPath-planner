@@ -1,6 +1,7 @@
 import { request as httpsRequest } from "node:https";
 import { isIP } from "node:net";
 import { isForbiddenNetworkAddress, validateCalendarUrl } from "../external-calendar/security.ts";
+import type { PinnedResponse } from "./pinned-http.ts";
 
 export const MAX_PACKAGE_BYTES = 20 * 1024 * 1024;
 export function validateExtensionUrl(value: string) {
@@ -21,6 +22,7 @@ type Address = { address: string; family: number };
 type DownloadDependencies = {
   resolve: (host: string) => Promise<Address[]>;
   request?: typeof httpsRequest;
+  fetchPinned?: (url: URL, address: string, signal: AbortSignal) => Promise<PinnedResponse>;
 };
 export async function downloadExtension(value: string, deps: DownloadDependencies): Promise<Uint8Array> {
   const controller = new AbortController();
@@ -34,16 +36,18 @@ export async function downloadExtension(value: string, deps: DownloadDependencie
       ]);
       if (!addresses.length || addresses.some(({ address }) => isForbiddenExtensionAddress(address))) throw new Error("Private extension destinations are blocked");
       const selected = addresses[0];
-      const result = await new Promise<import("node:http").IncomingMessage>((resolve, reject) => {
+      const result = deps.fetchPinned ? await deps.fetchPinned(url, selected.address, controller.signal) : await new Promise<import("node:http").IncomingMessage>((resolve, reject) => {
         const req = (deps.request || httpsRequest)(url, {
           signal: controller.signal,
           method: "GET",
+          hostname: selected.address,
+          family: selected.family,
+          servername: url.hostname,
+          agent: false,
           // Never forward the caller's JWT, cookies or other headers to sources.
-          headers: { Accept: "application/octet-stream, application/zip, application/json", "Accept-Encoding": "identity" },
-          // Keep the original hostname for SNI/certificate verification while
-          // pinning the TCP destination to a validated public DNS answer.
-          lookup: (_host, options, callback: any) => options?.all
-            ? callback(null, [selected]) : callback(null, selected.address, selected.family),
+          headers: { Host: url.host, Accept: "application/octet-stream, application/zip, application/json", "Accept-Encoding": "identity" },
+          // Connect to the validated IP while preserving the source's TLS
+          // identity and HTTP host. Edge Runtime does not implement lookup.
         }, resolve);
         req.on("error", reject);
         req.end();

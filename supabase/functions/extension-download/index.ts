@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.107.0";
 import { downloadExtension } from "./download.ts";
+import { pinnedHttpRequest } from "./pinned-http.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -39,6 +40,10 @@ serve(async (req) => {
     for (const chunk of chunks) { bodyBytes.set(chunk, offset); offset += chunk.byteLength; }
     const body = JSON.parse(new TextDecoder().decode(bodyBytes));
     const bytes = await downloadExtension(body.url, {
+      fetchPinned: (url, address, signal) => pinnedHttpRequest(url, address, signal, {
+        connect: (hostname) => Deno.connect({ hostname, port: 443 }),
+        startTls: (connection, hostname) => Deno.startTls(connection as Deno.Conn, { hostname }),
+      }),
       resolve: async (host) => {
         const results = await Promise.allSettled([Deno.resolveDns(host, "A"), Deno.resolveDns(host, "AAAA")]);
         return results.flatMap((result, index) => result.status === "fulfilled" ? result.value.map((address) => ({ address, family: index === 0 ? 4 : 6 })) : []);

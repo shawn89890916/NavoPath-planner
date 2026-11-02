@@ -1,6 +1,6 @@
 # NavoPath 更新日志
 
-## 2026-11-02 · 社区插件、主题与习惯编辑 · 1.5.0
+## 2026-11-02 · 社区插件、主题与习惯修复 · 1.5.1
 
 ### 改进
 - 插件拥有独立设置页，支持社区市场、第三方来源、完整性校验、本地导入、自定义设置、更新回退及账户同步；可信插件可扩展数据、界面、命令和桌面能力，受限模式可暂停运行。
@@ -9,6 +9,8 @@
 - 编辑习惯后点击面板外空白区域、关闭或返回总览会自动保存；右下角新增有未保存内容时，退出前可选择保存或放弃。
 
 ### 修复
+- 习惯标记未完成并重新规划后，可正常勾选和撤销完成；习惯列表与时间轴同步更新，保留先前的未完成记录。
+- 网页与移动端可通过认证下载服务安装社区包，并保留来源完整性校验和私有网络拦截。
 - 修改习惯名称时同步所有日期里已拖到时间轴的安排；重新打开后也会校正此前残留的旧名称，保留原有时间和完成记录。
 - 习惯候选行色条跟随归属项目更新；新建习惯直接进入可编辑的草稿，避免退出后再次打开占位习惯。
 
@@ -298,7 +300,7 @@
 
 # NavoPath Changelog
 
-## 2026-11-02 · Community plugins, themes and habit editing · 1.5.0
+## 2026-11-02 · Community plugins, themes and habit fixes · 1.5.1
 
 ### Improvements
 - Plugins have a dedicated settings page with community catalogs, custom sources, integrity verification, local imports, custom settings, update rollback and account sync. Trusted plugins can extend data, views, commands and desktop capabilities; restricted mode suspends execution.
@@ -307,6 +309,8 @@
 - Clicking outside the habit editor, closing it or returning to the overview saves edits automatically. Exiting a new item with unsaved content offers Save or Discard.
 
 ### Fixes
+- Habits can be completed and reopened after being marked unfinished and replanned. The habit list and timeline stay in sync while preserving earlier unfinished records.
+- Web and mobile can install community packages through authenticated downloads while retaining source integrity checks and private-network blocking.
 - Renaming a habit updates its timeline schedules across all dates. Reopening also corrects older stale names while preserving scheduled times and completion history.
 - Habit candidate color strips follow the assigned project. New habits open directly as editable drafts without requiring a second click on a placeholder habit.
 

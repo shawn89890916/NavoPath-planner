@@ -14,7 +14,11 @@ test("cloud download pins DNS, strips caller credentials and validates redirects
   let calls = 0;
   const request = (_url: unknown, options: any, callback: any) => {
     assert.equal(options.headers.Authorization, undefined);
-    options.lookup("example.com", {}, (_error: unknown, ip: string) => assert.equal(ip, "8.8.8.8"));
+    assert.equal(options.lookup, undefined);
+    assert.equal(options.hostname, "8.8.8.8");
+    assert.equal(options.servername, "example.com");
+    assert.equal(options.headers.Host, "example.com");
+    assert.equal(options.agent, false);
     const req = new EventEmitter() as any;
     req.end = () => {
       const result = Readable.from([Buffer.from("package")]) as any;
