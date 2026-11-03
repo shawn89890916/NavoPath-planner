@@ -16,9 +16,9 @@ describe("shared option-list visual contract", () => {
   });
 
   it("applies the shared option treatment to Settings and Planning", () => {
-    expect(main).toContain('className="df-settings-nav ui-choice-list"');
-    expect(main).toContain("df-settings-subtabs ui-choice-list ui-choice-list--inline");
-    expect(planning).toContain('className="df-planning-view-switch ui-choice-list ui-choice-list--bare"');
+    expect(main).toContain('className="df-settings-nav ui-choice-list ui-choice-list--motion-selection"');
+    expect(main).toContain("df-settings-subtabs ui-choice-list ui-choice-list--inline ui-choice-list--motion-selection");
+    expect(planning).toContain('className="df-planning-view-switch ui-choice-list ui-choice-list--bare ui-choice-list--motion-selection"');
     expect(planning).toContain("df-view-btn ui-choice-item");
   });
 
