@@ -1,0 +1,4 @@
+.navopath-quick-capture { display: grid; gap: var(--space-3, 12px); color: var(--text-main); }
+.navopath-quick-capture label { display: grid; gap: var(--space-2, 8px); }
+.navopath-quick-capture p { margin: 0; line-height: 1.6; }
+.navopath-quick-capture .ui-button { justify-self: start; }

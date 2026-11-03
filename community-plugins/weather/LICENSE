@@ -19,3 +19,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+The bundled city-name alias index is derived from GeoNames cities15000,
+retrieved 2026-11-03: https://download.geonames.org/export/dump/cities15000.zip
+Attribution: GeoNames, https://www.geonames.org/
+Geographical data license: Creative Commons Attribution 4.0 International,
+https://creativecommons.org/licenses/by/4.0/
+Changes: selected cities with population >=500,000, retained Han alternate names,
+removed city/county/district suffixes, added simplified New York aliases, sorted
+by population, and retained up to three GeoNames identifiers per alias.

@@ -13,3 +13,8 @@ options update CSS variables without executing code. Use the existing canonical
 selectors; avoid !important, duplicate override layers and unrelated layouts.
 
 See API.md. MIT licensed.
+
+For paired market previews, capture the real app in both modes and declare
+`previews: { "light": "preview-light.png", "dark": "preview-dark.png" }`.
+The package command includes these raster images as binary resources. Keep
+each thumbnail small and exclude personal data. See Typewriter and Ocean.

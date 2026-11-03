@@ -5,6 +5,17 @@ import { ExtensionMount } from "./ExtensionMount";
 import { extensionService } from "./service";
 import "./ExtensionSurfaces.css";
 
+/** Compact layouts expose the same contributions through the workspace menu. */
+export function ExtensionToolsDialog({ lang, onClose }: { lang: Language; onClose: () => void }) {
+  const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
+  const empty = !snapshot.headerItems.length && !snapshot.views.length && !extensionService.listCommands().length;
+  const title = lang === "zh" ? "插件工具" : "Plugin tools";
+  return <Modal label={title} onClose={onClose} className="df-extension-view">
+    <header className="df-extension-view-heading"><h2>{title}</h2><CloseButton label={lang === "zh" ? "关闭" : "Close"} onClick={onClose} /></header>
+    {empty ? <p>{lang === "zh" ? "在设置 → 插件中安装并启用插件。" : "Install and enable plugins in Settings → Plugins."}</p> : <ExtensionHeader lang={lang} />}
+  </Modal>;
+}
+
 /** Header entry points share the plugin lifecycle and disappear when unloaded. */
 export function ExtensionHeader({ lang }: { lang: Language }) {
   const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);

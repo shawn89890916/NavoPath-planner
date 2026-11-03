@@ -3,6 +3,8 @@ import { loadPlugin, patchMethod, type RuntimeBridge } from "./runtime";
 import { parsePackage } from "./packages";
 import { officialPackageTexts } from "./officialPackages";
 import type { PluginContext } from "./types";
+import { provider } from "../../community-plugins/pomodoro/main";
+import { getTimerMode, onTimerModeOpening } from "./timers";
 
 function bridge() {
   let data: any = { tasks: [], projects: [], events: [] };
@@ -42,5 +44,18 @@ describe("trusted plugin runtime", () => {
     const f = bridge(), pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather)); delete pkg.manifest.styles;
     await expect(loadPlugin(pkg, f.value, async () => ({ default: { onload(ctx) { ctx.ui.registerView("Partial", () => {}); throw new Error("broken"); } } }))).rejects.toThrow("broken");
     expect(f.clean).toHaveBeenCalledTimes(1);
+  });
+  it("opens host timer controls through the public SDK and revokes them on unload", async () => {
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test"); vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    const f = bridge(), pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather)); delete pkg.manifest.styles;
+    let ctx!: PluginContext;
+    const launch = vi.fn(); const off = onTimerModeOpening(launch);
+    const loaded = await loadPlugin(pkg, f.value, async () => ({ default: { onload(context) { ctx = context; ctx.timers.registerMode(provider as any); } } }));
+    try {
+      ctx.timers.open("pomodoro"); expect(launch).toHaveBeenCalledExactlyOnceWith("pomodoro");
+      await loaded.dispose(); expect(getTimerMode("pomodoro")).toBeUndefined();
+      expect(() => ctx.timers.open("pomodoro")).toThrow("Plugin is unloaded");
+      expect(launch).toHaveBeenCalledTimes(1);
+    } finally { await loaded.dispose(); off(); }
   });
 });

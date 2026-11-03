@@ -1,7 +1,7 @@
 import type { ExtensionManifest, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSource, InstalledExtension } from "./types";
 import type { Settings } from "../types";
 
-export const APP_VERSION = "1.5.2-beta.1";
+export const APP_VERSION = "1.5.2-beta.2";
 export const OFFICIAL_SOURCE: ExtensionSource = { id: "official", name: "NavoPath Community", url: "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/catalog.json" };
 export const MAX_PACKAGE_BYTES = 20 * 1024 * 1024;
 export const MAX_EXPANDED_BYTES = 32 * 1024 * 1024;
@@ -14,7 +14,8 @@ export function validateManifest(input: unknown): ExtensionManifest {
   if (![input.version, input.minAppVersion].every(v => /^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(v))) throw new Error("Invalid extension version");
   if (!Array.isArray(input.platforms) || !input.platforms.length || !input.platforms.every((p: unknown) => ["desktop", "web", "mobile"].includes(p as string))) throw new Error("Invalid extension platforms");
   for (const key of ["main", "desktop", "styles"]) if (input[key] !== undefined && (typeof input[key] !== "string" || !safePath(input[key]))) throw new Error(`Invalid entry ${key}`);
-  if (input.preview !== undefined && (typeof input.preview !== "string" || !safePath(input.preview) || !/\.(?:png|jpe?g|webp|avif)$/i.test(input.preview))) throw new Error("Preview must be a package-relative raster image");
+  if (input.previews !== undefined && (!isRecord(input.previews) || typeof input.previews.light !== "string" || typeof input.previews.dark !== "string")) throw new Error("Previews require light and dark images");
+  for (const preview of [input.preview, input.previews?.light, input.previews?.dark]) if (preview !== undefined && (typeof preview !== "string" || !safePath(preview) || !/\.(?:png|jpe?g|webp|avif)$/i.test(preview))) throw new Error("Preview must be a package-relative raster image");
   if (input.kind === "plugin" && !input.main) throw new Error("Plugin main.js is required");
   if (input.kind === "theme" && (input.main || input.desktop)) throw new Error("Themes contain CSS and resources only");
   if (input.options !== undefined && (!Array.isArray(input.options) || input.options.length > 100 || input.options.some((o: any) => !isRecord(o) || !safeId(o.key) || typeof o.label !== "string" || !/^--[a-z][a-z0-9-]*$/.test(o.variable) || !["color", "number", "string", "boolean"].includes(o.type) || !["string", "number", "boolean"].includes(typeof o.default)))) throw new Error("Invalid theme options");
@@ -23,7 +24,17 @@ export function validateManifest(input: unknown): ExtensionManifest {
 export function compareVersions(a: string, b: string): number {
   const av = a.split("-")[0].split(".").map(Number), bv = b.split("-")[0].split(".").map(Number);
   for (let i = 0; i < 3; i++) if (av[i] !== bv[i]) return av[i] > bv[i] ? 1 : -1;
-  return Number(!a.includes("-")) - Number(!b.includes("-"));
+  const ap = a.split("-").slice(1).join("-"), bp = b.split("-").slice(1).join("-");
+  if (!ap || !bp) return Number(!ap) - Number(!bp);
+  const ai = ap.split("."), bi = bp.split(".");
+  for (let i = 0; i < Math.max(ai.length, bi.length); i++) {
+    if (ai[i] === bi[i]) continue;
+    if (ai[i] === undefined || bi[i] === undefined) return ai[i] === undefined ? -1 : 1;
+    const an = /^\d+$/.test(ai[i]), bn = /^\d+$/.test(bi[i]);
+    if (an !== bn) return an ? -1 : 1;
+    return an ? Number(ai[i]) - Number(bi[i]) : ai[i] < bi[i] ? -1 : 1;
+  }
+  return 0;
 }
 export function compatibility(manifest: ExtensionManifest, platform: ExtensionPlatform): string | null {
   if (!manifest.platforms.includes(platform)) return `Unsupported on ${platform} / 当前平台不兼容`;
@@ -82,7 +93,7 @@ function validatePackage(pkg: ExtensionPackage): ExtensionPackage {
   for (const entry of [pkg.manifest.main, pkg.manifest.desktop, pkg.manifest.styles]) {
     if (entry && (!pkg.files[entry] || pkg.files[entry].encoding !== "utf8")) throw new Error(`Missing text entry: ${entry}`);
   }
-  if (pkg.manifest.preview && pkg.files[pkg.manifest.preview]?.encoding !== "base64") throw new Error("Missing binary preview resource");
+  for (const preview of [pkg.manifest.preview, pkg.manifest.previews?.light, pkg.manifest.previews?.dark]) if (preview && pkg.files[preview]?.encoding !== "base64") throw new Error("Missing binary preview resource");
   return pkg;
 }
 export function bytesToBase64(bytes: Uint8Array): string { let text = ""; for (let i = 0; i < bytes.length; i += 8192) text += String.fromCharCode(...bytes.subarray(i, i + 8192)); return btoa(text); }

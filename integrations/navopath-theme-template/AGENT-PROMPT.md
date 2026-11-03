@@ -6,3 +6,6 @@ WCAG AA text contrast, focus indicators, mobile touch sizes and reduced motion.
 Use CSS variables and declarative manifest options. Package CSS/assets only,
 never JavaScript. Return source, README, MIT license, .navopackage.json and its
 exact SHA-256, and verify changing options, disabling and switching themes.
+Capture real, non-personal screenshots in both modes. Declare
+`previews: { "light": "preview-light.png", "dark": "preview-dark.png" }`
+and package both images; verify split and separate previews in the market.

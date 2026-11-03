@@ -128,12 +128,22 @@ Use `kind: "theme"`, `styles`, optional assets and `options`. A theme has no
 (`color`, `number`, `string`, `boolean`), CSS `variable`, `default`, and optional
 `min/max`. The host applies option values as CSS variables. Preserve readable
 light/dark contrast, keyboard focus, reduced motion and mobile touch targets.
-The Linen, Minimal, Sage and Graphite samples in `community-plugins` are complete
+The Linen, Minimal, Sage, Graphite, Ocean and Typewriter samples in `community-plugins` are complete
 installable themes. Optional `preview` points to a packaged raster image
 (`.png`, `.jpg`, `.jpeg`, `.webp`, or `.avif`) stored with base64 encoding.
 Use a real, readable app screenshot without personal data, and keep thumbnails
 small. A catalog may also include a public HTTPS `previewUrl` for browsing
-before installation. Built-in previews are available offline with the app.
+before installation. Use `previews: { "light": "preview-light.png", "dark": "preview-dark.png" }`
+to supply both modes; each image must be a packaged binary resource. Catalogs
+may expose `previewUrls: { "light": "https://...", "dark": "https://..." }`.
+The market shows the two real screenshots together and lets users inspect each
+mode separately. Built-in previews are available offline with the app.
+
+`ctx.timers.open(modeId)` opens the host focus panel with a registered mode.
+If no task is active, the user may start a standalone session that records no
+task work time. Reset that session before starting work linked to a task.
+Pomodoro provides a header button, command and settings page; Quick Capture and
+Daily Overview demonstrate public-API task creation and custom views.
 
 ## Catalog and release workflow
 

@@ -4,12 +4,14 @@
 
 ### 改进
 - 插件与外观设置使用简洁的设置行，插件拥有独立侧栏设置入口；插件和主题市场支持搜索、已安装筛选、排序与详情浏览。
-- 主题市场新增 Linen、Minimal、Sage 与 Graphite 四种预设及真实界面预览，支持安装、切换与浅深色模式。
+- 主题市场提供 Linen、Minimal、Sage、Graphite、Ocean 与 Typewriter 六种预设，加入真实浅深色对照及单独预览；主题统一覆盖弹出界面、任务控件和桌面小组件。
+- 番茄钟新增顶栏入口，支持不关联任务的独立专注；新增快速收集与每日概览插件，可直接收集任务及查看真实工作区数据，窄屏可通过「更多 → 插件工具」打开。
 - 新版本使用 Beta 标识与预发布通道；桌面设置可选择接受 Beta 更新，默认仅检查正式版本。
 - 横屏网页及桌面端横竖屏可直接在时间块内输入任务名，仅日视图显示时间文字，移除额外输入层、复选框和确认勾；上下居中的短横条可拖动调整开始与结束时间，调整时保留正在输入的内容，回车或点击外部保存。
 
 ### 修复
 - 后台检查更新时仍可浏览市场、导入与启停插件、切换受限模式；加载进度明确显示，已安装和默认来源使用状态文字，按钮主次与窄屏排版更清晰。
+- 天气支持中文城市及常见海外城市中文名搜索，缩略时仅显示城市名，展开后可查看完整天气；窄屏与顶栏裁切时也能完整展开。
 
 ## 2026-11-02 · 社区插件、主题与习惯修复 · 1.5.1
 
@@ -316,12 +318,14 @@
 
 ### Improvements
 - Plugin and appearance settings use clean setting rows, with plugin settings in the sidebar. Dedicated plugin and theme markets support search, installed filters, sorting and package details.
-- Added Linen, Minimal, Sage and Graphite theme presets with real interface previews, installation, switching and light/dark support.
+- The theme market offers Linen, Minimal, Sage, Graphite, Ocean and Typewriter presets with real split light/dark and separate previews. Themes consistently cover popovers, task controls and desktop widgets.
+- Pomodoro has a clear header entry and supports standalone focus without a linked task. New Quick Capture and Daily Overview plugins create tasks and show actual workspace data; narrow screens provide More → Plugin tools.
 - New releases use Beta labels and the prerelease channel. Desktop settings can opt into Beta updates; stable releases remain the default.
 - Landscape web and both desktop orientations support typing directly inside a time block, with a time label only in day view, without a separate input surface, checkbox or confirm action. Centered bars on the top and bottom edges adjust start and end times while preserving the draft; Enter or an outside click saves the task.
 
 ### Fixes
 - Background update checks keep browsing, imports, plugin activation and restricted mode available. Loading is explicit, installed packages and default sources use status text, and action hierarchy and narrow-screen layouts are clearer.
+- Weather searches Chinese city names and common overseas cities in Chinese. The compact header shows only the city name; the expanded forecast stays fully visible on narrow screens and in clipped headers.
 
 ## 2026-11-02 · Community plugins, themes and habit fixes · 1.5.1
 

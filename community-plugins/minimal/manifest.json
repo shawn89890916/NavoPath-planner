@@ -1,6 +1,6 @@
 {
   "author": "NavoPath",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "apiVersion": 1,
   "minAppVersion": "1.5.0",
   "platforms": [
@@ -12,7 +12,7 @@
   "license": "MIT",
   "kind": "theme",
   "styles": "styles.css",
-  "preview": "preview.png",
+  "preview": "preview-light.png",
   "id": "minimal",
   "name": "Minimal",
   "description": "Crisp neutral paper and slate ink with a restrained, distraction-free light and dark palette.",
@@ -45,5 +45,9 @@
       "variable": "--minimal-dark-ink",
       "default": "#E2E5E9"
     }
-  ]
+  ],
+  "previews": {
+    "light": "preview-light.png",
+    "dark": "preview-dark.png"
+  }
 }

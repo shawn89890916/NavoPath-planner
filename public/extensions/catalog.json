@@ -7,6 +7,29 @@
         "author": "NavoPath",
         "version": "1.0.0",
         "apiVersion": 1,
+        "minAppVersion": "1.5.2-beta.2",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "repository": "https://github.com/shawn89890916/NavoPath-planner",
+        "license": "MIT",
+        "kind": "plugin",
+        "id": "daily-overview",
+        "name": "Daily Overview",
+        "description": "A live, read-only overview of current tasks, overdue work, projects, and saved calendar events.",
+        "main": "main.js",
+        "styles": "styles.css"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/daily-overview.navopackage.json",
+      "sha256": "532e104344b9d457abbea94593c708224ae040621916178de8e2bc2a104dc5d6"
+    },
+    {
+      "manifest": {
+        "author": "NavoPath",
+        "version": "1.1.0",
+        "apiVersion": 1,
         "minAppVersion": "1.5.0",
         "platforms": [
           "desktop",
@@ -17,7 +40,7 @@
         "license": "MIT",
         "kind": "theme",
         "styles": "styles.css",
-        "preview": "preview.png",
+        "preview": "preview-light.png",
         "id": "graphite",
         "name": "Graphite",
         "description": "Cool off-white by day and layered graphite after dark, with precise silver ink and subtle rules.",
@@ -50,11 +73,19 @@
             "variable": "--graphite-dark-ink",
             "default": "#E1E5ED"
           }
-        ]
+        ],
+        "previews": {
+          "light": "preview-light.png",
+          "dark": "preview-dark.png"
+        }
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/graphite.navopackage.json",
-      "sha256": "25c3310c826275ade5ab44e210c6597b78dbde5f5ece197f4884af17be3425d8",
-      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/graphite.png"
+      "sha256": "47399a42e4dd181513be5f7ac7543d3ed893d50a9d37e5d09a5741b704dca745",
+      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/graphite.png",
+      "previewUrls": {
+        "light": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/graphite-light.png",
+        "dark": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/graphite-dark.png"
+      }
     },
     {
       "manifest": {
@@ -71,7 +102,7 @@
         "license": "MIT",
         "kind": "theme",
         "styles": "styles.css",
-        "preview": "preview.png",
+        "preview": "preview-light.png",
         "id": "linen",
         "name": "Linen",
         "description": "Warm linen paper, brown ink and softly layered charcoal. Configurable paper and ink in both light and dark modes.",
@@ -104,16 +135,24 @@
             "variable": "--linen-dark-ink",
             "default": "#DFD9CC"
           }
-        ]
+        ],
+        "previews": {
+          "light": "preview-light.png",
+          "dark": "preview-dark.png"
+        }
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/linen.navopackage.json",
-      "sha256": "7acc721b217b8d1b3896133522e227151723ffb5365bcf268179783209434fbb",
-      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/linen.png"
+      "sha256": "6c0dc0556fe4408ce4d62bb354768898a0eb81cc48e6a87d2bde9daa50c9a1ac",
+      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/linen.png",
+      "previewUrls": {
+        "light": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/linen-light.png",
+        "dark": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/linen-dark.png"
+      }
     },
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "apiVersion": 1,
         "minAppVersion": "1.5.0",
         "platforms": [
@@ -125,7 +164,7 @@
         "license": "MIT",
         "kind": "theme",
         "styles": "styles.css",
-        "preview": "preview.png",
+        "preview": "preview-light.png",
         "id": "minimal",
         "name": "Minimal",
         "description": "Crisp neutral paper and slate ink with a restrained, distraction-free light and dark palette.",
@@ -158,18 +197,88 @@
             "variable": "--minimal-dark-ink",
             "default": "#E2E5E9"
           }
-        ]
+        ],
+        "previews": {
+          "light": "preview-light.png",
+          "dark": "preview-dark.png"
+        }
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/minimal.navopackage.json",
-      "sha256": "4ca90e860f6ea7d9dd26422b38ad45a6f6d9d309f512a842452b643a5f01b5ea",
-      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/minimal.png"
+      "sha256": "8bb206008e395fd8768a914554a2dc5cf8f942a5983e3c293e1831df8d9cff41",
+      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/minimal.png",
+      "previewUrls": {
+        "light": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/minimal-light.png",
+        "dark": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/minimal-dark.png"
+      }
     },
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "apiVersion": 1,
         "minAppVersion": "1.5.0",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "repository": "https://github.com/shawn89890916/NavoPath-planner",
+        "license": "MIT",
+        "kind": "theme",
+        "styles": "styles.css",
+        "preview": "preview-light.png",
+        "id": "ocean",
+        "name": "Ocean",
+        "description": "Mist-blue paper, deep navy ink and quiet steel rules, paired with a layered midnight-blue dark palette.",
+        "options": [
+          {
+            "key": "paper",
+            "label": "Light paper",
+            "type": "color",
+            "variable": "--ocean-paper",
+            "default": "#F0F6F8"
+          },
+          {
+            "key": "ink",
+            "label": "Light ink",
+            "type": "color",
+            "variable": "--ocean-ink",
+            "default": "#233B47"
+          },
+          {
+            "key": "dark-paper",
+            "label": "Dark paper",
+            "type": "color",
+            "variable": "--ocean-dark-paper",
+            "default": "#1B2B34"
+          },
+          {
+            "key": "dark-ink",
+            "label": "Dark ink",
+            "type": "color",
+            "variable": "--ocean-dark-ink",
+            "default": "#DCE8EC"
+          }
+        ],
+        "previews": {
+          "light": "preview-light.png",
+          "dark": "preview-dark.png"
+        }
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/ocean.navopackage.json",
+      "sha256": "1476a5c7968c71379991cbdfd336256ed9fa4647b0434be54755154f7d6b301f",
+      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/ocean.png",
+      "previewUrls": {
+        "light": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/ocean-light.png",
+        "dark": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/ocean-dark.png"
+      }
+    },
+    {
+      "manifest": {
+        "author": "NavoPath",
+        "version": "1.1.0",
+        "apiVersion": 1,
+        "minAppVersion": "1.5.2-beta.2",
         "platforms": [
           "desktop",
           "web",
@@ -185,12 +294,35 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/pomodoro.navopackage.json",
-      "sha256": "8ea76462f33880165c863cff097bd9f015a0c3818449ab1d4a5544583c26ec46"
+      "sha256": "6979f484ab977819fcbb4371cdd51c2df2350136452f1e79cc7041a38d066d1c"
     },
     {
       "manifest": {
         "author": "NavoPath",
         "version": "1.0.0",
+        "apiVersion": 1,
+        "minAppVersion": "1.5.2-beta.2",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "repository": "https://github.com/shawn89890916/NavoPath-planner",
+        "license": "MIT",
+        "kind": "plugin",
+        "id": "quick-capture",
+        "name": "Quick Capture",
+        "description": "Capture ideas as real tasks in current day candidates with an optional default project.",
+        "main": "main.js",
+        "styles": "styles.css"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/quick-capture.navopackage.json",
+      "sha256": "57d50546c4dfca26d99fa55ff72907f3f76b0763a38b6a53d135d95ed83c0bd1"
+    },
+    {
+      "manifest": {
+        "author": "NavoPath",
+        "version": "1.1.0",
         "apiVersion": 1,
         "minAppVersion": "1.5.0",
         "platforms": [
@@ -202,7 +334,7 @@
         "license": "MIT",
         "kind": "theme",
         "styles": "styles.css",
-        "preview": "preview.png",
+        "preview": "preview-light.png",
         "id": "sage",
         "name": "Sage",
         "description": "Soft sage paper, forest ink and quiet botanical annotations, paired with a neutral charcoal night palette.",
@@ -235,16 +367,86 @@
             "variable": "--sage-dark-ink",
             "default": "#DBE0D5"
           }
-        ]
+        ],
+        "previews": {
+          "light": "preview-light.png",
+          "dark": "preview-dark.png"
+        }
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/sage.navopackage.json",
-      "sha256": "048d0bd1d4b6bcd301543883a803af4ef7a381557babbcf8a736c7963d7de201",
-      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/sage.png"
+      "sha256": "e9e9f9f34818baed81c0b05c9a11b88f7915c97a7db9c0903568e6b95a4fd440",
+      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/sage.png",
+      "previewUrls": {
+        "light": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/sage-light.png",
+        "dark": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/sage-dark.png"
+      }
     },
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.0.0",
+        "version": "1.1.0",
+        "apiVersion": 1,
+        "minAppVersion": "1.5.0",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "repository": "https://github.com/shawn89890916/NavoPath-planner",
+        "license": "MIT",
+        "kind": "theme",
+        "styles": "styles.css",
+        "preview": "preview-light.png",
+        "id": "typewriter",
+        "name": "Typewriter",
+        "description": "Warm manuscript paper and sepia ink by day, charcoal umber at night, with literary serif headings and task titles.",
+        "options": [
+          {
+            "key": "paper",
+            "label": "Light paper",
+            "type": "color",
+            "variable": "--typewriter-paper",
+            "default": "#F6EFE2"
+          },
+          {
+            "key": "ink",
+            "label": "Light ink",
+            "type": "color",
+            "variable": "--typewriter-ink",
+            "default": "#392D23"
+          },
+          {
+            "key": "dark-paper",
+            "label": "Dark paper",
+            "type": "color",
+            "variable": "--typewriter-dark-paper",
+            "default": "#211D19"
+          },
+          {
+            "key": "dark-ink",
+            "label": "Dark ink",
+            "type": "color",
+            "variable": "--typewriter-dark-ink",
+            "default": "#E7DDCB"
+          }
+        ],
+        "previews": {
+          "light": "preview-light.png",
+          "dark": "preview-dark.png"
+        }
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/typewriter.navopackage.json",
+      "sha256": "88e3e0922c9cab4f16364be60b4cd88ebe9d6f35dc5c1986213c0d27896a0b81",
+      "previewUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/typewriter.png",
+      "previewUrls": {
+        "light": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/typewriter-light.png",
+        "dark": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/typewriter-dark.png"
+      }
+    },
+    {
+      "manifest": {
+        "author": "NavoPath",
+        "version": "1.0.1",
         "apiVersion": 1,
         "minAppVersion": "1.5.0",
         "platforms": [
@@ -262,7 +464,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/weather.navopackage.json",
-      "sha256": "c2fe153e10b15bf2938e575ffdbaac39423808ea9bd8a0906b09b633c24ab874"
+      "sha256": "5f45f7452cac9913ea10dd1db27707ef5e4dd07b1bca7401c900af2587e561cb"
     }
   ]
 }

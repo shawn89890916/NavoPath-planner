@@ -4,7 +4,6 @@ import { UiIcon } from "../components/UiIconRegistry";
 import {
   DEFAULT_WIDGET_APPEARANCE,
   getWidgetDensity,
-  hexToRgbTriplet,
   migrateLegacyWidgetAppearance,
   normalizeWidgetAppearance,
   type WidgetDensity,
@@ -99,16 +98,20 @@ export function opacityAction(value: number): WidgetAction {
   return { type: "updateWidgetAppearance", patch: { opacity: Math.min(1, Math.max(0, value)) } };
 }
 
-function appearanceStyle(snapshot: WidgetSnapshot): CSSProperties {
+export function appearanceStyle(snapshot: WidgetSnapshot): CSSProperties {
   const appearance = normalizeWidgetAppearance(snapshot.appearance);
   const colors = appearance[snapshot.theme];
+  const defaults = DEFAULT_WIDGET_APPEARANCE[snapshot.theme];
+  // Existing settings have no per-field provenance; values matching the defaults
+  // follow the active community theme, while saved custom values stay explicit.
+  const themed = (value: string, fallback: string, token: string) => snapshot.extensionTheme && value === fallback ? `var(${token}, ${value})` : value;
   return {
-    "--widget-bg-rgb": hexToRgbTriplet(colors.backgroundColor),
+    "--widget-bg": themed(colors.backgroundColor, defaults.backgroundColor, "--surface-card"),
     "--widget-opacity": String(appearance.opacity),
-    "--widget-ink": colors.fontColor,
-    "--widget-timer": colors.timerColor,
-    "--widget-overrun": colors.overrunColor,
-    "--widget-font": appearance.fontFamily,
+    "--widget-ink": themed(colors.fontColor, defaults.fontColor, "--text-main"),
+    "--widget-timer": themed(colors.timerColor, defaults.timerColor, "--accent-active"),
+    "--widget-overrun": themed(colors.overrunColor, defaults.overrunColor, "--danger-ink"),
+    "--widget-font": themed(appearance.fontFamily, DEFAULT_WIDGET_APPEARANCE.fontFamily, "--paper-sans"),
     "--widget-font-scale": String(appearance.fontScale),
   } as CSSProperties;
 }
@@ -154,12 +157,13 @@ export function WidgetView({ snapshot, density, onToggleTimer, onTogglePopover, 
   const pointer = useRef<{ startX: number; startY: number; lastX: number; lastY: number; dragged: boolean } | null>(null);
   const suppressNextClick = useRef(false);
   const showTask = density === "full";
-  const timelineActive = snapshot.timelineState === undefined || snapshot.timelineState === "active";
+  const unlinked = snapshot.timerRuntime.unlinked === true;
+  const timelineActive = unlinked || snapshot.timelineState === undefined || snapshot.timelineState === "active";
   const showPrimaryControl = density === "full" && timelineActive && !(snapshot.timerRuntime.mode === "countdown" && snapshot.timerRuntime.running);
   const showMoreControl = density !== "timerOnly";
   const effectiveRunning = timelineActive && (snapshot.timerRuntime.mode === "stopwatch" ? snapshot.timerRunning : snapshot.timerRuntime.running);
   const controlLabel = effectiveRunning ? (zh ? "暂停计时" : "Pause timer") : (zh ? "开始计时" : "Start timer");
-  const timerContext = snapshot.timelineState === "upcoming"
+  const timerContext = !unlinked && snapshot.timelineState === "upcoming"
     ? (zh ? "距开始" : "Starts in")
     : snapshot.timerPhase === "overrun" ? (zh ? "已超时" : "Overdue") : "";
 
@@ -193,7 +197,7 @@ export function WidgetView({ snapshot, density, onToggleTimer, onTogglePopover, 
         <div className="df-widget-right">
           <div className="df-widget-timer" onPointerDown={onTimerPointerDown} onPointerMove={onTimerPointerMove} onPointerUp={onTimerPointerUp} onPointerCancel={() => { pointer.current = null; suppressNextClick.current = false; }}>
             {timerContext && <span className="df-widget-timer-context">{timerContext}</span>}
-            <button type="button" className="df-widget-timer-display" aria-label={zh ? "切换分钟或秒显示" : "Toggle minute or second display"} title={zh ? "点击切换分钟或秒显示" : "Click to toggle minute or second display"} onClick={toggleTimerPrecision}>{snapshot.timelineState === "empty" ? "--:--" : formatTimer(snapshot.timerDisplaySeconds, timerPrecision)}</button>
+            <button type="button" className="df-widget-timer-display" aria-label={zh ? "切换分钟或秒显示" : "Toggle minute or second display"} title={zh ? "点击切换分钟或秒显示" : "Click to toggle minute or second display"} onClick={toggleTimerPrecision}>{snapshot.timelineState === "empty" && !unlinked ? "--:--" : formatTimer(snapshot.timerDisplaySeconds, timerPrecision)}</button>
           </div>
           {showPrimaryControl && <button type="button" className="df-widget-icon-btn" aria-label={controlLabel} title={controlLabel} onClick={onToggleTimer}>{effectiveRunning ? <UiIcon name="pause" size={18} /> : <UiIcon name="play" size={18} />}</button>}
           {showMoreControl && <button type="button" className="df-widget-icon-btn" aria-label={zh ? "更多" : "More"} aria-haspopup="dialog" aria-expanded={snapshot.popoverOpen} onClick={onTogglePopover}><UiIcon name="more" size={18} /></button>}

@@ -1,5 +1,5 @@
 import type { Dispose, ExtensionHost, ExtensionManifest, ExtensionPackage, ExtensionPlatform, Mount, PluginContext, PluginModule, CollectionApi } from "./types";
-import { registerTimerMode } from "./timers";
+import { registerTimerMode, openTimerMode } from "./timers";
 import type { CalendarEvent, Project, Task } from "../types";
 
 export interface RuntimeBridge {
@@ -61,7 +61,7 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
     localStorage: { get<T>(key: string) { try { return JSON.parse(localStorage.getItem(ownLocal + key) || "null") as T | null; } catch { return null; } }, set(key, value) { localStorage.setItem(ownLocal + key, JSON.stringify(value)); } },
     ui: { addHeaderItem: (name, mount) => register(bridge.contribute("headerItems", name, mount)), registerView: (name, mount) => register(bridge.contribute("views", name, mount)), toast: bridge.host.toast },
     commands: { register: (id, name, run, shortcut) => register(bridge.addCommand(`${bridge.key}:${id}`, name, run, shortcut)), execute: id => bridge.executeCommand(id.includes(":") ? id : `${bridge.key}:${id}`) },
-    timers: { registerMode: provider => register(registerTimerMode(provider)) },
+    timers: { registerMode: provider => register(registerTimerMode(provider)), open: mode => { if (disposed) throw new Error("Plugin is unloaded"); openTimerMode(mode); } },
     patch: (target, key, wrapper) => register(patchMethod(target, key, wrapper)),
     resourceUrl: resources.get,
     desktop: bridge.platform === "desktop" && window.desktopApi?.extensions ? { invoke: (method, payload) => window.desktopApi!.extensions!.invoke(bridge.key, method, payload) } : null,

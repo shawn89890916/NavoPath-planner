@@ -15,12 +15,24 @@ function ThemeOptionControl({ option, value, onChange }: { option: ThemeOption; 
   return <SettingTextInput value={String(value)} ariaLabel={option.label} onChange={onChange} />;
 }
 
-function ThemePreview({ entry, lang }: { entry: CatalogEntry; lang: Language }) {
+type PreviewMode = "split" | "light" | "dark";
+function ThemePreviewImage({ entry, lang, mode }: { entry: CatalogEntry; lang: Language; mode: "light" | "dark" }) {
   const [fallback, setFallback] = useState(false);
   const [failed, setFailed] = useState(false);
-  const local = entry.sourceId === "official" && entry.manifest.preview ? `${import.meta.env.BASE_URL}extensions/previews/${entry.manifest.id}.${entry.manifest.preview.split(".").pop()}` : undefined;
-  const source = fallback ? entry.previewUrl : local || entry.previewUrl;
-  return <div className="df-extension-preview">{source && !failed ? <img src={source} alt={lang === "zh" ? `${entry.manifest.name} 主题预览` : `${entry.manifest.name} theme preview`} loading="lazy" referrerPolicy="no-referrer" onError={() => { if (local && !fallback && entry.previewUrl) setFallback(true); else setFailed(true); }} /> : <span>{lang === "zh" ? "暂无预览" : "No preview provided"}</span>}</div>;
+  const path = entry.manifest.previews?.[mode] || entry.manifest.preview;
+  const local = entry.sourceId === "official" && path ? `${import.meta.env.BASE_URL}extensions/previews/${entry.manifest.id}${entry.manifest.previews ? `-${mode}` : ""}.${path.split(".").pop()}` : undefined;
+  const remote = entry.previewUrls?.[mode] || entry.previewUrl;
+  const source = fallback ? remote : local || remote;
+  return <div className={`df-extension-preview-image df-extension-preview-image--${mode}`}>{source && !failed ? <img src={source} alt={lang === "zh" ? `${entry.manifest.name} ${mode === "light" ? "浅色" : "深色"}预览` : `${entry.manifest.name} ${mode} preview`} loading="lazy" referrerPolicy="no-referrer" onError={() => { if (local && !fallback && remote) setFallback(true); else setFailed(true); }} /> : <span>{lang === "zh" ? "暂无预览" : "No preview provided"}</span>}</div>;
+}
+function ThemePreview({ entry, lang, mode }: { entry: CatalogEntry; lang: Language; mode: PreviewMode }) {
+  const paired = Boolean(entry.manifest.previews || entry.previewUrls);
+  const split = mode === "split" && paired;
+  return <div className={`df-extension-preview${split ? " df-extension-preview--split" : ""}`}>
+    {(split || mode !== "dark") && <ThemePreviewImage key={`${entry.sourceId}:${entry.manifest.id}:light`} entry={entry} lang={lang} mode="light" />}
+    {(split || mode === "dark") && <ThemePreviewImage key={`${entry.sourceId}:${entry.manifest.id}:dark`} entry={entry} lang={lang} mode="dark" />}
+    {paired && <><span className="df-extension-preview-label df-extension-preview-label--light" hidden={mode === "dark"}>{lang === "zh" ? "浅色" : "Light"}</span><span className="df-extension-preview-label df-extension-preview-label--dark" hidden={mode === "light"}>{lang === "zh" ? "深色" : "Dark"}</span></>}
+  </div>;
 }
 
 export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: { lang: Language; kind: ExtensionKind; settingsPageId?: string | null; onSelectPage?: (id: string | null) => void }) {
@@ -38,6 +50,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
   const setPageId = onSelectPage || setLocalPageId;
   const [onlyInstalled, setOnlyInstalled] = useState(false);
   const [marketSort, setMarketSort] = useState("name");
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("split");
   const [selectedCatalogKey, setSelectedCatalogKey] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -111,13 +124,14 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
     </>}
     <Modal open={view === "market"} label={text(plugin ? "社区插件市场" : "社区主题市场", plugin ? "Community plugin market" : "Community theme market")} className="df-extension-market" onClose={() => navigate("installed")} onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); navigate("installed"); } }}>
       <header className="df-extension-market-head"><div><h2>{text(plugin ? "社区插件市场" : "社区主题", plugin ? "Community plugin market" : "Community themes")}</h2><p>{text(plugin ? "为你的工作区添加新能力。" : "找到适合你的工作区外观。", plugin ? "Add new capabilities to your workspace." : "Find an appearance that feels right for your workspace.")}</p></div><CloseButton label={text("关闭市场", "Close market")} onClick={() => navigate("installed")} /></header>
+      {!plugin && <label className="df-extension-preview-control"><span>{text("预览外观", "Preview appearance")}</span><SettingSelect value={previewMode} ariaLabel={text("预览外观", "Preview appearance")} options={[{ value: "split", label: text("浅色与深色", "Light and dark") }, { value: "light", label: text("浅色", "Light") }, { value: "dark", label: text("深色", "Dark") }]} onChange={value => setPreviewMode(value as PreviewMode)} /></label>}
       {!selectedCatalog && <div className="df-extension-market-toolbar">{search}<label className="df-extension-market-filter"><span>{text("仅显示已安装", "Installed only")}</span><SettingToggle checked={onlyInstalled} ariaLabel={text("仅显示已安装", "Installed only")} onChange={setOnlyInstalled} /></label><SettingSelect value={marketSort} ariaLabel={text("市场排序", "Sort market")} options={[{ value: "name", label: text("按名称", "Name") }, { value: "author", label: text("按作者", "Author") }]} onChange={setMarketSort} /><span className="df-extension-market-count">{text(`${catalog.length} 个${plugin ? "插件" : "主题"}`, `${catalog.length} ${plugin ? "plugins" : "themes"}`)}</span></div>}
       <div className="df-extension-market-body">
         {(pending || notice || catalogLoading) && <p className="df-extension-note" role="status">{pending || notice || text("正在刷新市场…你可以继续浏览或返回。", "Refreshing catalog… You can keep browsing or go back.")}</p>}
         {(error || snapshot.error) && <p className="df-extension-error" role="alert">{error || snapshot.error}</p>}
         {selectedCatalog ? <article className="df-extension-detail">
           <Button onClick={() => setSelectedCatalogKey(null)}>{text("返回市场", "Back to market")}</Button>
-          {!plugin && <ThemePreview entry={selectedCatalog} lang={lang} />}
+          {!plugin && <ThemePreview entry={selectedCatalog} lang={lang} mode={previewMode} />}
           <h3>{selectedCatalog.manifest.name}</h3><p className="df-extension-meta">{selectedCatalog.manifest.author} · v{selectedCatalog.manifest.version}</p>
           <p>{selectedCatalog.manifest.description}</p>
           <dl><div><dt>{text("来源", "Source")}</dt><dd>{preferences.sources.find(source => source.id === selectedCatalog.sourceId)?.name ?? selectedCatalog.sourceId}</dd></div><div><dt>{text("最低应用版本", "Requires NavoPath")}</dt><dd>{selectedCatalog.manifest.minAppVersion}</dd></div><div><dt>{text("支持平台", "Platforms")}</dt><dd>{selectedCatalog.manifest.platforms.join(" · ")}</dd></div></dl>
@@ -129,7 +143,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
             const existing = installed.find(item => item.sourceId === entry.sourceId && item.manifest.id === entry.manifest.id);
             return <article className="df-extension-market-card" key={key}>
               <button type="button" className="df-extension-market-open" aria-label={text(`查看 ${entry.manifest.name}`, `View ${entry.manifest.name}`)} onClick={() => setSelectedCatalogKey(key)}>
-                {!plugin && <ThemePreview entry={entry} lang={lang} />}
+                {!plugin && <ThemePreview entry={entry} lang={lang} mode={previewMode} />}
                 <h3>{entry.manifest.name}</h3><span className="df-extension-meta">{entry.manifest.author} · v{entry.manifest.version}</span><p>{entry.manifest.description}</p>
               </button>
               <footer><span className="df-extension-state">{existing ? text("已安装", "Installed") : preferences.sources.find(source => source.id === entry.sourceId)?.name ?? entry.sourceId}</span>{existing ? <Button onClick={() => navigate("installed")}>{text("管理", "Manage")}</Button> : <Button variant="primary" disabled={busy} onClick={() => void run(() => extensionService.install(entry), text(`正在安装 ${entry.manifest.name}…`, `Installing ${entry.manifest.name}…`))}>{text("安装", "Install")}</Button>}</footer>

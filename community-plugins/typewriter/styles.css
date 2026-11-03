@@ -1,0 +1,59 @@
+/* Typewriter: paired palettes with shared workspace geometry. */
+body[data-navopath-base-theme="light"],
+.df-app.theme-light,
+.df-mobile-dock.theme-light,
+.df-mobile-floating-actions.theme-light,
+.df-widget-root[data-theme="light"],
+.df-widget-popover-root[data-theme="light"] {
+  --bg-app: #E8E0D1;
+  --bg-app-soft: #EDE5D8;
+  --surface-main: var(--typewriter-paper, #F6EFE2);
+  --surface-raised: #FFF8ED;
+  --surface-card: #F9F3E8;
+  --surface-tint: #EDE5D8;
+  --timeline-paper: var(--typewriter-paper, #F6EFE2);
+  --text-main: var(--typewriter-ink, #392D23);
+  --text-muted: #6C5B4B;
+  --text-faint: #786854;
+  --border-soft: #BCAF99;
+  --border-subtle: #DCD1BE;
+  --header-bg: #E8E0D1;
+  --header-border: #DCD1BE;
+  --header-fg: var(--typewriter-ink, #392D23);
+  --header-fg-muted: #6C5B4B;
+  --input-bg: var(--typewriter-paper, #F6EFE2);
+  --input-border: #BCAF99;
+  --accent-active: #68503C;
+  --accent-rgb: 104, 80, 60;
+  --accent-on: #FFFFFF;
+  --paper-serif: Georgia, "Noto Serif SC", "Songti SC", SimSun, serif;
+}
+body[data-navopath-base-theme="dark"],
+.df-app.theme-dark,
+.df-mobile-dock.theme-dark,
+.df-mobile-floating-actions.theme-dark,
+.df-widget-root[data-theme="dark"],
+.df-widget-popover-root[data-theme="dark"] {
+  --bg-app: #161311;
+  --bg-app-soft: #211C18;
+  --surface-main: var(--typewriter-dark-paper, #211D19);
+  --surface-raised: #2D2721;
+  --surface-card: #27221D;
+  --surface-tint: #211C18;
+  --timeline-paper: var(--typewriter-dark-paper, #211D19);
+  --text-main: var(--typewriter-dark-ink, #E7DDCB);
+  --text-muted: #BFB19C;
+  --text-faint: #A0917C;
+  --border-soft: #6A5B49;
+  --border-subtle: #3E342A;
+  --header-bg: #161311;
+  --header-border: #3E342A;
+  --header-fg: var(--typewriter-dark-ink, #E7DDCB);
+  --header-fg-muted: #BFB19C;
+  --input-bg: var(--typewriter-dark-paper, #211D19);
+  --input-border: #6A5B49;
+  --accent-active: #C3B49A;
+  --accent-rgb: 195, 180, 154;
+  --accent-on: #211D19;
+  --paper-serif: Georgia, "Noto Serif SC", "Songti SC", SimSun, serif;
+}

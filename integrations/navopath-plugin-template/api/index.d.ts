@@ -32,7 +32,7 @@ export interface PluginContext {
   localStorage: { get<T>(key: string): T | null; set(key: string, value: unknown): void };
   ui: { addHeaderItem(name: string, mount: Mount): Dispose; registerView(name: string, mount: Mount): Dispose; toast(message: string): void };
   commands: { register(id: string, name: string, run: () => void | Promise<void>, shortcut?: string): Dispose; execute(id: string): Promise<void> };
-  timers: { registerMode(provider: TimerModeProvider): Dispose };
+  timers: { registerMode(provider: TimerModeProvider): Dispose; open(mode: string): void };
   patch(target: Record<string, any>, key: string, wrapper: (original: any) => any): Dispose;
   resourceUrl(path: string): string;
   desktop: { invoke(method: string, payload?: unknown): Promise<unknown> } | null;

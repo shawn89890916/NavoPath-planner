@@ -12,7 +12,7 @@
   "license": "MIT",
   "kind": "theme",
   "styles": "styles.css",
-  "preview": "preview.png",
+  "preview": "preview-light.png",
   "id": "linen",
   "name": "Linen",
   "description": "Warm linen paper, brown ink and softly layered charcoal. Configurable paper and ink in both light and dark modes.",
@@ -45,5 +45,9 @@
       "variable": "--linen-dark-ink",
       "default": "#DFD9CC"
     }
-  ]
+  ],
+  "previews": {
+    "light": "preview-light.png",
+    "dark": "preview-dark.png"
+  }
 }

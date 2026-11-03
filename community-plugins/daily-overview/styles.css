@@ -1,0 +1,6 @@
+.navopath-daily-overview { color: var(--text-main); }
+.navopath-daily-overview section { margin-top: var(--space-5, 24px); }
+.navopath-daily-overview h3 { font-size: 16px; margin: 0 0 var(--space-2, 8px); }
+.navopath-daily-overview p { color: var(--text-secondary, var(--text-main)); line-height: 1.6; }
+.navopath-daily-overview ul { padding: 0; margin: 0; list-style: none; }
+.navopath-daily-overview li { padding: var(--space-2, 8px) 0; border-bottom: 1px solid var(--border-soft); overflow-wrap: anywhere; }

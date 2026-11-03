@@ -84,11 +84,12 @@ import { withDeletionTombstones } from "./syncMerge";
 import { SyncScheduler, isCurrentWorkspaceLoad, readSyncInterval, shouldApplyWorkspaceRevision, shouldReconcileRemoteRevision, shouldRequeueFailedSave } from "./sync";
 import { extensionService } from "./extensions/service";
 const ExtensionHeader = lazy(() => import("./extensions/ExtensionSurfaces").then(module => ({ default: module.ExtensionHeader })));
+const ExtensionToolsDialog = lazy(() => import("./extensions/ExtensionSurfaces").then(module => ({ default: module.ExtensionToolsDialog })));
 import { emitPluginEvent } from "./extensions/runtime";
 import type { ExtensionHost } from "./extensions/types";
 import { normalizeWidgetAppearance } from "./widget/widgetPreferences";
 import { DEFAULT_WIDGET_RUNTIME, DEFAULT_WIDGET_TIMER_PREFERENCES, accumulateWidgetWorkTime, advanceTaskElapsedSeconds, advanceWidgetTimer, countsWidgetTimerPhaseAsWork, createWidgetTimerModeTransition, createDeadlineAlignedTimerRuntime, createWidgetTimerRuntime, getWidgetTimerNotificationDescriptor, getStopwatchTaskTimerAction, getWidgetTimerModeChangeTaskAction, getWidgetTimerSnapshotDisplaySeconds, normalizeStoredTaskTimer, normalizeWidgetTimerPreferences, normalizeWidgetTimerRuntime, resolveWidgetCountdownTarget, scheduleWidgetCountdown } from "./widget/widgetTimer";
-import { getTimerMode, getTimerModes, getTimerModeRevision, subscribeTimerModes, onTimerModeRemoving } from "./extensions/timers";
+import { getTimerMode, getTimerModes, getTimerModeRevision, subscribeTimerModes, onTimerModeRemoving, onTimerModeOpening } from "./extensions/timers";
 import { createTimerOwner, type TimerOwner } from "./extensions/timerOwner";
 import { extendActiveTimelineRecord, nextOverrunExtensionEnd, resolveWidgetTimelineSelection, timelineRecordBounds } from "./widget/widgetSchedule";
 import { applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, findScheduledTimelineRecord, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
@@ -1256,6 +1257,7 @@ function App() {
   const timelinePinchPendingZoomRef = useRef<number | null>(null);
   const [resizeHintTaskId, setResizeHintTaskId] = useState("");
   const [utilityPanel, setUtilityPanel] = useState<"settings" | "about" | null>(null);
+  const [pluginToolsOpen, setPluginToolsOpen] = useState(false);
   const layerExitHandlesRef = useRef(new Map<string, ReturnType<typeof scheduleMotionCommit> | null>());
   const layerTriggerRef = useRef(new Map<string, HTMLElement>());
   const [habitPanel, setHabitPanel] = useState<"overview" | "detail" | null>(null);
@@ -1500,7 +1502,7 @@ function App() {
     widgetTimerAdvancedAtRef.current = now;
     widgetTimerRuntimeRef.current = tick.runtime;
     setWidgetTimerRuntime(tick.runtime);
-    if (current.mode !== "stopwatch" && timerTaskRef.current) {
+    if (current.mode !== "stopwatch" && !current.unlinked && timerTaskRef.current) {
       if (work.wholeSeconds > 0) {
         const elapsed = timerElapsedRef.current + work.wholeSeconds;
         timerElapsedRef.current = elapsed;
@@ -4490,6 +4492,7 @@ if (cached?.data && cached?.settings) {
     const snapshotNow = Date.now();
     const snapshotTasks = dataRef.current?.tasks || tasks;
     let selection = resolveWidgetTimelineSelection(snapshotTasks, snapshotNow);
+    if (widgetTimerRuntime.unlinked) selection = undefined;
     if (widgetTimerRuntime.mode === "countdown" && widgetTimerRuntime.running && widgetTimerRuntime.countdownTaskId && widgetTimerRuntime.countdownTargetAt && snapshotNow >= widgetTimerRuntime.countdownTargetAt) {
       const overrunTask = snapshotTasks.find((item) => item.id === widgetTimerRuntime.countdownTaskId);
       const overrunBounds = timelineRecordBounds(overrunTask, widgetTimerRuntime.countdownRecordId, widgetTimerRuntime.countdownTargetAt - 1);
@@ -4519,12 +4522,12 @@ if (cached?.data && cached?.settings) {
         : selection.endAt;
       timerDisplaySeconds = Math.max(0, Math.ceil(Math.abs(targetAt - snapshotNow) / 1_000));
       timerPhase = snapshotNow >= targetAt ? "overrun" : "countdown";
-    } else if (!selection) {
+    } else if (!selection && !widgetTimerRuntime.unlinked) {
       timerDisplaySeconds = 0;
     }
     return {
       taskId: task?.id,
-      taskTitle: task?.title || "",
+      taskTitle: task?.title || (widgetTimerRuntime.unlinked ? (lang === "zh" ? "未关联任务" : "No linked task") : ""),
       taskDueDate: task?.dueDate,
       taskScheduleRecordId: selection?.recordId,
       taskScheduleStartAt: selection?.startAt,
@@ -4731,8 +4734,29 @@ if (cached?.data && cached?.settings) {
       case "toggleWidgetTimer": {
         const now = Date.now();
         const selection = resolveWidgetTimelineSelection(dataRef.current?.tasks || [], now);
-        if (selection?.state !== "active") break;
         let current = widgetTimerRuntimeRef.current;
+        // Unlinked focus uses the same clock but never attaches its elapsed time
+        // to a task that becomes active later. Reset starts a fresh linked session.
+        if (getTimerMode(current.mode) && (current.unlinked || selection?.state !== "active")) {
+          const running = !current.running;
+          if (!current.unlinked && timerTaskRef.current) { advanceWidgetTimerNow(); stopAndSaveTimer(); }
+          if (current.running) advanceWidgetTimerNow();
+          current = widgetTimerRuntimeRef.current;
+          const runtime: WidgetTimerRuntime = { ...current, unlinked: true, running };
+          if (running) {
+            const shift = Math.max(0, now - (current.pausedAt ?? now));
+            runtime.phaseStartedAt += shift;
+            if (!runtime.plan && runtime.phaseEndsAt !== undefined) runtime.phaseEndsAt += shift;
+            delete runtime.pausedAt;
+          } else runtime.pausedAt = now;
+          timerTaskRef.current = null; timerElapsedRef.current = 0; timerElapsedBaseRef.current = 0; timerStartedAtRef.current = null;
+          setTimerTaskId(null); setTimerElapsed(0); setTimerRunning(false); setTimerStartedAt(null);
+          widgetManagesTaskTimerRef.current = false;
+          widgetTimerRemainderMsRef.current = 0; widgetTimerAdvancedAtRef.current = now;
+          widgetTimerRuntimeRef.current = runtime; setWidgetTimerRuntime(runtime);
+          break;
+        }
+        if (selection?.state !== "active") break;
         if (current.mode === "stopwatch") {
           if (timerTaskRef.current && timerTaskRef.current !== selection.task.id) stopAndSaveTimer();
           const taskAction = getStopwatchTaskTimerAction(
@@ -4805,6 +4829,12 @@ if (cached?.data && cached?.settings) {
   // once) always calls the current closure with up-to-date state.
   const widgetActionHandlerRef = useRef(handleWidgetAction);
   widgetActionHandlerRef.current = handleWidgetAction;
+  useEffect(() => onTimerModeOpening((mode) => {
+    if (widgetTimerRuntimeRef.current.mode !== mode) widgetActionHandlerRef.current({ type: "setTimerMode", mode });
+    setFocusOverlayMode(mode);
+    setUtilityPanel(null);
+    setPluginToolsOpen(false);
+  }), []);
   const widgetSnapshotBuilderRef = useRef(buildWidgetSnapshot);
   widgetSnapshotBuilderRef.current = buildWidgetSnapshot;
 
@@ -4825,9 +4855,9 @@ if (cached?.data && cached?.settings) {
       onSnapshot(next) {
         if (!settingsRef.current || !dataRef.current || (authStateRef.current?.user?.id || "preview") !== accountId) return;
         mirroredTimerRef.current = next;
-        timerTaskRef.current = next.taskId || null; timerElapsedRef.current = next.elapsedSeconds; timerElapsedBaseRef.current = next.elapsedSeconds;
+        timerTaskRef.current = next.timerRuntime.unlinked ? null : next.taskId || null; timerElapsedRef.current = next.elapsedSeconds; timerElapsedBaseRef.current = next.elapsedSeconds;
         timerStartedAtRef.current = null; setTimerStartedAt(null);
-        setTimerTaskId(next.taskId || null); setTimerElapsed(next.elapsedSeconds); setTimerRunning(next.timerRunning);
+        setTimerTaskId(next.timerRuntime.unlinked ? null : next.taskId || null); setTimerElapsed(next.elapsedSeconds); setTimerRunning(next.timerRunning);
         widgetTimerRuntimeRef.current = next.timerRuntime; widgetTimerAdvancedAtRef.current = next.timerSnapshotAt || Date.now(); setWidgetTimerRuntime(next.timerRuntime);
         if (JSON.stringify(settingsRef.current.widgetTimerPreferences) !== JSON.stringify(next.timerPreferences)) {
           const mirrored = { ...settingsRef.current, widgetTimerPreferences: next.timerPreferences };
@@ -9024,10 +9054,11 @@ if (cached?.data && cached?.settings) {
     : undefined;
   const timelineSnapActive = Boolean(draggedTask && (allDayDragDate || (hoverSlot && !drag?.outsideTimeline)));
   const showNotificationBadge = settings?.showInAppNotificationBadge !== false;
-  const focusTask = timerTask || headerTask;
-  const focusProject = timerProject || headerProject;
-  const focusElapsed = timerTask ? timerElapsed : 0;
   const focusProvider = focusOverlayMode ? getTimerMode(focusOverlayMode) : undefined;
+  const focusSelection = focusProvider ? resolveWidgetTimelineSelection(tasks, Date.now()) : undefined;
+  const focusTask = focusProvider ? (widgetTimerRuntime.unlinked ? null : timerTask || (focusSelection?.state === "active" ? focusSelection.task : null)) : timerTask || headerTask;
+  const focusProject = focusProvider ? projects.find(project => project.id === focusTask?.projectId) : timerProject || headerProject;
+  const focusElapsed = timerTask ? timerElapsed : 0;
   const focusTick = focusProvider ? advanceWidgetTimer(widgetTimerRuntime, widgetTimerPreferences, Date.now()) : null;
   const focusClockDisplay = formatTimerDisplay(focusTick ? focusTick.displaySeconds : focusElapsed);
   const flowBreakMinutes = Math.max(5, Math.round(Math.max(focusElapsed / 60, 25) / 5));
@@ -10398,11 +10429,13 @@ if (cached?.data && cached?.settings) {
               setQuickAddOpen(false);
               if (action === "notifications") setNotificationCenterOpen(true);
               if (action === "search") { setCommandQuery(""); setCommandOpen(true); }
+              if (action === "plugins") setPluginToolsOpen(true);
               if (action === "settings") { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }
             }}>
               <option value="" disabled hidden>{lang === "zh" ? "更多" : "More"}</option>
               <option value="notifications">{lang === "zh" ? "通知" : "Notifications"}</option>
               <option value="search">{lang === "zh" ? "搜索" : "Search"}</option>
+              <option value="plugins">{lang === "zh" ? "插件工具" : "Plugin tools"}</option>
               <option value="settings">{t(lang, "header.settings")}</option>
             </select>
             <NotificationBadge count={proactiveNotifications.length} enabled={showNotificationBadge} />
@@ -10433,6 +10466,7 @@ if (cached?.data && cached?.settings) {
       <CommandPalette open={commandOpen} compact={compactLayout} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
       {utilityPanel && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} onOpenScheduleTemplates={() => closeUtilityPanel(() => setScheduleTemplateOpen(true))} /></Suspense>}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
+      {pluginToolsOpen && <Suspense fallback={null}><ExtensionToolsDialog lang={lang} onClose={() => setPluginToolsOpen(false)} /></Suspense>}
       {focusOverlayMode && (
         <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>
           <div className="df-focus-topbar">
@@ -10450,13 +10484,13 @@ if (cached?.data && cached?.settings) {
             <div className="df-focus-mode-note">{focusModeNote}</div>
             <div className="df-focus-task-wrap">
               <span className="df-focus-task-prefix">{lang === "zh" ? "正在做" : "Working"}</span>
-              <span className="df-focus-task-name">{focusTask?.title || (lang === "zh" ? "未选择任务" : "No task selected")}</span>
+              <span className="df-focus-task-name">{focusTask?.title || (lang === "zh" ? "未关联任务 · 不记录任务用时" : "No linked task · no task work logged")}</span>
             </div>
             {focusProject && <div className="df-focus-project-name">{focusProject.title}</div>}
           </div>
           <div className="df-focus-controls">
             {!(focusProvider ? widgetTimerRuntime.running : timerRunning) ? (
-              <button className="df-focus-play" onClick={() => focusProvider ? handleWidgetAction({ type: "toggleWidgetTimer" }) : timerTaskId ? resumeTimer() : focusTask ? startTimer(focusTask.id) : undefined} disabled={!focusTask}>{timerTaskId ? (lang === "zh" ? "继续" : "Resume") : (lang === "zh" ? "开始" : "Start")}</button>
+              <button className="df-focus-play" onClick={() => focusProvider ? handleWidgetAction({ type: "toggleWidgetTimer" }) : timerTaskId ? resumeTimer() : focusTask ? startTimer(focusTask.id) : undefined} disabled={!focusTask && !focusProvider}>{timerTaskId || (focusProvider && widgetTimerRuntime.unlinked) ? (lang === "zh" ? "继续" : "Resume") : (lang === "zh" ? "开始" : "Start")}</button>
             ) : (
               <button className="df-focus-pause" onClick={() => focusProvider ? handleWidgetAction({ type: "toggleWidgetTimer" }) : pauseTimer()}>{lang === "zh" ? "暂停" : "Pause"}</button>
             )}

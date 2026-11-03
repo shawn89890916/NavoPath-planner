@@ -9,7 +9,7 @@ let removeMode: () => void;
 beforeEach(() => { removeMode = registerTimerMode(provider); });
 afterEach(() => removeMode());
 import type { WidgetSnapshot } from "../types";
-import { TimerModeTabs, WidgetPopoverUtilities, WidgetPopoverView, WidgetTimerSettingsView, WidgetView, didWidgetPointerDrag, formatTimer, getAdjacentTimerMode, getClampedTooltipPosition, getWidgetResizeDirection, getWidgetResizeFixedEdges, opacityAction, requiresRunningTimerModeConfirmation, resizeWidgetBounds, shouldToggleTimerClick, withPopoverState } from "./WidgetApp";
+import { appearanceStyle, TimerModeTabs, WidgetPopoverUtilities, WidgetPopoverView, WidgetTimerSettingsView, WidgetView, didWidgetPointerDrag, formatTimer, getAdjacentTimerMode, getClampedTooltipPosition, getWidgetResizeDirection, getWidgetResizeFixedEdges, opacityAction, requiresRunningTimerModeConfirmation, resizeWidgetBounds, shouldToggleTimerClick, withPopoverState } from "./WidgetApp";
 
 const snapshot: WidgetSnapshot = {
   taskId: "task-1",
@@ -416,4 +416,33 @@ describe("WidgetPopoverView", () => {
     expect(mainSource).not.toContain("setWidgetShadow");
     expect(mainSource).not.toContain("shadowEnabled");
   });
+});
+
+
+describe("widget community theme precedence", () => {
+  it("uses theme tokens for default fields in each mode and retains custom choices", () => {
+    const extensionTheme = { accountId: "local", sha256: "test", config: {} };
+    for (const theme of ["light", "dark"] as const) {
+      const style = appearanceStyle({ ...snapshot, theme, extensionTheme }) as Record<string, string>;
+      expect(style["--widget-bg"]).toContain("var(--surface-card,");
+      expect(style["--widget-ink"]).toContain("var(--text-main,");
+      expect(style["--widget-font"]).toContain("var(--paper-sans,");
+      expect(style["--widget-timer"]).toContain("var(--accent-active,");
+    }
+    const style = appearanceStyle({ ...snapshot, extensionTheme, appearance: { ...snapshot.appearance, fontFamily: "Georgia", light: { ...snapshot.appearance.light, backgroundColor: "#123456", fontColor: "#ABCDEF", timerColor: "#FEDCBA" } } }) as Record<string, string>;
+    expect(style).toMatchObject({ "--widget-bg": "#123456", "--widget-ink": "#ABCDEF", "--widget-font": "Georgia", "--widget-timer": "#FEDCBA" });
+    expect((appearanceStyle(snapshot) as Record<string, string>)["--widget-bg"]).toBe("#F8F7F3");
+  });
+});
+
+
+it("shows the shared standalone session even without an active timeline task", () => {
+  for (const timelineState of ["empty", "upcoming"] as const) {
+    const html = renderToStaticMarkup(<WidgetView snapshot={{ ...snapshot, timelineState, taskTitle: "No linked task", timerRuntime: { ...snapshot.timerRuntime, unlinked: true } }} density="full" onToggleTimer={() => {}} onTogglePopover={() => {}} onMove={() => {}} onResize={() => {}} />);
+    expect(html).toContain("No linked task");
+    expect(html).toContain("2:05");
+    expect(html).toContain('aria-label="Pause timer"');
+    expect(html).not.toContain("Starts in");
+    expect(html).not.toContain("--:--");
+  }
 });

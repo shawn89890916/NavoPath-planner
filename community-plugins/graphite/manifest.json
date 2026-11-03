@@ -1,6 +1,6 @@
 {
   "author": "NavoPath",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "apiVersion": 1,
   "minAppVersion": "1.5.0",
   "platforms": [
@@ -12,7 +12,7 @@
   "license": "MIT",
   "kind": "theme",
   "styles": "styles.css",
-  "preview": "preview.png",
+  "preview": "preview-light.png",
   "id": "graphite",
   "name": "Graphite",
   "description": "Cool off-white by day and layered graphite after dark, with precise silver ink and subtle rules.",
@@ -45,5 +45,9 @@
       "variable": "--graphite-dark-ink",
       "default": "#E1E5ED"
     }
-  ]
+  ],
+  "previews": {
+    "light": "preview-light.png",
+    "dark": "preview-dark.png"
+  }
 }

@@ -1,0 +1,59 @@
+/* Ocean: paired palettes with shared workspace geometry. */
+body[data-navopath-base-theme="light"],
+.df-app.theme-light,
+.df-mobile-dock.theme-light,
+.df-mobile-floating-actions.theme-light,
+.df-widget-root[data-theme="light"],
+.df-widget-popover-root[data-theme="light"] {
+  --bg-app: #DFE9ED;
+  --bg-app-soft: #E5EEF1;
+  --surface-main: var(--ocean-paper, #F0F6F8);
+  --surface-raised: #FBFEFF;
+  --surface-card: #F6FAFC;
+  --surface-tint: #E5EEF1;
+  --timeline-paper: var(--ocean-paper, #F0F6F8);
+  --text-main: var(--ocean-ink, #233B47);
+  --text-muted: #526D79;
+  --text-faint: #587480;
+  --border-soft: #AEBFC8;
+  --border-subtle: #D2DFE5;
+  --header-bg: #DFE9ED;
+  --header-border: #D2DFE5;
+  --header-fg: var(--ocean-ink, #233B47);
+  --header-fg-muted: #526D79;
+  --input-bg: var(--ocean-paper, #F0F6F8);
+  --input-border: #AEBFC8;
+  --accent-active: #385F73;
+  --accent-rgb: 56, 95, 115;
+  --accent-on: #FFFFFF;
+  --paper-serif: "Avenir Next", "Segoe UI", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei UI", sans-serif;
+}
+body[data-navopath-base-theme="dark"],
+.df-app.theme-dark,
+.df-mobile-dock.theme-dark,
+.df-mobile-floating-actions.theme-dark,
+.df-widget-root[data-theme="dark"],
+.df-widget-popover-root[data-theme="dark"] {
+  --bg-app: #10191E;
+  --bg-app-soft: #17252D;
+  --surface-main: var(--ocean-dark-paper, #1B2B34);
+  --surface-raised: #243943;
+  --surface-card: #20333D;
+  --surface-tint: #17252D;
+  --timeline-paper: var(--ocean-dark-paper, #1B2B34);
+  --text-main: var(--ocean-dark-ink, #DCE8EC);
+  --text-muted: #A9C0CA;
+  --text-faint: #88A4B1;
+  --border-soft: #4F6E7D;
+  --border-subtle: #304A58;
+  --header-bg: #10191E;
+  --header-border: #304A58;
+  --header-fg: var(--ocean-dark-ink, #DCE8EC);
+  --header-fg-muted: #A9C0CA;
+  --input-bg: var(--ocean-dark-paper, #1B2B34);
+  --input-border: #4F6E7D;
+  --accent-active: #B0C8D2;
+  --accent-rgb: 176, 200, 210;
+  --accent-on: #1B2B34;
+  --paper-serif: "Avenir Next", "Segoe UI", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei UI", sans-serif;
+}

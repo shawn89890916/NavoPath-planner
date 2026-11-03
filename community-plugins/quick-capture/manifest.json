@@ -1,0 +1,19 @@
+{
+  "author": "NavoPath",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "minAppVersion": "1.5.2-beta.2",
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
+  "repository": "https://github.com/shawn89890916/NavoPath-planner",
+  "license": "MIT",
+  "kind": "plugin",
+  "id": "quick-capture",
+  "name": "Quick Capture",
+  "description": "Capture ideas as real tasks in current day candidates with an optional default project.",
+  "main": "main.js",
+  "styles": "styles.css"
+}

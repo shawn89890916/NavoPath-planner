@@ -8094,16 +8094,12 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-app.task-block-fill .df-time-block:not(.is-event) .df-block-project {
   color: #ffffff;
-  -webkit-text-stroke: 0.4px rgba(255, 255, 255, 0.85);
-  paint-order: stroke fill;
 }
 .df-app.task-block-fill .df-time-block:not(.is-event) .df-next {
   color: #ffffff;
-  -webkit-text-stroke: 0.4px rgba(255, 255, 255, 0.85);
-  paint-order: stroke fill;
 }
 .df-app.task-block-fill .df-time-block:not(.is-event):hover .df-block-project {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 1px rgba(255, 255, 255, 0.7);
+  text-shadow: none;
 }
 .df-app.task-block-fill .df-time-block:not(.is-event) .df-block-check {
   border-color: rgba(255, 255, 255, 0.85);
@@ -18285,34 +18281,33 @@ body.df-planning-native-dragging [contenteditable] * {
   --drag-placeholder-border: rgba(128, 128, 128, 0.35);
   --task-drag-shadow: 0 6px 20px rgba(40, 36, 31, 0.12), 0 1px 3px rgba(40, 36, 31, 0.08);
 }
-.df-app {
+/* Resolve semantic aliases locally so themes reach body portals, mobile controls,
+   and desktop widgets as well as the main workspace. Palette tokens stay owned by
+   the base/theme CSS; explicit user choices retain their inline precedence. */
+:is(:where(body[data-navopath-base-theme]), .df-app, .df-mobile-dock,
+    .df-mobile-floating-actions, .df-widget-root, .df-widget-popover-root) {
   --df-primary: var(--accent-active);
   --df-primary-strong: var(--accent-active);
-  --df-primary-soft: color-mix(in srgb, var(--accent-active) 14%, #fff);
-  --df-bg: #FFFFFF;
+  --df-primary-soft: color-mix(in srgb, var(--accent-active) 14%, var(--surface-main));
+  --df-bg: var(--bg-app);
   --df-surface: var(--surface-main);
   --df-border: var(--border-soft);
   --df-text: var(--text-main);
   --df-muted: var(--text-muted);
-  --df-danger: #EF4444;
+  --df-danger: var(--danger-ink, #b6423c);
   --mode-primary: var(--accent-active);
   --mode-primary-strong: color-mix(in srgb, var(--accent-active) 80%, #000);
-  --mode-primary-soft: color-mix(in srgb, var(--accent-active) 14%, #fff);
-  --mode-on-primary: #111827;
+  --mode-primary-soft: color-mix(in srgb, var(--accent-active) 14%, var(--surface-main));
+  --mode-on-primary: var(--accent-on);
   --bg-surface: var(--surface-main);
   --bg-surface-soft: var(--surface-raised);
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 92% 7%, color-mix(in srgb, var(--mode-primary) 8%, transparent) 0, transparent 30%),
-    radial-gradient(circle at 6% 96%, color-mix(in srgb, var(--mode-primary) 5%, transparent) 0, transparent 25%),
-    #FFFFFF;
-  color: var(--text-main);
-  font-family: var(--paper-sans);
-  transition: background .42s ease;
-  --ix-dur:   140ms;
-  --ix-ease:  ease;
-  --ix-ring:  0 0 0 3px color-mix(in srgb, var(--mode-primary) 28%, transparent);
-  --ix-press: scale(0.965);
+  --color-primary: var(--accent-active);
+  --color-primary-strong: color-mix(in srgb, var(--accent-active) 80%, #000);
+  --color-primary-soft: color-mix(in srgb, var(--accent-active) 14%, var(--surface-main));
+  --color-bg: var(--bg-app);
+  --color-surface: var(--surface-main);
+  --color-border: var(--border-soft);
+  --color-text: var(--text-main);
   --color-ink: var(--text-main);
   --color-muted: var(--text-muted);
   --color-faint: var(--text-faint);
@@ -18321,7 +18316,6 @@ body.df-planning-native-dragging [contenteditable] * {
   --surface-page: var(--bg-app);
   --surface-elevated: var(--surface-raised);
   --surface-default: var(--surface-main);
-  --border-subtle: var(--paper-rule);
   --border-default: var(--paper-rule-strong);
   --border-strong: var(--paper-rule-strong);
   --border-focus: var(--accent-active);
@@ -18342,22 +18336,38 @@ body.df-planning-native-dragging [contenteditable] * {
   --paper-radius-soft: 8px;
   --paper-ease: var(--motion-ease);
   --paper-motion: var(--motion-base) var(--motion-ease);
-  --paper-rule: color-mix(in srgb, var(--text-main) 13%, transparent);
-  --paper-rule-strong: color-mix(in srgb, var(--text-main) 21%, transparent);
+  --paper-rule: var(--border-subtle);
+  --paper-rule-strong: var(--border-soft);
   --paper-accent-rule: color-mix(in srgb, var(--accent-active) 48%, var(--paper-rule));
   --paper-note: color-mix(in srgb, var(--accent-active) 8%, transparent);
   --paper-note-strong: color-mix(in srgb, var(--accent-active) 14%, transparent);
   --paper-float-shadow: 0 20px 48px rgba(20,18,15,.18);
+  --pencil-rule: color-mix(in srgb, var(--text-main) 38%, transparent);
+  --pencil-rule-strong: color-mix(in srgb, var(--text-main) 68%, transparent);
+  --pencil-press: color-mix(in srgb, var(--text-main) 18%, transparent);
+  --navo-task-rest-bg: var(--surface-main);
+  --navo-card-rest-bg: var(--surface-card);
+  --task-checkbox-color: var(--text-main);
+}
+
+.df-app {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 92% 7%, color-mix(in srgb, var(--mode-primary) 8%, transparent) 0, transparent 30%),
+    radial-gradient(circle at 6% 96%, color-mix(in srgb, var(--mode-primary) 5%, transparent) 0, transparent 25%),
+    #FFFFFF;
+  color: var(--text-main);
+  font-family: var(--paper-sans);
+  transition: background .42s ease;
+  --ix-dur:   140ms;
+  --ix-ease:  ease;
+  --ix-ring:  0 0 0 3px color-mix(in srgb, var(--mode-primary) 28%, transparent);
+  --ix-press: scale(0.965);
   background-color: var(--bg-app);
   background-image:
     radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--text-main) 2.2%, transparent) 0 .55px, transparent .75px),
     radial-gradient(circle at 72% 68%, color-mix(in srgb, var(--text-main) 1.8%, transparent) 0 .5px, transparent .7px);
   background-size: 11px 11px, 17px 17px;
-  --pencil-rule: color-mix(in srgb, var(--text-main) 38%, transparent);
-  --pencil-rule-strong: color-mix(in srgb, var(--text-main) 68%, transparent);
-  --pencil-press: color-mix(in srgb, var(--text-main) 18%, transparent);
-  --navo-task-rest-bg: rgb(250, 249, 245);
-  --navo-card-rest-bg: rgb(250, 249, 245);
   --task-bg: var(--surface-card, var(--surface-main, #F8F7F3));
   --task-border: color-mix(in srgb, var(--paper-rule, var(--border-subtle, #E7E2D8)) 90%, transparent);
   --task-border-hover: color-mix(in srgb, var(--text-faint, #807A70) 38%, var(--paper-rule, #E7E2D8));
@@ -18377,7 +18387,6 @@ body.df-planning-native-dragging [contenteditable] * {
   --task-project-accent-size: 4px;
   --task-accent-position: left;
   --task-accent-strength: subtle;
-  --task-checkbox-color: #27231E;
   --task-selected-border: color-mix(in srgb, var(--task-project-color) 48%, var(--task-border));
   --task-priority-low: rgb(110, 141, 166);
   --task-priority-normal: #27231E;
@@ -18390,13 +18399,13 @@ body.df-planning-native-dragging [contenteditable] * {
 /* Dark mode: keep the placeholder neutral gray, never purple/lavender. */
 .df-app.theme-dark {
   background: var(--bg-app);
-  --mode-primary: #A9A49B;
-  --mode-primary-strong: #A9A49B;
-  --mode-primary-soft: color-mix(in srgb, #A9A49B 10%, var(--surface-main));
-  --mode-on-primary: #1A1B1D;
+  --mode-primary: var(--accent-active);
+  --mode-primary-strong: var(--accent-active);
+  --mode-primary-soft: color-mix(in srgb, var(--accent-active) 10%, var(--surface-main));
+  --mode-on-primary: var(--accent-on);
   --paper-rule: var(--border-subtle);
   --paper-rule-strong: var(--border-soft);
-  --paper-accent-rule: #A9A49B;
+  --paper-accent-rule: var(--accent-active);
   --paper-note: color-mix(in srgb, var(--surface-raised) 65%, transparent);
   --paper-note-strong: var(--surface-raised);
   --paper-float-shadow: 0 18px 48px rgba(0,0,0,.34);
@@ -20819,10 +20828,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     top: 0;
   }
   .df-mobile-floating-actions {
-    --color-ink: var(--text-main);
-    --color-muted: var(--text-muted);
-    --paper-rule: var(--border-subtle);
-    --paper-rule-strong: var(--border-soft);
     --radius-control: var(--paper-radius, 4px);
     position: fixed;
     inset: 0;

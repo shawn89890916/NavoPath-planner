@@ -19,7 +19,7 @@ html:has(.df-widget-popover-root), body:has(.df-widget-popover-root), #root:has(
 }
 .df-widget-card::before {
   content: ""; position: absolute; inset: 0; z-index: 0; border: 1px solid var(--widget-border); border-radius: inherit;
-  background: rgb(var(--widget-bg-rgb)); opacity: var(--widget-opacity); pointer-events: none; corner-shape: var(--corner-shape, squircle);
+  background: var(--widget-bg); opacity: var(--widget-opacity); pointer-events: none; corner-shape: var(--corner-shape, squircle);
 }
 .df-widget-card > * { position: relative; z-index: 1; }
 .df-widget-resize-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
@@ -76,7 +76,7 @@ html:has(.df-widget-popover-root), body:has(.df-widget-popover-root), #root:has(
 .df-widget-popover-surface {
   display: flex; flex-direction: column; gap: 6px; width: 100%; height: 100%; padding: 8px;
   overflow: hidden; border: 1px solid var(--widget-border); border-radius: 10px;
-  background: rgb(var(--widget-bg-rgb)); -webkit-app-region: no-drag; corner-shape: var(--corner-shape, squircle);
+  background: var(--widget-bg); -webkit-app-region: no-drag; corner-shape: var(--corner-shape, squircle);
 }
 .df-widget-popover-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; margin-top: -8px; }
 .df-widget-opacity-heading { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 12px; font-weight: 600; white-space: nowrap; }
@@ -91,7 +91,7 @@ html:has(.df-widget-popover-root), body:has(.df-widget-popover-root), #root:has(
 }
 .df-widget-mode-switch button.is-selected { color: var(--widget-ink); border-color: var(--widget-ink); }
 .df-widget-mode-switch button:hover { color: var(--widget-ink); }
-.df-widget-mode-tooltip { position: fixed; z-index: 10; width: max-content; max-width: min(210px, calc(100vw - 12px)); max-height: calc(100vh - 12px); padding: 6px 8px; overflow: hidden; border: 0; border-radius: 7px; background: rgb(var(--widget-bg-rgb)); color: var(--widget-muted); font-size: 11px; line-height: 1.4; pointer-events: none; corner-shape: var(--corner-shape, squircle); }
+.df-widget-mode-tooltip { position: fixed; z-index: 10; width: max-content; max-width: min(210px, calc(100vw - 12px)); max-height: calc(100vh - 12px); padding: 6px 8px; overflow: hidden; border: 0; border-radius: 7px; background: var(--widget-bg); color: var(--widget-muted); font-size: 11px; line-height: 1.4; pointer-events: none; corner-shape: var(--corner-shape, squircle); }
 .df-widget-timer-mode-label { color: var(--widget-muted); font-size: 12px; line-height: 1.3; }
 .df-widget-mode-details { display: none; }
 .df-widget-mode-settings { min-height: 44px; padding: 4px 2px; border-bottom: 1px solid var(--widget-border); }

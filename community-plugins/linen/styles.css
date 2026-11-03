@@ -14,7 +14,7 @@ body[data-navopath-base-theme="light"],
   --timeline-paper: var(--linen-paper, #FBF7EE);
   --text-main: var(--linen-ink, #302A22);
   --text-muted: #746B5E;
-  --text-faint: #8D8374;
+  --text-faint: #756A59;
   --border-soft: #DDD3C3;
   --border-subtle: #E9E1D4;
   --header-bg: #F5F1E8;
@@ -42,7 +42,7 @@ body[data-navopath-base-theme="dark"],
   --timeline-paper: var(--linen-dark-paper, #1C1B18);
   --text-main: var(--linen-dark-ink, #DFD9CC);
   --text-muted: #B9B0A0;
-  --text-faint: #908779;
+  --text-faint: #968D7F;
   --border-soft: #565047;
   --border-subtle: #353028;
   --header-bg: #141311;

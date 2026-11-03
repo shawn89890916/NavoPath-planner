@@ -1,0 +1,53 @@
+{
+  "author": "NavoPath",
+  "version": "1.1.0",
+  "apiVersion": 1,
+  "minAppVersion": "1.5.0",
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
+  "repository": "https://github.com/shawn89890916/NavoPath-planner",
+  "license": "MIT",
+  "kind": "theme",
+  "styles": "styles.css",
+  "preview": "preview-light.png",
+  "id": "typewriter",
+  "name": "Typewriter",
+  "description": "Warm manuscript paper and sepia ink by day, charcoal umber at night, with literary serif headings and task titles.",
+  "options": [
+    {
+      "key": "paper",
+      "label": "Light paper",
+      "type": "color",
+      "variable": "--typewriter-paper",
+      "default": "#F6EFE2"
+    },
+    {
+      "key": "ink",
+      "label": "Light ink",
+      "type": "color",
+      "variable": "--typewriter-ink",
+      "default": "#392D23"
+    },
+    {
+      "key": "dark-paper",
+      "label": "Dark paper",
+      "type": "color",
+      "variable": "--typewriter-dark-paper",
+      "default": "#211D19"
+    },
+    {
+      "key": "dark-ink",
+      "label": "Dark ink",
+      "type": "color",
+      "variable": "--typewriter-dark-ink",
+      "default": "#E7DDCB"
+    }
+  ],
+  "previews": {
+    "light": "preview-light.png",
+    "dark": "preview-dark.png"
+  }
+}

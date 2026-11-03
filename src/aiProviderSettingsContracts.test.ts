@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 
 const main = fs.readFileSync(new URL("./SettingsPanel.tsx", import.meta.url), "utf8");
+const provider = fs.readFileSync(new URL("./components/AiProviderSettings.tsx", import.meta.url), "utf8");
 const controls = fs.readFileSync(new URL("./components/SettingsControls.tsx", import.meta.url), "utf8");
 const appCss = fs.readFileSync(new URL("./app.css", import.meta.url), "utf8");
 
@@ -14,8 +15,8 @@ describe("AI provider settings layout", () => {
   });
 
   it("shows GLM without the old Zhipu label", () => {
-    expect(main).toContain('zhipu: "GLM"');
-    expect(main).not.toContain('"Zhipu GLM"');
-    expect(main).not.toContain("智谱 GLM");
+    expect(provider).toContain('zhipu: "GLM"');
+    expect(provider).not.toContain('"Zhipu GLM"');
+    expect(provider).not.toContain("智谱 GLM");
   });
 });

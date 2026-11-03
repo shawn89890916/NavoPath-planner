@@ -1,0 +1,35 @@
+{
+  "manifest": {
+    "author": "NavoPath",
+    "version": "1.0.0",
+    "apiVersion": 1,
+    "minAppVersion": "1.5.2-beta.2",
+    "platforms": [
+      "desktop",
+      "web",
+      "mobile"
+    ],
+    "repository": "https://github.com/shawn89890916/NavoPath-planner",
+    "license": "MIT",
+    "kind": "plugin",
+    "id": "daily-overview",
+    "name": "Daily Overview",
+    "description": "A live, read-only overview of current tasks, overdue work, projects, and saved calendar events.",
+    "main": "main.js",
+    "styles": "styles.css"
+  },
+  "files": {
+    "main.js": {
+      "encoding": "utf8",
+      "data": "function R(n,a,c=new Date){let o=`${c.getFullYear()}-${String(c.getMonth()+1).padStart(2,\"0\")}-${String(c.getDate()).padStart(2,\"0\")}`,d=n.filter(e=>!e.completed),i=d.filter(e=>e.dueDate&&e.dueDate.slice(0,10)<o).sort((e,s)=>e.dueDate.localeCompare(s.dueDate)),l=d.filter(e=>e.plannedForDate===o||e.dueDate?.slice(0,10)===o||e.scheduledDate===o||e.timelineRecords?.some(s=>s.scheduledDate===o&&s.executionStatus===\"scheduled\")),r=a.filter(e=>(e.startDate||e.date)<=o&&(e.endDate||e.startDate||e.date)>=o).sort((e,s)=>(e.startTime||\"\").localeCompare(s.startTime||\"\"));return{date:o,overdue:i,today:l,calendar:r}}var S={onload(n){let a=n.language===\"zh\",c=a?\"\\u6BCF\\u65E5\\u6982\\u89C8\":\"Daily Overview\",o=()=>R(n.tasks.list(),n.calendar.list());n.commands.register(\"summary\",a?\"\\u5237\\u65B0\\u4ECA\\u65E5\\u6982\\u89C8\\u6458\\u8981\":\"Refresh daily summary\",()=>{let d=o();n.events.emit(\"daily-overview:refresh\"),n.ui.toast(a?`\\u4ECA\\u65E5 ${d.today.length} \\u9879 \\xB7 \\u903E\\u671F ${d.overdue.length} \\u9879 \\xB7 \\u65E5\\u5386 ${d.calendar.length} \\u9879`:`${d.today.length} today \\xB7 ${d.overdue.length} overdue \\xB7 ${d.calendar.length} calendar`)}),n.ui.registerView(c,d=>{let i=document.createElement(\"section\");i.className=\"navopath-daily-overview\";let l=document.createElement(\"button\");l.type=\"button\",l.className=\"ui-button ui-button--ghost\",l.textContent=a?\"\\u5237\\u65B0\":\"Refresh\";let r=document.createElement(\"div\");r.setAttribute(\"aria-live\",\"polite\"),i.append(l,r);let e=()=>{let p=o();r.replaceChildren();let f=document.createElement(\"p\");f.textContent=p.date,r.append(f);let v=new Map(n.projects.list().map(t=>[t.id,t.title])),h=(t,g)=>{let m=document.createElement(\"section\"),D=document.createElement(\"h3\");if(D.textContent=`${t} \\xB7 ${g.length}`,m.append(D),g.length){let u=document.createElement(\"ul\");for(let b of g){let C=document.createElement(\"li\");C.textContent=b,u.append(C)}m.append(u)}else{let u=document.createElement(\"p\");u.textContent=a?\"\\u6682\\u65E0\":\"None\",m.append(u)}r.append(m)},y=t=>`${t.title}${t.projectId&&v.has(t.projectId)?` \\xB7 ${v.get(t.projectId)}`:\"\"}${t.dueDate?` \\xB7 ${t.dueDate.slice(0,10)}`:\"\"}`;h(a?\"\\u4ECA\\u5929\\u5F85\\u529E\":\"Today\",p.today.map(y)),h(a?\"\\u903E\\u671F\\u5F85\\u529E\":\"Overdue\",p.overdue.map(y)),h(a?\"\\u65E5\\u5386\\u4E8B\\u9879\":\"Calendar events\",p.calendar.map(t=>`${t.startTime||(a?\"\\u5168\\u5929\":\"All day\")}${t.endTime?`\\u2013${t.endTime}`:\"\"} \\xB7 ${t.title}`));let $=document.createElement(\"p\");$.textContent=a?\"\\u53EA\\u8BFB\\u6982\\u89C8\\uFF1B\\u4ECA\\u65E5\\u5305\\u542B\\u8BA1\\u5212\\u3001\\u622A\\u6B62\\u6216\\u5DF2\\u6392\\u7A0B\\u7684\\u672A\\u5B8C\\u6210\\u4EFB\\u52A1\\u3002\\u65E5\\u5386\\u663E\\u793A\\u5DF2\\u4FDD\\u5B58\\u7684\\u4E8B\\u9879\\uFF0C\\u91CD\\u590D\\u4E8B\\u9879\\u6309\\u4FDD\\u5B58\\u65E5\\u671F\\u663E\\u793A\\u3002\":\"Read-only. Today includes unfinished planned, due, or scheduled tasks. Calendar shows saved events; recurring entries use their saved dates.\",r.append($)},s=n.on(l,\"click\",e),E=n.events.on(\"data:changed\",e),T=n.events.on(\"daily-overview:refresh\",e),w=n.interval(e,6e4);return d.append(i),e(),()=>{s(),E(),T(),w(),i.remove()}})}};export{R as dailyOverview,S as default};\n"
+    },
+    "styles.css": {
+      "encoding": "utf8",
+      "data": ".navopath-daily-overview { color: var(--text-main); }\n.navopath-daily-overview section { margin-top: var(--space-5, 24px); }\n.navopath-daily-overview h3 { font-size: 16px; margin: 0 0 var(--space-2, 8px); }\n.navopath-daily-overview p { color: var(--text-secondary, var(--text-main)); line-height: 1.6; }\n.navopath-daily-overview ul { padding: 0; margin: 0; list-style: none; }\n.navopath-daily-overview li { padding: var(--space-2, 8px) 0; border-bottom: 1px solid var(--border-soft); overflow-wrap: anywhere; }\n"
+    },
+    "LICENSE": {
+      "encoding": "utf8",
+      "data": "MIT License\n\nCopyright (c) 2026 NavoPath contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+    }
+  }
+}

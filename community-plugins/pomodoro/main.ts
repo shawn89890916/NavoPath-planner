@@ -82,6 +82,9 @@ export const provider = {
 
 export default {
   onload(ctx: any) {
+    const zh = ctx.language === "zh";
+    const title = zh ? "番茄钟" : "Pomodoro";
+    const open = () => ctx.timers.open("pomodoro");
     const withSettings = (value: any) => normalize({ ...value, ...ctx.settings.get() });
     const mode: any = { ...provider };
     for (const name of ["normalizePreferences", "createRuntime", "normalizeRuntime", "advance", "workMilliseconds", "createDeadlineRuntime"]) {
@@ -91,8 +94,18 @@ export default {
       };
     }
     ctx.timers.registerMode(mode);
+    ctx.commands.register("open", zh ? "打开番茄钟" : "Open Pomodoro", open);
+    ctx.ui.addHeaderItem(title, (container: HTMLElement) => {
+      const button = document.createElement("button"); button.type = "button"; button.className = "ui-button ui-button--ghost"; button.textContent = title;
+      button.setAttribute("aria-label", zh ? "打开番茄钟" : "Open Pomodoro");
+      button.title = zh ? "打开番茄钟，开始或暂停专注" : "Open Pomodoro to start or pause focus";
+      const off = ctx.on(button, "click", open); container.append(button);
+      return () => { off(); button.remove(); };
+    });
     ctx.settings.registerPage(ctx.language === "zh" ? "番茄钟" : "Pomodoro", (container: HTMLElement) => {
-      const zh = ctx.language === "zh"; const form = document.createElement("form"); form.className = "navopath-plugin-settings";
+      const form = document.createElement("form"); form.className = "navopath-plugin-settings navopath-pomodoro";
+      const help = document.createElement("p"); help.textContent = zh ? "顶部「番茄钟」或「插件工具 → 打开番茄钟」打开专注界面，点「开始」即可专注，可随时暂停。当前时间有时间轴任务时会关联并记录实际专注用时；未关联任务时仅计时。休息不计入任务用时。未关联的专注在「重置」后才会重新关联当前任务。" : "Use Pomodoro in the header or Plugin tools → Open Pomodoro, then Start or Pause. An active timeline task receives focus work logs; without one, focus runs without a task log. Breaks never count as work. Reset an unlinked session to link a newly active task.";
+      const launch = document.createElement("button"); launch.type = "button"; launch.textContent = zh ? "打开番茄钟" : "Open Pomodoro"; const offLaunch = ctx.on(launch, "click", open); form.append(help, launch);
       const labels: any = { focusMinutes: ["偏好专注（分钟）", "Preferred focus (minutes)"], breakMinutes: ["短休息（分钟）", "Short break (minutes)"], rounds: ["每组轮数", "Rounds per set"], minWorkMinutes: ["最短专注", "Minimum focus"], maxWorkMinutes: ["最长专注", "Maximum focus"], longBreakMinutes: ["长休息", "Long break"], minBreakMinutes: ["最短短休息", "Minimum short break"], minLongBreakMinutes: ["最短长休息", "Minimum long break"], longBreakEvery: ["长休息周期", "Long break every"], autoStartNextPhase: ["自动开始下一阶段", "Start next phase automatically"], allowWorkAdjustment: ["允许调整专注时长", "Adjust focus duration"], allowBreakShortening: ["允许缩短休息", "Shorten breaks"] };
       const current = withSettings({});
       for (const [key, fallback] of Object.entries(defaults)) {
@@ -101,7 +114,7 @@ export default {
       }
       const save = document.createElement("button"); save.type = "submit"; save.textContent = zh ? "保存" : "Save"; form.append(save);
       form.onsubmit = async (event) => { event.preventDefault(); const result: any = {}; for (const [key, fallback] of Object.entries(defaults)) { const input = form.elements.namedItem(key) as HTMLInputElement; result[key] = typeof fallback === "boolean" ? input.checked : Number(input.value); } await ctx.settings.save(normalize(result)); ctx.ui.toast(zh ? "番茄钟设置已保存" : "Pomodoro settings saved"); };
-      container.append(form); return () => form.remove();
+      container.append(form); return () => { offLaunch(); form.remove(); };
     });
   },
 };

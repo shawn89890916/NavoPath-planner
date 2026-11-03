@@ -1,6 +1,6 @@
 {
   "name": "navopath",
-  "version": "1.5.2-beta.1",
+  "version": "1.5.2-beta.2",
   "description": "NavoPath — Navigate your next step.",
   "author": "NavoPath",
   "main": "electron/main.cjs",
@@ -9,7 +9,7 @@
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && set VITE_DEV_SERVER_URL=http://127.0.0.1:5173&& electron .\"",
     "build": "npm run build:navopath",
     "build:navopath": "tsc && vite build",
-    "test": "node --test \"scripts/*.test.mjs\" \"supabase/functions/ai-assistant/*.test.ts\" \"supabase/functions/external-calendar/*.test.ts\" \"supabase/functions/extension-download/*.test.ts\" \"electron/*.test.cjs\" && vitest run src",
+    "test": "node --test \"scripts/*.test.mjs\" \"supabase/functions/ai-assistant/*.test.ts\" \"supabase/functions/external-calendar/*.test.ts\" \"supabase/functions/extension-download/*.test.ts\" \"electron/*.test.cjs\" && vitest run --dir src",
     "extensions:build": "node scripts/build-extensions.mjs",
     "extensions:check": "node scripts/build-extensions.mjs --check",
     "test:cloud-agent": "node scripts/cloud-agent-smoke.mjs",

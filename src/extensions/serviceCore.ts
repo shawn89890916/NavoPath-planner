@@ -145,7 +145,8 @@ export class ExtensionService {
     const { validateManifest } = await import("./packages");
     return raw.packages.map((entry: any) => {
       if (!isRecord(entry) || !/^[a-f0-9]{64}$/.test(entry.sha256)) throw new Error("Catalog requires SHA-256 hashes");
-      return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId, ...(entry.previewUrl ? { previewUrl: publicHttps(entry.previewUrl) } : {}) };
+      const previewUrls = entry.previewUrls === undefined ? undefined : { light: publicHttps(entry.previewUrls.light), dark: publicHttps(entry.previewUrls.dark) };
+      return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId, ...(entry.previewUrl ? { previewUrl: publicHttps(entry.previewUrl) } : {}), ...(previewUrls ? { previewUrls } : {}) };
     });
   }
   private refreshCatalogImpl(): Promise<void> {

@@ -17,11 +17,19 @@ export interface TimerModeProvider {
 const modes = new Map<string, TimerModeProvider>();
 const listeners = new Set<() => void>();
 const removing = new Set<(id: string) => void>();
+const launchers = new Set<(id: string) => void>();
 let revision = 0;
 export const getTimerMode = (id: string) => modes.get(id);
 export const getTimerModeRevision = () => revision;
 export const subscribeTimerModes = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
 export const onTimerModeRemoving = (listener: (id: string) => void) => { removing.add(listener); return () => { removing.delete(listener); }; };
+/** Opens the host's existing timer controls without starting or duplicating a clock. */
+export function openTimerMode(id: string): void {
+  if (!modes.has(id)) throw new Error("Timer mode is not enabled");
+  if (!launchers.size) throw new Error("Timer controls are not available in this window");
+  launchers.forEach((listener) => listener(id));
+}
+export const onTimerModeOpening = (listener: (id: string) => void) => { launchers.add(listener); return () => { launchers.delete(listener); }; };
 export function registerTimerMode(provider: TimerModeProvider): () => void {
   if (!provider?.id || ["stopwatch", "countdown"].includes(provider.id) || modes.has(provider.id)) throw new Error("Invalid or duplicate timer mode");
   for (const method of ["normalizePreferences", "createRuntime", "normalizeRuntime", "advance", "workMilliseconds"] as const) {

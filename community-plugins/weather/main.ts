@@ -1,3 +1,5 @@
+import cityAliases from "./city-aliases.json";
+
 /** Open-Meteo current conditions and daily forecast. No location or forecast is fabricated. */
 export function weatherCondition(code: unknown, zh: boolean) {
   const conditions: Record<number, [string, string, string]> = {
@@ -25,54 +27,110 @@ function weatherIcon(kind: string) {
   path.setAttribute("d", shapes[kind] ?? shapes.unknown); svg.append(path); return svg;
 }
 
+/** Keep the provider's administrative label for selection and a separate compact city label. */
+export function weatherCityName(settings: { city?: string; cityShort?: string }) {
+  return (settings.cityShort || settings.city?.split(/[,，]/)[0] || "").trim();
+}
+
+export function weatherSearchQueries(query: string) {
+  const name = query.trim().replace(/，/g, ",");
+  // GeoNames indexes some Chinese cities with 市 and others without it.
+  // Probe both real names rather than inventing aliases or coordinates.
+  const [city, ...qualifier] = name.split(",").map(part => part.trim());
+  const short = city.replace(/[市县縣区區]$/, "");
+  const alternate = short !== city ? short : `${city}市`;
+  return [...new Set([name, ...(/^[\p{Script=Han}]+$/u.test(city) ? [[alternate, ...qualifier].join(",")] : [])])];
+}
+
+type WeatherPlace = { city: string; cityShort: string; latitude: number; longitude: number; population: number; id?: number };
+export async function searchWeatherCities(query: string, language: string, request: (url: URL) => Promise<any>): Promise<WeatherPlace[]> {
+  const aliasKey = query.trim().replace(/[市县縣区區]$/, "");
+  const aliases = query.includes(",") || query.includes("，") ? [] : (cityAliases as Record<string, Array<{ id: number; name: string; country: string }>>)[aliasKey] || [];
+  const aliasIds = new Set(aliases.map(alias => alias.id));
+  const searches = weatherSearchQueries(query).map(name => {
+    const url = new URL("https://geocoding-api.open-meteo.com/v1/search");
+    url.searchParams.set("name", name); url.searchParams.set("count", "30"); url.searchParams.set("language", language);
+    return request(url);
+  });
+  for (const alias of aliases) {
+    const url = new URL("https://geocoding-api.open-meteo.com/v1/get");
+    url.searchParams.set("id", String(alias.id)); url.searchParams.set("language", language);
+    searches.push(request(url).then(place => ({ results: [place] })));
+  }
+  const responses = await Promise.allSettled(searches);
+  if (responses.every(response => response.status === "rejected")) throw (responses[0] as PromiseRejectedResult).reason;
+  const places = new Map<string, WeatherPlace>();
+  for (const response of responses) {
+    if (response.status !== "fulfilled" || !Array.isArray(response.value?.results)) continue;
+    for (const place of response.value.results) {
+      if (typeof place.name !== "string" || !place.name.trim() || !validCoordinates(place.latitude, place.longitude)) continue;
+      const key = String(place.id ?? `${place.latitude},${place.longitude}`);
+      const cityShort = place.name.trim();
+      places.set(key, { city: [...new Set([cityShort, place.admin1, place.country].filter(Boolean))].join(", "), cityShort, latitude: place.latitude, longitude: place.longitude, population: Number(place.population) || 0, id: place.id });
+    }
+  }
+  const normalized = (name: string) => name.toLocaleLowerCase().replace(/[市县縣区區]$/, "").trim();
+  const city = normalized(query.split(/[,，]/)[0]);
+  return [...places.values()].sort((a, b) => Number(aliasIds.has(b.id!)) - Number(aliasIds.has(a.id!)) || Number(normalized(b.cityShort) === city) - Number(normalized(a.cityShort) === city) || b.population - a.population).slice(0, 12);
+}
+
+function validCoordinates(latitude: unknown, longitude: unknown) {
+  return typeof latitude === "number" && Number.isFinite(latitude) && Math.abs(latitude) <= 90 && typeof longitude === "number" && Number.isFinite(longitude) && Math.abs(longitude) <= 180;
+}
+
 export default {
   async onload(ctx: any) {
     const zh = ctx.language === "zh";
-    const defaults = { city: "", latitude: null, longitude: null, unit: "celsius", intervalMinutes: 30, endpoint: "https://api.open-meteo.com/v1/forecast" };
+    const defaults = { city: "", cityShort: "", latitude: null, longitude: null, unit: "celsius", intervalMinutes: 30, endpoint: "https://api.open-meteo.com/v1/forecast" };
     const settings = () => ({ ...defaults, ...ctx.settings.get() });
-    const nodes = new Set<HTMLDetailsElement>();
-    const requests = new Set<AbortController>();
+    const nodes = new Set<{ root: HTMLElement; trigger: HTMLButtonElement; panel: HTMLElement; position: () => void; dispose: () => void }>();
+    const requests = new Map<AbortController, number>();
     let stopped = false, busy = false, error = "", forecastVersion = 0;
     let forecastRequest: AbortController | null = null, pending: Promise<void> | null = null;
     let cache: any = await ctx.storage.get("forecast");
     const render = () => {
-      const s = settings(); const same = cache?.latitude === s.latitude && cache?.longitude === s.longitude && cache?.unit === s.unit;
-      for (const node of nodes) {
-        node.replaceChildren();
+      const s = settings();
+      const same = cache?.latitude === s.latitude && cache?.longitude === s.longitude && cache?.unit === s.unit && [cache?.current, cache?.high, cache?.low, cache?.precipitation, cache?.timestamp].every(value => typeof value === "number" && Number.isFinite(value));
+      for (const { root, trigger, panel, position } of nodes) {
+        const restoreRefreshFocus = panel.contains(document.activeElement);
+        trigger.textContent = weatherCityName(s) || (zh ? "设置城市" : "Choose city");
+        trigger.title = zh ? "查看天气" : "View weather";
+        panel.replaceChildren();
         const condition = weatherCondition(same ? cache.weather_code : undefined, zh);
-        const current = document.createElement("summary"); current.className = "navopath-weather-summary";
-        current.append(weatherIcon(condition.icon));
-        const city = document.createElement("span"); city.className = "navopath-weather-city"; city.textContent = s.city || (zh ? "天气 · 请设置城市" : "Weather · choose a city"); current.append(city);
-        if (same) { const temperature = document.createElement("span"); temperature.textContent = `${Math.round(cache.current)}°${s.unit === "fahrenheit" ? "F" : "C"}`; current.append(temperature); }
-        current.setAttribute("aria-label", [city.textContent, same ? current.textContent : (zh ? "天气暂不可用" : "Weather unavailable"), same ? condition.label : ""].filter(Boolean).join(" · "));
-        node.append(current);
-        const updated = same ? `${zh ? "更新于" : "Updated"} ${new Date(cache.timestamp).toLocaleString(ctx.language)}` : "";
-        node.setAttribute("aria-busy", String(busy));
-        node.dataset.stale = String(Boolean(error || (same && Date.now() - cache.timestamp > Math.max(5, Number(s.intervalMinutes)) * 60000)));
-        const detail = document.createElement("div"); detail.className = "navopath-weather-details";
-        const description = document.createElement("p"); description.textContent = same ? condition.label : s.city ? (zh ? "天气暂不可用" : "Weather unavailable") : (zh ? "请在插件设置中搜索并选择城市。" : "Search and choose a city in the plugin settings."); detail.append(description);
+        const heading = document.createElement("h3"); heading.textContent = s.city || (zh ? "天气" : "Weather"); panel.append(heading);
+        const description = document.createElement("p"); description.className = "navopath-weather-current";
+        if (same) {
+          description.append(weatherIcon(condition.icon));
+          const temperature = document.createElement("strong"); temperature.textContent = `${Math.round(cache.current)}°${s.unit === "fahrenheit" ? "F" : "C"}`; description.append(temperature);
+        }
+        const summary = document.createElement("span"); summary.textContent = same ? condition.label : s.city ? (zh ? "天气暂不可用" : "Weather unavailable") : (zh ? "请在插件设置中搜索并选择城市。" : "Search and choose a city in the plugin settings."); description.append(summary); panel.append(description);
+        panel.setAttribute("aria-label", zh ? `${weatherCityName(s)}天气` : `${weatherCityName(s)} weather`);
+        panel.setAttribute("aria-busy", String(busy));
+        root.dataset.stale = String(Boolean(error || (same && Date.now() - cache.timestamp > Math.max(5, Number(s.intervalMinutes)) * 60000)));
         if (same) {
           const values = document.createElement("dl");
           for (const [label, value] of [[zh ? "最高 / 最低" : "High / low", `${Math.round(cache.high)}° / ${Math.round(cache.low)}°`], [zh ? "降水概率" : "Precipitation chance", `${cache.precipitation}%`]]) { const row = document.createElement("div"), term = document.createElement("dt"), reading = document.createElement("dd"); term.textContent = label; reading.textContent = value; row.append(term, reading); values.append(row); }
-          detail.append(values); const time = document.createElement("time"); time.dateTime = new Date(cache.timestamp).toISOString(); time.textContent = updated; detail.append(time);
+          panel.append(values); const time = document.createElement("time"); time.dateTime = new Date(cache.timestamp).toISOString(); time.textContent = `${zh ? "更新于" : "Updated"} ${new Date(cache.timestamp).toLocaleString(ctx.language)}`; panel.append(time);
         }
-        if (error) { const warning = document.createElement("p"); warning.className = "navopath-weather-error"; warning.setAttribute("role", "alert"); warning.textContent = `${same ? (zh ? "离线缓存" : "Cached / offline") : (zh ? "获取失败" : "Request failed")}: ${error}`; detail.append(warning); }
-        const refreshButton = document.createElement("button"); refreshButton.type = "button"; refreshButton.textContent = busy ? (zh ? "正在更新…" : "Refreshing…") : (zh ? "刷新" : "Refresh"); refreshButton.disabled = busy || !Number.isFinite(s.latitude) || !Number.isFinite(s.longitude); refreshButton.onclick = () => { void refresh(); };
+        if (error) { const warning = document.createElement("p"); warning.className = "navopath-weather-error"; warning.setAttribute("role", "alert"); warning.textContent = `${same ? (zh ? "离线缓存" : "Cached / offline") : (zh ? "获取失败" : "Request failed")}: ${error}`; panel.append(warning); }
+        const refreshButton = document.createElement("button"); refreshButton.type = "button"; refreshButton.className = "ui-button ui-button--secondary"; refreshButton.textContent = busy ? (zh ? "正在更新…" : "Refreshing…") : (zh ? "刷新" : "Refresh"); refreshButton.disabled = busy || !validCoordinates(s.latitude, s.longitude); refreshButton.onclick = () => { void refresh(); };
         const attribution = document.createElement("a"); attribution.href = "https://open-meteo.com/"; attribution.target = "_blank"; attribution.rel = "noopener noreferrer"; attribution.textContent = "Open-Meteo";
-        const actions = document.createElement("div"); actions.className = "navopath-weather-actions"; actions.append(refreshButton, attribution); detail.append(actions); node.append(detail);
+        const actions = document.createElement("div"); actions.className = "navopath-weather-actions"; actions.append(refreshButton, attribution); panel.append(actions);
+        if (restoreRefreshFocus) { if (refreshButton.disabled) { panel.tabIndex = -1; panel.focus({ preventScroll: true }); } else refreshButton.focus({ preventScroll: true }); }
+        position();
       }
     };
     const json = async (url: URL, controller = new AbortController()) => {
-      requests.add(controller);
+      requests.set(controller, (requests.get(controller) || 0) + 1);
       const timeout = setTimeout(() => controller.abort(), 15000);
       try { const response = await fetch(url, { signal: controller.signal, cache: "no-store" }); if (!response.ok) throw new Error(`HTTP ${response.status}`); return await response.json(); }
-      finally { clearTimeout(timeout); requests.delete(controller); }
+      finally { clearTimeout(timeout); const remaining = (requests.get(controller) || 1) - 1; if (remaining) requests.set(controller, remaining); else requests.delete(controller); }
     };
     function refresh(force = false): Promise<void> {
       const s = settings();
       if (stopped) return Promise.resolve();
       if (force) { forecastVersion++; forecastRequest?.abort(); busy = false; }
-      if (!Number.isFinite(s.latitude) || !Number.isFinite(s.longitude)) { render(); return Promise.resolve(); }
+      if (!validCoordinates(s.latitude, s.longitude)) { render(); return Promise.resolve(); }
       if (busy) return pending ?? Promise.resolve();
       const version = ++forecastVersion;
       forecastRequest = new AbortController(); const controller = forecastRequest;
@@ -96,26 +154,56 @@ export default {
       return pending;
     }
     ctx.ui.addHeaderItem(zh ? "天气" : "Weather", (container: HTMLElement) => {
-      const details = document.createElement("details"); details.className = "navopath-weather"; container.append(details); nodes.add(details); render();
-      return () => { nodes.delete(details); details.remove(); };
+      const root = document.createElement("div"); root.className = "navopath-weather";
+      const trigger = document.createElement("button"); trigger.type = "button"; trigger.className = "navopath-weather-summary ui-button ui-button--ghost"; trigger.setAttribute("aria-haspopup", "dialog"); trigger.setAttribute("aria-expanded", "false");
+      const panel = document.createElement("div"); panel.className = "navopath-weather-details ui-popover"; panel.id = `navopath-weather-${crypto.randomUUID()}`; panel.setAttribute("role", "dialog"); panel.setAttribute("popover", "auto"); trigger.setAttribute("aria-controls", panel.id);
+      const native = typeof panel.showPopover === "function";
+      let open = false;
+      if (!native) panel.hidden = true;
+      root.append(trigger, panel); container.append(root);
+      // The browser top layer escapes header overflow while retaining inherited theme tokens.
+      // Older browsers use a body-mounted panel with the same local tokens.
+      if (!native) document.body.append(panel);
+      const position = () => {
+        if (!open) return;
+        const rect = trigger.getBoundingClientRect(), bounds = panel.getBoundingClientRect();
+        const width = document.documentElement.clientWidth, height = window.innerHeight;
+        const left = Math.max(8, Math.min(rect.right - bounds.width, width - bounds.width - 8));
+        const top = Math.max(8, rect.bottom + 8 + bounds.height <= height - 8 ? rect.bottom + 8 : rect.top - bounds.height - 8);
+        panel.style.left = `${left}px`; panel.style.top = `${top}px`;
+      };
+      const close = () => { if (!open) return; open = false; trigger.setAttribute("aria-expanded", "false"); if (native) panel.hidePopover(); else panel.hidden = true; };
+      trigger.onclick = () => {
+        if (open) { close(); return; }
+        if (!native) { const style = getComputedStyle(root); for (let i = 0; i < style.length; i++) { const key = style[i]; if (key.startsWith("--")) panel.style.setProperty(key, style.getPropertyValue(key)); } }
+        open = true; trigger.setAttribute("aria-expanded", "true"); if (native) panel.showPopover(); else panel.hidden = false; position();
+      };
+      const toggle = (event: Event) => { open = (event as ToggleEvent).newState === "open"; trigger.setAttribute("aria-expanded", String(open)); position(); };
+      const outside = (event: Event) => { if (!root.contains(event.target as Node) && !panel.contains(event.target as Node)) close(); };
+      const keyboard = (event: KeyboardEvent) => { if (event.key === "Escape" && open) { event.stopPropagation(); event.preventDefault(); close(); trigger.focus(); } };
+      panel.addEventListener("toggle", toggle); document.addEventListener("pointerdown", outside); document.addEventListener("focusin", outside); root.addEventListener("keydown", keyboard); if (!native) panel.addEventListener("keydown", keyboard);
+      window.addEventListener("resize", position); window.addEventListener("scroll", position, true);
+      const entry = { root, trigger, panel, position, dispose: () => { close(); panel.removeEventListener("toggle", toggle); document.removeEventListener("pointerdown", outside); document.removeEventListener("focusin", outside); root.removeEventListener("keydown", keyboard); panel.removeEventListener("keydown", keyboard); window.removeEventListener("resize", position); window.removeEventListener("scroll", position, true); panel.remove(); root.remove(); nodes.delete(entry); } };
+      nodes.add(entry); render(); return entry.dispose;
     });
     ctx.settings.registerPage(zh ? "天气" : "Weather", (container: HTMLElement) => {
       const s = settings(); const form = document.createElement("form"); form.className = "navopath-plugin-settings";
       const city = document.createElement("input"); city.placeholder = zh ? "搜索城市" : "Search city"; city.value = s.city; city.setAttribute("aria-label", city.placeholder);
       const search = document.createElement("button"); search.type = "button"; search.textContent = zh ? "搜索" : "Search";
-      const results = document.createElement("div"); results.setAttribute("aria-live", "polite"); let selected: any = null, searchVersion = 0, searchRequest: AbortController | null = null;
+      const results = document.createElement("div"); results.className = "navopath-weather-results"; results.setAttribute("aria-live", "polite"); let selected: WeatherPlace | null = null, searchVersion = 0, searchRequest: AbortController | null = null;
+      city.oninput = () => { selected = null; searchVersion++; searchRequest?.abort(); results.replaceChildren(); };
       search.onclick = async () => {
         const query = city.value.trim(); if (!query) return;
-        const version = ++searchVersion; searchRequest?.abort(); searchRequest = new AbortController(); results.textContent = zh ? "正在搜索…" : "Searching…";
+        const version = ++searchVersion; searchRequest?.abort(); searchRequest = new AbortController(); const controller = searchRequest; results.textContent = zh ? "正在搜索…" : "Searching…";
         try {
-          const url = new URL("https://geocoding-api.open-meteo.com/v1/search"); url.searchParams.set("name", query); url.searchParams.set("count", "8"); url.searchParams.set("language", ctx.language);
-          const response = await json(url, searchRequest); if (version !== searchVersion || stopped) return; results.replaceChildren();
-          const places = Array.isArray(response.results) ? response.results : [];
-          if (!places.length) results.textContent = zh ? "未找到城市" : "No cities found";
-          for (const place of places) { const option = document.createElement("button"); option.type = "button"; option.textContent = [place.name, place.admin1, place.country].filter(Boolean).join(", "); option.onclick = () => { selected = { city: option.textContent, latitude: place.latitude, longitude: place.longitude }; city.value = selected.city; results.textContent = zh ? "已选择城市" : "City selected"; }; results.append(option); }
-        } catch (cause: any) { if (version === searchVersion) results.textContent = cause.message; }
+          const places = await searchWeatherCities(query, ctx.language, url => json(url, controller)); if (version !== searchVersion || stopped) return; results.replaceChildren();
+          if (!places.length) results.textContent = zh ? "未找到城市，请尝试城市全名、当地名称或英文名称。" : "No cities found. Try the full, local or English city name.";
+          for (const place of places) { const option = document.createElement("button"); option.type = "button"; option.textContent = place.city; option.onclick = () => { selected = place; city.value = place.city; results.textContent = zh ? "已选择城市" : "City selected"; }; results.append(option); }
+        } catch (cause: any) { if (version === searchVersion && !stopped) results.textContent = cause.message; }
       };
+      city.onkeydown = event => { if (event.key === "Enter") { event.preventDefault(); search.click(); } };
       form.append(city, search, results);
+      const geocodingAttribution = document.createElement("a"); geocodingAttribution.href = "https://www.geonames.org/"; geocodingAttribution.target = "_blank"; geocodingAttribution.rel = "noopener noreferrer"; geocodingAttribution.textContent = zh ? "城市数据：GeoNames · Open-Meteo" : "City data: GeoNames · Open-Meteo"; form.append(geocodingAttribution);
       const field = (title: string, input: HTMLElement) => { const row = document.createElement("label"); const text = document.createElement("span"); text.textContent = title; row.append(text, input); form.append(row); };
       const unit = document.createElement("select"); for (const [value, text] of [["celsius", "°C"], ["fahrenheit", "°F"]]) { const option = document.createElement("option"); option.value = value; option.textContent = text; unit.append(option); } unit.value = s.unit; field(zh ? "温度单位" : "Temperature unit", unit);
       const interval = document.createElement("input"); interval.type = "number"; interval.min = "5"; interval.max = "1440"; interval.value = String(s.intervalMinutes); field(zh ? "更新间隔（分钟）" : "Refresh interval (minutes)", interval);
@@ -123,13 +211,13 @@ export default {
       const key = document.createElement("input"); key.type = "password"; key.autocomplete = "off"; key.value = ctx.localStorage.get("apiKey") || ""; field(zh ? "API 密钥（仅保存到此设备）" : "API key (stored on this device only)", key);
       const status = document.createElement("p"); status.setAttribute("aria-live", "polite");
       const save = document.createElement("button"); save.type = "submit"; save.textContent = zh ? "保存并更新" : "Save and refresh"; form.append(save, status);
-      form.onsubmit = async (event) => { event.preventDefault(); if (!selected && city.value !== s.city) { status.textContent = zh ? "请先搜索并选择城市" : "Search and select a city first"; return; } try { new URL(endpoint.value); ctx.localStorage.set("apiKey", key.value); await ctx.settings.save({ ...(selected || {}), unit: unit.value, intervalMinutes: Math.max(5, Math.min(1440, Number(interval.value) || 30)), endpoint: endpoint.value }); await refresh(); status.textContent = error || (zh ? "已更新" : "Updated"); } catch (cause: any) { status.textContent = cause.message; } };
+      form.onsubmit = async (event) => { event.preventDefault(); const current = settings(); if ((!selected && city.value !== current.city) || (selected && city.value !== selected.city)) { status.textContent = zh ? "请先搜索并选择城市" : "Search and select a city first"; return; } try { new URL(endpoint.value); ctx.localStorage.set("apiKey", key.value); const location = selected ? { city: selected.city, cityShort: selected.cityShort, latitude: selected.latitude, longitude: selected.longitude } : { cityShort: weatherCityName(current) }; await ctx.settings.save({ ...location, unit: unit.value, intervalMinutes: Math.max(5, Math.min(1440, Number(interval.value) || 30)), endpoint: endpoint.value }); await refresh(true); status.textContent = error || (zh ? "已更新" : "Updated"); } catch (cause: any) { status.textContent = cause.message; } };
       container.append(form); return () => { searchVersion++; searchRequest?.abort(); form.remove(); };
     });
     ctx.interval(() => { const s = settings(); if (!cache || cache.unit !== s.unit || cache.latitude !== s.latitude || cache.longitude !== s.longitude || Date.now() - cache.timestamp >= Math.max(5, Number(s.intervalMinutes) || 30) * 60000) void refresh(); }, 60000);
     ctx.on(window, "online", () => { void refresh(); });
     ctx.events.on(`config:${ctx.id}`, () => { error = ""; void refresh(true); });
-    ctx.register(() => { stopped = true; requests.forEach((request) => request.abort()); nodes.clear(); });
+    ctx.register(() => { stopped = true; requests.forEach((_, request) => request.abort()); for (const entry of nodes) entry.dispose(); nodes.clear(); });
     void refresh();
   },
 };

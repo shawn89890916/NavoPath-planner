@@ -1,9 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { zipSync, strToU8 } from "fflate";
-import { compatibility, mergeExtensionPreferences, normalizeExtensionPreferences, parsePackage, readPackage, sha256 } from "./packages";
+import { compareVersions, compatibility, mergeExtensionPreferences, normalizeExtensionPreferences, parsePackage, readPackage, sha256 } from "./packages";
 import { officialCatalog, officialPackageTexts } from "./officialPackages";
 
 describe("community extension packages", () => {
+  it("orders numbered prereleases for compatibility and updates", () => {
+    expect(compareVersions("1.5.2-beta.2", "1.5.2-beta.1")).toBeGreaterThan(0);
+    expect(compareVersions("1.5.2-beta.10", "1.5.2-beta.2")).toBeGreaterThan(0);
+    expect(compareVersions("1.5.2-beta.2", "1.5.2")).toBeLessThan(0);
+    expect(compareVersions("1.5.2-beta", "1.5.2-beta.1")).toBeLessThan(0);
+    expect(compareVersions("1.5.2-beta.2", "1.5.2-beta.2")).toBe(0);
+  });
+  it("validates both packaged light and dark previews", () => {
+    const pkg = JSON.parse(officialPackageTexts.linen);
+    pkg.manifest.previews = { light: pkg.manifest.preview, dark: "missing.png" };
+    expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("preview resource");
+    pkg.manifest.previews.dark = "../dark.png";
+    expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("raster image");
+    delete pkg.manifest.previews.dark;
+    expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("light and dark");
+  });
   it("verifies every shipped offline package against the exact catalog bytes", async () => {
     for (const entry of officialCatalog.packages) {
       if (!officialPackageTexts[entry.manifest.id]) continue;

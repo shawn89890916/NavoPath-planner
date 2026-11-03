@@ -14,7 +14,7 @@ body[data-navopath-base-theme="light"],
   --timeline-paper: var(--sage-paper, #F3F6ED);
   --text-main: var(--sage-ink, #283325);
   --text-muted: #626F5A;
-  --text-faint: #85917D;
+  --text-faint: #65725C;
   --border-soft: #C9D3C0;
   --border-subtle: #DEE6D5;
   --header-bg: #E8EDE3;

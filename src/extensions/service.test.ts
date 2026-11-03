@@ -114,10 +114,10 @@ describe("extension installation and account reconciliation", () => {
   it("keeps the previous version installed when replacement activation fails", async () => {
     const f = fixture(); await current.configure(f.host);
     await current.importFile(new File([officialPackageTexts.weather], "weather.navopackage.json")); await current.toggle("imported:weather", true);
-    const pkg = JSON.parse(officialPackageTexts.weather); pkg.manifest.version = "2.0.0";
+    const pkg = JSON.parse(officialPackageTexts.weather); const previousVersion = pkg.manifest.version; pkg.manifest.version = "2.0.0";
     mocks.load.mockRejectedValueOnce(new Error("bad update"));
     await expect(current.importFile(new File([JSON.stringify(pkg)], "weather.navopackage.json"))).rejects.toThrow("bad update");
-    expect(current.getSnapshot().preferences.installed["imported:weather"].manifest.version).toBe("1.0.0");
+    expect(current.getSnapshot().preferences.installed["imported:weather"].manifest.version).toBe(previousVersion);
     expect(mocks.load).toHaveBeenCalledTimes(3);
   });
   it("restricted mode unloads local code without changing synced enable preferences", async () => {
