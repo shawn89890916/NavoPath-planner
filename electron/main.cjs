@@ -27,6 +27,16 @@ const {
 } = require("./window-lifecycle.cjs");
 const { createDesktopUpdater } = require("./desktop-updater.cjs");
 const { readAcceptBetaUpdates, writeAcceptBetaUpdates } = require("./update-preferences.cjs");
+
+// Let Windows integrations open the installed desktop app directly.
+if (process.platform === "win32") {
+  if (process.defaultApp && process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient("navopath", process.execPath, [path.resolve(process.argv[1])]);
+  } else {
+    app.setAsDefaultProtocolClient("navopath");
+  }
+}
+
 // Lazy-loaded: electron-updater is not needed until autoUpdater is configured
 let _autoUpdaterModule;
 let _autoUpdater;

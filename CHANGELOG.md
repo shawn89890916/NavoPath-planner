@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-11-04 · 桌面应用快速唤起
+
+### 改进
+- Windows 桌面版注册 `navopath://` 链接，外部工具可直接唤起 NavoPath；应用已在后台运行时会显示现有窗口。
+
 ## 2026-11-03 · 插件、主题市场与时间轴 · 1.5.2 Beta
 
 ### 改进
@@ -318,6 +323,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-04 · Open the desktop app from integrations
+
+### Improved
+- The Windows desktop app registers the `navopath://` link so integrations can open NavoPath directly; an existing background instance brings its window forward.
 
 ## 2026-11-03 · Plugin and theme markets, timeline entry · 1.5.2 Beta
 
