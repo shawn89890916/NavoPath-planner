@@ -8572,8 +8572,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   z-index: 0;
   pointer-events: none;
   margin-top: -2px; display: none; }
-.df-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.df-brand > .df-brand-wordmark { display: grid; gap: 0; }
+.df-brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .df-brand strong {
   display: block; font-size: 16px; font-family: var(--paper-display); letter-spacing: -.035em; font-weight: 600; }
 .df-app .dayflow-icon { box-shadow: none; filter: none; }
@@ -22791,7 +22790,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   backdrop-filter: blur(12px);
 }
 #root .df-app .df-header-fade { display: none; }
-#root .df-app .df-brand { opacity: .78; }
 #root .df-app .df-tabs button { min-height: 38px; }
 #root .df-app .df-tabs button.active { font-weight: 680; }
 #root .df-app .df-month-year-selector { color: var(--text-main); }
@@ -23643,7 +23641,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   z-index: 4;
 }
 #root .df-app .df-brand-ai-button .dayflow-icon.compact,
-#root .df-app .df-brand-ai-button .dayflow-icon.compact img { width: 24px; height: 24px; }
+#root .df-app .df-brand-ai-button .dayflow-icon.compact img { width: 28px; height: 28px; }
 #root .df-app .df-brand-ai-button img { filter: none; }
 @media (max-width: 980px) {
   #root .df-app .df-brand-ai-button { width: 44px; height: 44px; }

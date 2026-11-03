@@ -9132,10 +9132,9 @@ if (cached?.data && cached?.settings) {
       <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
           <div className="df-brand">
-            <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : undefined} disabled={!compactLayout || settings.hideAi}>
+            <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
               <ProductIcon compact />
             </button>
-            <div className="df-brand-wordmark"><strong>NavoPath</strong></div>
             {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} /></Suspense>}
           </div>
           <div className="df-month-year-selector">
@@ -9361,7 +9360,6 @@ if (cached?.data && cached?.settings) {
                 {!mobileExecution && (timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
                   <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }} style={{ fontSize: "14px", lineHeight: 1, padding: "0 2px" }}>«</button>
                 )}
-                <IconButton className="df-icon-action df-candidate-header-icon" icon={<UiCalendarCheckIcon size={17} />} label={term(lang, "planning")} onClick={() => changeMode("planning")} />
                 <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />
                 <IconButton className={`df-icon-action df-candidate-header-icon${showCompletedCandidates ? " active" : ""}`} icon={<UiEyeIcon size={17} />} label={t(lang, "candidate.showCompleted")} aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)} />
                 {!settings.hideAi && (

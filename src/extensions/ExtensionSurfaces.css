@@ -12,13 +12,13 @@
   border: 0;
   border-radius: var(--radius-control, 8px);
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-main);
   cursor: pointer;
   transition: color var(--motion-base, 180ms) var(--motion-ease, ease), background-color var(--motion-base, 180ms) var(--motion-ease, ease);
 }
 .df-extension-header-item .navopath-plugin-header-button:hover { background: var(--paper-note); color: var(--text-main); }
 .df-extension-header-item .navopath-plugin-header-button:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
-.df-extension-header-item .navopath-plugin-header-button svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.df-extension-header-item .navopath-plugin-header-button svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .df-extension-header-item .navopath-plugin-header-button[data-running="true"]::after {
   content: "";
   position: absolute;
