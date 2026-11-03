@@ -12,7 +12,8 @@ describe("shared option-list visual contract", () => {
   it("uses a complete neutral rounded selection instead of a partial underline", () => {
     expect(primitives).toContain(".ui-choice-list.ui-choice-list > .ui-choice-item:is(.active, [aria-current=\"page\"], [aria-selected=\"true\"], [aria-pressed=\"true\"])");
     expect(primitives).toContain("background: var(--ui-choice-selected);");
-    expect(primitives).toContain("border-radius: 12px;");
+    expect(primitives).toContain("--ui-choice-radius: 12px;");
+    expect(primitives.match(/border-radius: var\(--ui-choice-radius\);/g)).toHaveLength(2);
   });
 
   it("applies the shared option treatment to Settings and Planning", () => {
