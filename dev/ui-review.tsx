@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Button, IconButton, Input, Modal } from "../src/components/UiPrimitives";
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingTextInput, SettingActionButton } from "../src/components/SettingsControls";
@@ -9,6 +9,7 @@ import "./ui-review.css";
 
 function Review() {
   const [dark, setDark] = useState(false);
+  useEffect(() => { document.body.dataset.navopathBaseTheme = dark ? "dark" : "light"; }, [dark]);
   const [english, setEnglish] = useState(false);
   const [enabled, setEnabled] = useState(true);
   const [pending, setPending] = useState(false);

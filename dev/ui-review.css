@@ -1,4 +1,4 @@
-html, body { margin: 0; height: auto; overflow: auto; }
+html, body, #root { margin: 0; height: auto; overflow: auto; }
 #root .ui-review { display: block; min-height: 100vh; height: auto; padding: clamp(20px, 4vw, 56px); overflow: visible; font-family: var(--paper-sans); }
 .ui-review-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
 .ui-review-head h1 { font: 600 24px/1.4 var(--paper-sans); }
@@ -8,4 +8,4 @@ html, body { margin: 0; height: auto; overflow: auto; }
 .ui-review-controls { margin: 32px 0; display: grid; gap: 16px; }
 .ui-review h2 { font: 600 18px/1.4 var(--paper-sans); }
 .ui-review .df-settings-content { max-width: 760px; }
-.ui-review .ui-modal { width: min(440px, 100%); padding: 24px; }
+.ui-modal { width: min(440px, 100%); padding: 24px; }
