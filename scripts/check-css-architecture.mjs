@@ -4,7 +4,7 @@ import postcss from "postcss";
 import { fileURLToPath } from "node:url";
 
 const historicalSheets = ["app-redesign.css", "workspace-v0.css", "execute-review.css", "styles.css"];
-const canonicalSheets = new Set(["app.css", "ui-primitives.css"]);
+const canonicalSheets = new Set(["app.css", "ui-primitives.css", "SettingsControls.css"]);
 
 function walk(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -72,6 +72,12 @@ export function checkCssArchitecture(repoRoot = resolve(import.meta.dirname, "..
     }
 
     const root = postcss.parse(css, { from: file });
+    if (!file.endsWith("SettingsControls.css")) root.walkRules((rule) => {
+      if (/\.df-settings-(?:row(?:-(?:title|desc|label|control))?|toggle(?:-knob)?)(?![\w-])/.test(rule.selector)
+        && rule.nodes.some(node => node.type === "decl" && node.prop !== "justify-self")) {
+        errors.push(`${relative(repoRoot, file)}:${rule.source?.start.line || "?"} redefines settings primitives; use SettingsControls.css`);
+      }
+    });
     const seen = new Map();
     let importantCount = 0;
     root.walkDecls((declaration) => {

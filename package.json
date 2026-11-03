@@ -107,7 +107,8 @@
       "path": [
         "dist/assets/LandingPage-*.css",
         "dist/assets/WidgetApp-*.css",
-        "dist/assets/MobileTaskSummary-*.css"
+        "dist/assets/MobileTaskSummary-*.css",
+        "dist/assets/SettingsControls-*.css"
       ],
       "limit": "12 KB"
     },
@@ -119,7 +120,8 @@
         "dist/assets/ui-primitives-*.css",
         "dist/assets/LandingPage-*.css",
         "dist/assets/WidgetApp-*.css",
-        "dist/assets/MobileTaskSummary-*.css"
+        "dist/assets/MobileTaskSummary-*.css",
+        "dist/assets/SettingsControls-*.css"
       ],
       "limit": "94 KB"
     },

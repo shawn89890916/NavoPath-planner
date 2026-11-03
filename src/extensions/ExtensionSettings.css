@@ -52,15 +52,8 @@
 .df-extension-detail dl > div { display: grid; grid-template-columns: minmax(100px, .4fr) minmax(0, 1fr); gap: 18px; padding: 12px 0; border-bottom: 1px solid var(--paper-rule); }
 .df-extension-detail dt { color: var(--text-muted); }
 .df-extension-detail dd { margin: 0; overflow-wrap: anywhere; }
-#root .df-app .df-extensions .df-settings-row:not(.df-settings-row--stacked) { grid-template-columns: minmax(0, 1fr) auto; column-gap: 24px; }
-#root .df-app .df-extensions .df-settings-row-control { width: auto; max-width: 100%; flex-wrap: wrap; }
-#root .df-app .df-settings-content .df-extensions .df-settings-row-desc { overflow-wrap: anywhere; font-size: 12px; line-height: 1.55; }
-#root .df-app .df-extensions .df-extension-list .df-settings-row { padding: 18px 0; }
-#root .df-app .df-extensions .df-extension-list .df-settings-row-title { font-size: 14px; }
-#root .df-app .df-extensions .df-extension-list .df-settings-row-control { gap: 10px; }
 #root .df-app .df-extensions .df-extension-form .df-settings-input { flex: 1 1 260px; width: 100%; min-width: 0; }
 #root .df-app .df-extensions .df-extension-search .df-settings-input { width: 100%; min-width: 0; min-height: 40px; padding-left: 38px; }
-#root .df-app .df-extensions .df-settings-action { white-space: nowrap; font: 500 12px/1.4 var(--paper-sans); }
 @media (max-width: 680px) {
   .ui-modal.df-extension-market { width: calc(100vw - 24px); min-height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); }
   .df-extension-market-head, .df-extension-market-toolbar, .df-extension-market-body { padding: 16px; }
@@ -68,7 +61,4 @@
   .df-extension-market-toolbar { gap: 12px; }
   .df-extension-market-toolbar .df-extension-search { flex-basis: 100%; }
   .df-extension-market-grid { grid-template-columns: minmax(0, 1fr); }
-  #root .df-app .df-extensions .df-settings-row:not(.df-settings-row--stacked) { column-gap: 14px; }
-  #root .df-app .df-extensions .df-extension-list .df-settings-row { grid-template-columns: minmax(0, 1fr); row-gap: 12px; }
-  #root .df-app .df-extensions .df-extension-list .df-settings-row-control { justify-content: flex-start; }
 }

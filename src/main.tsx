@@ -4176,7 +4176,7 @@ if (cached?.data && cached?.settings) {
         next.delete(task.id);
         return next;
       });
-    }, MOTION.base);
+    }, MOTION.complete);
     if (completionHandlesRef.current.has(task.id)) completionHandlesRef.current.set(task.id, handle);
   }
 

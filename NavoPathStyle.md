@@ -32,9 +32,9 @@ NavoPath is not:
 
 - Core palette: brown `#584D3D`, sage `#7EA172`, coral `#D7816A`, aubergine `#0F0326`, and neutral paper `#F8F7F3`.
 - Light mode uses charcoal `#27231E` as the primary text and ink color. It is not a large filled accent.
-- Dark mode uses a graphite interface with softened white text and a fixed soft-white interaction accent.
+- Dark mode uses a graphite interface with softened white text and a fixed muted-stone interaction accent.
 - Execute coral `#D7816A`, Planning sage `#7EA172`, and custom project colors remain data markers; they do not tint dark-mode controls or large surfaces.
-- Keep the current-time marker coral as a small temporal cue; interaction emphasis remains soft white.
+- Keep the current-time marker coral as a small temporal cue; dark interaction emphasis remains muted stone.
 - Shared application controls must use the active page theme variables, especially `--accent-active`, rather than hard-coded purple or lime.
 - Light mode uses charcoal ink on warm soft-white paper.
 - Dark mode uses softened neutral ink on layered charcoal surfaces.
@@ -437,7 +437,7 @@ Before adding or changing a control:
 
 ## Shared UI Tokens And Primitives
 
-The token layer lives in `src/ui-tokens.css`; shared controls live in
+The token layer lives in the `:root` block of `src/app.css`; shared controls live in
 `src/components/UiPrimitives.tsx` and `src/ui-primitives.css`. New application
 controls should use these tokens and primitives instead of adding page-level
 visual values.
@@ -464,3 +464,11 @@ visual values.
 - Hover may change ink, use a faint paper wash, or change a hairline rule. Active state is limited to `translateY(1px)`.
 - Focus-visible uses the shared focus ring. Disabled controls reduce opacity and retain a readable label.
 - `TaskBlock` remains the shared task structure for candidate tasks, planning tasks, and timeline blocks. `SettingsControls` composes the shared button, input, and divider primitives.
+
+### Settings and motion ownership
+
+- Settings primitives own `src/components/SettingsControls.css`; pages compose them without redefining row typography or geometry. Settings navigation, section titles and controls use the sans-serif operational font; monospace is reserved for time and numeric metadata.
+- Setting rows use 14px labels, 12px supporting text, 64px minimum height and shared spacing tokens. Narrow rows respond to the content container, placing wide controls below their description.
+- Keep pending button labels stable and expose `aria-busy` through `Button.pending`; status details belong in the existing live status region.
+- Candidate completion keeps the checked state visible before the row folds away over 320ms. Reduced motion commits immediately.
+- Use `/dev/ui-review.html` during development to inspect the actual shared controls in light/dark themes and both languages. This page is excluded from the production entrypoints.

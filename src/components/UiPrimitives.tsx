@@ -6,8 +6,8 @@ import { UiCloseIcon, UiMoreIcon } from "./UiIcons";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
-export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }>(function Button({ variant = "secondary", className, type = "button", ...props }, ref) {
-  return <button ref={ref} type={type} className={["ui-button", `ui-button--${variant}`, className || ""].filter(Boolean).join(" ")} {...props} />;
+export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; pending?: boolean }>(function Button({ variant = "secondary", pending = false, disabled, className, type = "button", ...props }, ref) {
+  return <button ref={ref} type={type} className={["ui-button", `ui-button--${variant}`, className || ""].filter(Boolean).join(" ")} {...props} disabled={disabled || pending} aria-busy={pending || undefined} />;
 });
 
 export const IconButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { icon: ReactNode; label: string }>(function IconButton({ icon, label, className, title = label, type = "button", ...props }, ref) {

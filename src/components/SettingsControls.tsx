@@ -1,5 +1,6 @@
 import React, { type ReactNode } from "react";
 import { Button, Divider, Input } from "./UiPrimitives";
+import "./SettingsControls.css";
 
 /**
  * SettingsControls — the unified setting-row primitive system for the NavoPath
@@ -14,7 +15,7 @@ import { Button, Divider, Input } from "./UiPrimitives";
  * Exported primitives:
  *   - SettingSection      (titled group with optional description)
  *   - SettingRow          (title + description + control slot, single fine rule)
- *   - SettingToggle       (checkbox-style toggle, ink + accent rule)
+ *   - SettingToggle       (sliding switch, neutral ink + paper track)
  *   - SettingSelect       (native select styled as paper control)
  *   - SettingNumberInput  (number input with optional min/max/step)
  *   - SettingTextInput    (text input)
@@ -239,25 +240,27 @@ export function SettingActionButton({
   children,
   onClick,
   disabled,
+  pending,
   tone = "secondary",
   ariaLabel,
 }: {
   children: ReactNode;
   onClick: () => void;
   disabled?: boolean;
+  pending?: boolean;
   tone?: "secondary" | "primary" | "danger";
   ariaLabel?: string;
 }) {
   const variant = tone === "danger" ? "danger" : tone === "primary" ? "primary" : "secondary";
-  const toneClass = { primary: "df-settings-action--primary", secondary: "df-settings-action--secondary", danger: "df-settings-action--danger" }[tone];
 
   return (
     <Button
       type="button"
       variant={variant}
-      className={`df-settings-action ${toneClass}`}
+      className="df-settings-action"
       aria-label={ariaLabel}
       disabled={disabled}
+      pending={pending}
       onClick={onClick}
     >
       {children}

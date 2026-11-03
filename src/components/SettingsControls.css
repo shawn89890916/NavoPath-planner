@@ -1,0 +1,104 @@
+/* SettingsControls owns row anatomy, native fields and switches.
+   Actions reuse UiPrimitives without redefining button geometry or states. */
+.df-settings-group, #root .df-app .df-settings-group {
+  display: flex; flex-direction: column; gap: 0;
+  margin: 0 0 var(--space-5); padding: var(--space-4) var(--space-4) var(--space-1);
+  border: 1px solid var(--paper-rule); border-radius: var(--radius-overlay);
+  background: var(--surface-card); box-shadow: none;
+}
+.df-settings-group-head { margin: 0 0 var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px solid var(--paper-rule); }
+.df-settings-group-title, .df-settings-group > h3 { margin: 0; color: var(--text-main); font: 600 14px/1.45 var(--paper-sans); }
+.df-settings-group-desc { margin: var(--space-1) 0 0; max-width: 64ch; color: var(--text-muted); font: 400 12px/1.55 var(--paper-sans); }
+.df-settings-group-body { display: flex; flex-direction: column; min-width: 0; }
+#root .df-app .df-settings-group--plain { padding: 0; border: 0; border-radius: 0; background: transparent; }
+#root .df-app .df-settings-group--plain > .df-settings-group-head { border: 0; }
+#root .df-app .df-settings-group--danger {
+  border-color: color-mix(in srgb, var(--danger-ink) 48%, var(--paper-rule));
+  background: color-mix(in srgb, var(--danger-ink) 5%, var(--surface-card));
+}
+.df-settings-group--danger .df-settings-group-title { color: var(--danger-ink); }
+.df-settings-row, #root .df-app .df-settings-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 40%);
+  align-items: center; column-gap: var(--space-5); row-gap: var(--space-2);
+  min-height: 64px; padding: var(--space-3) 0; border-bottom: 1px solid var(--paper-rule);
+}
+.df-settings-row:last-child { border-bottom: 0; }
+.df-settings-row-label { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.df-settings-row-title { color: var(--text-main); font: 500 14px/1.45 var(--paper-sans); }
+.df-settings-row-desc { color: var(--text-muted); font: 400 12px/1.55 var(--paper-sans); text-wrap: pretty; overflow-wrap: anywhere; }
+.df-settings-row-control { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); min-width: 0; width: 100%; }
+.df-settings-toggle-status { color: var(--text-main); font: 600 12px/1.4 var(--paper-sans); white-space: nowrap; }
+#root .df-app .df-settings-row.df-settings-row--stacked { grid-template-columns: minmax(0, 1fr); align-items: start; row-gap: var(--space-3); }
+#root .df-app .df-settings-row--stacked > .df-settings-row-control { justify-content: flex-start; }
+.df-settings-row--stacked .df-ai-provider-settings { max-width: none; }
+@media (min-width: 900px), (min-width: 761px) and (orientation: landscape) {
+  .df-settings-row--stacked .df-ai-provider-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+}
+.df-settings-row[data-disabled="true"] .df-settings-row-title,
+.df-settings-row[data-disabled="true"] .df-settings-row-desc { color: var(--text-muted); }
+.df-settings-row[data-disabled="true"] .df-settings-row-control { pointer-events: none; }
+.df-settings-toggle, #root .df-app .df-settings-toggle {
+  --switch-width: 44px; --switch-track: 24px; --switch-thumb: 20px;
+  position: relative; flex: 0 0 auto; box-sizing: border-box;
+  width: var(--switch-width); min-width: var(--switch-width); height: 44px; min-height: 44px;
+  padding: 0; border: 0; border-radius: var(--radius-round); background: transparent; box-shadow: none;
+  cursor: pointer; overflow: visible;
+}
+.df-settings-toggle::before {
+  content: ""; position: absolute; inset: 50% 0 auto; height: var(--switch-track);
+  transform: translateY(-50%); border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-round);
+  background: color-mix(in srgb, var(--text-muted) 28%, var(--surface-main));
+  transition: background-color var(--paper-motion); pointer-events: none;
+}
+.df-settings-toggle[data-state="on"]::before { background: var(--accent-active); border-color: var(--accent-active); }
+.df-settings-toggle:hover:not(:disabled)::before { border-color: var(--text-muted); }
+.df-settings-toggle:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.df-settings-toggle:disabled { opacity: .5; cursor: not-allowed; }
+.df-settings-toggle-knob {
+  position: absolute; top: 50%; left: 2px; width: var(--switch-thumb); height: var(--switch-thumb);
+  box-sizing: border-box; border: 1px solid var(--paper-rule-strong); border-radius: 50%;
+  background: var(--surface-main); transform: translateY(-50%); pointer-events: none;
+  transition: transform var(--motion-layout) var(--motion-ease-settle);
+}
+.df-settings-toggle[data-state="on"] .df-settings-toggle-knob { transform: translate(calc(var(--switch-width) - var(--switch-thumb) - 4px), -50%); border-color: transparent; }
+#root .df-app :is(.df-settings-select, .df-settings-input, .df-settings-number) {
+  min-width: 0; width: 100%; max-width: 220px; height: 36px;
+  padding: 0 var(--space-3); border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-control);
+  background-color: var(--surface-card); color: var(--text-main); font: 500 13px/1.4 var(--paper-sans);
+  box-shadow: none; color-scheme: light;
+  transition: border-color var(--paper-motion), background-color var(--paper-motion);
+}
+#root .df-app.theme-dark :is(.df-settings-select, .df-settings-input, .df-settings-number) { color-scheme: dark; }
+#root .df-app .df-settings-select {
+  padding-right: 30px; appearance: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%), linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 16px) calc(50% - 2px), calc(100% - 11px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
+#root .df-app :is(.df-settings-select, .df-settings-input, .df-settings-number):hover:not(:disabled) { border-color: var(--accent-active); }
+#root .df-app :is(.df-settings-select, .df-settings-input, .df-settings-number):focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-color: var(--accent-active); }
+#root .df-app :is(.df-settings-select, .df-settings-input, .df-settings-number):disabled { opacity: .5; cursor: not-allowed; }
+.df-settings-select option { color: var(--text-main); background: var(--surface-card); }
+.df-settings-number-wrap { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.df-settings-number-suffix { color: var(--text-muted); font: 500 11px/1 var(--paper-mono); min-width: 32px; text-align: right; }
+.df-settings-divider { margin: var(--space-3) 0 var(--space-2); }
+#root .df-app .df-settings-home-quick-row .df-settings-select { width: auto; min-width: 108px; max-width: 180px; }
+#root .df-app .df-settings-accent-native .df-settings-select { min-width: 0; padding: 5px 0; border: 0; background: transparent; font-size: 12px; font-weight: 600; }
+#root .df-app .df-settings-accent-native .df-settings-select:hover,
+#root .df-app .df-settings-accent-native .df-settings-select:focus-visible { border-color: transparent; outline: 1px solid var(--accent-active); outline-offset: 2px; }
+@media (pointer: coarse) {
+  .df-settings-toggle, #root .df-app .df-settings-toggle { --switch-width: 51px; --switch-track: 31px; --switch-thumb: 27px; }
+}
+@media (max-width: 640px), (pointer: coarse) {
+  #root .df-app :is(.df-settings-select, .df-settings-input, .df-settings-number) { height: 44px; }
+}
+/* Respond to the panel's usable width rather than the window width. */
+@container settings-content (max-width: 420px) {
+  #root .df-app .df-settings-row { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-4); }
+  #root .df-app .df-settings-row:has(.df-settings-select, .df-settings-input, .df-settings-number, .df-settings-action) { grid-template-columns: minmax(0, 1fr); }
+  #root .df-app .df-settings-row:has(.df-settings-select, .df-settings-input, .df-settings-number, .df-settings-action) > .df-settings-row-control { justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .df-settings-toggle::before, .df-settings-toggle-knob,
+  #root .df-app :is(.df-settings-select, .df-settings-input, .df-settings-number) { transition: none; }
+}

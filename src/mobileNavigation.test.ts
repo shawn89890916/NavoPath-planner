@@ -7,6 +7,7 @@ import { MobileQuickAddButton } from "./components/MobileQuickAddButton";
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 const props = { compactLayout: true, productPresentation: false, drawerOpen: false, notificationCenterOpen: false, utilityPanelOpen: false, aiOpen: false, lang: "zh" as const, onAdd: () => undefined };
 const mobileStyles = readFileSync(new URL("./app.css", import.meta.url), "utf8");
+const settingsStyles = readFileSync(new URL("./components/SettingsControls.css", import.meta.url), "utf8");
 
 describe("portrait mobile navigation", () => {
   it("renders an accessible quick-add button and invokes its action", () => {
@@ -39,8 +40,8 @@ describe("portrait mobile navigation", () => {
   });
 
   it("uses an iOS-sized switch while keeping the active theme accent", () => {
-    expect(mobileStyles).toContain("width: 51px;");
-    expect(mobileStyles).toContain("height: 31px;");
-    expect(mobileStyles).toContain("background: var(--accent-active);");
+    expect(settingsStyles).toContain("--switch-width: 51px;");
+    expect(settingsStyles).toContain("--switch-track: 31px;");
+    expect(settingsStyles).toContain("background: var(--accent-active);");
   });
 });

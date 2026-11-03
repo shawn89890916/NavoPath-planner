@@ -39,3 +39,11 @@ test("rejects duplicate selectors in one cascade context", (t) => {
   const result = fixture(t, { "app.css": ".live { color: red; } .live { color: blue; }", "main.tsx": 'const className = "live";' });
   assert.ok(result.errors.some((error) => error.includes("duplicates .live")));
 });
+
+test("keeps shared settings row geometry in its owning stylesheet", (t) => {
+  const source = 'const className = "df-settings-row";';
+  const duplicate = fixture(t, { "app.css": ".df-settings-row { padding: 8px; }", "main.tsx": source });
+  assert.ok(duplicate.errors.some(error => error.includes("redefines settings primitives")));
+  const owned = fixture(t, { "SettingsControls.css": ".df-settings-row { padding: 8px; }", "main.tsx": source });
+  assert.deepEqual(owned.errors, []);
+});

@@ -3,6 +3,7 @@ export const MOTION = {
   fade: 140,
   base: 180,
   layout: 240,
+  complete: 320,
   story: 520,
 } as const;
 

@@ -37,7 +37,9 @@ describe("extension settings surfaces", () => {
     }
     expect(renderer!.root.findByProps({ "aria-label": "Restricted mode" }).props.disabled).not.toBe(true);
     expect(renderer!.root.findByProps({ "aria-label": "Enable plugin example" }).props.disabled).not.toBe(true);
-    expect(buttons.find(button => button.children.includes("Checking…"))?.props.disabled).toBe(true);
+    const check = buttons.find(button => button.children.includes("Check updates"));
+    expect(check?.props.disabled).toBe(true);
+    expect(check?.props["aria-busy"]).toBe(true);
   });
   it("renders installed and default-source states as text instead of disabled buttons", async () => {
     state.snapshot.preferences.sources = [{ id: "official", name: "Community", url: "https://example.com/catalog.json" }];
