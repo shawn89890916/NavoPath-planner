@@ -961,6 +961,13 @@ body {
   color: var(--text-main);
   background: var(--bg-app);
 }
+html:has(body > #root > .df-app),
+body:has(> #root > .df-app),
+body:has(> #root > .df-app) > #root {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
 button { font: inherit; cursor: pointer; }
 p { margin: 0; }
 @keyframes editOverlayFade {
@@ -23583,6 +23590,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 /* Browser review follow-up: keep compact controls in the viewport and let the
    timeline own the remaining height instead of leaving a dead lower shelf. */
 #root .df-app .df-header-right > .df-user-avatar {
+  width: 36px;
+  height: 36px;
   border: 0;
   border-radius: var(--radius-control);
   background: transparent;
@@ -23598,6 +23607,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app .df-brand-ai-button,
 #root .df-app .df-brand-ai-button:hover,
 #root .df-app .df-brand-ai-button:focus-visible {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -23607,6 +23620,21 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   width: 24px;
   height: 24px;
   stroke-width: 1.8;
+}
+#root .df-app .df-header-inner { padding-left: 8px; padding-right: 9px; }
+#root .df-app:not(.product-demo-workspace) .df-header-inner > .df-tabs-center.ui-choice-list--motion-selection {
+  position: fixed;
+  left: 50%;
+  top: 29px;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+}
+#root .df-app .df-brand-ai-button .dayflow-icon.compact,
+#root .df-app .df-brand-ai-button .dayflow-icon.compact img { width: 24px; height: 24px; }
+#root .df-app .df-brand-ai-button img { filter: none; }
+@media (max-width: 980px) {
+  #root .df-app .df-brand-ai-button { width: 44px; height: 44px; }
+  #root .df-app .df-header-right > .df-user-avatar { width: 44px; height: 44px; }
 }
 @media (min-width: 981px) and (orientation: landscape) {
   #root .df-app.mode-execute > .df-add-fab {

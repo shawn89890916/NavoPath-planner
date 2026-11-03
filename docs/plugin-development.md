@@ -73,6 +73,17 @@ methods through CommonJS `module.exports` or ESM exports; optional `onLoad` and
 `onUnload` hooks run on startup and shutdown. The renderer dispatches only to
 that installed entry's methods. Do not treat trusted plugins as sandboxed code.
 
+### Header icon contract
+
+Header contributions appear beside the NavoPath mark in installation order.
+Use one icon-only button with the host-provided navopath-plugin-header-button
+class, a 20px outline icon with 1.8px strokes, a localized aria-label, and a
+concise title that can include current state. Let the host own button size,
+hover/focus treatment, theme colors, and reduced-motion behavior. Do not add a
+pill, text label, or second border around the icon. State-aware plugins can
+update the SVG or title as their state changes. The host emits timer:changed
+with mode, phase, running, and displaySeconds for timer-aware plugin status.
+
 ```js
 export default {
   onload(ctx) {

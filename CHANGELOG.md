@@ -5,6 +5,7 @@
 ### 改进
 - 设置统一文字层级与行间节奏，窄面板将较宽控件移到说明下方；更新检查保留按钮宽度与清晰的忙碌状态，完成候选任务时先显示勾选反馈再平滑收拢。
 - 设置导航、设置内标签和规划视图的选中底色会平滑跟随切换，保持统一的低对比度纸感样式。
+- 执行/规划主导航与 Day、3-Day、Week、Month 时间轴视图也共用设置子页的滑动选中底色；插件图标统一排在左侧 N 标志后，可拖动排序并保留顺序。天气图标随天气状态变化，番茄钟运行时显示阶段状态；模板入口迁移为官方插件，候选区移除重复的 Focus 入口和 AI 设置项。
 - 插件与外观设置使用简洁的设置行，插件拥有独立侧栏设置入口；插件和主题市场支持搜索、已安装筛选、排序与详情浏览。
 - 主题市场提供 Linen、Minimal、Sage、Graphite、Ocean 与 Typewriter 六种预设，加入真实浅深色对照及单独预览；主题统一覆盖弹出界面、任务控件和桌面小组件。
 - 番茄钟新增顶栏入口，支持不关联任务的独立专注；新增快速收集与每日概览插件，可直接收集任务及查看真实工作区数据，窄屏可通过「更多 → 插件工具」打开。
@@ -322,6 +323,7 @@
 ### Improvements
 - Settings share consistent typography and row spacing, with wider controls placed below descriptions in narrow panels; update checks retain button width and expose a clear busy state, while completing a candidate shows its checkmark before the row folds away.
 - Selection highlights now glide across settings navigation, settings tabs, and planning views while retaining the shared low-contrast paper treatment.
+- Execute/Planning navigation and Day, 3-Day, Week, and Month timeline views now share that moving selection highlight. Plugin icons follow the N mark, can be reordered by dragging, and retain their order. Weather icons reflect current conditions, Pomodoro shows its running phase, schedule templates move to an official plugin, and the candidate menu drops the duplicate Focus and AI-settings entries.
 - Plugin and appearance settings use clean setting rows, with plugin settings in the sidebar. Dedicated plugin and theme markets support search, installed filters, sorting and package details.
 - The theme market offers Linen, Minimal, Sage, Graphite, Ocean and Typewriter presets with real split light/dark and separate previews. Themes consistently cover popovers, task controls and desktop widgets.
 - Pomodoro has a clear header entry and supports standalone focus without a linked task. New Quick Capture and Daily Overview plugins create tasks and show actual workspace data; narrow screens provide More → Plugin tools.

@@ -102,7 +102,7 @@ export function defaultExtensionPreferences(): ExtensionPreferences { return { v
 export function normalizeExtensionPreferences(input: unknown): ExtensionPreferences {
   const defaults = defaultExtensionPreferences();
   if (!isRecord(input)) return defaults;
-  const result: ExtensionPreferences = { ...defaults, autoCheckUpdates: input.autoCheckUpdates !== false, autoUpdate: input.autoUpdate === true, migratedLegacy: input.migratedLegacy === true, updatedAt: typeof input.updatedAt === "string" ? input.updatedAt : undefined };
+  const result: ExtensionPreferences = { ...defaults, autoCheckUpdates: input.autoCheckUpdates !== false, autoUpdate: input.autoUpdate === true, migratedLegacy: input.migratedLegacy === true, headerOrder: Array.isArray(input.headerOrder) ? [...new Set(input.headerOrder.filter((key): key is string => typeof key === "string" && /^[a-z0-9][a-z0-9._-]{0,79}:[a-z0-9][a-z0-9._-]{0,79}$/.test(key)))].slice(0, 100) : [], updatedAt: typeof input.updatedAt === "string" ? input.updatedAt : undefined };
   if (Array.isArray(input.sources)) result.sources = input.sources.slice(0, 30).flatMap((s: any) => { try { return isRecord(s) && safeId(s.id) && typeof s.name === "string" ? [{ id: s.id, name: s.name.slice(0, 200), url: publicHttps(s.url) }] : []; } catch { return []; } });
   if (!result.sources.some(s => s.id === "official")) result.sources.unshift(OFFICIAL_SOURCE);
   if (isRecord(input.removed)) for (const [key, value] of Object.entries(input.removed).slice(0, 1000)) if (/^[a-z0-9][a-z0-9._-]{0,79}:[a-z0-9][a-z0-9._-]{0,79}$/.test(key) && typeof value === "string" && Number.isFinite(Date.parse(value))) result.removed[key] = value;

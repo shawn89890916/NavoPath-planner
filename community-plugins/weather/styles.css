@@ -4,14 +4,14 @@
 .navopath-plugin-settings input:focus-visible, .navopath-plugin-settings select:focus-visible, .navopath-plugin-settings button:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
 @media (pointer: coarse) { .navopath-plugin-settings input, .navopath-plugin-settings select, .navopath-plugin-settings button { min-height: 44px; } }
 .navopath-weather { min-width: 0; color: var(--text-main); font: inherit; }
-.navopath-weather-summary.ui-button { display: block; max-width: min(140px, 22vw); min-height: 34px; padding: 4px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.navopath-weather-summary { display: grid; place-items: center; }
 .navopath-weather-details { position: fixed; z-index: 40; inset: auto; box-sizing: border-box; margin: 0; width: min(320px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow: auto; padding: 16px; color: var(--text-main); background: var(--surface-raised, var(--surface-main)); border: 1px solid var(--border-soft); border-radius: var(--radius-control, 4px); white-space: normal; font: 13px/1.5 var(--font-sans, sans-serif); }
 .navopath-weather-details[hidden] { display: none; }
 .navopath-weather-details h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 .navopath-weather-details p { margin: 0 0 12px; }
 .navopath-weather-current { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .navopath-weather-current strong { font-size: 24px; font-weight: 500; }
-.navopath-weather-current svg { flex: 0 0 16px; }
+.navopath-weather-current svg { flex: 0 0 20px; width: 20px; height: 20px; }
 .navopath-weather-details dl { display: grid; gap: 8px; margin: 0 0 12px; }
 .navopath-weather-details dl div, .navopath-weather-actions { display: flex; justify-content: space-between; gap: 12px; }
 .navopath-weather-details dd { margin: 0; }
@@ -19,11 +19,10 @@
 .navopath-weather-actions { align-items: center; margin-top: 12px; }
 .navopath-weather-actions a { color: inherit; text-underline-offset: 3px; }
 .navopath-weather-error { color: var(--danger-ink); overflow-wrap: anywhere; }
-.navopath-weather[data-stale="true"] .navopath-weather-summary { text-decoration: underline dotted; text-underline-offset: 3px; }
+.navopath-weather[data-stale="true"] .navopath-weather-summary { opacity: .72; }
 .navopath-weather-results { display: grid; gap: 8px; }
 .navopath-weather-results button { text-align: start; overflow-wrap: anywhere; }
-@media (max-width: 680px) { .navopath-weather-summary.ui-button { max-width: min(100px, 20vw); } }
-@media (pointer: coarse) { .navopath-weather-summary.ui-button, .navopath-weather-actions button { min-height: 44px; } }
+@media (pointer: coarse) { .navopath-weather-actions button { min-height: 44px; } }
 
 .navopath-plugin-settings input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; padding: 0; flex: 0 0 auto; accent-color: var(--accent-active); }
 .navopath-plugin-settings label > input:not([type="checkbox"]), .navopath-plugin-settings label > select { width: min(220px, 55%); }

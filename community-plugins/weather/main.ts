@@ -17,7 +17,7 @@ export function weatherCondition(code: unknown, zh: boolean) {
 
 function weatherIcon(kind: string) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  for (const [name, value] of Object.entries({ viewBox: "0 0 24 24", width: "16", height: "16", fill: "none", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true", focusable: "false" })) svg.setAttribute(name, value);
+  for (const [name, value] of Object.entries({ viewBox: "0 0 24 24", width: "20", height: "20", fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true", focusable: "false" })) svg.setAttribute(name, value);
   const path = document.createElementNS(svg.namespaceURI, "path");
   const cloud = "M5 16a4 4 0 1 1 1-7.9A6 6 0 0 1 18 9a3.5 3.5 0 0 1 0 7";
   const shapes: Record<string, string> = {
@@ -93,10 +93,12 @@ export default {
       const same = cache?.latitude === s.latitude && cache?.longitude === s.longitude && cache?.unit === s.unit && [cache?.current, cache?.high, cache?.low, cache?.precipitation, cache?.timestamp].every(value => typeof value === "number" && Number.isFinite(value));
       for (const { root, trigger, panel, position } of nodes) {
         const restoreRefreshFocus = panel.contains(document.activeElement);
-        trigger.textContent = weatherCityName(s) || (zh ? "设置城市" : "Choose city");
-        trigger.title = zh ? "查看天气" : "View weather";
-        panel.replaceChildren();
         const condition = weatherCondition(same ? cache.weather_code : undefined, zh);
+        trigger.replaceChildren(weatherIcon(condition.icon));
+        const temperature = same ? String(Math.round(cache.current)) + "°" + (s.unit === "fahrenheit" ? "F" : "C") : (zh ? "天气暂无数据" : "Weather unavailable");
+        trigger.title = (weatherCityName(s) || (zh ? "天气" : "Weather")) + " · " + temperature + " · " + condition.label + (zh ? " · 拖动调整插件顺序" : " · Drag to reorder plugins");
+        trigger.setAttribute("aria-label", zh ? "查看天气：" + (weatherCityName(s) || "未设置城市") + "，" + temperature + "，" + condition.label + "，可拖动调整插件顺序" : "View weather: " + (weatherCityName(s) || "No city set") + ", " + temperature + ", " + condition.label + "; drag to reorder plugins");
+        panel.replaceChildren();
         const heading = document.createElement("h3"); heading.textContent = s.city || (zh ? "天气" : "Weather"); panel.append(heading);
         const description = document.createElement("p"); description.className = "navopath-weather-current";
         if (same) {
@@ -155,7 +157,7 @@ export default {
     }
     ctx.ui.addHeaderItem(zh ? "天气" : "Weather", (container: HTMLElement) => {
       const root = document.createElement("div"); root.className = "navopath-weather";
-      const trigger = document.createElement("button"); trigger.type = "button"; trigger.className = "navopath-weather-summary ui-button ui-button--ghost"; trigger.setAttribute("aria-haspopup", "dialog"); trigger.setAttribute("aria-expanded", "false");
+      const trigger = document.createElement("button"); trigger.type = "button"; trigger.className = "navopath-plugin-header-button navopath-weather-summary"; trigger.setAttribute("aria-haspopup", "dialog"); trigger.setAttribute("aria-expanded", "false");
       const panel = document.createElement("div"); panel.className = "navopath-weather-details ui-popover"; panel.id = `navopath-weather-${crypto.randomUUID()}`; panel.setAttribute("role", "dialog"); panel.setAttribute("popover", "auto"); trigger.setAttribute("aria-controls", panel.id);
       const native = typeof panel.showPopover === "function";
       let open = false;

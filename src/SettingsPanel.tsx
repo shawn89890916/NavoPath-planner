@@ -403,7 +403,7 @@ function SettingsCategoryIcon({ category }: { category: SettingsCategory }) {
   }
 }
 
-export function UtilityPanel({ kind, settings, initialSection, compactLayout, data, authEmail, onClose, onSave, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang, onOpenScheduleTemplates }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language; onOpenScheduleTemplates?: () => void }) {
+export function UtilityPanel({ kind, settings, initialSection, compactLayout, data, authEmail, onClose, onSave, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
   const isDesktopRuntime = Boolean(window.desktopApi);
   const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
@@ -959,19 +959,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 title={lang === "zh" ? "任务缓冲" : "Task buffer"}
                 description={lang === "zh" ? "自动排程在相邻任务间预留的时间。" : "Time reserved between adjacent automatically scheduled tasks."}
                 control={<SettingNumberInput value={settings.scheduleBufferMinutes ?? 5} min={0} max={60} step={5} suffix={lang === "zh" ? "分钟" : "min"} ariaLabel={lang === "zh" ? "任务缓冲" : "Task buffer"} onChange={(value) => onSave({ scheduleBufferMinutes: Math.max(0, Math.min(60, value)) })} />}
-              />
-            </SettingSection>}
-
-            {settingsTarget.category === "workflow" && <SettingSection anchor="templates" title={lang === "zh" ? "模板" : "Templates"} description={lang === "zh" ? "把可复用的时间段模板应用到今天。" : "Apply reusable time-block templates to today."}>
-              <SettingRow
-                title={lang === "zh" ? "启用模板功能" : "Enable templates"}
-                description={lang === "zh" ? "关闭后隐藏今日候选顶栏的「模板」入口。" : "When off, the Templates button in the today-candidate header is hidden."}
-                control={<SettingToggle checked={settings.featureTemplatesEnabled !== false} ariaLabel={lang === "zh" ? "启用模板功能" : "Enable templates"} onChange={(next) => onSave({ featureTemplatesEnabled: next })} />}
-              />
-              <SettingRow
-                title={lang === "zh" ? "管理模板" : "Manage templates"}
-                description={lang === "zh" ? "打开模板编辑弹窗，新建或编辑时间段模板。" : "Open the template editor to create or edit time-block templates."}
-                control={<SettingActionButton onClick={() => onOpenScheduleTemplates?.()} disabled={!onOpenScheduleTemplates}>{lang === "zh" ? "打开模板" : "Open templates"}</SettingActionButton>}
               />
             </SettingSection>}
 

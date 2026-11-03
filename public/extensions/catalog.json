@@ -276,7 +276,7 @@
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.1.0",
+        "version": "1.1.1",
         "apiVersion": 1,
         "minAppVersion": "1.5.2-beta.2",
         "platforms": [
@@ -294,7 +294,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/pomodoro.navopackage.json",
-      "sha256": "6979f484ab977819fcbb4371cdd51c2df2350136452f1e79cc7041a38d066d1c"
+      "sha256": "189b735d2c2fb44c295e9db5edc4ed3c39d4327f23d168a330655bb3de97cf96"
     },
     {
       "manifest": {
@@ -384,6 +384,28 @@
     {
       "manifest": {
         "author": "NavoPath",
+        "version": "1.0.0",
+        "apiVersion": 1,
+        "minAppVersion": "1.5.2-beta.2",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "repository": "https://github.com/shawn89890916/NavoPath-planner",
+        "license": "MIT",
+        "kind": "plugin",
+        "id": "schedule-templates",
+        "name": "Schedule Templates",
+        "description": "Save reusable daily schedules and apply them to a date.",
+        "main": "main.js"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/schedule-templates.navopackage.json",
+      "sha256": "fbb48030324b28d3bf76ed35e43bb69f0b5236f6e987dba5d2a55c6915b544cd"
+    },
+    {
+      "manifest": {
+        "author": "NavoPath",
         "version": "1.1.0",
         "apiVersion": 1,
         "minAppVersion": "1.5.0",
@@ -446,7 +468,7 @@
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "apiVersion": 1,
         "minAppVersion": "1.5.0",
         "platforms": [
@@ -464,7 +486,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/weather.navopackage.json",
-      "sha256": "5f45f7452cac9913ea10dd1db27707ef5e4dd07b1bca7401c900af2587e561cb"
+      "sha256": "bd6747fdf6311400ea60ef1f2d404e55b942e506f3de934db0b3a24301487978"
     }
   ]
 }

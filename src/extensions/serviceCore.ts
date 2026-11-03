@@ -344,19 +344,28 @@ export class ExtensionService {
   }
   private async restorePackages() { if (this.host) { this.failed.clear(); await this.reconcile(this.generation); } }
   private async migrateLegacy() {
-    const host = this.ensureHost(), preferences = this.snapshot.preferences;
-    if (preferences.migratedLegacy) return;
-    const settings = host.getSettings();
-    const needed = settings.enabledPlugins?.includes("pomodoro") || settings.focusModeDefault === "pomodoro" || settings.widgetTimerPreferences?.mode === "pomodoro";
+    const host = this.ensureHost(), preferences = this.snapshot.preferences, settings = host.getSettings();
     const next = { ...preferences, migratedLegacy: true, installed: { ...preferences.installed } };
-    if (needed && !next.installed["official:pomodoro"] && !next.removed["official:pomodoro"]) {
-      const { officialPackages, officialPackageTexts } = await import("./officialPackages"); const pkg = officialPackages.pomodoro;
-      const bytes = new TextEncoder().encode(officialPackageTexts.pomodoro), hash = await sha256(bytes), now = new Date().toISOString();
-      await this.publishPackage(hash, bytes);
-      next.installed["official:pomodoro"] = { key: "official:pomodoro", sourceId: "official", manifest: pkg.manifest, sha256: hash, enabled: true, installedAt: now, updatedAt: now };
-      const config = { ...settings.pluginConfigs?.pomodoro, ...settings.widgetTimerPreferences };
-      await host.saveSettings({ extensionConfigs: { ...settings.extensionConfigs, "official:pomodoro": config } });
+    let changed = !preferences.migratedLegacy;
+    if (!preferences.migratedLegacy) {
+      const needed = settings.enabledPlugins?.includes("pomodoro") || settings.focusModeDefault === "pomodoro" || settings.widgetTimerPreferences?.mode === "pomodoro";
+      if (needed && !next.installed["official:pomodoro"] && !next.removed["official:pomodoro"]) {
+        const { officialPackages, officialPackageTexts } = await import("./officialPackages"); const pkg = officialPackages.pomodoro;
+        const bytes = new TextEncoder().encode(officialPackageTexts.pomodoro), hash = await sha256(bytes), now = new Date().toISOString();
+        await this.publishPackage(hash, bytes);
+        next.installed["official:pomodoro"] = { key: "official:pomodoro", sourceId: "official", manifest: pkg.manifest, sha256: hash, enabled: true, installedAt: now, updatedAt: now };
+        const config = { ...settings.pluginConfigs?.pomodoro, ...settings.widgetTimerPreferences };
+        await host.saveSettings({ extensionConfigs: { ...settings.extensionConfigs, "official:pomodoro": config } });
+      }
     }
+    if (settings.featureTemplatesEnabled !== false && !next.installed["official:schedule-templates"] && !next.removed["official:schedule-templates"]) {
+      const { officialPackages, officialPackageTexts } = await import("./officialPackages"); const pkg = officialPackages["schedule-templates"];
+      const bytes = new TextEncoder().encode(officialPackageTexts["schedule-templates"]), hash = await sha256(bytes), now = new Date().toISOString();
+      await this.publishPackage(hash, bytes);
+      next.installed["official:schedule-templates"] = { key: "official:schedule-templates", sourceId: "official", manifest: pkg.manifest, sha256: hash, enabled: true, installedAt: now, updatedAt: now };
+      changed = true;
+    }
+    if (!changed) return;
     next.updatedAt = new Date().toISOString(); this.setSnapshot({ preferences: next }); await host.saveSettings({ extensions: next });
   }
   private async reconcile(generation: number) {

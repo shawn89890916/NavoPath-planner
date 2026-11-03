@@ -94,13 +94,24 @@ export default {
       };
     }
     ctx.timers.registerMode(mode);
-    ctx.commands.register("open", zh ? "打开番茄钟" : "Open Pomodoro", open);
     ctx.ui.addHeaderItem(title, (container: HTMLElement) => {
-      const button = document.createElement("button"); button.type = "button"; button.className = "ui-button ui-button--ghost"; button.textContent = title;
+      const button = document.createElement("button"); button.type = "button"; button.className = "navopath-plugin-header-button"; button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9 2h6M12 2v3"/></svg>';
       button.setAttribute("aria-label", zh ? "打开番茄钟" : "Open Pomodoro");
-      button.title = zh ? "打开番茄钟，开始或暂停专注" : "Open Pomodoro to start or pause focus";
+      const reorderHint = zh ? " · 拖动调整插件顺序" : " · Drag to reorder plugins";
+      button.title = (zh ? "番茄钟" : "Pomodoro") + reorderHint;
+      button.setAttribute("aria-label", (zh ? "打开番茄钟" : "Open Pomodoro") + reorderHint);
+      const offState = ctx.events.on("timer:changed", (value: any) => {
+        const active = value?.mode === "pomodoro";
+        button.dataset.running = String(active && value?.running === true);
+        const phase = value?.phase === "break" ? (zh ? "休息" : "Break") : value?.phase === "overrun" ? (zh ? "超时" : "Overtime") : (zh ? "专注" : "Focus");
+        const remaining = Math.max(0, Number(value?.displaySeconds) || 0);
+        const clock = Math.floor(remaining / 60) + ":" + String(remaining % 60).padStart(2, "0");
+        const detail = active ? " · " + phase + " " + clock : "";
+        button.title = (zh ? "番茄钟" : "Pomodoro") + detail + reorderHint;
+        button.setAttribute("aria-label", (zh ? "打开番茄钟" : "Open Pomodoro") + detail + reorderHint);
+      });
       const off = ctx.on(button, "click", open); container.append(button);
-      return () => { off(); button.remove(); };
+      return () => { off(); offState(); button.remove(); };
     });
     ctx.settings.registerPage(ctx.language === "zh" ? "番茄钟" : "Pomodoro", (container: HTMLElement) => {
       const form = document.createElement("form"); form.className = "navopath-plugin-settings navopath-pomodoro";

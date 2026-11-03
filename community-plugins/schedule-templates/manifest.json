@@ -1,0 +1,14 @@
+{
+  "author": "NavoPath",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "minAppVersion": "1.5.2-beta.2",
+  "platforms": ["desktop", "web", "mobile"],
+  "repository": "https://github.com/shawn89890916/NavoPath-planner",
+  "license": "MIT",
+  "kind": "plugin",
+  "id": "schedule-templates",
+  "name": "Schedule Templates",
+  "description": "Save reusable daily schedules and apply them to a date.",
+  "main": "main.js"
+}

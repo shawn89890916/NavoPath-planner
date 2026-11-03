@@ -221,8 +221,19 @@ Candidate rows should remain visually quieter than scheduled timeline items.
 The candidate list is a staging area, not the primary execution surface.
 
 Action menus use one quiet panel outline and fine row dividers rather than a
-separate box around every choice. Header actions use the shared icon registry
-and unboxed icon buttons; the product wordmark follows the active text theme.
+separate box around every choice. Core header actions use the shared icon
+registry. Plugin entries use one unboxed 36px icon button with a 20px, 1.8px
+stroke icon, a localized accessible name, and a hover title for context. Plugin
+icons follow the NavoPath mark in their default install order; users can drag
+or keyboard-reorder them, and the saved order persists. Weather uses the current
+condition icon; running timers add a small status dot. The product wordmark
+follows the active text theme.
+
+Single-choice controls share the settings navigation's moving highlight.
+Execute/Planning tabs, timeline ranges, planning views, and settings subtabs
+keep their current selected text treatment while one quiet surface slides
+between options in about 200ms. Respect reduced-motion preferences and retain
+pressed/current semantics for keyboard and assistive technology.
 
 ### Schedule Timeline
 

@@ -33,6 +33,11 @@ export function createResourceUrls(pkg: ExtensionPackage): { get(path: string): 
   }, dispose() { for (const url of urls.values()) URL.revokeObjectURL(url); urls.clear(); } };
 }
 export function emitPluginEvent(event: string, payload?: unknown): void { eventBus.dispatchEvent(new CustomEvent(event, { detail: payload })); }
+export function subscribePluginEvent(event: string, listener: (payload: unknown) => void): Dispose {
+  const handler = (value: Event) => listener((value as CustomEvent).detail);
+  eventBus.addEventListener(event, handler);
+  return () => eventBus.removeEventListener(event, handler);
+}
 export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, importer: (url: string) => Promise<{ default?: PluginModule }> = url => import(/* @vite-ignore */ url)): Promise<LoadedPlugin> {
   const cleanups: Dispose[] = [];
   const resources = createResourceUrls(pkg);
@@ -55,7 +60,7 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
     app: bridge.host, tasks: collection<Task>("tasks"), projects: collection<Project>("projects"), calendar: collection<CalendarEvent>("events"), register,
     on(target, event, listener) { target.addEventListener(event, listener); return register(() => target.removeEventListener(event, listener)); },
     interval(callback, ms) { const timer = window.setInterval(callback, ms); return register(() => window.clearInterval(timer)); },
-    events: { on(event, listener) { const handler = (e: Event) => listener((e as CustomEvent).detail); eventBus.addEventListener(event, handler); return register(() => eventBus.removeEventListener(event, handler)); }, emit: emitPluginEvent },
+      events: { on(event, listener) { return register(subscribePluginEvent(event, listener)); }, emit: emitPluginEvent },
     settings: { get: () => bridge.config() as any, save: bridge.saveConfig, registerPage: (name, mount) => register(bridge.contribute("settingsPages", name, mount)) },
     storage: { get: bridge.getValue, set: bridge.setValue, remove: bridge.removeValue },
     localStorage: { get<T>(key: string) { try { return JSON.parse(localStorage.getItem(ownLocal + key) || "null") as T | null; } catch { return null; } }, set(key, value) { localStorage.setItem(ownLocal + key, JSON.stringify(value)); } },

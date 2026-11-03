@@ -725,6 +725,15 @@
   z-index: 1;
 }
 
+#root .df-app .df-tabs.ui-choice-list--motion-selection > .ui-choice-item:is(.active, [aria-pressed="true"], :hover:not(:disabled)) {
+  background: transparent;
+}
+
+#root .df-app .df-view-switch-vertical.ui-choice-list--motion-selection > .ui-choice-item:is(.active, [aria-pressed="true"], :hover:not(:disabled)) {
+  background: transparent;
+  box-shadow: none;
+}
+
 #root .df-app .ui-choice-list.ui-choice-list--motion-selection > .ui-choice-item:is(.active, [aria-current="page"], [aria-selected="true"], [aria-pressed="true"], :hover:not(:disabled)) {
   background: transparent;
 }
