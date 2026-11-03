@@ -10,7 +10,7 @@ import type { CatalogEntry, ExtensionHost } from "./types";
 import { cacheEntries } from "./cache";
 
 function fixture(account = "preview", extensions = defaultExtensionPreferences()) {
-  let settings: any = { language: "en", extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true }, extensionConfigs: {} };
+  let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true }, extensionConfigs: {} };
   let data: any = { tasks: [], projects: [], events: [] };
   const host: ExtensionHost = { getData: () => data, saveData: async next => { data = next; }, getSettings: () => settings, saveSettings: async patch => { settings = { ...settings, ...patch }; }, getAccountId: () => account === "preview" ? null : account, toast: vi.fn(), internal: {} };
   return { host, settings: () => settings };
