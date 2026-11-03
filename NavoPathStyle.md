@@ -220,6 +220,10 @@ Project color may appear only as:
 Candidate rows should remain visually quieter than scheduled timeline items.
 The candidate list is a staging area, not the primary execution surface.
 
+Action menus use one quiet panel outline and fine row dividers rather than a
+separate box around every choice. Header actions use the shared icon registry
+and unboxed icon buttons; the product wordmark follows the active text theme.
+
 ### Schedule Timeline
 
 The schedule timeline is the primary execution surface.
@@ -271,6 +275,9 @@ Avoid:
 
 Large scheduled blocks must not become visually heavy. Longer duration should
 be shown by vertical space, not by stronger color.
+Scheduled titles stay inside their time blocks and truncate before they collide
+with metadata or project labels. Next-step text remains in the text flow without
+an extra badge border.
 
 ### Current Time Indicator
 

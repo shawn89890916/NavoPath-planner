@@ -42,6 +42,29 @@
   min-height: 44px;
   text-align: start;
 }
+#root .df-app .df-candidate-panel .ui-action-disclosure-panel {
+  gap: 0;
+  padding: var(--space-2) var(--space-3);
+}
+#root .df-app .df-candidate-panel .ui-action-disclosure-panel > .ui-button {
+  min-height: 44px;
+  padding-inline: var(--space-2);
+  border: 0;
+  border-bottom: 1px solid var(--paper-rule);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#root .df-app .df-candidate-panel .ui-action-disclosure-panel > .ui-button:last-child {
+  border-bottom: 0;
+}
+#root .df-app .df-candidate-panel .ui-action-disclosure-panel > .ui-button:hover:not(:disabled),
+#root .df-app .df-candidate-panel .ui-action-disclosure-panel > .ui-button:focus-visible:not(:disabled) {
+  border-color: var(--paper-rule);
+  background: var(--paper-note);
+  color: var(--text-main);
+  box-shadow: none;
+}
 .ui-action-disclosure-panel [aria-pressed="true"]::after { content: "✓"; }
 #root .df-app .ui-action-disclosure-panel [class~="ui-button--danger"] { color: var(--danger, #b14a42); }
 

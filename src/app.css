@@ -2208,7 +2208,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   display: none;
 }
 .df-header .df-brand strong {
-  color: var(--mode-on-primary);
+  color: var(--text-main);
 }
 /* 2026-06-05 refinement pass */
 /* Current polish: candidate cards, settings entry, planning actions, multi-day alignment */
@@ -2237,7 +2237,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   display: none;
 }
 .df-app.theme-dark .df-header .df-brand strong {
-  color: var(--header-fg, #F5F7FA);
+  color: var(--text-main);
 }
 .df-app.theme-dark .df-header .df-user-avatar {
   color: var(--header-fg, #F5F7FA);
@@ -8596,18 +8596,16 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 .df-user-avatar {
   width: 34px; height: 34px; padding: 0;
   display: flex;
-  place-items: center; border-radius: 50%;
-  border: 1px solid var(--paper-rule); background: transparent;
+  place-items: center; border-radius: var(--radius-control);
+  border: 0; background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, transform .15s ease;
+  transition: color var(--motion-base) var(--motion-ease), background-color var(--motion-base) var(--motion-ease);
   align-items: center;
   justify-content: center; box-shadow: none;
-  border-color: color-mix(in srgb, var(--mode-primary) 34%, transparent);
+  border-color: transparent;
 }
-.df-user-avatar:hover { border-color: var(--paper-rule-strong); color: var(--text-main);
-  box-shadow: var(--shadow-hl); background: var(--paper-note);
-  transform: scale(1.06); }
+.df-user-avatar:hover { color: var(--text-main); background: var(--paper-note); box-shadow: none; transform: none; }
 .df-user-avatar:disabled { cursor: wait; opacity: .52; }
 /* Desktop workbench */
 .df-execute { background: transparent;
@@ -16423,6 +16421,16 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"] .df-time-card-main > .df-task-block-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  max-height: 2.8em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
 /* Metadata — muted. */
 .df-app .df-task-block[data-task-appearance] .df-candidate-meta-badges {
   color: var(--task-meta-color);
@@ -16442,7 +16450,11 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   font-size: 11px;
   font-weight: 550;
 }
-.df-app .df-task-block[data-task-appearance] .df-next {
+.df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"] .df-next {
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--task-meta-color);
   font-family: var(--paper-ui, var(--paper-sans, inherit));
   font-size: 11px;
@@ -16840,6 +16852,11 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"][data-schedule-size="short"] .df-time-card-main > .df-task-block-title {
+  display: block;
+  max-height: 1.15em;
+  white-space: nowrap;
+}
 .navo-demo-app .df-task-block[data-task-appearance][data-task-variant="scheduled"][data-schedule-size="short"] .df-task-block-title {
   font-size: 12px;
   line-height: 1.15;
@@ -16935,6 +16952,11 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   line-height: 1.4;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+.df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"][data-schedule-size="tall"] .df-time-card-main > .df-task-block-title {
+  max-height: 2.8em;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 .navo-demo-app .df-task-block[data-task-appearance][data-task-variant="scheduled"][data-schedule-size="tall"] .df-task-block-title {
   font-size: 14px;
@@ -17390,6 +17412,10 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   height: auto;
   flex: none;
   padding: 0;
+}
+.df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"]:has(> .df-block-project-wrap) .df-time-card-row {
+  box-sizing: border-box;
+  padding-bottom: 20px;
 }
 .navo-demo-app .df-task-block[data-task-appearance][data-task-variant="scheduled"] .df-time-card-main {
   align-self: start;
@@ -23556,6 +23582,19 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 /* Browser review follow-up: keep compact controls in the viewport and let the
    timeline own the remaining height instead of leaving a dead lower shelf. */
+#root .df-app .df-header-right > .df-user-avatar {
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+#root .df-app .df-header-right > .df-user-avatar:is(:hover, :active) {
+  border: 0;
+  background: var(--paper-note);
+  box-shadow: none;
+  transform: none;
+}
 #root .df-app .df-brand-ai-button,
 #root .df-app .df-brand-ai-button:hover,
 #root .df-app .df-brand-ai-button:focus-visible {
@@ -23567,7 +23606,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   flex: 0 0 24px;
   width: 24px;
   height: 24px;
-  stroke-width: 2;
+  stroke-width: 1.8;
 }
 @media (min-width: 981px) and (orientation: landscape) {
   #root .df-app.mode-execute > .df-add-fab {

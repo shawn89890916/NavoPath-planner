@@ -68,7 +68,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -9149,7 +9149,7 @@ if (cached?.data && cached?.settings) {
             onClick={() => { setCommandOpen(true); setCommandQuery(""); }}
             aria-label={lang === "zh" ? "搜索" : "Search"}
           >
-            <UiSearchIcon size={20} strokeWidth={2} />
+            <UiSearchIcon size={20} />
           </button>
           {authState?.mode === "cloud" && <button
             className={`df-user-avatar df-proactive-notification-button${showNotificationBadge && proactiveNotifications.length ? " has-unread" : ""}`}
@@ -9158,11 +9158,11 @@ if (cached?.data && cached?.settings) {
             aria-label={lang === "zh" ? `主动助理提醒${proactiveNotifications.length ? `，${proactiveNotifications.length} 条未读` : ""}` : `Proactive assistant messages${proactiveNotifications.length ? `, ${proactiveNotifications.length} unread` : ""}`}
             title={lang === "zh" ? "主动助理提醒" : "Proactive assistant messages"}
           >
-            <UiBellIcon size={20} strokeWidth={2} />
+            <UiBellIcon size={20} />
             <NotificationBadge count={proactiveNotifications.length} enabled={showNotificationBadge} />
           </button>}
           <button className="df-user-avatar" onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.01A1.65 1.65 0 0 0 10.91 3H11a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <UiSettingsIcon size={20} />
           </button>
         </div>}
         </div>}

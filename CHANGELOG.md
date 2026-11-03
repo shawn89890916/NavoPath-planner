@@ -14,6 +14,7 @@
 ### 修复
 - 后台检查更新时仍可浏览市场、导入与启停插件、切换受限模式；加载进度明确显示，已安装和默认来源使用状态文字，按钮主次与窄屏排版更清晰。
 - 天气支持中文城市及常见海外城市中文名搜索，缩略时仅显示城市名，展开后可查看完整天气；窄屏与顶栏裁切时也能完整展开。
+- 执行页“更多”菜单改用细线分隔，浅色模式品牌文字保持清晰；顶栏图标统一为无框样式，时间轴长标题不再遮挡辅助信息。
 
 ## 2026-11-02 · 社区插件、主题与习惯修复 · 1.5.1
 
@@ -330,6 +331,7 @@
 ### Fixes
 - Background update checks keep browsing, imports, plugin activation and restricted mode available. Loading is explicit, installed packages and default sources use status text, and action hierarchy and narrow-screen layouts are clearer.
 - Weather searches Chinese city names and common overseas cities in Chinese. The compact header shows only the city name; the expanded forecast stays fully visible on narrow screens and in clipped headers.
+- The Execute More menu now uses fine row dividers, the wordmark remains legible in light mode, header icons share an unboxed style, and long timeline titles no longer collide with supporting labels.
 
 ## 2026-11-02 · Community plugins, themes and habit fixes · 1.5.1
 
