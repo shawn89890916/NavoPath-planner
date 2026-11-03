@@ -368,6 +368,7 @@ Use for compact workspace tools, close controls, arrows, and utility actions.
 ## Interaction States
 
 - Default transitions: `150-180ms`, using the shared paper easing curve.
+- Single-choice lists may use one shared neutral highlight that follows the selected row over the `240ms` layout duration; retain static selected fills when animation is unavailable or reduced motion is preferred.
 - Hover: ink color, annotation wash, or rule change only.
 - Active: `translateY(1px)` only.
 - Focus-visible: one-pixel active-accent outline with clear offset.

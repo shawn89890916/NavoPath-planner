@@ -683,6 +683,29 @@
   gap: var(--space-1);
 }
 
+#root .df-app .ui-choice-list--motion-selection {
+  position: relative;
+}
+
+#root .df-app .ui-choice-list--motion-selection > .ui-choice-selection-indicator {
+  position: absolute;
+  z-index: 0;
+  border-radius: 12px;
+  corner-shape: var(--corner-shape, squircle);
+  background: var(--ui-choice-selected);
+  pointer-events: none;
+  transform-origin: top left;
+}
+
+#root .df-app .ui-choice-list--motion-selection > .ui-choice-item {
+  position: relative;
+  z-index: 1;
+}
+
+#root .df-app .ui-choice-list.ui-choice-list--motion-selection > .ui-choice-item:is(.active, [aria-current="page"], [aria-selected="true"], [aria-pressed="true"], :hover:not(:disabled)) {
+  background: transparent;
+}
+
 #root .df-app .ui-choice-list--inline {
   display: flex;
   align-items: center;
@@ -731,6 +754,10 @@
   color: var(--text-main);
   outline: 1px solid var(--border-focus);
   outline-offset: 2px;
+}
+
+#root .df-app .ui-choice-list.ui-choice-list--motion-selection > .ui-choice-item:is(.active, [aria-current="page"], [aria-selected="true"], [aria-pressed="true"], :active:not(:disabled)) {
+  background: transparent;
 }
 
 #root .df-app .ui-choice-list.ui-choice-list > .ui-choice-item:active:not(:disabled) {

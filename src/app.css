@@ -8402,7 +8402,7 @@ html[data-motion-scope="workspace"] .df-app > .df-planning {
 html[data-motion-scope="timeline"] #df-execute-timeline .df-timeline-content {
   view-transition-name: navo-motion-surface;
 }
-html[data-motion-scope="settings"] .df-app .df-settings-shell,
+html[data-motion-scope="settings"] .df-app .df-settings-content,
 html[data-motion-scope="planning"] .df-app > .df-planning .df-tree-wrap {
   view-transition-name: navo-motion-surface;
 }
@@ -8494,7 +8494,7 @@ html[data-motion-fallback][data-motion-scope="workspace"] .df-app > .df-planning
 html[data-motion-fallback][data-motion-scope="timeline"] #df-execute-timeline :is(.df-timeline-scroll, .df-timeline-3day-scroll, .df-month-scroll) {
   animation: navo-motion-new var(--motion-layout) var(--motion-ease) both;
 }
-html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-shell,
+html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-content,
 html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning .df-tree-wrap {
   animation: navo-motion-new var(--motion-layout) var(--motion-ease) backwards;
 }

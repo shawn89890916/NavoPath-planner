@@ -52,7 +52,8 @@
         "dist/assets/WidgetApp-*.js",
         "dist/assets/MobileTaskSummary-*.js",
         "dist/assets/MobileExecutionControls-*.js",
-        "dist/assets/mobilePlacement-*.js"
+        "dist/assets/mobilePlacement-*.js",
+        "dist/assets/SelectionIndicator-*.js"
       ],
       "limit": "38 KB"
     },
@@ -81,9 +82,10 @@
         "dist/assets/MobileTaskSummary-*.js",
         "dist/assets/SettingsPanel-*.js",
         "dist/assets/MobileExecutionControls-*.js",
-        "dist/assets/mobilePlacement-*.js"
+        "dist/assets/mobilePlacement-*.js",
+        "dist/assets/SelectionIndicator-*.js"
       ],
-      "limit": "357 KB"
+      "limit": "358 KB"
     },
     {
       "name": "Document parsing scripts",

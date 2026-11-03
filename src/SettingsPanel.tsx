@@ -24,6 +24,7 @@ import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumber
 import { reasoningModesForModel } from "./utils/aiModels";
 import { createPortal, flushSync } from "react-dom";
 import { runMotionTransition } from "./motion";
+import { SelectionIndicator } from "./components/SelectionIndicator";
 import { getDefaultSettings } from "./defaultSettings";
 import { uid } from "./utils/ids";
 const localStorage = getWorkspaceStorage();
@@ -796,7 +797,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             ) : <>
             <div className="df-settings-rail">
               <SettingTextInput value={navigationQuery} placeholder={lang === "zh" ? "搜索设置…" : "Search settings…"} ariaLabel={lang === "zh" ? "搜索设置" : "Search settings"} onChange={setNavigationQuery} />
-              <nav className="df-settings-nav ui-choice-list" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
+              <nav className="df-settings-nav ui-choice-list ui-choice-list--motion-selection" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
+                <SelectionIndicator activeKey={navigationQuery.trim() ? "" : `${settingsTarget.pluginPage ? `plugin:${settingsTarget.pluginPage}` : `category:${settingsTarget.category}`}:${lang}:${pluginPages.length}`} />
                 {navigationQuery.trim() ? navigationResults.map(result => <button type="button" key={result.id} className="ui-choice-item" onClick={() => navigateSettings(result.target)}>{lang === "zh" ? result.labelZh : result.labelEn}</button>) : SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => (
                   <button type="button" key={category.id} className={`ui-choice-item${settingsTarget.category === category.id && !settingsTarget.pluginPage ? " active" : ""}`} aria-current={settingsTarget.category === category.id && !settingsTarget.pluginPage ? "page" : undefined} onClick={() => navigateSettings({ category: category.id })}>{lang === "zh" ? category.labelZh : category.labelEn}</button>
                 ))}
@@ -1140,7 +1142,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 control={<SettingNumberInput value={widgetAppearance.fontScale} min={0.5} max={2} step={0.05} suffix="×" ariaLabel={lang === "zh" ? "小组件字号比例" : "Widget font scale"} onChange={(fontScale) => saveWidgetAppearance({ fontScale })} />}
               />
               <SettingDivider />
-              <div className="df-settings-subtabs ui-choice-list ui-choice-list--inline" role="tablist" aria-label={lang === "zh" ? "小组件外观主题" : "Widget appearance theme"}>
+              <div className="df-settings-subtabs ui-choice-list ui-choice-list--inline ui-choice-list--motion-selection" role="tablist" aria-label={lang === "zh" ? "小组件外观主题" : "Widget appearance theme"}>
+                <SelectionIndicator activeKey={`${widgetThemeOpen}:${lang}`} />
                 {(["light", "dark"] as const).map((theme) => <button key={theme} type="button" role="tab" aria-selected={widgetThemeOpen === theme} className={`ui-choice-item${widgetThemeOpen === theme ? " active" : ""}`} onClick={() => setWidgetThemeOpen(theme)}>{theme === "light" ? (lang === "zh" ? "浅色" : "Light") : (lang === "zh" ? "深色" : "Dark")}</button>)}
               </div>
               {(() => {
@@ -1258,7 +1261,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 </div>
               </section>}
             </SettingSection>}
-            {settingsTarget.category === "integrations" && <div className="df-settings-subtabs df-settings-integration-tabs ui-choice-list ui-choice-list--inline" role="tablist" aria-label={lang === "zh" ? "日历与集成" : "Calendar and integrations"}>
+            {settingsTarget.category === "integrations" && <div className="df-settings-subtabs df-settings-integration-tabs ui-choice-list ui-choice-list--inline ui-choice-list--motion-selection" role="tablist" aria-label={lang === "zh" ? "日历与集成" : "Calendar and integrations"}>
+              <SelectionIndicator activeKey={`${integrationTab}:${lang}`} />
               <button type="button" role="tab" aria-selected={integrationTab === "calendar"} className={`ui-choice-item${integrationTab === "calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("calendar"); setSettingsTarget({ category: "integrations", anchor: "calendar-feed" }); }}>{lang === "zh" ? "日历订阅" : "Calendar"}</button>
               <button type="button" role="tab" aria-selected={integrationTab === "external-calendar"} className={`ui-choice-item${integrationTab === "external-calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("external-calendar"); setSettingsTarget({ category: "integrations", anchor: "external-calendar" }); }}>{lang === "zh" ? "外部日历" : "External"}</button>
               <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={`ui-choice-item${integrationTab === "mcp" ? " active" : ""}`} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "integrations", anchor: "mcp" }); }}>MCP</button>

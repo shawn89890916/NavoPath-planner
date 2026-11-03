@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMotionSelection } from "./useMotionSelection";
+import { SelectionIndicator } from "./components/SelectionIndicator";
 import { useMotionPresence } from "./useMotionPresence";
 import type { PlannerData, Project, Settings, Subtask, Task, WorkflowStatus } from "./types";
 import { t, type Language } from "./i18n";
@@ -2301,7 +2302,8 @@ export default function PlanningView(props: {
         <section className="df-mindmap no-root">
           <aside className="df-planning-sidebar" aria-label={props.lang === "zh" ? "\u89c4\u5212\u5de5\u5177" : "Planning tools"}>
             {availableModes.length > 1 && (
-              <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare">
+              <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare ui-choice-list--motion-selection">
+                <SelectionIndicator activeKey={`${viewMode}:${props.lang}:${availableModes.length}`} />
                 {availableModes.map((m) => (
                   <button type="button" key={m} className={`df-view-btn ui-choice-item${viewMode === m ? " active" : ""}`} aria-label={metricViewLabel(props.lang, m)} aria-pressed={viewMode === m} onClick={() => changePlanningView(m)} title={metricViewLabel(props.lang, m)}>
                       <PlanningModeIcon mode={m} />
