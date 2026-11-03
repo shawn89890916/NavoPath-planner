@@ -701,8 +701,9 @@
 
 /* Shared option-list selection: a quiet, complete row highlight. */
 #root .df-app .ui-choice-list {
-  --ui-choice-hover: color-mix(in srgb, var(--text-main) 5%, var(--timeline-paper, var(--surface-main)));
-  --ui-choice-selected: color-mix(in srgb, var(--text-main) 9%, var(--timeline-paper, var(--surface-main)));
+  --ui-choice-radius: 12px;
+  --ui-choice-hover: color-mix(in srgb, var(--text-main) 4%, var(--timeline-paper, var(--surface-main)));
+  --ui-choice-selected: color-mix(in srgb, var(--text-main) 5%, var(--timeline-paper, var(--surface-main)));
   gap: var(--space-1);
 }
 
@@ -713,7 +714,7 @@
 #root .df-app .ui-choice-list--motion-selection > .ui-choice-selection-indicator {
   position: absolute;
   z-index: 0;
-  border-radius: 12px;
+  border-radius: var(--ui-choice-radius);
   corner-shape: var(--corner-shape, squircle);
   background: var(--ui-choice-selected);
   pointer-events: none;
@@ -759,7 +760,7 @@
   min-height: 40px;
   padding: 8px 12px;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: var(--ui-choice-radius);
   background: transparent;
   color: var(--text-muted);
   box-shadow: none;

@@ -8573,7 +8573,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   pointer-events: none;
   margin-top: -2px; display: none; }
 .df-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.df-brand > div { display: grid; gap: 0; }
+.df-brand > .df-brand-wordmark { display: grid; gap: 0; }
 .df-brand strong {
   display: block; font-size: 16px; font-family: var(--paper-display); letter-spacing: -.035em; font-weight: 600; }
 .df-app .dayflow-icon { box-shadow: none; filter: none; }
@@ -8658,6 +8658,19 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   border-color: color-mix(in srgb, var(--accent-active) 42%, var(--border-soft));
   border: 1px solid transparent; border-radius: var(--paper-radius); box-shadow: none;
   transition: all .15s ease; filter: none; corner-shape: var(--corner-shape, squircle);
+}
+#root .df-app .df-panel-title > div > .df-candidate-header-icon {
+  border: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+#root .df-app .df-panel-title > div > .df-candidate-header-icon:hover { background: var(--paper-note); }
+#root .df-app .df-panel-title > div > .df-candidate-header-icon.active { background: var(--paper-note); }
+#root .df-app .df-panel-title > div > .df-candidate-header-icon:focus-visible {
+  border: 0;
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
 }
 .df-icon-action {
   transition: all .15s ease;

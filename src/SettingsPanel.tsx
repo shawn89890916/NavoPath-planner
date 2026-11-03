@@ -410,7 +410,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   const [settingsTarget, setSettingsTarget] = useState<SettingsTarget>(resolveRuntimeTarget(resolvedInitial));
   const [settingsHome, setSettingsHome] = useState(!initialSection && compactLayout);
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const pluginPages = extensionSnapshot.settingsPages;
+  const pluginPages = Array.from(new Map(extensionSnapshot.settingsPages.map((page) => [`${page.owner}:${page.name.trim().toLocaleLowerCase()}`, page])).values());
   const selectedPluginPage = pluginPages.find(page => page.id === settingsTarget.pluginPage);
   const [navigationQuery, setNavigationQuery] = useState("");
   const navigationResults = searchSettings(navigationQuery, lang, isDesktopRuntime);

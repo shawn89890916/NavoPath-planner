@@ -1,5 +1,5 @@
-.df-extension-header { display: flex; align-items: center; gap: var(--space-2, 8px); min-width: 0; }
-.df-extension-header-item { display: flex; align-items: center; min-width: 0; border-radius: var(--radius-control, 8px); }
+.df-extension-header { display: flex; flex: 0 0 auto; flex-direction: row; align-items: center; gap: var(--space-2, 8px); min-width: 0; white-space: nowrap; }
+.df-extension-header-item { display: flex; flex: 0 0 auto; align-items: center; min-width: 36px; border-radius: var(--radius-control, 8px); }
 .df-extension-header-item[data-dragging="true"] { opacity: .45; }
 .df-extension-header-item[data-drop-target="true"] { box-shadow: inset 2px 0 var(--accent-active); }
 .df-extension-header-item .navopath-plugin-header-button {

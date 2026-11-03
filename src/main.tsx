@@ -68,7 +68,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiEyeIcon, UiFolderInputIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -9135,7 +9135,7 @@ if (cached?.data && cached?.settings) {
             <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : undefined} disabled={!compactLayout || settings.hideAi}>
               <ProductIcon compact />
             </button>
-            <div><strong>NavoPath</strong></div>
+            <div className="df-brand-wordmark"><strong>NavoPath</strong></div>
             {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} /></Suspense>}
           </div>
           <div className="df-month-year-selector">
@@ -9361,10 +9361,9 @@ if (cached?.data && cached?.settings) {
                 {!mobileExecution && (timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
                   <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }} style={{ fontSize: "14px", lineHeight: 1, padding: "0 2px" }}>«</button>
                 )}
-                <ActionDisclosure label={lang === "zh" ? "更多" : "More"}>
-                  <Button aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)}>{lang === "zh" ? "按项目分类" : "Group by project"}</Button>
-                  <Button aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)}>{t(lang, "candidate.showCompleted")}</Button>
-                </ActionDisclosure>
+                <IconButton className="df-icon-action df-candidate-header-icon" icon={<UiCalendarCheckIcon size={17} />} label={term(lang, "planning")} onClick={() => changeMode("planning")} />
+                <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />
+                <IconButton className={`df-icon-action df-candidate-header-icon${showCompletedCandidates ? " active" : ""}`} icon={<UiEyeIcon size={17} />} label={t(lang, "candidate.showCompleted")} aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)} />
                 {!settings.hideAi && (
                   <span className="df-ai-plan-title-tools">
                     <IconButton
