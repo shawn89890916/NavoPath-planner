@@ -11,7 +11,7 @@
 - 设置统一文字层级与行间节奏，窄面板将较宽控件移到说明下方；更新检查保留按钮宽度与清晰的忙碌状态，完成候选任务时先显示勾选反馈再平滑收拢。
 - 设置导航、设置内标签和规划视图的选中底色会平滑跟随切换，保持统一的低对比度纸感样式。
 - 执行/规划主导航与 Day、3-Day、Week、Month 时间轴视图也共用设置子页的滑动选中底色；插件图标统一排在左侧 N 标志后，可拖动排序并保留顺序。天气图标随天气状态变化，番茄钟运行时显示阶段状态；模板入口迁移为官方插件，候选区移除重复的 Focus 入口和 AI 设置项。
-- 插件工具栏保持横向排列，图标颜色、24px 图形尺寸和36px点击区域与右侧统一；放大 N 标志以补偿图案留白并移除品牌文字；插件设置入口去重。开始更新时按钮立即显示“正在更新”，候选区取消“更多”菜单，直接显示“按项目分类”和 Show Done 两个无描边图标按钮，选中底色进一步变浅并统一圆角。
+- 插件工具栏保持横向排列，图标颜色、24px 图形尺寸和36px点击区域与右侧统一；放大并以图形中心对齐 N 标志以补偿素材留白，移除品牌文字；插件设置入口去重。开始更新时按钮立即显示“正在更新”，候选区取消“更多”菜单，直接显示“按项目分类”和 Show Done 两个无描边图标按钮；Show Done 改用清单勾选图标，选中底色进一步变浅并统一圆角。
 - 插件与外观设置使用简洁的设置行，插件拥有独立侧栏设置入口；插件和主题市场支持搜索、已安装筛选、排序与详情浏览。
 - 主题市场提供 Linen、Minimal、Sage、Graphite、Ocean 与 Typewriter 六种预设，加入真实浅深色对照及单独预览；主题统一覆盖弹出界面、任务控件和桌面小组件。
 - 番茄钟新增顶栏入口，支持不关联任务的独立专注；新增快速收集与每日概览插件，可直接收集任务及查看真实工作区数据，窄屏可通过「更多 → 插件工具」打开。
@@ -345,7 +345,7 @@
 - Background update checks keep browsing, imports, plugin activation and restricted mode available. Loading is explicit, installed packages and default sources use status text, and action hierarchy and narrow-screen layouts are clearer.
 - Weather searches Chinese city names and common overseas cities in Chinese. The compact header shows only the city name; the expanded forecast stays fully visible on narrow screens and in clipped headers.
 - The Execute More menu now uses fine row dividers, the wordmark remains legible in light mode, header icons share an unboxed style, and long timeline titles no longer collide with supporting labels.
-- Plugin toolbar entries stay in a horizontal row, match the right-side icon color, 24px glyph size and 36px hit area; the N mark is enlarged to compensate for transparent padding and the wordmark is omitted. Duplicate plugin settings links are collapsed. Update buttons immediately read “Updating…”. The candidate More menu is replaced by two borderless icon actions for Group by project and Show Done; the moving selection fill is lighter with a shared corner radius.
+- Plugin toolbar entries stay in a horizontal row, match the right-side icon color, 24px glyph size and 36px hit area; the enlarged N mark is centered optically to compensate for transparent padding and the wordmark is omitted. Duplicate plugin settings links are collapsed. Update buttons immediately read “Updating…”. The candidate More menu is replaced by two borderless icon actions for Group by project and Show Done; Show Done uses a checklist icon, and the moving selection fill is lighter with a shared corner radius.
 
 ## 2026-11-02 · Community plugins, themes and habit fixes · 1.5.1
 

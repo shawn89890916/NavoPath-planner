@@ -23642,6 +23642,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 #root .df-app .df-brand-ai-button .dayflow-icon.compact,
 #root .df-app .df-brand-ai-button .dayflow-icon.compact img { width: 42px; height: 42px; }
+.df-header .df-brand-ai-button { position: relative; }
+.df-header .df-brand-ai-button > .dayflow-icon.compact { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 #root .df-app .df-brand-ai-button img { filter: none; }
 @media (max-width: 980px) {
   #root .df-app .df-brand-ai-button { width: 44px; height: 44px; }

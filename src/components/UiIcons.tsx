@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Ellipsis, Pencil, Plus, Search, Settings, Sparkles, Trash2, X, type LucideIcon, type LucideProps } from "lucide-react";
+import { Bell, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Ellipsis, ListChecks, Pencil, Plus, Search, Settings, Sparkles, Trash2, X, type LucideIcon, type LucideProps } from "lucide-react";
 
 function createNamedIcon(Icon: LucideIcon) {
   return function NamedUiIcon({ size = 16, strokeWidth = 1.8, ...props }: LucideProps) {
@@ -20,6 +20,7 @@ export const UiSettingsIcon = createNamedIcon(Settings);
 export const UiTrashIcon = createNamedIcon(Trash2);
 export const UiMoreIcon = createNamedIcon(Ellipsis);
 export const UiSparklesIcon = createNamedIcon(Sparkles);
+export const UiListChecksIcon = createNamedIcon(ListChecks);
 function createPathIcon(path: string) {
   return function PathIcon({ size = 16, strokeWidth = 1.8, absoluteStrokeWidth: _absoluteStrokeWidth, ...props }: LucideProps) {
     return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden={props["aria-label"] ? undefined : true} {...props}><path d={path} /></svg>;
