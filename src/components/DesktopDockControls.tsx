@@ -34,7 +34,7 @@ export function DesktopDockSettings({ lang }: { lang: Language }) {
           { value: "click", label: lang === "zh" ? "点击打开" : "Open on click" },
         ]} />} />
     {preferences && <>
-      <SettingRow title={lang === "zh" ? "小条长度" : "Tab height"} control={<SettingNumberInput value={preferences.handleHeight} min={32} max={160} step={8} suffix="px" disabled={busy} ariaLabel={lang === "zh" ? "小条长度" : "Tab height"} onChange={(handleHeight) => void save({ handleHeight })} />} />
+      <SettingRow title={lang === "zh" ? "小条长度" : "Tab height"} description={lang === "zh" ? "最长可覆盖整条屏幕边缘，超出屏幕的长度会自动适配。" : "Can cover the full screen edge; lengths beyond the screen are fitted automatically."} control={<SettingNumberInput value={preferences.handleHeight} min={32} max={8192} step={8} suffix="px" disabled={busy} ariaLabel={lang === "zh" ? "小条长度" : "Tab height"} onChange={(handleHeight) => void save({ handleHeight })} />} />
       <SettingRow title={lang === "zh" ? "小条位置" : "Tab position"} description={lang === "zh" ? "0% 为顶部，100% 为底部。" : "0% is the top; 100% is the bottom."} control={<SettingNumberInput value={preferences.position} min={0} max={100} step={5} suffix="%" disabled={busy} ariaLabel={lang === "zh" ? "小条位置" : "Tab position"} onChange={(position) => void save({ position })} />} />
       <SettingRow title={lang === "zh" ? "展开窗口高度" : "Expanded panel height"} control={<SettingNumberInput value={preferences.panelHeight} min={50} max={100} step={5} suffix="%" disabled={busy} ariaLabel={lang === "zh" ? "展开窗口高度" : "Expanded panel height"} onChange={(panelHeight) => void save({ panelHeight })} />} />
     </>}

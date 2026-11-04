@@ -8,7 +8,7 @@ function normalizeDockPreferences(value = {}) {
     ? Math.round(Math.max(min, Math.min(max, value[key]))) : DEFAULT_DOCK_PREFERENCES[key];
   return {
     activation: value.activation === "click" ? "click" : "hover",
-    handleHeight: number("handleHeight", 32, 160),
+    handleHeight: number("handleHeight", 32, 8192),
     position: number("position", 0, 100),
     panelHeight: number("panelHeight", 50, 100),
   };

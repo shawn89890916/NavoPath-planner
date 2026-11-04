@@ -3,6 +3,7 @@
 ## 2026-11-04 · 1.6.2 正式版
 
 ### 改进
+- 桌面 Dock 小条可加长至覆盖整条屏幕边缘，超出部分自动适配屏幕高度。
 - 课表插件 1.0.1 可在官方 1.6.2 独立安装，启动前检查背景接口，保留已有课表和任务。
 
 ### 新增
@@ -347,6 +348,7 @@
 ## 2026-11-04 · 1.6.2 Stable
 
 ### Improved
+- Desktop Dock tabs can span the full screen edge, automatically fitting lengths that exceed the screen height.
 - Timetable 1.0.1 installs independently on official 1.6.2, checks background support before startup, and retains existing planner data.
 
 ### Added
