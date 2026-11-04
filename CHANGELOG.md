@@ -1,9 +1,14 @@
 # NavoPath 更新日志
 
-## 2026-11-04 · 桌面应用快速唤起
+## 2026-11-04 · 插件工作区与桌面体验 · 1.6.0
+
+### 新功能
+- 顶栏插件图标统一排在左侧 N 标志后，支持拖动排序、按运行状态变化和悬停查看信息；天气、番茄钟与日程模板入口统一为插件。
+- Windows 桌面版注册 `navopath://` 链接，外部工具可直接唤起 NavoPath；应用已在后台运行时会显示现有窗口。
 
 ### 改进
-- Windows 桌面版注册 `navopath://` 链接，外部工具可直接唤起 NavoPath；应用已在后台运行时会显示现有窗口。
+- N 标志按实际图形中心与插件图标对齐；执行、规划、时间轴视图和设置选项共用平滑移动的选中状态。
+- 今日候选直接显示分类和已完成筛选图标；移除重复 Focus、模板和 AI 设置入口，让插件及设置承担各自功能。
 
 ## 2026-11-03 · 插件、主题市场与时间轴 · 1.5.2 Beta
 
@@ -324,10 +329,15 @@
 
 # NavoPath Changelog
 
-## 2026-11-04 · Open the desktop app from integrations
+## 2026-11-04 · Plugin workspace and desktop experience · 1.6.0
+
+### Added
+- Plugin icons form one ordered toolbar after the N mark, support drag reordering, status-aware icons and hover details; Weather, Pomodoro and Schedule Templates use the same plugin entry point.
+- The Windows desktop app registers the `navopath://` link so integrations can open NavoPath directly; an existing background instance brings its window forward.
 
 ### Improved
-- The Windows desktop app registers the `navopath://` link so integrations can open NavoPath directly; an existing background instance brings its window forward.
+- The N mark aligns by its visible center with plugin icons; Execute, Planning, timeline views and settings options share the same smoothly moving selection state.
+- Today’s Candidates exposes grouping and completed-task filtering directly, while duplicate Focus, template and AI-settings entries are removed in favor of their plugin and settings homes.
 
 ## 2026-11-03 · Plugin and theme markets, timeline entry · 1.5.2 Beta
 

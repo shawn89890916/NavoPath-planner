@@ -1,13 +1,15 @@
-# Desktop Beta releases
+# Desktop releases
 
-Until the user explicitly approves stable releases, every new release uses
-`x.x.x-beta.N` (for example `1.5.2-beta.1`) and the tag `vx.x.x-beta.N`.
-Display the version as `x.x.x Beta` in the app and release title. Increment the
-Beta ordinal for further builds of the same base version; never overwrite an
-existing tag, release or asset. Existing stable releases remain intact.
+The owner explicitly approved stable releases on 2026-11-04, starting with
+`1.6.0`. Stable releases use `x.x.x` semver and the `latest` channel. Beta
+releases use `x.x.x-beta.N` (for example `1.6.0-beta.1`), display `x.x.x Beta`
+in the release title and use the opt-in `beta` channel. Never overwrite an
+existing tag, release or asset; increment the Beta ordinal for another build of
+the same base version.
 
-`npm run dist` validates the Beta policy, builds without publishing, verifies the
-installer checksum and size, and prepares all five assets in `D:/navopath-build`:
+`npm run dist` validates the version/channel policy, builds without publishing,
+verifies the installer checksum and size, and prepares all five assets in
+`D:/navopath-build`:
 
 - `latest.yml`
 - `beta.yml`
@@ -15,15 +17,14 @@ installer checksum and size, and prepares all five assets in `D:/navopath-build`
 - `NavoPath-Setup.exe.blockmap`
 - `NavoPath-Portable.exe`
 
-The two YAML files describe the same Beta installer. `beta.yml` serves opted-in
-clients; `latest.yml` preserves the desktop asset contract. GitHub marks these
-releases as prereleases, so stable clients continue to resolve GitHub's stable
-Latest release. The presence of `latest.yml` on a prerelease does not promote it
-to the stable channel.
+The two YAML files describe the same build. `latest.yml` serves stable clients;
+`beta.yml` serves opted-in clients. Beta releases are published as prereleases
+with `--latest=false`; stable releases are published as the GitHub Latest
+release. Beta updates remain off by default.
 
 The Desktop Release workflow rejects a mismatched tag, refuses existing
-releases, uploads the complete asset set to a draft, then publishes it as a
-prerelease with `--latest=false`. It runs `scripts/verify-release.mjs` against
+releases, uploads the complete asset set to a draft, then publishes it on the
+channel selected by the version. It runs `scripts/verify-release.mjs` against
 the real version tag after publishing. If upload fails, the draft stays private;
 inspect it and use a new version or deliberately repair the incomplete draft.
 

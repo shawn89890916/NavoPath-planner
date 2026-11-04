@@ -10,19 +10,21 @@ const { load } = require("js-yaml");
 const root = fileURLToPath(new URL("../", import.meta.url));
 export const desktopReleaseAssets = ["latest.yml", "beta.yml", "NavoPath-Setup.exe", "NavoPath-Setup.exe.blockmap", "NavoPath-Portable.exe"];
 
-export function assertBetaReleasePolicy(pkg) {
-  if (!/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)-beta\.[1-9]\d*$/.test(pkg.version)) {
-    throw new Error("New releases must use x.x.x-beta.N until the user explicitly approves stable releases.");
-  }
-  if (pkg.build?.publish?.provider !== "github" || pkg.build.publish.releaseType !== "prerelease") {
-    throw new Error("Desktop releases must retain the GitHub provider and use prerelease publication.");
+export function assertDesktopReleasePolicy(pkg) {
+  const stable = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(pkg.version);
+  const beta = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)-beta\.[1-9]\d*$/.test(pkg.version);
+  if (!stable && !beta) throw new Error("Desktop releases must use stable x.x.x or numbered Beta x.x.x-beta.N semver.");
+  const expectedReleaseType = beta ? "prerelease" : "release";
+  const expectedChannel = beta ? "beta" : "latest";
+  if (pkg.build?.publish?.provider !== "github" || pkg.build.publish.releaseType !== expectedReleaseType || pkg.build.publish.channel !== expectedChannel) {
+    throw new Error(`Desktop ${beta ? "Beta" : "stable"} releases must use GitHub ${expectedChannel} publication with releaseType ${expectedReleaseType}.`);
   }
 }
 
 export async function prepareDesktopRelease(pkg, outputDir) {
-  assertBetaReleasePolicy(pkg);
-  // The installed electron-builder GitHub provider emits one channel manifest.
-  // Keep latest.yml for the protected asset contract and beta.yml for opt-in clients.
+  assertDesktopReleasePolicy(pkg);
+  // electron-builder emits one channel manifest. Keep both channel manifests
+  // describing this build so stable and opted-in clients can use the same assets.
   const sourceName = pkg.build.publish.channel === "beta" ? "beta.yml" : "latest.yml";
   const sourcePath = path.join(outputDir, sourceName);
   const metadata = load(await readFile(sourcePath, "utf8"));
@@ -43,7 +45,7 @@ export async function prepareDesktopRelease(pkg, outputDir) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const pkg = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
-  assertBetaReleasePolicy(pkg);
+  assertDesktopReleasePolicy(pkg);
   if (!process.argv.includes("--check-policy")) {
     await prepareDesktopRelease(pkg, path.resolve(pkg.build.directories.output));
     console.log(`Prepared ${pkg.version}: ${desktopReleaseAssets.join(", ")}`);
