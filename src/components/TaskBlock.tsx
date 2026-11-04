@@ -2,7 +2,7 @@ import React, { type CSSProperties, type ReactNode } from "react";
 import type { Language } from "../types";
 import { projectColorInk } from "../utils/presentationColor";
 
-export type TaskBlockVariant = "candidate" | "planning" | "scheduled" | "allDay" | "compact" | "habit-child";
+export type TaskBlockVariant = "course" | "candidate" | "planning" | "scheduled" | "allDay" | "compact" | "habit-child";
 export type TaskBlockDensity = "normal" | "compact" | "dense";
 export type TaskBlockAppearance = "calm" | "medium" | "custom";
 export type TaskBlockPriority = "low" | "normal" | "medium" | "high";

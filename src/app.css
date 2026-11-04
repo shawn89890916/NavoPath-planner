@@ -3404,6 +3404,70 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-day-col-bg.is-quick-add-target {
   background: color-mix(in srgb, var(--accent-active) 8%, transparent);
 }
+/* 固定课程是可穿透的背景；只有标题按钮接收详情操作。 */
+#root .df-app .df-task-block.df-course-background {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  overflow: hidden;
+  padding: 4px 7px;
+  border: 0;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--course-color) 14%, transparent);
+  color: var(--df-text, var(--text-primary));
+  box-shadow: none;
+  pointer-events: none;
+}
+#root .df-app.theme-dark .df-task-block.df-course-background {
+  background: color-mix(in srgb, var(--course-color) 21%, transparent);
+}
+#root .df-app .df-course-background .df-course-background-title {
+  display: block;
+  min-height: 0;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: none;
+}
+#root .df-app .df-course-background .df-course-background-title:hover {
+  border-bottom-color: var(--accent-active);
+}
+#root .df-app .df-course-background-title:focus-visible {
+  outline: 1px solid var(--accent-active);
+  outline-offset: 1px;
+}
+.df-course-background-meta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  line-height: 1.3;
+}
+.df-course-background-meta small { font-size: inherit; }
+@media (pointer: coarse) {
+  #root .df-app .df-course-background .df-course-background-title { min-height: 44px; }
+}
 .df-event-blocks-layer {
   position: absolute;
   inset: 0;
@@ -23536,7 +23600,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-left-color: var(--task-project-color);
   background: var(--task-bg);
 }
-#root .df-app.mode-execute .df-timeline-panel .df-task-block[data-task-appearance] {
+#root .df-app.mode-execute .df-timeline-panel .df-task-block[data-task-appearance]:not(.df-course-background) {
   /* Project color annotates the active theme surface. */
   border-left-color: var(--task-project-color);
   background: var(--task-bg);

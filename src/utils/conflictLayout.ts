@@ -37,6 +37,7 @@ export function scheduledTaskIntervalsOnDate(
   };
 
   for (const task of tasks) {
+    if (task.fixedCourse) continue;
     for (const record of task.timelineRecords || []) {
       if (record.executionStatus === "scheduled" && record.id !== ignoredRecordId) appendRecord(record);
     }
@@ -70,6 +71,7 @@ export function computeConflictLayout(tasks: Task[], maxColumns = Infinity): Con
   if (tasks.length <= 1) return new Map();
 
   const intervals = tasks
+    .filter(task => !task.fixedCourse)
     .map(scheduledInterval)
     .filter((interval): interval is ScheduledInterval => interval !== null)
     .sort((a, b) =>

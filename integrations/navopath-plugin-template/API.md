@@ -195,3 +195,5 @@ downloaded on demand and are not bundled into the application.
 The type-only SDK is in `integrations/navopath-plugin-api`. Each template also
 ships the same declarations in `api/` plus this guide as `API.md`; editors can
 use `import("./api").PluginContext` in JSDoc without installing the host.
+
+`calendar.registerBackground(predicate)` registers ownership of fixedCourse calendar backgrounds. Disposing hides backgrounds without deleting them. Backgrounds never block task placement or compress task columns.
