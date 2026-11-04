@@ -71,3 +71,5 @@ describe("course backgrounds", () => {
     expect(markup(displayedCourse, "weekly", "09:15")).toContain("height:15px");
   });
 });
+
+describe('recurring course migration',()=>{it('merges exact recurring course copies and retains user edits',()=>{const recurrence={mode:'scheduled' as const,frequency:'weekly' as const,startDate:date,startTime:'09:00',durationMinutes:60};const event={...course,id:'course_recurring',recurrence};const migrated={...task,id:'migrated_event_course_recurring_primary',title:event.title,notes:event.details,dueDate:date,plannedForDate:date,estimatedHours:1,workflowStatus:'next' as const,recurrence,timelineRecords:[]};expect(isUneditedMigratedCourse(migrated,[event])).toBe(true);expect(isUneditedMigratedCourse({...migrated,plannedForDate:'2099-01-12',executionLane:'candidate'},[event])).toBe(true);expect(isUneditedMigratedCourse({...migrated,priority:'high'},[event])).toBe(false);expect(isUneditedMigratedCourse({...migrated,notes:'user notes'},[event])).toBe(false);expect(isUneditedMigratedCourse({...migrated,estimatedHours:0.5},[event])).toBe(false);});});

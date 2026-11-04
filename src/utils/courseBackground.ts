@@ -18,6 +18,15 @@ export function isUneditedMigratedCourse(task: Task, events: CalendarEvent[]): b
   const event = events.find(event => event.fixedCourse && task.id === `migrated_event_${event.id}_primary`);
   if (!event || task.title !== event.title || task.notes !== (event.details || "")) return false;
   const records = task.timelineRecords || [];
+  if (!records.length && event.recurrence && task.recurrence
+    && !task.goalId && (!task.executionLane || task.executionLane === "candidate") && (!task.workflowStatus || task.workflowStatus === "next")
+    && task.category === event.category && Boolean(task.plannedForDate && task.plannedForDate >= event.date)
+    && task.estimatedHours === (event.recurrence.durationMinutes || 0) / 60
+    && task.priority === 'medium' && task.dueDate === event.date
+    && task.recurrence.mode === event.recurrence.mode && task.recurrence.frequency === event.recurrence.frequency
+    && task.recurrence.startDate === event.recurrence.startDate && task.recurrence.startTime === event.recurrence.startTime
+    && task.recurrence.durationMinutes === event.recurrence.durationMinutes
+    && task.recurrence.endDate === event.recurrence.endDate && task.recurrence.count === event.recurrence.count) return true;
   return records.length === 1 && records[0].executionStatus === "scheduled"
     && records[0].scheduledDate === (event.startDate || event.date)
     && records[0].scheduledStart === event.startTime && records[0].scheduledEnd === event.endTime

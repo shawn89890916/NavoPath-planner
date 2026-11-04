@@ -2,6 +2,9 @@
 
 ## 2026-11-04 · 1.6.1 正式版
 
+### 修复
+- 插件兼容性检查读取实际应用版本；旧版自动转换的每周课程可恢复为背景并合并未编辑副本。
+
 ### 新增
 - 社区课表插件支持课程与自习导入、每周重复及可覆盖的背景，停用保留课表。
 - NavoPath 连接器可安装并启用经校验的社区插件，插件在账户客户端自动启动。
@@ -340,6 +343,9 @@
 # NavoPath Changelog
 
 ## 2026-11-04 · 1.6.1 Stable
+
+### Fixed
+- Plugin compatibility reads the actual app version; weekly course backgrounds can recover unchanged legacy task copies.
 
 ### Added
 - The community timetable plugin imports weekly classes and self-study as overlapping backgrounds; disabling retains the timetable.
