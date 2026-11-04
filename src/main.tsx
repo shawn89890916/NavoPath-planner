@@ -1,3 +1,5 @@
+import { isCalendarBackgroundVisible } from "./extensions/calendarBackgrounds";
+import { blockingCalendarEvents } from "./utils/courseBackground";
 import { useMobileSheetGesture } from "./useMobileSheetGesture";
 import { uid } from "./utils/ids";
 import { toggleTaskCompletion, setTaskCompletion, habitScheduleForTask } from "./utils/taskCompletion";
@@ -3386,7 +3388,9 @@ if (cached?.data && cached?.settings) {
   const isViewingToday = timelineWindowAnchorDate === today;
   const projects = data?.projects || [];
   const tasks = data?.tasks || [];
-  const events = data?.events || [];
+  const [backgroundRevision, refreshBackgrounds] = useState(0);
+  useEffect(()=>{ const off=subscribePluginEvent("calendar:backgrounds-changed",()=>refreshBackgrounds(v=>v+1)); return ()=>{void off();}; },[]);
+  const events = useMemo(()=>(data?.events || []).filter(isCalendarBackgroundVisible),[data?.events,backgroundRevision]);
   const commandIndex = useMemo(() => data && settings ? buildCommandSearchIndex(data, settings) : [], [data, settings]);
   const commandResults = useMemo(() => searchCommands(commandIndex, commandQuery), [commandIndex, commandQuery]);
 
@@ -3640,6 +3644,7 @@ if (cached?.data && cached?.settings) {
         for (const slice of expandTimedCalendarEvent(event, [...dates])) {
           expanded.push({
             id: slice.id,
+            fixedCourse: event.fixedCourse,
             title: event.title,
             dueDate: slice.date,
             category: event.category,
@@ -3669,7 +3674,7 @@ if (cached?.data && cached?.settings) {
       for (const date of occurrenceDates) {
         const id = `event_occ_${event.id}_${date}_all`;
         expanded.push({
-          id, title: event.title, dueDate: date, category: event.category, priority: "medium",
+          id, fixedCourse: event.fixedCourse, title: event.title, dueDate: date, category: event.category, priority: "medium",
           notes: event.details, goalId: "", completed: false, estimatedHours: 0.5,
           scheduledDate: date,
           recurrence: event.recurrence, createdAt: event.createdAt, updatedAt: event.createdAt,
@@ -3767,7 +3772,7 @@ if (cached?.data && cached?.settings) {
     return [
       ...expandTimelineRecords(dates).tasks,
       ...expandRecurrenceOccurrences(dates).tasks,
-      ...expandEventOccurrences(dates).tasks.filter((task) => task.scheduledStart),
+      ...expandEventOccurrences(dates).tasks.filter((task) => task.scheduledStart && !task.fixedCourse),
       ...expandExternalCalendarOccurrences(dates).tasks.filter((task) => task.scheduledStart),
       ...previewTasks.filter((task) => dates.has(task.scheduledDate || "")),
     ];
@@ -3872,7 +3877,7 @@ if (cached?.data && cached?.settings) {
     const start = timeToMinutes(settings?.scheduleDayStartTime || "08:00");
     const end = timeToMinutes(settings?.dayEndTime || "22:00");
     const scheduledMinutes = scheduledTasks
-      .filter((task) => task.scheduledDate === today && !task.id.startsWith("preview_"))
+      .filter((task) => !task.fixedCourse && task.scheduledDate === today && !task.id.startsWith("preview_"))
       .reduce((total, task) => total + taskDuration(task), 0);
     const availableMinutes = Math.max(end - start - scheduledMinutes, 0);
     const demandMinutes = todayCandidates.reduce((total, task) => total + taskDuration(task), 0);
@@ -3903,6 +3908,7 @@ if (cached?.data && cached?.settings) {
     if (timelineView !== "month") {
       const byDate = new Map<string, Task[]>();
       for (const task of scheduledTasks) {
+        if (task.fixedCourse) continue;
         const date = task.scheduledDate || "";
         if (!byDate.has(date)) byDate.set(date, []);
         byDate.get(date)!.push(task);
@@ -5141,6 +5147,7 @@ if (cached?.data && cached?.settings) {
     const ignoredRecordId = ignoreTaskId ? recordByIdMap.get(ignoreTaskId)?.id : undefined;
     const ignoredEvent = ignoreTaskId ? resolveOwningEvent(ignoreTaskId) : undefined;
     return timelineTasks.some((task) => {
+      if (task.fixedCourse) return false;
       const sameRecord = ignoredRecordId
         && (task.id === ignoredRecordId || task.id.startsWith(`${ignoredRecordId}__day__`));
       const sameEvent = ignoredEvent && task.id.startsWith(`event_occ_${ignoredEvent.id}_`);
@@ -5381,7 +5388,7 @@ if (cached?.data && cached?.settings) {
       scheduledStart: task.scheduledStart,
       scheduledEnd: task.scheduledEnd,
     }));
-    const fixedEvents = events
+    const fixedEvents = blockingCalendarEvents(events)
       .filter((event) => dateRange.includes(event.startDate || event.date) && event.startTime && event.endTime)
       .map((event) => ({
         id: event.id,
@@ -8801,6 +8808,7 @@ if (cached?.data && cached?.settings) {
     const start = timeToMinutes(preview.scheduledStart);
     const end = timeToMinutes(preview.scheduledEnd);
     return scheduledTasks.some((task) => {
+      if (task.fixedCourse) return false;
       const a = timeToMinutes(task.scheduledStart);
       const b = timeToMinutes(task.scheduledEnd);
       return start < b && end > a;

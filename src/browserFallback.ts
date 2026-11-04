@@ -1,3 +1,4 @@
+import { isUneditedMigratedCourse } from "./utils/courseBackground";
 import type { AgentRunState, AiAction, AiPersonalizationProfile, ChatMessage, HabitDailyState, PlannerApi, PlannerData, Settings, Subtask, Task, TaskAiInference, TaskRecurrence, TimelineRecord } from "./types";
 import { normalizeSettings } from "./defaultSettings";
 import { normalizeEngagement } from "./utils/engagement";
@@ -613,6 +614,7 @@ function migrateEventsToTasks(data: PlannerData): Task[] {
     return task;
   };
   for (const event of data.events || []) {
+    if (event.fixedCourse) continue;
     if (migrationCandidates >= MAX_MIGRATED_EVENT_TASKS) break;
     const startDate = event.startDate || event.date || localIso(new Date());
     const endDate = event.endDate || startDate;
@@ -729,7 +731,7 @@ export function normalizeData(data: PlannerData): PlannerData {
   const migratedTasks = migrateEventsToTasks(safeData);
   const projectIds = new Set(safeData.projects.map((project) => project.id));
   const goalIds = new Set(safeData.goals.map((goal) => persistedId(goal.id)).filter(Boolean));
-  const tasks = [...safeData.tasks, ...migratedTasks];
+  const tasks = [...safeData.tasks.filter(task => !isUneditedMigratedCourse(task, safeData.events)), ...migratedTasks];
   const taskIds = new Set(tasks.map((task) => task.id));
   const notes = safeData.notes.map((note) => ({
     ...note,
@@ -1013,7 +1015,7 @@ export function normalizeData(data: PlannerData): PlannerData {
         details: boundedPersistedString(draft.details, MAX_PERSISTED_TEXT_LENGTH),
     })),
     version: Math.max(safeData.version || 1, 2),
-    events: [],
+    events: safeData.events.filter(event => event.fixedCourse === true),
     tasks: normalizedTasks,
   }));
 }

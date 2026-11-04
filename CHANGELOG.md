@@ -2,6 +2,9 @@
 
 ## 2026-11-04 · 1.6.1 正式版
 
+### 新增
+- 社区课表插件支持课程与自习导入、每周重复及可覆盖的背景，停用保留课表。
+
 ### 新功能
 - 顶栏插件图标统一排在左侧 N 标志后，支持拖动排序、按运行状态变化和悬停查看信息；天气、番茄钟与日程模板入口统一为插件。
 - Windows 桌面版注册 `navopath://` 链接，外部工具可直接唤起 NavoPath；应用已在后台运行时会显示现有窗口。
@@ -336,6 +339,9 @@
 # NavoPath Changelog
 
 ## 2026-11-04 · 1.6.1 Stable
+
+### Added
+- The community timetable plugin imports weekly classes and self-study as overlapping backgrounds; disabling retains the timetable.
 
 ### Added
 - Plugin icons form one ordered toolbar after the N mark, support drag reordering, status-aware icons and hover details; Weather, Pomodoro and Schedule Templates use the same plugin entry point.

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "name": "Class Timetable Preview",
+  "packages": [
+    {
+      "manifest": {
+        "kind": "plugin",
+        "apiVersion": 1,
+        "id": "class-timetable",
+        "name": "Class Timetable",
+        "description": "Import weekly classes and self-study as timeline backgrounds; schedule tasks over classes.",
+        "author": "Community",
+        "version": "1.0.0",
+        "minAppVersion": "1.6.2-beta.1",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "license": "MIT"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/90ec73d5d0a686c511438a4a99a09409b5e6076c/public/extensions/packages/class-timetable.navopackage.json",
+      "sha256": "3748e7398cd7901b7d6586b954d2b5bc4de83d87def482ef1332867ca730026c"
+    }
+  ]
+}

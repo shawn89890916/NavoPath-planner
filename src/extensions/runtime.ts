@@ -1,3 +1,4 @@
+import { registerCalendarBackground } from "./calendarBackgrounds";
 import type { Dispose, ExtensionHost, ExtensionManifest, ExtensionPackage, ExtensionPlatform, Mount, PluginContext, PluginModule, CollectionApi } from "./types";
 import { registerTimerMode, openTimerMode } from "./timers";
 import type { CalendarEvent, Project, Task } from "../types";
@@ -57,7 +58,7 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
   });
   const context: PluginContext = {
     apiVersion: 1, id: bridge.key, manifest: pkg.manifest, platform: bridge.platform, window: typeof location !== "undefined" && new URLSearchParams(location.search).get("compactWindow") === "1" ? "compact" : "main", language: bridge.host.getSettings().language,
-    app: bridge.host, tasks: collection<Task>("tasks"), projects: collection<Project>("projects"), calendar: collection<CalendarEvent>("events"), register,
+    app: bridge.host, tasks: collection<Task>("tasks"), projects: collection<Project>("projects"), calendar: { ...collection<CalendarEvent>("events"), registerBackground: predicate => { const off=registerCalendarBackground(predicate); emitPluginEvent("calendar:backgrounds-changed"); return register(()=>{ off(); emitPluginEvent("calendar:backgrounds-changed"); }); } }, register,
     on(target, event, listener) { target.addEventListener(event, listener); return register(() => target.removeEventListener(event, listener)); },
     interval(callback, ms) { const timer = window.setInterval(callback, ms); return register(() => window.clearInterval(timer)); },
       events: { on(event, listener) { return register(subscribePluginEvent(event, listener)); }, emit: emitPluginEvent },

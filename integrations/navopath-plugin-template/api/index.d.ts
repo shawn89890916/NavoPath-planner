@@ -22,7 +22,7 @@ export interface ExtensionHost {
 export interface PluginContext {
   apiVersion: 1; id: string; manifest: ExtensionManifest; platform: ExtensionPlatform;
   window: "main" | "compact" | "widget" | "popover"; language: Language; app: ExtensionHost;
-  tasks: CollectionApi<Task>; projects: CollectionApi<Project>; calendar: CollectionApi<CalendarEvent>;
+  tasks: CollectionApi<Task>; projects: CollectionApi<Project>; calendar: CollectionApi<CalendarEvent> & { registerBackground(predicate: (event: CalendarEvent) => boolean): Dispose };
   register(dispose: Dispose): Dispose;
   on(target: EventTarget, event: string, listener: EventListener): Dispose;
   interval(callback: () => void, ms: number): Dispose;

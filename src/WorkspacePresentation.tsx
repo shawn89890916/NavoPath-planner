@@ -1,3 +1,4 @@
+import { courseBackgroundColor } from "./utils/courseBackground";
 import { useMobileSheetGesture } from "./useMobileSheetGesture";
 import { normalizeEngagement } from "./utils/engagement";
 import React, { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -847,8 +848,22 @@ export function TimeBlock({ task, engagementEnabled, preview, projectName, proje
     ? resizedBlockTop(suppliedTop, originalDate, originalStart, preview.startDate || originalDate, start, hourHeight)
     : suppliedTop ?? top;
 
+  if (task.fixedCourse) {
+    return (
+      <TaskBlock as="div" variant="course" className="df-course-background" accent={<></>}
+        dataAttrs={{ kind: "course", "course-id": task.id, "view-mode": viewMode }}
+        style={{ ...extraStyle, top: resolvedTop, height, bottom: "auto", pointerEvents: "none", zIndex: 0, "--course-color": courseBackgroundColor(task.title) } as CSSProperties}>
+        <button type="button" className="df-course-background-title" title={`${task.title} · ${start}–${end}`}
+          aria-label={`${lang === "zh" ? "课程详情" : "Class details"}: ${task.title}, ${start}–${end}`}
+          onPointerDown={event => event.stopPropagation()} onMouseDown={event => event.stopPropagation()}
+          onClick={event => { event.stopPropagation(); onEdit(); }}>{task.title}</button>
+        <span className="df-course-background-meta"><time>{start}–{end}</time><small>{lang === "zh" ? "课程" : "Class"}</small></span>
+      </TaskBlock>
+    );
+  }
+
   return (
-    <TaskBlock lang={lang} engagement={engagementEnabled && !isEvent ? normalizeEngagement(task.engagement) : undefined} as="div" variant="scheduled" appearance="calm" priority={taskBlockPriorityFor(task.priority)} density={height < 56 ? "compact" : "normal"} checked={!isEvent && task.completed} selected={Boolean(showResizeHint || projectOpen || preview)} dragState={dragState} projectColor={stripeColor} className={`df-time-block priority-${task.priority} ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${preview ? "resizing" : ""} ${showResizeHint ? "show-resize-hint" : ""} ${projectOpen ? "project-open" : ""} ${isPreview ? "df-time-block-preview" : ""} ${isWeekView ? "df-time-block-week" : ""} ${isRecurring ? "recurring" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", preview: isPreview ? "true" : undefined, "view-mode": viewMode, "schedule-size": sizeClass, "timeline-event-id": eventId, "task-id": task.id, readonly: isExternalEvent ? "true" : undefined, "mouse-optimized": mouseOptimized ? "true" : undefined }} style={{ ...extraStyle, top: resolvedTop, height, bottom: "auto", "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px", "--recurring-text": recurringTextColor } as CSSProperties} onPointerEnter={(event) => { if (event.pointerType === "mouse" && (projectInteractive || mouseOptimized)) onHover(task.id); }} onMouseLeave={() => {
+    <TaskBlock lang={lang} engagement={engagementEnabled && !isEvent ? normalizeEngagement(task.engagement) : undefined} as="div" variant="scheduled" appearance="calm" priority={taskBlockPriorityFor(task.priority)} density={height < 56 ? "compact" : "normal"} checked={!isEvent && task.completed} selected={Boolean(showResizeHint || projectOpen || preview)} dragState={dragState} projectColor={stripeColor} className={`df-time-block priority-${task.priority} ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${preview ? "resizing" : ""} ${showResizeHint ? "show-resize-hint" : ""} ${projectOpen ? "project-open" : ""} ${isPreview ? "df-time-block-preview" : ""} ${isWeekView ? "df-time-block-week" : ""} ${isRecurring ? "recurring" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", preview: isPreview ? "true" : undefined, "view-mode": viewMode, "schedule-size": sizeClass, "timeline-event-id": eventId, "task-id": task.id, readonly: isExternalEvent ? "true" : undefined, "mouse-optimized": mouseOptimized ? "true" : undefined }} style={{ zIndex: 1, ...extraStyle, top: resolvedTop, height, bottom: "auto", "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px", "--recurring-text": recurringTextColor } as CSSProperties} onPointerEnter={(event) => { if (event.pointerType === "mouse" && (projectInteractive || mouseOptimized)) onHover(task.id); }} onMouseLeave={() => {
       onHover("");
     }} onPointerDown={isExternalEvent || isSkipped ? undefined : onDragStart} onClick={(event) => { event.stopPropagation(); onSelect(event); }} onDoubleClick={projectInteractive ? (event) => { event.stopPropagation(); onEdit(); } : undefined} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? t(lang, "timeBlock.returnedHint") : undefined}>
       {isPreview && <span className="df-preview-badge">{t(lang, "timeBlock.pending")}</span>}

@@ -167,6 +167,7 @@ export interface TaskRecurrence {
 }
 
 export interface Task {
+  fixedCourse?: boolean;
   /** Engagement for tasks without execution records. */
   engagement?: number;
   id: string;
@@ -220,6 +221,7 @@ export interface LongTermTask {
 }
 
 export interface CalendarEvent {
+  fixedCourse?: boolean;
   id: string;
   title: string;
   date: string;
