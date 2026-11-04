@@ -57,8 +57,11 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
   function reveal(win, state, focus = false) {
     state.hoverSince = state.leaveSince = null;
     state.handle?.hide();
-    win.setAlwaysOnTop(true);
+    if (win.isMinimized()) win.restore();
     if (focus) { win.show(); win.focus(); } else win.showInactive();
+    // Windows 的非激活显示可能保留旧层级；显示后再置顶，不抢走当前输入焦点。
+    win.setAlwaysOnTop(true);
+    win.moveTop();
   }
 
   function collapse(win, state) {

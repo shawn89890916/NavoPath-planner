@@ -81,6 +81,7 @@
 - 今日候选直接显示分类和已完成筛选图标；移除重复 Focus、模板和 AI 设置入口，让插件及设置承担各自功能。
 
 ### 修复
+- 修复 Windows 桌面 Dock 悬停展开后仍被其他窗口遮挡的问题，并恢复最小化的面板。
 - 修复竖屏“插件工具”打开插件后，新界面被工具面板遮挡的问题。
 - 设置分区切换改为轻柔淡入与轻微缩放，选中底色继续沿导航项平滑移动。
 - 桌面端生成 MCP 令牌时遇到过期登录凭据会先刷新会话，并核对服务端确已保存令牌，避免复制未生效的令牌。
@@ -486,6 +487,7 @@
 - Today’s Candidates exposes grouping and completed-task filtering directly, while duplicate Focus, template and AI-settings entries are removed in favor of their plugin and settings homes.
 
 ### Fixes
+- Fixed Windows Dock panels remaining behind other windows after hover activation, and restored minimized panels when opening.
 - Fixed plugin tools obscuring plugin interfaces opened from the portrait workspace menu.
 - Settings sections now crossfade with a subtle scale while the selected highlight glides between navigation items.
 - Desktop MCP token creation now refreshes expired sign-in credentials and confirms the server saved the token before showing it, preventing inactive credentials from being copied.

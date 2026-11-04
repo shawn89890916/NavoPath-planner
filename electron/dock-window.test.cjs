@@ -27,6 +27,9 @@ class FakeWindow extends EventEmitter {
   isFullScreenable() { return this.fullScreenable; }
   isAlwaysOnTop() { return this.alwaysOnTop; }
   isVisible() { return this.visible; }
+  isMinimized() { return Boolean(this.minimized); }
+  restore() { this.minimized = false; }
+  moveTop() { this.raised = this.visible; }
   setAlwaysOnTop(value) { this.alwaysOnTop = value; }
   setShape(rectangles) { this.shape = rectangles; }
   hide() { this.visible = false; }
@@ -177,6 +180,20 @@ test("only dwelling on the visible tab opens the panel, with a grace period on l
   assert.equal(win.alwaysOnTop, false);
   set(null);
   assert.equal(polling(), false);
+});
+
+test("悬停展开恢复最小化窗口，并在非激活显示后重新提升层级", () => {
+  const { win, set, tick } = setup();
+  set("left");
+  win.minimized = true;
+  win.showInactive = () => { win.visible = true; win.alwaysOnTop = false; };
+  tick({ x: -1600, y: 580 });
+  tick({ x: -1600, y: 580 }, 250);
+  assert.equal(win.minimized, false);
+  assert.equal(win.visible, true);
+  assert.equal(win.alwaysOnTop, true);
+  assert.equal(win.raised, true);
+  assert.equal(win.focused, undefined);
 });
 
 test("right edge activation stays on its monitor and preserves an original always-on-top window", () => {
