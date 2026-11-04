@@ -1,3 +1,5 @@
+import manifest from "../../community-plugins/class-timetable/manifest.json";
+import { compatibility } from "./packages";
 import {describe,it,expect} from 'vitest';
 import {registerCalendarBackground,isCalendarBackgroundVisible} from './calendarBackgrounds';
 import {parseTimetableJson,mergeTimetable} from '../../community-plugins/class-timetable/parser';
@@ -9,3 +11,5 @@ describe('timetable ownership and import',()=>{
  it('expands weekly classes at their original times without duplicating stored events',()=>{const event=parseTimetableJson(input)[0];event.recurrence={mode:'scheduled',frequency:'weekly',startDate:event.date,startTime:event.startTime,durationMinutes:40};const slices=expandTimedCalendarEvent(event,['2026-11-09','2026-11-16']);expect(slices.map(s=>[s.date,s.startTime,s.endTime])).toEqual([['2026-11-09','09:30','10:10'],['2026-11-16','09:30','10:10']]);});
  it('rejects invalid dates, reverse times and non-array documents',()=>{for(const value of ['{}',input.replace('2026-11-02','2026-02-30'),input.replace('10:10','09:00')])expect(()=>parseTimetableJson(value)).toThrow();});
 });
+
+it("accepts this timetable package on its declared host build",()=>{ expect(compatibility(manifest as any,"desktop")).toBe(null); });
