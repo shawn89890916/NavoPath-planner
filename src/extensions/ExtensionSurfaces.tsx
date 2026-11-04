@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Language } from "../types";
 import { ActionDisclosure, Button, CloseButton, Modal } from "../components/UiPrimitives";
 import { ExtensionMount } from "./ExtensionMount";
@@ -26,6 +26,11 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings }: { lang: La
   const [error, setError] = useState("");
   const [dragOwner, setDragOwner] = useState<string | null>(null);
   const [dropOwner, setDropOwner] = useState<string | null>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const hasOverflowRef = useRef(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const headerViewportRef = useRef<HTMLDivElement>(null);
+  const headerItemsRef = useRef<HTMLDivElement>(null);
   const view = snapshot.views.find((item) => item.id === selectedView);
   const label = lang === "zh" ? "插件工具" : "Plugin tools";
   const close = lang === "zh" ? "关闭" : "Close";
@@ -35,8 +40,42 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings }: { lang: La
   const launcherPlugins = Object.values(snapshot.preferences.installed).filter((item) => item.manifest.kind === "plugin" && item.enabled && !snapshot.safeMode && !headerOwners.includes(item.key));
   const launcherOwnerKeys = new Set(launcherPlugins.map((item) => item.key));
   const overflowViews = snapshot.views.filter((item) => !launcherOwnerKeys.has(item.owner));
-  const launcherPlugin = launcherPlugins.find((item) => item.key === selectedPlugin);
+  const launcherPlugin = Object.values(snapshot.preferences.installed).find((item) => item.key === selectedPlugin && item.manifest.kind === "plugin");
   useEffect(() => { if (selectedView && !view) setSelectedView(null); }, [selectedView, view]);
+  useEffect(() => {
+    const header = headerRef.current;
+    const viewport = headerViewportRef.current;
+    const items = headerItemsRef.current;
+    if (!header || !viewport || !items) return;
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const disclosure = header.querySelector<HTMLElement>(".ui-action-disclosure");
+        const gap = Number.parseFloat(getComputedStyle(header).columnGap) || 0;
+        const reserved = hasOverflowRef.current && disclosure ? disclosure.getBoundingClientRect().width + gap : 0;
+        const next = items.scrollWidth > viewport.clientWidth + reserved + 1;
+        if (next !== hasOverflowRef.current) {
+          hasOverflowRef.current = next;
+          setHasOverflow(next);
+        }
+      });
+    };
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(header);
+    resizeObserver.observe(viewport);
+    resizeObserver.observe(items);
+    const mutationObserver = new MutationObserver(measure);
+    mutationObserver.observe(items, { childList: true, subtree: true, attributes: true, characterData: true });
+    window.addEventListener("resize", measure);
+    measure();
+    return () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [commands.length, launcherPlugins.length, orderedHeaderItems.length, overflowViews.length]);
   async function moveHeader(owner: string, direction: -1 | 1) {
     const from = headerOrder.indexOf(owner), to = Math.max(0, Math.min(headerOrder.length - 1, from + direction));
     if (from < 0 || from === to) return;
@@ -60,7 +99,19 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings }: { lang: La
     finally { setRunning(null); }
   }
   if (!snapshot.headerItems.length && !launcherPlugins.length && !snapshot.views.length && !commands.length && !error) return null;
-  return <div className="df-extension-header" aria-busy={Boolean(running)}>
+  const activateLauncher = (key: string) => {
+    setError("");
+    const entry = snapshot.views.find((candidate) => candidate.owner === key);
+    const settingsPage = snapshot.settingsPages.find((candidate) => candidate.owner === key);
+    if (entry) setSelectedView(entry.id);
+    else if (settingsPage && onOpenSettings) onOpenSettings(settingsPage.id);
+    else setSelectedPlugin(key);
+    onActivate?.();
+  };
+
+  return <div ref={headerRef} className="df-extension-header" aria-busy={Boolean(running)}>
+    <div ref={headerViewportRef} className="df-extension-header-viewport" role="toolbar" aria-label={lang === "zh" ? "插件入口，可横向滚动" : "Plugin entries, horizontally scrollable"}>
+      <div ref={headerItemsRef} className="df-extension-header-content">
     {orderedHeaderItems.map((item) => <div
       key={item.id}
       className="df-extension-header-item"
@@ -79,12 +130,16 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings }: { lang: La
       }}
     ><ExtensionMount contribution={item} /></div>)}
     {launcherPlugins.map((item) => {
-      const entry = snapshot.views.find((candidate) => candidate.owner === item.key);
-      const settingsPage = snapshot.settingsPages.find((candidate) => candidate.owner === item.key);
       const iconUrl = snapshot.catalog.find((catalogEntry) => catalogEntry.sourceId === item.sourceId && catalogEntry.manifest.id === item.manifest.id)?.iconUrl;
-      return <button key={`launcher:${item.key}`} type="button" className="df-extension-header-launcher" aria-label={item.manifest.name} title={item.manifest.name} onClick={() => { setError(""); if (entry) setSelectedView(entry.id); else if (settingsPage && onOpenSettings) onOpenSettings(settingsPage.id); else setSelectedPlugin(item.key); onActivate?.(); }}>{iconUrl ? <img src={iconUrl} alt="" aria-hidden="true" /> : <span aria-hidden="true">{Array.from(item.manifest.name.trim())[0]?.toLocaleUpperCase() || "P"}</span>}</button>;
+      return <button key={`launcher:${item.key}`} type="button" className="df-extension-header-launcher" aria-label={item.manifest.name} title={item.manifest.name} onClick={() => activateLauncher(item.key)}>{iconUrl ? <img src={iconUrl} alt="" aria-hidden="true" /> : <span aria-hidden="true">{Array.from(item.manifest.name.trim())[0]?.toLocaleUpperCase() || "P"}</span>}</button>;
     })}
-    {(commands.length > 0 || overflowViews.length > 0) && <ActionDisclosure label={label}>
+    {overflowViews.map((item) => <Button key={`view:${item.id}`} className="df-extension-header-action" variant="ghost" title={item.name} onClick={() => { setError(""); setSelectedView(item.id); onActivate?.(); }}>{item.name}</Button>)}
+    {commands.map((command) => <Button key={`command:${command.id}`} className="df-extension-header-action" variant="ghost" disabled={Boolean(running)} title={command.name} onClick={() => { onActivate?.(); void runCommand(command.id); }}>{command.name}</Button>)}
+      </div>
+    </div>
+    {hasOverflow && <ActionDisclosure label={label}>
+      {Array.from(new Map(orderedHeaderItems.map((item) => [item.owner, item])).values()).map((item) => <Button key={`overflow-header:${item.owner}`} className="df-extension-overflow-action" variant="ghost" onClick={() => activateLauncher(item.owner)}>{item.name}</Button>)}
+      {launcherPlugins.map((item) => <Button key={`overflow-launcher:${item.key}`} className="df-extension-overflow-action" variant="ghost" onClick={() => activateLauncher(item.key)}>{item.manifest.name}</Button>)}
       {overflowViews.map((item) => <Button key={item.id} variant="ghost" onClick={() => { setError(""); setSelectedView(item.id); onActivate?.(); }}>{item.name}</Button>)}
       {commands.map((command) => <Button key={command.id} variant="ghost" disabled={Boolean(running)} onClick={() => { onActivate?.(); void runCommand(command.id); }}>{command.name}</Button>)}
     </ActionDisclosure>}

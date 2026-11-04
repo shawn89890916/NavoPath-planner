@@ -1,6 +1,14 @@
 # NavoPath 更新日志
 
-## 2026-11-04 · 1.6.3 Beta
+## 2026-11-04 · 1.6.3 Beta 2
+
+### 1.6.3 Beta 2
+
+### 改进
+- Dock 方向菜单改为紧凑的左右图标按钮，说明收进信息图标的悬停提示；竖屏 Dock 为左上角 N 恢复按钮预留空间，避免遮挡日期。
+- 插件入口按顶栏实际宽度自适应排列；仅在内容无法全部显示时出现「更多」，并可从中访问溢出的入口。
+
+### 1.6.3 Beta 1
 
 ### 1.6.3 Beta
 
@@ -353,7 +361,15 @@
 
 # NavoPath Changelog
 
-## 2026-11-04 · 1.6.3 Beta
+## 2026-11-04 · 1.6.3 Beta 2
+
+### 1.6.3 Beta 2
+
+### Improved
+- The Dock side picker now uses compact left/right icon buttons with centered labels and moves its guidance to an info hover tip. Portrait Dock mode reserves space for the top-left N restore control so it no longer covers the date.
+- Plugin entries now adapt to the toolbar’s available width. “More” appears only when entries do not fit and provides access to the overflow.
+
+### 1.6.3 Beta 1
 
 ### 1.6.3 Beta
 

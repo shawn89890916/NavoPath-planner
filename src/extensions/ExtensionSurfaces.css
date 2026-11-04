@@ -1,4 +1,8 @@
-.df-extension-header { display: flex; flex: 0 0 auto; flex-direction: row; align-items: center; gap: var(--space-2, 8px); min-width: 0; white-space: nowrap; }
+.df-extension-header { display: flex; flex: 1 1 auto; flex-direction: row; align-items: center; gap: var(--space-2, 8px); min-width: 0; max-width: 100%; white-space: nowrap; }
+.df-extension-header-viewport { flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.df-extension-header-viewport::-webkit-scrollbar { display: none; }
+.df-extension-header-content { display: flex; align-items: center; gap: var(--space-2, 8px); width: max-content; min-width: 100%; white-space: nowrap; }
+.df-extension-header .ui-action-disclosure { flex: 0 0 auto; }
 .df-extension-header-item { display: flex; flex: 0 0 auto; align-items: center; min-width: 36px; border-radius: var(--radius-control, 8px); }
 .df-extension-header-item[data-dragging="true"] { opacity: .45; }
 .df-extension-header-item[data-drop-target="true"] { box-shadow: inset 2px 0 var(--accent-active); }
@@ -23,6 +27,11 @@
 .df-extension-header-launcher:hover { background: var(--paper-note); }
 .df-extension-header-launcher:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
 .df-extension-header-launcher img { width: 22px; height: 22px; object-fit: contain; }
+.df-extension-header-action { flex: 0 0 auto; min-width: 0; max-width: 168px; min-height: 32px; height: 32px; overflow: hidden; padding: 0 8px; border: 0; border-radius: var(--radius-control, 8px); color: var(--text-muted); background: transparent; font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.df-extension-header-action:hover, .df-extension-header-action:focus-visible { border: 0; color: var(--text-main); background: var(--paper-note); }
+.df-extension-overflow-action { justify-content: flex-start; width: 100%; text-align: left; }
+#root .df-app .df-header-inner > .df-brand { min-width: 0; max-width: calc(100vw - 290px); }
+#root .df-app .df-brand > .df-brand-dock-control { flex: 0 0 auto; }
 .df-extension-header-item .navopath-plugin-header-button[data-running="true"]::after {
   content: "";
   position: absolute;

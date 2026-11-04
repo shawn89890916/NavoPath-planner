@@ -8778,42 +8778,93 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   top: calc(100% + 7px);
   left: 0;
   z-index: 140;
-  width: min(260px, calc(100vw - 16px));
-  padding: 10px;
+  width: min(204px, calc(100vw - 16px));
+  padding: 8px;
   border: 1px solid var(--paper-rule);
   border-radius: var(--paper-radius);
   background: var(--surface-raised);
   box-shadow: var(--shadow-soft);
 }
-#root .df-app .df-brand-dock-hint {
-  margin: 0 0 8px;
+#root .df-app .df-brand-dock-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 26px;
+  padding: 0 3px 5px;
+  color: var(--text-main);
+  font: 700 12px/1.2 var(--paper-sans);
+}
+#root .df-app .df-brand-dock-help-wrap { position: static; display: inline-flex; flex: 0 0 auto; }
+#root .df-app .df-brand-dock-menu .df-brand-dock-menu-head .df-brand-dock-help-wrap > .df-brand-dock-help {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
   color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.45;
+  cursor: help;
+}
+#root .df-app .df-brand-dock-help:hover { background: var(--paper-note); color: var(--text-main); }
+#root .df-app .df-brand-dock-help:focus-visible { background: var(--paper-note); color: var(--text-main); outline: 2px solid var(--border-focus); outline-offset: 1px; }
+#root .df-app .df-brand-dock-help-tooltip {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 150;
+  width: min(196px, calc(100vw - 24px));
+  padding: 8px 10px;
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  box-shadow: var(--shadow-soft);
+  font: 500 11px/1.45 var(--paper-sans);
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--motion-base, 180ms) var(--motion-ease, ease), visibility var(--motion-base, 180ms) var(--motion-ease, ease);
+}
+#root .df-app .df-brand-dock-help-wrap:hover .df-brand-dock-help-tooltip,
+#root .df-app .df-brand-dock-help:focus-visible + .df-brand-dock-help-tooltip {
+  opacity: 1;
+  visibility: visible;
 }
 #root .df-app .df-brand-dock-choices {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
+  gap: 6px;
 }
-#root .df-app .df-brand-dock-option {
+#root .df-app .df-brand-dock-menu .df-brand-dock-choices > .df-brand-dock-option.ui-icon-button {
   width: 100%;
   min-width: 0;
-  height: 42px;
+  height: 64px;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 4px;
   border: 0;
   border-radius: var(--radius-control);
   background: transparent;
   color: var(--text-muted);
+  font: 750 12px/1.15 var(--paper-sans);
+  text-align: center;
 }
+#root .df-app .df-brand-dock-menu .df-brand-dock-choices > .df-brand-dock-option.ui-icon-button > svg { flex: 0 0 auto; stroke-width: 2.1; }
+#root .df-app .df-brand-dock-menu .df-brand-dock-choices > .df-brand-dock-option.ui-icon-button > span { font: inherit; text-align: center; }
 #root .df-app .df-brand-dock-option:hover,
 #root .df-app .df-brand-dock-option:focus-visible {
   border: 0;
   background: var(--paper-note);
   color: var(--text-main);
-}
-#root .df-app .df-brand-dock-option + .df-brand-dock-option {
-  border-left: 1px solid var(--paper-rule);
-  border-radius: 0 var(--radius-control) var(--radius-control) 0;
 }
 #root .df-app .df-brand-dock-option:disabled {
   opacity: .5;
@@ -23077,7 +23128,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
   #root .df-app.mode-execute .df-candidate-panel { padding: 10px 10px 0; }
   /* Timeline edge handles own their hit area and must stay centered on the edge. */
-  #root .df-app.mode-execute button:not([role="switch"]):not(.df-task-block-check):not(.df-timeline-draft-handle) { min-height: 44px; }
+  #root .df-app.mode-execute button:not([role="switch"]):not(.df-task-block-check):not(.df-timeline-draft-handle):not(.df-brand-dock-help) { min-height: 44px; }
   #root .df-app.mode-execute [role="button"] { min-height: 44px; }
   #root .df-app.mode-execute .df-candidate-list { overflow-x: hidden; }
 }
@@ -25382,5 +25433,18 @@ body[data-navopath-base-theme="light"],
   }
   #root .df-app.is-desktop-docked .df-header-fade {
     display: none;
+  }
+  #root .df-app.is-desktop-docked.mode-execute .df-compact-execute-controls {
+    top: 58px;
+  }
+  #root .df-app.is-desktop-docked.mode-execute .df-candidate-panel.compact-active,
+  #root .df-app.is-desktop-docked.mode-execute .df-timeline-panel.compact-active {
+    padding-top: 116px;
+  }
+  #root .df-app.is-desktop-docked.mode-execute .df-compact-date-display.is-readonly {
+    top: 52px;
+  }
+  #root .df-app.is-desktop-docked.mode-planning > .df-planning {
+    padding-top: 52px;
   }
 }

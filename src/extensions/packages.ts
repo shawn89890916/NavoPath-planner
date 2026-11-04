@@ -1,7 +1,7 @@
 import type { ExtensionManifest, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSource, InstalledExtension } from "./types";
 import type { Settings } from "../types";
 
-export const APP_VERSION = "1.6.3-beta.1";
+export const APP_VERSION = "1.6.3-beta.2";
 export const OFFICIAL_SOURCE: ExtensionSource = { id: "official", name: "NavoPath Community", url: "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/catalog.json" };
 export const MAX_PACKAGE_BYTES = 20 * 1024 * 1024;
 export const MAX_EXPANDED_BYTES = 32 * 1024 * 1024;
