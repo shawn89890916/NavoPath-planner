@@ -17,7 +17,8 @@ import { kanbanGroups, WORKFLOW_LABELS } from "./utils/productivity";
 import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch, type UiWorkflowStatus, type StateFilterValue } from "./utils/productivityModel";
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockVariant } from "./components/TaskBlock";
-import { CloseButton } from "./components/UiPrimitives";
+import { useModalFocus } from "./useModalFocus";
+import { CloseButton, IconButton } from "./components/UiPrimitives";
 import { UiPanelLeftCloseIcon, UiPanelLeftOpenIcon } from "./components/UiIcons";
 import { TaskDragLayer } from "./unifiedDrag";
 import { bindHeldTouchScroll } from "./useUnifiedDrag";
@@ -1052,6 +1053,21 @@ export default function PlanningView(props: {
   const [collapsedSubtasks, setCollapsedSubtasks] = useState<Record<string, boolean>>({});
   const [dragNode, setDragNode] = useState<TreeDragNode | null>(null);
   const [dropTarget, setDropTarget] = useState<TreeDropTarget | null>(null);
+  const [portraitSidebarOpen, setPortraitSidebarOpen] = useState(false);
+  const [portraitLayout, setPortraitLayout] = useState(() => window.matchMedia("(orientation: portrait)").matches);
+  const sidebarRef = useRef<HTMLElement>(null);
+  useModalFocus(portraitLayout && portraitSidebarOpen, sidebarRef);
+  useEffect(() => {
+    const media = window.matchMedia("(orientation: portrait)");
+    const update = () => { setPortraitLayout(media.matches); setPortraitSidebarOpen(false); };
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  const sidebarCollapsed = portraitLayout ? !portraitSidebarOpen : Boolean(props.planningSidebarCollapsed);
+  const toggleSidebar = () => {
+    if (portraitLayout) setPortraitSidebarOpen(open => !open);
+    else props.onPlanningSidebarCollapsedChange?.(!props.planningSidebarCollapsed);
+  };
   const treeRef = useRef<HTMLDivElement>(null);
   const donutSvgRef = useRef<SVGSVGElement>(null);
   const dialog = useInAppDialog(props.lang);
@@ -2314,19 +2330,20 @@ export default function PlanningView(props: {
     metricsProjectFilter.length > 0 ? { key: "project", label: `${props.lang === "zh" ? "项目" : "Project"}: ${metricsProjectFilter.length}`, onClear: () => setMetricsProjectFilter([]) } : null,
   ].filter(Boolean) as Array<{ key: string; label: string; onClear: () => void }>;
 
+  const sidebarToggle = <IconButton className="df-planning-sidebar-toggle" label={sidebarCollapsed ? (props.lang === "zh" ? "展开规划侧栏" : "Expand planning sidebar") : (props.lang === "zh" ? "收起规划侧栏" : "Collapse planning sidebar")} aria-expanded={!sidebarCollapsed} onClick={toggleSidebar} icon={sidebarCollapsed ? <UiPanelLeftOpenIcon size={20} /> : <UiPanelLeftCloseIcon size={20} />} />;
   return (
-    <main className={`df-planning${props.compact ? " compact-layout" : ""}${props.planningSidebarCollapsed ? " is-sidebar-collapsed" : ""}`} style={{ "--planning-sidebar-width": `${planningSidebarWidth}px` } as React.CSSProperties}>
+    <main className={`df-planning${props.compact ? " compact-layout" : ""}${sidebarCollapsed ? " is-sidebar-collapsed" : ""}${portraitSidebarOpen ? " is-portrait-sidebar-open" : ""}`} style={{ "--planning-sidebar-width": `${planningSidebarWidth}px` } as React.CSSProperties}>
       {dialog.host}
+      {portraitLayout && sidebarToggle}
+      {portraitLayout && portraitSidebarOpen && <button type="button" className="df-planning-sidebar-backdrop" tabIndex={-1} aria-label={props.lang === "zh" ? "关闭规划侧栏" : "Close planning sidebar"} onClick={() => setPortraitSidebarOpen(false)} />}
       <div className="df-planning-body">
         <section className="df-mindmap no-root">
-          <aside className="df-planning-sidebar" aria-label={props.lang === "zh" ? "\u89c4\u5212\u5de5\u5177" : "Planning tools"}>
-            <button type="button" className="df-planning-sidebar-toggle" aria-label={props.planningSidebarCollapsed ? (props.lang === "zh" ? "展开规划侧栏" : "Expand planning sidebar") : (props.lang === "zh" ? "收起规划侧栏" : "Collapse planning sidebar")} title={props.planningSidebarCollapsed ? (props.lang === "zh" ? "展开侧栏" : "Expand sidebar") : (props.lang === "zh" ? "收起侧栏" : "Collapse sidebar")} aria-expanded={!props.planningSidebarCollapsed} onClick={() => props.onPlanningSidebarCollapsedChange?.(!props.planningSidebarCollapsed)}>
-              {props.planningSidebarCollapsed ? <UiPanelLeftOpenIcon size={20} /> : <UiPanelLeftCloseIcon size={20} />}
-            </button>
+          <aside className="df-planning-sidebar" ref={sidebarRef} tabIndex={-1} onKeyDown={event => { if (portraitLayout && event.key === "Escape") { event.stopPropagation(); setPortraitSidebarOpen(false); } }} aria-label={props.lang === "zh" ? "\u89c4\u5212\u5de5\u5177" : "Planning tools"}>
+            {!portraitLayout && sidebarToggle}
             <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare ui-choice-list--motion-selection">
               {planningViews.length > 0 && <SelectionIndicator activeKey={`${selectedPlanningViewId}:${props.lang}:${planningViews.length}`} />}
               {planningViews.map((view) => (
-                <button type="button" key={view.id} className={`df-view-btn ui-choice-item${selectedPlanningViewId === view.id ? " active" : ""}`} aria-label={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name} aria-pressed={selectedPlanningViewId === view.id} onClick={() => changePlanningView(view.id)} title={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}>
+                <button type="button" key={view.id} className={`df-view-btn ui-choice-item${selectedPlanningViewId === view.id ? " active" : ""}`} aria-label={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name} aria-pressed={selectedPlanningViewId === view.id} onClick={() => { changePlanningView(view.id); setPortraitSidebarOpen(false); }} title={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}>
                   {view.nativeMode ? <PlanningModeIcon mode={view.nativeMode} /> : view.iconUrl ? <img className="df-planning-view-icon" src={view.iconUrl} alt="" aria-hidden="true" /> : <span className="df-planning-view-initial" aria-hidden="true">{Array.from(view.name.trim())[0]?.toLocaleUpperCase() || "P"}</span>}
                   <span>{view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}</span>
                 </button>
@@ -2574,7 +2591,7 @@ export default function PlanningView(props: {
               )}
             </div>
 
-          <div className="df-tree-wrap">
+          <div className="df-tree-wrap" inert={portraitLayout && portraitSidebarOpen}>
             {viewMode === "plugin" && selectedPlanningView && <div className="df-planning-plugin-view"><ExtensionMount contribution={selectedPlanningView} /></div>}
             {!selectedPlanningView && <div className="df-planning-no-view" role="status">{extensionSnapshot.safeMode ? (props.lang === "zh" ? "受限模式已暂停所有插件视图。关闭受限模式以继续规划。" : "Restricted mode has paused all plugin views. Turn it off to continue planning.") : (props.lang === "zh" ? "暂无可用规划视图。请在设置中的插件市场安装并启用一个视图插件。" : "No planning views are available. Install and enable a view plugin from the plugin market.")}</div>}
             {showLongRangeGuide && viewMode === "tree" && (

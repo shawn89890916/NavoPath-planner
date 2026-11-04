@@ -61,6 +61,18 @@ describe("trusted plugin runtime", () => {
     expect(f.clean).toHaveBeenCalledTimes(4);
     vi.unstubAllGlobals();
   });
+  it("exposes a bundled launcher icon for the active plugin and revokes it on unload", async () => {
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:launcher-icon");
+    const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    const pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather));
+    delete pkg.manifest.styles;
+    pkg.manifest.icon = "icon.svg";
+    pkg.files["icon.svg"] = { encoding: "utf8", data: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 12h16"/></svg>' };
+    const loaded = await loadPlugin(pkg, bridge().value, async () => ({ default: { onload() {} } }));
+    expect(loaded.iconUrl).toBe("blob:launcher-icon");
+    await loaded.dispose();
+    expect(revoke).toHaveBeenCalledWith("blob:launcher-icon");
+  });
   it("cleans partial activation when plugin startup throws", async () => {
     vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test"); vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
     const f = bridge(), pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather)); delete pkg.manifest.styles;

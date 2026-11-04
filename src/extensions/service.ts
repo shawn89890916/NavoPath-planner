@@ -20,6 +20,7 @@ async function engine() {
 export const extensionService = {
   subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; },
   getSnapshot: () => snapshot,
+  getPluginIcon: (key: string) => implementation?.getPluginIcon(key),
   isReady: () => implementation?.isReady() ?? false,
   configure: async (host: ExtensionHost | null) => {
     const revision = ++configureRevision;

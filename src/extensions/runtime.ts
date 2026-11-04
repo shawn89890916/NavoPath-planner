@@ -11,7 +11,7 @@ export interface RuntimeBridge {
   registerNativePlanningView(mode: NativePlanningViewMode, name: string, iconUrl?: string): Dispose;
   executeCommand(id: string): Promise<void>; addCommand(id: string, name: string, run: () => void | Promise<void>, shortcut?: string): Dispose;
 }
-export type LoadedPlugin = { module: PluginModule; context: PluginContext; dispose: Dispose; configChanged(config: Record<string, unknown>): Promise<void> };
+export type LoadedPlugin = { iconUrl?: string; module: PluginModule; context: PluginContext; dispose: Dispose; configChanged(config: Record<string, unknown>): Promise<void> };
 const eventBus = new EventTarget();
 // A patch stack can safely remove an older plugin while a later wrapper is active.
 const patches = new WeakMap<object, Map<string, { original: any; entries: Array<{ token: symbol; wrapper: (original: any) => any }> }>>();
@@ -99,6 +99,6 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
     module = (await importer(resources.get(pkg.manifest.main!))).default;
     if (!module || typeof module.onload !== "function") throw new Error("Plugin must export default { onload(context) }");
     const cleanup = await module.onload(context); if (typeof cleanup === "function") register(cleanup);
-    return { module, context, dispose, async configChanged(config) { await module!.onSettingsChange?.(config); emitPluginEvent(`config:${bridge.key}`, config); } };
+    return { iconUrl: pkg.manifest.icon ? resources.get(pkg.manifest.icon) : undefined, module, context, dispose, async configChanged(config) { await module!.onSettingsChange?.(config); emitPluginEvent(`config:${bridge.key}`, config); } };
   } catch (error) { await dispose(); throw error; }
 }

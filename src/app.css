@@ -20264,7 +20264,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     gap: 0;
     width: 100%;
   }
-  #root .df-app.mode-planning .df-planning .df-view-btn span { display: inline; }
+  #root .df-app.mode-planning .df-planning .df-view-btn span { display: inline; font: inherit; }
   #root .df-app .df-task-card .df-candidate-main { grid-column: 2; grid-row: 1; }
   #root .df-app .df-task-card .df-task-block-duration { grid-column: 2; grid-row: 2; justify-self: start; }
   /* Matrix cards use the checkbox as a small corner control. The copy gets
@@ -20997,8 +20997,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     height: 44px;
     align-self: center;
-    gap: 3px;
-    padding: 3px;
+    gap: 4px;
+    padding: 0;
     border: 0;
     border-radius: var(--radius-control);
     background: transparent;
@@ -21012,6 +21012,11 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
   .df-mobile-dock--viewport .df-mobile-mode-switch button {
     display: grid;
+    place-items: center;
+    height: 44px;
+    padding: 0;
+    line-height: 1;
+    box-sizing: border-box;
     position: relative;
     z-index: 1;
     width: 100%;
@@ -21900,14 +21905,15 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
   #root .df-app.mode-planning .df-planning .df-tree-wrap {
     grid-column: 1 / -1;
-    grid-row: 2 / 3;
+    grid-row: 1 / 2;
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    padding: 8px 6px calc(72px + env(safe-area-inset-bottom));
+    padding: 8px 6px 64px;
+    transition: transform var(--motion-layout) var(--motion-ease);
   }
   #root .df-app.mode-planning .df-planning .df-project-tasks{padding-left:8px;margin:5px 0 0;gap:5px}
   #root .df-app.mode-planning .df-planning .df-category-branch { margin-bottom: 12px; }
@@ -23175,7 +23181,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app.mode-execute .df-execute {
     width: 100%;
     min-width: 0;
-    padding: 8px 8px calc(78px + env(safe-area-inset-bottom));
+    padding: 8px 0 calc(56px + env(safe-area-inset-bottom));
     gap: 0;
     background: var(--bg-app);
   }
@@ -24442,6 +24448,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     grid-template-columns: 44px minmax(0, 1fr) 44px;
     width: 100%;
     min-height: calc(56px + env(safe-area-inset-bottom));
+    align-items: center;
     gap: 6px;
     padding: 5px 6px calc(5px + env(safe-area-inset-bottom));
     border: 0;
@@ -25036,27 +25043,26 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   height: 20px;
 }
 @media (orientation: portrait) {
-  #root .df-app.mode-planning .df-planning .df-mindmap.no-root {
-    grid-template-rows: 56px minmax(0, 1fr);
-  }
+  #root .df-app.mode-planning .df-planning { position: relative; height: 100%; padding: 56px 0 calc(56px + env(safe-area-inset-bottom)); }
+  #root .df-app.mode-planning .df-planning .df-planning-body { height: 100%; border: 0; border-radius: 0; }
+  #root .df-app.mode-planning .df-planning .df-mindmap.no-root,
+  #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-mindmap.no-root { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  #root .df-app.mode-planning .df-planning > .df-planning-sidebar-toggle { position: absolute; top: 6px; left: 8px; z-index: 100; width: 44px; height: 44px; min-height: 44px; }
   #root .df-app.mode-planning .df-planning .df-planning-sidebar {
-    height: 56px;
-    min-height: 56px;
+    position: fixed; inset: 56px auto calc(56px + env(safe-area-inset-bottom)) 0;
+    display: flex; flex-direction: column; align-items: stretch;
+    width: min(240px, 80vw); min-width: 0; height: auto; min-height: 0;
+    padding: 12px; border-right: 1px solid var(--paper-rule); border-bottom: 0;
+    background: var(--surface-main); z-index: 90; overflow-y: auto; pointer-events: auto;
   }
-  #root .df-app.mode-planning .df-planning .df-planning-view-switch {
-    height: 46px;
-    padding: 0;
-  }
-  #root .df-app.mode-planning .df-planning .df-view-btn {
-    flex: 0 0 44px;
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
-    padding: 0;
-  }
-  #root .df-app.mode-planning .df-planning .df-view-btn span {
-    display: none;
-  }
+  #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-sidebar { display: none; }
+  #root .df-app.mode-planning .df-planning-sidebar-resizer { display: none; }
+  #root .df-app.mode-planning .df-planning .df-planning-sidebar-backdrop { position: fixed; inset: 56px 0 calc(56px + env(safe-area-inset-bottom)); width: auto; height: auto; z-index: 80; border: 0; border-radius: 0; background: rgb(0 0 0 / 18%); }
+  #root .df-app.mode-planning .df-planning.is-portrait-sidebar-open .df-tree-wrap { transform: translate(8px, 6px); border-radius: 8px; }
+  #root .df-app.mode-planning .df-planning .df-planning-view-switch { position: relative; inset: auto; display: flex; flex-direction: column; align-items: stretch; width: 100%; height: auto; padding: 0; border: 0; gap: 4px; background: transparent; }
+  #root .df-app.mode-planning .df-planning .df-view-btn { display: grid; grid-template-columns: 20px minmax(0, 1fr); justify-items: start; align-items: center; gap: 12px; width: 100%; height: 44px; min-height: 44px; padding: 0 12px; border: 0; font: 600 14px/1.4 var(--paper-sans); text-align: left; }
+  #root .df-app.mode-planning .df-planning .df-view-btn span { display: inline; font: inherit; }
+  #root .df-app.mode-planning .df-planning .df-tree-wrap { grid-column: 1; grid-row: 1; }
 }
 @media (orientation: portrait) {
   #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday {
@@ -25091,7 +25097,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     padding-right: 0;
   }
   #root .df-app.mode-planning .df-planning .df-planning-filter-corner {
-    position: absolute;
+    position: fixed;
     top: 6px;
     right: 6px;
     z-index: 30;
@@ -25456,9 +25462,9 @@ body[data-navopath-base-theme="light"],
   --accent-on: #FFFFFF;
 }
 
-/* A docked portrait desktop window keeps its N recovery control visible. */
+/* Portrait Execute always keeps its N Dock/undock entry visible. */
 @media (orientation: portrait) {
-  #root .df-app.is-desktop-docked .df-header {
+  #root .df-app.mode-execute .df-header {
     position: fixed;
     top: 0;
     left: 0;
@@ -25473,16 +25479,16 @@ body[data-navopath-base-theme="light"],
     box-shadow: none;
     pointer-events: none;
   }
-  #root .df-app.is-desktop-docked .df-header-inner {
+  #root .df-app.mode-execute .df-header-inner {
     display: block;
     width: 52px;
     height: 52px;
     padding: 0;
   }
-  #root .df-app.is-desktop-docked .df-header-inner > :not(.df-brand) {
+  #root .df-app.mode-execute .df-header-inner > :not(.df-brand) {
     display: none;
   }
-  #root .df-app.is-desktop-docked .df-brand {
+  #root .df-app.mode-execute .df-brand {
     position: fixed;
     top: 4px;
     left: 4px;
@@ -25490,21 +25496,21 @@ body[data-navopath-base-theme="light"],
     margin: 0;
     pointer-events: auto;
   }
-  #root .df-app.is-desktop-docked .df-brand > :not(.df-brand-dock-control) {
+  #root .df-app.mode-execute .df-brand > :not(.df-brand-dock-control):not(.df-brand-ai-button) {
     display: none;
   }
-  #root .df-app.is-desktop-docked .df-header-fade {
+  #root .df-app.mode-execute .df-header-fade {
     display: none;
   }
-  #root .df-app.is-desktop-docked.mode-execute .df-compact-execute-controls {
+  #root .df-app.mode-execute .df-compact-execute-controls {
     top: 4px;
     left: 58px;
     right: 8px;
   }
-  #root .df-app.is-desktop-docked.mode-execute .df-compact-date-display.is-readonly {
+  #root .df-app.mode-execute .df-compact-date-display.is-readonly {
     top: 0;
   }
   #root .df-app.is-desktop-docked.mode-planning > .df-planning {
-    padding-top: 52px;
+    padding-top: 56px;
   }
 }

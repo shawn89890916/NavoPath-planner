@@ -726,6 +726,7 @@ export interface PlannerApi {
 }
 
 export interface DesktopDockPreferences {
+  handleWidth: number;
   activation: "hover" | "click";
   handleHeight: number;
   position: number;

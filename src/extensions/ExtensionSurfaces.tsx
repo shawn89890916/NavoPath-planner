@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Language } from "../types";
-import { ActionDisclosure, Button, CloseButton, Modal } from "../components/UiPrimitives";
+import { ActionDisclosure, Button, CloseButton, IconButton, Modal } from "../components/UiPrimitives";
 import { ExtensionMount } from "./ExtensionMount";
 import { extensionService } from "./service";
-import { UiRefreshIcon, UiZapIcon } from "../components/UiIcons";
+import { UiRefreshIcon, UiZapIcon, UiPencilIcon, UiListChecksIcon, UiCalendarCheckIcon } from "../components/UiIcons";
 import type { PluginUiPlacement } from "./types";
 import "./ExtensionSurfaces.css";
 
@@ -134,14 +134,15 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, placement = 
       }}
     ><ExtensionMount contribution={item} /></div>)}
     {launcherPlugins.map((item) => {
-      const iconUrl = snapshot.catalog.find((catalogEntry) => catalogEntry.sourceId === item.sourceId && catalogEntry.manifest.id === item.manifest.id)?.iconUrl;
-      return <button key={`launcher:${item.key}`} type="button" className="df-extension-header-launcher" aria-label={item.manifest.name} title={item.manifest.name} onClick={() => activateLauncher(item.key)}>{iconUrl ? <img src={iconUrl} alt="" aria-hidden="true" /> : <span aria-hidden="true">{Array.from(item.manifest.name.trim())[0]?.toLocaleUpperCase() || "P"}</span>}</button>;
+      const iconUrl = extensionService.getPluginIcon(item.key) || snapshot.catalog.find((catalogEntry) => catalogEntry.sourceId === item.sourceId && catalogEntry.manifest.id === item.manifest.id)?.iconUrl;
+      const Icon = item.manifest.id === "quick-capture" ? UiPencilIcon : item.manifest.id === "daily-overview" ? UiListChecksIcon : ["class-timetable", "schedule-templates"].includes(item.manifest.id) ? UiCalendarCheckIcon : UiZapIcon;
+      return <IconButton key={`launcher:${item.key}`} className="df-extension-header-launcher" label={item.manifest.name} onClick={() => activateLauncher(item.key)} icon={iconUrl ? <img src={iconUrl} alt="" aria-hidden="true" /> : <Icon size={20} />} />;
     })}
     {overflowViews.map((item) => <Button key={`view:${item.id}`} className="df-extension-header-action" variant="ghost" title={item.name} onClick={() => { setError(""); setSelectedView(item.id); onActivate?.(); }}>{item.name}</Button>)}
     {visibleCommands.map((command) => {
       const label = command.name.trim();
       const Icon = /refresh|reload|更新|刷新|重载/i.test(`${command.id} ${label}`) ? UiRefreshIcon : UiZapIcon;
-      return <Button key={`command:${command.id}`} className="df-extension-header-action is-command" variant="ghost" disabled={Boolean(running)} aria-label={label} title={label} onClick={() => { onActivate?.(); void runCommand(command.id); }}><Icon size={18} /></Button>;
+      return <IconButton key={`command:${command.id}`} className="df-extension-header-launcher" disabled={Boolean(running)} label={label} onClick={() => { onActivate?.(); void runCommand(command.id); }} icon={<Icon size={20} />} />;
     })}
       </div>
     </div>
