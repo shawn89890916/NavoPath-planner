@@ -486,14 +486,14 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
     void runMotionTransition(() => flushSync(() => {
       setSettingsTarget(resolveRuntimeTarget(target));
       setSettingsHome(false);
-    }), { scope: "settings", direction: "forward" });
+    }), { scope: "settings", direction: "neutral" });
   }
   function backToSettingsHome() {
     void runMotionTransition(() => flushSync(() => {
       setSettingsTarget(resolveRuntimeTarget({ category: "general" }));
       setSettingsHome(true);
       if (settingsContentRef.current) settingsContentRef.current.scrollTop = 0;
-    }), { scope: "settings", direction: "backward" });
+    }), { scope: "settings", direction: "neutral" });
   }
   async function commitProfileName() {
     if (profileNameSaveInFlightRef.current) return;

@@ -8485,6 +8485,21 @@ html:is([data-motion-scope="workspace"], [data-motion-scope="timeline"]) #df-exe
 ::view-transition-new(navo-motion-surface) {
   animation: navo-motion-new var(--motion-layout) var(--motion-ease) both;
 }
+/* Settings keep the shell and moving selection pill in place. Let only the
+   selected page content softly crossfade, like the nearby island controls. */
+html[data-motion-scope="settings"]::view-transition-old(navo-motion-surface) {
+  animation: navo-settings-content-out var(--motion-base) var(--motion-ease) both;
+}
+html[data-motion-scope="settings"]::view-transition-new(navo-motion-surface) {
+  animation: navo-settings-content-in var(--motion-base) var(--motion-ease) both;
+}
+@keyframes navo-settings-content-out {
+  to { opacity: 0; transform: scale(.995); }
+}
+@keyframes navo-settings-content-in {
+  from { opacity: 0; transform: scale(.995); }
+  to { opacity: 1; transform: scale(1); }
+}
 @keyframes navo-motion-old {
   to { opacity: 0; transform: translateX(calc(var(--motion-shift-x) * -1)); }
 }
@@ -8501,9 +8516,11 @@ html[data-motion-fallback][data-motion-scope="workspace"] .df-app > .df-planning
 html[data-motion-fallback][data-motion-scope="timeline"] #df-execute-timeline :is(.df-timeline-scroll, .df-timeline-3day-scroll, .df-month-scroll) {
   animation: navo-motion-new var(--motion-layout) var(--motion-ease) both;
 }
-html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-content,
 html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning .df-tree-wrap {
   animation: navo-motion-new var(--motion-layout) var(--motion-ease) backwards;
+}
+html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-content {
+  animation: navo-settings-content-in var(--motion-base) var(--motion-ease) backwards;
 }
 .df-app.type-balanced { --paper-task: var(--paper-sans); }
 .df-app.type-sans { --paper-display: var(--paper-sans); --paper-task: var(--paper-sans); }

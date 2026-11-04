@@ -12,6 +12,7 @@
 
 ### 1.6.1 Beta 修复
 - 修复竖屏“插件工具”打开插件后，新界面被工具面板遮挡的问题。
+- 设置分区切换改为轻柔淡入与轻微缩放，选中底色继续沿导航项平滑移动。
 
 ## 2026-11-03 · 插件、主题市场与时间轴 · 1.5.2 Beta
 
@@ -344,6 +345,7 @@
 
 ### 1.6.1 Beta Fix
 - Fixed plugin tools obscuring plugin interfaces opened from the portrait workspace menu.
+- Settings sections now crossfade with a subtle scale while the selected highlight glides between navigation items.
 
 ## 2026-11-03 · Plugin and theme markets, timeline entry · 1.5.2 Beta
 
