@@ -184,6 +184,6 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
         <SettingActionButton tone="primary" disabled={busy || !sourceUrl.trim()} onClick={() => void run(async () => { await extensionService.addSource(sourceUrl.trim(), sourceName.trim() || undefined); setSourceUrl(""); setSourceName(""); }, text("正在添加来源…", "Adding source…"))}>{text("添加来源", "Add source")}</SettingActionButton>
       </div>} />
     </SettingSection>}
-    <p className="df-extension-guide"><a href="/plugin-guidelines">{text("插件 API、设计规范与 MCP 文档", "Plugin API, design standards and MCP docs")}</a></p>
+    <p className="df-extension-guide"><a href="/guidelines">{text("插件 API、设计规范与 MCP 文档", "Plugin API, design standards and MCP docs")}</a></p>
   </div>;
 }

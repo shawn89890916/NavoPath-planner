@@ -13333,7 +13333,7 @@ root.render(
       ? <Suspense fallback={<div className="df-loading-inline">Loading changelog...</div>}><ChangelogPage /></Suspense>
       : window.location.pathname === "/plugin-guide"
         ? <Suspense fallback={<div className="df-loading-inline">Loading guide...</div>}><PluginGuidePageLazy /></Suspense>
-      : window.location.pathname === "/plugin-guidelines"
+      : window.location.pathname === "/guidelines" || window.location.pathname === "/plugin-guidelines"
         ? <Suspense fallback={<div className="df-loading-inline">Loading API docs...</div>}><PluginGuidePageLazy /></Suspense>
       : <AppErrorBoundary><App /></AppErrorBoundary>,
 );

@@ -1,6 +1,18 @@
 # NavoPath 更新日志
 
-## 2026-11-04 · 1.6.3 Beta 4
+## 2026-11-04 · 1.6.3 Beta 5
+
+### 新增
+- 插件可将入口固定放在总顶栏、今日候选顶栏或规划侧栏，也可注册规划主区域视图；树和指标预装，看板、矩阵和列表可从官方市场安装。
+- 插件与 MCP 文档改用更新日志式布局：正文旁提供固定章节目录，小屏幕折叠目录；正式地址为 /guidelines。
+
+### 改进
+- 旧版已启用的看板、矩阵和列表会在升级时自动安装并保留状态；规划侧栏折叠状态和宽度持久化，受限模式暂停全部插件视图。
+
+### 修复
+- 官方插件包现在包含 manifest 声明的 SVG 图标，规划视图插件能通过宿主兼容性与图标校验正常启动。
+
+### 1.6.3 Beta 4
 
 ### 新增
 - 规划侧栏可用面板按钮收起，并支持拖动调整宽度；子任务统一使用今日候选卡片样式。
@@ -382,7 +394,19 @@
 
 # NavoPath Changelog
 
-## 2026-11-04 · 1.6.3 Beta 4
+## 2026-11-04 · 1.6.3 Beta 5
+
+### Added
+- Plugins can place entries in the app header, Today's Candidates header, or Planning sidebar, and register Planning workspace views. Tree and Metrics are preinstalled; Kanban, Matrix, and List are available in the official market.
+- Plugin and MCP docs now follow the release notes layout, with a sticky section index beside the article and a compact mobile contents menu at /guidelines.
+
+### Improved
+- Previously enabled Kanban, Matrix, and List views are installed and retain their state during upgrades. Planning sidebar collapse and width persist, and Restricted mode pauses all plugin views.
+
+### Fixed
+- Official plugin packages now include their manifest-declared SVG icons so planning view plugins pass host compatibility and icon validation.
+
+### 1.6.3 Beta 4
 
 ### Added
 - The Planning sidebar can collapse with a panel control and be resized by dragging; subtasks now share the Today's Candidates card style.

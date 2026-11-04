@@ -20,7 +20,6 @@ function DocCodeBlock({ value, label, language }: { value: string; label: string
 
 export default function PluginGuidePage() {
   const [language, setLanguage] = useState<Language>(detectSystemLanguage());
-  const [activeSection, setActiveSection] = useState(() => location.hash.slice(1) || "plugins");
   const zh = language === "zh";
   useEffect(() => {
     const previous = document.title;
@@ -28,22 +27,8 @@ export default function PluginGuidePage() {
     return () => { document.title = previous; };
   }, [zh]);
   useEffect(() => {
-    const sections = [...document.querySelectorAll<HTMLElement>(".df-api-doc-page .df-doc-section[id]")];
-    if (!sections.length) return;
-    let initialHashFrame = 0;
-    const initialHash = location.hash.slice(1);
-    if (initialHash && sections.some((section) => section.id === initialHash)) {
-      setActiveSection(initialHash);
-      initialHashFrame = requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById(initialHash)?.scrollIntoView({ block: "start" })));
-    }
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-      if (visible[0]?.target instanceof HTMLElement) setActiveSection(visible[0].target.id);
-    }, { rootMargin: "-12% 0px -72% 0px", threshold: 0 });
-    sections.forEach((section) => observer.observe(section));
-    const hashChange = () => { if (location.hash) setActiveSection(location.hash.slice(1)); };
-    window.addEventListener("hashchange", hashChange);
-    return () => { cancelAnimationFrame(initialHashFrame); observer.disconnect(); window.removeEventListener("hashchange", hashChange); };
+    if (location.pathname !== "/plugin-guidelines") return;
+    window.history.replaceState(null, "", `/guidelines${location.search}${location.hash}`);
   }, [language]);
   const labels = {
     back: zh ? "返回工作区" : "Back to app",
@@ -58,15 +43,15 @@ export default function PluginGuidePage() {
     host: zh ? "宿主环境能力" : "Host Environment Capabilities",
   };
   const navItems = [
-    { id: "plugins", label: zh ? "插件入门" : "Plugins" },
-    { id: "standards", label: zh ? "设计规范" : "Design standards" },
-    { id: "mcp", label: "MCP" },
+    { id: "mcp", label: zh ? "连接 NavoPath" : "Connect NavoPath" },
     { id: "codex", label: "Codex" },
     { id: "claude", label: "Claude Desktop" },
     { id: "move", label: zh ? "迁移到新设备" : "New computer" },
     { id: "troubleshooting", label: zh ? "常见问题" : "Troubleshooting" },
-    { id: "host", label: zh ? "API 参考" : "API reference" },
-    { id: "security", label: zh ? "安全边界" : "Security" },
+    { id: "plugins", label: zh ? "安装插件与主题" : "Install plugins" },
+    { id: "standards", label: zh ? "设计规范" : "Design standards" },
+    { id: "security", label: zh ? "安全与权限" : "Security" },
+    { id: "host", label: zh ? "宿主 API 参考" : "Host API reference" },
   ];
   const codexConfig = `[mcp_servers.navopath]\nurl = "${MCP_ENDPOINT}"\nbearer_token_env_var = "NAVOPATH_MCP_TOKEN"`;
   const windowsTokenCommand = `[Environment]::SetEnvironmentVariable("NAVOPATH_MCP_TOKEN", "nvp_YOUR_TOKEN", "User")`;
@@ -100,17 +85,19 @@ export default function PluginGuidePage() {
 }`;
 
   return <main className="df-doc-page changelog-like df-api-doc-page">
-    <nav className="df-doc-sidebar" aria-label={zh ? "文档导航" : "Documentation Navigation"}>
-      <a className="df-doc-back" href="/app">← {labels.back}</a>
-      <span className="df-doc-nav-label">{zh ? "文档章节" : "ON THIS PAGE"}</span>
-      {navItems.map((item) => <a key={item.id} href={`#${item.id}`} className={activeSection === item.id ? "active" : ""} aria-current={activeSection === item.id ? "location" : undefined}>{item.label}</a>)}
-      <div className="df-doc-language" aria-label={zh ? "文档语言" : "Documentation Language"}>
-        <button type="button" className={zh ? "active" : ""} onClick={() => setLanguage("zh")}>中文</button>
-        <button type="button" className={!zh ? "active" : ""} onClick={() => setLanguage("en")}>EN</button>
+    <nav className="df-doc-topbar" aria-label={zh ? "文档导航" : "Documentation navigation"}>
+      <a href="/app">← {labels.back}</a>
+      <div className="df-doc-topbar-tools"><span>{zh ? "开发者文档" : "DEVELOPER DOCS"}</span>
+        <div className="df-doc-language" aria-label={zh ? "文档语言" : "Documentation language"}>
+          <button type="button" className={zh ? "active" : ""} aria-pressed={zh} onClick={() => setLanguage("zh")}>中文</button>
+          <button type="button" className={!zh ? "active" : ""} aria-pressed={!zh} onClick={() => setLanguage("en")}>EN</button>
+        </div>
       </div>
     </nav>
+    <div className="df-api-layout">
     <article className="df-doc-content">
       <header className="df-doc-hero"><span>{labels.tag}</span><h1>{labels.title}</h1><p>{labels.intro}</p></header>
+      <details className="df-api-mobile-toc"><summary>{zh ? "本页目录" : "On this page"}</summary><nav aria-label={zh ? "本页目录" : "On this page"}>{navItems.map((item) => <a key={item.id} href={`#${item.id}`}>{item.label}</a>)}</nav></details>
       <section id="mcp" className="df-doc-section">
         <h2>{labels.mcp}</h2>
         <p className="df-doc-lede">{zh ? "建议为每台设备生成独立令牌。完成以下三个配置步骤后，Codex 或 Claude Desktop 即可联动 NavoPath。" : "We recommend generating a dedicated token for each device. Complete the three steps below to connect Codex or Claude Desktop with NavoPath."}</p>
@@ -199,5 +186,7 @@ export default function PluginGuidePage() {
         <tr><th><code>timers.registerMode(provider)</code></th><td>{zh ? "注册独立计时模式，随插件停用而清理。" : "Register an independent timer mode with plugin lifecycle cleanup."}</td></tr>
       </tbody></table></section>
     </article>
+    <aside className="df-api-toc"><nav aria-label={zh ? "本页目录" : "On this page"}><span>{zh ? "本页目录" : "ON THIS PAGE"}</span>{navItems.map((item) => <a key={item.id} href={`#${item.id}`}>{item.label}</a>)}</nav></aside>
+    </div>
   </main>;
 }
