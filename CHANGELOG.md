@@ -7,6 +7,7 @@
 
 ### 新增
 - 社区课表插件支持课程与自习导入、每周重复及可覆盖的背景，停用保留课表。
+- NavoPath 连接器可安装并启用经校验的社区插件，插件在账户客户端自动启动。
 
 ### 新功能
 - 顶栏插件图标统一排在左侧 N 标志后，支持拖动排序、按运行状态变化和悬停查看信息；天气、番茄钟与日程模板入口统一为插件。
@@ -20,6 +21,7 @@
 - 修复竖屏“插件工具”打开插件后，新界面被工具面板遮挡的问题。
 - 设置分区切换改为轻柔淡入与轻微缩放，选中底色继续沿导航项平滑移动。
 - 桌面端生成 MCP 令牌时遇到过期登录凭据会先刷新会话，并核对服务端确已保存令牌，避免复制未生效的令牌。
+- 修复 Windows Claude Desktop 配置中 Bearer 请求头被 npx 拆分的问题，并让无效 NavoPath 令牌返回明确的认证错误。
 
 ## 2026-11-03 · 插件、主题市场与时间轴 · 1.5.2 Beta
 
@@ -347,6 +349,7 @@
 
 ### Added
 - The community timetable plugin imports weekly classes and self-study as overlapping backgrounds; disabling retains the timetable.
+- The NavoPath connector can install and enable checksum-validated community plugins, which start on the account's clients.
 
 ### Added
 - Plugin icons form one ordered toolbar after the N mark, support drag reordering, status-aware icons and hover details; Weather, Pomodoro and Schedule Templates use the same plugin entry point.

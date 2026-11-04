@@ -87,12 +87,17 @@ Claude Desktop 可通过 `mcp-remote` 连接带 Bearer Token 的远程服务。�
         "mcp-remote",
         "https://navopath-mcp.shawn89890916.workers.dev/mcp",
         "--header",
-        "Authorization: Bearer nvp_YOUR_TOKEN"
-      ]
+        "Authorization:${NAVOPATH_AUTH_HEADER}"
+      ],
+      "env": {
+        "NAVOPATH_AUTH_HEADER": "Bearer nvp_YOUR_TOKEN"
+      }
     }
   }
 }
 ```
+
+Keep the `Authorization:` argument free of spaces on Windows. The `Bearer` value belongs in `env`; otherwise Windows clients may split the `npx` argument and send a broken header.
 
 ### macOS 或 Linux
 
@@ -167,7 +172,8 @@ npx @modelcontextprotocol/inspector@latest
 
 | 现象 | 处理方式 |
 | --- | --- |
-| `401 Invalid or revoked bearer token` | 重新生成设备令牌，并更新完整的 `nvp_...` 内容。 |
+| `401 Invalid NavoPath device token format` | 检查是否复制了完整令牌；格式应为 `nvp_` 加 64 位十六进制字符。 |
+| `401 Invalid or revoked NavoPath device token` | 确认使用当前账户生成的令牌且未撤销；之后重新复制或生成设备令牌。 |
 | `Workspace not found` | 先在 NavoPath 登录同一云端账户，等待工作区加载完成。 |
 | 客户端没有显示 NavoPath | 检查服务地址末尾的 `/mcp`，保存配置后彻底退出客户端并重新打开。 |
 | `PROFILE_REVISION_CONFLICT` | 重新读取受影响的数据，再重试当前写入。 |

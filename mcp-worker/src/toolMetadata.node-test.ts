@@ -42,6 +42,7 @@ test("private reads and irreversible workspace mutations have appropriate approv
     assert.equal(tools.get(name)?.readOnlyHint, false, name);
     assert.equal(tools.get(name)?.destructiveHint, true, name);
   }
+  assert.equal(tools.get("update_settings")?.openWorldHint, true, "plugin installation fetches public catalog assets");
   assert.equal(tools.get("batch_update_tasks")?.readOnlyHint, false, "committing mode must not inherit preview permissions");
 });
 
