@@ -261,6 +261,38 @@ describe("createSupabasePlannerApi", () => {
     expect(rpc.mock.calls[1]).toEqual(rpc.mock.calls[0]);
   });
 
+  it("refreshes an expired desktop session before generating an MCP token", async () => {
+    const user = { id: "user_1", email: "user@example.com" };
+    const rpc = vi.fn()
+      .mockResolvedValueOnce({ data: null, error: { message: "Invalid JWT", status: 401 } })
+      .mockResolvedValueOnce({
+        data: [{
+          id: "token_1",
+          name: "Desktop",
+          token_prefix: "nvp_12345678",
+          created_at: "2026-09-22T00:00:00.000Z",
+          last_used_at: null,
+        }],
+        error: null,
+      });
+    const auth = {
+      getSession: vi.fn().mockResolvedValue({ data: { session: { user } }, error: null }),
+      refreshSession: vi.fn().mockResolvedValue({ data: { session: { user } }, error: null }),
+      onAuthStateChange: vi.fn(),
+    };
+    createClientMock.mockReturnValue({ auth, rpc });
+
+    const { createSupabasePlannerApi } = await import("./supabasePlannerApi");
+    const api = createSupabasePlannerApi("https://supabase.test", "anon");
+
+    await expect(api.createMcpToken?.("Desktop")).resolves.toMatchObject({
+      token: expect.stringMatching(/^nvp_[0-9a-f]{64}$/),
+      metadata: { id: "token_1", tokenPrefix: "nvp_12345678" },
+    });
+    expect(auth.refreshSession).toHaveBeenCalledOnce();
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
+
   it("avoids a direct Realtime socket on production web", async () => {
     window.location = { origin: "https://navopath.com", href: "https://navopath.com/app" } as any;
     const user = { id: "user_1", email: "user@example.com" };

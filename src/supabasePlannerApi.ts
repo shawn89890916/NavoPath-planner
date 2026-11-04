@@ -267,14 +267,14 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     }
   }
 
-  async function retryTransientRequest(call: () => any, options: { retryNetworkFailures?: boolean } = {}) {
+  async function retryTransientRequest(call: () => any, options: { retryNetworkFailures?: boolean; retryAuthRejection?: boolean } = {}) {
     let result: any;
     let authRecoveryAttempted = false;
     const maxAttempts = options.retryNetworkFailures ? 3 : 2;
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       result = await runCloudRequest(call);
       if (!result.error) return result;
-      if (options.retryNetworkFailures && !authRecoveryAttempted && isAuthTokenRejected(result.error)) {
+      if ((options.retryNetworkFailures || options.retryAuthRejection) && !authRecoveryAttempted && isAuthTokenRejected(result.error)) {
         authRecoveryAttempted = true;
         if (await refreshSessionAfterAuthRejection()) {
           continue;
@@ -667,7 +667,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     },
     listMcpTokens: async () => {
       await requireUser();
-      const { data, error } = await retryTransientRequest(() => supabase.rpc("list_mcp_tokens"));
+      const { data, error } = await retryTransientRequest(() => supabase.rpc("list_mcp_tokens"), { retryAuthRejection: true });
       if (error) throw new Error(error.message);
       return (data || []).map(tokenMetadata);
     },
@@ -680,13 +680,16 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
         token_name: name.trim() || "MCP client",
         token_digest: tokenDigest,
         token_label_prefix: token.slice(0, 12),
-      }));
+      }), { retryAuthRejection: true });
       if (error) throw new Error(error.message);
+      if (!data?.[0]?.id) {
+        throw new Error("The server did not confirm saving this token. Please try again.");
+      }
       return { token, metadata: tokenMetadata(data?.[0]) };
     },
     revokeMcpToken: async (id) => {
       await requireUser();
-      const { error } = await retryTransientRequest(() => supabase.rpc("revoke_mcp_token", { token_id: id }));
+      const { error } = await retryTransientRequest(() => supabase.rpc("revoke_mcp_token", { token_id: id }), { retryAuthRejection: true });
       if (error) throw new Error(error.message);
     },
     listSyncBridgeStatuses: async () => (await import("./syncBridgeStatusApi")).listSyncBridgeStatuses(supabase, await requireUser()),

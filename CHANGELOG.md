@@ -1,6 +1,6 @@
 # NavoPath 更新日志
 
-## 2026-11-04 · 1.6.0 正式版 / 1.6.1 Beta
+## 2026-11-04 · 1.6.1 正式版
 
 ### 新功能
 - 顶栏插件图标统一排在左侧 N 标志后，支持拖动排序、按运行状态变化和悬停查看信息；天气、番茄钟与日程模板入口统一为插件。
@@ -10,9 +10,10 @@
 - N 标志按实际图形中心与插件图标对齐；执行、规划、时间轴视图和设置选项共用平滑移动的选中状态。
 - 今日候选直接显示分类和已完成筛选图标；移除重复 Focus、模板和 AI 设置入口，让插件及设置承担各自功能。
 
-### 1.6.1 Beta 修复
+### 修复
 - 修复竖屏“插件工具”打开插件后，新界面被工具面板遮挡的问题。
 - 设置分区切换改为轻柔淡入与轻微缩放，选中底色继续沿导航项平滑移动。
+- 桌面端生成 MCP 令牌时遇到过期登录凭据会先刷新会话，并核对服务端确已保存令牌，避免复制未生效的令牌。
 
 ## 2026-11-03 · 插件、主题市场与时间轴 · 1.5.2 Beta
 
@@ -333,7 +334,7 @@
 
 # NavoPath Changelog
 
-## 2026-11-04 · 1.6.0 Stable / 1.6.1 Beta
+## 2026-11-04 · 1.6.1 Stable
 
 ### Added
 - Plugin icons form one ordered toolbar after the N mark, support drag reordering, status-aware icons and hover details; Weather, Pomodoro and Schedule Templates use the same plugin entry point.
@@ -343,9 +344,10 @@
 - The N mark aligns by its visible center with plugin icons; Execute, Planning, timeline views and settings options share the same smoothly moving selection state.
 - Today’s Candidates exposes grouping and completed-task filtering directly, while duplicate Focus, template and AI-settings entries are removed in favor of their plugin and settings homes.
 
-### 1.6.1 Beta Fix
+### Fixes
 - Fixed plugin tools obscuring plugin interfaces opened from the portrait workspace menu.
 - Settings sections now crossfade with a subtle scale while the selected highlight glides between navigation items.
+- Desktop MCP token creation now refreshes expired sign-in credentials and confirms the server saved the token before showing it, preventing inactive credentials from being copied.
 
 ## 2026-11-03 · Plugin and theme markets, timeline entry · 1.5.2 Beta
 
