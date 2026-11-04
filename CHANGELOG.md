@@ -5,8 +5,7 @@
 ### 1.6.3 Beta 3
 
 ### 修复
-- 竖屏 Dock 下让执行日期与视图控件保持在 N 标志右侧同一行；移除 N 标志角落的状态点。
-- Dock 方向菜单去掉冗余的悬停文字，将方向标题和说明图标移到选项下方，并缩小与入口的间距，避免菜单收起。
+- 竖屏 Dock 执行栏与 N 同行；方向菜单去掉角标和多余悬停提示，说明移至选项下方并贴近入口。
 
 ### 1.6.3 Beta 2
 
@@ -372,8 +371,7 @@
 ### 1.6.3 Beta 3
 
 ### Fixes
-- Portrait Dock mode keeps the Execute date and view controls on one row beside the N mark, and removes the status dot from its corner.
-- The Dock side menu drops the redundant hover label, moves its heading and help icon below the choices, and closes the gap above the menu to prevent it collapsing while the pointer moves.
+- Portrait Dock controls share a row with N. The side menu drops its dot and redundant tooltip, moves guidance below the choices, and sits closer to the trigger.
 
 ### 1.6.3 Beta 2
 
