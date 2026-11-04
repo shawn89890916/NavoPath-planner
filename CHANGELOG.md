@@ -10,7 +10,8 @@
 - 旧版已启用的看板、矩阵和列表会在升级时自动安装并保留状态；规划侧栏折叠状态和宽度持久化，受限模式暂停全部插件视图。
 
 ### 修复
-- 官方插件包现在包含 manifest 声明的 SVG 图标，规划视图插件能通过宿主兼容性与图标校验正常启动。
+- 官方插件包现在包含 manifest 声明的 SVG 图标，规划视图插件能通过 NavoPath 应用兼容性与图标校验正常启动。
+- 文档使用完整视口纸张底色，并将“宿主 API”改成更直观的“NavoPath 应用 API”。
 
 ### 1.6.3 Beta 4
 
@@ -404,7 +405,8 @@
 - Previously enabled Kanban, Matrix, and List views are installed and retain their state during upgrades. Planning sidebar collapse and width persist, and Restricted mode pauses all plugin views.
 
 ### Fixed
-- Official plugin packages now include their manifest-declared SVG icons so planning view plugins pass host compatibility and icon validation.
+- Official plugin packages now include their manifest-declared SVG icons so planning view plugins pass NavoPath app compatibility and icon validation.
+- The documentation paper background now fills the viewport, and vague host API labels use clearer NavoPath app API wording.
 
 ### 1.6.3 Beta 4
 

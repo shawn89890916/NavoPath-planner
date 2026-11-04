@@ -40,7 +40,7 @@ export default function PluginGuidePage() {
     mcp: zh ? "在新设备上连接 NavoPath" : "Connect NavoPath on a New Computer",
     plugins: zh ? "安装插件与主题" : "Install plugins and themes",
     security: zh ? "安全与权限边界" : "Security & Permission Boundaries",
-    host: zh ? "宿主环境能力" : "Host Environment Capabilities",
+    host: zh ? "NavoPath 应用接口" : "NavoPath App APIs",
   };
   const navItems = [
     { id: "mcp", label: zh ? "连接 NavoPath" : "Connect NavoPath" },
@@ -51,7 +51,7 @@ export default function PluginGuidePage() {
     { id: "plugins", label: zh ? "安装插件与主题" : "Install plugins" },
     { id: "standards", label: zh ? "设计规范" : "Design standards" },
     { id: "security", label: zh ? "安全与权限" : "Security" },
-    { id: "host", label: zh ? "宿主 API 参考" : "Host API reference" },
+    { id: "host", label: zh ? "应用 API 参考" : "App API reference" },
   ];
   const codexConfig = `[mcp_servers.navopath]\nurl = "${MCP_ENDPOINT}"\nbearer_token_env_var = "NAVOPATH_MCP_TOKEN"`;
   const windowsTokenCommand = `[Environment]::SetEnvironmentVariable("NAVOPATH_MCP_TOKEN", "nvp_YOUR_TOKEN", "User")`;
@@ -176,9 +176,9 @@ export default function PluginGuidePage() {
         </dl></aside>
         <p>{zh ? "官方目录与第三方目录统一使用这些字段。当前还没有统计数据来源的插件会明确显示暂无数据。" : "Official and third-party catalogs share these fields. Listings without a connected statistics source are marked unavailable."}</p>
       </section>
-      <section id="security" className="df-doc-section"><h2>{labels.security}</h2><p>{zh ? "插件代码在宿主页面中运行，具有与应用相近的访问能力；它可以读取和修改工作区、访问网络，桌面专属插件还可使用桌面桥接能力。请核实作者和来源。受限模式暂停全部插件，保留安装与配置，适合排查异常。主题只加载 CSS 和静态资源。" : "Plugin code runs in the host page with access comparable to the app. It can read and change workspace data, access the network, and use desktop bridge capabilities when available. Verify authors and sources. Restricted mode pauses all plugins while retaining packages and configuration for troubleshooting. Themes load CSS and static assets."}</p></section>
-      <section id="host" className="df-doc-section"><h2>{labels.host}</h2><table><tbody>
-        <tr><th><code>app.getData()</code></th><td>{zh ? "读取当前规划工作区快照。" : "Read current workspace planning snapshot."}</td></tr>
+      <section id="security" className="df-doc-section"><h2>{labels.security}</h2><p>{zh ? "插件代码在 NavoPath 应用页面中运行，可以读取和修改工作区、访问网络，桌面专属插件还可使用桌面桥接能力。请核实作者和来源。受限模式暂停全部插件，保留安装与配置，适合排查异常。主题只加载 CSS 和静态资源。" : "Plugin code runs inside the NavoPath app. It can read and change workspace data, access the network, and use desktop bridge capabilities when available. Verify authors and sources. Restricted mode pauses all plugins while retaining packages and configuration for troubleshooting. Themes load CSS and static assets."}</p></section>
+      <section id="host" className="df-doc-section"><h2>{labels.host}</h2><p>{zh ? "NavoPath 应用负责加载和运行插件，并提供下面这些数据、界面与设置接口。" : "The NavoPath app loads and runs plugins, and provides the data, UI, and settings APIs below."}</p><table><tbody>
+        <tr><th><code>app.getData()</code></th><td>{zh ? "NavoPath 应用接口：读取当前规划工作区快照。" : "NavoPath app API: read the current planning workspace snapshot."}</td></tr>
         <tr><th><code>settings.save(patch)</code></th><td>{zh ? "持久化存储插件专属配置。" : "Persist plugin-specific settings."}</td></tr>
         <tr><th><code>events.emit(event, payload)</code></th><td>{zh ? "监听并广播 NavoPath 插件事件。" : "Listen and broadcast NavoPath plugin events."}</td></tr>
         <tr><th><code>ui.toast(message)</code></th><td>{zh ? "在应用界面展示轻量状态提示。" : "Display lightweight status notifications in the app."}</td></tr>

@@ -510,13 +510,18 @@
 
 .df-api-doc-page.df-doc-page.changelog-like {
   width: 100%;
-  max-width: 1280px;
+  max-width: none;
   min-height: 100vh;
-  margin: 0 auto;
-  padding: clamp(24px, 6vw, 72px);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
   background: repeating-linear-gradient(2deg, color-mix(in srgb, var(--doc-ink) 2%, transparent) 0 1px, transparent 1px 5px), var(--doc-paper);
 }
 .df-doc-topbar {
+  width: min(1280px, 100%);
+  margin-inline: auto;
+  padding: clamp(24px, 6vw, 72px) clamp(20px, 6vw, 72px) 14px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -530,6 +535,10 @@
 .df-doc-topbar-tools { display: flex; align-items: center; gap: 18px; }
 .df-doc-topbar-tools > span { color: var(--doc-muted); }
 .df-api-layout {
+  width: min(1280px, 100%);
+  margin-inline: auto;
+  padding-inline: clamp(20px, 6vw, 72px);
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: minmax(0, 720px) minmax(200px, 250px);
   gap: clamp(36px, 6vw, 100px);
@@ -564,7 +573,8 @@
 }
 
 @media (max-width: 600px) {
-  .df-api-doc-page.df-doc-page.changelog-like { padding: 24px 20px 48px; }
+  .df-doc-topbar { padding: 24px 20px 14px; }
+  .df-api-layout { padding-inline: 20px; padding-bottom: 48px; }
   .df-doc-topbar { align-items: flex-start; gap: 18px; }
   .df-doc-topbar-tools { align-items: flex-end; flex-direction: column-reverse; gap: 8px; }
   .df-doc-topbar-tools > span { display: none; }
