@@ -18,6 +18,7 @@ import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockVariant } from "./components/TaskBlock";
 import { CloseButton } from "./components/UiPrimitives";
+import { UiPanelLeftCloseIcon, UiPanelLeftOpenIcon } from "./components/UiIcons";
 import { TaskDragLayer } from "./unifiedDrag";
 import { bindHeldTouchScroll } from "./useUnifiedDrag";
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricCompletionFilter, type MetricDisplayMetric, type MetricGroupBy, type MetricHabitMode, type MetricRangePreset, type TimeAllocationGroup } from "./metrics/timeAllocation";
@@ -1052,28 +1053,6 @@ export default function PlanningView(props: {
   const [dragNode, setDragNode] = useState<TreeDragNode | null>(null);
   const [dropTarget, setDropTarget] = useState<TreeDropTarget | null>(null);
   const treeRef = useRef<HTMLDivElement>(null);
-  const sidebarRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (!props.compact || props.planningSidebarCollapsed) return;
-    const previous = document.activeElement as HTMLElement | null;
-    const sidebar = sidebarRef.current;
-    const controls = () => Array.from(sidebar?.querySelectorAll<HTMLElement>('button:not(:disabled), [tabindex="0"]') || []);
-    controls()[0]?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        props.onPlanningSidebarCollapsedChange?.(true);
-      } else if (event.key === "Tab") {
-        const items = controls();
-        const first = items[0];
-        const last = items[items.length - 1];
-        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("keydown", onKey); previous?.focus(); };
-  }, [props.compact, props.planningSidebarCollapsed]);
   const donutSvgRef = useRef<SVGSVGElement>(null);
   const dialog = useInAppDialog(props.lang);
   const [planningSidebarWidth, setPlanningSidebarWidth] = useState(() => Math.max(150, Math.min(360, props.planningSidebarWidth || 216)));
@@ -2338,8 +2317,60 @@ export default function PlanningView(props: {
   return (
     <main className={`df-planning${props.compact ? " compact-layout" : ""}${props.planningSidebarCollapsed ? " is-sidebar-collapsed" : ""}`} style={{ "--planning-sidebar-width": `${planningSidebarWidth}px` } as React.CSSProperties}>
       {dialog.host}
-      <div className="df-planning-title">{selectedPlanningView?.nativeMode ? metricViewLabel(props.lang, selectedPlanningView.nativeMode) : selectedPlanningView?.name || (props.lang === "zh" ? "规划" : "Planning")}</div>
-      {props.compact && !props.planningSidebarCollapsed && <button className="df-planning-sidebar-backdrop" aria-label={props.lang === "zh" ? "关闭规划侧栏" : "Close planning sidebar"} onClick={() => props.onPlanningSidebarCollapsedChange?.(true)} />}
+      <div className="df-planning-body">
+        <section className="df-mindmap no-root">
+          <aside className="df-planning-sidebar" aria-label={props.lang === "zh" ? "\u89c4\u5212\u5de5\u5177" : "Planning tools"}>
+            <button type="button" className="df-planning-sidebar-toggle" aria-label={props.planningSidebarCollapsed ? (props.lang === "zh" ? "展开规划侧栏" : "Expand planning sidebar") : (props.lang === "zh" ? "收起规划侧栏" : "Collapse planning sidebar")} title={props.planningSidebarCollapsed ? (props.lang === "zh" ? "展开侧栏" : "Expand sidebar") : (props.lang === "zh" ? "收起侧栏" : "Collapse sidebar")} aria-expanded={!props.planningSidebarCollapsed} onClick={() => props.onPlanningSidebarCollapsedChange?.(!props.planningSidebarCollapsed)}>
+              {props.planningSidebarCollapsed ? <UiPanelLeftOpenIcon size={20} /> : <UiPanelLeftCloseIcon size={20} />}
+            </button>
+            <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare ui-choice-list--motion-selection">
+              {planningViews.length > 0 && <SelectionIndicator activeKey={`${selectedPlanningViewId}:${props.lang}:${planningViews.length}`} />}
+              {planningViews.map((view) => (
+                <button type="button" key={view.id} className={`df-view-btn ui-choice-item${selectedPlanningViewId === view.id ? " active" : ""}`} aria-label={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name} aria-pressed={selectedPlanningViewId === view.id} onClick={() => changePlanningView(view.id)} title={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}>
+                  {view.nativeMode ? <PlanningModeIcon mode={view.nativeMode} /> : view.iconUrl ? <img className="df-planning-view-icon" src={view.iconUrl} alt="" aria-hidden="true" /> : <span className="df-planning-view-initial" aria-hidden="true">{Array.from(view.name.trim())[0]?.toLocaleUpperCase() || "P"}</span>}
+                  <span>{view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}</span>
+                </button>
+              ))}
+            </div>
+            <div className="df-planning-plugin-items" aria-label={props.lang === "zh" ? "规划侧栏插件" : "Planning sidebar plugins"}>
+              {extensionSnapshot.headerItems.filter((item) => item.placement === "planning-sidebar").map((item) => <div className="df-planning-plugin-item" key={item.id}><ExtensionMount contribution={item} /></div>)}
+            </div>
+            {!props.compact && <div
+              className="df-planning-sidebar-resizer"
+              role="separator"
+              aria-orientation="vertical"
+              aria-label={props.lang === "zh" ? "调整规划侧栏宽度" : "Resize planning sidebar"}
+              aria-valuemin={150}
+              aria-valuemax={360}
+              aria-valuenow={planningSidebarWidth}
+              tabIndex={0}
+              onPointerDown={(event) => {
+                if (props.planningSidebarCollapsed) return;
+                event.preventDefault();
+                sidebarResizeRef.current = { pointerId: event.pointerId, startX: event.clientX, startWidth: planningSidebarWidth };
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerMove={(event) => {
+                const drag = sidebarResizeRef.current;
+                if (!drag || drag.pointerId !== event.pointerId) return;
+                updateSidebarWidth(drag.startWidth + event.clientX - drag.startX);
+              }}
+              onPointerUp={(event) => {
+                const drag = sidebarResizeRef.current;
+                if (!drag || drag.pointerId !== event.pointerId) return;
+                sidebarResizeRef.current = null;
+                const width = Math.max(150, Math.min(360, Math.round(drag.startWidth + event.clientX - drag.startX)));
+                updateSidebarWidth(width, true);
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }}
+              onPointerCancel={() => { sidebarResizeRef.current = null; }}
+              onKeyDown={(event) => {
+                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+                event.preventDefault();
+                updateSidebarWidth(planningSidebarWidth + (event.key === "ArrowRight" ? 16 : -16), true);
+              }}
+            />}
+          </aside>
             <div className="df-planning-filter-corner">
               {!props.demo && viewMode !== "metrics" && viewMode !== "plugin" && viewMode !== null && (
               <div className="df-filter-popover-anchor">
@@ -2543,57 +2574,6 @@ export default function PlanningView(props: {
               )}
             </div>
 
-      <div className="df-planning-body">
-        <section className="df-mindmap no-root">
-          <aside ref={sidebarRef} className="df-planning-sidebar" aria-label={props.lang === "zh" ? "\u89c4\u5212\u5de5\u5177" : "Planning tools"}>
-            <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare ui-choice-list--motion-selection">
-              {planningViews.length > 0 && <SelectionIndicator activeKey={`${selectedPlanningViewId}:${props.lang}:${planningViews.length}`} />}
-              {planningViews.map((view) => (
-                <button type="button" key={view.id} className={`df-view-btn ui-choice-item${selectedPlanningViewId === view.id ? " active" : ""}`} aria-label={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name} aria-pressed={selectedPlanningViewId === view.id} onClick={() => { changePlanningView(view.id); if (props.compact) props.onPlanningSidebarCollapsedChange?.(true); }} title={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}>
-                  {view.nativeMode ? <PlanningModeIcon mode={view.nativeMode} /> : view.iconUrl ? <img className="df-planning-view-icon" src={view.iconUrl} alt="" aria-hidden="true" /> : <span className="df-planning-view-initial" aria-hidden="true">{Array.from(view.name.trim())[0]?.toLocaleUpperCase() || "P"}</span>}
-                  <span>{view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}</span>
-                </button>
-              ))}
-            </div>
-            <div className="df-planning-plugin-items" aria-label={props.lang === "zh" ? "规划侧栏插件" : "Planning sidebar plugins"}>
-              {extensionSnapshot.headerItems.filter((item) => item.placement === "planning-sidebar").map((item) => <div className="df-planning-plugin-item" key={item.id}><ExtensionMount contribution={item} /></div>)}
-            </div>
-            {!props.compact && <div
-              className="df-planning-sidebar-resizer"
-              role="separator"
-              aria-orientation="vertical"
-              aria-label={props.lang === "zh" ? "调整规划侧栏宽度" : "Resize planning sidebar"}
-              aria-valuemin={150}
-              aria-valuemax={360}
-              aria-valuenow={planningSidebarWidth}
-              tabIndex={0}
-              onPointerDown={(event) => {
-                if (props.planningSidebarCollapsed) return;
-                event.preventDefault();
-                sidebarResizeRef.current = { pointerId: event.pointerId, startX: event.clientX, startWidth: planningSidebarWidth };
-                event.currentTarget.setPointerCapture(event.pointerId);
-              }}
-              onPointerMove={(event) => {
-                const drag = sidebarResizeRef.current;
-                if (!drag || drag.pointerId !== event.pointerId) return;
-                updateSidebarWidth(drag.startWidth + event.clientX - drag.startX);
-              }}
-              onPointerUp={(event) => {
-                const drag = sidebarResizeRef.current;
-                if (!drag || drag.pointerId !== event.pointerId) return;
-                sidebarResizeRef.current = null;
-                const width = Math.max(150, Math.min(360, Math.round(drag.startWidth + event.clientX - drag.startX)));
-                updateSidebarWidth(width, true);
-                event.currentTarget.releasePointerCapture(event.pointerId);
-              }}
-              onPointerCancel={() => { sidebarResizeRef.current = null; }}
-              onKeyDown={(event) => {
-                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-                event.preventDefault();
-                updateSidebarWidth(planningSidebarWidth + (event.key === "ArrowRight" ? 16 : -16), true);
-              }}
-            />}
-          </aside>
           <div className="df-tree-wrap">
             {viewMode === "plugin" && selectedPlanningView && <div className="df-planning-plugin-view"><ExtensionMount contribution={selectedPlanningView} /></div>}
             {!selectedPlanningView && <div className="df-planning-no-view" role="status">{extensionSnapshot.safeMode ? (props.lang === "zh" ? "受限模式已暂停所有插件视图。关闭受限模式以继续规划。" : "Restricted mode has paused all plugin views. Turn it off to continue planning.") : (props.lang === "zh" ? "暂无可用规划视图。请在设置中的插件市场安装并启用一个视图插件。" : "No planning views are available. Install and enable a view plugin from the plugin market.")}</div>}

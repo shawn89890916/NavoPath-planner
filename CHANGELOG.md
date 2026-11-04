@@ -3,12 +3,12 @@
 ## 2026-11-04 · 1.6.3 Beta 6
 
 ### 改进
-- 工作区左上角统一为侧栏展开与收起按钮，移除工作区 N 标识；Dock 使用独立图标选择贴边方向或恢复窗口，竖屏顶栏控件保持居中对齐。
-- 竖屏规划侧栏改为图标与文字组成的抽屉，点击视图、遮罩或按 Escape 即可收起，筛选入口保留在右上角。
 - 应用更新与接受 Beta 更新移至通用分类，搜索与旧入口同步指向新位置。
 
 ### 修复
 - 竖屏设置首页的插件名称恢复完整可用宽度，避免名称挤在窄图标列中被截断。
+- 竖屏 Dock 的 N 恢复入口与日期、时间范围控件对齐。
+- 规划筛选固定在顶栏下方右侧，侧栏收起后仍可使用；内置规划图标在展开和收起状态均清晰显示。
 
 ### 1.6.3 Beta 5
 
@@ -408,12 +408,12 @@
 ## 2026-11-04 · 1.6.3 Beta 6
 
 ### Improved
-- One top-left sidebar button expands or collapses workspace navigation, replacing the workspace N mark. A separate Dock icon selects an edge or restores the window, and portrait toolbar controls share a centered alignment.
-- Portrait Planning uses an icon-and-label sidebar drawer that closes when choosing a view, clicking the backdrop, or pressing Escape. Filters remain at the top right.
 - App updates and Accept Beta updates now live in General, including search results and existing links.
 
 ### Fixed
 - Plugin names on the portrait settings home regain their full available width instead of being truncated inside a narrow icon column.
+- The portrait Dock N recovery control now aligns with the date and time range controls.
+- Planning filters stay at the right below the header and remain available when the sidebar collapses. Built-in Planning icons render clearly in both sidebar states.
 
 ### 1.6.3 Beta 5
 

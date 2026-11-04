@@ -70,7 +70,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiPanelLeftOpenIcon, UiPanelLeftCloseIcon, UiDockSidebarIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiListChecksIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiListChecksIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -1074,7 +1074,6 @@ function App() {
   const [compactLayout, setCompactLayout] = useState(() => window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches);
   const [portraitLayout, setPortraitLayout] = useState(() => window.matchMedia("(orientation: portrait)").matches);
   const inlineTimelineDraft = Boolean(window.desktopApi) || !portraitLayout;
-  const [compactPlanningSidebarOpen, setCompactPlanningSidebarOpen] = useState(false);
   const [desktopDockSide, setDesktopDockSide] = useState<"left" | "right" | null>(null);
   const [desktopDockReady, setDesktopDockReady] = useState(false);
   const dockMouseLayout = Boolean(desktopDockSide) && compactLayout;
@@ -9144,30 +9143,20 @@ if (cached?.data && cached?.settings) {
       <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
           <div className="df-brand">
-            <IconButton
-              className="df-workspace-sidebar-toggle"
-              label={mode === "planning" ? (lang === "zh" ? "展开或收起规划侧栏" : "Toggle planning sidebar") : (lang === "zh" ? "展开或收起今日候选" : "Toggle today's candidates")}
-              aria-expanded={mode === "planning" ? (compactLayout ? compactPlanningSidebarOpen : !settings.planningSidebarCollapsed) : (mobileExecution ? candidateDrawerOpen : compactLayout ? compactExecuteView === "tasks" : !candidatePanelCollapsed)}
-              icon={(mode === "planning" ? (compactLayout ? compactPlanningSidebarOpen : !settings.planningSidebarCollapsed) : (mobileExecution ? candidateDrawerOpen : compactLayout ? compactExecuteView === "tasks" : !candidatePanelCollapsed)) ? <UiPanelLeftCloseIcon size={20} /> : <UiPanelLeftOpenIcon size={20} />}
-              onClick={() => {
-                if (mode === "planning") {
-                  if (compactLayout) setCompactPlanningSidebarOpen(open => !open);
-                  else void saveSettings({ planningSidebarCollapsed: !settings.planningSidebarCollapsed });
-                } else if (mobileExecution) { setCandidateDrawerExpanded(false); setCandidateDrawerOpen(open => !open); }
-                else if (compactLayout) setCompactExecuteView(view => view === "tasks" ? "schedule" : "tasks");
-                else setCandidatePanelCollapsed(collapsed => !collapsed);
-              }}
-            />
-            {window.desktopApi?.dockWindow && <Suspense fallback={null}>
-              <DesktopDockControls
-                lang={lang}
-                side={desktopDockSide}
-                disabled={!desktopDockReady}
-                trigger={<UiDockSidebarIcon size={20} />}
-                onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }}
-                onError={showToast}
-              />
-            </Suspense>}
+            {window.desktopApi?.dockWindow
+              ? <Suspense fallback={<button className="df-brand-ai-button" type="button" disabled aria-label="NavoPath"><ProductIcon compact /></button>}>
+                <DesktopDockControls
+                  lang={lang}
+                  side={desktopDockSide}
+                  disabled={!desktopDockReady}
+                  trigger={<ProductIcon compact />}
+                  onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }}
+                  onError={showToast}
+                />
+              </Suspense>
+              : <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
+                <ProductIcon compact />
+              </button>}
             {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
           </div>
           <div className="df-month-year-selector">
@@ -9282,7 +9271,7 @@ if (cached?.data && cached?.settings) {
               >
                 <span className="df-compact-mode-label tasks-label" aria-hidden="true">{lang === "zh" ? "任务" : "Tasks"}</span>
                 <span className="df-compact-mode-label schedule-label" aria-hidden="true">{lang === "zh" ? "日程" : "Schedule"}</span>
-                <span className="df-compact-mode-logo" aria-hidden="true"><UiCalendarCheckIcon size={20} /></span>
+                <span className="df-compact-mode-logo" aria-hidden="true"><ProductIcon compact /></span>
               </button>
             </nav>}
             {(() => {
@@ -10439,7 +10428,7 @@ if (cached?.data && cached?.settings) {
           <div className="df-planning-loading-toolbar" aria-hidden="true"><span className="df-skeleton-title" /><span className="df-skeleton-tab" /></div>
           <section aria-hidden="true"><span className="df-skeleton-title" />{Array.from({ length: 5 }, (_, index) => <div className="df-skeleton-task" key={index}><i /><span /><small /></div>)}</section>
         </main>}>
-          <PlanningViewLazy focusTaskId={planningFocusTaskId} onFocusHandled={() => setPlanningFocusTaskId(null)} presentationNote={productDemo?.story} demo={Boolean(productDemo)} referenceDate={productDemo?.date} lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled === true} featureQuadrant={settings.featureQuadrantViewEnabled === true} featureList={settings.featureListViewEnabled === true} featureMetrics={settings.featureMetricsEnabled !== false} planningSidebarCollapsed={compactLayout ? !compactPlanningSidebarOpen : settings.planningSidebarCollapsed === true} onPlanningSidebarCollapsedChange={(collapsed) => { if (compactLayout) setCompactPlanningSidebarOpen(!collapsed); else void saveSettings({ planningSidebarCollapsed: collapsed }); }} planningSidebarWidth={settings.planningSidebarWidth} onPlanningSidebarWidthChange={(width) => void saveSettings({ planningSidebarWidth: width })} engagementEnabled={settings.featureEngagementEnabled === true} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
+          <PlanningViewLazy focusTaskId={planningFocusTaskId} onFocusHandled={() => setPlanningFocusTaskId(null)} presentationNote={productDemo?.story} demo={Boolean(productDemo)} referenceDate={productDemo?.date} lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled === true} featureQuadrant={settings.featureQuadrantViewEnabled === true} featureList={settings.featureListViewEnabled === true} featureMetrics={settings.featureMetricsEnabled !== false} planningSidebarCollapsed={settings.planningSidebarCollapsed === true} onPlanningSidebarCollapsedChange={(collapsed) => void saveSettings({ planningSidebarCollapsed: collapsed })} planningSidebarWidth={settings.planningSidebarWidth} onPlanningSidebarWidthChange={(width) => void saveSettings({ planningSidebarWidth: width })} engagementEnabled={settings.featureEngagementEnabled === true} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
         </Suspense>
       </Activity>
 
