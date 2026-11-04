@@ -337,8 +337,8 @@ test("a brief pass over the tab and a cancelled drag do not open the panel", () 
 test("preferences clamp geometry, survive a new service, and retain unrelated fields", () => {
   const { win, set, preferences, saved, event } = setup();
   set("left");
-  preferences({ activation: "click", handleHeight: 999, position: -20, panelHeight: 60 });
-  assert.deepEqual(preferences(), { activation: "click", handleHeight: 160, position: 0, panelHeight: 60 });
+  preferences({ activation: "click", handleHeight: 99999, position: -20, panelHeight: 60 });
+  assert.deepEqual(preferences(), { activation: "click", handleHeight: 8192, position: 0, panelHeight: 60 });
   assert.equal(win.bounds.height, 516);
   assert.equal(win.bounds.y, 40);
   preferences({ position: 100 });
@@ -360,4 +360,19 @@ test("handle IPC rejects app renderers and subframes, and closed owners destroy 
   assert.throws(() => handleAction("press", { sender: handles[0].webContents, senderFrame: {} }), /unavailable/);
   win.destroy();
   assert.equal(handles[0].destroyed, true);
+});
+
+test("最大长度的小条自动适配不同屏幕的整条可用边缘", () => {
+  for (const side of ["left", "right"]) {
+    const area = { x: -1600, y: 40, width: 1600, height: 860 };
+    const bounds = dockHandleBounds(area, side, normalizeDockPreferences({ handleHeight: 8192 }));
+    assert.equal(bounds.y, area.y);
+    assert.equal(bounds.height, area.height);
+  }
+  const { set, preferences, tick, win } = setup();
+  preferences({ handleHeight: 8192 });
+  set("right");
+  tick({ x: -1, y: 50 });
+  tick({ x: -1, y: 50 }, 250);
+  assert.equal(win.visible, true);
 });

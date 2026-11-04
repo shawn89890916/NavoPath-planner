@@ -3,9 +3,11 @@
 ## 2026-11-04 · 1.6.3 Beta 6
 
 ### 改进
+- 桌面 Dock 小条可加长至覆盖整条屏幕边缘，超出部分自动适配屏幕高度。
 - 应用更新与接受 Beta 更新移至通用分类，搜索与旧入口同步指向新位置。
 
 ### 修复
+- 修复 Windows 桌面 Dock 悬停展开后仍被其他窗口遮挡的问题，并恢复最小化的面板。
 - 竖屏设置首页的插件名称恢复完整可用宽度，避免名称挤在窄图标列中被截断。
 - 竖屏 Dock 的 N 恢复入口与日期、时间范围控件对齐。
 - 规划筛选固定在顶栏下方、设置图标下侧，不随侧栏收起隐藏；侧栏继续保留图标栏，内置规划图标在两种状态均清晰显示。
@@ -81,7 +83,6 @@
 - 今日候选直接显示分类和已完成筛选图标；移除重复 Focus、模板和 AI 设置入口，让插件及设置承担各自功能。
 
 ### 修复
-- 修复 Windows 桌面 Dock 悬停展开后仍被其他窗口遮挡的问题，并恢复最小化的面板。
 - 修复竖屏“插件工具”打开插件后，新界面被工具面板遮挡的问题。
 - 设置分区切换改为轻柔淡入与轻微缩放，选中底色继续沿导航项平滑移动。
 - 桌面端生成 MCP 令牌时遇到过期登录凭据会先刷新会话，并核对服务端确已保存令牌，避免复制未生效的令牌。
@@ -409,6 +410,7 @@
 ## 2026-11-04 · 1.6.3 Beta 6
 
 ### Improved
+- Desktop Dock tabs can span the full screen edge, automatically fitting lengths that exceed the screen height.
 - App updates and Accept Beta updates now live in General, including search results and existing links.
 
 ### Fixed
@@ -450,6 +452,7 @@
 - Restricted mode pauses every plugin view, and workflow settings direct users to manage Planning views through Plugins.
 
 ### Fixes
+- Fixed Windows Dock panels remaining behind other windows after hover activation, and restored minimized panels when opening.
 - Portrait Dock controls share a row with N. The side menu drops its dot and redundant tooltip, moves guidance below the choices, and sits closer to the trigger.
 
 ### 1.6.3 Beta 2
@@ -487,7 +490,6 @@
 - Today’s Candidates exposes grouping and completed-task filtering directly, while duplicate Focus, template and AI-settings entries are removed in favor of their plugin and settings homes.
 
 ### Fixes
-- Fixed Windows Dock panels remaining behind other windows after hover activation, and restored minimized panels when opening.
 - Fixed plugin tools obscuring plugin interfaces opened from the portrait workspace menu.
 - Settings sections now crossfade with a subtle scale while the selected highlight glides between navigation items.
 - Desktop MCP token creation now refreshes expired sign-in credentials and confirms the server saved the token before showing it, preventing inactive credentials from being copied.
