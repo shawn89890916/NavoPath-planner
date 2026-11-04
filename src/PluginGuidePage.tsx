@@ -43,8 +43,11 @@ export default function PluginGuidePage() {
       "args": [
         "/c", "npx", "-y", "mcp-remote",
         "${MCP_ENDPOINT}",
-        "--header", "Authorization: Bearer nvp_YOUR_TOKEN"
-      ]
+        "--header", "Authorization:\${NAVOPATH_AUTH_HEADER}"
+      ],
+      "env": {
+        "NAVOPATH_AUTH_HEADER": "Bearer nvp_YOUR_TOKEN"
+      }
     }
   }
 }`;
@@ -99,7 +102,7 @@ export default function PluginGuidePage() {
       <section id="claude" className="df-doc-section df-doc-client">
         <div className="df-doc-section-heading"><span>CLIENT 02</span><h2>Claude Desktop</h2></div>
         <p>{zh ? "Claude Desktop 可通过 mcp-remote 工具桥接带有 Bearer 认证的远程 MCP 端点。" : "Claude Desktop connects to Bearer-authenticated endpoints via the mcp-remote bridge."}</p>
-        <ol className="df-doc-checklist"><li>{zh ? "请先安装 Node.js 环境，并启动一次 Claude Desktop 以便自动生成初始配置文件目录。" : "Ensure Node.js is installed, and launch Claude Desktop once to create default configuration files."} {zh ? <>Windows 配置位置为 <code>%APPDATA%\Claude\claude_desktop_config.json</code>，macOS 为 <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>。</> : <>Open <code>%APPDATA%\Claude\claude_desktop_config.json</code> on Windows or <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> on macOS.</>}</li><li>{zh ? "将 nvp_YOUR_TOKEN 替换为当前设备生成的令牌，并保存配置文件。" : "Replace nvp_YOUR_TOKEN with the device token and save changes."}</li></ol>
+        <ol className="df-doc-checklist"><li>{zh ? "请先安装 Node.js 环境，并启动一次 Claude Desktop 以便自动生成初始配置文件目录。" : "Ensure Node.js is installed, and launch Claude Desktop once to create default configuration files."} {zh ? <>Windows 配置位置为 <code>%APPDATA%\Claude\claude_desktop_config.json</code>，macOS 为 <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>。</> : <>Open <code>%APPDATA%\Claude\claude_desktop_config.json</code> on Windows or <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> on macOS.</>}</li><li>{zh ? "将 env 中的 nvp_YOUR_TOKEN 替换为当前设备生成的令牌，并保存配置文件。Windows 示例把带空格的 Bearer 值放进环境变量，避免 npx 拆分参数。" : "Replace nvp_YOUR_TOKEN in env with the device token and save changes. The Windows example keeps the spaced Bearer value in an environment variable so npx does not split the argument."}</li></ol>
         <div className="df-doc-platforms">
           <article><span>WINDOWS</span><DocCodeBlock value={claudeWindowsConfig} label="CLAUDE_DESKTOP_CONFIG.JSON" language={language} /></article>
           <article><span>MACOS / LINUX</span><DocCodeBlock value={claudeUnixConfig} label="CLAUDE_DESKTOP_CONFIG.JSON" language={language} /></article>
@@ -117,7 +120,7 @@ export default function PluginGuidePage() {
       <section id="troubleshooting" className="df-doc-section">
         <div className="df-doc-section-heading"><span>{zh ? "常见问题与排障" : "QUICK DIAGNOSIS"}</span><h2>{zh ? "客户端未显示连接" : "Connection Not Showing"}</h2></div>
         <table className="df-doc-troubleshooting"><tbody>
-          <tr><th><code>401</code></th><td>{zh ? "令牌可能不完整、已被撤销或请求头格式错误。请重新生成设备专属令牌并检查配置中的 Bearer 前缀。" : "The token may be invalid, revoked, or formatted incorrectly. Generate a fresh token and ensure the Bearer prefix is intact."}</td></tr>
+          <tr><th><code>401</code></th><td>{zh ? "设备令牌格式错误时请检查是否为 nvp_ 加 64 位十六进制字符；若提示令牌无效或已撤销，请确认账户、令牌状态及完整的 Bearer 请求头。" : "For a token format error, check for nvp_ followed by 64 hexadecimal characters. If the token is invalid or revoked, verify the account, token status, and complete Bearer header."}</td></tr>
           <tr><th>{zh ? "未能读取到工作区数据" : "Workspace Data Missing"}</th><td>{zh ? "请确认在 NavoPath 中已登录同一云端账户，且工作区数据已成功同步加载。" : "Ensure you are signed in to the same NavoPath cloud account and that workspace sync is up to date."}</td></tr>
           <tr><th>{zh ? "客户端提示服务不存在" : "Server Not Found"}</th><td>{zh ? "请核对服务地址结尾是否包含 /mcp，保存配置文件后需彻底重启客户端进程。" : "Verify that the endpoint URL ends with /mcp, save configuration, and fully restart the client application."}</td></tr>
           <tr><th><code>PROFILE_REVISION_CONFLICT</code></th><td>{zh ? "可先让客户端读取规划数据，再尝试执行写操作。" : "Try reading planning data first before triggering modification requests."}</td></tr>

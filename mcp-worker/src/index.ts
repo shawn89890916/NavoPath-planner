@@ -487,15 +487,25 @@ export default {
     if (url.pathname === "/mcp/oauth-protected-resource") return oauthProtectedMcp(request, env, ctx);
     if (url.pathname !== "/mcp") return new Response("Not found", { status: 404 });
     const bearer = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] || "";
-    if (/^nvp_[a-f0-9]{64}$/.test(bearer)) {
+    if (bearer.startsWith("nvp_")) {
+      if (!/^nvp_[a-f0-9]{64}$/.test(bearer)) {
+        return new Response(JSON.stringify({ error: "Invalid NavoPath device token format. Expected nvp_ followed by 64 hexadecimal characters." }), {
+          status: 401,
+          headers: { "content-type": "application/json", "cache-control": "no-store" },
+        });
+      }
       const auth = await authenticate(request, env);
       if (auth === tokenLookupUnavailable) return tokenLookupUnavailableResponse();
       if (auth) {
         (ctx as ExecutionContext & { props?: AgentProps }).props = { userId: auth.userId };
         return mcpHandler.fetch(request, env, ctx);
       }
+      return new Response(JSON.stringify({ error: "Invalid or revoked NavoPath device token." }), {
+        status: 401,
+        headers: { "content-type": "application/json", "cache-control": "no-store" },
+      });
     }
-    // Missing, invalid, or non-legacy credentials receive Supabase's user JWT
+    // Missing or non-NavoPath credentials receive Supabase's user JWT
     // verification and the standard Protected Resource challenge.
     return oauthProtectedMcp(request, env, ctx);
   },
