@@ -166,15 +166,16 @@ describe("portrait interaction contracts", () => {
   });
 
 
-  it("keeps the Planning filter inside the mobile top toolbar safe area", () => {
+  it("keeps Planning filters at the top right independently of the collapsible sidebar", () => {
     const sidebarStart = planning.indexOf('<aside className="df-planning-sidebar"');
     const sidebarEnd = planning.indexOf("</aside>", sidebarStart);
     const filterPosition = planning.indexOf('<div className="df-planning-filter-corner">');
 
     expect(sidebarStart).toBeGreaterThanOrEqual(0);
-    expect(filterPosition).toBeGreaterThan(sidebarStart);
-    expect(filterPosition).toBeLessThan(sidebarEnd);
+    expect(filterPosition).toBeGreaterThan(sidebarEnd);
+    expect(filterPosition).toBeLessThan(planning.indexOf('<div className="df-tree-wrap">'));
     expect(appCss).toContain("position: absolute;\n    top: 6px;\n    right: 6px;");
+    expect(appCss).not.toContain(".is-sidebar-collapsed .df-planning-filter-corner { display: none; }");
   });
 
   it("keeps candidate quick-add in the floating control and bounds task editing to the dynamic viewport", () => {

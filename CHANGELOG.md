@@ -8,7 +8,7 @@
 ### 修复
 - 竖屏设置首页的插件名称恢复完整可用宽度，避免名称挤在窄图标列中被截断。
 - 竖屏 Dock 的 N 恢复入口与日期、时间范围控件对齐。
-- 规划筛选固定在顶栏下方右侧，侧栏收起后仍可使用；内置规划图标在展开和收起状态均清晰显示。
+- 规划筛选固定在顶栏下方、设置图标下侧，不随侧栏收起隐藏；侧栏继续保留图标栏，内置规划图标在两种状态均清晰显示。
 
 ### 1.6.3 Beta 5
 
@@ -413,7 +413,7 @@
 ### Fixed
 - Plugin names on the portrait settings home regain their full available width instead of being truncated inside a narrow icon column.
 - The portrait Dock N recovery control now aligns with the date and time range controls.
-- Planning filters stay at the right below the header and remain available when the sidebar collapses. Built-in Planning icons render clearly in both sidebar states.
+- Planning filters stay below the header and settings icon, and remain visible when the sidebar collapses. The collapsed sidebar retains its icon rail, with clear built-in icons in both states.
 
 ### 1.6.3 Beta 5
 
