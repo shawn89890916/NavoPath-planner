@@ -6,6 +6,21 @@ function applySide() {
   if (document.documentElement) document.documentElement.dataset.side = side;
 }
 
+let geometry = { width: 24, height: 64, visibleWidth: 3 };
+function applyGeometry() {
+  const style = document.documentElement?.style;
+  if (!style) return;
+  style.setProperty("--dock-hit-width", `${geometry.width}px`);
+  style.setProperty("--dock-hit-height", `${geometry.height}px`);
+  style.setProperty("--dock-visible-width", `${geometry.visibleWidth}px`);
+}
+ipcRenderer.on("dock-handle:set-geometry", (_event, next) => {
+  if (!next || ![next.width, next.height, next.visibleWidth].every(Number.isFinite)) return;
+  geometry = next;
+  applyGeometry();
+});
+window.addEventListener("DOMContentLoaded", applyGeometry, { once: true });
+
 ipcRenderer.on("dock-handle:set-side", (_event, nextSide) => {
   side = nextSide === "right" ? "right" : "left";
   applySide();

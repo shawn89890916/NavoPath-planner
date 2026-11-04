@@ -17,11 +17,9 @@
   #root .df-app[data-phone-execution] .df-mobile-candidate-backdrop.is-open {
     opacity: 1; visibility: visible; transition-delay: 0s;
   }
-  /* Extend only the hour bands into the right gutter; keep the measured
-     canvas and its task coordinates unchanged. */
   #root .df-app[data-phone-execution] .df-timeline-panel:has(.df-timeline-daily) {
-    width: calc(100% + 8px);
-    max-width: none;
+    width: 100%;
+    max-width: 100%;
   }
   #root .df-app[data-phone-execution] .df-timeline-panel:has(.df-timeline-daily) .df-timeline-allday {
     width: min(500px, calc(100% - 32px));

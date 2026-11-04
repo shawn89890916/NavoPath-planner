@@ -45,6 +45,7 @@ export class ExtensionService {
   }
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   getSnapshot = () => this.snapshot;
+  getPluginIcon = (key: string) => this.loaded.get(key)?.plugin.iconUrl;
   isReady = () => this.ready;
   private setSnapshot(patch: Partial<ExtensionSnapshot>) { this.snapshot = { ...this.snapshot, ...patch }; for (const listener of this.listeners) listener(); }
   private scope() { return `account:${this.account}:`; }

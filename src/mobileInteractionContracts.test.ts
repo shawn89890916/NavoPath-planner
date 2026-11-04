@@ -64,7 +64,7 @@ describe("portrait interaction contracts", () => {
   });
 
   it("keeps portrait Planning filter visible, checkbox visuals compact, and portals the dock to the viewport edge", () => {
-    expect(appCss).toContain("position: absolute;\n    top: 6px;\n    right: 6px;");
+    expect(appCss).toContain("position: fixed;\n    top: 6px;\n    right: 6px;");
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check\s*\{[^}]*width:\s*18px;[^}]*height:\s*18px;/);
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check::before\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/);
     expect(main).toContain('createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport');
@@ -173,8 +173,8 @@ describe("portrait interaction contracts", () => {
 
     expect(sidebarStart).toBeGreaterThanOrEqual(0);
     expect(filterPosition).toBeGreaterThan(sidebarEnd);
-    expect(filterPosition).toBeLessThan(planning.indexOf('<div className="df-tree-wrap">'));
-    expect(appCss).toContain("position: absolute;\n    top: 6px;\n    right: 6px;");
+    expect(filterPosition).toBeLessThan(planning.indexOf('<div className="df-tree-wrap"'));
+    expect(appCss).toContain("position: fixed;\n    top: 6px;\n    right: 6px;");
     expect(appCss).not.toContain(".is-sidebar-collapsed .df-planning-filter-corner { display: none; }");
   });
 
@@ -251,7 +251,7 @@ describe("portrait interaction contracts", () => {
 describe("portrait timeline and Planning control contracts", () => {
   it("keeps task action buttons borderless and the Planning filter at the portrait top right", () => {
     expect(appCss).toMatch(/\.df-plan-task-node \.df-task-node-actions \.df-tree-icon-button\s*\{[^}]*border:\s*0;/);
-    expect(appCss).toContain("position: absolute;\n    top: 6px;\n    right: 6px;");
+    expect(appCss).toContain("position: fixed;\n    top: 6px;\n    right: 6px;");
     expect(appCss).toContain("width: 44px;");
   });
 });

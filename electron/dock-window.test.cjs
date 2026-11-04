@@ -279,7 +279,7 @@ test("click mode ignores hovering, clicks focus the panel, and dragging saves po
   assert.equal(handle.visible, true);
   assert.deepEqual(handle.bounds, { x: -1600, y: 557, width: 24, height: 64 });
   assert.deepEqual(handle.shape, [{ x: 0, y: 0, width: 24, height: 64 }]);
-  assert.deepEqual(handle.webContents.sent.at(-1), ["dock-handle:set-side", "left"]);
+  assert.ok(handle.webContents.sent.some(([channel, side]) => channel === "dock-handle:set-side" && side === "left"));
   tick({ x: -1598, y: 580 });
   tick({ x: -1598, y: 580 }, 1000);
   assert.equal(win.visible, false);
@@ -321,7 +321,7 @@ test("preferences clamp geometry, survive a new service, and retain unrelated fi
   const { win, set, preferences, saved, event } = setup();
   set("left");
   preferences({ activation: "click", handleHeight: 999, position: -20, panelHeight: 60 });
-  assert.deepEqual(preferences(), { activation: "click", handleHeight: 160, position: 0, panelHeight: 60 });
+  assert.deepEqual(preferences(), { activation: "click", handleWidth: 3, handleHeight: 160, position: 0, panelHeight: 60 });
   assert.equal(win.bounds.height, 516);
   assert.equal(win.bounds.y, 40);
   preferences({ position: 100 });
@@ -343,4 +343,30 @@ test("handle IPC rejects app renderers and subframes, and closed owners destroy 
   assert.throws(() => handleAction("press", { sender: handles[0].webContents, senderFrame: {} }), /unavailable/);
   win.destroy();
   assert.equal(handles[0].destroyed, true);
+});
+
+
+test("advanced tab width clamps, persists, and updates the handle painting geometry", () => {
+  const { set, preferences, saved, handles } = setup();
+  set("right");
+  preferences({ handleWidth: 12 });
+  assert.equal(preferences().handleWidth, 12);
+  assert.equal(saved().handleWidth, 12);
+  assert.equal(handles[0].bounds.width, 24);
+  assert.ok(handles[0].webContents.sent.some(([channel, value]) => channel === "dock-handle:set-geometry" && value.visibleWidth === 12 && value.width === 24));
+  assert.equal(normalizeDockPreferences({ handleWidth: 0 }).handleWidth, 2);
+  assert.equal(normalizeDockPreferences({ handleWidth: 999 }).handleWidth, 24);
+  assert.equal(normalizeDockPreferences({ handleWidth: NaN }).handleWidth, 3);
+  assert.equal(setup(undefined, saved()).preferences().handleWidth, 12);
+});
+
+
+test("opening Dock reapplies its edge after Windows restores stale window bounds", () => {
+  const { win, set, handleAction } = setup();
+  set("right");
+  const expected = win.getBounds();
+  win.setBounds({ ...expected, x: 0, width: 1200 });
+  handleAction("open");
+  assert.deepEqual(win.getBounds(), expected);
+  assert.equal(win.visible, true);
 });

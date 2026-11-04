@@ -1,6 +1,6 @@
 const { DEFAULT_COMPACT_WIDTH } = require("./compact-window.cjs");
 
-const DEFAULT_DOCK_PREFERENCES = { activation: "hover", handleHeight: 64, position: 65, panelHeight: 100 };
+const DEFAULT_DOCK_PREFERENCES = { activation: "hover", handleWidth: 3, handleHeight: 64, position: 65, panelHeight: 100 };
 const DOCK_HANDLE_HIT_WIDTH = 24;
 
 function normalizeDockPreferences(value = {}) {
@@ -10,6 +10,7 @@ function normalizeDockPreferences(value = {}) {
   return {
     activation: value.activation === "click" ? "click" : "hover",
     handleHeight: number("handleHeight", 32, 160),
+    handleWidth: number("handleWidth", 2, 24),
     position: number("position", 0, 100),
     panelHeight: number("panelHeight", 50, 100),
   };
@@ -57,6 +58,7 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
   function reveal(win, state, focus = false) {
     state.hoverSince = state.leaveSince = null;
     state.handle?.hide();
+    applyBounds(win, state);
     win.setAlwaysOnTop(true);
     if (focus) { win.show(); win.focus(); } else win.showInactive();
   }
@@ -104,6 +106,11 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
     }
   }
 
+  function sendHandleGeometry(state) {
+    if (!state.handle || state.handle.isDestroyed()) return;
+    state.handle.webContents.send("dock-handle:set-geometry", { width: state.handleBounds.width, height: state.handleBounds.height, visibleWidth: preferences.handleWidth });
+  }
+
   function applyBounds(win, state) {
     const display = screen.getAllDisplays().find((item) => item.id === state.displayId)
       || screen.getDisplayMatching(win.getBounds());
@@ -115,6 +122,7 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
     state.handle?.setBounds(state.handleBounds);
     // Windows enforces a native minimum width; clip painting and hit-testing to the tab.
     state.handle?.setShape?.([{ x: 0, y: 0, width: state.handleBounds.width, height: state.handleBounds.height }]);
+    sendHandleGeometry(state);
   }
 
   function updateDrag(state, point) {
@@ -177,6 +185,7 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
       state.onClosed = () => { state.handle?.destroy(); docked.delete(win); stopHoverTimer(); };
       win.once("closed", state.onClosed);
       state.handle = createHandle?.(side);
+      state.handle?.webContents?.once?.("did-finish-load", () => { if (state.handleBounds) sendHandleGeometry(state); });
       if (state.fullScreen) win.setFullScreen(false);
       if (state.maximized) win.unmaximize();
       win.setMinimumSize(0, 0);

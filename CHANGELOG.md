@@ -1,6 +1,16 @@
 # NavoPath 更新日志
 
-## 2026-11-04 · 1.6.3 Beta 6
+## 2026-11-04 · 1.6.3 Beta 7
+
+### 改进
+- 竖屏规划页移除顶栏与 N 标识，仅保留左上浮动侧栏按钮和右上筛选；视图选项移入左侧抽屉，展开时内容区显示阴影遮罩，支持点击遮罩、选择视图或按 Escape 关闭。
+
+### 修复
+- 快速收集、每日概览、课表与插件命令使用统一无框图标；已安装插件可直接使用包内图标，无需先打开插件市场。
+- 竖屏底栏的图标、文字与选中背景重新居中对齐，移除时间轴与底栏之间多余的空白条。
+- 时间轴页始终保留左上角 N 作为 Dock / unDock 入口；Dock 高级设置可调整小条伸出宽度，并修复 Windows 原生窗口最小宽度导致右侧小条被裁掉的问题。
+
+### 1.6.3 Beta 6
 
 ### 改进
 - 应用更新与接受 Beta 更新移至通用分类，搜索与旧入口同步指向新位置。
@@ -405,7 +415,17 @@
 
 # NavoPath Changelog
 
-## 2026-11-04 · 1.6.3 Beta 6
+## 2026-11-04 · 1.6.3 Beta 7
+
+### Improved
+- Portrait Planning removes its header and N mark, keeping only a floating sidebar button at the top left and filters at the top right. Views live in a left drawer with a shadow scrim over the content, and close by selecting a view, clicking the scrim, or pressing Escape.
+
+### Fixed
+- Quick Capture, Daily Overview, Class Timetable, and plugin commands use consistent unboxed icons. Installed plugins can use their bundled icons without opening the marketplace first.
+- Portrait bottom navigation icons, labels, and selection highlights align centrally again, and the extra blank strip between the timeline and navigation is removed.
+- The timeline always retains its top-left N Dock / unDock entry. Dock advanced settings control the visible tab width, and right-edge tabs remain visible when Windows expands the native window to its minimum width.
+
+### 1.6.3 Beta 6
 
 ### Improved
 - App updates and Accept Beta updates now live in General, including search results and existing links.

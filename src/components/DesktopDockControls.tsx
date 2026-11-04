@@ -38,6 +38,10 @@ export function DesktopDockSettings({ lang }: { lang: Language }) {
       <SettingRow title={lang === "zh" ? "小条位置" : "Tab position"} description={lang === "zh" ? "0% 为顶部，100% 为底部。" : "0% is the top; 100% is the bottom."} control={<SettingNumberInput value={preferences.position} min={0} max={100} step={5} suffix="%" disabled={busy} ariaLabel={lang === "zh" ? "小条位置" : "Tab position"} onChange={(position) => void save({ position })} />} />
       <SettingRow title={lang === "zh" ? "展开窗口高度" : "Expanded panel height"} control={<SettingNumberInput value={preferences.panelHeight} min={50} max={100} step={5} suffix="%" disabled={busy} ariaLabel={lang === "zh" ? "展开窗口高度" : "Expanded panel height"} onChange={(panelHeight) => void save({ panelHeight })} />} />
     </>}
+    {preferences && <details>
+      <summary>{lang === "zh" ? "高级设置" : "Advanced settings"}</summary>
+      <SettingRow title={lang === "zh" ? "小条伸出宽度" : "Visible tab width"} description={lang === "zh" ? "调整屏幕边缘小条露出的宽度；小条不易看见时可适当增大，悬停和点击区域保持至少 24px。" : "Adjust how far the edge tab is visible. Increase this if it is hard to find; the hover and click area remains at least 24px."} control={<SettingNumberInput value={preferences.handleWidth} min={2} max={24} step={1} suffix="px" disabled={busy} ariaLabel={lang === "zh" ? "小条伸出宽度" : "Visible tab width"} onChange={(handleWidth) => void save({ handleWidth })} />} />
+    </details>}
     {error && <SettingDescription>{error}</SettingDescription>}
   </>;
 }
