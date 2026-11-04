@@ -376,7 +376,7 @@ function AccountMoreSection({ lang, onShowAbout }: { lang: Language; onShowAbout
 
 function settingsCategoryDescription(category: SettingsCategory, lang: Language, isDark: boolean): string {
   const descriptions: Record<SettingsCategory, [string, string]> = {
-    general: ["语言、时间边界与快捷键。", "Language, time boundaries, and shortcuts."],
+    general: ["语言、时间边界、应用更新与快捷键。", "Language, time boundaries, app updates, and shortcuts."],
     appearance: isDark
       ? ["深色交互高亮使用柔和白色；浅色模式可继续使用已保存的强调色。", "Dark mode uses a softened white interaction accent; saved accents remain available in light mode."]
       : ["界面模式、字体与强调色。", "Interface mode, typography, and accent color."],
@@ -793,7 +793,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                     ))}
                   </div>
                 </section>
-                {pluginPages.length > 0 && <section className="df-settings-home-group"><header className="df-settings-home-heading"><h3>{lang === "zh" ? "插件设置" : "Plugin settings"}</h3></header><div className="df-settings-home-card df-settings-home-detail-card">{pluginPages.map(page => <button type="button" className="df-settings-home-entry" key={page.id} onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}><span className="df-settings-home-entry-copy"><strong>{page.name}</strong></span><span className="df-settings-home-entry-chevron" aria-hidden="true">›</span></button>)}</div></section>}
+                {pluginPages.length > 0 && <section className="df-settings-home-group"><header className="df-settings-home-heading"><h3>{lang === "zh" ? "插件设置" : "Plugin settings"}</h3></header><div className="df-settings-home-card df-settings-home-detail-card">{pluginPages.map(page => <button type="button" className="df-settings-home-entry" key={page.id} onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}><span className="df-settings-home-entry-icon" aria-hidden="true"><SettingsCategoryIcon category="plugins" /></span><span className="df-settings-home-entry-copy"><strong>{page.name}</strong></span><span className="df-settings-home-entry-chevron" aria-hidden="true">›</span></button>)}</div></section>}
               </div>
             ) : <>
             <div className="df-settings-rail">
@@ -1156,6 +1156,10 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 control={<SettingActionButton disabled={!Boolean(window.desktopApi?.widget)} onClick={() => { void window.desktopApi?.widget?.setBounds({ x: 80, y: 80, width: 400, height: 80 }); }}>{lang === "zh" ? "重置" : "Reset"}</SettingActionButton>}
               />
             </SettingSection>}
+            {settingsTarget.category === "general" && isDesktopRuntime && <SettingSection title={lang === "zh" ? "应用更新" : "App updates"}>
+              <div data-settings-anchor="updates" tabIndex={-1}><Suspense fallback={null}><DesktopUpdateControl lang={lang} /></Suspense></div>
+              <div data-settings-anchor="beta-updates" tabIndex={-1}><Suspense fallback={null}><BetaUpdatePreference lang={lang} onSave={onSave} /></Suspense></div>
+            </SettingSection>}
             {settingsTarget.category === "general" && <SettingSection anchor="general-help" title={lang === "zh" ? "帮助" : "Help"}>
               <SettingRow
                 anchor="restart-onboarding"
@@ -1293,8 +1297,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                   onChange={(patch) => onSave(patch)}
                   onSyncNow={onSyncNow}
                 /></div>
-              <div data-settings-anchor="updates" tabIndex={-1}><Suspense fallback={null}><DesktopUpdateControl lang={lang} /></Suspense></div>
-              <div data-settings-anchor="beta-updates" tabIndex={-1}><Suspense fallback={null}><BetaUpdatePreference lang={lang} onSave={onSave} /></Suspense></div>
               <div data-settings-anchor="auto-launch" tabIndex={-1}><Suspense fallback={null}><AutoLaunchToggle lang={lang} /></Suspense></div>
               <AccountMoreSection lang={lang} onShowAbout={onShowAbout} />
               {onSignOut && <SettingRow

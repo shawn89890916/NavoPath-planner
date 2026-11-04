@@ -1,6 +1,16 @@
 # NavoPath 更新日志
 
-## 2026-11-04 · 1.6.3 Beta 5
+## 2026-11-04 · 1.6.3 Beta 6
+
+### 改进
+- 工作区左上角统一为侧栏展开与收起按钮，移除工作区 N 标识；Dock 使用独立图标选择贴边方向或恢复窗口，竖屏顶栏控件保持居中对齐。
+- 竖屏规划侧栏改为图标与文字组成的抽屉，点击视图、遮罩或按 Escape 即可收起，筛选入口保留在右上角。
+- 应用更新与接受 Beta 更新移至通用分类，搜索与旧入口同步指向新位置。
+
+### 修复
+- 竖屏设置首页的插件名称恢复完整可用宽度，避免名称挤在窄图标列中被截断。
+
+### 1.6.3 Beta 5
 
 ### 新增
 - 插件可将入口固定放在总顶栏、今日候选顶栏或规划侧栏，也可注册规划主区域视图；树和指标预装，看板、矩阵和列表可从官方市场安装。
@@ -395,7 +405,17 @@
 
 # NavoPath Changelog
 
-## 2026-11-04 · 1.6.3 Beta 5
+## 2026-11-04 · 1.6.3 Beta 6
+
+### Improved
+- One top-left sidebar button expands or collapses workspace navigation, replacing the workspace N mark. A separate Dock icon selects an edge or restores the window, and portrait toolbar controls share a centered alignment.
+- Portrait Planning uses an icon-and-label sidebar drawer that closes when choosing a view, clicking the backdrop, or pressing Escape. Filters remain at the top right.
+- App updates and Accept Beta updates now live in General, including search results and existing links.
+
+### Fixed
+- Plugin names on the portrait settings home regain their full available width instead of being truncated inside a narrow icon column.
+
+### 1.6.3 Beta 5
 
 ### Added
 - Plugins can place entries in the app header, Today's Candidates header, or Planning sidebar, and register Planning workspace views. Tree and Metrics are preinstalled; Kanban, Matrix, and List are available in the official market.

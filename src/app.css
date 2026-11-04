@@ -19981,26 +19981,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border-bottom: 0;
   background: var(--timeline-paper, rgb(248, 247, 243));
 }
-#root .df-app.mode-planning .df-planning .df-planning-sidebar-toggle {
-  display: grid;
-  place-items: center;
-  align-self: flex-end;
-  flex: 0 0 34px;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  color: var(--text-muted);
-  background: transparent;
-  cursor: pointer;
-}
-#root .df-app.mode-planning .df-planning .df-planning-sidebar-toggle:hover {
-  border-color: var(--paper-rule);
-  color: var(--text-main);
-  background: var(--surface-raised);
-}
-#root .df-app.mode-planning .df-planning .df-planning-sidebar-toggle:focus-visible { border-color: var(--paper-rule); color: var(--text-main); background: var(--surface-raised); outline: 2px solid var(--accent-active); outline-offset: 2px; }
 #root .df-app.mode-planning .df-planning .df-planning-sidebar-resizer {
   position: absolute;
   z-index: 3;
@@ -20026,6 +20006,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app.mode-planning .df-planning .df-planning-plugin-items { display: grid; gap: 4px; }
 #root .df-app.mode-planning .df-planning .df-planning-plugin-item { min-width: 0; }
 #root .df-app.mode-planning .df-planning .df-planning-view-switch {
+  position: relative;
+  inset: auto;
+  margin: 0;
   display: flex;
   align-items: stretch;
   gap: 4px;
@@ -20048,6 +20031,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   font: 650 11px/1 var(--paper-sans);
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr);
+  justify-items: start;
+  align-items: center;
   justify-content: start;
   text-align: left;
   border-left: 2px solid transparent;
@@ -20057,9 +20042,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: color-mix(in srgb, var(--accent-active) 6%, transparent);
   border-left-color: var(--accent-active);
 }
-#root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-mindmap.no-root { grid-template-columns: 58px minmax(0, 1fr); }
-#root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-sidebar { width: 58px; min-width: 58px; padding-inline: 6px; align-items: center; }
-#root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-sidebar-toggle { align-self: center; }
+#root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-mindmap.no-root { grid-template-columns: 0 minmax(0, 1fr); }
+#root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-sidebar { display: none; }
 #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-view-switch { align-items: center; }
 #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-view-btn { display: grid; grid-template-columns: 1fr; justify-items: center; width: 42px; padding: 0; border-left-color: transparent; }
 #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-view-btn span { display: none; }
@@ -21777,36 +21761,26 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-task-drag-layer .df-task-actions {
     display: none;
   }
-  #root .df-app.mode-planning .df-planning .df-mindmap.no-root {
+  #root .df-app.mode-planning .df-planning .df-mindmap.no-root,
+  #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-mindmap.no-root {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 52px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
   }
   #root .df-app.mode-planning .df-planning .df-planning-sidebar {
-    position: absolute;
-    grid-column: 1 / -1;
-    grid-row: 1 / 2;
-    width: 100vw;
+    position: fixed;
+    inset: 56px auto 56px 0;
+    width: min(240px, 80vw);
     min-width: 0;
-    min-height: 52px;
-    padding: 4px 56px 4px 10px;
-    flex-direction: row;
-    align-items: center;
-    border-right: 0;
-    border-bottom: 1px solid var(--paper-rule);
-    inset: -6px auto auto -8px;
-    height: 52px;
-    display: flex;
-    box-sizing: border-box;
+    height: auto;
+    padding: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    border-right: 1px solid var(--paper-rule);
+    border-bottom: 0;
     background: var(--surface-main);
-    box-shadow: none;
-    z-index: 20;
+    z-index: 110;
   }
-  #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-mindmap.no-root { grid-template-rows: 52px minmax(0, 1fr); }
-  #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-sidebar { width: 48px; min-width: 48px; justify-content: flex-start; padding: 4px 6px; }
-  #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-sidebar-toggle { align-self: center; }
-  #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-view-switch,
-  #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-plugin-items { display: none; }
-  #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-filter-corner { display: none; }
+  #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-sidebar { display: none; }
   #root .df-app.mode-planning .df-planning-sidebar-resizer { display: none; }
   #root .df-app.mode-planning .df-planning .df-planning-filter-corner .df-filter-panel {
     display: grid;
@@ -21851,57 +21825,30 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     min-height: 44px;
   }
   #root .df-app.mode-planning .df-planning .df-planning-view-switch {
-    display: inline-flex;
-    flex-direction: row;
-    align-items: center;
-    width: auto;
-    max-width: 100%;
-    height: 36px;
-    justify-content: flex-start;
-    gap: 2px;
-    padding: 3px;
-    border: 1px solid var(--paper-rule-strong);
-    border-radius: 7px;
-    background: color-mix(in srgb, var(--surface-main) 90%, var(--surface-tint, var(--text-main)) 10%);
-    corner-shape: var(--corner-shape, squircle);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: transparent;
   }
   #root .df-app.mode-planning .df-planning .df-view-btn {
-    display: flex;
-    min-width: 0;
-    flex-direction: row;
-    justify-content: center;
-    width: auto;
-    height: 28px;
-    min-height: 28px;
-    padding: 0 7px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    background: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
-    writing-mode: horizontal-tb;
-    letter-spacing: 0;
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    justify-items: start;
     align-items: center;
-    gap: 5px;
-    overflow: hidden;
-    corner-shape: var(--corner-shape, squircle);
-  }
-  #root .df-app .df-planning .df-view-btn svg {
-    width: 15px;
-    height: 15px;
-    flex: 0 0 auto;
-  }
-  #root .df-app .df-planning .df-view-btn span {
-    display: inline;
-  }
-  #root .df-app .df-planning .df-view-btn.active {
-    color: var(--text-main);
-    border-color: var(--paper-rule-strong);
-    background: var(--surface-main);
+    gap: 12px;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    font: 600 14px/1.4 var(--paper-sans);
+    text-align: left;
   }
   #root .df-app.mode-planning .df-planning .df-tree-wrap {
     grid-column: 1 / -1;
-    grid-row: 2 / 3;
+    grid-row: 1 / 2;
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
@@ -25032,33 +24979,14 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
 }
 /* Portrait planning modes keep a clear icon for each view and a full touch target. */
-#root .df-app.mode-planning .df-planning .df-view-btn svg {
+#root .df-app.mode-planning .df-planning .df-view-btn :is(svg, .df-planning-view-icon) {
+  display: block;
+  object-fit: contain;
   width: 20px;
   height: 20px;
 }
-@media (orientation: portrait) {
-  #root .df-app.mode-planning .df-planning .df-mindmap.no-root {
-    grid-template-rows: 56px minmax(0, 1fr);
-  }
-  #root .df-app.mode-planning .df-planning .df-planning-sidebar {
-    height: 56px;
-    min-height: 56px;
-  }
-  #root .df-app.mode-planning .df-planning .df-planning-view-switch {
-    height: 46px;
-    padding: 0;
-  }
-  #root .df-app.mode-planning .df-planning .df-view-btn {
-    flex: 0 0 44px;
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
-    padding: 0;
-  }
-  #root .df-app.mode-planning .df-planning .df-view-btn span {
-    display: none;
-  }
-}
+#root .df-app.mode-planning .df-planning .df-view-btn > span { font: inherit; }
+#root .df-app.theme-dark .df-planning-view-icon { filter: invert(1); }
 @media (orientation: portrait) {
   #root .df-app.mode-execute .df-timeline-daily .df-timeline-allday {
     position: relative;
@@ -25457,55 +25385,40 @@ body[data-navopath-base-theme="light"],
   --accent-on: #FFFFFF;
 }
 
-/* A docked portrait desktop window keeps its N recovery control visible. */
+/* Workspace navigation has one top-left owner on desktop and portrait. */
+#root .df-app .df-workspace-sidebar-toggle { flex: 0 0 auto; }
+#root .df-app .df-planning-title { display: none; }
+#root .df-app .df-planning-sidebar-backdrop { display: none; }
 @media (orientation: portrait) {
-  #root .df-app.is-desktop-docked .df-header {
+  #root .df-app:is(.mode-execute, .mode-planning) .df-header {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0 auto auto 4px;
     z-index: 120;
     display: block;
-    width: 52px;
-    height: 52px;
-    min-height: 52px;
-    max-height: 52px;
+    width: 44px;
+    height: 56px;
+    min-height: 56px;
+    max-height: 56px;
     border: 0;
     background: transparent;
     box-shadow: none;
     pointer-events: none;
   }
-  #root .df-app.is-desktop-docked .df-header-inner {
-    display: block;
-    width: 52px;
-    height: 52px;
-    padding: 0;
-  }
-  #root .df-app.is-desktop-docked .df-header-inner > :not(.df-brand) {
-    display: none;
-  }
-  #root .df-app.is-desktop-docked .df-brand {
-    position: fixed;
-    top: 2px;
-    left: 4px;
-    z-index: 121;
-    margin: 0;
-    pointer-events: auto;
-  }
-  #root .df-app.is-desktop-docked .df-brand > :not(.df-brand-dock-control) {
-    display: none;
-  }
-  #root .df-app.is-desktop-docked .df-header-fade {
-    display: none;
-  }
-  #root .df-app.is-desktop-docked.mode-execute .df-compact-execute-controls {
-    top: 4px;
-    left: 58px;
-    right: 8px;
-  }
-  #root .df-app.is-desktop-docked.mode-execute .df-compact-date-display.is-readonly {
-    top: 0;
-  }
-  #root .df-app.is-desktop-docked.mode-planning > .df-planning {
-    padding-top: 52px;
-  }
+  #root .df-app:has(.df-brand-dock-control) .df-header { width: 92px; }
+  #root .df-app .df-header-inner { display: flex; align-items: center; width: 100%; height: 100%; padding: 0; }
+  #root .df-app .df-header-inner > :not(.df-brand) { display: none; }
+  #root .df-app .df-header .df-brand { display: flex; align-items: center; gap: 4px; margin: 0; pointer-events: auto; }
+  #root .df-app .df-header .df-brand > :not(.df-workspace-sidebar-toggle):not(.df-brand-dock-control) { display: none; }
+  #root .df-app .df-header .df-workspace-sidebar-toggle,
+  #root .df-app .df-header .df-brand-dock-trigger { width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0; }
+  #root .df-app .df-header-fade { display: none; }
+  #root .df-app.mode-execute .df-compact-execute-controls { top: 6px; left: 56px; right: 8px; grid-template-columns: minmax(0, 1fr) auto; }
+  #root .df-app.mode-execute:has(.df-brand-dock-control) .df-compact-execute-controls { left: 116px; }
+  #root .df-app.mode-execute .df-compact-execute-tabs { display: none; }
+  #root .df-app.mode-execute .df-compact-date-display { justify-self: start; }
+  #root .df-app.mode-planning > .df-planning { position: relative; padding-top: 56px; }
+  #root .df-app.mode-planning .df-planning .df-planning-body { height: 100%; border: 0; border-radius: 0; }
+  #root .df-app.mode-planning .df-planning-title { position: absolute; top: 6px; left: 60px; right: 60px; display: flex; align-items: center; height: 44px; color: var(--text-main); font: 600 14px/1.4 var(--paper-sans); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  #root .df-app.mode-planning:has(.df-brand-dock-control) .df-planning-title { left: 124px; }
+  #root .df-app.mode-planning .df-planning-sidebar-backdrop { position: absolute; inset: 56px 0 0; z-index: 100; display: block; width: 100%; height: auto; border: 0; border-radius: 0; background: color-mix(in srgb, var(--text-main) 18%, transparent); }
 }

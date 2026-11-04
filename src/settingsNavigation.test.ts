@@ -14,6 +14,12 @@ describe("settings navigation", () => {
     expect(searchSettings("Beta", "en")[0].target.anchor).toBe("beta-updates");
     expect(searchSettings("Beta", "en", false)).toEqual([]);
   });
+  it("routes updates and existing update links to General", () => {
+    for (const anchor of ["updates", "beta-updates"]) {
+      expect(normalizeSettingsTarget({ category: "account-data", anchor })).toEqual({ category: "general", anchor });
+      expect(SETTINGS_SEARCH_ENTRIES.find(entry => entry.id === anchor)?.target).toEqual({ category: "general", anchor });
+    }
+  });
   it("exposes the requested top-level categories", () => {
     expect(SETTINGS_CATEGORIES.map((category) => category.id)).toEqual([
       "general",

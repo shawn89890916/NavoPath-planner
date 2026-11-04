@@ -26,7 +26,7 @@ export function DesktopDockSettings({ lang }: { lang: Language }) {
   if (!api) return null;
   return <>
     <SettingRow title={lang === "zh" ? "贴边栏触发方式" : "Dock activation"}
-      description={lang === "zh" ? "从左上角 N 图标选择贴边方向；收起时可悬停或点击边缘小条展开，点击 Dock 窗口中的 N 图标即可恢复。" : "Choose a screen edge from the top-left N icon. Hover or click the edge tab to reopen; click N in the docked window to restore it."}
+      description={lang === "zh" ? "从左上角 Dock 图标选择贴边方向；收起时可悬停或点击边缘小条展开，再次点击 Dock 图标即可恢复普通窗口。" : "Choose a screen edge from the top-left Dock icon. Hover or click the edge tab to reopen; click the Dock icon at the top left to restore the window."}
       control={<SettingSelect value={preferences?.activation || "hover"} disabled={!preferences || busy}
         ariaLabel={lang === "zh" ? "贴边栏触发方式" : "Dock activation"}
         onChange={(activation) => void save({ activation })} options={[
@@ -61,11 +61,11 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError,
   }
 
   const label = side
-    ? (lang === "zh" ? "点击 N 恢复普通窗口" : "Click N to restore the window")
+    ? (lang === "zh" ? "恢复普通窗口" : "Restore the window")
     : (lang === "zh" ? "选择贴边方向" : "Choose a Dock side");
   const help = lang === "zh"
-    ? "选择贴边方向后，悬停或点击屏幕边缘即可展开；点击 Dock 窗口左上角的 N 可恢复普通窗口。"
-    : "Choose an edge. Hover or click its screen tab to reopen; click N in the docked window to restore it.";
+    ? "选择贴边方向后，悬停或点击屏幕边缘即可展开；点击左上角的 Dock 图标可恢复普通窗口。"
+    : "Choose an edge. Hover or click its screen tab to reopen; click the Dock icon at the top left to restore the window.";
 
   return <div className={`df-brand-dock-control${side ? " is-docked" : ""}`} onMouseEnter={() => { if (!side) setChoosing(true); }} onMouseLeave={() => setChoosing(false)}>
     <button
