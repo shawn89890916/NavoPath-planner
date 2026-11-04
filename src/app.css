@@ -8762,20 +8762,9 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   position: relative;
   z-index: 1;
 }
-#root .df-app .df-brand-dock-trigger.is-docked::after {
-  content: "";
-  position: absolute;
-  right: 3px;
-  bottom: 3px;
-  width: 7px;
-  height: 7px;
-  border: 1.5px solid var(--bg-app);
-  border-radius: 50%;
-  background: var(--accent-active);
-}
 #root .df-app .df-brand-dock-menu {
   position: absolute;
-  top: calc(100% + 7px);
+  top: calc(100% - 4px);
   left: 0;
   z-index: 140;
   width: min(204px, calc(100vw - 16px));
@@ -8785,18 +8774,20 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   background: var(--surface-raised);
   box-shadow: var(--shadow-soft);
 }
-#root .df-app .df-brand-dock-menu-head {
+#root .df-app .df-brand-dock-menu-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   min-height: 26px;
-  padding: 0 3px 5px;
+  margin-top: 4px;
+  padding: 5px 3px 0;
+  border-top: 1px solid var(--paper-rule);
   color: var(--text-main);
   font: 700 12px/1.2 var(--paper-sans);
 }
 #root .df-app .df-brand-dock-help-wrap { position: static; display: inline-flex; flex: 0 0 auto; }
-#root .df-app .df-brand-dock-menu .df-brand-dock-menu-head .df-brand-dock-help-wrap > .df-brand-dock-help {
+#root .df-app .df-brand-dock-menu .df-brand-dock-menu-foot .df-brand-dock-help-wrap > .df-brand-dock-help {
   display: grid;
   width: 24px;
   height: 24px;
@@ -25435,14 +25426,12 @@ body[data-navopath-base-theme="light"],
     display: none;
   }
   #root .df-app.is-desktop-docked.mode-execute .df-compact-execute-controls {
-    top: 58px;
-  }
-  #root .df-app.is-desktop-docked.mode-execute .df-candidate-panel.compact-active,
-  #root .df-app.is-desktop-docked.mode-execute .df-timeline-panel.compact-active {
-    padding-top: 116px;
+    top: 4px;
+    left: 58px;
+    right: 8px;
   }
   #root .df-app.is-desktop-docked.mode-execute .df-compact-date-display.is-readonly {
-    top: 52px;
+    top: 0;
   }
   #root .df-app.is-desktop-docked.mode-planning > .df-planning {
     padding-top: 52px;

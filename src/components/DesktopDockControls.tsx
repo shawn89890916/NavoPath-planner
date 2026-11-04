@@ -74,7 +74,6 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError,
       aria-label={label}
       aria-pressed={Boolean(side)}
       aria-expanded={choosing}
-      title={label}
       disabled={disabled || busy}
       onClick={(event) => {
         event.stopPropagation();
@@ -83,15 +82,6 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError,
       }}
     >{trigger}</button>
     {choosing && !side && <div className="df-brand-dock-menu" role="group" aria-label={lang === "zh" ? "选择 Dock 贴边方向" : "Choose Dock side"}>
-      <div className="df-brand-dock-menu-head">
-        <strong>{lang === "zh" ? "贴边方向" : "Dock side"}</strong>
-        <span className="df-brand-dock-help-wrap">
-          <button className="df-brand-dock-help" type="button" aria-label={lang === "zh" ? "Dock 使用说明" : "Dock instructions"} aria-describedby="df-brand-dock-help-tooltip">
-            <UiInfoIcon size={17} />
-          </button>
-          <span id="df-brand-dock-help-tooltip" className="df-brand-dock-help-tooltip" role="tooltip">{help}</span>
-        </span>
-      </div>
       <div className="df-brand-dock-choices">
         <IconButton className="df-brand-dock-option" icon={<><UiDockLeftIcon size={21} /><span>{lang === "zh" ? "左侧" : "Left"}</span></>} label={lang === "zh" ? "贴到屏幕左侧" : "Dock to left edge"} disabled={busy} onClick={() => {
           setChoosing(false);
@@ -101,6 +91,15 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError,
           setChoosing(false);
           void changeSide("right");
         }} />
+      </div>
+      <div className="df-brand-dock-menu-foot">
+        <strong>{lang === "zh" ? "贴边方向" : "Dock side"}</strong>
+        <span className="df-brand-dock-help-wrap">
+          <button className="df-brand-dock-help" type="button" aria-label={lang === "zh" ? "Dock 使用说明" : "Dock instructions"} aria-describedby="df-brand-dock-help-tooltip">
+            <UiInfoIcon size={17} />
+          </button>
+          <span id="df-brand-dock-help-tooltip" className="df-brand-dock-help-tooltip" role="tooltip">{help}</span>
+        </span>
       </div>
     </div>}
   </div>;
