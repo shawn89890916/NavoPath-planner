@@ -4,6 +4,7 @@
 
 ### 新增
 - 社区课表插件支持课程与自习导入、每周重复及可覆盖的背景，停用保留课表。
+- NavoPath 连接器可安装并启用经校验的社区插件，插件在账户客户端自动启动。
 
 ### 新功能
 - 顶栏插件图标统一排在左侧 N 标志后，支持拖动排序、按运行状态变化和悬停查看信息；天气、番茄钟与日程模板入口统一为插件。
@@ -342,6 +343,7 @@
 
 ### Added
 - The community timetable plugin imports weekly classes and self-study as overlapping backgrounds; disabling retains the timetable.
+- The NavoPath connector can install and enable checksum-validated community plugins, which start on the account's clients.
 
 ### Added
 - Plugin icons form one ordered toolbar after the N mark, support drag reordering, status-aware icons and hover details; Weather, Pomodoro and Schedule Templates use the same plugin entry point.

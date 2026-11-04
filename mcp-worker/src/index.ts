@@ -6,6 +6,7 @@ import { z } from "zod";
 import { combineSyncSnapshot } from "./syncSnapshot";
 import { buildCalendarFeed } from "./calendarFeed";
 import { listEngagement } from "./engagement";
+import { validatePluginPreferences } from "./extensions";
 import {
   batchUpdateTasks,
   confirmChange,
@@ -39,7 +40,7 @@ type AgentProps = { userId: string };
 const oauthSecuritySchemes = [{ type: "oauth2", scopes: ["email"] }];
 const oauthProtectedResourcePath = "/.well-known/oauth-protected-resource";
 
-const allowedSettings = ["language", "defaultTimelineView", "planningView", "theme", "typographyStyle", "executeAccentColor", "planningAccentColor", "hideCompleted", "taskNoteDisplay", "featureEngagementEnabled", "aiTone", "aiMemoryEnabled", "hideAi", "model", "reasoningMode"];
+const allowedSettings = ["language", "defaultTimelineView", "planningView", "theme", "typographyStyle", "executeAccentColor", "planningAccentColor", "hideCompleted", "taskNoteDisplay", "featureEngagementEnabled", "aiTone", "aiMemoryEnabled", "hideAi", "model", "reasoningMode", "extensions"];
 const result = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] });
 const now = () => new Date().toISOString();
 const uid = (prefix: string) => `${prefix}_${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`;
@@ -249,13 +250,14 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       return result({ habits, dailyStates: (data.habitDailyStates || []).filter((state: Json) => ids.has(state.habitId) && (!from || state.date >= from) && (!to || state.date <= to)) });
     });
 
-    this.server.registerTool("get_settings", { description: "Read safe display, AI, planning, and Engagement feature settings.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: {} }, async () => {
+    this.server.registerTool("get_settings", { description: "Read safe display, AI, planning, Engagement, and plugin installation settings.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: {} }, async () => {
       const { settings } = await getProfile(this.env, this.userId());
-      return result({ ...Object.fromEntries(allowedSettings.map((key) => [key, settings[key]])), featureEngagementEnabled: settings.featureEngagementEnabled === true });
+      return result({ ...Object.fromEntries(allowedSettings.map((key) => [key, settings[key]])), featureEngagementEnabled: settings.featureEngagementEnabled === true, extensions: validatePluginPreferences(settings.extensions || { version: 1, sources: [], installed: {}, removed: {}, activeTheme: null, autoCheckUpdates: true, autoUpdate: false }) });
     });
 
-    this.server.registerTool("update_settings", { description: "Update allowlisted settings. Set featureEngagementEnabled to a boolean to enable/disable Engagement; disabling retains saved ratings.", annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false }, inputSchema: { patch: z.record(z.string(), z.unknown()) } }, async ({ patch }) => {
+    this.server.registerTool("update_settings", { description: "Update allowlisted settings. Set extensions to a complete plugin-preferences object to add and enable a package from a public HTTPS source with its manifest and SHA-256. NavoPath clients verify the package before running it. Installed plugin code runs with the user's NavoPath access, so only install code you trust.", annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true }, inputSchema: { patch: z.record(z.string(), z.unknown()) } }, async ({ patch }) => {
       if ("featureEngagementEnabled" in patch && typeof patch.featureEngagementEnabled !== "boolean") throw new Error("featureEngagementEnabled must be a boolean");
+      if ("extensions" in patch) patch.extensions = validatePluginPreferences(patch.extensions);
       const profile = await getProfile(this.env, this.userId());
       const safePatch = Object.fromEntries(Object.entries(patch).filter(([key]) => allowedSettings.includes(key)));
       const saved = await saveProfile(this.env, this.userId(), profile, { settings: { ...profile.settings, ...safePatch } });
