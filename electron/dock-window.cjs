@@ -9,8 +9,8 @@ function normalizeDockPreferences(value = {}) {
     ? Math.round(Math.max(min, Math.min(max, value[key]))) : DEFAULT_DOCK_PREFERENCES[key];
   return {
     activation: value.activation === "click" ? "click" : "hover",
-    handleHeight: number("handleHeight", 32, 160),
     handleWidth: number("handleWidth", 2, 24),
+    handleHeight: number("handleHeight", 32, 8192),
     position: number("position", 0, 100),
     panelHeight: number("panelHeight", 50, 100),
   };
@@ -58,9 +58,12 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
   function reveal(win, state, focus = false) {
     state.hoverSince = state.leaveSince = null;
     state.handle?.hide();
+    if (win.isMinimized()) win.restore();
     applyBounds(win, state);
-    win.setAlwaysOnTop(true);
     if (focus) { win.show(); win.focus(); } else win.showInactive();
+    // Windows 的非激活显示可能保留旧层级；显示后再置顶，不抢走当前输入焦点。
+    win.setAlwaysOnTop(true);
+    win.moveTop();
   }
 
   function collapse(win, state) {

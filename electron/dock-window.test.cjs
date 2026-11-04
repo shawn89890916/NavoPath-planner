@@ -27,6 +27,9 @@ class FakeWindow extends EventEmitter {
   isFullScreenable() { return this.fullScreenable; }
   isAlwaysOnTop() { return this.alwaysOnTop; }
   isVisible() { return this.visible; }
+  isMinimized() { return Boolean(this.minimized); }
+  restore() { this.minimized = false; }
+  moveTop() { this.raised = this.visible; }
   setAlwaysOnTop(value) { this.alwaysOnTop = value; }
   setShape(rectangles) { this.shape = rectangles; }
   hide() { this.visible = false; }
@@ -179,6 +182,20 @@ test("only dwelling on the visible tab opens the panel, with a grace period on l
   assert.equal(polling(), false);
 });
 
+test("悬停展开恢复最小化窗口，并在非激活显示后重新提升层级", () => {
+  const { win, set, tick } = setup();
+  set("left");
+  win.minimized = true;
+  win.showInactive = () => { win.visible = true; win.alwaysOnTop = false; };
+  tick({ x: -1600, y: 580 });
+  tick({ x: -1600, y: 580 }, 250);
+  assert.equal(win.minimized, false);
+  assert.equal(win.visible, true);
+  assert.equal(win.alwaysOnTop, true);
+  assert.equal(win.raised, true);
+  assert.equal(win.focused, undefined);
+});
+
 test("right edge activation stays on its monitor and preserves an original always-on-top window", () => {
   const { win, set, tick } = setup();
   win.alwaysOnTop = true;
@@ -320,8 +337,8 @@ test("a brief pass over the tab and a cancelled drag do not open the panel", () 
 test("preferences clamp geometry, survive a new service, and retain unrelated fields", () => {
   const { win, set, preferences, saved, event } = setup();
   set("left");
-  preferences({ activation: "click", handleHeight: 999, position: -20, panelHeight: 60 });
-  assert.deepEqual(preferences(), { activation: "click", handleWidth: 3, handleHeight: 160, position: 0, panelHeight: 60 });
+  preferences({ activation: "click", handleHeight: 99999, position: -20, panelHeight: 60 });
+  assert.deepEqual(preferences(), { activation: "click", handleWidth: 3, handleHeight: 8192, position: 0, panelHeight: 60 });
   assert.equal(win.bounds.height, 516);
   assert.equal(win.bounds.y, 40);
   preferences({ position: 100 });
@@ -345,6 +362,20 @@ test("handle IPC rejects app renderers and subframes, and closed owners destroy 
   assert.equal(handles[0].destroyed, true);
 });
 
+test("最大长度的小条自动适配不同屏幕的整条可用边缘", () => {
+  for (const side of ["left", "right"]) {
+    const area = { x: -1600, y: 40, width: 1600, height: 860 };
+    const bounds = dockHandleBounds(area, side, normalizeDockPreferences({ handleHeight: 8192 }));
+    assert.equal(bounds.y, area.y);
+    assert.equal(bounds.height, area.height);
+  }
+  const { set, preferences, tick, win } = setup();
+  preferences({ handleHeight: 8192 });
+  set("right");
+  tick({ x: -1, y: 50 });
+  tick({ x: -1, y: 50 }, 250);
+  assert.equal(win.visible, true);
+});
 
 test("advanced tab width clamps, persists, and updates the handle painting geometry", () => {
   const { set, preferences, saved, handles } = setup();
@@ -366,7 +397,12 @@ test("opening Dock reapplies its edge after Windows restores stale window bounds
   set("right");
   const expected = win.getBounds();
   win.setBounds({ ...expected, x: 0, width: 1200 });
+  win.minimized = true;
+  win.showInactive = () => { win.visible = true; win.alwaysOnTop = false; };
   handleAction("open");
   assert.deepEqual(win.getBounds(), expected);
+  assert.equal(win.minimized, false);
+  assert.equal(win.alwaysOnTop, true);
+  assert.equal(win.raised, true);
   assert.equal(win.visible, true);
 });

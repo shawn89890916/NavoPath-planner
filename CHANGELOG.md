@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-11-05 · 1.6.3 Beta 8
+
+### 修复
+- Windows Dock 悬停展开后会恢复最小化的窗口，并在显示后重新置顶，不抢走当前输入焦点；小条长度可覆盖整条屏幕边缘，超出屏幕高度时自动适配。
+
 ## 2026-11-04 · 1.6.3 Beta 7
 
 ### 改进
@@ -414,6 +419,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-05 · 1.6.3 Beta 8
+
+### Fixed
+- Windows Dock hover activation restores minimized windows and raises the panel after showing without taking input focus. The edge tab can span the full screen edge, and lengths beyond the screen height are fitted automatically.
 
 ## 2026-11-04 · 1.6.3 Beta 7
 
