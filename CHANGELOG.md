@@ -414,6 +414,7 @@
 - App updates and Accept Beta updates now live in General, including search results and existing links.
 
 ### Fixed
+- Fixed Windows Dock panels remaining behind other windows after hover activation, and restored minimized panels when opening.
 - Plugin names on the portrait settings home regain their full available width instead of being truncated inside a narrow icon column.
 - The portrait Dock N recovery control now aligns with the date and time range controls.
 - Planning filters stay below the header and settings icon, and remain visible when the sidebar collapses. The collapsed sidebar retains its icon rail, with clear built-in icons in both states.
@@ -452,7 +453,6 @@
 - Restricted mode pauses every plugin view, and workflow settings direct users to manage Planning views through Plugins.
 
 ### Fixes
-- Fixed Windows Dock panels remaining behind other windows after hover activation, and restored minimized panels when opening.
 - Portrait Dock controls share a row with N. The side menu drops its dot and redundant tooltip, moves guidance below the choices, and sits closer to the trigger.
 
 ### 1.6.3 Beta 2
