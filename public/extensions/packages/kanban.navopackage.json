@@ -1,0 +1,35 @@
+{
+  "manifest": {
+    "id": "kanban",
+    "name": "Kanban",
+    "description": "Plan and move tasks through workflow stages.",
+    "author": "NavoPath",
+    "version": "1.0.0",
+    "kind": "plugin",
+    "apiVersion": 1,
+    "minAppVersion": "1.6.3-beta.3",
+    "platforms": [
+      "desktop",
+      "web",
+      "mobile"
+    ],
+    "main": "main.js",
+    "icon": "icon.svg",
+    "license": "MIT",
+    "repository": "https://github.com/shawn89890916/NavoPath-planner"
+  },
+  "files": {
+    "main.js": {
+      "encoding": "utf8",
+      "data": "var n={onload(a){return a.app.internal.registerNativePlanningView(\"kanban\",a.manifest.name)}};export{n as default};\n"
+    },
+    "icon.svg": {
+      "encoding": "utf8",
+      "data": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n  <rect x=\"2.5\" y=\"3\" width=\"19\" height=\"18\" rx=\"1.6\"/><path d=\"M8.8 3v18M15.2 3v18M4.7 7h1.9m-1.9 3.5h1.9M11 7h2m-2 3.5h2m4.5-3.5h1.7\" stroke-width=\"2\"/>\n</svg>\n"
+    },
+    "LICENSE": {
+      "encoding": "utf8",
+      "data": "MIT License\n\nCopyright (c) 2026 NavoPath\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\n"
+    }
+  }
+}

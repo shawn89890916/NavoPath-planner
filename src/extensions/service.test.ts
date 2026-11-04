@@ -10,7 +10,7 @@ import type { CatalogEntry, ExtensionHost } from "./types";
 import { cacheEntries } from "./cache";
 
 function fixture(account = "preview", extensions = defaultExtensionPreferences()) {
-  let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true }, extensionConfigs: {} };
+  let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true, migratedPlanningViews: extensions.migratedPlanningViews ?? true }, extensionConfigs: {} };
   let data: any = { tasks: [], projects: [], events: [] };
   const host: ExtensionHost = { getData: () => data, saveData: async next => { data = next; }, getSettings: () => settings, saveSettings: async patch => { settings = { ...settings, ...patch }; }, getAccountId: () => account === "preview" ? null : account, toast: vi.fn(), internal: {} };
   return { host, settings: () => settings };
@@ -28,6 +28,26 @@ beforeEach(() => {
 afterEach(async () => { await current.configure(null); vi.unstubAllGlobals(); });
 
 describe("extension installation and account reconciliation", () => {
+  it("preinstalls only the Tree and Metrics planning views on a clean installation", async () => {
+    const f = fixture("preview", { ...defaultExtensionPreferences(), migratedLegacy: true, migratedPlanningViews: false });
+    await current.configure(f.host);
+    expect(Object.keys(current.getSnapshot().preferences.installed).sort()).toEqual(["official:metrics", "official:tree"]);
+    expect(current.getSnapshot().preferences.installed["official:tree"].enabled).toBe(true);
+    expect(current.getSnapshot().preferences.installed["official:metrics"].enabled).toBe(true);
+  });
+  it("preinstalls Tree and Metrics and migrates only previously enabled legacy views", async () => {
+    const prefs = { ...defaultExtensionPreferences(), migratedLegacy: true, migratedPlanningViews: false };
+    const f = fixture("preview", prefs);
+    await f.host.saveSettings({ featureKanbanViewEnabled: false, featureQuadrantViewEnabled: true, featureListViewEnabled: true, featureMetricsEnabled: false });
+    await current.configure(f.host);
+    const installed = current.getSnapshot().preferences.installed;
+    expect(Object.keys(installed).sort()).toEqual(["official:list", "official:matrix", "official:metrics", "official:tree"]);
+    expect(installed["official:tree"].enabled).toBe(true);
+    expect(installed["official:metrics"].enabled).toBe(false);
+    expect(installed["official:matrix"].enabled).toBe(true);
+    expect(installed["official:list"].enabled).toBe(true);
+    expect(f.settings().extensions.migratedPlanningViews).toBe(true);
+  });
   it("keeps local controls available during a slow update check and shares catalog requests", async () => {
     const f = fixture(); await current.configure(f.host);
     await current.importFile(new File([officialPackageTexts.weather], "weather.navopackage.json"));

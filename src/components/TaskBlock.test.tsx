@@ -149,8 +149,9 @@ describe("TaskBlock shared component contract", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
-    expect(planning).toContain('variant="candidate"');
-    expect(planning).toContain('variant="habit-child"');
+    const subtaskNode = planning.match(/function PlanningSubtaskNode[\s\S]*?function PlanningTaskNode/)?.[0] || "";
+    expect(subtaskNode).toContain('variant="candidate"');
+    expect(subtaskNode).not.toContain('variant="habit-child"');
     expect(planning).not.toContain("<article");
     expect(css).toContain('.df-app .df-task-block[data-task-appearance][data-task-variant="candidate"]');
     expect(css).toContain('#root .df-app.mode-planning .df-planning .df-task-node-inner[data-task-variant="candidate"]');

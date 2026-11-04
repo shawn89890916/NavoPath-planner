@@ -20,12 +20,31 @@ function DocCodeBlock({ value, label, language }: { value: string; label: string
 
 export default function PluginGuidePage() {
   const [language, setLanguage] = useState<Language>(detectSystemLanguage());
+  const [activeSection, setActiveSection] = useState(() => location.hash.slice(1) || "plugins");
   const zh = language === "zh";
   useEffect(() => {
     const previous = document.title;
     document.title = zh ? "NavoPath 插件 API 与 MCP 文档" : "NavoPath Plugin API & MCP Docs";
     return () => { document.title = previous; };
   }, [zh]);
+  useEffect(() => {
+    const sections = [...document.querySelectorAll<HTMLElement>(".df-api-doc-page .df-doc-section[id]")];
+    if (!sections.length) return;
+    let initialHashFrame = 0;
+    const initialHash = location.hash.slice(1);
+    if (initialHash && sections.some((section) => section.id === initialHash)) {
+      setActiveSection(initialHash);
+      initialHashFrame = requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById(initialHash)?.scrollIntoView({ block: "start" })));
+    }
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+      if (visible[0]?.target instanceof HTMLElement) setActiveSection(visible[0].target.id);
+    }, { rootMargin: "-12% 0px -72% 0px", threshold: 0 });
+    sections.forEach((section) => observer.observe(section));
+    const hashChange = () => { if (location.hash) setActiveSection(location.hash.slice(1)); };
+    window.addEventListener("hashchange", hashChange);
+    return () => { cancelAnimationFrame(initialHashFrame); observer.disconnect(); window.removeEventListener("hashchange", hashChange); };
+  }, [language]);
   const labels = {
     back: zh ? "返回工作区" : "Back to app",
     tag: zh ? "社区插件 / 主题 / MCP" : "COMMUNITY PLUGINS / THEMES / MCP",
@@ -38,6 +57,17 @@ export default function PluginGuidePage() {
     security: zh ? "安全与权限边界" : "Security & Permission Boundaries",
     host: zh ? "宿主环境能力" : "Host Environment Capabilities",
   };
+  const navItems = [
+    { id: "plugins", label: zh ? "插件入门" : "Plugins" },
+    { id: "standards", label: zh ? "设计规范" : "Design standards" },
+    { id: "mcp", label: "MCP" },
+    { id: "codex", label: "Codex" },
+    { id: "claude", label: "Claude Desktop" },
+    { id: "move", label: zh ? "迁移到新设备" : "New computer" },
+    { id: "troubleshooting", label: zh ? "常见问题" : "Troubleshooting" },
+    { id: "host", label: zh ? "API 参考" : "API reference" },
+    { id: "security", label: zh ? "安全边界" : "Security" },
+  ];
   const codexConfig = `[mcp_servers.navopath]\nurl = "${MCP_ENDPOINT}"\nbearer_token_env_var = "NAVOPATH_MCP_TOKEN"`;
   const windowsTokenCommand = `[Environment]::SetEnvironmentVariable("NAVOPATH_MCP_TOKEN", "nvp_YOUR_TOKEN", "User")`;
   const unixTokenCommand = `# macOS (zsh)\necho 'export NAVOPATH_MCP_TOKEN="nvp_YOUR_TOKEN"' >> ~/.zshrc\n\n# Linux (bash)\necho 'export NAVOPATH_MCP_TOKEN="nvp_YOUR_TOKEN"' >> ~/.bashrc`;
@@ -71,11 +101,9 @@ export default function PluginGuidePage() {
 
   return <main className="df-doc-page changelog-like df-api-doc-page">
     <nav className="df-doc-sidebar" aria-label={zh ? "文档导航" : "Documentation Navigation"}>
-      <a href="/app">← {labels.back}</a>
-      <a href="#plugins">{zh ? "插件 API" : "Plugin API"}</a>
-      <a href="#standards">{zh ? "设计规范" : "Design standards"}</a>
-      <a href="#mcp">MCP</a>
-      <a href="#security">{zh ? "安全边界" : "Security"}</a>
+      <a className="df-doc-back" href="/app">← {labels.back}</a>
+      <span className="df-doc-nav-label">{zh ? "文档章节" : "ON THIS PAGE"}</span>
+      {navItems.map((item) => <a key={item.id} href={`#${item.id}`} className={activeSection === item.id ? "active" : ""} aria-current={activeSection === item.id ? "location" : undefined}>{item.label}</a>)}
       <div className="df-doc-language" aria-label={zh ? "文档语言" : "Documentation Language"}>
         <button type="button" className={zh ? "active" : ""} onClick={() => setLanguage("zh")}>中文</button>
         <button type="button" className={!zh ? "active" : ""} onClick={() => setLanguage("en")}>EN</button>
@@ -141,6 +169,7 @@ export default function PluginGuidePage() {
           <li>{zh ? "插件位于“设置 → 插件”；主题位于“设置 → 外观”。点击“浏览市场”，从当前来源按插件或主题类型浏览并安装。" : "Open Settings → Plugins for plugins, or Settings → Appearance for themes. Browse market shows the matching package type from your configured sources."}</li>
           <li>{zh ? "也可导入 ZIP 或 .navopackage.json 扩展包。来源管理支持添加 HTTPS 市场索引。移除来源会保留已安装扩展。" : "You can also import a ZIP or .navopackage.json package. Manage sources accepts HTTPS catalog indexes. Removing a source keeps installed extensions."}</li>
           <li>{zh ? "在已安装列表中启用、停用、更新、回退或卸载。插件专属设置在插件子页面中显示；主题提供声明式颜色、数值和文字选项。" : "Enable, disable, update, roll back, or uninstall from the installed list. Plugin settings open in a dedicated subpage; themes can expose declarative color, numeric, and text options."}</li>
+          <li>{zh ? "规划页的树和指标由官方插件预装。看板、矩阵和列表是可从官方市场安装的独立视图插件；在插件页分别控制启用状态。" : "Tree and Metrics are preinstalled official Planning plugins. Kanban, Matrix, and List are separate view plugins available in the official market; manage each from Plugin settings."}</li>
           <li>{zh ? "主题叠加顺序为默认浅色/深色样式、社区主题、用户明确设置。界面模式还可选择跟随系统。" : "Theme precedence is the light/dark base, community theme, then explicit user choices. Interface mode can also follow the system."}</li>
         </ol>
       </section>
@@ -149,7 +178,8 @@ export default function PluginGuidePage() {
         <div className="df-doc-grid">
           <article><h3>{zh ? "介绍与兼容资料" : "Description & compatibility"}</h3><p>{zh ? "名称简洁且可区分。description 用一两句说明主要功能、入口和外部服务/数据用途；准确填写 author、minAppVersion、apiVersion、platforms、license，项目地址填 repository。" : "Use a concise, distinctive name. Explain the main feature, entry point, and any external services or data use in one or two sentences. Keep author, minAppVersion, apiVersion, platforms, license, and repository accurate."}</p></article>
           <article><h3>{zh ? "单色图标" : "Monochrome icon"}</h3><p>{zh ? "在 manifest 设置 icon: \"icon.svg\" 并把文件放进包内。使用正方形 24 × 24 viewBox 和 currentColor 单色线条/色块，不加文字、背景板、脚本或远程资源。未上传时市场和顶栏显示名称首字母。" : "Set manifest icon to \"icon.svg\" and include it in the package. Use a square 24 × 24 viewBox with single-color currentColor strokes/fills, without text, backplates, scripts, or remote resources. If omitted, the market and toolbar show the plugin's first letter."}</p></article>
-          <article><h3>{zh ? "顶栏与设置" : "Toolbar & settings"}</h3><p>{zh ? "常用操作使用 24px 单色图标、可访问名称和简短悬停提示。主视图会自动获得顶栏首字母入口；次要视图和命令可放入“更多”。可配置项用 settings.registerPage；没有配置项时仍显示含版本、作者和平台信息的通用设置页。" : "Use a 24px monochrome icon, accessible label, and concise hover title for frequent actions. A primary view gets a first-letter toolbar launcher automatically; secondary views and commands can stay in More. Register options with settings.registerPage. Plugins without options still get a standard settings page with version, author, and platform details."}</p></article>
+          <article><h3>{zh ? "入口位置与设置" : "Entry placement & settings"}</h3><p>{zh ? "插件可将图标固定放到总顶栏、今日候选顶栏或规划侧栏。旧版两参数 addHeaderItem 调用仍进入总顶栏。规划侧栏按钮用于打开插件视图；可配置项用 settings.registerPage。" : "Plugins can place an icon in the app header, Today's Candidates header, or Planning sidebar. The legacy two-argument addHeaderItem call remains in the app header. Planning sidebar entries open plugin views. Register configurable options with settings.registerPage."}</p></article>
+          <article><h3>{zh ? "规划视图 API" : "Planning view API"}</h3><p>{zh ? "ui.registerPlanningView(name, mount) 会把插件内容挂载到规划主区域，并用 manifest.icon 显示图标；无图标时使用名称首字母。返回的清理函数应在插件停用时执行。" : "ui.registerPlanningView(name, mount) mounts plugin content in the Planning workspace and uses manifest.icon for the entry; without an icon, the first letter is shown. Return cleanup so the host can dispose the view when the plugin stops."}</p><pre><code>{`ctx.ui.addHeaderItem("Quick capture", mount, { placement: "candidate-header" });\nctx.ui.registerPlanningView("Review", container => {\n  container.textContent = "Planning view";\n  return () => container.replaceChildren();\n});`}</code></pre></article>
           <article><h3>{zh ? "版本与更新" : "Versions & updates"}</h3><p><code>version</code> {zh ? "使用 MAJOR.MINOR.PATCH，例如" : "uses MAJOR.MINOR.PATCH, for example"} <code>1.2.0</code>{zh ? "。每次发布都递增；测试版可用" : ". Increment it for every release; pre-releases may use"} <code>1.2.0-beta.1</code>{zh ? "。市场用目录版本检查更新；自动安装默认关闭。" : ". The catalog version drives update checks. Automatic installation is off by default."}</p></article>
         </div>
         <aside className="df-doc-note"><span>{zh ? "市场字段" : "Marketplace fields"}</span><dl>

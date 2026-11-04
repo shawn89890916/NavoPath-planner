@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useMotionSelection } from "./useMotionSelection";
 import { SelectionIndicator } from "./components/SelectionIndicator";
@@ -18,9 +18,13 @@ import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockVariant } from "./components/TaskBlock";
 import { CloseButton } from "./components/UiPrimitives";
+import { UiPanelLeftCloseIcon, UiPanelLeftOpenIcon } from "./components/UiIcons";
 import { TaskDragLayer } from "./unifiedDrag";
 import { bindHeldTouchScroll } from "./useUnifiedDrag";
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricCompletionFilter, type MetricDisplayMetric, type MetricGroupBy, type MetricHabitMode, type MetricRangePreset, type TimeAllocationGroup } from "./metrics/timeAllocation";
+import { extensionService } from "./extensions/service";
+import { ExtensionMount } from "./extensions/ExtensionMount";
+import type { ExtensionContribution, NativePlanningViewMode } from "./extensions/types";
 
 type TreeNodeKind = "project" | "task" | "subtask";
 type TreeDragNode = { kind: TreeNodeKind; id: string };
@@ -485,7 +489,7 @@ function PlanningSubtaskNode(props: {
       >
         <TaskBlock
           as="div"
-          variant="habit-child"
+          variant="candidate"
           appearance="calm"
           checked={done}
           projectColor={props.projectColor}
@@ -997,7 +1001,7 @@ function useTreeLines(
   return lines;
 }
 
-type PlanningViewMode = "tree" | "kanban" | "eisenhower" | "list" | "metrics";
+type PlanningViewMode = NativePlanningViewMode | "plugin";
 
 export default function PlanningView(props: {
   focusTaskId?: string | null;
@@ -1006,7 +1010,7 @@ export default function PlanningView(props: {
   demo?: boolean;
   lang: Language;
   referenceDate?: string;
-  initialViewMode?: PlanningViewMode;
+  initialViewMode?: NativePlanningViewMode;
   data: PlannerData;
   projects: Project[];
   tasks: Task[];
@@ -1038,6 +1042,10 @@ export default function PlanningView(props: {
   metricsCustomStart?: string;
   metricsCustomEnd?: string;
   onMetricsSettingsChange?: (patch: Partial<Settings>) => void;
+  planningSidebarCollapsed?: boolean;
+  onPlanningSidebarCollapsedChange?: (collapsed: boolean) => void;
+  planningSidebarWidth?: number;
+  onPlanningSidebarWidthChange?: (width: number) => void;
 }) {
   const safeProjects = Array.isArray(props.projects) ? props.projects : [];
   const safeTasks = Array.isArray(props.tasks) ? props.tasks : [];
@@ -1047,29 +1055,39 @@ export default function PlanningView(props: {
   const treeRef = useRef<HTMLDivElement>(null);
   const donutSvgRef = useRef<SVGSVGElement>(null);
   const dialog = useInAppDialog(props.lang);
-
-  const enableKanban = props.featureKanban !== false;
-  const enableQuadrant = props.featureQuadrant !== false;
-  const enableList = props.featureList !== false;
-  const enableMetrics = props.featureMetrics !== false;
-  const availableModes = useMemo<PlanningViewMode[]>(() => {
-    const modes: PlanningViewMode[] = ["tree"];
-    if (enableKanban) modes.push("kanban");
-    if (enableQuadrant) modes.push("eisenhower");
-    if (enableList) modes.push("list");
-    if (enableMetrics) modes.push("metrics");
-    return modes;
-  }, [enableKanban, enableQuadrant, enableList, enableMetrics]);
-  const [viewMode, setViewMode] = useState<PlanningViewMode>(props.initialViewMode || "tree");
-  const changePlanningView = useMotionSelection(viewMode, setViewMode, "planning", availableModes);
-  // Safety: if the active view mode is removed from the available set (e.g. the
-  // user just disabled the metrics feature while sitting on the metrics view),
-  // fall back to the default tree view so the panel never renders a gated mode.
+  const [planningSidebarWidth, setPlanningSidebarWidth] = useState(() => Math.max(150, Math.min(360, props.planningSidebarWidth || 216)));
+  const sidebarResizeRef = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null);
   useEffect(() => {
-    if (!availableModes.includes(viewMode)) {
-      setViewMode("tree");
-    }
-  }, [availableModes, viewMode]);
+    if (Number.isFinite(props.planningSidebarWidth)) setPlanningSidebarWidth(Math.max(150, Math.min(360, props.planningSidebarWidth || 216)));
+  }, [props.planningSidebarWidth]);
+  const updateSidebarWidth = (width: number, persist = false) => {
+    const next = Math.max(150, Math.min(360, Math.round(width)));
+    setPlanningSidebarWidth(next);
+    if (persist) props.onPlanningSidebarWidthChange?.(next);
+  };
+
+  const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
+  const planningViews = useMemo<ExtensionContribution[]>(() => {
+    if (!props.demo) return extensionSnapshot.views.filter((view) => view.planningView);
+    const modes: NativePlanningViewMode[] = ["tree"];
+    if (props.featureKanban) modes.push("kanban");
+    if (props.featureQuadrant) modes.push("eisenhower");
+    if (props.featureList) modes.push("list");
+    if (props.featureMetrics) modes.push("metrics");
+    return modes.map((nativeMode) => ({ id: `demo:${nativeMode}`, owner: "demo", name: metricViewLabel(props.lang, nativeMode), mount: () => {}, nativeMode, planningView: true }));
+  }, [extensionSnapshot.views, props.demo, props.featureKanban, props.featureQuadrant, props.featureList, props.featureMetrics, props.lang]);
+  const [selectedPlanningViewId, setSelectedPlanningViewId] = useState("");
+  const planningViewIds = useMemo(() => planningViews.map((view) => view.id), [planningViews]);
+  const selectedPlanningView = planningViews.find((view) => view.id === selectedPlanningViewId);
+  const viewMode: PlanningViewMode | null = selectedPlanningView?.nativeMode || (selectedPlanningView ? "plugin" : null);
+  const changePlanningView = useMotionSelection(selectedPlanningViewId, setSelectedPlanningViewId, "planning", planningViewIds);
+  // If a plugin removes the selected view, select Tree when available, then the
+  // first remaining view. Safe mode intentionally leaves the panel empty.
+  useEffect(() => {
+    if (selectedPlanningViewId && planningViews.some((view) => view.id === selectedPlanningViewId)) return;
+    const fallback = planningViews.find((view) => view.nativeMode === (props.initialViewMode || "tree")) || planningViews[0];
+    if (selectedPlanningViewId !== (fallback?.id || "")) setSelectedPlanningViewId(fallback?.id || "");
+  }, [planningViews, selectedPlanningViewId, props.initialViewMode]);
   const [metricsRangePreset, setMetricsRangePreset] = useState<MetricRangePreset>(props.metricsRangePreset || "today");
   const [metricsGroupBy, setMetricsGroupBy] = useState<MetricGroupBy>(props.metricsGroupBy || "project");
   const [metricsDisplayMetric, setMetricsDisplayMetric] = useState<MetricDisplayMetric>(props.metricsDisplayMetric || "percentage");
@@ -2048,12 +2066,13 @@ export default function PlanningView(props: {
   useEffect(() => {
     const task = safeTasks.find((item) => item.id === props.focusTaskId);
     if (!task) return;
-    setViewMode("tree");
+    const treeView = planningViews.find((view) => view.nativeMode === "tree");
+    if (treeView) setSelectedPlanningViewId(treeView.id);
     clearAllFilters();
     setFilterOpen(false);
     const branch = task.projectId || "unassigned";
     props.setCollapsed((current) => ({ ...current, [branch]: false }));
-  }, [props.focusTaskId]);
+  }, [props.focusTaskId, planningViews]);
 
   useLayoutEffect(() => {
     if (!props.focusTaskId || viewMode !== "tree") return;
@@ -2296,24 +2315,63 @@ export default function PlanningView(props: {
   ].filter(Boolean) as Array<{ key: string; label: string; onClear: () => void }>;
 
   return (
-    <main className={`df-planning${props.compact ? " compact-layout" : ""}`}>
+    <main className={`df-planning${props.compact ? " compact-layout" : ""}${props.planningSidebarCollapsed ? " is-sidebar-collapsed" : ""}`} style={{ "--planning-sidebar-width": `${planningSidebarWidth}px` } as React.CSSProperties}>
       {dialog.host}
       <div className="df-planning-body">
         <section className="df-mindmap no-root">
           <aside className="df-planning-sidebar" aria-label={props.lang === "zh" ? "\u89c4\u5212\u5de5\u5177" : "Planning tools"}>
-            {availableModes.length > 1 && (
-              <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare ui-choice-list--motion-selection">
-                <SelectionIndicator activeKey={`${viewMode}:${props.lang}:${availableModes.length}`} />
-                {availableModes.map((m) => (
-                  <button type="button" key={m} className={`df-view-btn ui-choice-item${viewMode === m ? " active" : ""}`} aria-label={metricViewLabel(props.lang, m)} aria-pressed={viewMode === m} onClick={() => changePlanningView(m)} title={metricViewLabel(props.lang, m)}>
-                      <PlanningModeIcon mode={m} />
-                      <span>{metricViewLabel(props.lang, m)}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+            <button type="button" className="df-planning-sidebar-toggle" aria-label={props.planningSidebarCollapsed ? (props.lang === "zh" ? "展开规划侧栏" : "Expand planning sidebar") : (props.lang === "zh" ? "收起规划侧栏" : "Collapse planning sidebar")} title={props.planningSidebarCollapsed ? (props.lang === "zh" ? "展开侧栏" : "Expand sidebar") : (props.lang === "zh" ? "收起侧栏" : "Collapse sidebar")} aria-expanded={!props.planningSidebarCollapsed} onClick={() => props.onPlanningSidebarCollapsedChange?.(!props.planningSidebarCollapsed)}>
+              {props.planningSidebarCollapsed ? <UiPanelLeftOpenIcon size={20} /> : <UiPanelLeftCloseIcon size={20} />}
+            </button>
+            <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare ui-choice-list--motion-selection">
+              {planningViews.length > 0 && <SelectionIndicator activeKey={`${selectedPlanningViewId}:${props.lang}:${planningViews.length}`} />}
+              {planningViews.map((view) => (
+                <button type="button" key={view.id} className={`df-view-btn ui-choice-item${selectedPlanningViewId === view.id ? " active" : ""}`} aria-label={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name} aria-pressed={selectedPlanningViewId === view.id} onClick={() => changePlanningView(view.id)} title={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}>
+                  {view.iconUrl ? <img className="df-planning-view-icon" src={view.iconUrl} alt="" aria-hidden="true" /> : view.nativeMode ? <PlanningModeIcon mode={view.nativeMode} /> : <span className="df-planning-view-initial" aria-hidden="true">{Array.from(view.name.trim())[0]?.toLocaleUpperCase() || "P"}</span>}
+                  <span>{view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}</span>
+                </button>
+              ))}
+            </div>
+            <div className="df-planning-plugin-items" aria-label={props.lang === "zh" ? "规划侧栏插件" : "Planning sidebar plugins"}>
+              {extensionSnapshot.headerItems.filter((item) => item.placement === "planning-sidebar").map((item) => <div className="df-planning-plugin-item" key={item.id}><ExtensionMount contribution={item} /></div>)}
+            </div>
+            {!props.compact && <div
+              className="df-planning-sidebar-resizer"
+              role="separator"
+              aria-orientation="vertical"
+              aria-label={props.lang === "zh" ? "调整规划侧栏宽度" : "Resize planning sidebar"}
+              aria-valuemin={150}
+              aria-valuemax={360}
+              aria-valuenow={planningSidebarWidth}
+              tabIndex={0}
+              onPointerDown={(event) => {
+                if (props.planningSidebarCollapsed) return;
+                event.preventDefault();
+                sidebarResizeRef.current = { pointerId: event.pointerId, startX: event.clientX, startWidth: planningSidebarWidth };
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerMove={(event) => {
+                const drag = sidebarResizeRef.current;
+                if (!drag || drag.pointerId !== event.pointerId) return;
+                updateSidebarWidth(drag.startWidth + event.clientX - drag.startX);
+              }}
+              onPointerUp={(event) => {
+                const drag = sidebarResizeRef.current;
+                if (!drag || drag.pointerId !== event.pointerId) return;
+                sidebarResizeRef.current = null;
+                const width = Math.max(150, Math.min(360, Math.round(drag.startWidth + event.clientX - drag.startX)));
+                updateSidebarWidth(width, true);
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }}
+              onPointerCancel={() => { sidebarResizeRef.current = null; }}
+              onKeyDown={(event) => {
+                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+                event.preventDefault();
+                updateSidebarWidth(planningSidebarWidth + (event.key === "ArrowRight" ? 16 : -16), true);
+              }}
+            />}
             <div className="df-planning-filter-corner">
-              {!props.demo && viewMode !== "metrics" && (
+              {!props.demo && viewMode !== "metrics" && viewMode !== "plugin" && viewMode !== null && (
               <div className="df-filter-popover-anchor">
                 <button
                   type="button"
@@ -2517,7 +2575,9 @@ export default function PlanningView(props: {
 
           </aside>
           <div className="df-tree-wrap">
-            {showLongRangeGuide && (
+            {viewMode === "plugin" && selectedPlanningView && <div className="df-planning-plugin-view"><ExtensionMount contribution={selectedPlanningView} /></div>}
+            {!selectedPlanningView && <div className="df-planning-no-view" role="status">{extensionSnapshot.safeMode ? (props.lang === "zh" ? "受限模式已暂停所有插件视图。关闭受限模式以继续规划。" : "Restricted mode has paused all plugin views. Turn it off to continue planning.") : (props.lang === "zh" ? "暂无可用规划视图。请在设置中的插件市场安装并启用一个视图插件。" : "No planning views are available. Install and enable a view plugin from the plugin market.")}</div>}
+            {showLongRangeGuide && viewMode === "tree" && (
               <aside className="df-planning-longrange-guide" role="note">
                 <CloseButton className="df-planning-guide-close" label={props.lang === "zh" ? "关闭规划说明" : "Dismiss planning note"} onClick={() => { if (!props.demo) dismissGuide("planning"); setGuideDismissed(true); }} />
                 <span>{props.lang === "zh" ? "长期任务，从这里开始规划" : "Plan long-range work here"}</span>
@@ -2525,7 +2585,7 @@ export default function PlanningView(props: {
                 <div aria-hidden="true"><b>01 {props.lang === "zh" ? "项目" : "Project"}</b><i>→</i><b>02 {props.lang === "zh" ? "任务" : "Tasks"}</b><i>→</i><b>03 {props.lang === "zh" ? "排程" : "Schedule"}</b></div>
               </aside>
             )}
-          {viewMode !== "metrics" && activeFilterChips.length > 0 && (
+          {viewMode !== "metrics" && viewMode !== "plugin" && viewMode !== null && activeFilterChips.length > 0 && (
             <div className="df-active-filter-bar" role="region" aria-label={props.lang === "zh" ? "Active filters" : "Active filters"}>
               {activeFilterChips.map((chip) => (
                 <button

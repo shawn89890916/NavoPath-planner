@@ -14,7 +14,8 @@ function bridge() {
     key: "official:weather", platform: "web",
     host: { getData: () => data, saveData: async next => { data = next; }, getSettings: () => ({ language: "en" } as any), saveSettings: async () => {}, getAccountId: () => "alice", toast: vi.fn(), internal: {} },
     config: () => config, saveConfig: async patch => { config = { ...config, ...patch }; }, getValue: async () => null, setValue: async () => {}, removeValue: async () => {},
-    contribute: (kind) => { contributions.push(kind); return clean; }, executeCommand: async () => {}, addCommand: () => clean,
+    contribute: (kind, name, mount, options) => { contributions.push(`${kind}:${name}:${options?.placement || ""}:${options?.planningView ? "planning" : ""}`); return clean; },
+    registerNativePlanningView: () => clean, executeCommand: async () => {}, addCommand: () => clean,
   };
   return { value, clean, contributions, getData: () => data };
 }
@@ -37,6 +38,27 @@ describe("trusted plugin runtime", () => {
     await ctx.tasks.update(f.getData().tasks[0].id, { title: "Changed" }); expect(f.getData().tasks[0].title).toBe("Changed");
     await loaded.configChanged({ city: "Shanghai" }); expect(onSettingsChange).toHaveBeenCalledWith({ city: "Shanghai" });
     await loaded.dispose(); expect(f.clean).toHaveBeenCalledTimes(2); expect(revoke).toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+  it("routes header items to declared placements and cleans planning view registrations", async () => {
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test"); vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    const f = bridge(), pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather)); delete pkg.manifest.styles;
+    let ctx!: PluginContext;
+    const loaded = await loadPlugin(pkg, f.value, async () => ({ default: { onload(context) {
+      ctx = context;
+      context.ui.addHeaderItem("Legacy", () => {});
+      context.ui.addHeaderItem("Candidates", () => {}, { placement: "candidate-header" });
+      context.ui.addHeaderItem("Planning tools", () => {}, { placement: "planning-sidebar" });
+      context.ui.registerPlanningView("Review", () => {});
+    } } }));
+    expect(f.contributions).toEqual([
+      "headerItems:Legacy:app-header:",
+      "headerItems:Candidates:candidate-header:",
+      "headerItems:Planning tools:planning-sidebar:",
+      "views:Review::planning",
+    ]);
+    await loaded.dispose();
+    expect(f.clean).toHaveBeenCalledTimes(4);
     vi.unstubAllGlobals();
   });
   it("cleans partial activation when plugin startup throws", async () => {

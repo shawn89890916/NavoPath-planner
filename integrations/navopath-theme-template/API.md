@@ -43,10 +43,16 @@ this value against the catalog and offers an update when it increases.
 - Use `settings.registerPage` for configurable options. Every installed plugin
   still gets a Settings action with its version, author and platform details if
   it has no custom settings page.
-- Register a `ui.addHeaderItem` for an active tool. When a plugin contributes a
-  view but no header item, the host places a first-letter launcher in the top
-  bar and opens that view directly. Remaining views and commands stay in the
-  plugin-tools menu.
+- Register a `ui.addHeaderItem` for an active tool and declare its placement as
+  `app-header`, `candidate-header`, or `planning-sidebar`. The two-argument
+  form remains supported and defaults to `app-header`.
+- Use `ui.registerPlanningView(name, mount)` for a view mounted in the Planning
+  workspace. The plugin manifest icon is used for its sidebar entry; when it is
+  missing, the host uses the plugin name's first letter. Return cleanup from the
+  mount and unregister the view when the plugin unloads.
+- Keep each plugin's primary action in one declared location. `registerView`
+  remains available for general plugin tools and does not create a Planning
+  entry.
 - Keep header controls icon-only and accessible. Use the shared
   `navopath-plugin-header-button` class, a localized accessible label, a 24px
   monochrome outline icon and no added pill or border.
@@ -85,7 +91,7 @@ contain an executable entry point. Safe mode suspends plugin execution.
 | Settings | `settings.get()`, async `save(patch)`, `registerPage(name, mount)` |
 | Synced storage | Async `storage.get(key)`, `set`, `remove`; use for plugin data |
 | Device storage | `localStorage.get(key)`, `set`; keep API keys and device preferences here |
-| UI | `ui.addHeaderItem(name, mount)`, `registerView(name, mount)`, `toast(message)` |
+| UI | `ui.addHeaderItem(name, mount, { placement? })`, `ui.registerPlanningView(name, mount)`, `registerView(name, mount)`, `toast(message)` |
 | Commands | `commands.register(id, name, run, shortcut?)`, `execute(id)` |
 | Events | `events.on(name, listener)`, `emit(name, payload?)`; `on(target,event,listener)` for DOM events |
 | Lifecycle | `register(dispose)`, `interval(callback, milliseconds)`; SDK registrations clean up on unload |
@@ -107,7 +113,9 @@ that installed entry's methods. Do not treat trusted plugins as sandboxed code.
 
 ### Header icon contract
 
-Header contributions appear beside the NavoPath mark in installation order.
+Header contributions appear in their declared host location. The available
+placements are `app-header`, `candidate-header`, and `planning-sidebar`. The
+legacy `ui.addHeaderItem(name, mount)` signature defaults to `app-header`.
 Use one icon-only button with the host-provided navopath-plugin-header-button
 class, a 20px outline icon with 1.8px strokes, a localized aria-label, and a
 concise title that can include current state. Let the host own button size,

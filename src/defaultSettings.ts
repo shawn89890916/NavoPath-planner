@@ -20,6 +20,8 @@ export const defaultSettings: Settings = {
   acceptBetaUpdates: false,
   language: "en",
   planningView: "tree",
+  planningSidebarCollapsed: false,
+  planningSidebarWidth: 216,
   metricsRangePreset: "today",
   metricsGroupBy: "project",
   metricsDisplayMetric: "percentage",

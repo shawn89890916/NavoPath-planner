@@ -930,19 +930,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
             </SettingSection>}
 
-            {settingsTarget.category === "workflow" && <SettingSection anchor="planning-views" title={lang === "zh" ? "规划视图" : "Planning views"} description={lang === "zh" ? "选择规划页中可用的组织方式。" : "Choose the organization views available on Planning."}>
-              <SettingRow
-                title={lang === "zh" ? "启用看板视图" : "Enable Kanban view"}
-                control={<SettingToggle checked={settings.featureKanbanViewEnabled !== false} ariaLabel={lang === "zh" ? "启用看板视图" : "Enable Kanban view"} onChange={(next) => onSave({ featureKanbanViewEnabled: next })} />}
-              />
-              <SettingRow
-                title={lang === "zh" ? "启用四象限视图" : "Enable Eisenhower matrix view"}
-                control={<SettingToggle checked={settings.featureQuadrantViewEnabled !== false} ariaLabel={lang === "zh" ? "启用四象限视图" : "Enable Eisenhower matrix view"} onChange={(next) => onSave({ featureQuadrantViewEnabled: next })} />}
-              />
-              <SettingRow
-                title={lang === "zh" ? "启用列表视图" : "Enable list view"}
-                control={<SettingToggle checked={settings.featureListViewEnabled !== false} ariaLabel={lang === "zh" ? "启用列表视图" : "Enable list view"} onChange={(next) => onSave({ featureListViewEnabled: next })} />}
-              />
+            {settingsTarget.category === "workflow" && <SettingSection anchor="planning-views" title={lang === "zh" ? "规划视图" : "Planning views"} description={lang === "zh" ? "在插件设置中安装、启用或停用规划视图。" : "Install, enable, or disable Planning views in Plugin settings."}>
+              <SettingRow title={lang === "zh" ? "管理规划视图插件" : "Manage Planning view plugins"} description={lang === "zh" ? "树和指标是预装官方插件；看板、矩阵和列表可从插件市场安装。" : "Tree and Metrics are preinstalled official plugins. Kanban, Matrix, and List are available in the plugin market."} />
             </SettingSection>}
 
             {settingsTarget.category === "workflow" && <SettingSection anchor="smart-scheduling" title={lang === "zh" ? "智能排程" : "Smart scheduling"} description={lang === "zh" ? "定义自动排程使用的工作时段与任务间隔。" : "Define the working window and task spacing used by automatic scheduling."}>
@@ -1000,11 +989,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             </SettingSection>}
 
             {settingsTarget.category === "workflow" && <SettingSection anchor="metrics" title={lang === "zh" ? "指标" : "Metrics"} description={lang === "zh" ? "规划页指标视图的默认范围与分组。" : "Default range and grouping for the planning-page metrics view."}>
-              <SettingRow
-                title={lang === "zh" ? "启用指标视图" : "Enable metrics view"}
-                description={lang === "zh" ? "关闭后隐藏规划页的「指标」视图入口。" : "When off, the Metrics entry in the planning view switcher is hidden."}
-                control={<SettingToggle checked={settings.featureMetricsEnabled !== false} ariaLabel={lang === "zh" ? "启用指标视图" : "Enable metrics view"} onChange={(next) => onSave({ featureMetricsEnabled: next })} />}
-              />
+              <SettingRow title={lang === "zh" ? "指标插件状态" : "Metrics plugin status"} description={lang === "zh" ? "在设置 → 插件中管理指标插件；以下选项只调整显示方式。" : "Manage the Metrics plugin in Settings → Plugins. The options below adjust its display."} />
               <SettingRow
                 title={lang === "zh" ? "默认时间范围" : "Default time range"}
                 control={<SettingSelect<NonNullable<Settings["metricsRangePreset"]>>

@@ -504,6 +504,8 @@ export interface Settings {
   acceptBetaUpdates?: boolean;
   language: Language;
   planningView: "tree" | "matrix" | "split";
+  planningSidebarCollapsed?: boolean;
+  planningSidebarWidth?: number;
   metricsRangePreset?: "all" | "today" | "yesterday" | "thisWeek" | "lastWeek" | "thisMonth" | "custom";
   metricsGroupBy?: "project" | "customCategory" | "tag" | "importance" | "urgency" | "completion" | "taskType";
   metricsDisplayMetric?: "percentage" | "duration" | "taskCount" | "completionRate";

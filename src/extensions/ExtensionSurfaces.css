@@ -28,6 +28,8 @@
 .df-extension-header-launcher:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
 .df-extension-header-launcher img { width: 22px; height: 22px; object-fit: contain; }
 .df-extension-header-action { flex: 0 0 auto; min-width: 0; max-width: 168px; min-height: 32px; height: 32px; overflow: hidden; padding: 0 8px; border: 0; border-radius: var(--radius-control, 8px); color: var(--text-muted); background: transparent; font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.df-extension-header-action.is-command { display: grid; width: 36px; min-width: 36px; max-width: 36px; min-height: 36px; height: 36px; place-items: center; padding: 0; }
+.df-extension-header-action.is-command svg { width: 18px; height: 18px; flex: 0 0 auto; }
 .df-extension-header-action:hover, .df-extension-header-action:focus-visible { border: 0; color: var(--text-main); background: var(--paper-note); }
 .df-extension-overflow-action { justify-content: flex-start; width: 100%; text-align: left; }
 #root .df-app .df-header-inner > .df-brand { min-width: 0; max-width: calc(100vw - 290px); }

@@ -20,5 +20,5 @@ export interface InstalledExtension {
 export interface ExtensionPreferences {
   version: 1; sources: ExtensionSource[]; installed: Record<string, InstalledExtension>;
   removed: Record<string, string>; activeTheme: string | null; autoCheckUpdates: boolean; autoUpdate: boolean;
-  headerOrder?: string[]; migratedLegacy?: boolean; updatedAt?: string;
+  headerOrder?: string[]; migratedLegacy?: boolean; migratedPlanningViews?: boolean; updatedAt?: string;
 }

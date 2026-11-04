@@ -1,4 +1,4 @@
-import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount } from "./types";
+import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativePlanningViewMode, PluginUiPlacement } from "./types";
 import { compatibility, compareVersions, defaultExtensionPreferences, isRecord, MAX_PACKAGE_BYTES, normalizeExtensionPreferences, readPackage, publicHttps, sha256 } from "./packages";
 import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
 import { emitPluginEvent, loadPlugin, type LoadedPlugin } from "./runtime";
@@ -292,10 +292,16 @@ export class ExtensionService {
       getValue: async <T>(name: string): Promise<T | null> => { guard(); return this.getValue(key, name) as Promise<T | null>; },
       setValue: async (name: string, value: unknown) => { guard(); await this.writeValue(key, name, value, false); },
       removeValue: async (name: string) => { guard(); await this.writeValue(key, name, null, true); },
-      contribute: (kind: "settingsPages" | "headerItems" | "views", name: string, mount: Mount): Dispose => {
-        guard(); const contribution: ExtensionContribution = { id: crypto.randomUUID(), owner: key, name, mount };
+      contribute: (kind: "settingsPages" | "headerItems" | "views", name: string, mount: Mount, options?: { placement?: PluginUiPlacement; iconUrl?: string; planningView?: boolean; nativeMode?: NativePlanningViewMode }): Dispose => {
+        guard(); const contribution: ExtensionContribution = { id: crypto.randomUUID(), owner: key, name, mount, ...options };
         this.setSnapshot({ [kind]: [...this.snapshot[kind], contribution] }); return () => { this.setSnapshot({ [kind]: this.snapshot[kind].filter(item => item.id !== contribution.id) }); };
       }, executeCommand: this.executeCommand,
+      registerNativePlanningView: (mode: NativePlanningViewMode, name: string, iconUrl?: string): Dispose => {
+        guard();
+        const nativeModes: Record<string, NativePlanningViewMode> = { tree: "tree", kanban: "kanban", matrix: "eisenhower", list: "list", metrics: "metrics" };
+        if (!key.startsWith("official:") || nativeModes[key.slice("official:".length)] !== mode) throw new Error("Native planning views are reserved for matching official packages");
+        return this.bridge(key).contribute("views", name, () => {}, { iconUrl, planningView: true, nativeMode: mode });
+      },
       addCommand: (id: string, name: string, run: () => void | Promise<void>, shortcut?: string): Dispose => { guard(); if (this.commands.has(id)) throw new Error("Duplicate plugin command"); this.commands.set(id, { name, run, shortcut }); this.setSnapshot({}); emitPluginEvent("commands:changed"); return () => { this.commands.delete(id); this.setSnapshot({}); emitPluginEvent("commands:changed"); }; },
     };
   }
@@ -359,6 +365,28 @@ export class ExtensionService {
         const config = { ...settings.pluginConfigs?.pomodoro, ...settings.widgetTimerPreferences };
         await host.saveSettings({ extensionConfigs: { ...settings.extensionConfigs, "official:pomodoro": config } });
       }
+    }
+    if (!preferences.migratedPlanningViews) {
+      const builtins: Array<{ id: string; enabled: boolean }> = [
+        { id: "tree", enabled: true },
+        { id: "kanban", enabled: settings.featureKanbanViewEnabled === true },
+        { id: "matrix", enabled: settings.featureQuadrantViewEnabled === true },
+        { id: "list", enabled: settings.featureListViewEnabled === true },
+        { id: "metrics", enabled: settings.featureMetricsEnabled !== false },
+      ];
+      const { officialPackages, officialPackageTexts } = await import("./officialPackages");
+      for (const { id, enabled } of builtins) {
+        if (!enabled && id !== "metrics") continue;
+        const key = `official:${id}`;
+        if (next.installed[key] || next.removed[key]) continue;
+        const pkg = officialPackages[id], text = officialPackageTexts[id];
+        if (!pkg || !text) continue;
+        const bytes = new TextEncoder().encode(text), hash = await sha256(bytes), now = new Date().toISOString();
+        await this.publishPackage(hash, bytes);
+        next.installed[key] = { key, sourceId: "official", manifest: pkg.manifest, sha256: hash, enabled, installedAt: now, updatedAt: now };
+      }
+      next.migratedPlanningViews = true;
+      changed = true;
     }
     if (settings.featureTemplatesEnabled !== false && !next.installed["official:schedule-templates"] && !next.removed["official:schedule-templates"]) {
       const { officialPackages, officialPackageTexts } = await import("./officialPackages"); const pkg = officialPackages["schedule-templates"];

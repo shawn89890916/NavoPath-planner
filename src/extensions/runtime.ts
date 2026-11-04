@@ -1,5 +1,5 @@
 import { registerCalendarBackground } from "./calendarBackgrounds";
-import type { Dispose, ExtensionHost, ExtensionManifest, ExtensionPackage, ExtensionPlatform, Mount, PluginContext, PluginModule, CollectionApi } from "./types";
+import type { Dispose, ExtensionHost, ExtensionManifest, ExtensionPackage, ExtensionPlatform, Mount, PluginContext, PluginModule, CollectionApi, NativePlanningViewMode, PluginUiPlacement } from "./types";
 import { registerTimerMode, openTimerMode } from "./timers";
 import type { CalendarEvent, Project, Task } from "../types";
 
@@ -7,7 +7,8 @@ export interface RuntimeBridge {
   host: ExtensionHost; platform: ExtensionPlatform; key: string;
   config(): Record<string, unknown>; saveConfig(patch: Record<string, unknown>): Promise<void>;
   getValue<T>(key: string): Promise<T | null>; setValue(key: string, value: unknown): Promise<void>; removeValue(key: string): Promise<void>;
-  contribute(kind: "settingsPages" | "headerItems" | "views", name: string, mount: Mount): Dispose;
+  contribute(kind: "settingsPages" | "headerItems" | "views", name: string, mount: Mount, options?: { placement?: PluginUiPlacement; iconUrl?: string; planningView?: boolean; nativeMode?: NativePlanningViewMode }): Dispose;
+  registerNativePlanningView(mode: NativePlanningViewMode, name: string, iconUrl?: string): Dispose;
   executeCommand(id: string): Promise<void>; addCommand(id: string, name: string, run: () => void | Promise<void>, shortcut?: string): Dispose;
 }
 export type LoadedPlugin = { module: PluginModule; context: PluginContext; dispose: Dispose; configChanged(config: Record<string, unknown>): Promise<void> };
@@ -58,14 +59,20 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
   });
   const context: PluginContext = {
     apiVersion: 1, id: bridge.key, manifest: pkg.manifest, platform: bridge.platform, window: typeof location !== "undefined" && new URLSearchParams(location.search).get("compactWindow") === "1" ? "compact" : "main", language: bridge.host.getSettings().language,
-    app: bridge.host, tasks: collection<Task>("tasks"), projects: collection<Project>("projects"), calendar: { ...collection<CalendarEvent>("events"), registerBackground: predicate => { const off=registerCalendarBackground(predicate); emitPluginEvent("calendar:backgrounds-changed"); return register(()=>{ off(); emitPluginEvent("calendar:backgrounds-changed"); }); } }, register,
+    app: { ...bridge.host, internal: { ...bridge.host.internal, registerNativePlanningView: (mode: NativePlanningViewMode, name: string) => bridge.registerNativePlanningView(mode, name, pkg.manifest.icon ? resources.get(pkg.manifest.icon) : undefined) } },
+    tasks: collection<Task>("tasks"), projects: collection<Project>("projects"), calendar: { ...collection<CalendarEvent>("events"), registerBackground: predicate => { const off=registerCalendarBackground(predicate); emitPluginEvent("calendar:backgrounds-changed"); return register(()=>{ off(); emitPluginEvent("calendar:backgrounds-changed"); }); } }, register,
     on(target, event, listener) { target.addEventListener(event, listener); return register(() => target.removeEventListener(event, listener)); },
     interval(callback, ms) { const timer = window.setInterval(callback, ms); return register(() => window.clearInterval(timer)); },
       events: { on(event, listener) { return register(subscribePluginEvent(event, listener)); }, emit: emitPluginEvent },
     settings: { get: () => bridge.config() as any, save: bridge.saveConfig, registerPage: (name, mount) => register(bridge.contribute("settingsPages", name, mount)) },
     storage: { get: bridge.getValue, set: bridge.setValue, remove: bridge.removeValue },
     localStorage: { get<T>(key: string) { try { return JSON.parse(localStorage.getItem(ownLocal + key) || "null") as T | null; } catch { return null; } }, set(key, value) { localStorage.setItem(ownLocal + key, JSON.stringify(value)); } },
-    ui: { addHeaderItem: (name, mount) => register(bridge.contribute("headerItems", name, mount)), registerView: (name, mount) => register(bridge.contribute("views", name, mount)), toast: bridge.host.toast },
+    ui: {
+      addHeaderItem: (name, mount, options) => register(bridge.contribute("headerItems", name, mount, { placement: options?.placement || "app-header" })),
+      registerView: (name, mount) => register(bridge.contribute("views", name, mount)),
+      registerPlanningView: (name, mount) => register(bridge.contribute("views", name, mount, { iconUrl: pkg.manifest.icon ? resources.get(pkg.manifest.icon) : undefined, planningView: true })),
+      toast: bridge.host.toast,
+    },
     commands: { register: (id, name, run, shortcut) => register(bridge.addCommand(`${bridge.key}:${id}`, name, run, shortcut)), execute: id => bridge.executeCommand(id.includes(":") ? id : `${bridge.key}:${id}`) },
     timers: { registerMode: provider => register(registerTimerMode(provider)), open: mode => { if (disposed) throw new Error("Plugin is unloaded"); openTimerMode(mode); } },
     patch: (target, key, wrapper) => register(patchMethod(target, key, wrapper)),

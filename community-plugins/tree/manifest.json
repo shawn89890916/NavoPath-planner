@@ -1,0 +1,15 @@
+{
+  "id": "tree",
+  "name": "Tree",
+  "description": "Organize projects and tasks as an editable hierarchy.",
+  "author": "NavoPath",
+  "version": "1.0.0",
+  "kind": "plugin",
+  "apiVersion": 1,
+  "minAppVersion": "1.6.3-beta.3",
+  "platforms": ["desktop", "web", "mobile"],
+  "main": "main.js",
+  "icon": "icon.svg",
+  "license": "MIT",
+  "repository": "https://github.com/shawn89890916/NavoPath-planner"
+}

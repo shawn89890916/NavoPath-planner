@@ -1,8 +1,24 @@
 # NavoPath 更新日志
 
-## 2026-11-04 · 1.6.3 Beta 3
+## 2026-11-04 · 1.6.3 Beta 4
+
+### 新增
+- 规划侧栏可用面板按钮收起，并支持拖动调整宽度；子任务统一使用今日候选卡片样式。
+
+### 改进
+- 顶栏插件命令使用紧凑图标并保留可访问名称；竖屏 Dock 顶栏固定 N 标志，底栏完整显示执行与规划切换。
 
 ### 1.6.3 Beta 3
+
+### 1.6.3 Beta 3
+
+### 新增
+- 插件 API 支持把入口放到总顶栏、今日候选顶栏或规划侧栏；规划插件可注册主区域视图，并沿用插件图标或首字母。
+- 树与指标成为预装官方规划插件；看板、矩阵和列表可从官方市场安装。规划侧栏可收起为图标栏，旧版已启用视图会自动迁移。
+
+### 改进
+- 插件 API 文档改为带当前章节标记的侧边导航，窄屏使用横向章节栏，纸张纹理和 `#standards` 直达链接均保留。
+- 工作流受限模式会暂停全部插件视图；设置页通过插件管理规划视图。
 
 ### 修复
 - 竖屏 Dock 执行栏与 N 同行；方向菜单去掉角标和多余悬停提示，说明移至选项下方并贴近入口。
@@ -366,9 +382,25 @@
 
 # NavoPath Changelog
 
-## 2026-11-04 · 1.6.3 Beta 3
+## 2026-11-04 · 1.6.3 Beta 4
+
+### Added
+- The Planning sidebar can collapse with a panel control and be resized by dragging; subtasks now share the Today's Candidates card style.
+
+### Improved
+- Header plugin commands use compact icons with accessible names; portrait Dock keeps N at the far left and shows both Execute and Planning in the bottom bar.
 
 ### 1.6.3 Beta 3
+
+### 1.6.3 Beta 3
+
+### Added
+- The plugin API supports entries in the app header, Today's Candidates header, or Planning sidebar. Planning plugins can register workspace views using their icon or a first-letter fallback.
+- Tree and Metrics are preinstalled official Planning plugins; Kanban, Matrix, and List are available in the official market. The Planning sidebar collapses to an icon rail, and previously enabled legacy views migrate automatically.
+
+### Improved
+- Plugin API docs now use a current-section sidebar on wide screens and a horizontal section bar on narrow screens while keeping the paper texture and `#standards` deep link.
+- Restricted mode pauses every plugin view, and workflow settings direct users to manage Planning views through Plugins.
 
 ### Fixes
 - Portrait Dock controls share a row with N. The side menu drops its dot and redundant tooltip, moves guidance below the choices, and sits closer to the trigger.

@@ -110,6 +110,30 @@
     },
     {
       "manifest": {
+        "id": "kanban",
+        "name": "Kanban",
+        "description": "Plan and move tasks through workflow stages.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.6.3-beta.3",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "icon": "icon.svg",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/kanban.navopackage.json",
+      "sha256": "5d40b6fc505d6318b47e838fa391c2746e17f039f5e7a2f3030e512ffb483ede",
+      "iconUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/icons/kanban.svg"
+    },
+    {
+      "manifest": {
         "author": "NavoPath",
         "version": "1.1.0",
         "apiVersion": 1,
@@ -169,6 +193,78 @@
         "light": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/linen-light.png",
         "dark": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/linen-dark.png"
       }
+    },
+    {
+      "manifest": {
+        "id": "list",
+        "name": "List",
+        "description": "Review, filter and reorder tasks in a compact list.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.6.3-beta.3",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "icon": "icon.svg",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/list.navopackage.json",
+      "sha256": "7808cbac426131fd79fd3a78578e77296258c62503b051928d2923a0021b79b4",
+      "iconUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/icons/list.svg"
+    },
+    {
+      "manifest": {
+        "id": "matrix",
+        "name": "Matrix",
+        "description": "Prioritize tasks by importance and urgency.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.6.3-beta.3",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "icon": "icon.svg",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/matrix.navopackage.json",
+      "sha256": "3540eb8c55009fff2e1fc7f348d16593ee047b361bfe280c061d3bd3e847446c",
+      "iconUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/icons/matrix.svg"
+    },
+    {
+      "manifest": {
+        "id": "metrics",
+        "name": "Metrics",
+        "description": "Analyze scheduled time, completion and project allocation.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.6.3-beta.3",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "icon": "icon.svg",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/metrics.navopackage.json",
+      "sha256": "98b35c1f0792e3d2c9a45bf840fa61b7f8b2b28f2338adb40ac728dc391dcc1c",
+      "iconUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/icons/metrics.svg"
     },
     {
       "manifest": {
@@ -423,6 +519,30 @@
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/schedule-templates.navopackage.json",
       "sha256": "fbb48030324b28d3bf76ed35e43bb69f0b5236f6e987dba5d2a55c6915b544cd"
+    },
+    {
+      "manifest": {
+        "id": "tree",
+        "name": "Tree",
+        "description": "Organize projects and tasks as an editable hierarchy.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.6.3-beta.3",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "icon": "icon.svg",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/tree.navopackage.json",
+      "sha256": "947169448d2bc6ccffe91ec01ee64590227d1187cb169e391b9402e622712352",
+      "iconUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/icons/tree.svg"
     },
     {
       "manifest": {

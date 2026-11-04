@@ -38,6 +38,7 @@ for (const folder of (await readdir(resolve(root, 'community-plugins'))).sort())
     files[manifest.main] = { encoding: 'utf8', data: result.outputFiles[0].text };
   }
   if (manifest.styles) files[manifest.styles] = { encoding: 'utf8', data: (await readFile(resolve(dir, manifest.styles), 'utf8')).replaceAll('\r\n', '\n') };
+  if (manifest.icon) files[manifest.icon] = { encoding: 'utf8', data: (await readFile(resolve(dir, manifest.icon), 'utf8')).replaceAll('\r\n', '\n') };
   let previewUrl, previewUrls;
   const previewEntries = [...(manifest.preview ? [['default', manifest.preview]] : []), ...Object.entries(manifest.previews || {})];
   for (const [mode, path] of previewEntries) {
