@@ -29,11 +29,11 @@ jobs:
       - name: Check changelog
         run: node scripts/changelog-maintain.mjs --check
 
-      - name: Check Beta release policy and tag
+      - name: Check desktop release policy and tag
         shell: pwsh
         run: |
           node scripts/prepare-desktop-release.mjs --check-policy
-          if ($LASTEXITCODE -ne 0) { throw "Beta release policy validation failed" }
+          if ($LASTEXITCODE -ne 0) { throw "Desktop release policy validation failed" }
           $version = node -p "require('./package.json').version"
           if ($env:GITHUB_REF_TYPE -eq "tag" -and $env:GITHUB_REF_NAME -ne "v$version") {
             throw "Release tag must match package.json version v$version"
@@ -66,18 +66,26 @@ jobs:
             throw "Release $tag already exists. Published versions and assets must not be overwritten."
           }
 
+          $isBeta = $version -match '-beta\.\d+$'
           $label = $version -replace '-beta\.\d+$', ' Beta'
-          gh release create $tag @assets --verify-tag --draft --prerelease --title "NavoPath $label"
-          if ($LASTEXITCODE -ne 0) { throw "Creating the Beta draft release failed" }
-          gh release edit $tag --draft=false --prerelease --latest=false
-          if ($LASTEXITCODE -ne 0) { throw "Publishing the Beta release failed" }
+          $createFlags = @("--draft", "--title", "NavoPath $label")
+          if ($isBeta) { $createFlags += "--prerelease" }
+          gh release create $tag @assets --verify-tag @createFlags
+          if ($LASTEXITCODE -ne 0) { throw "Creating the desktop draft release failed" }
+          if ($isBeta) {
+            gh release edit $tag --draft=false --prerelease --latest=false
+          } else {
+            gh release edit $tag --draft=false --latest=true
+          }
+          if ($LASTEXITCODE -ne 0) { throw "Publishing the desktop release failed" }
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify published Beta release
+      - name: Verify published desktop release
         shell: pwsh
         run: |
           $version = node -p "require('./package.json').version"
           node scripts/verify-release.mjs "v$version"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
