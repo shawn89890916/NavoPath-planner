@@ -26,6 +26,7 @@ import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricCompletion
 import { extensionService } from "./extensions/service";
 import { ExtensionMount } from "./extensions/ExtensionMount";
 import type { ExtensionContribution, NativePlanningViewMode } from "./extensions/types";
+import { CandidateSubtaskItem } from "./WorkspacePresentation";
 
 type TreeNodeKind = "project" | "task" | "subtask";
 type TreeDragNode = { kind: TreeNodeKind; id: string };
@@ -460,7 +461,6 @@ function PlanningSubtaskNode(props: {
   demo?: boolean;
   lang: Language;
   subtask: Subtask;
-  projectColor: string;
   onToggle: (subtaskId: string) => void;
   onPromote: (subtaskId: string) => void;
   onRename: (subtaskId: string) => void;
@@ -468,137 +468,44 @@ function PlanningSubtaskNode(props: {
   onMoveProject: (subtaskId: string) => void;
   onDelete: (subtaskId: string) => void;
   onAddSubtask: (parentId: string) => void;
-  dragging?: boolean;
+  onDragStart: (event: React.PointerEvent, subtaskId: string) => void;
+  draggingSubtaskId?: string;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(true);
-  const { tooltipEl, showTip, hideTip } = useTooltip();
-  const titleRef = useRef<HTMLSpanElement>(null);
-  const done = Boolean(props.subtask.completed || props.subtask.done);
-  const childSubtasks = (props.subtask.subtasks || []).filter(isIncompletePlanningSubtask);
-  const hasChildren = childSubtasks.length > 0;
-
   return (
-    <>
-      {tooltipEl}
-      <div
-        className={`df-plan-subtask-node ${done ? "done" : ""}${hasChildren ? " has-children" : ""}`}
-        data-node-id={props.subtask.id}
-        data-node-type="subtask"
-        aria-grabbed={props.dragging}
-        style={{ "--project-color": projectColorInk(props.projectColor), "--task-project-color": projectColorInk(props.projectColor) } as React.CSSProperties}
-      >
-        <TaskBlock
-          as="div"
-          variant="candidate"
-          appearance="calm"
-          checked={done}
-          projectColor={props.projectColor}
-          className="df-subtask-inner"
-          dragState={props.dragging ? "source-placeholder" : undefined}
-          dataAttrs={{ "planning-drag-card": props.subtask.id }}
-          ariaGrabbed={props.dragging}
-        >
-          <TaskBlockRow>
-            <TaskCheckbox lang={props.lang}
-              checked={done}
-              tone="muted"
-              className={`df-subtask-check ${done ? "done" : ""}`}
-              onClick={(event) => {
-                event.stopPropagation();
-                props.onToggle(props.subtask.id);
-              }}
-              ariaLabel={done ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
-            >
-              {done && <CheckIcon size={10} />}
-            </TaskCheckbox>
-            <TaskBlockContent
-              title={(
-                <span
-                  className="df-subtask-title"
-                  ref={titleRef}
-                  onMouseEnter={() => {
-                    if (titleRef.current && titleRef.current.scrollWidth > titleRef.current.clientWidth) {
-                      showTip(props.subtask.title, titleRef.current);
-                    }
-                  }}
-                  onMouseLeave={hideTip}
-                >
-                  {props.subtask.title}
-                </span>
-              )}
-            />
-            <TaskActions className="df-task-node-actions">
-              {hasChildren && (
-                <button
-                  className="df-task-chevron df-subtask-chevron"
-                  aria-expanded={!collapsed}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setCollapsed((v) => !v);
-                  }}
-                  aria-label={collapsed ? t(props.lang, "planning.expandSubtasks") : t(props.lang, "planning.collapseSubtasks")}
-                >
-                  <ChevronIcon open={!collapsed} />
-                </button>
-              )}
-              <button
-                className="df-tree-icon-button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  props.onPromote(props.subtask.id);
-                }}
-                aria-label={term(props.lang, "todayCandidates")}
-              >
-                <ArrowRightIcon />
-              </button>
-              {!props.demo && <button
-                className="df-tree-icon-button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  event.currentTarget.focus();
-                  setMenuOpen((open) => !open);
-                }}
-                aria-label={t(props.lang, "planning.more")}
-              >
-                <MoreIcon />
-              </button>}
-            </TaskActions>
-          </TaskBlockRow>
-        </TaskBlock>
-        <TreeMenu
-          open={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          actions={[
-            { label: t(props.lang, "planning.editName"), onClick: () => props.onRename(props.subtask.id) },
-            { label: t(props.lang, "planning.addSubtask"), onClick: () => { setCollapsed(false); props.onAddSubtask(props.subtask.id); } },
-            { label: t(props.lang, "planning.setDate"), onClick: () => props.onSetDate(props.subtask.id) },
-            { label: t(props.lang, "planning.moveToProject"), onClick: () => props.onMoveProject(props.subtask.id) },
-            { label: t(props.lang, "planning.delete"), danger: true, onClick: () => props.onDelete(props.subtask.id) },
-          ]}
-        />
-        {hasChildren && !collapsed && (
-          <div className="df-subtask-children">
-            {childSubtasks.map((child) => (
-              <PlanningSubtaskNode
-                demo={props.demo}
-                key={child.id}
-                lang={props.lang}
-                subtask={child}
-                projectColor={props.projectColor}
-                onToggle={props.onToggle}
-                onPromote={props.onPromote}
-                onRename={props.onRename}
-                onSetDate={props.onSetDate}
-                onMoveProject={props.onMoveProject}
-                onDelete={props.onDelete}
-                onAddSubtask={props.onAddSubtask}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </>
+    <CandidateSubtaskItem
+      subtask={props.subtask}
+      lang={props.lang}
+      planningTree
+      draggingSubtaskId={props.draggingSubtaskId}
+      onToggleSubtask={props.onToggle}
+      onSubtaskDragStart={props.onDragStart}
+      renderTrailingAction={props.demo ? undefined : ({ subtask, menuOpen, toggleMenu }) => (
+        <span className="df-plan-subtask-menu-anchor">
+          <button
+            type="button"
+            className="df-candidate-subtask-toggle"
+            onClick={(event) => {
+              event.stopPropagation();
+              event.currentTarget.focus();
+              toggleMenu();
+            }}
+            aria-label={t(props.lang, "planning.more")}
+          ><MoreIcon /></button>
+          <TreeMenu
+            open={menuOpen}
+            onClose={toggleMenu}
+            actions={[
+              { label: term(props.lang, "todayCandidates"), onClick: () => props.onPromote(subtask.id) },
+              { label: t(props.lang, "planning.editName"), onClick: () => props.onRename(subtask.id) },
+              { label: t(props.lang, "planning.addSubtask"), onClick: () => props.onAddSubtask(subtask.id) },
+              { label: t(props.lang, "planning.setDate"), onClick: () => props.onSetDate(subtask.id) },
+              { label: t(props.lang, "planning.moveToProject"), onClick: () => props.onMoveProject(subtask.id) },
+              { label: t(props.lang, "planning.delete"), danger: true, onClick: () => props.onDelete(subtask.id) },
+            ]}
+          />
+        </span>
+      )}
+    />
   );
 }
 
@@ -619,6 +526,7 @@ function PlanningTaskNode(props: {
   onDelete: () => void;
   onToggleComplete: () => void;
   onToggleSubtask: (subtaskId: string) => void;
+  subtaskContent?: React.ReactNode;
   dragging?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -728,6 +636,7 @@ function PlanningTaskNode(props: {
             collapseLabel={t(props.lang, "planning.collapseSubtasks")}
             onToggle={props.onToggleCollapse}
           />}
+          {props.subtaskContent}
           <TreeMenu
             open={menuOpen}
             onClose={() => setMenuOpen(false)}
@@ -1458,6 +1367,35 @@ export default function PlanningView(props: {
         style={{ "--tree-drop-slot-height": `${dropTarget.height}px` } as React.CSSProperties}
         aria-hidden="true"
       />
+    );
+  };
+
+  const renderTaskSubtasks = (task: Task) => {
+    if (collapsedSubtasks[task.id] || !(task.subtasks || []).some(isIncompletePlanningSubtask)) return null;
+    return (
+      <div className="df-candidate-subtasks df-plan-subtask-list" data-parent-id={task.id}>
+        {(task.subtasks || []).filter(isIncompletePlanningSubtask).map((subtask) => (
+          <React.Fragment key={subtask.id}>
+            {treeDropSlot("subtask", subtask.id, "before")}
+            <PlanningSubtaskNode
+              demo={props.demo}
+              lang={props.lang}
+              subtask={subtask}
+              onToggle={(subtaskId) => toggleSubtask(task.id, subtaskId)}
+              onPromote={promoteSubtask}
+              onRename={renameSubtask}
+              onSetDate={setSubtaskDate}
+              onMoveProject={moveSubtaskProject}
+              onDelete={deleteSubtask}
+              onAddSubtask={(parentId) => addSubtask(task, parentId)}
+              draggingSubtaskId={dragNode?.kind === "subtask" ? dragNode.id : undefined}
+              onDragStart={(event, subtaskId) => beginTreeDrag(event, { kind: "subtask", id: subtaskId })}
+            />
+            {treeDropSlot("subtask", subtask.id, "inside")}
+            {treeDropSlot("subtask", subtask.id, "after")}
+          </React.Fragment>
+        ))}
+      </div>
     );
   };
 
@@ -3039,34 +2977,10 @@ export default function PlanningView(props: {
                           onDelete={() => props.onTaskDelete(task.id)}
                           onToggleComplete={() => props.onTaskUpdate(task.id, workflowStatusForPatch(normalizeWorkflowStatus(task) === "done" ? "backlog" : "done"))}
                           onToggleSubtask={(subtaskId) => toggleSubtask(task.id, subtaskId)}
+                          subtaskContent={renderTaskSubtasks(task)}
                           dragging={dragNode?.kind === "task" && dragNode.id === task.id}
                         />
                         {treeDropSlot("task", task.id, "inside")}
-                        {!collapsedSubtasks[task.id] && (task.subtasks || []).some(isIncompletePlanningSubtask) && (
-                          <div className="df-subtask-list" data-parent-id={task.id}>
-                            {(task.subtasks || []).filter(isIncompletePlanningSubtask).map((subtask) => (
-                              <React.Fragment key={subtask.id}>
-                                {treeDropSlot("subtask", subtask.id, "before")}
-                                <PlanningSubtaskNode
-                demo={props.demo}
-                                  lang={props.lang}
-                                  subtask={subtask}
-                                  projectColor={project.color || DEFAULT_PROJECT_COLOR}
-                                  onToggle={(subtaskId) => toggleSubtask(task.id, subtaskId)}
-                                  onPromote={promoteSubtask}
-                                  onRename={renameSubtask}
-                                  onSetDate={setSubtaskDate}
-                                  onMoveProject={moveSubtaskProject}
-                                  onDelete={deleteSubtask}
-                                  onAddSubtask={(parentId) => addSubtask(task, parentId)}
-                                  dragging={dragNode?.kind === "subtask" && dragNode.id === subtask.id}
-                                />
-                                {treeDropSlot("subtask", subtask.id, "inside")}
-                                {treeDropSlot("subtask", subtask.id, "after")}
-                              </React.Fragment>
-                            ))}
-                          </div>
-                        )}
                         {treeDropSlot("task", task.id, "after")}
                       </div>
                     ))}
@@ -3115,34 +3029,10 @@ export default function PlanningView(props: {
                           onDelete={() => props.onTaskDelete(task.id)}
                           onToggleComplete={() => props.onTaskUpdate(task.id, workflowStatusForPatch(normalizeWorkflowStatus(task) === "done" ? "backlog" : "done"))}
                           onToggleSubtask={(subtaskId) => toggleSubtask(task.id, subtaskId)}
+                          subtaskContent={renderTaskSubtasks(task)}
                           dragging={dragNode?.kind === "task" && dragNode.id === task.id}
                         />
                         {treeDropSlot("task", task.id, "inside")}
-                        {!collapsedSubtasks[task.id] && (task.subtasks || []).some(isIncompletePlanningSubtask) && (
-                          <div className="df-subtask-list" data-parent-id={task.id}>
-                            {(task.subtasks || []).filter(isIncompletePlanningSubtask).map((subtask) => (
-                              <React.Fragment key={subtask.id}>
-                                {treeDropSlot("subtask", subtask.id, "before")}
-                                <PlanningSubtaskNode
-                demo={props.demo}
-                                  lang={props.lang}
-                                  subtask={subtask}
-                                  projectColor={UNASSIGNED_COLOR}
-                                  onToggle={(subtaskId) => toggleSubtask(task.id, subtaskId)}
-                                  onPromote={promoteSubtask}
-                                  onRename={renameSubtask}
-                                  onSetDate={setSubtaskDate}
-                                  onMoveProject={moveSubtaskProject}
-                                  onDelete={deleteSubtask}
-                                  onAddSubtask={(parentId) => addSubtask(task, parentId)}
-                                  dragging={dragNode?.kind === "subtask" && dragNode.id === subtask.id}
-                                />
-                                {treeDropSlot("subtask", subtask.id, "inside")}
-                                {treeDropSlot("subtask", subtask.id, "after")}
-                              </React.Fragment>
-                            ))}
-                          </div>
-                        )}
                         {treeDropSlot("task", task.id, "after")}
                       </div>
                     ))}

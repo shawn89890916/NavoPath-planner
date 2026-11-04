@@ -3,7 +3,10 @@
 ## 2026-11-05 · 1.6.3 Beta 8
 
 ### 修复
-- Windows Dock 悬停展开后会恢复最小化的窗口，并在显示后重新置顶，不抢走当前输入焦点；小条长度可覆盖整条屏幕边缘，超出屏幕高度时自动适配。
+- 规划页子任务复用今日候选行并嵌入父任务卡片，保留拖动和操作菜单。
+- 横屏规划侧栏的收起按钮与视图图标统一靠左，标签文字从固定列起始位置左对齐；竖屏规划页补回固定在左上角的侧栏按钮，unDock 时 N 标识保持原位。
+- 窄横屏执行页将“今日候选 / 日程”切换移至左下方，并与左上角的 Dock N 入口分开。
+- Windows Dock 悬停展开后恢复最小化窗口，显示后重新置顶且不抢输入焦点；小条长度可覆盖整条屏幕边缘。
 
 ## 2026-11-04 · 1.6.3 Beta 7
 
@@ -423,7 +426,10 @@
 ## 2026-11-05 · 1.6.3 Beta 8
 
 ### Fixed
-- Windows Dock hover activation restores minimized windows and raises the panel after showing without taking input focus. The edge tab can span the full screen edge, and lengths beyond the screen height are fitted automatically.
+- Planning subtasks reuse the Today's Candidates row inside the parent task card, preserving drag behavior and the action menu.
+- Landscape Planning aligns the collapse button and view icons to the left, with labels starting from a shared left-aligned column. Restored the fixed top-left button in portrait Planning, and kept the N mark in place during unDock.
+- Compact landscape Execute places the Today's Candidates / Schedule switch at the lower left, separate from the top-left Dock N entry.
+- Windows Dock hover activation restores minimized windows and raises the panel after showing without taking input focus. The edge tab can span the full screen edge, with longer values fitted to screen height.
 
 ## 2026-11-04 · 1.6.3 Beta 7
 

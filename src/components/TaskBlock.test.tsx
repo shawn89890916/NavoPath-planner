@@ -147,11 +147,13 @@ describe("TaskBlock shared component contract", () => {
 
   it("keeps Planning task-like surfaces on the current TaskBlock variants", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
+    const workspace = readFileSync(resolve(__dirname, "../WorkspacePresentation.tsx"), "utf8");
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
     const subtaskNode = planning.match(/function PlanningSubtaskNode[\s\S]*?function PlanningTaskNode/)?.[0] || "";
-    expect(subtaskNode).toContain('variant="candidate"');
-    expect(subtaskNode).not.toContain('variant="habit-child"');
+    const candidateSubtask = workspace.match(/export function CandidateSubtaskItem[\s\S]*?const candidateDateFormatters/)?.[0] || "";
+    expect(subtaskNode).toContain("<CandidateSubtaskItem");
+    expect(candidateSubtask).toContain('variant="habit-child"');
     expect(planning).not.toContain("<article");
     expect(css).toContain('.df-app .df-task-block[data-task-appearance][data-task-variant="candidate"]');
     expect(css).toContain('#root .df-app.mode-planning .df-planning .df-task-node-inner[data-task-variant="candidate"]');
@@ -330,12 +332,38 @@ describe("TaskBlock shared component contract", () => {
     expect(css).toContain("background: var(--bg-app-soft, var(--surface-main));");
     expect(css).toContain(".df-app.mode-planning .df-planning .df-task-node-inner > .df-task-block-accent");
     expect(css).toContain(".df-app.mode-planning .df-planning .df-task-node-inner::before");
-    expect(css).toContain(".df-app.mode-planning .df-planning .df-plan-subtask-node::after");
-    expect(css).toContain("content: none;");
-    expect(css).toContain("border: 0;");
+    expect(planning).toContain("<CandidateSubtaskItem");
+    expect(planning).toContain("planningTree");
+    expect(planning).toContain('className="df-candidate-subtasks df-plan-subtask-list"');
+    expect(planning).toContain("subtaskContent={renderTaskSubtasks(task)}");
+    expect(css).toContain(".df-app .df-candidate-subtask-row");
+    expect(css).toContain(".df-app .df-plan-subtask-list");
+    expect(css).toContain("align-self: flex-start;");
+    expect(css).not.toContain(".df-plan-subtask-node");
     expect(planning).not.toContain("df-planning-native-drag-image");
     expect(planning).toContain("beginTreeDrag");
     expect(css).toContain("cursor: grabbing;");
+  });
+
+  it("keeps the portrait Planning drawer button fixed and the Execute N mark in place", () => {
+    const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
+
+    expect(planning).toContain("df-planning-sidebar-toggle");
+    expect(css).toContain("df-planning > .df-planning-sidebar-toggle { position: fixed;");
+    expect(css).toContain("button.schedule-state .df-compact-mode-logo { transform: none; }");
+    expect(css).not.toContain("transform: translateX(80px);");
+    expect(css).not.toContain("transform: translateX(70px);");
+  });
+
+  it("keeps compact landscape candidate switching at the lower left, separate from Dock N", () => {
+    const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
+
+    expect(main).toContain('lang === "zh" ? "今日候选" : "Today\'s Candidates"');
+    expect(css).toContain("@media (min-width: 761px) and (max-width: 980px) and (orientation: landscape)");
+    expect(css).toContain("bottom: calc(68px + env(safe-area-inset-bottom));");
+    expect(css).toContain("#root .df-app.mode-execute .df-compact-mode-logo { display: none; }");
   });
 
   it("keeps Planning fallbacks bound to the active theme accent", () => {

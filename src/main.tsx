@@ -9265,11 +9265,11 @@ if (cached?.data && cached?.settings) {
             {!mobileExecution && <nav className="df-compact-execute-tabs" aria-label={lang === "zh" ? "执行视图" : "Execute view"}>
               <button
                 className={`active ${compactExecuteView === "schedule" ? "schedule-state" : "tasks-state"}`}
-                aria-label={compactExecuteView === "tasks" ? (lang === "zh" ? "任务" : "Tasks") : (lang === "zh" ? "日程" : "Schedule")}
+                aria-label={compactExecuteView === "tasks" ? (lang === "zh" ? "日程" : "Schedule") : (lang === "zh" ? "今日候选" : "Today's Candidates")}
                 aria-pressed={compactExecuteView === "schedule"}
                 onClick={() => setCompactExecuteView((view) => view === "tasks" ? "schedule" : "tasks")}
               >
-                <span className="df-compact-mode-label tasks-label" aria-hidden="true">{lang === "zh" ? "任务" : "Tasks"}</span>
+                <span className="df-compact-mode-label tasks-label" aria-hidden="true">{lang === "zh" ? "今日候选" : "Today's Candidates"}</span>
                 <span className="df-compact-mode-label schedule-label" aria-hidden="true">{lang === "zh" ? "日程" : "Schedule"}</span>
                 <span className="df-compact-mode-logo" aria-hidden="true"><ProductIcon compact /></span>
               </button>

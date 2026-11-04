@@ -1,7 +1,7 @@
 import { courseBackgroundColor } from "./utils/courseBackground";
 import { useMobileSheetGesture } from "./useMobileSheetGesture";
 import { normalizeEngagement } from "./utils/engagement";
-import React, { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Suspense, lazy } from "react";
 import type { AgentAuditEntry, AgentRunState, AiConversation, Category, Language, NullablePriority, Project, RecurrenceFrequency, Settings, Subtask, Task, TaskRecurrence } from "./types";
@@ -252,14 +252,21 @@ export function CandidateSubtaskItem({
   lang,
   onToggleSubtask,
   onSubtaskDragStart,
+  planningTree = false,
+  draggingSubtaskId,
+  renderTrailingAction,
 }: {
   subtask: Subtask;
   depth?: number;
   lang: Language;
   onToggleSubtask: (subtaskId: string) => void;
   onSubtaskDragStart?: (event: React.PointerEvent, subtaskId: string) => void;
+  planningTree?: boolean;
+  draggingSubtaskId?: string;
+  renderTrailingAction?: (context: { subtask: Subtask; menuOpen: boolean; toggleMenu: () => void }) => ReactNode;
 }) {
   const [open, setOpen] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   const children = subtask.subtasks || [];
   const hasChildren = children.length > 0;
   const done = Boolean(subtask.completed || subtask.done);
@@ -280,12 +287,15 @@ export function CandidateSubtaskItem({
         selected={planned}
         projectColor="var(--accent-active)"
         className={`df-candidate-subtask-row${done ? " done" : ""}${planned ? " planned" : ""}`}
-        dataAttrs={{ "candidate-subtask": subtask.id }}
+        dataAttrs={{ "candidate-subtask": subtask.id, "node-id": planningTree ? subtask.id : undefined, "node-type": planningTree ? "subtask" : undefined, "planning-drag-card": planningTree ? subtask.id : undefined }}
+        ariaGrabbed={planningTree && draggingSubtaskId === subtask.id}
         title={displayTitle}
         onClick={(event) => event.stopPropagation()}
         onPointerDown={(event) => {
           event.stopPropagation();
-          onSubtaskDragStart?.(event, subtask.id);
+          if (!(event.target instanceof Element) || !event.target.closest("button, input, textarea, select, [contenteditable='true']")) {
+            onSubtaskDragStart?.(event, subtask.id);
+          }
         }}
       >
         <TaskBlockRow className="df-candidate-subtask-row-inner">
@@ -321,6 +331,7 @@ export function CandidateSubtaskItem({
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d={open ? "M4 9.5 8 5.5l4 4" : "M5.5 4 9.5 8l-4 4"} /></svg>
               </button>
             ) : null}
+            {renderTrailingAction?.({ subtask, menuOpen, toggleMenu: () => setMenuOpen((value) => !value) })}
           </TaskActions>
         </TaskBlockRow>
       </TaskBlock>
@@ -334,6 +345,9 @@ export function CandidateSubtaskItem({
               lang={lang}
               onToggleSubtask={onToggleSubtask}
               onSubtaskDragStart={onSubtaskDragStart}
+              planningTree={planningTree}
+              draggingSubtaskId={draggingSubtaskId}
+              renderTrailingAction={renderTrailingAction}
             />
           ))}
         </div>
