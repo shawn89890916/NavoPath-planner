@@ -8752,38 +8752,71 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   outline: 2px solid var(--border-focus);
   outline-offset: 2px;
 }
-#root .df-app .df-candidate-panel .df-desktop-dock-control {
+#root .df-app .df-brand-dock-control {
   position: relative;
   display: inline-flex;
   flex: 0 0 auto;
+  z-index: 130;
 }
-#root .df-app .df-candidate-panel .df-desktop-dock-trigger {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
+#root .df-app .df-brand-dock-trigger {
+  position: relative;
+  z-index: 1;
 }
-#root .df-app .df-candidate-panel .df-desktop-dock-trigger:hover,
-#root .df-app .df-candidate-panel .df-desktop-dock-trigger.active {
-  background: var(--paper-note);
-}
-#root .df-app .df-candidate-panel .df-desktop-dock-trigger:focus-visible {
-  outline: 2px solid var(--border-focus);
-  outline-offset: 2px;
-}
-#root .df-app .df-candidate-panel .df-desktop-dock-choices {
+#root .df-app .df-brand-dock-trigger.is-docked::after {
+  content: "";
   position: absolute;
-  z-index: 80;
-  top: calc(100% + 6px);
-  right: 0;
-  display: flex;
-  min-width: max-content;
-  flex-direction: column;
-  align-items: stretch;
-  padding: 5px;
+  right: 3px;
+  bottom: 3px;
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--bg-app);
+  border-radius: 50%;
+  background: var(--accent-active);
+}
+#root .df-app .df-brand-dock-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  z-index: 140;
+  width: min(260px, calc(100vw - 16px));
+  padding: 10px;
   border: 1px solid var(--paper-rule);
   border-radius: var(--paper-radius);
   background: var(--surface-raised);
   box-shadow: var(--shadow-soft);
+}
+#root .df-app .df-brand-dock-hint {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+#root .df-app .df-brand-dock-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+#root .df-app .df-brand-dock-option {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-muted);
+}
+#root .df-app .df-brand-dock-option:hover,
+#root .df-app .df-brand-dock-option:focus-visible {
+  border: 0;
+  background: var(--paper-note);
+  color: var(--text-main);
+}
+#root .df-app .df-brand-dock-option + .df-brand-dock-option {
+  border-left: 1px solid var(--paper-rule);
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+}
+#root .df-app .df-brand-dock-option:disabled {
+  opacity: .5;
 }
 #root .df-app .df-panel-title > div > .df-candidate-collapse {
   border: 0;
@@ -15469,6 +15502,14 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   padding: 0;
   border-right: 0;
 }
+.df-settings-rail .df-settings-nav { flex: 1 0 auto; }
+.df-plugin-update-notice { display:flex; flex:0 0 auto; align-items:center; gap:10px; width:100%; margin-top:auto; padding:12px 10px; border:1px solid var(--paper-rule); border-radius:var(--radius-control); color:var(--text-main); text-align:left; background:var(--surface-main); font:400 12px/1.4 var(--paper-sans); cursor:pointer; }
+.df-plugin-update-notice:hover { background:var(--paper-note); }
+.df-plugin-update-notice:focus-visible { outline:2px solid var(--accent-active); outline-offset:2px; }
+.df-plugin-update-notice > span:nth-child(2) { display:grid; min-width:0; gap:3px; flex:1; }
+.df-plugin-update-notice strong { font-weight:600; }
+.df-plugin-update-notice small { color:var(--text-muted); font-size:11px; }
+.df-plugin-update-notice-dot { width:8px; height:8px; flex:0 0 8px; border-radius:50%; background:var(--accent-active); }
 .df-settings-disclosure-toggle {
   display: flex;
   width: 100%;
@@ -20852,6 +20893,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     height: 32px;
   }
   .df-mobile-dock--viewport .df-mobile-mode-switch {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     height: 44px;
     align-self: center;
     gap: 3px;
@@ -20861,6 +20906,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: transparent;
   }
   .df-mobile-dock--viewport .df-mobile-mode-switch button {
+    display: grid;
+    width: 100%;
+    min-width: 0;
     min-height: 44px;
     border: 1px solid transparent;
     border-radius: var(--radius-control);
@@ -25293,4 +25341,46 @@ body[data-navopath-base-theme="light"],
   --accent-active: #584D3D;
   --accent-rgb: 88, 77, 61;
   --accent-on: #FFFFFF;
+}
+
+/* A docked portrait desktop window keeps its N recovery control visible. */
+@media (orientation: portrait) {
+  #root .df-app.is-desktop-docked .df-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 120;
+    display: block;
+    width: 52px;
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+  #root .df-app.is-desktop-docked .df-header-inner {
+    display: block;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+  }
+  #root .df-app.is-desktop-docked .df-header-inner > :not(.df-brand) {
+    display: none;
+  }
+  #root .df-app.is-desktop-docked .df-brand {
+    position: fixed;
+    top: 2px;
+    left: 4px;
+    z-index: 121;
+    margin: 0;
+    pointer-events: auto;
+  }
+  #root .df-app.is-desktop-docked .df-brand > :not(.df-brand-dock-control) {
+    display: none;
+  }
+  #root .df-app.is-desktop-docked .df-header-fade {
+    display: none;
+  }
 }

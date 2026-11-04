@@ -43,3 +43,17 @@ export function UiDockSidebarIcon({ size = 16, strokeWidth = 1.8, absoluteStroke
     <path d="m9 10 3-3 3 3M9 14l3 3 3-3" />
   </svg>;
 }
+
+export function UiDockLeftIcon({ size = 20, strokeWidth = 1.8, absoluteStrokeWidth: _absoluteStrokeWidth, ...props }: LucideProps) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden={props["aria-label"] ? undefined : true} {...props}>
+    <rect x="3.5" y="4" width="17" height="16" rx="2" />
+    <path d="M9 4v16m8-11-3 3 3 3" />
+  </svg>;
+}
+
+export function UiDockRightIcon({ size = 20, strokeWidth = 1.8, absoluteStrokeWidth: _absoluteStrokeWidth, ...props }: LucideProps) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden={props["aria-label"] ? undefined : true} {...props}>
+    <rect x="3.5" y="4" width="17" height="16" rx="2" />
+    <path d="M15 4v16M7 9l3 3-3 3" />
+  </svg>;
+}

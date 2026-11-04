@@ -1,6 +1,19 @@
 # NavoPath 更新日志
 
-## 2026-11-04 · 1.6.2 正式版
+## 2026-11-04 · 1.6.3 Beta
+
+### 1.6.3 Beta
+
+### 新增
+- 新增统一的插件 API 文档，将插件设计规范、市场字段、打包发布和 MCP 放在同一网址，桌面与手机均延续纸张纹理。
+- 插件统一使用市场介绍、首字母或单色 SVG 图标、设置入口和顶栏快捷入口；市场卡片与详情展示版本、下载量和最新版上传时间，并提供对应排序。
+- 插件更新可用时，在设置侧栏底部显示入口；下载量和上传时间仅采用目录提供的真实统计数据。
+
+### 改进
+- 桌面 Dock 移到左上角 N 标志，点击后用左右图标选择贴边方向；第一次使用显示说明，贴边收起时仍可从屏幕边缘展开并点 N 恢复窗口。
+- 扩大 Dock 边缘触发区域，减少小条卡在屏幕边缘时难以重新打开的情况；竖屏底栏完整显示 Execute 与 Planning，和横屏保持一致。
+
+### 同日正式版 · 1.6.2
 
 ### 新增
 - 社区课表插件支持课程与自习导入、每周重复及可覆盖的背景，停用保留课表。
@@ -340,7 +353,20 @@
 
 # NavoPath Changelog
 
-## 2026-11-04 · 1.6.2 Stable
+## 2026-11-04 · 1.6.3 Beta
+
+### 1.6.3 Beta
+
+### Added
+- A unified Plugin API page now brings together design standards, marketplace fields, packaging, publishing, and MCP at one URL, with the paper texture carried across desktop and mobile.
+- Plugins now share marketplace descriptions, first-letter or monochrome SVG icons, settings actions and toolbar launchers. Market cards and details show version, download count and latest upload time, with matching sort options.
+- A plugin update entry appears at the bottom of the settings sidebar; download and upload figures use catalog-provided statistics only.
+
+### Improved
+- The desktop Dock moves to the top-left N mark, where left and right edge choices use matching icons. First use shows guidance; the collapsed edge tab can reopen the panel and its N mark restores the window.
+- A wider Dock edge hit area makes the tab easier to reopen. Portrait mode keeps both Execute and Planning visible in the bottom bar, matching landscape mode.
+
+### Same-day stable release · 1.6.2
 
 ### Added
 - The community timetable plugin imports weekly classes and self-study as overlapping backgrounds; disabling retains the timetable.

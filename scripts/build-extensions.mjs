@@ -14,6 +14,8 @@ const output = resolve(root, 'public/extensions/packages');
 await mkdir(output, { recursive: true });
 const previews = resolve(root, 'public/extensions/previews');
 await mkdir(previews, { recursive: true });
+const icons = resolve(root, 'public/extensions/icons');
+await mkdir(icons, { recursive: true });
 async function emit(path, data) {
   if (check) {
     const existing = await readFile(path, 'utf8').catch(() => '');
@@ -52,7 +54,14 @@ for (const folder of (await readdir(resolve(root, 'community-plugins'))).sort())
   const data = `${JSON.stringify({ manifest, files }, null, 2)}\n`;
   const filename = `${manifest.id}.navopackage.json`;
   await emit(resolve(output, filename), data);
-  catalog.packages.push({ manifest, downloadUrl: `${base}/packages/${filename}`, sha256: createHash('sha256').update(data).digest('hex'), ...(previewUrl ? { previewUrl } : {}), ...(previewUrls ? { previewUrls } : {}) });
+  let iconUrl;
+  if (manifest.icon) {
+    const icon = (await readFile(resolve(dir, manifest.icon), 'utf8')).replaceAll('\r\n', '\n');
+    const iconFile = `${manifest.id}.svg`;
+    await emit(resolve(icons, iconFile), icon);
+    iconUrl = `${base}/icons/${iconFile}`;
+  }
+  catalog.packages.push({ manifest, downloadUrl: `${base}/packages/${filename}`, sha256: createHash('sha256').update(data).digest('hex'), ...(previewUrl ? { previewUrl } : {}), ...(previewUrls ? { previewUrls } : {}), ...(iconUrl ? { iconUrl } : {}) });
 }
 const bundledEntries = [...catalog.packages];
 const registry = JSON.parse(await readFile(resolve(root, 'community-plugins/registry.json'), 'utf8'));
@@ -63,6 +72,10 @@ for (const entry of registry) {
   if (knownIds.has(manifest.id) || !/^[a-f0-9]{64}$/.test(entry.sha256)) throw new Error('Duplicate community id or invalid SHA-256');
   knownIds.add(manifest.id);
   const downloadUrl = publicHttps(entry.downloadUrl);
+  if (entry.downloads !== undefined && (!Number.isSafeInteger(entry.downloads) || entry.downloads < 0)) throw new Error(`Invalid download count: ${manifest.id}`);
+  if (entry.publishedAt !== undefined && (typeof entry.publishedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(entry.publishedAt) || !Number.isFinite(Date.parse(entry.publishedAt)))) throw new Error(`Invalid publish date: ${manifest.id}`);
+  const iconUrl = entry.iconUrl ? publicHttps(entry.iconUrl) : undefined;
+  if (manifest.icon && !iconUrl) throw new Error(`Community plugin icon needs iconUrl: ${manifest.id}`);
   if (check) {
     const bytes = await fetchExtensionPackage(downloadUrl);
     if (createHash('sha256').update(bytes).digest('hex') !== entry.sha256) throw new Error(`Release hash mismatch: ${manifest.id}`);
@@ -70,7 +83,7 @@ for (const entry of registry) {
     const pkg = await readPackage(new Uint8Array(bytes));
     if (JSON.stringify(pkg.manifest) !== JSON.stringify(manifest)) throw new Error(`Release manifest mismatch: ${manifest.id}`);
   }
-  catalog.packages.push({manifest,downloadUrl,sha256:entry.sha256,...(entry.previewUrl ? {previewUrl:publicHttps(entry.previewUrl)} : {}),...(entry.previewUrls ? {previewUrls:{light:publicHttps(entry.previewUrls.light),dark:publicHttps(entry.previewUrls.dark)}} : {})});
+  catalog.packages.push({manifest,downloadUrl,sha256:entry.sha256,...(entry.previewUrl ? {previewUrl:publicHttps(entry.previewUrl)} : {}),...(entry.previewUrls ? {previewUrls:{light:publicHttps(entry.previewUrls.light),dark:publicHttps(entry.previewUrls.dark)}} : {}),...(iconUrl ? {iconUrl} : {}),...(entry.downloads !== undefined ? {downloads:entry.downloads} : {}),...(entry.publishedAt ? {publishedAt:entry.publishedAt} : {})});
 }
 await emit(resolve(root, 'public/extensions/catalog.json'), `${JSON.stringify(catalog, null, 2)}\n`);
 // JSON imports are lazy behind the service's offline official package fallback.

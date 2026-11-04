@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { DesktopDockPreferences, Language } from "../types";
-import { Button, IconButton } from "./UiPrimitives";
-import { UiDockSidebarIcon } from "./UiIcons";
+import { IconButton } from "./UiPrimitives";
+import { UiDockLeftIcon, UiDockRightIcon } from "./UiIcons";
 import { SettingDescription, SettingNumberInput, SettingRow, SettingSelect } from "./SettingsControls";
 
 export function DesktopDockSettings({ lang }: { lang: Language }) {
@@ -26,7 +26,7 @@ export function DesktopDockSettings({ lang }: { lang: Language }) {
   if (!api) return null;
   return <>
     <SettingRow title={lang === "zh" ? "贴边栏触发方式" : "Dock activation"}
-      description={lang === "zh" ? "从今日候选工具栏的 Dock 图标启用。收起时仅露出 3 像素小条；点击模式下可上下拖动小条。" : "Enable from the Dock icon in Today’s Candidates. A 3 px tab remains visible when hidden; drag it vertically in click mode."}
+      description={lang === "zh" ? "从左上角 N 图标选择贴边方向；收起时可悬停或点击边缘小条展开，点击 Dock 窗口中的 N 图标即可恢复。" : "Choose a screen edge from the top-left N icon. Hover or click the edge tab to reopen; click N in the docked window to restore it."}
       control={<SettingSelect value={preferences?.activation || "hover"} disabled={!preferences || busy}
         ariaLabel={lang === "zh" ? "贴边栏触发方式" : "Dock activation"}
         onChange={(activation) => void save({ activation })} options={[
@@ -42,11 +42,17 @@ export function DesktopDockSettings({ lang }: { lang: Language }) {
   </>;
 }
 
-export default function DesktopDockControls({ lang, side, onSideChange, onError }: {
-  lang: Language; side: "left" | "right" | null; onSideChange: (side: "left" | "right" | null) => void; onError: (message: string) => void;
+const FIRST_DOCK_PROMPT_KEY = "navopath-dock-first-use-seen";
+
+export default function DesktopDockControls({ lang, side, onSideChange, onError, trigger, disabled = false }: {
+  lang: Language; side: "left" | "right" | null; onSideChange: (side: "left" | "right" | null) => void; onError: (message: string) => void; trigger: ReactNode; disabled?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [choosing, setChoosing] = useState(false);
+  const [showFirstUsePrompt, setShowFirstUsePrompt] = useState(() => {
+    try { return window.localStorage.getItem(FIRST_DOCK_PROMPT_KEY) !== "1"; }
+    catch { return true; }
+  });
 
   async function changeSide(next: "left" | "right" | null) {
     if (busy || !window.desktopApi?.dockWindow) return;
@@ -61,26 +67,44 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError 
   }
 
   const label = side
-    ? (lang === "zh" ? `取消${side === "left" ? "左" : "右"}侧贴边` : `Undock from ${side} edge`)
-    : (lang === "zh" ? "桌面贴边 Dock" : "Desktop edge Dock");
+    ? (lang === "zh" ? "点击 N 恢复普通窗口" : "Click N to restore the window")
+    : (lang === "zh" ? "选择贴边方向" : "Choose a Dock side");
 
-  return <div className="df-desktop-dock-control">
-    <IconButton
-      className={`df-icon-action df-candidate-header-icon df-desktop-dock-trigger${side ? " active" : ""}`}
-      icon={<UiDockSidebarIcon size={17} />}
-      label={label}
+  return <div className={`df-brand-dock-control${side ? " is-docked" : ""}`} onMouseEnter={() => { if (!side) setChoosing(true); }} onMouseLeave={() => setChoosing(false)}>
+    <button
+      className={`df-brand-ai-button df-brand-dock-trigger${side ? " is-docked" : ""}`}
+      type="button"
+      aria-label={label}
       aria-pressed={Boolean(side)}
       aria-expanded={choosing}
-      disabled={busy}
+      title={label}
+      disabled={disabled || busy}
       onClick={(event) => {
         event.stopPropagation();
         if (side) void changeSide(null);
         else setChoosing((open) => !open);
       }}
-    />
-    {choosing && !side && <div className="ui-choice-list ui-choice-list--inline df-desktop-dock-choices" role="group" aria-label={lang === "zh" ? "贴边方向" : "Dock side"}>
-      <Button className="ui-choice-item" disabled={busy} onClick={() => { setChoosing(false); void changeSide("left"); }}>{lang === "zh" ? "左侧" : "Left"}</Button>
-      <Button className="ui-choice-item" disabled={busy} onClick={() => { setChoosing(false); void changeSide("right"); }}>{lang === "zh" ? "右侧" : "Right"}</Button>
+    >{trigger}</button>
+    {choosing && !side && <div className="df-brand-dock-menu" role="group" aria-label={lang === "zh" ? "选择 Dock 贴边方向" : "Choose Dock side"}>
+      {showFirstUsePrompt && <p className="df-brand-dock-hint">
+        {lang === "zh"
+          ? "首次使用：选择贴边方向后，悬停或点击屏幕边缘即可展开；Dock 窗口左上角点 N 可恢复。"
+          : "First use: choose an edge. Hover or click its tab to reopen; click N in the docked window to restore it."}
+      </p>}
+      <div className="df-brand-dock-choices">
+        <IconButton className="df-brand-dock-option" icon={<UiDockLeftIcon size={21} />} label={lang === "zh" ? "贴到屏幕左侧" : "Dock to left edge"} disabled={busy} onClick={() => {
+          setChoosing(false);
+          setShowFirstUsePrompt(false);
+          try { window.localStorage.setItem(FIRST_DOCK_PROMPT_KEY, "1"); } catch { /* First-use help is best effort. */ }
+          void changeSide("left");
+        }} />
+        <IconButton className="df-brand-dock-option" icon={<UiDockRightIcon size={21} />} label={lang === "zh" ? "贴到屏幕右侧" : "Dock to right edge"} disabled={busy} onClick={() => {
+          setChoosing(false);
+          setShowFirstUsePrompt(false);
+          try { window.localStorage.setItem(FIRST_DOCK_PROMPT_KEY, "1"); } catch { /* First-use help is best effort. */ }
+          void changeSide("right");
+        }} />
+      </div>
     </div>}
   </div>;
 }

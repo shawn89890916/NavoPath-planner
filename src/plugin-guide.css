@@ -507,3 +507,24 @@
     border-top: 0;
   }
 }
+
+.df-api-doc-page.df-doc-page.changelog-like {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 24px clamp(24px, calc((100vw - 1080px) / 2), 180px) 72px;
+  background: repeating-linear-gradient(2deg, color-mix(in srgb, var(--doc-ink) 2%, transparent) 0 1px, transparent 1px 5px), var(--doc-paper);
+}
+.df-api-doc-page .df-doc-sidebar { width: 100%; max-width: 1080px; margin: 0 auto; }
+.df-doc-page.changelog-like.df-api-doc-page .df-doc-content { width: 100%; max-width: 720px; margin: 64px auto 0; }
+.df-api-doc-page .df-doc-section[id="standards"] .df-doc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (max-width: 760px) {
+  .df-api-doc-page.df-doc-page.changelog-like { padding: 20px 20px 48px; }
+  .df-api-doc-page.df-doc-page.changelog-like .df-doc-sidebar { display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 10px 14px; }
+  .df-api-doc-page .df-doc-sidebar > a { flex: 0 0 auto; white-space: nowrap; }
+  .df-api-doc-page .df-doc-language { flex: 0 0 auto; }
+  .df-doc-page.changelog-like.df-api-doc-page .df-doc-content { margin-top: 42px; }
+  .df-api-doc-page .df-doc-section[id="standards"] .df-doc-grid { grid-template-columns: 1fr; }
+}

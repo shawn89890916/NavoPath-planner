@@ -72,6 +72,23 @@ describe("extension installation and account reconciliation", () => {
     expect(current.getSnapshot().error).toBeTruthy();
     expect(current.getSnapshot().catalog).toEqual([]);
   });
+  it("keeps only validated marketplace metrics and icon URLs", async () => {
+    await current.configure(fixture().host);
+    const entry = officialCatalog.packages[0];
+    const catalog = { ...officialCatalog, packages: [{ ...entry, iconUrl: "https://example.com/icon.svg", downloads: 1234, publishedAt: "2026-11-03T12:00:00Z" }] };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(catalog))));
+    await current.refreshCatalog();
+    expect(current.getSnapshot().catalog[0]).toMatchObject({ iconUrl: "https://example.com/icon.svg", downloads: 1234, publishedAt: "2026-11-03T12:00:00Z" });
+    catalog.packages[0].downloads = -1;
+    await current.refreshCatalog();
+    expect(current.getSnapshot().catalog).toEqual([]);
+    expect(current.getSnapshot().error).toBeTruthy();
+    catalog.packages[0].downloads = 1234;
+    catalog.packages[0].publishedAt = "Nov 3, 2026";
+    await current.refreshCatalog();
+    expect(current.getSnapshot().catalog).toEqual([]);
+    expect(current.getSnapshot().error).toBeTruthy();
+  });
   it("installs an offline bundled package with verified bytes, then enables and unloads it", async () => {
     const f = fixture(); await current.configure(f.host);
     const entry = officialCatalog.packages.find(e => e.manifest.id === "weather")!;

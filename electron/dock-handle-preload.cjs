@@ -1,5 +1,18 @@
 const { ipcRenderer } = require("electron");
 
+let side = new URL(window.location.href).searchParams.get("side") === "right" ? "right" : "left";
+
+function applySide() {
+  if (document.documentElement) document.documentElement.dataset.side = side;
+}
+
+ipcRenderer.on("dock-handle:set-side", (_event, nextSide) => {
+  side = nextSide === "right" ? "right" : "left";
+  applySide();
+});
+
+window.addEventListener("DOMContentLoaded", applySide, { once: true });
+
 window.addEventListener("DOMContentLoaded", () => {
   const button = document.querySelector("button");
   const zh = navigator.language.startsWith("zh");

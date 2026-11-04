@@ -1,7 +1,7 @@
 import type { ExtensionManifest, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSource, InstalledExtension } from "./types";
 import type { Settings } from "../types";
 
-export const APP_VERSION = "1.5.2-beta.2";
+export const APP_VERSION = "1.6.3-beta.1";
 export const OFFICIAL_SOURCE: ExtensionSource = { id: "official", name: "NavoPath Community", url: "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/catalog.json" };
 export const MAX_PACKAGE_BYTES = 20 * 1024 * 1024;
 export const MAX_EXPANDED_BYTES = 32 * 1024 * 1024;
@@ -13,7 +13,8 @@ export function validateManifest(input: unknown): ExtensionManifest {
   for (const key of ["name", "description", "author", "version", "minAppVersion"]) if (typeof input[key] !== "string" || !input[key].trim() || input[key].length > 2000) throw new Error(`Invalid manifest ${key}`);
   if (![input.version, input.minAppVersion].every(v => /^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(v))) throw new Error("Invalid extension version");
   if (!Array.isArray(input.platforms) || !input.platforms.length || !input.platforms.every((p: unknown) => ["desktop", "web", "mobile"].includes(p as string))) throw new Error("Invalid extension platforms");
-  for (const key of ["main", "desktop", "styles"]) if (input[key] !== undefined && (typeof input[key] !== "string" || !safePath(input[key]))) throw new Error(`Invalid entry ${key}`);
+  for (const key of ["main", "desktop", "styles", "icon"]) if (input[key] !== undefined && (typeof input[key] !== "string" || !safePath(input[key]))) throw new Error(`Invalid entry ${key}`);
+  if (input.icon !== undefined && !/\.svg$/i.test(input.icon)) throw new Error("Plugin icon must be an SVG file");
   if (input.previews !== undefined && (!isRecord(input.previews) || typeof input.previews.light !== "string" || typeof input.previews.dark !== "string")) throw new Error("Previews require light and dark images");
   for (const preview of [input.preview, input.previews?.light, input.previews?.dark]) if (preview !== undefined && (typeof preview !== "string" || !safePath(preview) || !/\.(?:png|jpe?g|webp|avif)$/i.test(preview))) throw new Error("Preview must be a package-relative raster image");
   if (input.kind === "plugin" && !input.main) throw new Error("Plugin main.js is required");
@@ -92,6 +93,13 @@ function validatePackage(pkg: ExtensionPackage): ExtensionPackage {
   if (pkg.manifest.kind === "theme" && !pkg.manifest.styles) pkg.manifest.styles = "theme.css";
   for (const entry of [pkg.manifest.main, pkg.manifest.desktop, pkg.manifest.styles]) {
     if (entry && (!pkg.files[entry] || pkg.files[entry].encoding !== "utf8")) throw new Error(`Missing text entry: ${entry}`);
+  }
+  if (pkg.manifest.icon) {
+    const icon = pkg.files[pkg.manifest.icon];
+    const source = icon?.data ?? "";
+    const viewBox = source.match(/\bviewBox\s*=\s*["']([^"']+)["']/i)?.[1].trim().split(/[\s,]+/).map(Number);
+    const squareViewBox = viewBox?.length === 4 && viewBox[0] === 0 && viewBox[1] === 0 && viewBox[2] === 24 && viewBox[3] === 24;
+    if (!icon || icon.encoding !== "utf8" || source.length > 64 * 1024 || !/^\s*<svg\b[\s\S]*<\/svg>\s*$/i.test(source) || !squareViewBox || /<(?:script|foreignObject|image)\b|\bon[a-z]+\s*=|\b(?:href|url)\s*=?/i.test(source) || /(?:fill|stroke)\s*=\s*["'](?!none|currentColor)[^"']+/i.test(source)) throw new Error("Plugin icon must be a bundled, square monochrome SVG using currentColor");
   }
   for (const preview of [pkg.manifest.preview, pkg.manifest.previews?.light, pkg.manifest.previews?.dark]) if (preview && pkg.files[preview]?.encoding !== "base64") throw new Error("Missing binary preview resource");
   return pkg;

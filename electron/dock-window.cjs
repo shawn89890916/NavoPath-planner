@@ -1,6 +1,7 @@
 const { DEFAULT_COMPACT_WIDTH } = require("./compact-window.cjs");
 
 const DEFAULT_DOCK_PREFERENCES = { activation: "hover", handleHeight: 64, position: 65, panelHeight: 100 };
+const DOCK_HANDLE_HIT_WIDTH = 24;
 
 function normalizeDockPreferences(value = {}) {
   if (!value || typeof value !== "object") value = {};
@@ -27,10 +28,11 @@ function dockWindowBounds(workArea, side, preferences = DEFAULT_DOCK_PREFERENCES
 
 function dockHandleBounds(workArea, side, preferences) {
   const height = Math.min(preferences.handleHeight, workArea.height);
+  const width = Math.min(DOCK_HANDLE_HIT_WIDTH, workArea.width);
   return {
-    x: side === "left" ? workArea.x : workArea.x + workArea.width - 3,
+    x: side === "left" ? workArea.x : workArea.x + workArea.width - width,
     y: workArea.y + Math.round((workArea.height - height) * preferences.position / 100),
-    width: 3,
+    width,
     height,
   };
 }
@@ -174,7 +176,7 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
       docked.set(win, state);
       state.onClosed = () => { state.handle?.destroy(); docked.delete(win); stopHoverTimer(); };
       win.once("closed", state.onClosed);
-      state.handle = createHandle?.();
+      state.handle = createHandle?.(side);
       if (state.fullScreen) win.setFullScreen(false);
       if (state.maximized) win.unmaximize();
       win.setMinimumSize(0, 0);
@@ -185,6 +187,7 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
     }
     state.side = side;
     state.drag = null;
+    state.handle?.webContents?.send("dock-handle:set-side", side);
     applyBounds(win, state);
     collapse(win, state);
     if (hoverTimer === null) {

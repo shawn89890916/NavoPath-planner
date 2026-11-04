@@ -81,7 +81,7 @@ function setup(options, saved = {}) {
     createHandle: () => {
       const handle = new FakeWindow();
       handle.minimumSize = [0, 0];
-      handle.webContents = { mainFrame: {} };
+      handle.webContents = { mainFrame: {}, sent: [], send(channel, value) { this.sent.push([channel, value]); } };
       handles.push(handle);
       return handle;
     },
@@ -159,7 +159,7 @@ test("only dwelling on the visible tab opens the panel, with a grace period on l
   assert.equal(win.visible, false);
   tick({ x: -1600, y: 100 }, 500);
   assert.equal(win.visible, false);
-  tick({ x: -1597, y: 580 }, 500);
+  tick({ x: -1576, y: 580 }, 500);
   assert.equal(win.visible, false);
   tick({ x: -1600, y: 580 });
   tick({ x: -1600, y: 580 }, 199);
@@ -277,8 +277,9 @@ test("click mode ignores hovering, clicks focus the panel, and dragging saves po
   set("left");
   const handle = handles[0];
   assert.equal(handle.visible, true);
-  assert.deepEqual(handle.bounds, { x: -1600, y: 557, width: 3, height: 64 });
-  assert.deepEqual(handle.shape, [{ x: 0, y: 0, width: 3, height: 64 }]);
+  assert.deepEqual(handle.bounds, { x: -1600, y: 557, width: 24, height: 64 });
+  assert.deepEqual(handle.shape, [{ x: 0, y: 0, width: 24, height: 64 }]);
+  assert.deepEqual(handle.webContents.sent.at(-1), ["dock-handle:set-side", "left"]);
   tick({ x: -1598, y: 580 });
   tick({ x: -1598, y: 580 }, 1000);
   assert.equal(win.visible, false);
@@ -332,7 +333,7 @@ test("preferences clamp geometry, survive a new service, and retain unrelated fi
   assert.throws(() => preferences({}, { role: "widget", win }), /application window/);
   assert.throws(() => preferences(null, event), /Invalid dock preferences/);
   const area = { x: -300, y: -200, width: 300, height: 40 };
-  assert.deepEqual(dockHandleBounds(area, "right", preferences()), { x: -3, y: -200, width: 3, height: 40 });
+  assert.deepEqual(dockHandleBounds(area, "right", preferences()), { x: -24, y: -200, width: 24, height: 40 });
 });
 
 test("handle IPC rejects app renderers and subframes, and closed owners destroy their handles", () => {

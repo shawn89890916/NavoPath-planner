@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { detectSystemLanguage } from "./i18n";
 import type { Language } from "./types";
 import "./plugin-guide.css";
@@ -21,10 +21,15 @@ function DocCodeBlock({ value, label, language }: { value: string; label: string
 export default function PluginGuidePage() {
   const [language, setLanguage] = useState<Language>(detectSystemLanguage());
   const zh = language === "zh";
+  useEffect(() => {
+    const previous = document.title;
+    document.title = zh ? "NavoPath 插件 API 与 MCP 文档" : "NavoPath Plugin API & MCP Docs";
+    return () => { document.title = previous; };
+  }, [zh]);
   const labels = {
     back: zh ? "返回工作区" : "Back to app",
     tag: zh ? "社区插件 / 主题 / MCP" : "COMMUNITY PLUGINS / THEMES / MCP",
-    title: zh ? "插件系统与 MCP 连接指南" : "Plugins and MCP Integration Guide",
+    title: zh ? "插件 API、设计规范与 MCP" : "Plugin API, Design Standards & MCP",
     intro: zh
       ? "通过独立安装包扩展 NavoPath 的工具、计时模式与外观；通过 Model Context Protocol (MCP) 让 AI 客户端读取与操作你的规划数据。"
       : "Extend NavoPath tools, timer modes, and appearance with independent packages. Connect AI clients to planning data through Model Context Protocol (MCP).",
@@ -64,9 +69,13 @@ export default function PluginGuidePage() {
   }
 }`;
 
-  return <main className="df-doc-page changelog-like">
+  return <main className="df-doc-page changelog-like df-api-doc-page">
     <nav className="df-doc-sidebar" aria-label={zh ? "文档导航" : "Documentation Navigation"}>
       <a href="/app">← {labels.back}</a>
+      <a href="#plugins">{zh ? "插件 API" : "Plugin API"}</a>
+      <a href="#standards">{zh ? "设计规范" : "Design standards"}</a>
+      <a href="#mcp">MCP</a>
+      <a href="#security">{zh ? "安全边界" : "Security"}</a>
       <div className="df-doc-language" aria-label={zh ? "文档语言" : "Documentation Language"}>
         <button type="button" className={zh ? "active" : ""} onClick={() => setLanguage("zh")}>中文</button>
         <button type="button" className={!zh ? "active" : ""} onClick={() => setLanguage("en")}>EN</button>
@@ -134,6 +143,21 @@ export default function PluginGuidePage() {
           <li>{zh ? "在已安装列表中启用、停用、更新、回退或卸载。插件专属设置在插件子页面中显示；主题提供声明式颜色、数值和文字选项。" : "Enable, disable, update, roll back, or uninstall from the installed list. Plugin settings open in a dedicated subpage; themes can expose declarative color, numeric, and text options."}</li>
           <li>{zh ? "主题叠加顺序为默认浅色/深色样式、社区主题、用户明确设置。界面模式还可选择跟随系统。" : "Theme precedence is the light/dark base, community theme, then explicit user choices. Interface mode can also follow the system."}</li>
         </ol>
+      </section>
+      <section id="standards" className="df-doc-section">
+        <div className="df-doc-section-heading"><span>{zh ? "插件设计与发布" : "PLUGIN DESIGN & RELEASE"}</span><h2>{zh ? "统一插件设计规范" : "Shared Plugin Design Standards"}</h2></div>
+        <div className="df-doc-grid">
+          <article><h3>{zh ? "介绍与兼容资料" : "Description & compatibility"}</h3><p>{zh ? "名称简洁且可区分。description 用一两句说明主要功能、入口和外部服务/数据用途；准确填写 author、minAppVersion、apiVersion、platforms、license，项目地址填 repository。" : "Use a concise, distinctive name. Explain the main feature, entry point, and any external services or data use in one or two sentences. Keep author, minAppVersion, apiVersion, platforms, license, and repository accurate."}</p></article>
+          <article><h3>{zh ? "单色图标" : "Monochrome icon"}</h3><p>{zh ? "在 manifest 设置 icon: \"icon.svg\" 并把文件放进包内。使用正方形 24 × 24 viewBox 和 currentColor 单色线条/色块，不加文字、背景板、脚本或远程资源。未上传时市场和顶栏显示名称首字母。" : "Set manifest icon to \"icon.svg\" and include it in the package. Use a square 24 × 24 viewBox with single-color currentColor strokes/fills, without text, backplates, scripts, or remote resources. If omitted, the market and toolbar show the plugin's first letter."}</p></article>
+          <article><h3>{zh ? "顶栏与设置" : "Toolbar & settings"}</h3><p>{zh ? "常用操作使用 24px 单色图标、可访问名称和简短悬停提示。主视图会自动获得顶栏首字母入口；次要视图和命令可放入“更多”。可配置项用 settings.registerPage；没有配置项时仍显示含版本、作者和平台信息的通用设置页。" : "Use a 24px monochrome icon, accessible label, and concise hover title for frequent actions. A primary view gets a first-letter toolbar launcher automatically; secondary views and commands can stay in More. Register options with settings.registerPage. Plugins without options still get a standard settings page with version, author, and platform details."}</p></article>
+          <article><h3>{zh ? "版本与更新" : "Versions & updates"}</h3><p><code>version</code> {zh ? "使用 MAJOR.MINOR.PATCH，例如" : "uses MAJOR.MINOR.PATCH, for example"} <code>1.2.0</code>{zh ? "。每次发布都递增；测试版可用" : ". Increment it for every release; pre-releases may use"} <code>1.2.0-beta.1</code>{zh ? "。市场用目录版本检查更新；自动安装默认关闭。" : ". The catalog version drives update checks. Automatic installation is off by default."}</p></article>
+        </div>
+        <aside className="df-doc-note"><span>{zh ? "市场字段" : "Marketplace fields"}</span><dl>
+          <div><dt><code>downloads</code></dt><dd>{zh ? "真实下载数，非负整数；缺失时显示暂无数据，不估算。" : "Actual download count as a non-negative integer; missing values are marked unavailable, never estimated."}</dd></div>
+          <div><dt><code>publishedAt</code></dt><dd>{zh ? "最新版上传时间，使用 ISO 8601。" : "Latest upload timestamp in ISO 8601 format."}</dd></div>
+          <div><dt><code>iconUrl</code></dt><dd>{zh ? "自定义目录可提供公开 HTTPS 的 SVG 图标地址。" : "Custom catalogs may provide a public HTTPS URL for the SVG icon."}</dd></div>
+        </dl></aside>
+        <p>{zh ? "官方目录与第三方目录统一使用这些字段。当前还没有统计数据来源的插件会明确显示暂无数据。" : "Official and third-party catalogs share these fields. Listings without a connected statistics source are marked unavailable."}</p>
       </section>
       <section id="security" className="df-doc-section"><h2>{labels.security}</h2><p>{zh ? "插件代码在宿主页面中运行，具有与应用相近的访问能力；它可以读取和修改工作区、访问网络，桌面专属插件还可使用桌面桥接能力。请核实作者和来源。受限模式暂停全部插件，保留安装与配置，适合排查异常。主题只加载 CSS 和静态资源。" : "Plugin code runs in the host page with access comparable to the app. It can read and change workspace data, access the network, and use desktop bridge capabilities when available. Verify authors and sources. Restricted mode pauses all plugins while retaining packages and configuration for troubleshooting. Themes load CSS and static assets."}</p></section>
       <section id="host" className="df-doc-section"><h2>{labels.host}</h2><table><tbody>

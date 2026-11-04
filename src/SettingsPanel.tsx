@@ -411,6 +411,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   const [settingsHome, setSettingsHome] = useState(!initialSection && compactLayout);
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const pluginPages = Array.from(new Map(extensionSnapshot.settingsPages.map((page) => [`${page.owner}:${page.name.trim().toLocaleLowerCase()}`, page])).values());
+  const pluginUpdateCount = Object.keys(extensionSnapshot.updates).filter((key) => extensionSnapshot.preferences.installed[key]?.manifest.kind === "plugin").length;
   const selectedPluginPage = pluginPages.find(page => page.id === settingsTarget.pluginPage);
   const [navigationQuery, setNavigationQuery] = useState("");
   const navigationResults = searchSettings(navigationQuery, lang, isDesktopRuntime);
@@ -804,6 +805,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 ))}
                 {pluginPages.length > 0 && <><h3 className="df-settings-nav-heading">{lang === "zh" ? "插件设置" : "Plugin settings"}</h3>{pluginPages.filter(page => page.name.toLocaleLowerCase().includes(navigationQuery.trim().toLocaleLowerCase())).map(page => <button type="button" key={page.id} className={`ui-choice-item${settingsTarget.pluginPage === page.id ? " active" : ""}`} aria-current={settingsTarget.pluginPage === page.id ? "page" : undefined} onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}>{page.name}</button>)}</>}
               </nav>
+              {!navigationQuery.trim() && pluginUpdateCount > 0 && <button type="button" className="df-plugin-update-notice" onClick={() => navigateSettings({ category: "plugins" })}><span className="df-plugin-update-notice-dot" aria-hidden="true" /><span><strong>{lang === "zh" ? `${pluginUpdateCount} 个插件可更新` : `${pluginUpdateCount} plugin updates`}</strong><small>{lang === "zh" ? "查看并安装更新" : "Review and install updates"}</small></span><span aria-hidden="true">›</span></button>}
             </div>
             <div ref={settingsContentRef} className="df-settings-content">
             {settingsTarget.category === "general" && <SettingSection anchor="general-basics" title={lang === "zh" ? "基础" : "Basics"} description={lang === "zh" ? "语言、时间边界与通知显示。" : "Language, time boundary, and notification display."}>

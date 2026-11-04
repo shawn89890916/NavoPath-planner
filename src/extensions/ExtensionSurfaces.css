@@ -19,6 +19,10 @@
 .df-extension-header-item .navopath-plugin-header-button:hover { background: var(--paper-note); color: var(--text-main); }
 .df-extension-header-item .navopath-plugin-header-button:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
 .df-extension-header-item .navopath-plugin-header-button svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.df-extension-header-launcher { display: grid; flex: 0 0 auto; width: 36px; height: 36px; place-items: center; padding: 0; border: 0; border-radius: var(--radius-control, 8px); color: var(--text-main); background: transparent; font: 600 15px/1 var(--paper-sans); cursor: pointer; transition: color var(--motion-base, 180ms) var(--motion-ease, ease), background-color var(--motion-base, 180ms) var(--motion-ease, ease); }
+.df-extension-header-launcher:hover { background: var(--paper-note); }
+.df-extension-header-launcher:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
+.df-extension-header-launcher img { width: 22px; height: 22px; object-fit: contain; }
 .df-extension-header-item .navopath-plugin-header-button[data-running="true"]::after {
   content: "";
   position: absolute;
@@ -35,8 +39,8 @@
 .df-extension-view-heading h2 { margin: 0; color: var(--text-main); font-size: 20px; }
 .df-extension-view-error { color: var(--danger-ink, var(--text-main)); overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) {
-  .df-extension-header-item .navopath-plugin-header-button { transition: none; }
+  .df-extension-header-item .navopath-plugin-header-button, .df-extension-header-launcher { transition: none; }
 }
 @media (pointer: coarse) {
-  .df-extension-header-item .navopath-plugin-header-button { width: 44px; height: 44px; }
+  .df-extension-header-item .navopath-plugin-header-button, .df-extension-header-launcher { width: 44px; height: 44px; }
 }

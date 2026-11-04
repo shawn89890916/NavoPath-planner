@@ -146,7 +146,9 @@ export class ExtensionService {
     return raw.packages.map((entry: any) => {
       if (!isRecord(entry) || !/^[a-f0-9]{64}$/.test(entry.sha256)) throw new Error("Catalog requires SHA-256 hashes");
       const previewUrls = entry.previewUrls === undefined ? undefined : { light: publicHttps(entry.previewUrls.light), dark: publicHttps(entry.previewUrls.dark) };
-      return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId, ...(entry.previewUrl ? { previewUrl: publicHttps(entry.previewUrl) } : {}), ...(previewUrls ? { previewUrls } : {}) };
+      if (entry.downloads !== undefined && (!Number.isSafeInteger(entry.downloads) || entry.downloads < 0)) throw new Error("Catalog download count must be a non-negative integer");
+      if (entry.publishedAt !== undefined && (typeof entry.publishedAt !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(entry.publishedAt) || !Number.isFinite(Date.parse(entry.publishedAt)))) throw new Error("Catalog publish date must be an ISO timestamp");
+      return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId, ...(entry.previewUrl ? { previewUrl: publicHttps(entry.previewUrl) } : {}), ...(previewUrls ? { previewUrls } : {}), ...(entry.iconUrl ? { iconUrl: publicHttps(entry.iconUrl) } : {}), ...(entry.downloads !== undefined ? { downloads: entry.downloads } : {}), ...(entry.publishedAt ? { publishedAt: entry.publishedAt } : {}) };
     });
   }
   private refreshCatalogImpl(): Promise<void> {

@@ -1075,12 +1075,15 @@ function App() {
   const [portraitLayout, setPortraitLayout] = useState(() => window.matchMedia("(orientation: portrait)").matches);
   const inlineTimelineDraft = Boolean(window.desktopApi) || !portraitLayout;
   const [desktopDockSide, setDesktopDockSide] = useState<"left" | "right" | null>(null);
+  const [desktopDockReady, setDesktopDockReady] = useState(false);
   const dockMouseLayout = Boolean(desktopDockSide) && compactLayout;
   useEffect(() => {
     let cancelled = false;
-    void window.desktopApi?.dockWindow?.getSide().then((side) => {
-      if (!cancelled) setDesktopDockSide(side);
-    }).catch(() => {});
+    const dockWindow = window.desktopApi?.dockWindow;
+    if (!dockWindow) { setDesktopDockReady(true); return () => { cancelled = true; }; }
+    void dockWindow.getSide().then((side) => {
+      if (!cancelled) { setDesktopDockSide(side); setDesktopDockReady(true); }
+    }).catch(() => { if (!cancelled) setDesktopDockReady(true); });
     return () => { cancelled = true; };
   }, []);
   const [compactExecuteView, setCompactExecuteView] = useState<CompactExecuteView>("schedule");
@@ -9135,15 +9138,26 @@ if (cached?.data && cached?.settings) {
   const aiPanel = aiPresence.present && <AiPanel closing={aiPresence.closing} demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
 
   return (
-    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
           <div className="df-brand">
-            <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
-              <ProductIcon compact />
-            </button>
-            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} /></Suspense>}
+            {window.desktopApi?.dockWindow
+              ? <Suspense fallback={<button className="df-brand-ai-button" type="button" disabled aria-label="NavoPath"><ProductIcon compact /></button>}>
+                <DesktopDockControls
+                  lang={lang}
+                  side={desktopDockSide}
+                  disabled={!desktopDockReady}
+                  trigger={<ProductIcon compact />}
+                  onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }}
+                  onError={showToast}
+                />
+              </Suspense>
+              : <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
+                <ProductIcon compact />
+              </button>}
+            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
           </div>
           <div className="df-month-year-selector">
             <button className="df-month-year-btn" aria-expanded={yearOverviewOpen} onClick={() => {
@@ -9367,7 +9381,6 @@ if (cached?.data && cached?.settings) {
               actions={<>
                 <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />
                 <IconButton className={`df-icon-action df-candidate-header-icon${showCompletedCandidates ? " active" : ""}`} icon={<UiListChecksIcon size={17} />} label={t(lang, "candidate.showCompleted")} aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)} />
-                {!productPresentation && window.desktopApi?.dockWindow && <Suspense fallback={null}><DesktopDockControls lang={lang} side={desktopDockSide} onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }} onError={showToast} /></Suspense>}
                 {!settings.hideAi && (
                   <span className="df-ai-plan-title-tools">
                     <IconButton
@@ -10481,7 +10494,7 @@ if (cached?.data && cached?.settings) {
       <CommandPalette open={commandOpen} compact={compactLayout} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
       {utilityPanel && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} /></Suspense>}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
-      {pluginToolsOpen && <Suspense fallback={null}><ExtensionToolsDialog lang={lang} onClose={() => setPluginToolsOpen(false)} /></Suspense>}
+      {pluginToolsOpen && <Suspense fallback={null}><ExtensionToolsDialog lang={lang} onClose={() => setPluginToolsOpen(false)} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
       {focusOverlayMode && (
         <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>
           <div className="df-focus-topbar">
@@ -13319,5 +13332,7 @@ root.render(
       ? <Suspense fallback={<div className="df-loading-inline">Loading changelog...</div>}><ChangelogPage /></Suspense>
       : window.location.pathname === "/plugin-guide"
         ? <Suspense fallback={<div className="df-loading-inline">Loading guide...</div>}><PluginGuidePageLazy /></Suspense>
+      : window.location.pathname === "/plugin-guidelines"
+        ? <Suspense fallback={<div className="df-loading-inline">Loading API docs...</div>}><PluginGuidePageLazy /></Suspense>
       : <AppErrorBoundary><App /></AppErrorBoundary>,
 );

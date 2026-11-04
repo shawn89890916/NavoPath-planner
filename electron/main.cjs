@@ -460,9 +460,9 @@ compactWindowService.registerIpc();
 const dockWindowService = createDockWindowService({
   ipcMain: trustedIpcMain,
   handleIpcMain: ipcMain,
-  createHandle: () => {
+  createHandle: (side) => {
     const handle = new BrowserWindow({
-      width: 3, height: 64, show: false, frame: false, transparent: true,
+      width: 24, height: 64, show: false, frame: false, transparent: true,
       hasShadow: false, resizable: false, movable: false, minimizable: false,
       maximizable: false, skipTaskbar: true, alwaysOnTop: true, thickFrame: false,
       webPreferences: {
@@ -472,7 +472,7 @@ const dockWindowService = createDockWindowService({
     });
     handle.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
     handle.webContents.on("will-navigate", (event) => event.preventDefault());
-    void handle.loadFile(path.join(__dirname, "dock-handle.html"));
+    void handle.loadFile(path.join(__dirname, "dock-handle.html"), { query: { side } });
     return handle;
   },
   readPreferences: () => {

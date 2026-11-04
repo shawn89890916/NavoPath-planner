@@ -1,6 +1,8 @@
 # NavoPath community plugin and theme development
 
-NavoPath API v1 loads installable packages on desktop, web and mobile. Start
+NavoPath API v1 loads installable packages on desktop, web and mobile. The
+combined public reference for plugin API, design standards, publishing and MCP
+is available at `/plugin-guide` and `/plugin-guidelines`. Start
 with `integrations/navopath-plugin-template` or
 `integrations/navopath-theme-template`; both include an MIT license and an
 `AGENT-PROMPT.md` that can be handed to a coding assistant. You can install a
@@ -24,6 +26,36 @@ A `.navopackage.json` is UTF-8 JSON with `{ manifest, files }`.
   }
 }
 ```
+
+Use the manifest `version` as the release version. Choose the value before
+packaging; bump it for every published change using `MAJOR.MINOR.PATCH` (a
+pre-release suffix such as `1.2.0-beta.1` is allowed). The installed app checks
+this value against the catalog and offers an update when it increases.
+
+### Plugin presentation standard
+
+- Keep `description` short, specific and action-oriented. Explain what the
+  plugin adds and mention external services or data use.
+- A plugin may include `icon: "icon.svg"` and the SVG in `files`. Use a square
+  `viewBox="0 0 24 24"`, one-color strokes/fills with `currentColor`, no text,
+  scripts, remote references or background. When no icon is provided, NavoPath
+  uses the plugin name's first letter.
+- Use `settings.registerPage` for configurable options. Every installed plugin
+  still gets a Settings action with its version, author and platform details if
+  it has no custom settings page.
+- Register a `ui.addHeaderItem` for an active tool. When a plugin contributes a
+  view but no header item, the host places a first-letter launcher in the top
+  bar and opens that view directly. Remaining views and commands stay in the
+  plugin-tools menu.
+- Keep header controls icon-only and accessible. Use the shared
+  `navopath-plugin-header-button` class, a localized accessible label, a 24px
+  monochrome outline icon and no added pill or border.
+
+Catalog entries may include `downloads` (non-negative integer) and
+`publishedAt` (ISO 8601 date) from a real release/statistics source. The market
+shows “Unavailable” when a source does not provide a value; do not estimate or
+invent counts. Independent catalog entries can include `iconUrl` for a public
+HTTPS copy of the packaged SVG.
 
 Each file uses `encoding: "utf8"` for source/text or `"base64"` for binary
 assets, with its content in `data`. Use safe package-relative paths. The

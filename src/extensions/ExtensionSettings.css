@@ -34,6 +34,13 @@
 .df-extension-market-open { flex: 1; display: block; width: 100%; padding: 18px; border: 0; border-radius: 0; background: transparent; color: inherit; text-align: start; font: inherit; cursor: pointer; }
 .df-extension-market-open:focus-visible { outline: 2px solid var(--border-focus, var(--accent-active)); outline-offset: -4px; }
 .df-extension-market-open h3 { margin: 0 0 5px; font: 600 17px/1.4 var(--paper-sans, sans-serif); }
+.df-extension-plugin-heading { display: flex; min-width: 0; align-items: center; gap: 12px; }
+.df-extension-plugin-heading > div { min-width: 0; }
+.df-extension-plugin-heading h3 { margin: 0; overflow-wrap: anywhere; }
+.df-extension-plugin-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; overflow: hidden; border: 1px solid var(--paper-rule); border-radius: 11px; color: var(--text-main); background: var(--paper-note); font: 600 20px/1 var(--paper-sans); }
+.df-extension-plugin-icon img { width: 24px; height: 24px; object-fit: contain; }
+.df-extension-market-stats { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; color: var(--text-muted); font: 400 11px/1.5 var(--paper-sans); }
+.df-extension-market-stats span { color: var(--paper-rule-strong); }
 .df-extension-market-open p { min-height: 4.6em; margin: 14px 0 0; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
 .df-extension-market-card footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 18px 18px; }
 .df-extension-preview-control { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--paper-rule); color: var(--text-muted); font-size: 12px; }
@@ -48,10 +55,19 @@
 .df-extension-detail { max-width: 780px; margin: 0 auto; }
 .df-extension-detail > .df-extension-preview { margin-top: 18px; }
 .df-extension-detail h3 { margin: 24px 0 6px; font: 600 26px/1.3 var(--paper-sans, sans-serif); }
+.df-extension-detail .df-extension-plugin-heading { margin-top: 18px; }
+.df-extension-detail .df-extension-plugin-heading h3 { margin: 0; font-size: 23px; }
 .df-extension-detail dl { margin: 24px 0; }
 .df-extension-detail dl > div { display: grid; grid-template-columns: minmax(100px, .4fr) minmax(0, 1fr); gap: 18px; padding: 12px 0; border-bottom: 1px solid var(--paper-rule); }
 .df-extension-detail dt { color: var(--text-muted); }
 .df-extension-detail dd { margin: 0; overflow-wrap: anywhere; }
+.ui-modal.df-extension-info { width:min(560px, calc(100vw - 32px)); padding:24px; border:1px solid var(--paper-rule-strong); border-radius:12px; color:var(--text-main); background:var(--surface-main); }
+.df-extension-info > header { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.df-extension-info h2 { margin:0; font:600 20px/1.35 var(--paper-sans); }
+.df-extension-info dl { margin:20px 0; }
+.df-extension-info dl > div { display:flex; justify-content:space-between; gap:16px; padding:10px 0; border-bottom:1px solid var(--paper-rule); }
+.df-extension-info dt, .df-extension-info .df-extension-meta { color:var(--text-muted); }
+.df-extension-info dd { margin:0; text-align:right; }
 #root .df-app .df-extensions .df-extension-form .df-settings-input { flex: 1 1 260px; width: 100%; min-width: 0; }
 #root .df-app .df-extensions .df-extension-search .df-settings-input { width: 100%; min-width: 0; min-height: 40px; padding-left: 38px; }
 @media (max-width: 680px) {

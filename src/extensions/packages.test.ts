@@ -49,6 +49,16 @@ describe("community extension packages", () => {
     pkg.manifest.preview = "missing.png";
     expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("preview resource");
   });
+  it("accepts a square currentColor plugin icon and rejects colored or unsafe SVGs", () => {
+    const pkg = JSON.parse(officialPackageTexts.weather);
+    pkg.manifest.icon = "icon.svg";
+    pkg.files["icon.svg"] = { encoding: "utf8", data: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" d="M4 4h16v16H4z"/></svg>' };
+    expect(parsePackage(strToU8(JSON.stringify(pkg))).manifest.icon).toBe("icon.svg");
+    pkg.files["icon.svg"].data = '<svg viewBox="0 0 24 24"><path fill="#ff0000" d="M0 0h24v24z"/></svg>';
+    expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("monochrome SVG");
+    pkg.files["icon.svg"].data = '<svg viewBox="0 0 24 24"><script>alert(1)</script></svg>';
+    expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("monochrome SVG");
+  });
   it("retains incompatible installations without pretending they can run", () => {
     const manifest = JSON.parse(officialPackageTexts.weather).manifest;
     expect(compatibility({ ...manifest, platforms: ["desktop"] }, "web")).toContain("Unsupported");

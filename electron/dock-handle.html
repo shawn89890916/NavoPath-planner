@@ -7,16 +7,17 @@
   <style>
     :root { color-scheme: light dark; }
     html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
-    button { display: block; padding: 0; width: 3px; height: 100%; border: 0;
-      background: #584d3d; opacity: .48; cursor: pointer; touch-action: none;
-      mask-image: linear-gradient(to bottom, transparent, #000 12px, #000 calc(100% - 12px), transparent),
-        linear-gradient(to right, transparent, #000 50%, transparent);
-      mask-composite: intersect;
+    button { display: block; padding: 0; width: 100%; height: 100%; border: 0;
+      background: linear-gradient(to right, #584d3d 0 3px, transparent 3px);
+      opacity: .48; cursor: pointer; touch-action: none;
+      mask-image: linear-gradient(to bottom, transparent, #000 12px, #000 calc(100% - 12px), transparent);
       transition: opacity 140ms ease; }
+    html[data-side="right"] button { background: linear-gradient(to left, #584d3d 0 3px, transparent 3px); }
     button:hover, button:focus-visible { opacity: .72; outline: none; }
     button:active { cursor: ns-resize; }
     @media (prefers-color-scheme: dark) {
-      button { background: #d9d6cf; opacity: .38; }
+      button { background: linear-gradient(to right, #d9d6cf 0 3px, transparent 3px); opacity: .38; }
+      html[data-side="right"] button { background: linear-gradient(to left, #d9d6cf 0 3px, transparent 3px); }
       button:hover, button:focus-visible { opacity: .65; }
     }
     @media (prefers-reduced-motion: reduce) { button { transition: none; } }
