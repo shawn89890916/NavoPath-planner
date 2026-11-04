@@ -9365,11 +9365,9 @@ if (cached?.data && cached?.settings) {
               {...candidateHeaderGesture}
               title={term(lang, "todayCandidates")}
               actions={<>
-                {!mobileExecution && (timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
-                  <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }} style={{ fontSize: "14px", lineHeight: 1, padding: "0 2px" }}>«</button>
-                )}
                 <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />
                 <IconButton className={`df-icon-action df-candidate-header-icon${showCompletedCandidates ? " active" : ""}`} icon={<UiListChecksIcon size={17} />} label={t(lang, "candidate.showCompleted")} aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)} />
+                {!productPresentation && window.desktopApi?.dockWindow && <Suspense fallback={null}><DesktopDockControls lang={lang} side={desktopDockSide} onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }} onError={showToast} /></Suspense>}
                 {!settings.hideAi && (
                   <span className="df-ai-plan-title-tools">
                     <IconButton
@@ -9398,6 +9396,9 @@ if (cached?.data && cached?.settings) {
                   </span>
                 )}
                 {mobileExecution && <CloseButton className="df-mobile-candidate-close" label={lang === "zh" ? "关闭候选任务" : "Close candidates"} onClick={closeCandidateDrawer} />}
+                {!mobileExecution && (timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
+                  <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }}>«</button>
+                )}
               </>
             }
             />

@@ -1,6 +1,6 @@
 # NavoPath 更新日志
 
-## 2026-11-04 · 1.6.1 正式版
+## 2026-11-04 · 1.6.2 正式版
 
 ### 新增
 - 社区课表插件支持课程与自习导入、每周重复及可覆盖的背景，停用保留课表。
@@ -12,6 +12,7 @@
 
 ### 改进
 - N 标志按实际图形中心与插件图标对齐；执行、规划、时间轴视图和设置选项共用平滑移动的选中状态。
+- 桌面 Dock 控件回到今日候选栏，紧邻 AI 规划按钮左侧并可选择左右贴边；候选栏收起按钮移到最右侧且不再显示边框。
 - 今日候选直接显示分类和已完成筛选图标；移除重复 Focus、模板和 AI 设置入口，让插件及设置承担各自功能。
 
 ### 修复
@@ -339,7 +340,7 @@
 
 # NavoPath Changelog
 
-## 2026-11-04 · 1.6.1 Stable
+## 2026-11-04 · 1.6.2 Stable
 
 ### Added
 - The community timetable plugin imports weekly classes and self-study as overlapping backgrounds; disabling retains the timetable.
@@ -351,6 +352,7 @@
 
 ### Improved
 - The N mark aligns by its visible center with plugin icons; Execute, Planning, timeline views and settings options share the same smoothly moving selection state.
+- The desktop Dock control returns to Today’s Candidates, immediately before AI planning, and lets users choose the left or right screen edge. The collapse control moves to the far right without a visible border.
 - Today’s Candidates exposes grouping and completed-task filtering directly, while duplicate Focus, template and AI-settings entries are removed in favor of their plugin and settings homes.
 
 ### Fixes

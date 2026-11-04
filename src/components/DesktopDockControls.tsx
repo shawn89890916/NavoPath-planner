@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { DesktopDockPreferences, Language } from "../types";
-import { Button } from "./UiPrimitives";
+import { Button, IconButton } from "./UiPrimitives";
+import { UiDockSidebarIcon } from "./UiIcons";
 import { SettingDescription, SettingNumberInput, SettingRow, SettingSelect } from "./SettingsControls";
 
 export function DesktopDockSettings({ lang }: { lang: Language }) {
@@ -25,7 +26,7 @@ export function DesktopDockSettings({ lang }: { lang: Language }) {
   if (!api) return null;
   return <>
     <SettingRow title={lang === "zh" ? "贴边栏触发方式" : "Dock activation"}
-      description={lang === "zh" ? "在今日候选的「更多 → Dock」启用。收起时仅露出 3 像素小条；点击模式下可上下拖动小条。" : "Enable from Today’s Candidates → More → Dock. A 3 px tab remains visible when hidden; drag it vertically in click mode."}
+      description={lang === "zh" ? "从今日候选工具栏的 Dock 图标启用。收起时仅露出 3 像素小条；点击模式下可上下拖动小条。" : "Enable from the Dock icon in Today’s Candidates. A 3 px tab remains visible when hidden; drag it vertically in click mode."}
       control={<SettingSelect value={preferences?.activation || "hover"} disabled={!preferences || busy}
         ariaLabel={lang === "zh" ? "贴边栏触发方式" : "Dock activation"}
         onChange={(activation) => void save({ activation })} options={[
@@ -59,12 +60,27 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError 
     }
   }
 
-  if (side) return <Button disabled={busy} onClick={() => void changeSide(null)}>Undock</Button>;
-  return <div onMouseEnter={() => setChoosing(true)} onMouseLeave={() => setChoosing(false)}>
-    <Button disabled={busy} aria-expanded={choosing} onFocus={() => setChoosing(true)} onClick={(event) => { event.stopPropagation(); setChoosing(true); }}>Dock <span aria-hidden="true">›</span></Button>
-    {choosing && <div className="ui-choice-list ui-choice-list--inline" role="group" aria-label={lang === "zh" ? "贴边方向" : "Dock side"}>
-      <Button className="ui-choice-item" disabled={busy} onClick={() => void changeSide("left")}>{lang === "zh" ? "左侧" : "Left"}</Button>
-      <Button className="ui-choice-item" disabled={busy} onClick={() => void changeSide("right")}>{lang === "zh" ? "右侧" : "Right"}</Button>
+  const label = side
+    ? (lang === "zh" ? `取消${side === "left" ? "左" : "右"}侧贴边` : `Undock from ${side} edge`)
+    : (lang === "zh" ? "桌面贴边 Dock" : "Desktop edge Dock");
+
+  return <div className="df-desktop-dock-control">
+    <IconButton
+      className={`df-icon-action df-candidate-header-icon df-desktop-dock-trigger${side ? " active" : ""}`}
+      icon={<UiDockSidebarIcon size={17} />}
+      label={label}
+      aria-pressed={Boolean(side)}
+      aria-expanded={choosing}
+      disabled={busy}
+      onClick={(event) => {
+        event.stopPropagation();
+        if (side) void changeSide(null);
+        else setChoosing((open) => !open);
+      }}
+    />
+    {choosing && !side && <div className="ui-choice-list ui-choice-list--inline df-desktop-dock-choices" role="group" aria-label={lang === "zh" ? "贴边方向" : "Dock side"}>
+      <Button className="ui-choice-item" disabled={busy} onClick={() => { setChoosing(false); void changeSide("left"); }}>{lang === "zh" ? "左侧" : "Left"}</Button>
+      <Button className="ui-choice-item" disabled={busy} onClick={() => { setChoosing(false); void changeSide("right"); }}>{lang === "zh" ? "右侧" : "Right"}</Button>
     </div>}
   </div>;
 }

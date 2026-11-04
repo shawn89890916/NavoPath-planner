@@ -8752,6 +8752,52 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   outline: 2px solid var(--border-focus);
   outline-offset: 2px;
 }
+#root .df-app .df-candidate-panel .df-desktop-dock-control {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+#root .df-app .df-candidate-panel .df-desktop-dock-trigger {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#root .df-app .df-candidate-panel .df-desktop-dock-trigger:hover,
+#root .df-app .df-candidate-panel .df-desktop-dock-trigger.active {
+  background: var(--paper-note);
+}
+#root .df-app .df-candidate-panel .df-desktop-dock-trigger:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+#root .df-app .df-candidate-panel .df-desktop-dock-choices {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 6px);
+  right: 0;
+  display: flex;
+  min-width: max-content;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 5px;
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--paper-radius);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-soft);
+}
+#root .df-app .df-panel-title > div > .df-candidate-collapse {
+  border: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+#root .df-app .df-panel-title > div > .df-candidate-collapse:hover {
+  background: var(--paper-note);
+}
+#root .df-app .df-panel-title > div > .df-candidate-collapse:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
 .df-icon-action {
   transition: all .15s ease;
   width: 34px;

@@ -1,6 +1,6 @@
 {
   "name": "navopath",
-  "version": "1.6.2-beta.1",
+  "version": "1.6.2",
   "description": "NavoPath — Navigate your next step.",
   "author": "NavoPath",
   "main": "electron/main.cjs",
