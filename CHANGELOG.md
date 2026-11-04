@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-11-05 · 1.6.3 Beta 8
+
+### 修复
+- Windows Dock 悬停展开后会恢复最小化的窗口，并在显示后重新置顶，不抢走当前输入焦点；小条长度可覆盖整条屏幕边缘，超出屏幕高度时自动适配。
+
 ## 2026-11-04 · 1.6.3 Beta 7
 
 ### 改进
@@ -13,11 +18,9 @@
 ### 1.6.3 Beta 6
 
 ### 改进
-- 桌面 Dock 小条可加长至覆盖整条屏幕边缘，超出部分自动适配屏幕高度。
 - 应用更新与接受 Beta 更新移至通用分类，搜索与旧入口同步指向新位置。
 
 ### 修复
-- 修复 Windows 桌面 Dock 悬停展开后仍被其他窗口遮挡的问题，并恢复最小化的面板。
 - 竖屏设置首页的插件名称恢复完整可用宽度，避免名称挤在窄图标列中被截断。
 - 竖屏 Dock 的 N 恢复入口与日期、时间范围控件对齐。
 - 规划筛选固定在顶栏下方、设置图标下侧，不随侧栏收起隐藏；侧栏继续保留图标栏，内置规划图标在两种状态均清晰显示。
@@ -417,6 +420,11 @@
 
 # NavoPath Changelog
 
+## 2026-11-05 · 1.6.3 Beta 8
+
+### Fixed
+- Windows Dock hover activation restores minimized windows and raises the panel after showing without taking input focus. The edge tab can span the full screen edge, and lengths beyond the screen height are fitted automatically.
+
 ## 2026-11-04 · 1.6.3 Beta 7
 
 ### Improved
@@ -430,11 +438,9 @@
 ### 1.6.3 Beta 6
 
 ### Improved
-- Desktop Dock tabs can span the full screen edge, automatically fitting lengths that exceed the screen height.
 - App updates and Accept Beta updates now live in General, including search results and existing links.
 
 ### Fixed
-- Fixed Windows Dock panels remaining behind other windows after hover activation, and restored minimized panels when opening.
 - Plugin names on the portrait settings home regain their full available width instead of being truncated inside a narrow icon column.
 - The portrait Dock N recovery control now aligns with the date and time range controls.
 - Planning filters stay below the header and settings icon, and remain visible when the sidebar collapses. The collapsed sidebar retains its icon rail, with clear built-in icons in both states.
