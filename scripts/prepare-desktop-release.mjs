@@ -9,11 +9,13 @@ const require = createRequire(import.meta.url);
 const { load } = require("js-yaml");
 const root = fileURLToPath(new URL("../", import.meta.url));
 export const desktopReleaseAssets = ["latest.yml", "beta.yml", "NavoPath-Setup.exe", "NavoPath-Setup.exe.blockmap", "NavoPath-Portable.exe"];
+const approvedStableReleaseVersions = new Set(["1.6.0", "1.6.3"]);
 
 export function assertDesktopReleasePolicy(pkg) {
   const stable = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(pkg.version);
   const beta = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)-beta\.[1-9]\d*$/.test(pkg.version);
   if (!stable && !beta) throw new Error("Desktop releases must use stable x.x.x or numbered Beta x.x.x-beta.N semver.");
+  if (stable && !approvedStableReleaseVersions.has(pkg.version)) throw new Error(`Stable desktop release ${pkg.version} has not been explicitly approved.`);
   const expectedReleaseType = beta ? "prerelease" : "release";
   const expectedChannel = beta ? "beta" : "latest";
   if (pkg.build?.publish?.provider !== "github" || pkg.build.publish.releaseType !== expectedReleaseType || pkg.build.publish.channel !== expectedChannel) {

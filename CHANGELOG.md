@@ -2,6 +2,17 @@
 
 ## 2026-11-05
 
+### 1.6.3
+
+#### 新增
+- 规划页支持扩展视图，树与指标预装，看板、矩阵和列表可从插件市场安装。
+
+#### 改进
+- 规划侧栏与竖屏布局、Dock 设置及 Beta 更新偏好更加完整。
+
+#### 修复
+- 修复竖屏侧栏顶部空带、横屏子任务操作和 Dock 入口遮罩显示问题。
+
 ### 1.6.3 Beta 15
 
 #### 修复
@@ -464,6 +475,17 @@
 # NavoPath Changelog
 
 ## 2026-11-05
+
+### 1.6.3
+
+#### Added
+- Planning supports extension views, with Tree and Metrics built in and Kanban, Matrix and List available from the plugin marketplace.
+
+#### Improved
+- Planning sidebar and portrait layout, Dock settings and Beta update preferences.
+
+#### Fixed
+- Removed the portrait sidebar top gap and improved landscape subtask controls and Dock entry dimming under overlays.
 
 ### 1.6.3 Beta 15
 

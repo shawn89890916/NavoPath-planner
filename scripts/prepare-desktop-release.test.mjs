@@ -7,11 +7,13 @@ import path from "node:path";
 import { assertDesktopReleasePolicy, desktopReleaseAssets, prepareDesktopRelease } from "./prepare-desktop-release.mjs";
 
 const betaPkg = { version: "1.6.0-beta.1", build: { publish: { provider: "github", releaseType: "prerelease", channel: "beta" } } };
-const stablePkg = { version: "1.6.0", build: { publish: { provider: "github", releaseType: "release", channel: "latest" } } };
+const stablePkg = { version: "1.6.3", build: { publish: { provider: "github", releaseType: "release", channel: "latest" } } };
 
 test("release policy accepts stable semver on latest and numbered Beta semver on beta", () => {
   assert.doesNotThrow(() => assertDesktopReleasePolicy(betaPkg));
   assert.doesNotThrow(() => assertDesktopReleasePolicy(stablePkg));
+  assert.doesNotThrow(() => assertDesktopReleasePolicy({ ...stablePkg, version: "1.6.0" }));
+  assert.throws(() => assertDesktopReleasePolicy({ ...stablePkg, version: "1.6.4" }), /not been explicitly approved/);
   for (const version of ["1.6", "1.6.0-beta", "1.6.0-alpha.1", "1.6.0-beta.0", "v1.6.0", "01.6.0"]) {
     assert.throws(() => assertDesktopReleasePolicy({ ...stablePkg, version }), /semver/);
   }

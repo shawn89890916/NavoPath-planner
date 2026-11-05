@@ -1,7 +1,10 @@
 # Desktop releases
 
-The owner explicitly approved stable releases on 2026-11-04, starting with
-`1.6.0`. Stable releases use `x.x.x` semver and the `latest` channel. Beta
+The owner explicitly approved stable release `1.6.3` on 2026-11-05. Stable
+releases use `x.x.x` semver and the `latest` channel. The build guard and
+workflow allow only the explicitly approved stable versions `1.6.0` and
+`1.6.3`. Every new stable version requires explicit owner approval and an update
+to the policy, build guard, workflow and tests. Beta
 releases use `x.x.x-beta.N` (for example `1.6.0-beta.1`), display `x.x.x Beta`
 in the release title and use the opt-in `beta` channel. Never overwrite an
 existing tag, release or asset; increment the Beta ordinal for another build of
@@ -51,5 +54,4 @@ Installed-library integration tests exercise the GitHub Atom release selection,
 the real channel manifest URL and semver comparisons. These are offline fixtures;
 the post-publication verification checks real release metadata and assets.
 
-Stable publishing requires explicit user approval followed by a deliberate
-update of this policy, the build guard, release workflow and tests.
+Stable release `1.6.3` is approved for publication as the next release.

@@ -1,6 +1,6 @@
 {
   "name": "navopath",
-  "version": "1.6.3-beta.15",
+  "version": "1.6.3",
   "description": "NavoPath — Navigate your next step.",
   "author": "NavoPath",
   "main": "electron/main.cjs",
@@ -222,8 +222,8 @@
       "provider": "github",
       "owner": "shawn89890916",
       "repo": "NavoPath-planner",
-      "releaseType": "prerelease",
-      "channel": "beta"
+      "releaseType": "release",
+      "channel": "latest"
     }
   },
   "dependencies": {
