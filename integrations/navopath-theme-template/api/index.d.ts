@@ -32,7 +32,7 @@ export interface PluginContext {
   settings: { get<T extends Record<string, unknown> = Record<string, unknown>>(): T; save(patch: Record<string, unknown>): Promise<void>; registerPage(name: string, mount: Mount): Dispose };
   storage: { get<T>(key: string): Promise<T | null>; set(key: string, value: unknown): Promise<void>; remove(key: string): Promise<void> };
   localStorage: { get<T>(key: string): T | null; set(key: string, value: unknown): void };
-  ui: { addHeaderItem(name: string, mount: Mount, options?: { placement?: PluginUiPlacement }): Dispose; registerView(name: string, mount: Mount): Dispose; registerPlanningView(name: string, mount: Mount): Dispose; toast(message: string): void };
+  ui: { addHeaderItem(name: string, mount: Mount, options?: { placement?: PluginUiPlacement }): Dispose; registerView(name: string, mount: Mount): Dispose; registerPlanningView(name: string, mount: Mount): Dispose; openView(name: string): void; toast(message: string): void };
   commands: { register(id: string, name: string, run: () => void | Promise<void>, shortcut?: string): Dispose; execute(id: string): Promise<void> };
   timers: { registerMode(provider: TimerModeProvider): Dispose; open(mode: string): void };
   patch(target: Record<string, any>, key: string, wrapper: (original: any) => any): Dispose;

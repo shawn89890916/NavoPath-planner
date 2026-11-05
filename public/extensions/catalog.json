@@ -44,7 +44,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/daily-overview.navopackage.json",
-      "sha256": "532e104344b9d457abbea94593c708224ae040621916178de8e2bc2a104dc5d6"
+      "sha256": "d01fd31129fce63fd72398ce7eda9858990dc79f0123859436fee0f25ad006af"
     },
     {
       "manifest": {
@@ -627,7 +627,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/weather.navopackage.json",
-      "sha256": "bd6747fdf6311400ea60ef1f2d404e55b942e506f3de934db0b3a24301487978"
+      "sha256": "2455180dddc06c4b6a949d70a3c2089a9378e1e19a09d0dfc3d16e442604a1f8"
     }
   ]
 }

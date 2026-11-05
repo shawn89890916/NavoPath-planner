@@ -1,28 +1,28 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Language } from "../types";
 import { ActionDisclosure, Button, CloseButton, IconButton, Modal } from "../components/UiPrimitives";
+import { RightUtilityPanel, utilityPanelCloseLabel } from "../components/RightUtilityPanel";
 import { ExtensionMount } from "./ExtensionMount";
 import { extensionService } from "./service";
 import { UiRefreshIcon, UiZapIcon, UiPencilIcon, UiMetricsIcon, UiListChecksIcon, UiCalendarCheckIcon } from "../components/UiIcons";
-import type { PluginUiPlacement } from "./types";
+import type { ExtensionContribution, PluginUiPlacement } from "./types";
 import "./ExtensionSurfaces.css";
 
 /** Compact layouts expose the same contributions through the workspace menu. */
-export function ExtensionToolsDialog({ lang, onClose, onOpenSettings, onOpenMetrics }: { lang: Language; onClose: () => void; onOpenSettings?: (pageId: string) => void; onOpenMetrics?: () => void }) {
+export function ExtensionToolsDialog({ lang, onClose, onOpenSettings, onOpenMetrics, onOpenView }: { lang: Language; onClose: () => void; onOpenSettings?: (pageId: string) => void; onOpenMetrics?: () => void; onOpenView?: (view: ExtensionContribution) => void }) {
   const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const empty = !snapshot.headerItems.some((item) => !item.placement || item.placement === "app-header") && !snapshot.views.some((item) => !item.planningView || (onOpenMetrics && item.nativeMode === "metrics")) && !extensionService.listCommands().length;
   const title = lang === "zh" ? "插件工具" : "Plugin tools";
   return <Modal label={title} onClose={onClose} className="df-extension-view">
     <header className="df-extension-view-heading"><h2>{title}</h2><CloseButton label={lang === "zh" ? "关闭" : "Close"} onClick={onClose} /></header>
-    {empty ? <p>{lang === "zh" ? "在设置 → 插件中安装并启用插件。" : "Install and enable plugins in Settings → Plugins."}</p> : <ExtensionHeader lang={lang} onActivate={onClose} onOpenSettings={onOpenSettings} onOpenMetrics={onOpenMetrics} />}
+    {empty ? <p>{lang === "zh" ? "在设置 → 插件中安装并启用插件。" : "Install and enable plugins in Settings → Plugins."}</p> : <ExtensionHeader lang={lang} onActivate={onClose} onOpenSettings={onOpenSettings} onOpenMetrics={onOpenMetrics} onOpenView={onOpenView} />}
   </Modal>;
 }
 
 /** Header entry points share the plugin lifecycle and disappear when unloaded. */
-export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetrics, placement = "app-header" }: { lang: Language; onActivate?: () => void; onOpenSettings?: (pageId: string) => void; onOpenMetrics?: () => void; placement?: PluginUiPlacement }) {
+export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetrics, onOpenView, placement = "app-header" }: { lang: Language; onActivate?: () => void; onOpenSettings?: (pageId: string) => void; onOpenMetrics?: () => void; onOpenView?: (view: ExtensionContribution) => void; placement?: PluginUiPlacement }) {
   const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const commands = extensionService.listCommands();
-  const [selectedView, setSelectedView] = useState<string | null>(null);
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const [running, setRunning] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -33,7 +33,6 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetric
   const headerRef = useRef<HTMLDivElement>(null);
   const headerViewportRef = useRef<HTMLDivElement>(null);
   const headerItemsRef = useRef<HTMLDivElement>(null);
-  const view = snapshot.views.find((item) => item.id === selectedView);
   const label = lang === "zh" ? "插件工具" : "Plugin tools";
   const close = lang === "zh" ? "关闭" : "Close";
   const metrics = placement === "app-header" && onOpenMetrics ? snapshot.views.find((item) => item.nativeMode === "metrics") : undefined;
@@ -47,7 +46,6 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetric
   const launcherOwnerKeys = new Set(launcherPlugins.map((item) => item.key));
   const overflowViews = placement === "app-header" ? snapshot.views.filter((item) => !item.planningView && !launcherOwnerKeys.has(item.owner)) : [];
   const launcherPlugin = Object.values(snapshot.preferences.installed).find((item) => item.key === selectedPlugin && item.manifest.kind === "plugin");
-  useEffect(() => { if (selectedView && !view) setSelectedView(null); }, [selectedView, view]);
   useEffect(() => {
     const header = headerRef.current;
     const viewport = headerViewportRef.current;
@@ -111,7 +109,7 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetric
     const entry = snapshot.views.find((candidate) => candidate.owner === key);
     const settingsPage = snapshot.settingsPages.find((candidate) => candidate.owner === key);
     if (entry?.id === metrics?.id && metrics) onOpenMetrics?.();
-    else if (entry) setSelectedView(entry.id);
+    else if (entry) onOpenView?.(entry);
     else if (settingsPage && onOpenSettings) onOpenSettings(settingsPage.id);
     else setSelectedPlugin(key);
     onActivate?.();
@@ -145,7 +143,7 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetric
       const Icon = item.manifest.id === "quick-capture" ? UiPencilIcon : item.manifest.id === "daily-overview" ? UiListChecksIcon : ["class-timetable", "schedule-templates"].includes(item.manifest.id) ? UiCalendarCheckIcon : UiZapIcon;
       return <IconButton key={`launcher:${item.key}`} className="df-extension-header-launcher" label={item.manifest.name} onClick={() => activateLauncher(item.key)} icon={iconUrl ? <img src={iconUrl} alt="" aria-hidden="true" /> : <Icon size={20} />} />;
     })}
-    {overflowViews.map((item) => <Button key={`view:${item.id}`} className="df-extension-header-action" variant="ghost" title={item.name} onClick={() => { setError(""); setSelectedView(item.id); onActivate?.(); }}>{item.name}</Button>)}
+    {overflowViews.map((item) => <Button key={`view:${item.id}`} className="df-extension-header-action" variant="ghost" title={item.name} onClick={() => { setError(""); onOpenView?.(item); onActivate?.(); }}>{item.name}</Button>)}
     {visibleCommands.map((command) => {
       const label = command.name.trim();
       const Icon = /refresh|reload|更新|刷新|重载/i.test(`${command.id} ${label}`) ? UiRefreshIcon : UiZapIcon;
@@ -156,14 +154,10 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetric
     {hasOverflow && <ActionDisclosure label={label}>
       {Array.from(new Map(orderedHeaderItems.map((item) => [item.owner, item])).values()).map((item) => <Button key={`overflow-header:${item.owner}`} className="df-extension-overflow-action" variant="ghost" onClick={() => activateLauncher(item.owner)}>{item === metrics ? metricsLabel : item.name}</Button>)}
       {launcherPlugins.map((item) => <Button key={`overflow-launcher:${item.key}`} className="df-extension-overflow-action" variant="ghost" onClick={() => activateLauncher(item.key)}>{item.manifest.name}</Button>)}
-      {overflowViews.map((item) => <Button key={item.id} variant="ghost" onClick={() => { setError(""); setSelectedView(item.id); onActivate?.(); }}>{item.name}</Button>)}
+      {overflowViews.map((item) => <Button key={item.id} variant="ghost" onClick={() => { setError(""); onOpenView?.(item); onActivate?.(); }}>{item.name}</Button>)}
       {visibleCommands.map((command) => <Button key={command.id} variant="ghost" disabled={Boolean(running)} onClick={() => { onActivate?.(); void runCommand(command.id); }}>{command.name}</Button>)}
     </ActionDisclosure>}
-    {(view || error) && <Modal label={view?.name ?? label} onClose={() => { setSelectedView(null); setError(""); }} className="df-extension-view" onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); setSelectedView(null); setError(""); } }}>
-      <header className="df-extension-view-heading"><h2>{view?.name ?? label}</h2><CloseButton label={close} onClick={() => { setSelectedView(null); setError(""); }} /></header>
-      {error && <p className="df-extension-view-error" role="alert">{error}</p>}
-      {view && <ExtensionMount contribution={view} />}
-    </Modal>}
-    {launcherPlugin && <Modal label={launcherPlugin.manifest.name} onClose={() => setSelectedPlugin(null)} className="df-extension-view"><header className="df-extension-view-heading"><h2>{launcherPlugin.manifest.name}</h2><CloseButton label={close} onClick={() => setSelectedPlugin(null)} /></header><p>{launcherPlugin.manifest.description}</p><p className="df-extension-meta">v{launcherPlugin.manifest.version} · {launcherPlugin.manifest.author}</p></Modal>}
+    {error && <p className="df-extension-view-error" role="alert">{error}</p>}
+    {launcherPlugin && <RightUtilityPanel label={launcherPlugin.manifest.name} closeLabel={utilityPanelCloseLabel(lang)} onClose={() => setSelectedPlugin(null)}><p>{launcherPlugin.manifest.description}</p><p className="df-extension-meta">v{launcherPlugin.manifest.version} · {launcherPlugin.manifest.author}</p></RightUtilityPanel>}
   </div>;
 }

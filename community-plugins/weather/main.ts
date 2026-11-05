@@ -81,9 +81,10 @@ function validCoordinates(latitude: unknown, longitude: unknown) {
 export default {
   async onload(ctx: any) {
     const zh = ctx.language === "zh";
+    const title = zh ? "天气" : "Weather";
     const defaults = { city: "", cityShort: "", latitude: null, longitude: null, unit: "celsius", intervalMinutes: 30, endpoint: "https://api.open-meteo.com/v1/forecast" };
     const settings = () => ({ ...defaults, ...ctx.settings.get() });
-    const nodes = new Set<{ root: HTMLElement; trigger: HTMLButtonElement; panel: HTMLElement; position: () => void; dispose: () => void }>();
+    const nodes = new Set<{ root: HTMLElement; trigger: HTMLButtonElement; panel: HTMLElement; dispose: () => void }>();
     const requests = new Map<AbortController, number>();
     let stopped = false, busy = false, error = "", forecastVersion = 0;
     let forecastRequest: AbortController | null = null, pending: Promise<void> | null = null;
@@ -91,7 +92,7 @@ export default {
     const render = () => {
       const s = settings();
       const same = cache?.latitude === s.latitude && cache?.longitude === s.longitude && cache?.unit === s.unit && [cache?.current, cache?.high, cache?.low, cache?.precipitation, cache?.timestamp].every(value => typeof value === "number" && Number.isFinite(value));
-      for (const { root, trigger, panel, position } of nodes) {
+      for (const { root, trigger, panel } of nodes) {
         const restoreRefreshFocus = panel.contains(document.activeElement);
         const condition = weatherCondition(same ? cache.weather_code : undefined, zh);
         trigger.replaceChildren(weatherIcon(condition.icon));
@@ -119,7 +120,6 @@ export default {
         const attribution = document.createElement("a"); attribution.href = "https://open-meteo.com/"; attribution.target = "_blank"; attribution.rel = "noopener noreferrer"; attribution.textContent = "Open-Meteo";
         const actions = document.createElement("div"); actions.className = "navopath-weather-actions"; actions.append(refreshButton, attribution); panel.append(actions);
         if (restoreRefreshFocus) { if (refreshButton.disabled) { panel.tabIndex = -1; panel.focus({ preventScroll: true }); } else refreshButton.focus({ preventScroll: true }); }
-        position();
       }
     };
     const json = async (url: URL, controller = new AbortController()) => {
@@ -155,37 +155,21 @@ export default {
       })();
       return pending;
     }
+    ctx.ui.registerView(title, (container: HTMLElement) => {
+      const root = document.createElement("section"); root.className = "navopath-weather-details";
+      const trigger = document.createElement("button");
+      const entry = { root, trigger, panel: root, dispose: () => { root.remove(); nodes.delete(entry); } };
+      nodes.add(entry); container.append(root); render();
+      return entry.dispose;
+    });
     ctx.ui.addHeaderItem(zh ? "天气" : "Weather", (container: HTMLElement) => {
       const root = document.createElement("div"); root.className = "navopath-weather";
-      const trigger = document.createElement("button"); trigger.type = "button"; trigger.className = "navopath-plugin-header-button navopath-weather-summary"; trigger.setAttribute("aria-haspopup", "dialog"); trigger.setAttribute("aria-expanded", "false");
-      const panel = document.createElement("div"); panel.className = "navopath-weather-details ui-popover"; panel.id = `navopath-weather-${crypto.randomUUID()}`; panel.setAttribute("role", "dialog"); panel.setAttribute("popover", "auto"); trigger.setAttribute("aria-controls", panel.id);
-      const native = typeof panel.showPopover === "function";
-      let open = false;
-      if (!native) panel.hidden = true;
-      root.append(trigger, panel); container.append(root);
-      // The browser top layer escapes header overflow while retaining inherited theme tokens.
-      // Older browsers use a body-mounted panel with the same local tokens.
-      if (!native) document.body.append(panel);
-      const position = () => {
-        if (!open) return;
-        const rect = trigger.getBoundingClientRect(), bounds = panel.getBoundingClientRect();
-        const width = document.documentElement.clientWidth, height = window.innerHeight;
-        const left = Math.max(8, Math.min(rect.right - bounds.width, width - bounds.width - 8));
-        const top = Math.max(8, rect.bottom + 8 + bounds.height <= height - 8 ? rect.bottom + 8 : rect.top - bounds.height - 8);
-        panel.style.left = `${left}px`; panel.style.top = `${top}px`;
-      };
-      const close = () => { if (!open) return; open = false; trigger.setAttribute("aria-expanded", "false"); if (native) panel.hidePopover(); else panel.hidden = true; };
-      trigger.onclick = () => {
-        if (open) { close(); return; }
-        if (!native) { const style = getComputedStyle(root); for (let i = 0; i < style.length; i++) { const key = style[i]; if (key.startsWith("--")) panel.style.setProperty(key, style.getPropertyValue(key)); } }
-        open = true; trigger.setAttribute("aria-expanded", "true"); if (native) panel.showPopover(); else panel.hidden = false; position();
-      };
-      const toggle = (event: Event) => { open = (event as ToggleEvent).newState === "open"; trigger.setAttribute("aria-expanded", String(open)); position(); };
-      const outside = (event: Event) => { if (!root.contains(event.target as Node) && !panel.contains(event.target as Node)) close(); };
-      const keyboard = (event: KeyboardEvent) => { if (event.key === "Escape" && open) { event.stopPropagation(); event.preventDefault(); close(); trigger.focus(); } };
-      panel.addEventListener("toggle", toggle); document.addEventListener("pointerdown", outside); document.addEventListener("focusin", outside); root.addEventListener("keydown", keyboard); if (!native) panel.addEventListener("keydown", keyboard);
-      window.addEventListener("resize", position); window.addEventListener("scroll", position, true);
-      const entry = { root, trigger, panel, position, dispose: () => { close(); panel.removeEventListener("toggle", toggle); document.removeEventListener("pointerdown", outside); document.removeEventListener("focusin", outside); root.removeEventListener("keydown", keyboard); panel.removeEventListener("keydown", keyboard); window.removeEventListener("resize", position); window.removeEventListener("scroll", position, true); panel.remove(); root.remove(); nodes.delete(entry); } };
+      const trigger = document.createElement("button"); trigger.type = "button"; trigger.className = "navopath-plugin-header-button navopath-weather-summary";
+      trigger.setAttribute("aria-haspopup", "dialog");
+      trigger.onclick = () => ctx.ui.openView(title);
+      root.append(trigger); container.append(root);
+      const panel = document.createElement("div");
+      const entry = { root, trigger, panel, dispose: () => { root.remove(); nodes.delete(entry); } };
       nodes.add(entry); render(); return entry.dispose;
     });
     ctx.settings.registerPage(zh ? "天气" : "Weather", (container: HTMLElement) => {

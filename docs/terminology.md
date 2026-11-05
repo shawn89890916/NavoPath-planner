@@ -7,7 +7,7 @@ Tooltip、`aria-label`、帮助文档和 Toast 应优先复用 `src/terminology.
 | --- | --- | --- | --- | --- | --- |
 | `planning` | 规划 | Planning | 管理项目、任务和长期安排 | Plan、计划 | 打开规划，整理长期项目。 |
 | `execute` | 执行 | Execute | 完成今天已经选定的工作 | 工作台、Focus | 在执行中完成今日任务。 |
-| `todayCandidates` | 今日候选 | Today's Candidates | 已选中今天推进、尚未放入具体时间的任务 | Queue、Inbox、待办 | 从规划加入今日候选。 |
+| `todayCandidates` | 任务 | Tasks | 可浏览、筛选并安排到时间轴上的任务 | Queue、Inbox、待办 | 从任务列表安排到时间轴。 |
 | `schedule` | 安排 | Schedule | 将任务放入具体时间段 | Plan、Adopt、计划 | 安排任务到 10:00。 |
 | `timeline` | 时间轴 | Timeline | 展示时间安排的时间网格 | Calendar、日历 | 在时间轴上查看安排。 |
 | `task` | 任务 | Task | 需要完成的可执行事项 | Event、事项 | 创建任务并设置时长。 |

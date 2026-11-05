@@ -47,9 +47,14 @@ this value against the catalog and offers an update when it increases.
   `app-header`, `candidate-header`, or `planning-sidebar`. The two-argument
   form remains supported and defaults to `app-header`.
 - Use `ui.registerPlanningView(name, mount)` to add a view to the left panel's
-  title menu in 1.6.4 Beta 1. The host mounts the view in the task region next to
+  title menu in 1.6.4 Beta 2. The host mounts the view in the task region next to
   the timeline. Return cleanup from the mount and unregister the view when the
   plugin unloads.
+- Use `ui.registerView(name, mount)` for expanded plugin content and
+  `ui.openView(name)` from its launcher. The host displays it in the shared
+  right-side panel. Do not create a separate app-level modal, popover, or
+  full-screen overlay for expanded content. Make mounted content responsive to
+  the panel width, including the full-width portrait layout.
 - Keep each plugin's primary action in one declared location. `registerView`
   remains available for general plugin tools and does not create a Planning
   entry.
@@ -91,7 +96,7 @@ contain an executable entry point. Safe mode suspends plugin execution.
 | Settings | `settings.get()`, async `save(patch)`, `registerPage(name, mount)` |
 | Synced storage | Async `storage.get(key)`, `set`, `remove`; use for plugin data |
 | Device storage | `localStorage.get(key)`, `set`; keep API keys and device preferences here |
-| UI | `ui.addHeaderItem(name, mount, { placement? })`, `ui.registerPlanningView(name, mount)`, `registerView(name, mount)`, `toast(message)` |
+| UI | `ui.addHeaderItem(name, mount, { placement? })`, `ui.registerPlanningView(name, mount)`, `registerView(name, mount)`, `openView(name)`, `toast(message)` |
 | Commands | `commands.register(id, name, run, shortcut?)`, `execute(id)` |
 | Events | `events.on(name, listener)`, `emit(name, payload?)`; `on(target,event,listener)` for DOM events |
 | Lifecycle | `register(dispose)`, `interval(callback, milliseconds)`; SDK registrations clean up on unload |
@@ -115,7 +120,7 @@ that installed entry's methods. Do not treat trusted plugins as sandboxed code.
 
 Header contributions appear in their declared host location. The available
 placements are `app-header`, `candidate-header`, and `planning-sidebar`. In
-1.6.4 Beta 1, the host places `planning-sidebar` contributions in the left
+1.6.4 Beta 2, the host places `planning-sidebar` contributions in the left
 panel's More menu. The legacy `ui.addHeaderItem(name, mount)` signature
 defaults to `app-header`.
 Use one icon-only button with the host-provided navopath-plugin-header-button

@@ -9109,6 +9109,9 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   animation: dfPanelPop .18s ease-out;
   corner-shape: var(--corner-shape, squircle); }
 .df-utility-panel:is(:has(.df-settings-shell), .df-metrics-utility) { width:min(860px,100vw); --paper-display: var(--paper-sans); }
+.df-utility-panel.df-extension-utility { width: min(680px,100vw); }
+.df-utility-panel.df-template-utility { width: min(1040px,100vw); }
+.df-template-utility .df-utility-body { display: block; padding: 0; }
 .df-utility-head {
   display: flex;
   align-items: center;
@@ -9772,7 +9775,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-calendar-generate:active { transform:translateY(1px); }
 .df-calendar-actions button:focus-visible { outline:1px solid var(--accent-active); outline-offset:2px; }
 @media (max-width:680px) {
-  .df-utility-panel:is(:has(.df-settings-shell), .df-metrics-utility) { inset:0; width:100vw; max-height:100vh; border-radius:0; }
+  .df-utility-panel:is(:has(.df-settings-shell), .df-metrics-utility, .df-extension-utility, .df-template-utility) { inset:0; width:100vw; max-height:100vh; border-radius:0; }
   .df-settings-shell { grid-template-columns:1fr; grid-template-rows:auto minmax(0,1fr); gap:14px; }
   .df-settings-nav { flex-direction:row; gap:14px; overflow-x:auto; min-height:53px; padding:0 0 8px; border-right:0; border-bottom:1px solid var(--paper-rule); }
   .df-settings-nav button { min-width:max-content; min-height:44px; }
@@ -12957,39 +12960,16 @@ body.df-timeline-pointer-drag * {
   font: 600 11px/1.2 var(--paper-sans);
 }
 /* Schedule template modal */
-.df-app .df-template-modal-backdrop {
-  z-index: 1000001;
+.df-app .df-template-panel {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  position: relative;
   display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgba(22,19,15,.48);
-  backdrop-filter: none;
-  animation: ui-fade-in var(--motion-fade) var(--motion-ease) backwards;
-}
-.df-app .df-template-modal {
-  width: min(1040px, calc(100vw - 36px));
-  min-height: min(720px, calc(100dvh - 36px));
-  max-height: calc(100dvh - 36px);
-  display: grid;
-  /* 3 rows: ExecutionLayoutShell (1fr) + status (auto) + footer (auto).
-     Header actions are absolutely positioned outside the grid flow. */
   grid-template-rows: minmax(0, 1fr) auto auto;
-  border: 1px solid var(--paper-rule-strong);
-  border-radius: var(--paper-radius-soft);
-  background: var(--surface-main);
   color: var(--text-main);
-  box-shadow: var(--paper-float-shadow);
   overflow: hidden;
-  animation: paper-sheet-in var(--motion-base) var(--motion-ease) backwards;
-  transform-origin: center top;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-template-modal-backdrop[data-motion-closing] {
-  pointer-events: none;
-  animation: ui-fade-out var(--motion-base) var(--motion-ease) forwards;
-}
-.df-app .df-template-modal-backdrop[data-motion-closing] .df-template-modal {
-  animation: ui-surface-out var(--motion-base) var(--motion-ease) forwards;
 }
 .df-app .df-template-header-actions {
   position: absolute;
@@ -14043,18 +14023,18 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 }
 /* ===== Focus overlay (super-productivity style) ===== */
 .df-focus-main {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 36px;
-  padding: 0 24px;
+  gap: 24px;
+  padding: 24px 12px;
 }
 .df-focus-controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  padding: 0 24px 56px;
+  padding: 12px 0 8px;
   justify-content: center;
 }
 .df-focus-controls button:hover {
@@ -14062,30 +14042,28 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   color: var(--focus-accent, var(--accent-active));
 }
 /* Current task and focus mode final pass: editorial paper controls, not pills. */
-.df-focus-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: var(--surface-main);
+.df-focus-utility .df-utility-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0 18px 18px;
+}
+.df-focus-panel {
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   color: var(--text-main);
 }
-.df-focus-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  padding: 22px 28px 0;
-}
 .df-focus-mode-switch {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
   border-bottom: 1px solid var(--paper-rule);
+  padding: 18px 0 12px;
 }
 .df-focus-mode-btn {
   font-size: 13px;
-  padding: 7px 20px;
+  padding: 8px 10px;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
@@ -14106,32 +14084,8 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: transparent;
   border-color: var(--focus-accent, var(--accent-active));
 }
-.df-focus-close {
-  position: absolute;
-  top: 16px;
-  right: 20px;
-  width: 42px;
-  height: 42px;
-  display: flex;
-  place-items: center;
-  padding: 0;
-  font-size: 28px;
-  line-height: 1;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0;
-  transition: color var(--motion-fade) var(--motion-ease), background-color var(--motion-fade) var(--motion-ease);
-}
-.df-focus-close:hover {
-  background: transparent;
-  color: var(--focus-accent, var(--accent-active));
-}
 .df-focus-timer-display {
-  font-size: clamp(72px, 12vw, 132px);
+  font-size: clamp(52px, 10vw, 88px);
   font-weight: 300;
   font-family: var(--df-mono, "SF Mono", "Menlo", monospace);
   color: var(--text-main);
@@ -14907,18 +14861,11 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   .df-app .df-template-name-bar {
     padding-right: 16px;
   }
-  .df-app .df-template-modal-backdrop {
-    place-items: end stretch;
-    padding: 0;
-  }
-  .df-app .df-template-modal {
+  .df-app .df-template-panel {
     width: 100%;
-    height: calc(100dvh - 18px);
+    height: 100%;
     min-height: 0;
-    max-height: calc(100dvh - 18px);
-    border-inline: 0;
-    border-radius: var(--paper-radius-soft) var(--paper-radius-soft) 0 0;
-    corner-shape: var(--corner-shape, squircle);
+    max-height: none;
   }
   .df-app .df-template-modal-actions {
     display: grid;

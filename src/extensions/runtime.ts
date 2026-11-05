@@ -71,6 +71,7 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
       addHeaderItem: (name, mount, options) => register(bridge.contribute("headerItems", name, mount, { placement: options?.placement || "app-header" })),
       registerView: (name, mount) => register(bridge.contribute("views", name, mount)),
       registerPlanningView: (name, mount) => register(bridge.contribute("views", name, mount, { iconUrl: pkg.manifest.icon ? resources.get(pkg.manifest.icon) : undefined, planningView: true })),
+      openView: (name) => { if (disposed) throw new Error("Plugin is unloaded"); emitPluginEvent("ui:open-view", { owner: bridge.key, name }); },
       toast: bridge.host.toast,
     },
     commands: { register: (id, name, run, shortcut) => register(bridge.addCommand(`${bridge.key}:${id}`, name, run, shortcut)), execute: id => bridge.executeCommand(id.includes(":") ? id : `${bridge.key}:${id}`) },

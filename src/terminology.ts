@@ -29,7 +29,7 @@ export type ProductTerm = {
 export const TERM_CATALOG: Record<TermKey, ProductTerm> = {
   planning: { zh: "规划", en: "Planning", definition: "管理项目、任务和长期安排。", avoid: ["Plan", "计划"], example: "打开规划，整理长期项目。" },
   execute: { zh: "执行", en: "Execute", definition: "完成今天已经选定的工作。", avoid: ["工作台", "Focus"], example: "在执行中完成今日任务。" },
-  todayCandidates: { zh: "今日候选", en: "Today's Candidates", definition: "已选中今天推进、尚未放入具体时间的任务。", avoid: ["Queue", "Inbox", "待办"], example: "从规划加入今日候选。" },
+  todayCandidates: { zh: "任务", en: "Tasks", definition: "可浏览、筛选并安排到时间轴上的任务。", avoid: ["Queue", "Inbox", "待办"], example: "从任务列表安排到时间轴。" },
   schedule: { zh: "安排", en: "Schedule", definition: "将任务放入具体时间段。", avoid: ["Plan", "Adopt", "计划"], example: "安排任务到 10:00。" },
   timeline: { zh: "时间轴", en: "Timeline", definition: "展示时间安排的时间网格。", avoid: ["Calendar", "日历"], example: "在时间轴上查看安排。" },
   task: { zh: "任务", en: "Task", definition: "需要完成的可执行事项。", avoid: ["Event", "事项"], example: "创建任务并设置时长。" },

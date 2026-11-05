@@ -10,6 +10,7 @@ import { getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./wo
 import { normalizeEngagement } from "./utils/engagement";
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
 import { ExtensionMount } from "./extensions/ExtensionMount";
+import { RightUtilityPanel } from "./components/RightUtilityPanel";
 import type { ExtensionContribution } from "./extensions/types";
 import { undoAiImportData } from "./utils/aiImportUndo";
 import { highlightTaskLocation } from "./utils/highlightTaskLocation";
@@ -212,7 +213,7 @@ type QueuedSettingsSave = { payload: SettingsPatch; version: number; pendingSave
  * One preview = one real task block. Split suggestions share a source task and
  * expose segment metadata so the user can review each part before accepting.
  * with `clonedTaskId` is appended to `data.tasks`. The source task stays in
- * 今日候选 until then.
+ * 任务 until then.
  */
 type SchedulePreview = {
   id: string;
@@ -817,24 +818,6 @@ function buildTaskFromEvent(event: CalendarEvent): Task {
   };
 }
 
-function MetricsPanel({ label, closeLabel, onClose, children }: {
-  label: string;
-  closeLabel: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  const ref = useRef<HTMLElement>(null);
-  useModalFocus(true, ref);
-  return <>
-    <div className="df-utility-backdrop" onMouseDown={onClose} />
-    <aside ref={ref} tabIndex={-1} className="df-utility-panel df-metrics-utility" role="dialog" aria-modal="true" aria-label={label}
-      onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onClose(); } }}>
-      <div className="df-utility-head"><h2>{label}</h2><CloseButton label={closeLabel} onClick={onClose} /></div>
-      <div className="df-utility-body">{children}</div>
-    </aside>
-  </>;
-}
-
 function SettingsLoading({ lang, onClose }: { lang: Language; onClose: () => void }) {
   const ref = useRef<HTMLElement>(null);
   useModalFocus(true, ref);
@@ -948,7 +931,7 @@ function OnboardingGuide(props: {
   const steps: Array<Exclude<OnboardingStep, "drag" | "done">> = ["add", "candidates", "schedule", "calendar", "planning", "ai"];
   const copy = {
     add: [zh ? "添加第一个任务" : "Add your first task", zh ? "直接在工作区键入，或使用候选区下方的快速添加栏。" : "Type anywhere in the workspace, or use the quick-add field below Candidates."],
-    candidates: [zh ? "管理今日候选" : "Manage Today's Candidates", zh ? "在这里完成、恢复、调整时长，或把任务移回 Planning。" : "Complete, restore, resize, or move tasks back to Planning here."],
+    candidates: [zh ? "管理任务" : "Manage Tasks", zh ? "在这里完成、恢复、调整时长，或把任务移回 Planning。" : "Complete, restore, resize, or move tasks back to Planning here."],
     schedule: [zh ? "拖到时间轴排程" : "Schedule on the timeline", zh ? "把候选任务拖到时间轴，选择开始时间；任务块可继续拖动和调整。" : "Drag a candidate to a start time, then move or resize its timeline block."],
     calendar: [zh ? "切换日历视图" : "Switch calendar views", zh ? "使用日、三日、周和连续月视图，并可随时回到今天。" : "Use Day, 3-Day, Week, and continuous Month views, then jump back to today."],
     planning: [zh ? "拆解长期目标" : "Break down long-term work", zh ? "整块拖动项目、任务与子任务；预览会显示即将放置的位置和层级。" : "Drag whole projects, tasks, and subtasks; the preview shows the resulting position and level."],
@@ -1310,7 +1293,8 @@ function App() {
   const timelinePinchFrameRef = useRef<number | null>(null);
   const timelinePinchPendingZoomRef = useRef<number | null>(null);
   const [resizeHintTaskId, setResizeHintTaskId] = useState("");
-  const [utilityPanel, setUtilityPanel] = useState<"settings" | "about" | "metrics" | null>(null);
+  const [utilityPanel, setUtilityPanel] = useState<"settings" | "about" | "metrics" | "extension" | null>(null);
+  const [activeExtensionPanelId, setActiveExtensionPanelId] = useState<string | null>(null);
   const [pluginToolsOpen, setPluginToolsOpen] = useState(false);
   const layerExitHandlesRef = useRef(new Map<string, ReturnType<typeof scheduleMotionCommit> | null>());
   const layerTriggerRef = useRef(new Map<string, HTMLElement>());
@@ -1784,6 +1768,22 @@ function App() {
   const [isManualSyncing, setIsManualSyncing] = useState(false);
   const extensionHostRef = useRef<ExtensionHost | null>(null);
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
+  const activeExtensionPanel = extensionSnapshot.views.find((view) => view.id === activeExtensionPanelId);
+  const openExtensionPanel = useCallback((view: ExtensionContribution) => {
+    rememberLayerTrigger("utility");
+    setActiveExtensionPanelId(view.id);
+    setUtilityPanel("extension");
+    setPluginToolsOpen(false);
+  }, []);
+  useEffect(() => {
+    const unsubscribe = subscribePluginEvent("ui:open-view", (payload) => {
+      const request = payload as { owner?: string; name?: string } | null;
+      if (!request?.owner || !request.name) return;
+      const view = extensionService.getSnapshot().views.find((item) => item.owner === request.owner && item.name === request.name);
+      if (view) openExtensionPanel(view);
+    });
+    return () => { void unsubscribe(); };
+  }, [openExtensionPanel]);
   const shelfViews = useMemo(() => extensionSnapshot.views.filter((view) =>
     view.planningView && view.nativeMode !== "tree" && view.nativeMode !== "metrics"
   ).sort((first, second) => {
@@ -3136,7 +3136,7 @@ if (cached?.data && cached?.settings) {
     if (!result.changed) return;
     void saveData(result.data);
     if (result.overdueReturnedCount > 0) {
-      showToast(lang === "zh" ? `${result.overdueReturnedCount} 个逾期任务已回到今日候选` : `${result.overdueReturnedCount} overdue task${result.overdueReturnedCount === 1 ? "" : "s"} returned to Today’s Candidates`);
+      showToast(lang === "zh" ? `${result.overdueReturnedCount} 个逾期任务已回到任务` : `${result.overdueReturnedCount} overdue task${result.overdueReturnedCount === 1 ? "" : "s"} returned to Tasks`);
     }
   }, [data]);
 
@@ -8758,7 +8758,7 @@ if (cached?.data && cached?.settings) {
    * 1. Build a real Task instance (clone of source) with same id as preview
    *    `clonedTaskId`.
    * 2. Append to `tasks`.
-   * 3. Remove the source task from 今日候选 (clear plannedForDate).
+   * 3. Remove the source task from 任务 (clear plannedForDate).
    * 4. Remove this preview from previews.
    * 5. Show 5-second undo toast.
    */
@@ -8806,7 +8806,7 @@ if (cached?.data && cached?.settings) {
    * Accept ALL previews. Same per-preview logic but batched:
    * 1. Build all N real task instances in one pass.
    * 2. Append to `tasks` atomically.
-   * 3. Remove all source tasks from 今日候选.
+   * 3. Remove all source tasks from 任务.
    * 4. Clear all previews.
    * 5. Show 5-second undo toast.
    */
@@ -8874,7 +8874,7 @@ if (cached?.data && cached?.settings) {
   /**
    * Undo the most recent auto-schedule commit. Removes committed tasks from
    * `tasks` and restores the source tasks' `plannedForDate` so they reappear
-   * in 今日候选. Does NOT touch any tasks the user manually created after
+   * in 任务. Does NOT touch any tasks the user manually created after
    * the commit (those have a different id, not in committedTaskIds).
    */
   function undoLastCommit(undo: TaskUndo) {
@@ -9275,7 +9275,7 @@ if (cached?.data && cached?.settings) {
               : <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
                 <ProductIcon compact />
               </button>}
-            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} onOpenMetrics={openMetrics} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
+            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} onOpenMetrics={openMetrics} onOpenView={openExtensionPanel} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
           </div>
           <div className="df-month-year-selector">
             <button className="df-month-year-btn" aria-expanded={yearOverviewOpen} onClick={() => {
@@ -9382,11 +9382,11 @@ if (cached?.data && cached?.settings) {
             {!mobileExecution && !narrowSplitLayout && <nav className="df-compact-execute-tabs" aria-label={lang === "zh" ? "执行视图" : "Execute view"}>
               <button
                 className={`active ${compactExecuteView === "schedule" ? "schedule-state" : "tasks-state"}`}
-                aria-label={compactExecuteView === "tasks" ? (lang === "zh" ? "日程" : "Schedule") : (lang === "zh" ? "今日候选" : "Today's Candidates")}
+                aria-label={compactExecuteView === "tasks" ? (lang === "zh" ? "日程" : "Schedule") : (lang === "zh" ? "任务" : "Tasks")}
                 aria-pressed={compactExecuteView === "schedule"}
                 onClick={() => setCompactExecuteView((view) => view === "tasks" ? "schedule" : "tasks")}
               >
-                <span className="df-compact-mode-label tasks-label" aria-hidden="true">{lang === "zh" ? "今日候选" : "Today's Candidates"}</span>
+                <span className="df-compact-mode-label tasks-label" aria-hidden="true">{lang === "zh" ? "任务" : "Tasks"}</span>
                 <span className="df-compact-mode-label schedule-label" aria-hidden="true">{lang === "zh" ? "日程" : "Schedule"}</span>
                 <span className="df-compact-mode-logo" aria-hidden="true"><ProductIcon compact /></span>
               </button>
@@ -9558,7 +9558,7 @@ if (cached?.data && cached?.settings) {
             </AnchoredNarrowMenu>}
             {candidateDropActive && (
               <div className="df-candidate-return-hint" role="status">
-                {lang === "zh" ? "松手后移回今日候选" : "Release to return to Today's Candidates"}
+                {lang === "zh" ? "松手后移回任务" : "Release to return to Tasks"}
               </div>
             )}
             {!projectManagement && !shelfView && compactLayout && compactExecuteView === "tasks" && scheduleGuideOpen && visibleCandidates.length > 0 && (
@@ -9696,7 +9696,7 @@ if (cached?.data && cached?.settings) {
                   draggedHabitId={drag?.source === "candidate" ? drag.taskId : null}
                 />
               )}
-              {productDemo && !productDemo.story && !productAiPresentation && <aside className="df-product-notes"><p>{lang === "zh" ? "从今日候选中挑选，再放进时间轴。" : "Pick a candidate and give it time on the timeline."}</p><p>{lang === "zh" ? "一天有变化，安排也可以调整。" : "Adjust the plan as your day changes."}</p></aside>}
+              {productDemo && !productDemo.story && !productAiPresentation && <aside className="df-product-notes"><p>{lang === "zh" ? "从任务中挑选，再放进时间轴。" : "Pick a candidate and give it time on the timeline."}</p><p>{lang === "zh" ? "一天有变化，安排也可以调整。" : "Adjust the plan as your day changes."}</p></aside>}
             </div>
             {productAiPresentation ? demoAiControls : <form className="df-quick-add" onSubmit={(event) => {
               event.preventDefault();
@@ -9747,7 +9747,7 @@ if (cached?.data && cached?.settings) {
           </CandidatePanelShell>
           {productAiPresentation ? <ProductStorySlot feature="ai"><div className="df-product-ai-intro" role="status" aria-live="polite" aria-atomic="true">
             <h1>{demoRevealing ? (lang === "zh" ? "一步一步，\n各就各位。" : "Step by step.\nInto place.") : demoPresetBusy ? (lang === "zh" ? "正在为今天\n留出时间。" : "Making room\nfor your day.") : demoHasSchedule ? (lang === "zh" ? "一天有了\n自己的节奏。" : "A day with\nroom to breathe.") : (lang === "zh" ? "点一下，\n安排一整天。" : "Try one click.\nPlan your day.")}</h1>
-            <p id="product-ai-start-guide">{demoRevealing ? (lang === "zh" ? "从上午到傍晚，每项任务都有自己的位置。" : "From morning to evening, each task finds its time.") : demoPresetBusy ? (lang === "zh" ? "让任务、休息和生活，都有自己的时间。" : "Make room for tasks, breaks and everyday life.") : demoHasSchedule ? (lang === "zh" ? "午餐与休息也在计划里。你还可以调整任务，或试试改期与撤回。" : "Lunch and breaks belong here, too. Adjust a task, reschedule it, or undo.") : <>{lang === "zh" ? "点击左侧「今日候选」右上角的 " : "Click the pulsing "}<UiSparklesIcon /><strong>{lang === "zh" ? "AI 安排按钮" : "AI scheduling icon"}</strong>{lang === "zh" ? "，体验一次示例安排。" : " at the top right of Today’s Candidates to try the example."}</>}</p>
+            <p id="product-ai-start-guide">{demoRevealing ? (lang === "zh" ? "从上午到傍晚，每项任务都有自己的位置。" : "From morning to evening, each task finds its time.") : demoPresetBusy ? (lang === "zh" ? "让任务、休息和生活，都有自己的时间。" : "Make room for tasks, breaks and everyday life.") : demoHasSchedule ? (lang === "zh" ? "午餐与休息也在计划里。你还可以调整任务，或试试改期与撤回。" : "Lunch and breaks belong here, too. Adjust a task, reschedule it, or undo.") : <>{lang === "zh" ? "点击左侧「任务」右上角的 " : "Click the pulsing "}<UiSparklesIcon /><strong>{lang === "zh" ? "AI 安排按钮" : "AI scheduling icon"}</strong>{lang === "zh" ? "，体验一次示例安排。" : " at the top right of Tasks to try the example."}</>}</p>
             {demoPresetBusy && !demoRevealing && !demoHasSchedule && <div className="df-product-ai-arranging-notes"><p>{lang === "zh" ? "按任务估时留出完整时段，减少来回切换。" : "Give each task enough time, with fewer switches."}</p><p>{lang === "zh" ? "午餐与休息也排进去，计划才跟得上生活。" : "Lunch and breaks belong in the plan, too."}</p><p>{lang === "zh" ? "安排好后，仍可调整时间、改期或撤回。" : "Then adjust the time, move a task, or undo."}</p></div>}
           </div></ProductStorySlot> : productDemo?.story}
           <section
@@ -10645,7 +10645,7 @@ if (cached?.data && cached?.settings) {
       {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onLocateTimeline={locateTaskOnTimeline} onLocatePlanning={locateTaskInPlanning} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel}
       <CommandPalette open={commandOpen} compact={compactLayout} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
-      {utilityPanel === "metrics" && metricsAvailable && <MetricsPanel label={metricsLabel} closeLabel={t(lang, "settings.close")} onClose={closeUtilityPanel}>
+      {utilityPanel === "metrics" && metricsAvailable && <RightUtilityPanel label={metricsLabel} closeLabel={t(lang, "settings.close")} className="df-metrics-utility" onClose={() => closeUtilityPanel()}>
         <Suspense fallback={<div className="df-shelf-loading" role="status">{lang === "zh" ? "正在打开…" : "Opening…"}</div>}>
           <PlanningViewLazy {...planningViewProps} viewMode="metrics" tasks={tasks} dayStartTime={settings.dayStartTime}
             metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy}
@@ -10653,13 +10653,14 @@ if (cached?.data && cached?.settings) {
             metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart}
             metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
         </Suspense>
-      </MetricsPanel>}
-      {utilityPanel && utilityPanel !== "metrics" && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} /></Suspense>}
+      </RightUtilityPanel>}
+      {utilityPanel && utilityPanel !== "metrics" && utilityPanel !== "extension" && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} /></Suspense>}
+      {utilityPanel === "extension" && activeExtensionPanel && <RightUtilityPanel label={activeExtensionPanel.name} closeLabel={t(lang, "settings.close")} className="df-extension-utility" onClose={() => closeUtilityPanel()}><ExtensionMount contribution={activeExtensionPanel} /></RightUtilityPanel>}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
-      {pluginToolsOpen && <Suspense fallback={null}><ExtensionToolsDialog lang={lang} onOpenMetrics={openMetrics} onClose={() => setPluginToolsOpen(false)} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
+      {pluginToolsOpen && <Suspense fallback={null}><ExtensionToolsDialog lang={lang} onOpenMetrics={openMetrics} onClose={() => setPluginToolsOpen(false)} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} onOpenView={openExtensionPanel} /></Suspense>}
       {focusOverlayMode && (
-        <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>
-          <div className="df-focus-topbar">
+        <RightUtilityPanel label={focusProvider?.label[lang] || (lang === "zh" ? "专注" : "Focus")} closeLabel={t(lang, "settings.close")} className="df-focus-utility" onClose={() => setFocusOverlayMode(null)}>
+          <div className="df-focus-panel" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>
             <div className="df-focus-mode-switch">
               {["stopwatch", ...getTimerModes().filter((item) => getTimerMode(item.mode)).map((item) => item.mode), "flowtime"].map((m) => (
                 <button key={m} className={`df-focus-mode-btn${focusOverlayMode === m ? " active" : ""}`} onClick={() => chooseFocusMode(m)}>
@@ -10667,8 +10668,6 @@ if (cached?.data && cached?.settings) {
                 </button>
               ))}
             </div>
-            <CloseButton className="df-focus-close" onClick={() => setFocusOverlayMode(null)} label={lang === "zh" ? "关闭" : "Close"} />
-          </div>
           <div className="df-focus-main">
             <div className="df-focus-timer-display">{focusClockDisplay}</div>
             <div className="df-focus-mode-note">{focusModeNote}</div>
@@ -10687,11 +10686,12 @@ if (cached?.data && cached?.settings) {
             <button className="df-focus-save" onClick={stopAndSaveTimer} disabled={!timerTaskId}>{lang === "zh" ? "保存" : "Save"}</button>
             <button className="df-focus-discard" onClick={() => { if (focusProvider) handleWidgetAction({ type: "resetWidgetTimer", draft: widgetTimerPreferences }); discardTimer(); }}>{lang === "zh" ? "重置" : "Reset"}</button>
           </div>
-        </div>
+          </div>
+        </RightUtilityPanel>
       )}
       {scheduleTemplatePresence.present && data && (
+        <RightUtilityPanel label={lang === "zh" ? "日程模板" : "Schedule templates"} closeLabel={t(lang, "settings.close")} closing={scheduleTemplatePresence.closing} className="df-template-utility" onClose={() => setScheduleTemplateOpen(false)}>
         <ScheduleTemplateModal
-          closing={scheduleTemplatePresence.closing}
           lang={lang}
           date={timelineDate}
           tasks={[...tasks, ...expandExternalCalendarOccurrences(new Set([timelineDate])).tasks.map((task) => task.scheduledStart ? task : { ...task, scheduledStart: "00:00", scheduledEnd: "23:59" })]}
@@ -10700,6 +10700,7 @@ if (cached?.data && cached?.settings) {
           onApply={applyTemplateToDate}
           onClose={() => setScheduleTemplateOpen(false)}
         />
+        </RightUtilityPanel>
       )}
       {drag?.kind === "block" && drag.pointer && draggedTask && !timelineSnapActive && (
         <TaskDragLayer
@@ -10816,20 +10817,12 @@ if (cached?.data && cached?.settings) {
 function FloatingShelfDragPreview({ task, pointer, candidateTarget, lang }: { task?: Task; pointer: { x: number; y: number }; candidateTarget: boolean; lang: Language }) {
   if (!task) return null;
   const hint = candidateTarget
-    ? (lang === "zh" ? "放回今日候选" : "Return to Today's Candidates")
+    ? (lang === "zh" ? "放回任务" : "Return to Tasks")
     : (lang === "zh" ? "拖到时间轴安排" : "Drag to timeline to schedule");
   return <div className={`df-floating-unschedule df-floating-shelf-drag${candidateTarget ? " candidate-target" : ""}`} style={{ left: pointer.x + 14, top: pointer.y + 14 }}><strong>{task.title}</strong><span>{hint}</span></div>;
 }
 
-// Visual parity debug switch. When true, the template modal body renders
-// placeholder content using the execution page's EXACT wrapper hierarchy
-// (df-timeline-panel > df-timeline-body > df-timeline-content > df-timeline-daily
-// > df-date-title + TimelineCanvas). If the debug layout still differs from the
-// execution page, the problem is the modal frame, not the template data.
-const TEMPLATE_VISUAL_PARITY_DEBUG = false;
-
 function ScheduleTemplateModal({
-  closing,
   lang,
   date,
   tasks,
@@ -10838,7 +10831,6 @@ function ScheduleTemplateModal({
   onApply,
   onClose,
 }: {
-  closing: boolean;
   lang: Language;
   date: string;
   tasks: Task[];
@@ -10848,7 +10840,7 @@ function ScheduleTemplateModal({
   onClose: () => void;
 }) {
   // Template mode = execution-page interaction model applied to date-less
-  // template periods. Left list visually corresponds to 今日候选; right
+  // template periods. Left list visually corresponds to 任务; right
   // timeline editor visually corresponds to the execution timeline. Periods
   // store only { title, startMinutes, durationMinutes } and never pollute the
   // real task store until Apply.
@@ -10884,12 +10876,10 @@ function ScheduleTemplateModal({
   const [dragState, setDragState] = useState<{ periodId: string; mode: "move" | "resize-top" | "resize-bottom"; originY: number; originStart: number; originDuration: number } | null>(null);
   const [creatingState, setCreatingState] = useState<{ startMinutes: number; currentMinutes: number } | null>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const modalRef = useRef<HTMLElement>(null);
-  useModalFocus(!closing, modalRef);
   const timelineRef = useRef<HTMLDivElement>(null);
 
   // ── Template list drag-to-reorder ──
-  // Reuses the shared usePointerReorder hook, which mirrors Today's Candidate
+  // Reuses the shared usePointerReorder hook, which mirrors Tasks
   // drag feel (pointer capture, 5px threshold, half-height before/after,
   // is-dragging-source placeholder, .df-list-insertion-line indicator).
   // Only custom templates are draggable; built-ins are read-only/fixed and the
@@ -10917,7 +10907,6 @@ function ScheduleTemplateModal({
   useEffect(() => { titleRef.current?.focus(); }, []);
 
   useEffect(() => {
-    if (closing) return;
     const handler = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (dragState || creatingState || renamingId || editingPeriodId) {
@@ -10934,7 +10923,7 @@ function ScheduleTemplateModal({
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [closing, onClose, dragState, creatingState, renamingId, editingPeriodId, templateReorder.drag, templateReorder.cancelDrag]);
+  }, [onClose, dragState, creatingState, renamingId, editingPeriodId, templateReorder.drag, templateReorder.cancelDrag]);
 
   // ── Period factory helpers ──
   function slotToPeriod(slot: BuiltInScheduleTemplateSlot): TemplatePeriod {
@@ -11269,69 +11258,12 @@ function ScheduleTemplateModal({
     }] : []),
   ];
 
-  const portalTarget = document.getElementById("df-portal-target") || document.body;
-
-  return createPortal(
-    <div className="df-modal-backdrop df-template-modal-backdrop" data-motion-closing={closing || undefined} inert={closing} role="presentation" onMouseDown={onClose}>
-      <section
-        ref={modalRef}
-        tabIndex={-1}
-        className="df-template-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="df-template-modal-title"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
+  return (
+      <section className="df-template-panel" aria-labelledby="df-template-modal-title">
         <div className="df-template-header-actions">
           <IconButton className="df-icon-template-new" icon={<UiPlusIcon size={16} />} label={zh ? "新建模板" : "New template"} onClick={createCustomTemplate} />
-          <CloseButton className="df-template-close" onClick={onClose} label={zh ? "关闭模板模式" : "Close template mode"} />
         </div>
 
-        {TEMPLATE_VISUAL_PARITY_DEBUG ? (
-          <ExecutionSplitLayout className="df-template-shell">
-            {/* Debug left: real CandidatePanelShell with placeholder candidate rows */}
-            <CandidatePanelShell ariaLabel={zh ? "今日候选（debug）" : "Today's candidates (debug)"}>
-              <CandidatePanelHeader title={<span>{zh ? "今日候选" : "Today"}</span>} />
-              <div className="df-candidate-list">
-                <CandidateBlock mode="template" title={zh ? "示例任务 A" : "Sample task A"} meta="09:00–10:00" />
-                <CandidateBlock mode="template" title={zh ? "示例任务 B" : "Sample task B"} meta="30m" />
-                <CandidateBlock mode="template" title={zh ? "示例任务 C" : "Sample task C"} meta="2h" />
-              </div>
-            </CandidatePanelShell>
-            {/* Debug right: EXACT execution-page wrapper hierarchy
-                df-timeline-panel > df-timeline-body > df-timeline-content >
-                df-timeline-daily > df-date-title + TimelineCanvas.
-                If this looks wrong inside the modal, the modal frame is the problem. */}
-            <section className="df-timeline-panel" id="df-template-timeline-debug">
-              <div className="df-timeline-body">
-                <div className="df-timeline-content">
-                  <div className="df-timeline-daily">
-                    <div className="df-date-title df-date-title-compact today">
-                      <span className="df-date-num">{workspaceNow().getDate()}</span>
-                      <span className="df-date-sep" />
-                      <span className="df-date-wd">{zh ? "今天" : "Today"}</span>
-                    </div>
-                    <TimelineCanvas height={TIMELINE_HEIGHT} scrollRef={timelineRef}>
-                      {Array.from({ length: 96 }).map((_, index) => {
-                        const minutes = index * SLOT_MINUTES;
-                        const isHour = minutes % 60 === 0;
-                        if (!isHour) return null;
-                        const isMajor = minutes % (6 * 60) === 0;
-                        const hh = String(Math.floor(minutes / 60)).padStart(2, "0");
-                        const mm = String(minutes % 60).padStart(2, "0");
-                        return (
-                          <div key={index} className={`df-slot ${isHour ? "hour" : "quarter"}${isMajor ? " major" : ""}`} style={{ top: `${index * SLOT_HEIGHT}px` }}>
-                            <span>{hh}:{mm}</span>
-                          </div>
-                        );
-                      })}
-                    </TimelineCanvas>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </ExecutionSplitLayout>
-        ) : (
         <ExecutionSplitLayout className="df-template-shell">
           {/* ── Left: shared CandidatePanelShell (same component as execution page) ── */}
           <CandidatePanelShell ariaLabel={zh ? "模板列表" : "Template list"}>
@@ -11496,12 +11428,11 @@ function ScheduleTemplateModal({
             </div>
           </section>
         </ExecutionSplitLayout>
-        )}
 
         {templateNotice && <div className="df-template-status" role="status">{templateNotice}</div>}
 
         {/* Template-list drag overlay — reuses TaskDragLayer (same component as
-            Today's Candidate drag overlay) with a real CandidateBlock clone so
+            Tasks drag overlay) with a real CandidateBlock clone so
             the dragged row keeps its exact card styling. */}
         {templateReorder.drag && (
           <TaskDragLayer
@@ -11536,8 +11467,6 @@ function ScheduleTemplateModal({
           >{zh ? `应用到今天${applySlots.length > 0 ? ` (${applySlots.length})` : ""}` : `Apply to today${applySlots.length > 0 ? ` (${applySlots.length})` : ""}`}</button>
         </footer>
       </section>
-    </div>,
-    portalTarget,
   );
 }
 

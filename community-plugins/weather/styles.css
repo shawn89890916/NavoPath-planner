@@ -5,8 +5,7 @@
 @media (pointer: coarse) { .navopath-plugin-settings input, .navopath-plugin-settings select, .navopath-plugin-settings button { min-height: 44px; } }
 .navopath-weather { min-width: 0; color: var(--text-main); font: inherit; }
 .navopath-weather-summary { display: grid; place-items: center; }
-.navopath-weather-details { position: fixed; z-index: 40; inset: auto; box-sizing: border-box; margin: 0; width: min(320px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow: auto; padding: 16px; color: var(--text-main); background: var(--surface-raised, var(--surface-main)); border: 1px solid var(--border-soft); border-radius: var(--radius-control, 4px); white-space: normal; font: 13px/1.5 var(--font-sans, sans-serif); }
-.navopath-weather-details[hidden] { display: none; }
+.navopath-weather-details { min-width: 0; color: var(--text-main); white-space: normal; font: 13px/1.5 var(--font-sans, sans-serif); }
 .navopath-weather-details h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 .navopath-weather-details p { margin: 0 0 12px; }
 .navopath-weather-current { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
