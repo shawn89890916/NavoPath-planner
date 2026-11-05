@@ -47,7 +47,7 @@ this value against the catalog and offers an update when it increases.
   `app-header`, `candidate-header`, or `planning-sidebar`. The two-argument
   form remains supported and defaults to `app-header`.
 - Use `ui.registerPlanningView(name, mount)` to add a view to the left panel's
-  title menu in 1.6 Alpha 1. The host mounts the view in the task region next to
+  title menu in 1.6.4 Beta 1. The host mounts the view in the task region next to
   the timeline. Return cleanup from the mount and unregister the view when the
   plugin unloads.
 - Keep each plugin's primary action in one declared location. `registerView`
@@ -115,7 +115,7 @@ that installed entry's methods. Do not treat trusted plugins as sandboxed code.
 
 Header contributions appear in their declared host location. The available
 placements are `app-header`, `candidate-header`, and `planning-sidebar`. In
-1.6 Alpha 1, the host places `planning-sidebar` contributions in the left
+1.6.4 Beta 1, the host places `planning-sidebar` contributions in the left
 panel's More menu. The legacy `ui.addHeaderItem(name, mount)` signature
 defaults to `app-header`.
 Use one icon-only button with the host-provided navopath-plugin-header-button
