@@ -6,6 +6,7 @@
 
 #### 修复
 - 短栏 Incomplete 默认继续；详情遮罩中 Dock N 降亮。
+- 竖屏规划侧栏与背景遮罩延伸到内容顶端，顶部只保留原位的悬浮按钮。
 
 ### 1.6.3 Beta 13
 
@@ -463,6 +464,7 @@
 
 #### Fixed
 - Compact Incomplete continues; Dock N dims with overlays.
+- The portrait Planning sidebar and backdrop now extend to the top of the content, leaving only the floating controls in their original positions.
 
 ### 1.6.3 Beta 13
 
