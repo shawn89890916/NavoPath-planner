@@ -24767,9 +24767,9 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   filter: none;
   transform: none;
 }
-#root .df-app.is-settings-open .df-brand-dock-trigger,
-#root .df-app.is-settings-open .df-brand-dock-trigger:is(:hover, :focus-visible, :active) {
-  opacity: 1;
+#root .df-app:is(.is-settings-open, :has(.df-drawer-backdrop)) .df-brand-dock-trigger,
+#root .df-app:is(.is-settings-open, :has(.df-drawer-backdrop)) .df-brand-dock-trigger:is(:hover, :focus-visible, :active) {
+  opacity: 0.56;
   transform: none;
   filter: none;
   box-shadow: none;

@@ -5,7 +5,7 @@
 ### 1.6.3 Beta 14
 
 #### 修复
-- 紧凑栏“Incomplete”默认“未完成·继续”；Dock N 始终静止无光。
+- 短栏 Incomplete 默认继续；N 悬停静止，详情时随背景变暗。
 
 ### 1.6.3 Beta 13
 
@@ -462,7 +462,7 @@
 ### 1.6.3 Beta 14
 
 #### Fixed
-- Compact Incomplete defaults to “Incomplete · Continue”; Dock N stays static and unlit.
+- Compact Incomplete continues; Dock N stays still on hover and dims with details.
 
 ### 1.6.3 Beta 13
 
