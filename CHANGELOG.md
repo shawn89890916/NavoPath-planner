@@ -1,8 +1,15 @@
 # NavoPath 更新日志
 
-## 2026-11-05 · 1.6.3 Beta 8
+## 2026-11-05
 
-### 修复
+### 1.6.3 Beta 9
+
+#### 修复
+- 竖屏规划页移除顶栏与品牌区，仅保留左上侧栏、右上筛选两个透明浮动按钮；打开侧栏时内容保持原位，仅通过遮罩呈现背景阴影。
+
+### 1.6.3 Beta 8
+
+#### 修复
 - 规划页子任务复用今日候选行并嵌入父任务卡片，保留拖动和操作菜单。
 - 横屏规划侧栏的收起按钮与视图图标统一靠左，标签文字从固定列起始位置左对齐；竖屏规划页补回固定在左上角的侧栏按钮，unDock 时 N 标识保持原位。
 - 窄横屏执行页将“今日候选 / 日程”切换移至左下方，并与左上角的 Dock N 入口分开。
@@ -423,9 +430,16 @@
 
 # NavoPath Changelog
 
-## 2026-11-05 · 1.6.3 Beta 8
+## 2026-11-05
 
-### Fixed
+### 1.6.3 Beta 9
+
+#### Fixed
+- Portrait Planning removes the header and brand area, leaving only transparent floating sidebar and filter buttons. Opening the sidebar leaves content in place and dims it with an overlay.
+
+### 1.6.3 Beta 8
+
+#### Fixed
 - Planning subtasks reuse the Today's Candidates row inside the parent task card, preserving drag behavior and the action menu.
 - Landscape Planning aligns the collapse button and view icons to the left, with labels starting from a shared left-aligned column. Restored the fixed top-left button in portrait Planning, and kept the N mark in place during unDock.
 - Compact landscape Execute places the Today's Candidates / Schedule switch at the lower left, separate from the top-left Dock N entry.

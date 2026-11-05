@@ -19586,6 +19586,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: transparent;
   cursor: pointer;
 }
+#root .df-app.mode-planning .df-planning > .df-planning-sidebar-toggle { display: none; }
 #root .df-app.mode-planning .df-planning .df-planning-sidebar-toggle:hover {
   border-color: var(--paper-rule);
   color: var(--text-main);
@@ -24630,22 +24631,23 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   height: 20px;
 }
 @media (orientation: portrait) {
-  #root .df-app.mode-planning .df-planning { position: relative; height: 100%; padding: 56px 0 calc(56px + env(safe-area-inset-bottom)); }
-  #root .df-app.mode-planning .df-planning .df-planning-body { height: 100%; border: 0; border-radius: 0; }
+  #root .df-app.mode-planning .df-planning { position: relative; height: 100%; padding: 52px 0 calc(56px + env(safe-area-inset-bottom)); background: transparent; }
+  #root .df-app.mode-planning .df-planning .df-planning-body { height: 100%; border: 0; border-radius: 0; background: transparent; }
   #root .df-app.mode-planning .df-planning .df-mindmap.no-root,
   #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-mindmap.no-root { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-  #root .df-app.mode-planning .df-planning > .df-planning-sidebar-toggle { position: fixed; top: 6px; left: 8px; z-index: 100; width: 44px; height: 44px; min-height: 44px; }
+  #root .df-app.mode-planning .df-planning > .df-planning-sidebar-toggle { position: fixed; top: 6px; left: 8px; z-index: 100; display: grid; width: 44px; height: 44px; min-height: 44px; border: 0; background: transparent; box-shadow: none; }
+  #root .df-app.mode-planning .df-planning .df-planning-sidebar > .df-planning-sidebar-toggle { display: none; }
   #root .df-app.mode-planning .df-planning .df-planning-sidebar {
-    position: fixed; inset: 56px auto calc(56px + env(safe-area-inset-bottom)) 0;
-    display: flex; flex-direction: column; align-items: stretch;
+    position: fixed; inset: 52px auto calc(56px + env(safe-area-inset-bottom)) 0;
+    display: none; flex-direction: column; align-items: stretch;
     width: min(240px, 80vw); min-width: 0; height: auto; min-height: 0;
     padding: 12px; border-right: 1px solid var(--paper-rule); border-bottom: 0;
     background: var(--surface-main); z-index: 90; overflow-y: auto; pointer-events: auto;
   }
   #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-sidebar { display: none; }
+  #root .df-app.mode-planning .df-planning.is-portrait-sidebar-open .df-planning-sidebar { display: flex; }
   #root .df-app.mode-planning .df-planning-sidebar-resizer { display: none; }
-  #root .df-app.mode-planning .df-planning .df-planning-sidebar-backdrop { position: fixed; inset: 56px 0 calc(56px + env(safe-area-inset-bottom)); width: auto; height: auto; z-index: 80; border: 0; border-radius: 0; background: rgb(0 0 0 / 18%); }
-  #root .df-app.mode-planning .df-planning.is-portrait-sidebar-open .df-tree-wrap { transform: translate(8px, 6px); border-radius: 8px; }
+  #root .df-app.mode-planning .df-planning .df-planning-sidebar-backdrop { position: fixed; inset: 52px 0 calc(56px + env(safe-area-inset-bottom)); width: auto; height: auto; z-index: 80; border: 0; border-radius: 0; background: rgb(0 0 0 / 18%); }
   #root .df-app.mode-planning .df-planning .df-planning-view-switch { position: relative; inset: auto; display: flex; flex-direction: column; align-items: stretch; width: 100%; height: auto; padding: 0; border: 0; gap: 4px; background: transparent; }
   #root .df-app.mode-planning .df-planning .df-view-btn { display: grid; grid-template-columns: 20px minmax(0, 1fr); justify-items: start; align-items: center; gap: 12px; width: 100%; height: 44px; min-height: 44px; padding: 0 12px; border: 0; font: 600 14px/1.4 var(--paper-sans); text-align: left; }
   #root .df-app.mode-planning .df-planning .df-view-btn span { display: inline; font: inherit; }
@@ -25096,8 +25098,5 @@ body[data-navopath-base-theme="light"],
   }
   #root .df-app.mode-execute .df-compact-date-display.is-readonly {
     top: 0;
-  }
-  #root .df-app.is-desktop-docked.mode-planning > .df-planning {
-    padding-top: 56px;
   }
 }

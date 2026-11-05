@@ -964,18 +964,34 @@ export default function PlanningView(props: {
   const [dropTarget, setDropTarget] = useState<TreeDropTarget | null>(null);
   const [portraitSidebarOpen, setPortraitSidebarOpen] = useState(false);
   const [portraitLayout, setPortraitLayout] = useState(() => window.matchMedia("(orientation: portrait)").matches);
+  const portraitViewport = window.matchMedia("(orientation: portrait)").matches;
   const sidebarRef = useRef<HTMLElement>(null);
   useModalFocus(portraitLayout && portraitSidebarOpen, sidebarRef);
   useEffect(() => {
     const media = window.matchMedia("(orientation: portrait)");
-    const update = () => { setPortraitLayout(media.matches); setPortraitSidebarOpen(false); };
+    const update = () => {
+      setPortraitLayout(media.matches);
+      if (!media.matches) setPortraitSidebarOpen(false);
+    };
     media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => {
+      media.removeEventListener("change", update);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
   }, []);
-  const sidebarCollapsed = portraitLayout ? !portraitSidebarOpen : Boolean(props.planningSidebarCollapsed);
+  const sidebarCollapsed = portraitViewport ? !portraitSidebarOpen : Boolean(props.planningSidebarCollapsed);
   const toggleSidebar = () => {
-    if (portraitLayout) setPortraitSidebarOpen(open => !open);
-    else props.onPlanningSidebarCollapsedChange?.(!props.planningSidebarCollapsed);
+    if (window.matchMedia("(orientation: portrait)").matches) {
+      setPortraitLayout(true);
+      setPortraitSidebarOpen(open => !open);
+    } else {
+      setPortraitLayout(false);
+      setPortraitSidebarOpen(false);
+      props.onPlanningSidebarCollapsedChange?.(!props.planningSidebarCollapsed);
+    }
   };
   const treeRef = useRef<HTMLDivElement>(null);
   const donutSvgRef = useRef<SVGSVGElement>(null);
@@ -2272,12 +2288,12 @@ export default function PlanningView(props: {
   return (
     <main className={`df-planning${props.compact ? " compact-layout" : ""}${sidebarCollapsed ? " is-sidebar-collapsed" : ""}${portraitSidebarOpen ? " is-portrait-sidebar-open" : ""}`} style={{ "--planning-sidebar-width": `${planningSidebarWidth}px` } as React.CSSProperties}>
       {dialog.host}
-      {portraitLayout && sidebarToggle}
+      {sidebarToggle}
       {portraitLayout && portraitSidebarOpen && <button type="button" className="df-planning-sidebar-backdrop" tabIndex={-1} aria-label={props.lang === "zh" ? "关闭规划侧栏" : "Close planning sidebar"} onClick={() => setPortraitSidebarOpen(false)} />}
       <div className="df-planning-body">
         <section className="df-mindmap no-root">
           <aside className="df-planning-sidebar" ref={sidebarRef} tabIndex={-1} onKeyDown={event => { if (portraitLayout && event.key === "Escape") { event.stopPropagation(); setPortraitSidebarOpen(false); } }} aria-label={props.lang === "zh" ? "\u89c4\u5212\u5de5\u5177" : "Planning tools"}>
-            {!portraitLayout && sidebarToggle}
+            {sidebarToggle}
             <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare ui-choice-list--motion-selection">
               {planningViews.length > 0 && <SelectionIndicator activeKey={`${selectedPlanningViewId}:${props.lang}:${planningViews.length}`} />}
               {planningViews.map((view) => (
