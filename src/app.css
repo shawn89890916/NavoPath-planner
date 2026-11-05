@@ -24767,13 +24767,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   filter: none;
   transform: none;
 }
-#root .df-app:is(.is-settings-open, :has(.df-drawer-backdrop)) .df-brand-dock-trigger,
-#root .df-app:is(.is-settings-open, :has(.df-drawer-backdrop)) .df-brand-dock-trigger:is(:hover, :focus-visible, :active) {
-  opacity: 0.56;
-  transform: none;
-  filter: none;
-  box-shadow: none;
-}
 #root .df-app.mode-planning .df-planning .df-project-node-actions .df-tree-icon-button {
   border: 0;
   color: var(--text-main);
@@ -25172,4 +25165,9 @@ body[data-navopath-base-theme="light"],
   #root .df-app.mode-execute .df-compact-date-display.is-readonly {
     top: 0;
   }
+}
+
+/* Detail backdrops must cover the fixed portrait Execute brand/header too. */
+#root .df-app:is(.mode-execute, .mode-planning):has(.df-drawer-backdrop) > .df-header {
+  z-index: 30;
 }
