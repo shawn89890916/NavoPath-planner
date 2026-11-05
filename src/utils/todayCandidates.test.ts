@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PlannerData, Task } from "../types";
-import { promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToToday, toggleTodayCandidate } from "./todayCandidates";
+import { reorderTodayCandidates, returnScheduledTaskToToday } from "./todayCandidates";
 
 function task(overrides: Partial<Task> = {}): Task {
   return {
@@ -28,47 +28,6 @@ function data(tasks: Task[]): PlannerData {
 }
 
 describe("today candidate transformations", () => {
-  it("adds a task to today without removing its existing executions", () => {
-    const source = data([task({ scheduledDate: "2026-06-21", scheduledStart: "09:00", scheduledEnd: "10:00", timelineRecords: [{ id: "r1", taskId: "task-1", scheduledDate: "2026-06-21", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled", createdAt: "now" }] })]);
-    const result = toggleTodayCandidate(source, "task-1", "2026-06-20", "now");
-    expect(result.action).toBe("added");
-    expect(result.data.tasks[0]).toMatchObject({ plannedForDate: "2026-06-20", executionLane: "candidate", timelineRecords: source.tasks[0].timelineRecords });
-    expect(result.data.tasks[0].scheduledStart).toBe("09:00");
-  });
-
-  it("preserves rated history when adding and removing a candidate, including after serialization", () => {
-    const records = (["completed", "returned_unfinished", "skipped", "cancelled"] as const).map((executionStatus, index) => ({
-      id: `history-${index}`, taskId: "task-1", scheduledDate: "2026-06-19", scheduledStart: "09:00", scheduledEnd: "10:00",
-      executionStatus, engagement: 70, createdAt: "2026-06-19T00:00:00Z",
-    }));
-    const source = data([task({ timelineRecords: records }), task({ id: "other" })]);
-    const added = toggleTodayCandidate(source, "task-1", "2026-06-20", "now").data;
-    const removed = toggleTodayCandidate(JSON.parse(JSON.stringify(added)), "task-1", "2026-06-20", "later").data;
-    expect(added.tasks[0].timelineRecords).toEqual(records);
-    expect(removed.tasks[0].timelineRecords).toEqual(records);
-    expect(removed.tasks[0].plannedForDate).toBeUndefined();
-    expect(source.tasks[0].plannedForDate).toBeUndefined();
-    expect(added.tasks[1]).toBe(source.tasks[1]);
-  });
-
-  it("removes an existing today candidate without duplicating it", () => {
-    const source = data([task({ plannedForDate: "2026-06-20", executionLane: "candidate" })]);
-    const result = toggleTodayCandidate(source, "task-1", "2026-06-20", "now");
-    expect(result.action).toBe("removed");
-    expect(result.data.tasks).toHaveLength(1);
-    expect(result.data.tasks[0].plannedForDate).toBeUndefined();
-  });
-
-  it("promotes a nested subtask once", () => {
-    const source = data([task({ subtasks: [{ id: "sub-1", title: "Collect sources", completed: false, createdAt: "now" }] })]);
-    const first = promoteSubtaskToToday(source, "task-1", "sub-1", "2026-06-20", () => "promoted-1", "now");
-    const second = promoteSubtaskToToday(first.data, "task-1", "sub-1", "2026-06-20", () => "promoted-2", "now");
-    expect(first.action).toBe("added");
-    expect(first.data.tasks[1]).toMatchObject({ id: "promoted-1", parentTaskId: "task-1", title: "Collect sources", executionLane: "candidate" });
-    expect(second.action).toBe("existing");
-    expect(second.data.tasks).toHaveLength(2);
-  });
-
   it("returns a scheduled promoted subtask to today without clearing its planned marker", () => {
     const source = data([
       task({
@@ -89,6 +48,22 @@ describe("today candidate transformations", () => {
     expect(result.action).toBe("returned");
     expect(result.data.tasks[1]).toMatchObject({ plannedForDate: "2026-06-20", executionLane: "candidate", timelineRecords: [] });
     expect(result.data.tasks[0].subtasks?.[0].plannedTaskId).toBe("promoted-1");
+  });
+
+  it("removes only the selected execution and keeps the remaining schedule", () => {
+    const record = { id: "first", taskId: "task-1", scheduledDate: "2026-06-20", scheduledStart: "09:00", scheduledEnd: "09:30", executionStatus: "scheduled" as const, createdAt: "now" };
+    const remaining = { ...record, id: "second", scheduledStart: "10:00", scheduledEnd: "10:30" };
+    const source = data([task({ projectId: "project-1", executionLane: undefined, timelineRecords: [record, remaining] })]);
+    const result = returnScheduledTaskToToday(source, record.id, "2026-06-20", "now");
+    expect(result.data.tasks[0]).toMatchObject({ projectId: "project-1", executionLane: undefined, timelineRecords: [remaining] });
+    expect(returnScheduledTaskToToday(result.data, record.id, "2026-06-20").data).toBe(result.data);
+  });
+
+  it("preserves explicit records when cancelling a legacy all-day block", () => {
+    const record = { id: "record-1", taskId: "task-1", scheduledDate: "2026-06-21", scheduledStart: "10:00", scheduledEnd: "10:30", executionStatus: "scheduled" as const, createdAt: "now" };
+    const source = data([task({ scheduledDate: "2026-06-20", executionLane: undefined, timelineRecords: [record] })]);
+    const result = returnScheduledTaskToToday(source, "task-1", "2026-06-20", "now");
+    expect(result.data.tasks[0]).toMatchObject({ scheduledDate: undefined, executionLane: undefined, timelineRecords: [record] });
   });
 });
 

@@ -367,12 +367,11 @@ export class ExtensionService {
         await host.saveSettings({ extensionConfigs: { ...settings.extensionConfigs, "official:pomodoro": config } });
       }
     }
-    if (!preferences.migratedPlanningViews) {
+    if (!preferences.migratedPlanningViews || !preferences.migratedShelfViews) {
       const builtins: Array<{ id: string; enabled: boolean }> = [
-        { id: "tree", enabled: true },
-        { id: "kanban", enabled: settings.featureKanbanViewEnabled === true },
-        { id: "matrix", enabled: settings.featureQuadrantViewEnabled === true },
-        { id: "list", enabled: settings.featureListViewEnabled === true },
+        { id: "kanban", enabled: true },
+        { id: "matrix", enabled: true },
+        { id: "list", enabled: true },
         { id: "metrics", enabled: settings.featureMetricsEnabled !== false },
       ];
       const { officialPackages, officialPackageTexts } = await import("./officialPackages");
@@ -387,6 +386,7 @@ export class ExtensionService {
         next.installed[key] = { key, sourceId: "official", manifest: pkg.manifest, sha256: hash, enabled, installedAt: now, updatedAt: now };
       }
       next.migratedPlanningViews = true;
+      next.migratedShelfViews = true;
       changed = true;
     }
     if (settings.featureTemplatesEnabled !== false && !next.installed["official:schedule-templates"] && !next.removed["official:schedule-templates"]) {

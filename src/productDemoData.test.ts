@@ -6,7 +6,6 @@ import {
   rescheduleDemoTomorrow,
   scheduleDemoTask,
 } from "./productDemoData";
-import { toggleTodayCandidate } from "./utils/todayCandidates";
 
 afterEach(() => vi.useRealTimers());
 
@@ -20,18 +19,6 @@ describe("isolated product examples", () => {
     expect(createDemoData("en", "planning", 0).tasks[0].title).toBe(
       "Write your introduction",
     );
-  });
-
-  it("uses the product candidate transition to add and remove a task", () => {
-    const initial = createDemoData("zh", "planning", 0);
-    const added = toggleTodayCandidate(initial, "content", DEMO_DATE).data;
-    expect(added.tasks[0].plannedForDate).toBe(DEMO_DATE);
-    expect(added.tasks[0].executionLane).toBe("candidate");
-    expect(
-      toggleTodayCandidate(added, "content", DEMO_DATE).data.tasks[0]
-        .plannedForDate,
-    ).toBeUndefined();
-    expect(initial.tasks[0].plannedForDate).toBeUndefined();
   });
 
   it("keeps examples in every planning quadrant in both languages and candidate states", () => {

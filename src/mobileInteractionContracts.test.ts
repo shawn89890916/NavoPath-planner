@@ -47,7 +47,7 @@ describe("portrait interaction contracts", () => {
     expect(main).toContain('let holdReady = !(source === "candidate" && event.pointerType === "touch");');
     expect(main).toContain("const holdTimer = holdReady ? undefined : window.setTimeout(() => {");
     expect(main).toContain('setCompactExecuteView("schedule");\n          window.requestAnimationFrame(() => updateTarget(pointerEvent));');
-    expect(main).toContain('moveTaskToMonthDate(task, monthDate);');
+    expect(main).toContain('if (monthDate) void moveTaskToMonthDate(task, date);');
     expect(defaults).toContain("continuousCrossDayScroll: true");
     expect(main).toContain("settings?.continuousCrossDayScroll !== false");
     expect(main).toContain('onChange={(next) => onSave({ continuousCrossDayScroll: next })}');
@@ -63,8 +63,8 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toContain("-webkit-touch-callout: default;");
   });
 
-  it("keeps portrait Planning filter visible, checkbox visuals compact, and portals the dock to the viewport edge", () => {
-    expect(appCss).toContain("position: fixed;\n    top: 6px;\n    right: 6px;");
+  it("keeps project filters in the shelf header, checkboxes compact, and the dock at the viewport edge", () => {
+    expect(main).toContain('ref={setProjectFilterAnchor} className="df-project-filter-anchor"');
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check\s*\{[^}]*width:\s*18px;[^}]*height:\s*18px;/);
     expect(appCss).toMatch(/\.mode-execute \.df-time-block \.df-block-check::before\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/);
     expect(main).toContain('createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport');
@@ -113,11 +113,10 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toContain("/* Multi-day views share the Day view's paper and hour-band rhythm. */");
   });
 
-  it("uses the compact workbench until landscape has room for the two-column layout", () => {
-    expect(main).toContain("const COMPACT_LAYOUT_MEDIA_QUERY = \"(orientation: portrait), (max-width: 980px) and (orientation: landscape)\";");
-    expect(appCss).not.toContain("grid-template-columns: clamp(330px, 40%, 390px)");
+  it("keeps the shelf and timeline side by side on narrow landscape screens", () => {
+    expect(main).toContain("const narrowSplitLayout = compactLayout && !portraitLayout && !productPresentation;");
+    expect(appCss).toMatch(/\.df-execute\.shelf-timeline-split\s*\{[^}]*grid-template-columns:\s*minmax\(230px, 34%\) minmax\(0, 1fr\)/);
     expect(appCss).toContain("@media (min-width: 981px) and (orientation: landscape)");
-    expect(appCss).toContain("#root .df-app.mode-execute > .df-execute {\n    grid-template-columns: minmax(0, 1fr);");
   });
 
   it("keeps the dark landscape candidate column at the shared readable width", () => {
@@ -166,16 +165,11 @@ describe("portrait interaction contracts", () => {
   });
 
 
-  it("keeps Planning filters at the top right independently of the collapsible sidebar", () => {
-    const sidebarStart = planning.indexOf('<aside className="df-planning-sidebar"');
-    const sidebarEnd = planning.indexOf("</aside>", sidebarStart);
-    const filterPosition = planning.indexOf('<div className="df-planning-filter-corner">');
-
-    expect(sidebarStart).toBeGreaterThanOrEqual(0);
-    expect(filterPosition).toBeGreaterThan(sidebarEnd);
-    expect(filterPosition).toBeLessThan(planning.indexOf('<div className="df-tree-wrap"'));
-    expect(appCss).toContain("position: fixed;\n    top: 6px;\n    right: 6px;");
-    expect(appCss).not.toContain(".is-sidebar-collapsed .df-planning-filter-corner { display: none; }");
+  it("mounts project task filters in the existing candidate header", () => {
+    expect(main).toContain('filterAnchor={projectManagement ? projectFilterAnchor : null}');
+    expect(planning).toContain("createPortal(projectFilters, props.filterAnchor)");
+    expect(planning).not.toContain("df-planning-sidebar");
+    expect(appCss).toContain(".df-project-filter-anchor .df-filter-panel");
   });
 
   it("keeps candidate quick-add in the floating control and bounds task editing to the dynamic viewport", () => {
@@ -187,7 +181,7 @@ describe("portrait interaction contracts", () => {
 
   it("awaits profile persistence and scrolls the profile with Settings home", () => {
     expect(main).toContain("onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }}");
-    expect(main).toContain('utilityPanel !== "settings"');
+    expect(main).toContain('!scheduleTemplatePresence.present && !utilityPanel && (');
     expect(appCss).toContain(".df-settings-shell:not(.df-settings-detail-shell)");
   });
 
@@ -249,9 +243,9 @@ describe("portrait interaction contracts", () => {
 });
 
 describe("portrait timeline and Planning control contracts", () => {
-  it("keeps task action buttons borderless and the Planning filter at the portrait top right", () => {
+  it("keeps task action buttons borderless and the project filter in the shelf header", () => {
     expect(appCss).toMatch(/\.df-plan-task-node \.df-task-node-actions \.df-tree-icon-button\s*\{[^}]*border:\s*0;/);
-    expect(appCss).toContain("position: fixed;\n    top: 6px;\n    right: 6px;");
+    expect(appCss).toContain(".df-project-filter-anchor .df-filter-trigger");
     expect(appCss).toContain("width: 44px;");
   });
 });

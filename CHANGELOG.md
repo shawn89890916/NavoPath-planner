@@ -2,6 +2,16 @@
 
 ## 2026-11-05
 
+### 1.6 Alpha 1
+
+#### 新增
+
+- 将今日候选、列表、矩阵、看板和项目管理合并到左浮栏，切换时保留时间轴。指标插件从顶栏打开右侧面板。
+
+#### 改进
+
+- 今日候选默认展示所有项目的待安排任务，可直接拖入时间轴。拖回左浮栏只取消当前时间块。全局 AI 排程覆盖所有待安排任务。
+
 ### 1.6.3
 
 #### 新增
@@ -475,6 +485,16 @@
 # NavoPath Changelog
 
 ## 2026-11-05
+
+### 1.6 Alpha 1
+
+#### Added
+
+- Today's Candidates, List, Matrix, Kanban, and project management share the left panel and keep the timeline in place. The Metrics plugin opens a right-side panel from the top bar.
+
+#### Improved
+
+- Today's Candidates shows unscheduled tasks from every project and supports dragging directly onto the timeline. Dragging back removes only the selected time block. Global AI scheduling covers all tasks waiting to be scheduled.
 
 ### 1.6.3
 

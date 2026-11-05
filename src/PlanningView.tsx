@@ -1,12 +1,10 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useMotionSelection } from "./useMotionSelection";
-import { SelectionIndicator } from "./components/SelectionIndicator";
 import { useMotionPresence } from "./useMotionPresence";
 import type { PlannerData, Project, Settings, Subtask, Task, WorkflowStatus } from "./types";
 import { t, type Language } from "./i18n";
-import { term } from "./terminology";
 import { useInAppDialog } from "./InAppDialog";
+import { hasActiveTaskSchedule } from "./utils/timelineRecords";
 import { localIsoDate } from "./utils/localDate";
 import { highlightTaskLocation } from "./utils/highlightTaskLocation";
 import { projectColorInk } from "./utils/presentationColor";
@@ -18,13 +16,11 @@ import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockVariant } from "./components/TaskBlock";
 import { CloseButton, IconButton } from "./components/UiPrimitives";
-import { UiPanelLeftCloseIcon, UiPanelLeftOpenIcon } from "./components/UiIcons";
+import { UiCalendarCheckIcon, UiFilterIcon } from "./components/UiIcons";
 import { TaskDragLayer } from "./unifiedDrag";
 import { bindHeldTouchScroll } from "./useUnifiedDrag";
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricCompletionFilter, type MetricDisplayMetric, type MetricGroupBy, type MetricHabitMode, type MetricRangePreset, type TimeAllocationGroup } from "./metrics/timeAllocation";
-import { extensionService } from "./extensions/service";
-import { ExtensionMount } from "./extensions/ExtensionMount";
-import type { ExtensionContribution, NativePlanningViewMode } from "./extensions/types";
+import type { NativePlanningViewMode } from "./extensions/types";
 import { CandidateSubtaskItem } from "./WorkspacePresentation";
 
 type TreeNodeKind = "project" | "task" | "subtask";
@@ -254,62 +250,8 @@ function localDateInputValue(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function metricViewLabel(lang: Language, mode: PlanningViewMode) {
-  if (mode === "tree") return lang === "zh" ? "树" : "Tree";
-  if (mode === "kanban") return lang === "zh" ? "看板" : "Kanban";
-  if (mode === "eisenhower") return lang === "zh" ? "矩阵" : "Matrix";
-  if (mode === "metrics") return lang === "zh" ? "指标" : "Metrics";
-  return lang === "zh" ? "列表" : "List";
-}
-
-function PlanningModeIcon({ mode }: { mode: PlanningViewMode }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {mode === "tree" && (
-        <>
-          <rect x="2" y="9" width="6" height="6" rx="1.2" />
-          <rect x="16" y="2.5" width="6" height="6" rx="1.2" />
-          <rect x="16" y="15.5" width="6" height="6" rx="1.2" />
-          <path d="M8 12h4m0-6.5v13m0-13h4m-4 13h4" />
-        </>
-      )}
-      {mode === "kanban" && (
-        <>
-          <rect x="2.5" y="3" width="19" height="18" rx="1.6" />
-          <path d="M8.8 3v18M15.2 3v18" />
-          <path d="M4.7 7h1.9m-1.9 3.5h1.9M11 7h2m-2 3.5h2M17.5 7h1.7" strokeWidth="2" />
-        </>
-      )}
-      {mode === "eisenhower" && (
-        <>
-          <rect x="3" y="3" width="18" height="18" rx="1.6" />
-          <path d="M12 3v18M3 12h18" />
-          <rect x="14.5" y="5.5" width="4" height="4" rx=".6" fill="currentColor" stroke="none" />
-        </>
-      )}
-      {mode === "list" && (
-        <>
-          <path d="M3.5 5.6 5 7.1l2.5-3M10 5.5h11M10 12h9M10 18.5h11" />
-          <rect x="3" y="10" width="4" height="4" rx=".6" />
-          <rect x="3" y="16.5" width="4" height="4" rx=".6" />
-        </>
-      )}
-      {mode === "metrics" && (
-        <>
-          <circle cx="12" cy="12" r="8" strokeWidth="3.4" opacity=".45" />
-          <path d="M12 4a8 8 0 0 1 8 8" strokeWidth="3.4" />
-        </>
-      )}
-    </svg>
-  );
-}
-
 function planningTaskPriority(task: Pick<Task, "priority">) {
   return task.priority || "normal";
-}
-
-function isIncompletePlanningTask(task: Task) {
-  return normalizeWorkflowStatus(task) !== "done";
 }
 
 function isIncompletePlanningSubtask(subtask: Subtask) {
@@ -353,14 +295,6 @@ function PlusIcon() {
   );
 }
 
-function ArrowRightIcon() {
-  return (
-    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 8h8" />
-      <path d="M8.5 4.5 12 8l-3.5 3.5" />
-    </svg>
-  );
-}
 
 function MoreIcon() {
   return (
@@ -461,7 +395,7 @@ function PlanningSubtaskNode(props: {
   lang: Language;
   subtask: Subtask;
   onToggle: (subtaskId: string) => void;
-  onPromote: (subtaskId: string) => void;
+  onSchedule?: (subtaskId: string) => void;
   onRename: (subtaskId: string) => void;
   onSetDate: (subtaskId: string) => void;
   onMoveProject: (subtaskId: string) => void;
@@ -494,7 +428,7 @@ function PlanningSubtaskNode(props: {
             open={menuOpen}
             onClose={toggleMenu}
             actions={[
-              { label: term(props.lang, "todayCandidates"), onClick: () => props.onPromote(subtask.id) },
+              ...(props.onSchedule ? [{ label: props.lang === "zh" ? "安排" : "Schedule", onClick: () => props.onSchedule?.(subtask.id) }] : []),
               { label: t(props.lang, "planning.editName"), onClick: () => props.onRename(subtask.id) },
               { label: t(props.lang, "planning.addSubtask"), onClick: () => props.onAddSubtask(subtask.id) },
               { label: t(props.lang, "planning.setDate"), onClick: () => props.onSetDate(subtask.id) },
@@ -512,12 +446,11 @@ function PlanningTaskNode(props: {
   demo?: boolean;
   lang: Language;
   task: Task;
-  addedToToday: boolean;
   projectColor: string;
   collapsed: boolean;
   onToggleCollapse: () => void;
   onOpen: () => void;
-  onToggleTodayCandidate: () => void;
+  onSchedule?: () => void;
   onRename: () => void;
   onAddSubtask: () => void;
   onSetDate: () => void;
@@ -533,10 +466,6 @@ function PlanningTaskNode(props: {
   const titleRef = useRef<HTMLSpanElement>(null);
   const done = normalizeWorkflowStatus(props.task) === "done" || Boolean(props.task.completed);
   const hasSubtasks = (props.task.subtasks || []).some(isIncompletePlanningSubtask);
-  const isPlanned = Boolean(
-    props.task.plannedForDate
-    || (props.task.timelineRecords || []).some((record) => record.executionStatus === "scheduled"),
-  );
   const doneCount = countDoneSubtasks(props.task.subtasks);
   const totalCount = countSubtasks(props.task.subtasks);
   const metaBadges = buildTaskMetaBadges(props.task, props.lang);
@@ -545,7 +474,7 @@ function PlanningTaskNode(props: {
     <>
       {tooltipEl}
       <div
-        className={`df-plan-task-node${props.addedToToday ? " added-to-today" : ""}`}
+        className="df-plan-task-node"
         data-node-id={props.task.id}
         data-node-type="task"
         aria-grabbed={props.dragging}
@@ -557,7 +486,6 @@ function PlanningTaskNode(props: {
           appearance="calm"
           priority={planningTaskPriority(props.task)}
           checked={done}
-          selected={props.addedToToday}
           projectColor={props.projectColor}
           className="df-task-node-inner"
           dragState={props.dragging ? "source-placeholder" : undefined}
@@ -603,17 +531,7 @@ function PlanningTaskNode(props: {
               )}
             </TaskBlockContent>
             <TaskActions className="df-task-node-actions">
-              {(!isPlanned || props.demo) && <button
-                className="df-tree-icon-button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  props.onToggleTodayCandidate();
-                }}
-                aria-label={term(props.lang, "todayCandidates")}
-                title={term(props.lang, "todayCandidates")}
-              >
-                <ArrowRightIcon />
-              </button>}
+              {props.onSchedule && <IconButton className="df-tree-icon-button" icon={<UiCalendarCheckIcon size={16} />} label={props.lang === "zh" ? "安排" : "Schedule"} onClick={(event) => { event.stopPropagation(); props.onSchedule?.(); }} />}
               {!props.demo && <button
                 className="df-tree-icon-button"
                 onClick={(event) => {
@@ -910,8 +828,6 @@ function useTreeLines(
   return lines;
 }
 
-type PlanningViewMode = NativePlanningViewMode | "plugin";
-
 export default function PlanningView(props: {
   focusTaskId?: string | null;
   onFocusHandled?: () => void;
@@ -919,15 +835,19 @@ export default function PlanningView(props: {
   demo?: boolean;
   lang: Language;
   referenceDate?: string;
-  initialViewMode?: NativePlanningViewMode;
+  viewMode: NativePlanningViewMode;
+  filterAnchor?: HTMLElement | null;
+  onScheduleTask?: (task: Task) => void;
+  onScheduleSubtask?: (task: Task, subtaskId: string) => void;
+  onTouchScheduleDrag?: (event: React.PointerEvent, task: Task, subtaskId?: string) => void;
+  onTimelineDrag?: (task: Task, point: { x: number; y: number } | null) => void;
+  onTimelineDrop?: (task: Task, point: { x: number; y: number }, subtaskId?: string) => boolean;
   data: PlannerData;
   projects: Project[];
   tasks: Task[];
   compact: boolean;
   collapsed: Record<string, boolean>;
   setCollapsed: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  onToggleTodayCandidate: (taskId: string) => void;
-  onPromoteSubtaskToToday: (parentTaskId: string, subtaskId: string) => void;
   onProjectEdit: (project: Project) => void;
   onProjectComplete?: (projectId: string) => void;
   onTaskEdit: (task: Task) => void;
@@ -936,11 +856,6 @@ export default function PlanningView(props: {
   onTaskDelete: (taskId: string) => void;
   onDeleteSubtask: (subtaskId: string) => void;
   onDataChange: (data: PlannerData) => void;
-  featureKanban?: boolean;
-  featureQuadrant?: boolean;
-  featureList?: boolean;
-  /** 指标视图开关：关闭后隐藏规划页的「指标」视图入口。 */
-  featureMetrics?: boolean;
   engagementEnabled?: boolean;
   dayStartTime?: string;
   metricsRangePreset?: MetricRangePreset;
@@ -951,128 +866,16 @@ export default function PlanningView(props: {
   metricsCustomStart?: string;
   metricsCustomEnd?: string;
   onMetricsSettingsChange?: (patch: Partial<Settings>) => void;
-  planningSidebarCollapsed?: boolean;
-  onPlanningSidebarCollapsedChange?: (collapsed: boolean) => void;
-  planningSidebarWidth?: number;
-  onPlanningSidebarWidthChange?: (width: number) => void;
 }) {
   const safeProjects = Array.isArray(props.projects) ? props.projects : [];
   const safeTasks = Array.isArray(props.tasks) ? props.tasks : [];
   const [collapsedSubtasks, setCollapsedSubtasks] = useState<Record<string, boolean>>({});
   const [dragNode, setDragNode] = useState<TreeDragNode | null>(null);
   const [dropTarget, setDropTarget] = useState<TreeDropTarget | null>(null);
-  const [portraitSidebarOpen, setPortraitSidebarOpen] = useState(false);
-  const [portraitLayout, setPortraitLayout] = useState(() => window.matchMedia("(orientation: portrait)").matches);
-  const portraitViewport = window.matchMedia("(orientation: portrait)").matches;
-  const sidebarRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const media = window.matchMedia("(orientation: portrait)");
-    const update = () => {
-      setPortraitLayout(media.matches);
-      if (!media.matches) setPortraitSidebarOpen(false);
-    };
-    media.addEventListener("change", update);
-    window.addEventListener("resize", update);
-    window.addEventListener("orientationchange", update);
-    return () => {
-      media.removeEventListener("change", update);
-      window.removeEventListener("resize", update);
-      window.removeEventListener("orientationchange", update);
-    };
-  }, []);
-  const sidebarCollapsed = portraitViewport ? !portraitSidebarOpen : Boolean(props.planningSidebarCollapsed);
-  const toggleSidebar = () => {
-    if (window.matchMedia("(orientation: portrait)").matches) {
-      setPortraitLayout(true);
-      setPortraitSidebarOpen(open => !open);
-    } else {
-      setPortraitLayout(false);
-      setPortraitSidebarOpen(false);
-      props.onPlanningSidebarCollapsedChange?.(!props.planningSidebarCollapsed);
-    }
-  };
   const treeRef = useRef<HTMLDivElement>(null);
   const donutSvgRef = useRef<SVGSVGElement>(null);
   const dialog = useInAppDialog(props.lang);
-  const [planningSidebarWidth, setPlanningSidebarWidth] = useState(() => Math.max(150, Math.min(360, props.planningSidebarWidth || 216)));
-  const sidebarResizeRef = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null);
-  useEffect(() => {
-    if (Number.isFinite(props.planningSidebarWidth)) setPlanningSidebarWidth(Math.max(150, Math.min(360, props.planningSidebarWidth || 216)));
-  }, [props.planningSidebarWidth]);
-  const updateSidebarWidth = (width: number, persist = false) => {
-    const next = Math.max(150, Math.min(360, Math.round(width)));
-    setPlanningSidebarWidth(next);
-    if (persist) props.onPlanningSidebarWidthChange?.(next);
-  };
-
-  const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const availablePlanningViews = useMemo<ExtensionContribution[]>(() => {
-    if (!props.demo) return extensionSnapshot.views.filter((view) => view.planningView);
-    const modes: NativePlanningViewMode[] = ["tree"];
-    if (props.featureKanban) modes.push("kanban");
-    if (props.featureQuadrant) modes.push("eisenhower");
-    if (props.featureList) modes.push("list");
-    if (props.featureMetrics) modes.push("metrics");
-    return modes.map((nativeMode) => ({ id: `demo:${nativeMode}`, owner: "demo", name: metricViewLabel(props.lang, nativeMode), mount: () => {}, nativeMode, planningView: true }));
-  }, [extensionSnapshot.views, props.demo, props.featureKanban, props.featureQuadrant, props.featureList, props.featureMetrics, props.lang]);
-  const [planningViewOrder, setPlanningViewOrder] = useState<string[]>(() => {
-    try {
-      const saved = window.localStorage.getItem("navopath.planningViewOrder");
-      const parsed: unknown = saved ? JSON.parse(saved) : [];
-      return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
-    } catch {
-      return [];
-    }
-  });
-  const planningViews = useMemo(() => {
-    const defaultOrder = new Map(["tree", "list", "kanban", "eisenhower", "metrics"].map((mode, index) => [mode, index]));
-    const savedOrder = new Map(planningViewOrder.map((id, index) => [id, index]));
-    const orderKey = (view: ExtensionContribution) => view.nativeMode ? `native:${view.nativeMode}` : `plugin:${view.owner}:${view.name}`;
-    return [...availablePlanningViews].sort((a, b) => {
-      const aSaved = savedOrder.get(orderKey(a));
-      const bSaved = savedOrder.get(orderKey(b));
-      if (aSaved !== undefined || bSaved !== undefined) {
-        if (aSaved === undefined) return 1;
-        if (bSaved === undefined) return -1;
-        if (aSaved !== bSaved) return aSaved - bSaved;
-      }
-      const aDefault = a.nativeMode ? defaultOrder.get(a.nativeMode) : undefined;
-      const bDefault = b.nativeMode ? defaultOrder.get(b.nativeMode) : undefined;
-      if (aDefault !== undefined || bDefault !== undefined) {
-        if (aDefault === undefined) return 1;
-        if (bDefault === undefined) return -1;
-        if (aDefault !== bDefault) return aDefault - bDefault;
-      }
-      return availablePlanningViews.indexOf(a) - availablePlanningViews.indexOf(b);
-    });
-  }, [availablePlanningViews, planningViewOrder]);
-  const draggedPlanningViewId = useRef<string | null>(null);
-  const reorderPlanningViews = (targetId: string) => {
-    const sourceId = draggedPlanningViewId.current;
-    draggedPlanningViewId.current = null;
-    if (!sourceId || sourceId === targetId) return;
-    const next = [...planningViews];
-    const sourceIndex = next.findIndex((view) => view.id === sourceId);
-    const targetIndex = next.findIndex((view) => view.id === targetId);
-    if (sourceIndex < 0 || targetIndex < 0) return;
-    const [moved] = next.splice(sourceIndex, 1);
-    next.splice(targetIndex, 0, moved);
-    const order = next.map((view) => view.nativeMode ? `native:${view.nativeMode}` : `plugin:${view.owner}:${view.name}`);
-    setPlanningViewOrder(order);
-    try { window.localStorage.setItem("navopath.planningViewOrder", JSON.stringify(order)); } catch { /* Keep the current-session order if storage is unavailable. */ }
-  };
-  const [selectedPlanningViewId, setSelectedPlanningViewId] = useState("");
-  const planningViewIds = useMemo(() => planningViews.map((view) => view.id), [planningViews]);
-  const selectedPlanningView = planningViews.find((view) => view.id === selectedPlanningViewId);
-  const viewMode: PlanningViewMode | null = selectedPlanningView?.nativeMode || (selectedPlanningView ? "plugin" : null);
-  const changePlanningView = useMotionSelection(selectedPlanningViewId, setSelectedPlanningViewId, "planning", planningViewIds);
-  // If a plugin removes the selected view, select Tree when available, then the
-  // first remaining view. Safe mode intentionally leaves the panel empty.
-  useEffect(() => {
-    if (selectedPlanningViewId && planningViews.some((view) => view.id === selectedPlanningViewId)) return;
-    const fallback = planningViews.find((view) => view.nativeMode === (props.initialViewMode || "tree")) || planningViews[0];
-    if (selectedPlanningViewId !== (fallback?.id || "")) setSelectedPlanningViewId(fallback?.id || "");
-  }, [planningViews, selectedPlanningViewId, props.initialViewMode]);
+  const { viewMode } = props;
   const [metricsRangePreset, setMetricsRangePreset] = useState<MetricRangePreset>(props.metricsRangePreset || "today");
   const [metricsGroupBy, setMetricsGroupBy] = useState<MetricGroupBy>(props.metricsGroupBy || "project");
   const [metricsDisplayMetric, setMetricsDisplayMetric] = useState<MetricDisplayMetric>(props.metricsDisplayMetric || "percentage");
@@ -1085,11 +888,30 @@ export default function PlanningView(props: {
   const [metricsProjectFilter, setMetricsProjectFilter] = useState<string[]>([]);
   const [hoveredMetricGroupId, setHoveredMetricGroupId] = useState<string | null>(null);
   const [selectedMetricGroupId, setSelectedMetricGroupId] = useState<string | null>(null);
+  const [includeCompleted, setIncludeCompleted] = useState(false);
   const [filterProjects, setFilterProjects] = useState<string[]>([]);
   const [filterWorkflows, setFilterWorkflows] = useState<UiWorkflowStatus[]>([]);
   const [filterImportances, setFilterImportances] = useState<StateFilterValue[]>([]);
   const [filterUrgencies, setFilterUrgencies] = useState<StateFilterValue[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
+  useEffect(() => {
+    if (!filterOpen || !props.filterAnchor) return;
+    const anchor = props.filterAnchor;
+    const close = (event: PointerEvent) => {
+      if (event.target instanceof Node && !anchor.contains(event.target)) setFilterOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setFilterOpen(false);
+      anchor.querySelector("button")?.focus();
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [filterOpen, props.filterAnchor]);
   const [filterExpandedCategory, setFilterExpandedCategory] = useState<string | null>(null);
   const [filterDueDate, setFilterDueDate] = useState<"overdue" | "this-week" | "no-date" | null>(null);
   const [filterScheduled, setFilterScheduled] = useState<"scheduled" | "unscheduled" | null>(null);
@@ -1237,11 +1059,6 @@ export default function PlanningView(props: {
     props.onDeleteSubtask(subtaskId);
   }, [dialog, props]);
 
-  const promoteSubtask = useCallback((subtaskId: string) => {
-    const parent = safeTasks.find((task) => Boolean(findSubtaskInTree(task.subtasks || [], subtaskId)));
-    if (parent) props.onPromoteSubtaskToToday(parent.id, subtaskId);
-  }, [props, safeTasks]);
-
   const setSubtaskDate = useCallback(async (subtaskId: string) => {
     for (const task of safeTasks) {
       const subtask = findSubtaskInTree(task.subtasks || [], subtaskId);
@@ -1356,7 +1173,7 @@ export default function PlanningView(props: {
 
   const viewFilteredTasks = useMemo(() => {
     return safeTasks.filter((task) => {
-      if (!isIncompletePlanningTask(task)) return false;
+      if (viewMode === "tree" && !includeCompleted && task.completed && task.id !== props.focusTaskId) return false;
       if (filterProjects.length > 0 && !filterProjects.includes(String(task.projectId || ""))) return false;
       const uiStatus = normalizeWorkflowStatus(task);
       if (filterWorkflows.length > 0 && !filterWorkflows.includes(uiStatus)) return false;
@@ -1382,31 +1199,25 @@ export default function PlanningView(props: {
         }
       }
       if (filterScheduled) {
-        const hasSchedule = !!(task.timelineRecords && task.timelineRecords.length > 0) || !!task.plannedForDate;
+        const hasSchedule = hasActiveTaskSchedule(task);
         if (filterScheduled === "scheduled" && !hasSchedule) return false;
         if (filterScheduled === "unscheduled" && hasSchedule) return false;
       }
       return true;
     });
-  }, [safeTasks, filterProjects, filterWorkflows, filterImportances, filterUrgencies, filterDueDate, filterScheduled]);
+  }, [safeTasks, filterProjects, filterWorkflows, filterImportances, filterUrgencies, filterDueDate, filterScheduled, viewMode, includeCompleted, props.focusTaskId]);
   const orderPlanningTasks = useCallback((items: Task[]) => {
     return [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.createdAt.localeCompare(b.createdAt));
   }, []);
 
-  const hasTreeFilters = filterProjects.length > 0
-    || filterWorkflows.length > 0
-    || filterImportances.length > 0
-    || filterUrgencies.length > 0
-    || !!filterDueDate
-    || !!filterScheduled;
   const visibleProjects = useMemo(
     () => safeProjects
       .map((project) => ({
         project,
         tasks: viewFilteredTasks.filter((task) => String(task.projectId || "") === String(project.id)),
       }))
-      .filter((item) => !hasTreeFilters || item.tasks.length > 0),
-    [safeProjects, viewFilteredTasks, hasTreeFilters],
+      .filter(({ project }) => filterProjects.length === 0 || filterProjects.includes(String(project.id))),
+    [safeProjects, viewFilteredTasks, filterProjects],
   );
   const unassigned = useMemo(
     () => viewFilteredTasks.filter((task) => task && !task.projectId),
@@ -1442,14 +1253,17 @@ export default function PlanningView(props: {
               lang={props.lang}
               subtask={subtask}
               onToggle={(subtaskId) => toggleSubtask(task.id, subtaskId)}
-              onPromote={promoteSubtask}
+              onSchedule={props.onScheduleSubtask ? (subtaskId) => props.onScheduleSubtask?.(task, subtaskId) : undefined}
               onRename={renameSubtask}
               onSetDate={setSubtaskDate}
               onMoveProject={moveSubtaskProject}
               onDelete={deleteSubtask}
               onAddSubtask={(parentId) => addSubtask(task, parentId)}
               draggingSubtaskId={dragNode?.kind === "subtask" ? dragNode.id : undefined}
-              onDragStart={(event, subtaskId) => beginTreeDrag(event, { kind: "subtask", id: subtaskId })}
+              onDragStart={(event, subtaskId) => {
+                if (event.pointerType === "touch" && props.onTouchScheduleDrag) props.onTouchScheduleDrag(event, task, subtaskId);
+                else beginTreeDrag(event, { kind: "subtask", id: subtaskId });
+              }}
             />
             {treeDropSlot("subtask", subtask.id, "inside")}
             {treeDropSlot("subtask", subtask.id, "after")}
@@ -1549,6 +1363,10 @@ export default function PlanningView(props: {
    */
   const beginPlanningDrag = useCallback((event: React.PointerEvent, task: Task, variant: TaskBlockVariant) => {
     if (event.button !== 0) return;
+    if (event.pointerType === "touch" && props.onTouchScheduleDrag) {
+      props.onTouchScheduleDrag(event, task);
+      return;
+    }
     const target = event.target as HTMLElement;
     if (target.closest("button,input,textarea,select,a,[contenteditable='true']")) return;
     const dragElement = event.currentTarget as HTMLElement;
@@ -1576,6 +1394,7 @@ export default function PlanningView(props: {
       document.body.classList.remove("df-unified-dragging");
       dragElement.classList.remove("is-dragging-source", "is-drag-armed");
       if (holdTimer !== undefined) window.clearTimeout(holdTimer);
+      if (active) props.onTimelineDrag?.(task, null);
       setPlanningDragTask(null);
       setKanbanDragTaskId(null);
       setKanbanDropStatus(null);
@@ -1697,12 +1516,17 @@ export default function PlanningView(props: {
         treeRef.current,
       ]);
       detectDropTarget(pointerEvent.clientX, pointerEvent.clientY);
+      props.onTimelineDrag?.(task, { x: pointerEvent.clientX, y: pointerEvent.clientY });
     };
 
     const up = (pointerEvent: PointerEvent) => {
       if (pointerEvent.pointerId !== pointerId) return;
       if (active) {
         suppressPostDragClick();
+        if (props.onTimelineDrop?.(task, { x: pointerEvent.clientX, y: pointerEvent.clientY })) {
+          cleanup();
+          return;
+        }
         const pointedElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
         const planningTask = pointedElement?.closest<HTMLElement>("[data-planning-task-id]");
         const kanbanColumn = pointedElement?.closest<HTMLElement>("[data-kanban-status]");
@@ -1759,7 +1583,7 @@ export default function PlanningView(props: {
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
-  }, [handleKanbanDrop, handleQuadrantDrop, handleListDrop, orderPlanningTasks, planningContainerTasks, props.compact, reorderPlanningTasks, suppressPostDragClick, viewFilteredTasks]);
+  }, [handleKanbanDrop, handleQuadrantDrop, handleListDrop, orderPlanningTasks, planningContainerTasks, props.compact, props.onTimelineDrag, props.onTimelineDrop, props.onTouchScheduleDrag, reorderPlanningTasks, suppressPostDragClick, viewFilteredTasks]);
 
   /**
    * Shared pointer-event drag for Tree view.
@@ -1951,6 +1775,13 @@ export default function PlanningView(props: {
         suppressPostDragClick();
         const source = dragNodeRef.current;
         const target = dropTargetRef.current;
+        const point = { x: pointerEvent.clientX, y: pointerEvent.clientY };
+        const owner = source?.kind === "subtask" ? subtaskOwner(source.id) : undefined;
+        const task = source?.kind === "task" ? safeTasks.find((item) => item.id === source.id) : owner;
+        if (task && props.onTimelineDrop?.(task, point, source?.kind === "subtask" ? source.id : undefined)) {
+          cleanup();
+          return;
+        }
         if (source && target) void handleTreeDrop(source, target);
       }
       cleanup();
@@ -1963,9 +1794,9 @@ export default function PlanningView(props: {
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
-  }, [props.compact, props.lang, handleTreeDrop, safeProjects, safeTasks, setTreeDragNode, setTreeDropTarget, subtaskOwner, suppressPostDragClick, taskFromSubtask]);
+  }, [props.compact, props.lang, props.onTimelineDrop, handleTreeDrop, safeProjects, safeTasks, setTreeDragNode, setTreeDropTarget, subtaskOwner, suppressPostDragClick, taskFromSubtask]);
 
-  const hasActiveFilters = filterProjects.length > 0 || filterWorkflows.length > 0 || filterImportances.length > 0 || filterUrgencies.length > 0 || !!filterDueDate || !!filterScheduled;
+  const hasActiveFilters = includeCompleted || filterProjects.length > 0 || filterWorkflows.length > 0 || filterImportances.length > 0 || filterUrgencies.length > 0 || !!filterDueDate || !!filterScheduled;
 
   const toggleArray = <T,>(setter: React.Dispatch<React.SetStateAction<T[]>>, value: T) => {
     setter((prev) => prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]);
@@ -1991,7 +1822,7 @@ export default function PlanningView(props: {
     {
       key: "status",
       label: props.lang === "zh" ? "Status" : "Status",
-      selected: filterWorkflows.map((s) => s === "backlog" ? (props.lang === "zh" ? "To do" : "To do") : s === "doing" ? (props.lang === "zh" ? "Doing" : "Doing") : (props.lang === "zh" ? "Done" : "Done")),
+      selected: filterWorkflows.map((s) => s === "backlog" ? (props.lang === "zh" ? "To do" : "To do") : s === "doing" ? (props.lang === "zh" ? "Doing" : "Doing") : (props.lang === "zh" ? "已完成" : "Done")),
       options: (["backlog"] as UiWorkflowStatus[]).map((s) => ({
         value: s,
         label: s === "backlog" ? (props.lang === "zh" ? "To do" : "To do") : s === "doing" ? (props.lang === "zh" ? "Doing" : "Doing") : (props.lang === "zh" ? "Done" : "Done"),
@@ -2069,6 +1900,7 @@ export default function PlanningView(props: {
   ];
 
   const clearAllFilters = () => {
+    setIncludeCompleted(false);
     setFilterProjects([]);
     setFilterWorkflows([]);
     setFilterImportances([]);
@@ -2080,13 +1912,12 @@ export default function PlanningView(props: {
   useEffect(() => {
     const task = safeTasks.find((item) => item.id === props.focusTaskId);
     if (!task) return;
-    const treeView = planningViews.find((view) => view.nativeMode === "tree");
-    if (treeView) setSelectedPlanningViewId(treeView.id);
     clearAllFilters();
+    if (task.completed) setIncludeCompleted(true);
     setFilterOpen(false);
     const branch = task.projectId || "unassigned";
     props.setCollapsed((current) => ({ ...current, [branch]: false }));
-  }, [props.focusTaskId, planningViews]);
+  }, [props.focusTaskId]);
 
   useLayoutEffect(() => {
     if (!props.focusTaskId || viewMode !== "tree") return;
@@ -2124,7 +1955,7 @@ export default function PlanningView(props: {
     dotColor?: string;
     onToggle: () => void;
   };
-  const filterHasSchedule = (task: Task) => Boolean((task.timelineRecords && task.timelineRecords.length > 0) || task.plannedForDate);
+  const filterHasSchedule = hasActiveTaskSchedule;
   const filterDueMatches = (task: Task, value: "overdue" | "this-week" | "no-date") => {
     const due = task.dueDate;
     if (value === "no-date") return !due;
@@ -2199,9 +2030,6 @@ export default function PlanningView(props: {
   const activeFilterCategory = filterExpandedCategory && effectiveFilterCategories.some((cat) => cat.key === filterExpandedCategory)
     ? filterExpandedCategory
     : null;
-  const activeFilterCategoryIndex = activeFilterCategory
-    ? Math.max(0, effectiveFilterCategories.findIndex((cat) => cat.key === activeFilterCategory))
-    : 0;
 
   const updateMetricsSetting = useCallback((patch: Partial<Settings>) => {
     props.onMetricsSettingsChange?.(patch);
@@ -2235,7 +2063,7 @@ export default function PlanningView(props: {
   }, [updateMetricsSetting]);
 
   const dayStartMinutes = parseDayStartMinutes(props.dayStartTime || "00:00");
-  const metricsResult = useMemo(() => buildTimeAllocationMetrics({
+  const metricsResult = useMemo(() => viewMode === "metrics" ? buildTimeAllocationMetrics({
     data: props.data,
     range: {
       preset: metricsRangePreset,
@@ -2249,14 +2077,14 @@ export default function PlanningView(props: {
     habitMode: metricsHabitMode,
     completion: metricsCompletion,
     projectIds: metricsProjectFilter,
-  }), [props.data, metricsRangePreset, today, metricsCustomStart, metricsCustomEnd, dayStartMinutes, metricsGroupBy, metricsHabitMode, metricsCompletion, metricsProjectFilter, props.engagementEnabled]);
+  }) : null, [viewMode, props.data, metricsRangePreset, today, metricsCustomStart, metricsCustomEnd, dayStartMinutes, metricsGroupBy, metricsHabitMode, metricsCompletion, metricsProjectFilter, props.engagementEnabled]);
   useEffect(() => {
-    setSelectedMetricGroupId((id) => id && metricsResult.groups.some((group) => group.id === id) ? id : null);
-  }, [metricsResult.groups]);
-  const selectedMetricGroup = metricsResult.groups.find((group) => group.id === selectedMetricGroupId) || null;
-  const hoveredMetricGroup = metricsResult.groups.find((group) => group.id === hoveredMetricGroupId) || null;
+    setSelectedMetricGroupId((id) => id && metricsResult?.groups.some((group) => group.id === id) ? id : null);
+  }, [metricsResult?.groups]);
+  const selectedMetricGroup = metricsResult?.groups.find((group) => group.id === selectedMetricGroupId) || null;
+  const hoveredMetricGroup = metricsResult?.groups.find((group) => group.id === hoveredMetricGroupId) || null;
   const activeDonutGroup = hoveredMetricGroup || selectedMetricGroup;
-  const donutSegments = metricsResult.groups.reduce<Array<{ group: TimeAllocationGroup; startAngle: number; endAngle: number }>>((segments, group) => {
+  const donutSegments = (metricsResult?.groups ?? []).reduce<Array<{ group: TimeAllocationGroup; startAngle: number; endAngle: number }>>((segments, group) => {
     const startAngle = segments.length > 0 ? segments[segments.length - 1].endAngle : 0;
     const endAngle = startAngle + (group.percentage / 100) * 360;
     segments.push({ group, startAngle, endAngle });
@@ -2328,84 +2156,47 @@ export default function PlanningView(props: {
     metricsProjectFilter.length > 0 ? { key: "project", label: `${props.lang === "zh" ? "项目" : "Project"}: ${metricsProjectFilter.length}`, onClear: () => setMetricsProjectFilter([]) } : null,
   ].filter(Boolean) as Array<{ key: string; label: string; onClear: () => void }>;
 
-  const sidebarToggle = <IconButton className="df-planning-sidebar-toggle" label={sidebarCollapsed ? (props.lang === "zh" ? "展开规划侧栏" : "Expand planning sidebar") : (props.lang === "zh" ? "收起规划侧栏" : "Collapse planning sidebar")} aria-expanded={!sidebarCollapsed} onClick={toggleSidebar} icon={sidebarCollapsed ? <UiPanelLeftOpenIcon size={20} /> : <UiPanelLeftCloseIcon size={20} />} />;
-  return (
-    <main className={`df-planning${props.compact ? " compact-layout" : ""}${sidebarCollapsed ? " is-sidebar-collapsed" : ""}${portraitSidebarOpen ? " is-portrait-sidebar-open" : ""}`} style={{ "--planning-sidebar-width": `${planningSidebarWidth}px` } as React.CSSProperties}>
-      {dialog.host}
-      {sidebarToggle}
-      <div className="df-planning-sidebar-scrim" aria-hidden="true" />
-      <div className="df-planning-body">
-        <section className="df-mindmap no-root">
-          <aside className="df-planning-sidebar" ref={sidebarRef} tabIndex={-1} onKeyDown={event => { if (portraitLayout && event.key === "Escape") { event.stopPropagation(); setPortraitSidebarOpen(false); } }} aria-label={props.lang === "zh" ? "\u89c4\u5212\u5de5\u5177" : "Planning tools"}>
-            {sidebarToggle}
-            <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare ui-choice-list--motion-selection">
-              {planningViews.length > 0 && <SelectionIndicator activeKey={`${selectedPlanningViewId}:${props.lang}:${planningViews.map((view) => view.id).join(",")}:${sidebarCollapsed}:${planningSidebarWidth}`} />}
-              {planningViews.map((view) => (
-                <button type="button" key={view.id} className={`df-view-btn ui-choice-item${selectedPlanningViewId === view.id ? " active" : ""}`} aria-label={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name} aria-pressed={selectedPlanningViewId === view.id} draggable onDragStart={(event) => { draggedPlanningViewId.current = view.id; event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", view.id); }} onDragOver={(event) => { if (draggedPlanningViewId.current) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; } }} onDrop={(event) => { event.preventDefault(); reorderPlanningViews(view.id); }} onDragEnd={() => { draggedPlanningViewId.current = null; }} onClick={() => { changePlanningView(view.id); setPortraitSidebarOpen(false); }} title={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}>
-                  {view.nativeMode ? <PlanningModeIcon mode={view.nativeMode} /> : view.iconUrl ? <img className="df-planning-view-icon" src={view.iconUrl} alt="" aria-hidden="true" /> : <span className="df-planning-view-initial" aria-hidden="true">{Array.from(view.name.trim())[0]?.toLocaleUpperCase() || "P"}</span>}
-                  <span>{view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}</span>
-                </button>
-              ))}
-            </div>
-            <div className="df-planning-plugin-items" aria-label={props.lang === "zh" ? "规划侧栏插件" : "Planning sidebar plugins"}>
-              {extensionSnapshot.headerItems.filter((item) => item.placement === "planning-sidebar").map((item) => <div className="df-planning-plugin-item" key={item.id}><ExtensionMount contribution={item} /></div>)}
-            </div>
-            {!props.compact && <div
-              className="df-planning-sidebar-resizer"
-              role="separator"
-              aria-orientation="vertical"
-              aria-label={props.lang === "zh" ? "调整规划侧栏宽度" : "Resize planning sidebar"}
-              aria-valuemin={150}
-              aria-valuemax={360}
-              aria-valuenow={planningSidebarWidth}
-              tabIndex={0}
-              onPointerDown={(event) => {
-                if (props.planningSidebarCollapsed) return;
-                event.preventDefault();
-                sidebarResizeRef.current = { pointerId: event.pointerId, startX: event.clientX, startWidth: planningSidebarWidth };
-                event.currentTarget.setPointerCapture(event.pointerId);
-              }}
-              onPointerMove={(event) => {
-                const drag = sidebarResizeRef.current;
-                if (!drag || drag.pointerId !== event.pointerId) return;
-                updateSidebarWidth(drag.startWidth + event.clientX - drag.startX);
-              }}
-              onPointerUp={(event) => {
-                const drag = sidebarResizeRef.current;
-                if (!drag || drag.pointerId !== event.pointerId) return;
-                sidebarResizeRef.current = null;
-                const width = Math.max(150, Math.min(360, Math.round(drag.startWidth + event.clientX - drag.startX)));
-                updateSidebarWidth(width, true);
-                event.currentTarget.releasePointerCapture(event.pointerId);
-              }}
-              onPointerCancel={() => { sidebarResizeRef.current = null; }}
-              onKeyDown={(event) => {
-                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-                event.preventDefault();
-                updateSidebarWidth(planningSidebarWidth + (event.key === "ArrowRight" ? 16 : -16), true);
-              }}
-            />}
-          </aside>
-            <div className="df-planning-filter-corner">
-              {!props.demo && viewMode !== "metrics" && viewMode !== "plugin" && viewMode !== null && (
+  const scheduleButton = (task: Task) => props.onScheduleTask && !task.completed && (
+    <IconButton className="df-shelf-task-schedule" icon={<UiCalendarCheckIcon size={16} />}
+      label={hasActiveTaskSchedule(task) ? (props.lang === "zh" ? "查看安排" : "View schedule") : (props.lang === "zh" ? "安排" : "Schedule")}
+      onClick={(event) => { event.stopPropagation(); props.onScheduleTask?.(task); }} />
+  );
+
+  const scheduleSubtasks = (task: Task) => {
+    if (!(task.subtasks || []).some(isIncompletePlanningSubtask)) return null;
+    const expanded = collapsedSubtasks[task.id] === false;
+    return <>
+      <TaskSubtaskShelf label={props.lang === "zh" ? "子任务" : "Subtasks"}
+        progress={`${countDoneSubtasks(task.subtasks)}/${countSubtasks(task.subtasks)}`} expanded={expanded}
+        expandLabel={props.lang === "zh" ? "展开子任务" : "Expand subtasks"}
+        collapseLabel={props.lang === "zh" ? "收起子任务" : "Collapse subtasks"}
+        onToggle={() => setCollapsedSubtasks((current) => ({ ...current, [task.id]: current[task.id] === false }))} />
+      {expanded && renderTaskSubtasks(task)}
+    </>;
+  };
+
+  const projectFilters = (<>
+              {viewMode === "tree" && (
               <div className="df-filter-popover-anchor">
                 <button
                   type="button"
                   className={`df-filter-trigger${filterOpen ? " active" : ""}${hasActiveFilters ? " has-active" : ""}`}
                   aria-expanded={filterOpen}
-                  aria-label={props.lang === "zh" ? "Filter" : "Filter"}
-                  title={props.lang === "zh" ? "Filter" : "Filter"}
+                  aria-label={props.lang === "zh" ? "筛选项目任务" : "Filter project tasks"}
+                  title={props.lang === "zh" ? "筛选" : "Filter"}
                   onClick={() => { setFilterOpen((open) => !open); setFilterExpandedCategory(null); }}
                 >
-                  <svg viewBox="0 0 18 18" aria-hidden="true">
-                    <path d="M3 4h12M5 9h8M7 14h4" />
-                  </svg>
-                  {hasActiveFilters && <b>{activeFilterChips.length}</b>}
+                  <UiFilterIcon size={17} />
+                  {hasActiveFilters && <b>{activeFilterChips.length + Number(includeCompleted)}</b>}
                 </button>
                 {filterOpen && (
                   <>
                     <div className="df-filter-panel" onClick={(e) => e.stopPropagation()}>
                       <div className="df-filter-categories">
+                        <label className="df-filter-option">
+                          <input type="checkbox" checked={includeCompleted} onChange={(event) => setIncludeCompleted(event.target.checked)} />
+                          {props.lang === "zh" ? "显示已完成" : "Show completed"}
+                        </label>
                         {effectiveFilterCategories.map((cat) => (
                           <button
                             key={cat.key}
@@ -2439,7 +2230,6 @@ export default function PlanningView(props: {
                       {activeFilterCategory && (
                         <div
                           className="df-filter-flyout-panel"
-                          style={props.compact ? undefined : { top: `${activeFilterCategoryIndex * 31}px` }}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="df-filter-options-view">
@@ -2459,6 +2249,12 @@ export default function PlanningView(props: {
                 )}
               </div>
               )}
+  </>);
+  return (
+    <div className={`df-planning df-shelf-view${props.compact ? " compact-layout" : ""}`}>
+      <section className={`df-planning-main is-view-${viewMode}`}>
+        {props.filterAnchor && createPortal(projectFilters, props.filterAnchor)}
+        <div className="df-planning-content">
               {viewMode === "metrics" && (
                 <header className="df-metrics-header">
                   <div className="df-metrics-toolbar">
@@ -2471,7 +2267,7 @@ export default function PlanningView(props: {
                         title={props.lang === "zh" ? "指标筛选" : "Metrics filters"}
                         onClick={() => setMetricsFilterOpen((open) => !open)}
                       >
-                        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 4h12M5 9h8M7 14h4" /></svg>
+                        <UiFilterIcon size={17} />
                         {metricActiveChips.length > 0 && <b>{metricActiveChips.length}</b>}
                       </button>
                       {metricsFilterOpen && (
@@ -2587,11 +2383,7 @@ export default function PlanningView(props: {
                   </div>
                 </header>
               )}
-            </div>
-
             <div className="df-tree-wrap">
-              {viewMode === "plugin" && selectedPlanningView && <div className="df-planning-plugin-view"><ExtensionMount contribution={selectedPlanningView} /></div>}
-            {!selectedPlanningView && <div className="df-planning-no-view" role="status">{extensionSnapshot.safeMode ? (props.lang === "zh" ? "受限模式已暂停所有插件视图。关闭受限模式以继续规划。" : "Restricted mode has paused all plugin views. Turn it off to continue planning.") : (props.lang === "zh" ? "暂无可用规划视图。请在设置中的插件市场安装并启用一个视图插件。" : "No planning views are available. Install and enable a view plugin from the plugin market.")}</div>}
             {showLongRangeGuide && viewMode === "tree" && (
               <aside className="df-planning-longrange-guide" role="note">
                 <CloseButton className="df-planning-guide-close" label={props.lang === "zh" ? "关闭规划说明" : "Dismiss planning note"} onClick={() => { if (!props.demo) dismissGuide("planning"); setGuideDismissed(true); }} />
@@ -2600,7 +2392,7 @@ export default function PlanningView(props: {
                 <div aria-hidden="true"><b>01 {props.lang === "zh" ? "项目" : "Project"}</b><i>→</i><b>02 {props.lang === "zh" ? "任务" : "Tasks"}</b><i>→</i><b>03 {props.lang === "zh" ? "排程" : "Schedule"}</b></div>
               </aside>
             )}
-          {viewMode !== "metrics" && viewMode !== "plugin" && viewMode !== null && activeFilterChips.length > 0 && (
+          {viewMode === "tree" && activeFilterChips.length > 0 && (
             <div className="df-active-filter-bar" role="region" aria-label={props.lang === "zh" ? "Active filters" : "Active filters"}>
               {activeFilterChips.map((chip) => (
                 <button
@@ -2620,7 +2412,7 @@ export default function PlanningView(props: {
             </div>
           )}
 
-          {viewMode === "metrics" && (
+          {metricsResult && (
             <section className="df-metrics-view" aria-label={props.lang === "zh" ? "时间占比" : "Time allocation metrics"}>
               {props.engagementEnabled && <p className="df-engagement-caption">{props.lang === "zh" ? "已完成任务按时长 × 投入度统计（默认 80%）；未完成安排按原始时长统计。" : "Completed time is weighted by engagement (80% by default); incomplete schedules use their original duration."}</p>}
 
@@ -2795,7 +2587,7 @@ export default function PlanningView(props: {
                     data-kanban-status={status}
                   >
                     <div className="df-kanban-column-header">
-                      <span>{status === "done" ? (props.lang === "zh" ? "Done" : "Done") : (props.lang === "zh" ? "Tasks" : "Tasks")}</span>
+                      <span>{status === "done" ? (props.lang === "zh" ? "Done" : "Done") : (props.lang === "zh" ? "任务" : "Tasks")}</span>
                       <small>{columnTasks.length}</small>
                       {columnTasks.reduce((sum, t) => sum + (t.estimatedHours || 0), 0) > 0 && (
                         <em className="df-kanban-column-duration">{columnTasks.reduce((sum, t) => sum + (t.estimatedHours || 0), 0)}h</em>
@@ -2836,7 +2628,9 @@ export default function PlanningView(props: {
                                 {task.dueDate && <span className="df-kanban-tag df-tag-due" title={props.lang === "zh" ? "Due" : "Due"}>{task.dueDate.slice(5)}</span>}
                               </span>
                             </TaskBlockContent>
+                            <TaskActions>{scheduleButton(task)}</TaskActions>
                           </TaskBlockRow>
+                          {scheduleSubtasks(task)}
                         </TaskBlock>}
                         {isDropTarget && listDropPosition === "after" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${planningDragTask?.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />}
                         </React.Fragment>
@@ -2845,7 +2639,7 @@ export default function PlanningView(props: {
                       {planningDragTask && !listDropTargetId && kanbanDropStatus === status && (
                         <div className="df-reorder-preview-slot df-kanban-drop-placeholder" style={{ "--reorder-preview-height": `${planningDragTask.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />
                       )}
-                      {columnTasks.length === 0 && !planningDragTask && <div className="df-kanban-empty">{props.lang === "zh" ? "Drop tasks here" : "Drop tasks here"}</div>}
+                      {columnTasks.length === 0 && !planningDragTask && <div className="df-kanban-empty">{props.lang === "zh" ? "拖入任务" : "Drop tasks here"}</div>}
                     </div>
                   </div>
                 );
@@ -2856,10 +2650,10 @@ export default function PlanningView(props: {
           {viewMode === "eisenhower" && (
             <div className="df-eisenhower-grid">
               {([
-                { key: "q1", label: "Focus now", importance: "high" as const, urgency: "high" as const },
-                { key: "q2", label: "Plan", importance: "high" as const, urgency: "low" as const },
-                { key: "q3", label: "Handle soon", importance: "low" as const, urgency: "high" as const },
-                { key: "q4", label: "Later", importance: "low" as const, urgency: "low" as const },
+                { key: "q1", label: props.lang === "zh" ? "立即处理" : "Focus now", importance: "high" as const, urgency: "high" as const },
+                { key: "q2", label: props.lang === "zh" ? "安排时间" : "Plan", importance: "high" as const, urgency: "low" as const },
+                { key: "q3", label: props.lang === "zh" ? "尽快处理" : "Handle soon", importance: "low" as const, urgency: "high" as const },
+                { key: "q4", label: props.lang === "zh" ? "稍后处理" : "Later", importance: "low" as const, urgency: "low" as const },
               ]).map((quad) => {
                 const quadTasks = orderPlanningTasks(viewFilteredTasks.filter((task) => {
                   const imp = task.importance || "medium";
@@ -2917,7 +2711,9 @@ export default function PlanningView(props: {
                                   {task.dueDate && <span className="df-eisenhower-due">{task.dueDate.slice(5)}</span>}
                                 </span>
                               </TaskBlockContent>
+                              <TaskActions>{scheduleButton(task)}</TaskActions>
                             </TaskBlockRow>
+                            {scheduleSubtasks(task)}
                           </TaskBlock>}
                           {isDropTarget && listDropPosition === "after" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${planningDragTask?.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />}
                           </React.Fragment>
@@ -2926,7 +2722,7 @@ export default function PlanningView(props: {
                       {planningDragTask && !listDropTargetId && kanbanDropStatus === (("q-" + quad.key) as unknown as UiWorkflowStatus) && (
                         <div className="df-reorder-preview-slot df-kanban-drop-placeholder" style={{ "--reorder-preview-height": `${planningDragTask.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />
                       )}
-                      {quadTasks.length === 0 && !planningDragTask && <div className="df-eisenhower-empty">Drop tasks here</div>}
+                      {quadTasks.length === 0 && !planningDragTask && <div className="df-eisenhower-empty">{props.lang === "zh" ? "拖入任务" : "Drop tasks here"}</div>}
                     </div>
                   </div>
                 );
@@ -2972,9 +2768,11 @@ export default function PlanningView(props: {
                           <span className="df-list-project">{projectName(task.projectId)}</span>
                         </TaskBlockDuration>
                         <TaskActions>
+                          {scheduleButton(task)}
                           {task.dueDate && <span className="df-list-tag df-tag-due" title={props.lang === "zh" ? "\u622a\u6b62\u65e5\u671f" : "Due"}>{task.dueDate.slice(5)}</span>}
                         </TaskActions>
                       </TaskBlockRow>
+                      {scheduleSubtasks(task)}
                     </TaskBlock>}
                     {isDropTarget && listDropPosition === "after" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${planningDragTask?.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />}
                   </div>
@@ -2994,7 +2792,9 @@ export default function PlanningView(props: {
               const node = origin.closest<HTMLElement>("[data-node-type][data-node-id]");
               if (!node) return;
               const source = { kind: node.dataset.nodeType as TreeNodeKind, id: node.dataset.nodeId || "" };
-              beginTreeDrag(event, source);
+              const task = source.kind === "task" && safeTasks.find((item) => item.id === source.id);
+              if (task && event.pointerType === "touch" && props.onTouchScheduleDrag) props.onTouchScheduleDrag(event, task);
+              else beginTreeDrag(event, source);
             }}
           >
             {svgLines}
@@ -3024,12 +2824,12 @@ export default function PlanningView(props: {
                 demo={props.demo}
                           lang={props.lang}
                           task={task}
-                          addedToToday={task.plannedForDate === today && task.executionLane === "candidate"}
+
                           projectColor={project.color || DEFAULT_PROJECT_COLOR}
                           collapsed={Boolean(collapsedSubtasks[task.id])}
                           onToggleCollapse={() => setCollapsedSubtasks((current) => ({ ...current, [task.id]: !current[task.id] }))}
                           onOpen={() => openTaskFromPlanning(task)}
-                          onToggleTodayCandidate={() => props.onToggleTodayCandidate(task.id)}
+                          onSchedule={props.onScheduleTask ? () => props.onScheduleTask?.(task) : undefined}
                           onRename={() => renameTask(task)}
                           onAddSubtask={() => addSubtask(task)}
                           onSetDate={() => setTaskDate(task)}
@@ -3076,12 +2876,12 @@ export default function PlanningView(props: {
                 demo={props.demo}
                           lang={props.lang}
                           task={task}
-                          addedToToday={task.plannedForDate === today && task.executionLane === "candidate"}
+
                           projectColor={UNASSIGNED_COLOR}
                           collapsed={Boolean(collapsedSubtasks[task.id])}
                           onToggleCollapse={() => setCollapsedSubtasks((current) => ({ ...current, [task.id]: !current[task.id] }))}
                           onOpen={() => openTaskFromPlanning(task)}
-                          onToggleTodayCandidate={() => props.onToggleTodayCandidate(task.id)}
+                          onSchedule={props.onScheduleTask ? () => props.onScheduleTask?.(task) : undefined}
                           onRename={() => renameTask(task)}
                           onAddSubtask={() => addSubtask(task)}
                           onSetDate={() => setTaskDate(task)}
@@ -3106,6 +2906,7 @@ export default function PlanningView(props: {
           )}
         </div>
         {props.presentationNote}
+        </div>
       </section>
 
       {planningDragTask && (
@@ -3143,7 +2944,6 @@ export default function PlanningView(props: {
           </TaskBlock>
         </TaskDragLayer>
       )}
-      </div>
-    </main>
+    </div>
   );
 }

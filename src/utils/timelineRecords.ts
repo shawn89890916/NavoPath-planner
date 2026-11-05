@@ -1,4 +1,9 @@
-import type { TimelineRecord } from "../types";
+import type { Task, TimelineRecord } from "../types";
+
+export function hasActiveTaskSchedule(task: Task): boolean {
+  const legacyScheduled = task.scheduledDate && (!task.executionStatus || task.executionStatus === "scheduled");
+  return Boolean(legacyScheduled) || (task.timelineRecords || []).some((record) => record.executionStatus === "scheduled");
+}
 
 export type TimelineSlice = {
   recordId: string;

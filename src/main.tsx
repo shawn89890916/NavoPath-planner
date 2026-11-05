@@ -8,7 +8,9 @@ import { MobileQuickAddButton } from "./components/MobileQuickAddButton";
 import { NotificationBadge } from "./components/NotificationBadge";
 import { getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./workspaceEnvironment";
 import { normalizeEngagement } from "./utils/engagement";
-import { WorkspaceModeTabs } from "./components/WorkspaceModeTabs";
+import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
+import { ExtensionMount } from "./extensions/ExtensionMount";
+import type { ExtensionContribution } from "./extensions/types";
 import { undoAiImportData } from "./utils/aiImportUndo";
 import { highlightTaskLocation } from "./utils/highlightTaskLocation";
 import { DailyTimelineGrid } from "./components/ExecutionSharedLayout";
@@ -38,7 +40,7 @@ import { term } from "./terminology";
 import { migrateLegacyHabitTracker, scheduleHabitRecord, toggleHabitCompletion, unscheduleHabitRecord, updateHabit, archiveHabit, buildHabitMetrics, isHabitDueOnDate, isHabitWithinDateRange, weekdayLabels, type HabitMetrics } from "./utils/habits";
 import { shouldShowHabitCandidates } from "./utils/habitCandidateVisibility";
 import { normalizeAiReply } from "./utils/aiReply";
-import { type CandidateScheduleSummary } from "./utils/candidateSchedule";
+import { candidateScheduleSummary, type CandidateScheduleSummary } from "./utils/candidateSchedule";
 import { localIsoDate } from "./utils/localDate";
 import { buildWeekWindow } from "./utils/monthWindow";
 import { buildCommandSearchIndex, searchCommands, type CommandSearchResult } from "./utils/commandSearch";
@@ -53,7 +55,7 @@ import { appendAiSubtasks, getAiSubtaskSuggestions } from "./utils/aiSubtasks";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
 import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
 import { addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree } from "./utils/treeOrder";
-import { promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToToday, toggleTodayCandidate } from "./utils/todayCandidates";
+import { reorderTodayCandidates, returnScheduledTaskToToday } from "./utils/todayCandidates";
 import { reconcileOverdueTasks } from "./utils/overdueTasks";
 import { useInAppDialog } from "./InAppDialog";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskGroup } from "./components/TaskBlock";
@@ -70,7 +72,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiListChecksIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiChevronDownIcon, UiChevronLeftIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiKanbanIcon, UiListChecksIcon, UiListIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -95,7 +97,7 @@ import { DEFAULT_WIDGET_RUNTIME, DEFAULT_WIDGET_TIMER_PREFERENCES, accumulateWid
 import { getTimerMode, getTimerModes, getTimerModeRevision, subscribeTimerModes, onTimerModeRemoving, onTimerModeOpening } from "./extensions/timers";
 import { createTimerOwner, type TimerOwner } from "./extensions/timerOwner";
 import { extendActiveTimelineRecord, nextOverrunExtensionEnd, resolveWidgetTimelineSelection, timelineRecordBounds } from "./widget/widgetSchedule";
-import { applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, findScheduledTimelineRecord, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
+import { hasActiveTaskSchedule, applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, findScheduledTimelineRecord, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { anchoredTimelineScrollTop, timelineZoomFromPinch } from "./utils/timelineZoom";
 import { calendarEventDurationMinutes, expandTimedCalendarEvent } from "./utils/calendarEventSlices";
 import { MOTION, runMotionTransition, scheduleMotionCommit } from "./motion";
@@ -159,7 +161,26 @@ const TIME_OPTIONS = Array.from({ length: ((TIMELINE_END - TIMELINE_START) * 60)
 
 const categoryOrder: Category[] = ["exam", "project", "essay", "materials", "uk", "us", "personal"];
 
-type Mode = "execute" | "planning";
+const candidateViewNames = {
+  list: ["列表", "List", UiListIcon],
+  eisenhower: ["矩阵", "Matrix", UiMatrixIcon],
+  kanban: ["看板", "Kanban", UiKanbanIcon],
+} as const;
+
+function CandidateViewIcon({ view }: { view: ExtensionContribution }) {
+  const mode = view.nativeMode;
+  if (mode === "list" || mode === "eisenhower" || mode === "kanban") {
+    const Icon = candidateViewNames[mode][2];
+    return <Icon size={16} />;
+  }
+  return view.iconUrl ? <img src={view.iconUrl} alt="" aria-hidden="true" onError={(event) => { event.currentTarget.hidden = true; }} /> : null;
+}
+
+function candidateViewName(view: ExtensionContribution, lang: Language) {
+  const mode = view.nativeMode;
+  if (mode === "list" || mode === "eisenhower" || mode === "kanban") return candidateViewNames[mode][lang === "zh" ? 0 : 1];
+  return view.name;
+}
 const WIDGET_TIMER_RUNTIME_KEY = "navopath-widget-timer-runtime";
 const WIDGET_TIMER_ADVANCED_AT_KEY = "navopath-widget-timer-advanced-at";
 const WIDGET_TIMER_REMAINDER_KEY = "navopath-widget-timer-remainder-ms";
@@ -181,7 +202,7 @@ function loadWidgetTimerRuntime(): WidgetTimerRuntime {
 type AddType = "task" | "project" | "event" | "habit";
 type CompactExecuteView = "tasks" | "schedule";
 type TimelineView = "daily" | "3day" | "weekly" | "month";
-type AiPlanPrefs = { source: "today" | "all"; scope: "day" | "3day" | "week"; strategy: "random" | "byProject" | "alternativeProject" | "longShort" };
+type AiPlanPrefs = { scope: "day" | "3day" | "week"; strategy: "random" | "byProject" | "alternativeProject" | "longShort" };
 type SettingsPatch = Partial<Settings>;
 type QueuedDataSave = { payload: PlannerData; version: number; pendingSavedAt: string };
 type QueuedSettingsSave = { payload: SettingsPatch; version: number; pendingSavedAt: string };
@@ -260,7 +281,10 @@ type CandidateDropTarget = {
   kind: "project";
   projectId: string | null;
 } | null;
+type ShelfSubtask = { id: string; draftTaskId: string };
+
 type CandidateDragOptions = {
+  dragElement?: HTMLElement;
   allowCandidateReorder?: boolean;
   onSchedule?: (date: string, startTime: string) => void;
 };
@@ -793,6 +817,24 @@ function buildTaskFromEvent(event: CalendarEvent): Task {
   };
 }
 
+function MetricsPanel({ label, closeLabel, onClose, children }: {
+  label: string;
+  closeLabel: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLElement>(null);
+  useModalFocus(true, ref);
+  return <>
+    <div className="df-utility-backdrop" onMouseDown={onClose} />
+    <aside ref={ref} tabIndex={-1} className="df-utility-panel df-metrics-utility" role="dialog" aria-modal="true" aria-label={label}
+      onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onClose(); } }}>
+      <div className="df-utility-head"><h2>{label}</h2><CloseButton label={closeLabel} onClick={onClose} /></div>
+      <div className="df-utility-body">{children}</div>
+    </aside>
+  </>;
+}
+
 function SettingsLoading({ lang, onClose }: { lang: Language; onClose: () => void }) {
   const ref = useRef<HTMLElement>(null);
   useModalFocus(true, ref);
@@ -894,7 +936,7 @@ type OnboardingStep = NonNullable<Settings["onboardingStep"]>;
 function OnboardingGuide(props: {
   lang: Language;
   step: OnboardingStep;
-  mode: Mode;
+  projectManagement: boolean;
   onOpenPlanning: () => void;
   onOpenAi: () => void;
   onChange: (step: OnboardingStep) => void;
@@ -922,8 +964,8 @@ function OnboardingGuide(props: {
       <p>{content[1]}</p>
       <div>
         {index > 0 && <button type="button" className="quiet" onClick={() => props.onChange(steps[index - 1])}>{zh ? "上一步" : "Back"}</button>}
-        {steps[index] === "planning" && props.mode !== "planning" && (
-          <button type="button" onClick={props.onOpenPlanning}>{zh ? "打开 Planning" : "Open Planning"}</button>
+        {steps[index] === "planning" && !props.projectManagement && (
+          <button type="button" onClick={props.onOpenPlanning}>{zh ? "管理项目" : "Manage projects"}</button>
         )}
         {steps[index] === "ai" && <button type="button" onClick={props.onOpenAi}>{zh ? "打开 AI" : "Open AI"}</button>}
         {index < steps.length - 1
@@ -1052,11 +1094,13 @@ function App() {
   const [authError, setAuthError] = useState("");
   const [authNotice, setAuthNotice] = useState<AuthNotice>(null);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
-  const [mode, setModeState] = useState<Mode>("execute");
-  const changeWorkspaceMode = useMotionSelection<Mode>(mode, (next) => {
-    setYearOverviewOpen(false);
-    void saveSettings({ activeMode: next });
-  }, "workspace", ["execute", "planning"]);
+  const [shelfViewId, setShelfViewId] = useState("");
+  const [shelfMenuOpen, setShelfMenuOpen] = useState(false);
+  const [projectManagement, setProjectManagement] = useState(productDemo?.feature === "planning");
+  const [projectManagementVisited, setProjectManagementVisited] = useState(productDemo?.feature === "planning");
+  const [projectFilterAnchor, setProjectFilterAnchor] = useState<HTMLSpanElement | null>(null);
+  const [showScheduledCandidates, setShowScheduledCandidates] = useState(false);
+  const shelfTitleRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!data || !settings) return;
     const preload = () => {
@@ -1088,7 +1132,8 @@ function App() {
   }, []);
   const [compactExecuteView, setCompactExecuteView] = useState<CompactExecuteView>("schedule");
   const [phoneLayout, setPhoneLayout] = useState(() => window.matchMedia("(max-width: 899.98px) and (orientation: portrait)").matches);
-  const mobileExecution = phoneLayout && !productPresentation && mode === "execute";
+  const mobileExecution = phoneLayout && !productPresentation;
+  const narrowSplitLayout = compactLayout && !portraitLayout && !productPresentation;
   const mobileExecutionRef = useRef(mobileExecution);
   mobileExecutionRef.current = mobileExecution;
   const [candidateDrawerOpen, setCandidateDrawerOpen] = useState(false);
@@ -1098,9 +1143,9 @@ function App() {
   const candidateScrollRef = useRef(0);
   const candidateHeaderGesture = useMobileSheetGesture({
     enabled: mobileExecution && candidateDrawerOpen,
-    onSwipeUp: () => setCandidateDrawerExpanded(true), onSwipeDown: closeCandidateDrawer });
+    onSwipeUp: () => setCandidateDrawerExpanded(true), onSwipeDown: () => setCandidateDrawerExpanded(false) });
   const mobileTapRef = useRef({ x: 0, y: 0, moved: false });
-  type MobilePlacementSession = { taskId: string; version: string; view: TimelineView; date: string; visibleDate: string; scrollTop: number; drawerOpen: boolean };
+  type MobilePlacementSession = { taskId: string; subtask?: ShelfSubtask; version: string; view: TimelineView; date: string; visibleDate: string; scrollTop: number; drawerOpen: boolean };
   const [mobilePlacement, setMobilePlacement] = useState<MobilePlacementSession | null>(null);
   const mobilePlacementRef = useRef<MobilePlacementSession | null>(null);
   const mobileCommitRef = useRef(false);
@@ -1188,7 +1233,7 @@ function App() {
   const [dismissedCapacityDate, setDismissedCapacityDate] = useState("");
   const [autoScheduleState, setAutoScheduleState] = useState<AutoScheduleState>("idle");
   const [aiPlanMenuOpen, setAiPlanMenuOpen] = useState(false);
-  const [aiPlanPrefs, setAiPlanPrefs] = useState<AiPlanPrefs>({ source: "today", scope: "day", strategy: "longShort" });
+  const [aiPlanPrefs, setAiPlanPrefs] = useState<AiPlanPrefs>({ scope: "day", strategy: "longShort" });
   const [timelineView, setTimelineView] = useState<TimelineView>("daily");
   const timelineViewFocusRef = useRef<TimelineFocusTarget | null>(null);
   const changeTimelineView = useMotionSelection<TimelineView>(timelineView, (nextView) => {
@@ -1256,7 +1301,6 @@ function App() {
   const [allDayDragOver, setAllDayDragOver] = useState(false);
   const [allDayDragDate, setAllDayDragDate] = useState("");
   const [candidateDropActive, setCandidateDropActive] = useState(false);
-  const [candidatePlanningReturnActive, setCandidatePlanningReturnActive] = useState(false);
   const [candidateDropTarget, setCandidateDropTarget] = useState<CandidateDropTarget>(null);
   const [dragCreate, setDragCreate] = useState<DragCreateState>(null);
   const dragCreateSuppressClickRef = useRef(false);
@@ -1266,7 +1310,7 @@ function App() {
   const timelinePinchFrameRef = useRef<number | null>(null);
   const timelinePinchPendingZoomRef = useRef<number | null>(null);
   const [resizeHintTaskId, setResizeHintTaskId] = useState("");
-  const [utilityPanel, setUtilityPanel] = useState<"settings" | "about" | null>(null);
+  const [utilityPanel, setUtilityPanel] = useState<"settings" | "about" | "metrics" | null>(null);
   const [pluginToolsOpen, setPluginToolsOpen] = useState(false);
   const layerExitHandlesRef = useRef(new Map<string, ReturnType<typeof scheduleMotionCommit> | null>());
   const layerTriggerRef = useRef(new Map<string, HTMLElement>());
@@ -1618,14 +1662,13 @@ function App() {
     timelineRef.current = element;
   }, [timelineViewportContext]);
   useLayoutEffect(() => {
-    if (mode !== "execute") return;
     const viewport = lastTimelineScrollRef.current;
     const element = timelineRef.current;
     if (!element || viewport.context !== timelineViewportContext || pendingTimelineFocus) return;
     delete viewport.context;
     element.scrollTop = viewport.top;
     element.scrollLeft = viewport.left;
-  }, [mode, timelineViewportContext, pendingTimelineFocus]);
+  }, [timelineViewportContext, pendingTimelineFocus]);
   const previousTimelineDataRef = useRef(data);
   const [nowInTimelineViewport, setNowInTimelineViewport] = useState(true);
   const [nowLineReturnPulse, setNowLineReturnPulse] = useState(false);
@@ -1648,17 +1691,17 @@ function App() {
     rememberTimelineScroll();
     element.addEventListener("scroll", rememberTimelineScroll, { passive: true });
     return () => element.removeEventListener("scroll", rememberTimelineScroll);
-  }, [data, mode, timelineView]);
+  }, [data, timelineView]);
   useLayoutEffect(() => {
     const previousData = previousTimelineDataRef.current;
     previousTimelineDataRef.current = data;
-    if (!previousData || !data || previousData === data || mode !== "execute" || timelineView === "month" || pendingTimelineFocus || continuousPrependLockRef.current) return;
+    if (!previousData || !data || previousData === data || timelineView === "month" || pendingTimelineFocus || continuousPrependLockRef.current) return;
     const element = timelineRef.current;
     if (!element) return;
     const scroll = lastTimelineScrollRef.current;
     element.scrollTop = scroll.top;
     element.scrollLeft = scroll.left;
-  }, [data, mode, timelineView, pendingTimelineFocus]);
+  }, [data, timelineView, pendingTimelineFocus]);
   const preserveTimelineViewportOnNextDataChange = useCallback(() => {
     const element = timelineRef.current;
     if (!element) return;
@@ -1670,7 +1713,7 @@ function App() {
     const anchor = timelineMutationScrollRef.current;
     const element = timelineRef.current;
     if (!anchor) return;
-    if (!element || mode !== "execute" || timelineView === "month") {
+    if (!element || timelineView === "month") {
       timelineMutationScrollRef.current = null;
       return;
     }
@@ -1684,7 +1727,7 @@ function App() {
       continuousPrependLockRef.current = false;
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [data, mode, timelineView]);
+  }, [data, timelineView]);
   const suppressBlockClickRef = useRef(false);
   const suppressBlockClickTimerRef = useRef<number | null>(null);
   const suppressClickAfterDrag = useCallback(() => {
@@ -1741,6 +1784,21 @@ function App() {
   const [isManualSyncing, setIsManualSyncing] = useState(false);
   const extensionHostRef = useRef<ExtensionHost | null>(null);
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
+  const shelfViews = useMemo(() => extensionSnapshot.views.filter((view) =>
+    view.planningView && view.nativeMode !== "tree" && view.nativeMode !== "metrics"
+  ).sort((first, second) => {
+    const order = Object.keys(candidateViewNames);
+    const rank = (view: ExtensionContribution) => view.nativeMode ? order.indexOf(view.nativeMode) : order.length;
+    return rank(first) - rank(second);
+  }), [extensionSnapshot.views]);
+  const shelfView = shelfViews.find((view) => view.id === shelfViewId);
+  const metricsAvailable = extensionSnapshot.views.some((view) => view.nativeMode === "metrics");
+  useEffect(() => {
+    if (shelfViewId && !shelfView) setShelfViewId("");
+  }, [shelfViewId, shelfView]);
+  useEffect(() => {
+    if (utilityPanel === "metrics" && !metricsAvailable) closeUtilityPanel();
+  }, [utilityPanel, metricsAvailable]);
   const colsContainerRef = useRef<HTMLDivElement | null>(null);
   const timeGridRef = useRef<HTMLDivElement | null>(null);
   const [multiColWidth, setMultiColWidth] = useState(0);
@@ -1815,7 +1873,7 @@ function App() {
 
   useEffect(() => {
     const scrollElement = timelineRef.current;
-    if (productPresentation || !scrollElement || !compactLayout || mode !== "execute" || timelineView === "month") return;
+    if (productPresentation || !scrollElement || !compactLayout || timelineView === "month") return;
 
     const verticalDistance = (touches: TouchList) => Math.abs(touches[0].clientY - touches[1].clientY);
     const verticalCentre = (touches: TouchList) => (touches[0].clientY + touches[1].clientY) / 2;
@@ -1890,11 +1948,11 @@ function App() {
       scrollElement.removeEventListener("touchend", endPinch);
       scrollElement.removeEventListener("touchcancel", endPinch);
     };
-  }, [compactLayout, mode, timelineView, data]);
+  }, [compactLayout, timelineView, data]);
 
   useEffect(() => {
     const container = timelineRef.current;
-    if (!productPresentation || mode !== "execute" || !container || !settings) return;
+    if (!productPresentation || !container || !settings) return;
     // Fit the example day using the same geometry as native task dragging.
     const minutes = timeToMinutes(settings.dayEndTime || "18:00") - timeToMinutes(settings.dayStartTime || "08:00");
     const fit = () => {
@@ -1903,7 +1961,7 @@ function App() {
     const observer = new ResizeObserver(fit);
     observer.observe(container); fit();
     return () => observer.disconnect();
-  }, [mode, data, settings?.dayStartTime, settings?.dayEndTime]);
+  }, [data, settings?.dayStartTime, settings?.dayEndTime]);
 
   // Keep column width updated for multi-day overlay positioning
   useEffect(() => {
@@ -2056,13 +2114,6 @@ function App() {
     setSimpleView((candidatePanelCollapsed || fullscreen) && supportsCompactRange);
   }, [candidatePanelCollapsed, fullscreen, timelineView]);
 
-  useEffect(() => {
-    if (mode !== "execute") {
-      setSimpleView(false);
-      setFullscreen(false);
-    }
-  }, [mode]);
-
   function resetWorkspaceUi() {
     workspaceLoadVersionRef.current += 1;
     pendingDataSaveRef.current = null;
@@ -2086,7 +2137,11 @@ function App() {
     cloudBaselineReadyRef.current = false;
     if (snapshotTimerRef.current) window.clearTimeout(snapshotTimerRef.current);
     snapshotTimerRef.current = null;
-    setModeState("execute");
+    setShelfViewId("");
+    setProjectManagement(productDemo?.feature === "planning");
+    setProjectManagementVisited(productDemo?.feature === "planning");
+    setShelfMenuOpen(false);
+    setShowScheduledCandidates(false);
     setCompactExecuteView("schedule");
     setQuickAddOpen(false);
     setSelectedDate(todayIso());
@@ -2170,7 +2225,6 @@ if (cached?.data && cached?.settings) {
       setData(cached.data);
       setSettings(cached.settings);
       if (cached.settings.language) setLang(cached.settings.language);
-      setModeState((cached.settings.activeMode as Mode) || "execute");
       if (cached.settings.defaultTimelineView) setTimelineView(cached.settings.defaultTimelineView);
     }
     if (cached?.remoteRevision) remoteRevisionRef.current = Math.max(remoteRevisionRef.current, cached.remoteRevision);
@@ -2251,7 +2305,6 @@ if (cached?.data && cached?.settings) {
     if (productDemo?.feature === "ai") setAiMessages([]);
     productDemo?.ready();
     if (nextSettings.language) setLang(nextSettings.language);
-    setModeState((nextSettings.activeMode as Mode) || "execute");
     if (nextSettings.defaultTimelineView) setTimelineView(nextSettings.defaultTimelineView);
     if ((shouldPushCachedData || shouldPersistHabitMigration) && nextData) void saveData(nextData);
     if (shouldPushCachedSettings) void saveSettings(nextSettings);
@@ -2553,7 +2606,7 @@ if (cached?.data && cached?.settings) {
   useLayoutEffect(() => {
     if (timelineInitialFocusCompleteRef.current) return;
     if (pendingTimelineFocus) return;
-    if (mode !== "execute" || !data || timelineView === "month") return;
+    if (!data || timelineView === "month") return;
     const nowDate = todayIso();
     if (selectedDate !== nowDate) {
       setSelectedDate(nowDate);
@@ -2611,12 +2664,11 @@ if (cached?.data && cached?.settings) {
       if (stableAlignTimer !== null) window.clearTimeout(stableAlignTimer);
       observer?.disconnect();
     };
-  }, [mode, data, selectedDate, timelineView, pendingTimelineFocus, dayStartHour, settings?.continuousCrossDayScroll, timelineSlotHeight]);
+  }, [data, selectedDate, timelineView, pendingTimelineFocus, dayStartHour, settings?.continuousCrossDayScroll, timelineSlotHeight]);
 
   // Scroll timeline to day start time when the setting changes
   const prevDayStartRef = useRef<string>("");
   useEffect(() => {
-    if (mode !== "execute") return;
     const dayStart = settings?.dayStartTime || "00:00";
     const isInitial = !prevDayStartRef.current;
     if (!productDemo && !isInitial && prevDayStartRef.current !== dayStart) {
@@ -2629,10 +2681,10 @@ if (cached?.data && cached?.settings) {
       showToast(lang === "zh" ? `一天开始时间已设为 ${dayStart}` : `Day start time set to ${dayStart}`);
     }
     prevDayStartRef.current = dayStart;
-  }, [settings?.dayStartTime, mode, lang, dayStartHour, timelineSlotHeight]);
+  }, [settings?.dayStartTime, lang, dayStartHour, timelineSlotHeight]);
 
   useLayoutEffect(() => {
-    if (mode !== "execute" || !pendingTimelineFocus) return;
+    if (!pendingTimelineFocus) return;
     const targetDate = pendingTimelineFocus.date;
     const visibleDays = getVisibleDays(timelineView === "weekly" ? "weekly" : (timelineView === "3day" ? "3day" : "daily"), selectedDate);
     if (!visibleDays.includes(targetDate)) {
@@ -2717,12 +2769,12 @@ if (cached?.data && cached?.settings) {
       setPendingTimelineFocus(null);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [mode, pendingTimelineFocus, selectedDate, timelineView, dayStartHour, settings?.continuousCrossDayScroll, timelineSlotHeight]);
+  }, [pendingTimelineFocus, selectedDate, timelineView, dayStartHour, settings?.continuousCrossDayScroll, timelineSlotHeight]);
 
   useEffect(() => {
     const effectColumnCount = timelineView === "weekly" ? 7 : timelineView === "3day" ? 3 : 1;
     const effectEnabled = settings?.continuousCrossDayScroll !== false && timelineView !== "month";
-    if (mode !== "execute" || pendingTimelineFocus) return;
+    if (pendingTimelineFocus) return;
     if (!effectEnabled) {
       setVisibleTimelineDate(selectedDate);
       return;
@@ -2770,7 +2822,7 @@ if (cached?.data && cached?.settings) {
     updateVisibleLabel();
     scrollElement.addEventListener("scroll", handleTimelineScroll, { passive: true });
     return () => scrollElement.removeEventListener("scroll", handleTimelineScroll);
-  }, [mode, settings?.continuousCrossDayScroll, timelineView, selectedDate, pendingTimelineFocus, timelineSlotHeight, workspaceLoaded]);
+  }, [settings?.continuousCrossDayScroll, timelineView, selectedDate, pendingTimelineFocus, timelineSlotHeight, workspaceLoaded]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 899.98px) and (orientation: portrait)");
@@ -2780,7 +2832,10 @@ if (cached?.data && cached?.settings) {
   }, []);
 
   function closeCandidateDrawer() {
-    candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
+    setShelfMenuOpen(false);
+    if (!projectManagement && !shelfView) {
+      candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
+    }
     setCandidateDrawerOpen(false);
     candidateTriggerRef.current?.focus();
   }
@@ -3026,7 +3081,7 @@ if (cached?.data && cached?.settings) {
                 remoteRevision: remoteRevisionRef.current,
               });
             }
-            if (saved.activeMode) setModeState(saved.activeMode as Mode);
+
             scheduleSnapshotWrite();
           }
         } catch (caught) {
@@ -3225,7 +3280,7 @@ if (cached?.data && cached?.settings) {
       settingsPendingSavedAt: pendingSavedAt,
       remoteRevision: remoteRevisionRef.current,
     });
-    if (patch.activeMode) setModeState(patch.activeMode as Mode);
+
     scheduleSettingsFlush();
   }
 
@@ -3504,10 +3559,6 @@ if (cached?.data && cached?.settings) {
   const dailyTimelineSlotCount = dailyContinuousSlotCount(continuousTimelineBandCount);
 
   useEffect(() => {
-    if (mode !== "execute") {
-      setNowInTimelineViewport(true);
-      return;
-    }
     if (timelineView === "month") {
       setNowInTimelineViewport(timelineWindowAnchorDate.slice(0, 7) === today.slice(0, 7));
       return;
@@ -3544,7 +3595,7 @@ if (cached?.data && cached?.settings) {
       resizeObserver.disconnect();
       scrollElement.removeEventListener("scroll", updateNowVisibility);
     };
-  }, [compactExecuteView, continuousTimelineDates, continuousTimelineEnabled, continuousTimelineStartDate, dayStartHour, mode, timelineColumnCount, timelineSlotHeight, timelineView, timelineWindowAnchorDate, today, workspaceLoaded]);
+  }, [compactExecuteView, continuousTimelineDates, continuousTimelineEnabled, continuousTimelineStartDate, dayStartHour, timelineColumnCount, timelineSlotHeight, timelineView, timelineWindowAnchorDate, today, workspaceLoaded]);
 
   const showBackToNow = !productPresentation && !nowInTimelineViewport;
 
@@ -3833,8 +3884,9 @@ if (cached?.data && cached?.settings) {
   }
 
   const placementPreviewTask = useMemo(
-    () => placementPreview ? tasks.find((task) => task.id === placementPreview.taskId) : undefined,
-    [placementPreview, tasks],
+    () => mobilePlacement && data ? shelfTask(data, mobilePlacement.taskId, mobilePlacement.subtask)
+      : placementPreview ? tasks.find((task) => task.id === placementPreview.taskId) : undefined,
+    [data, mobilePlacement, placementPreview, tasks],
   );
 
   // Real scheduled tasks for current timeline date, expanded from timelineRecords.
@@ -3930,9 +3982,17 @@ if (cached?.data && cached?.settings) {
     return style ? { left: style.left, width: style.width } : { left: state.left, width: state.width };
   };
 
-  const visibleCandidates = showCompletedCandidates
-    ? [...todayEventCandidates, ...todayCandidates, ...completedCandidates]
-    : [...todayEventCandidates, ...todayCandidates];
+  const unscheduledShelfTasks = useMemo(() => tasks.filter((task) =>
+    !task.completed && !hasActiveTaskSchedule(task) && !hasRecurrenceOccurrenceOnDate(task, today)
+  ), [tasks, today]);
+  const visibleCandidates = useMemo(() => {
+    const candidateTasks = productDemo ? (showCompletedCandidates ? [...todayCandidates, ...completedCandidates] : todayCandidates) :
+      tasks.filter((task) =>
+        (showCompletedCandidates || !task.completed) &&
+        (showScheduledCandidates || (!hasActiveTaskSchedule(task) && !hasRecurrenceOccurrenceOnDate(task, today)))
+      );
+    return [...todayEventCandidates, ...candidateTasks].sort((first, second) => (first.order || 0) - (second.order || 0));
+  }, [tasks, today, todayCandidates, completedCandidates, todayEventCandidates, showScheduledCandidates, showCompletedCandidates]);
   function focusCandidateSchedule(schedule: CandidateScheduleSummary) {
     setCompactExecuteView("schedule");
     setTimelineView("daily");
@@ -4035,46 +4095,95 @@ if (cached?.data && cached?.settings) {
     });
   }
 
+  function shelfTask(snapshot: PlannerData, taskId: string, subtask?: ShelfSubtask): Task | undefined {
+    const task = snapshot.tasks.find((item) => item.id === taskId);
+    if (!task || !subtask) return task;
+    const node = findSubtaskInTree(task.subtasks || [], subtask.id);
+    if (!node || node.completed || node.done) return;
+    const linked = snapshot.tasks.find((item) => item.id === node.plannedTaskId && item.parentTaskId === task.id);
+    if (linked) return linked;
+    if (!node.plannedTaskId) {
+      const legacy = snapshot.tasks.filter((item) => item.parentTaskId === task.id && item.title === node.title && !item.completed);
+      if (legacy.length === 1) return legacy[0];
+    }
+    const now = workspaceNow().toISOString();
+    return {
+      ...task, id: subtask.draftTaskId, title: node.title, parentTaskId: task.id, subtasks: [],
+      completed: false, completedAt: undefined, workflowStatus: "backlog", order: Date.now(),
+      recurrence: undefined, timelineRecords: [], plannedForDate: undefined, executionLane: undefined,
+      scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, executionStatus: undefined,
+      createdAt: now, updatedAt: now,
+    };
+  }
+
+  function commitShelfSchedule(taskId: string, date: string, startTime: string, subtask?: ShelfSubtask): TimelineRecord | undefined {
+    const current = dataRef.current;
+    if (!current) return;
+    const task = shelfTask(current, taskId, subtask);
+    if (!task || task.completed || hasActiveTaskSchedule(task) || hasRecurrenceOccurrenceOnDate(task, date)) return;
+    const record = startTime ? createScheduledRecord(task, date, startTime, taskDuration(task)) : {
+      id: uid("record"), taskId: task.id, scheduledDate: date, scheduledStart: "", scheduledEnd: "",
+      executionStatus: "scheduled" as const, createdAt: workspaceNow().toISOString(),
+    };
+    const nextTask: Task = {
+      ...task, plannedForDate: date, executionLane: undefined,
+      timelineRecords: [...(task.timelineRecords || []), record],
+      updatedAt: record.createdAt,
+    };
+    const nextTasks = current.tasks.map((item) => {
+      if (item.id === task.id) return nextTask;
+      if (subtask && item.id === taskId) {
+        return { ...item, subtasks: markSubtaskPlanned(item.subtasks, subtask.id, task.id), updatedAt: record.createdAt };
+      }
+      return item;
+    });
+    if (subtask && task.id === subtask.draftTaskId) nextTasks.push(nextTask);
+    const next = { ...current, tasks: nextTasks };
+    const undo = captureTaskUndo(current, next);
+    preserveTimelineViewportOnNextDataChange();
+    void saveData(next);
+    showUndoToast(lang === "zh" ? "已安排到时间轴" : "Scheduled on the timeline", lang === "zh" ? "撤销" : "Undo", () => undoLastCommit(undo));
+    return record;
+  }
+
   function beginCandidateSubtaskDrag(event: React.PointerEvent, parentTask: Task, subtaskId: string) {
     event.stopPropagation();
     const current = dataRef.current;
-    const subtask = findSubtaskInTree(parentTask.subtasks || [], subtaskId);
-    if (!current || !subtask) return;
-    const existing = subtask.plannedTaskId
-      ? current.tasks.find((item) => item.id === subtask.plannedTaskId)
-      : current.tasks.find((item) => item.parentTaskId === parentTask.id && item.title === subtask.title && !item.completed);
-    if (existing) {
-      beginShelfDrag(event, existing, "candidate");
+    if (!current) return;
+    const subtask = { id: subtaskId, draftTaskId: uid("task") };
+    const task = shelfTask(current, parentTask.id, subtask);
+    if (task) beginShelfDrag(event, task, "candidate", {
+      allowCandidateReorder: false,
+      onSchedule: (date, startTime) => { commitShelfSchedule(parentTask.id, date, startTime, subtask); },
+    });
+  }
+
+  function beginViewTouchScheduleDrag(event: React.PointerEvent, task: Task, subtaskId?: string) {
+    if (subtaskId) beginCandidateSubtaskDrag(event, task, subtaskId);
+    else beginShelfDrag(event, task, "candidate", {
+      allowCandidateReorder: false,
+      dragElement: (event.target as HTMLElement).closest<HTMLElement>(".df-task-block") || undefined,
+    });
+  }
+
+  function openShelfTaskPlacement(task: Task) {
+    const schedule = candidateScheduleSummary(task, today);
+    if (schedule) {
+      if (mobileExecution) closeCandidateDrawer();
+      focusCandidateSchedule(schedule);
       return;
     }
-    const now = workspaceNow().toISOString();
-    const plannedTask: Task = {
-      ...parentTask,
-      id: uid("task"),
-      title: subtask.title,
-      parentTaskId: parentTask.id,
-      plannedForDate: today,
-      executionLane: "candidate",
-      scheduledDate: undefined,
-      scheduledStart: undefined,
-      scheduledEnd: undefined,
-      executionStatus: undefined,
-      timelineRecords: [],
-      recurrence: undefined,
-      subtasks: [],
-      completed: false,
-      completedAt: undefined,
-      order: Date.now(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    const nextTasks = current.tasks.map((task) => (
-      task.id === parentTask.id
-        ? { ...task, subtasks: markSubtaskPlanned(task.subtasks, subtaskId, plannedTask.id), updatedAt: now }
-        : task
-    ));
-    void saveData({ ...current, tasks: [...nextTasks, plannedTask] });
-    beginShelfDrag(event, plannedTask, "candidate");
+    if (mobileExecution) void startMobilePlacement(task.id);
+    else openTaskEdit(task);
+  }
+
+  async function openShelfSubtaskPlacement(task: Task, subtaskId: string) {
+    const subtask = { id: subtaskId, draftTaskId: uid("task") };
+    if (mobileExecution) { await startMobilePlacement(task.id, subtask); return; }
+    const startTime = await dialog.prompt(lang === "zh" ? `安排到 ${timelineDate} 的几点？（HH:MM）` : `Schedule on ${timelineDate} at what time? (HH:MM)`, "09:00");
+    if (startTime && /^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(startTime.trim())) {
+      commitShelfSchedule(task.id, timelineDate, startTime.trim(), subtask);
+    }
   }
 
   function reorderTodayCandidate(dragId: string, targetId: string, position: "before" | "after") {
@@ -4255,17 +4364,6 @@ if (cached?.data && cached?.settings) {
     showToast(t(lang, "candidate.deletedTask"));
   }
 
-  function moveCandidateToPlanning(taskId: string) {
-    const task = data?.tasks.find((item) => item.id === taskId);
-    if (!task) return;
-    updateTask(taskId, {
-      plannedForDate: undefined,
-      executionLane: undefined,
-      ...(task.dueDateSource === "automatic" ? { dueDate: "", dueDateSource: undefined } : {}),
-    });
-    showToast(lang === "zh" ? "已移回 Planning" : "Moved back to Planning");
-  }
-
   function applyTemplateToDate(slots: ScheduleTemplateApplySlot[], conflictCount: number) {
     const snapshot = dataRef.current;
     if (!snapshot || slots.length === 0) return;
@@ -4382,34 +4480,6 @@ if (cached?.data && cached?.settings) {
     }
   }
 
-  function togglePlanningTodayCandidate(taskId: string) {
-    const current = dataRef.current;
-    if (!current) return;
-    const result = toggleTodayCandidate(current, taskId, today);
-    if (result.action === "existing") return;
-    const undo = captureTaskUndo(current, result.data);
-    void saveData(result.data);
-    const notice = result.action === "added"
-      ? (lang === "zh" ? "已加入今日候选" : "Added to today's candidates")
-      : (lang === "zh" ? "已移回 Planning" : "Returned to Planning");
-    window.setTimeout(() => showUndoToast(notice, lang === "zh" ? "撤销" : "Undo", () => undoLastCommit(undo)), 0);
-  }
-
-  function promotePlanningSubtask(parentTaskId: string, subtaskId: string) {
-    const current = dataRef.current;
-    if (!current) return;
-    const result = promoteSubtaskToToday(current, parentTaskId, subtaskId, today, () => uid("task"));
-    if (result.action === "existing") {
-      showToast(lang === "zh" ? "该子任务已在今日候选中" : "This subtask is already in today's candidates");
-      return;
-    }
-    const undo = captureTaskUndo(current, result.data);
-    void saveData(result.data);
-    window.setTimeout(() => showUndoToast(
-      lang === "zh" ? "子任务已加入今日候选" : "Subtask added to today's candidates",
-      lang === "zh" ? "撤销" : "Undo", () => undoLastCommit(undo)), 0);
-  }
-
   function focusQuickAddForProject(projectId: string) {
     setQuickProjectId(projectId === "__unassigned__" || projectId === "__events__" ? "" : projectId);
     setQuickProjectOpen(false);
@@ -4429,7 +4499,7 @@ if (cached?.data && cached?.settings) {
         const month = currentDateObj.getMonth();
         const day = Math.min(currentDateObj.getDate(), daysInMonth(year, month));
         targetDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        if (mode === "execute") setSelectedDate(targetDate);
+        setSelectedDate(targetDate);
       }
     }
     if (!title.trim()) return;
@@ -4438,7 +4508,7 @@ if (cached?.data && cached?.settings) {
       title,
       projectId: quickProjectId,
     });
-    const createdTask: Task = { ...task, plannedForDate: mode === "execute" ? targetDate : undefined, executionLane: mode === "execute" ? "candidate" : undefined, order: Date.now() };
+    const createdTask: Task = { ...task, plannedForDate: targetDate, executionLane: "candidate", order: Date.now() };
     void saveData({ ...data, tasks: [...data.tasks, createdTask] });
     void enrichTaskInBackground(createdTask);
     if (!compactLayout) setQuickTitle("");
@@ -4454,9 +4524,7 @@ if (cached?.data && cached?.settings) {
         () => updateTask(task.id, { projectId: undefined }),
       ), 0);
     } else {
-      showToast(mode === "planning"
-        ? (lang === "zh" ? "已添加到规划" : "Added to Planning")
-        : (lang === "zh" ? `已加入今日候选 · 预计 ${Math.round((task.estimatedHours || 0.5) * 60)} 分钟` : `Added to today's candidates · ${Math.round((task.estimatedHours || 0.5) * 60)} min`));
+      showToast(lang === "zh" ? `已添加任务 · 预计 ${Math.round((task.estimatedHours || 0.5) * 60)} 分钟` : `Task added · ${Math.round((task.estimatedHours || 0.5) * 60)} min`);
     }
   }
 
@@ -5472,15 +5540,17 @@ if (cached?.data && cached?.settings) {
     setPendingTimelineFocus(null);
   }
 
-  async function startMobilePlacement(taskId: string) {
+  async function startMobilePlacement(taskId: string, subtask?: ShelfSubtask) {
     const { mobilePlacementVersion } = await import("./utils/mobilePlacement");
-    if (!mobileExecutionRef.current) return;
-    const task = dataRef.current?.tasks.find((item) => item.id === taskId);
-    if (!task || task.completed) return;
+    if (!mobileExecutionRef.current || !dataRef.current) return;
+    const task = shelfTask(dataRef.current, taskId, subtask);
+    if (!task || task.completed || hasActiveTaskSchedule(task)) return;
     const date = timelineWindowAnchorDate;
-    const session = { taskId, version: mobilePlacementVersion(task), view: timelineView, date: selectedDate, visibleDate: visibleTimelineDate,
+    const session = { taskId, subtask, version: mobilePlacementVersion(task), view: timelineView, date: selectedDate, visibleDate: visibleTimelineDate,
       scrollTop: timelineRef.current?.scrollTop || 0, drawerOpen: candidateDrawerOpen };
-    candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
+    if (!projectManagement && !shelfView) {
+      candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
+    }
     mobileCommitRef.current = false;
     mobilePlacementRef.current = session;
     setMobilePlacement(session);
@@ -5492,7 +5562,7 @@ if (cached?.data && cached?.settings) {
     setVisibleTimelineDate(date);
     setTimelineView("daily");
     const proposal = findCandidatePlacementForRange(task, [date]);
-    const choice = placementChoiceFromProposal(taskId, proposal);
+    const choice = placementChoiceFromProposal(task.id, proposal);
     setPlacementPreview(choice);
     placementPreviewRef.current = choice;
     setPlacementChoices(choice ? [choice] : []);
@@ -5518,26 +5588,23 @@ if (cached?.data && cached?.settings) {
   async function confirmMobilePlacement() {
     if (mobileCommitRef.current) return;
     mobileCommitRef.current = true;
-    const { applyMobilePlacement, mobilePlacementVersion } = await import("./utils/mobilePlacement");
+    const { mobilePlacementVersion } = await import("./utils/mobilePlacement");
     const session = mobilePlacementRef.current;
     const choice = placementPreviewRef.current;
     const current = dataRef.current;
     if (!session || !choice || !current) { mobileCommitRef.current = false; return; }
-    const task = current.tasks.find((item) => item.id === session.taskId);
+    const task = shelfTask(current, session.taskId, session.subtask);
     if (!task || task.completed || mobilePlacementVersion(task) !== session.version) {
       cancelMobilePlacement(true);
       showToast(lang === "zh" ? "任务已变更，请重新安排" : "Task changed. Please schedule it again.");
       return;
     }
-    const record = createScheduledRecord(task, choice.date, choice.startTime, taskDuration(task));
-    const next = { ...current, tasks: current.tasks.map((item) => item.id === task.id ? applyMobilePlacement(item, record) : item) };
-    const undo = captureTaskUndo(current, next);
+    const record = commitShelfSchedule(session.taskId, choice.date, choice.startTime, session.subtask);
+    if (!record) { cancelMobilePlacement(true); return; }
     mobilePlacementRef.current = null;
     setMobilePlacement(null);
     cancelPlacementPreview();
-    void saveData(next);
     requestTimelineFocus({ date: choice.date, startTime: choice.startTime, taskId: record.id, source: "schedule" });
-    showUndoToast(lang === "zh" ? "已安排到日程" : "Scheduled", lang === "zh" ? "撤销" : "Undo", () => undoLastCommit(undo));
   }
 
   function selectMobilePlacement(event: React.MouseEvent) {
@@ -5545,7 +5612,7 @@ if (cached?.data && cached?.settings) {
     if (!session) return false;
     if (mobileTapRef.current.moved) return true;
     const target = resolveDropTarget(event.clientX, event.clientY);
-    const task = dataRef.current?.tasks.find((item) => item.id === session.taskId);
+    const task = dataRef.current && shelfTask(dataRef.current, session.taskId, session.subtask);
     if (target && task) {
       const durationMinutes = taskDuration(task);
       const choice: PlacementChoice = { taskId: task.id, date: target.date, startTime: target.startTime, endTime: addMinutes(target.startTime, durationMinutes), durationMinutes, source: "candidate-calendar" };
@@ -5934,14 +6001,7 @@ if (cached?.data && cached?.settings) {
       dragTargetDateRef.current = "";
       return;
     }
-    const task = data?.tasks.find((item) => item.id === taskId);
-    if (!task) return;
-    applyCandidateTimeSettings(taskId, {
-      date: targetDate,
-      startTime,
-      durationMinutes: taskDuration(task),
-      allDay: false,
-    }, { focusTimeline: false });
+    if (!commitShelfSchedule(taskId, targetDate, startTime)) return;
     if ((settings?.onboardingVersion ?? 0) < 2 && (settings?.onboardingStep === "drag" || settings?.onboardingStep === "schedule")) {
       void saveSettings({ onboardingStep: "calendar" });
     }
@@ -6059,6 +6119,32 @@ if (cached?.data && cached?.settings) {
     return current ? habitScheduleForTask(current, resolveTimelineRecordId(taskId)) : null;
   }
 
+  function shelfTimelineDropTarget(point: { x: number; y: number }) {
+    const element = document.elementFromPoint(point.x, point.y);
+    const monthDate = element?.closest<HTMLElement>(".df-month-cell[data-date]")?.dataset.date;
+    const allDayDate = element?.closest<HTMLElement>("[data-all-day-date]")?.dataset.allDayDate;
+    if (monthDate || allDayDate) return { date: (monthDate || allDayDate)!, startTime: "" };
+    if (!element || !timelineRef.current?.contains(element)) return;
+    return resolveDropTarget(point.x, point.y);
+  }
+
+  function previewShelfTimelineDrop(task: Task, point: { x: number; y: number } | null) {
+    const target = point && !task.completed && !hasActiveTaskSchedule(task) ? shelfTimelineDropTarget(point) : undefined;
+    setHoverSlot(target?.startTime || "");
+    dragTargetDateRef.current = target?.date || "";
+    setMonthDropDate(timelineView === "month" ? target?.date || "" : "");
+    setAllDayDragDate(timelineView !== "month" && target && !target.startTime ? target.date : "");
+    setDrag(target ? { taskId: task.id, kind: "candidate", source: "candidate", duration: taskDuration(task) } : null);
+  }
+
+  function commitShelfTimelineDrop(task: Task, point: { x: number; y: number }, subtaskId?: string) {
+    const target = shelfTimelineDropTarget(point);
+    if (!target) return false;
+    const subtask = subtaskId ? { id: subtaskId, draftTaskId: uid("task") } : undefined;
+    commitShelfSchedule(task.id, target.date, target.startTime, subtask);
+    return true;
+  }
+
   function returnTimelineTaskToCandidates(taskId: string, date = today) {
     const habitSchedule = habitScheduleFromTimelineTask(taskId);
     if (habitSchedule) {
@@ -6067,8 +6153,20 @@ if (cached?.data && cached?.settings) {
     }
     const current = dataRef.current;
     if (!current) return;
-    void saveData(returnScheduledTaskToToday(current, resolveTimelineRecordId(taskId), date).data);
-    showToast(t(lang, "toast.draggedBackToCandidates"));
+    let next = returnScheduledTaskToToday(current, resolveTimelineRecordId(taskId), date).data;
+    const recurringOwner = next === current ? occurrenceToTaskMap.get(taskId) : undefined;
+    const occurrence = recurringOwner && scheduledTasks.find((task) => task.id === taskId);
+    if (recurringOwner && occurrence?.scheduledDate && occurrence.scheduledStart) {
+      const exception = createOccurrenceExceptionRecord(recurringOwner, occurrence.scheduledDate, occurrence.scheduledStart, "cancelled");
+      next = { ...current, tasks: current.tasks.map((task) => task.id === recurringOwner.id
+        ? { ...task, timelineRecords: [...(task.timelineRecords || []), exception], updatedAt: exception.createdAt }
+        : task) };
+    }
+    if (next === current) return;
+    const undo = captureTaskUndo(current, next);
+    preserveTimelineViewportOnNextDataChange();
+    void saveData(next);
+    showUndoToast(lang === "zh" ? "已取消这个时间块" : "Time block removed", lang === "zh" ? "撤销" : "Undo", () => undoLastCommit(undo));
     setDrag(null);
     setHoverSlot("");
   }
@@ -6440,15 +6538,15 @@ if (cached?.data && cached?.settings) {
             return;
           }
         }
-        const leftPanel = document.querySelector(".df-candidate-panel")?.getBoundingClientRect();
-        const droppedOnCandidatePanel = Boolean(leftPanel && upEvent.clientX >= leftPanel.left && upEvent.clientX <= leftPanel.right && upEvent.clientY >= leftPanel.top && upEvent.clientY <= leftPanel.bottom);
+        const dropElement = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
+        const droppedOnCandidatePanel = Boolean(dropElement?.closest(".df-candidate-panel, .df-mobile-candidates-trigger"));
         const droppedOutsideTimeline = pointerOutsideTimeline(upEvent.clientX, upEvent.clientY);
         if (isEvent && droppedOnCandidatePanel) {
           makeEventCandidate(task.id, today);
-        } else if (!isEvent && (droppedOnCandidatePanel || droppedOutsideTimeline)) {
+        } else if (droppedOnCandidatePanel) {
           returnTimelineTaskToCandidates(task.id, today);
-        } else if (isEvent && droppedOutsideTimeline) {
-          // Outside the timeline but not over the candidate shelf: cancel the move.
+        } else if (droppedOutsideTimeline) {
+          // Outside either drop target, retain the existing time block.
         } else {
           // Same continuous-aware resolution as the move handler: date comes
           // from Y band in cross-day mode, offset subtracted in absolute time.
@@ -6933,9 +7031,7 @@ if (cached?.data && cached?.settings) {
             SLOT_MINUTES,
           )
         : 0;
-      const createdTask = mode === "planning"
-        ? { ...task, plannedForDate: undefined, executionLane: undefined }
-        : form.dueTime
+      const createdTask = form.dueTime
           ? { ...task, plannedForDate: form.dueDate, executionLane: undefined, timelineRecords: [createScheduledRecord(task, form.dueDate || today, form.dueTime, durationMinutes)] }
           : mobileQuickAddDate
             ? { ...task, plannedForDate: form.dueDate || mobileQuickAddDate, scheduledDate: form.dueDate || mobileQuickAddDate, executionLane: undefined }
@@ -7083,7 +7179,7 @@ if (cached?.data && cached?.settings) {
 
   function locateTaskOnTimeline(date: string, startTime: string, taskId: string) {
     setYearOverviewOpen(false);
-    setModeState("execute");
+
     setCompactExecuteView("schedule");
     if (timelineView === "month") setTimelineView("daily");
     setSelectedDate(date);
@@ -7096,7 +7192,7 @@ if (cached?.data && cached?.settings) {
     void closeTaskDrawer({ autoSave: true });
     setPlanningFocusTaskId(task.id);
     setYearOverviewOpen(false);
-    setModeState("planning");
+    openProjectManagement();
   }
 
   function deleteEditingItem() {
@@ -7247,13 +7343,14 @@ if (cached?.data && cached?.settings) {
       }
       if (command.entity !== "app" || command.operation !== "navigate") continue;
       const values = command.values || {};
-      if (values.mode === "execute" || values.mode === "planning") setModeState(values.mode);
+      if (values.mode === "planning") openProjectManagement();
+      if (values.mode === "execute") showTimelineWorkspace();
       if (values.view === "daily" || values.view === "3day" || values.view === "weekly" || values.view === "month") setTimelineView(values.view);
       if (typeof values.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(values.date)) setSelectedDate(values.date);
       if (command.targetId && dataRef.current?.tasks.some((item) => item.id === command.targetId)) {
         const target = dataRef.current.tasks.find((item) => item.id === command.targetId)!;
         setSelectedDate(target.scheduledDate || target.dueDate || todayIso());
-        setModeState("execute");
+
       }
     }
   }
@@ -7349,7 +7446,7 @@ if (cached?.data && cached?.settings) {
         attachmentName: aiAttachment?.name,
         context: {
           currentViewDate: selectedDate || today,
-          page: mode,
+          page: projectManagement ? "planning" : "execute",
           language: settings?.language || lang,
           timerStatus: { taskId: timerTaskId || "", running: timerRunning, elapsedSeconds: timerElapsed },
         },
@@ -7865,7 +7962,7 @@ if (cached?.data && cached?.settings) {
     // same task; dragging only changes its position or scheduled record.
     if (isEventDisplayTask(task)) return;
     const pointerId = event.pointerId;
-    const dragElement = event.currentTarget as HTMLElement;
+    const dragElement = options.dragElement || event.currentTarget as HTMLElement;
     const startX = event.clientX;
     const startY = event.clientY;
     const duration = taskDuration(task);
@@ -7934,7 +8031,6 @@ if (cached?.data && cached?.settings) {
       setAllDayDragOver(false);
       setAllDayDragDate("");
       setCandidateDropActive(false);
-      setCandidatePlanningReturnActive(false);
       setCandidateDropTarget(null);
       dragTargetDateRef.current = "";
       setMonthDropDate("");
@@ -7943,18 +8039,6 @@ if (cached?.data && cached?.settings) {
       if (active) suppressClickAfterDrag();
     };
     const updateTarget = (pointerEvent: PointerEvent) => {
-      const returnToPlanning = compactLayout && source === "candidate" && pointerEvent.clientX <= 58;
-      setCandidatePlanningReturnActive(returnToPlanning);
-      if (returnToPlanning) {
-        setCandidateReorderTarget(null);
-        setCandidateDropActive(false);
-        setAllDayDragOver(false);
-        setAllDayDragDate("");
-        dropTime = "";
-        setHoverSlot("");
-        dragTargetDateRef.current = "";
-        return;
-      }
       const pointedElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
       const monthDate = monthDateAtPointer({ x: pointerEvent.clientX, y: pointerEvent.clientY });
       setMonthDropDate(monthDate);
@@ -8122,11 +8206,6 @@ if (cached?.data && cached?.settings) {
     const up = (pointerEvent: PointerEvent) => {
       if (pointerEvent.pointerId !== pointerId) return;
       if (active) {
-        if (source === "candidate" && compactLayout && pointerEvent.clientX <= 58) {
-          moveCandidateToPlanning(task.id);
-          cleanup();
-          return;
-        }
         // Re-resolve at release so a stale hover cannot reorder after the
         // pointer has left the candidate list or moved onto the timeline.
         updateTarget(pointerEvent);
@@ -8144,18 +8223,17 @@ if (cached?.data && cached?.settings) {
         const candidatePanel = source === "allDay" ? pointedElement?.closest<HTMLElement>(".df-candidate-panel") : null;
         const allDayCell = pointedElement?.closest<HTMLElement>("[data-all-day-date]");
         const monthDate = monthDateAtPointer({ x: pointerEvent.clientX, y: pointerEvent.clientY });
-        if (monthDate) {
-          moveTaskToMonthDate(task, monthDate);
+        if (monthDate || allDayCell) {
+          const date = monthDate || allDayCell?.dataset.allDayDate || timelineDate;
+          if (source === "allDay") {
+            if (monthDate) void moveTaskToMonthDate(task, date);
+            else makeAllDay(task.id, date);
+          } else if (task.id.startsWith("habit:")) {
+            scheduleHabitAt(task.id.slice("habit:".length), date, minutesToTime(dayStartHour * 60), false);
+          } else if (options.onSchedule) options.onSchedule(date, "");
+          else commitShelfSchedule(task.id, date, "");
         } else if (candidatePanel) {
-          applyCandidateTimeSettings(task.id, {
-            date: today,
-            startTime: "",
-            durationMinutes: duration,
-            allDay: false,
-            clearSchedule: true,
-          });
-        } else if (allDayCell && !options.onSchedule) {
-          makeAllDay(task.id, allDayCell.dataset.allDayDate || timelineDate);
+          returnTimelineTaskToCandidates(task.id, today);
         } else if (dropTime && dragTargetDateRef.current) {
           mobileDropCommitted = true;
           if (options.onSchedule) options.onSchedule(dragTargetDateRef.current, dropTime);
@@ -8217,7 +8295,7 @@ if (cached?.data && cached?.settings) {
   function viewAiImport(messageId: string) {
     const commit = aiMessages.find((message) => message.id === messageId)?.importCommit;
     if (!commit?.focus) return;
-    setModeState("execute");
+
     setTimelineView("daily");
     requestTimelineFocus(commit.focus);
     if (!productAiPresentation) setAiOpen(false);
@@ -8483,11 +8561,10 @@ if (cached?.data && cached?.settings) {
 
     const planPrefs = { ...aiPlanPrefs, ...overrides };
     if (overrides) setAiPlanPrefs(planPrefs);
-    const sourceTasks = sourceTasksOverride || (planPrefs.source === "all"
-      ? tasks.filter((t) => !t.completed && getExecutionLane(t) !== "queued" && !(t.timelineRecords || []).some((r) => r.executionStatus === "scheduled") && !t.scheduledDate && !hasRecurrenceOccurrenceOnDate(t, today))
-      : todayCandidates);
+    const sourceIds = sourceTasksOverride && new Set(sourceTasksOverride.map((task) => task.id));
+    const sourceTasks = sourceIds ? unscheduledShelfTasks.filter((task) => sourceIds.has(task.id)) : unscheduledShelfTasks;
     if (sourceTasks.length === 0) {
-      void dialog.alert(planPrefs.source === "all" ? t(lang, "toast.noTaskToSchedule") : t(lang, "toast.noCandidateYet"));
+      void dialog.alert(t(lang, "toast.noTaskToSchedule"));
       return;
     }
     setSchedulePreviews([]);
@@ -8829,9 +8906,32 @@ if (cached?.data && cached?.settings) {
     }, { direction: direction < 0 ? "backward" : "forward", scope: "timeline", updates: "all" });
   }
 
-  function changeMode(nextMode: Mode) {
-    if (nextMode === "planning") preloadPlanningView();
-    changeWorkspaceMode(nextMode);
+  function selectShelfView(id: string) {
+    setShelfViewId(id);
+    setShelfMenuOpen(false);
+    shelfTitleRef.current?.focus({ preventScroll: true });
+  }
+
+  function openProjectManagement() {
+    preloadPlanningView();
+    setShelfMenuOpen(false);
+    setCandidatePanelCollapsed(false);
+    setFullscreen(false);
+    setProjectManagementVisited(true);
+    setProjectManagement(true);
+    setCompactExecuteView("tasks");
+    if (mobileExecution) setCandidateDrawerOpen(true);
+  }
+
+  function showTimelineWorkspace() {
+    setProjectManagement(false);
+    setCompactExecuteView("schedule");
+    if (mobileExecution && candidateDrawerOpen) closeCandidateDrawer();
+  }
+
+  function openMetrics() {
+    rememberLayerTrigger("utility");
+    setUtilityPanel("metrics");
   }
 
   function currentTimelineViewportFocus() {
@@ -8906,7 +9006,7 @@ if (cached?.data && cached?.settings) {
     setCommandOpen(false);
     setCommandQuery("");
     if (result.focusTarget) {
-      void saveSettings({ activeMode: "execute" });
+      showTimelineWorkspace();
       setSelectedDate(result.focusTarget.date);
       setTimelineView("daily");
       requestTimelineFocus({
@@ -8975,11 +9075,11 @@ if (cached?.data && cached?.settings) {
           break;
         case "execute":
           setYearOverviewOpen(false);
-          void saveSettings({ activeMode: "execute" });
+          showTimelineWorkspace();
           break;
         case "planning":
           setYearOverviewOpen(false);
-          void saveSettings({ activeMode: "planning" });
+          openProjectManagement();
           break;
         case "day-view":
           changeTimelineView("daily");
@@ -9137,8 +9237,26 @@ if (cached?.data && cached?.settings) {
   </div> : undefined;
   const aiPanel = aiPresence.present && <AiPanel closing={aiPresence.closing} demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
 
+  const planningViewProps = {
+    lang, data, projects, compact: compactLayout, collapsed: collapsedBranches, setCollapsed: setCollapsedBranches,
+    onProjectEdit: openProjectEdit, onProjectComplete: completeProject, onTaskEdit: openTaskEdit,
+    onTaskUpdate: updateTask, onTaskCreate: createTaskInProject, onTaskDelete: deleteTaskById, onDeleteSubtask: deleteSubtaskById,
+    onDataChange: (next: PlannerData) => void saveData(next),
+    engagementEnabled: settings.featureEngagementEnabled === true,
+  };
+  const scheduleViewProps = {
+    onScheduleTask: openShelfTaskPlacement,
+    onScheduleSubtask: openShelfSubtaskPlacement,
+    onTouchScheduleDrag: mobileExecution ? beginViewTouchScheduleDrag : undefined,
+    onTimelineDrag: previewShelfTimelineDrop,
+    onTimelineDrop: commitShelfTimelineDrop,
+  };
+  const shelfTitle = term(lang, "todayCandidates");
+  const switchViewsLabel = lang === "zh" ? "切换左浮栏视图" : "Switch task views";
+  const manageProjectsLabel = lang === "zh" ? "管理项目" : "Manage projects";
+  const metricsLabel = lang === "zh" ? "指标" : "Metrics";
   return (
-    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
@@ -9157,7 +9275,7 @@ if (cached?.data && cached?.settings) {
               : <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
                 <ProductIcon compact />
               </button>}
-            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
+            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} onOpenMetrics={openMetrics} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
           </div>
           <div className="df-month-year-selector">
             <button className="df-month-year-btn" aria-expanded={yearOverviewOpen} onClick={() => {
@@ -9166,7 +9284,7 @@ if (cached?.data && cached?.settings) {
               if (nextOpen) {
                 setOverviewYear(new Date(`${timelineDate}T00:00:00`).getFullYear());
                 setCompactExecuteView("schedule");
-                if (mode !== "execute") void saveSettings({ activeMode: "execute" });
+
               }
             }}>
               {yearOverviewOpen
@@ -9175,7 +9293,7 @@ if (cached?.data && cached?.settings) {
               <span className="df-month-year-chevron" />
             </button>
           </div>
-          <WorkspaceModeTabs mode={mode} lang={lang} onChange={changeMode} onPlanningIntent={preloadPlanningView} className="df-tabs df-tabs-center" as="nav" />
+
           {!productDemo && <div className="df-header-right">
           <button
             className="df-user-avatar"
@@ -9250,8 +9368,8 @@ if (cached?.data && cached?.settings) {
         <OnboardingGuide
           lang={lang}
           step={onboardingStep}
-          mode={mode}
-          onOpenPlanning={() => void saveSettings({ activeMode: "planning" })}
+          projectManagement={projectManagement}
+          onOpenPlanning={openProjectManagement}
           onOpenAi={() => setAiOpen(true)}
           onChange={(step) => void saveSettings({ onboardingStep: step })}
           onFinish={() => void saveSettings({ onboardingVersion: 2, onboardingStep: "done" })}
@@ -9259,10 +9377,9 @@ if (cached?.data && cached?.settings) {
         />
       )}
 
-      <Activity mode={mode === "execute" ? "visible" : "hidden"}>
-        <ExecutionSplitLayout className={`${candidatePanelCollapsed ? "candidate-collapsed" : ""}${fullscreen ? " fullscreen" : ""}${simpleView ? " simple-view" : ""}`} style={candidatePanelCollapsed || candidatePanelWidth ? { "--df-candidate-width": candidatePanelCollapsed ? "44px" : `${candidatePanelWidth}px` } as CSSProperties : undefined}>
+        <ExecutionSplitLayout className={`${narrowSplitLayout ? "shelf-timeline-split " : ""}${candidatePanelCollapsed ? "candidate-collapsed" : ""}${fullscreen ? " fullscreen" : ""}${simpleView ? " simple-view" : ""}`} style={candidatePanelCollapsed || candidatePanelWidth ? { "--df-candidate-width": candidatePanelCollapsed ? "44px" : `${candidatePanelWidth}px` } as CSSProperties : undefined}>
           {!productAiPresentation && <div className="df-compact-execute-controls">
-            {!mobileExecution && <nav className="df-compact-execute-tabs" aria-label={lang === "zh" ? "执行视图" : "Execute view"}>
+            {!mobileExecution && !narrowSplitLayout && <nav className="df-compact-execute-tabs" aria-label={lang === "zh" ? "执行视图" : "Execute view"}>
               <button
                 className={`active ${compactExecuteView === "schedule" ? "schedule-state" : "tasks-state"}`}
                 aria-label={compactExecuteView === "tasks" ? (lang === "zh" ? "日程" : "Schedule") : (lang === "zh" ? "今日候选" : "Today's Candidates")}
@@ -9340,9 +9457,9 @@ if (cached?.data && cached?.settings) {
             panelRef={candidatePanelRef}
             role={mobileExecution && candidateDrawerOpen ? "dialog" : undefined}
             ariaLabel={mobileExecution ? (lang === "zh" ? "待安排任务" : "Tasks to schedule") : undefined}
-            className={`${mobileExecution ? `is-mobile-candidates ${candidateDrawerOpen ? "compact-active" : "compact-inactive"}${candidateDrawerExpanded ? " is-expanded" : ""}` : productAiPresentation || compactExecuteView === "tasks" ? "compact-active" : "compact-inactive"}${!mobileExecution && candidatePanelCollapsed ? " collapsed" : ""}${!mobileExecution && fullscreen ? " hidden" : ""}${candidateDropActive ? " drop-active" : ""}`}
+            className={`${mobileExecution ? `is-mobile-candidates ${candidateDrawerOpen ? "compact-active" : "compact-inactive"}${candidateDrawerExpanded ? " is-expanded" : ""}` : productAiPresentation || narrowSplitLayout || compactExecuteView === "tasks" ? "compact-active" : "compact-inactive"}${!mobileExecution && candidatePanelCollapsed ? " collapsed" : ""}${!mobileExecution && fullscreen ? " hidden" : ""}${candidateDropActive ? " drop-active" : ""}`}
             style={!mobileExecution && candidatePanelCollapsed ? { position: "relative", zIndex: 2, pointerEvents: "auto" } : undefined}
-            ariaHidden={mobileExecution ? !candidateDrawerOpen : !productAiPresentation && compactLayout && compactExecuteView !== "tasks"}
+            ariaHidden={mobileExecution ? !candidateDrawerOpen : !productAiPresentation && !narrowSplitLayout && compactLayout && compactExecuteView !== "tasks"}
             inert={mobileExecution && !candidateDrawerOpen}
             onPointerDown={(event) => {
               if (compactLayout || candidatePanelCollapsed || event.button) return;
@@ -9377,8 +9494,20 @@ if (cached?.data && cached?.settings) {
               <>
             <CandidatePanelHeader
               {...candidateHeaderGesture}
-              title={term(lang, "todayCandidates")}
+              title={projectManagement ? (
+                <button type="button" className="df-shelf-title-button" onClick={() => { setProjectManagement(false); window.requestAnimationFrame(() => shelfTitleRef.current?.focus()); }}>
+                  <UiChevronLeftIcon size={15} />{manageProjectsLabel}
+                </button>
+              ) : (
+                <button ref={shelfTitleRef} type="button" className="df-shelf-title-button" aria-label={switchViewsLabel} aria-expanded={shelfMenuOpen} onClick={() => setShelfMenuOpen((open) => !open)}>
+                  <span>{shelfView ? candidateViewName(shelfView, lang) : shelfTitle}</span><UiChevronDownIcon size={15} />
+                </button>
+              )}
               actions={<>
+                {projectManagement ? <>
+                  <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />
+                  {!productDemo && <IconButton icon={<UiPlusIcon size={17} />} label={lang === "zh" ? "新建项目" : "New project"} onClick={() => openAdd("project")} />}
+                </> : <>
                 <Suspense fallback={null}><ExtensionHeader lang={lang} placement="candidate-header" onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>
                 <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />
                 <IconButton className={`df-icon-action df-candidate-header-icon${showCompletedCandidates ? " active" : ""}`} icon={<UiListChecksIcon size={17} />} label={t(lang, "candidate.showCompleted")} aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)} />
@@ -9402,13 +9531,20 @@ if (cached?.data && cached?.settings) {
                         <strong>{lang === "zh" ? "今日容量" : "Today's capacity"}</strong>
                         <small>{lang === "zh" ? `待安排 ${formatMinutes(dailyCapacityRisk.demandMinutes)} / 可用 ${formatMinutes(dailyCapacityRisk.availableMinutes)}` : `${formatMinutes(dailyCapacityRisk.demandMinutes)} to place / ${formatMinutes(dailyCapacityRisk.availableMinutes)} free`}</small>
                       </span>
-                      <label>{t(lang, "timeline.source")}<select value={aiPlanPrefs.source} onChange={(event) => setAiPlanPrefs((current) => ({ ...current, source: event.target.value as AiPlanPrefs["source"] }))}><option value="today">{t(lang, "timeline.fromCandidates")}</option><option value="all">{t(lang, "timeline.allUnfinished")}</option></select></label>
                       <label>{t(lang, "timeline.scope")}<select value={aiPlanPrefs.scope} onChange={(event) => setAiPlanPrefs((current) => ({ ...current, scope: event.target.value as AiPlanPrefs["scope"] }))}><option value="day">{viewLabel(lang, "daily")}</option><option value="3day">{viewLabel(lang, "3day")}</option><option value="week">{lang === "zh" ? "本周" : "This week"}</option></select></label>
                       <label>{t(lang, "timeline.strategy")}<select value={aiPlanPrefs.strategy} onChange={(event) => setAiPlanPrefs((current) => ({ ...current, strategy: event.target.value as AiPlanPrefs["strategy"] }))}><option value="alternativeProject">{t(lang, "timeline.alternateByProject")}</option><option value="byProject">{t(lang, "timeline.scheduleByProject")}</option><option value="longShort">{t(lang, "timeline.alternateLongShort")}</option><option value="random">{t(lang, "timeline.random")}</option></select></label>
                       <span className="df-ai-daily-tools"><button type="button" onClick={() => { setAiPlanMenuOpen(false); openDailyAiPrompt("start"); }}>{lang === "zh" ? "开工简报" : "Start brief"}</button><button type="button" onClick={() => { setAiPlanMenuOpen(false); openDailyAiPrompt("review"); }}>{lang === "zh" ? "收工复盘" : "Day review"}</button></span>
                     </span>}
                   </span>
                 )}
+                {!productDemo && <ActionDisclosure label={lang === "zh" ? "更多候选操作" : "More task options"}>
+                  <Button variant="ghost" aria-pressed={showScheduledCandidates} onClick={() => setShowScheduledCandidates((show) => !show)}>
+                    {lang === "zh" ? "显示已安排" : "Show scheduled"}
+                  </Button>
+                  <Button variant="ghost" onClick={openProjectManagement}>{manageProjectsLabel}</Button>
+                  <Suspense fallback={null}><ExtensionHeader lang={lang} placement="planning-sidebar" onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>
+                </ActionDisclosure>}
+                </>}
                 {mobileExecution && <CloseButton className="df-mobile-candidate-close" label={lang === "zh" ? "关闭候选任务" : "Close candidates"} onClick={closeCandidateDrawer} />}
                 {!mobileExecution && (timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
                   <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }}>«</button>
@@ -9416,17 +9552,16 @@ if (cached?.data && cached?.settings) {
               </>
             }
             />
+            {!projectManagement && <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu">
+              <Button variant="ghost" aria-pressed={!shelfView} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
+              {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id} onClick={() => selectShelfView(view.id)}><CandidateViewIcon view={view} />{candidateViewName(view, lang)}</Button>)}
+            </AnchoredNarrowMenu>}
             {candidateDropActive && (
               <div className="df-candidate-return-hint" role="status">
                 {lang === "zh" ? "松手后移回今日候选" : "Release to return to Today's Candidates"}
               </div>
             )}
-            {candidatePlanningReturnActive && (
-              <div className="df-candidate-planning-return-hint" role="status">
-                {lang === "zh" ? "松手移回规划" : "Release to return to Planning"}
-              </div>
-            )}
-            {compactLayout && compactExecuteView === "tasks" && scheduleGuideOpen && visibleCandidates.length > 0 && (
+            {!projectManagement && !shelfView && compactLayout && compactExecuteView === "tasks" && scheduleGuideOpen && visibleCandidates.length > 0 && (
               <aside className="df-schedule-drop-guide" aria-label={lang === "zh" ? "手机端拖拽排程说明" : "Mobile drag-to-schedule guide"}>
                 <div className="df-schedule-drop-guide-content">
                   <p className="df-schedule-drop-guide-copy">
@@ -9461,7 +9596,8 @@ if (cached?.data && cached?.settings) {
                 </details>}
               </div>
             )}
-            <div className="df-candidate-list" inert={productAiPresentation && demoPresetBusy ? true : undefined}>
+            <Activity mode={projectManagement || shelfView ? "hidden" : "visible"}>
+            <div className="df-candidate-list" data-shelf-scroll="candidates" inert={productAiPresentation && demoPresetBusy ? true : undefined}>
               {visibleCandidates.length === 0 && !hasActiveHabits ? (
                 <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.emptyTitle")}</strong><span>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "在右侧查看安排，或试试改期与撤回。" : "Explore the timeline, reschedule a task, or undo.") : t(lang, "candidate.emptyDesc")}</span>{compactLayout && !productAiPresentation && <img className="df-empty-add-guidance" src="/empty-add-guidance-v2.png" alt="" aria-hidden="true" />}</div>
               ) : groupByProject ? (
@@ -9499,7 +9635,7 @@ if (cached?.data && cached?.settings) {
                               icon={<UiCalendarCheckIcon size={16} />}
                               label={lang === "zh" ? `智能安排「${projectTitle}」的全部任务` : `Schedule all tasks in “${projectTitle}”`}
                               disabled={autoScheduleState === "generating" || autoScheduleState === "committing"}
-                              onClick={() => void planMyDay({ source: "today" }, tasks)}
+                              onClick={() => void planMyDay(undefined, tasks)}
                             />
                             <IconButton
                               className="df-project-group-action"
@@ -9521,7 +9657,7 @@ if (cached?.data && cached?.settings) {
                                 toggleCandidateTaskDone(task);
                               }}
                             >
-                              <TaskCard demo={Boolean(productDemo)} task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />
+                              <TaskCard demo={Boolean(productDemo)} task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />
                             </div>
                           );
                         })}
@@ -9541,7 +9677,7 @@ if (cached?.data && cached?.settings) {
                     toggleCandidateTaskDone(task);
                   }}
                 >
-                  {!isReorderSource && <TaskCard demo={Boolean(productDemo)} task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMoveToPlanning={isEventDisplayTask(task) ? undefined : () => moveCandidateToPlanning(task.id)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
+                  {!isReorderSource && <TaskCard demo={Boolean(productDemo)} task={task} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
                 </div>
               })}
               {shouldShowHabitCandidates(settings) && (
@@ -9585,6 +9721,26 @@ if (cached?.data && cached?.settings) {
                 Add
               </button>
             </form>}
+            </Activity>
+            {shelfView && <Activity mode={projectManagement ? "hidden" : "visible"}>
+              <div className="df-shelf-scroll" data-shelf-scroll="views">
+                <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
+                  {shelfView.nativeMode
+                    ? <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode={shelfView.nativeMode} tasks={visibleCandidates} />
+                    : <ExtensionMount contribution={shelfView} />}
+                </Suspense>
+              </div>
+            </Activity>}
+            {projectManagementVisited && <Activity mode={projectManagement ? "visible" : "hidden"}>
+              <div className="df-shelf-scroll" data-shelf-scroll="projects">
+                <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
+                  <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode="tree" tasks={tasks}
+                    filterAnchor={projectManagement ? projectFilterAnchor : null} focusTaskId={planningFocusTaskId}
+                    onFocusHandled={() => setPlanningFocusTaskId(null)} demo={Boolean(productDemo)}
+                    referenceDate={productDemo?.date} presentationNote={productDemo?.story} />
+                </Suspense>
+              </div>
+            </Activity>}
             {!productAiPresentation && <span className="df-candidate-resize-zone" aria-hidden="true" onPointerDown={startCandidatePanelResize} />}
               </>
             )}
@@ -9609,8 +9765,8 @@ if (cached?.data && cached?.settings) {
               event.stopPropagation();
               if (!mobileTapRef.current.moved) closeCandidateDrawer();
             }}
-            className={`df-timeline-panel${productAiPresentation || compactExecuteView === "schedule" ? " compact-active" : " compact-inactive"}`}
-            aria-hidden={!productAiPresentation && compactLayout && compactExecuteView !== "schedule"}
+            className={`df-timeline-panel${productAiPresentation || narrowSplitLayout || compactExecuteView === "schedule" ? " compact-active" : " compact-inactive"}`}
+            aria-hidden={!productAiPresentation && !narrowSplitLayout && compactLayout && compactExecuteView !== "schedule"}
             id="df-execute-timeline"
             data-candidates-open={mobileExecution && candidateDrawerOpen || undefined}
             data-cross-day-scroll={settings.continuousCrossDayScroll !== false ? "true" : "false"}
@@ -10083,6 +10239,10 @@ if (cached?.data && cached?.settings) {
                     compact={compactLayout} dragging={Boolean(drag)} dropDate={monthDropDate} scrollRef={monthScrollRef}
                     projectColor={(task) => categories[task.category].color} isEvent={isEventDisplayTask}
                     onSelectDate={setSelectedDate} onOpenDate={openMonthDate} onMoveTask={moveTaskToMonthDate}
+                    onReturnTask={(task, point) => {
+                      if (hasActiveTaskSchedule(task) && !isEventDisplayTask(task) &&
+                        document.elementFromPoint(point.x, point.y)?.closest(".df-candidate-panel")) returnTimelineTaskToCandidates(task.id);
+                    }}
                     onEditTask={(task) => { if (!suppressBlockClickRef.current) openTaskEdit(task); }}
                     onAddTask={(date) => {
                       if (compactLayout) {
@@ -10422,17 +10582,7 @@ if (cached?.data && cached?.settings) {
             </>}
           </section>
         </ExecutionSplitLayout>
-      </Activity>
-      <Activity mode={mode === "planning" ? "visible" : "hidden"}>
-        <Suspense fallback={<main className="df-planning df-planning-loading" aria-busy="true" aria-label={lang === "zh" ? "规划" : "Planning"}>
-          <div className="df-planning-loading-toolbar" aria-hidden="true"><span className="df-skeleton-title" /><span className="df-skeleton-tab" /></div>
-          <section aria-hidden="true"><span className="df-skeleton-title" />{Array.from({ length: 5 }, (_, index) => <div className="df-skeleton-task" key={index}><i /><span /><small /></div>)}</section>
-        </main>}>
-          <PlanningViewLazy focusTaskId={planningFocusTaskId} onFocusHandled={() => setPlanningFocusTaskId(null)} presentationNote={productDemo?.story} demo={Boolean(productDemo)} referenceDate={productDemo?.date} lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled === true} featureQuadrant={settings.featureQuadrantViewEnabled === true} featureList={settings.featureListViewEnabled === true} featureMetrics={settings.featureMetricsEnabled !== false} planningSidebarCollapsed={settings.planningSidebarCollapsed === true} onPlanningSidebarCollapsedChange={(collapsed) => void saveSettings({ planningSidebarCollapsed: collapsed })} planningSidebarWidth={settings.planningSidebarWidth} onPlanningSidebarWidthChange={(width) => void saveSettings({ planningSidebarWidth: width })} engagementEnabled={settings.featureEngagementEnabled === true} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
-        </Suspense>
-      </Activity>
-
-      {!inlineTimelineDraft && dragCreate?.committed && mode === "execute" && (
+      {!inlineTimelineDraft && dragCreate?.committed && (
         <DragCreateQuickAdd
           sheet
           lang={lang}
@@ -10445,12 +10595,12 @@ if (cached?.data && cached?.settings) {
         />
       )}
 
-      {!productAiPresentation && compactLayout && !candidateDrawerOpen && !mobilePlacement && !drawerOpen && !commandOpen && !notificationCenterOpen && !scheduleTemplatePresence.present && utilityPanel !== "settings" && (
-        createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, mode)} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
+      {!productAiPresentation && compactLayout && !candidateDrawerOpen && !mobilePlacement && !drawerOpen && !commandOpen && !notificationCenterOpen && !scheduleTemplatePresence.present && !utilityPanel && (
+        createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, "execute")} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {!productPresentation && !settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
           </button> : <span className="df-mobile-dock-spacer" aria-hidden="true" />}
-          <WorkspaceModeTabs mode={mode} lang={lang} onChange={changeMode} onPlanningIntent={preloadPlanningView} className="df-mobile-mode-switch" as="div" />
+
           {!productDemo && <label className={`df-mobile-dock-action df-mobile-more${showNotificationBadge && proactiveNotifications.length ? " has-unread" : ""}`} title={lang === "zh" ? "更多" : "More"}>
             <UiMoreIcon />
             <select aria-label={lang === "zh" ? "更多" : "More"} value="" onChange={(event) => {
@@ -10459,11 +10609,13 @@ if (cached?.data && cached?.settings) {
               if (action === "notifications") setNotificationCenterOpen(true);
               if (action === "search") { setCommandQuery(""); setCommandOpen(true); }
               if (action === "plugins") setPluginToolsOpen(true);
+              if (action === "metrics") openMetrics();
               if (action === "settings") { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }
             }}>
               <option value="" disabled hidden>{lang === "zh" ? "更多" : "More"}</option>
               <option value="notifications">{lang === "zh" ? "通知" : "Notifications"}</option>
               <option value="search">{lang === "zh" ? "搜索" : "Search"}</option>
+              {metricsAvailable && <option value="metrics">{metricsLabel}</option>}
               <option value="plugins">{lang === "zh" ? "插件工具" : "Plugin tools"}</option>
               <option value="settings">{t(lang, "header.settings")}</option>
             </select>
@@ -10474,18 +10626,18 @@ if (cached?.data && cached?.settings) {
 
       {!productPresentation && !compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
       {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
-      {createPortal(<div className="df-mobile-floating-actions" style={themeVars(settings, mode)}>
+      {createPortal(<div className="df-mobile-floating-actions" style={themeVars(settings, "execute")}>
         {mobileExecution && <Suspense fallback={null}><MobileExecutionControls
           hidden={candidateDrawerOpen || drawerOpen || quickAddOpen || aiOpen || Boolean(utilityPanel) || commandOpen || notificationCenterOpen || scheduleTemplatePresence.present || Boolean(dragCreate?.committed)}
           drawerOpen={candidateDrawerOpen} panelRef={candidatePanelRef} scrollRef={candidateScrollRef} onClose={closeCandidateDrawer}
           lang={lang} count={visibleCandidates.filter((task) => !task.completed).length} triggerRef={candidateTriggerRef}
-          title={mobilePlacement ? (tasks.find((task) => task.id === mobilePlacement.taskId)?.title || (lang === "zh" ? "任务已移除" : "Task removed")) : undefined}
+          title={mobilePlacement ? (placementPreviewTask?.title || (lang === "zh" ? "任务已移除" : "Task removed")) : undefined}
           time={mobilePlacement && placementPreview ? `${placementPreview.date} · ${placementPreview.startTime}–${placementPreview.endTime}` : undefined}
           conflict={Boolean(mobilePlacement && placementPreview && getScheduledEventsForRange([addDays(placementPreview.date, -1), placementPreview.date, addDays(placementPreview.date, 1)]).some((item) => item.scheduledStart && item.scheduledEnd && scheduledDateTimesOverlap(placementPreview.date, placementPreview.startTime, placementPreview.endTime, item.scheduledDate || placementPreview.date, item.scheduledStart, item.scheduledEnd)))}
           onOpen={() => { setCandidatePanelCollapsed(false); setCandidateDrawerExpanded(false); setCandidateDrawerOpen(true); }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
         <MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
         drawerOpen={drawerOpen || commandOpen || quickAddOpen || scheduleTemplatePresence.present || Boolean(dragCreate?.committed) || (mobileExecution && (candidateDrawerOpen || Boolean(mobilePlacement)))} notificationCenterOpen={notificationCenterOpen}
-        utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, mode)}
+        utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, "execute")}
         onAdd={() => { setQuickTitle(""); setMobileQuickAddKind("task"); setMobileQuickAddDate(null); setQuickAddOpen(true); }}
       /></div>, document.body)}
 
@@ -10493,9 +10645,18 @@ if (cached?.data && cached?.settings) {
       {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onLocateTimeline={locateTaskOnTimeline} onLocatePlanning={locateTaskInPlanning} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel}
       <CommandPalette open={commandOpen} compact={compactLayout} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
-      {utilityPanel && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} /></Suspense>}
+      {utilityPanel === "metrics" && metricsAvailable && <MetricsPanel label={metricsLabel} closeLabel={t(lang, "settings.close")} onClose={closeUtilityPanel}>
+        <Suspense fallback={<div className="df-shelf-loading" role="status">{lang === "zh" ? "正在打开…" : "Opening…"}</div>}>
+          <PlanningViewLazy {...planningViewProps} viewMode="metrics" tasks={tasks} dayStartTime={settings.dayStartTime}
+            metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy}
+            metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits}
+            metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart}
+            metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
+        </Suspense>
+      </MetricsPanel>}
+      {utilityPanel && utilityPanel !== "metrics" && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} /></Suspense>}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
-      {pluginToolsOpen && <Suspense fallback={null}><ExtensionToolsDialog lang={lang} onClose={() => setPluginToolsOpen(false)} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
+      {pluginToolsOpen && <Suspense fallback={null}><ExtensionToolsDialog lang={lang} onOpenMetrics={openMetrics} onClose={() => setPluginToolsOpen(false)} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
       {focusOverlayMode && (
         <div className="df-focus-overlay" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>
           <div className="df-focus-topbar">
@@ -10594,7 +10755,7 @@ if (cached?.data && cached?.settings) {
             onToggleDone={() => {}}
             onToggleSubtask={() => {}}
             onSubtaskDragStart={() => {}}
-            onMoveToPlanning={() => {}}
+
             onMarkUnfinished={() => {}}
             onUnschedule={() => {}}
             onMetaUpdate={() => {}}
@@ -10630,7 +10791,7 @@ if (cached?.data && cached?.settings) {
             onToggleDone={() => {}}
             onToggleSubtask={() => {}}
             onSubtaskDragStart={() => {}}
-            onMoveToPlanning={() => {}}
+
             onMarkUnfinished={() => {}}
             onUnschedule={() => {}}
             onMetaUpdate={() => {}}

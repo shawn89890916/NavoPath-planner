@@ -156,7 +156,7 @@ describe("TaskBlock shared component contract", () => {
     expect(candidateSubtask).toContain('variant="habit-child"');
     expect(planning).not.toContain("<article");
     expect(css).toContain('.df-app .df-task-block[data-task-appearance][data-task-variant="candidate"]');
-    expect(css).toContain('#root .df-app.mode-planning .df-planning .df-task-node-inner[data-task-variant="candidate"]');
+    expect(css).toContain('#root .df-app .df-planning .df-task-node-inner[data-task-variant="candidate"]');
   });
 
   it("keeps completed task blocks free of full-card opacity and overlay masks", () => {
@@ -176,19 +176,15 @@ describe("TaskBlock shared component contract", () => {
     });
   });
 
-  it("keeps Planning view controls in the left sidebar with compact tree rows and no task left strip", () => {
+  it("reuses compact project rows and retires the old planning sidebar", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
-    expect(planning).toContain('className="df-planning-sidebar"');
-    expect(planning).not.toMatch(/<aside className="df-planning-sidebar"[\s\S]*df-planning-filter-menu[\s\S]*<\/aside>/);
-    expect(planning).toMatch(/<aside className="df-planning-sidebar"[\s\S]*df-planning-view-switch[\s\S]*<\/aside>/);
-    expect(css).toContain(".df-planning-sidebar");
-    expect(css).toContain("left: 0;");
-    expect(css).toContain(".df-app.mode-planning .df-task-block[data-task-variant=\"planning\"]");
+    expect(planning).not.toContain("df-planning-sidebar");
+    expect(css).not.toContain(".df-planning-sidebar");
     expect(css).toContain("--task-project-accent-size: 0px;");
     expect(css).toContain(".df-category-branch");
-    expect(css).toContain("margin-bottom: 28px;");
+    expect(css).toContain(".df-shelf-view .df-project-tasks");
   });
 
   it("keeps Planning filters as a top-right compact hover menu without search", () => {
@@ -197,7 +193,7 @@ describe("TaskBlock shared component contract", () => {
 
     expect(planning).toContain("effectiveFilterCategories");
     expect(planning).toContain("const filterOptionsByCategory");
-    expect(planning).toContain("df-planning-filter-corner");
+    expect(planning).toContain("createPortal(projectFilters, props.filterAnchor)");
     expect(planning).not.toContain("df-filter-search");
     expect(planning).not.toContain('key: "search"');
     expect(planning).not.toContain("filterQuery");
@@ -205,24 +201,14 @@ describe("TaskBlock shared component contract", () => {
     expect(planning).toContain("df-filter-flyout-panel");
     expect(planning).toContain("const activeFilterCategory = filterExpandedCategory");
     expect(planning).not.toContain("effectiveFilterCategories[0]?.key || null");
-    expect(css).toContain(".df-app.mode-planning .df-planning .df-planning-filter-corner");
-    expect(css).toContain("position: sticky;");
-    expect(css).toContain("top: 0;");
-    expect(css).toContain(".df-app.mode-planning .df-planning .df-filter-panel");
-    expect(css).toContain(".df-app.mode-planning .df-planning .df-filter-flyout-panel");
-    expect(css).toContain("font: 500 11px/1.25 var(--paper-sans);");
+    expect(css).toContain(".df-project-filter-anchor .df-filter-panel");
+    expect(css).toContain(".df-project-filter-anchor .df-filter-flyout-panel");
   });
 
-  it("keeps the final Planning repair layer in the last-loaded TaskBlock stylesheet", () => {
+  it("keeps alternative task views within the existing shelf width", () => {
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
-
-    expect(css).toContain("Planning repair layer");
-    expect(css).toContain(".df-app.mode-planning .df-planning .df-mindmap.no-root");
-    expect(css).toContain("display: grid;");
-    expect(css).toContain("grid-template-columns: var(--planning-sidebar-width, 86px) minmax(0, 1fr)");
-    expect(css).toContain("grid-column: 2 / 3;");
-    expect(css).toContain(".df-app .df-planning .df-view-btn span");
-    expect(css).toContain("transform: none;");
+    expect(css).toContain(".df-shelf-view :is(.df-kanban-board, .df-eisenhower-grid, .df-planning-list)");
+    expect(css).toContain(".df-shelf-scroll");
     expect(css).toContain(".df-kanban-card.is-drag-source");
   });
 
@@ -255,7 +241,7 @@ describe("TaskBlock shared component contract", () => {
     expect(css).toContain("@keyframes df-subtask-ai-orbit");
     expect(css).toContain("@keyframes df-subtask-ai-arrive");
     expect(css).toContain("@media (prefers-reduced-motion:reduce)");
-    expect(css).toContain(".df-app.mode-planning .df-subtask-list");
+    expect(css).toContain(".df-app .df-planning .df-subtask-list");
     expect(css).toContain("margin-left: 16px;");
     expect(css).toContain("width: min(420px, 100%)");
   });
@@ -323,15 +309,15 @@ describe("TaskBlock shared component contract", () => {
     expect(touchTarget).toContain("height: 44px;");
   });
 
-  it("keeps Planning tree drag UX stable with the always-visible tools sidebar", () => {
+  it("keeps project tree and timeline drag targets usable together", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
-    expect(planning).toContain('className="df-planning-sidebar"');
+    expect(planning).toContain("props.onTimelineDrop?.(task, point");
     expect(planning).toContain("clearPlanningDragState");
-    expect(css).toContain("background: var(--bg-app-soft, var(--surface-main));");
-    expect(css).toContain(".df-app.mode-planning .df-planning .df-task-node-inner > .df-task-block-accent");
-    expect(css).toContain(".df-app.mode-planning .df-planning .df-task-node-inner::before");
+    expect(css).toContain(".df-shelf-view .df-tree-wrap");
+    expect(css).toContain(".df-app .df-planning .df-task-node-inner > .df-task-block-accent");
+    expect(css).toContain(".df-app .df-planning .df-task-node-inner::before");
     expect(planning).toContain("<CandidateSubtaskItem");
     expect(planning).toContain("planningTree");
     expect(planning).toContain('className="df-candidate-subtasks df-plan-subtask-list"');
@@ -345,20 +331,11 @@ describe("TaskBlock shared component contract", () => {
     expect(css).toContain("cursor: grabbing;");
   });
 
-  it("keeps the portrait Planning drawer button fixed and the Execute N mark in place", () => {
-    const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
-    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
-
-    expect(planning).toContain("df-planning-sidebar-toggle");
-    expect(planning.match(/\{sidebarToggle\}/g)).toHaveLength(2);
-    expect(css).toContain("df-planning > .df-planning-sidebar-toggle { position: fixed;");
-    expect(css).toContain("padding: 0 0 calc(56px + env(safe-area-inset-bottom)); background: transparent;");
-    expect(css).toContain(".df-planning.is-portrait-sidebar-open .df-planning-sidebar { display: flex; box-shadow: 12px 0 28px");
-    expect(css).not.toContain("transform: translate(8px, 6px);");
-    expect(css).not.toContain("is-desktop-docked.mode-planning > .df-planning {\n    padding-top: 56px;");
-    expect(css).toContain("button.schedule-state .df-compact-mode-logo { transform: none; }");
-    expect(css).not.toContain("transform: translateX(80px);");
-    expect(css).not.toContain("transform: translateX(70px);");
+  it("keeps the portrait switcher and close action inside the candidate sheet", () => {
+    const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8");
+    expect(main).toContain('ref={shelfTitleRef}');
+    expect(main).toContain('className="df-mobile-candidate-close"');
+    expect(main).not.toContain("<WorkspaceModeTabs");
   });
 
   it("keeps compact landscape candidate switching at the lower left, separate from Dock N", () => {

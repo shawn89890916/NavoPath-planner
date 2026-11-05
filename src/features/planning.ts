@@ -4,41 +4,41 @@ import type { FeatureCopy } from "../productSite";
 export default {
   "zh": {
     "title": "把长期目标，拆解为可落实的行动步骤。",
-    "description": "将工作、学业与生活目标归纳为项目树，通过不同视图洞察全局进展，并挑选任务进入今日候选。",
+    "description": "将工作、学业与生活目标归纳为项目树，在时间轴旁切换任务视图和管理项目。",
     "benefits": [
       [
         "项目全貌，一览无余。",
         "在同一个项目下组织相关任务。展开节点即可看清前置事项、待办细节与已完成成果。"
       ],
       [
-        "一份数据源，四重视角自由切换。",
-        "树状图理清层级结构，列表方便快速检索，看板跟踪执行状态，四象限矩阵辅助决策优先级。"
+        "在同一区域切换任务视图。",
+        "项目管理保留层级结构。列表方便快速检索，看板跟踪状态，矩阵辅助权衡优先级。"
       ],
       [
         "明确今日推进重点。",
-        "将计划今日推进的任务加入“今日候选”，再前往执行页排入时间轴；未选中的任务仍保留在项目库中。"
+        "「今日候选」自动显示各项目的待安排任务。直接将任务拖入旁边的时间轴。"
       ]
     ],
     "faq": [
       [
         "日常应该如何选用不同的规划视图？",
-        "目标梳理首选树视图；待办检视推荐列表；多流程跟进使用看板；面对冲突时使用矩阵权衡轻重缓急。"
+        "整理目标时打开项目管理。浏览待办可用列表，跟进状态可用看板，权衡轻重缓急可用矩阵。"
       ],
       [
         "父任务与子任务在逻辑上有何区别？",
         "父任务代表阶段性成果，子任务承载具体落地步骤。子任务同样支持独立设定时间并排入时间轴。"
       ],
       [
-        "如何将项目中的任务加入今日候选？",
-        "点击任务卡片右侧的“加入今日候选”图标，进入执行页即可在候选列表中看到并安排入日程。"
+        "如何安排项目中的任务？",
+        "在左浮栏找到任务，直接拖入时间轴。竖屏也可以点「安排」选择时间。"
       ],
       [
         "切换规划视图会影响任务数据吗？",
-        "完全不会。四种视图完全共享同一底层数据，无论在何种视图下修改状态或内容，均实时全局同步。"
+        "完全不会。各视图共享同一底层数据，无论在何种视图下修改状态或内容，均实时全局同步。"
       ],
       [
-        "任务加入今日候选后，是否仍保留在原项目中？",
-        "仍在原项目中。“今日候选”仅代表当天的执行聚焦标记，不会改变任务在项目树中的归属关系。"
+        "排程后，任务是否仍保留在原项目中？",
+        "任务仍在原项目中。可以在项目管理中查看，或在「更多」里打开「显示已安排」。"
       ],
       [
         "在介绍页交互演示中所做的更改会被保存吗？",
@@ -49,41 +49,41 @@ export default {
   },
   "en": {
     "title": "Turn long-term goals into clear actions.",
-    "description": "Organize goals into structured projects, inspect progress across multiple views, and choose today's candidates.",
+    "description": "Organize goals into projects, switch task views, and manage projects alongside the timeline.",
     "benefits": [
       [
         "See the entire project structure.",
         "Group related tasks under common objectives to clearly see what is ahead and what is already done."
       ],
       [
-        "One set of tasks, four distinct views.",
-        "Tree view reveals hierarchy, List aids rapid review, Kanban tracks status, and Matrix clarifies priorities."
+        "Switch task views in one place.",
+        "Project management shows the hierarchy. List aids review, Kanban tracks status, and Matrix clarifies priorities."
       ],
       [
         "Select today's next actionable steps.",
-        "Send tasks to Today's Candidates for timeline scheduling, while remaining items stay organized in the project."
+        "Today's Candidates brings together tasks waiting for a time slot. Drag them straight onto the timeline."
       ]
     ],
     "faq": [
       [
         "Which planning view fits which workflow?",
-        "Use Tree to break down goals, List for daily scanning, Kanban to track workflow, and Matrix to weigh urgency."
+        "Use project management to break down goals, List for daily scanning, Kanban to track workflow, and Matrix to weigh urgency."
       ],
       [
         "How do parent tasks and subtasks relate?",
         "Tasks capture specific deliverables; subtasks break down procedural steps and can be scheduled independently."
       ],
       [
-        "How do I add a project task to Today's Candidates?",
-        "Click the candidate icon beside any task, then open the Execute page to schedule it on the timeline."
+        "How do I schedule a project task?",
+        "Find the task in the left panel and drag it onto the timeline. In portrait, you can also select Schedule and choose a time."
       ],
       [
         "Does switching views alter or duplicate tasks?",
         "No. All views reflect the exact same underlying task objects; edits synchronize across views instantly."
       ],
       [
-        "Does a task remain in its project after becoming a candidate?",
-        "Yes. Being a candidate simply marks intention for today; project hierarchy and context remain untouched."
+        "Does a scheduled task remain in its project?",
+        "Yes. Find it under Manage projects or turn on Show scheduled in the More menu."
       ],
       [
         "Are modifications made in the demo saved permanently?",

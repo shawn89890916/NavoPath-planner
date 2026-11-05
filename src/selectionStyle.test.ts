@@ -3,7 +3,6 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const main = readFileSync(resolve(__dirname, "main.tsx"), "utf8") + readFileSync(resolve(__dirname, "SettingsPanel.tsx"), "utf8") + readFileSync(resolve(__dirname, "WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "AiPanel.tsx"), "utf8");
-const planning = readFileSync(resolve(__dirname, "PlanningView.tsx"), "utf8");
 const primitives = readFileSync(resolve(__dirname, "ui-primitives.css"), "utf8");
 const appCss = readFileSync(resolve(__dirname, "app.css"), "utf8");
 const notificationCss = readFileSync(resolve(__dirname, "components/ProactiveNotificationCenter.css"), "utf8");
@@ -16,11 +15,11 @@ describe("shared option-list visual contract", () => {
     expect(primitives.match(/border-radius: var\(--ui-choice-radius\);/g)).toHaveLength(2);
   });
 
-  it("applies the shared option treatment to Settings and Planning", () => {
+  it("uses shared selection and popover controls for Settings and the shelf", () => {
     expect(main).toContain('className="df-settings-nav ui-choice-list ui-choice-list--motion-selection"');
     expect(main).toContain("df-settings-subtabs ui-choice-list ui-choice-list--inline ui-choice-list--motion-selection");
-    expect(planning).toContain('className="df-planning-view-switch ui-choice-list ui-choice-list--bare ui-choice-list--motion-selection"');
-    expect(planning).toContain("df-view-btn ui-choice-item");
+    expect(main).toContain('className="df-shelf-view-menu"');
+    expect(main).toContain('aria-pressed={shelfViewId === view.id}');
   });
 
   it("keeps light application surfaces on the timeline paper color", () => {

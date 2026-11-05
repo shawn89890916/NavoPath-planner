@@ -24,6 +24,7 @@ export default function MobileExecutionControls({ lang, count, title, time, conf
     panel?.querySelector<HTMLButtonElement>(".df-mobile-candidate-close")?.focus();
     const key = (event: KeyboardEvent) => {
       if (event.target instanceof Element && event.target.closest("details[open]")) return;
+      if (document.querySelector(".df-shelf-view-menu, .df-project-filter-anchor [aria-expanded=true]")) return;
       if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); onClose(); }
     };
     window.addEventListener("keydown", key, true);

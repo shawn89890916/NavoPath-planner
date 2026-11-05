@@ -9,6 +9,7 @@ export function AnchoredNarrowMenu({
   children,
   className,
   placement = "side",
+  focusOnOpen = false,
   label,
 }: {
   open: boolean;
@@ -17,6 +18,7 @@ export function AnchoredNarrowMenu({
   children: ReactNode;
   className?: string;
   placement?: "side" | "below";
+  focusOnOpen?: boolean;
   label: string;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -61,6 +63,10 @@ export function AnchoredNarrowMenu({
       document.removeEventListener("keydown", escape);
     };
   }, [anchorRef, onClose, open, placement]);
+
+  useLayoutEffect(() => {
+    if (open && focusOnOpen) menuRef.current?.querySelector<HTMLElement>('button[aria-pressed="true"], button')?.focus({ preventScroll: true });
+  }, [open, focusOnOpen]);
 
   if (!open || typeof document === "undefined") return null;
   return createPortal(

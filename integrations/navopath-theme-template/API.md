@@ -46,10 +46,10 @@ this value against the catalog and offers an update when it increases.
 - Register a `ui.addHeaderItem` for an active tool and declare its placement as
   `app-header`, `candidate-header`, or `planning-sidebar`. The two-argument
   form remains supported and defaults to `app-header`.
-- Use `ui.registerPlanningView(name, mount)` for a view mounted in the Planning
-  workspace. The plugin manifest icon is used for its sidebar entry; when it is
-  missing, the host uses the plugin name's first letter. Return cleanup from the
-  mount and unregister the view when the plugin unloads.
+- Use `ui.registerPlanningView(name, mount)` to add a view to the left panel's
+  title menu in 1.6 Alpha 1. The host mounts the view in the task region next to
+  the timeline. Return cleanup from the mount and unregister the view when the
+  plugin unloads.
 - Keep each plugin's primary action in one declared location. `registerView`
   remains available for general plugin tools and does not create a Planning
   entry.
@@ -114,8 +114,10 @@ that installed entry's methods. Do not treat trusted plugins as sandboxed code.
 ### Header icon contract
 
 Header contributions appear in their declared host location. The available
-placements are `app-header`, `candidate-header`, and `planning-sidebar`. The
-legacy `ui.addHeaderItem(name, mount)` signature defaults to `app-header`.
+placements are `app-header`, `candidate-header`, and `planning-sidebar`. In
+1.6 Alpha 1, the host places `planning-sidebar` contributions in the left
+panel's More menu. The legacy `ui.addHeaderItem(name, mount)` signature
+defaults to `app-header`.
 Use one icon-only button with the host-provided navopath-plugin-header-button
 class, a 20px outline icon with 1.8px strokes, a localized aria-label, and a
 concise title that can include current state. Let the host own button size,

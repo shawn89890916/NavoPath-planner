@@ -416,7 +416,6 @@ export function TaskCard({
   onSaveDueDate,
   onSaveRecurrence,
   onMetaUpdate,
-  onMoveToPlanning,
   onMarkUnfinished,
   onUnschedule,
   onToggleSubtask,
@@ -449,7 +448,6 @@ export function TaskCard({
   onSaveDueDate: (date: string) => void;
   onSaveRecurrence: (recurrence?: TaskRecurrence) => void;
   onMetaUpdate?: (patch: Partial<Task>) => void;
-  onMoveToPlanning?: () => void;
   onMarkUnfinished: () => void;
   onUnschedule: () => void;
   onToggleSubtask?: (subtaskId: string) => void;
@@ -717,7 +715,6 @@ export function TaskCard({
         </div>)}
 
         {isMoreOpen && <div className="df-candidate-more-toolbar" onClick={stop}>
-          {onMoveToPlanning && <button type="button" title={lang === "zh" ? "移回规划" : "Move back to Planning"} onClick={() => { onMoveToPlanning(); setOpenPanel(null); }}><UiReturnIcon size={18} /><span>{lang === "zh" ? "移回规划" : "Planning"}</span></button>}
           <button ref={priorityTriggerRef} type="button" title={lang === "zh" ? "设置优先级" : "Set priority"} aria-expanded={morePopover === "priority"} onClick={() => setMorePopover((current) => current === "priority" ? null : "priority")}><UiFlagIcon size={18} /><span>{lang === "zh" ? "优先级" : "Priority"}</span></button>
           <button ref={projectTriggerRef} type="button" title={t(lang, "drawer.assignProject")} aria-expanded={morePopover === "project"} onClick={() => setMorePopover((current) => current === "project" ? null : "project")}><UiFolderInputIcon size={18} /><span>{lang === "zh" ? "项目" : "Project"}</span></button>
           <button type="button" className={`danger-lite${deleteConfirm ? " is-confirming" : ""}`} title={deleteConfirm ? (lang === "zh" ? "再次点击确认删除" : "Click again to delete") : t(lang, "taskCard.delete")} onClick={() => { if (deleteConfirm) onDelete(); else setDeleteConfirm(true); }}><UiTrashIcon size={18} /><span>{deleteConfirm ? (lang === "zh" ? "确认删除" : "Confirm") : t(lang, "taskCard.delete")}</span></button>

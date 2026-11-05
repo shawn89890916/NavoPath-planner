@@ -747,15 +747,6 @@
   border: 0;
 }
 
-#root .df-app .ui-choice-list.ui-choice-list.ui-choice-list--bare {
-  height: auto;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
 #root .df-app .ui-choice-list.ui-choice-list > .ui-choice-item {
   min-height: 40px;
   padding: 8px 12px;

@@ -1,3 +1,5 @@
+import { APP_VERSION } from "./extensions/packages";
+import { formatVersionLabel } from "./versionLabel";
 import { Suspense, lazy } from "react";
 import type { AiMemory, CalendarFeedTokenMetadata, ExternalCalendarSource, Language, PlannerData, Settings, WidgetAction } from "./types";
 import { type CSSProperties, useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -365,7 +367,7 @@ function AccountMoreSection({ lang, onShowAbout }: { lang: Language; onShowAbout
         <button className="df-settings-about" onClick={onShowAbout}>
           <span className="df-settings-about-icon">i</span>
           <span>{t(lang, "settings.about")}</span>
-          <small>{lang === "zh" ? "将打开外部链接" : "Opens external link"}</small>
+          <small>{formatVersionLabel(APP_VERSION)}</small>
           <i aria-hidden="true">↗</i>
         </button>
         <a href={`https://navopath.com/privacy?lang=${lang}`} target="_blank" rel="noopener noreferrer">{lang === "zh" ? "隐私政策" : "Privacy Policy"}</a>
@@ -988,7 +990,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
             </SettingSection>}
 
-            {settingsTarget.category === "workflow" && <SettingSection anchor="metrics" title={lang === "zh" ? "指标" : "Metrics"} description={lang === "zh" ? "规划页指标视图的默认范围与分组。" : "Default range and grouping for the planning-page metrics view."}>
+            {settingsTarget.category === "workflow" && <SettingSection anchor="metrics" title={lang === "zh" ? "指标" : "Metrics"} description={lang === "zh" ? "顶栏指标插件的默认范围与分组。" : "Default range and grouping for the Metrics plugin in the top bar."}>
               <SettingRow title={lang === "zh" ? "指标插件状态" : "Metrics plugin status"} description={lang === "zh" ? "在设置 → 插件中管理指标插件；以下选项只调整显示方式。" : "Manage the Metrics plugin in Settings → Plugins. The options below adjust its display."} />
               <SettingRow
                 title={lang === "zh" ? "默认时间范围" : "Default time range"}
@@ -1331,7 +1333,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               </div>
         ) : (
           <div className="df-utility-body">
-            <strong>{t(lang, "settings.version")}</strong>
+            <strong>NavoPath {formatVersionLabel(APP_VERSION)}</strong>
             <p>{t(lang, "settings.aboutDesc")}</p>
             <small>{t(lang, "settings.lastUpdated")}</small>
             <Suspense fallback={null}><DesktopUpdateControl lang={lang} /></Suspense>

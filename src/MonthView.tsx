@@ -10,13 +10,14 @@ import { buildMonthTaskBuckets } from "./utils/monthTasks";
 
 export default function MonthView({ weeks, tasks, schedules, projects, selectedDate, today, lang, weekStartsOn,
   compact, dragging, dropDate, scrollRef, projectColor, isEvent, onSelectDate, onOpenDate, onEditTask,
-  onMoveTask, onAddTask, onDragActivate, onDragFinish, renderQuickAdd }: {
+  onMoveTask, onReturnTask, onAddTask, onDragActivate, onDragFinish, renderQuickAdd }: {
   weeks: string[][]; tasks: Task[]; schedules: Task[]; projects: Project[];
   selectedDate: string; today: string; lang: Language; weekStartsOn: 0 | 1; compact: boolean;
   dragging: boolean; dropDate: string; scrollRef: RefObject<HTMLDivElement | null>;
   projectColor: (task: Task) => string; isEvent: (task: Task) => boolean;
   onSelectDate: (date: string) => void; onOpenDate: (date: string, tasks: Task[]) => void;
   onEditTask: (task: Task) => void; onMoveTask: (task: Task, date: string) => void;
+  onReturnTask?: (task: Task, point: { x: number; y: number }) => void;
   onAddTask: (date: string) => void; onDragActivate: () => void; onDragFinish: () => void;
   renderQuickAdd: (date: string) => ReactNode;
 }) {
@@ -89,7 +90,7 @@ export default function MonthView({ weeks, tasks, schedules, projects, selectedD
                     if (isEvent(task)) return;
                     monthDrag.beginDrag(event, { taskId: task.id, requireHoldMs: 360, onActivate: onDragActivate,
                       onMove: (pointer) => { autoScrollAtDragEdge(pointer.x, pointer.y, [scrollRef.current]); setPointerDropDate(dateAtPointer(pointer)); },
-                      onDrop: (pointer) => { const date = dateAtPointer(pointer); if (date) onMoveTask(task, date); setPointerDropDate(""); onDragFinish(); },
+                      onDrop: (pointer) => { const date = dateAtPointer(pointer); if (date) onMoveTask(task, date); else onReturnTask?.(task, pointer); setPointerDropDate(""); onDragFinish(); },
                       onCancel: () => { setPointerDropDate(""); onDragFinish(); } });
                   }}
                   main={<TaskBlockContent title={task.title}>{task.scheduledStart ? <time>{task.scheduledStart}</time> : isEvent(task) ? <small>{lang === "zh" ? "事件" : "Event"}</small> : null}</TaskBlockContent>}
