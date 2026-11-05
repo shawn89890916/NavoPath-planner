@@ -5,7 +5,7 @@
 ### 1.6.3 Beta 14
 
 #### 修复
-- 短栏 Incomplete 默认继续；N 悬停静止，详情时随背景变暗。
+- 短栏 Incomplete 默认继续；详情遮罩中 Dock N 降亮。
 
 ### 1.6.3 Beta 13
 
@@ -462,7 +462,7 @@
 ### 1.6.3 Beta 14
 
 #### Fixed
-- Compact Incomplete continues; Dock N stays still on hover and dims with details.
+- Compact Incomplete continues; Dock N dims with overlays.
 
 ### 1.6.3 Beta 13
 
