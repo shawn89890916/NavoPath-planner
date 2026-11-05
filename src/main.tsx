@@ -4095,6 +4095,10 @@ if (cached?.data && cached?.settings) {
     });
   }
 
+  function hasLinkedSubtask(subtasks: Subtask[] | undefined, plannedTaskId: string): boolean {
+    return Boolean(subtasks?.some((node) => node.plannedTaskId === plannedTaskId || hasLinkedSubtask(node.subtasks, plannedTaskId)));
+  }
+
   function shelfTask(snapshot: PlannerData, taskId: string, subtask?: ShelfSubtask): Task | undefined {
     const task = snapshot.tasks.find((item) => item.id === taskId);
     if (!task || !subtask) return task;
@@ -4103,7 +4107,8 @@ if (cached?.data && cached?.settings) {
     const linked = snapshot.tasks.find((item) => item.id === node.plannedTaskId && item.parentTaskId === task.id);
     if (linked) return linked;
     if (!node.plannedTaskId) {
-      const legacy = snapshot.tasks.filter((item) => item.parentTaskId === task.id && item.title === node.title && !item.completed);
+      const legacy = snapshot.tasks.filter((item) => item.parentTaskId === task.id && item.title === node.title
+        && !item.completed && !hasLinkedSubtask(task.subtasks, item.id));
       if (legacy.length === 1) return legacy[0];
     }
     const now = workspaceNow().toISOString();
@@ -4116,17 +4121,22 @@ if (cached?.data && cached?.settings) {
     };
   }
 
-  function commitShelfSchedule(taskId: string, date: string, startTime: string, subtask?: ShelfSubtask): TimelineRecord | undefined {
+  function commitShelfSchedule(taskId: string, date: string, startTime: string, options: { subtask?: ShelfSubtask; moveLegacyAllDay?: boolean } = {}): TimelineRecord | undefined {
     const current = dataRef.current;
     if (!current) return;
+    const { subtask, moveLegacyAllDay } = options;
     const task = shelfTask(current, taskId, subtask);
-    if (!task || task.completed || hasActiveTaskSchedule(task) || hasRecurrenceOccurrenceOnDate(task, date)) return;
+    if (!task || task.completed) return;
+    const replaceLegacyAllDay = moveLegacyAllDay && isAllDayTask(task)
+      && (!task.executionStatus || task.executionStatus === "scheduled");
+    if ((!replaceLegacyAllDay && hasActiveTaskSchedule(task)) || hasRecurrenceOccurrenceOnDate(task, date)) return;
     const record = startTime ? createScheduledRecord(task, date, startTime, taskDuration(task)) : {
       id: uid("record"), taskId: task.id, scheduledDate: date, scheduledStart: "", scheduledEnd: "",
       executionStatus: "scheduled" as const, createdAt: workspaceNow().toISOString(),
     };
     const nextTask: Task = {
       ...task, plannedForDate: date, executionLane: undefined,
+      ...(replaceLegacyAllDay ? { scheduledDate: undefined, executionStatus: undefined } : {}),
       timelineRecords: [...(task.timelineRecords || []), record],
       updatedAt: record.createdAt,
     };
@@ -4154,7 +4164,7 @@ if (cached?.data && cached?.settings) {
     const task = shelfTask(current, parentTask.id, subtask);
     if (task) beginShelfDrag(event, task, "candidate", {
       allowCandidateReorder: false,
-      onSchedule: (date, startTime) => { commitShelfSchedule(parentTask.id, date, startTime, subtask); },
+      onSchedule: (date, startTime) => { commitShelfSchedule(parentTask.id, date, startTime, { subtask }); },
     });
   }
 
@@ -4182,7 +4192,7 @@ if (cached?.data && cached?.settings) {
     if (mobileExecution) { await startMobilePlacement(task.id, subtask); return; }
     const startTime = await dialog.prompt(lang === "zh" ? `安排到 ${timelineDate} 的几点？（HH:MM）` : `Schedule on ${timelineDate} at what time? (HH:MM)`, "09:00");
     if (startTime && /^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(startTime.trim())) {
-      commitShelfSchedule(task.id, timelineDate, startTime.trim(), subtask);
+      commitShelfSchedule(task.id, timelineDate, startTime.trim(), { subtask });
     }
   }
 
@@ -5599,7 +5609,7 @@ if (cached?.data && cached?.settings) {
       showToast(lang === "zh" ? "任务已变更，请重新安排" : "Task changed. Please schedule it again.");
       return;
     }
-    const record = commitShelfSchedule(session.taskId, choice.date, choice.startTime, session.subtask);
+    const record = commitShelfSchedule(session.taskId, choice.date, choice.startTime, { subtask: session.subtask });
     if (!record) { cancelMobilePlacement(true); return; }
     mobilePlacementRef.current = null;
     setMobilePlacement(null);
@@ -5975,7 +5985,7 @@ if (cached?.data && cached?.settings) {
     showToast(settings.clearSchedule ? t(lang, "toast.clearedSchedule") : settings.allDay ? t(lang, "toast.setToAllDay") : t(lang, "drawer.scheduledOnTimeline"));
   }
 
-  function scheduleTask(taskId: string, startTime: string) {
+  function scheduleTask(taskId: string, startTime: string, moveLegacyAllDay = false) {
     preserveTimelineViewportOnNextDataChange();
     const targetDate = dragTargetDateRef.current || timelineDate;
     if (taskId.startsWith("habit:")) {
@@ -6001,7 +6011,7 @@ if (cached?.data && cached?.settings) {
       dragTargetDateRef.current = "";
       return;
     }
-    if (!commitShelfSchedule(taskId, targetDate, startTime)) return;
+    if (!commitShelfSchedule(taskId, targetDate, startTime, { moveLegacyAllDay })) return;
     if ((settings?.onboardingVersion ?? 0) < 2 && (settings?.onboardingStep === "drag" || settings?.onboardingStep === "schedule")) {
       void saveSettings({ onboardingStep: "calendar" });
     }
@@ -6141,7 +6151,7 @@ if (cached?.data && cached?.settings) {
     const target = shelfTimelineDropTarget(point);
     if (!target) return false;
     const subtask = subtaskId ? { id: subtaskId, draftTaskId: uid("task") } : undefined;
-    commitShelfSchedule(task.id, target.date, target.startTime, subtask);
+    commitShelfSchedule(task.id, target.date, target.startTime, { subtask });
     return true;
   }
 
@@ -8237,7 +8247,7 @@ if (cached?.data && cached?.settings) {
         } else if (dropTime && dragTargetDateRef.current) {
           mobileDropCommitted = true;
           if (options.onSchedule) options.onSchedule(dragTargetDateRef.current, dropTime);
-          else scheduleTask(task.id, dropTime);
+          else scheduleTask(task.id, dropTime, source === "allDay");
         }
       }
       cleanup();
@@ -10240,7 +10250,7 @@ if (cached?.data && cached?.settings) {
                     projectColor={(task) => categories[task.category].color} isEvent={isEventDisplayTask}
                     onSelectDate={setSelectedDate} onOpenDate={openMonthDate} onMoveTask={moveTaskToMonthDate}
                     onReturnTask={(task, point) => {
-                      if (hasActiveTaskSchedule(task) && !isEventDisplayTask(task) &&
+                      if (!isEventDisplayTask(task) &&
                         document.elementFromPoint(point.x, point.y)?.closest(".df-candidate-panel")) returnTimelineTaskToCandidates(task.id);
                     }}
                     onEditTask={(task) => { if (!suppressBlockClickRef.current) openTaskEdit(task); }}
@@ -10387,9 +10397,9 @@ if (cached?.data && cached?.settings) {
                           });
                           const dailyTarget = settings.continuousCrossDayScroll !== false ? dailyTargetFromPointer(event.clientY) : target;
                           dragTargetDateRef.current = dailyTarget.date;
-                          scheduleTask(taskId, dailyTarget.startTime);
+                          scheduleTask(taskId, dailyTarget.startTime, drag?.source === "allDay");
                         } else {
-                          scheduleTask(taskId, hoverSlot || slotFromPointer(event.clientY, 0, event.clientX));
+                          scheduleTask(taskId, hoverSlot || slotFromPointer(event.clientY, 0, event.clientX), drag?.source === "allDay");
                         }
                       }
                     }} onScrollDragLeave={() => { setHoverSlot(""); dragTargetDateRef.current = ""; }}

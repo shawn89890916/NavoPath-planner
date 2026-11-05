@@ -13,6 +13,7 @@
 #### 修复
 
 - 修复关闭指标面板时把鼠标事件当作回调调用而触发崩溃。
+- 从时间轴拖回任务栏时保留已完成等历史记录。支持把全天任务拖入具体时段，同一父任务下的同名子任务可分别安排。
 
 ### 1.6.3
 
@@ -499,6 +500,7 @@
 #### Fixed
 
 - Fixed a crash when closing Metrics caused by treating the mouse event as a callback.
+- Dragging blocks back to Tasks preserves completed and other historical records. All-day tasks can be dragged into a time slot, and subtasks with the same name under one parent can be scheduled independently.
 
 ### 1.6.3
 

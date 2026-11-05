@@ -48,15 +48,20 @@ export function returnScheduledTaskToToday(
     task.id === taskOrRecordId || (task.timelineRecords || []).some((record) => record.id === taskOrRecordId)
   );
   if (!owner) return { data, action: "existing", taskId: taskOrRecordId };
+  const record = owner.timelineRecords?.find((item) => item.id === taskOrRecordId);
+  const legacyScheduled = owner.id === taskOrRecordId && !owner.completed && owner.scheduledDate
+    && (!owner.executionStatus || owner.executionStatus === "scheduled");
+  if (record ? record.executionStatus !== "scheduled" : !legacyScheduled) {
+    return { data, action: "existing", taskId: owner.id };
+  }
 
   return {
     data: {
       ...data,
       tasks: data.tasks.map((task) => {
         if (task.id !== owner.id) return task;
-        const isRecordReturn = (task.timelineRecords || []).some((record) => record.id === taskOrRecordId);
-        const nextTask = isRecordReturn ? {
-          ...task, timelineRecords: (task.timelineRecords || []).filter((record) => record.id !== taskOrRecordId),
+        const nextTask = record ? {
+          ...task, timelineRecords: (task.timelineRecords || []).filter((item) => item.id !== record.id),
         } : {
           ...task, scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, executionStatus: undefined,
         };

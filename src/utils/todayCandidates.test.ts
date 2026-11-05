@@ -65,6 +65,22 @@ describe("today candidate transformations", () => {
     const result = returnScheduledTaskToToday(source, "task-1", "2026-06-20", "now");
     expect(result.data.tasks[0]).toMatchObject({ scheduledDate: undefined, executionLane: undefined, timelineRecords: [record] });
   });
+
+  it.each(["completed", "returned_unfinished", "skipped", "cancelled"] as const)(
+    "preserves a %s block even when another block is scheduled",
+    (executionStatus) => {
+      const history = { id: "history", taskId: "task-1", scheduledDate: "2026-06-20", scheduledStart: "09:00", scheduledEnd: "09:30", executionStatus, createdAt: "now" };
+      const scheduled = { ...history, id: "next", executionStatus: "scheduled" as const };
+      const source = data([task({ timelineRecords: [history, scheduled] })]);
+      expect(returnScheduledTaskToToday(source, history.id, "2026-06-20").data).toBe(source);
+    },
+  );
+
+  it("does not clear a completed legacy block or treat an unscheduled task as a block", () => {
+    const source = data([task({ scheduledDate: "2026-06-20", completed: true }), task({ id: "unscheduled" })]);
+    expect(returnScheduledTaskToToday(source, "task-1", "2026-06-20").data).toBe(source);
+    expect(returnScheduledTaskToToday(source, "unscheduled", "2026-06-20").data).toBe(source);
+  });
 });
 
 

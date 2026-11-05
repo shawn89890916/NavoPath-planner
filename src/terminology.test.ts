@@ -14,8 +14,8 @@ describe("product terminology", () => {
   });
 
   it("returns the canonical label for both supported languages", () => {
-    expect(term("zh" as Language, "todayCandidates")).toBe("今日候选");
-    expect(term("en" as Language, "todayCandidates")).toBe("Today's Candidates");
+    expect(term("zh" as Language, "todayCandidates")).toBe("任务");
+    expect(term("en" as Language, "todayCandidates")).toBe("Tasks");
     expect(term("zh" as Language, "complete")).toBe("完成");
     expect(term("en" as Language, "done")).toBe("Done");
   });

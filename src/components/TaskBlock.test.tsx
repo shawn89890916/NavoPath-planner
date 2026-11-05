@@ -342,7 +342,7 @@ describe("TaskBlock shared component contract", () => {
     const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8");
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
-    expect(main).toContain('lang === "zh" ? "今日候选" : "Today\'s Candidates"');
+    expect(main).toContain('const shelfTitle = term(lang, "todayCandidates");');
     expect(css).toContain("@media (min-width: 761px) and (max-width: 980px) and (orientation: landscape)");
     expect(css).toContain("bottom: calc(68px + env(safe-area-inset-bottom));");
     expect(css).toContain("#root .df-app.mode-execute .df-compact-mode-logo { display: none; }");
