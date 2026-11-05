@@ -5,7 +5,7 @@
 ### 1.6.3 Beta 14
 
 #### 修复
-- 紧凑任务栏点击“Incomplete”后默认直接标记未完成并继续，将任务放回今日候选；N 图标在悬停、按下、焦点和设置打开时保持稳定，不再发亮。
+- 紧凑栏“Incomplete”默认“未完成·继续”；Dock N 始终静止无光。
 
 ### 1.6.3 Beta 13
 
@@ -462,7 +462,7 @@
 ### 1.6.3 Beta 14
 
 #### Fixed
-- In the compact task bar, Incomplete now marks the task incomplete and returns it to today's candidates directly. The N icon stays steady without glow on hover, press, focus, or while Settings is open.
+- Compact Incomplete defaults to “Incomplete · Continue”; Dock N stays static and unlit.
 
 ### 1.6.3 Beta 13
 
