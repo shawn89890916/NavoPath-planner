@@ -24672,7 +24672,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 @media (orientation: portrait) {
   #root .df-app.mode-planning > .df-header { display: none; }
-  #root .df-app.mode-planning .df-planning { position: relative; height: 100%; padding: 52px 0 calc(56px + env(safe-area-inset-bottom)); background: transparent; }
+  #root .df-app.mode-planning .df-planning { position: relative; height: 100%; padding: 0 0 calc(56px + env(safe-area-inset-bottom)); background: transparent; }
   #root .df-app.mode-planning .df-planning .df-planning-body { height: 100%; border: 0; border-radius: 0; background: transparent; }
   #root .df-app.mode-planning .df-planning .df-mindmap.no-root,
   #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-mindmap.no-root { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }

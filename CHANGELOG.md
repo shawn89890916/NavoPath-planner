@@ -2,6 +2,11 @@
 
 ## 2026-11-05
 
+### 1.6.3 Beta 13
+
+#### 修复
+- 竖屏规划页移除悬浮控制区下方的顶部留白，让规划内容延伸到顶端，不再留下类似顶栏的空带。
+
 ### 1.6.3 Beta 12
 
 #### 修复
@@ -448,6 +453,11 @@
 # NavoPath Changelog
 
 ## 2026-11-05
+
+### 1.6.3 Beta 13
+
+#### Fixed
+- Portrait Planning removes the top spacer below the floating controls so planning content extends to the top without a bar-like blank strip.
 
 ### 1.6.3 Beta 12
 
