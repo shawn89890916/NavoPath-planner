@@ -17,7 +17,6 @@ import { kanbanGroups, WORKFLOW_LABELS } from "./utils/productivity";
 import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch, type UiWorkflowStatus, type StateFilterValue } from "./utils/productivityModel";
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockVariant } from "./components/TaskBlock";
-import { useModalFocus } from "./useModalFocus";
 import { CloseButton, IconButton } from "./components/UiPrimitives";
 import { UiPanelLeftCloseIcon, UiPanelLeftOpenIcon } from "./components/UiIcons";
 import { TaskDragLayer } from "./unifiedDrag";
@@ -966,7 +965,6 @@ export default function PlanningView(props: {
   const [portraitLayout, setPortraitLayout] = useState(() => window.matchMedia("(orientation: portrait)").matches);
   const portraitViewport = window.matchMedia("(orientation: portrait)").matches;
   const sidebarRef = useRef<HTMLElement>(null);
-  useModalFocus(portraitLayout && portraitSidebarOpen, sidebarRef);
   useEffect(() => {
     const media = window.matchMedia("(orientation: portrait)");
     const update = () => {
@@ -1008,7 +1006,7 @@ export default function PlanningView(props: {
   };
 
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const planningViews = useMemo<ExtensionContribution[]>(() => {
+  const availablePlanningViews = useMemo<ExtensionContribution[]>(() => {
     if (!props.demo) return extensionSnapshot.views.filter((view) => view.planningView);
     const modes: NativePlanningViewMode[] = ["tree"];
     if (props.featureKanban) modes.push("kanban");
@@ -1017,6 +1015,52 @@ export default function PlanningView(props: {
     if (props.featureMetrics) modes.push("metrics");
     return modes.map((nativeMode) => ({ id: `demo:${nativeMode}`, owner: "demo", name: metricViewLabel(props.lang, nativeMode), mount: () => {}, nativeMode, planningView: true }));
   }, [extensionSnapshot.views, props.demo, props.featureKanban, props.featureQuadrant, props.featureList, props.featureMetrics, props.lang]);
+  const [planningViewOrder, setPlanningViewOrder] = useState<string[]>(() => {
+    try {
+      const saved = window.localStorage.getItem("navopath.planningViewOrder");
+      const parsed: unknown = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
+    } catch {
+      return [];
+    }
+  });
+  const planningViews = useMemo(() => {
+    const defaultOrder = new Map(["tree", "list", "kanban", "eisenhower", "metrics"].map((mode, index) => [mode, index]));
+    const savedOrder = new Map(planningViewOrder.map((id, index) => [id, index]));
+    const orderKey = (view: ExtensionContribution) => view.nativeMode ? `native:${view.nativeMode}` : `plugin:${view.owner}:${view.name}`;
+    return [...availablePlanningViews].sort((a, b) => {
+      const aSaved = savedOrder.get(orderKey(a));
+      const bSaved = savedOrder.get(orderKey(b));
+      if (aSaved !== undefined || bSaved !== undefined) {
+        if (aSaved === undefined) return 1;
+        if (bSaved === undefined) return -1;
+        if (aSaved !== bSaved) return aSaved - bSaved;
+      }
+      const aDefault = a.nativeMode ? defaultOrder.get(a.nativeMode) : undefined;
+      const bDefault = b.nativeMode ? defaultOrder.get(b.nativeMode) : undefined;
+      if (aDefault !== undefined || bDefault !== undefined) {
+        if (aDefault === undefined) return 1;
+        if (bDefault === undefined) return -1;
+        if (aDefault !== bDefault) return aDefault - bDefault;
+      }
+      return availablePlanningViews.indexOf(a) - availablePlanningViews.indexOf(b);
+    });
+  }, [availablePlanningViews, planningViewOrder]);
+  const draggedPlanningViewId = useRef<string | null>(null);
+  const reorderPlanningViews = (targetId: string) => {
+    const sourceId = draggedPlanningViewId.current;
+    draggedPlanningViewId.current = null;
+    if (!sourceId || sourceId === targetId) return;
+    const next = [...planningViews];
+    const sourceIndex = next.findIndex((view) => view.id === sourceId);
+    const targetIndex = next.findIndex((view) => view.id === targetId);
+    if (sourceIndex < 0 || targetIndex < 0) return;
+    const [moved] = next.splice(sourceIndex, 1);
+    next.splice(targetIndex, 0, moved);
+    const order = next.map((view) => view.nativeMode ? `native:${view.nativeMode}` : `plugin:${view.owner}:${view.name}`);
+    setPlanningViewOrder(order);
+    try { window.localStorage.setItem("navopath.planningViewOrder", JSON.stringify(order)); } catch { /* Keep the current-session order if storage is unavailable. */ }
+  };
   const [selectedPlanningViewId, setSelectedPlanningViewId] = useState("");
   const planningViewIds = useMemo(() => planningViews.map((view) => view.id), [planningViews]);
   const selectedPlanningView = planningViews.find((view) => view.id === selectedPlanningViewId);
@@ -2289,15 +2333,14 @@ export default function PlanningView(props: {
     <main className={`df-planning${props.compact ? " compact-layout" : ""}${sidebarCollapsed ? " is-sidebar-collapsed" : ""}${portraitSidebarOpen ? " is-portrait-sidebar-open" : ""}`} style={{ "--planning-sidebar-width": `${planningSidebarWidth}px` } as React.CSSProperties}>
       {dialog.host}
       {sidebarToggle}
-      {portraitLayout && portraitSidebarOpen && <button type="button" className="df-planning-sidebar-backdrop" tabIndex={-1} aria-label={props.lang === "zh" ? "关闭规划侧栏" : "Close planning sidebar"} onClick={() => setPortraitSidebarOpen(false)} />}
       <div className="df-planning-body">
         <section className="df-mindmap no-root">
           <aside className="df-planning-sidebar" ref={sidebarRef} tabIndex={-1} onKeyDown={event => { if (portraitLayout && event.key === "Escape") { event.stopPropagation(); setPortraitSidebarOpen(false); } }} aria-label={props.lang === "zh" ? "\u89c4\u5212\u5de5\u5177" : "Planning tools"}>
             {sidebarToggle}
             <div className="df-planning-view-switch ui-choice-list ui-choice-list--bare ui-choice-list--motion-selection">
-              {planningViews.length > 0 && <SelectionIndicator activeKey={`${selectedPlanningViewId}:${props.lang}:${planningViews.length}`} />}
+              {planningViews.length > 0 && <SelectionIndicator activeKey={`${selectedPlanningViewId}:${props.lang}:${planningViews.map((view) => view.id).join(",")}:${sidebarCollapsed}:${planningSidebarWidth}`} />}
               {planningViews.map((view) => (
-                <button type="button" key={view.id} className={`df-view-btn ui-choice-item${selectedPlanningViewId === view.id ? " active" : ""}`} aria-label={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name} aria-pressed={selectedPlanningViewId === view.id} onClick={() => { changePlanningView(view.id); setPortraitSidebarOpen(false); }} title={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}>
+                <button type="button" key={view.id} className={`df-view-btn ui-choice-item${selectedPlanningViewId === view.id ? " active" : ""}`} aria-label={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name} aria-pressed={selectedPlanningViewId === view.id} draggable onDragStart={(event) => { draggedPlanningViewId.current = view.id; event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", view.id); }} onDragOver={(event) => { if (draggedPlanningViewId.current) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; } }} onDrop={(event) => { event.preventDefault(); reorderPlanningViews(view.id); }} onDragEnd={() => { draggedPlanningViewId.current = null; }} onClick={() => { changePlanningView(view.id); setPortraitSidebarOpen(false); }} title={view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}>
                   {view.nativeMode ? <PlanningModeIcon mode={view.nativeMode} /> : view.iconUrl ? <img className="df-planning-view-icon" src={view.iconUrl} alt="" aria-hidden="true" /> : <span className="df-planning-view-initial" aria-hidden="true">{Array.from(view.name.trim())[0]?.toLocaleUpperCase() || "P"}</span>}
                   <span>{view.nativeMode ? metricViewLabel(props.lang, view.nativeMode) : view.name}</span>
                 </button>
@@ -2545,8 +2588,8 @@ export default function PlanningView(props: {
               )}
             </div>
 
-          <div className="df-tree-wrap" inert={portraitLayout && portraitSidebarOpen}>
-            {viewMode === "plugin" && selectedPlanningView && <div className="df-planning-plugin-view"><ExtensionMount contribution={selectedPlanningView} /></div>}
+            <div className="df-tree-wrap">
+              {viewMode === "plugin" && selectedPlanningView && <div className="df-planning-plugin-view"><ExtensionMount contribution={selectedPlanningView} /></div>}
             {!selectedPlanningView && <div className="df-planning-no-view" role="status">{extensionSnapshot.safeMode ? (props.lang === "zh" ? "受限模式已暂停所有插件视图。关闭受限模式以继续规划。" : "Restricted mode has paused all plugin views. Turn it off to continue planning.") : (props.lang === "zh" ? "暂无可用规划视图。请在设置中的插件市场安装并启用一个视图插件。" : "No planning views are available. Install and enable a view plugin from the plugin market.")}</div>}
             {showLongRangeGuide && viewMode === "tree" && (
               <aside className="df-planning-longrange-guide" role="note">

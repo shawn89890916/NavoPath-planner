@@ -2,6 +2,12 @@
 
 ## 2026-11-05
 
+### 1.6.3 Beta 10
+
+#### 改进
+- 规划侧栏打开时不再遮暗或锁住主内容；视图选中状态沿用通用选择样式，视图支持拖动排序并记住顺序，Tree 默认排在第一位。
+- 横屏展开侧栏时，选中状态铺满整行，图标与文字保持左对齐；收起按钮在展开和收起时保持原位，左侧视图选项靠近按钮一些。
+
 ### 1.6.3 Beta 9
 
 #### 修复
@@ -431,6 +437,12 @@
 # NavoPath Changelog
 
 ## 2026-11-05
+
+### 1.6.3 Beta 10
+
+### Improved
+- Opening the Planning sidebar no longer dims or blocks the main content. View selection uses the shared selection style, views can be dragged to reorder with the order saved, and Tree is first by default.
+- In landscape, the selected state fills the expanded sidebar row and labels stay left aligned; the collapse button remains in place, with view options positioned closer to it.
 
 ### 1.6.3 Beta 9
 
