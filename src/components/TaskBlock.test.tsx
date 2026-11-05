@@ -352,8 +352,8 @@ describe("TaskBlock shared component contract", () => {
     expect(planning).toContain("df-planning-sidebar-toggle");
     expect(planning.match(/\{sidebarToggle\}/g)).toHaveLength(2);
     expect(css).toContain("df-planning > .df-planning-sidebar-toggle { position: fixed;");
-    expect(css).toContain("padding: 52px 0 calc(56px + env(safe-area-inset-bottom)); background: transparent;");
-    expect(css).toContain("is-portrait-sidebar-open .df-planning-sidebar { display: flex; }");
+    expect(css).toContain("padding: 0 0 calc(56px + env(safe-area-inset-bottom)); background: transparent;");
+    expect(css).toContain(".df-planning.is-portrait-sidebar-open .df-planning-sidebar { display: flex; box-shadow: 12px 0 28px");
     expect(css).not.toContain("transform: translate(8px, 6px);");
     expect(css).not.toContain("is-desktop-docked.mode-planning > .df-planning {\n    padding-top: 56px;");
     expect(css).toContain("button.schedule-state .df-compact-mode-logo { transform: none; }");
