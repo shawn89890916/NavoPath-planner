@@ -2,6 +2,11 @@
 
 ## 2026-11-05
 
+### 1.6.3 Beta 12
+
+#### 修复
+- 竖屏规划侧栏展开时，在主内容后显示轻微阴影，避免卡片与抽屉边缘生硬交叠；阴影不拦截页面操作。
+
 ### 1.6.3 Beta 11
 
 #### 改进
@@ -443,6 +448,11 @@
 # NavoPath Changelog
 
 ## 2026-11-05
+
+### 1.6.3 Beta 12
+
+#### Fixed
+- Portrait Planning now adds a soft shadow behind the open sidebar so cards recede instead of meeting the drawer edge abruptly; the shadow does not block page interaction.
 
 ### 1.6.3 Beta 11
 

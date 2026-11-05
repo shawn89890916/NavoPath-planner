@@ -2333,6 +2333,7 @@ export default function PlanningView(props: {
     <main className={`df-planning${props.compact ? " compact-layout" : ""}${sidebarCollapsed ? " is-sidebar-collapsed" : ""}${portraitSidebarOpen ? " is-portrait-sidebar-open" : ""}`} style={{ "--planning-sidebar-width": `${planningSidebarWidth}px` } as React.CSSProperties}>
       {dialog.host}
       {sidebarToggle}
+      <div className="df-planning-sidebar-scrim" aria-hidden="true" />
       <div className="df-planning-body">
         <section className="df-mindmap no-root">
           <aside className="df-planning-sidebar" ref={sidebarRef} tabIndex={-1} onKeyDown={event => { if (portraitLayout && event.key === "Escape") { event.stopPropagation(); setPortraitSidebarOpen(false); } }} aria-label={props.lang === "zh" ? "\u89c4\u5212\u5de5\u5177" : "Planning tools"}>

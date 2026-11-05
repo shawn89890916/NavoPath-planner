@@ -24685,8 +24685,18 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     padding: 12px; border-right: 1px solid var(--paper-rule); border-bottom: 0;
     background: var(--surface-main); z-index: 90; overflow-y: auto; pointer-events: auto;
   }
+  #root .df-app.mode-planning .df-planning-sidebar-scrim {
+    position: fixed;
+    inset: 52px 0 calc(56px + env(safe-area-inset-bottom));
+    z-index: 80;
+    display: none;
+    background: color-mix(in srgb, var(--text-main) 12%, transparent);
+    box-shadow: inset 14px 0 24px color-mix(in srgb, var(--text-main) 10%, transparent);
+    pointer-events: none;
+  }
+  #root .df-app.mode-planning .df-planning.is-portrait-sidebar-open .df-planning-sidebar-scrim { display: block; }
   #root .df-app.mode-planning .df-planning.is-sidebar-collapsed .df-planning-sidebar { display: none; }
-  #root .df-app.mode-planning .df-planning.is-portrait-sidebar-open .df-planning-sidebar { display: flex; }
+  #root .df-app.mode-planning .df-planning.is-portrait-sidebar-open .df-planning-sidebar { display: flex; box-shadow: 12px 0 28px color-mix(in srgb, var(--text-main) 12%, transparent); }
   #root .df-app.mode-planning .df-planning-sidebar-resizer { display: none; }
   #root .df-app.mode-planning .df-planning .df-planning-view-switch { position: relative; inset: auto; display: flex; flex-direction: column; align-items: stretch; width: 100%; height: auto; padding: 0; border: 0; gap: 4px; background: transparent; }
   #root .df-app.mode-planning .df-planning .df-view-btn { display: grid; grid-template-columns: 20px minmax(0, 1fr); justify-items: start; align-items: center; gap: 12px; width: 100%; height: 44px; min-height: 44px; padding: 0 12px; border: 0; font: 600 14px/1.4 var(--paper-sans); text-align: left; }
