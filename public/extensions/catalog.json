@@ -10,8 +10,8 @@
         "name": "Class Timetable",
         "description": "Import weekly classes and self-study as timeline backgrounds; schedule tasks over classes.",
         "author": "Community",
-        "version": "1.0.0",
-        "minAppVersion": "1.6.2-beta.1",
+        "version": "1.0.1",
+        "minAppVersion": "1.5.2-beta.2",
         "platforms": [
           "desktop",
           "web",
@@ -21,7 +21,7 @@
         "license": "MIT"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/class-timetable.navopackage.json",
-      "sha256": "3748e7398cd7901b7d6586b954d2b5bc4de83d87def482ef1332867ca730026c"
+      "sha256": "97d119196d263ee8277e039890939b29e2d5ed7c1ba3c28f11f1cca99ccf4a9b"
     },
     {
       "manifest": {

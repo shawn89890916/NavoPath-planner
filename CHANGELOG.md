@@ -136,6 +136,9 @@
 
 ### 同日正式版 · 1.6.2
 
+### 改进
+- 课表插件 1.0.1 可在官方 1.6.2 独立安装，启动前检查背景接口，保留已有课表和任务。
+
 ### 新增
 - 社区课表插件支持课程与自习导入、每周重复及可覆盖的背景，停用保留课表。
 - NavoPath 连接器可安装并启用经校验的社区插件，插件在账户客户端自动启动。
@@ -609,6 +612,9 @@
 - A wider Dock edge hit area makes the tab easier to reopen. Portrait mode keeps both Execute and Planning visible in the bottom bar, matching landscape mode.
 
 ### Same-day stable release · 1.6.2
+
+### Improved
+- Timetable 1.0.1 installs independently on official 1.6.2, checks background support before startup, and retains existing planner data.
 
 ### Added
 - The community timetable plugin imports weekly classes and self-study as overlapping backgrounds; disabling retains the timetable.
