@@ -2,6 +2,12 @@
 
 ## 2026-11-05
 
+### 1.6.3 Beta 11
+
+#### 改进
+- 竖屏规划页移除顶栏，内容从悬浮侧栏与筛选按钮下方开始；设置打开时 Dock N 不再突出显示，悬停提示 Undock 且位置保持稳定。
+- 横屏任务编辑中的子任务行改为紧凑清晰的输入布局，触屏下勾选和添加子任务的操作区域保持易用。
+
 ### 1.6.3 Beta 10
 
 #### 改进
@@ -437,6 +443,12 @@
 # NavoPath Changelog
 
 ## 2026-11-05
+
+### 1.6.3 Beta 11
+
+#### Improved
+- Portrait Planning removes the top bar, with content starting below the floating sidebar and filter buttons. The Dock N stays subdued while Settings is open, shows an Undock tooltip on hover, and keeps its position steady.
+- Subtask rows in the landscape task editor use a clearer, more compact input layout, with touch sized controls for completion and adding child tasks.
 
 ### 1.6.3 Beta 10
 

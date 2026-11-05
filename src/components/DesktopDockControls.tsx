@@ -76,6 +76,7 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError,
       className={`df-brand-ai-button df-brand-dock-trigger${side ? " is-docked" : ""}`}
       type="button"
       aria-label={label}
+      title={side ? (lang === "zh" ? "取消 Dock" : "Undock") : (lang === "zh" ? "选择贴边方向" : "Choose a Dock side")}
       aria-pressed={Boolean(side)}
       aria-expanded={choosing}
       disabled={disabled || busy}

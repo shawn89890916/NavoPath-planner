@@ -9846,10 +9846,30 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   grid-template-columns:16px minmax(0,1fr) 34px;
   gap:8px;
   align-items:center;
+  min-height:48px;
+  padding:6px 10px;
 }
 .df-app .df-detail-subtasks-new .df-task-checkbox-wrap { width:16px; height:20px; }
 .df-app .df-detail-subtasks-new .df-task-checkbox-wrap .df-block-check { left:50%; top:50%; transform:translate(-50%,-50%); }
-.df-app .df-detail-subtasks-new .df-subtask-title-input { min-width:0; min-height:20px; padding:0; line-height:20px; }
+#root .df-app .df-drawer .df-detail-subtasks-new .df-subtask-title-input {
+  width:100%; min-width:0; min-height:34px; padding:4px 0;
+  border:0; border-radius:0; background:transparent; box-shadow:none;
+  color:var(--text-main); font:500 14px/1.45 var(--paper-sans);
+}
+#root .df-app .df-drawer .df-detail-subtasks-new .df-subtask-title-input:hover,
+#root .df-app .df-drawer .df-detail-subtasks-new .df-subtask-title-input:focus {
+  border:0; border-radius:0; background:transparent; box-shadow:none;
+}
+#root .df-app .df-drawer .df-detail-subtasks-new .df-subtask-title-input:focus-visible {
+  outline:2px solid var(--accent-active); outline-offset:2px;
+}
+#root .df-app .df-detail-subtasks-new .df-subtask-add-child {
+  width:34px; min-width:34px; height:34px; min-height:34px;
+  border:0; border-radius:var(--radius-control); background:transparent;
+}
+#root .df-app .df-detail-subtasks-new .df-subtask-add-child:hover {
+  border:0; background:var(--paper-note);
+}
 .df-app .df-subtask-row-new.completed .df-subtask-title-input { text-decoration:line-through; color:var(--text-muted); }
 .df-app .df-subtask-tree-item.ai-generated {
   animation:df-subtask-ai-arrive 360ms cubic-bezier(.2,.75,.25,1) both;
@@ -9866,6 +9886,10 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-ai-subtask-preview li > small { color:var(--text-faint); font:600 10px/1 var(--paper-mono); }
 @media (pointer:coarse) {
   .df-app .df-detail-subtask-tools .df-detail-add-btn { width:44px; height:44px; min-width:44px; } .df-calendar-generate { min-height:44px; } .df-calendar-actions button { min-height:44px; } .df-subtask-add-child { flex-basis:44px; width:44px; height:44px; }
+  #root .df-app .df-detail-subtasks-new .df-subtask-row-new { grid-template-columns:44px minmax(0,1fr) 44px; min-height:56px; gap:8px; padding:6px 8px; }
+  #root .df-app .df-detail-subtasks-new .df-task-checkbox-wrap { width:44px; height:44px; }
+  #root .df-app .df-detail-subtasks-new .df-subtask-title-input { min-height:44px; }
+  #root .df-app .df-detail-subtasks-new .df-subtask-add-child { width:44px; min-width:44px; height:44px; min-height:44px; }
 }
 @media (prefers-reduced-motion:reduce) {
   .df-app .df-detail-subtask-tools .df-detail-ai-subtasks.loading svg { animation:none; opacity:.64; }
@@ -24647,6 +24671,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   height: 20px;
 }
 @media (orientation: portrait) {
+  #root .df-app.mode-planning > .df-header { display: none; }
   #root .df-app.mode-planning .df-planning { position: relative; height: 100%; padding: 52px 0 calc(56px + env(safe-area-inset-bottom)); background: transparent; }
   #root .df-app.mode-planning .df-planning .df-planning-body { height: 100%; border: 0; border-radius: 0; background: transparent; }
   #root .df-app.mode-planning .df-planning .df-mindmap.no-root,
@@ -24715,6 +24740,19 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     background: transparent;
     box-shadow: none;
   }
+}
+#root .df-app .df-brand-dock-trigger:is(:hover, :active) {
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+#root .df-app.is-settings-open .df-brand-dock-trigger,
+#root .df-app.is-settings-open .df-brand-dock-trigger:is(:hover, :active) {
+  opacity: .56;
+  transform: none;
+  filter: none;
+  box-shadow: none;
 }
 #root .df-app.mode-planning .df-planning .df-project-node-actions .df-tree-icon-button {
   border: 0;
