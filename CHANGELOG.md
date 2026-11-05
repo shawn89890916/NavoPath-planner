@@ -2,25 +2,17 @@
 
 ## 2026-11-05
 
-### 1.6.4 Beta 2
+### 1.7.0
 
 #### 新增
 
-- 左浮栏正式更名为「任务 / Tasks」。所有官方插件展开内容统一使用右侧面板；Daily Overview 改为侧栏摘要布局。
+- 将原「今日候选」区域更名为「任务 / Tasks」，并把列表、矩阵、看板、项目管理与任务排程整合到同一左侧面板，切换视图时保留时间轴位置。
+- 指标、Daily Overview、Quick Capture、Pomodoro、Weather 和日程模板统一在右侧面板展开；Daily Overview 更新为日期、任务摘要与分组列表布局。
+- 官方任务视图可直接排入时间轴；从时间轴拖回任务面板时只取消当前时间块；全局 AI 排程覆盖所有未完成且未安排的可排程任务。
 
 #### 修复
 
-- 修复关闭指标面板时将鼠标事件当作关闭回调调用而导致的启动前错误。
-
-### 1.6.4 Beta 1
-
-#### 新增
-
-- 将今日候选、列表、矩阵、看板和项目管理合并到左浮栏，切换时保留时间轴。指标插件从顶栏打开右侧面板。
-
-#### 改进
-
-- 今日候选默认展示所有项目的待安排任务，可直接拖入时间轴。拖回左浮栏只取消当前时间块。全局 AI 排程覆盖所有待安排任务。
+- 修复关闭指标面板时把鼠标事件当作回调调用而触发崩溃。
 
 ### 1.6.3
 
@@ -496,15 +488,17 @@
 
 ## 2026-11-05
 
-### 1.6.4 Beta 1
+### 1.7.0
 
 #### Added
 
-- Today's Candidates, List, Matrix, Kanban, and project management share the left panel and keep the timeline in place. The Metrics plugin opens a right-side panel from the top bar.
+- Renamed the former candidate area to “Tasks” and brought List, Matrix, Kanban, project management and task scheduling into one left panel while preserving the timeline position when switching views.
+- Metrics, Daily Overview, Quick Capture, Pomodoro, Weather and Schedule Templates now expand in the shared right-side panel. Daily Overview has a cleaner date, summary and grouped-list layout.
+- Official task views can schedule directly onto the timeline; dragging a block back removes only that block; global AI scheduling covers all schedulable tasks that are unfinished and unscheduled.
 
-#### Improved
+#### Fixed
 
-- Today's Candidates shows unscheduled tasks from every project and supports dragging directly onto the timeline. Dragging back removes only the selected time block. Global AI scheduling covers all tasks waiting to be scheduled.
+- Fixed a crash when closing Metrics caused by treating the mouse event as a callback.
 
 ### 1.6.3
 
