@@ -2,6 +2,11 @@
 
 ## 2026-11-05
 
+### 1.6.3 Beta 15
+
+#### 修复
+- 竖屏规划页侧栏与背景遮罩延伸到内容顶端，顶部浮动按钮保持原位。
+
 ### 1.6.3 Beta 14
 
 #### 修复
@@ -459,6 +464,11 @@
 # NavoPath Changelog
 
 ## 2026-11-05
+
+### 1.6.3 Beta 15
+
+#### Fixed
+- The portrait Planning sidebar and backdrop now extend to the top of the content while the floating controls stay in place.
 
 ### 1.6.3 Beta 14
 
