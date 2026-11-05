@@ -35,6 +35,11 @@ jobs:
           node scripts/prepare-desktop-release.mjs --check-policy
           if ($LASTEXITCODE -ne 0) { throw "Desktop release policy validation failed" }
           $version = node -p "require('./package.json').version"
+          $isBeta = $version -match '-beta\.\d+$'
+          $approvedStableVersions = @("1.6.0", "1.6.3")
+          if (-not $isBeta -and $version -notin $approvedStableVersions) {
+            throw "Stable release $version is not in the explicitly approved version list: $($approvedStableVersions -join ', ')"
+          }
           if ($env:GITHUB_REF_TYPE -eq "tag" -and $env:GITHUB_REF_NAME -ne "v$version") {
             throw "Release tag must match package.json version v$version"
           }
