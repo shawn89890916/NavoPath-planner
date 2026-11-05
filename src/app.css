@@ -7431,7 +7431,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .dayflow-icon img {
   width: 36px;
   height: 36px; object-fit: contain; display: block; border-radius: 0; box-shadow: none;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.18));
+  filter: none;
 }
 .dayflow-icon.compact img {
   width: 32px;
@@ -12071,7 +12071,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 }
 /* Browser comment fixes: planning rows, dark logo, and app-native dialogs. */
 .df-app.theme-dark .dayflow-icon img {
-  filter: invert(1) brightness(1.08) contrast(.96);
+  filter: invert(1) contrast(.96);
 }
 .df-app.mode-planning.theme-dark .df-plan-project-node {
   min-height: 36px;
@@ -24753,13 +24753,23 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 #root .df-app .df-brand-dock-trigger:is(:hover, :active) {
   background: transparent;
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+  opacity: 1;
+}
+#root .df-app .df-brand-dock-trigger:focus-visible {
+  outline: 1px solid var(--border-focus);
+  outline-offset: 2px;
   box-shadow: none;
   filter: none;
   transform: none;
 }
 #root .df-app.is-settings-open .df-brand-dock-trigger,
-#root .df-app.is-settings-open .df-brand-dock-trigger:is(:hover, :active) {
-  opacity: .56;
+#root .df-app.is-settings-open .df-brand-dock-trigger:is(:hover, :focus-visible, :active) {
+  opacity: 1;
   transform: none;
   filter: none;
   box-shadow: none;

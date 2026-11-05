@@ -12987,7 +12987,7 @@ function EditDrawer(props: {
       return (
         <>
           {dialog.host}
-          <Suspense fallback={null}><MobileTaskSummary engagementEnabled={props.engagementEnabled} lang={props.lang} task={props.task} form={f} setForm={props.setForm} projects={props.projects} record={activeRecord} occurrence={activeOccurrence} today={props.today} onClose={props.onClose} onDelete={props.onDelete} onMore={showMore} onIncomplete={() => { props.onShowMore?.(); setIncompleteMenuOpen(true); }} onUpdate={props.onTaskUpdate} /></Suspense>
+          <Suspense fallback={null}><MobileTaskSummary engagementEnabled={props.engagementEnabled} lang={props.lang} task={props.task} form={f} setForm={props.setForm} projects={props.projects} record={activeRecord} occurrence={activeOccurrence} today={props.today} onClose={props.onClose} onDelete={props.onDelete} onMore={showMore} onIncomplete={() => chooseIncompleteOutcome("unfinished-return")} onUpdate={props.onTaskUpdate} /></Suspense>
         </>
       );
     }
