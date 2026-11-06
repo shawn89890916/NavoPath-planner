@@ -2,6 +2,13 @@
 
 ## 2026-11-06
 
+### 1.7.0 Beta 8
+
+#### 改进
+
+- 紧凑窗口的插件快捷栏居中显示，默认按安装顺序补齐 5 个快捷位，可在插件设置中调整为 4 到 7 个。
+- 可在底栏和「更多」之间拖动插件。快捷栏已满时，拖到某个快捷项上即可将它换回「更多」。
+
 ### 1.7.0 Beta 7
 
 #### 改进
@@ -520,6 +527,13 @@
 # NavoPath Changelog
 
 ## 2026-11-06
+
+### 1.7.0 Beta 8
+
+#### Improved
+
+- Compact windows center plugin shortcuts and fill five dock slots by installation order by default. Plugin settings let you choose four to seven slots.
+- Drag plugins between the dock and More. When the dock is full, drop onto a shortcut to move that shortcut back to More.
 
 ### 1.7.0 Beta 7
 

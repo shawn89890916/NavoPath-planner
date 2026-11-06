@@ -4,7 +4,8 @@ import { SettingActionButton, SettingColorInput, SettingDescription, SettingNumb
 import { ActionDisclosure, Button, CloseButton, Modal } from "../components/UiPrimitives";
 import { UiSearchIcon } from "../components/UiIcons";
 import { extensionService } from "./service";
-import type { CatalogEntry, ExtensionKind, ThemeOption } from "./types";
+import type { CatalogEntry, CompactPluginPlacement, ExtensionKind, ThemeOption } from "./types";
+import { COMPACT_DOCK_LIMITS, DEFAULT_COMPACT_DOCK_LIMIT } from "./compactDock";
 import { ExtensionMount } from "./ExtensionMount";
 import "./ExtensionSettings.css";
 
@@ -110,8 +111,15 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
         <SettingRow title={text("自动安装更新", "Install updates automatically")} description={text("关闭时，由你决定何时升级。", "When off, you choose when to upgrade.")} control={<SettingToggle checked={preferences.autoUpdate} disabled={busy} ariaLabel={text("自动安装更新", "Install updates automatically")} onChange={(autoUpdate) => void run(() => extensionService.setPreference({ autoUpdate }))} />} />
         <SettingRow title={text("扩展来源", "Extension sources")} description={text(`${preferences.sources.length} 个市场源`, `${preferences.sources.length} catalog sources`)} control={<SettingActionButton onClick={() => navigate("sources")}>{text("管理来源", "Manage sources")}</SettingActionButton>} />
       </SettingSection>
-      {plugin && <SettingSection presentation="plain" title={text("插件工具入口", "Plugin tool placement")} description={text("选择常用工具显示在底栏或“更多”菜单；其余插件保留在这个设置列表中。", "Choose which tools appear in the dock or More menu. Other plugins stay in this settings list.")}>
-        {installed.map((item) => <SettingRow key={`placement:${item.key}`} title={item.manifest.name} description={text(item.enabled ? "选择这个插件工具的入口位置。" : "启用插件后可选择入口位置。", item.enabled ? "Choose where this plugin tool appears." : "Enable this plugin to choose where its tool appears.")} control={<SettingSelect disabled={!item.enabled || safeMode || busy} value={preferences.compactPlacements?.[item.key] || "settings"} ariaLabel={text(`${item.manifest.name} 的入口位置`, `${item.manifest.name} placement`)} options={[{ value: "bottom", label: text("底栏", "Dock") }, { value: "more", label: text("更多", "More") }, { value: "settings", label: text("设置", "Settings") }]} onChange={(value) => void run(() => extensionService.setPreference({ compactPlacements: { ...preferences.compactPlacements, [item.key]: value as "bottom" | "more" | "settings" } }))} />} />)}
+      {plugin && <SettingSection presentation="plain" title={text("插件工具入口", "Plugin tool placement")} description={text("固定的插件优先显示，剩余快捷位按安装时间从早到晚自动补齐。也可在底栏与“更多”之间拖动插件。", "Pinned plugins take priority. Remaining dock slots fill from oldest to newest. Drag plugins between the dock and More to move them.")}>
+        <SettingRow title={text("插件快捷栏数量", "Plugin dock slots")} description={text("默认 5 个。窄屏可横向滑动快捷栏查看其余图标。", "Defaults to 5. On narrow screens, scroll the dock sideways for the remaining icons.")} control={<SettingSelect
+          disabled={busy}
+          value={String(preferences.compactDockLimit ?? DEFAULT_COMPACT_DOCK_LIMIT)}
+          ariaLabel={text("插件快捷栏数量", "Plugin dock slots")}
+          options={COMPACT_DOCK_LIMITS.map((count) => ({ value: String(count), label: String(count) }))}
+          onChange={(value) => void run(() => extensionService.setPreference({ compactDockLimit: Number(value) }))}
+        />} />
+        {installed.map((item) => <SettingRow key={`placement:${item.key}`} title={item.manifest.name} description={text(item.enabled ? "选择这个插件工具的入口位置。" : "启用插件后可选择入口位置。", item.enabled ? "Choose where this plugin tool appears." : "Enable this plugin to choose where its tool appears.")} control={<SettingSelect disabled={!item.enabled || safeMode || busy} value={preferences.compactPlacements?.[item.key] || "auto"} ariaLabel={text(`${item.manifest.name} 的入口位置`, `${item.manifest.name} placement`)} options={[{ value: "auto", label: text("自动", "Automatic") }, { value: "bottom", label: text("底栏", "Dock") }, { value: "more", label: text("更多", "More") }, { value: "settings", label: text("仅设置", "Settings only") }]} onChange={(value) => void run(() => extensionService.setCompactPlacement(item.key, value as CompactPluginPlacement))} />} />)}
       </SettingSection>}
       <SettingSection presentation="plain" title={<>{text(plugin ? "已安装插件" : "已安装主题", plugin ? "Installed plugins" : "Installed themes")} <span className="df-extension-count">{installed.length}</span></>}>
         {installed.length > 0 && search}

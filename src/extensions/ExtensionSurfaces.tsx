@@ -1,53 +1,127 @@
-import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent } from "react";
 import type { Language } from "../types";
 import { ActionDisclosure, Button, CloseButton, IconButton, Modal } from "../components/UiPrimitives";
 import { RightUtilityPanel, utilityPanelCloseLabel } from "../components/RightUtilityPanel";
 import { ExtensionMount } from "./ExtensionMount";
 import { extensionService } from "./service";
 import { UiRefreshIcon, UiZapIcon, UiPencilIcon, UiMetricsIcon, UiListChecksIcon, UiCalendarCheckIcon, UiBellIcon, UiSearchIcon, UiSettingsIcon, UiMoreIcon } from "../components/UiIcons";
-import type { ExtensionContribution, PluginUiPlacement } from "./types";
+import type { ExtensionContribution, InstalledExtension, PluginUiPlacement } from "./types";
+import { getCompactPluginGroups } from "./compactDock";
+import { useUnifiedDrag } from "../useUnifiedDrag";
 import "./ExtensionSurfaces.css";
 
 export function CompactPluginDock({ lang, metricsAvailable, onNotifications, onSearch, onMetrics, onSettings, onOpenSettings, onOpenView, onOpenPluginTools, notificationCount = 0 }: { lang: Language; metricsAvailable: boolean; onNotifications: () => void; onSearch: () => void; onMetrics: () => void; onSettings: () => void; onOpenSettings?: (pageId: string) => void; onOpenView?: (view: ExtensionContribution) => void; onOpenPluginTools: () => void; notificationCount?: number }) {
   const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const [moreOpen, setMoreOpen] = useState(false);
-  const installed = Object.values(snapshot.preferences.installed).filter((item) => item.manifest.kind === "plugin" && item.enabled && !snapshot.safeMode);
-  const placement = (key: string) => snapshot.preferences.compactPlacements?.[key] || "settings";
-  const bottomPlugins = installed.filter((item) => placement(item.key) === "bottom");
-  const morePlugins = installed.filter((item) => placement(item.key) === "more");
+  const [dropZone, setDropZone] = useState<"bottom" | "more">();
+  const [error, setError] = useState("");
+  const dockRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const suppressClick = useRef(false);
+  const drag = useUnifiedDrag();
+  const { dock, more } = snapshot.safeMode ? { dock: [], more: [] } : getCompactPluginGroups(snapshot.preferences);
   const zh = lang === "zh";
-  const activate = (key: string) => {
+  const moreLabel = zh ? "更多" : "More";
+  const metricsOwner = snapshot.views.find((view) => view.nativeMode === "metrics")?.owner;
+  const showMetrics = metricsAvailable && ![...dock, ...more].some((item) => item.key === metricsOwner);
+
+  function reportError(caught: unknown) {
+    setError(caught instanceof Error ? caught.message : String(caught));
+  }
+
+  function activate(key: string) {
     setMoreOpen(false);
-    const view = snapshot.views.find((item) => item.owner === key && !item.planningView);
+    setError("");
+    const view = snapshot.views.find((item) => item.owner === key);
     const headerItem = snapshot.headerItems.find((item) => item.owner === key && (item.placement || "app-header") === "app-header");
     const settingsPage = snapshot.settingsPages.find((item) => item.owner === key);
-    if (view) onOpenView?.(view);
-    else if (headerItem) onOpenView?.(headerItem);
+    const commands = extensionService.listCommands().filter((item) => item.id.startsWith(key + ":"));
+    if (view || headerItem) onOpenView?.((view ?? headerItem)!);
     else if (settingsPage && onOpenSettings) onOpenSettings(settingsPage.id);
+    else if (commands.length === 1) void extensionService.executeCommand(commands[0].id).catch(reportError);
     else onOpenPluginTools();
-  };
-  const pluginButton = (item: typeof installed[number], inMenu = false) => {
+  }
+
+  function beginDrag(event: PointerEvent<HTMLButtonElement>, key: string, fromMore: boolean) {
+    if (!event.isPrimary || snapshot.busy) return;
+    const destination = fromMore ? "bottom" : "more";
+    const targetAt = ({ x, y }: { x: number; y: number }) => {
+      const target = document.elementFromPoint(x, y);
+      const targetZone = fromMore ? dockRef.current?.contains(target) : moreRef.current?.contains(target) || moreButtonRef.current?.contains(target);
+      return targetZone ? target : null;
+    };
+    drag.beginDrag(event, {
+      taskId: key,
+      requireHoldMs: 180,
+      onActivate: () => { suppressClick.current = true; setError(""); },
+      onMove: (pointer) => setDropZone(targetAt(pointer) ? destination : undefined),
+      onCancel: () => setDropZone(undefined),
+      onDrop: (pointer) => {
+        setDropZone(undefined);
+        const target = targetAt(pointer);
+        if (!target) return;
+        const replaceKey = fromMore ? target.closest<HTMLElement>("[data-compact-plugin]")?.dataset.compactPlugin : undefined;
+        void extensionService.setCompactPlacement(key, destination, replaceKey).catch(reportError);
+      },
+    });
+  }
+
+  function pluginButton(item: InstalledExtension, inMenu: boolean) {
     const iconUrl = extensionService.getPluginIcon(item.key) || snapshot.catalog.find((entry) => entry.sourceId === item.sourceId && entry.manifest.id === item.manifest.id)?.iconUrl;
     const Icon = item.manifest.id === "quick-capture" ? UiPencilIcon : item.manifest.id === "daily-overview" ? UiListChecksIcon : ["class-timetable", "schedule-templates"].includes(item.manifest.id) ? UiCalendarCheckIcon : UiZapIcon;
-    return inMenu
-      ? <button key={item.key} type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => activate(item.key)}>{iconUrl ? <img src={iconUrl} alt="" aria-hidden="true" /> : <Icon size={18} />}<span>{item.manifest.name}</span></button>
-      : <button key={item.key} type="button" className="df-mobile-dock-action df-mobile-plugin-action" aria-label={item.manifest.name} title={item.manifest.name} onClick={() => activate(item.key)}>{iconUrl ? <img src={iconUrl} alt="" aria-hidden="true" /> : <Icon size={19} />}<span>{item.manifest.name}</span></button>;
-  };
+    return <button
+      key={item.key}
+      type="button"
+      className={inMenu ? "df-mobile-menu-item" : "df-mobile-dock-action df-mobile-plugin-action"}
+      role={inMenu ? "menuitem" : undefined}
+      aria-label={item.manifest.name}
+      title={item.manifest.name}
+      data-compact-plugin={item.key}
+      onPointerDown={(event) => { suppressClick.current = false; beginDrag(event, item.key, inMenu); }}
+      onClick={(event) => {
+        if (!suppressClick.current || event.detail === 0) activate(item.key);
+        suppressClick.current = false;
+      }}
+    >
+      {iconUrl ? <img src={iconUrl} alt="" draggable={false} /> : <Icon size={18} />}
+      <span>{item.manifest.name}</span>
+    </button>;
+  }
+
   return <>
-    <div className="df-mobile-plugin-actions">{bottomPlugins.map((item) => pluginButton(item))}</div>
+    <div ref={dockRef} className="df-mobile-plugin-dock-center" data-drop-active={dropZone === "bottom" || undefined}>
+      <div className="df-mobile-plugin-actions">{dock.map((item) => pluginButton(item, false))}</div>
+    </div>
     <div className="df-mobile-more-wrap">
-      <button type="button" className={`df-mobile-dock-action df-mobile-more-button${moreOpen ? " active" : ""}`} aria-label={zh ? `更多${notificationCount ? `，${notificationCount} 条未读通知` : ""}` : `More${notificationCount ? `, ${notificationCount} unread notifications` : ""}`} aria-expanded={moreOpen} aria-haspopup="menu" onClick={() => setMoreOpen((open) => !open)}><UiMoreIcon />{notificationCount > 0 && <span className="df-proactive-notification-count">{notificationCount > 99 ? "99+" : notificationCount}</span>}</button>
+      <IconButton
+        ref={moreButtonRef}
+        className={`df-mobile-dock-action df-mobile-more-button${moreOpen ? " active" : ""}`}
+        label={notificationCount ? `${moreLabel}${zh ? `，${notificationCount} 条未读通知` : `, ${notificationCount} unread notifications`}` : moreLabel}
+        icon={<><UiMoreIcon />{notificationCount > 0 && <span className="df-proactive-notification-count">{notificationCount > 99 ? "99+" : notificationCount}</span>}</>}
+        aria-expanded={moreOpen}
+        aria-haspopup="menu"
+        data-drop-active={dropZone === "more" || undefined}
+        onClick={() => setMoreOpen((open) => !open)}
+      />
       {moreOpen && <>
         <button type="button" className="df-mobile-menu-scrim" aria-label={zh ? "关闭更多菜单" : "Close More menu"} onClick={() => setMoreOpen(false)} />
-        <div className="df-mobile-more-menu" role="menu" aria-label={zh ? "更多" : "More"}>
+        <div className="df-mobile-more-menu" role="menu" aria-label={moreLabel}>
           <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onNotifications(); }}><UiBellIcon size={18} /><span>{zh ? "通知" : "Notifications"}{notificationCount > 0 ? ` · ${notificationCount}` : ""}</span></button>
           <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onSearch(); }}><UiSearchIcon size={18} /><span>{zh ? "搜索" : "Search"}</span></button>
-          {metricsAvailable && <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onMetrics(); }}><UiMetricsIcon size={18} /><span>{zh ? "指标" : "Metrics"}</span></button>}
-          {morePlugins.map((item) => <Fragment key={item.key}>{pluginButton(item, true)}</Fragment>)}
+          {showMetrics && <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onMetrics(); }}><UiMetricsIcon size={18} /><span>{zh ? "指标" : "Metrics"}</span></button>}
+          {Boolean(dock.length || more.length) && <div ref={moreRef} className="df-mobile-menu-plugins" role="group" aria-label={zh ? "插件" : "Plugins"} data-drop-active={dropZone === "more" || undefined}>
+            {more.map((item) => pluginButton(item, true))}
+            <div className="df-mobile-plugin-drag-hint">{more.length
+              ? (zh ? "拖到下方快捷栏可固定，触屏长按拖动" : "Drag to the dock to pin. On touch, hold first.")
+              : (zh ? "可把快捷栏插件拖回这里" : "Drop a dock shortcut here to unpin it.")}</div>
+          </div>}
           <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onSettings(); }}><UiSettingsIcon size={18} /><span>{zh ? "设置" : "Settings"}</span></button>
         </div>
       </>}
     </div>
+    {error && <span className="df-mobile-plugin-error" role="alert">{error}</span>}
+    {drag.overlay}
   </>;
 }
 

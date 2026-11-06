@@ -1,5 +1,5 @@
 import type { ExtensionService } from "./serviceCore";
-import type { CatalogEntry, ExtensionHost, ExtensionKind, ExtensionPreferences, ExtensionSnapshot } from "./types";
+import type { CatalogEntry, CompactPluginPlacement, ExtensionHost, ExtensionKind, ExtensionPreferences, ExtensionSnapshot } from "./types";
 import { defaultExtensionPreferences } from "./packages";
 
 // Keep executable loading, cloud transport and package management off the
@@ -34,6 +34,7 @@ export const extensionService = {
   saveConfig: async (key: string, patch: Record<string, unknown>) => (await engine()).saveConfig(key, patch),
   setSafeMode: async (enabled: boolean) => (await engine()).setSafeMode(enabled),
   setPreference: async (patch: Partial<ExtensionPreferences>) => (await engine()).setPreference(patch),
+  setCompactPlacement: async (key: string, placement: CompactPluginPlacement, replaceKey?: string) => (await engine()).setCompactPlacement(key, placement, replaceKey),
   refreshCatalog: async () => (await engine()).refreshCatalog(),
   checkUpdates: async () => (await engine()).checkUpdates(),
   install: async (entry: CatalogEntry) => (await engine()).install(entry),

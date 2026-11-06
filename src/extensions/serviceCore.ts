@@ -4,6 +4,8 @@ import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
 import { emitPluginEvent, loadPlugin, type LoadedPlugin } from "./runtime";
 import { fetchExtensionBytes, getExtensionValue, getPrivatePackage, putPrivatePackage, removeExtensionValue, setExtensionValue, subscribeExtensionValues } from "./transport";
 import { applyExtensionTheme } from "./theme";
+import { moveCompactPlugin } from "./compactDock";
+import type { CompactPluginPlacement } from "./model";
 
 type PendingValue = { owner: string; key: string; value: unknown; remove: boolean; id: string };
 const errorText = (error: unknown) => error instanceof Error ? error.message : String(error);
@@ -95,6 +97,12 @@ export class ExtensionService {
     }); this.operationTail = result; return result;
   }
   setPreference = (patch: Partial<ExtensionPreferences>) => this.operation(async () => { await this.savePreferences({ ...this.snapshot.preferences, ...patch }); });
+  setCompactPlacement = (key: string, placement: CompactPluginPlacement, replaceKey?: string) => this.operation(async () => {
+    const { preferences, safeMode } = this.snapshot;
+    if (safeMode) return;
+    const compactPlacements = moveCompactPlugin(preferences, key, placement, replaceKey);
+    if (compactPlacements) await this.savePreferences({ ...preferences, compactPlacements });
+  });
   setSafeMode = async (safeMode: boolean) => {
     try { localStorage.setItem(this.scope() + "safe-mode", String(safeMode)); localStorage.removeItem(this.scope() + "booting"); } catch { /* local override only */ }
     this.failed.clear(); this.setSnapshot({ safeMode }); await this.reconcile(this.generation);
