@@ -1,0 +1,7 @@
+name = "navopath-xiaoyang"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-06-04"
+
+[[services]]
+binding = "CALENDAR_FEED"
+service = "navopath-mcp"

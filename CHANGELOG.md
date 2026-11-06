@@ -3,7 +3,7 @@
 ## 2026-11-06
 
 ### 修复
-- 日历订阅改用 NavoPath 主站的 HTTPS 地址，改善 iPhone 和其他日历应用的连接。
+- 日历订阅使用 NavoPath 主站的 HTTPS 地址，改善 iPhone 和其他日历应用的连接。
 
 ## 2026-11-05
 
@@ -482,7 +482,7 @@
 ## 2026-11-06
 
 ### Fixed
-- Calendar subscriptions now use the main NavoPath HTTPS address to improve connectivity in iPhone Calendar and other calendar apps.
+- Calendar subscriptions use the main NavoPath HTTPS address to improve connectivity in iPhone Calendar and other calendar apps.
 
 ## 2026-11-05
 

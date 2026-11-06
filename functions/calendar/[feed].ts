@@ -1,6 +1,6 @@
-const CALENDAR_WORKER_ORIGIN = "https://navopath-mcp.shawn89890916.workers.dev";
+type CalendarFeedEnv = { CALENDAR_FEED: { fetch(request: Request): Promise<Response> } };
 
-export async function onRequest({ request }: { request: Request }) {
+export async function onRequest({ request, env }: { request: Request; env: CalendarFeedEnv }) {
   const { pathname } = new URL(request.url);
   if (!/^\/calendar\/nvc_[a-f0-9]{64}\.ics$/.test(pathname)) {
     return new Response("Calendar subscription not found", { status: 404 });
@@ -13,9 +13,8 @@ export async function onRequest({ request }: { request: Request }) {
   const etag = request.headers.get("if-none-match");
   if (etag) headers.set("if-none-match", etag);
 
-  return fetch(new URL(pathname, CALENDAR_WORKER_ORIGIN), {
+  return env.CALENDAR_FEED.fetch(new Request(new URL(pathname, request.url), {
     method: request.method,
     headers,
-    redirect: "error",
-  });
+  }));
 }
