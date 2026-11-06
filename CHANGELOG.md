@@ -2,6 +2,12 @@
 
 ## 2026-11-06
 
+### 1.7.0 Beta 5
+
+#### 修复
+
+- 苹果日历同步的项目会作为普通任务显示，旧的同步事件也会自动迁移为任务。
+
 ### 1.7.0 Beta 4
 
 #### 新增
@@ -502,6 +508,12 @@
 # NavoPath Changelog
 
 ## 2026-11-06
+
+### 1.7.0 Beta 5
+
+#### Fixed
+
+- Show Apple Calendar sync items as ordinary tasks and migrate existing synced events to tasks.
 
 ### 1.7.0 Beta 4
 

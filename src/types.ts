@@ -168,6 +168,8 @@ export interface TaskRecurrence {
 
 export interface Task {
   fixedCourse?: boolean;
+  /** Backing resource for tasks synchronized through CalDAV. */
+  caldav?: { file: string; uid: string; ics: string; projection: string; endDate?: string; endTime?: string };
   /** Engagement for tasks without execution records. */
   engagement?: number;
   id: string;
@@ -222,7 +224,7 @@ export interface LongTermTask {
 
 export interface CalendarEvent {
   calendarKind?: "appointment";
-  caldav?: { file: string; uid: string; ics: string; projection: string };
+  caldav?: { file: string; uid: string; ics: string; projection: string; endDate?: string; endTime?: string };
   updatedAt?: string;
   fixedCourse?: boolean;
   id: string;
