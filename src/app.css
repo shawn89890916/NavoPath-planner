@@ -8486,7 +8486,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   position: relative;
   display: inline-flex;
   flex: 0 0 auto;
-  z-index: 130;
+  z-index: 3;
 }
 #root .df-app .df-brand-dock-trigger {
   position: relative;
@@ -8496,7 +8496,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   position: absolute;
   top: calc(100% - 4px);
   left: 0;
-  z-index: 140;
+  z-index: 1;
   width: min(204px, calc(100vw - 16px));
   padding: 8px;
   border: 1px solid var(--paper-rule);
@@ -19778,7 +19778,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     align-items: center;
     z-index: 12;
   }
-  #root .df-app.is-mobile-sheet-open .df-compact-execute-controls { filter:none; opacity:1; pointer-events:none; }
   #root .df-app.is-mobile-sheet-open .df-mobile-quick-add-fab { filter:none; opacity:1; pointer-events:none; }
   #root .df-app.mode-execute .df-compact-date-picker-trigger {
     pointer-events: auto;
@@ -22420,8 +22419,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 #root .df-app .df-brand-ai-button .dayflow-icon.compact,
 #root .df-app .df-brand-ai-button .dayflow-icon.compact img { width: 42px; height: 42px; }
-.df-header .df-brand-ai-button { position: relative; }
-.df-header .df-brand-ai-button > .dayflow-icon.compact { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+:is(.df-header, .df-compact-brand) .df-brand-ai-button { position: relative; }
+:is(.df-header, .df-compact-brand) .df-brand-ai-button > .dayflow-icon.compact { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 #root .df-app .df-brand-ai-button img { filter: none; }
 @media (max-width: 980px) {
   #root .df-app .df-brand-ai-button { width: 44px; height: 44px; }
@@ -22943,10 +22942,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   }
   .df-mobile-dock--viewport.theme-dark {
     border-top-color: color-mix(in srgb, var(--surface-main) 24%, transparent);
-  }
-  .df-mobile-dock--viewport.is-mobile-sheet-open {
-    visibility: hidden;
-    pointer-events: none;
   }
   .df-mobile-dock--viewport .df-mobile-dock-slots {
     --df-compact-slot-width: max(44px, calc(100% / var(--df-compact-dock-columns, 7)));
@@ -24000,57 +23995,26 @@ body[data-navopath-base-theme="light"],
   --accent-on: #FFFFFF;
 }
 
-/* Portrait Execute always keeps its N Dock/undock entry visible. */
 @media (orientation: portrait) {
-  #root .df-app.mode-execute .df-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 120;
-    display: block;
-    width: 52px;
-    height: 52px;
-    min-height: 52px;
-    max-height: 52px;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-    pointer-events: none;
+  #root .df-app.mode-execute .df-compact-execute-controls:has(> .df-compact-brand) {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
   }
-  #root .df-app.mode-execute .df-header-inner {
-    display: block;
-    width: 52px;
-    height: 52px;
-    padding: 0;
+  #root .df-app.mode-execute .df-compact-execute-controls:has(> .df-compact-brand):has(> .df-compact-execute-tabs) {
+    grid-template-columns: 44px auto minmax(0, 1fr) auto;
   }
-  #root .df-app.mode-execute .df-header-inner > :not(.df-brand) {
-    display: none;
+  #root .df-app .df-compact-brand {
+    grid-column: 1;
+    display: grid;
+    place-items: center;
   }
-  #root .df-app.mode-execute .df-brand {
-    position: fixed;
-    top: 4px;
-    left: 4px;
-    z-index: 121;
-    margin: 0;
-    pointer-events: auto;
+  #root .df-app .df-compact-brand ~ .df-compact-date-display {
+    grid-column: -3;
+    position: static;
+    justify-self: start;
+    transform: none;
   }
-  #root .df-app.mode-execute .df-brand > :not(.df-brand-dock-control):not(.df-brand-ai-button) {
-    display: none;
-  }
-  #root .df-app.mode-execute .df-header-fade {
-    display: none;
-  }
-  #root .df-app.mode-execute .df-compact-execute-controls {
-    top: 4px;
-    left: 58px;
-    right: 8px;
-  }
-  #root .df-app.mode-execute .df-compact-date-display.is-readonly {
-    top: 0;
-  }
+  #root .df-app .df-compact-brand ~ .df-compact-calendar-tabs { grid-column: -2; }
 }
-
-/* Detail backdrops must cover the fixed portrait Execute brand/header too. */
 
 /* The left shelf shares the execution panel and scrolls independently of the timeline. */
 #root .df-app .df-candidate-panel > .df-panel-title h2 {

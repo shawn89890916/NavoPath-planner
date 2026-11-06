@@ -9283,27 +9283,30 @@ if (cached?.data && cached?.settings) {
   const switchViewsLabel = lang === "zh" ? "切换左浮栏视图" : "Switch task views";
   const manageProjectsLabel = lang === "zh" ? "管理项目" : "Manage projects";
   const metricsLabel = lang === "zh" ? "指标" : "Metrics";
+  const compactOverlayOpen = Boolean(aiOpen || utilityPanel || quickAddOpen || candidateDrawerOpen || drawerOpen
+    || commandOpen || notificationCenterOpen || pluginToolsOpen || scheduleTemplatePresence.present || mobilePlacement);
+  const brandControl = window.desktopApi?.dockWindow
+    ? <Suspense fallback={<button className="df-brand-ai-button" type="button" disabled aria-label="NavoPath"><ProductIcon compact /></button>}>
+      <DesktopDockControls
+        lang={lang}
+        side={desktopDockSide}
+        disabled={!desktopDockReady || (compactLayout && compactOverlayOpen)}
+        trigger={<ProductIcon compact />}
+        onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }}
+        onError={showToast}
+      />
+    </Suspense>
+    : <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
+      <ProductIcon compact />
+    </button>;
   const compactChat = !productPresentation && !settings.hideAi && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} />;
   return (
     <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
-      <header className="df-header">
+      {(!compactLayout || productDemo) && <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
           <div className="df-brand">
-            {window.desktopApi?.dockWindow
-              ? <Suspense fallback={<button className="df-brand-ai-button" type="button" disabled aria-label="NavoPath"><ProductIcon compact /></button>}>
-                <DesktopDockControls
-                  lang={lang}
-                  side={desktopDockSide}
-                  disabled={!desktopDockReady}
-                  trigger={<ProductIcon compact />}
-                  onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }}
-                  onError={showToast}
-                />
-              </Suspense>
-              : <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
-                <ProductIcon compact />
-              </button>}
+            {brandControl}
             {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} onOpenMetrics={openMetrics} onOpenView={openExtensionPanel} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
           </div>
           <div className="df-month-year-selector">
@@ -9347,7 +9350,7 @@ if (cached?.data && cached?.settings) {
           </button>
         </div>}
         </div>}
-      </header>
+      </header>}
       <div className="df-header-fade" />
       {compactLayout && quickAddPresence.present && <div className={`df-drawer-backdrop${quickAddPresence.closing ? " is-closing" : ""}`} onMouseDown={() => void closeMobileQuickAdd()} />}
       {compactLayout && quickAddPresence.present && (
@@ -9407,7 +9410,8 @@ if (cached?.data && cached?.settings) {
       )}
 
         <ExecutionSplitLayout className={`${narrowSplitLayout ? "shelf-timeline-split " : ""}${candidatePanelCollapsed ? "candidate-collapsed" : ""}${fullscreen ? " fullscreen" : ""}${simpleView ? " simple-view" : ""}`} style={candidatePanelCollapsed || candidatePanelWidth ? { "--df-candidate-width": candidatePanelCollapsed ? "44px" : `${candidatePanelWidth}px` } as CSSProperties : undefined}>
-          {!productAiPresentation && <div className="df-compact-execute-controls">
+          {!productAiPresentation && <div className="df-compact-execute-controls" inert={compactLayout && compactOverlayOpen}>
+            {portraitLayout && !productPresentation && <div className="df-compact-brand">{brandControl}</div>}
             {!mobileExecution && !narrowSplitLayout && <nav className="df-compact-execute-tabs" aria-label={lang === "zh" ? "执行视图" : "Execute view"}>
               <button
                 className={`active ${compactExecuteView === "schedule" ? "schedule-state" : "tasks-state"}`}
@@ -9468,7 +9472,7 @@ if (cached?.data && cached?.settings) {
           </div>}
           {!productPresentation && compactExecuteView === "schedule" && (
             <DateQuickPicker
-              open={mobileDatePickerOpen}
+              open={mobileDatePickerOpen && !compactOverlayOpen}
               month={mobileDatePickerMonth}
               selectedDate={timelineWindowAnchorDate}
               today={today}
@@ -10625,8 +10629,8 @@ if (cached?.data && cached?.settings) {
         />
       )}
 
-      {!productAiPresentation && compactLayout && !candidateDrawerOpen && !mobilePlacement && !drawerOpen && !commandOpen && !notificationCenterOpen && !scheduleTemplatePresence.present && !utilityPanel && (
-        createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, "execute")} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
+      {!productAiPresentation && compactLayout && !compactOverlayOpen && (
+        createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}`} style={themeVars(settings, "execute")} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {productDemo ? <div className="df-mobile-dock-slots">{compactChat}</div> : <Suspense fallback={<div className="df-mobile-dock-slots">{compactChat}<IconButton className="df-mobile-dock-action df-mobile-more-wrap" label={lang === "zh" ? "更多" : "More"} icon={<UiMoreIcon />} /></div>}>
             <CompactPluginDock lang={lang} chat={compactChat} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => { setQuickAddOpen(false); setNotificationCenterOpen(true); }} onSearch={() => { setQuickAddOpen(false); setCommandQuery(""); setCommandOpen(true); }} onMetrics={openMetrics} onSettings={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} onOpenView={openExtensionPanel} onOpenPluginTools={() => setPluginToolsOpen(true)} />
           </Suspense>}

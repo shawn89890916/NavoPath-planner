@@ -24,6 +24,7 @@ function createCompactWindowService(deps) {
   function open(options = {}) {
     const alwaysOnTop = options.alwaysOnTop !== false;
     if (compactWindow && !compactWindow.isDestroyed()) {
+      if (deps.showDock?.(compactWindow)) return compactWindow;
       compactWindow.setAlwaysOnTop(alwaysOnTop);
       compactWindow.show();
       compactWindow.focus();
@@ -52,6 +53,7 @@ function createCompactWindowService(deps) {
     deps.rendererPolicy?.secureWindowNavigation(compactWindow, deps.openExternal);
 
     const createdWindow = compactWindow;
+    const restoredDock = deps.restoreDock?.(createdWindow);
     const useLocalFile = deps.app.isPackaged || (deps.fs.existsSync(deps.localIndexPath) && !deps.env.VITE_DEV_SERVER_URL);
     if (useLocalFile) {
       createdWindow.loadFile(deps.localIndexPath, { query: { compactWindow: "1" } });
@@ -59,7 +61,7 @@ function createCompactWindowService(deps) {
       createdWindow.loadURL(resolveDevAppUrl(deps.env.VITE_DEV_SERVER_URL, { compactWindow: 1 }).toString());
     }
     createdWindow.once("ready-to-show", () => {
-      if (compactWindow === createdWindow && !createdWindow.isDestroyed()) createdWindow.show();
+      if (!restoredDock && compactWindow === createdWindow && !createdWindow.isDestroyed()) createdWindow.show();
     });
     createdWindow.on("closed", () => {
       if (compactWindow === createdWindow) compactWindow = null;

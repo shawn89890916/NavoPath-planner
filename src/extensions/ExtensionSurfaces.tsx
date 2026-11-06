@@ -51,7 +51,8 @@ export function CompactPluginDock({ lang, chat, onNotifications, onSearch, onMet
     else onOpenPluginTools();
   }
 
-  function beginDrag(event: PointerEvent<HTMLButtonElement>, key: string, fromMore: boolean) {
+  function beginDrag(event: PointerEvent<HTMLElement>, key: string, fromMore: boolean) {
+    suppressClick.current = false;
     if (!event.isPrimary || snapshot.busy) return;
     const destination = fromMore ? "bottom" : "more";
     const targetAt = ({ x, y }: { x: number; y: number }) => {
@@ -76,15 +77,32 @@ export function CompactPluginDock({ lang, chat, onNotifications, onSearch, onMet
   }
 
   function pluginButton(item: InstalledExtension, inMenu: boolean) {
+    const className = inMenu ? "df-mobile-menu-item" : "df-mobile-dock-action df-mobile-plugin-action";
+    const live = toolbar.headerItems.find((entry) => entry.owner === item.key && entry !== toolbar.metrics);
+    if (live) return <div
+      key={item.key}
+      className={`${className} df-compact-extension`}
+      data-compact-plugin={item.key}
+      onPointerDownCapture={(event) => beginDrag(event, item.key, inMenu)}
+      onClickCapture={(event) => {
+        const dragged = suppressClick.current && event.detail !== 0;
+        suppressClick.current = false;
+        if (dragged) { event.preventDefault(); event.stopPropagation(); }
+        else if (inMenu && (event.target as Element).closest("button, [role=button], a[href]")) setMoreOpen(false);
+      }}
+    >
+      <ExtensionMount contribution={live} />
+      {inMenu && <span aria-hidden="true">{item.manifest.name}</span>}
+    </div>;
     return <button
       key={item.key}
       type="button"
-      className={inMenu ? "df-mobile-menu-item" : "df-mobile-dock-action df-mobile-plugin-action"}
+      className={className}
       role={inMenu ? "menuitem" : undefined}
       aria-label={item.manifest.name}
       title={item.manifest.name}
       data-compact-plugin={item.key}
-      onPointerDown={(event) => { suppressClick.current = false; beginDrag(event, item.key, inMenu); }}
+      onPointerDown={(event) => beginDrag(event, item.key, inMenu)}
       onClick={(event) => {
         if (!suppressClick.current || event.detail === 0) activate(item.key);
         suppressClick.current = false;

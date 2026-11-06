@@ -2,6 +2,14 @@
 
 ## 2026-11-06
 
+### 1.7.0 Beta 11
+
+#### 修复
+
+- 竖屏将 NavoPath 标志、日期和视图切换放在同一工具栏。打开浮层时，整条工具栏一起退到背景。
+- Windows 更新重启后恢复贴边窗口、贴边方向和取消贴边前的窗口位置。
+- 底栏和「更多」显示插件的实时顶栏控件，天气图标会跟随预报更新。
+
 ### 1.7.0 Beta 10
 
 #### 修复
@@ -537,6 +545,14 @@
 # NavoPath Changelog
 
 ## 2026-11-06
+
+### 1.7.0 Beta 11
+
+#### Fixed
+
+- Portrait mode places the NavoPath logo, date, and view controls in one toolbar that stays behind overlays.
+- Windows restores the docked window, screen edge, and original window position after an update restarts the app.
+- The dock and More show live plugin controls, so the weather icon follows forecast updates.
 
 ### 1.7.0 Beta 10
 

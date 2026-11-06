@@ -38,16 +38,51 @@ function dockHandleBounds(workArea, side, preferences) {
   };
 }
 
+function readWindowMode(value) {
+  if (!value || (value.side !== "left" && value.side !== "right")) return null;
+  const { bounds } = value;
+  if (!bounds || ![bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isSafeInteger) || bounds.width <= 0 || bounds.height <= 0) return null;
+  return {
+    side: value.side,
+    bounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+    displayId: Number.isSafeInteger(value.displayId) ? value.displayId : null,
+    restoreDisplayId: Number.isSafeInteger(value.restoreDisplayId) ? value.restoreDisplayId : null,
+    maximized: value.maximized === true,
+    fullScreen: value.fullScreen === true,
+    alwaysOnTop: value.alwaysOnTop === true,
+  };
+}
+
 function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen, getWindow, canControl,
-  readPreferences = () => ({}), writePreferences = () => {}, now = Date.now, timers = { setInterval, clearInterval } }) {
+  readPreferences = () => ({}), writePreferences = () => {}, isQuitting = () => false, now = Date.now, timers = { setInterval, clearInterval } }) {
   const docked = new Map();
-  let preferences = normalizeDockPreferences(readPreferences());
+  const windowRoles = new WeakMap();
+  const stored = readPreferences();
+  let preferences = normalizeDockPreferences(stored);
+  let windowModes = Object.fromEntries(["main", "compact"].flatMap((role) => {
+    const mode = readWindowMode(stored?.windowModes?.[role]);
+    return mode ? [[role, mode]] : [];
+  }));
   let hoverTimer = null;
+
+  function persist(nextPreferences, nextModes) {
+    writePreferences(Object.keys(nextModes).length ? { ...nextPreferences, windowModes: nextModes } : nextPreferences);
+    preferences = nextPreferences;
+    windowModes = nextModes;
+  }
+
+  function saveMode(win, mode) {
+    const role = windowRoles.get(win);
+    if (!role) return;
+    const next = { ...windowModes };
+    if (mode) next[role] = readWindowMode(mode);
+    else delete next[role];
+    persist(preferences, next);
+  }
 
   function savePreferences(patch) {
     const next = normalizeDockPreferences({ ...preferences, ...patch });
-    writePreferences(next);
-    preferences = next;
+    persist(next, windowModes);
     for (const [win, state] of docked) {
       applyBounds(win, state);
       state.hoverSince = null;
@@ -139,11 +174,12 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
     state.handle?.setBounds(state.handleBounds);
   }
 
-  function setSide(win, side) {
+  function setSide(win, side, savedMode = null) {
     if (side !== null && side !== "left" && side !== "right") throw new Error("Invalid dock side.");
     let state = docked.get(win);
     if (side === null) {
       if (!state) return null;
+      saveMode(win, null);
       docked.delete(win);
       stopHoverTimer();
       win.removeListener("closed", state.onClosed);
@@ -171,32 +207,41 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
 
     if (!state) {
       state = {
-        bounds: win.getNormalBounds(),
+        bounds: savedMode?.bounds ?? win.getNormalBounds(),
         minimumSize: win.getMinimumSize(),
-        maximized: win.isMaximized(),
-        fullScreen: win.isFullScreen(),
+        maximized: savedMode?.maximized ?? win.isMaximized(),
+        fullScreen: savedMode?.fullScreen ?? win.isFullScreen(),
         resizable: win.isResizable(),
         movable: win.isMovable(),
         maximizable: win.isMaximizable(),
         fullScreenable: win.isFullScreenable(),
-        alwaysOnTop: win.isAlwaysOnTop(),
-        displayId: screen.getDisplayMatching(win.getBounds()).id,
-        restoreDisplayId: screen.getDisplayMatching(win.getBounds()).id,
+        alwaysOnTop: savedMode?.alwaysOnTop ?? win.isAlwaysOnTop(),
+        displayId: savedMode?.displayId ?? screen.getDisplayMatching(win.getBounds()).id,
+        restoreDisplayId: savedMode?.restoreDisplayId ?? screen.getDisplayMatching(win.getBounds()).id,
         side,
       };
+      if (!savedMode) saveMode(win, state);
       docked.set(win, state);
-      state.onClosed = () => { state.handle?.destroy(); docked.delete(win); stopHoverTimer(); };
+      state.onClosed = () => {
+        state.handle?.destroy();
+        docked.delete(win);
+        stopHoverTimer();
+        if (!isQuitting()) {
+          try { saveMode(win, null); }
+          catch (error) { console.warn("Could not clear saved Dock mode:", error); }
+        }
+      };
       win.once("closed", state.onClosed);
       state.handle = createHandle?.(side);
       state.handle?.webContents?.once?.("did-finish-load", () => { if (state.handleBounds) sendHandleGeometry(state); });
-      if (state.fullScreen) win.setFullScreen(false);
-      if (state.maximized) win.unmaximize();
+      if (win.isFullScreen()) win.setFullScreen(false);
+      if (win.isMaximized()) win.unmaximize();
       win.setMinimumSize(0, 0);
       win.setResizable(false);
       win.setMovable(false);
       win.setMaximizable(false);
       win.setFullScreenable(false);
-    }
+    } else if (state.side !== side) saveMode(win, { ...state, side });
     state.side = side;
     state.drag = null;
     state.handle?.webContents?.send("dock-handle:set-side", side);
@@ -256,7 +301,23 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
     screen.on("display-removed", refresh);
   }
 
-  return { registerIpc, watchDisplays };
+  return {
+    registerIpc, watchDisplays,
+    hasSavedMode: (role) => Boolean(windowModes[role]),
+    restore(win, role) {
+      windowRoles.set(win, role);
+      const mode = windowModes[role];
+      if (mode) setSide(win, mode.side, mode);
+      return Boolean(mode);
+    },
+    isDocked: (win) => docked.has(win),
+    show(win) {
+      const state = docked.get(win);
+      if (!state) return false;
+      reveal(win, state, true);
+      return true;
+    },
+  };
 }
 
 module.exports = { dockWindowBounds, dockHandleBounds, normalizeDockPreferences, createDockWindowService };

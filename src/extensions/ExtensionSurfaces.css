@@ -6,7 +6,7 @@
 .df-extension-header-item { display: flex; flex: 0 0 auto; align-items: center; min-width: 36px; border-radius: var(--radius-control, 8px); }
 .df-extension-header-item[data-dragging="true"] { opacity: .45; }
 .df-extension-header-item[data-drop-target="true"] { box-shadow: inset 2px 0 var(--accent-active); }
-.df-extension-header-item .navopath-plugin-header-button {
+:is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button {
   display: grid;
   place-items: center;
   width: 36px;
@@ -20,9 +20,9 @@
   cursor: pointer;
   transition: color var(--motion-base, 180ms) var(--motion-ease, ease), background-color var(--motion-base, 180ms) var(--motion-ease, ease);
 }
-.df-extension-header-item .navopath-plugin-header-button:hover { background: var(--paper-note); color: var(--text-main); }
-.df-extension-header-item .navopath-plugin-header-button:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
-.df-extension-header-item .navopath-plugin-header-button svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+:is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button:hover { background: var(--paper-note); color: var(--text-main); }
+:is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
+:is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 #root .df-app .df-extension-header-launcher { display: grid; flex: 0 0 auto; width: 36px; height: 36px; place-items: center; padding: 0; border: 0; border-radius: var(--radius-control, 8px); color: var(--text-main); background: transparent; font: 600 15px/1 var(--paper-sans); cursor: pointer; transition: color var(--motion-base, 180ms) var(--motion-ease, ease), background-color var(--motion-base, 180ms) var(--motion-ease, ease); }
 #root .df-app .df-extension-header-launcher:hover { background: var(--paper-note); }
 #root .df-app .df-extension-header-launcher:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
@@ -32,7 +32,7 @@
 .df-extension-overflow-action { justify-content: flex-start; width: 100%; text-align: left; }
 #root .df-app .df-header-inner > .df-brand { min-width: 0; max-width: calc(100vw - 290px); }
 #root .df-app .df-brand > .df-brand-dock-control { flex: 0 0 auto; }
-.df-extension-header-item .navopath-plugin-header-button[data-running="true"]::after {
+:is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button[data-running="true"]::after {
   content: "";
   position: absolute;
   top: 5px;
@@ -43,13 +43,26 @@
   background: var(--accent-active);
   box-shadow: 0 0 0 2px var(--surface-main);
 }
+.df-compact-extension .navopath-plugin-header-button { width: 44px; height: 44px; }
+.df-compact-extension.df-mobile-menu-item { position: relative; padding: 0; }
+.df-compact-extension.df-mobile-menu-item > div { width: 100%; }
+.df-compact-extension.df-mobile-menu-item .navopath-plugin-header-button {
+  width: 100%;
+  justify-items: start;
+  padding-inline: 10px;
+}
+.df-compact-extension.df-mobile-menu-item > span {
+  position: absolute;
+  inset-inline-start: 41px;
+  pointer-events: none;
+}
 .df-extension-view { width: min(720px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); overflow: auto; padding: var(--space-5, 24px); color: var(--text-main); background: var(--surface-main); }
 .df-extension-view-heading { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3, 12px); margin-bottom: var(--space-4, 16px); }
 .df-extension-view-heading h2 { margin: 0; color: var(--text-main); font-size: 20px; }
 .df-extension-view-error { color: var(--danger-ink, var(--text-main)); overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) {
-  .df-extension-header-item .navopath-plugin-header-button, #root .df-app .df-extension-header-launcher { transition: none; }
+  :is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button, #root .df-app .df-extension-header-launcher { transition: none; }
 }
 @media (pointer: coarse) {
-  .df-extension-header-item .navopath-plugin-header-button, #root .df-app .df-extension-header-launcher { width: 44px; height: 44px; }
+  :is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button, #root .df-app .df-extension-header-launcher { width: 44px; height: 44px; }
 }

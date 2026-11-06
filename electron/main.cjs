@@ -221,10 +221,11 @@ let isQuitting = false;
 let tray = null;
 
 function showMainWindow() {
-  return primaryWindowRegistry.show() || createWindow();
+  const win = primaryWindowRegistry.get();
+  return (win && dockWindowService.show(win) ? win : primaryWindowRegistry.show()) || createWindow();
 }
 
-function createWindow() {
+function createWindow({ showWhenReady = true } = {}) {
   const existingWin = primaryWindowRegistry.get();
   if (existingWin) return existingWin;
   const iconPath = app.isPackaged
@@ -252,10 +253,11 @@ function createWindow() {
     }
   });
   primaryWindowRegistry.set(win);
+  dockWindowService.restore(win, "main");
 
   // Show window when content is ready for faster perceived performance
   win.once("ready-to-show", () => {
-    win.show();
+    if (showWhenReady && !dockWindowService.isDocked(win)) win.show();
   });
 
   win.on("close", (event) => {
@@ -291,7 +293,9 @@ if (!gotTheLock) {
 
 app.whenReady().then(() => {
   // Create window first for fastest perceived startup
-  createWindow();
+  const restoreCompactDock = dockWindowService.hasSavedMode("compact");
+  createWindow({ showWhenReady: !restoreCompactDock });
+  if (restoreCompactDock) compactWindowService.open();
   dockWindowService.watchDisplays();
   
   // Defer non-critical initialization to background
@@ -454,6 +458,8 @@ compactWindowService = createCompactWindowService({
   rendererPolicy,
   openExternal: (url) => shell.openExternal(url),
   canControl: isApplicationWindowEvent,
+  restoreDock: (win) => dockWindowService.restore(win, "compact"),
+  showDock: (win) => dockWindowService.show(win),
 });
 compactWindowService.registerIpc();
 
@@ -488,6 +494,7 @@ const dockWindowService = createDockWindowService({
   screen,
   getWindow: (event) => windowFromEvent(BrowserWindow, event),
   canControl: isApplicationWindowEvent,
+  isQuitting: () => isQuitting,
 });
 dockWindowService.registerIpc();
 

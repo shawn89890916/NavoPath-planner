@@ -54,7 +54,7 @@ class FakeWindow extends EventEmitter {
   }
 }
 
-function setup(options, saved = {}) {
+function setup(options, saved = {}, isQuitting = () => false) {
   const win = new FakeWindow(options);
   const handlers = new Map();
   const screen = new EventEmitter();
@@ -77,6 +77,7 @@ function setup(options, saved = {}) {
     screen,
     canControl: (event) => event.role === "app",
     getWindow: (event) => event.win,
+    isQuitting,
     now: () => clock,
     readPreferences: () => saved,
     writePreferences: (value) => { saved = value; },
@@ -110,6 +111,8 @@ function setup(options, saved = {}) {
     polling: () => Boolean(poll),
     set: (side, sender = event) => handlers.get("dock-window:set-side")(sender, side),
     get: (sender = event) => handlers.get("dock-window:get-side")(sender),
+    restore: (role) => service.restore(win, role),
+    show: () => service.show(win),
   };
 }
 
@@ -150,6 +153,44 @@ test("docks the sender window, switches sides, and restores its original geometr
   assert.equal(win.listenerCount("closed"), 0);
   assert.equal(win.visible, true);
   assert.equal(win.focused, true);
+});
+
+test("restores the saved Dock side and original window after the app restarts", () => {
+  const before = setup({ maximized: true }, {}, () => true);
+  const original = before.win.getNormalBounds();
+  assert.equal(before.restore("main"), false);
+  before.set("left");
+  before.set("right");
+  before.preferences({ activation: "click" });
+  before.win.destroy();
+
+  const after = setup(undefined, before.saved());
+  assert.equal(after.restore("main"), true);
+  assert.equal(after.get(), "right");
+  assert.equal(after.win.getBounds().x, -420);
+  assert.equal(after.win.isVisible(), false);
+  assert.equal(after.preferences().activation, "click");
+  assert.equal(after.show(), true);
+  assert.equal(after.win.isVisible(), true);
+  assert.equal(after.handles[0].isVisible(), false);
+  after.set(null);
+  assert.deepEqual(after.win.getBounds(), original);
+  assert.equal(after.win.isMaximized(), true);
+  assert.equal(setup(undefined, after.saved()).restore("main"), false);
+});
+
+test("closing a compact window clears only that window's saved Dock mode", () => {
+  const primary = setup();
+  primary.restore("main");
+  primary.set("left");
+  const compact = setup(undefined, primary.saved());
+  assert.equal(compact.restore("compact"), false);
+  compact.set("right");
+  compact.win.destroy();
+  const restored = setup(undefined, compact.saved());
+  assert.equal(restored.restore("compact"), false);
+  assert.equal(restored.restore("main"), true);
+  assert.equal(restored.get(), "left");
 });
 
 test("only dwelling on the visible tab opens the panel, with a grace period on leaving", () => {

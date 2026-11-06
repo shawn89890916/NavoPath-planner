@@ -51,6 +51,7 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError,
 }) {
   const [busy, setBusy] = useState(false);
   const [choosing, setChoosing] = useState(false);
+  useEffect(() => { if (disabled) setChoosing(false); }, [disabled]);
 
   async function changeSide(next: "left" | "right" | null) {
     if (busy || !window.desktopApi?.dockWindow) return;
@@ -71,7 +72,7 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError,
     ? "选择贴边方向后，悬停或点击屏幕边缘即可展开；点击 Dock 窗口左上角的 N 可恢复普通窗口。"
     : "Choose an edge. Hover or click its screen tab to reopen; click N in the docked window to restore it.";
 
-  return <div className={`df-brand-dock-control${side ? " is-docked" : ""}`} onMouseEnter={() => { if (!side) setChoosing(true); }} onMouseLeave={() => setChoosing(false)}>
+  return <div className={`df-brand-dock-control${side ? " is-docked" : ""}`} onMouseEnter={() => { if (!side && !disabled) setChoosing(true); }} onMouseLeave={() => setChoosing(false)}>
     <button
       className={`df-brand-ai-button df-brand-dock-trigger${side ? " is-docked" : ""}`}
       type="button"
