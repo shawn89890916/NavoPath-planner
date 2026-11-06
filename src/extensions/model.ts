@@ -20,5 +20,5 @@ export interface InstalledExtension {
 export interface ExtensionPreferences {
   version: 1; sources: ExtensionSource[]; installed: Record<string, InstalledExtension>;
   removed: Record<string, string>; activeTheme: string | null; autoCheckUpdates: boolean; autoUpdate: boolean;
-  headerOrder?: string[]; migratedLegacy?: boolean; migratedPlanningViews?: boolean; migratedShelfViews?: boolean; updatedAt?: string;
+  headerOrder?: string[]; compactPlacements?: Record<string, "bottom" | "more" | "settings">; migratedLegacy?: boolean; migratedPlanningViews?: boolean; migratedShelfViews?: boolean; updatedAt?: string;
 }

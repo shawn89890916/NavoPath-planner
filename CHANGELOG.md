@@ -4,6 +4,10 @@
 
 ### 1.7.0 Beta 6
 
+#### 改进
+
+- 手机底栏支持自选插件快捷项；“更多”改为应用内菜单，其他插件可在设置的长列表中管理入口位置。
+
 #### 修复
 
 - 移除普通日历事件在时间轴上的独立卡片显示，同步条目继续作为任务显示。
@@ -516,6 +520,10 @@
 ## 2026-11-06
 
 ### 1.7.0 Beta 6
+
+#### Improved
+
+- Choose plugin shortcuts for the mobile dock; More now opens an in-app menu, with other plugin placements managed in a long Settings list.
 
 #### Fixed
 

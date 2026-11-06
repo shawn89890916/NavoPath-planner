@@ -22963,6 +22963,42 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     color: var(--text-main);
     box-shadow: none;
   }
+  .df-mobile-dock--viewport .df-mobile-plugin-actions {
+    display: flex;
+    min-width: 0;
+    height: 46px;
+    align-items: center;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .df-mobile-dock--viewport .df-mobile-plugin-actions::-webkit-scrollbar { display: none; }
+  .df-mobile-dock--viewport .df-mobile-plugin-action {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    width: auto;
+    min-width: 44px;
+    max-width: 68px;
+    height: 44px;
+    padding: 2px 5px;
+    border-radius: var(--radius-control, 8px);
+  }
+  .df-mobile-dock--viewport .df-mobile-plugin-action svg,
+  .df-mobile-dock--viewport .df-mobile-plugin-action img { width: 18px; height: 18px; object-fit: contain; }
+  .df-mobile-dock--viewport .df-mobile-plugin-action span { max-width: 100%; overflow: hidden; color: var(--text-muted); font-size: 9px; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
+  .df-mobile-dock--viewport .df-mobile-more-wrap { position: relative; display: grid; place-items: center; z-index: 2; }
+  .df-mobile-dock--viewport .df-mobile-more-button { position: relative; z-index: 3; border-radius: 50%; }
+  .df-mobile-dock--viewport .df-mobile-more-button.active { background: color-mix(in srgb, var(--text-main) 9%, transparent); }
+  .df-mobile-dock--viewport .df-mobile-menu-scrim { position: fixed; inset: 0; z-index: 1; border: 0; background: transparent; }
+  .df-mobile-dock--viewport .df-mobile-more-menu { position: absolute; right: -2px; bottom: calc(100% + 10px); z-index: 2; display: flex; width: min(280px, calc(100vw - 24px)); max-height: min(65vh, 480px); flex-direction: column; overflow-y: auto; padding: 6px; border: 1px solid var(--border-soft); background: var(--bg-surface); color: var(--text-main); box-shadow: 0 8px 24px color-mix(in srgb, #000 16%, transparent); }
+  .df-mobile-dock--viewport .df-mobile-menu-item { display: flex; min-height: 42px; align-items: center; gap: 11px; padding: 7px 10px; border: 0; border-radius: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .df-mobile-dock--viewport .df-mobile-menu-item:hover,
+  .df-mobile-dock--viewport .df-mobile-menu-item:focus-visible { background: color-mix(in srgb, var(--text-main) 7%, transparent); }
+  .df-mobile-dock--viewport .df-mobile-menu-item img { width: 20px; height: 20px; object-fit: contain; }
+  .df-mobile-dock--viewport .df-mobile-menu-item svg { flex: 0 0 20px; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
   .df-mobile-dock--viewport .df-mobile-dock-action:hover,
   .df-mobile-dock--viewport .df-mobile-dock-action:focus-visible {
     background: color-mix(in srgb, var(--text-main) 8%, transparent);
@@ -22975,28 +23011,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     stroke-width: 1.8;
     stroke-linecap: round;
     stroke-linejoin: round;
-  }
-  .df-mobile-dock--viewport .df-mobile-more {
-    position: relative;
-    overflow: visible;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--text-main);
-  }
-  .df-mobile-dock--viewport .df-mobile-more select {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    font-size: 16px;
-    cursor: pointer;
-  }
-  .df-mobile-dock--viewport .df-mobile-more:has(select:focus-visible) {
-    outline: 2px solid var(--accent-active);
-    outline-offset: -2px;
   }
   .df-mobile-dock--viewport .df-proactive-notification-count {
     position: absolute;

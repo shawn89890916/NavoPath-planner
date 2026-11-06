@@ -90,6 +90,7 @@ import { SyncScheduler, isCurrentWorkspaceLoad, readSyncInterval, shouldApplyWor
 import { extensionService } from "./extensions/service";
 const ExtensionHeader = lazy(() => import("./extensions/ExtensionSurfaces").then(module => ({ default: module.ExtensionHeader })));
 const ExtensionToolsDialog = lazy(() => import("./extensions/ExtensionSurfaces").then(module => ({ default: module.ExtensionToolsDialog })));
+const CompactPluginDock = lazy(() => import("./extensions/ExtensionSurfaces").then(module => ({ default: module.CompactPluginDock })));
 import { emitPluginEvent, subscribePluginEvent } from "./extensions/runtime";
 import { SelectionIndicator } from "./components/SelectionIndicator";
 import type { ExtensionHost } from "./extensions/types";
@@ -10626,26 +10627,7 @@ if (cached?.data && cached?.settings) {
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
           </button> : <span className="df-mobile-dock-spacer" aria-hidden="true" />}
 
-          {!productDemo && <label className={`df-mobile-dock-action df-mobile-more${showNotificationBadge && proactiveNotifications.length ? " has-unread" : ""}`} title={lang === "zh" ? "更多" : "More"}>
-            <UiMoreIcon />
-            <select aria-label={lang === "zh" ? "更多" : "More"} value="" onChange={(event) => {
-              const action = event.target.value;
-              setQuickAddOpen(false);
-              if (action === "notifications") setNotificationCenterOpen(true);
-              if (action === "search") { setCommandQuery(""); setCommandOpen(true); }
-              if (action === "plugins") setPluginToolsOpen(true);
-              if (action === "metrics") openMetrics();
-              if (action === "settings") { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }
-            }}>
-              <option value="" disabled hidden>{lang === "zh" ? "更多" : "More"}</option>
-              <option value="notifications">{lang === "zh" ? "通知" : "Notifications"}</option>
-              <option value="search">{lang === "zh" ? "搜索" : "Search"}</option>
-              {metricsAvailable && <option value="metrics">{metricsLabel}</option>}
-              <option value="plugins">{lang === "zh" ? "插件工具" : "Plugin tools"}</option>
-              <option value="settings">{t(lang, "header.settings")}</option>
-            </select>
-            <NotificationBadge count={proactiveNotifications.length} enabled={showNotificationBadge} />
-          </label>}
+          {!productDemo && <Suspense fallback={<button type="button" className="df-mobile-dock-action" aria-label={lang === "zh" ? "更多" : "More"}><UiMoreIcon /></button>}><CompactPluginDock lang={lang} metricsAvailable={metricsAvailable} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => { setQuickAddOpen(false); setNotificationCenterOpen(true); }} onSearch={() => { setQuickAddOpen(false); setCommandQuery(""); setCommandOpen(true); }} onMetrics={openMetrics} onSettings={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} onOpenView={openExtensionPanel} onOpenPluginTools={() => setPluginToolsOpen(true)} /></Suspense>}
         </nav>, document.body)
       )}
 

@@ -1,12 +1,55 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Language } from "../types";
 import { ActionDisclosure, Button, CloseButton, IconButton, Modal } from "../components/UiPrimitives";
 import { RightUtilityPanel, utilityPanelCloseLabel } from "../components/RightUtilityPanel";
 import { ExtensionMount } from "./ExtensionMount";
 import { extensionService } from "./service";
-import { UiRefreshIcon, UiZapIcon, UiPencilIcon, UiMetricsIcon, UiListChecksIcon, UiCalendarCheckIcon } from "../components/UiIcons";
+import { UiRefreshIcon, UiZapIcon, UiPencilIcon, UiMetricsIcon, UiListChecksIcon, UiCalendarCheckIcon, UiBellIcon, UiSearchIcon, UiSettingsIcon, UiMoreIcon } from "../components/UiIcons";
 import type { ExtensionContribution, PluginUiPlacement } from "./types";
 import "./ExtensionSurfaces.css";
+
+export function CompactPluginDock({ lang, metricsAvailable, onNotifications, onSearch, onMetrics, onSettings, onOpenSettings, onOpenView, onOpenPluginTools, notificationCount = 0 }: { lang: Language; metricsAvailable: boolean; onNotifications: () => void; onSearch: () => void; onMetrics: () => void; onSettings: () => void; onOpenSettings?: (pageId: string) => void; onOpenView?: (view: ExtensionContribution) => void; onOpenPluginTools: () => void; notificationCount?: number }) {
+  const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const installed = Object.values(snapshot.preferences.installed).filter((item) => item.manifest.kind === "plugin" && item.enabled && !snapshot.safeMode);
+  const placement = (key: string) => snapshot.preferences.compactPlacements?.[key] || "settings";
+  const bottomPlugins = installed.filter((item) => placement(item.key) === "bottom");
+  const morePlugins = installed.filter((item) => placement(item.key) === "more");
+  const zh = lang === "zh";
+  const activate = (key: string) => {
+    setMoreOpen(false);
+    const view = snapshot.views.find((item) => item.owner === key && !item.planningView);
+    const headerItem = snapshot.headerItems.find((item) => item.owner === key && (item.placement || "app-header") === "app-header");
+    const settingsPage = snapshot.settingsPages.find((item) => item.owner === key);
+    if (view) onOpenView?.(view);
+    else if (headerItem) onOpenView?.(headerItem);
+    else if (settingsPage && onOpenSettings) onOpenSettings(settingsPage.id);
+    else onOpenPluginTools();
+  };
+  const pluginButton = (item: typeof installed[number], inMenu = false) => {
+    const iconUrl = extensionService.getPluginIcon(item.key) || snapshot.catalog.find((entry) => entry.sourceId === item.sourceId && entry.manifest.id === item.manifest.id)?.iconUrl;
+    const Icon = item.manifest.id === "quick-capture" ? UiPencilIcon : item.manifest.id === "daily-overview" ? UiListChecksIcon : ["class-timetable", "schedule-templates"].includes(item.manifest.id) ? UiCalendarCheckIcon : UiZapIcon;
+    return inMenu
+      ? <button key={item.key} type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => activate(item.key)}>{iconUrl ? <img src={iconUrl} alt="" aria-hidden="true" /> : <Icon size={18} />}<span>{item.manifest.name}</span></button>
+      : <button key={item.key} type="button" className="df-mobile-dock-action df-mobile-plugin-action" aria-label={item.manifest.name} title={item.manifest.name} onClick={() => activate(item.key)}>{iconUrl ? <img src={iconUrl} alt="" aria-hidden="true" /> : <Icon size={19} />}<span>{item.manifest.name}</span></button>;
+  };
+  return <>
+    <div className="df-mobile-plugin-actions">{bottomPlugins.map((item) => pluginButton(item))}</div>
+    <div className="df-mobile-more-wrap">
+      <button type="button" className={`df-mobile-dock-action df-mobile-more-button${moreOpen ? " active" : ""}`} aria-label={zh ? `更多${notificationCount ? `，${notificationCount} 条未读通知` : ""}` : `More${notificationCount ? `, ${notificationCount} unread notifications` : ""}`} aria-expanded={moreOpen} aria-haspopup="menu" onClick={() => setMoreOpen((open) => !open)}><UiMoreIcon />{notificationCount > 0 && <span className="df-proactive-notification-count">{notificationCount > 99 ? "99+" : notificationCount}</span>}</button>
+      {moreOpen && <>
+        <button type="button" className="df-mobile-menu-scrim" aria-label={zh ? "关闭更多菜单" : "Close More menu"} onClick={() => setMoreOpen(false)} />
+        <div className="df-mobile-more-menu" role="menu" aria-label={zh ? "更多" : "More"}>
+          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onNotifications(); }}><UiBellIcon size={18} /><span>{zh ? "通知" : "Notifications"}{notificationCount > 0 ? ` · ${notificationCount}` : ""}</span></button>
+          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onSearch(); }}><UiSearchIcon size={18} /><span>{zh ? "搜索" : "Search"}</span></button>
+          {metricsAvailable && <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onMetrics(); }}><UiMetricsIcon size={18} /><span>{zh ? "指标" : "Metrics"}</span></button>}
+          {morePlugins.map((item) => <Fragment key={item.key}>{pluginButton(item, true)}</Fragment>)}
+          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onSettings(); }}><UiSettingsIcon size={18} /><span>{zh ? "设置" : "Settings"}</span></button>
+        </div>
+      </>}
+    </div>
+  </>;
+}
 
 /** Compact layouts expose the same contributions through the workspace menu. */
 export function ExtensionToolsDialog({ lang, onClose, onOpenSettings, onOpenMetrics, onOpenView }: { lang: Language; onClose: () => void; onOpenSettings?: (pageId: string) => void; onOpenMetrics?: () => void; onOpenView?: (view: ExtensionContribution) => void }) {

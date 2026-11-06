@@ -112,7 +112,8 @@ export function defaultExtensionPreferences(): ExtensionPreferences { return { v
 export function normalizeExtensionPreferences(input: unknown): ExtensionPreferences {
   const defaults = defaultExtensionPreferences();
   if (!isRecord(input)) return defaults;
-  const result: ExtensionPreferences = { ...defaults, autoCheckUpdates: input.autoCheckUpdates !== false, autoUpdate: input.autoUpdate === true, migratedLegacy: input.migratedLegacy === true, migratedPlanningViews: input.migratedPlanningViews === true, migratedShelfViews: input.migratedShelfViews === true, headerOrder: Array.isArray(input.headerOrder) ? [...new Set(input.headerOrder.filter((key): key is string => typeof key === "string" && /^[a-z0-9][a-z0-9._-]{0,79}:[a-z0-9][a-z0-9._-]{0,79}$/.test(key)))].slice(0, 100) : [], updatedAt: typeof input.updatedAt === "string" ? input.updatedAt : undefined };
+  const result: ExtensionPreferences = { ...defaults, autoCheckUpdates: input.autoCheckUpdates !== false, autoUpdate: input.autoUpdate === true, migratedLegacy: input.migratedLegacy === true, migratedPlanningViews: input.migratedPlanningViews === true, migratedShelfViews: input.migratedShelfViews === true, headerOrder: Array.isArray(input.headerOrder) ? [...new Set(input.headerOrder.filter((key): key is string => typeof key === "string" && /^[a-z0-9][a-z0-9._-]{0,79}:[a-z0-9][a-z0-9._-]{0,79}$/.test(key)))].slice(0, 100) : [], compactPlacements: {}, updatedAt: typeof input.updatedAt === "string" ? input.updatedAt : undefined };
+  if (isRecord(input.compactPlacements)) for (const [key, placement] of Object.entries(input.compactPlacements).slice(0, 100)) if (/^[a-z0-9][a-z0-9._-]{0,79}:[a-z0-9][a-z0-9._-]{0,79}$/.test(key) && (placement === "bottom" || placement === "more" || placement === "settings")) result.compactPlacements![key] = placement;
   if (Array.isArray(input.sources)) result.sources = input.sources.slice(0, 30).flatMap((s: any) => { try { return isRecord(s) && safeId(s.id) && typeof s.name === "string" ? [{ id: s.id, name: s.name.slice(0, 200), url: publicHttps(s.url) }] : []; } catch { return []; } });
   if (!result.sources.some(s => s.id === "official")) result.sources.unshift(OFFICIAL_SOURCE);
   if (isRecord(input.removed)) for (const [key, value] of Object.entries(input.removed).slice(0, 1000)) if (/^[a-z0-9][a-z0-9._-]{0,79}:[a-z0-9][a-z0-9._-]{0,79}$/.test(key) && typeof value === "string" && Number.isFinite(Date.parse(value))) result.removed[key] = value;
@@ -131,7 +132,7 @@ export function normalizeExtensionPreferences(input: unknown): ExtensionPreferen
 export function mergeExtensionPreferences(remote: unknown, local: unknown): ExtensionPreferences {
   const a = normalizeExtensionPreferences(remote), b = normalizeExtensionPreferences(local);
   const newer = Date.parse(a.updatedAt || "1970-01-01") > Date.parse(b.updatedAt || "1970-01-01") ? a : b;
-  const merged = { ...newer, installed: { ...a.installed }, removed: { ...a.removed } };
+  const merged = { ...newer, installed: { ...a.installed }, removed: { ...a.removed }, compactPlacements: { ...(newer === a ? b.compactPlacements : a.compactPlacements), ...newer.compactPlacements } };
   for (const [key, date] of Object.entries(b.removed)) if (!merged.removed[key] || date > merged.removed[key]) merged.removed[key] = date;
   for (const [key, item] of Object.entries(b.installed)) if (!merged.installed[key] || (item.updatedAt || item.installedAt) >= (merged.installed[key].updatedAt || merged.installed[key].installedAt)) merged.installed[key] = item;
   return normalizeExtensionPreferences(merged);
