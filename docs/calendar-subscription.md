@@ -15,6 +15,8 @@ The raw subscription token is generated in the browser. Supabase stores only its
 1. Sign in to NavoPath.
 2. Open **Settings → Advanced → Calendar & Integrations → Calendar**.
 3. Select **Create subscription link**.
-4. On iPhone, select **Subscribe in Calendar**. For another client, copy the HTTPS link and add it as an iCalendar or Webcal subscription.
+4. Copy the HTTPS link and paste it into **Add Subscription Calendar** on iPhone or the equivalent URL subscription option in another calendar client.
+
+New NavoPath links use `https://navopath.com/calendar/…`. To switch an existing link from the default Worker hostname, change only the hostname to `navopath.com` and keep the complete `/calendar/` path, including the token and `.ics` suffix.
 
 Calendar subscriptions are read-only. Changes made in Apple Calendar or Notion Calendar do not update NavoPath, and calendar clients decide when to refresh remote feeds.

@@ -58,10 +58,10 @@ const ACCENT_COLOR_NAMES: Record<string, [string, string]> = {
   "#EEE9DF": ["白色", "White"],
 };
 
-const MCP_ENDPOINT = import.meta.env.VITE_MCP_ENDPOINT || "https://navopath-mcp.shawn89890916.workers.dev/mcp";
+const CALENDAR_FEED_ENDPOINT = import.meta.env.VITE_MCP_ENDPOINT || "https://navopath.com";
 
 function calendarFeedUrl(token: string) {
-  const endpoint = new URL(MCP_ENDPOINT);
+  const endpoint = new URL(CALENDAR_FEED_ENDPOINT);
   endpoint.pathname = `${endpoint.pathname.replace(/\/mcp\/?$/, "").replace(/\/$/, "")}/calendar/${token}.ics`;
   endpoint.search = "";
   endpoint.hash = "";

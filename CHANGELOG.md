@@ -1,5 +1,10 @@
 # NavoPath 更新日志
 
+## 2026-11-06
+
+### 修复
+- 日历订阅链接改用 NavoPath 主站域名，解决部分网络无法访问原订阅地址的问题。
+
 ## 2026-11-05
 
 ### 1.6.3
@@ -473,6 +478,11 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-06
+
+### Fixed
+- Calendar subscription links use the main NavoPath domain so they can work on networks that cannot reach the original address.
 
 ## 2026-11-05
 
