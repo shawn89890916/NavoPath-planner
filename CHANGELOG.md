@@ -2,6 +2,16 @@
 
 ## 2026-11-06
 
+### 1.7.0 Beta 9
+
+#### 修复
+
+- 竖屏底栏和「更多」仅显示横屏顶栏的插件，树、看板、矩阵和列表统一在 Tasks 下拉框中切换，并修复插件图标破图。
+
+#### 改进
+
+- 底栏采用等间距图标，换上圆润的机器人对话气泡，并移除快捷项标签和「更多」中的拖动说明。
+
 ### 1.7.0 Beta 8
 
 #### 改进
@@ -527,6 +537,16 @@
 # NavoPath Changelog
 
 ## 2026-11-06
+
+### 1.7.0 Beta 9
+
+#### Fixed
+
+- The portrait dock and More show plugins from the landscape toolbar. Tree, Kanban, Matrix, and List are available in the Tasks dropdown, and plugin icons load correctly.
+
+#### Improved
+
+- Space dock icons evenly, give chat a rounded robot bubble, and remove shortcut labels and drag instructions from More.
 
 ### 1.7.0 Beta 8
 

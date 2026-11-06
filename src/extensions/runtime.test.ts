@@ -62,14 +62,18 @@ describe("trusted plugin runtime", () => {
     vi.unstubAllGlobals();
   });
   it("exposes a bundled launcher icon for the active plugin and revokes it on unload", async () => {
-    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:launcher-icon");
+    const createUrl = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:launcher-icon");
     const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
     const pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather));
     delete pkg.manifest.styles;
     pkg.manifest.icon = "icon.svg";
-    pkg.files["icon.svg"] = { encoding: "utf8", data: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 12h16"/></svg>' };
+    pkg.files["icon.svg"] = { encoding: "utf8", data: '<svg viewBox="0 0 24 24"><path d="M4 12h16"/></svg>' };
     const loaded = await loadPlugin(pkg, bridge().value, async () => ({ default: { onload() {} } }));
     expect(loaded.iconUrl).toBe("blob:launcher-icon");
+    const icon = createUrl.mock.calls.at(-1)?.[0];
+    if (!(icon instanceof Blob)) throw new Error("Expected an SVG blob for the launcher icon");
+    expect(icon.type).toBe("image/svg+xml");
+    expect(await icon.text()).toContain('<svg xmlns="http://www.w3.org/2000/svg" viewBox=');
     await loaded.dispose();
     expect(revoke).toHaveBeenCalledWith("blob:launcher-icon");
   });

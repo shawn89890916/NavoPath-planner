@@ -4,7 +4,7 @@ import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
 import { emitPluginEvent, loadPlugin, type LoadedPlugin } from "./runtime";
 import { fetchExtensionBytes, getExtensionValue, getPrivatePackage, putPrivatePackage, removeExtensionValue, setExtensionValue, subscribeExtensionValues } from "./transport";
 import { applyExtensionTheme } from "./theme";
-import { moveCompactPlugin } from "./compactDock";
+import { getAppHeaderPlugins, moveCompactPlugin } from "./compactDock";
 import type { CompactPluginPlacement } from "./model";
 
 type PendingValue = { owner: string; key: string; value: unknown; remove: boolean; id: string };
@@ -100,7 +100,7 @@ export class ExtensionService {
   setCompactPlacement = (key: string, placement: CompactPluginPlacement, replaceKey?: string) => this.operation(async () => {
     const { preferences, safeMode } = this.snapshot;
     if (safeMode) return;
-    const compactPlacements = moveCompactPlugin(preferences, key, placement, replaceKey);
+    const compactPlacements = moveCompactPlugin(preferences, getAppHeaderPlugins(this.snapshot).owners, key, placement, replaceKey);
     if (compactPlacements) await this.savePreferences({ ...preferences, compactPlacements });
   });
   setSafeMode = async (safeMode: boolean) => {

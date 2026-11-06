@@ -73,7 +73,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiChevronDownIcon, UiChevronLeftIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiKanbanIcon, UiListChecksIcon, UiListIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiChatIcon, UiChevronDownIcon, UiChevronLeftIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiKanbanIcon, UiListChecksIcon, UiListIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -1800,6 +1800,7 @@ function App() {
     return rank(first) - rank(second);
   }), [extensionSnapshot.views]);
   const shelfView = shelfViews.find((view) => view.id === shelfViewId);
+  const treeView = extensionSnapshot.views.find((view) => view.nativeMode === "tree");
   const metricsAvailable = extensionSnapshot.views.some((view) => view.nativeMode === "metrics");
   useEffect(() => {
     if (shelfViewId && !shelfView) setShelfViewId("");
@@ -8961,18 +8962,6 @@ if (cached?.data && cached?.settings) {
     setUtilityPanel("metrics");
   }
 
-  function openCompactPluginView(view: ExtensionContribution) {
-    if (view.nativeMode === "metrics") return openMetrics();
-    if (view.nativeMode === "tree") return openProjectManagement();
-    if (!view.planningView) return openExtensionPanel(view);
-    setProjectManagement(false);
-    setCandidatePanelCollapsed(false);
-    setFullscreen(false);
-    selectShelfView(view.id);
-    setCompactExecuteView("tasks");
-    if (mobileExecution) setCandidateDrawerOpen(true);
-  }
-
   function currentTimelineViewportFocus() {
     const scrollElement = timelineRef.current;
     if (!scrollElement || timelineView === "month") return { date: timelineWindowAnchorDate, startTime: "09:00" };
@@ -9294,6 +9283,7 @@ if (cached?.data && cached?.settings) {
   const switchViewsLabel = lang === "zh" ? "切换左浮栏视图" : "Switch task views";
   const manageProjectsLabel = lang === "zh" ? "管理项目" : "Manage projects";
   const metricsLabel = lang === "zh" ? "指标" : "Metrics";
+  const compactChat = !productPresentation && !settings.hideAi && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} />;
   return (
     <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
@@ -9580,7 +9570,7 @@ if (cached?.data && cached?.settings) {
                   <Button variant="ghost" aria-pressed={showScheduledCandidates} onClick={() => setShowScheduledCandidates((show) => !show)}>
                     {lang === "zh" ? "显示已安排" : "Show scheduled"}
                   </Button>
-                  <Button variant="ghost" onClick={openProjectManagement}>{manageProjectsLabel}</Button>
+                  {!treeView && <Button variant="ghost" onClick={openProjectManagement}>{manageProjectsLabel}</Button>}
                   <Suspense fallback={null}><ExtensionHeader lang={lang} placement="planning-sidebar" onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>
                 </ActionDisclosure>}
                 </>}
@@ -9593,6 +9583,7 @@ if (cached?.data && cached?.settings) {
             />
             {!projectManagement && <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu">
               <Button variant="ghost" aria-pressed={!shelfView} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
+              {treeView && <Button variant="ghost" onClick={openProjectManagement}><CandidateViewIcon view={treeView} />{candidateViewName(treeView, lang)}</Button>}
               {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id} onClick={() => selectShelfView(view.id)}><CandidateViewIcon view={view} />{candidateViewName(view, lang)}</Button>)}
             </AnchoredNarrowMenu>}
             {candidateDropActive && (
@@ -10636,11 +10627,9 @@ if (cached?.data && cached?.settings) {
 
       {!productAiPresentation && compactLayout && !candidateDrawerOpen && !mobilePlacement && !drawerOpen && !commandOpen && !notificationCenterOpen && !scheduleTemplatePresence.present && !utilityPanel && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, "execute")} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
-          {!productPresentation && !settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
-          </button> : <span className="df-mobile-dock-spacer" aria-hidden="true" />}
-
-          {!productDemo && <Suspense fallback={<button type="button" className="df-mobile-dock-action df-mobile-more-wrap" aria-label={lang === "zh" ? "更多" : "More"}><UiMoreIcon /></button>}><CompactPluginDock lang={lang} metricsAvailable={metricsAvailable} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => { setQuickAddOpen(false); setNotificationCenterOpen(true); }} onSearch={() => { setQuickAddOpen(false); setCommandQuery(""); setCommandOpen(true); }} onMetrics={openMetrics} onSettings={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} onOpenView={openCompactPluginView} onOpenPluginTools={() => setPluginToolsOpen(true)} /></Suspense>}
+          {productDemo ? <div className="df-mobile-dock-slots">{compactChat}</div> : <Suspense fallback={<div className="df-mobile-dock-slots">{compactChat}<IconButton className="df-mobile-dock-action df-mobile-more-wrap" label={lang === "zh" ? "更多" : "More"} icon={<UiMoreIcon />} /></div>}>
+            <CompactPluginDock lang={lang} chat={compactChat} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => { setQuickAddOpen(false); setNotificationCenterOpen(true); }} onSearch={() => { setQuickAddOpen(false); setCommandQuery(""); setCommandOpen(true); }} onMetrics={openMetrics} onSettings={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} onOpenView={openExtensionPanel} onOpenPluginTools={() => setPluginToolsOpen(true)} />
+          </Suspense>}
         </nav>, document.body)
       )}
 

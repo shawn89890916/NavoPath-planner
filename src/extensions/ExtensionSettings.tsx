@@ -5,7 +5,7 @@ import { ActionDisclosure, Button, CloseButton, Modal } from "../components/UiPr
 import { UiSearchIcon } from "../components/UiIcons";
 import { extensionService } from "./service";
 import type { CatalogEntry, CompactPluginPlacement, ExtensionKind, ThemeOption } from "./types";
-import { COMPACT_DOCK_LIMITS, DEFAULT_COMPACT_DOCK_LIMIT } from "./compactDock";
+import { COMPACT_DOCK_LIMITS, DEFAULT_COMPACT_DOCK_LIMIT, getAppHeaderPlugins } from "./compactDock";
 import { ExtensionMount } from "./ExtensionMount";
 import "./ExtensionSettings.css";
 
@@ -73,6 +73,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
   const [fallbackSettingsKey, setFallbackSettingsKey] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const installed = Object.values(preferences.installed).filter((item) => item.manifest.kind === kind);
+  const toolbarOwners = plugin ? getAppHeaderPlugins(snapshot).owners : undefined;
   const matches = (name: string, description: string, author: string) => `${name} ${description} ${author}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase());
   const filtered = installed.filter(({ manifest }) => matches(manifest.name, manifest.description, manifest.author));
   const catalog = snapshot.catalog.filter(({ manifest, sourceId }) => manifest.kind === kind && matches(manifest.name, manifest.description, manifest.author) && (!onlyInstalled || installed.some(item => item.sourceId === sourceId && item.manifest.id === manifest.id))).sort((a, b) => marketSort === "downloads" ? (b.downloads ?? -1) - (a.downloads ?? -1) : marketSort === "updated" ? (Date.parse(b.publishedAt || "") || 0) - (Date.parse(a.publishedAt || "") || 0) : a.manifest[marketSort === "author" ? "author" : "name"].localeCompare(b.manifest[marketSort === "author" ? "author" : "name"], lang));
@@ -111,15 +112,15 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
         <SettingRow title={text("自动安装更新", "Install updates automatically")} description={text("关闭时，由你决定何时升级。", "When off, you choose when to upgrade.")} control={<SettingToggle checked={preferences.autoUpdate} disabled={busy} ariaLabel={text("自动安装更新", "Install updates automatically")} onChange={(autoUpdate) => void run(() => extensionService.setPreference({ autoUpdate }))} />} />
         <SettingRow title={text("扩展来源", "Extension sources")} description={text(`${preferences.sources.length} 个市场源`, `${preferences.sources.length} catalog sources`)} control={<SettingActionButton onClick={() => navigate("sources")}>{text("管理来源", "Manage sources")}</SettingActionButton>} />
       </SettingSection>
-      {plugin && <SettingSection presentation="plain" title={text("插件工具入口", "Plugin tool placement")} description={text("固定的插件优先显示，剩余快捷位按安装时间从早到晚自动补齐。也可在底栏与“更多”之间拖动插件。", "Pinned plugins take priority. Remaining dock slots fill from oldest to newest. Drag plugins between the dock and More to move them.")}>
-        <SettingRow title={text("插件快捷栏数量", "Plugin dock slots")} description={text("默认 5 个。窄屏可横向滑动快捷栏查看其余图标。", "Defaults to 5. On narrow screens, scroll the dock sideways for the remaining icons.")} control={<SettingSelect
+      {plugin && <SettingSection presentation="plain" title={text("插件工具入口", "Plugin tool placement")}>
+        <SettingRow title={text("插件快捷栏数量", "Plugin dock slots")} control={<SettingSelect
           disabled={busy}
           value={String(preferences.compactDockLimit ?? DEFAULT_COMPACT_DOCK_LIMIT)}
           ariaLabel={text("插件快捷栏数量", "Plugin dock slots")}
           options={COMPACT_DOCK_LIMITS.map((count) => ({ value: String(count), label: String(count) }))}
           onChange={(value) => void run(() => extensionService.setPreference({ compactDockLimit: Number(value) }))}
         />} />
-        {installed.map((item) => <SettingRow key={`placement:${item.key}`} title={item.manifest.name} description={text(item.enabled ? "选择这个插件工具的入口位置。" : "启用插件后可选择入口位置。", item.enabled ? "Choose where this plugin tool appears." : "Enable this plugin to choose where its tool appears.")} control={<SettingSelect disabled={!item.enabled || safeMode || busy} value={preferences.compactPlacements?.[item.key] || "auto"} ariaLabel={text(`${item.manifest.name} 的入口位置`, `${item.manifest.name} placement`)} options={[{ value: "auto", label: text("自动", "Automatic") }, { value: "bottom", label: text("底栏", "Dock") }, { value: "more", label: text("更多", "More") }, { value: "settings", label: text("仅设置", "Settings only") }]} onChange={(value) => void run(() => extensionService.setCompactPlacement(item.key, value as CompactPluginPlacement))} />} />)}
+        {installed.filter((item) => item.enabled && toolbarOwners?.has(item.key)).map((item) => <SettingRow key={`placement:${item.key}`} title={item.manifest.name} control={<SettingSelect disabled={safeMode || busy} value={preferences.compactPlacements?.[item.key] || "auto"} ariaLabel={text(`${item.manifest.name} 的入口位置`, `${item.manifest.name} placement`)} options={[{ value: "auto", label: text("自动", "Automatic") }, { value: "bottom", label: text("底栏", "Dock") }, { value: "more", label: text("更多", "More") }, { value: "settings", label: text("仅设置", "Settings only") }]} onChange={(value) => void run(() => extensionService.setCompactPlacement(item.key, value as CompactPluginPlacement))} />} />)}
       </SettingSection>}
       <SettingSection presentation="plain" title={<>{text(plugin ? "已安装插件" : "已安装主题", plugin ? "Installed plugins" : "Installed themes")} <span className="df-extension-count">{installed.length}</span></>}>
         {installed.length > 0 && search}

@@ -30,7 +30,10 @@ export function createResourceUrls(pkg: ExtensionPackage): { get(path: string): 
   return { get(path) {
     if (urls.has(path)) return urls.get(path)!;
     const file = pkg.files[path]; if (!file) throw new Error(`Missing resource ${path}`);
-    const content = file.encoding === "base64" ? Uint8Array.from(atob(file.data), c => c.charCodeAt(0)) : file.data;
+    const content = file.encoding === "base64" ? Uint8Array.from(atob(file.data), c => c.charCodeAt(0)) : path === pkg.manifest.icon
+      ? file.data.replace(/^(\s*<svg\b)([^>]*>)/i, (tag, start: string, attributes: string) =>
+        /\sxmlns\s*=/.test(attributes) ? tag : `${start} xmlns="http://www.w3.org/2000/svg"${attributes}`)
+      : file.data;
     const url = URL.createObjectURL(new Blob([content], { type: mime(path) })); urls.set(path, url); return url;
   }, dispose() { for (const url of urls.values()) URL.revokeObjectURL(url); urls.clear(); } };
 }
