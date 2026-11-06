@@ -3404,7 +3404,9 @@ if (cached?.data && cached?.settings) {
   const tasks = data?.tasks || [];
   const [backgroundRevision, refreshBackgrounds] = useState(0);
   useEffect(()=>{ const off=subscribePluginEvent("calendar:backgrounds-changed",()=>refreshBackgrounds(v=>v+1)); return ()=>{void off();}; },[]);
-  const events = useMemo(()=>(data?.events || []).filter(isCalendarBackgroundVisible),[data?.events,backgroundRevision]);
+  // The timeline only renders fixed timetable backgrounds from the event store.
+  // Ordinary appointments are tasks now and must not reappear as Event blocks.
+  const events = useMemo(()=>(data?.events || []).filter(event => event.fixedCourse && event.calendarKind !== "appointment" && isCalendarBackgroundVisible(event)),[data?.events,backgroundRevision]);
   const commandIndex = useMemo(() => data && settings ? buildCommandSearchIndex(data, settings) : [], [data, settings]);
   const commandResults = useMemo(() => searchCommands(commandIndex, commandQuery), [commandIndex, commandQuery]);
 
