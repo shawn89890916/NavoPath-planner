@@ -29,6 +29,6 @@ Calendar subscriptions are read-only. Changes made in Apple Calendar or Notion C
 3. Enter the server **navopath.com**, the generated username and password, and a description such as **NavoPath**.
 4. When creating or editing an event in Apple Calendar, select the **NavoPath** calendar. NavoPath uses the time zone shown when the account password is generated.
 
-CalDAV syncs appointments created in the NavoPath calendar or as calendar events in NavoPath. Task deadlines, scheduled task blocks and legacy course blocks remain available through the separate read-only subscription. The writable calendar supports timed and all-day appointments and the recurring patterns represented in NavoPath. Invitations and edits to individual occurrences of a recurring series are outside this sync.
+CalDAV syncs appointments created in the NavoPath calendar into NavoPath as ordinary tasks, so they can be checked off and managed with the rest of the task list. Task deadlines, scheduled task blocks and legacy course blocks remain available through the separate read-only subscription. The writable calendar supports timed and all-day appointments and the recurring patterns represented in NavoPath. Invitations and edits to individual occurrences of a recurring series are outside this sync.
 
 The CalDAV password is dedicated to calendar access and shown only when generated. Revoke it in NavoPath to disconnect all devices that use it.

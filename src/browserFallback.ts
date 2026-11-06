@@ -560,7 +560,9 @@ function migrateEventsToTasks(data: PlannerData): Task[] {
   const migrated: Task[] = [];
   let migrationCandidates = 0;
   const makeTask = (event: PlannerData["events"][number], date: string, suffix: string): Task => {
-    const id = `migrated_event_${event.id}_${suffix}`;
+    const id = event.calendarKind === "appointment" && event.caldav
+      ? event.id
+      : `migrated_event_${event.id}_${suffix}`;
     const start = event.startTime || undefined;
     let end = start ? event.endTime : undefined;
     let endDate = event.endDate && event.endDate >= date ? event.endDate : date;
@@ -597,6 +599,7 @@ function migrateEventsToTasks(data: PlannerData): Task[] {
       estimatedHours: duration / 60,
       plannedForDate: date,
       recurrence: event.recurrence,
+      caldav: event.calendarKind === "appointment" ? event.caldav : undefined,
       subtasks: [],
       createdAt: event.createdAt || now(),
       updatedAt: event.createdAt || now(),
@@ -611,14 +614,24 @@ function migrateEventsToTasks(data: PlannerData): Task[] {
       executionStatus: "scheduled",
       createdAt: event.createdAt || now(),
     }];
+    else if (!start && !event.recurrence && event.calendarKind === "appointment") task.timelineRecords = [{
+      id: `${id}_schedule`,
+      taskId: id,
+      scheduledDate: date,
+      scheduledStart: "",
+      scheduledEndDate: date,
+      scheduledEnd: "",
+      executionStatus: "scheduled",
+      createdAt: event.createdAt || now(),
+    }];
     return task;
   };
   for (const event of data.events || []) {
-    if (event.fixedCourse) continue;
+    if (event.fixedCourse && event.calendarKind !== "appointment") continue;
     if (migrationCandidates >= MAX_MIGRATED_EVENT_TASKS) break;
     const startDate = event.startDate || event.date || localIso(new Date());
     const endDate = event.endDate || startDate;
-    if (event.startTime || event.recurrence) {
+    if (event.calendarKind === "appointment" || event.startTime || event.recurrence) {
       migrationCandidates += 1;
       const task = makeTask(event, startDate, "primary");
       if (!existing.has(task.id)) migrated.push(task);
@@ -1015,7 +1028,7 @@ export function normalizeData(data: PlannerData): PlannerData {
         details: boundedPersistedString(draft.details, MAX_PERSISTED_TEXT_LENGTH),
     })),
     version: Math.max(safeData.version || 1, 2),
-    events: safeData.events.filter(event => event.fixedCourse === true),
+    events: safeData.events.filter(event => event.fixedCourse === true && event.calendarKind !== "appointment"),
     tasks: normalizedTasks,
   }));
 }

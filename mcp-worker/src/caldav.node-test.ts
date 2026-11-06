@@ -87,11 +87,11 @@ test("creates, retrieves, revises and deletes appointments using ETags and tombs
   const created = await api.request("PUT", item, appleEvent, { "If-None-Match": "*" });
   assert.equal(created.status, 201);
   const etag = created.headers.get("ETag")!;
-  const stored = api.profile.data.events!.at(-1)!;
-  assert.equal(stored.startTime, "15:00");
-  assert.equal(stored.endTime, "16:00");
-  assert.equal(stored.calendarKind, "appointment");
-  assert.equal(stored.fixedCourse, true);
+  const stored = api.profile.data.tasks!.at(-1)!;
+  assert.equal(stored.timelineRecords?.[0].scheduledStart, "15:00");
+  assert.equal(stored.timelineRecords?.[0].scheduledEnd, "16:00");
+  assert.equal(stored.caldav?.uid, "calendar-smoke");
+  assert.equal(stored.fixedCourse, undefined);
   assert.equal((await api.request("PUT", item, appleEvent, { "If-None-Match": "*" })).status, 412);
   assert.equal((await api.request("PUT", calendar + "duplicate.ics", appleEvent)).status, 403);
   assert.equal((await api.request("GET", item, undefined, { "If-None-Match": etag })).status, 304);
@@ -102,7 +102,7 @@ test("creates, retrieves, revises and deletes appointments using ETags and tombs
   assert.equal(revised.status, 204);
   assert.equal((await api.request("DELETE", item, undefined, { "If-Match": etag })).status, 412);
   assert.equal((await api.request("DELETE", item, undefined, { "If-Match": revised.headers.get("ETag")! })).status, 204);
-  assert.ok(api.profile.data.sync?.deleted?.["events:" + stored.id]);
+  assert.ok(api.profile.data.sync?.deleted?.["tasks:" + stored.id]);
   assert.equal((await api.request("GET", item)).status, 404);
 });
 
