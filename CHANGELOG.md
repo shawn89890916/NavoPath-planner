@@ -2,6 +2,12 @@
 
 ## 2026-11-06
 
+### 1.7.0 Beta 6
+
+#### 修复
+
+- 移除普通日历事件在时间轴上的独立卡片显示，同步条目继续作为任务显示。
+
 ### 1.7.0 Beta 5
 
 #### 修复
@@ -508,6 +514,12 @@
 # NavoPath Changelog
 
 ## 2026-11-06
+
+### 1.7.0 Beta 6
+
+#### Fixed
+
+- Remove standalone calendar event cards from the timeline while keeping synchronized items as tasks.
 
 ### 1.7.0 Beta 5
 
