@@ -37,9 +37,15 @@ export function createResourceUrls(pkg: ExtensionPackage): { get(path: string): 
     const url = URL.createObjectURL(new Blob([content], { type: mime(path) })); urls.set(path, url); return url;
   }, dispose() { for (const url of urls.values()) URL.revokeObjectURL(url); urls.clear(); } };
 }
-export function emitPluginEvent(event: string, payload?: unknown): void { eventBus.dispatchEvent(new CustomEvent(event, { detail: payload })); }
-export function subscribePluginEvent(event: string, listener: (payload: unknown) => void): Dispose {
-  const handler = (value: Event) => listener((value as CustomEvent).detail);
+export function emitPluginEvent(event: string, payload?: unknown, owner?: string): void {
+  eventBus.dispatchEvent(Object.assign(new CustomEvent(event, { detail: payload }), { owner }));
+}
+export function subscribePluginEvent(event: string, listener: (payload: unknown, owner?: string) => void): Dispose {
+  const handler = (value: Event) => {
+    const event = value as CustomEvent & { owner?: string };
+    if (event.owner) listener(event.detail, event.owner);
+    else listener(event.detail);
+  };
   eventBus.addEventListener(event, handler);
   return () => eventBus.removeEventListener(event, handler);
 }
@@ -66,7 +72,7 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
     tasks: collection<Task>("tasks"), projects: collection<Project>("projects"), calendar: { ...collection<CalendarEvent>("events"), registerBackground: predicate => { const off=registerCalendarBackground(predicate); emitPluginEvent("calendar:backgrounds-changed"); return register(()=>{ off(); emitPluginEvent("calendar:backgrounds-changed"); }); } }, register,
     on(target, event, listener) { target.addEventListener(event, listener); return register(() => target.removeEventListener(event, listener)); },
     interval(callback, ms) { const timer = window.setInterval(callback, ms); return register(() => window.clearInterval(timer)); },
-      events: { on(event, listener) { return register(subscribePluginEvent(event, listener)); }, emit: emitPluginEvent },
+      events: { on(event, listener) { return register(subscribePluginEvent(event, (payload) => listener(payload))); }, emit: (event, payload) => emitPluginEvent(event, payload, bridge.key) },
     settings: { get: () => bridge.config() as any, save: bridge.saveConfig, registerPage: (name, mount) => register(bridge.contribute("settingsPages", name, mount)) },
     storage: { get: bridge.getValue, set: bridge.setValue, remove: bridge.removeValue },
     localStorage: { get<T>(key: string) { try { return JSON.parse(localStorage.getItem(ownLocal + key) || "null") as T | null; } catch { return null; } }, set(key, value) { localStorage.setItem(ownLocal + key, JSON.stringify(value)); } },
@@ -78,7 +84,7 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
       toast: bridge.host.toast,
     },
     commands: { register: (id, name, run, shortcut) => register(bridge.addCommand(`${bridge.key}:${id}`, name, run, shortcut)), execute: id => bridge.executeCommand(id.includes(":") ? id : `${bridge.key}:${id}`) },
-    timers: { registerMode: provider => register(registerTimerMode(provider)), open: mode => { if (disposed) throw new Error("Plugin is unloaded"); openTimerMode(mode); } },
+    timers: { registerMode: provider => register(registerTimerMode(provider)), open: mode => { if (disposed) throw new Error("Plugin is unloaded"); openTimerMode(mode, bridge.key); } },
     patch: (target, key, wrapper) => register(patchMethod(target, key, wrapper)),
     resourceUrl: resources.get,
     desktop: bridge.platform === "desktop" && window.desktopApi?.extensions ? { invoke: (method, payload) => window.desktopApi!.extensions!.invoke(bridge.key, method, payload) } : null,

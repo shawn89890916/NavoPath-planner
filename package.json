@@ -1,6 +1,6 @@
 {
   "name": "navopath",
-  "version": "1.7.0-beta.11",
+  "version": "1.7.0-beta.12",
   "description": "NavoPath — Navigate your next step.",
   "author": "NavoPath",
   "main": "electron/main.cjs",
@@ -180,6 +180,11 @@
       "name": "Settings panel scripts",
       "path": "dist/assets/SettingsPanel-*.js",
       "limit": "24 KB"
+    },
+    {
+      "name": "On-demand search panel",
+      "path": "dist/assets/CommandPalette-*.js",
+      "limit": "2 KB"
     }
   ],
   "build": {

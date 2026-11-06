@@ -104,7 +104,6 @@ import { anchoredTimelineScrollTop, timelineZoomFromPinch } from "./utils/timeli
 import { calendarEventDurationMinutes, expandTimedCalendarEvent } from "./utils/calendarEventSlices";
 import { MOTION, runMotionTransition, scheduleMotionCommit } from "./motion";
 import { useMotionPresence } from "./useMotionPresence";
-import { useModalFocus } from "./useModalFocus";
 import { useMotionSelection } from "./useMotionSelection";
 import "./app.css";
 import "./mobile-execution.css";
@@ -126,6 +125,7 @@ const ChangelogPage = lazy(() => import("./ChangelogPage"));
 const PluginGuidePageLazy = lazy(() => import("./PluginGuidePage"));
 const loadSettingsPanel = () => import("./SettingsPanel");
 const UtilityPanel = lazy(() => loadSettingsPanel().then((module) => ({ default: module.UtilityPanel })));
+const CommandPalette = lazy(() => import("./components/CommandPalette"));
 const MobileExecutionControls = lazy(() => import("./components/MobileExecutionControls"));
 const MobileTaskSummary = lazy(() => import("./MobileTaskSummary"));
 const EngagementRating = lazy(() => import("./components/EngagementRating").then(module => ({ default: module.EngagementRating })));
@@ -203,6 +203,14 @@ function loadWidgetTimerRuntime(): WidgetTimerRuntime {
 }
 type AddType = "task" | "project" | "event" | "habit";
 type CompactExecuteView = "tasks" | "schedule";
+type WorkspacePanelKind = "ai" | "settings" | "about" | "search" | "notifications" | "metrics" | "extension" | "templates" | "timer" | "tools" | "more";
+type UtilityPanelKind = "settings" | "about" | "metrics" | "extension";
+type WorkspacePanel = { kind: WorkspacePanelKind; owner?: string; id?: string };
+function utilityPanelKind(panel: WorkspacePanel | null): UtilityPanelKind | null {
+  const kind = panel?.kind;
+  return kind === "settings" || kind === "about" || kind === "metrics" || kind === "extension" ? kind : null;
+}
+
 type TimelineView = "daily" | "3day" | "weekly" | "month";
 type AiPlanPrefs = { scope: "day" | "3day" | "week"; strategy: "random" | "byProject" | "alternativeProject" | "longShort" };
 type SettingsPatch = Partial<Settings>;
@@ -826,11 +834,9 @@ function buildTaskFromEvent(event: CalendarEvent): Task {
 }
 
 function SettingsLoading({ lang, onClose }: { lang: Language; onClose: () => void }) {
-  const ref = useRef<HTMLElement>(null);
-  useModalFocus(true, ref);
   return <>
-    <div className="df-utility-backdrop" onMouseDown={onClose} />
-    <aside ref={ref} tabIndex={-1} className="df-utility-panel" role="dialog" aria-modal="true" aria-busy="true" aria-label={lang === "zh" ? "正在打开设置" : "Opening Settings"} onKeyDown={(event) => { if (event.key === "Escape") onClose(); }}>
+    <div className="df-utility-backdrop" data-workspace-backdrop onMouseDown={onClose} />
+    <aside className="df-utility-panel" data-workspace-panel role="dialog" aria-busy="true" aria-label={lang === "zh" ? "正在打开设置" : "Opening Settings"} onKeyDown={(event) => { if (event.key === "Escape") onClose(); }}>
       <div className="df-utility-head"><h2>{lang === "zh" ? "设置" : "Settings"}</h2><CloseButton label={t(lang, "settings.close")} onClick={onClose} /></div>
       <div className="df-utility-body df-settings-shell" aria-hidden="true"><section>{Array.from({ length: 5 }, (_, index) => <div className="df-skeleton-task" key={index}><i /><span /><small /></div>)}</section></div>
     </aside>
@@ -1187,7 +1193,31 @@ function App() {
   const [editingId, setEditingId] = useState("");
   const [editingRecordId, setEditingRecordId] = useState<string | undefined>(undefined);
   const [form, setForm] = useState<FormState>(defaultForm());
-  const [aiOpen, setAiOpen] = useState(productDemo?.feature === "ai" && !productAiPresentation);
+  const [workspacePanel, setWorkspacePanel] = useState<WorkspacePanel | null>(() =>
+    productDemo?.feature === "ai" && !productAiPresentation ? { kind: "ai" } : null);
+  const workspacePanelRef = useRef(workspacePanel);
+  workspacePanelRef.current = workspacePanel;
+  function showWorkspacePanel(next: WorkspacePanel, toggle = false) {
+    setWorkspacePanel((current) => toggle && current?.kind === next.kind && current.owner === next.owner && current.id === next.id ? null : next);
+  }
+  function setWorkspacePanelOpen(kind: WorkspacePanelKind, next: boolean | ((open: boolean) => boolean)) {
+    setWorkspacePanel((current) => {
+      const open = current?.kind === kind;
+      const shouldOpen = typeof next === "function" ? next(open) : next;
+      if (shouldOpen === open) return current;
+      return shouldOpen ? { kind } : null;
+    });
+  }
+  useEffect(() => {
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented || (event.target instanceof Element && event.target.closest(".df-dialog, .ui-modal-overlay"))) return;
+      setWorkspacePanel(null);
+    };
+    window.addEventListener("keydown", dismiss);
+    return () => window.removeEventListener("keydown", dismiss);
+  }, []);
+  const aiOpen = workspacePanel?.kind === "ai";
+  const setAiOpen = (next: boolean | ((open: boolean) => boolean)) => setWorkspacePanelOpen("ai", next);
   const aiPresence = useMotionPresence(aiOpen, MOTION.layout);
   const [aiDocked, setAiDocked] = useState(loadAiDockedPreference);
   const freshAiConversationRef = useRef(true);
@@ -1280,10 +1310,11 @@ function App() {
   const taskEnrichmentInFlightRef = useRef(new Map<string, Promise<Task | undefined>>());
   const [editingOccurrence, setEditingOccurrence] = useState<EditingOccurrence>(null);
   const [quickSchedule, setQuickSchedule] = useState<QuickSchedule>(null);
-  const [scheduleTemplateOpen, setScheduleTemplateOpen] = useState(false);
+  const scheduleTemplateOpen = workspacePanel?.kind === "templates";
+  const setScheduleTemplateOpen = (open: boolean) => setWorkspacePanelOpen("templates", open);
   const scheduleTemplatePresence = useMotionPresence(scheduleTemplateOpen, MOTION.base);
   useEffect(() => {
-    const unsubscribe = subscribePluginEvent("schedule-templates:open", () => setScheduleTemplateOpen(true));
+    const unsubscribe = subscribePluginEvent("schedule-templates:open", (_payload, owner) => showWorkspacePanel({ kind: "templates", owner }, true));
     return () => { void unsubscribe(); };
   }, []);
   const [allDayQuickAdd, setAllDayQuickAdd] = useState<AllDayQuickAdd>(null);
@@ -1300,20 +1331,26 @@ function App() {
   const timelinePinchFrameRef = useRef<number | null>(null);
   const timelinePinchPendingZoomRef = useRef<number | null>(null);
   const [resizeHintTaskId, setResizeHintTaskId] = useState("");
-  const [utilityPanel, setUtilityPanel] = useState<"settings" | "about" | "metrics" | "extension" | null>(null);
-  const [activeExtensionPanelId, setActiveExtensionPanelId] = useState<string | null>(null);
-  const [pluginToolsOpen, setPluginToolsOpen] = useState(false);
+  const utilityPanel = utilityPanelKind(workspacePanel);
+  const setUtilityPanel = (kind: UtilityPanelKind | null) => setWorkspacePanel((current) =>
+    kind ? { kind } : utilityPanelKind(current) ? null : current);
+  const activeExtensionPanelId = workspacePanel?.kind === "extension" ? workspacePanel.id : undefined;
+  const pluginToolsOwner = workspacePanel?.kind === "tools" ? workspacePanel.owner : undefined;
+  const openPluginTools = (owner: string) => showWorkspacePanel({ kind: "tools", owner }, true);
   const layerExitHandlesRef = useRef(new Map<string, ReturnType<typeof scheduleMotionCommit> | null>());
   const layerTriggerRef = useRef(new Map<string, HTMLElement>());
   const [habitPanel, setHabitPanel] = useState<"overview" | "detail" | null>(null);
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
   const [newHabitDraft, setNewHabitDraft] = useState<Habit | null>(null);
   const [settingsSectionTarget, setSettingsSectionTarget] = useState<SettingsTargetInput>();
-  const [commandOpen, setCommandOpen] = useState(false);
+  const commandOpen = workspacePanel?.kind === "search";
+  const commandPresence = useMotionPresence(commandOpen);
+  const setCommandOpen = (open: boolean) => setWorkspacePanelOpen("search", open);
   const [commandQuery, setCommandQuery] = useState("");
   const [toast, setToast] = useState("");
   const [proactiveNotifications, setProactiveNotifications] = useState<ProactiveNotification[]>([]);
-  const [notificationCenterOpen, setNotificationCenterOpen] = useState(false);
+  const notificationCenterOpen = workspacePanel?.kind === "notifications";
+  const setNotificationCenterOpen = (open: boolean) => setWorkspacePanelOpen("notifications", open);
   const [unfinishedNotification, setUnfinishedNotification] = useState<ProactiveNotification | null>(null);
   const seenProactiveNotificationIdsRef = useRef(new Set<string>());
   // Enhanced toast with optional undo action (5-second window)
@@ -1347,7 +1384,9 @@ function App() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerElapsed, setTimerElapsed] = useState(0);
   const [timerStartedAt, setTimerStartedAt] = useState<number | null>(null);
-  const [focusOverlayMode, setFocusOverlayMode] = useState<string | null>(null);
+  const focusOverlayMode = workspacePanel?.kind === "timer" ? workspacePanel.id : undefined;
+  const setFocusOverlayMode = (mode: string | null) => setWorkspacePanel((current) =>
+    mode ? { kind: "timer", id: mode, owner: current?.kind === "timer" ? current.owner : undefined } : current?.kind === "timer" ? null : current);
   const timerIntervalRef = useRef<number | null>(null);
   const timerTaskRef = useRef<string | null>(null);
   const timerElapsedRef = useRef(0);
@@ -1575,6 +1614,7 @@ function App() {
   }, [advanceWidgetTimerNow, widgetTimerRuntime.running, timerExtensionsReady]);
 
   useEffect(() => onTimerModeRemoving((mode) => {
+    setWorkspacePanel((current) => current?.kind === "timer" && current.id === mode ? null : current);
     if (!timerOwnerRef.current?.isOwner()) return;
     if (widgetTimerRuntimeRef.current.mode !== mode) return;
     advanceWidgetTimerNow();
@@ -1779,9 +1819,7 @@ function App() {
     ?? extensionSnapshot.headerItems.find((item) => item.id === activeExtensionPanelId);
   const openExtensionPanel = useCallback((view: ExtensionContribution) => {
     rememberLayerTrigger("utility");
-    setActiveExtensionPanelId(view.id);
-    setUtilityPanel("extension");
-    setPluginToolsOpen(false);
+    showWorkspacePanel({ kind: "extension", id: view.id, owner: view.owner }, true);
   }, []);
   useEffect(() => {
     const unsubscribe = subscribePluginEvent("ui:open-view", (payload) => {
@@ -1805,6 +1843,15 @@ function App() {
   useEffect(() => {
     if (shelfViewId && !shelfView) setShelfViewId("");
   }, [shelfViewId, shelfView]);
+  useEffect(() => {
+    if (activeExtensionPanelId && !activeExtensionPanel) setWorkspacePanelOpen("extension", false);
+  }, [activeExtensionPanelId, activeExtensionPanel]);
+  const activePlugin = workspacePanel?.owner ? extensionSnapshot.preferences.installed[workspacePanel.owner] : undefined;
+  useEffect(() => {
+    if (workspacePanel?.owner && !activePlugin?.enabled) {
+      setWorkspacePanel((current) => current === workspacePanel ? null : current);
+    }
+  }, [workspacePanel, activePlugin]);
   useEffect(() => {
     if (utilityPanel === "metrics" && !metricsAvailable) closeUtilityPanel();
   }, [utilityPanel, metricsAvailable]);
@@ -2164,7 +2211,7 @@ function App() {
     setEditingRecordId(undefined);
     setEditingOccurrence(null);
     setForm(defaultForm());
-    setAiOpen(false);
+    setWorkspacePanel(null);
     setAiMessages([]);
     setActiveAiConversationId("");
     setAiConversationListOpen(false);
@@ -4945,11 +4992,14 @@ if (cached?.data && cached?.settings) {
   // once) always calls the current closure with up-to-date state.
   const widgetActionHandlerRef = useRef(handleWidgetAction);
   widgetActionHandlerRef.current = handleWidgetAction;
-  useEffect(() => onTimerModeOpening((mode) => {
+  useEffect(() => onTimerModeOpening((mode, owner) => {
+    const current = workspacePanelRef.current;
+    if (current?.kind === "timer" && (owner ? current.owner === owner : current.id === mode)) {
+      setWorkspacePanel(null);
+      return;
+    }
     if (widgetTimerRuntimeRef.current.mode !== mode) widgetActionHandlerRef.current({ type: "setTimerMode", mode });
-    setFocusOverlayMode(mode);
-    setUtilityPanel(null);
-    setPluginToolsOpen(false);
+    setWorkspacePanel({ kind: "timer", id: mode, owner });
   }), []);
   const widgetSnapshotBuilderRef = useRef(buildWidgetSnapshot);
   widgetSnapshotBuilderRef.current = buildWidgetSnapshot;
@@ -8959,7 +9009,7 @@ if (cached?.data && cached?.settings) {
 
   function openMetrics() {
     rememberLayerTrigger("utility");
-    setUtilityPanel("metrics");
+    showWorkspacePanel({ kind: "metrics", owner: extensionSnapshot.views.find((view) => view.nativeMode === "metrics")?.owner }, true);
   }
 
   function currentTimelineViewportFocus() {
@@ -9003,16 +9053,19 @@ if (cached?.data && cached?.settings) {
     }, 1400);
   }
 
-  function openSettingsSection(section: SettingsTargetInput) {
+  function openSettingsSection(section: SettingsTargetInput, toggle = false) {
     if (productDemo) return;
     rememberLayerTrigger("utility");
-    setSettingsSectionTarget(normalizeSettingsTarget(section));
-    setUtilityPanel("settings");
+    const target = normalizeSettingsTarget(section);
+    setSettingsSectionTarget(target);
+    const owner = extensionSnapshot.settingsPages.find((page) => page.id === target.pluginPage)?.owner;
+    showWorkspacePanel({ kind: "settings", owner }, toggle);
   }
 
   function closeUtilityPanel(afterClose?: () => void) {
+    const closingPanel = workspacePanel;
     requestLayerClose("utility", ".df-utility-backdrop, .df-utility-panel", () => {
-      setUtilityPanel(null);
+      setWorkspacePanel((current) => current === closingPanel ? null : current);
       afterClose?.();
     });
   }
@@ -9263,7 +9316,9 @@ if (cached?.data && cached?.settings) {
       {([{ taskId: "content", days: 1 }, { taskId: "layout", days: 2 }, { taskId: "walk", days: 1 }] as const).map(choice => <Button key={choice.taskId} variant="ghost" disabled={demoPresetBusy || tasks.find(task => task.id === choice.taskId)?.completed} onClick={() => void runProductDemoPreset(choice)}>{tasks.find(task => task.id === choice.taskId)?.title}<span>{lang === "zh" ? (choice.days === 1 ? "明天" : "后天") : (choice.days === 1 ? "Tomorrow" : "In two days")}</span></Button>)}
     </div>}
   </div> : undefined;
-  const aiPanel = aiPresence.present && <AiPanel closing={aiPresence.closing} demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={() => { cancelAi(); setAiOpen(false); clearAiAttachment(); }} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
+  const workspaceChatPanel = !productPresentation;
+  const closeWorkspaceChat = () => { cancelAi(); setAiOpen(false); clearAiAttachment(); };
+  const aiPanel = aiPresence.present && (aiOpen || !workspacePanel) && <AiPanel workspace={workspaceChatPanel} closing={aiPresence.closing} demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={closeWorkspaceChat} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
 
   const planningViewProps = {
     lang, data, projects, compact: compactLayout, collapsed: collapsedBranches, setCollapsed: setCollapsedBranches,
@@ -9283,14 +9338,14 @@ if (cached?.data && cached?.settings) {
   const switchViewsLabel = lang === "zh" ? "切换左浮栏视图" : "Switch task views";
   const manageProjectsLabel = lang === "zh" ? "管理项目" : "Manage projects";
   const metricsLabel = lang === "zh" ? "指标" : "Metrics";
-  const compactOverlayOpen = Boolean(aiOpen || utilityPanel || quickAddOpen || candidateDrawerOpen || drawerOpen
-    || commandOpen || notificationCenterOpen || pluginToolsOpen || scheduleTemplatePresence.present || mobilePlacement);
+  const compactOverlayOpen = Boolean(quickAddOpen || candidateDrawerOpen || drawerOpen || mobilePlacement);
+  const compactToolbarBlocked = compactOverlayOpen || Boolean(workspacePanel);
   const brandControl = window.desktopApi?.dockWindow
     ? <Suspense fallback={<button className="df-brand-ai-button" type="button" disabled aria-label="NavoPath"><ProductIcon compact /></button>}>
       <DesktopDockControls
         lang={lang}
         side={desktopDockSide}
-        disabled={!desktopDockReady || (compactLayout && compactOverlayOpen)}
+        disabled={!desktopDockReady || (compactLayout && compactToolbarBlocked)}
         trigger={<ProductIcon compact />}
         onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }}
         onError={showToast}
@@ -9299,15 +9354,15 @@ if (cached?.data && cached?.settings) {
     : <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
       <ProductIcon compact />
     </button>;
-  const compactChat = !productPresentation && !settings.hideAi && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} />;
+  const compactChat = !productPresentation && !settings.hideAi && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />;
   return (
-    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked && !workspaceChatPanel ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       {(!compactLayout || productDemo) && <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
           <div className="df-brand">
             {brandControl}
-            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} onOpenMetrics={openMetrics} onOpenView={openExtensionPanel} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>}
+            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} activeOwner={workspacePanel?.owner} onOpenPluginTools={openPluginTools} onOpenMetrics={openMetrics} onOpenView={openExtensionPanel} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId }, true)} /></Suspense>}
           </div>
           <div className="df-month-year-selector">
             <button className="df-month-year-btn" aria-expanded={yearOverviewOpen} onClick={() => {
@@ -9330,7 +9385,7 @@ if (cached?.data && cached?.settings) {
           <button
             className="df-user-avatar"
             type="button"
-            onClick={() => { setCommandOpen(true); setCommandQuery(""); }}
+            onClick={() => { setWorkspacePanelOpen("search", (open) => !open); setCommandQuery(""); }}
             aria-label={lang === "zh" ? "搜索" : "Search"}
           >
             <UiSearchIcon size={20} />
@@ -9338,14 +9393,14 @@ if (cached?.data && cached?.settings) {
           {authState?.mode === "cloud" && <button
             className={`df-user-avatar df-proactive-notification-button${showNotificationBadge && proactiveNotifications.length ? " has-unread" : ""}`}
             type="button"
-            onClick={() => setNotificationCenterOpen(true)}
+            onClick={() => setWorkspacePanelOpen("notifications", (open) => !open)}
             aria-label={lang === "zh" ? `主动助理提醒${proactiveNotifications.length ? `，${proactiveNotifications.length} 条未读` : ""}` : `Proactive assistant messages${proactiveNotifications.length ? `, ${proactiveNotifications.length} unread` : ""}`}
             title={lang === "zh" ? "主动助理提醒" : "Proactive assistant messages"}
           >
             <UiBellIcon size={20} />
             <NotificationBadge count={proactiveNotifications.length} enabled={showNotificationBadge} />
           </button>}
-          <button className="df-user-avatar" onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} aria-label={t(lang, "header.settings")}>
+          <button className="df-user-avatar" onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); showWorkspacePanel({ kind: "settings" }, true); }} aria-label={t(lang, "header.settings")}>
             <UiSettingsIcon size={20} />
           </button>
         </div>}
@@ -9376,7 +9431,7 @@ if (cached?.data && cached?.settings) {
       )}
       <div id="df-portal-target" />
       {dialog.host}
-      {!productDemo && <Suspense fallback={null}><ProactiveNotificationCenter
+      {!productDemo && (notificationCenterOpen || !workspacePanel) && <Suspense fallback={null}><ProactiveNotificationCenter
         data={data}
         lang={lang}
         notifications={proactiveNotifications}
@@ -9410,7 +9465,7 @@ if (cached?.data && cached?.settings) {
       )}
 
         <ExecutionSplitLayout className={`${narrowSplitLayout ? "shelf-timeline-split " : ""}${candidatePanelCollapsed ? "candidate-collapsed" : ""}${fullscreen ? " fullscreen" : ""}${simpleView ? " simple-view" : ""}`} style={candidatePanelCollapsed || candidatePanelWidth ? { "--df-candidate-width": candidatePanelCollapsed ? "44px" : `${candidatePanelWidth}px` } as CSSProperties : undefined}>
-          {!productAiPresentation && <div className="df-compact-execute-controls" inert={compactLayout && compactOverlayOpen}>
+          {!productAiPresentation && <div className="df-compact-execute-controls" inert={compactLayout && compactToolbarBlocked}>
             {portraitLayout && !productPresentation && <div className="df-compact-brand">{brandControl}</div>}
             {!mobileExecution && !narrowSplitLayout && <nav className="df-compact-execute-tabs" aria-label={lang === "zh" ? "执行视图" : "Execute view"}>
               <button
@@ -9472,7 +9527,7 @@ if (cached?.data && cached?.settings) {
           </div>}
           {!productPresentation && compactExecuteView === "schedule" && (
             <DateQuickPicker
-              open={mobileDatePickerOpen && !compactOverlayOpen}
+              open={mobileDatePickerOpen && !compactToolbarBlocked}
               month={mobileDatePickerMonth}
               selectedDate={timelineWindowAnchorDate}
               today={today}
@@ -10632,16 +10687,16 @@ if (cached?.data && cached?.settings) {
       {!productAiPresentation && compactLayout && !compactOverlayOpen && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}`} style={themeVars(settings, "execute")} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {productDemo ? <div className="df-mobile-dock-slots">{compactChat}</div> : <Suspense fallback={<div className="df-mobile-dock-slots">{compactChat}<IconButton className="df-mobile-dock-action df-mobile-more-wrap" label={lang === "zh" ? "更多" : "More"} icon={<UiMoreIcon />} /></div>}>
-            <CompactPluginDock lang={lang} chat={compactChat} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => { setQuickAddOpen(false); setNotificationCenterOpen(true); }} onSearch={() => { setQuickAddOpen(false); setCommandQuery(""); setCommandOpen(true); }} onMetrics={openMetrics} onSettings={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); setUtilityPanel("settings"); }} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} onOpenView={openExtensionPanel} onOpenPluginTools={() => setPluginToolsOpen(true)} />
+            <CompactPluginDock lang={lang} chat={compactChat} activePanel={workspacePanel?.kind} activeOwner={workspacePanel?.owner} onMoreChange={(open) => setWorkspacePanelOpen("more", open)} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => setNotificationCenterOpen(true)} onSearch={() => { setCommandQuery(""); setCommandOpen(true); }} onMetrics={openMetrics} onSettings={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); showWorkspacePanel({ kind: "settings" }); }} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId }, true)} onOpenView={openExtensionPanel} onOpenPluginTools={openPluginTools} />
           </Suspense>}
         </nav>, document.body)
       )}
 
-      {!productPresentation && !compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
-      {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
+      {!productPresentation && !compactLayout && !workspacePanel && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
+      {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />}
       {createPortal(<div className="df-mobile-floating-actions" style={themeVars(settings, "execute")}>
         {mobileExecution && <Suspense fallback={null}><MobileExecutionControls
-          hidden={candidateDrawerOpen || drawerOpen || quickAddOpen || aiOpen || Boolean(utilityPanel) || commandOpen || notificationCenterOpen || scheduleTemplatePresence.present || Boolean(dragCreate?.committed)}
+          hidden={compactToolbarBlocked || Boolean(dragCreate?.committed)}
           drawerOpen={candidateDrawerOpen} panelRef={candidatePanelRef} scrollRef={candidateScrollRef} onClose={closeCandidateDrawer}
           lang={lang} count={visibleCandidates.filter((task) => !task.completed).length} triggerRef={candidateTriggerRef}
           title={mobilePlacement ? (placementPreviewTask?.title || (lang === "zh" ? "任务已移除" : "Task removed")) : undefined}
@@ -10649,16 +10704,17 @@ if (cached?.data && cached?.settings) {
           conflict={Boolean(mobilePlacement && placementPreview && getScheduledEventsForRange([addDays(placementPreview.date, -1), placementPreview.date, addDays(placementPreview.date, 1)]).some((item) => item.scheduledStart && item.scheduledEnd && scheduledDateTimesOverlap(placementPreview.date, placementPreview.startTime, placementPreview.endTime, item.scheduledDate || placementPreview.date, item.scheduledStart, item.scheduledEnd)))}
           onOpen={() => { setCandidatePanelCollapsed(false); setCandidateDrawerExpanded(false); setCandidateDrawerOpen(true); }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
         <MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
-        drawerOpen={drawerOpen || commandOpen || quickAddOpen || scheduleTemplatePresence.present || Boolean(dragCreate?.committed) || (mobileExecution && (candidateDrawerOpen || Boolean(mobilePlacement)))} notificationCenterOpen={notificationCenterOpen}
+        drawerOpen={compactToolbarBlocked || Boolean(dragCreate?.committed)} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, "execute")}
         onAdd={() => { setQuickTitle(""); setMobileQuickAddKind("task"); setMobileQuickAddDate(null); setQuickAddOpen(true); }}
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
       {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onLocateTimeline={locateTaskOnTimeline} onLocatePlanning={locateTaskInPlanning} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
+      {!productAiPresentation && aiPanel && workspaceChatPanel && <div className="df-utility-backdrop" data-workspace-backdrop data-motion-closing={aiPresence.closing || undefined} onMouseDown={closeWorkspaceChat} />}
       {!productAiPresentation && aiPanel}
-      <CommandPalette open={commandOpen} compact={compactLayout} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} />
-      {utilityPanel === "metrics" && metricsAvailable && <RightUtilityPanel label={metricsLabel} closeLabel={t(lang, "settings.close")} className="df-metrics-utility" onClose={() => closeUtilityPanel()}>
+      {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}
+      {utilityPanel === "metrics" && metricsAvailable && <RightUtilityPanel workspace label={metricsLabel} closeLabel={t(lang, "settings.close")} className="df-metrics-utility" onClose={() => closeUtilityPanel()}>
         <Suspense fallback={<div className="df-shelf-loading" role="status">{lang === "zh" ? "正在打开…" : "Opening…"}</div>}>
           <PlanningViewLazy {...planningViewProps} viewMode="metrics" tasks={tasks} dayStartTime={settings.dayStartTime}
             metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy}
@@ -10668,11 +10724,11 @@ if (cached?.data && cached?.settings) {
         </Suspense>
       </RightUtilityPanel>}
       {utilityPanel && utilityPanel !== "metrics" && utilityPanel !== "extension" && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} /></Suspense>}
-      {utilityPanel === "extension" && activeExtensionPanel && <RightUtilityPanel label={activeExtensionPanel.name} closeLabel={t(lang, "settings.close")} className="df-extension-utility" onClose={() => closeUtilityPanel()}><ExtensionMount contribution={activeExtensionPanel} /></RightUtilityPanel>}
+      {utilityPanel === "extension" && activeExtensionPanel && <RightUtilityPanel workspace label={activeExtensionPanel.name} closeLabel={t(lang, "settings.close")} className="df-extension-utility" onClose={() => closeUtilityPanel()}><ExtensionMount contribution={activeExtensionPanel} /></RightUtilityPanel>}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
-      {pluginToolsOpen && <Suspense fallback={null}><ExtensionToolsDialog lang={lang} onOpenMetrics={openMetrics} onClose={() => setPluginToolsOpen(false)} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} onOpenView={openExtensionPanel} /></Suspense>}
+      {pluginToolsOwner && <Suspense fallback={null}><ExtensionToolsDialog key={pluginToolsOwner} lang={lang} owner={pluginToolsOwner} onClose={() => setWorkspacePanelOpen("tools", false)} /></Suspense>}
       {focusOverlayMode && (
-        <RightUtilityPanel label={focusProvider?.label[lang] || (lang === "zh" ? "专注" : "Focus")} closeLabel={t(lang, "settings.close")} className="df-focus-utility" onClose={() => setFocusOverlayMode(null)}>
+        <RightUtilityPanel workspace label={focusProvider?.label[lang] || (lang === "zh" ? "专注" : "Focus")} closeLabel={t(lang, "settings.close")} className="df-focus-utility" onClose={() => setFocusOverlayMode(null)}>
           <div className="df-focus-panel" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>
             <div className="df-focus-mode-switch">
               {["stopwatch", ...getTimerModes().filter((item) => getTimerMode(item.mode)).map((item) => item.mode), "flowtime"].map((m) => (
@@ -10702,8 +10758,8 @@ if (cached?.data && cached?.settings) {
           </div>
         </RightUtilityPanel>
       )}
-      {scheduleTemplatePresence.present && data && (
-        <RightUtilityPanel label={lang === "zh" ? "日程模板" : "Schedule templates"} closeLabel={t(lang, "settings.close")} closing={scheduleTemplatePresence.closing} className="df-template-utility" onClose={() => setScheduleTemplateOpen(false)}>
+      {scheduleTemplatePresence.present && (scheduleTemplateOpen || !workspacePanel) && data && (
+        <RightUtilityPanel workspace label={lang === "zh" ? "日程模板" : "Schedule templates"} closeLabel={t(lang, "settings.close")} closing={scheduleTemplatePresence.closing} className="df-template-utility" onClose={() => setScheduleTemplateOpen(false)}>
         <ScheduleTemplateModal
           lang={lang}
           date={timelineDate}
@@ -11635,96 +11691,6 @@ function habitDragTask(habit: Habit, dueDate: string): Task {
     createdAt: "",
     updatedAt: "",
   };
-}
-
-function CommandPalette(props: {
-  open: boolean;
-  compact: boolean;
-  query: string;
-  results: CommandSearchResult[];
-  lang: Language;
-  onQuery: (value: string) => void;
-  onClose: () => void;
-  onChoose: (result: CommandSearchResult) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const panelRef = useRef<HTMLElement>(null);
-  const presence = useMotionPresence(props.open);
-  useEffect(() => {
-    if (props.open) window.setTimeout(() => inputRef.current?.focus(), 0);
-  }, [props.open]);
-  useEffect(() => {
-    const panel = panelRef.current;
-    if (!props.open || !props.compact || !panel) return;
-    const align = () => {
-      const viewport = window.visualViewport;
-      panel.style.top = `${(viewport?.offsetTop || 0) + 12}px`;
-      panel.style.maxHeight = `${Math.max(0, (viewport?.height || window.innerHeight) - 24)}px`;
-    };
-    align();
-    window.visualViewport?.addEventListener("resize", align);
-    window.visualViewport?.addEventListener("scroll", align);
-    window.addEventListener("resize", align);
-    return () => {
-      window.visualViewport?.removeEventListener("resize", align);
-      window.visualViewport?.removeEventListener("scroll", align);
-      window.removeEventListener("resize", align);
-      panel.style.removeProperty("top");
-      panel.style.removeProperty("max-height");
-    };
-  }, [props.open, props.compact]);
-  if (!presence.present) return null;
-  const kindLabel = (kind: CommandSearchResult["kind"]) => {
-    if (props.lang === "zh") {
-      if (kind === "task") return "任务";
-      if (kind === "project") return "项目";
-      if (kind === "habit") return "习惯";
-      if (kind === "setting") return "设置";
-      if (kind === "event") return "事件";
-      return "备注";
-    }
-    return kind.charAt(0).toUpperCase() + kind.slice(1);
-  };
-  return (
-    <>
-      <button className="df-command-backdrop" data-motion-closing={presence.closing || undefined} disabled={presence.closing} type="button" aria-label={props.lang === "zh" ? "关闭搜索" : "Close search"} onClick={props.onClose} />
-      <section ref={panelRef} className="df-command-palette" data-motion-closing={presence.closing || undefined} inert={presence.closing} role="dialog" aria-modal="true" aria-label={props.lang === "zh" ? "搜索" : "Search"}>
-        <div className="df-command-input-row">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
-          <input
-            ref={inputRef}
-            value={props.query}
-            onChange={(event) => props.onQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                props.onClose();
-              }
-              if (event.key === "Enter" && props.results[0]) {
-                event.preventDefault();
-                props.onChoose(props.results[0]);
-              }
-            }}
-            placeholder={props.lang === "zh" ? "搜索任务、项目、习惯、设置" : "Search tasks, projects, habits, settings"}
-          />
-          {props.compact ? <CloseButton label={props.lang === "zh" ? "关闭搜索" : "Close search"} onClick={props.onClose} /> : <kbd>Esc</kbd>}
-        </div>
-        <div className="df-command-results">
-          {props.results.map((result) => (
-            <button key={result.id} type="button" onClick={() => props.onChoose(result)}>
-              <span className="df-command-kind">{kindLabel(result.kind)}</span>
-              <span className="df-command-main">
-                <strong>{result.title}</strong>
-                <small>{result.subtitle}</small>
-              </span>
-              {result.focusTarget && <span className="df-command-jump">{props.lang === "zh" ? "跳转" : "Jump"}</span>}
-            </button>
-          ))}
-          {props.results.length === 0 && <p className="df-command-empty">{props.lang === "zh" ? "没有匹配结果" : "No matching results"}</p>}
-        </div>
-      </section>
-    </>
-  );
 }
 
 function HabitCandidateCard(props: {

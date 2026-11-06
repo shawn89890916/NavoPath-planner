@@ -90,7 +90,7 @@ describe("trusted plugin runtime", () => {
     const launch = vi.fn(); const off = onTimerModeOpening(launch);
     const loaded = await loadPlugin(pkg, f.value, async () => ({ default: { onload(context) { ctx = context; ctx.timers.registerMode(provider as any); } } }));
     try {
-      ctx.timers.open("pomodoro"); expect(launch).toHaveBeenCalledExactlyOnceWith("pomodoro");
+      ctx.timers.open("pomodoro"); expect(launch).toHaveBeenCalledExactlyOnceWith("pomodoro", f.value.key);
       await loaded.dispose(); expect(getTimerMode("pomodoro")).toBeUndefined();
       expect(() => ctx.timers.open("pomodoro")).toThrow("Plugin is unloaded");
       expect(launch).toHaveBeenCalledTimes(1);

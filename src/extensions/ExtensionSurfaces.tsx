@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import type { Language } from "../types";
-import { ActionDisclosure, Button, CloseButton, IconButton, Modal } from "../components/UiPrimitives";
+import { ActionDisclosure, Button, IconButton } from "../components/UiPrimitives";
 import { RightUtilityPanel, utilityPanelCloseLabel } from "../components/RightUtilityPanel";
 import { ExtensionMount } from "./ExtensionMount";
 import { extensionService } from "./service";
@@ -18,9 +18,9 @@ function PluginLauncherIcon({ item, catalog, size }: { item: InstalledExtension;
   return <Icon size={size} />;
 }
 
-export function CompactPluginDock({ lang, chat, onNotifications, onSearch, onMetrics, onSettings, onOpenSettings, onOpenView, onOpenPluginTools, notificationCount = 0 }: { lang: Language; chat: ReactNode; onNotifications: () => void; onSearch: () => void; onMetrics: () => void; onSettings: () => void; onOpenSettings?: (pageId: string) => void; onOpenView?: (view: ExtensionContribution) => void; onOpenPluginTools: () => void; notificationCount?: number }) {
+export function CompactPluginDock({ lang, chat, activePanel, activeOwner, onMoreChange, onNotifications, onSearch, onMetrics, onSettings, onOpenSettings, onOpenView, onOpenPluginTools, notificationCount = 0 }: { lang: Language; chat: ReactNode; activePanel?: string; activeOwner?: string; onMoreChange: (open: boolean) => void; onNotifications: () => void; onSearch: () => void; onMetrics: () => void; onSettings: () => void; onOpenSettings?: (pageId: string) => void; onOpenView?: (view: ExtensionContribution) => void; onOpenPluginTools: (owner: string) => void; notificationCount?: number }) {
   const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const moreOpen = activePanel === "more";
   const [dropZone, setDropZone] = useState<"bottom" | "more">();
   const [error, setError] = useState("");
   const dockRef = useRef<HTMLDivElement>(null);
@@ -30,6 +30,7 @@ export function CompactPluginDock({ lang, chat, onNotifications, onSearch, onMet
   const drag = useUnifiedDrag();
   const toolbar = getAppHeaderPlugins(snapshot);
   const { dock, more } = snapshot.safeMode ? { dock: [], more: [] } : getCompactPluginGroups(snapshot.preferences, toolbar.owners);
+  const moreSelected = Boolean(activePanel && activePanel !== "ai" && !dock.some((item) => item.key === activeOwner));
   const zh = lang === "zh";
   const moreLabel = zh ? "更多" : "More";
 
@@ -38,7 +39,7 @@ export function CompactPluginDock({ lang, chat, onNotifications, onSearch, onMet
   }
 
   function activate(key: string) {
-    setMoreOpen(false);
+    onMoreChange(false);
     setError("");
     if (toolbar.metrics?.owner === key) { onMetrics(); return; }
     const view = snapshot.views.find((item) => item.owner === key && !item.planningView)
@@ -48,7 +49,7 @@ export function CompactPluginDock({ lang, chat, onNotifications, onSearch, onMet
     if (view) onOpenView?.(view);
     else if (settingsPage && onOpenSettings) onOpenSettings(settingsPage.id);
     else if (commands.length === 1) void extensionService.executeCommand(commands[0].id).catch(reportError);
-    else onOpenPluginTools();
+    else onOpenPluginTools(key);
   }
 
   function beginDrag(event: PointerEvent<HTMLElement>, key: string, fromMore: boolean) {
@@ -78,17 +79,19 @@ export function CompactPluginDock({ lang, chat, onNotifications, onSearch, onMet
 
   function pluginButton(item: InstalledExtension, inMenu: boolean) {
     const className = inMenu ? "df-mobile-menu-item" : "df-mobile-dock-action df-mobile-plugin-action";
+    const selected = activeOwner === item.key;
     const live = toolbar.headerItems.find((entry) => entry.owner === item.key && entry !== toolbar.metrics);
     if (live) return <div
       key={item.key}
       className={`${className} df-compact-extension`}
       data-compact-plugin={item.key}
+      data-dock-selected={!inMenu && selected || undefined}
       onPointerDownCapture={(event) => beginDrag(event, item.key, inMenu)}
       onClickCapture={(event) => {
         const dragged = suppressClick.current && event.detail !== 0;
         suppressClick.current = false;
         if (dragged) { event.preventDefault(); event.stopPropagation(); }
-        else if (inMenu && (event.target as Element).closest("button, [role=button], a[href]")) setMoreOpen(false);
+        else if (inMenu && (event.target as Element).closest("button, [role=button], a[href]")) onMoreChange(false);
       }}
     >
       <ExtensionMount contribution={live} />
@@ -101,6 +104,7 @@ export function CompactPluginDock({ lang, chat, onNotifications, onSearch, onMet
       role={inMenu ? "menuitem" : undefined}
       aria-label={item.manifest.name}
       title={item.manifest.name}
+      aria-pressed={!inMenu ? selected : undefined}
       data-compact-plugin={item.key}
       onPointerDown={(event) => beginDrag(event, item.key, inMenu)}
       onClick={(event) => {
@@ -121,23 +125,24 @@ export function CompactPluginDock({ lang, chat, onNotifications, onSearch, onMet
     <div className="df-mobile-more-wrap">
       <IconButton
         ref={moreButtonRef}
-        className={`df-mobile-dock-action df-mobile-more-button${moreOpen ? " active" : ""}`}
+        className="df-mobile-dock-action df-mobile-more-button"
         label={notificationCount ? `${moreLabel}${zh ? `，${notificationCount} 条未读通知` : `, ${notificationCount} unread notifications`}` : moreLabel}
         icon={<><UiMoreIcon />{notificationCount > 0 && <span className="df-proactive-notification-count">{notificationCount > 99 ? "99+" : notificationCount}</span>}</>}
         aria-expanded={moreOpen}
         aria-haspopup="menu"
+        data-dock-selected={moreSelected || undefined}
         data-drop-active={dropZone === "more" || undefined}
-        onClick={() => setMoreOpen((open) => !open)}
+        onClick={() => onMoreChange(!moreOpen)}
       />
       {moreOpen && <>
-        <button type="button" className="df-mobile-menu-scrim" aria-label={zh ? "关闭更多菜单" : "Close More menu"} onClick={() => setMoreOpen(false)} />
-        <div ref={moreRef} className="df-mobile-more-menu" role="menu" aria-label={moreLabel} data-drop-active={dropZone === "more" || undefined}>
-          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onNotifications(); }}><UiBellIcon size={18} /><span>{zh ? "通知" : "Notifications"}{notificationCount > 0 ? ` · ${notificationCount}` : ""}</span></button>
-          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onSearch(); }}><UiSearchIcon size={18} /><span>{zh ? "搜索" : "Search"}</span></button>
+        <button type="button" className="df-mobile-menu-scrim" data-workspace-backdrop aria-label={zh ? "关闭更多菜单" : "Close More menu"} onClick={() => onMoreChange(false)} />
+        <div ref={moreRef} className="df-mobile-more-menu" data-workspace-panel role="menu" aria-label={moreLabel} data-drop-active={dropZone === "more" || undefined}>
+          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={onNotifications}><UiBellIcon size={18} /><span>{zh ? "通知" : "Notifications"}{notificationCount > 0 ? ` · ${notificationCount}` : ""}</span></button>
+          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={onSearch}><UiSearchIcon size={18} /><span>{zh ? "搜索" : "Search"}</span></button>
           {more.length > 0 && <div className="df-mobile-menu-plugins" role="group" aria-label={zh ? "插件" : "Plugins"}>
             {more.map((item) => pluginButton(item, true))}
           </div>}
-          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onSettings(); }}><UiSettingsIcon size={18} /><span>{zh ? "设置" : "Settings"}</span></button>
+          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={onSettings}><UiSettingsIcon size={18} /><span>{zh ? "设置" : "Settings"}</span></button>
         </div>
       </>}
     </div>
@@ -146,22 +151,33 @@ export function CompactPluginDock({ lang, chat, onNotifications, onSearch, onMet
   </div>;
 }
 
-/** Compact layouts expose the same contributions through the workspace menu. */
-export function ExtensionToolsDialog({ lang, onClose, onOpenSettings, onOpenMetrics, onOpenView }: { lang: Language; onClose: () => void; onOpenSettings?: (pageId: string) => void; onOpenMetrics?: () => void; onOpenView?: (view: ExtensionContribution) => void }) {
+/** Fallback for launchers with no registered panel or settings page. */
+export function ExtensionToolsDialog({ lang, owner, onClose }: { lang: Language; owner: string; onClose: () => void }) {
   const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const empty = !snapshot.headerItems.some((item) => !item.placement || item.placement === "app-header") && !snapshot.views.some((item) => !item.planningView || (onOpenMetrics && item.nativeMode === "metrics")) && !extensionService.listCommands().length;
-  const title = lang === "zh" ? "插件工具" : "Plugin tools";
-  return <Modal label={title} onClose={onClose} className="df-extension-view">
-    <header className="df-extension-view-heading"><h2>{title}</h2><CloseButton label={lang === "zh" ? "关闭" : "Close"} onClick={onClose} /></header>
-    {empty ? <p>{lang === "zh" ? "在设置 → 插件中安装并启用插件。" : "Install and enable plugins in Settings → Plugins."}</p> : <ExtensionHeader lang={lang} onActivate={onClose} onOpenSettings={onOpenSettings} onOpenMetrics={onOpenMetrics} onOpenView={onOpenView} />}
-  </Modal>;
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState("");
+  const plugin = snapshot.preferences.installed[owner];
+  if (!plugin?.enabled) return null;
+  const { manifest } = plugin;
+  const commands = extensionService.listCommands().filter((command) => command.id.startsWith(owner + ":"));
+  async function runCommand(id: string) {
+    setRunning(true); setError("");
+    try { await extensionService.executeCommand(id); }
+    catch (caught) { setError(caught instanceof Error ? caught.message : String(caught)); }
+    finally { setRunning(false); }
+  }
+  return <RightUtilityPanel workspace label={manifest.name} closeLabel={utilityPanelCloseLabel(lang)} onClose={onClose}>
+    <p>{manifest.description}</p>
+    <p className="df-extension-meta">v{manifest.version} · {manifest.author}</p>
+    {commands.map((command) => <Button key={command.id} variant="ghost" disabled={running} onClick={() => void runCommand(command.id)}>{command.name}</Button>)}
+    {error && <p className="df-extension-view-error" role="alert">{error}</p>}
+  </RightUtilityPanel>;
 }
 
 /** Header entry points share the plugin lifecycle and disappear when unloaded. */
-export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetrics, onOpenView, placement = "app-header" }: { lang: Language; onActivate?: () => void; onOpenSettings?: (pageId: string) => void; onOpenMetrics?: () => void; onOpenView?: (view: ExtensionContribution) => void; placement?: PluginUiPlacement }) {
+export function ExtensionHeader({ lang, activeOwner, onOpenPluginTools, onOpenSettings, onOpenMetrics, onOpenView, placement = "app-header" }: { lang: Language; activeOwner?: string; onOpenPluginTools?: (owner: string) => void; onOpenSettings?: (pageId: string) => void; onOpenMetrics?: () => void; onOpenView?: (view: ExtensionContribution) => void; placement?: PluginUiPlacement }) {
   const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const commands = extensionService.listCommands();
-  const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const [running, setRunning] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [dragOwner, setDragOwner] = useState<string | null>(null);
@@ -172,7 +188,6 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetric
   const headerViewportRef = useRef<HTMLDivElement>(null);
   const headerItemsRef = useRef<HTMLDivElement>(null);
   const label = lang === "zh" ? "插件工具" : "Plugin tools";
-  const close = lang === "zh" ? "关闭" : "Close";
   const toolbar = placement === "app-header" ? getAppHeaderPlugins(snapshot, Boolean(onOpenMetrics)) : undefined;
   const metrics = toolbar?.metrics;
   const metricsLabel = lang === "zh" ? "指标" : "Metrics";
@@ -182,7 +197,6 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetric
   const orderedHeaderItems = [...headerItems].sort((a, b) => headerOrder.indexOf(a.owner) - headerOrder.indexOf(b.owner));
   const launcherPlugins = toolbar?.launcherPlugins ?? [];
   const overflowViews = toolbar?.overflowViews ?? [];
-  const launcherPlugin = Object.values(snapshot.preferences.installed).find((item) => item.key === selectedPlugin && item.manifest.kind === "plugin");
   useEffect(() => {
     const header = headerRef.current;
     const viewport = headerViewportRef.current;
@@ -248,8 +262,7 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetric
     if (entry?.id === metrics?.id && metrics) onOpenMetrics?.();
     else if (entry) onOpenView?.(entry);
     else if (settingsPage && onOpenSettings) onOpenSettings(settingsPage.id);
-    else setSelectedPlugin(key);
-    onActivate?.();
+    else onOpenPluginTools?.(key);
   };
 
   return <div ref={headerRef} className="df-extension-header" aria-busy={Boolean(running)}>
@@ -258,6 +271,7 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetric
     {orderedHeaderItems.map((item) => <div
       key={item.id}
       className="df-extension-header-item"
+      data-dock-selected={activeOwner === item.owner || undefined}
       data-dragging={dragOwner === item.owner || undefined}
       data-drop-target={dropOwner === item.owner && dragOwner !== item.owner || undefined}
       draggable
@@ -265,7 +279,6 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetric
       onDragOver={(event) => { event.preventDefault(); setDropOwner(item.owner); }}
       onDrop={(event) => { event.preventDefault(); void dropHeader(item.owner); }}
       onDragEnd={() => { setDragOwner(null); setDropOwner(null); }}
-      onClickCapture={() => { if (onActivate) window.setTimeout(onActivate, 0); }}
       onKeyDown={(event) => {
         if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
         event.preventDefault();
@@ -275,22 +288,21 @@ export function ExtensionHeader({ lang, onActivate, onOpenSettings, onOpenMetric
       ? <IconButton className="df-extension-header-launcher" label={metricsLabel} onClick={onOpenMetrics}
           icon={<UiMetricsIcon size={20} />} />
       : <ExtensionMount contribution={item} />}</div>)}
-    {launcherPlugins.map((item) => <IconButton key={`launcher:${item.key}`} className="df-extension-header-launcher" label={item.manifest.name} onClick={() => activateLauncher(item.key)} icon={<PluginLauncherIcon item={item} catalog={snapshot.catalog} size={20} />} />)}
-    {overflowViews.map((item) => <Button key={`view:${item.id}`} className="df-extension-header-action" variant="ghost" title={item.name} onClick={() => { setError(""); onOpenView?.(item); onActivate?.(); }}>{item.name}</Button>)}
+    {launcherPlugins.map((item) => <IconButton key={`launcher:${item.key}`} className="df-extension-header-launcher" label={item.manifest.name} aria-pressed={activeOwner === item.key} onClick={() => activateLauncher(item.key)} icon={<PluginLauncherIcon item={item} catalog={snapshot.catalog} size={20} />} />)}
+    {overflowViews.map((item) => <Button key={`view:${item.id}`} className="df-extension-header-action" variant="ghost" title={item.name} onClick={() => { setError(""); onOpenView?.(item); }}>{item.name}</Button>)}
     {visibleCommands.map((command) => {
       const label = command.name.trim();
       const Icon = /refresh|reload|更新|刷新|重载/i.test(`${command.id} ${label}`) ? UiRefreshIcon : UiZapIcon;
-      return <IconButton key={`command:${command.id}`} className="df-extension-header-launcher" disabled={Boolean(running)} label={label} onClick={() => { onActivate?.(); void runCommand(command.id); }} icon={<Icon size={20} />} />;
+      return <IconButton key={`command:${command.id}`} className="df-extension-header-launcher" disabled={Boolean(running)} label={label} onClick={() => void runCommand(command.id)} icon={<Icon size={20} />} />;
     })}
       </div>
     </div>
     {hasOverflow && <ActionDisclosure label={label}>
       {Array.from(new Map(orderedHeaderItems.map((item) => [item.owner, item])).values()).map((item) => <Button key={`overflow-header:${item.owner}`} className="df-extension-overflow-action" variant="ghost" onClick={() => activateLauncher(item.owner)}>{item === metrics ? metricsLabel : item.name}</Button>)}
       {launcherPlugins.map((item) => <Button key={`overflow-launcher:${item.key}`} className="df-extension-overflow-action" variant="ghost" onClick={() => activateLauncher(item.key)}>{item.manifest.name}</Button>)}
-      {overflowViews.map((item) => <Button key={item.id} variant="ghost" onClick={() => { setError(""); onOpenView?.(item); onActivate?.(); }}>{item.name}</Button>)}
-      {visibleCommands.map((command) => <Button key={command.id} variant="ghost" disabled={Boolean(running)} onClick={() => { onActivate?.(); void runCommand(command.id); }}>{command.name}</Button>)}
+      {overflowViews.map((item) => <Button key={item.id} variant="ghost" onClick={() => { setError(""); onOpenView?.(item); }}>{item.name}</Button>)}
+      {visibleCommands.map((command) => <Button key={command.id} variant="ghost" disabled={Boolean(running)} onClick={() => void runCommand(command.id)}>{command.name}</Button>)}
     </ActionDisclosure>}
     {error && <p className="df-extension-view-error" role="alert">{error}</p>}
-    {launcherPlugin && <RightUtilityPanel label={launcherPlugin.manifest.name} closeLabel={utilityPanelCloseLabel(lang)} onClose={() => setSelectedPlugin(null)}><p>{launcherPlugin.manifest.description}</p><p className="df-extension-meta">v{launcherPlugin.manifest.version} · {launcherPlugin.manifest.author}</p></RightUtilityPanel>}
   </div>;
 }

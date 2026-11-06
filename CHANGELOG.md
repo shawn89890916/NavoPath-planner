@@ -2,6 +2,13 @@
 
 ## 2026-11-06
 
+### 1.7.0 Beta 12
+
+#### 改进
+
+- 底栏的活动入口统一使用单个方框。再次点击会关闭面板，点击另一个入口会直接切换。
+- 插件和工作区控件共用番茄钟面板的范围。竖屏给底栏留出空间，横屏统一靠右。
+
 ### 1.7.0 Beta 11
 
 #### 修复
@@ -545,6 +552,13 @@
 # NavoPath Changelog
 
 ## 2026-11-06
+
+### 1.7.0 Beta 12
+
+#### Improved
+
+- Active dock entries use one rectangular outline. Activate the same entry to close its panel or another entry to switch directly.
+- Plugins and workspace controls share the timer panel bounds. Portrait leaves the dock visible, and landscape aligns panels to the right.
 
 ### 1.7.0 Beta 11
 
