@@ -2,8 +2,6 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "navopath-mcp",
   "main": "src/index.ts",
-  "workers_dev": true,
-  "routes": [{ "pattern": "navopath.com/calendar/nvc_*", "zone_name": "navopath.com" }],
   "compatibility_date": "2026-06-18",
   "compatibility_flags": ["nodejs_compat"],
   "secrets": { "required": ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"] },
