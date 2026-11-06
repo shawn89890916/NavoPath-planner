@@ -13,8 +13,7 @@ complete development guide in `API.md`.
 Use `ctx.settings.get/save/registerPage` for synchronized plugin configuration,
 `ctx.storage.get/set/remove` for synchronized data, and `ctx.localStorage.get/set`
 for device-only secrets. Register resources using `ctx.register(dispose)`;
-SDK registrations dispose automatically. Use `ctx.ui.addHeaderItem` or
-`registerView` to mount DOM and return cleanup. `ctx.desktop` is null on web and
+SDK registrations dispose automatically. Use `ctx.ui.registerPage` to register a workspace page and return cleanup. `ctx.desktop` is null on web and
 mobile. Check availability instead of assuming a desktop environment.
 
 MIT licensed. Never commit API keys, account exports, node_modules or app bundles.

@@ -10,8 +10,8 @@
         "name": "Class Timetable",
         "description": "Import weekly classes and self-study as timeline backgrounds; schedule tasks over classes.",
         "author": "Community",
-        "version": "1.0.0",
-        "minAppVersion": "1.6.2-beta.1",
+        "version": "1.0.1",
+        "minAppVersion": "1.7.0-beta.13",
         "platforms": [
           "desktop",
           "web",
@@ -21,14 +21,14 @@
         "license": "MIT"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/class-timetable.navopackage.json",
-      "sha256": "3748e7398cd7901b7d6586b954d2b5bc4de83d87def482ef1332867ca730026c"
+      "sha256": "fd46ea74c029ab62ce47e0490879e9a7d28c8140b8ca3c59857d58fd80d77bda"
     },
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "apiVersion": 1,
-        "minAppVersion": "1.5.2-beta.2",
+        "minAppVersion": "1.7.0-beta.13",
         "platforms": [
           "desktop",
           "web",
@@ -44,7 +44,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/daily-overview.navopackage.json",
-      "sha256": "d01fd31129fce63fd72398ce7eda9858990dc79f0123859436fee0f25ad006af"
+      "sha256": "9c59d92c2a087dbabe3d504ccd658b730bd042cc979da9e3e3fba332a5f6477a"
     },
     {
       "manifest": {
@@ -393,9 +393,9 @@
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.1.1",
+        "version": "1.1.2",
         "apiVersion": 1,
-        "minAppVersion": "1.5.2-beta.2",
+        "minAppVersion": "1.7.0-beta.13",
         "platforms": [
           "desktop",
           "web",
@@ -411,14 +411,14 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/pomodoro.navopackage.json",
-      "sha256": "189b735d2c2fb44c295e9db5edc4ed3c39d4327f23d168a330655bb3de97cf96"
+      "sha256": "351f35f01093290b0e23617e724b28679a666fef34a27b94c31c2d0881a64c7b"
     },
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "apiVersion": 1,
-        "minAppVersion": "1.5.2-beta.2",
+        "minAppVersion": "1.7.0-beta.13",
         "platforms": [
           "desktop",
           "web",
@@ -434,7 +434,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/quick-capture.navopackage.json",
-      "sha256": "57d50546c4dfca26d99fa55ff72907f3f76b0763a38b6a53d135d95ed83c0bd1"
+      "sha256": "9fe750efa4f5c1ab40c00609f6b5d18868f9aee657fdfdabfe5785fd617ba914"
     },
     {
       "manifest": {
@@ -501,9 +501,9 @@
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "apiVersion": 1,
-        "minAppVersion": "1.5.2-beta.2",
+        "minAppVersion": "1.7.0-beta.13",
         "platforms": [
           "desktop",
           "web",
@@ -518,7 +518,7 @@
         "main": "main.js"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/schedule-templates.navopackage.json",
-      "sha256": "fbb48030324b28d3bf76ed35e43bb69f0b5236f6e987dba5d2a55c6915b544cd"
+      "sha256": "8721b5a8392531f891910581787a5360d8db9016aec6813c5915b845761ced61"
     },
     {
       "manifest": {
@@ -609,9 +609,9 @@
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "apiVersion": 1,
-        "minAppVersion": "1.5.0",
+        "minAppVersion": "1.7.0-beta.13",
         "platforms": [
           "desktop",
           "web",
@@ -627,7 +627,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/weather.navopackage.json",
-      "sha256": "2455180dddc06c4b6a949d70a3c2089a9378e1e19a09d0dfc3d16e442604a1f8"
+      "sha256": "84b7dc33ba2248072cbfdbf7d094df602b640e35697cec85b3d76db51abb4270"
     }
   ]
 }

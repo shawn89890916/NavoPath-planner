@@ -1,3 +1,4 @@
+import { weatherGlyphs } from "../../src/extensions/weatherGlyphs";
 import cityAliases from "./city-aliases.json";
 
 /** Open-Meteo current conditions and daily forecast. No location or forecast is fabricated. */
@@ -19,12 +20,7 @@ function weatherIcon(kind: string) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   for (const [name, value] of Object.entries({ viewBox: "0 0 24 24", width: "20", height: "20", fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true", focusable: "false" })) svg.setAttribute(name, value);
   const path = document.createElementNS(svg.namespaceURI, "path");
-  const cloud = "M5 16a4 4 0 1 1 1-7.9A6 6 0 0 1 18 9a3.5 3.5 0 0 1 0 7";
-  const shapes: Record<string, string> = {
-    sun: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5",
-    cloud: `${cloud}H5`, fog: `${cloud}M4 19h16M7 22h10`, rain: `${cloud}M8 18l-1 3m6-3-1 3m6-3-1 3`, snow: `${cloud}M12 17v6m-2.6-4.5 5.2 3m-5.2 0 5.2-3`, storm: `${cloud}M13 15l-3 5h4l-2 3`, unknown: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4m0 3h.01",
-  };
-  path.setAttribute("d", shapes[kind] ?? shapes.unknown); svg.append(path); return svg;
+  path.setAttribute("d", weatherGlyphs[kind as keyof typeof weatherGlyphs] ?? weatherGlyphs.unknown); svg.append(path); return svg;
 }
 
 /** Keep the provider's administrative label for selection and a separate compact city label. */
@@ -84,7 +80,7 @@ export default {
     const title = zh ? "天气" : "Weather";
     const defaults = { city: "", cityShort: "", latitude: null, longitude: null, unit: "celsius", intervalMinutes: 30, endpoint: "https://api.open-meteo.com/v1/forecast" };
     const settings = () => ({ ...defaults, ...ctx.settings.get() });
-    const nodes = new Set<{ root: HTMLElement; trigger: HTMLButtonElement; panel: HTMLElement; dispose: () => void }>();
+    const nodes = new Set<{ panel: HTMLElement; dispose: () => void }>();
     const requests = new Map<AbortController, number>();
     let stopped = false, busy = false, error = "", forecastVersion = 0;
     let forecastRequest: AbortController | null = null, pending: Promise<void> | null = null;
@@ -92,13 +88,12 @@ export default {
     const render = () => {
       const s = settings();
       const same = cache?.latitude === s.latitude && cache?.longitude === s.longitude && cache?.unit === s.unit && [cache?.current, cache?.high, cache?.low, cache?.precipitation, cache?.timestamp].every(value => typeof value === "number" && Number.isFinite(value));
-      for (const { root, trigger, panel } of nodes) {
+      const condition = weatherCondition(same ? cache.weather_code : undefined, zh);
+      const temperature = same ? String(Math.round(cache.current)) + "°" + (s.unit === "fahrenheit" ? "F" : "C") : (zh ? "天气暂无数据" : "Weather unavailable");
+      const label = [weatherCityName(s) || title, temperature, condition.label].join(" · ");
+      ctx.ui.setLauncherStatus({ label, weather: condition.icon });
+      for (const { panel } of nodes) {
         const restoreRefreshFocus = panel.contains(document.activeElement);
-        const condition = weatherCondition(same ? cache.weather_code : undefined, zh);
-        trigger.replaceChildren(weatherIcon(condition.icon));
-        const temperature = same ? String(Math.round(cache.current)) + "°" + (s.unit === "fahrenheit" ? "F" : "C") : (zh ? "天气暂无数据" : "Weather unavailable");
-        trigger.title = (weatherCityName(s) || (zh ? "天气" : "Weather")) + " · " + temperature + " · " + condition.label + (zh ? " · 拖动调整插件顺序" : " · Drag to reorder plugins");
-        trigger.setAttribute("aria-label", zh ? "查看天气：" + (weatherCityName(s) || "未设置城市") + "，" + temperature + "，" + condition.label + "，可拖动调整插件顺序" : "View weather: " + (weatherCityName(s) || "No city set") + ", " + temperature + ", " + condition.label + "; drag to reorder plugins");
         panel.replaceChildren();
         const heading = document.createElement("h3"); heading.textContent = s.city || (zh ? "天气" : "Weather"); panel.append(heading);
         const description = document.createElement("p"); description.className = "navopath-weather-current";
@@ -106,10 +101,9 @@ export default {
           description.append(weatherIcon(condition.icon));
           const temperature = document.createElement("strong"); temperature.textContent = `${Math.round(cache.current)}°${s.unit === "fahrenheit" ? "F" : "C"}`; description.append(temperature);
         }
-        const summary = document.createElement("span"); summary.textContent = same ? condition.label : s.city ? (zh ? "天气暂不可用" : "Weather unavailable") : (zh ? "请在插件设置中搜索并选择城市。" : "Search and choose a city in the plugin settings."); description.append(summary); panel.append(description);
+        const summary = document.createElement("span"); summary.textContent = same ? condition.label : s.city ? (zh ? "天气暂不可用" : "Weather unavailable") : (zh ? "请在下方搜索并选择城市。" : "Search and choose a city below."); description.append(summary); panel.append(description);
         panel.setAttribute("aria-label", zh ? `${weatherCityName(s)}天气` : `${weatherCityName(s)} weather`);
         panel.setAttribute("aria-busy", String(busy));
-        root.dataset.stale = String(Boolean(error || (same && Date.now() - cache.timestamp > Math.max(5, Number(s.intervalMinutes)) * 60000)));
         if (same) {
           const values = document.createElement("dl");
           for (const [label, value] of [[zh ? "最高 / 最低" : "High / low", `${Math.round(cache.high)}° / ${Math.round(cache.low)}°`], [zh ? "降水概率" : "Precipitation chance", `${cache.precipitation}%`]]) { const row = document.createElement("div"), term = document.createElement("dt"), reading = document.createElement("dd"); term.textContent = label; reading.textContent = value; row.append(term, reading); values.append(row); }
@@ -155,25 +149,10 @@ export default {
       })();
       return pending;
     }
-    ctx.ui.registerView(title, (container: HTMLElement) => {
-      const root = document.createElement("section"); root.className = "navopath-weather-details";
-      const trigger = document.createElement("button");
-      const entry = { root, trigger, panel: root, dispose: () => { root.remove(); nodes.delete(entry); } };
-      nodes.add(entry); container.append(root); render();
-      return entry.dispose;
-    });
-    ctx.ui.addHeaderItem(zh ? "天气" : "Weather", (container: HTMLElement) => {
-      const root = document.createElement("div"); root.className = "navopath-weather";
-      const trigger = document.createElement("button"); trigger.type = "button"; trigger.className = "navopath-plugin-header-button navopath-weather-summary";
-      trigger.setAttribute("aria-haspopup", "dialog");
-      trigger.onclick = () => ctx.ui.openView(title);
-      root.append(trigger); container.append(root);
-      const panel = document.createElement("div");
-      const entry = { root, trigger, panel, dispose: () => { root.remove(); nodes.delete(entry); } };
-      nodes.add(entry); render(); return entry.dispose;
-    });
-    ctx.settings.registerPage(zh ? "天气" : "Weather", (container: HTMLElement) => {
-      const s = settings(); const form = document.createElement("form"); form.className = "navopath-plugin-settings";
+    ctx.ui.registerPage(title, (container: HTMLElement) => {
+      const panel = document.createElement("section"); panel.className = "navopath-weather-details";
+      const s = settings(); const form = document.createElement("form"); form.className = "navopath-weather-settings";
+      const heading = document.createElement("h3"); heading.textContent = zh ? "天气设置" : "Weather settings"; form.append(heading);
       const city = document.createElement("input"); city.placeholder = zh ? "搜索城市" : "Search city"; city.value = s.city; city.setAttribute("aria-label", city.placeholder);
       const search = document.createElement("button"); search.type = "button"; search.textContent = zh ? "搜索" : "Search";
       const results = document.createElement("div"); results.className = "navopath-weather-results"; results.setAttribute("aria-live", "polite"); let selected: WeatherPlace | null = null, searchVersion = 0, searchRequest: AbortController | null = null;
@@ -198,7 +177,9 @@ export default {
       const status = document.createElement("p"); status.setAttribute("aria-live", "polite");
       const save = document.createElement("button"); save.type = "submit"; save.textContent = zh ? "保存并更新" : "Save and refresh"; form.append(save, status);
       form.onsubmit = async (event) => { event.preventDefault(); const current = settings(); if ((!selected && city.value !== current.city) || (selected && city.value !== selected.city)) { status.textContent = zh ? "请先搜索并选择城市" : "Search and select a city first"; return; } try { new URL(endpoint.value); ctx.localStorage.set("apiKey", key.value); const location = selected ? { city: selected.city, cityShort: selected.cityShort, latitude: selected.latitude, longitude: selected.longitude } : { cityShort: weatherCityName(current) }; await ctx.settings.save({ ...location, unit: unit.value, intervalMinutes: Math.max(5, Math.min(1440, Number(interval.value) || 30)), endpoint: endpoint.value }); await refresh(true); status.textContent = error || (zh ? "已更新" : "Updated"); } catch (cause: any) { status.textContent = cause.message; } };
-      container.append(form); return () => { searchVersion++; searchRequest?.abort(); form.remove(); };
+      const entry = { panel, dispose: () => { searchVersion++; searchRequest?.abort(); nodes.delete(entry); panel.remove(); form.remove(); } };
+      nodes.add(entry); container.append(panel, form); render();
+      return entry.dispose;
     });
     ctx.interval(() => { const s = settings(); if (!cache || cache.unit !== s.unit || cache.latitude !== s.latitude || cache.longitude !== s.longitude || Date.now() - cache.timestamp >= Math.max(5, Number(s.intervalMinutes) || 30) * 60000) void refresh(); }, 60000);
     ctx.on(window, "online", () => { void refresh(); });

@@ -1,12 +1,11 @@
-.navopath-plugin-settings { display: grid; gap: 16px; color: var(--text-main); }
-.navopath-plugin-settings label { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.navopath-plugin-settings input, .navopath-plugin-settings select, .navopath-plugin-settings button { font: inherit; color: inherit; background: var(--surface-main); border: 1px solid var(--border-soft); border-radius: 4px; padding: 8px; min-height: 34px; }
-.navopath-plugin-settings input:focus-visible, .navopath-plugin-settings select:focus-visible, .navopath-plugin-settings button:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
-@media (pointer: coarse) { .navopath-plugin-settings input, .navopath-plugin-settings select, .navopath-plugin-settings button { min-height: 44px; } }
+.navopath-weather-settings { display: grid; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-soft); color: var(--text-main); }
+.navopath-weather-settings label { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.navopath-weather-settings input, .navopath-weather-settings select, .navopath-weather-settings button { font: inherit; color: inherit; background: var(--surface-main); border: 1px solid var(--border-soft); border-radius: 4px; padding: 8px; min-height: 34px; }
+.navopath-weather-settings input:focus-visible, .navopath-weather-settings select:focus-visible, .navopath-weather-settings button:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
+@media (pointer: coarse) { .navopath-weather-settings input, .navopath-weather-settings select, .navopath-weather-settings button { min-height: 44px; } }
 .navopath-weather { min-width: 0; color: var(--text-main); font: inherit; }
-.navopath-weather-summary { display: grid; place-items: center; }
 .navopath-weather-details { min-width: 0; color: var(--text-main); white-space: normal; font: 13px/1.5 var(--font-sans, sans-serif); }
-.navopath-weather-details h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.navopath-weather-settings h3, .navopath-weather-details h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 .navopath-weather-details p { margin: 0 0 12px; }
 .navopath-weather-current { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .navopath-weather-current strong { font-size: 24px; font-weight: 500; }
@@ -18,10 +17,9 @@
 .navopath-weather-actions { align-items: center; margin-top: 12px; }
 .navopath-weather-actions a { color: inherit; text-underline-offset: 3px; }
 .navopath-weather-error { color: var(--danger-ink); overflow-wrap: anywhere; }
-.navopath-weather[data-stale="true"] .navopath-weather-summary { opacity: .72; }
 .navopath-weather-results { display: grid; gap: 8px; }
 .navopath-weather-results button { text-align: start; overflow-wrap: anywhere; }
 @media (pointer: coarse) { .navopath-weather-actions button { min-height: 44px; } }
 
-.navopath-plugin-settings input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; padding: 0; flex: 0 0 auto; accent-color: var(--accent-active); }
-.navopath-plugin-settings label > input:not([type="checkbox"]), .navopath-plugin-settings label > select { width: min(220px, 55%); }
+.navopath-weather-settings input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; padding: 0; flex: 0 0 auto; accent-color: var(--accent-active); }
+.navopath-weather-settings label > input:not([type="checkbox"]), .navopath-weather-settings label > select { width: min(220px, 55%); }

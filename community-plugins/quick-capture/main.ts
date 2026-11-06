@@ -20,7 +20,7 @@ export default {
       for (const project of ctx.projects.list().filter(item => !item.completed)) { const option = document.createElement("option"); option.value = project.id; option.textContent = project.title; select.append(option); }
       select.value = selected; return select;
     };
-    ctx.ui.registerView(title, container => {
+    ctx.ui.registerPage(title, container => {
       const form = document.createElement("form"); form.className = "navopath-quick-capture";
       const help = document.createElement("p"); help.textContent = zh ? "将想法直接保存为今天的候选任务，稍后再安排。" : "Save an idea as a candidate task for today, then schedule it when ready.";
       const label = document.createElement("label"); label.textContent = zh ? "任务名称" : "Task title";

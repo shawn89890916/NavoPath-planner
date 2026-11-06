@@ -8,7 +8,7 @@ let implementation: ExtensionService | undefined;
 let pending: Promise<ExtensionService> | undefined;
 let configureRevision = 0;
 const listeners = new Set<() => void>();
-let snapshot: ExtensionSnapshot = { preferences: defaultExtensionPreferences(), catalog: [], updates: {}, status: {}, busy: false, error: "", safeMode: false, settingsPages: [], headerItems: [], views: [] };
+let snapshot: ExtensionSnapshot = { preferences: defaultExtensionPreferences(), catalog: [], updates: {}, status: {}, busy: false, error: "", safeMode: false, settingsPages: [], views: [], launcherStatus: {} };
 async function engine() {
   return implementation ?? (pending ??= import("./serviceCore").then(({ ExtensionService }) => {
     implementation = new ExtensionService();
@@ -29,7 +29,6 @@ export const extensionService = {
     if (revision === configureRevision) await current.configure(host);
   },
   getConfig: (key: string) => implementation?.getConfig(key) ?? {},
-  listCommands: () => implementation?.listCommands() ?? [],
   getActiveThemeDescriptor: () => implementation?.getActiveThemeDescriptor(),
   saveConfig: async (key: string, patch: Record<string, unknown>) => (await engine()).saveConfig(key, patch),
   setSafeMode: async (enabled: boolean) => (await engine()).setSafeMode(enabled),

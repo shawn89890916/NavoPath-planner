@@ -23,7 +23,7 @@ beforeEach(() => {
   (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
   vi.stubGlobal("document", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
-  state.snapshot = { preferences: { version: 1, sources: [], installed: Object.fromEntries((["plugin", "theme"] as const).map((kind) => [`official:${kind}`, { key: `official:${kind}`, sourceId: "official", manifest: manifest(kind), sha256: "a".repeat(64), enabled: true, installedAt: "2026-11-02T00:00:00Z" }])), removed: {}, activeTheme: null, autoCheckUpdates: true, autoUpdate: false }, catalog: (["plugin", "theme"] as const).map((kind) => ({ sourceId: "official", manifest: manifest(kind), downloadUrl: `https://example.com/${kind}.zip`, sha256: "a".repeat(64) })), updates: {}, status: {}, busy: false, error: "", safeMode: false, settingsPages: [], headerItems: [], views: [] };
+  state.snapshot = { preferences: { version: 1, sources: [], installed: Object.fromEntries((["plugin", "theme"] as const).map((kind) => [`official:${kind}`, { key: `official:${kind}`, sourceId: "official", manifest: manifest(kind), sha256: "a".repeat(64), enabled: true, installedAt: "2026-11-02T00:00:00Z" }])), removed: {}, activeTheme: null, autoCheckUpdates: true, autoUpdate: false }, catalog: (["plugin", "theme"] as const).map((kind) => ({ sourceId: "official", manifest: manifest(kind), downloadUrl: `https://example.com/${kind}.zip`, sha256: "a".repeat(64) })), updates: {}, status: {}, busy: false, error: "", safeMode: false, settingsPages: [], views: [], launcherStatus: {} };
 });
 afterEach(async () => { if (renderer) await act(async () => renderer!.unmount()); renderer = undefined; vi.unstubAllGlobals(); });
 

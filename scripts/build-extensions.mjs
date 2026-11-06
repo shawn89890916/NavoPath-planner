@@ -106,4 +106,4 @@ for (const folder of ['navopath-plugin-api', 'navopath-plugin-template', 'navopa
   await emit(resolve(directory, 'timer.d.ts'), timerTypes.trimEnd() + '\n');
   if (folder !== 'navopath-plugin-api') await emit(resolve(directory, '../API.md'), apiDoc);
 }
-await emit(resolve(root, 'integrations/navopath-plugin-api/package.json'), JSON.stringify({name:'@navopath/plugin-api',version:'1.0.0',type:'module',types:'index.d.ts',license:'MIT',files:['*.d.ts']},null,2)+'\n');
+await emit(resolve(root, 'integrations/navopath-plugin-api/package.json'), JSON.stringify({name:'@navopath/plugin-api',version:'2.0.0',type:'module',types:'index.d.ts',license:'MIT',files:['*.d.ts']},null,2)+'\n');

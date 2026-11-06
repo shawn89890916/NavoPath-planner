@@ -89,14 +89,13 @@ import { withDeletionTombstones } from "./syncMerge";
 import { SyncScheduler, isCurrentWorkspaceLoad, readSyncInterval, shouldApplyWorkspaceRevision, shouldReconcileRemoteRevision, shouldRequeueFailedSave } from "./sync";
 import { extensionService } from "./extensions/service";
 const ExtensionHeader = lazy(() => import("./extensions/ExtensionSurfaces").then(module => ({ default: module.ExtensionHeader })));
-const ExtensionToolsDialog = lazy(() => import("./extensions/ExtensionSurfaces").then(module => ({ default: module.ExtensionToolsDialog })));
 const CompactPluginDock = lazy(() => import("./extensions/ExtensionSurfaces").then(module => ({ default: module.CompactPluginDock })));
 import { emitPluginEvent, subscribePluginEvent } from "./extensions/runtime";
 import { SelectionIndicator } from "./components/SelectionIndicator";
 import type { ExtensionHost } from "./extensions/types";
 import { normalizeWidgetAppearance } from "./widget/widgetPreferences";
 import { DEFAULT_WIDGET_RUNTIME, DEFAULT_WIDGET_TIMER_PREFERENCES, accumulateWidgetWorkTime, advanceTaskElapsedSeconds, advanceWidgetTimer, countsWidgetTimerPhaseAsWork, createWidgetTimerModeTransition, createDeadlineAlignedTimerRuntime, createWidgetTimerRuntime, getWidgetTimerNotificationDescriptor, getStopwatchTaskTimerAction, getWidgetTimerModeChangeTaskAction, getWidgetTimerSnapshotDisplaySeconds, normalizeStoredTaskTimer, normalizeWidgetTimerPreferences, normalizeWidgetTimerRuntime, resolveWidgetCountdownTarget, scheduleWidgetCountdown } from "./widget/widgetTimer";
-import { getTimerMode, getTimerModes, getTimerModeRevision, subscribeTimerModes, onTimerModeRemoving, onTimerModeOpening } from "./extensions/timers";
+import { getTimerMode, getTimerModes, getTimerModeRevision, subscribeTimerModes, onTimerModeRemoving, onTimerModeOpening, openTimerMode } from "./extensions/timers";
 import { createTimerOwner, type TimerOwner } from "./extensions/timerOwner";
 import { extendActiveTimelineRecord, nextOverrunExtensionEnd, resolveWidgetTimelineSelection, timelineRecordBounds } from "./widget/widgetSchedule";
 import { hasActiveTaskSchedule, applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, findScheduledTimelineRecord, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
@@ -203,7 +202,7 @@ function loadWidgetTimerRuntime(): WidgetTimerRuntime {
 }
 type AddType = "task" | "project" | "event" | "habit";
 type CompactExecuteView = "tasks" | "schedule";
-type WorkspacePanelKind = "ai" | "settings" | "about" | "search" | "notifications" | "metrics" | "extension" | "templates" | "timer" | "tools" | "more";
+type WorkspacePanelKind = "ai" | "settings" | "about" | "search" | "notifications" | "metrics" | "extension" | "templates" | "timer";
 type UtilityPanelKind = "settings" | "about" | "metrics" | "extension";
 type WorkspacePanel = { kind: WorkspacePanelKind; owner?: string; id?: string };
 function utilityPanelKind(panel: WorkspacePanel | null): UtilityPanelKind | null {
@@ -1313,10 +1312,6 @@ function App() {
   const scheduleTemplateOpen = workspacePanel?.kind === "templates";
   const setScheduleTemplateOpen = (open: boolean) => setWorkspacePanelOpen("templates", open);
   const scheduleTemplatePresence = useMotionPresence(scheduleTemplateOpen, MOTION.base);
-  useEffect(() => {
-    const unsubscribe = subscribePluginEvent("schedule-templates:open", (_payload, owner) => showWorkspacePanel({ kind: "templates", owner }, true));
-    return () => { void unsubscribe(); };
-  }, []);
   const [allDayQuickAdd, setAllDayQuickAdd] = useState<AllDayQuickAdd>(null);
   const [monthQuickAdd, setMonthQuickAdd] = useState<AllDayQuickAdd>(null);
   const [allDayDragOver, setAllDayDragOver] = useState(false);
@@ -1335,8 +1330,6 @@ function App() {
   const setUtilityPanel = (kind: UtilityPanelKind | null) => setWorkspacePanel((current) =>
     kind ? { kind } : utilityPanelKind(current) ? null : current);
   const activeExtensionPanelId = workspacePanel?.kind === "extension" ? workspacePanel.id : undefined;
-  const pluginToolsOwner = workspacePanel?.kind === "tools" ? workspacePanel.owner : undefined;
-  const openPluginTools = (owner: string) => showWorkspacePanel({ kind: "tools", owner }, true);
   const layerExitHandlesRef = useRef(new Map<string, ReturnType<typeof scheduleMotionCommit> | null>());
   const layerTriggerRef = useRef(new Map<string, HTMLElement>());
   const [habitPanel, setHabitPanel] = useState<"overview" | "detail" | null>(null);
@@ -1815,21 +1808,17 @@ function App() {
   const [isManualSyncing, setIsManualSyncing] = useState(false);
   const extensionHostRef = useRef<ExtensionHost | null>(null);
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const activeExtensionPanel = extensionSnapshot.views.find((view) => view.id === activeExtensionPanelId)
-    ?? extensionSnapshot.headerItems.find((item) => item.id === activeExtensionPanelId);
-  const openExtensionPanel = useCallback((view: ExtensionContribution) => {
+  const activeExtensionPanel = extensionSnapshot.views.find((view) => view.id === activeExtensionPanelId && !view.planningView);
+  function openExtensionPage(page: ExtensionContribution) {
+    if (page.nativeMode === "metrics") { openMetrics(); return; }
+    if (page.nativeTool === "pomodoro") { openTimerMode("pomodoro", page.owner); return; }
+    if (page.nativeTool === "schedule-templates") {
+      showWorkspacePanel({ kind: "templates", owner: page.owner }, true);
+      return;
+    }
     rememberLayerTrigger("utility");
-    showWorkspacePanel({ kind: "extension", id: view.id, owner: view.owner }, true);
-  }, []);
-  useEffect(() => {
-    const unsubscribe = subscribePluginEvent("ui:open-view", (payload) => {
-      const request = payload as { owner?: string; name?: string } | null;
-      if (!request?.owner || !request.name) return;
-      const view = extensionService.getSnapshot().views.find((item) => item.owner === request.owner && item.name === request.name);
-      if (view) openExtensionPanel(view);
-    });
-    return () => { void unsubscribe(); };
-  }, [openExtensionPanel]);
+    showWorkspacePanel({ kind: "extension", id: page.id, owner: page.owner }, true);
+  }
   const shelfViews = useMemo(() => extensionSnapshot.views.filter((view) =>
     view.planningView && view.nativeMode !== "tree" && view.nativeMode !== "metrics"
   ).sort((first, second) => {
@@ -9362,7 +9351,7 @@ if (cached?.data && cached?.settings) {
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
           <div className="df-brand">
             {brandControl}
-            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} activeOwner={workspacePanel?.owner} onOpenPluginTools={openPluginTools} onOpenMetrics={openMetrics} onOpenView={openExtensionPanel} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId }, true)} /></Suspense>}
+            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} activeOwner={workspacePanel?.owner} onOpenPage={openExtensionPage} /></Suspense>}
           </div>
           <div className="df-month-year-selector">
             <button className="df-month-year-btn" aria-expanded={yearOverviewOpen} onClick={() => {
@@ -9596,7 +9585,6 @@ if (cached?.data && cached?.settings) {
                   <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />
                   {!productDemo && <IconButton icon={<UiPlusIcon size={17} />} label={lang === "zh" ? "新建项目" : "New project"} onClick={() => openAdd("project")} />}
                 </> : <>
-                <Suspense fallback={null}><ExtensionHeader lang={lang} placement="candidate-header" onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>
                 <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />
                 <IconButton className={`df-icon-action df-candidate-header-icon${showCompletedCandidates ? " active" : ""}`} icon={<UiListChecksIcon size={17} />} label={t(lang, "candidate.showCompleted")} aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)} />
                 {!settings.hideAi && (
@@ -9630,7 +9618,6 @@ if (cached?.data && cached?.settings) {
                     {lang === "zh" ? "显示已安排" : "Show scheduled"}
                   </Button>
                   {!treeView && <Button variant="ghost" onClick={openProjectManagement}>{manageProjectsLabel}</Button>}
-                  <Suspense fallback={null}><ExtensionHeader lang={lang} placement="planning-sidebar" onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId })} /></Suspense>
                 </ActionDisclosure>}
                 </>}
                 {mobileExecution && <CloseButton className="df-mobile-candidate-close" label={lang === "zh" ? "关闭候选任务" : "Close candidates"} onClick={closeCandidateDrawer} />}
@@ -10687,7 +10674,7 @@ if (cached?.data && cached?.settings) {
       {!productAiPresentation && compactLayout && !compactOverlayOpen && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}`} style={themeVars(settings, "execute")} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {productDemo ? <div className="df-mobile-dock-slots">{compactChat}</div> : <Suspense fallback={<div className="df-mobile-dock-slots">{compactChat}<IconButton className="df-mobile-dock-action df-mobile-more-wrap" label={lang === "zh" ? "更多" : "More"} icon={<UiMoreIcon />} /></div>}>
-            <CompactPluginDock lang={lang} chat={compactChat} activePanel={workspacePanel?.kind} activeOwner={workspacePanel?.owner} onMoreChange={(open) => setWorkspacePanelOpen("more", open)} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => setNotificationCenterOpen(true)} onSearch={() => { setCommandQuery(""); setCommandOpen(true); }} onMetrics={openMetrics} onSettings={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); showWorkspacePanel({ kind: "settings" }); }} onOpenSettings={(pageId) => openSettingsSection({ category: "plugins", pluginPage: pageId }, true)} onOpenView={openExtensionPanel} onOpenPluginTools={openPluginTools} />
+            <CompactPluginDock lang={lang} chat={compactChat} activePanel={workspacePanel?.kind} activeOwner={workspacePanel?.owner} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => setNotificationCenterOpen(true)} onSearch={() => { setCommandQuery(""); setCommandOpen(true); }} onSettings={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); showWorkspacePanel({ kind: "settings" }); }} onOpenPage={openExtensionPage} />
           </Suspense>}
         </nav>, document.body)
       )}
@@ -10724,9 +10711,8 @@ if (cached?.data && cached?.settings) {
         </Suspense>
       </RightUtilityPanel>}
       {utilityPanel && utilityPanel !== "metrics" && utilityPanel !== "extension" && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} /></Suspense>}
-      {utilityPanel === "extension" && activeExtensionPanel && <RightUtilityPanel workspace label={activeExtensionPanel.name} closeLabel={t(lang, "settings.close")} className="df-extension-utility" onClose={() => closeUtilityPanel()}><ExtensionMount contribution={activeExtensionPanel} /></RightUtilityPanel>}
+      {utilityPanel === "extension" && activeExtensionPanel && <RightUtilityPanel workspace label={activeExtensionPanel.name} closeLabel={t(lang, "settings.close")} className="df-extension-utility" onClose={() => closeUtilityPanel()}><div className="df-extension-page-content"><ExtensionMount contribution={activeExtensionPanel} /></div></RightUtilityPanel>}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
-      {pluginToolsOwner && <Suspense fallback={null}><ExtensionToolsDialog key={pluginToolsOwner} lang={lang} owner={pluginToolsOwner} onClose={() => setWorkspacePanelOpen("tools", false)} /></Suspense>}
       {focusOverlayMode && (
         <RightUtilityPanel workspace label={focusProvider?.label[lang] || (lang === "zh" ? "专注" : "Focus")} closeLabel={t(lang, "settings.close")} className="df-focus-utility" onClose={() => setFocusOverlayMode(null)}>
           <div className="df-focus-panel" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>

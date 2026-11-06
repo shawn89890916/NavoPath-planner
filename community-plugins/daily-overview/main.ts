@@ -18,7 +18,7 @@ export default {
       const data = read(); ctx.events.emit("daily-overview:refresh");
       ctx.ui.toast(zh ? `今日 ${data.today.length} 项 · 逾期 ${data.overdue.length} 项 · 日历 ${data.calendar.length} 项` : `${data.today.length} today · ${data.overdue.length} overdue · ${data.calendar.length} calendar`);
     });
-    ctx.ui.registerView(title, container => {
+    ctx.ui.registerPage(title, container => {
       const root = document.createElement("section"); root.className = "navopath-daily-overview";
       const top = document.createElement("header"); top.className = "navopath-daily-overview-top";
       const heading = document.createElement("div"); heading.className = "navopath-daily-overview-heading";

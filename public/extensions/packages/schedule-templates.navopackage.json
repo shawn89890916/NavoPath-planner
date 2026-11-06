@@ -1,9 +1,9 @@
 {
   "manifest": {
     "author": "NavoPath",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "apiVersion": 1,
-    "minAppVersion": "1.5.2-beta.2",
+    "minAppVersion": "1.7.0-beta.13",
     "platforms": [
       "desktop",
       "web",
@@ -20,7 +20,7 @@
   "files": {
     "main.js": {
       "encoding": "utf8",
-      "data": "var d={onload(t){let n=t.language===\"zh\",a=n?\"\\u65E5\\u7A0B\\u6A21\\u677F\":\"Schedule templates\",o=()=>t.events.emit(\"schedule-templates:open\");t.ui.addHeaderItem(a,l=>{let e=document.createElement(\"button\");e.type=\"button\",e.className=\"navopath-plugin-header-button\",e.innerHTML='<svg viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M16 3v4M8 3v4M3 10h18M8 14h3M8 18h6\"/></svg>',e.setAttribute(\"aria-label\",n?\"\\u6253\\u5F00\\u65E5\\u7A0B\\u6A21\\u677F\\uFF0C\\u53EF\\u62D6\\u52A8\\u8C03\\u6574\\u63D2\\u4EF6\\u987A\\u5E8F\":\"Open schedule templates; drag to reorder plugins\"),e.title=n?\"\\u65E5\\u7A0B\\u6A21\\u677F \\xB7 \\u62D6\\u52A8\\u8C03\\u6574\\u987A\\u5E8F\":\"Schedule templates \\xB7 drag to reorder\";let r=t.on(e,\"click\",o);return l.append(e),()=>{r(),e.remove()}})}};export{d as default};\n"
+      "data": "var a={onload(e){e.app.internal.registerNativeToolPage(\"schedule-templates\",e.language===\"zh\"?\"\\u65E5\\u7A0B\\u6A21\\u677F\":\"Schedule templates\")}};export{a as default};\n"
     },
     "LICENSE": {
       "encoding": "utf8",

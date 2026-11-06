@@ -17,8 +17,10 @@ export interface InstalledExtension {
   key: string; sourceId: string; manifest: ExtensionManifest; sha256: string; downloadUrl?: string;
   enabled: boolean; installedAt: string; updatedAt?: string; previous?: { manifest: ExtensionManifest; sha256: string; downloadUrl?: string };
 }
+export type CompactPluginPlacement = "auto" | "bottom" | "more" | "settings";
 export interface ExtensionPreferences {
   version: 1; sources: ExtensionSource[]; installed: Record<string, InstalledExtension>;
   removed: Record<string, string>; activeTheme: string | null; autoCheckUpdates: boolean; autoUpdate: boolean;
-  headerOrder?: string[]; migratedLegacy?: boolean; migratedPlanningViews?: boolean; migratedShelfViews?: boolean; updatedAt?: string;
+  headerOrder?: string[]; compactPlacements?: Record<string, CompactPluginPlacement>; compactDockLimit?: number;
+  migratedLegacy?: boolean; migratedPlanningViews?: boolean; migratedShelfViews?: boolean; updatedAt?: string;
 }

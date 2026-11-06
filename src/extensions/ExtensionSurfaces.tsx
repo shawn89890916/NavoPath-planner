@@ -1,26 +1,27 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import type { Language } from "../types";
 import { ActionDisclosure, Button, IconButton } from "../components/UiPrimitives";
-import { RightUtilityPanel, utilityPanelCloseLabel } from "../components/RightUtilityPanel";
-import { ExtensionMount } from "./ExtensionMount";
 import { extensionService } from "./service";
-import { UiRefreshIcon, UiZapIcon, UiPencilIcon, UiMetricsIcon, UiListChecksIcon, UiCalendarCheckIcon, UiBellIcon, UiSearchIcon, UiSettingsIcon, UiMoreIcon } from "../components/UiIcons";
-import type { CatalogEntry, ExtensionContribution, InstalledExtension, PluginUiPlacement } from "./types";
+import { UiZapIcon, UiPencilIcon, UiMetricsIcon, UiListChecksIcon, UiCalendarCheckIcon, UiBellIcon, UiSearchIcon, UiSettingsIcon, UiMoreIcon, UiTimerIcon } from "../components/UiIcons";
+import type { CatalogEntry, ExtensionContribution, InstalledExtension, PluginLauncherStatus } from "./types";
 import { getAppHeaderPlugins, getCompactPluginGroups } from "./compactDock";
 import { useUnifiedDrag } from "../useUnifiedDrag";
+import { weatherGlyphs } from "./weatherGlyphs";
 import "./ExtensionSurfaces.css";
 
-function PluginLauncherIcon({ item, catalog, size }: { item: InstalledExtension; catalog: CatalogEntry[]; size: number }) {
+function PluginLauncherIcon({ item, catalog, size, status }: { item: InstalledExtension; catalog: CatalogEntry[]; size: number; status?: PluginLauncherStatus }) {
   const [failedUrl, setFailedUrl] = useState<string>();
   const iconUrl = extensionService.getPluginIcon(item.key) || catalog.find((entry) => entry.sourceId === item.sourceId && entry.manifest.id === item.manifest.id)?.iconUrl;
+  const weather = status?.weather ?? (item.manifest.id === "weather" ? "unknown" : undefined);
+  if (weather && Object.hasOwn(weatherGlyphs, weather)) return <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={weatherGlyphs[weather]} /></svg>;
   if (iconUrl && iconUrl !== failedUrl) return <img src={iconUrl} alt="" draggable={false} onError={() => setFailedUrl(iconUrl)} />;
-  const Icon = item.manifest.id === "metrics" ? UiMetricsIcon : item.manifest.id === "quick-capture" ? UiPencilIcon : item.manifest.id === "daily-overview" ? UiListChecksIcon : ["class-timetable", "schedule-templates"].includes(item.manifest.id) ? UiCalendarCheckIcon : UiZapIcon;
+  const Icon = item.manifest.id === "metrics" ? UiMetricsIcon : item.manifest.id === "pomodoro" ? UiTimerIcon : item.manifest.id === "quick-capture" ? UiPencilIcon : item.manifest.id === "daily-overview" ? UiListChecksIcon : ["class-timetable", "schedule-templates"].includes(item.manifest.id) ? UiCalendarCheckIcon : UiZapIcon;
   return <Icon size={size} />;
 }
 
-export function CompactPluginDock({ lang, chat, activePanel, activeOwner, onMoreChange, onNotifications, onSearch, onMetrics, onSettings, onOpenSettings, onOpenView, onOpenPluginTools, notificationCount = 0 }: { lang: Language; chat: ReactNode; activePanel?: string; activeOwner?: string; onMoreChange: (open: boolean) => void; onNotifications: () => void; onSearch: () => void; onMetrics: () => void; onSettings: () => void; onOpenSettings?: (pageId: string) => void; onOpenView?: (view: ExtensionContribution) => void; onOpenPluginTools: (owner: string) => void; notificationCount?: number }) {
+export function CompactPluginDock({ lang, chat, activePanel, activeOwner, onNotifications, onSearch, onSettings, onOpenPage, notificationCount = 0 }: { lang: Language; chat: ReactNode; activePanel?: string; activeOwner?: string; onNotifications: () => void; onSearch: () => void; onSettings: () => void; onOpenPage: (page: ExtensionContribution) => void; notificationCount?: number }) {
   const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const moreOpen = activePanel === "more";
+  const [moreOpen, setMoreOpen] = useState(false);
   const [dropZone, setDropZone] = useState<"bottom" | "more">();
   const [error, setError] = useState("");
   const dockRef = useRef<HTMLDivElement>(null);
@@ -30,26 +31,31 @@ export function CompactPluginDock({ lang, chat, activePanel, activeOwner, onMore
   const drag = useUnifiedDrag();
   const toolbar = getAppHeaderPlugins(snapshot);
   const { dock, more } = snapshot.safeMode ? { dock: [], more: [] } : getCompactPluginGroups(snapshot.preferences, toolbar.owners);
-  const moreSelected = Boolean(activePanel && activePanel !== "ai" && !dock.some((item) => item.key === activeOwner));
+  const moreSelected = activePanel ? activePanel !== "ai" && !dock.some((item) => item.key === activeOwner) : moreOpen;
   const zh = lang === "zh";
   const moreLabel = zh ? "更多" : "More";
+  useEffect(() => { setMoreOpen(false); }, [activePanel, activeOwner]);
 
   function reportError(caught: unknown) {
     setError(caught instanceof Error ? caught.message : String(caught));
   }
 
+  useEffect(() => {
+    if (!moreOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.stopPropagation();
+      setMoreOpen(false);
+      moreButtonRef.current?.focus();
+    };
+    window.addEventListener("keydown", close, true);
+    return () => window.removeEventListener("keydown", close, true);
+  }, [moreOpen]);
+
   function activate(key: string) {
-    onMoreChange(false);
-    setError("");
-    if (toolbar.metrics?.owner === key) { onMetrics(); return; }
-    const view = snapshot.views.find((item) => item.owner === key && !item.planningView)
-      ?? toolbar.headerItems.find((item) => item.owner === key);
-    const settingsPage = snapshot.settingsPages.find((item) => item.owner === key);
-    const commands = extensionService.listCommands().filter((item) => item.id.startsWith(key + ":"));
-    if (view) onOpenView?.(view);
-    else if (settingsPage && onOpenSettings) onOpenSettings(settingsPage.id);
-    else if (commands.length === 1) void extensionService.executeCommand(commands[0].id).catch(reportError);
-    else onOpenPluginTools(key);
+    setMoreOpen(false);
+    const page = toolbar.pages.get(key);
+    if (page) onOpenPage(page);
   }
 
   function beginDrag(event: PointerEvent<HTMLElement>, key: string, fromMore: boolean) {
@@ -80,30 +86,17 @@ export function CompactPluginDock({ lang, chat, activePanel, activeOwner, onMore
   function pluginButton(item: InstalledExtension, inMenu: boolean) {
     const className = inMenu ? "df-mobile-menu-item" : "df-mobile-dock-action df-mobile-plugin-action";
     const selected = activeOwner === item.key;
-    const live = toolbar.headerItems.find((entry) => entry.owner === item.key && entry !== toolbar.metrics);
-    if (live) return <div
-      key={item.key}
-      className={`${className} df-compact-extension`}
-      data-compact-plugin={item.key}
-      data-dock-selected={!inMenu && selected || undefined}
-      onPointerDownCapture={(event) => beginDrag(event, item.key, inMenu)}
-      onClickCapture={(event) => {
-        const dragged = suppressClick.current && event.detail !== 0;
-        suppressClick.current = false;
-        if (dragged) { event.preventDefault(); event.stopPropagation(); }
-        else if (inMenu && (event.target as Element).closest("button, [role=button], a[href]")) onMoreChange(false);
-      }}
-    >
-      <ExtensionMount contribution={live} />
-      {inMenu && <span aria-hidden="true">{item.manifest.name}</span>}
-    </div>;
+    const status = snapshot.launcherStatus[item.key];
+    const pageName = toolbar.pages.get(item.key)?.name || item.manifest.name;
+    const label = status?.label || pageName;
     return <button
       key={item.key}
       type="button"
       className={className}
       role={inMenu ? "menuitem" : undefined}
-      aria-label={item.manifest.name}
-      title={item.manifest.name}
+      aria-label={label}
+      title={label}
+      data-running={status?.active || undefined}
       aria-pressed={!inMenu ? selected : undefined}
       data-compact-plugin={item.key}
       onPointerDown={(event) => beginDrag(event, item.key, inMenu)}
@@ -112,8 +105,8 @@ export function CompactPluginDock({ lang, chat, activePanel, activeOwner, onMore
         suppressClick.current = false;
       }}
     >
-      <PluginLauncherIcon item={item} catalog={snapshot.catalog} size={inMenu ? 20 : 19} />
-      {inMenu && <span>{item.manifest.name}</span>}
+      <PluginLauncherIcon item={item} catalog={snapshot.catalog} size={inMenu ? 20 : 19} status={status} />
+      {inMenu && <span>{pageName}</span>}
     </button>;
   }
 
@@ -132,17 +125,17 @@ export function CompactPluginDock({ lang, chat, activePanel, activeOwner, onMore
         aria-haspopup="menu"
         data-dock-selected={moreSelected || undefined}
         data-drop-active={dropZone === "more" || undefined}
-        onClick={() => onMoreChange(!moreOpen)}
+        onClick={() => setMoreOpen(!moreOpen)}
       />
       {moreOpen && <>
-        <button type="button" className="df-mobile-menu-scrim" data-workspace-backdrop aria-label={zh ? "关闭更多菜单" : "Close More menu"} onClick={() => onMoreChange(false)} />
-        <div ref={moreRef} className="df-mobile-more-menu" data-workspace-panel role="menu" aria-label={moreLabel} data-drop-active={dropZone === "more" || undefined}>
-          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={onNotifications}><UiBellIcon size={18} /><span>{zh ? "通知" : "Notifications"}{notificationCount > 0 ? ` · ${notificationCount}` : ""}</span></button>
-          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={onSearch}><UiSearchIcon size={18} /><span>{zh ? "搜索" : "Search"}</span></button>
+        <button type="button" className="df-mobile-menu-scrim" aria-label={zh ? "关闭更多菜单" : "Close More menu"} onClick={() => setMoreOpen(false)} />
+        <div ref={moreRef} className="df-mobile-more-menu" role="menu" aria-label={moreLabel} data-drop-active={dropZone === "more" || undefined}>
+          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onNotifications(); }}><UiBellIcon size={18} /><span>{zh ? "通知" : "Notifications"}{notificationCount > 0 ? ` · ${notificationCount}` : ""}</span></button>
+          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onSearch(); }}><UiSearchIcon size={18} /><span>{zh ? "搜索" : "Search"}</span></button>
           {more.length > 0 && <div className="df-mobile-menu-plugins" role="group" aria-label={zh ? "插件" : "Plugins"}>
             {more.map((item) => pluginButton(item, true))}
           </div>}
-          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={onSettings}><UiSettingsIcon size={18} /><span>{zh ? "设置" : "Settings"}</span></button>
+          <button type="button" className="df-mobile-menu-item" role="menuitem" onClick={() => { setMoreOpen(false); onSettings(); }}><UiSettingsIcon size={18} /><span>{zh ? "设置" : "Settings"}</span></button>
         </div>
       </>}
     </div>
@@ -151,34 +144,9 @@ export function CompactPluginDock({ lang, chat, activePanel, activeOwner, onMore
   </div>;
 }
 
-/** Fallback for launchers with no registered panel or settings page. */
-export function ExtensionToolsDialog({ lang, owner, onClose }: { lang: Language; owner: string; onClose: () => void }) {
+/** The host renders the same launcher for every registered workspace page. */
+export function ExtensionHeader({ lang, activeOwner, onOpenPage }: { lang: Language; activeOwner?: string; onOpenPage: (page: ExtensionContribution) => void }) {
   const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const [running, setRunning] = useState(false);
-  const [error, setError] = useState("");
-  const plugin = snapshot.preferences.installed[owner];
-  if (!plugin?.enabled) return null;
-  const { manifest } = plugin;
-  const commands = extensionService.listCommands().filter((command) => command.id.startsWith(owner + ":"));
-  async function runCommand(id: string) {
-    setRunning(true); setError("");
-    try { await extensionService.executeCommand(id); }
-    catch (caught) { setError(caught instanceof Error ? caught.message : String(caught)); }
-    finally { setRunning(false); }
-  }
-  return <RightUtilityPanel workspace label={manifest.name} closeLabel={utilityPanelCloseLabel(lang)} onClose={onClose}>
-    <p>{manifest.description}</p>
-    <p className="df-extension-meta">v{manifest.version} · {manifest.author}</p>
-    {commands.map((command) => <Button key={command.id} variant="ghost" disabled={running} onClick={() => void runCommand(command.id)}>{command.name}</Button>)}
-    {error && <p className="df-extension-view-error" role="alert">{error}</p>}
-  </RightUtilityPanel>;
-}
-
-/** Header entry points share the plugin lifecycle and disappear when unloaded. */
-export function ExtensionHeader({ lang, activeOwner, onOpenPluginTools, onOpenSettings, onOpenMetrics, onOpenView, placement = "app-header" }: { lang: Language; activeOwner?: string; onOpenPluginTools?: (owner: string) => void; onOpenSettings?: (pageId: string) => void; onOpenMetrics?: () => void; onOpenView?: (view: ExtensionContribution) => void; placement?: PluginUiPlacement }) {
-  const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const commands = extensionService.listCommands();
-  const [running, setRunning] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [dragOwner, setDragOwner] = useState<string | null>(null);
   const [dropOwner, setDropOwner] = useState<string | null>(null);
@@ -187,16 +155,9 @@ export function ExtensionHeader({ lang, activeOwner, onOpenPluginTools, onOpenSe
   const headerRef = useRef<HTMLDivElement>(null);
   const headerViewportRef = useRef<HTMLDivElement>(null);
   const headerItemsRef = useRef<HTMLDivElement>(null);
-  const label = lang === "zh" ? "插件工具" : "Plugin tools";
-  const toolbar = placement === "app-header" ? getAppHeaderPlugins(snapshot, Boolean(onOpenMetrics)) : undefined;
-  const metrics = toolbar?.metrics;
-  const metricsLabel = lang === "zh" ? "指标" : "Metrics";
-  const headerItems = toolbar?.headerItems ?? snapshot.headerItems.filter((item) => item.placement === placement);
-  const headerOwners = Array.from(new Set(headerItems.map((item) => item.owner)));
-  const headerOrder = [...(snapshot.preferences.headerOrder || []).filter((owner) => headerOwners.includes(owner)), ...headerOwners.filter((owner) => !snapshot.preferences.headerOrder?.includes(owner))];
-  const orderedHeaderItems = [...headerItems].sort((a, b) => headerOrder.indexOf(a.owner) - headerOrder.indexOf(b.owner));
-  const launcherPlugins = toolbar?.launcherPlugins ?? [];
-  const overflowViews = toolbar?.overflowViews ?? [];
+  const { pages, owners } = getAppHeaderPlugins(snapshot);
+  const stored = snapshot.preferences.headerOrder || [];
+  const headerOrder = [...stored.filter((owner) => owners.has(owner)), ...[...owners].filter((owner) => !stored.includes(owner))];
   useEffect(() => {
     const header = headerRef.current;
     const viewport = headerViewportRef.current;
@@ -230,7 +191,7 @@ export function ExtensionHeader({ lang, activeOwner, onOpenPluginTools, onOpenSe
       mutationObserver.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [commands.length, launcherPlugins.length, orderedHeaderItems.length, overflowViews.length]);
+  }, [headerOrder.length]);
   async function moveHeader(owner: string, direction: -1 | 1) {
     const from = headerOrder.indexOf(owner), to = Math.max(0, Math.min(headerOrder.length - 1, from + direction));
     if (from < 0 || from === to) return;
@@ -247,61 +208,37 @@ export function ExtensionHeader({ lang, activeOwner, onOpenPluginTools, onOpenSe
     try { await extensionService.setPreference({ headerOrder: next }); }
     catch (caught) { setError(caught instanceof Error ? caught.message : String(caught)); }
   }
-  async function runCommand(id: string) {
-    setRunning(id); setError("");
-    try { await extensionService.executeCommand(id); }
-    catch (caught) { setError(caught instanceof Error ? caught.message : String(caught)); }
-    finally { setRunning(null); }
-  }
-  const visibleCommands = placement === "app-header" ? commands : [];
-  if (!headerItems.length && !launcherPlugins.length && !overflowViews.length && !visibleCommands.length && !error) return null;
-  const activateLauncher = (key: string) => {
-    setError("");
-    const entry = snapshot.views.find((candidate) => candidate.owner === key);
-    const settingsPage = snapshot.settingsPages.find((candidate) => candidate.owner === key);
-    if (entry?.id === metrics?.id && metrics) onOpenMetrics?.();
-    else if (entry) onOpenView?.(entry);
-    else if (settingsPage && onOpenSettings) onOpenSettings(settingsPage.id);
-    else onOpenPluginTools?.(key);
-  };
-
-  return <div ref={headerRef} className="df-extension-header" aria-busy={Boolean(running)}>
+  if (!headerOrder.length && !error) return null;
+  return <div ref={headerRef} className="df-extension-header">
     <div ref={headerViewportRef} className="df-extension-header-viewport" role="toolbar" aria-label={lang === "zh" ? "插件入口，可横向滚动" : "Plugin entries, horizontally scrollable"}>
       <div ref={headerItemsRef} className="df-extension-header-content">
-    {orderedHeaderItems.map((item) => <div
-      key={item.id}
-      className="df-extension-header-item"
-      data-dock-selected={activeOwner === item.owner || undefined}
-      data-dragging={dragOwner === item.owner || undefined}
-      data-drop-target={dropOwner === item.owner && dragOwner !== item.owner || undefined}
-      draggable
-      onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", item.owner); setDragOwner(item.owner); }}
-      onDragOver={(event) => { event.preventDefault(); setDropOwner(item.owner); }}
-      onDrop={(event) => { event.preventDefault(); void dropHeader(item.owner); }}
-      onDragEnd={() => { setDragOwner(null); setDropOwner(null); }}
-      onKeyDown={(event) => {
-        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-        event.preventDefault();
-        void moveHeader(item.owner, event.key === "ArrowLeft" ? -1 : 1);
-      }}
-    >{item === metrics
-      ? <IconButton className="df-extension-header-launcher" label={metricsLabel} onClick={onOpenMetrics}
-          icon={<UiMetricsIcon size={20} />} />
-      : <ExtensionMount contribution={item} />}</div>)}
-    {launcherPlugins.map((item) => <IconButton key={`launcher:${item.key}`} className="df-extension-header-launcher" label={item.manifest.name} aria-pressed={activeOwner === item.key} onClick={() => activateLauncher(item.key)} icon={<PluginLauncherIcon item={item} catalog={snapshot.catalog} size={20} />} />)}
-    {overflowViews.map((item) => <Button key={`view:${item.id}`} className="df-extension-header-action" variant="ghost" title={item.name} onClick={() => { setError(""); onOpenView?.(item); }}>{item.name}</Button>)}
-    {visibleCommands.map((command) => {
-      const label = command.name.trim();
-      const Icon = /refresh|reload|更新|刷新|重载/i.test(`${command.id} ${label}`) ? UiRefreshIcon : UiZapIcon;
-      return <IconButton key={`command:${command.id}`} className="df-extension-header-launcher" disabled={Boolean(running)} label={label} onClick={() => void runCommand(command.id)} icon={<Icon size={20} />} />;
-    })}
+        {headerOrder.map((owner) => {
+          const page = pages.get(owner)!;
+          const item = snapshot.preferences.installed[owner];
+          const status = snapshot.launcherStatus[owner];
+          return <IconButton key={owner} className="df-extension-header-launcher" label={status?.label || page.name}
+            aria-pressed={activeOwner === owner} data-running={status?.active || undefined}
+            data-dragging={dragOwner === owner || undefined} data-drop-target={dropOwner === owner && dragOwner !== owner || undefined}
+            draggable
+            onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", owner); setDragOwner(owner); }}
+            onDragOver={(event) => { event.preventDefault(); setDropOwner(owner); }}
+            onDrop={(event) => { event.preventDefault(); void dropHeader(owner); }}
+            onDragEnd={() => { setDragOwner(null); setDropOwner(null); }}
+            onKeyDown={(event) => {
+              if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+              event.preventDefault();
+              void moveHeader(owner, event.key === "ArrowLeft" ? -1 : 1);
+            }}
+            onClick={() => onOpenPage(page)} icon={<PluginLauncherIcon item={item} catalog={snapshot.catalog} size={20} status={status} />}
+          />;
+        })}
       </div>
     </div>
-    {hasOverflow && <ActionDisclosure label={label}>
-      {Array.from(new Map(orderedHeaderItems.map((item) => [item.owner, item])).values()).map((item) => <Button key={`overflow-header:${item.owner}`} className="df-extension-overflow-action" variant="ghost" onClick={() => activateLauncher(item.owner)}>{item === metrics ? metricsLabel : item.name}</Button>)}
-      {launcherPlugins.map((item) => <Button key={`overflow-launcher:${item.key}`} className="df-extension-overflow-action" variant="ghost" onClick={() => activateLauncher(item.key)}>{item.manifest.name}</Button>)}
-      {overflowViews.map((item) => <Button key={item.id} variant="ghost" onClick={() => { setError(""); onOpenView?.(item); }}>{item.name}</Button>)}
-      {visibleCommands.map((command) => <Button key={command.id} variant="ghost" disabled={Boolean(running)} onClick={() => void runCommand(command.id)}>{command.name}</Button>)}
+    {hasOverflow && <ActionDisclosure label={lang === "zh" ? "插件工具" : "Plugin tools"}>
+      {headerOrder.map((owner) => {
+        const page = pages.get(owner)!;
+        return <Button key={owner} className="df-extension-overflow-action" variant="ghost" onClick={() => onOpenPage(page)}>{page.name}</Button>;
+      })}
     </ActionDisclosure>}
     {error && <p className="df-extension-view-error" role="alert">{error}</p>}
   </div>;

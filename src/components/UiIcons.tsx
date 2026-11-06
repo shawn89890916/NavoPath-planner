@@ -40,6 +40,7 @@ export const UiInfoIcon = createPathIcon("M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20
 export const UiEyeIcon = createPathIcon("M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z");
 export const UiCalendarCheckIcon = createPathIcon("M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Zm3 10 2 2 5-5");
 export const UiCalendarClockIcon = createPathIcon("M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v4M4 9v11h7m5-7v4l2 1m3-1a5 5 0 1 1-10 0 5 5 0 0 1 10 0Z");
+export const UiTimerIcon = createPathIcon("M20 13a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM12 9v4l2.5 1.5M9 2h6M12 2v3");
 export const UiFilterIcon = createPathIcon("M4 6h16M7 12h10m-7 6h4");
 export const UiFlagIcon = createPathIcon("M5 21V4m0 0h11l-2 4 2 4H5");
 export const UiFolderInputIcon = createPathIcon("M3 7h7l2 2h9v10H3V7Zm7 7h6m-2-2 2 2-2 2");

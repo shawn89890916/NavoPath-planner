@@ -488,8 +488,8 @@ visual values.
 
 - A workspace toolbar has one active panel at a time. A second activation of the same entry closes its panel. Activating another entry replaces the current panel. Running timers and plugin data follow their own lifecycle.
 - The host owns panel bounds, scrolling, the backdrop, and the selected outline. Use the shared workspace panel treatment on wide and compact layouts. Landscape uses a right-hand panel up to 560 px wide. Portrait uses the available width. Keep the active layout's launchers outside the panel and backdrop so they remain clickable.
-- Use one rectangular selected outline on the launcher. Place the live plugin contribution inside that launcher surface and keep its icon decorative. Settings pages and Tasks views use their existing navigation surfaces.
-- Plugin views mount into the host panel using the same content on both orientations. Use fluid widths, allow content to wrap, and return cleanup when mounting listeners or resources. Leave viewport positioning and opening state to the host.
+- Use one rectangular selected outline on the launcher. The host draws the launcher from the plugin’s icon and status data. Settings pages and Tasks views use their existing navigation surfaces.
+- Each plugin registers one workspace page with `ui.registerPage`. The host mounts that content in both orientations. The portrait More button opens an anchored launcher menu above the dock. Use fluid widths, allow content to wrap, and return cleanup when mounting listeners or resources. Leave viewport positioning and opening state to the host.
 
 ### Settings and motion ownership
 

@@ -43,24 +43,15 @@ this value against the catalog and offers an update when it increases.
 - Use `settings.registerPage` for configurable options. Every installed plugin
   still gets a Settings action with its version, author and platform details if
   it has no custom settings page.
-- Register a `ui.addHeaderItem` for an active tool and declare its placement as
-  `app-header`, `candidate-header`, or `planning-sidebar`. The two-argument
-  form remains supported and defaults to `app-header`.
-- Use `ui.registerPlanningView(name, mount)` to add a view to the left panel's
-  title menu in 1.6.4 Beta 2. The host mounts the view in the task region next to
-  the timeline. Return cleanup from the mount and unregister the view when the
-  plugin unloads.
-- Use `ui.registerView(name, mount)` for expanded plugin content and
-  `ui.openView(name)` from its launcher. The host displays it in the shared
-  right-side panel. Do not create a separate app-level modal, popover, or
-  full-screen overlay for expanded content. Make mounted content responsive to
-  the panel width, including the full-width portrait layout.
-- Keep each plugin's primary action in one declared location. `registerView`
-  remains available for general plugin tools and does not create a Planning
-  entry.
-- Keep header controls icon-only and accessible. Use the shared
-  `navopath-plugin-header-button` class, a localized accessible label, a 24px
-  monochrome outline icon and no added pill or border.
+- Register a workspace tool once with `ui.registerPage(name, mount)`. NavoPath
+  renders its launcher in the header or dock and gives the content one scrollable
+  page. The same mount works in both orientations. The portrait More menu is a
+  small launcher menu anchored above the last dock button.
+- Use `ui.setLauncherStatus({ label, weather?, active? })` after registering a
+  page to update its accessible label, an optional weather symbol, or an activity
+  indicator. The host creates the button and handles opening, closing and selection.
+- Use `ui.registerPlanningView(name, mount)` for a view in the Tasks menu. The
+  host mounts planning content in the task region next to the timeline.
 
 Catalog entries may include `downloads` (non-negative integer) and
 `publishedAt` (ISO 8601 date) from a real release/statistics source. The market
@@ -96,7 +87,7 @@ contain an executable entry point. Safe mode suspends plugin execution.
 | Settings | `settings.get()`, async `save(patch)`, `registerPage(name, mount)` |
 | Synced storage | Async `storage.get(key)`, `set`, `remove`; use for plugin data |
 | Device storage | `localStorage.get(key)`, `set`; keep API keys and device preferences here |
-| UI | `ui.addHeaderItem(name, mount, { placement? })`, `ui.registerPlanningView(name, mount)`, `registerView(name, mount)`, `openView(name)`, `toast(message)` |
+| UI | `ui.registerPage(name, mount)`, `ui.setLauncherStatus(status)`, `ui.registerPlanningView(name, mount)`, `ui.toast(message)` |
 | Commands | `commands.register(id, name, run, shortcut?)`, `execute(id)` |
 | Events | `events.on(name, listener)`, `emit(name, payload?)`; `on(target,event,listener)` for DOM events |
 | Lifecycle | `register(dispose)`, `interval(callback, milliseconds)`; SDK registrations clean up on unload |
@@ -116,45 +107,33 @@ methods through CommonJS `module.exports` or ESM exports; optional `onLoad` and
 `onUnload` hooks run on startup and shutdown. The renderer dispatches only to
 that installed entry's methods. Do not treat trusted plugins as sandboxed code.
 
-### Header icon contract
+### Workspace page contract
 
-Header contributions appear in their declared host location. The available
-placements are `app-header`, `candidate-header`, and `planning-sidebar`. In
-1.6.4 Beta 2, the host places `planning-sidebar` contributions in the left
-panel's More menu. The legacy `ui.addHeaderItem(name, mount)` signature
-defaults to `app-header`.
-Use one icon-only button with the host-provided navopath-plugin-header-button
-class, a 20px outline icon with 1.8px strokes, a localized aria-label, and a
-concise title that can include current state. Let the host own button size,
-hover/focus treatment, theme colors, and reduced-motion behavior. Do not add a
-pill, text label, or second border around the icon. State-aware plugins can
-update the SVG or title as their state changes. The host emits timer:changed
-with mode, phase, running, and displaySeconds for timer-aware plugin status.
+The host accepts one workspace page registration per plugin. Use fluid widths
+inside the mount and return cleanup for listeners and network requests. Keep
+ordinary preferences with the tool when they are part of its workflow. Separate
+administrative options may use `settings.registerPage`.
+
+Starting in 1.7.0 Beta 13, migrate old toolbar DOM and view-opening calls to
+`ui.registerPage` and set `minAppVersion` to `1.7.0-beta.13` in the migrated
+package. Launcher status accepts plain data. The supported weather symbols are
+`sun`, `cloud`, `fog`, `rain`, `snow`, `storm` and `unknown`.
 
 ```js
 export default {
   onload(ctx) {
-    ctx.ui.addHeaderItem('Example', container => {
+    ctx.ui.registerPage('Example', container => {
       const button = document.createElement('button');
-      button.textContent = ctx.settings.get().label || 'Example';
+      button.textContent = 'Say hello';
       button.onclick = () => ctx.ui.toast('Ready');
       container.append(button);
       return () => button.remove();
-    });
-    ctx.settings.registerPage('Example', container => {
-      const input = document.createElement('input');
-      input.setAttribute('aria-label', 'Header label');
-      input.value = ctx.settings.get().label || '';
-      input.onchange = () => { void ctx.settings.save({ label: input.value }); };
-      container.append(input);
-      return () => input.remove();
     });
   }
 };
 ```
 
-`app.internal` is an advanced escape hatch for deliberate host integration. Its
-members are not stable public APIs. Prefer the documented collections and
+`app.internal` is reserved for host integration. Prefer the documented collections and
 registrations. If you patch an owning function, restore it, keep the change
 bounded to your plugin lifecycle, and declare the compatibility assumptions.
 
@@ -197,11 +176,10 @@ may expose `previewUrls: { "light": "https://...", "dark": "https://..." }`.
 The market shows the two real screenshots together and lets users inspect each
 mode separately. Built-in previews are available offline with the app.
 
-`ctx.timers.open(modeId)` opens the host focus panel with a registered mode.
-If no task is active, the user may start a standalone session that records no
-task work time. Reset that session before starting work linked to a task.
-Pomodoro provides a header button, command and settings page; Quick Capture and
-Daily Overview demonstrate public-API task creation and custom views.
+The bundled Pomodoro uses the host focus page. If no task is active, the user
+may start a standalone session. Reset that session before starting work linked
+to a task. Quick Capture and Daily Overview demonstrate workspace pages.
+
 
 ## Catalog and release workflow
 

@@ -3,37 +3,18 @@
 .df-extension-header-viewport::-webkit-scrollbar { display: none; }
 .df-extension-header-content { display: flex; align-items: center; gap: var(--space-2, 8px); width: max-content; min-width: 100%; white-space: nowrap; }
 .df-extension-header .ui-action-disclosure { flex: 0 0 auto; }
-.df-extension-header-item { display: flex; flex: 0 0 auto; align-items: center; min-width: 36px; border-radius: var(--radius-control, 8px); }
-.df-extension-header-item[data-dragging="true"] { opacity: .45; }
-.df-extension-header-item[data-drop-target="true"] { box-shadow: inset 2px 0 var(--accent-active); }
-.df-extension-header-item[data-dock-selected], .df-extension-header-launcher[aria-pressed="true"] { outline: 1px solid var(--accent-active); outline-offset: -1px; }
-:is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  position: relative;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-control, 8px);
-  background: transparent;
-  color: var(--text-main);
-  cursor: pointer;
-  transition: color var(--motion-base, 180ms) var(--motion-ease, ease), background-color var(--motion-base, 180ms) var(--motion-ease, ease);
-}
-.df-extension-header-item .navopath-plugin-header-button:hover { background: var(--paper-note); color: var(--text-main); }
-.df-extension-header-item .navopath-plugin-header-button:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
-:is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.df-extension-header-launcher[data-dragging="true"] { opacity: .45; }
+.df-extension-header-launcher[data-drop-target="true"] { box-shadow: inset 2px 0 var(--accent-active); }
+.df-extension-header-launcher[aria-pressed="true"] { outline: 1px solid var(--accent-active); outline-offset: -1px; }
 #root .df-app .df-extension-header-launcher { display: grid; flex: 0 0 auto; width: 36px; height: 36px; place-items: center; padding: 0; border: 0; border-radius: var(--radius-control, 8px); color: var(--text-main); background: transparent; font: 600 15px/1 var(--paper-sans); cursor: pointer; transition: color var(--motion-base, 180ms) var(--motion-ease, ease), background-color var(--motion-base, 180ms) var(--motion-ease, ease); }
 #root .df-app .df-extension-header-launcher:hover { background: var(--paper-note); }
 #root .df-app .df-extension-header-launcher:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
 #root .df-app .df-extension-header-launcher :is(img, svg) { width: 20px; height: 20px; object-fit: contain; stroke-width: 1.8; }
-.df-extension-header-action { flex: 0 0 auto; min-width: 0; max-width: 168px; min-height: 32px; height: 32px; overflow: hidden; padding: 0 8px; border: 0; border-radius: var(--radius-control, 8px); color: var(--text-muted); background: transparent; font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.df-extension-header-action:hover, .df-extension-header-action:focus-visible { border: 0; color: var(--text-main); background: var(--paper-note); }
 .df-extension-overflow-action { justify-content: flex-start; width: 100%; text-align: left; }
 #root .df-app .df-header-inner > .df-brand { min-width: 0; max-width: calc(100vw - 290px); }
 #root .df-app .df-brand > .df-brand-dock-control { flex: 0 0 auto; }
-:is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button[data-running="true"]::after {
+:is(.df-extension-header-launcher, .df-mobile-plugin-action)[data-running="true"] { position: relative; }
+:is(.df-extension-header-launcher, .df-mobile-plugin-action)[data-running="true"]::after {
   content: "";
   position: absolute;
   top: 5px;
@@ -44,24 +25,11 @@
   background: var(--accent-active);
   box-shadow: 0 0 0 2px var(--surface-main);
 }
-.df-compact-extension .navopath-plugin-header-button { width: 44px; height: 44px; }
-.df-compact-extension.df-mobile-plugin-action .navopath-plugin-header-button:focus-visible { outline: none; }
-.df-compact-extension.df-mobile-menu-item { position: relative; padding: 0; }
-.df-compact-extension.df-mobile-menu-item > div { width: 100%; }
-.df-compact-extension.df-mobile-menu-item .navopath-plugin-header-button {
-  width: 100%;
-  justify-items: start;
-  padding-inline: 10px;
-}
-.df-compact-extension.df-mobile-menu-item > span {
-  position: absolute;
-  inset-inline-start: 41px;
-  pointer-events: none;
-}
+.df-extension-page-content { contain: layout paint; min-width: 0; }
 .df-extension-view-error { color: var(--danger-ink, var(--text-main)); overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) {
-  :is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button, #root .df-app .df-extension-header-launcher { transition: none; }
+  #root .df-app .df-extension-header-launcher { transition: none; }
 }
 @media (pointer: coarse) {
-  :is(.df-extension-header-item, .df-compact-extension) .navopath-plugin-header-button, #root .df-app .df-extension-header-launcher { width: 44px; height: 44px; }
+  #root .df-app .df-extension-header-launcher { width: 44px; height: 44px; }
 }

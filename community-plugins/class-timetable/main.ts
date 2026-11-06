@@ -2,7 +2,7 @@ import {parseTimetableJson,mergeTimetable} from './parser';
 export default {onload(ctx:any){
  const zh=ctx.language==='zh',name=zh?'课表':'Class timetable';
  ctx.calendar.registerBackground((event:any)=>event.fixedCourse===true);
- ctx.settings.registerPage(name,(container:HTMLElement)=>{
+ ctx.ui.registerPage(name,(container:HTMLElement)=>{
   let mounted=true;const account=ctx.app.getAccountId();
   const description=document.createElement('p');description.textContent=zh?'导入 JSON 课表，课程与自习显示为背景。任务可覆盖课程。停用不删除课表。':'Import JSON classes and self-study as backgrounds. Tasks may overlap classes. Disabling retains data.';
   const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.setAttribute('aria-label',zh?'选择课表 JSON':'Select timetable JSON');

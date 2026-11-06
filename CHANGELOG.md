@@ -2,6 +2,13 @@
 
 ## 2026-11-06
 
+### 1.7.0 Beta 13
+
+#### 改进
+
+- 工作区插件统一使用一页内容。天气的预报、城市选择和刷新设置集中在同一页。
+- 底栏「更多」恢复为右下角小菜单，打开时保留当前页面。
+
 ### 1.7.0 Beta 12
 
 #### 改进
@@ -552,6 +559,13 @@
 # NavoPath Changelog
 
 ## 2026-11-06
+
+### 1.7.0 Beta 13
+
+#### Improvements
+
+- Workspace plugins use a single page. Weather shows the forecast, city selection, and refresh settings on that page.
+- More opens a small menu in the bottom-right corner and keeps the current page open.
 
 ### 1.7.0 Beta 12
 

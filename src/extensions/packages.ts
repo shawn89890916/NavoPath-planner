@@ -1,10 +1,11 @@
 import type { ExtensionManifest, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSource, InstalledExtension } from "./types";
 import type { Settings } from "../types";
-import { COMPACT_DOCK_LIMITS } from "./compactDock";
 
 import packageInfo from "../../package.json" with { type: "json" };
 
 export const APP_VERSION = packageInfo.version;
+export const COMPACT_DOCK_LIMITS = [4, 5, 6, 7];
+export const DEFAULT_COMPACT_DOCK_LIMIT = 5;
 export const OFFICIAL_SOURCE: ExtensionSource = { id: "official", name: "NavoPath Community", url: "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/catalog.json" };
 export const MAX_PACKAGE_BYTES = 20 * 1024 * 1024;
 export const MAX_EXPANDED_BYTES = 32 * 1024 * 1024;

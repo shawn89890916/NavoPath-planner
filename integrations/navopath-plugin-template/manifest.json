@@ -2,7 +2,7 @@
   "author": "Your name",
   "version": "1.0.0",
   "apiVersion": 1,
-  "minAppVersion": "1.5.0",
+  "minAppVersion": "1.7.0-beta.13",
   "platforms": [
     "desktop",
     "web",

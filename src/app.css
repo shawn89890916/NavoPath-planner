@@ -22992,8 +22992,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   .df-mobile-dock--viewport.theme-dark [data-compact-plugin] img { filter: invert(1); }
   .df-mobile-dock--viewport .df-mobile-more-wrap { position: relative; display: grid; grid-area: 1 / 3; place-items: center; z-index: 2; }
   .df-mobile-dock--viewport .df-mobile-more-button { position: relative; z-index: 3; }
-  .df-mobile-dock--viewport .df-mobile-menu-scrim { position: fixed; inset: 0; border: 0; }
-  .df-mobile-dock--viewport .df-mobile-more-menu { display: flex; flex-direction: column; overflow-y: auto; padding: 6px; border: 1px solid var(--border-soft); background: var(--bg-surface); color: var(--text-main); box-shadow: var(--paper-float-shadow); }
+  .df-mobile-dock--viewport .df-mobile-menu-scrim { position: fixed; inset: 0 0 var(--workspace-dock-height); z-index: 1; border: 0; background: transparent; }
+  .df-mobile-dock--viewport .df-mobile-more-menu { position: absolute; right: -2px; bottom: calc(100% + 10px); z-index: 2; display: flex; width: min(280px, calc(100vw - 24px)); max-height: min(65dvh, 480px); flex-direction: column; overflow-y: auto; padding: 6px; border: 1px solid var(--border-soft); background: var(--bg-surface); color: var(--text-main); box-shadow: var(--paper-float-shadow); }
   .df-mobile-dock--viewport .df-mobile-menu-item { display: flex; min-height: 42px; align-items: center; gap: 11px; padding: 7px 10px; border: 0; border-radius: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
   .df-mobile-dock--viewport .df-mobile-menu-item:hover,
   .df-mobile-dock--viewport .df-mobile-menu-item:focus-visible { background: color-mix(in srgb, var(--text-main) 7%, transparent); }
@@ -23028,7 +23028,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   .df-mobile-dock--viewport .df-mobile-dock-action:hover {
     background: color-mix(in srgb, var(--text-main) 8%, transparent);
   }
-  .df-mobile-dock--viewport .df-mobile-dock-action:is([aria-pressed="true"], [data-dock-selected], :focus-visible, :has(.navopath-plugin-header-button:focus-visible)) {
+  .df-mobile-dock--viewport .df-mobile-dock-action:is([aria-pressed="true"], [data-dock-selected], :focus-visible) {
     outline: 1px solid var(--accent-active);
     outline-offset: -1px;
     box-shadow: none;
@@ -24185,8 +24185,7 @@ body[data-navopath-base-theme="light"],
     --workspace-panel-width: 100%;
   }
 }
-#root .df-app :is(.df-utility-panel, .df-ai-panel-reference, .df-command-palette, .df-proactive-center)[data-workspace-panel],
-.df-mobile-dock--viewport [data-workspace-panel] {
+#root .df-app :is(.df-utility-panel, .df-ai-panel-reference, .df-command-palette, .df-proactive-center)[data-workspace-panel] {
   position: fixed;
   inset: var(--workspace-panel-top) var(--workspace-panel-gap) var(--workspace-panel-bottom) auto;
   z-index: 80;
@@ -24198,12 +24197,10 @@ body[data-navopath-base-theme="light"],
   border-radius: var(--workspace-panel-radius);
   transform: translateY(var(--mobile-sheet-drag-y, 0px));
 }
-#root .df-app [data-workspace-panel]:not(.is-closing, [data-motion-closing]),
-.df-mobile-dock--viewport [data-workspace-panel]:not(.is-closing, [data-motion-closing]) {
+#root .df-app [data-workspace-panel]:not(.is-closing, [data-motion-closing]) {
   animation: ui-fade-in var(--motion-fade) var(--motion-ease) backwards;
 }
-#root .df-app [data-workspace-backdrop],
-.df-mobile-dock--viewport [data-workspace-backdrop] {
+#root .df-app [data-workspace-backdrop] {
   inset: var(--workspace-panel-toolbar) 0 var(--workspace-panel-bottom);
   z-index: 70;
   background: rgba(22, 19, 15, .48);

@@ -5,8 +5,8 @@
   "name": "Class Timetable",
   "description": "Import weekly classes and self-study as timeline backgrounds; schedule tasks over classes.",
   "author": "Community",
-  "version": "1.0.0",
-  "minAppVersion": "1.6.2-beta.1",
+  "version": "1.0.1",
+  "minAppVersion": "1.7.0-beta.13",
   "platforms": [
     "desktop",
     "web",

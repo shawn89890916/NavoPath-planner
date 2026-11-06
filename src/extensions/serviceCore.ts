@@ -1,4 +1,4 @@
-import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativePlanningViewMode, PluginUiPlacement } from "./types";
+import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativePlanningViewMode, PluginLauncherStatus } from "./types";
 import { compatibility, compareVersions, defaultExtensionPreferences, isRecord, MAX_PACKAGE_BYTES, normalizeExtensionPreferences, readPackage, publicHttps, sha256 } from "./packages";
 import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
 import { emitPluginEvent, loadPlugin, type LoadedPlugin } from "./runtime";
@@ -8,6 +8,7 @@ import { getAppHeaderPlugins, moveCompactPlugin } from "./compactDock";
 import type { CompactPluginPlacement } from "./model";
 
 type PendingValue = { owner: string; key: string; value: unknown; remove: boolean; id: string };
+const toolPageMigrations = new Set(["weather", "pomodoro", "schedule-templates", "daily-overview", "quick-capture", "class-timetable"]);
 const errorText = (error: unknown) => error instanceof Error ? error.message : String(error);
 const platform = (): ExtensionPlatform => window.desktopApi?.isDesktop?.() ? "desktop" : /^(capacitor|ionic):/.test(location.protocol) || !!(window as any).Capacitor?.isNativePlatform?.() ? "mobile" : "web";
 export class ExtensionService {
@@ -27,7 +28,7 @@ export class ExtensionService {
   private lastCheck = 0;
   private catalogRequest?: { signature: string; promise: Promise<void> };
   private updateRequest?: Promise<void>;
-  private snapshot: ExtensionSnapshot = { preferences: defaultExtensionPreferences(), catalog: [], updates: {}, status: {}, busy: false, error: "", safeMode: false, settingsPages: [], headerItems: [], views: [] };
+  private snapshot: ExtensionSnapshot = { preferences: defaultExtensionPreferences(), catalog: [], updates: {}, status: {}, busy: false, error: "", safeMode: false, settingsPages: [], views: [], launcherStatus: {} };
   constructor() {
     if (typeof window !== "undefined") {
       window.addEventListener("online", () => { void this.flushQueue(); void this.restorePackages(); });
@@ -65,7 +66,7 @@ export class ExtensionService {
       this.host = host;
       let safeMode = false;
       try { safeMode = new URLSearchParams(location.search).has("safe-mode") || localStorage.getItem(this.scope() + "safe-mode") === "true" || localStorage.getItem(this.scope() + "booting") === "true"; } catch { /* ephemeral sessions */ }
-      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], headerItems: [], views: [], catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, error: "" });
+      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, error: "" });
       if (generation !== this.generation) return;
       if (account && account !== "preview") this.unbindStorage = subscribeExtensionValues((owner, key, value) => {
         const pendingKey = this.scope() + `pending:${owner}:${key}`;
@@ -152,13 +153,24 @@ export class ExtensionService {
     catch (error) { if (sourceId !== "official") throw error; raw = (await import("./officialPackages")).officialCatalog; }
     if (!isRecord(raw) || raw.version !== 1 || !Array.isArray(raw.packages) || raw.packages.length > 1000) throw new Error("Invalid extension catalog");
     const { validateManifest } = await import("./packages");
-    return raw.packages.map((entry: any) => {
+    const entries: CatalogEntry[] = raw.packages.map((entry: any) => {
       if (!isRecord(entry) || !/^[a-f0-9]{64}$/.test(entry.sha256)) throw new Error("Catalog requires SHA-256 hashes");
       const previewUrls = entry.previewUrls === undefined ? undefined : { light: publicHttps(entry.previewUrls.light), dark: publicHttps(entry.previewUrls.dark) };
       if (entry.downloads !== undefined && (!Number.isSafeInteger(entry.downloads) || entry.downloads < 0)) throw new Error("Catalog download count must be a non-negative integer");
       if (entry.publishedAt !== undefined && (typeof entry.publishedAt !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(entry.publishedAt) || !Number.isFinite(Date.parse(entry.publishedAt)))) throw new Error("Catalog publish date must be an ISO timestamp");
       return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId, ...(entry.previewUrl ? { previewUrl: publicHttps(entry.previewUrl) } : {}), ...(previewUrls ? { previewUrls } : {}), ...(entry.iconUrl ? { iconUrl: publicHttps(entry.iconUrl) } : {}), ...(entry.downloads !== undefined ? { downloads: entry.downloads } : {}), ...(entry.publishedAt ? { publishedAt: entry.publishedAt } : {}) };
     });
+    if (sourceId === "official") {
+      const { officialCatalog } = await import("./officialPackages");
+      for (const bundled of officialCatalog.packages as Omit<CatalogEntry, "sourceId">[]) {
+        if (!toolPageMigrations.has(bundled.manifest.id)) continue;
+        const index = entries.findIndex((entry) => entry.manifest.id === bundled.manifest.id);
+        const current = entries[index];
+        if (!current) entries.push({ ...bundled, sourceId });
+        else if (compareVersions(bundled.manifest.version, current.manifest.version) > 0) entries[index] = { ...bundled, sourceId };
+      }
+    }
+    return entries;
   }
   private refreshCatalogImpl(): Promise<void> {
     const generation = this.generation, sources = this.snapshot.preferences.sources;
@@ -179,11 +191,11 @@ export class ExtensionService {
   private async packageBytes(item: Pick<InstalledExtension, "sha256" | "sourceId" | "manifest" | "downloadUrl">): Promise<Uint8Array> {
     const cacheKey = this.scope() + "package:" + item.sha256;
     let bytes = await cacheGet<Uint8Array>(cacheKey);
-    if (!bytes && this.account !== "preview" && navigator.onLine) { try { bytes = await getPrivatePackage(item.sha256, this.account); } catch { /* Public sources remain available offline after caching. */ } }
-    if (!bytes && item.sourceId === "official") {
+    if (!bytes && (item.sourceId === "official" || (item.sourceId === "imported" && toolPageMigrations.has(item.manifest.id)))) {
       const official = (await import("./officialPackages")).officialPackageTexts[item.manifest.id];
       if (official) { const candidate = new TextEncoder().encode(official); if (await sha256(candidate) === item.sha256) bytes = candidate; }
     }
+    if (!bytes && this.account !== "preview" && navigator.onLine) { try { bytes = await getPrivatePackage(item.sha256, this.account); } catch { /* Public sources remain available offline after caching. */ } }
     if (!bytes && item.downloadUrl) bytes = await this.download(item.downloadUrl);
     if (!bytes) throw new Error("Package unavailable; connect the device to restore it / 联网后重试恢复插件包");
     if (await sha256(bytes) !== item.sha256) throw new Error("Package integrity check failed / 插件包完整性校验失败");
@@ -301,10 +313,19 @@ export class ExtensionService {
       getValue: async <T>(name: string): Promise<T | null> => { guard(); return this.getValue(key, name) as Promise<T | null>; },
       setValue: async (name: string, value: unknown) => { guard(); await this.writeValue(key, name, value, false); },
       removeValue: async (name: string) => { guard(); await this.writeValue(key, name, null, true); },
-      contribute: (kind: "settingsPages" | "headerItems" | "views", name: string, mount: Mount, options?: { placement?: PluginUiPlacement; iconUrl?: string; planningView?: boolean; nativeMode?: NativePlanningViewMode }): Dispose => {
+      contribute: (kind: "settingsPages" | "views", name: string, mount: Mount, options?: Pick<ExtensionContribution, "iconUrl" | "planningView" | "nativeMode" | "nativeTool">): Dispose => {
         guard(); const contribution: ExtensionContribution = { id: crypto.randomUUID(), owner: key, name, mount, ...options };
         this.setSnapshot({ [kind]: [...this.snapshot[kind], contribution] }); return () => { this.setSnapshot({ [kind]: this.snapshot[kind].filter(item => item.id !== contribution.id) }); };
       }, executeCommand: this.executeCommand,
+      setLauncherStatus: (status?: PluginLauncherStatus) => {
+        if (generation !== this.generation) return;
+        const previous = this.snapshot.launcherStatus[key];
+        if (previous?.label === status?.label && previous?.weather === status?.weather && previous?.active === status?.active) return;
+        const launcherStatus = { ...this.snapshot.launcherStatus };
+        if (status) launcherStatus[key] = status;
+        else delete launcherStatus[key];
+        this.setSnapshot({ launcherStatus });
+      },
       registerNativePlanningView: (mode: NativePlanningViewMode, name: string, iconUrl?: string): Dispose => {
         guard();
         const nativeModes: Record<string, NativePlanningViewMode> = { tree: "tree", kanban: "kanban", matrix: "eisenhower", list: "list", metrics: "metrics" };
@@ -315,7 +336,6 @@ export class ExtensionService {
     };
   }
   executeCommand = async (id: string) => { const command = this.commands.get(id); if (!command) throw new Error("Unknown plugin command"); await command.run(); };
-  listCommands = () => Array.from(this.commands, ([id, command]) => ({ id, name: command.name }));
   getActiveThemeDescriptor = () => {
     const key = this.snapshot.preferences.activeTheme;
     const item = key && this.snapshot.preferences.installed[key];
@@ -362,6 +382,7 @@ export class ExtensionService {
   private async restorePackages() { if (this.host) { this.failed.clear(); await this.reconcile(this.generation); } }
   private async migrateLegacy() {
     const host = this.ensureHost(), preferences = this.snapshot.preferences, settings = host.getSettings();
+    const generation = this.generation;
     const next = { ...preferences, migratedLegacy: true, installed: { ...preferences.installed } };
     let changed = !preferences.migratedLegacy;
     if (!preferences.migratedLegacy) {
@@ -404,6 +425,23 @@ export class ExtensionService {
       next.installed["official:schedule-templates"] = { key: "official:schedule-templates", sourceId: "official", manifest: pkg.manifest, sha256: hash, enabled: true, installedAt: now, updatedAt: now };
       changed = true;
     }
+    const legacyTools = Object.values(next.installed).filter((item) =>
+      toolPageMigrations.has(item.manifest.id) && (item.sourceId === "official" ||
+        (item.sourceId === "imported" && item.manifest.author === "NavoPath" && item.manifest.repository === "https://github.com/shawn89890916/NavoPath-planner")));
+    if (legacyTools.length) {
+      const { officialCatalog, officialPackageTexts } = await import("./officialPackages");
+      for (const item of legacyTools) {
+        const entry = officialCatalog.packages.find((entry) => entry.manifest.id === item.manifest.id);
+        if (!entry || compareVersions(entry.manifest.version, item.manifest.version) <= 0) continue;
+        if (generation !== this.generation) return;
+        await this.publishPackage(entry.sha256, new TextEncoder().encode(officialPackageTexts[item.manifest.id]));
+        if (generation !== this.generation) return;
+        next.installed[item.key] = { ...item, manifest: entry.manifest as InstalledExtension["manifest"], sha256: entry.sha256, downloadUrl: entry.downloadUrl, updatedAt: new Date().toISOString(), previous: undefined };
+        this.failed.delete(item.key);
+        changed = true;
+      }
+    }
+    if (generation !== this.generation) return;
     if (!changed) return;
     next.updatedAt = new Date().toISOString(); this.setSnapshot({ preferences: next }); await host.saveSettings({ extensions: next });
   }

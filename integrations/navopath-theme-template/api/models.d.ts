@@ -168,6 +168,8 @@ export interface TaskRecurrence {
 
 export interface Task {
   fixedCourse?: boolean;
+  /** Backing resource for tasks synchronized through CalDAV. */
+  caldav?: { file: string; uid: string; ics: string; projection: string; endDate?: string; endTime?: string };
   /** Engagement for tasks without execution records. */
   engagement?: number;
   id: string;
@@ -221,6 +223,9 @@ export interface LongTermTask {
 }
 
 export interface CalendarEvent {
+  calendarKind?: "appointment";
+  caldav?: { file: string; uid: string; ics: string; projection: string; endDate?: string; endTime?: string };
+  updatedAt?: string;
   fixedCourse?: boolean;
   id: string;
   title: string;
@@ -714,6 +719,9 @@ export interface PlannerApi {
   createMcpToken?: (name: string) => Promise<{ token: string; metadata: McpTokenMetadata }>;
   revokeMcpToken?: (id: string) => Promise<void>;
   listSyncBridgeStatuses?: () => Promise<SyncBridgeStatus[]>;
+  getCalDavCredential?: () => Promise<{ username: string; timezone: string } | null>;
+  createCalDavCredential?: () => Promise<{ username: string; password: string; timezone: string }>;
+  revokeCalDavCredential?: () => Promise<void>;
   listCalendarFeedTokens?: () => Promise<CalendarFeedTokenMetadata[]>;
   createCalendarFeedToken?: () => Promise<{ token: string; metadata: CalendarFeedTokenMetadata }>;
   revokeCalendarFeedToken?: (id: string) => Promise<void>;

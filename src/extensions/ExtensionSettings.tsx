@@ -5,7 +5,8 @@ import { ActionDisclosure, Button, CloseButton, Modal } from "../components/UiPr
 import { UiSearchIcon } from "../components/UiIcons";
 import { extensionService } from "./service";
 import type { CatalogEntry, CompactPluginPlacement, ExtensionKind, ThemeOption } from "./types";
-import { COMPACT_DOCK_LIMITS, DEFAULT_COMPACT_DOCK_LIMIT, getAppHeaderPlugins } from "./compactDock";
+import { getAppHeaderPlugins } from "./compactDock";
+import { COMPACT_DOCK_LIMITS, DEFAULT_COMPACT_DOCK_LIMIT } from "./packages";
 import { ExtensionMount } from "./ExtensionMount";
 import "./ExtensionSettings.css";
 
