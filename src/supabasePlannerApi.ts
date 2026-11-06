@@ -693,6 +693,31 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       if (error) throw new Error(error.message);
     },
     listSyncBridgeStatuses: async () => (await import("./syncBridgeStatusApi")).listSyncBridgeStatuses(supabase, await requireUser()),
+    getCalDavCredential: async () => {
+      await requireUser();
+      const { data, error } = await retryTransientRequest(() => supabase.rpc("get_caldav_credential"));
+      if (error) throw new Error(error.message);
+      return data?.[0] || null;
+    },
+    createCalDavCredential: async () => {
+      await requireUser();
+      const bytes = crypto.getRandomValues(new Uint8Array(32));
+      const password = "nvd_" + Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+      const digest = await sha256(password);
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      const { data, error } = await retryTransientRequest(() => supabase.rpc("create_caldav_credential", {
+        password_digest: digest,
+        connection_timezone: timezone,
+      }));
+      if (error) throw new Error(error.message);
+      if (!data?.[0]?.username) throw new Error("The server did not confirm the calendar password.");
+      return { ...data[0], password };
+    },
+    revokeCalDavCredential: async () => {
+      await requireUser();
+      const { error } = await retryTransientRequest(() => supabase.rpc("revoke_caldav_credential"));
+      if (error) throw new Error(error.message);
+    },
     listCalendarFeedTokens: async () => {
       await requireUser();
       const { data, error } = await retryTransientRequest(() => supabase.rpc("list_calendar_feed_tokens"));

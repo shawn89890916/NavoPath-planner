@@ -20,3 +20,15 @@ The raw subscription token is generated in the browser. Supabase stores only its
 New NavoPath links use `https://navopath.com/calendar/…`. To switch an existing link from the default Worker hostname, change only the hostname to `navopath.com` and keep the complete `/calendar/` path, including the token and `.ics` suffix.
 
 Calendar subscriptions are read-only. Changes made in Apple Calendar or Notion Calendar do not update NavoPath, and calendar clients decide when to refresh remote feeds.
+
+
+## Apple Calendar two-way sync
+
+1. Sign in to NavoPath on the web. Go to **Settings → Calendar & Integrations → Calendar** and generate a CalDAV password.
+2. On iPhone, open **Settings → Apps → Calendar → Calendar Accounts → Add Account → Add Other Account → CalDAV Account**.
+3. Enter the server **navopath.com**, the generated username and password, and a description such as **NavoPath**.
+4. When creating or editing an event in Apple Calendar, select the **NavoPath** calendar. NavoPath uses the time zone shown when the account password is generated.
+
+CalDAV syncs appointments created in the NavoPath calendar or as calendar events in NavoPath. Task deadlines, scheduled task blocks and legacy course blocks remain available through the separate read-only subscription. The writable calendar supports timed and all-day appointments and the recurring patterns represented in NavoPath. Invitations and edits to individual occurrences of a recurring series are outside this sync.
+
+The CalDAV password is dedicated to calendar access and shown only when generated. Revoke it in NavoPath to disconnect all devices that use it.

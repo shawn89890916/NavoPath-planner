@@ -2,6 +2,9 @@
 
 ## 2026-11-06
 
+### 新增
+- 支持通过 CalDAV 账户在苹果日历与 NavoPath 双向同步日程。
+
 ### 修复
 - 修复日历应用无法验证有效订阅链接的问题，订阅地址使用 NavoPath 主站的 HTTPS 域名。
 
@@ -480,6 +483,9 @@
 # NavoPath Changelog
 
 ## 2026-11-06
+
+### Added
+- Sync events both ways between Apple Calendar and NavoPath with a CalDAV account.
 
 ### Fixed
 - Fixed calendar apps rejecting valid subscription links. Subscription links use the main NavoPath HTTPS domain.

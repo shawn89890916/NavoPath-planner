@@ -5,6 +5,7 @@ import { fromSupabaseUrl, withOAuthProtectedResource, withSupabase } from "@supa
 import { z } from "zod";
 import { combineSyncSnapshot } from "./syncSnapshot";
 import { buildCalendarFeed } from "./calendarFeed";
+import { handleCalDav } from "./caldav";
 import { listEngagement } from "./engagement";
 import { validatePluginPreferences } from "./extensions";
 import {
@@ -96,12 +97,15 @@ async function getProfile(env: Env, userId: string): Promise<Profile> {
   return rows[0];
 }
 
+class ProfileConflictError extends Error {}
+
 async function saveProfile(env: Env, userId: string, profile: Profile, patch: Partial<Profile>) {
   const response = await db(env, "rpc/save_dayflow_profile_as_service", {
     method: "POST",
     body: JSON.stringify({ target_user_id: userId, expected_revision: profile.revision, next_data: patch.data || profile.data, next_settings: patch.settings || profile.settings }),
   });
   const rows = await response.json() as Profile[] | { message?: string };
+  if (response.status === 409 && !Array.isArray(rows) && rows.message === "PROFILE_REVISION_CONFLICT") throw new ProfileConflictError(rows.message);
   if (!response.ok || !Array.isArray(rows) || !rows[0]) throw new Error(!Array.isArray(rows) && rows.message ? rows.message : "Workspace changed concurrently; retry");
   return rows[0];
 }
@@ -419,6 +423,28 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === "/") return new Response(JSON.stringify({ name: env.MCP_SERVER_NAME, endpoint: "/mcp", transport: "streamable-http", version: "2.0.0" }), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
     if (url.pathname === oauthProtectedResourcePath) return protectedResourceMetadata(request, env);
+    if (url.pathname === "/caldav" || url.pathname.startsWith("/caldav/")) {
+      if (url.protocol !== "https:") return Response.redirect("https://navopath.com" + url.pathname, 308);
+      return handleCalDav(request, {
+        async authenticate(username, password) {
+          const digest = await sha256(password);
+          const lookup = await db(env, "navopath_caldav_credentials?select=user_id,timezone&user_id=eq." + username + "&password_hash=eq." + digest);
+          if (!lookup.ok) throw new Error("Calendar authentication unavailable");
+          const [row] = await lookup.json() as { user_id: string; timezone: string }[];
+          return row ? { userId: row.user_id, timezone: row.timezone } : null;
+        },
+        load: (userId) => getProfile(env, userId),
+        async save(userId, profile, data) {
+          try {
+            await saveProfile(env, userId, profile, { data });
+            return true;
+          } catch (error) {
+            if (error instanceof ProfileConflictError) return false;
+            throw error;
+          }
+        },
+      });
+    }
     const calendarMatch = url.pathname.match(/^\/calendar\/(nvc_[a-f0-9]{64})\.ics$/);
     if (calendarMatch) {
       if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });

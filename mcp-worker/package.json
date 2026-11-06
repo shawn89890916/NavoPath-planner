@@ -12,8 +12,10 @@
     "@babel/runtime-corejs3": "^8.0.0",
     "@modelcontextprotocol/sdk": "1.29.0",
     "@supabase/server": "1.8.1",
+    "@xmldom/xmldom": "0.9.12",
     "agents": "0.16.2",
     "cron-schedule": "^6.0.0",
+    "ical.js": "2.2.1",
     "zod": "4.4.3"
   },
   "devDependencies": {
