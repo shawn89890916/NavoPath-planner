@@ -125,7 +125,7 @@ const entry = (
 ): SettingsSearchEntry => ({ id, target: { ...target, anchor: target.anchor ?? id }, labelZh, labelEn, keywords, descriptionZh, descriptionEn });
 
 export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
-  entry("calendar-feed", { category: "integrations" }, "日历订阅", "Calendar subscription", "webcal ics iPhone Notion Calendar 日历 同步 订阅"),
+  entry("calendar-feed", { category: "integrations" }, "日历订阅", "Calendar subscription", "webcal ics CalDAV iPhone Notion Calendar 日历 同步 订阅 双向 苹果"),
   entry("external-calendar", { category: "integrations" }, "外部日历", "External calendars", "read only ICS busy time 只读 忙碌 冲突"),
   entry("language", { category: "general" }, "语言", "Language", "中文 English locale"),
   entry("notification-badge", { category: "general" }, "应用内通知角标", "In-app notification badge", "unread count notifications badge 通知 未读 提醒 角标"),

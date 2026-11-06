@@ -35,6 +35,8 @@ const AiProviderSettings = lazy(() => import("./components/AiProviderSettings"))
 
 const ProactiveAssistantSettings = lazy(() => import("./components/ProactiveAssistantSettings").then((module) => ({ default: module.ProactiveAssistantSettings })));
 
+const CalDavManager = lazy(() => import("./components/CalDavManager"));
+
 const McpTokenManager = lazy(() => import("./components/McpTokenManager"));
 
 const SyncBridgeManager = lazy(() => import("./components/SyncBridgeManager"));
@@ -1248,7 +1250,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={`ui-choice-item${integrationTab === "mcp" ? " active" : ""}`} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "integrations", anchor: "mcp" }); }}>MCP</button>
               <button type="button" role="tab" aria-selected={integrationTab === "sync"} className={`ui-choice-item${integrationTab === "sync" ? " active" : ""}`} onClick={() => { setIntegrationTab("sync"); setSettingsTarget({ category: "integrations", anchor: "sync-bridge" }); }}>{lang === "zh" ? "同步" : "Sync"}</button>
             </div>}
-            {settingsTarget.category === "integrations" && integrationTab === "calendar" && <section className="df-settings-group" data-settings-anchor="calendar-feed" tabIndex={-1}><h3>{lang === "zh" ? "日历订阅" : "Calendar Subscription"}</h3><CalendarFeedManager lang={lang} /></section>}
+            {settingsTarget.category === "integrations" && integrationTab === "calendar" && <section className="df-settings-group" data-settings-anchor="calendar-feed" tabIndex={-1}><h3>{lang === "zh" ? "日历订阅" : "Calendar Subscription"}</h3><CalendarFeedManager lang={lang} /><Suspense fallback={null}><CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} /></Suspense></section>}
             {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <section className="df-settings-group" data-settings-anchor="external-calendar" tabIndex={-1}><h3>{lang === "zh" ? "外部日历" : "External Calendars"}</h3><ExternalCalendarManager lang={lang} /></section>}
             {settingsTarget.category === "integrations" && integrationTab === "mcp" && <section className="df-settings-group" data-settings-anchor="mcp" tabIndex={-1}><h3>MCP</h3><Suspense fallback={<p className="df-mcp-status">{lang === "zh" ? "正在打开 MCP…" : "Opening MCP…"}</p>}><McpTokenManager lang={lang} /></Suspense></section>}
             {settingsTarget.category === "integrations" && integrationTab === "sync" && <section className="df-settings-group" data-settings-anchor="sync-bridge" tabIndex={-1}><h3>{lang === "zh" ? "同步" : "Sync"}</h3><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></section>}

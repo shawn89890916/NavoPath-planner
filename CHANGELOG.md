@@ -2,6 +2,12 @@
 
 ## 2026-11-06
 
+### 1.7.0 Beta 4
+
+#### 新增
+
+- 支持通过 CalDAV 账户在苹果日历与 NavoPath 双向同步日程。
+
 ### 1.7.0 Beta 3
 
 #### 修复
@@ -496,6 +502,12 @@
 # NavoPath Changelog
 
 ## 2026-11-06
+
+### 1.7.0 Beta 4
+
+#### Added
+
+- Sync events both ways between Apple Calendar and NavoPath with a CalDAV account.
 
 ### 1.7.0 Beta 3
 

@@ -697,6 +697,9 @@ function makeProject(form: FormState): Project {
 
 function makeEvent(form: FormState): CalendarEvent {
   return {
+    // The legacy marker keeps older NavoPath builds from migrating this event into a task.
+    fixedCourse: true,
+    calendarKind: "appointment",
     id: uid("event"),
     title: form.title.trim(),
     date: form.dueDate || todayIso(),
@@ -756,6 +759,9 @@ function buildEventFromTask(task: Task, activeRecord?: TimelineRecord): Calendar
   const scheduledEnd = activeSchedule?.scheduledEnd || task.scheduledEnd || fallbackEnd?.scheduledEnd || "";
   const scheduledEndDate = activeSchedule?.scheduledEndDate || fallbackEnd?.scheduledEndDate || scheduledDate;
   return {
+    // The legacy marker keeps older NavoPath builds from migrating this event into a task.
+    fixedCourse: true,
+    calendarKind: "appointment",
     id: uid("event"),
     title: task.title,
     date: scheduledDate,
@@ -3114,7 +3120,12 @@ if (cached?.data && cached?.settings) {
   }
   async function persistData(next: PlannerData) {
     const savedAt = workspaceNow().toISOString();
-    const tracked = withDeletionTombstones(dataRef.current, next, savedAt);
+    const previous = dataRef.current;
+    const previousEvents = new Map(previous?.events.map(event => [event.id, event]));
+    const events = next.events.map(event => event.calendarKind === "appointment" && previousEvents.get(event.id) !== event
+      ? { ...event, updatedAt: savedAt }
+      : event);
+    const tracked = withDeletionTombstones(previous, { ...next, events }, savedAt);
     const optimistic = { ...tracked, aiProfile: buildAiProfile(tracked), savedAt };
     const version = dataSaveVersionRef.current + 1;
     dataSaveVersionRef.current = version;
@@ -3698,7 +3709,7 @@ if (cached?.data && cached?.settings) {
         for (const slice of expandTimedCalendarEvent(event, [...dates])) {
           expanded.push({
             id: slice.id,
-            fixedCourse: event.fixedCourse,
+            fixedCourse: event.fixedCourse && event.calendarKind !== "appointment",
             title: event.title,
             dueDate: slice.date,
             category: event.category,
@@ -3728,7 +3739,7 @@ if (cached?.data && cached?.settings) {
       for (const date of occurrenceDates) {
         const id = `event_occ_${event.id}_${date}_all`;
         expanded.push({
-          id, fixedCourse: event.fixedCourse, title: event.title, dueDate: date, category: event.category, priority: "medium",
+          id, fixedCourse: event.fixedCourse && event.calendarKind !== "appointment", title: event.title, dueDate: date, category: event.category, priority: "medium",
           notes: event.details, goalId: "", completed: false, estimatedHours: 0.5,
           scheduledDate: date,
           recurrence: event.recurrence, createdAt: event.createdAt, updatedAt: event.createdAt,
@@ -8431,6 +8442,8 @@ if (cached?.data && cached?.settings) {
       const now = workspaceNow().toISOString();
       if (a.kind === "event") {
         const event: CalendarEvent = {
+          fixedCourse: true,
+          calendarKind: "appointment",
           id: uid("event"),
           title: action.title,
           date: a.date,
