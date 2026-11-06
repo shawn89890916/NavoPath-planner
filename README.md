@@ -1,170 +1,20 @@
-[README.md](https://github.com/user-attachments/files/28858357/README.md)
 # NavoPath
 
-NavoPath is a planning tool for turning long-term goals into concrete daily action.
+NavoPath is a personal project and calendar planner for students and anyone who wants to turn long-term goals into a daily schedule.
 
-It combines tree-based project planning with timeline-based execution, so you can break large projects into smaller tasks, decide what matters today, and place that work onto a realistic schedule.
+## What you can do
 
-## Core Workflow
+- Break projects into tasks and subtasks in a project tree.
+- Pick what to work on today and drag tasks into open slots on your timeline.
+- Review your schedule by day, week, or month and reschedule unfinished work.
+- Ask the AI assistant to break down a task or suggest a schedule.
+- Sign in to sync your projects and schedule across devices.
 
-### 1. Plan in trees
+## Installation and requirements
 
-Use the `Planning` workspace to organize projects, break goals into tasks, and build a clear structure before you start scheduling.
-
-### 2. Choose what moves today forward
-
-Pick the tasks worth advancing now instead of carrying your entire backlog into the day.
-
-### 3. Execute on a timeline
-
-Use the `Execute` workspace to place work on a daily timeline, adjust timing visually, and keep the day grounded in actual time.
-
-### 4. Get AI help when needed
-
-NavoPath includes AI-assisted daily planning to help suggest schedules based on the tasks you already selected and organized.
-
-## Key Features
-
-- Tree-based planning for long-term projects and multi-step goals
-- Timeline-based execution for scheduling a realistic day
-- AI-assisted daily planning
-- Always-online cloud scheduling at 08:30 and 20:30 Asia/Shanghai, plus signed incremental workspace events
-- Optional cloud sync with Supabase for the public web app
-- Local preview mode for offline or single-browser use
-- Desktop packaging with Electron
-
-## Runtime Modes
-
-NavoPath currently supports two main runtime modes:
-
-### Local preview mode
-
-- No cloud environment variables required
-- Data stays in browser storage for local use
-- Best for development, quick demos, or private single-device usage
-
-### Public web mode
-
-- Requires Supabase environment variables
-- Users can sign up and sign in
-- Planner data is stored in Supabase and available across sessions/devices
-
-## Tech Stack
-
-- React 19
-- TypeScript
-- Vite
-- Electron
-- Supabase
-- Cloudflare Pages
-
-## Local Development
-
-Install dependencies:
-
-```powershell
-npm install
-```
-
-Start the development app:
-
-```powershell
-npm run dev
-```
-
-This starts the Vite dev server and launches the Electron app against it.
-
-## Web Build
-
-Create a production web build:
-
-```powershell
-npm run build
-```
-
-The build output is written to:
-
-```text
-dist
-```
-
-Check the production asset size budget:
-
-```powershell
-npm run size
-```
-
-To check the existing `dist` output without rebuilding:
-
-```powershell
-npm run size:check
-```
-
-## Desktop Packaging
-
-Build the desktop app and package the Windows portable executable:
-
-```powershell
-npm run dist
-```
-
-The packaged output is written to:
-
-```text
-release
-```
-
-## Environment Variables
-
-Set these variables only when you want the public web app with Supabase-backed accounts and sync:
-
-```text
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_public_key
-```
-
-Without these variables, NavoPath runs in local preview mode.
-
-Fast task-duration and project prediction can optionally use Jev through Vercel AI Gateway. Store the key only as a Supabase Edge Function secret; never expose it through a `VITE_` variable:
-
-```text
-supabase secrets set AI_GATEWAY_API_KEY=your_vercel_ai_gateway_key
-```
-
-When this secret is absent or the gateway is unavailable, task creation and scheduling continue to use NavoPath's local prediction, with the existing generative provider as a server-side fallback when configured.
-Teams whose Vercel plan supports per-request Zero Data Retention can additionally set `AI_GATEWAY_ZERO_DATA_RETENTION=true` as a Supabase secret.
-
-## Web Deployment
-
-NavoPath can be deployed as a Cloudflare Pages project.
-
-Cloudflare Pages build settings:
-
-- Build command: `npm run build`
-- Build output directory: `dist`
-- Node version: `20` or newer
-
-Supabase setup:
-
-1. Create a Supabase project.
-2. Open the SQL Editor and run `supabase/schema.sql`.
-3. Enable email signups in Supabase Authentication.
-4. Copy the project URL and anon public key into the environment variables above.
-
-For more deployment detail, see [`docs/dayflow-web-deploy.md`](./docs/dayflow-web-deploy.md).
-
-The cloud worker, incremental workspace event API, DeepSeek safety boundary, notifications, and deployment steps are documented in [`docs/cloud-proactive-assistant.md`](./docs/cloud-proactive-assistant.md).
-
-## Project Structure
-
-```text
-src/        React application code
-electron/   Electron main and preload processes
-public/     Static assets
-supabase/   Database schema and related setup
-docs/       Deployment notes
-```
-
-## Status
-
-NavoPath is an actively evolving project focused on bridging long-range planning and day-level execution in a single workflow.
+| Option | Installation and startup | Requirements |
+| --- | --- | --- |
+| Web app | Open the [NavoPath web app](https://navopath.com/app) and sign in or create an account. | A modern browser and an internet connection. |
+| Windows desktop | Download `NavoPath-Setup.exe` from the [latest stable release](https://github.com/shawn89890916/NavoPath-planner/releases/latest) and run it. For a portable copy, download and open `NavoPath-Portable.exe` from the same page. | Windows. |
+| Run from source | Clone this repository and open its folder. Run `npm ci`, then `npx vite` and open [the local app](http://127.0.0.1:5173/app). On Windows, use `npm run dev` after installing dependencies to start Vite and Electron together. | Git, Node.js 24, and npm. Browser preview stores data locally and works without cloud configuration. |
+| Self-host with cloud sync | Follow the [web deployment guide](docs/dayflow-web-deploy.md) to set up the backend and deploy the web app. | Node.js 24, npm, and a Supabase project for accounts and sync. |
