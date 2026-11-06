@@ -2,11 +2,13 @@
 
 ## 2026-11-06
 
-### 1.7.0 Beta 6
+### 1.7.0 Beta 7
 
 #### 改进
 
 - 手机底栏支持自选插件快捷项；“更多”改为应用内菜单，其他插件可在设置的长列表中管理入口位置。
+
+### 1.7.0 Beta 6
 
 #### 修复
 
@@ -519,11 +521,13 @@
 
 ## 2026-11-06
 
-### 1.7.0 Beta 6
+### 1.7.0 Beta 7
 
 #### Improved
 
 - Choose plugin shortcuts for the mobile dock; More now opens an in-app menu, with other plugin placements managed in a long Settings list.
+
+### 1.7.0 Beta 6
 
 #### Fixed
 
