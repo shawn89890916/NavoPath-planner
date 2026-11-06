@@ -35,7 +35,7 @@ function createPathIcon(path: string) {
   };
 }
 
-export const UiChatIcon = createPathIcon("M8.4 5.5h7.2c3.1 0 5.4 2.1 5.4 5v2.3c0 2.2-1 3.8-2.7 4.6v2.2a1 1 0 0 1-2 .2l-.4-1.8h-4.5l-3.7 2.7a.7.7 0 0 1-1.1-.6v-2.3C4.4 17.1 3 15.2 3 12.8v-2.3c0-2.9 2.3-5 5.4-5ZM12 5.5V3m0 0h1.3M8.6 10.6v.9m6.8-.9v.9m-5 2.3c.9.9 2.3.9 3.2 0");
+export const UiChatIcon = createPathIcon("M18.3 17.1c-1.9.6-3.5-.3-5.6-.3-2.2 0-4.1.9-5.8.2-1.1-.4-2.8.2-3.8-.1-1.4-.3-1.4-1.3-.3-2.1l1.5-1c.2-4.1 3.4-7.2 7.4-7.3 4.1-.1 7.5 3.1 7.4 7.3.1.3 1.5.4 2.3 1.3.7.8.5 1.4-.2 1.8M9.7 11.2v1.4m4-1.4v1.4");
 export const UiInfoIcon = createPathIcon("M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0ZM12 16v-4m0-4h.01");
 export const UiEyeIcon = createPathIcon("M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z");
 export const UiCalendarCheckIcon = createPathIcon("M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Zm3 10 2 2 5-5");

@@ -2,7 +2,7 @@
 
 ## 2026-11-06
 
-### 1.7.0 Beta 9
+### 1.7.0 Beta 10
 
 #### 修复
 
@@ -10,7 +10,7 @@
 
 #### 改进
 
-- 底栏采用等间距图标，换上圆润的机器人对话气泡，并移除快捷项标签和「更多」中的拖动说明。
+- 底栏采用等间距图标，对话入口换成圆顶、波浪底边的新气泡，并移除快捷项标签和「更多」中的拖动说明。
 
 ### 1.7.0 Beta 8
 
@@ -538,7 +538,7 @@
 
 ## 2026-11-06
 
-### 1.7.0 Beta 9
+### 1.7.0 Beta 10
 
 #### Fixed
 
@@ -546,7 +546,7 @@
 
 #### Improved
 
-- Space dock icons evenly, give chat a rounded robot bubble, and remove shortcut labels and drag instructions from More.
+- Space dock icons evenly, give chat a new bubble with a rounded top and wavy base, and remove shortcut labels and drag instructions from More.
 
 ### 1.7.0 Beta 8
 
