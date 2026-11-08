@@ -7,6 +7,7 @@
 #### 修复
 
 - 整个窗口贴边时，即使工作区面板打开，也能从左上角 N 恢复普通窗口。
+- 修复连续跨日时间轴中凌晨任务块与日期轴错位的问题；现在可按实际日期显示并正常拖动。
 
 ## 2026-11-06
 
@@ -573,6 +574,7 @@
 #### Fixed
 
 - Restore the normal window from the top-left N while a workspace panel is open in desktop Dock mode.
+- Fixed early-morning task blocks being offset from their calendar dates in the continuous timeline; they now display on the correct date and can be dragged normally.
 
 ## 2026-11-06
 

@@ -34,9 +34,12 @@ export function dailyContinuousBlockTop(
   dayStartHour: number,
   hourHeight = HOUR_HEIGHT,
 ): number {
-  const offset = dayOffset(date, anchorDate);
+  let offset = dayOffset(date, anchorDate);
   let minutesFromDayStart = timeToMinutes(startTime) - dayStartHour * 60;
-  if (minutesFromDayStart < 0) minutesFromDayStart += MINUTES_PER_DAY;
+  if (minutesFromDayStart < 0) {
+    minutesFromDayStart += MINUTES_PER_DAY;
+    offset -= 1;
+  }
   return offset * MINUTES_PER_DAY / 60 * hourHeight + minutesFromDayStart / 60 * hourHeight;
 }
 

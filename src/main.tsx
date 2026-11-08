@@ -45,7 +45,7 @@ import { candidateScheduleSummary, type CandidateScheduleSummary } from "./utils
 import { localIsoDate } from "./utils/localDate";
 import { buildWeekWindow } from "./utils/monthWindow";
 import { buildCommandSearchIndex, searchCommands, type CommandSearchResult } from "./utils/commandSearch";
-import { buildDailyContinuousDates, dailyContinuousCanvasHeight, dailyContinuousSlotCount, dailyContinuousSlotLabel, dailyContinuousTargetFromContentY, getContinuousTimelineDateForOffset } from "./utils/continuousTimeline";
+import { buildDailyContinuousDates, dailyContinuousBlockTop, dailyContinuousCanvasHeight, dailyContinuousSlotCount, dailyContinuousSlotLabel, dailyContinuousTargetFromContentY, getContinuousTimelineDateForOffset } from "./utils/continuousTimeline";
 import { normalizeTaskCheckTone, normalizeTaskState, taskMetaPatch, validateProjectCompletion, workflowStatusForPatch } from "./utils/productivityModel";
 import { matchShortcut } from "./utils/shortcuts";
 import { buildTaskMetaBadges } from "./utils/taskMetaBadges";
@@ -2671,10 +2671,13 @@ if (cached?.data && cached?.settings) {
       const effectEnabled = settings?.continuousCrossDayScroll !== false;
       const effectAnchorDate = timelineView === "weekly" ? getVisibleDays("weekly", selectedDate)[0] : selectedDate;
       const effectStartDate = buildDailyContinuousDates(effectAnchorDate, effectEnabled, continuousTimelineDayCount(effectColumnCount))[0] || selectedDate;
-      const offset = Math.round((new Date(`${selectedDate}T00:00:00`).getTime() - new Date(`${effectStartDate}T00:00:00`).getTime()) / 86400000);
-      const bandIndex = Math.floor(offset / effectColumnCount);
+      let offset = Math.round((new Date(`${selectedDate}T00:00:00`).getTime() - new Date(`${effectStartDate}T00:00:00`).getTime()) / 86400000);
       let minutesFromDayStart = targetMinutes - dayStartHour * 60;
-      if (minutesFromDayStart < 0) minutesFromDayStart += 24 * 60;
+      if (minutesFromDayStart < 0) {
+        minutesFromDayStart += 24 * 60;
+        if (effectColumnCount === 1) offset -= 1;
+      }
+      const bandIndex = Math.floor(offset / effectColumnCount);
       const targetTop = effectEnabled
         ? bandIndex * ((24 * 60 / SLOT_MINUTES) * timelineSlotHeight) + (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight
         : (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight;
@@ -2747,11 +2750,14 @@ if (cached?.data && cached?.settings) {
     const effectAnchorDate = timelineView === "weekly" ? getVisibleDays("weekly", selectedDate)[0] : selectedDate;
     const effectStartDate = buildDailyContinuousDates(effectAnchorDate, effectEnabled, continuousTimelineDayCount(effectColumnCount))[0] || selectedDate;
     const effectTop = (date: string, time: string) => {
-      const offset = Math.round((new Date(`${date}T00:00:00`).getTime() - new Date(`${effectStartDate}T00:00:00`).getTime()) / 86400000);
-      const bandIndex = Math.floor(offset / effectColumnCount);
+      let offset = Math.round((new Date(`${date}T00:00:00`).getTime() - new Date(`${effectStartDate}T00:00:00`).getTime()) / 86400000);
       let minutesFromDayStart = timeToMinutes(time) - dayStartHour * 60;
-      if (minutesFromDayStart < 0) minutesFromDayStart += 24 * 60;
-      return bandIndex * ((24 * 60 / SLOT_MINUTES) * timelineSlotHeight) + (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight;
+      if (minutesFromDayStart < 0) {
+        minutesFromDayStart += 24 * 60;
+        if (effectColumnCount === 1) offset -= 1;
+      }
+      const resolvedBandIndex = Math.floor(offset / effectColumnCount);
+      return resolvedBandIndex * ((24 * 60 / SLOT_MINUTES) * timelineSlotHeight) + (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight;
     };
     const targetTop = effectEnabled
       ? effectTop(targetDate, minutesToTime(targetMinutes))
@@ -3625,11 +3631,11 @@ if (cached?.data && cached?.settings) {
         setNowInTimelineViewport(false);
         return;
       }
-      const dateOffset = Math.round((new Date(`${nowDate}T00:00:00`).getTime() - new Date(`${continuousTimelineStartDate}T00:00:00`).getTime()) / 86400000);
-      const bandIndex = continuousTimelineEnabled ? Math.floor(dateOffset / timelineColumnCount) : 0;
       let minutesFromDayStart = now.getHours() * 60 + now.getMinutes() - dayStartHour * 60;
       if (minutesFromDayStart < 0) minutesFromDayStart += 24 * 60;
-      const nowTop = bandIndex * ((24 * 60 / SLOT_MINUTES) * timelineSlotHeight) + (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight;
+      const nowTop = continuousTimelineEnabled
+        ? continuousTimedTop(nowDate, `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`)
+        : (minutesFromDayStart / SLOT_MINUTES) * timelineSlotHeight;
       const viewportTop = scrollElement.scrollTop;
       const viewportBottom = viewportTop + scrollElement.clientHeight;
       const visible = nowTop >= viewportTop + 2 && nowTop <= viewportBottom - 2;
@@ -5387,6 +5393,9 @@ if (cached?.data && cached?.settings) {
   }
 
   function continuousTimedTop(date: string, startTime: string) {
+    if (timelineColumnCount === 1) {
+      return dailyContinuousBlockTop(date, startTime, continuousTimelineStartDate, dayStartHour, timelineHourHeight);
+    }
     const offset = continuousDateOffset(date);
     const bandIndex = Math.floor(offset / timelineColumnCount);
     let minutesFromDayStart = timeToMinutes(startTime) - dayStartHour * 60;
@@ -9011,9 +9020,10 @@ if (cached?.data && cached?.settings) {
     const minutes = Math.floor(exactMinutes);
     const viewportY = scrollElement.getBoundingClientRect().top + scrollElement.clientHeight / 2
       - (exactMinutes - minutes) / SLOT_MINUTES * timelineSlotHeight;
-    const date = continuousTimelineEnabled
+    let date = continuousTimelineEnabled
       ? getContinuousTimelineDateForOffset(continuousTimelineStartDate, Math.floor(centerY / dayHeight), timelineColumnCount)
       : timelineWindowAnchorDate;
+    if (continuousTimelineEnabled && timelineColumnCount === 1 && exactMinutes >= 24 * 60) date = addDays(date, 1);
     return { date, startTime: minutesToTime(minutes), viewportY };
   }
 
