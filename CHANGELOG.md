@@ -2,12 +2,17 @@
 
 ## 2026-11-08
 
+### 1.7.0 Beta 16
+
+#### 修复
+
+- 桌面端设置与插件面板按窗口宽度展开，恢复网页端参考布局中的宽版面板。
+
 ### 1.7.0 Beta 15
 
 #### 修复
 
 - 整个窗口贴边时，工作区面板打开也可直接点击左上角 N 恢复普通窗口，且只显示一个 N。
-- 桌面端设置与插件面板按窗口宽度展开，恢复网页端参考布局中的宽版面板。
 
 ### 1.7.0 Beta 14
 
@@ -576,12 +581,17 @@
 
 ## 2026-11-08
 
+### 1.7.0 Beta 16
+
+#### Fixed
+
+- Desktop settings and plugin panels now scale with the window width to match the wider web layout.
+
 ### 1.7.0 Beta 15
 
 #### Fixed
 
 - While desktop Dock is active, click the single top-left N to restore the normal window even with a workspace panel open.
-- Desktop settings and plugin panels now scale with the window width to match the wider web layout.
 
 ### 1.7.0 Beta 14
 
