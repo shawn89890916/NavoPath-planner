@@ -2,6 +2,12 @@
 
 ## 2026-11-08
 
+### 1.7.0 Beta 17
+
+#### 修复
+
+- 点击左上角 N 时会先读取窗口当前贴边状态；贴边时立即恢复普通窗口。
+
 ### 1.7.0 Beta 16
 
 #### 修复
@@ -580,6 +586,12 @@
 # NavoPath Changelog
 
 ## 2026-11-08
+
+### 1.7.0 Beta 17
+
+#### Fixed
+
+- The top-left N now checks the window's current Dock state and immediately restores the normal window when docked.
 
 ### 1.7.0 Beta 16
 

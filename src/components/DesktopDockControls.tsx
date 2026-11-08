@@ -65,6 +65,26 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError,
     }
   }
 
+  async function handleTriggerClick() {
+    const api = window.desktopApi?.dockWindow;
+    if (busy || !api) return;
+    setBusy(true);
+    try {
+      const currentSide = await api.getSide();
+      if (currentSide) {
+        setChoosing(false);
+        onSideChange(await api.setSide(null));
+      } else {
+        onSideChange(null);
+        setChoosing((open) => !open);
+      }
+    } catch {
+      onError(lang === "zh" ? "无法调整贴边窗口，请重试。" : "Could not adjust the docked window. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const label = side
     ? (lang === "zh" ? "点击 N 恢复普通窗口" : "Click N to restore the window")
     : (lang === "zh" ? "选择贴边方向" : "Choose a Dock side");
@@ -81,11 +101,7 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError,
       aria-pressed={Boolean(side)}
       aria-expanded={choosing}
       disabled={disabled || busy}
-      onClick={(event) => {
-        event.stopPropagation();
-        if (side) void changeSide(null);
-        else setChoosing((open) => !open);
-      }}
+      onClick={(event) => { event.stopPropagation(); void handleTriggerClick(); }}
     >{trigger}</button>
     {choosing && !side && <div className="df-brand-dock-menu" role="group" aria-label={lang === "zh" ? "选择 Dock 贴边方向" : "Choose Dock side"}>
       <div className="df-brand-dock-choices">
