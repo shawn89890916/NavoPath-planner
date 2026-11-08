@@ -2,6 +2,12 @@
 
 ## 2026-11-09
 
+### 1.7.0 Beta 19
+
+#### 修复
+
+- 左上角 N 通过原生 Dock 状态直接恢复窗口，避免界面状态过期导致点击无效。
+
 ### 1.7.0 Beta 18
 
 #### 修复
@@ -594,6 +600,12 @@
 # NavoPath Changelog
 
 ## 2026-11-09
+
+### 1.7.0 Beta 19
+
+#### Fixed
+
+- The top-left N restores the window directly from native Dock state, avoiding stale UI state that could leave the click ineffective.
 
 ### 1.7.0 Beta 18
 

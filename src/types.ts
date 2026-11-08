@@ -840,6 +840,7 @@ declare global {
       dockWindow?: {
         getSide: () => Promise<"left" | "right" | null>;
         setSide: (side: "left" | "right" | null) => Promise<"left" | "right" | null>;
+        undock: () => Promise<boolean>;
         getPreferences: () => Promise<DesktopDockPreferences>;
         setPreferences: (patch: Partial<DesktopDockPreferences>) => Promise<DesktopDockPreferences>;
       };

@@ -263,6 +263,7 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
     }
     ipcMain.handle("dock-window:get-side", (event) => docked.get(senderWindow(event))?.side ?? null);
     ipcMain.handle("dock-window:set-side", (event, side) => setSide(senderWindow(event), side));
+    ipcMain.handle("dock-window:undock", (event) => undock(senderWindow(event)));
     ipcMain.handle("dock-window:get-preferences", (event) => { senderWindow(event); return { ...preferences }; });
     ipcMain.handle("dock-window:set-preferences", (event, patch) => {
       senderWindow(event);
@@ -291,6 +292,12 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
     });
   }
 
+  function undock(win) {
+    if (!docked.has(win)) return false;
+    setSide(win, null);
+    return true;
+  }
+
   function watchDisplays() {
     const refresh = () => {
       for (const [win, state] of docked) {
@@ -303,6 +310,7 @@ function createDockWindowService({ ipcMain, handleIpcMain, createHandle, screen,
 
   return {
     registerIpc, watchDisplays,
+    undock,
     hasSavedMode: (role) => Boolean(windowModes[role]),
     restore(win, role) {
       windowRoles.set(win, role);

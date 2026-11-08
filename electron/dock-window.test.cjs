@@ -110,6 +110,7 @@ function setup(options, saved = {}, isQuitting = () => false) {
     },
     polling: () => Boolean(poll),
     set: (side, sender = event) => handlers.get("dock-window:set-side")(sender, side),
+    undock: (sender = event) => handlers.get("dock-window:undock")(sender),
     get: (sender = event) => handlers.get("dock-window:get-side")(sender),
     restore: (role) => service.restore(win, role),
     show: () => service.show(win),
@@ -153,6 +154,18 @@ test("docks the sender window, switches sides, and restores its original geometr
   assert.equal(win.listenerCount("closed"), 0);
   assert.equal(win.visible, true);
   assert.equal(win.focused, true);
+});
+
+test("the N restore IPC atomically undocks the sender's live native Dock state", () => {
+  const { win, set, undock, get } = setup();
+  assert.equal(undock(), false);
+  set("right");
+  assert.equal(get(), "right");
+  assert.equal(undock(), true);
+  assert.equal(get(), null);
+  assert.equal(win.visible, true);
+  assert.equal(win.focused, true);
+  assert.equal(undock(), false);
 });
 
 test("restores the saved Dock side and original window after the app restarts", () => {

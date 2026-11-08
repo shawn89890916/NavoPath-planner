@@ -70,10 +70,10 @@ export default function DesktopDockControls({ lang, side, onSideChange, onError,
     if (busy || !api) return;
     setBusy(true);
     try {
-      const currentSide = await api.getSide();
-      if (currentSide) {
+      const restored = await api.undock();
+      if (restored) {
         setChoosing(false);
-        onSideChange(await api.setSide(null));
+        onSideChange(null);
       } else {
         onSideChange(null);
         setChoosing((open) => !open);
