@@ -1,5 +1,13 @@
 # NavoPath 更新日志
 
+## 2026-11-08
+
+### 1.7.0 Beta 14
+
+#### 修复
+
+- 整个窗口贴边时，即使工作区面板打开，也能从左上角 N 恢复普通窗口。
+
 ## 2026-11-06
 
 ### 1.7.0 Beta 13
@@ -557,6 +565,14 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-08
+
+### 1.7.0 Beta 14
+
+#### Fixed
+
+- Restore the normal window from the top-left N while a workspace panel is open in desktop Dock mode.
 
 ## 2026-11-06
 

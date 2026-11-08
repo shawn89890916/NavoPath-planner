@@ -9343,9 +9343,20 @@ if (cached?.data && cached?.settings) {
     : <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
       <ProductIcon compact />
     </button>;
+  const showDockRecoveryControl = Boolean(window.desktopApi?.dockWindow && desktopDockSide && compactLayout && portraitLayout && compactToolbarBlocked);
   const compactChat = !productPresentation && !settings.hideAi && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />;
   return (
     <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked && !workspaceChatPanel ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+      {showDockRecoveryControl && <div className="df-compact-dock-recovery">
+        <Suspense fallback={null}><DesktopDockControls
+          lang={lang}
+          side={desktopDockSide}
+          disabled={!desktopDockReady}
+          trigger={<ProductIcon compact />}
+          onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }}
+          onError={showToast}
+        /></Suspense>
+      </div>}
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       {(!compactLayout || productDemo) && <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
