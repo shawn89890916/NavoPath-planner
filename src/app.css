@@ -17129,7 +17129,7 @@ body.df-planning-native-dragging [contenteditable] * {
   --workspace-panel-gap: 12px;
   --workspace-panel-top: calc(var(--workspace-panel-toolbar) + var(--workspace-panel-gap));
   --workspace-panel-radius: 14px;
-  --workspace-panel-width: min(560px, calc(100vw - 24px));
+  --workspace-panel-width: min(60vw, 1200px);
   --df-font-brand: "Sora", Inter, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei UI", "Noto Sans SC", system-ui, sans-serif;
   --df-font-ui: Inter, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei UI", "Noto Sans SC", system-ui, sans-serif;
   --df-font-task: Inter, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei UI", "Noto Sans SC", system-ui, sans-serif;
