@@ -8492,16 +8492,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   position: relative;
   z-index: 1;
 }
-#root .df-app .df-compact-dock-recovery {
-  position: fixed;
-  z-index: 100060;
-  top: max(2px, env(safe-area-inset-top));
-  left: 18px;
-  pointer-events: none;
-}
-#root .df-app .df-compact-dock-recovery > .df-brand-dock-control {
-  pointer-events: auto;
-}
 #root .df-app .df-brand-dock-menu {
   position: absolute;
   top: calc(100% - 4px);

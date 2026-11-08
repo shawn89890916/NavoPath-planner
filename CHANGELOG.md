@@ -2,6 +2,12 @@
 
 ## 2026-11-08
 
+### 1.7.0 Beta 15
+
+#### 修复
+
+- 整个窗口贴边时，工作区面板打开也可直接点击左上角 N 恢复普通窗口，且只显示一个 N。
+
 ### 1.7.0 Beta 14
 
 #### 修复
@@ -568,6 +574,12 @@
 # NavoPath Changelog
 
 ## 2026-11-08
+
+### 1.7.0 Beta 15
+
+#### Fixed
+
+- While desktop Dock is active, click the single top-left N to restore the normal window even with a workspace panel open.
 
 ### 1.7.0 Beta 14
 
