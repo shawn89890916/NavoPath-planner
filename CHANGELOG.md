@@ -1,5 +1,13 @@
 # NavoPath 更新日志
 
+## 2026-11-09
+
+### 1.7.0 Beta 18
+
+#### 修复
+
+- Dock 窗口左上角的 N 始终可点击，并根据原生窗口的实时贴边状态恢复普通窗口。
+
 ## 2026-11-08
 
 ### 1.7.0 Beta 17
@@ -584,6 +592,14 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-09
+
+### 1.7.0 Beta 18
+
+#### Fixed
+
+- The top-left N in a docked window stays clickable and restores the window using its live native Dock state.
 
 ## 2026-11-08
 

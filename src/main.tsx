@@ -1114,15 +1114,14 @@ function App() {
   const [portraitLayout, setPortraitLayout] = useState(() => window.matchMedia("(orientation: portrait)").matches);
   const inlineTimelineDraft = Boolean(window.desktopApi) || !portraitLayout;
   const [desktopDockSide, setDesktopDockSide] = useState<"left" | "right" | null>(null);
-  const [desktopDockReady, setDesktopDockReady] = useState(false);
   const dockMouseLayout = Boolean(desktopDockSide) && compactLayout;
   useEffect(() => {
     let cancelled = false;
     const dockWindow = window.desktopApi?.dockWindow;
-    if (!dockWindow) { setDesktopDockReady(true); return () => { cancelled = true; }; }
+    if (!dockWindow) return () => { cancelled = true; };
     void dockWindow.getSide().then((side) => {
-      if (!cancelled) { setDesktopDockSide(side); setDesktopDockReady(true); }
-    }).catch(() => { if (!cancelled) setDesktopDockReady(true); });
+      if (!cancelled) setDesktopDockSide(side);
+    }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
   const [compactExecuteView, setCompactExecuteView] = useState<CompactExecuteView>("schedule");
@@ -9344,7 +9343,6 @@ if (cached?.data && cached?.settings) {
       <DesktopDockControls
         lang={lang}
         side={desktopDockSide}
-        disabled={!desktopDockReady || (compactLayout && compactToolbarBlocked && !desktopDockSide)}
         trigger={<ProductIcon compact />}
         onSideChange={(side) => { setDesktopDockSide(side); setHoveredBlock(""); setFullscreen(false); }}
         onError={showToast}
@@ -9465,7 +9463,7 @@ if (cached?.data && cached?.settings) {
 
         <ExecutionSplitLayout className={`${narrowSplitLayout ? "shelf-timeline-split " : ""}${candidatePanelCollapsed ? "candidate-collapsed" : ""}${fullscreen ? " fullscreen" : ""}${simpleView ? " simple-view" : ""}`} style={candidatePanelCollapsed || candidatePanelWidth ? { "--df-candidate-width": candidatePanelCollapsed ? "44px" : `${candidatePanelWidth}px` } as CSSProperties : undefined}>
           {!productAiPresentation && <div className="df-compact-execute-controls">
-            {portraitLayout && !productPresentation && <div className="df-compact-brand" inert={compactLayout && compactToolbarBlocked && !desktopDockSide}>{brandControl}</div>}
+            {portraitLayout && !productPresentation && <div className="df-compact-brand">{brandControl}</div>}
             {!mobileExecution && !narrowSplitLayout && <nav className="df-compact-execute-tabs" inert={compactLayout && compactToolbarBlocked} aria-label={lang === "zh" ? "执行视图" : "Execute view"}>
               <button
                 className={`active ${compactExecuteView === "schedule" ? "schedule-state" : "tasks-state"}`}
