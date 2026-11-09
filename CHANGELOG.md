@@ -2,6 +2,12 @@
 
 ## 2026-11-09
 
+### 1.7.0 Beta 20
+
+#### 修复
+
+- 修复桌面贴边窗口左上角 N 无法接收鼠标点击的问题。点击 N 可退出 Dock 并恢复原窗口大小和位置。
+
 ### 1.7.0 Beta 19
 
 #### 修复
@@ -600,6 +606,12 @@
 # NavoPath Changelog
 
 ## 2026-11-09
+
+### 1.7.0 Beta 20
+
+#### Fixed
+
+- Fixed the top-left N in the desktop Dock window ignoring mouse clicks. Clicking N exits Dock and restores the original window size and position.
 
 ### 1.7.0 Beta 19
 

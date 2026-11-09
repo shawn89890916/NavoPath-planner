@@ -8487,6 +8487,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   display: inline-flex;
   flex: 0 0 auto;
   z-index: 3;
+  pointer-events: auto;
 }
 #root .df-app .df-brand-dock-trigger {
   position: relative;
