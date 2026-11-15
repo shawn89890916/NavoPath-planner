@@ -1128,6 +1128,8 @@ function App() {
   const [phoneLayout, setPhoneLayout] = useState(() => window.matchMedia("(max-width: 899.98px) and (orientation: portrait)").matches);
   const mobileExecution = phoneLayout && !productPresentation;
   const narrowSplitLayout = compactLayout && !portraitLayout && !productPresentation;
+  const compactTasksActive = !mobileExecution && compactExecuteView === "tasks";
+  const compactTimelineActive = productAiPresentation || narrowSplitLayout || !compactTasksActive;
   const mobileExecutionRef = useRef(mobileExecution);
   mobileExecutionRef.current = mobileExecution;
   const [candidateDrawerOpen, setCandidateDrawerOpen] = useState(false);
@@ -8994,8 +8996,8 @@ if (cached?.data && cached?.settings) {
     setFullscreen(false);
     setProjectManagementVisited(true);
     setProjectManagement(true);
-    setCompactExecuteView("tasks");
     if (mobileExecution) setCandidateDrawerOpen(true);
+    else setCompactExecuteView("tasks");
   }
 
   function showTimelineWorkspace() {
@@ -9483,7 +9485,7 @@ if (cached?.data && cached?.settings) {
                 ) : (
                   <><strong>{date.getDate()}</strong><span>{weekdayName(lang, date.getDay()).replace(/^周/, "")}</span></>
                 );
-                if (productPresentation || compactExecuteView === "tasks") {
+                if (productPresentation || compactTasksActive) {
                   return <div className="df-compact-date-display is-readonly" inert={compactLayout && compactToolbarBlocked} aria-label={lang === "zh" ? "当前日期" : "Current date"}>{dateContents}</div>;
                 }
                 return <button
@@ -9850,8 +9852,8 @@ if (cached?.data && cached?.settings) {
               event.stopPropagation();
               if (!mobileTapRef.current.moved) closeCandidateDrawer();
             }}
-            className={`df-timeline-panel${productAiPresentation || narrowSplitLayout || compactExecuteView === "schedule" ? " compact-active" : " compact-inactive"}`}
-            aria-hidden={!productAiPresentation && !narrowSplitLayout && compactLayout && compactExecuteView !== "schedule"}
+            className={`df-timeline-panel${compactTimelineActive ? " compact-active" : " compact-inactive"}`}
+            aria-hidden={compactLayout && !compactTimelineActive}
             id="df-execute-timeline"
             data-candidates-open={mobileExecution && candidateDrawerOpen || undefined}
             data-cross-day-scroll={settings.continuousCrossDayScroll !== false ? "true" : "false"}

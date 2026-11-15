@@ -1,5 +1,13 @@
 # NavoPath 更新日志
 
+## 2026-11-16
+
+### 1.7.0 Beta 21
+
+#### 修复
+
+- 修复桌面 Dock 模式下打开任务树后时间轴变白的问题，关闭 Tree 或 Tasks 抽屉后即可继续使用时间轴。
+
 ## 2026-11-09
 
 ### 1.7.0 Beta 20
@@ -604,6 +612,14 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-16
+
+### 1.7.0 Beta 21
+
+#### Fixed
+
+- Fixed a blank timeline after opening Tree while docked. Close the Tree or Tasks drawer to continue using the timeline.
 
 ## 2026-11-09
 
