@@ -183,7 +183,8 @@ describe("portrait interaction contracts", () => {
     expect(main).toContain("onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }}");
     expect(main).toContain('const compactToolbarBlocked = compactOverlayOpen || Boolean(workspacePanel);');
     expect(main).toContain('compactLayout && !compactOverlayOpen && (');
-    expect(main).toContain('className="df-compact-execute-controls" inert={compactLayout && compactToolbarBlocked}');
+    expect(main).toContain('className="df-compact-execute-tabs" inert={compactLayout && compactToolbarBlocked}');
+    expect(main).toContain('className="df-compact-calendar-tabs" inert={compactLayout && compactToolbarBlocked}');
     expect(appCss).toContain(".df-settings-shell:not(.df-settings-detail-shell)");
   });
 

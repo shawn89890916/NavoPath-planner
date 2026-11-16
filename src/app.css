@@ -24047,6 +24047,32 @@ body[data-navopath-base-theme="light"],
   overscroll-behavior: contain;
   container-type: inline-size;
 }
+.df-task-history {
+  padding: 0 12px;
+  color: var(--text-main);
+  font: 500 13px/1.45 var(--paper-sans);
+}
+.df-task-history-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.df-task-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--paper-rule);
+}
+.df-task-history-row p {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+.df-task-history-row time { color: var(--text-muted); font-size: 12px; }
+.df-task-history-row .ui-button { min-width: 44px; min-height: 44px; }
+.df-task-history-undone { padding-inline: 8px; color: var(--text-muted); font-size: 12px; }
+.df-task-history-empty { margin: 16px 0; color: var(--text-muted); }
 .df-shelf-view,
 .df-shelf-view .df-planning-main,
 .df-shelf-view .df-planning-content {

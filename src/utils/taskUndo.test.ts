@@ -14,6 +14,37 @@ function schedule(task: Task) {
 }
 
 describe("operation-scoped task undo", () => {
+  it("blocks the entire undo when a later change overlaps, then permits it after that change is undone", () => {
+    const before = createDemoData("en", "planning", 0);
+    const first = { ...before, tasks: [schedule(before.tasks[0]), ...before.tasks.slice(1)] };
+    const later = { ...first, tasks: [{ ...first.tasks[0], plannedForDate: "2026-10-15" }, ...first.tasks.slice(1)] };
+    const firstUndo = captureTaskUndo(before, first);
+    expect(undoTaskChanges(later, firstUndo, stamp)).toBe(later);
+    const restored = undoTaskChanges(later, captureTaskUndo(first, later), stamp);
+    expect(undoTaskChanges(restored, firstUndo, stamp).tasks[0].timelineRecords).toEqual(before.tasks[0].timelineRecords);
+  });
+
+  it("protects a task created by an operation after later work modifies it", () => {
+    const before = createDemoData("en", "planning", 0);
+    const added = { ...before.tasks[0], id: "created" };
+    const after = { ...before, tasks: [...before.tasks, added] };
+    const undo = captureTaskUndo(before, after);
+    const modified = { ...after, tasks: [...before.tasks, { ...added, notes: "Later notes" }] };
+    expect(undoTaskChanges(modified, undo, stamp)).toBe(modified);
+    expect(undoTaskChanges(after, undo, stamp).tasks).toEqual(before.tasks);
+  });
+
+  it("restores a deleted task past its sync tombstone while preserving other tasks", () => {
+    const before = createDemoData("en", "planning", 0);
+    const [deleted, ...kept] = before.tasks;
+    const after = withDeletionTombstones(before, { ...before, tasks: kept }, stamp);
+    const restored = undoTaskChanges(after, captureTaskUndo(before, after), stamp);
+    const persisted = withDeletionTombstones(after, restored, stamp);
+    expect(persisted.tasks.slice(0, kept.length)).toEqual(kept);
+    expect(persisted.tasks.find((task) => task.id === deleted.id)?.title).toBe(deleted.title);
+    expect(persisted.sync?.deleted[`tasks:${deleted.id}`]).toBeUndefined();
+  });
+
   it("retains tasks, notes, and same-task title edits made after scheduling a task", () => {
     const before = createDemoData("en", "planning", 0);
     const after = { ...before, tasks: [schedule(before.tasks[0]), ...before.tasks.slice(1)] };

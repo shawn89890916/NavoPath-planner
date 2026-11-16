@@ -3,7 +3,8 @@ import { blockingCalendarEvents } from "./utils/courseBackground";
 import { useMobileSheetGesture } from "./useMobileSheetGesture";
 import { uid } from "./utils/ids";
 import { toggleTaskCompletion, setTaskCompletion, habitScheduleForTask } from "./utils/taskCompletion";
-import { captureTaskUndo, undoTaskChanges, type TaskUndo } from "./utils/taskUndo";
+import { captureTaskUndo, undoTaskChanges } from "./utils/taskUndo";
+import type { TaskOperation, TaskOperationKind } from "./components/TaskOperationHistory";
 import { MobileQuickAddButton } from "./components/MobileQuickAddButton";
 import { NotificationBadge } from "./components/NotificationBadge";
 import { getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./workspaceEnvironment";
@@ -74,7 +75,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiChatIcon, UiChevronDownIcon, UiChevronLeftIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiKanbanIcon, UiListChecksIcon, UiListIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiChatIcon, UiChevronDownIcon, UiChevronLeftIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiHistoryIcon, UiKanbanIcon, UiListChecksIcon, UiListIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -126,6 +127,7 @@ const PluginGuidePageLazy = lazy(() => import("./PluginGuidePage"));
 const loadSettingsPanel = () => import("./SettingsPanel");
 const UtilityPanel = lazy(() => loadSettingsPanel().then((module) => ({ default: module.UtilityPanel })));
 const CommandPalette = lazy(() => import("./components/CommandPalette"));
+const TaskOperationHistory = lazy(() => import("./components/TaskOperationHistory"));
 const MobileExecutionControls = lazy(() => import("./components/MobileExecutionControls"));
 const MobileTaskSummary = lazy(() => import("./MobileTaskSummary"));
 const EngagementRating = lazy(() => import("./components/EngagementRating").then(module => ({ default: module.EngagementRating })));
@@ -1061,6 +1063,8 @@ function App() {
   const [authError, setAuthError] = useState("");
   const [authNotice, setAuthNotice] = useState<AuthNotice>(null);
   const [shelfViewId, setShelfViewId] = useState("");
+  const [taskHistoryOpen, setTaskHistoryOpen] = useState(false);
+  const [taskOperations, setTaskOperations] = useState<TaskOperation[]>([]);
   const [shelfMenuOpen, setShelfMenuOpen] = useState(false);
   const [projectManagement, setProjectManagement] = useState(productDemo?.feature === "planning");
   const [projectManagementVisited, setProjectManagementVisited] = useState(productDemo?.feature === "planning");
@@ -2155,6 +2159,9 @@ function App() {
     if (snapshotTimerRef.current) window.clearTimeout(snapshotTimerRef.current);
     snapshotTimerRef.current = null;
     setShelfViewId("");
+    setTaskHistoryOpen(false);
+    setTaskOperations([]);
+    dismissToast();
     setProjectManagement(productDemo?.feature === "planning");
     setProjectManagementVisited(productDemo?.feature === "planning");
     setShelfMenuOpen(false);
@@ -2798,7 +2805,7 @@ if (cached?.data && cached?.settings) {
 
   function closeCandidateDrawer() {
     setShelfMenuOpen(false);
-    if (!projectManagement && !shelfView) {
+    if (!projectManagement && !shelfView && !taskHistoryOpen) {
       candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
     }
     setCandidateDrawerOpen(false);
@@ -3077,6 +3084,38 @@ if (cached?.data && cached?.settings) {
   function saveData(next: PlannerData): Promise<void> {
     return extensionHostRef.current?.internal.services.saveData(next) ?? persistData(next);
   }
+
+  function saveTaskOperation(next: PlannerData, kind: TaskOperationKind, options?: { title?: string; titles?: string[]; toast?: string }) {
+    const previous = dataRef.current;
+    const undo = previous && captureTaskUndo(previous, next);
+    const saving = saveData(next);
+    if (!undo || !(undo.added.length || undo.removed.length || undo.changes.length)) return saving;
+    const operation: TaskOperation = {
+      id: uid("operation"),
+      workspaceKey: loadedWorkspaceKeyRef.current,
+      at: workspaceNow().toISOString(),
+      kind,
+      titles: options?.titles || (options?.title ? [options.title] : [...undo.added, ...undo.removed, ...undo.changes].map(({ title }) => title)),
+      undo,
+    };
+    setTaskOperations((current) => [operation, ...current].slice(0, 50));
+    if (options?.toast) showUndoToast(options.toast, t(lang, "toast.undo"), () => undoTaskOperation(operation));
+    return saving;
+  }
+
+  function undoTaskOperation(operation: TaskOperation) {
+    const current = dataRef.current;
+    if (!current || operation.undone || operation.workspaceKey !== loadedWorkspaceKeyRef.current) return;
+    const next = undoTaskChanges(current, operation.undo, workspaceNow().toISOString());
+    if (next === current) {
+      showToast(lang === "zh" ? "相关任务后来有改动，暂时无法撤销。" : "The affected tasks have since changed. This action can’t be undone yet.");
+      return;
+    }
+    preserveTimelineViewportOnNextDataChange();
+    void saveData(next);
+    setTaskOperations((entries) => entries.map((entry) => entry.id === operation.id ? { ...entry, undone: true } : entry));
+    showToast(t(lang, "toast.undone"));
+  }
   async function persistData(next: PlannerData) {
     const savedAt = workspaceNow().toISOString();
     const previous = dataRef.current;
@@ -3220,6 +3259,9 @@ if (cached?.data && cached?.settings) {
         ...latest,
         tasks: latest.tasks.map((item) => item.id === task.id ? updatedTask : item),
       });
+      if (currentTask === task) setTaskOperations((entries) => entries.map((entry) => entry.undo.added.includes(task)
+        ? { ...entry, undo: { ...entry.undo, added: entry.undo.added.map((item) => item === task ? updatedTask : item) } }
+        : entry));
       return updatedTask;
     })();
 
@@ -4054,7 +4096,10 @@ if (cached?.data && cached?.settings) {
         return updatedTask;
       })
     };
-    void saveData(typeof patch.completed === "boolean" ? setTaskCompletion(next, taskId, patch.completed, inferredAt) : next);
+    const updated = typeof patch.completed === "boolean" ? setTaskCompletion(next, taskId, patch.completed, inferredAt) : next;
+    if (updated.habitDailyStates !== current.habitDailyStates) void saveData(updated);
+    else void saveTaskOperation(updated, typeof patch.completed === "boolean" && patch.completed !== existing?.completed
+      ? (patch.completed ? "complete" : "reopen") : "edit");
     if (titleChanged && updatedTask) void enrichTaskInBackground(updatedTask);
   }
 
@@ -4121,10 +4166,8 @@ if (cached?.data && cached?.settings) {
     });
     if (subtask && task.id === subtask.draftTaskId) nextTasks.push(nextTask);
     const next = { ...current, tasks: nextTasks };
-    const undo = captureTaskUndo(current, next);
     preserveTimelineViewportOnNextDataChange();
-    void saveData(next);
-    showUndoToast(lang === "zh" ? "已安排到时间轴" : "Scheduled on the timeline", lang === "zh" ? "撤销" : "Undo", () => undoLastCommit(undo));
+    void saveTaskOperation(next, "schedule", { title: task.title, toast: lang === "zh" ? "已安排到时间轴" : "Scheduled on the timeline" });
     return record;
   }
 
@@ -4178,7 +4221,7 @@ if (cached?.data && cached?.settings) {
       .filter((task) => !isEventDisplayTask(task))
       .map((task) => resolveOwningTask(task)?.id || task.id);
     const next = reorderTodayCandidates(current, visibleIds, sourceId, destinationId, position, groupByProject);
-    if (next !== current) void saveData(next);
+    if (next !== current) void saveTaskOperation(next, "reorder", { title: resolveOwningTask(sourceId)?.title });
   }
 
   function moveTodayCandidateToProjectGroup(taskId: string, projectId: string | undefined) {
@@ -4196,7 +4239,7 @@ if (cached?.data && cached?.settings) {
       return { ...task, subtasks: removeSubtaskFromTree(task.subtasks || [], subtaskId), updatedAt: workspaceNow().toISOString() };
     });
     if (!found) return;
-    void saveData({ ...current, tasks: nextTasks });
+    void saveTaskOperation({ ...current, tasks: nextTasks }, "edit");
   }
 
   /** Update a specific TimelineRecord by recordId. Finds the owning task. */
@@ -4204,7 +4247,7 @@ if (cached?.data && cached?.settings) {
     const current = dataRef.current;
     if (!current) return;
     const sourceRecordId = resolveTimelineRecordId(recordId);
-    void saveData({
+    void saveTaskOperation({
       ...current,
       tasks: current.tasks.map((task) => {
         const records = task.timelineRecords;
@@ -4215,32 +4258,7 @@ if (cached?.data && cached?.settings) {
         updated[idx] = { ...updated[idx], ...patch };
         return { ...task, timelineRecords: updated, updatedAt: workspaceNow().toISOString() };
       }),
-    });
-  }
-
-  /** Delete a TimelineRecord by recordId. */
-  function deleteTimelineRecord(recordId: string) {
-    if (!data) return;
-    const sourceRecordId = resolveTimelineRecordId(recordId);
-    void saveData({
-      ...data,
-      tasks: data.tasks.map((task) => {
-        const records = task.timelineRecords;
-        if ((!records || records.length === 0) && task.id === sourceRecordId && task.scheduledDate) {
-          return {
-            ...task,
-            scheduledDate: undefined,
-            scheduledStart: undefined,
-            scheduledEnd: undefined,
-            updatedAt: workspaceNow().toISOString(),
-          };
-        }
-        if (!records) return task;
-        const filtered = records.filter((r) => r.id !== sourceRecordId);
-        if (filtered.length === records.length) return task;
-        return { ...task, timelineRecords: filtered, updatedAt: workspaceNow().toISOString() };
-      }),
-    });
+    }, "reschedule");
   }
 
   function toggleTaskDone(taskId: string) {
@@ -4262,14 +4280,23 @@ if (cached?.data && cached?.settings) {
         executionStatus: "completed",
         createdAt: workspaceNow().toISOString(),
       };
-      updateTask(realTask.id, {
-        timelineRecords: [...(realTask.timelineRecords || []), completedRecord],
-      });
+      void saveTaskOperation({
+        ...current,
+        tasks: current.tasks.map((task) => task.id === realTask.id
+          ? { ...task, timelineRecords: [...(task.timelineRecords || []), completedRecord], updatedAt: completedRecord.createdAt }
+          : task),
+      }, "complete");
       return;
     }
 
-    const next = toggleTaskCompletion(current, resolveTimelineRecordId(taskId), workspaceNow().toISOString());
-    if (next !== current) void saveData(next);
+    const sourceRecordId = resolveTimelineRecordId(taskId);
+    const owner = current.tasks.find((task) => task.id === sourceRecordId || task.timelineRecords?.some((record) => record.id === sourceRecordId));
+    if (!owner) return;
+    const record = owner.timelineRecords?.find((item) => item.id === sourceRecordId);
+    const next = toggleTaskCompletion(current, sourceRecordId, workspaceNow().toISOString());
+    if (next === current) return;
+    if (next.habitDailyStates !== current.habitDailyStates) void saveData(next);
+    else void saveTaskOperation(next, (record ? record.executionStatus === "completed" : owner.completed) ? "reopen" : "complete");
   }
 
   function toggleCandidateTaskDone(task: Task) {
@@ -4294,7 +4321,8 @@ if (cached?.data && cached?.settings) {
   }
 
   function deleteTaskById(taskId: string) {
-    if (!data) return;
+    const current = dataRef.current;
+    if (!current) return;
     // Check if this is a recurrence occurrence
     const occurrenceMeta = parseRecurrenceOccurrenceId(taskId);
     if (occurrenceMeta) {
@@ -4302,9 +4330,9 @@ if (cached?.data && cached?.settings) {
       if (!realTask) return;
       // Cancel this occurrence instead of deleting the whole task
       const now = workspaceNow().toISOString();
-      void saveData({
-        ...data,
-        tasks: data.tasks.map((task) => {
+      void saveTaskOperation({
+        ...current,
+        tasks: current.tasks.map((task) => {
           if (task.id !== realTask.id) return task;
           const records = task.timelineRecords || [];
           const hasExisting = records.some((record) => matchesOccurrence(record, occurrenceMeta.scheduledDate, occurrenceMeta.scheduledStart));
@@ -4320,29 +4348,26 @@ if (cached?.data && cached?.settings) {
             updatedAt: now,
           };
         }),
-      });
+      }, "unschedule");
       showToast(t(lang, "toast.cancelledPlan"));
       return;
     }
     // Check if this is a timeline record
-    const realTask = recordToTaskMap.get(taskId);
+    const sourceRecordId = resolveTimelineRecordId(taskId);
+    const realTask = current.tasks.find((task) => task.timelineRecords?.some((record) => record.id === sourceRecordId));
     if (realTask) {
-      const sourceRecordId = resolveTimelineRecordId(taskId);
-      // Delete the record and also check if we should delete the whole task
-      deleteTimelineRecord(sourceRecordId);
-      // If the task has no other records and is not a recurring task, delete the whole task
       const remainingRecords = (realTask.timelineRecords || []).filter((r) => r.id !== sourceRecordId);
-      if (remainingRecords.length === 0 && !hasRecurringRule(realTask) && !realTask.plannedForDate) {
-        void saveData({
-          ...dataRef.current!,
-          tasks: dataRef.current!.tasks.filter((t) => t.id !== realTask.id),
-        });
-      }
+      const removeTask = remainingRecords.length === 0 && !hasRecurringRule(realTask) && !realTask.plannedForDate;
+      const nextTasks = removeTask ? current.tasks.filter((task) => task.id !== realTask.id)
+        : current.tasks.map((task) => task.id === realTask.id
+          ? { ...task, timelineRecords: remainingRecords, updatedAt: workspaceNow().toISOString() }
+          : task);
+      void saveTaskOperation({ ...current, tasks: nextTasks }, removeTask ? "delete" : "unschedule");
       showToast(t(lang, "candidate.deletedTask"));
       return;
     }
     // Regular task deletion
-    void saveData({ ...data, tasks: data.tasks.filter((task) => task.id !== taskId) });
+    void saveTaskOperation({ ...current, tasks: current.tasks.filter((task) => task.id !== taskId) }, "delete");
     showToast(t(lang, "candidate.deletedTask"));
   }
 
@@ -4367,7 +4392,7 @@ if (cached?.data && cached?.settings) {
       };
     });
 
-    void saveData({ ...snapshot, tasks: [...snapshot.tasks, ...createdTasks] });
+    void saveTaskOperation({ ...snapshot, tasks: [...snapshot.tasks, ...createdTasks] }, "schedule");
     setScheduleTemplateOpen(false);
 
     if (createdTasks[0]?.timelineRecords?.[0]) {
@@ -4434,7 +4459,7 @@ if (cached?.data && cached?.settings) {
    */
   function showUndoToast(message: string, actionLabel: string, onUndo: () => void) {
     setToast(message);
-    setToastAction({ label: actionLabel, onClick: () => { onUndo(); dismissToast(); } });
+    setToastAction({ label: actionLabel, onClick: () => { dismissToast(); onUndo(); } });
     if (toastTimerRef.current) {
       window.clearTimeout(toastTimerRef.current);
     }
@@ -4491,7 +4516,7 @@ if (cached?.data && cached?.settings) {
       projectId: quickProjectId,
     });
     const createdTask: Task = { ...task, plannedForDate: targetDate, executionLane: "candidate", order: Date.now() };
-    void saveData({ ...data, tasks: [...data.tasks, createdTask] });
+    void saveTaskOperation({ ...data, tasks: [...data.tasks, createdTask] }, "create");
     void enrichTaskInBackground(createdTask);
     if (!compactLayout) setQuickTitle("");
     setQuickAddOpen(false);
@@ -5065,7 +5090,7 @@ if (cached?.data && cached?.settings) {
         dueDate: addDays(timelineDate, 1),
         estimatedHours: durationMinutes / 60
       });
-      void saveData({
+      void saveTaskOperation({
         ...data,
         projects: nextProjects,
         tasks: [...data.tasks, {
@@ -5076,7 +5101,7 @@ if (cached?.data && cached?.settings) {
           scheduledStart: undefined,
           scheduledEnd: undefined
         }]
-      });
+      }, "create");
       setQuickSchedule(null);
       showToast(t(lang, "toast.addedToAllDay"));
       return;
@@ -5103,7 +5128,7 @@ if (cached?.data && cached?.settings) {
       estimatedHours: durationMinutes / 60
     });
     const scheduledRecord = createScheduledRecord(task, timelineDate, quickSchedule.startTime, durationMinutes);
-    void saveData({
+    void saveTaskOperation({
       ...data,
       projects: nextProjects,
       tasks: [...data.tasks, {
@@ -5112,7 +5137,7 @@ if (cached?.data && cached?.settings) {
         executionLane: undefined,
         timelineRecords: [scheduledRecord],
       }]
-    });
+    }, "create");
     requestTimelineFocus({ date: timelineDate, startTime: quickSchedule.startTime, taskId: scheduledRecord.id, source: "schedule" });
     setQuickSchedule(null);
     showToast(t(lang, "toast.addedToTimeline"));
@@ -5128,11 +5153,11 @@ if (cached?.data && cached?.settings) {
     const cleanTitle = title.trim();
     const estimatedMinutes = learnedTaskDurationMinutes(cleanTitle, data.tasks, pid || undefined);
     const task = makeSmartTask({ ...defaultForm("task"), title: cleanTitle, projectId: pid, dueDate: addDays(targetDate, 1), estimatedHours: estimatedMinutes / 60 });
-    void saveData({
+    void saveTaskOperation({
       ...data,
       projects: nextProjects,
       tasks: [...data.tasks, { ...task, plannedForDate: targetDate, executionLane: undefined, scheduledDate: targetDate, scheduledStart: undefined, scheduledEnd: undefined }]
-    });
+    }, "create");
     setAllDayQuickAdd(null);
     showToast(t(lang, "toast.allDayTaskAdded"));
   }
@@ -5263,7 +5288,7 @@ if (cached?.data && cached?.settings) {
         updatedAt: now,
       };
     });
-    void saveData({ ...current, tasks: nextTasks });
+    void saveTaskOperation({ ...current, tasks: nextTasks }, "reschedule");
     const dateLabel = date === addDays(today, 1) ? (lang === "zh" ? "明天" : "tomorrow") : shortDate(date);
     showToastWithAction(
       lang === "zh" ? `已安排到${dateLabel} ${startTime}` : `Scheduled for ${dateLabel} at ${startTime}`,
@@ -5536,7 +5561,7 @@ if (cached?.data && cached?.settings) {
     const date = timelineWindowAnchorDate;
     const session = { taskId, subtask, version: mobilePlacementVersion(task), view: timelineView, date: selectedDate, visibleDate: visibleTimelineDate,
       scrollTop: timelineRef.current?.scrollTop || 0, drawerOpen: candidateDrawerOpen };
-    if (!projectManagement && !shelfView) {
+    if (!projectManagement && !shelfView && !taskHistoryOpen) {
       candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
     }
     mobileCommitRef.current = false;
@@ -5733,7 +5758,7 @@ if (cached?.data && cached?.settings) {
     const durationMinutes = endMinutes - startMinutes;
     const task = makeSmartTask({ ...defaultForm("task"), title, projectId: projectId || "", dueDate: addDays(date, 1), estimatedHours: durationMinutes / 60 });
     const scheduledRecord = createScheduledRecord(task, date, startTime, durationMinutes);
-    void saveData({ ...current, tasks: [...current.tasks, { ...task, subtasks, plannedForDate: date, executionLane: undefined, timelineRecords: [scheduledRecord] }] });
+    void saveTaskOperation({ ...current, tasks: [...current.tasks, { ...task, subtasks, plannedForDate: date, executionLane: undefined, timelineRecords: [scheduledRecord] }] }, "create");
     requestTimelineFocus({ date, startTime, taskId: scheduledRecord.id, source: "schedule" });
     revealResizeHandles(scheduledRecord.id);
     setDragCreate(null);
@@ -5948,10 +5973,10 @@ if (cached?.data && cached?.settings) {
           ],
           updatedAt: now,
         };
-    void saveData({
+    void saveTaskOperation({
       ...data,
       tasks: data.tasks.map((item) => item.id === taskId ? updatedTask : item),
-    });
+    }, settings.clearSchedule ? "unschedule" : "schedule");
     if (!settings.clearSchedule && !settings.allDay && options.focusTimeline !== false) {
       requestTimelineFocus({
         date: settings.date,
@@ -6151,10 +6176,8 @@ if (cached?.data && cached?.settings) {
         : task) };
     }
     if (next === current) return;
-    const undo = captureTaskUndo(current, next);
     preserveTimelineViewportOnNextDataChange();
-    void saveData(next);
-    showUndoToast(lang === "zh" ? "已取消这个时间块" : "Time block removed", lang === "zh" ? "撤销" : "Undo", () => undoLastCommit(undo));
+    void saveTaskOperation(next, "unschedule", { toast: lang === "zh" ? "已取消这个时间块" : "Time block removed" });
     setDrag(null);
     setHoverSlot("");
   }
@@ -6170,7 +6193,7 @@ if (cached?.data && cached?.settings) {
   function unscheduleTask(taskId: string) {
     if (!data) return;
     preserveTimelineViewportOnNextDataChange();
-    void saveData({
+    void saveTaskOperation({
       ...data,
       tasks: data.tasks.map((t) =>
         t.id === taskId
@@ -6187,7 +6210,7 @@ if (cached?.data && cached?.settings) {
             }
           : t
       ),
-    });
+    }, "unschedule");
     showToast(t(lang, "toast.movedBackToCandidates"));
     setDrag(null);
     setHoverSlot("");
@@ -6243,7 +6266,7 @@ if (cached?.data && cached?.settings) {
     if (!data) return;
     const sourceRecordId = resolveTimelineRecordId(recordId);
     const now = workspaceNow().toISOString();
-    void saveData({
+    void saveTaskOperation({
       ...data,
       tasks: data.tasks.map((task) => {
         const records = task.timelineRecords;
@@ -6271,7 +6294,7 @@ if (cached?.data && cached?.settings) {
         );
         return { ...task, timelineRecords: updated, updatedAt: now };
       }),
-    });
+    }, "reschedule");
   }
 
   function moveEventOccurrence(occurrenceId: string, newStart: string, newDate?: string) {
@@ -6715,10 +6738,7 @@ if (cached?.data && cached?.settings) {
         }),
       };
       showToast(t(lang, "toast.durationAdjusted"));
-      // Direct setData for immediate visual update, saveData for persistence
-      dataRef.current = nextData;
-      setData(nextData);
-      saveData(nextData);
+      void saveTaskOperation(nextData, "reschedule");
       setResizePreview(null);
       cleanup();
     };
@@ -6999,10 +7019,10 @@ if (cached?.data && cached?.settings) {
         const updatedTask = data.tasks.find((task) => task.id === editingId);
         if (!updatedTask) return;
         const enrichedCandidate = buildUpdatedTask(updatedTask);
-        void saveData({
+        void saveTaskOperation({
           ...data,
           tasks: data.tasks.map((task) => task.id === editingId ? enrichedCandidate : task)
-        });
+        }, "edit");
         void enrichTaskInBackground(enrichedCandidate);
       } else if (addType === "project") {
         void saveData({ ...data, projects: data.projects.map((project) => project.id === editingId ? { ...project, title: form.title.trim(), dueDate: form.dueDate || undefined, category: form.category, color: form.projectColor || categories[form.category].color, notes: form.details, importance: form.importance, updatedAt: now } : project) });
@@ -7024,7 +7044,7 @@ if (cached?.data && cached?.settings) {
           : mobileQuickAddDate
             ? { ...task, plannedForDate: form.dueDate || mobileQuickAddDate, scheduledDate: form.dueDate || mobileQuickAddDate, executionLane: undefined }
             : task;
-      void saveData({ ...data, tasks: [...data.tasks, createdTask] });
+      void saveTaskOperation({ ...data, tasks: [...data.tasks, createdTask] }, "create");
       void enrichTaskInBackground(createdTask);
     } else if (addType === "project") {
       void saveData({ ...data, projects: [...data.projects, makeProject(form)] });
@@ -8469,9 +8489,8 @@ if (cached?.data && cached?.settings) {
         updatedAt: workspaceNow().toISOString(),
       } as Task;
       const updatedTasks = [...currentData.tasks, newTask];
-      await saveData({ ...currentData, version: currentData.version || 1, tasks: updatedTasks });
-      showUndoToast(`${t(lang, "toast.created").replace("%TITLE%", action.title)}`, t(lang, "toast.undo"), () => {
-        void saveData({ ...currentData, version: currentData.version || 1, tasks: currentData.tasks });
+      await saveTaskOperation({ ...currentData, version: currentData.version || 1, tasks: updatedTasks }, "create", {
+        toast: t(lang, "toast.created").replace("%TITLE%", action.title),
       });
       // Mark action as accepted
       if (messageId) removeAiMessageAction(messageId, action, actionIndex);
@@ -8494,9 +8513,8 @@ if (cached?.data && cached?.settings) {
           ? { ...t, estimatedHours: duration / 60, projectId: typeof a.projectId === "string" ? a.projectId || undefined : t.projectId, plannedForDate: action.date, executionLane: undefined, scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, timelineRecords: applyScheduledTimelineRecord(t.timelineRecords || [], createScheduledRecord(t, action.date!, start, duration), record?.id), updatedAt: workspaceNow().toISOString() }
           : t
       );
-      await saveData({ ...currentData, version: currentData.version || 1, tasks: updatedTasks });
-      showUndoToast(`${t(lang, "toast.scheduledToDate").replace("%DATE%", action.date)}`, t(lang, "toast.undo"), () => {
-        void saveData({ ...currentData, version: currentData.version || 1, tasks: currentData.tasks });
+      await saveTaskOperation({ ...currentData, version: currentData.version || 1, tasks: updatedTasks }, "schedule", {
+        toast: t(lang, "toast.scheduledToDate").replace("%DATE%", action.date),
       });
     }
     // Dismiss the action card
@@ -8775,9 +8793,10 @@ if (cached?.data && cached?.settings) {
     });
     tasksAfter.push(newTask);
 
-    const undo = captureTaskUndo(data, { ...data, tasks: tasksAfter });
-
-    void saveData({ ...data, tasks: tasksAfter, aiProfile: profileWithFeedback(data, "scheduleAccepts") });
+    void saveTaskOperation({ ...data, tasks: tasksAfter, aiProfile: profileWithFeedback(data, "scheduleAccepts") }, "schedule", {
+      title: newTask.title,
+      toast: t(lang, "toast.adoptedOne"),
+    });
     setSchedulePreviews((current) => {
       const next = current.filter((p) => p.id !== previewId);
       if (next.length === 0) setAutoScheduleState("idle");
@@ -8789,7 +8808,6 @@ if (cached?.data && cached?.settings) {
       taskId: preview.clonedTaskId,
       source: "autoschedule",
     });
-    showUndoToast(t(lang, "toast.adoptedOne"), t(lang, "toast.undo"), () => undoLastCommit(undo));
   }
 
   /**
@@ -8825,8 +8843,6 @@ if (cached?.data && cached?.settings) {
     });
     tasksAfter.push(...toAdd);
 
-    const undo = captureTaskUndo(data, { ...data, tasks: tasksAfter });
-
     // DEV invariant check
     if (import.meta.env.DEV) {
       const expectedAdd = toAdd.length;
@@ -8843,7 +8859,10 @@ if (cached?.data && cached?.settings) {
       });
     }
 
-    void saveData({ ...data, tasks: tasksAfter, aiProfile: profileWithFeedback(data, "scheduleAccepts", toAdd.length) });
+    void saveTaskOperation({ ...data, tasks: tasksAfter, aiProfile: profileWithFeedback(data, "scheduleAccepts", toAdd.length) }, "schedule", {
+      titles: toAdd.map(({ title }) => title),
+      toast: t(lang, "toast.adoptedMany").replace("%COUNT%", String(toAdd.length)),
+    });
     setSchedulePreviews([]);
     setAutoScheduleState("idle");
     if (toAdd[0]?.scheduledDate) {
@@ -8854,24 +8873,6 @@ if (cached?.data && cached?.settings) {
         source: "autoschedule",
       });
     }
-    showUndoToast(
-      `${t(lang, "toast.adoptedMany").replace("%COUNT%", String(toAdd.length))}`,
-      t(lang, "toast.undo"),
-      () => undoLastCommit(undo),
-    );
-  }
-
-  /**
-   * Undo the most recent auto-schedule commit. Removes committed tasks from
-   * `tasks` and restores the source tasks' `plannedForDate` so they reappear
-   * in 任务. Does NOT touch any tasks the user manually created after
-   * the commit (those have a different id, not in committedTaskIds).
-   */
-  function undoLastCommit(undo: TaskUndo) {
-    const current = dataRef.current;
-    if (!current) return;
-    void saveData(undoTaskChanges(current, undo, workspaceNow().toISOString()));
-    showToast(t(lang, "toast.undone"));
   }
 
   function previewConflict(preview: SchedulePreview) {
@@ -8897,6 +8898,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function selectShelfView(id: string) {
+    setTaskHistoryOpen(false);
     setShelfViewId(id);
     setShelfMenuOpen(false);
     shelfTitleRef.current?.focus({ preventScroll: true });
@@ -9245,6 +9247,7 @@ if (cached?.data && cached?.settings) {
     onTimelineDrop: commitShelfTimelineDrop,
   };
   const shelfTitle = term(lang, "todayCandidates");
+  const taskHistoryLabel = lang === "zh" ? "操作历史" : "Activity history";
   const switchViewsLabel = lang === "zh" ? "切换左浮栏视图" : "Switch task views";
   const manageProjectsLabel = lang === "zh" ? "管理项目" : "Manage projects";
   const metricsLabel = lang === "zh" ? "指标" : "Metrics";
@@ -9498,14 +9501,14 @@ if (cached?.data && cached?.settings) {
                 </button>
               ) : (
                 <button ref={shelfTitleRef} type="button" className="df-shelf-title-button" aria-label={switchViewsLabel} aria-expanded={shelfMenuOpen} onClick={() => setShelfMenuOpen((open) => !open)}>
-                  <span>{shelfView ? candidateViewName(shelfView, lang) : shelfTitle}</span><UiChevronDownIcon size={15} />
+                  <span>{taskHistoryOpen ? taskHistoryLabel : shelfView ? candidateViewName(shelfView, lang) : shelfTitle}</span><UiChevronDownIcon size={15} />
                 </button>
               )}
               actions={<>
                 {projectManagement ? <>
                   <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />
                   {!productDemo && <IconButton icon={<UiPlusIcon size={17} />} label={lang === "zh" ? "新建项目" : "New project"} onClick={() => openAdd("project")} />}
-                </> : <>
+                </> : !taskHistoryOpen && <>
                 <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />
                 <IconButton className={`df-icon-action df-candidate-header-icon${showCompletedCandidates ? " active" : ""}`} icon={<UiListChecksIcon size={17} />} label={t(lang, "candidate.showCompleted")} aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)} />
                 {!settings.hideAi && (
@@ -9549,16 +9552,22 @@ if (cached?.data && cached?.settings) {
             }
             />
             {!projectManagement && <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu">
-              <Button variant="ghost" aria-pressed={!shelfView} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
+              <Button variant="ghost" aria-pressed={!shelfView && !taskHistoryOpen} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
               {treeView && <Button variant="ghost" onClick={openProjectManagement}><CandidateViewIcon view={treeView} />{candidateViewName(treeView, lang)}</Button>}
               {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id} onClick={() => selectShelfView(view.id)}><CandidateViewIcon view={view} />{candidateViewName(view, lang)}</Button>)}
+              <Button variant="ghost" aria-pressed={taskHistoryOpen} onClick={() => {
+                setShelfViewId("");
+                setTaskHistoryOpen(true);
+                setShelfMenuOpen(false);
+                shelfTitleRef.current?.focus({ preventScroll: true });
+              }}><UiHistoryIcon />{taskHistoryLabel}</Button>
             </AnchoredNarrowMenu>}
             {candidateDropActive && (
               <div className="df-candidate-return-hint" role="status">
                 {lang === "zh" ? "松手后移回任务" : "Release to return to Tasks"}
               </div>
             )}
-            {!projectManagement && !shelfView && compactLayout && compactExecuteView === "tasks" && scheduleGuideOpen && visibleCandidates.length > 0 && (
+            {!projectManagement && !shelfView && !taskHistoryOpen && compactLayout && compactExecuteView === "tasks" && scheduleGuideOpen && visibleCandidates.length > 0 && (
               <aside className="df-schedule-drop-guide" aria-label={lang === "zh" ? "手机端拖拽排程说明" : "Mobile drag-to-schedule guide"}>
                 <div className="df-schedule-drop-guide-content">
                   <p className="df-schedule-drop-guide-copy">
@@ -9593,7 +9602,7 @@ if (cached?.data && cached?.settings) {
                 </details>}
               </div>
             )}
-            <Activity mode={projectManagement || shelfView ? "hidden" : "visible"}>
+            <Activity mode={projectManagement || shelfView || taskHistoryOpen ? "hidden" : "visible"}>
             <div className="df-candidate-list" data-shelf-scroll="candidates" inert={productAiPresentation && demoPresetBusy ? true : undefined}>
               {visibleCandidates.length === 0 && !hasActiveHabits ? (
                 <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.emptyTitle")}</strong><span>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "在右侧查看安排，或试试改期与撤回。" : "Explore the timeline, reschedule a task, or undo.") : t(lang, "candidate.emptyDesc")}</span>{compactLayout && !productAiPresentation && <img className="df-empty-add-guidance" src="/empty-add-guidance-v2.png" alt="" aria-hidden="true" />}</div>
@@ -9728,6 +9737,9 @@ if (cached?.data && cached?.settings) {
                 </Suspense>
               </div>
             </Activity>}
+            {taskHistoryOpen && !projectManagement && <Suspense fallback={<div className="df-shelf-loading" role="status">{lang === "zh" ? "正在打开…" : "Opening…"}</div>}>
+              <TaskOperationHistory operations={taskOperations} lang={lang} now={workspaceNow()} label={taskHistoryLabel} onUndo={undoTaskOperation} />
+            </Suspense>}
             {projectManagementVisited && <Activity mode={projectManagement ? "visible" : "hidden"}>
               <div className="df-shelf-scroll" data-shelf-scroll="projects">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>

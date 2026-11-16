@@ -2,6 +2,12 @@
 
 ## 2026-11-16
 
+### 1.7.0 Beta 23
+
+#### 新增
+
+- 任务视图菜单新增「操作历史」，按时间显示本次使用中的任务创建、编辑、完成、删除与排程操作，可在提示消失后逐条撤销。撤销时保留之后的其他修改。
+
 ### 1.7.0 Beta 22
 
 #### 新增
@@ -620,6 +626,12 @@
 # NavoPath Changelog
 
 ## 2026-11-16
+
+### 1.7.0 Beta 23
+
+#### Added
+
+- Open Activity history from the task view menu to review when tasks were created, edited, completed, deleted, or scheduled during this session. Undo individual actions after their notifications expire while preserving later edits.
 
 ### 1.7.0 Beta 22
 
