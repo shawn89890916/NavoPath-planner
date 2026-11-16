@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-11-16
+
+### 新增
+
+- 登录页支持通过注册邮箱重置密码。
+
 ## 2026-11-06
 
 ### 新增
@@ -481,6 +487,12 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-16
+
+### Added
+
+- Reset your password using your registered email from the sign-in screen.
 
 ## 2026-11-06
 

@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { createAuthSessionStorage } from "./authSessionStorage";
+import { isPasswordRecoveryCallback } from "./passwordRecovery";
 import { configureExtensionTransport, purgePrivatePackages } from "./extensions/transport";
 import type { AiAction, CalendarFeedTokenMetadata, ExternalCalendarOccurrence, ExternalCalendarSource, McpTokenMetadata, PlannerApi, PlannerData, Settings } from "./types";
 import { fallbackData, normalizeData } from "./browserFallback";
@@ -126,6 +127,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
   const authSessionStorage = createAuthSessionStorage(desktopStorage ?? window.localStorage, window.sessionStorage);
   const upstreamOrigin = new URL(supabaseUrl).origin;
   const pageUrl = new URL(window.location.href);
+  const recoveryCallback = isPasswordRecoveryCallback(pageUrl);
   const useSameOriginProxy = pageUrl.protocol === "https:"
     && (pageUrl.hostname === "navopath.com"
       || pageUrl.hostname.endsWith(".navopath-xiaoyang.pages.dev"));
@@ -149,14 +151,15 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
   };
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      storageKey: authStorageKey,
-      storage: authSessionStorage,
+      persistSession: !recoveryCallback,
+      autoRefreshToken: !recoveryCallback,
+      storageKey: recoveryCallback ? `${authStorageKey}-recovery` : authStorageKey,
+      storage: recoveryCallback ? undefined : authSessionStorage,
     },
     global: { fetch: cloudFetch },
   });
   configureExtensionTransport(supabase);
+  let recoveryVerified = false;
   let cachedUser: User | null | undefined;
   // Consent uses the direct Auth URL because the same-origin proxy does not
   // forward OAuth endpoints. Share session storage with the planner client.
@@ -533,26 +536,47 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       await supabase.auth.signOut({ scope: "local" });
     },
 
-    sendPasswordResetEmail: async (email: string) => {
+    sendPasswordResetEmail: async (email) => {
+      const origin = window.desktopApi || !["https:", "http:"].includes(pageUrl.protocol)
+        ? "https://navopath.com"
+        : pageUrl.origin;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: new URL("/app?auth_callback=1", window.location.origin).toString(),
+        redirectTo: new URL("/app?auth_callback=recovery", origin).toString(),
       });
-      if (error) throw new Error(authErrorMessage(error.message));
-      return { message: "密码重置邮件已发送，请检查收件箱。" };
+      if (error && error.code !== "user_not_found") throw error;
     },
 
-    resetPassword: async (newPassword: string) => {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !sessionData.session) {
-        return { success: false, message: "重置链接已过期或无效，请重新发起密码重置。" };
+    completePasswordRecovery: async () => {
+      if (!recoveryCallback) return false;
+      const fragment = new URLSearchParams(pageUrl.hash.slice(1));
+      try {
+        if (pageUrl.searchParams.has("error") || fragment.has("error") ||
+            pageUrl.searchParams.has("error_code") || fragment.has("error_code")) return false;
+        const tokenHash = pageUrl.searchParams.get("token_hash");
+        if (tokenHash && pageUrl.searchParams.get("type") === "recovery") {
+          const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
+          recoveryVerified = !error && Boolean(data.session);
+        } else if (fragment.get("type") === "recovery" && fragment.get("access_token") && fragment.get("refresh_token")) {
+          // Supabase verifies the implicit callback during initialization.
+          const { data, error } = await supabase.auth.getSession();
+          recoveryVerified = !error && Boolean(data.session);
+        }
+        return recoveryVerified;
+      } finally {
+        window.history.replaceState(null, "", "/app?auth_callback=recovery");
       }
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) throw new Error(authErrorMessage(error.message));
-      return { success: true, message: "密码已成功更改。" };
     },
 
-    clearAuthCallbackUrl: () => {
-      clearAuthCallbackUrl();
+    resetPassword: async (newPassword) => {
+      if (!recoveryVerified) return false;
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session) return false;
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error?.status === 401 || error?.code === "session_not_found") return false;
+      if (error) throw error;
+      recoveryVerified = false;
+      await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+      return true;
     },
 
     getData: async () => {

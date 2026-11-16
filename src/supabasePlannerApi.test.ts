@@ -70,6 +70,61 @@ beforeEach(() => {
 });
 
 describe("createSupabasePlannerApi", () => {
+  describe("password recovery", () => {
+    const user = { id: "recovery-user", email: "user@example.invalid" };
+
+    async function createApi(href: string, currentUser = user) {
+      window.location.href = href;
+      const auth = {
+        getSession: vi.fn().mockResolvedValue({ data: { session: { user: currentUser } }, error: null }),
+        onAuthStateChange: vi.fn(),
+        resetPasswordForEmail: vi.fn().mockResolvedValue({ error: null }),
+        updateUser: vi.fn().mockResolvedValue({ error: null }),
+        signOut: vi.fn().mockResolvedValue({ error: null }),
+        verifyOtp: vi.fn().mockResolvedValue({ data: { session: { user } }, error: null }),
+      };
+      createClientMock.mockReturnValue({ auth });
+      const { createSupabasePlannerApi } = await import("./supabasePlannerApi");
+      return { auth, api: createSupabasePlannerApi("https://supabase.test", "anon") };
+    }
+
+    it("sends packaged desktop recovery emails to the HTTPS app", async () => {
+      const { api, auth } = await createApi("file:///C:/NavoPath/dist/index.html");
+      await api.sendPasswordResetEmail?.(user.email);
+      expect(auth.resetPasswordForEmail).toHaveBeenCalledWith(user.email, {
+        redirectTo: "https://navopath.com/app?auth_callback=recovery",
+      });
+    });
+
+    it.each([
+      "https://navopath.test/app",
+      "https://navopath.test/app?auth_callback=recovery",
+      "https://navopath.test/app?auth_callback=recovery#error=access_denied&error_code=otp_expired",
+      "https://navopath.test/app?auth_callback=recovery#type=signup&access_token=stub&refresh_token=stub",
+    ])("requires a verified recovery link even when a user is signed in (%s)", async (href) => {
+      const { api, auth } = await createApi(href, { id: "regular-user", email: "regular@example.invalid" });
+      expect(await api.completePasswordRecovery?.()).toBe(false);
+      expect(await api.resetPassword?.("NewPassword1")).toBe(false);
+      expect(auth.updateUser).not.toHaveBeenCalled();
+    });
+
+    it("isolates a recovery session, clears callback credentials, and signs out after updating", async () => {
+      const { api, auth } = await createApi("https://navopath.test/app?auth_callback=recovery&token_hash=stub&type=recovery");
+      expect(createClientMock.mock.calls[0][2].auth).toMatchObject({
+        storageKey: "sb-supabase-auth-token-recovery",
+        persistSession: false,
+        autoRefreshToken: false,
+      });
+      expect(await api.completePasswordRecovery?.()).toBe(true);
+      expect(auth.verifyOtp).toHaveBeenCalledWith({ token_hash: "stub", type: "recovery" });
+      expect(window.history.replaceState).toHaveBeenCalledWith(null, "", "/app?auth_callback=recovery");
+      expect(await api.resetPassword?.("NewPassword1")).toBe(true);
+      expect(auth.updateUser).toHaveBeenCalledExactlyOnceWith({ password: "NewPassword1" });
+      expect(auth.signOut).toHaveBeenCalledWith({ scope: "local" });
+      expect(await api.resetPassword?.("AnotherPassword1")).toBe(false);
+    });
+  });
+
   it("preserves newer cloud profile details when another setting changes", async () => {
     const user = { id: "user_1", email: "user@example.com" };
     const stale = profileRow(user.id, "Cloud", 1);

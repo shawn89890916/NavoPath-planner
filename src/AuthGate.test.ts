@@ -5,7 +5,7 @@ vi.mock("./WorkspacePresentation", () => ({ ProductIcon: () => null }));
 import AuthGate from "./AuthGate";
 import { t } from "./i18n";
 
-const props = { busy: false, error: "", notice: { type: "confirm-email" as const, email: "test@example.invalid" }, onSubmit: vi.fn(async () => {}), onResend: vi.fn(async () => {}), onContinueAfterConfirm: vi.fn(async () => {}) };
+const props = { busy: false, error: "", notice: { type: "confirm-email" as const, email: "test@example.invalid" }, onSubmit: vi.fn(async () => {}), onResend: vi.fn(async () => {}), onContinueAfterConfirm: vi.fn(async () => {}), onForgotPassword: vi.fn(async () => {}) };
 describe("authentication copy", () => {
   beforeAll(() => vi.stubGlobal("location", { protocol: "https:" }));
   afterAll(() => vi.unstubAllGlobals());
@@ -13,6 +13,7 @@ describe("authentication copy", () => {
     const html = renderToStaticMarkup(createElement(AuthGate, { ...props, lang: "en" }));
     expect(html).toContain(t("en", "auth.emailSent"));
     expect(html).toContain("Privacy Policy");
+    expect(html).toContain("Forgot password?");
     expect(html).not.toMatch(/[\u3400-\u9fff]/);
     expect(html).toMatch(/class="df-auth-submit"[^>]*disabled/);
     expect(html).not.toMatch(/name="privacy-consent"[^>]*checked/);

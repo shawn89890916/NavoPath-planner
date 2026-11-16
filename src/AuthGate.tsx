@@ -2,6 +2,8 @@ import { useState } from "react";
 import { t, type Language } from "./i18n";
 import { ProductIcon } from "./WorkspacePresentation";
 import { PrivacyConsent } from "./components/PrivacyConsent";
+import PasswordResetRequest from "./components/PasswordResetRequest";
+import { Button } from "./components/UiPrimitives";
 export default function AuthGate(props: {
   lang: Language;
   busy: boolean;
@@ -10,8 +12,10 @@ export default function AuthGate(props: {
   onSubmit: (email: string, password: string, displayName: string, intent: "signin" | "signup", privacyAccepted: boolean) => Promise<void>;
   onResend: (email: string) => Promise<void>;
   onContinueAfterConfirm: (email: string) => Promise<void>;
+  onForgotPassword: (email: string) => Promise<void>;
 }) {
   const [intent, setIntent] = useState<"signin" | "signup">("signin");
+  const [forgotPassword, setForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,6 +34,7 @@ export default function AuthGate(props: {
             <span>{label("tagline")}</span>
           </div>
         </div>
+        {forgotPassword ? <PasswordResetRequest lang={props.lang} email={email} onRequest={props.onForgotPassword} onBack={() => setForgotPassword(false)} /> : <>
         <div className="df-auth-tabs">
           <button className={intent === "signin" ? "active" : ""} onClick={() => { if (intent !== "signin") setPrivacyAccepted(false); setIntent("signin"); }}>{label("login")}</button>
           <button className={intent === "signup" ? "active" : ""} onClick={() => { if (intent !== "signup") setPrivacyAccepted(false); setIntent("signup"); }}>{label("register")}</button>
@@ -44,6 +49,7 @@ export default function AuthGate(props: {
           <label>{label("password")}<input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={intent === "signin" ? "current-password" : "new-password"} minLength={6} required /></label>
           {intent === "signup" && <label>{label("confirmPassword")}<input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" minLength={6} required /></label>}
           <label className="df-auth-check"><input type="checkbox" checked={showPassword} onChange={(event) => setShowPassword(event.target.checked)} />{label("showPassword")}</label>
+          {intent === "signin" && <Button variant="ghost" disabled={props.busy} onClick={() => setForgotPassword(true)}>{label("forgotPassword")}</Button>}
           <PrivacyConsent lang={props.lang} checked={privacyAccepted} onChange={setPrivacyAccepted} disabled={props.busy} />
           {mismatch && <p className="df-auth-error">{label("passwordMismatch")}</p>}
           {props.error && <p className="df-auth-error">{props.error}</p>}
@@ -53,6 +59,7 @@ export default function AuthGate(props: {
           </button>
         </form>
         <p className="df-auth-note">{label("note")}</p>
+        </>}
       </section>
     </main>
   );

@@ -32,6 +32,7 @@ import { autoScheduleTasks, type UnscheduledTask } from "./autoSchedule";
 import { AI_INFERENCE_MODEL_VERSION, buildAiProfile, learnedTaskDurationMinutes, predictTaskIntelligence } from "./aiPersonalization";
 import { TaskDragLayer, UnifiedDragOverlay, type UnifiedDragSnapshot } from "./unifiedDrag";
 import { installBrowserFallback, forceLocalPreviewMode } from "./browserFallback";
+import { isPasswordRecoveryCallback } from "./passwordRecovery";
 import { getVisibleDays, pointerToDateTime, timeBlockTop, timeBlockHeight, HOUR_HEIGHT, timelineHourSlots } from "./timelineGeometry";
 import { t, detectSystemLanguage, viewLabel, weekdayName } from "./i18n";
 import { term } from "./terminology";
@@ -542,6 +543,12 @@ function waitForPlannerApi() {
   });
 }
 
+async function sendPasswordResetEmail(email: string) {
+  const api = await waitForPlannerApi();
+  if (!api.sendPasswordResetEmail) throw new Error("Password reset unavailable");
+  await api.sendPasswordResetEmail(email);
+}
+
 function bootstrapCacheKey(userId?: string) {
   return `${LOCAL_BOOTSTRAP_PREFIX}:${userId || "local"}`;
 }
@@ -860,41 +867,6 @@ function CloudWorkspaceError(props: {
   );
 }
 
-function ResetPasswordForm({ lang, busy, error, onReset }: { lang: Language; busy: boolean; error: string; onReset: (newPassword: string) => Promise<void> }) {
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const isValid = password.length >= 8 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
-  const mismatch = password.length > 0 && confirm.length > 0 && password !== confirm;
-  let pwHint = "";
-  if (password.length > 0) {
-    if (password.length < 8) pwHint = `✕ ${t(lang, "auth.passwordStrength")}`;
-    else if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) pwHint = `✕ ${t(lang, "auth.passwordStrength")}`;
-    else pwHint = "✓ OK";
-  }
-
-  return (
-    <div className="landing" lang={lang}>
-      <div className="landing-auth-overlay" style={{ position: "fixed", display: "flex" }}>
-        <section className="landing-auth-card" style={{ maxWidth: 400 }}>
-          <ProductIcon /><span className="landing-auth-label">NavoPath</span>
-          <h2>{t(lang, "auth.setNewPassword")}</h2>
-          <p style={{ fontSize: 13, color: "var(--l-muted)", marginBottom: 12 }}>{t(lang, "auth.setNewPasswordDesc")}</p>
-          <form onSubmit={async (event) => { event.preventDefault(); if (isValid && !mismatch) await onReset(password); }}>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t(lang, "auth.newPassword")} minLength={8} required autoFocus />
-            <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t(lang, "auth.confirmNewPassword")} minLength={8} required />
-            {password.length > 0 && <p style={{ fontSize: 11, margin: "-4px 0 4px", color: isValid ? "#22c55e" : "var(--l-muted)" }}>{pwHint}</p>}
-            {mismatch && <p className="landing-auth-error">{t(lang, "auth.passwordMismatch")}</p>}
-            {error && <p className="landing-auth-error">{error}</p>}
-            <button className="landing-button primary full" disabled={busy || !isValid || mismatch}>
-              {busy ? t(lang, "auth.processing") : t(lang, "auth.setNewPassword")}
-            </button>
-          </form>
-        </section>
-      </div>
-    </div>
-  );
-}
-
 type OnboardingStep = NonNullable<Settings["onboardingStep"]>;
 
 function OnboardingGuide(props: {
@@ -1057,7 +1029,6 @@ function App() {
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authNotice, setAuthNotice] = useState<AuthNotice>(null);
-  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [mode, setModeState] = useState<Mode>("execute");
   const changeWorkspaceMode = useMotionSelection<Mode>(mode, (next) => {
     setYearOverviewOpen(false);
@@ -2299,27 +2270,6 @@ if (cached?.data && cached?.settings) {
       || url.searchParams.has("code")
       || url.searchParams.has("token_hash")
       || /access_token|error_description|type=signup/i.test(url.hash);
-    const isRecovery = /type=recovery/i.test(url.hash);
-    if (isRecovery) {
-      setIsRecoveryMode(true);
-      // Recovery flow: Supabase client auto-processes the recovery hash and sets the session.
-      // Do NOT call completeEmailConfirmation() -- that's for sign-up email verification.
-      // Just load initial state; authState.user will be set from the recovery session,
-      // and isRecoveryMode will trigger ResetPasswordForm.
-      (async () => {
-        await loadInitial();
-        // Clean up the URL hash (access token, recovery params) for security / clean URL
-        try {
-          const api = await waitForPlannerApi();
-          await api.clearAuthCallbackUrl?.();
-        } catch { /* non-critical */ }
-      })().catch((error) => {
-        setAuthBusy(false);
-        setIsRecoveryMode(false);
-        setAuthError(error instanceof Error ? error.message : String(error));
-      });
-      return;
-    }
     const initialize = async () => {
       if (hasConfirmationCallback) {
         setAuthBusy(true);
@@ -2409,43 +2359,6 @@ if (cached?.data && cached?.settings) {
       setAuthError(confirmation?.message || (lang === "zh" ? "尚未检测到邮箱验证。请点击最新确认邮件中的链接，或验证后直接使用邮箱与密码登录。" : "Email confirmation not detected yet. Please click the link in your latest confirmation email, or sign in after confirming."));
     } catch (error) {
       setAuthNotice({ type: "confirm-email", email });
-      setAuthError(error instanceof Error ? error.message : String(error));
-    } finally {
-      setAuthBusy(false);
-    }
-  }
-
-  async function handleForgotPassword(email: string) {
-    setAuthBusy(true);
-    setAuthError("");
-    try {
-      const api = await waitForPlannerApi();
-      await api.sendPasswordResetEmail?.(email);
-      // Success: LandingPage transitions to forgotSent UI
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      setAuthError(msg);
-      throw error; // re-throw so LandingPage can stay in forgot view
-    } finally {
-      setAuthBusy(false);
-    }
-  }
-
-  async function handleResetPassword(newPassword: string) {
-    setAuthBusy(true);
-    setAuthError("");
-    try {
-      const api = await waitForPlannerApi();
-      const response = await api.resetPassword?.(newPassword);
-      if (response?.success) {
-        setIsRecoveryMode(false);
-        showToast(response?.message || (lang === "zh" ? "密码已更新，请使用新密码登录。" : "Password successfully updated. Please sign in with your new password."));
-        await handleSignOut();
-      } else {
-        setAuthError(response?.message || (lang === "zh" ? "重置链接已失效或过期，请重新申请密码重置。" : "Reset link has expired or is invalid. Please request a new password reset."));
-        setIsRecoveryMode(false);
-      }
-    } catch (error) {
       setAuthError(error instanceof Error ? error.message : String(error));
     } finally {
       setAuthBusy(false);
@@ -9040,15 +8953,12 @@ if (cached?.data && cached?.settings) {
         )}
         onResend={resendConfirmation}
         onContinueAfterConfirm={continueAfterConfirm}
+        onForgotPassword={sendPasswordResetEmail}
       /></Suspense>;
     }
     return <Suspense fallback={<ExecuteSkeleton />}>
-      <LandingPageLazy initialShowAuth={isWorkspaceRoute} signedIn={Boolean(authState?.user)} busy={authBusy} error={authError} notice={authNotice} onLogin={handleAuthSubmit} onResend={resendConfirmation} onContinueAfterConfirm={continueAfterConfirm} onForgotPassword={handleForgotPassword} />
+      <LandingPageLazy initialShowAuth={isWorkspaceRoute} signedIn={Boolean(authState?.user)} busy={authBusy} error={authError} notice={authNotice} onLogin={handleAuthSubmit} onResend={resendConfirmation} onContinueAfterConfirm={continueAfterConfirm} onForgotPassword={sendPasswordResetEmail} />
     </Suspense>;
-  }
-
-  if (authState?.mode === "cloud" && authState.user && isRecoveryMode) {
-    return <ResetPasswordForm lang={lang} busy={authBusy} error={authError} onReset={handleResetPassword} />;
   }
 
   const unusableCloudCache = !data || !settings
@@ -13339,8 +13249,12 @@ const routeSearchParams = new URLSearchParams(window.location.search);
 const isCompactWindowRoute = routeSearchParams.get("compactWindow") === "1";
 const isWidgetPopoverRoute = routeSearchParams.get("widgetPopover") === "1";
 const isWidgetRoute = routeSearchParams.get("widget") === "1";
+const PasswordRecoveryPage = lazy(() => import("./PasswordRecoveryPage"));
+const isRecoveryCallback = isPasswordRecoveryCallback(new URL(window.location.href));
 root.render(
-  isWidgetPopoverRoute
+  isRecoveryCallback
+    ? <Suspense fallback={<ExecuteSkeleton />}><PasswordRecoveryPage lang={detectSystemLanguage()} getApi={waitForPlannerApi} onRequest={sendPasswordResetEmail} /></Suspense>
+    : isWidgetPopoverRoute
     ? <Suspense fallback={null}><WidgetPopoverAppLazy /></Suspense>
     : isWidgetRoute
     ? <Suspense fallback={null}><WidgetAppLazy /></Suspense>
