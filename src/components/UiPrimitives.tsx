@@ -2,13 +2,17 @@ import React, { forwardRef, useEffect, useRef, useState, type ButtonHTMLAttribut
 import { createPortal } from "react-dom";
 import { useMotionPresence } from "../useMotionPresence";
 import { useModalFocus } from "../useModalFocus";
-import { UiCloseIcon, UiMoreIcon } from "./UiIcons";
+import { UiCloseIcon, UiMoreIcon, UiReturnIcon } from "./UiIcons";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "text";
 
 export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; pending?: boolean }>(function Button({ variant = "secondary", pending = false, disabled, className, type = "button", ...props }, ref) {
   return <button ref={ref} type={type} className={["ui-button", `ui-button--${variant}`, className || ""].filter(Boolean).join(" ")} {...props} disabled={disabled || pending} aria-busy={pending || undefined} />;
 });
+
+export function UndoButton({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <Button variant="text" {...props}><UiReturnIcon />{children}</Button>;
+}
 
 export const IconButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { icon: ReactNode; label: string }>(function IconButton({ icon, label, className, title = label, type = "button", ...props }, ref) {
   return <button ref={ref} type={type} className={["ui-icon-button", className || ""].filter(Boolean).join(" ")} aria-label={label} title={title} {...props}>{icon}</button>;

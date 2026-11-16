@@ -13,7 +13,7 @@ import { normalizeTaskCheckTone } from "./utils/productivityModel";
 import { addDays, addMonths, hasRecurringRule } from "./utils/recurrence";
 import { countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockDragState } from "./components/TaskBlock";
-import { CloseButton, IconButton } from "./components/UiPrimitives";
+import { Button, CloseButton, IconButton, UndoButton } from "./components/UiPrimitives";
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
 import { UiCalendarCheckIcon, UiCalendarClockIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiReturnIcon, UiTrashIcon } from "./components/UiIcons";
 import { clockTimeSpanMinutes } from "./utils/timelineRecords";
@@ -387,7 +387,7 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
             {message.agent.applied.length > 0 && message.agent.decisionState !== "undone" && <div className="df-agent-applied executed">
               <strong>{lang === "zh" ? `已自动执行 ${message.agent.applied.length} 项` : `${message.agent.applied.length} action(s) applied`}</strong>
               {message.agent.applied.map((action) => <span key={action.commandId}>{action.title} · {action.operation}</span>)}
-              <button type="button" className="df-ai-undo-action" disabled={busy} onClick={() => onUndoAgent(message.id)} aria-label={lang === "zh" ? "撤回本轮 AI 执行" : "Undo this AI run"}>{lang === "zh" ? "撤回本轮操作" : "Undo this run"}</button>
+              <UndoButton disabled={busy} onClick={() => onUndoAgent(message.id)} aria-label={lang === "zh" ? "撤销本轮 AI 操作" : "Undo this AI run"}>{t(lang, "toast.undo")}</UndoButton>
             </div>}
             {message.agent.pending.length > 0 && message.agent.decisionState === "pending" && <div className="df-agent-confirm-card">
               <header><strong>{lang === "zh" ? "需要确认" : "Confirmation required"}</strong><small>{lang === "zh" ? `将影响 ${message.agent.pending.length} 个操作` : `${message.agent.pending.length} operation(s)`}</small></header>
@@ -482,8 +482,8 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
           {message.actionState && message.actionState !== "pending" && !(embedded && demoControls && message.actionState === "adopted") && <div className={`df-ai-action-outcome ${message.actionState}`}>
           <span>{message.actionState === "adopted" ? (lang === "zh" ? `已添加 ${message.importCommit?.addedCount || 0} 项` : `Added ${message.importCommit?.addedCount || 0} items`) : message.actionState === "undone" ? (lang === "zh" ? "已撤回本次添加" : "Changes undone") : (lang === "zh" ? "已否决本轮建议" : "Suggestions dismissed")}</span>
           {message.actionState === "adopted" && !(embedded && demoControls) && <div>
-            {message.importCommit?.focus && !(embedded && demoControls) && <button onClick={() => onViewImport(message.id)}>{lang === "zh" ? "查看时间轴" : "View timeline"}</button>}
-            <button onClick={() => onUndoImport(message.id)}>{lang === "zh" ? "撤回本次操作" : "Undo changes"}</button>
+            {message.importCommit?.focus && !(embedded && demoControls) && <Button variant="text" onClick={() => onViewImport(message.id)}>{lang === "zh" ? "查看时间轴" : "View timeline"}</Button>}
+            <UndoButton onClick={() => onUndoImport(message.id)} aria-label={lang === "zh" ? "撤销本次导入" : "Undo imported changes"}>{t(lang, "toast.undo")}</UndoButton>
           </div>}
           </div>}
           {!demoControls && message.content && <div className="df-ai-message-actions" aria-label={lang === "zh" ? "消息操作" : "Message actions"}>

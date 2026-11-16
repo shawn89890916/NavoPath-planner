@@ -705,9 +705,9 @@ export interface PlannerApi {
   }>;
   signOut?: () => Promise<void>;
   deleteAccount?: () => Promise<void>;
-  sendPasswordResetEmail?: (email: string) => Promise<{ message?: string }>;
-  resetPassword?: (newPassword: string) => Promise<{ success: boolean; message?: string }>;
-  clearAuthCallbackUrl?: () => void;
+  sendPasswordResetEmail?: (email: string) => Promise<void>;
+  completePasswordRecovery?: () => Promise<boolean>;
+  resetPassword?: (newPassword: string) => Promise<boolean>;
   getData: () => Promise<PlannerData>;
   saveData: (data: PlannerData) => Promise<PlannerData>;
   subscribeToRemoteChanges?: (listener: (payload: { data: PlannerData; settings: Settings; revision?: number }) => void) => () => void;
@@ -840,6 +840,7 @@ declare global {
       dockWindow?: {
         getSide: () => Promise<"left" | "right" | null>;
         setSide: (side: "left" | "right" | null) => Promise<"left" | "right" | null>;
+        undock: () => Promise<boolean>;
         getPreferences: () => Promise<DesktopDockPreferences>;
         setPreferences: (patch: Partial<DesktopDockPreferences>) => Promise<DesktopDockPreferences>;
       };

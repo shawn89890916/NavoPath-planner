@@ -66,7 +66,7 @@ import { projectColorInk } from "./utils/presentationColor";
 import { ProductStorySlot } from "./ProductStory";
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, CandidateBlock, TimelineCanvas, TimelineEventBlock } from "./components/ExecutionSharedLayout";
 
-import { ActionDisclosure, Button, CloseButton, IconButton } from "./components/UiPrimitives";
+import { ActionDisclosure, Button, CloseButton, IconButton, UndoButton } from "./components/UiPrimitives";
 
 import { DateQuickPicker } from "./components/DateQuickPicker";
 
@@ -169,11 +169,12 @@ const candidateViewNames = {
   list: ["列表", "List", UiListIcon],
   eisenhower: ["矩阵", "Matrix", UiMatrixIcon],
   kanban: ["看板", "Kanban", UiKanbanIcon],
+  "activity-history": ["操作历史", "Activity history", UiHistoryIcon],
 } as const;
 
 function CandidateViewIcon({ view }: { view: ExtensionContribution }) {
   const mode = view.nativeMode;
-  if (mode === "list" || mode === "eisenhower" || mode === "kanban") {
+  if (mode && mode !== "tree" && mode !== "metrics") {
     const Icon = candidateViewNames[mode][2];
     return <Icon size={16} />;
   }
@@ -182,7 +183,7 @@ function CandidateViewIcon({ view }: { view: ExtensionContribution }) {
 
 function candidateViewName(view: ExtensionContribution, lang: Language) {
   const mode = view.nativeMode;
-  if (mode === "list" || mode === "eisenhower" || mode === "kanban") return candidateViewNames[mode][lang === "zh" ? 0 : 1];
+  if (mode && mode !== "tree" && mode !== "metrics") return candidateViewNames[mode][lang === "zh" ? 0 : 1];
   return view.name;
 }
 const WIDGET_TIMER_RUNTIME_KEY = "navopath-widget-timer-runtime";
@@ -1063,7 +1064,6 @@ function App() {
   const [authError, setAuthError] = useState("");
   const [authNotice, setAuthNotice] = useState<AuthNotice>(null);
   const [shelfViewId, setShelfViewId] = useState("");
-  const [taskHistoryOpen, setTaskHistoryOpen] = useState(false);
   const [taskOperations, setTaskOperations] = useState<TaskOperation[]>([]);
   const [shelfMenuOpen, setShelfMenuOpen] = useState(false);
   const [projectManagement, setProjectManagement] = useState(productDemo?.feature === "planning");
@@ -1225,7 +1225,6 @@ function App() {
   // ── Auto-schedule: single source of truth ──
   const [schedulePreviews, setSchedulePreviews] = useState<SchedulePreview[]>([]);
   const [scheduleUnscheduled, setScheduleUnscheduled] = useState<UnscheduledTask[]>([]);
-  const [dismissedCapacityDate, setDismissedCapacityDate] = useState("");
   const [autoScheduleState, setAutoScheduleState] = useState<AutoScheduleState>("idle");
   const [aiPlanMenuOpen, setAiPlanMenuOpen] = useState(false);
   const [aiPlanPrefs, setAiPlanPrefs] = useState<AiPlanPrefs>({ scope: "day", strategy: "longShort" });
@@ -1323,7 +1322,7 @@ function App() {
   const [unfinishedNotification, setUnfinishedNotification] = useState<ProactiveNotification | null>(null);
   const seenProactiveNotificationIdsRef = useRef(new Set<string>());
   // Enhanced toast with optional undo action (5-second window)
-  const [toastAction, setToastAction] = useState<{ label: string; onClick: () => void } | null>(null);
+  const [toastAction, setToastAction] = useState<{ label: string; onClick: () => void; undo?: boolean } | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const [showCompletedCandidates, setShowCompletedCandidates] = useState(false);
   const [scheduleGuideOpen, setScheduleGuideOpen] = useState(() => !productDemo && !isGuideDismissed("schedule"));
@@ -1803,11 +1802,16 @@ function App() {
     return rank(first) - rank(second);
   }), [extensionSnapshot.views]);
   const shelfView = shelfViews.find((view) => view.id === shelfViewId);
+  const taskHistoryOpen = shelfView?.nativeMode === "activity-history";
+  const taskHistoryEnabled = shelfViews.some((view) => view.nativeMode === "activity-history");
   const treeView = extensionSnapshot.views.find((view) => view.nativeMode === "tree");
   const metricsAvailable = extensionSnapshot.views.some((view) => view.nativeMode === "metrics");
   useEffect(() => {
     if (shelfViewId && !shelfView) setShelfViewId("");
   }, [shelfViewId, shelfView]);
+  useEffect(() => {
+    if (!taskHistoryEnabled) setTaskOperations((entries) => entries.length ? [] : entries);
+  }, [taskHistoryEnabled]);
   useEffect(() => {
     if (activeExtensionPanelId && !activeExtensionPanel) setWorkspacePanelOpen("extension", false);
   }, [activeExtensionPanelId, activeExtensionPanel]);
@@ -2159,7 +2163,6 @@ function App() {
     if (snapshotTimerRef.current) window.clearTimeout(snapshotTimerRef.current);
     snapshotTimerRef.current = null;
     setShelfViewId("");
-    setTaskHistoryOpen(false);
     setTaskOperations([]);
     dismissToast();
     setProjectManagement(productDemo?.feature === "planning");
@@ -2805,7 +2808,7 @@ if (cached?.data && cached?.settings) {
 
   function closeCandidateDrawer() {
     setShelfMenuOpen(false);
-    if (!projectManagement && !shelfView && !taskHistoryOpen) {
+    if (!projectManagement && !shelfView) {
       candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
     }
     setCandidateDrawerOpen(false);
@@ -3086,6 +3089,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function saveTaskOperation(next: PlannerData, kind: TaskOperationKind, options?: { title?: string; titles?: string[]; toast?: string }) {
+    if (!taskHistoryEnabled && !options?.toast) return saveData(next);
     const previous = dataRef.current;
     const undo = previous && captureTaskUndo(previous, next);
     const saving = saveData(next);
@@ -3098,7 +3102,7 @@ if (cached?.data && cached?.settings) {
       titles: options?.titles || (options?.title ? [options.title] : [...undo.added, ...undo.removed, ...undo.changes].map(({ title }) => title)),
       undo,
     };
-    setTaskOperations((current) => [operation, ...current].slice(0, 50));
+    if (taskHistoryEnabled) setTaskOperations((current) => [operation, ...current].slice(0, 50));
     if (options?.toast) showUndoToast(options.toast, t(lang, "toast.undo"), () => undoTaskOperation(operation));
     return saving;
   }
@@ -4459,7 +4463,7 @@ if (cached?.data && cached?.settings) {
    */
   function showUndoToast(message: string, actionLabel: string, onUndo: () => void) {
     setToast(message);
-    setToastAction({ label: actionLabel, onClick: () => { dismissToast(); onUndo(); } });
+    setToastAction({ label: actionLabel, undo: true, onClick: () => { dismissToast(); onUndo(); } });
     if (toastTimerRef.current) {
       window.clearTimeout(toastTimerRef.current);
     }
@@ -5561,7 +5565,7 @@ if (cached?.data && cached?.settings) {
     const date = timelineWindowAnchorDate;
     const session = { taskId, subtask, version: mobilePlacementVersion(task), view: timelineView, date: selectedDate, visibleDate: visibleTimelineDate,
       scrollTop: timelineRef.current?.scrollTop || 0, drawerOpen: candidateDrawerOpen };
-    if (!projectManagement && !shelfView && !taskHistoryOpen) {
+    if (!projectManagement && !shelfView) {
       candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
     }
     mobileCommitRef.current = false;
@@ -8898,7 +8902,6 @@ if (cached?.data && cached?.settings) {
   }
 
   function selectShelfView(id: string) {
-    setTaskHistoryOpen(false);
     setShelfViewId(id);
     setShelfMenuOpen(false);
     shelfTitleRef.current?.focus({ preventScroll: true });
@@ -9222,7 +9225,7 @@ if (cached?.data && cached?.settings) {
     {!productAiPresentation && !demoHasSchedule && !demoPresetBusy && <div className="df-product-ai-candidates">{demoTodayTasks.map(task => <TaskBlock key={task.id} variant="candidate" projectColor={projects.find(project => project.id === task.projectId)?.color}><TaskBlockRow><TaskBlockContent title={task.title} /><TaskBlockDuration>{formatMinutes(Math.round((task.estimatedHours || .5) * 60))}</TaskBlockDuration></TaskBlockRow></TaskBlock>)}</div>}
     {demoCanUndo && <div className="df-product-ai-requests">
       <Button variant="ghost" disabled={demoPresetBusy} aria-expanded={demoReschedulesOpen} aria-controls="product-ai-reschedules" onClick={() => setDemoReschedulesOpen(open => !open)}>{lang === "zh" ? "帮我改期" : "Reschedule a task"}</Button>
-      <Button variant="ghost" disabled={demoPresetBusy} onClick={() => void runProductDemoPreset("undo")}>{lang === "zh" ? "撤回" : "Undo"}</Button>
+      <UndoButton disabled={demoPresetBusy} onClick={() => void runProductDemoPreset("undo")}>{t(lang, "toast.undo")}</UndoButton>
     </div>}
     {demoReschedulesOpen && <div id="product-ai-reschedules" className="df-product-ai-reschedules" role="group" aria-label={lang === "zh" ? "选择改期" : "Choose a reschedule"}>
       {([{ taskId: "content", days: 1 }, { taskId: "layout", days: 2 }, { taskId: "walk", days: 1 }] as const).map(choice => <Button key={choice.taskId} variant="ghost" disabled={demoPresetBusy || tasks.find(task => task.id === choice.taskId)?.completed} onClick={() => void runProductDemoPreset(choice)}>{tasks.find(task => task.id === choice.taskId)?.title}<span>{lang === "zh" ? (choice.days === 1 ? "明天" : "后天") : (choice.days === 1 ? "Tomorrow" : "In two days")}</span></Button>)}
@@ -9247,7 +9250,6 @@ if (cached?.data && cached?.settings) {
     onTimelineDrop: commitShelfTimelineDrop,
   };
   const shelfTitle = term(lang, "todayCandidates");
-  const taskHistoryLabel = lang === "zh" ? "操作历史" : "Activity history";
   const switchViewsLabel = lang === "zh" ? "切换左浮栏视图" : "Switch task views";
   const manageProjectsLabel = lang === "zh" ? "管理项目" : "Manage projects";
   const metricsLabel = lang === "zh" ? "指标" : "Metrics";
@@ -9501,7 +9503,7 @@ if (cached?.data && cached?.settings) {
                 </button>
               ) : (
                 <button ref={shelfTitleRef} type="button" className="df-shelf-title-button" aria-label={switchViewsLabel} aria-expanded={shelfMenuOpen} onClick={() => setShelfMenuOpen((open) => !open)}>
-                  <span>{taskHistoryOpen ? taskHistoryLabel : shelfView ? candidateViewName(shelfView, lang) : shelfTitle}</span><UiChevronDownIcon size={15} />
+                  <span>{shelfView ? candidateViewName(shelfView, lang) : shelfTitle}</span><UiChevronDownIcon size={15} />
                 </button>
               )}
               actions={<>
@@ -9552,22 +9554,16 @@ if (cached?.data && cached?.settings) {
             }
             />
             {!projectManagement && <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu">
-              <Button variant="ghost" aria-pressed={!shelfView && !taskHistoryOpen} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
+              <Button variant="ghost" aria-pressed={!shelfView} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
               {treeView && <Button variant="ghost" onClick={openProjectManagement}><CandidateViewIcon view={treeView} />{candidateViewName(treeView, lang)}</Button>}
               {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id} onClick={() => selectShelfView(view.id)}><CandidateViewIcon view={view} />{candidateViewName(view, lang)}</Button>)}
-              <Button variant="ghost" aria-pressed={taskHistoryOpen} onClick={() => {
-                setShelfViewId("");
-                setTaskHistoryOpen(true);
-                setShelfMenuOpen(false);
-                shelfTitleRef.current?.focus({ preventScroll: true });
-              }}><UiHistoryIcon />{taskHistoryLabel}</Button>
             </AnchoredNarrowMenu>}
             {candidateDropActive && (
               <div className="df-candidate-return-hint" role="status">
                 {lang === "zh" ? "松手后移回任务" : "Release to return to Tasks"}
               </div>
             )}
-            {!projectManagement && !shelfView && !taskHistoryOpen && compactLayout && compactExecuteView === "tasks" && scheduleGuideOpen && visibleCandidates.length > 0 && (
+            {!projectManagement && !shelfView && compactLayout && compactExecuteView === "tasks" && scheduleGuideOpen && visibleCandidates.length > 0 && (
               <aside className="df-schedule-drop-guide" aria-label={lang === "zh" ? "手机端拖拽排程说明" : "Mobile drag-to-schedule guide"}>
                 <div className="df-schedule-drop-guide-content">
                   <p className="df-schedule-drop-guide-copy">
@@ -9589,9 +9585,8 @@ if (cached?.data && cached?.settings) {
                 <CloseButton label={lang === "zh" ? "关闭提示" : "Dismiss hint"} onClick={() => { dismissGuide("schedule"); setScheduleGuideOpen(false); }} />
               </aside>
             )}
-            {((dailyCapacityRisk.level !== "comfortable" && dismissedCapacityDate !== today) || schedulePreviews.length > 0 || scheduleUnscheduled.length > 0) && (
+            {!taskHistoryOpen && (schedulePreviews.length > 0 || scheduleUnscheduled.length > 0) && (
               <div className="df-ai-plan-feedback" role="status">
-                {dailyCapacityRisk.level !== "comfortable" && dismissedCapacityDate !== today && <span className={`df-ai-capacity-inline ${dailyCapacityRisk.level}`}><span>{lang === "zh" ? `容量${dailyCapacityRisk.level === "high" ? "超载" : "偏紧"}：待安排 ${formatMinutes(dailyCapacityRisk.demandMinutes)}，剩余 ${formatMinutes(dailyCapacityRisk.availableMinutes)}` : `Capacity ${dailyCapacityRisk.level === "high" ? "overloaded" : "tight"}: ${formatMinutes(dailyCapacityRisk.demandMinutes)} to place, ${formatMinutes(dailyCapacityRisk.availableMinutes)} free`}</span><CloseButton label={lang === "zh" ? "关闭容量提示" : "Dismiss capacity notice"} onClick={() => setDismissedCapacityDate(today)} /></span>}
                 {schedulePreviews.length > 0 && <><span className="df-ai-plan-summary">{t(lang, "timeline.previewPlan").replace("X", String(schedulePreviews.length))}</span>{compactLayout && <div className="df-ai-plan-mobile-preview">{schedulePreviews.slice(0, 4).map((preview) => <button key={preview.id} type="button" onClick={() => { setCompactExecuteView("schedule"); setPendingTimelineFocus({ date: preview.scheduledDate, startTime: preview.scheduledStart, source: "autoschedule" }); }}><strong>{preview.title}</strong><small>{preview.scheduledDate} · {preview.scheduledStart}–{preview.scheduledEnd}</small></button>)}</div>}</>}
                 {scheduleUnscheduled.length > 0 && <details className="df-ai-plan-unscheduled">
                   <summary>{lang === "zh" ? `${scheduleUnscheduled.length} 项暂未安排` : `${scheduleUnscheduled.length} not scheduled`}</summary>
@@ -9602,7 +9597,7 @@ if (cached?.data && cached?.settings) {
                 </details>}
               </div>
             )}
-            <Activity mode={projectManagement || shelfView || taskHistoryOpen ? "hidden" : "visible"}>
+            <Activity mode={projectManagement || shelfView ? "hidden" : "visible"}>
             <div className="df-candidate-list" data-shelf-scroll="candidates" inert={productAiPresentation && demoPresetBusy ? true : undefined}>
               {visibleCandidates.length === 0 && !hasActiveHabits ? (
                 <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.emptyTitle")}</strong><span>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "在右侧查看安排，或试试改期与撤回。" : "Explore the timeline, reschedule a task, or undo.") : t(lang, "candidate.emptyDesc")}</span>{compactLayout && !productAiPresentation && <img className="df-empty-add-guidance" src="/empty-add-guidance-v2.png" alt="" aria-hidden="true" />}</div>
@@ -9731,15 +9726,14 @@ if (cached?.data && cached?.settings) {
             {shelfView && <Activity mode={projectManagement ? "hidden" : "visible"}>
               <div className="df-shelf-scroll" data-shelf-scroll="views">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
-                  {shelfView.nativeMode
-                    ? <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode={shelfView.nativeMode} tasks={visibleCandidates} />
-                    : <ExtensionMount contribution={shelfView} />}
+                  {shelfView.nativeMode === "activity-history"
+                    ? <TaskOperationHistory operations={taskOperations} projects={projects} lang={lang} now={workspaceNow()} label={candidateViewName(shelfView, lang)} onUndo={undoTaskOperation} />
+                    : shelfView.nativeMode
+                      ? <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode={shelfView.nativeMode} tasks={visibleCandidates} />
+                      : <ExtensionMount contribution={shelfView} />}
                 </Suspense>
               </div>
             </Activity>}
-            {taskHistoryOpen && !projectManagement && <Suspense fallback={<div className="df-shelf-loading" role="status">{lang === "zh" ? "正在打开…" : "Opening…"}</div>}>
-              <TaskOperationHistory operations={taskOperations} lang={lang} now={workspaceNow()} label={taskHistoryLabel} onUndo={undoTaskOperation} />
-            </Suspense>}
             {projectManagementVisited && <Activity mode={projectManagement ? "visible" : "hidden"}>
               <div className="df-shelf-scroll" data-shelf-scroll="projects">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
@@ -10793,9 +10787,9 @@ if (cached?.data && cached?.settings) {
       {toast && (
         <div className={toastAction ? "df-toast df-toast-undo" : "df-toast"}>
           <span className="df-toast-message">{toast}</span>
-          {toastAction && (
-            <button className="df-toast-undo-btn" onClick={toastAction.onClick}>{toastAction.label}</button>
-          )}
+          {toastAction && (toastAction.undo
+            ? <UndoButton onClick={toastAction.onClick}>{toastAction.label}</UndoButton>
+            : <Button variant="text" onClick={toastAction.onClick}>{toastAction.label}</Button>)}
         </div>
       )}
     </div>

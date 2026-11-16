@@ -4,6 +4,30 @@
   "packages": [
     {
       "manifest": {
+        "id": "activity-history",
+        "name": "Activity history",
+        "description": "Review recent task changes and undo individual actions from the task view menu.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.7.0-beta.24",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "icon": "icon.svg",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/activity-history.navopackage.json",
+      "sha256": "d04b8fbac07ab7cf0155419176823365806850f0b3faa288ea09812f1be4dd3f",
+      "iconUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/icons/activity-history.svg"
+    },
+    {
+      "manifest": {
         "kind": "plugin",
         "apiVersion": 1,
         "id": "class-timetable",

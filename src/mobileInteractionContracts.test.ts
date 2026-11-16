@@ -236,11 +236,8 @@ describe("portrait interaction contracts", () => {
   });
 
   it("keeps the task-prediction undo action readable after global button resets", () => {
-    const globalButtonReset = appCss.lastIndexOf(".df-app button:not(.df-resize-dot):not(.df-level-option)");
-    const toastActionRule = appCss.lastIndexOf("#root .df-app .df-toast .df-toast-undo-btn");
-
-    expect(toastActionRule).toBeGreaterThan(globalButtonReset);
-    expect(appCss.slice(toastActionRule)).toMatch(/color:\s*var\(--accent-active\)/);
+    expect(main).toContain("<UndoButton onClick={toastAction.onClick}>");
+    expect(appCss).toMatch(/\.df-toast\.df-toast-undo > \.ui-button\s*\{[^}]*pointer-events:\s*auto/);
     expect(main).toContain('lang === "zh" ? "撤销归属" : "Undo assignment"');
   });
 });

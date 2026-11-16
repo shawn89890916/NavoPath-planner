@@ -2,6 +2,13 @@
 
 ## 2026-11-16
 
+### 1.7.0 Beta 24
+
+#### 改进
+
+- 操作历史改为默认安装、可卸载的插件。记录会说明改期前后的时段，以及任务名称、截止日期、所属项目或预计时长的具体变化。
+- 移除任务浮栏里的容量横幅，统一操作历史、提示和 AI 面板里的撤销按钮。
+
 ### 1.7.0 Beta 23
 
 #### 新增
@@ -626,6 +633,13 @@
 # NavoPath Changelog
 
 ## 2026-11-16
+
+### 1.7.0 Beta 24
+
+#### Improved
+
+- Activity history is now a preinstalled plugin you can uninstall. Entries show previous and new schedule slots, as well as changes to task titles, due dates, projects, or estimated durations.
+- Removed the capacity banner from the task shelf and unified Undo controls in activity history, notifications, and the AI panel.
 
 ### 1.7.0 Beta 23
 

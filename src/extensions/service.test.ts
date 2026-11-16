@@ -28,11 +28,11 @@ beforeEach(() => {
 afterEach(async () => { await current.configure(null); vi.unstubAllGlobals(); });
 
 describe("extension installation and account reconciliation", () => {
-  it("preinstalls List, Matrix, Kanban and Metrics on a clean installation", async () => {
+  it("preinstalls Activity history, List, Matrix, Kanban and Metrics on a clean installation", async () => {
     const f = fixture("preview", { ...defaultExtensionPreferences(), migratedPlanningViews: false, migratedShelfViews: false });
     await current.configure(f.host);
     const installed = current.getSnapshot().preferences.installed;
-    expect(Object.keys(installed).sort()).toEqual(["official:kanban", "official:list", "official:matrix", "official:metrics"]);
+    expect(Object.keys(installed).sort()).toEqual(["official:activity-history", "official:kanban", "official:list", "official:matrix", "official:metrics"]);
     expect(Object.values(installed).every((item) => item.enabled)).toBe(true);
   });
 
@@ -47,11 +47,23 @@ describe("extension installation and account reconciliation", () => {
     await f.host.saveSettings({ featureMetricsEnabled: false });
     await current.configure(f.host);
     const installed = current.getSnapshot().preferences.installed;
-    expect(Object.keys(installed).sort()).toEqual(["official:list", "official:matrix", "official:metrics"]);
+    expect(Object.keys(installed).sort()).toEqual(["official:activity-history", "official:list", "official:matrix", "official:metrics"]);
     expect(installed["official:metrics"].enabled).toBe(false);
     expect(installed["official:matrix"].enabled).toBe(false);
     expect(installed["official:list"].enabled).toBe(true);
     expect(f.settings().extensions.migratedShelfViews).toBe(true);
+  });
+
+  it("adds Activity history to an already migrated profile and remembers uninstall after restarting", async () => {
+    const key = "official:activity-history";
+    const f = fixture();
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed[key]?.enabled).toBe(true);
+    await current.uninstall(key);
+    await current.configure(null);
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed[key]).toBeUndefined();
+    expect(f.settings().extensions.removed[key]).toBeTruthy();
   });
   it("keeps local controls available during a slow update check and shares catalog requests", async () => {
     const f = fixture(); await current.configure(f.host);
@@ -67,7 +79,7 @@ describe("extension installation and account reconciliation", () => {
     await current.toggle("imported:weather", true);
     await current.setPreference({ autoCheckUpdates: false });
     await current.setSafeMode(true);
-    expect(mocks.load).toHaveBeenCalledOnce();
+    expect(mocks.load.mock.calls.filter(([pkg]) => pkg.manifest.id === "weather")).toHaveLength(1);
     expect(current.getSnapshot().safeMode).toBe(true);
     expect(fetch).toHaveBeenCalledOnce();
     resolve(new Response(JSON.stringify(officialCatalog)));
@@ -119,8 +131,10 @@ describe("extension installation and account reconciliation", () => {
     const entry = officialCatalog.packages.find(e => e.manifest.id === "weather")!;
     await current.install({ ...entry, sourceId: "official" } as CatalogEntry);
     expect(current.getSnapshot().preferences.installed["official:weather"].enabled).toBe(false);
-    await current.toggle("official:weather", true); expect(mocks.load).toHaveBeenCalledTimes(1);
-    const loaded = await mocks.load.mock.results[0].value;
+    await current.toggle("official:weather", true);
+    expect(mocks.load.mock.calls.filter(([pkg]) => pkg.manifest.id === "weather")).toHaveLength(1);
+    const weatherIndex = mocks.load.mock.calls.findIndex(([pkg]) => pkg.manifest.id === "weather");
+    const loaded = await mocks.load.mock.results[weatherIndex].value;
     await current.uninstall("official:weather"); expect(loaded.dispose).toHaveBeenCalledTimes(1);
     expect(current.getSnapshot().preferences.removed["official:weather"]).toBeTruthy();
     expect(f.settings().extensions.installed["official:weather"]).toBeUndefined();
@@ -141,7 +155,7 @@ describe("extension installation and account reconciliation", () => {
     await current.importFile(new File([officialPackageTexts.weather], "weather.navopackage.json"));
     expect((await cacheEntries("account:alice-isolation:upload:")).length).toBe(1);
     const b = fixture("bob-isolation"); await current.configure(b.host);
-    expect(current.getSnapshot().preferences.installed).toEqual({});
+    expect(current.getSnapshot().preferences.installed["imported:weather"]).toBeUndefined();
     expect(current.getConfig("imported:weather")).toEqual({});
     expect(await cacheEntries("account:bob-isolation:upload:")).toEqual([]);
   });
@@ -151,7 +165,8 @@ describe("extension installation and account reconciliation", () => {
     await current.install({ ...entry, sourceId: "official" } as CatalogEntry);
     const prefs = structuredClone(current.getSnapshot().preferences); prefs.installed["official:weather"].manifest.platforms = ["desktop"]; prefs.installed["official:weather"].enabled = true;
     await f.host.saveSettings({ extensions: prefs }); await current.configure(f.host);
-    expect(current.getSnapshot().status["official:weather"]).toContain("Unsupported"); expect(mocks.load).not.toHaveBeenCalled();
+    expect(current.getSnapshot().status["official:weather"]).toContain("Unsupported");
+    expect(mocks.load.mock.calls.some(([pkg]) => pkg.manifest.id === "weather")).toBe(false);
   });
   it("keeps the previous version installed when replacement activation fails", async () => {
     const f = fixture(); await current.configure(f.host);
@@ -160,7 +175,7 @@ describe("extension installation and account reconciliation", () => {
     mocks.load.mockRejectedValueOnce(new Error("bad update"));
     await expect(current.importFile(new File([JSON.stringify(pkg)], "weather.navopackage.json"))).rejects.toThrow("bad update");
     expect(current.getSnapshot().preferences.installed["imported:weather"].manifest.version).toBe(previousVersion);
-    expect(mocks.load).toHaveBeenCalledTimes(3);
+    expect(mocks.load.mock.calls.filter(([pkg]) => pkg.manifest.id === "weather")).toHaveLength(3);
   });
   it("restricted mode unloads local code without changing synced enable preferences", async () => {
     const f = fixture(); await current.configure(f.host);

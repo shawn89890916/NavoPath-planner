@@ -1,4 +1,4 @@
-import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativePlanningViewMode, PluginLauncherStatus } from "./types";
+import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativeShelfViewMode, PluginLauncherStatus } from "./types";
 import { compatibility, compareVersions, defaultExtensionPreferences, isRecord, MAX_PACKAGE_BYTES, normalizeExtensionPreferences, readPackage, publicHttps, sha256 } from "./packages";
 import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
 import { emitPluginEvent, loadPlugin, type LoadedPlugin } from "./runtime";
@@ -326,9 +326,9 @@ export class ExtensionService {
         else delete launcherStatus[key];
         this.setSnapshot({ launcherStatus });
       },
-      registerNativePlanningView: (mode: NativePlanningViewMode, name: string, iconUrl?: string): Dispose => {
+      registerNativePlanningView: (mode: NativeShelfViewMode, name: string, iconUrl?: string): Dispose => {
         guard();
-        const nativeModes: Record<string, NativePlanningViewMode> = { tree: "tree", kanban: "kanban", matrix: "eisenhower", list: "list", metrics: "metrics" };
+        const nativeModes: Record<string, NativeShelfViewMode> = { tree: "tree", kanban: "kanban", matrix: "eisenhower", list: "list", metrics: "metrics", "activity-history": "activity-history" };
         if (!key.startsWith("official:") || nativeModes[key.slice("official:".length)] !== mode) throw new Error("Native planning views are reserved for matching official packages");
         return this.bridge(key).contribute("views", name, () => {}, { iconUrl, planningView: true, nativeMode: mode });
       },
@@ -423,6 +423,17 @@ export class ExtensionService {
       const bytes = new TextEncoder().encode(officialPackageTexts["schedule-templates"]), hash = await sha256(bytes), now = new Date().toISOString();
       await this.publishPackage(hash, bytes);
       next.installed["official:schedule-templates"] = { key: "official:schedule-templates", sourceId: "official", manifest: pkg.manifest, sha256: hash, enabled: true, installedAt: now, updatedAt: now };
+      changed = true;
+    }
+    const historyKey = "official:activity-history";
+    if (!next.installed[historyKey] && !next.removed[historyKey]) {
+      const { officialCatalog, officialPackages } = await import("./officialPackages");
+      const entry = officialCatalog.packages.find(({ manifest }) => manifest.id === "activity-history")!;
+      const now = new Date().toISOString();
+      next.installed[historyKey] = {
+        key: historyKey, sourceId: "official", manifest: officialPackages["activity-history"].manifest,
+        sha256: entry.sha256, downloadUrl: entry.downloadUrl, enabled: true, installedAt: now, updatedAt: now,
+      };
       changed = true;
     }
     const legacyTools = Object.values(next.installed).filter((item) =>

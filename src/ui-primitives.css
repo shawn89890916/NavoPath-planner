@@ -119,6 +119,31 @@
 .ui-button[class~="ui-button--danger"]:not(:disabled),
 #root .df-app .ui-button[class~="ui-button--danger"]:not(:disabled) { color: var(--danger-ink); }
 
+.ui-button[class~="ui-button--text"],
+#root .df-app .ui-button[class~="ui-button--text"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  min-width: 44px;
+  padding-inline: 8px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ui-button[class~="ui-button--text"] svg { flex: none; }
+.ui-button[class~="ui-button--text"]:hover:not(:disabled),
+.ui-button[class~="ui-button--text"]:focus-visible,
+#root .df-app .ui-button[class~="ui-button--text"]:hover:not(:disabled),
+#root .df-app .ui-button[class~="ui-button--text"]:focus-visible {
+  border-color: transparent;
+  color: var(--text-main);
+  background: var(--paper-note);
+}
+
 .ui-button[aria-busy="true"],
 #root .df-app .ui-button[aria-busy="true"] { animation: ui-pending 1.2s ease-in-out infinite; cursor: progress; }
 @keyframes ui-pending { 50% { opacity: .65; } }

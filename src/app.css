@@ -6095,24 +6095,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.df-toast-undo-btn {
-  padding: 4px 12px;
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 600;
-  border: 0;
-  cursor: pointer;
-  background: var(--accent-active);
-  color: #FFFFFF;
-  flex-shrink: 0;
-  transition: opacity .14s ease, transform .12s ease;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-toast-undo-btn:hover { transform: translateY(-1px); }
-.df-app:not(.theme-dark) .df-toast-undo-btn {
-  background: var(--accent-active, #584D3D);
-  color: #FFFFFF;
-}
+.df-toast.df-toast-undo > .ui-button { pointer-events: auto; flex-shrink: 0; }
 .df-time-block[data-preview="true"][style*="height:48"] {
   .df-preview-badge { display: none; }
 }
@@ -6676,15 +6659,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   corner-shape: var(--corner-shape, squircle);
 }
 .df-ai-action-outcome > div { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-.df-ai-action-outcome button {
-  padding: 5px 8px;
-  border-radius: 8px;
-  color: var(--mode-primary);
-  background: color-mix(in srgb, var(--mode-primary) 8%, var(--surface-card));
-  border: 1px solid color-mix(in srgb, var(--mode-primary) 24%, var(--border-soft));
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-ai-action-outcome button:hover { background: color-mix(in srgb, var(--mode-primary) 15%, var(--surface-card)); }
 .df-ai-attachment-card {
   width: min(360px, 100%);
   display: grid;
@@ -7597,9 +7571,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   color: var(--text-main);
 }
 .df-app.theme-dark .df-toast-message {
-  color: var(--text-main);
-}
-.df-app.theme-dark .df-toast-undo-btn {
   color: var(--text-main);
 }
 .df-app.theme-dark .df-drawer-backdrop {
@@ -9981,9 +9952,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app .df-empty button {
   box-shadow: none; filter: none;
 }
-.df-app .df-toast-undo-btn {
-  box-shadow: none; filter: none;
-}
 .df-app .df-tabs button:hover {
   color: var(--accent-active); transform: none; box-shadow: none; filter: none;
 }
@@ -10000,9 +9968,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   color: var(--accent-active); transform: none; box-shadow: none; filter: none;
 }
 .df-app .df-settings-about:hover {
-  color: var(--accent-active); transform: none; box-shadow: none; filter: none;
-}
-.df-app .df-toast-undo-btn:hover {
   color: var(--accent-active); transform: none; box-shadow: none; filter: none;
 }
 /* Compact icon controls receive an ink-wash hover, never a lift. */
@@ -13076,23 +13041,8 @@ body.df-timeline-pointer-drag * {
 .df-app .df-ai-capacity-risk.medium strong {
   color: var(--accent-active);
 }
-.df-app .df-ai-capacity-inline.medium {
-  color: var(--accent-active);
-}
 .df-app .df-ai-capacity-risk.high strong {
   color: var(--danger);
-}
-.df-app .df-ai-capacity-inline.high {
-  color: var(--danger);
-}
-.df-app .df-ai-capacity-inline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.df-app .df-ai-capacity-inline .ui-icon-button {
-  flex-shrink: 0;
 }
 .df-app .df-ai-daily-tools {
   display: grid;
@@ -14739,13 +14689,10 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-ai-capability-state.locked { border-style: solid; }
 .df-agent-confirm-card code { overflow-wrap: anywhere; font-size: 11px; }
 .df-agent-applied > span { font-size: 12px; }
-.df-agent-applied button { border: 1px solid var(--paper-rule-strong); background: var(--surface-raised); color: var(--text-primary); padding: 7px 10px; }
 .df-agent-confirm-card button { border: 1px solid var(--paper-rule-strong); background: var(--surface-raised); color: var(--text-primary); padding: 7px 10px; }
 .df-external-calendar-settings button { border: 1px solid var(--paper-rule-strong); background: var(--surface-raised); color: var(--text-primary); padding: 7px 10px; }
-.df-agent-applied button:hover { color: var(--accent-active); border-color: var(--accent-active); }
 .df-agent-confirm-card button:hover { color: var(--accent-active); border-color: var(--accent-active); }
 .df-external-calendar-settings button:hover { color: var(--accent-active); border-color: var(--accent-active); }
-.df-agent-applied button:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
 .df-agent-confirm-card button:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
 .df-external-calendar-settings button:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
 .df-agent-confirm-card {
@@ -22259,25 +22206,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     touch-action: none;
   }
 }
-/* Keep toast actions readable after the global transparent-button layer. */
-#root .df-app .df-toast .df-toast-undo-btn {
-  pointer-events: auto;
-  min-height: 30px;
-  padding: 4px 8px;
-  border: 1px solid currentColor;
-  border-radius: var(--radius-control);
-  background-color: transparent;
-  background-image: none;
-  color: var(--accent-active);
-  box-shadow: none;
-}
-#root .df-app .df-toast .df-toast-undo-btn:hover:not(:disabled),
-#root .df-app .df-toast .df-toast-undo-btn:focus-visible {
-  border-color: currentColor;
-  background-color: var(--paper-note);
-  color: var(--accent-active);
-  transform: none;
-}
 /* Let project accents keep their identity without overpowering the paper blocks. */
 #root .df-app.mode-execute .df-task-block[data-task-appearance] {
   --task-checkbox-color: color-mix(in srgb, var(--task-project-color) 68%, #fff);
@@ -23873,9 +23801,9 @@ html.product-demo-fullscreen #root .df-app[data-product-revealing="true"] .df-ti
 }
 .df-product-ai-presets, .df-product-ai-candidates { display: grid; gap: 12px; }
 .df-product-ai-requests { display: flex; flex-wrap: wrap; gap: 8px; }
-#root .df-app .df-product-ai-requests .ui-button { min-height: 40px; padding: 9px 16px; border: 0; border-radius: 12px; color: var(--text-main); font: 600 13px/1.4 var(--paper-sans); }
+#root .df-app .df-product-ai-requests > .ui-button[class~="ui-button--ghost"] { min-height: 40px; padding: 9px 16px; border: 0; border-radius: 12px; color: var(--text-main); font: 600 13px/1.4 var(--paper-sans); }
 #root .df-app[data-product-feature="ai"] .df-product-ai-requests .ui-button--ghost { background: var(--paper-note); }
-#root .df-app .df-product-ai-requests .ui-button:disabled { opacity: .42; cursor: default; }
+#root .df-app .df-product-ai-requests > .ui-button[class~="ui-button--ghost"]:disabled { opacity: .42; cursor: default; }
 .df-product-ai-reschedules { display: grid; grid-template-columns: 1fr; gap: 8px; }
 #root .df-app .df-product-ai-reschedules .ui-button { display: grid; gap: 6px; text-align: left; min-width: 0; padding: 12px; border: 0; border-radius: 12px; background: var(--paper-note); font: 500 13px/1.5 var(--paper-sans); }
 .df-product-ai-reschedules .ui-button span { color: var(--text-muted); font-size: 12px; }
@@ -24070,7 +23998,7 @@ body[data-navopath-base-theme="light"],
   overflow-wrap: anywhere;
 }
 .df-task-history-row time { color: var(--text-muted); font-size: 12px; }
-.df-task-history-row .ui-button { min-width: 44px; min-height: 44px; }
+.df-task-history-row .df-task-history-detail { margin-top: 3px; color: var(--text-muted); font-size: 12px; }
 .df-task-history-undone { padding-inline: 8px; color: var(--text-muted); font-size: 12px; }
 .df-task-history-empty { margin: 16px 0; color: var(--text-muted); }
 .df-shelf-view,

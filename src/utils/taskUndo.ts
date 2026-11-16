@@ -1,7 +1,7 @@
 import type { PlannerData, Task } from "../types";
 
 type FieldChange = { key: keyof Task; before: unknown; after: unknown };
-type TaskChange = { id: string; title: string; fields: FieldChange[] };
+type TaskChange = { id: string; title: string; fields: FieldChange[]; previousSlot: [string?, string?, string?] };
 export type TaskUndo = { added: Task[]; removed: Task[]; changes: TaskChange[] };
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -22,7 +22,10 @@ export function captureTaskUndo(before: PlannerData, after: PlannerData): TaskUn
       const original = previous.get(task.id);
       if (!original || original === task) return [];
       const fields = changedFields(original, task);
-      return fields.length ? [{ id: task.id, title: task.title, fields }] : [];
+      return fields.length ? [{
+        id: task.id, title: task.title, fields,
+        previousSlot: [original.scheduledDate, original.scheduledStart, original.scheduledEnd],
+      }] : [];
     }),
   };
 }

@@ -1,5 +1,5 @@
 import { registerCalendarBackground } from "./calendarBackgrounds";
-import type { Dispose, ExtensionContribution, ExtensionHost, ExtensionPackage, ExtensionPlatform, Mount, PluginContext, PluginModule, CollectionApi, NativePlanningViewMode, NativeToolPage, PluginLauncherStatus } from "./types";
+import type { Dispose, ExtensionContribution, ExtensionHost, ExtensionPackage, ExtensionPlatform, Mount, PluginContext, PluginModule, CollectionApi, NativeShelfViewMode, NativeToolPage, PluginLauncherStatus } from "./types";
 import { registerTimerMode } from "./timers";
 import type { CalendarEvent, Project, Task } from "../types";
 
@@ -9,7 +9,7 @@ export interface RuntimeBridge {
   getValue<T>(key: string): Promise<T | null>; setValue(key: string, value: unknown): Promise<void>; removeValue(key: string): Promise<void>;
   contribute(kind: "settingsPages" | "views", name: string, mount: Mount, options?: Pick<ExtensionContribution, "iconUrl" | "planningView" | "nativeMode" | "nativeTool">): Dispose;
   setLauncherStatus(status?: PluginLauncherStatus): void;
-  registerNativePlanningView(mode: NativePlanningViewMode, name: string, iconUrl?: string): Dispose;
+  registerNativePlanningView(mode: NativeShelfViewMode, name: string, iconUrl?: string): Dispose;
   executeCommand(id: string): Promise<void>; addCommand(id: string, name: string, run: () => void | Promise<void>, shortcut?: string): Dispose;
 }
 export type LoadedPlugin = { iconUrl?: string; module: PluginModule; context: PluginContext; dispose: Dispose; configChanged(config: Record<string, unknown>): Promise<void> };
@@ -81,7 +81,7 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
   const context: PluginContext = {
     apiVersion: 1, id: bridge.key, manifest: pkg.manifest, platform: bridge.platform, window: typeof location !== "undefined" && new URLSearchParams(location.search).get("compactWindow") === "1" ? "compact" : "main", language: bridge.host.getSettings().language,
     app: { ...bridge.host, internal: { ...bridge.host.internal,
-      registerNativePlanningView: (mode: NativePlanningViewMode, name: string) => bridge.registerNativePlanningView(mode, name, pkg.manifest.icon ? resources.get(pkg.manifest.icon) : undefined),
+      registerNativePlanningView: (mode: NativeShelfViewMode, name: string) => bridge.registerNativePlanningView(mode, name, pkg.manifest.icon ? resources.get(pkg.manifest.icon) : undefined),
       registerNativeToolPage: (tool: NativeToolPage, name: string) => {
         if ((tool !== "pomodoro" && tool !== "schedule-templates") || pkg.manifest.id !== tool ||
           (bridge.key !== `official:${tool}` && bridge.key !== `imported:${tool}`)) throw new Error("Native tool pages are reserved for bundled plugins");

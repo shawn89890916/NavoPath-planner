@@ -7,9 +7,10 @@ export type * from "./extensions";
 export type Dispose = () => void | Promise<void>;
 export type Mount = (container: HTMLElement) => void | Dispose;
 export type NativePlanningViewMode = "tree" | "kanban" | "eisenhower" | "list" | "metrics";
+export type NativeShelfViewMode = NativePlanningViewMode | "activity-history";
 export type NativeToolPage = "pomodoro" | "schedule-templates";
 export interface PluginLauncherStatus { label: string; weather?: "sun" | "cloud" | "fog" | "rain" | "snow" | "storm" | "unknown"; active?: boolean }
-export interface ExtensionContribution { id: string; owner: string; name: string; mount: Mount; iconUrl?: string; planningView?: boolean; nativeMode?: NativePlanningViewMode; nativeTool?: NativeToolPage }
+export interface ExtensionContribution { id: string; owner: string; name: string; mount: Mount; iconUrl?: string; planningView?: boolean; nativeMode?: NativeShelfViewMode; nativeTool?: NativeToolPage }
 export interface ExtensionSnapshot {
   preferences: ExtensionPreferences; catalog: CatalogEntry[]; updates: Record<string, CatalogEntry>;
   status: Record<string, string>; busy: boolean; error: string; safeMode: boolean;
