@@ -2,6 +2,12 @@
 
 ## 2026-11-16
 
+### 1.7.0 Beta 22
+
+#### 新增
+
+- 网页版和 Windows 桌面版登录页支持通过注册邮箱重置密码。
+
 ### 1.7.0 Beta 21
 
 #### 修复
@@ -614,6 +620,12 @@
 # NavoPath Changelog
 
 ## 2026-11-16
+
+### 1.7.0 Beta 22
+
+#### Added
+
+- Reset your password using your registered email from the web and Windows sign-in screens.
 
 ### 1.7.0 Beta 21
 
