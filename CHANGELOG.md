@@ -2,6 +2,12 @@
 
 ## 2026-11-17
 
+### 1.7.0 Beta 28
+
+#### 改进
+
+- 加粗时间轴的当前时间线和跨天分隔线，滚动时更容易辨认。
+
 ### 1.7.0 Beta 27
 
 #### 改进
@@ -658,6 +664,12 @@
 # NavoPath Changelog
 
 ## 2026-11-17
+
+### 1.7.0 Beta 28
+
+#### Improved
+
+- Made the current-time line and cross-day dividers thicker so they are easier to spot when scrolling.
 
 ### 1.7.0 Beta 27
 

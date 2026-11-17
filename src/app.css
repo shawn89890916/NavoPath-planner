@@ -3105,7 +3105,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   position: absolute;
   inset-inline: 0;
   z-index: 2;
-  border-top: 1px solid color-mix(in srgb, var(--text-main) 48%, transparent);
+  border-top: 2px solid color-mix(in srgb, var(--text-main) 48%, transparent);
   pointer-events: none;
 }
 .df-timeline-day-boundary > span {
@@ -8832,7 +8832,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   left: -4px;
   right: -4px;
   height: 0;
-  border-top: 2px solid var(--accent-active);
+  border-top: 3px solid var(--accent-active);
   z-index: 7;
   pointer-events: none; border-color: var(--accent-active); opacity: .78; filter: none; }
 .df-now-line span {
@@ -22986,7 +22986,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   min-height: 44px;
 }
 @keyframes dfNowReturnPulse {
-  0%, 100% { border-top-width: 2px; opacity: .82; box-shadow: none; }
+  0%, 100% { border-top-width: 3px; opacity: .82; box-shadow: none; }
   18%, 68% { border-top-width: 4px; opacity: 1; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-active) 14%, transparent), 0 0 16px color-mix(in srgb, var(--accent-active) 52%, transparent); }
 }
 #root .df-app .df-now-line.is-return-highlighted {
