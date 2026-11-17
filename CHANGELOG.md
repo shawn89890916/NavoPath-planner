@@ -2,6 +2,12 @@
 
 ## 2026-11-17
 
+### 1.7.0 Beta 29
+
+#### 修复
+
+- 跨天分隔线的日期移到左侧时间刻度栏，避免盖住跨天任务的标题和勾选框。
+
 ### 1.7.0 Beta 28
 
 #### 改进
@@ -664,6 +670,12 @@
 # NavoPath Changelog
 
 ## 2026-11-17
+
+### 1.7.0 Beta 29
+
+#### Fixed
+
+- Moved cross-day divider dates into the time ruler so they stay clear of task titles and checkboxes.
 
 ### 1.7.0 Beta 28
 

@@ -1,6 +1,6 @@
 import { dailyContinuousCanvasHeight, getContinuousTimelineDateForOffset } from "../utils/continuousTimeline";
-import { addDays, minutesToTime, timelineHourSlots } from "../timelineGeometry";
-import { weekdayName } from "../i18n";
+import { addDays, minutesToTime, SLOT_MINUTES, timelineHourSlots } from "../timelineGeometry";
+import { shortDateStr, weekdayName } from "../i18n";
 import React, { memo, type CSSProperties } from "react";
 import { TaskBlock } from "./TaskBlock";
 import { CloseButton } from "./UiPrimitives";
@@ -412,16 +412,19 @@ export const TimelineDayBoundaries = memo(function TimelineDayBoundaries({
 }) {
   const format = new Intl.DateTimeFormat(lang === "zh" ? "zh-CN" : "en-US", { month: "short", day: "numeric" });
   const startMinutes = Math.round(dayStartHour * 60);
+  const startTime = minutesToTime(startMinutes);
+  const minutesPastHour = startMinutes % 60;
   return <>{Array.from({ length: bandCount - 1 }, (_, index) => {
     const band = index + 1;
     const date = getContinuousTimelineDateForOffset(anchorDate, band, columnCount);
     const first = new Date(`${date}T00:00:00`);
+    const weekday = weekdayName(lang, first.getDay());
+    const endDate = addDays(date, columnCount - 1);
     let label: string;
     if (columnCount === 1) {
-      const weekday = weekdayName(lang, first.getDay());
       label = lang === "zh" ? `${format.format(first)} · ${weekday}` : `${weekday}, ${format.format(first)}`;
     } else {
-      const last = new Date(`${addDays(date, columnCount - 1)}T00:00:00`);
+      const last = new Date(`${endDate}T00:00:00`);
       if (lang === "zh") {
         label = first.getMonth() === last.getMonth()
           ? `${first.getMonth() + 1}月${first.getDate()}–${last.getDate()}日`
@@ -430,9 +433,20 @@ export const TimelineDayBoundaries = memo(function TimelineDayBoundaries({
         label = format.formatRange(first, last);
       }
     }
+    const caption = columnCount > 1 ? `–${shortDateStr(lang, endDate)}` : minutesPastHour ? startTime : weekday;
     return (
-      <div className="df-timeline-day-boundary" style={{ top: dailyContinuousCanvasHeight(band, slotHeight) }} data-date={date} key={date}>
-        <span>{label}{startMinutes % 60 !== 0 && ` · ${minutesToTime(startMinutes)}`}</span>
+      <div
+        className="df-timeline-day-boundary"
+        style={{
+          top: dailyContinuousCanvasHeight(band, slotHeight),
+          "--df-boundary-hour-offset": `${minutesPastHour / SLOT_MINUTES * slotHeight}px`,
+        } as CSSProperties}
+        data-date={date}
+        key={date}
+        role="separator"
+        aria-label={`${label} · ${startTime}`}
+      >
+        <span aria-hidden="true">{shortDateStr(lang, date)}<br />{caption}</span>
       </div>
     );
   })}</>;

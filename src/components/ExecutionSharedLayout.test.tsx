@@ -46,13 +46,15 @@ describe("time-axis rendering", () => {
     const day = tree.root.findAllByType("div")[0];
     expect(day.props["data-date"]).toBe("2026-10-24");
     expect(day.props.style.top).toBe(960);
-    expect(day.findByType("span").children.join("")).toMatch(/Sat, Oct 24.*04:30/);
+    expect(day.props["aria-label"]).toBe("Sat, Oct 24 · 04:30");
+    expect(day.findByType("span").children.filter((child) => typeof child === "string")).toEqual(["10/24", "04:30"]);
 
     act(() => tree.update(<TimelineDayBoundaries {...props} columnCount={7} slotHeight={20} />));
     const weeks = tree.root.findAllByType("div");
     expect(weeks.map((week) => week.props["data-date"])).toEqual(["2026-10-30", "2026-11-06"]);
     expect(weeks[0].props.style.top).toBe(1920);
-    expect(weeks[0].findByType("span").children.join("")).toMatch(/Oct 30.*Nov 5/);
+    expect(weeks[0].props["aria-label"]).toMatch(/Oct 30.*Nov 5/);
+    expect(weeks[0].findByType("span").children.filter((child) => typeof child === "string")).toEqual(["10/30", "–11/5"]);
     act(() => tree.unmount());
   });
 });

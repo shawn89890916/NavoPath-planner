@@ -3110,14 +3110,19 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-timeline-day-boundary > span {
   position: absolute;
-  top: 3px;
-  inset-inline-start: 4px;
-  padding: 1px 5px;
-  background: var(--surface-main);
+  /* Keep both text lines between the surrounding hour ticks. */
+  top: clamp(
+    calc(8px - var(--df-boundary-hour-offset)),
+    5px,
+    calc(var(--timeline-hour-height) - var(--df-boundary-hour-offset) - 35px)
+  );
+  inset-inline-end: calc(100% + 2px);
   color: var(--text-main);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 650;
-  line-height: 1.3;
+  line-height: 11px;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .df-timeline-empty {
