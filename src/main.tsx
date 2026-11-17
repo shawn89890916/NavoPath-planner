@@ -10615,7 +10615,7 @@ if (cached?.data && cached?.settings) {
       )}
 
       {!productPresentation && !compactLayout && !workspacePanel && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
-      {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />}
+      {!productPresentation && !compactLayout && !settings.hideAi && (!workspacePanel || aiOpen) && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />}
       {createPortal(<div className="df-mobile-floating-actions" style={themeVars(settings, "execute")}>
         {mobileExecution && <Suspense fallback={null}><MobileExecutionControls
           hidden={compactToolbarBlocked || Boolean(dragCreate?.committed)}

@@ -16715,7 +16715,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --workspace-header-height: 58px;
   --workspace-panel-toolbar: var(--workspace-header-height);
   --workspace-dock-height: 0px;
-  --workspace-panel-bottom: 72px;
+  --workspace-panel-bottom: max(var(--workspace-panel-gap), var(--workspace-dock-height));
   --workspace-panel-gap: 12px;
   --workspace-panel-top: calc(var(--workspace-panel-toolbar) + var(--workspace-panel-gap));
   --workspace-panel-radius: 14px;
@@ -23516,7 +23516,6 @@ body[data-navopath-base-theme="light"],
   :root {
     --workspace-panel-toolbar: 0px;
     --workspace-dock-height: calc(57px + env(safe-area-inset-bottom));
-    --workspace-panel-bottom: var(--workspace-dock-height);
   }
 }
 @media (orientation: portrait) {
@@ -23543,7 +23542,7 @@ body[data-navopath-base-theme="light"],
   animation: ui-fade-in var(--motion-fade) var(--motion-ease) backwards;
 }
 #root .df-app [data-workspace-backdrop] {
-  inset: var(--workspace-panel-toolbar) 0 var(--workspace-panel-bottom);
+  inset: var(--workspace-panel-toolbar) 0 var(--workspace-dock-height);
   z-index: 70;
   background: rgba(22, 19, 15, .48);
   backdrop-filter: none;

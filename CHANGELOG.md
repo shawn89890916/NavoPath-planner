@@ -2,6 +2,12 @@
 
 ## 2026-11-17
 
+### 1.7.0 Beta 26
+
+#### 修复
+
+- 修复 Windows 解除贴边后的宽屏窗口中打开插件面板时，底部遮罩断开且快捷添加等控件仍可点击的问题。
+
 ### 1.7.0 Beta 25
 
 #### 修复
@@ -646,6 +652,12 @@
 # NavoPath Changelog
 
 ## 2026-11-17
+
+### 1.7.0 Beta 26
+
+#### Fixed
+
+- Fixed a gap below the backdrop in wide undocked Windows windows that allowed quick add and other workspace controls to remain clickable behind plugin panels.
 
 ### 1.7.0 Beta 25
 
