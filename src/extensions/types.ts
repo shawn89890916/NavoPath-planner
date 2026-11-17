@@ -6,7 +6,7 @@ export type * from "./model";
 
 export type Dispose = () => void | Promise<void>;
 export type Mount = (container: HTMLElement) => void | Dispose;
-export type NativePlanningViewMode = "tree" | "kanban" | "eisenhower" | "list" | "metrics";
+export type NativePlanningViewMode = "tree" | "kanban" | "eisenhower" | "metrics";
 export type NativeShelfViewMode = NativePlanningViewMode | "activity-history";
 export type NativeToolPage = "pomodoro" | "schedule-templates";
 export interface PluginLauncherStatus { label: string; weather?: "sun" | "cloud" | "fog" | "rain" | "snow" | "storm" | "unknown"; active?: boolean }

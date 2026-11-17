@@ -220,30 +220,6 @@
     },
     {
       "manifest": {
-        "id": "list",
-        "name": "List",
-        "description": "Review, filter and reorder tasks in a compact list.",
-        "author": "NavoPath",
-        "version": "1.0.0",
-        "kind": "plugin",
-        "apiVersion": 1,
-        "minAppVersion": "1.6.3-beta.5",
-        "platforms": [
-          "desktop",
-          "web",
-          "mobile"
-        ],
-        "main": "main.js",
-        "icon": "icon.svg",
-        "license": "MIT",
-        "repository": "https://github.com/shawn89890916/NavoPath-planner"
-      },
-      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/list.navopackage.json",
-      "sha256": "50a50e71515a74ebe1f1a70bee0d2f220d4fa5e246ba1cf4c2c5b1bde7ce1c98",
-      "iconUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/icons/list.svg"
-    },
-    {
-      "manifest": {
         "id": "matrix",
         "name": "Matrix",
         "description": "Prioritize tasks by importance and urgency.",

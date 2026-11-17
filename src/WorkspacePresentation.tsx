@@ -246,6 +246,19 @@ export function TaskRecurrenceIndicator({ recurrence, lang }: { recurrence?: Tas
   </span>;
 }
 
+export const CandidateTaskCard = React.forwardRef<HTMLElement, Omit<React.ComponentPropsWithoutRef<typeof TaskBlock>, "variant" | "priority"> & {
+  task: Task;
+  row: ReactNode;
+  rowClassName?: string;
+}>(function CandidateTaskCard({ task, row, rowClassName, className, children, lang, ...props }, ref) {
+  return <TaskBlock ref={ref} variant="candidate" priority={taskBlockPriorityFor(task.priority)}
+    checked={task.completed} {...props} className={className ? `df-task-card ${className}` : "df-task-card"} lang={lang}>
+    <TaskRecurrenceIndicator recurrence={task.recurrence} lang={lang || "en"} />
+    <TaskBlockRow className={rowClassName ? `df-candidate-row ${rowClassName}` : "df-candidate-row"}>{row}</TaskBlockRow>
+    {children}
+  </TaskBlock>;
+});
+
 export function CandidateSubtaskItem({
   subtask,
   depth = 0,
@@ -626,17 +639,16 @@ export function TaskCard({
 
   return (
     <>
-      <TaskBlock
+      <CandidateTaskCard
+        task={task}
+        lang={lang}
         ref={cardRef}
         as="article"
-        variant="candidate"
-        appearance="calm"
-        priority={taskBlockPriorityFor(task.priority)}
         checked={task.completed && !isEvent}
         selected={Boolean(openPanel || schedulePanelOpen || isPlacementArmed)}
         dragState={dragState}
         projectColor={cardAccentColor}
-        className={`df-task-card ${isOverdueCandidate && !isEvent ? "overdue" : ""} ${task.completed && !isEvent ? "completed" : ""} ${openPanel || schedulePanelOpen ? "expanded" : ""} ${isMoreOpen ? "more-open" : ""} ${isPlacementArmed ? "placement-armed" : ""} ${isEvent ? "is-event" : ""}`}
+        className={`${isOverdueCandidate && !isEvent ? "overdue" : ""} ${task.completed && !isEvent ? "completed" : ""} ${openPanel || schedulePanelOpen ? "expanded" : ""} ${isMoreOpen ? "more-open" : ""} ${isPlacementArmed ? "placement-armed" : ""} ${isEvent ? "is-event" : ""}`}
         dataAttrs={{ "placement-card": task.id, kind: isEvent ? "event" : "task", "candidate-layout": stackedActions ? "stacked" : "inline" }}
         onPointerDown={isEvent ? undefined : onPointerDragStart}
         onMouseLeave={isOverdueCandidate && !isEvent ? () => {
@@ -645,9 +657,8 @@ export function TaskCard({
         } : undefined}
         onClick={onClick}
         title={demo ? undefined : compact ? (lang === "zh" ? "长按后拖到时间轴排程" : "Long press, then drag to schedule") : t(lang, "taskCard.dragHint")}
-      >
-        <TaskRecurrenceIndicator recurrence={task.recurrence} lang={lang} />
-        <TaskBlockRow className={`df-candidate-row${scheduleSummary ? " df-candidate-summary-row" : ""}`}>
+        rowClassName={scheduleSummary ? "df-candidate-summary-row" : undefined}
+        row={<>
           {!isEvent && <TaskCheckbox lang={lang}
             checked={task.completed}
             tone={normalizeTaskCheckTone(task)}
@@ -684,7 +695,8 @@ export function TaskCard({
             <button type="button" className="df-ai-project-suggestion-accept" title={lang === "zh" ? `建议归入「${suggestedProject.title}」` : `Suggested project: ${suggestedProject.title}`} onClick={() => onProjectChange(suggestedProject.id)}>↗ {suggestedProject.title}</button>
             <CloseButton label={lang === "zh" ? "关闭项目建议" : "Dismiss project suggestion"} onClick={() => { setDismissedProjectId(suggestedProject.id); window.requestAnimationFrame(() => durationTriggerRef.current?.focus()); }} />
           </span>}
-        </TaskBlockRow>
+        </>}
+      >
         {!isEvent && onToggleSubtask && hasSubtasks && <TaskSubtaskShelf
           label={lang === "zh" ? "子任务" : "Subtasks"}
           progress={`${countDoneSubtasks(task.subtasks)}/${countSubtasks(task.subtasks)}`}
@@ -719,7 +731,7 @@ export function TaskCard({
           <button ref={projectTriggerRef} type="button" title={t(lang, "drawer.assignProject")} aria-expanded={morePopover === "project"} onClick={() => setMorePopover((current) => current === "project" ? null : "project")}><UiFolderInputIcon size={18} /><span>{lang === "zh" ? "项目" : "Project"}</span></button>
           <button type="button" className={`danger-lite${deleteConfirm ? " is-confirming" : ""}`} title={deleteConfirm ? (lang === "zh" ? "再次点击确认删除" : "Click again to delete") : t(lang, "taskCard.delete")} onClick={() => { if (deleteConfirm) onDelete(); else setDeleteConfirm(true); }}><UiTrashIcon size={18} /><span>{deleteConfirm ? (lang === "zh" ? "确认删除" : "Confirm") : t(lang, "taskCard.delete")}</span></button>
         </div>}
-      </TaskBlock>
+      </CandidateTaskCard>
 
       <AnchoredNarrowMenu open={popoverOpen === "duration"} anchorRef={durationTriggerRef} onClose={() => setPopoverOpen(null)} placement="below" label={t(lang, "taskCard.adjustDuration")} className="df-candidate-duration-menu">
         <label><span>{lang === "zh" ? "分钟" : "Minutes"}</span><input type="number" min={SLOT_MINUTES} max={1440} step={SLOT_MINUTES} value={durationDraft} onChange={(event) => setDurationDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") commitDuration(Number(durationDraft)); }} /></label>

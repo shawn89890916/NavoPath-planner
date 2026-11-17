@@ -1,5 +1,18 @@
 # NavoPath 更新日志
 
+## 2026-11-17
+
+### 1.7.0 Beta 25
+
+#### 修复
+
+- 管理项目中拖动任务或项目时，插入位置保持稳定，靠近侧栏边缘会自动滚动，拖到时间轴会显示排程预览。
+
+#### 改进
+
+- 管理项目、矩阵和看板沿用任务卡的样式，显示预计时长和重复标记。矩阵在窄栏改为单列，看板支持显示已完成任务。
+- 移除列表视图。已有任务、排序和排程保留。
+
 ## 2026-11-16
 
 ### 1.7.0 Beta 24
@@ -631,6 +644,19 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-17
+
+### 1.7.0 Beta 25
+
+#### Fixed
+
+- In Manage projects, insertion targets stay in place while you drag tasks or projects. Drag near the panel edge to scroll, or over the timeline to preview scheduling.
+
+#### Improved
+
+- Manage projects, Matrix, and Kanban share the Tasks card style, including estimated duration and recurrence. Matrix uses one column in narrow panels, and Kanban can show completed tasks.
+- The List view has been retired. Existing tasks, order, and schedules are preserved.
 
 ## 2026-11-16
 

@@ -161,6 +161,8 @@ export class ExtensionService {
       return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId, ...(entry.previewUrl ? { previewUrl: publicHttps(entry.previewUrl) } : {}), ...(previewUrls ? { previewUrls } : {}), ...(entry.iconUrl ? { iconUrl: publicHttps(entry.iconUrl) } : {}), ...(entry.downloads !== undefined ? { downloads: entry.downloads } : {}), ...(entry.publishedAt ? { publishedAt: entry.publishedAt } : {}) };
     });
     if (sourceId === "official") {
+      const retiredIndex = entries.findIndex((entry) => entry.manifest.id === "list");
+      if (retiredIndex !== -1) entries.splice(retiredIndex, 1);
       const { officialCatalog } = await import("./officialPackages");
       for (const bundled of officialCatalog.packages as Omit<CatalogEntry, "sourceId">[]) {
         if (!toolPageMigrations.has(bundled.manifest.id)) continue;
@@ -328,7 +330,7 @@ export class ExtensionService {
       },
       registerNativePlanningView: (mode: NativeShelfViewMode, name: string, iconUrl?: string): Dispose => {
         guard();
-        const nativeModes: Record<string, NativeShelfViewMode> = { tree: "tree", kanban: "kanban", matrix: "eisenhower", list: "list", metrics: "metrics", "activity-history": "activity-history" };
+        const nativeModes: Record<string, NativeShelfViewMode> = { tree: "tree", kanban: "kanban", matrix: "eisenhower", metrics: "metrics", "activity-history": "activity-history" };
         if (!key.startsWith("official:") || nativeModes[key.slice("official:".length)] !== mode) throw new Error("Native planning views are reserved for matching official packages");
         return this.bridge(key).contribute("views", name, () => {}, { iconUrl, planningView: true, nativeMode: mode });
       },
@@ -385,6 +387,12 @@ export class ExtensionService {
     const generation = this.generation;
     const next = { ...preferences, migratedLegacy: true, installed: { ...preferences.installed } };
     let changed = !preferences.migratedLegacy;
+    const retiredKey = "official:list";
+    if (next.installed[retiredKey]) {
+      delete next.installed[retiredKey];
+      next.removed = { ...next.removed, [retiredKey]: next.removed[retiredKey] || new Date().toISOString() };
+      changed = true;
+    }
     if (!preferences.migratedLegacy) {
       const needed = settings.enabledPlugins?.includes("pomodoro") || settings.focusModeDefault === "pomodoro" || settings.widgetTimerPreferences?.mode === "pomodoro";
       if (needed && !next.installed["official:pomodoro"] && !next.removed["official:pomodoro"]) {
@@ -400,7 +408,6 @@ export class ExtensionService {
       const builtins: Array<{ id: string; enabled: boolean }> = [
         { id: "kanban", enabled: true },
         { id: "matrix", enabled: true },
-        { id: "list", enabled: true },
         { id: "metrics", enabled: settings.featureMetricsEnabled !== false },
       ];
       const { officialPackages, officialPackageTexts } = await import("./officialPackages");

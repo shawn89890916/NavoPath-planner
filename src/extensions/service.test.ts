@@ -28,11 +28,11 @@ beforeEach(() => {
 afterEach(async () => { await current.configure(null); vi.unstubAllGlobals(); });
 
 describe("extension installation and account reconciliation", () => {
-  it("preinstalls Activity history, List, Matrix, Kanban and Metrics on a clean installation", async () => {
+  it("preinstalls Activity history, Matrix, Kanban and Metrics on a clean installation", async () => {
     const f = fixture("preview", { ...defaultExtensionPreferences(), migratedPlanningViews: false, migratedShelfViews: false });
     await current.configure(f.host);
     const installed = current.getSnapshot().preferences.installed;
-    expect(Object.keys(installed).sort()).toEqual(["official:activity-history", "official:kanban", "official:list", "official:matrix", "official:metrics"]);
+    expect(Object.keys(installed).sort()).toEqual(["official:activity-history", "official:kanban", "official:matrix", "official:metrics"]);
     expect(Object.values(installed).every((item) => item.enabled)).toBe(true);
   });
 
@@ -47,11 +47,34 @@ describe("extension installation and account reconciliation", () => {
     await f.host.saveSettings({ featureMetricsEnabled: false });
     await current.configure(f.host);
     const installed = current.getSnapshot().preferences.installed;
-    expect(Object.keys(installed).sort()).toEqual(["official:activity-history", "official:list", "official:matrix", "official:metrics"]);
+    expect(Object.keys(installed).sort()).toEqual(["official:activity-history", "official:matrix", "official:metrics"]);
     expect(installed["official:metrics"].enabled).toBe(false);
     expect(installed["official:matrix"].enabled).toBe(false);
-    expect(installed["official:list"].enabled).toBe(true);
     expect(f.settings().extensions.migratedShelfViews).toBe(true);
+  });
+
+  it("retires the installed official List once without changing other views or planner data", async () => {
+    const matrix = officialCatalog.packages.find((entry) => entry.manifest.id === "matrix") as CatalogEntry;
+    const now = "2026-11-16T00:00:00.000Z";
+    const key = "official:list";
+    const f = fixture("preview", {
+      ...defaultExtensionPreferences(),
+      installed: {
+        [key]: { ...matrix, manifest: { ...matrix.manifest, id: "list", name: "List" }, key, sourceId: "official", enabled: true, installedAt: now },
+        "official:matrix": { ...matrix, key: "official:matrix", sourceId: "official", enabled: false, installedAt: now },
+      },
+    });
+    const data = f.host.getData();
+    await current.configure(f.host);
+    const preferences = current.getSnapshot().preferences;
+    expect(preferences.installed[key]).toBeUndefined();
+    expect(preferences.removed[key]).toBeTruthy();
+    expect(preferences.installed["official:matrix"]?.enabled).toBe(false);
+    expect(f.host.getData()).toBe(data);
+    await current.configure(null);
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.removed[key]).toBe(preferences.removed[key]);
+    expect(officialCatalog.packages.some((entry) => entry.manifest.id === "list")).toBe(false);
   });
 
   it("adds Activity history to an already migrated profile and remembers uninstall after restarting", async () => {

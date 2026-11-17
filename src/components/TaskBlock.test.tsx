@@ -156,7 +156,9 @@ describe("TaskBlock shared component contract", () => {
     expect(candidateSubtask).toContain('variant="habit-child"');
     expect(planning).not.toContain("<article");
     expect(css).toContain('.df-app .df-task-block[data-task-appearance][data-task-variant="candidate"]');
-    expect(css).toContain('#root .df-app .df-planning .df-task-node-inner[data-task-variant="candidate"]');
+    expect(planning).toContain("<CandidateTaskCard");
+    expect(workspace).toContain("<CandidateTaskCard");
+    expect(css).toContain('.df-shelf-view .df-task-card[data-task-variant="candidate"]');
   });
 
   it("keeps completed task blocks free of full-card opacity and overlay masks", () => {
@@ -207,9 +209,11 @@ describe("TaskBlock shared component contract", () => {
 
   it("keeps alternative task views within the existing shelf width", () => {
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
-    expect(css).toContain(".df-shelf-view :is(.df-kanban-board, .df-eisenhower-grid, .df-planning-list)");
+    expect(css).toContain(".df-shelf-view :is(.df-kanban-board, .df-eisenhower-grid)");
     expect(css).toContain(".df-shelf-scroll");
-    expect(css).toContain(".df-kanban-card.is-drag-source");
+    expect(css).toContain('[data-planning-drop="before"]::after');
+    expect(css).toContain('@container (max-width: 520px)');
+    expect(css).not.toContain(".df-planning-list");
   });
 
   it("renders candidate subtasks as collapsible TaskBlock child rows", () => {
@@ -313,11 +317,11 @@ describe("TaskBlock shared component contract", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
     const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
 
-    expect(planning).toContain("props.onTimelineDrop?.(task, point");
-    expect(planning).toContain("clearPlanningDragState");
+    expect(planning).toContain("props.onTimelineDrop?.(task, { x, y }, subtaskId)");
+    expect(planning).toContain("props.onTimelineDrag?.(task, null, subtaskId)");
     expect(css).toContain(".df-shelf-view .df-tree-wrap");
-    expect(css).toContain(".df-app .df-planning .df-task-node-inner > .df-task-block-accent");
-    expect(css).toContain(".df-app .df-planning .df-task-node-inner::before");
+    expect(css).toContain('[data-planning-drop="inside"]');
+    expect(css).not.toContain(".df-tree-drop-preview");
     expect(planning).toContain("<CandidateSubtaskItem");
     expect(planning).toContain("planningTree");
     expect(planning).toContain('className="df-candidate-subtasks df-plan-subtask-list"');

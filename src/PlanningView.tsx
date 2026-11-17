@@ -14,22 +14,21 @@ import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
 import { kanbanGroups, WORKFLOW_LABELS } from "./utils/productivity";
 import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch, type UiWorkflowStatus, type StateFilterValue } from "./utils/productivityModel";
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
-import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockVariant } from "./components/TaskBlock";
+import { TaskActions, TaskBlockContent, TaskBlockDuration, TaskCheckbox, TaskSubtaskShelf } from "./components/TaskBlock";
 import { CloseButton, IconButton } from "./components/UiPrimitives";
 import { UiCalendarCheckIcon, UiFilterIcon } from "./components/UiIcons";
 import { TaskDragLayer } from "./unifiedDrag";
 import { bindHeldTouchScroll } from "./useUnifiedDrag";
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricCompletionFilter, type MetricDisplayMetric, type MetricGroupBy, type MetricHabitMode, type MetricRangePreset, type TimeAllocationGroup } from "./metrics/timeAllocation";
 import type { NativePlanningViewMode } from "./extensions/types";
-import { CandidateSubtaskItem } from "./WorkspacePresentation";
+import { CandidateSubtaskItem, CandidateTaskCard, categories, formatDuration, isEventDisplayTask } from "./WorkspacePresentation";
 
 type TreeNodeKind = "project" | "task" | "subtask";
 type TreeDragNode = { kind: TreeNodeKind; id: string };
-type TreeDropTarget = TreeDragNode & { position: "before" | "inside" | "after"; height: number };
-type PlanningDropContainer = string;
+type DropPosition = "before" | "inside" | "after";
+type TreeDropTarget = TreeDragNode & { position: DropPosition; element: HTMLElement };
 
 const DEFAULT_PROJECT_COLOR = "var(--accent-active)";
-const UNASSIGNED_COLOR = "#7B8191";
 const DRAG_START_THRESHOLD_PX = 5;
 const SUPPRESS_CLICK_AFTER_DRAG_MS = 220;
 
@@ -250,10 +249,6 @@ function localDateInputValue(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function planningTaskPriority(task: Pick<Task, "priority">) {
-  return task.priority || "normal";
-}
-
 function isIncompletePlanningSubtask(subtask: Subtask) {
   return !subtask.completed && !subtask.done;
 }
@@ -265,7 +260,7 @@ function createProjectShell(title: string): Project {
     category: "project",
     notes: "",
     completed: false,
-    color: UNASSIGNED_COLOR,
+    color: "#7B8191",
     createdAt: "",
     updatedAt: "",
   };
@@ -442,6 +437,26 @@ function PlanningSubtaskNode(props: {
   );
 }
 
+function PlanningCandidateCard({ task, lang, meta, actions, onToggle, children, ...props }:
+  Omit<React.ComponentPropsWithoutRef<typeof CandidateTaskCard>, "row"> & {
+    meta?: React.ReactNode;
+    actions?: React.ReactNode;
+    onToggle?: () => void;
+  }) {
+  const isEvent = isEventDisplayTask(task);
+  const done = !isEvent && normalizeWorkflowStatus(task) === "done";
+  return <CandidateTaskCard {...props} task={task} lang={lang} checked={done} title={task.title} row={<>
+    {isEvent ? <span className="df-task-block-check df-candidate-kind" aria-hidden="true" /> : <TaskCheckbox lang={lang} checked={done} tone={normalizeTaskCheckTone(task)} priority={task.priority}
+      ariaLabel={t(lang || "en", done ? "planning.markIncomplete" : "planning.markComplete")}
+      onClick={onToggle && ((event) => { event.stopPropagation(); onToggle(); })} />}
+    <TaskBlockContent className="df-candidate-main" title={task.title}>{isEvent ? <span className="df-candidate-kind">EVENT</span> : meta}</TaskBlockContent>
+    {!isEvent && <>
+      <TaskBlockDuration>{task.estimatedHours !== 0 ? <span className="df-duration-pill">{formatDuration(task.estimatedHours || 0.5)}</span> : null}</TaskBlockDuration>
+      {actions}
+    </>}
+  </>}>{children}</CandidateTaskCard>;
+}
+
 function PlanningTaskNode(props: {
   demo?: boolean;
   lang: Language;
@@ -462,17 +477,12 @@ function PlanningTaskNode(props: {
   dragging?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { tooltipEl, showTip, hideTip } = useTooltip();
-  const titleRef = useRef<HTMLSpanElement>(null);
-  const done = normalizeWorkflowStatus(props.task) === "done" || Boolean(props.task.completed);
   const hasSubtasks = (props.task.subtasks || []).some(isIncompletePlanningSubtask);
   const doneCount = countDoneSubtasks(props.task.subtasks);
   const totalCount = countSubtasks(props.task.subtasks);
   const metaBadges = buildTaskMetaBadges(props.task, props.lang);
 
   return (
-    <>
-      {tooltipEl}
       <div
         className="df-plan-task-node"
         data-node-id={props.task.id}
@@ -480,71 +490,29 @@ function PlanningTaskNode(props: {
         aria-grabbed={props.dragging}
         style={{ "--project-color": projectColorInk(props.projectColor), "--task-project-color": projectColorInk(props.projectColor) } as React.CSSProperties}
       >
-        <TaskBlock
+        <PlanningCandidateCard
           as="div"
-          variant="candidate"
-          appearance="calm"
-          priority={planningTaskPriority(props.task)}
-          checked={done}
+          task={props.task}
+          lang={props.lang}
           projectColor={props.projectColor}
           className="df-task-node-inner"
           dragState={props.dragging ? "source-placeholder" : undefined}
           dataAttrs={{ "planning-drag-card": props.task.id }}
           ariaGrabbed={props.dragging}
           onClick={props.onOpen}
+          onToggle={props.onToggleComplete}
+          meta={metaBadges.length > 0 && <span className="df-task-meta-badges" aria-label="Task status">
+            {metaBadges.map((badge) => <span key={badge.key} className={badge.className}>{badge.label}</span>)}
+          </span>}
+          actions={<TaskActions className="df-task-node-actions">
+            {props.onSchedule && <IconButton className="df-tree-icon-button" icon={<UiCalendarCheckIcon size={16} />} label={props.lang === "zh" ? "安排" : "Schedule"} onClick={(event) => { event.stopPropagation(); props.onSchedule?.(); }} />}
+            {!props.demo && <button className="df-tree-icon-button" onClick={(event) => {
+              event.stopPropagation();
+              event.currentTarget.focus();
+              setMenuOpen((open) => !open);
+            }} aria-label={t(props.lang, "planning.more")}><MoreIcon /></button>}
+          </TaskActions>}
         >
-          <TaskBlockRow>
-            <TaskCheckbox lang={props.lang}
-              checked={done}
-              tone={normalizeTaskCheckTone(props.task)}
-              priority={props.task.priority}
-              className="df-list-status-toggle df-planning-task-check"
-              ariaLabel={done ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
-              onClick={(event) => {
-                event.stopPropagation();
-                props.onToggleComplete();
-              }}
-            />
-            <TaskBlockContent
-              className="df-planning-task-copy"
-              title={(
-                <span
-                  className="df-task-title"
-                  ref={titleRef}
-                  onMouseEnter={() => {
-                    if (titleRef.current && titleRef.current.scrollWidth > titleRef.current.clientWidth) {
-                      showTip(props.task.title, titleRef.current);
-                    }
-                  }}
-                  onMouseLeave={hideTip}
-                >
-                  {props.task.title}
-                </span>
-              )}
-            >
-              {metaBadges.length > 0 && (
-                <span className="df-task-meta-badges" aria-label={props.lang === "zh" ? "Task status" : "Task status"}>
-                  {metaBadges.map((badge) => (
-                    <span key={badge.key} className={badge.className}>{badge.label}</span>
-                  ))}
-                </span>
-              )}
-            </TaskBlockContent>
-            <TaskActions className="df-task-node-actions">
-              {props.onSchedule && <IconButton className="df-tree-icon-button" icon={<UiCalendarCheckIcon size={16} />} label={props.lang === "zh" ? "安排" : "Schedule"} onClick={(event) => { event.stopPropagation(); props.onSchedule?.(); }} />}
-              {!props.demo && <button
-                className="df-tree-icon-button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  event.currentTarget.focus();
-                  setMenuOpen((open) => !open);
-                }}
-                aria-label={t(props.lang, "planning.more")}
-              >
-                <MoreIcon />
-              </button>}
-            </TaskActions>
-          </TaskBlockRow>
           {hasSubtasks && <TaskSubtaskShelf
             label={props.lang === "zh" ? "子任务" : "Subtasks"}
             progress={`${doneCount}/${totalCount}`}
@@ -565,9 +533,8 @@ function PlanningTaskNode(props: {
               { label: t(props.lang, "planning.delete"), danger: true, onClick: props.onDelete },
             ]}
           />
-        </TaskBlock>
+        </PlanningCandidateCard>
       </div>
-    </>
   );
 }
 
@@ -594,7 +561,6 @@ function PlanningProjectNode(props: {
         className={`df-plan-project-node ${props.collapsed ? "collapsed" : ""}${props.dragging ? " is-dragging-source" : ""}`}
         data-node-id={props.project.id}
         data-node-type="project"
-        data-empty-project-drop={props.taskCount === 0 ? "true" : undefined}
         data-planning-drag-card={props.project.id}
         aria-grabbed={props.dragging}
         style={{
@@ -840,7 +806,8 @@ export default function PlanningView(props: {
   onScheduleTask?: (task: Task) => void;
   onScheduleSubtask?: (task: Task, subtaskId: string) => void;
   onTouchScheduleDrag?: (event: React.PointerEvent, task: Task, subtaskId?: string) => void;
-  onTimelineDrag?: (task: Task, point: { x: number; y: number } | null) => void;
+  onTimelineDrag?: (task: Task, point: { x: number; y: number } | null, subtaskId?: string) => void;
+  showCompleted?: boolean;
   onTimelineDrop?: (task: Task, point: { x: number; y: number }, subtaskId?: string) => boolean;
   data: PlannerData;
   projects: Project[];
@@ -871,7 +838,6 @@ export default function PlanningView(props: {
   const safeTasks = Array.isArray(props.tasks) ? props.tasks : [];
   const [collapsedSubtasks, setCollapsedSubtasks] = useState<Record<string, boolean>>({});
   const [dragNode, setDragNode] = useState<TreeDragNode | null>(null);
-  const [dropTarget, setDropTarget] = useState<TreeDropTarget | null>(null);
   const treeRef = useRef<HTMLDivElement>(null);
   const donutSvgRef = useRef<SVGSVGElement>(null);
   const dialog = useInAppDialog(props.lang);
@@ -915,23 +881,13 @@ export default function PlanningView(props: {
   const [filterExpandedCategory, setFilterExpandedCategory] = useState<string | null>(null);
   const [filterDueDate, setFilterDueDate] = useState<"overdue" | "this-week" | "no-date" | null>(null);
   const [filterScheduled, setFilterScheduled] = useState<"scheduled" | "unscheduled" | null>(null);
-  const [kanbanDragTaskId, setKanbanDragTaskId] = useState<string | null>(null);
-  const [kanbanDropStatus, setKanbanDropStatus] = useState<UiWorkflowStatus | null>(null);
-  const [listDragTaskId, setListDragTaskId] = useState<string | null>(null);
-  const [listDropTargetId, setListDropTargetId] = useState<string | null>(null);
-  const [listDropPosition, setListDropPosition] = useState<"before" | "after">("before");
-  const [listDropAtEnd, setListDropAtEnd] = useState(false);
   const [guideDismissed, setGuideDismissed] = useState(() => props.demo ? false : isGuideDismissed("planning"));
   const [planningDragTask, setPlanningDragTask] = useState<{
     task: Task;
-    variant: TaskBlockVariant;
     sourceRect: { width: number; height: number };
     offset: { x: number; y: number };
     pointer: { x: number; y: number };
   } | null>(null);
-  const dragNodeRef = useRef<TreeDragNode | null>(null);
-  const dropTargetRef = useRef<TreeDropTarget | null>(null);
-  const planningDropTargetRef = useRef<{ taskId: string; position: "before" | "after"; container: PlanningDropContainer } | null>(null);
   const suppressClickUntilRef = useRef(0);
 
   const suppressPostDragClick = useCallback(() => {
@@ -944,36 +900,6 @@ export default function PlanningView(props: {
     if (shouldSuppressTaskClick()) return;
     props.onTaskEdit(task);
   }, [props, shouldSuppressTaskClick]);
-
-  const setTreeDragNode = useCallback((node: TreeDragNode | null) => {
-    dragNodeRef.current = node;
-    setDragNode(node);
-  }, []);
-
-  const setTreeDropTarget = useCallback((target: TreeDropTarget | null) => {
-    const current = dropTargetRef.current;
-    if (
-      current?.kind === target?.kind
-      && current?.id === target?.id
-      && current?.position === target?.position
-      && current?.height === target?.height
-    ) return;
-    dropTargetRef.current = target;
-    setDropTarget(target);
-  }, []);
-
-  function clearPlanningDragState() {
-    document.body.classList.remove("df-planning-native-dragging");
-    document.body.classList.remove("df-unified-dragging");
-    setTreeDragNode(null);
-    setTreeDropTarget(null);
-    setKanbanDragTaskId(null);
-    setKanbanDropStatus(null);
-    setListDragTaskId(null);
-    setListDropTargetId(null);
-    setListDropAtEnd(false);
-    setPlanningDragTask(null);
-  }
 
   const today = props.referenceDate || todayIso();
 
@@ -1226,20 +1152,8 @@ export default function PlanningView(props: {
 
   const svgLines = useTreeLines(treeRef, safeProjects, viewFilteredTasks, props.collapsed, collapsedSubtasks);
 
-  const kanbanTasks = viewFilteredTasks;
   // This entry note stays dismissed after the user closes it.
   const showLongRangeGuide = !props.demo && !guideDismissed;
-
-  const treeDropSlot = (kind: TreeNodeKind, id: string, position: TreeDropTarget["position"], suppress = false) => {
-    if (suppress || !dropTarget || dropTarget.kind !== kind || dropTarget.id !== id || dropTarget.position !== position) return null;
-    return (
-      <div
-        className={`df-tree-drop-preview ${position}`}
-        style={{ "--tree-drop-slot-height": `${dropTarget.height}px` } as React.CSSProperties}
-        aria-hidden="true"
-      />
-    );
-  };
 
   const renderTaskSubtasks = (task: Task) => {
     if (collapsedSubtasks[task.id] || !(task.subtasks || []).some(isIncompletePlanningSubtask)) return null;
@@ -1247,7 +1161,6 @@ export default function PlanningView(props: {
       <div className="df-candidate-subtasks df-plan-subtask-list" data-parent-id={task.id}>
         {(task.subtasks || []).filter(isIncompletePlanningSubtask).map((subtask) => (
           <React.Fragment key={subtask.id}>
-            {treeDropSlot("subtask", subtask.id, "before")}
             <PlanningSubtaskNode
               demo={props.demo}
               lang={props.lang}
@@ -1265,8 +1178,6 @@ export default function PlanningView(props: {
                 else beginTreeDrag(event, { kind: "subtask", id: subtaskId });
               }}
             />
-            {treeDropSlot("subtask", subtask.id, "inside")}
-            {treeDropSlot("subtask", subtask.id, "after")}
           </React.Fragment>
         ))}
       </div>
@@ -1274,7 +1185,7 @@ export default function PlanningView(props: {
   };
 
   const projectColor = useCallback((projectId?: string) => {
-    if (!projectId) return UNASSIGNED_COLOR;
+    if (!projectId) return DEFAULT_PROJECT_COLOR;
     const project = safeProjects.find((p) => String(p.id) === String(projectId));
     return project?.color || DEFAULT_PROJECT_COLOR;
   }, [safeProjects]);
@@ -1284,22 +1195,6 @@ export default function PlanningView(props: {
     const project = safeProjects.find((p) => String(p.id) === String(projectId));
     return project?.title || (props.lang === "zh" ? "Unassigned" : "Unassigned");
   }, [safeProjects, props.lang]);
-
-  const handleKanbanDrop = useCallback((status: UiWorkflowStatus, taskId?: string) => {
-    const id = taskId || kanbanDragTaskId;
-    if (!id) return;
-    props.onTaskUpdate(id, workflowStatusForPatch(status));
-    setKanbanDragTaskId(null);
-    setKanbanDropStatus(null);
-  }, [kanbanDragTaskId, props]);
-
-  const handleQuadrantDrop = useCallback((importance: "high" | "medium" | "low" | null, urgency: "high" | "medium" | "low" | null, taskId?: string) => {
-    const id = taskId || kanbanDragTaskId;
-    if (!id) return;
-    props.onTaskUpdate(id, { importance, urgency, completed: false });
-    setKanbanDragTaskId(null);
-    setKanbanDropStatus(null);
-  }, [kanbanDragTaskId, props]);
 
   const reorderPlanningTasks = useCallback((dragId: string, targetTaskId: string, position: "before" | "after", sequence: Task[]) => {
     if (!dragId || dragId === targetTaskId) {
@@ -1327,42 +1222,14 @@ export default function PlanningView(props: {
     });
   }, [props]);
 
-  const handleListDrop = useCallback((targetTaskId: string, position: "before" | "after", taskId?: string) => {
-    const dragId = taskId || listDragTaskId;
-    reorderPlanningTasks(dragId || "", targetTaskId, position, viewFilteredTasks);
-    setListDragTaskId(null);
-    setListDropTargetId(null);
-  }, [listDragTaskId, reorderPlanningTasks, viewFilteredTasks]);
+  const kanbanStatus = (task: Task) => normalizeWorkflowStatus(task) === "done" ? "done" : "backlog";
+  const matrixQuadrant = (task: Task) => task.importance === "high"
+    ? task.urgency === "high" ? "q1" : "q2"
+    : task.urgency === "high" ? "q3" : "q4";
+  const planningContainer = (task: Task) => viewMode === "kanban" ? kanbanStatus(task) : matrixQuadrant(task);
 
-  const planningContainerTasks = useCallback((container: PlanningDropContainer) => {
-    if (container === "list") return orderPlanningTasks(viewFilteredTasks);
-    if (container.startsWith("kanban:")) {
-      const status = container.slice("kanban:".length) as UiWorkflowStatus;
-      return orderPlanningTasks(kanbanTasks.filter((task) => status === "done" ? normalizeWorkflowStatus(task) === "done" : normalizeWorkflowStatus(task) !== "done"));
-    }
-    if (container.startsWith("matrix:")) {
-      const key = container.slice("matrix:".length);
-      return orderPlanningTasks(viewFilteredTasks.filter((task) => {
-        const imp = task.importance || "medium";
-        const urg = task.urgency || "medium";
-        if (key === "q1") return imp === "high" && urg === "high";
-        if (key === "q2") return imp === "high" && urg !== "high";
-        if (key === "q3") return imp !== "high" && urg === "high";
-        return imp !== "high" && urg !== "high";
-      }));
-    }
-    return orderPlanningTasks(viewFilteredTasks);
-  }, [kanbanTasks, orderPlanningTasks, viewFilteredTasks]);
-
-  /**
-   * Shared pointer-event drag for Kanban / Matrix / List views.
-   * Renders a real TaskBlock in TaskDragLayer (not a blue-gray custom card).
-   * The source element gets is-dragging-source (clean placeholder).
-   * Drop feedback: insertion line for list reorder, container outline for
-   * kanban column / matrix quadrant.
-   */
-  const beginPlanningDrag = useCallback((event: React.PointerEvent, task: Task, variant: TaskBlockVariant) => {
-    if (event.button !== 0) return;
+  const beginPlanningDrag = (event: React.PointerEvent, task: Task) => {
+    if (event.button !== 0 || isEventDisplayTask(task)) return;
     if (event.pointerType === "touch" && props.onTouchScheduleDrag) {
       props.onTouchScheduleDrag(event, task);
       return;
@@ -1370,6 +1237,10 @@ export default function PlanningView(props: {
     const target = event.target as HTMLElement;
     if (target.closest("button,input,textarea,select,a,[contenteditable='true']")) return;
     const dragElement = event.currentTarget as HTMLElement;
+    const surface = dragElement.closest(".df-shelf-view");
+    const scroll = dragElement.closest<HTMLElement>("[data-shelf-scroll]");
+    const sourceContainer = planningContainer(task);
+    let marker: HTMLElement | undefined;
     const pointerId = event.pointerId;
     const startX = event.clientX;
     const startY = event.clientY;
@@ -1395,92 +1266,25 @@ export default function PlanningView(props: {
       dragElement.classList.remove("is-dragging-source", "is-drag-armed");
       if (holdTimer !== undefined) window.clearTimeout(holdTimer);
       if (active) props.onTimelineDrag?.(task, null);
+      marker?.removeAttribute("data-planning-drop");
       setPlanningDragTask(null);
-      setKanbanDragTaskId(null);
-      setKanbanDropStatus(null);
-      setListDragTaskId(null);
-      setListDropTargetId(null);
-      setListDropAtEnd(false);
-      planningDropTargetRef.current = null;
       if (dragElement.hasPointerCapture(pointerId)) {
         try { dragElement.releasePointerCapture(pointerId); } catch { /* ignore */ }
       }
     };
 
-    const detectDropTarget = (clientX: number, clientY: number) => {
-      const pointedElement = document.elementFromPoint(clientX, clientY);
-      const planningTask = pointedElement?.closest<HTMLElement>("[data-planning-task-id]");
-      if (planningTask) {
-        const targetTaskId = planningTask.dataset.planningTaskId;
-        if (targetTaskId && targetTaskId !== task.id) {
-          const rect = planningTask.getBoundingClientRect();
-          const isBefore = (clientY - rect.top) < rect.height / 2;
-          setListDropTargetId(targetTaskId);
-          setListDropPosition(isBefore ? "before" : "after");
-          setListDropAtEnd(false);
-          planningDropTargetRef.current = {
-            taskId: targetTaskId,
-            position: isBefore ? "before" : "after",
-            container: (planningTask.dataset.planningContainer || "") as PlanningDropContainer,
-          };
-        } else {
-          setListDropTargetId(null);
-          setListDropAtEnd(false);
-          planningDropTargetRef.current = null;
-        }
-        setKanbanDropStatus(null);
-        return;
-      }
-      const kanbanColumn = pointedElement?.closest<HTMLElement>("[data-kanban-status]");
-      if (kanbanColumn) {
-        setKanbanDropStatus(kanbanColumn.dataset.kanbanStatus as UiWorkflowStatus);
-        setListDropTargetId(null);
-        setListDropAtEnd(false);
-        planningDropTargetRef.current = null;
-        return;
-      }
-      const quadrant = pointedElement?.closest<HTMLElement>("[data-quadrant]");
-      if (quadrant) {
-        setKanbanDropStatus(("q-" + quadrant.dataset.quadrant) as unknown as UiWorkflowStatus);
-        setListDropTargetId(null);
-        setListDropAtEnd(false);
-        planningDropTargetRef.current = null;
-        return;
-      }
-      const listRow = pointedElement?.closest<HTMLElement>("[data-list-task-id]");
-      if (listRow) {
-        const targetTaskId = listRow.dataset.listTaskId;
-        if (targetTaskId && targetTaskId !== task.id) {
-          const rect = listRow.getBoundingClientRect();
-          const isBefore = (clientY - rect.top) < rect.height / 2;
-          setListDropTargetId(targetTaskId);
-          setListDropPosition(isBefore ? "before" : "after");
-          setListDropAtEnd(false);
-          planningDropTargetRef.current = {
-            taskId: targetTaskId,
-            position: isBefore ? "before" : "after",
-            container: "list",
-          };
-        } else {
-          setListDropTargetId(null);
-          setListDropAtEnd(false);
-          planningDropTargetRef.current = null;
-        }
-        setKanbanDropStatus(null);
-        return;
-      }
-      const listContainer = pointedElement?.closest<HTMLElement>(".df-planning-list");
-      if (listContainer) {
-        setKanbanDropStatus(null);
-        setListDropTargetId(null);
-        setListDropAtEnd(true);
-        planningDropTargetRef.current = null;
-        return;
-      }
-      setKanbanDropStatus(null);
-      setListDropTargetId(null);
-      setListDropAtEnd(false);
-      planningDropTargetRef.current = null;
+    const getDropTarget = (x: number, y: number) => {
+      const hit = document.elementFromPoint(x, y);
+      if (!hit || !surface?.contains(hit)) return;
+      const group = hit.closest<HTMLElement>("[data-planning-group]");
+      if (!group) return;
+      const container = group.dataset.planningGroup!;
+      const card = hit.closest<HTMLElement>("[data-planning-task-id]");
+      if (card?.dataset.planningTaskId === task.id || card?.dataset.kind === "event") return;
+      if (!card || sourceContainer !== container) return { container, element: group, position: "inside" as const };
+      const rect = card.getBoundingClientRect();
+      return { container, element: card, taskId: card.dataset.planningTaskId,
+        position: y < rect.top + rect.height / 2 ? "before" as const : "after" as const };
     };
 
     const move = (pointerEvent: PointerEvent) => {
@@ -1502,20 +1306,19 @@ export default function PlanningView(props: {
         try { dragElement.setPointerCapture(pointerId); } catch { /* ignore */ }
         document.body.classList.add("df-unified-dragging");
         dragElement.classList.add("is-dragging-source");
-        setListDragTaskId(task.id);
-        setKanbanDragTaskId(task.id);
         const rect = dragElement.getBoundingClientRect();
         const offX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
         const offY = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
-        setPlanningDragTask({ task, variant, sourceRect: { width: rect.width, height: rect.height }, offset: { x: offX, y: offY }, pointer: { x: pointerEvent.clientX, y: pointerEvent.clientY } });
+        setPlanningDragTask({ task, sourceRect: { width: rect.width, height: rect.height }, offset: { x: offX, y: offY }, pointer: { x: pointerEvent.clientX, y: pointerEvent.clientY } });
       }
       pointerEvent.preventDefault();
       setPlanningDragTask((current) => current ? { ...current, pointer: { x: pointerEvent.clientX, y: pointerEvent.clientY } } : current);
-      autoScrollAtDragEdge(pointerEvent.clientX, pointerEvent.clientY, [
-        document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY)?.closest<HTMLElement>(".df-planning-list, .df-kanban-board, .df-eisenhower-grid"),
-        treeRef.current,
-      ]);
-      detectDropTarget(pointerEvent.clientX, pointerEvent.clientY);
+      const { clientX, clientY } = pointerEvent;
+      autoScrollAtDragEdge(clientX, clientY, [scroll]);
+      const drop = getDropTarget(clientX, clientY);
+      if (marker !== drop?.element) marker?.removeAttribute("data-planning-drop");
+      marker = drop?.element;
+      if (drop) drop.element.dataset.planningDrop = drop.position;
       props.onTimelineDrag?.(task, { x: pointerEvent.clientX, y: pointerEvent.clientY });
     };
 
@@ -1527,50 +1330,20 @@ export default function PlanningView(props: {
           cleanup();
           return;
         }
-        const pointedElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
-        const planningTask = pointedElement?.closest<HTMLElement>("[data-planning-task-id]");
-        const kanbanColumn = pointedElement?.closest<HTMLElement>("[data-kanban-status]");
-        const quadrant = pointedElement?.closest<HTMLElement>("[data-quadrant]");
-        const listRow = pointedElement?.closest<HTMLElement>("[data-list-task-id]");
-        const fallback = planningDropTargetRef.current;
-        const sourceContainer = (dragElement.dataset.planningContainer || "") as PlanningDropContainer;
-        if (fallback && fallback.taskId !== task.id && sourceContainer && sourceContainer === fallback.container) {
-          reorderPlanningTasks(task.id, fallback.taskId, fallback.position, planningContainerTasks(sourceContainer));
-          cleanup();
-          return;
-        }
-        if (planningTask) {
-          const targetTaskId = planningTask.dataset.planningTaskId;
-          const targetContainer = (planningTask.dataset.planningContainer || "") as PlanningDropContainer;
-          if (targetTaskId && targetTaskId !== task.id && sourceContainer && sourceContainer === targetContainer) {
-            const rect = planningTask.getBoundingClientRect();
-            const isBefore = (pointerEvent.clientY - rect.top) < rect.height / 2;
-            reorderPlanningTasks(task.id, targetTaskId, isBefore ? "before" : "after", planningContainerTasks(sourceContainer));
-          } else if (kanbanColumn) {
-            handleKanbanDrop(kanbanColumn.dataset.kanbanStatus as UiWorkflowStatus, task.id);
-          } else if (quadrant) {
-            const q = quadrant.dataset.quadrant || "";
-            const importance = (q === "q1" || q === "q2") ? "high" : "low";
-            const urgency = (q === "q1" || q === "q3") ? "high" : "low";
-            handleQuadrantDrop(importance as "high" | "low", urgency as "high" | "low", task.id);
+        const drop = getDropTarget(pointerEvent.clientX, pointerEvent.clientY);
+        if (drop?.container === sourceContainer) {
+          const sequence = viewFilteredTasks.filter((item) => !isEventDisplayTask(item) && planningContainer(item) === sourceContainer);
+          const targetId = drop.taskId || orderPlanningTasks(sequence).filter((item) => item.id !== task.id).at(-1)?.id;
+          if (targetId) reorderPlanningTasks(task.id, targetId, drop.position === "before" ? "before" : "after", sequence);
+        } else if (drop) {
+          if (viewMode === "kanban") {
+            props.onTaskUpdate(task.id, workflowStatusForPatch(drop.container === "done" ? "done" : "backlog"));
+          } else {
+            props.onTaskUpdate(task.id, {
+              importance: drop.container === "q1" || drop.container === "q2" ? "high" : "low",
+              urgency: drop.container === "q1" || drop.container === "q3" ? "high" : "low",
+            });
           }
-        } else if (kanbanColumn) {
-          handleKanbanDrop(kanbanColumn.dataset.kanbanStatus as UiWorkflowStatus, task.id);
-        } else if (quadrant) {
-          const q = quadrant.dataset.quadrant || "";
-          const importance = (q === "q1" || q === "q2") ? "high" : "low";
-          const urgency = (q === "q1" || q === "q3") ? "high" : "low";
-          handleQuadrantDrop(importance as "high" | "low", urgency as "high" | "low", task.id);
-        } else if (listRow) {
-          const targetTaskId = listRow.dataset.listTaskId;
-          if (targetTaskId && targetTaskId !== task.id) {
-            const rect = listRow.getBoundingClientRect();
-            const isBefore = (pointerEvent.clientY - rect.top) < rect.height / 2;
-            handleListDrop(targetTaskId, isBefore ? "before" : "after", task.id);
-          }
-        } else if (pointedElement?.closest(".df-planning-list")) {
-          const lastTask = orderPlanningTasks(viewFilteredTasks).filter((item) => item.id !== task.id).at(-1);
-          if (lastTask) reorderPlanningTasks(task.id, lastTask.id, "after", viewFilteredTasks);
         }
       }
       cleanup();
@@ -1583,23 +1356,25 @@ export default function PlanningView(props: {
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
-  }, [handleKanbanDrop, handleQuadrantDrop, handleListDrop, orderPlanningTasks, planningContainerTasks, props.compact, props.onTimelineDrag, props.onTimelineDrop, props.onTouchScheduleDrag, reorderPlanningTasks, suppressPostDragClick, viewFilteredTasks]);
+  };
 
-  /**
-   * Shared pointer-event drag for Tree view.
-   * Uses the same React-rendered TaskDragLayer overlay as other Planning
-   * surfaces, then keeps the tree-specific drop target detection.
-   */
   const beginTreeDrag = useCallback((event: React.PointerEvent, node: TreeDragNode) => {
     if (event.button !== 0) return;
     const target = event.target as HTMLElement;
     if (target.closest("button,input,textarea,select,a,[contenteditable='true']")) return;
     const sourceNodeEl = target.closest<HTMLElement>("[data-node-type][data-node-id]");
-    if (!sourceNodeEl) return;
-    const sourceNode: TreeDragNode = {
-      kind: sourceNodeEl.dataset.nodeType as TreeNodeKind,
-      id: sourceNodeEl.dataset.nodeId || node.id,
-    };
+    if (!sourceNodeEl || node.id === "__unassigned__") return;
+    const sourceNode = node;
+    const tree = treeRef.current;
+    const scroll = tree?.closest<HTMLElement>("[data-shelf-scroll]") || tree?.parentElement;
+    const task = sourceNode.kind === "task" ? safeTasks.find((item) => item.id === sourceNode.id)
+      : sourceNode.kind === "subtask" ? subtaskOwner(sourceNode.id) : undefined;
+    const subtaskId = sourceNode.kind === "subtask" ? sourceNode.id : undefined;
+    const subtask = subtaskId && task ? findSubtaskInTree(task.subtasks || [], subtaskId) : undefined;
+    let marker: HTMLElement | undefined;
+    let scrollFrame = 0;
+    let x = event.clientX;
+    let y = event.clientY;
     const dragElement = event.currentTarget as HTMLElement;
     const pointerId = event.pointerId;
     const startX = event.clientX;
@@ -1625,83 +1400,61 @@ export default function PlanningView(props: {
       document.body.classList.remove("df-unified-dragging");
       dragElement.classList.remove("is-dragging-source", "is-drag-armed");
       if (holdTimer !== undefined) window.clearTimeout(holdTimer);
-      setTreeDragNode(null);
-      setTreeDropTarget(null);
+      window.cancelAnimationFrame(scrollFrame);
+      marker?.removeAttribute("data-planning-drop");
+      if (active && task) props.onTimelineDrag?.(task, null, subtaskId);
+      setDragNode(null);
       setPlanningDragTask(null);
       if (dragElement.hasPointerCapture(pointerId)) {
         try { dragElement.releasePointerCapture(pointerId); } catch { /* ignore */ }
       }
     };
 
-    let dragPreviewHeight = 54;
-
-    const detectTreeDropTarget = (clientX: number, clientY: number) => {
-      const tree = treeRef.current;
-      if (!tree) return;
-      const pointedElement = document.elementFromPoint(clientX, clientY);
-      const node = pointedElement?.closest<HTMLElement>("[data-node-type][data-node-id]");
+    const getDropTarget = (): TreeDropTarget | undefined => {
+      const hit = document.elementFromPoint(x, y);
+      if (!hit || !tree?.contains(hit)) return;
+      const node = hit.closest<HTMLElement>("[data-node-type][data-node-id]");
+      const empty = hit.closest<HTMLElement>("[data-empty-project-drop]");
       if (!node) {
-        // An empty project's expanded body has no child node to hit-test. Treat the
-        // vertical space below its header as an explicit `inside` target so the
-        // target remains stable while the preview slot changes the layout.
-        const treeRect = tree.getBoundingClientRect();
-        const projectIds = [...safeProjects.map((project) => project.id), "__unassigned__"];
-        const headers = projectIds
-          .map((id) => tree.querySelector<HTMLElement>(`[data-node-type="project"][data-node-id="${CSS.escape(id)}"]`))
-          .filter((header): header is HTMLElement => Boolean(header));
-        for (let index = 0; index < headers.length; index += 1) {
-          const header = headers[index];
-          const id = header.dataset.nodeId || "";
-          const hasTasks = id === "__unassigned__"
-            ? safeTasks.some((task) => !task.projectId)
-            : safeTasks.some((task) => String(task.projectId || "") === id);
-          if (hasTasks || sourceNode.kind !== "task") continue;
-          const rect = header.getBoundingClientRect();
-          const nextTop = headers[index + 1]?.getBoundingClientRect().top ?? treeRect.bottom;
-          const targetBottom = Math.max(rect.bottom + 44, nextTop - 4);
-          if (clientX >= rect.left && clientX <= treeRect.right && clientY >= rect.bottom - 8 && clientY <= targetBottom) {
-            setTreeDropTarget({ kind: "project", id, position: "inside", height: dragPreviewHeight });
-            return;
-          }
+        if (sourceNode.kind === "task" && empty) {
+          return { kind: "project", id: empty.dataset.emptyProjectDrop!, position: "inside", element: empty };
         }
-        setTreeDropTarget(null);
         return;
       }
-      const nodeKind = node.dataset.nodeType as TreeNodeKind;
+      const kind = node.dataset.nodeType as TreeNodeKind;
+      const id = node.dataset.nodeId!;
+      if (kind === sourceNode.kind && id === sourceNode.id) return;
       const rect = node.getBoundingClientRect();
-      const ratio = (clientY - rect.top) / Math.max(rect.height, 1);
-      let position: TreeDropTarget["position"];
-
-      // Dragging never changes an item's type. Tasks can only be assigned to a
-      // project or reordered beside another task; projects can only reorder with
-      // projects. This also makes a project header an unambiguous assignment
-      // target, including a project whose task list is empty.
+      const ratio = (y - rect.top) / Math.max(rect.height, 1);
+      const relative = ratio < 0.5 ? "before" : "after";
       if (sourceNode.kind === "project") {
-        if (nodeKind !== "project") {
-          setTreeDropTarget(null);
-          return;
+        const branch = node.closest<HTMLElement>("[data-project-id]");
+        if (kind === "project" && id !== "__unassigned__" && branch) {
+          return { kind, id, position: relative, element: branch };
         }
-        position = ratio < 0.5 ? "before" : "after";
       } else if (sourceNode.kind === "task") {
-        if (nodeKind === "project") position = "inside";
-        else if (nodeKind === "task") position = ratio < 0.5 ? "before" : "after";
-        else {
-          setTreeDropTarget(null);
-          return;
-        }
-      } else {
-        if (nodeKind === "project") {
-          setTreeDropTarget(null);
-          return;
-        }
-        position = nodeKind === "task" ? "inside" : ratio < 0.28 ? "before" : ratio > 0.72 ? "after" : "inside";
+        if (kind !== "subtask") return { kind, id, position: kind === "project" ? "inside" : relative, element: node };
+      } else if (kind !== "project" && !findSubtaskInTree(subtask?.subtasks || [], id)) {
+        const position = kind === "task" ? "inside" : ratio < 0.28 ? "before" : ratio > 0.72 ? "after" : "inside";
+        const element = position === "inside" ? node
+          : node.closest<HTMLElement>(".df-candidate-subtask-item") || node;
+        return { kind, id, position, element };
       }
-      setTreeDropTarget({
-        kind: nodeKind,
-        id: node.dataset.nodeId || "",
-        position,
-        height: dragPreviewHeight,
-      });
+    };
+
+    const updateDropTarget = () => {
+      const drop = getDropTarget();
+      if (marker !== drop?.element) marker?.removeAttribute("data-planning-drop");
+      marker = drop?.element;
+      if (drop) drop.element.dataset.planningDrop = drop.position;
+      if (task) props.onTimelineDrag?.(task, { x, y }, subtaskId);
+    };
+    const scrollAtEdge = () => {
+      scrollFrame = 0;
+      const hit = document.elementFromPoint(x, y);
+      if (!hit || !scroll?.contains(hit) || !autoScrollAtDragEdge(x, y, [scroll])) return;
+      updateDropTarget();
+      scrollFrame = window.requestAnimationFrame(scrollAtEdge);
     };
 
     const move = (pointerEvent: PointerEvent) => {
@@ -1723,21 +1476,14 @@ export default function PlanningView(props: {
         try { dragElement.setPointerCapture(pointerId); } catch { /* ignore */ }
         document.body.classList.add("df-unified-dragging");
         dragElement.classList.add("is-dragging-source");
-        setTreeDragNode(sourceNode);
+        setDragNode(sourceNode);
         const sourceCard = sourceNodeEl.querySelector<HTMLElement>("[data-planning-drag-card]") || sourceNodeEl;
         const rect = sourceCard.getBoundingClientRect();
-        dragPreviewHeight = Math.max(52, Math.round(rect.height));
         const offX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
         const offY = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
-        let overlayTask: Task | undefined;
-        if (sourceNode.kind === "task") {
-          overlayTask = safeTasks.find((task) => task.id === sourceNode.id);
-        } else if (sourceNode.kind === "subtask") {
-          const owner = subtaskOwner(sourceNode.id);
-          const subtask = owner ? findSubtaskInTree(owner.subtasks || [], sourceNode.id) : undefined;
-          overlayTask = subtask ? taskFromSubtask(subtask, owner?.projectId) : undefined;
-        } else {
-          const project = safeProjects.find((item) => item.id === sourceNode.id) || (sourceNode.id === "__unassigned__" ? createProjectShell(props.lang === "zh" ? "Unassigned Tasks" : "Unassigned Tasks") : undefined);
+        let overlayTask = subtask ? taskFromSubtask(subtask, task?.projectId) : task;
+        if (sourceNode.kind === "project") {
+          const project = safeProjects.find((item) => item.id === sourceNode.id);
           overlayTask = project ? {
             id: project.id,
             title: project.title,
@@ -1756,7 +1502,6 @@ export default function PlanningView(props: {
         if (overlayTask) {
           setPlanningDragTask({
             task: overlayTask,
-            variant: "candidate",
             sourceRect: { width: rect.width, height: rect.height },
             offset: { x: offX, y: offY },
             pointer: { x: pointerEvent.clientX, y: pointerEvent.clientY },
@@ -1765,24 +1510,22 @@ export default function PlanningView(props: {
       }
       pointerEvent.preventDefault();
       setPlanningDragTask((current) => current ? { ...current, pointer: { x: pointerEvent.clientX, y: pointerEvent.clientY } } : current);
-      autoScrollAtDragEdge(pointerEvent.clientX, pointerEvent.clientY, [treeRef.current]);
-      detectTreeDropTarget(pointerEvent.clientX, pointerEvent.clientY);
+      x = pointerEvent.clientX;
+      y = pointerEvent.clientY;
+      updateDropTarget();
+      if (!scrollFrame) scrollFrame = window.requestAnimationFrame(scrollAtEdge);
     };
 
     const up = (pointerEvent: PointerEvent) => {
       if (pointerEvent.pointerId !== pointerId) return;
       if (active) {
         suppressPostDragClick();
-        const source = dragNodeRef.current;
-        const target = dropTargetRef.current;
-        const point = { x: pointerEvent.clientX, y: pointerEvent.clientY };
-        const owner = source?.kind === "subtask" ? subtaskOwner(source.id) : undefined;
-        const task = source?.kind === "task" ? safeTasks.find((item) => item.id === source.id) : owner;
-        if (task && props.onTimelineDrop?.(task, point, source?.kind === "subtask" ? source.id : undefined)) {
-          cleanup();
-          return;
+        x = pointerEvent.clientX;
+        y = pointerEvent.clientY;
+        if (!task || !props.onTimelineDrop?.(task, { x, y }, subtaskId)) {
+          const drop = getDropTarget();
+          if (drop) void handleTreeDrop(sourceNode, drop);
         }
-        if (source && target) void handleTreeDrop(source, target);
       }
       cleanup();
     };
@@ -1794,7 +1537,7 @@ export default function PlanningView(props: {
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
-  }, [props.compact, props.lang, props.onTimelineDrop, handleTreeDrop, safeProjects, safeTasks, setTreeDragNode, setTreeDropTarget, subtaskOwner, suppressPostDragClick, taskFromSubtask]);
+  }, [props.compact, props.onTimelineDrag, props.onTimelineDrop, handleTreeDrop, safeProjects, safeTasks, subtaskOwner, suppressPostDragClick, taskFromSubtask]);
 
   const hasActiveFilters = includeCompleted || filterProjects.length > 0 || filterWorkflows.length > 0 || filterImportances.length > 0 || filterUrgencies.length > 0 || !!filterDueDate || !!filterScheduled;
 
@@ -2576,211 +2319,45 @@ export default function PlanningView(props: {
             </section>
           )}
 
-          {viewMode === "kanban" && (
-            <div className="df-kanban-board">
-              {(["backlog"] as UiWorkflowStatus[]).map((status) => {
-                const columnTasks = orderPlanningTasks(kanbanTasks.filter((task) => status === "done" ? normalizeWorkflowStatus(task) === "done" : normalizeWorkflowStatus(task) !== "done"));
-                return (
-                  <div
-                    key={status}
-                    className={`df-kanban-column${kanbanDropStatus === status ? " is-drop-target drop-container-active" : ""}`}
-                    data-kanban-status={status}
-                  >
-                    <div className="df-kanban-column-header">
-                      <span>{status === "done" ? (props.lang === "zh" ? "Done" : "Done") : (props.lang === "zh" ? "任务" : "Tasks")}</span>
-                      <small>{columnTasks.length}</small>
-                      {columnTasks.reduce((sum, t) => sum + (t.estimatedHours || 0), 0) > 0 && (
-                        <em className="df-kanban-column-duration">{columnTasks.reduce((sum, t) => sum + (t.estimatedHours || 0), 0)}h</em>
-                      )}
-                    </div>
-                    <div className="df-kanban-card-list">
-                      {columnTasks.map((task) => {
-                        const isDropTarget = listDropTargetId === task.id;
-                        const isReorderSource = planningDragTask?.task.id === task.id;
-                        return (
-                        <React.Fragment key={task.id}>
-                        {isDropTarget && listDropPosition === "before" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${planningDragTask?.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />}
-                        {!isReorderSource && <TaskBlock
-                          key={task.id}
-                          as="div"
-                          variant="candidate"
-                          appearance="calm"
-                          priority={planningTaskPriority(task)}
-                          checked={normalizeWorkflowStatus(task) === "done"}
-                          projectColor={projectColor(task.projectId)}
-                          className={`df-kanban-card${normalizeWorkflowStatus(task) === "done" ? " completed" : ""}`}
-                          dataAttrs={{ "planning-task-id": task.id, "planning-container": `kanban:${status}` }}
-                          onPointerDown={(event) => beginPlanningDrag(event, task, "candidate")}
-                          onClick={() => openTaskFromPlanning(task)}
-                        >
-                          <TaskBlockRow>
-                            <TaskCheckbox lang={props.lang}
-                              checked={normalizeWorkflowStatus(task) === "done"}
-                              tone={normalizeTaskCheckTone(task)}
-                              priority={task.priority}
-                              className="df-list-status-toggle"
-                              ariaLabel={normalizeWorkflowStatus(task) === "done" ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
-                              onClick={(e) => { e.stopPropagation(); props.onTaskUpdate(task.id, workflowStatusForPatch(normalizeWorkflowStatus(task) === "done" ? "backlog" : "done")); }}
-                            />
-                            <TaskBlockContent className="df-planning-task-copy" title={<span className="df-kanban-card-title">{task.title}</span>}>
-                              <span className="df-kanban-card-meta">
-                                <span className="df-kanban-project-name" style={{ color: `var(--project-label-color, ${projectColor(task.projectId)})` }}>{projectName(task.projectId)}</span>
-                                {task.dueDate && <span className="df-kanban-tag df-tag-due" title={props.lang === "zh" ? "Due" : "Due"}>{task.dueDate.slice(5)}</span>}
-                              </span>
-                            </TaskBlockContent>
-                            <TaskActions>{scheduleButton(task)}</TaskActions>
-                          </TaskBlockRow>
-                          {scheduleSubtasks(task)}
-                        </TaskBlock>}
-                        {isDropTarget && listDropPosition === "after" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${planningDragTask?.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />}
-                        </React.Fragment>
-                        );
-                      })}
-                      {planningDragTask && !listDropTargetId && kanbanDropStatus === status && (
-                        <div className="df-reorder-preview-slot df-kanban-drop-placeholder" style={{ "--reorder-preview-height": `${planningDragTask.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />
-                      )}
-                      {columnTasks.length === 0 && !planningDragTask && <div className="df-kanban-empty">{props.lang === "zh" ? "拖入任务" : "Drop tasks here"}</div>}
-                    </div>
+          {(viewMode === "kanban" || viewMode === "eisenhower") && (() => {
+            const zh = props.lang === "zh";
+            const kanban = viewMode === "kanban";
+            const groups = kanban
+              ? [{ key: "backlog", label: zh ? "任务" : "Tasks" }, ...(props.showCompleted ? [{ key: "done", label: zh ? "已完成" : "Done" }] : [])]
+              : [
+                  { key: "q1", label: zh ? "立即处理" : "Focus now" },
+                  { key: "q2", label: zh ? "安排时间" : "Plan" },
+                  { key: "q3", label: zh ? "尽快处理" : "Handle soon" },
+                  { key: "q4", label: zh ? "稍后处理" : "Later" },
+                ];
+            return <div className={kanban ? "df-kanban-board" : "df-eisenhower-grid"}>
+              {groups.map(({ key, label }) => {
+                const cards = orderPlanningTasks(viewFilteredTasks.filter((task) => planningContainer(task) === key));
+                const hours = cards.reduce((sum, task) => sum + (task.estimatedHours || 0), 0);
+                return <div key={key} className={kanban ? "df-kanban-column" : "df-eisenhower-quadrant"} data-planning-group={key}>
+                  <div className={kanban ? "df-kanban-column-header" : "df-eisenhower-quadrant-header"}>
+                    <span>{label}</span><small>{cards.length}</small>
+                    {hours > 0 && <em className="df-kanban-column-duration">{formatDuration(hours)}</em>}
                   </div>
-                );
-              })}
-            </div>
-          )}
-
-          {viewMode === "eisenhower" && (
-            <div className="df-eisenhower-grid">
-              {([
-                { key: "q1", label: props.lang === "zh" ? "立即处理" : "Focus now", importance: "high" as const, urgency: "high" as const },
-                { key: "q2", label: props.lang === "zh" ? "安排时间" : "Plan", importance: "high" as const, urgency: "low" as const },
-                { key: "q3", label: props.lang === "zh" ? "尽快处理" : "Handle soon", importance: "low" as const, urgency: "high" as const },
-                { key: "q4", label: props.lang === "zh" ? "稍后处理" : "Later", importance: "low" as const, urgency: "low" as const },
-              ]).map((quad) => {
-                const quadTasks = orderPlanningTasks(viewFilteredTasks.filter((task) => {
-                  const imp = task.importance || "medium";
-                  const urg = task.urgency || "medium";
-                  const matchImp = quad.importance === "high" ? imp === "high" : imp !== "high";
-                  const matchUrg = quad.urgency === "high" ? urg === "high" : urg !== "high";
-                  return matchImp && matchUrg;
-                }));
-                return (
-                  <div
-                    key={quad.key}
-                    className={`df-eisenhower-quadrant${kanbanDropStatus === ("q-" + quad.key) as unknown as UiWorkflowStatus ? " is-drop-target drop-container-active" : ""}`}
-                    data-quadrant={quad.key}
-                  >
-                    <div className="df-eisenhower-quadrant-header">
-                      <span>{quad.label}</span>
-                      <small>{quadTasks.length}</small>
-                      {quadTasks.reduce((sum, t) => sum + (t.estimatedHours || 0), 0) > 0 && (
-                        <em className="df-eisenhower-quadrant-duration">{quadTasks.reduce((sum, t) => sum + (t.estimatedHours || 0), 0)}h</em>
-                      )}
-                    </div>
-                    <div className="df-eisenhower-task-list">
-                      {quadTasks.map((task) => {
-                        const taskDone = normalizeWorkflowStatus(task) === "done";
-                        const isDropTarget = listDropTargetId === task.id;
-                        const isReorderSource = planningDragTask?.task.id === task.id;
-                        return (
-                          <React.Fragment key={task.id}>
-                          {isDropTarget && listDropPosition === "before" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${planningDragTask?.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />}
-                          {!isReorderSource && <TaskBlock
-                            key={task.id}
-                            as="div"
-                            variant="candidate"
-                            appearance="calm"
-                            priority={planningTaskPriority(task)}
-                            checked={taskDone}
-                            projectColor={projectColor(task.projectId)}
-                            className={`df-eisenhower-task${taskDone ? " completed" : ""}`}
-                            dataAttrs={{ "planning-task-id": task.id, "planning-container": `matrix:${quad.key}` }}
-                            onPointerDown={(event) => beginPlanningDrag(event, task, "candidate")}
-                            onClick={() => openTaskFromPlanning(task)}
-                          >
-                            <TaskBlockRow>
-                              <TaskCheckbox lang={props.lang}
-                                checked={taskDone}
-                                tone={normalizeTaskCheckTone(task)}
-                                priority={task.priority}
-                                className="df-list-status-toggle"
-                                ariaLabel={taskDone ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
-                                onClick={(e) => { e.stopPropagation(); props.onTaskUpdate(task.id, workflowStatusForPatch(taskDone ? "backlog" : "done")); }}
-                              />
-                              <TaskBlockContent className="df-planning-task-copy" title={<span className="df-eisenhower-task-title">{task.title}</span>}>
-                                <span className="df-eisenhower-task-meta">
-                                  <span className="df-eisenhower-project-name" style={{ color: `var(--project-label-color, ${projectColor(task.projectId)})` }}>{projectName(task.projectId)}</span>
-                                  {task.dueDate && <span className="df-eisenhower-due">{task.dueDate.slice(5)}</span>}
-                                </span>
-                              </TaskBlockContent>
-                              <TaskActions>{scheduleButton(task)}</TaskActions>
-                            </TaskBlockRow>
-                            {scheduleSubtasks(task)}
-                          </TaskBlock>}
-                          {isDropTarget && listDropPosition === "after" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${planningDragTask?.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />}
-                          </React.Fragment>
-                        );
-                      })}
-                      {planningDragTask && !listDropTargetId && kanbanDropStatus === (("q-" + quad.key) as unknown as UiWorkflowStatus) && (
-                        <div className="df-reorder-preview-slot df-kanban-drop-placeholder" style={{ "--reorder-preview-height": `${planningDragTask.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />
-                      )}
-                      {quadTasks.length === 0 && !planningDragTask && <div className="df-eisenhower-empty">{props.lang === "zh" ? "拖入任务" : "Drop tasks here"}</div>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          {viewMode === "list" && (
-            <div className="df-planning-list">
-              {viewFilteredTasks.length === 0 && <div className="df-planning-list-empty">{props.lang === "zh" ? "\u6682\u65e0\u4efb\u52a1" : "No tasks"}</div>}
-              {orderPlanningTasks(viewFilteredTasks).map((task) => {
-                const uiStatus = normalizeWorkflowStatus(task);
-                const isDropTarget = listDropTargetId === task.id;
-                const isReorderSource = planningDragTask?.task.id === task.id;
-                return (
-                  <div
-                    key={task.id}
-                    className={`df-planning-list-row-wrap${isDropTarget ? ` is-list-drop is-${listDropPosition}` : ""}`}
-                    data-list-task-id={task.id}
-                  >
-                    {isDropTarget && listDropPosition === "before" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${planningDragTask?.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />}
-                    {!isReorderSource && <TaskBlock
-                      as="div"
-                      variant="candidate"
-                      appearance="calm"
-                      priority={planningTaskPriority(task)}
-                      checked={uiStatus === "done"}
-                      projectColor={projectColor(task.projectId)}
-                      className="df-planning-list-row"
-                      dataAttrs={{ "planning-task-id": task.id, "planning-container": "list" }}
-                      onPointerDown={(event) => beginPlanningDrag(event, task, "candidate")}
-                    >
-                      <TaskBlockRow>
-                        <TaskCheckbox lang={props.lang}
-                          checked={uiStatus === "done"}
-                          tone={normalizeTaskCheckTone(task)}
-                          priority={task.priority}
-                          className="df-list-status-toggle"
-                          ariaLabel={uiStatus === "done" ? t(props.lang, "planning.markIncomplete") : t(props.lang, "planning.markComplete")}
-                          onClick={() => props.onTaskUpdate(task.id, workflowStatusForPatch(uiStatus === "done" ? "backlog" : "done"))}
-                        />
-                        <TaskBlockContent title={<span className="df-list-title" onClick={() => openTaskFromPlanning(task)}>{task.title}</span>} />
-                        <TaskBlockDuration>
-                          <span className="df-list-project">{projectName(task.projectId)}</span>
-                        </TaskBlockDuration>
-                        <TaskActions>
-                          {scheduleButton(task)}
-                          {task.dueDate && <span className="df-list-tag df-tag-due" title={props.lang === "zh" ? "\u622a\u6b62\u65e5\u671f" : "Due"}>{task.dueDate.slice(5)}</span>}
-                        </TaskActions>
-                      </TaskBlockRow>
+                  <div className={kanban ? "df-kanban-card-list" : "df-eisenhower-task-list"}>
+                    {cards.map((task) => <PlanningCandidateCard key={task.id} as="div" task={task} lang={props.lang}
+                      projectColor={isEventDisplayTask(task) ? categories[task.category]?.color : projectColor(task.projectId)}
+                      dragState={planningDragTask?.task.id === task.id ? "source-placeholder" : undefined}
+                      dataAttrs={{ "planning-task-id": task.id, kind: isEventDisplayTask(task) ? "event" : undefined }}
+                      onPointerDown={(event) => beginPlanningDrag(event, task)} onClick={() => openTaskFromPlanning(task)}
+                      onToggle={() => props.onTaskUpdate(task.id, workflowStatusForPatch(kanbanStatus(task) === "done" ? "backlog" : "done"))}
+                      meta={<span className="df-shelf-task-meta">
+                        <span>{projectName(task.projectId)}</span>{task.dueDate && <time dateTime={task.dueDate}>{task.dueDate.slice(5)}</time>}
+                      </span>}
+                      actions={<TaskActions>{scheduleButton(task)}</TaskActions>}>
                       {scheduleSubtasks(task)}
-                    </TaskBlock>}
-                    {isDropTarget && listDropPosition === "after" && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${planningDragTask?.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />}
+                    </PlanningCandidateCard>)}
+                    {cards.length === 0 && <div className="df-eisenhower-empty">{zh ? "暂无任务" : "No tasks"}</div>}
                   </div>
-                );
+                </div>;
               })}
-              {planningDragTask && listDropAtEnd && <div className="df-reorder-preview-slot" style={{ "--reorder-preview-height": `${planningDragTask.sourceRect.height || 52}px` } as React.CSSProperties} aria-hidden="true" />}
-            </div>
-          )}
+            </div>;
+          })()}
 
           {viewMode === "tree" && (
           <div
@@ -2800,7 +2377,6 @@ export default function PlanningView(props: {
             {svgLines}
             {visibleProjects.map(({ project, tasks }) => (
               <React.Fragment key={project.id}>
-                {treeDropSlot("project", project.id, "before")}
                 <div className="df-category-branch" data-project-id={project.id}>
                   <PlanningProjectNode
                 demo={props.demo}
@@ -2814,12 +2390,10 @@ export default function PlanningView(props: {
                     onComplete={props.demo ? undefined : () => props.onProjectComplete?.(project.id)}
                     dragging={dragNode?.kind === "project" && dragNode.id === project.id}
                   />
-                  {treeDropSlot("project", project.id, "inside")}
-                  {(!props.collapsed[project.id] || Boolean(dragNode)) && (
-                    <div className="df-project-tasks">
+                  {!props.collapsed[project.id] && (
+                    <div className="df-project-tasks" data-empty-project-drop={tasks.length === 0 ? project.id : undefined}>
                       {tasks.map((task) => (
                         <div className="df-task-branch" key={task.id}>
-                          {treeDropSlot("task", task.id, "before")}
                         <PlanningTaskNode
                 demo={props.demo}
                           lang={props.lang}
@@ -2840,20 +2414,16 @@ export default function PlanningView(props: {
                           subtaskContent={renderTaskSubtasks(task)}
                           dragging={dragNode?.kind === "task" && dragNode.id === task.id}
                         />
-                        {treeDropSlot("task", task.id, "inside")}
-                        {treeDropSlot("task", task.id, "after")}
                       </div>
                     ))}
                   </div>
                 )}
                 </div>
-                {treeDropSlot("project", project.id, "after")}
               </React.Fragment>
             ))}
 
             {(!props.demo || unassigned.length > 0) && (
               <React.Fragment>
-                {treeDropSlot("project", "__unassigned__", "before")}
                 <div className="df-category-branch" data-project-id="__unassigned__">
                 <PlanningProjectNode
                 demo={props.demo}
@@ -2864,20 +2434,17 @@ export default function PlanningView(props: {
                   onToggleCollapse={() => props.setCollapsed((current) => ({ ...current, unassigned: !current.unassigned }))}
                   onOpen={() => {}}
                   onAddTask={() => props.onTaskCreate("")}
-                  dragging={dragNode?.kind === "project" && dragNode.id === "__unassigned__"}
                 />
-                {treeDropSlot("project", "__unassigned__", "inside")}
-                {(!props.collapsed.unassigned || Boolean(dragNode)) && (
-                  <div className="df-project-tasks">
+                {!props.collapsed.unassigned && (
+                  <div className="df-project-tasks" data-empty-project-drop={unassigned.length === 0 ? "__unassigned__" : undefined}>
                     {unassigned.map((task) => (
                       <div className="df-task-branch" key={task.id}>
-                        {treeDropSlot("task", task.id, "before")}
                         <PlanningTaskNode
                 demo={props.demo}
                           lang={props.lang}
                           task={task}
 
-                          projectColor={UNASSIGNED_COLOR}
+                          projectColor={DEFAULT_PROJECT_COLOR}
                           collapsed={Boolean(collapsedSubtasks[task.id])}
                           onToggleCollapse={() => setCollapsedSubtasks((current) => ({ ...current, [task.id]: !current[task.id] }))}
                           onOpen={() => openTaskFromPlanning(task)}
@@ -2892,14 +2459,11 @@ export default function PlanningView(props: {
                           subtaskContent={renderTaskSubtasks(task)}
                           dragging={dragNode?.kind === "task" && dragNode.id === task.id}
                         />
-                        {treeDropSlot("task", task.id, "inside")}
-                        {treeDropSlot("task", task.id, "after")}
                       </div>
                     ))}
                   </div>
                 )}
                 </div>
-                {treeDropSlot("project", "__unassigned__", "after")}
               </React.Fragment>
             )}
           </div>
@@ -2915,33 +2479,9 @@ export default function PlanningView(props: {
           sourceRect={planningDragTask.sourceRect}
           offset={planningDragTask.offset}
         >
-          <TaskBlock
-            as="article"
-            variant={planningDragTask.variant}
-            appearance="calm"
-            priority={planningTaskPriority(planningDragTask.task)}
-            checked={normalizeWorkflowStatus(planningDragTask.task) === "done"}
-            dragState="overlay"
+          <PlanningCandidateCard task={planningDragTask.task} lang={props.lang} dragState="overlay"
             projectColor={projectColor(planningDragTask.task.projectId)}
-            className="df-task-card"
-            style={{ width: "100%", height: "100%", minHeight: 0 }}
-          >
-            <TaskBlockRow>
-              <TaskCheckbox lang={props.lang}
-                checked={normalizeWorkflowStatus(planningDragTask.task) === "done"}
-                tone={normalizeTaskCheckTone(planningDragTask.task)}
-                priority={planningDragTask.task.priority}
-              />
-              <TaskBlockContent
-                title={<span>{planningDragTask.task.title}</span>}
-              />
-              {planningDragTask.task.estimatedHours ? (
-                <TaskBlockDuration>
-                  <span className="df-duration-pill">{planningDragTask.task.estimatedHours}h</span>
-                </TaskBlockDuration>
-              ) : null}
-            </TaskBlockRow>
-          </TaskBlock>
+            style={{ width: "100%", height: "100%", minHeight: 0 }} />
         </TaskDragLayer>
       )}
     </div>

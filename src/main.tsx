@@ -75,7 +75,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiChatIcon, UiChevronDownIcon, UiChevronLeftIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiHistoryIcon, UiKanbanIcon, UiListChecksIcon, UiListIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiChatIcon, UiChevronDownIcon, UiChevronLeftIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiHistoryIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -166,7 +166,6 @@ const TIME_OPTIONS = Array.from({ length: ((TIMELINE_END - TIMELINE_START) * 60)
 const categoryOrder: Category[] = ["exam", "project", "essay", "materials", "uk", "us", "personal"];
 
 const candidateViewNames = {
-  list: ["列表", "List", UiListIcon],
   eisenhower: ["矩阵", "Matrix", UiMatrixIcon],
   kanban: ["看板", "Kanban", UiKanbanIcon],
   "activity-history": ["操作历史", "Activity history", UiHistoryIcon],
@@ -258,6 +257,7 @@ type EditingOccurrence = {
 } | null;
 
 type DragState = {
+  shelfTask?: Task;
   taskId: string;
   kind: "candidate" | "block";
   source?: "candidate" | "allDay" | "timeline";
@@ -4142,6 +4142,11 @@ if (cached?.data && cached?.settings) {
     };
   }
 
+  function canScheduleShelfTask(task: Task, date: string, replaceLegacyAllDay = false) {
+    return !task.completed && !isEventDisplayTask(task)
+      && (replaceLegacyAllDay || !hasActiveTaskSchedule(task)) && !hasRecurrenceOccurrenceOnDate(task, date);
+  }
+
   function commitShelfSchedule(taskId: string, date: string, startTime: string, options: { subtask?: ShelfSubtask; moveLegacyAllDay?: boolean } = {}): TimelineRecord | undefined {
     const current = dataRef.current;
     if (!current) return;
@@ -4150,7 +4155,7 @@ if (cached?.data && cached?.settings) {
     if (!task || task.completed) return;
     const replaceLegacyAllDay = moveLegacyAllDay && isAllDayTask(task)
       && (!task.executionStatus || task.executionStatus === "scheduled");
-    if ((!replaceLegacyAllDay && hasActiveTaskSchedule(task)) || hasRecurrenceOccurrenceOnDate(task, date)) return;
+    if (!canScheduleShelfTask(task, date, replaceLegacyAllDay)) return;
     const record = startTime ? createScheduledRecord(task, date, startTime, taskDuration(task)) : {
       id: uid("record"), taskId: task.id, scheduledDate: date, scheduledStart: "", scheduledEnd: "",
       executionStatus: "scheduled" as const, createdAt: workspaceNow().toISOString(),
@@ -6145,21 +6150,24 @@ if (cached?.data && cached?.settings) {
     return resolveDropTarget(point.x, point.y);
   }
 
-  function previewShelfTimelineDrop(task: Task, point: { x: number; y: number } | null) {
-    const target = point && !task.completed && !hasActiveTaskSchedule(task) ? shelfTimelineDropTarget(point) : undefined;
+  function previewShelfTimelineDrop(owner: Task, point: { x: number; y: number } | null, subtaskId?: string) {
+    const snapshot = dataRef.current;
+    const task = point && snapshot ? shelfTask(snapshot, owner.id,
+      subtaskId ? { id: subtaskId, draftTaskId: `shelf-preview:${subtaskId}` } : undefined) : undefined;
+    const hit = point && task ? shelfTimelineDropTarget(point) : undefined;
+    const target = hit && task && canScheduleShelfTask(task, hit.date) ? hit : undefined;
     setHoverSlot(target?.startTime || "");
     dragTargetDateRef.current = target?.date || "";
     setMonthDropDate(timelineView === "month" ? target?.date || "" : "");
     setAllDayDragDate(timelineView !== "month" && target && !target.startTime ? target.date : "");
-    setDrag(target ? { taskId: task.id, kind: "candidate", source: "candidate", duration: taskDuration(task) } : null);
+    setDrag(target && task ? { taskId: task.id, shelfTask: task, kind: "candidate", source: "candidate", duration: taskDuration(task) } : null);
   }
 
   function commitShelfTimelineDrop(task: Task, point: { x: number; y: number }, subtaskId?: string) {
     const target = shelfTimelineDropTarget(point);
     if (!target) return false;
     const subtask = subtaskId ? { id: subtaskId, draftTaskId: uid("task") } : undefined;
-    commitShelfSchedule(task.id, target.date, target.startTime, { subtask });
-    return true;
+    return Boolean(commitShelfSchedule(task.id, target.date, target.startTime, { subtask }));
   }
 
   function returnTimelineTaskToCandidates(taskId: string, date = today) {
@@ -9161,7 +9169,7 @@ if (cached?.data && cached?.settings) {
   const habitDailyStates = data.habitDailyStates || [];
   const hasActiveHabits = settings.featureHabitsEnabled !== false && habits.some((habit) => !habit.archived);
   const draggedTask = drag
-    ? tasks.find((task) => task.id === drag.taskId)
+    ? drag.shelfTask || tasks.find((task) => task.id === drag.taskId)
       || explicitVisibleTimeline.tasks.find((task) => task.id === drag.taskId)
       || recordToTaskMap.get(drag.taskId)
       || eventVisibleTimeline.tasks.find((task) => task.id === drag.taskId)
@@ -9511,7 +9519,7 @@ if (cached?.data && cached?.settings) {
                   <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />
                   {!productDemo && <IconButton icon={<UiPlusIcon size={17} />} label={lang === "zh" ? "新建项目" : "New project"} onClick={() => openAdd("project")} />}
                 </> : !taskHistoryOpen && <>
-                <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />
+                {!shelfView && <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />}
                 <IconButton className={`df-icon-action df-candidate-header-icon${showCompletedCandidates ? " active" : ""}`} icon={<UiListChecksIcon size={17} />} label={t(lang, "candidate.showCompleted")} aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)} />
                 {!settings.hideAi && (
                   <span className="df-ai-plan-title-tools">
@@ -9729,7 +9737,7 @@ if (cached?.data && cached?.settings) {
                   {shelfView.nativeMode === "activity-history"
                     ? <TaskOperationHistory operations={taskOperations} projects={projects} lang={lang} now={workspaceNow()} label={candidateViewName(shelfView, lang)} onUndo={undoTaskOperation} />
                     : shelfView.nativeMode
-                      ? <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode={shelfView.nativeMode} tasks={visibleCandidates} />
+                      ? <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode={shelfView.nativeMode} tasks={visibleCandidates} showCompleted={showCompletedCandidates} />
                       : <ExtensionMount contribution={shelfView} />}
                 </Suspense>
               </div>

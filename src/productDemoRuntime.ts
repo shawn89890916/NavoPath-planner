@@ -15,7 +15,7 @@ export function installProductDemo(feature: ProductFeature) {
   const language = siteLanguage(location.search, navigator.language);
   const fullscreen = new URLSearchParams(location.search).get("presentation") === "full";
   let data = createDemoData(language, feature, feature === "execute" ? 2 : 1);
-  let settings: Settings = { ...getDefaultSettings(), language, theme: "light", activeMode: feature === "planning" ? "planning" : "execute", continuousCrossDayScroll: false, dayStartTime: "08:00", dayEndTime: "18:00", featureHabitsEnabled: false, featureMetricsEnabled: false, featureKanbanViewEnabled: true, featureQuadrantViewEnabled: true, featureListViewEnabled: true, syncIntervalMinutes: 0 };
+  let settings: Settings = { ...getDefaultSettings(), language, theme: "light", activeMode: feature === "planning" ? "planning" : "execute", continuousCrossDayScroll: false, dayStartTime: "08:00", dayEndTime: "18:00", featureHabitsEnabled: false, featureMetricsEnabled: false, featureKanbanViewEnabled: true, featureQuadrantViewEnabled: true, syncIntervalMinutes: 0 };
   const clone = <T,>(value: T): T => structuredClone(value);
   const auth = { mode: "local" as const, user: null, configured: false };
   const api: PlannerApi = {

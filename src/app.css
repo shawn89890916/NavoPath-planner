@@ -5187,80 +5187,9 @@ body:has(:active)::-webkit-scrollbar-thumb {
   min-width: 420px;
   flex-shrink: 0;
 }
-.df-app.theme-dark .df-task-node-inner:hover {
-  background: #202733;
-  border-color: color-mix(in srgb, var(--accent-active, #584D3D) 24%, transparent);
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent-active, #584D3D) 6%, transparent);
-}
-.df-app:not(.theme-dark) .df-task-node-inner:hover {
-  background: color-mix(in srgb, var(--accent-active, #584D3D) 4%, transparent);
-  border-color: color-mix(in srgb, var(--accent-active, #584D3D) 20%, transparent);
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent-active, #584D3D) 4%, transparent);
-}
 /* Picked state */
 /* Left color stripe */
-.df-app .df-task-node-inner::before {
-  content: '';
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 28px;
-  border-radius: 999px;
-  background: var(--project-color, var(--accent-active));
-  opacity: 0.7;
-  pointer-events: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app.theme-dark .df-task-node-inner::before {
-  content: '';
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 28px;
-  border-radius: 999px;
-  background: var(--project-color, var(--accent-active));
-  opacity: 0.7;
-  pointer-events: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app:not(.theme-dark) .df-task-node-inner::before {
-  content: '';
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 28px;
-  border-radius: 999px;
-  background: var(--project-color, var(--accent-active));
-  opacity: 0.7;
-  pointer-events: none;
-  corner-shape: var(--corner-shape, squircle);
-}
 /* Task title */
-.df-app .df-task-title {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-.df-app:not(.theme-dark) .df-task-title {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.35; color: #111827; }
 /* Subtask progress badge */
 /* Task actions */
 .df-app .df-task-node-actions {
@@ -5669,11 +5598,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
     min-width: 0;
   }
 }
-.df-app:not(.theme-dark) .df-planning .df-task-node-inner {
-  background: #FFFFFF;
-  border-color: rgba(15,23,42,0.10);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-}
 .df-app:not(.theme-dark) .df-planning .df-plan-project-node {
   background: #FFFFFF;
   border-color: rgba(15,23,42,0.12);
@@ -5702,9 +5626,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-app:not(.theme-dark) .df-planning .df-tree-menu button:hover {
   background: color-mix(in srgb, var(--accent-active) 8%, #FFFFFF);
-}
-.df-app:not(.theme-dark) .df-planning .df-task-title {
-  color: #111827;
 }
 .df-app:not(.theme-dark) .df-planning .df-project-name {
   color: #111827;
@@ -7466,17 +7387,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   cursor: pointer;
   color: var(--text-main);
 }
-.df-app.theme-dark .df-task-title {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.35;
-  color: var(--text-main);
-}
 .df-app.theme-dark .df-tree-menu button {
   display: block;
   width: 100%;
@@ -8963,14 +8873,9 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 /* Planning as an editorial outline */
 .df-tree-line { opacity: .48; stroke: var(--paper-rule-strong); filter: none; }
 .df-plan-project-node::before { box-shadow: none; filter: none; }
-.df-task-node-inner::before { box-shadow: none; filter: none; }
 .df-app .df-plan-project-node:hover {
   border-color: var(--paper-rule-strong); background: var(--paper-note); box-shadow: none; transform: none;
 }
-.df-app .df-task-node-inner:hover {
-  border-color: var(--paper-rule-strong); background: var(--paper-note); box-shadow: none; transform: none;
-}
-.df-task-node-inner strong { font-family: var(--paper-task); }
 .df-app .df-plan-project-node.selected {
   border-color: var(--paper-accent-rule); background: var(--paper-note); box-shadow: inset 2px 0 0 var(--accent-active);
 }
@@ -9853,44 +9758,11 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   .df-app .df-detail-subtask-tools .df-detail-ai-subtasks.loading svg { animation:none; opacity:.64; }
   .df-app .df-subtask-tree-item.ai-generated { animation:none; }
 }
-@keyframes treeDropIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-.df-tree-drop-preview.before { margin-bottom:3px; border-bottom:0; border-radius:8px 8px 0 0; corner-shape: var(--corner-shape, squircle); }
-.df-tree-drop-preview.after { margin-top:3px; border-top:0; border-radius:0 0 8px 8px; corner-shape: var(--corner-shape, squircle); }
-.df-tree-drop-preview.inside { margin-inline-start:28px; border-inline-start:2px solid var(--accent-active); border-radius:4px 8px 8px 4px; corner-shape: var(--corner-shape, squircle); }
-/* Drag targets use ink and rules only; no lift or scale. */
 .df-app .df-planning .df-subtask-list {
   gap: 6px;
   margin-top: 4px;
   margin-left: 16px;
   padding-left: 12px;
-}
-.df-tree.is-tree-dragging .df-plan-project-node:hover {
-  transform: none;
-  border-color: color-mix(in srgb, var(--accent-active) 42%, var(--paper-rule));
-  background: color-mix(in srgb, var(--accent-active) 5%, transparent);
-}
-.df-tree.is-tree-dragging .df-plan-task-node:hover {
-  transform: none;
-  border-color: color-mix(in srgb, var(--accent-active) 42%, var(--paper-rule));
-  background: color-mix(in srgb, var(--accent-active) 5%, transparent);
-}
-.df-tree.is-tree-dragging .df-candidate-subtask-row[data-node-type="subtask"]:hover {
-  transform: none;
-  border-color: color-mix(in srgb, var(--accent-active) 42%, var(--paper-rule));
-  background: color-mix(in srgb, var(--accent-active) 5%, transparent);
-}
-.df-tree-drop-preview { position:relative; z-index:8;
-  padding: 0 8px; color:var(--accent-active);
-  background: transparent;
-  border-radius: 0; font:600 11px/1.3 var(--paper-mono); letter-spacing:.03em; pointer-events:none; animation:treeDropIn var(--motion-base) var(--motion-ease) both; display:flex; align-items:center; gap:8px;
-  height: 20px;
-  box-shadow: none;
-  backdrop-filter: none;
-}
-.df-tree-drop-preview::before { content:"";
-  width: 5px;
-  height: 5px; border-radius:50%; background:var(--accent-active); flex-shrink:0;
-  animation: none;
 }
 .df-app .df-quick-add-project-menu { animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; }
 .df-app .df-detail-floating-popover { animation: detail-popover-in var(--motion-base) var(--motion-ease) both; }
@@ -10577,23 +10449,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   border-color: var(--paper-rule);
   corner-shape: var(--corner-shape, squircle);
 }
-.df-app .df-task-node-inner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 46px;
-  padding: 10px 14px 10px 48px; border-radius: 2px;
-  position: relative;
-  box-sizing: border-box;
-  cursor: pointer; transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion);
-  border: 1px solid var(--paper-rule);
-  background: var(--surface-card);
-  box-shadow: none;
-  filter: none; transform: none;
-  border-color: var(--paper-rule);
-  corner-shape: var(--corner-shape, squircle);
-}
 .df-app.theme-dark .df-plan-project-node {
   display: flex;
   align-items: center;
@@ -10615,24 +10470,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   filter: none;
   corner-shape: var(--corner-shape, squircle);
 }
-.df-app.theme-dark .df-task-node-inner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 46px;
-  padding: 10px 14px 10px 48px; border-radius: 2px;
-  position: relative;
-  box-sizing: border-box;
-  cursor: pointer;
-  transition: border-color .14s ease, background .14s ease, box-shadow .14s ease;
-  background: var(--surface-card);
-  border: 1px solid rgba(255,255,255,0.07);
-  box-shadow: none;
-  border-color: var(--paper-rule);
-  filter: none;
-  corner-shape: var(--corner-shape, squircle);
-}
 .df-app:not(.theme-dark) .df-plan-project-node {
   display: flex;
   align-items: center;
@@ -10645,24 +10482,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   position: relative;
   flex-shrink: 0;
   cursor: default;
-  transition: border-color .14s ease, background .14s ease, box-shadow .14s ease;
-  background: var(--surface-card);
-  border: 1px solid rgba(30,40,60,0.08);
-  box-shadow: none;
-  border-color: var(--paper-rule);
-  filter: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app:not(.theme-dark) .df-task-node-inner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 46px;
-  padding: 10px 14px 10px 48px; border-radius: 2px;
-  position: relative;
-  box-sizing: border-box;
-  cursor: pointer;
   transition: border-color .14s ease, background .14s ease, box-shadow .14s ease;
   background: var(--surface-card);
   border: 1px solid rgba(30,40,60,0.08);
@@ -13874,46 +13693,14 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   gap: 6px;
   min-height: 60px;
 }
-.df-kanban-card {
-  border: 1px solid var(--df-hairline, rgba(0,0,0,0.08));
-  border-left: 3px solid var(--task-project-color, var(--accent-active));
-  border-radius: 4px;
-  padding: 8px 10px;
-  background: var(--df-surface, #fff);
-  cursor: pointer;
-  transition: box-shadow 0.15s;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-kanban-card:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
-.df-kanban-card-title {
-  font-size: 13px;
-  margin-bottom: 4px;
-  line-height: 1.3;
-}
-.df-kanban-card-meta {
-  min-height: 20px;
+.df-shelf-task-meta {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--df-ink-muted, #888);
-  font-family: var(--paper-mono);
-  font-size: 11px;
+  flex-wrap: wrap;
+  gap: 3px 6px;
+  color: var(--text-muted);
+  font: 500 11px/1.3 var(--paper-mono);
 }
-.df-kanban-tag {
-  padding: 1px 5px;
-  border-radius: 2px;
-  font-size: 10px;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-kanban-empty {
-  text-align: center;
-  padding: 16px 8px;
-  font-size: 11px;
-  color: var(--df-ink-muted, #aaa);
-  border: 0;
-  border-radius: 4px;
-  corner-shape: var(--corner-shape, squircle);
-}
+
 /* ===== Eisenhower matrix ===== */
 .df-eisenhower-quadrant-header {
   display: flex;
@@ -13931,26 +13718,11 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  overflow-y: auto;
 }
 .df-eisenhower-empty {
   text-align: center;
   padding: 12px 8px;
   font-size: 11px;
-  color: var(--df-ink-muted, #aaa);
-}
-/* Tag indicators for importance/urgency/due */
-.df-kanban-tag.df-tag-due { color: var(--df-ink-muted, #888); font-size: 10px; font-family: var(--df-mono, monospace); }
-.df-list-tag { font-size: 10px; font-family: var(--df-mono, monospace); opacity: .85; }
-.df-list-tag.df-tag-due { color: var(--df-ink-muted, #888); }
-.df-eisenhower-project-name { font-size: 10px; font-weight: 500; }
-.df-eisenhower-due { font-size: 10px; color: var(--df-ink-muted, #888); font-family: var(--df-mono, monospace); }
-/* ===== Planning list view ===== */
-.df-list-project { font-size: 11px; color: var(--df-ink-muted, #888); white-space: nowrap; }
-.df-planning-list-empty {
-  text-align: center;
-  padding: 24px;
-  font-size: 13px;
   color: var(--df-ink-muted, #aaa);
 }
 /* ===== Header timer task (super-productivity style) ===== */
@@ -14216,12 +13988,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   transition: border-color 0.15s;
   corner-shape: var(--corner-shape, squircle);
 }
-.df-kanban-card:active {
-  cursor: grabbing;
-}
-.df-eisenhower-task:active {
-  cursor: grabbing;
-}
 .df-eisenhower-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -14229,22 +13995,10 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   gap: 14px;
   padding: 18px 68px 18px 6px;
 }
-.df-planning-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 18px 72px 18px 6px;
-}
 .df-app .df-all-day-block strong {
   font-weight: 760;
   line-height: 1.25;
   font-family: var(--paper-task);
-  letter-spacing: -.012em;
-  color: var(--text-main);
-}
-.df-list-title { cursor: pointer;
-  font-family: var(--paper-task);
-  font-weight: 760;
   letter-spacing: -.012em;
   color: var(--text-main);
 }
@@ -14487,10 +14241,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   font: 500 11px/1.4 var(--paper-sans); text-align: center;
 }
 /* View switcher: icons + short labels, clean active marker (left rule). */
-/* List view drag/drop: insertion line. */
-.df-planning-list-row-wrap {
-  position: relative;
-}
 .df-list-insertion-line {
   height: 2px;
   margin: 0 2px;
@@ -14502,16 +14252,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 }
 /* Kanban column + Matrix quadrant duration summary. */
 .df-kanban-column-duration {
-  margin-left: auto;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--surface-main) 90%, var(--surface-tint, var(--text-main)) 10%);
-  color: var(--text-muted);
-  font: 500 10px/1.4 var(--paper-mono);
-  font-style: normal;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-eisenhower-quadrant-duration {
   margin-left: auto;
   padding: 1px 6px;
   border-radius: 4px;
@@ -16933,13 +16673,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   gap: 10px;
   padding: 8px;
 }
-.df-app .df-planning .df-planning-list {
-  padding-right: 6px;
-  padding-top: 4px;
-  padding-left: 0;
-  gap: 10px;
-  padding: 8px;
-}
 .df-app .df-planning .df-kanban-column {
   border: 1px solid var(--paper-rule);
   border-radius: 6px;
@@ -16954,48 +16687,9 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
 }
-.df-app .df-planning .df-kanban-card {
-  border: 1px solid var(--task-border);
-  border-radius: var(--task-radius);
-  background: var(--task-bg);
-  box-shadow: none;
-  transform: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-planning .df-eisenhower-task {
-  border: 1px solid var(--task-border);
-  border-radius: var(--task-radius);
-  background: var(--task-bg);
-  box-shadow: none;
-  transform: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-planning .df-planning-list-row {
-  border: 1px solid var(--task-border);
-  border-radius: var(--task-radius);
-  background: var(--task-bg);
-  box-shadow: none;
-  transform: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-planning .df-kanban-card:hover {
-  transform: none;
-  box-shadow: none;
-}
-.df-app .df-planning .df-eisenhower-task:hover {
-  transform: none;
-  box-shadow: none;
-}
-.df-app .df-planning .df-planning-list-row:hover {
-  transform: none;
-  box-shadow: none;
-}
 .df-app .df-tree.is-tree-dragging .df-task-block:hover {
   transform: none;
   box-shadow: none;
-}
-.df-app .df-planning .df-task-node-inner > .df-task-block-accent {
-  display: none;
 }
 .df-app .df-planning .df-plan-project-node::before {
   content: none;
@@ -17006,64 +16700,12 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   background: transparent;
   box-shadow: none;
 }
-.df-app .df-planning .df-task-node-inner::before {
-  content: none;
-  display: none;
-  width: 0;
-  height: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.df-app .df-planning .df-task-node-inner::after {
-  content: none;
-  display: none;
-  width: 0;
-  height: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.df-app .df-planning .df-task-node-inner {
-  border-left-width: 1px;
-  border-left-color: var(--task-border);
-}
 .df-app .df-planning .df-task-block[data-task-variant="planning"] {
   --task-project-accent-size: 0px;
   border-left-width: 1px;
   border-left-color: var(--task-border);
   border-left-width: 1px;
   border-left-color: var(--task-border);
-}
-body.df-planning-native-dragging {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  cursor: grabbing;
-}
-body.df-planning-native-dragging * {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  cursor: grabbing;
-}
-body.df-planning-native-dragging input {
-  user-select: text;
-  -webkit-user-select: text;
-}
-body.df-planning-native-dragging textarea {
-  user-select: text;
-  -webkit-user-select: text;
-}
-body.df-planning-native-dragging [contenteditable] {
-  user-select: text;
-  -webkit-user-select: text;
-}
-body.df-planning-native-dragging [contenteditable] * {
-  user-select: text;
-  -webkit-user-select: text;
 }
 /* ============================================================
    Unified drag system — shared source placeholder, overlay,
@@ -17389,33 +17031,10 @@ body.df-unified-dragging [contenteditable] * {
 body.df-unified-dragging .df-unified-drag-overlay {
   pointer-events: none;
 }
-body.df-planning-native-dragging .df-unified-drag-overlay {
-  pointer-events: none;
-}
 /* Drop targets use a light paper tint across the
    whole target area (kanban column, matrix quadrant, tree parent,
    timeline day, candidate panel, empty drop zone). Clean paper
    background, no dirty gray fill. */
-.df-kanban-column.is-drop-container-active {
-  background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
-  box-shadow: none;
-}
-.df-kanban-column.is-drop-target {
-  border-color: var(--accent-active);
-  border-style: solid;
-  background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
-  box-shadow: none;
-}
-.df-eisenhower-quadrant.is-drop-container-active {
-  background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
-  box-shadow: none;
-}
-.df-eisenhower-quadrant.is-drop-target {
-  border-color: var(--accent-active);
-  border-style: solid;
-  background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
-  box-shadow: none;
-}
 .df-candidate-panel.is-drop-container-active {
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
   box-shadow: none;
@@ -17478,16 +17097,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: transparent;
   border-radius: var(--task-radius, 10px);
   min-height: 36px;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-kanban-drop-placeholder {
-  position: relative;
-  height: 44px;
-  min-height: 36px;
-  border: 0;
-  border-radius: var(--task-radius, 10px);
-  background: transparent;
-  pointer-events: none;
   corner-shape: var(--corner-shape, squircle);
 }
 /* ============================================================
@@ -17592,34 +17201,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: color-mix(in srgb, var(--accent-active) 4%, var(--paper-bg));
   box-shadow: none;
 }
-/* Planning native-drag source placeholder: unify with the shared
-   is-dragging-source visual so all views share one placeholder look.
-   Keep the is-drag-source selector (contract) but render the same
-   transparent slot with the original layout space. */
-.df-app .df-planning .df-kanban-card.is-drag-source {
-  border: 1px solid transparent;
-  background: transparent;
-  box-shadow: none;
-  transform: none;
-  opacity: 1;
-  color: transparent;
-}
-.df-app .df-planning .df-eisenhower-task.is-drag-source {
-  border: 1px solid transparent;
-  background: transparent;
-  box-shadow: none;
-  transform: none;
-  opacity: 1;
-  color: transparent;
-}
-.df-app .df-planning .df-planning-list-row-wrap.is-drag-source .df-planning-list-row {
-  border: 1px solid transparent;
-  background: transparent;
-  box-shadow: none;
-  transform: none;
-  opacity: 1;
-  color: transparent;
-}
 .df-app .df-tree [aria-grabbed="true"] {
   border: 1px solid transparent;
   background: transparent;
@@ -17627,15 +17208,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   transform: none;
   opacity: 1;
   color: transparent;
-}
-.df-app .df-planning .df-kanban-card.is-drag-source > * {
-  opacity: 0;
-}
-.df-app .df-planning .df-eisenhower-task.is-drag-source > * {
-  opacity: 0;
-}
-.df-app .df-planning .df-planning-list-row-wrap.is-drag-source .df-planning-list-row > * {
-  opacity: 0;
 }
 .df-app .df-tree [aria-grabbed="true"] > * {
   opacity: 0;
@@ -18182,18 +17754,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
     height: 25px;
   }
 }
-.df-app .df-kanban-card.completed {
-  opacity: 1;
-  background: var(--task-bg);
-}
-.df-app .df-eisenhower-task.completed {
-  opacity: 1;
-  background: var(--task-bg);
-}
-.df-app .df-planning-list-row.is-checked {
-  opacity: 1;
-  background: var(--task-bg);
-}
 .df-app .df-task-block[data-task-appearance].is-checked {
   opacity: 1;
   background: var(--task-bg);
@@ -18734,43 +18294,8 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   color: var(--text-muted);
   font: 600 10px/1 var(--paper-mono);
 }
-#root .df-app .df-planning .df-task-node-inner[data-task-variant="candidate"] > .df-task-block-accent {
-  display: block;
-}
-/* Tree reorders use the pointer overlay too, so the source leaves the document
-   flow and its neighbours can immediately close the gap. */
 /* During sorting the dragged card is represented by the pointer overlay while
    this in-flow slot reserves only the intended destination. */
-.df-reorder-preview-slot {
-  position: relative;
-  flex: 0 0 var(--reorder-preview-height, 56px);
-  align-self: stretch;
-  box-sizing: border-box;
-  width: 100%;
-  min-height: var(--reorder-preview-height, 56px);
-  margin: 0;
-  border: 0;
-  border-radius: var(--task-radius, 6px);
-  background: transparent;
-  pointer-events: none;
-  animation: df-reorder-preview-in 120ms var(--paper-ease, ease) both;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-reorder-preview-slot::after, .df-kanban-drop-placeholder::after, .df-tree-drop-preview::after, .is-drop-placeholder::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 2px;
-  background: var(--accent-active);
-  opacity: .5;
-  pointer-events: none;
-}
-@keyframes df-reorder-preview-in {
-  from { opacity: .45; }
-  to { opacity: 1; }
-}
 /* Planning is a separate paper sitting on the same warm ground as the app
    header. The left rail is reserved for view changes only. */
 #root .df-app .df-planning .df-tree-wrap {
@@ -18830,23 +18355,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   background: var(--surface-card);
   corner-shape: var(--corner-shape, squircle);
 }
-#root .df-app .df-planning .df-task-node-inner[data-task-variant="candidate"] {
-  --task-padding-x: 16px;
-  --task-padding-y: 14px;
-  --task-min-height: 64px;
-  --task-project-accent-size: 4px;
-  min-height: 64px;
-  border-left-width: 4px;
-  border-left-color: var(--task-project-color);
-  background: var(--surface-card);
-}
-#root .df-app .df-planning .df-planning-task-copy {
-  justify-content: center;
-}
-#root .df-app .df-planning .df-task-node-inner .df-task-title {
-  color: var(--text-main);
-  font: 700 17px/1.25 var(--paper-display);
-}
 #root .df-app:not(.theme-dark) .df-utility-panel:is(:has(.df-settings-shell), .df-metrics-utility),
 #root .df-app:not(.theme-dark) .df-utility-panel:is(:has(.df-settings-shell), .df-metrics-utility) .df-utility-head,
 #root .df-app:not(.theme-dark) .df-utility-panel:is(:has(.df-settings-shell), .df-metrics-utility) .df-settings-shell,
@@ -18861,25 +18369,32 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 #root .df-app .df-candidate-panel header > * {
   flex-shrink: 0;
 }
-/* Reorder destinations reserve space and show one shared insertion rule. */
-#root .df-app :is(.df-reorder-preview-slot, .df-kanban-drop-placeholder, .df-tree-drop-preview) {
-  box-sizing: border-box;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  animation: none;
+[data-planning-drop] { position: relative; }
+:is(.is-drop-placeholder, [data-planning-drop="before"], [data-planning-drop="after"])::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 2px;
+  background: var(--accent-active);
+  opacity: .5;
+  pointer-events: none;
 }
-#root .df-app .df-kanban-drop-placeholder {
-  flex: 0 0 var(--reorder-preview-height, 52px);
-  width: 100%;
-  min-height: var(--reorder-preview-height, 52px);
-}
+[data-planning-drop="before"]::after { top: -3px; z-index: 2; }
+[data-planning-drop="after"]::after { top: auto; bottom: -3px; z-index: 2; }
+[data-planning-drop="inside"] { outline: 1px solid var(--accent-active); outline-offset: -1px; }
+.df-project-tasks[data-empty-project-drop] { min-height: 24px; }
+
 /* A source never competes with the dragged overlay. Keep timeline geometry
    stable if a source remains mounted, but make its old contents disappear. */
 #root .df-app .df-task-block[data-drag-state="source-placeholder"] {
   visibility: hidden;
   border-color: transparent;
   background: transparent;
+}
+#root .df-app .df-shelf-view [data-planning-task-id][data-drag-state="source-placeholder"] {
+  visibility: visible;
+  opacity: 0;
 }
 #root .df-app .df-task-block.is-dragging-source {
   visibility: hidden;
@@ -18893,45 +18408,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   transform-origin: center;
   box-shadow: 0 10px 24px rgb(39 35 30 / 18%);
   padding-block: 4px;
-}
-/* Project branches leave the tree completely while their card is in the
-   pointer layer, avoiding an empty source frame and the resulting jump. */
-/* Planning's alternate views use the same paper TaskBlock as the tree. */
-#root .df-app .df-planning :is(.df-kanban-card, .df-eisenhower-task, .df-planning-list-row)[data-task-appearance] {
-  --task-bg: var(--surface-card);
-  --task-project-accent-size: 4px;
-  min-height: 56px;
-  padding: 11px 14px;
-  border: 1px solid var(--task-border);
-  border-left-width: 4px;
-  border-left-color: var(--task-project-color);
-  border-radius: var(--task-radius);
-  background: var(--surface-card);
-  box-shadow: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-/* Tree dragging shows a real empty destination slot, never an instruction
-   label such as “Place before/after”. */
-#root .df-app .df-planning .df-tree-drop-preview {
-  position: relative;
-  z-index: 0;
-  display: block;
-  width: min(100%, 620px);
-  height: var(--tree-drop-slot-height, 54px);
-  min-height: var(--tree-drop-slot-height, 54px);
-  margin: 8px 0;
-  flex: 0 0 var(--tree-drop-slot-height, 54px);
-  box-sizing: border-box;
-  padding: 0;
-  border: 0;
-  border-radius: var(--task-radius);
-  background: transparent;
-  box-shadow: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-#root .df-app .df-planning .df-tree-drop-preview::before {
-  content: none;
-  display: none;
 }
 @media (max-width: 760px) {
   .df-ai-provider-grid { grid-template-columns: 1fr; }
@@ -18954,83 +18430,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-task-card .df-task-block-duration { grid-column: 2; grid-row: 2; justify-self: start; }
   /* Matrix cards use the checkbox as a small corner control. The copy gets
      the full row below it so long titles keep their reading width. */
-  #root .df-app .df-planning .df-eisenhower-task .df-task-block-row {
-    --task-grid-template: 44px minmax(0, 1fr) 36px;
-    grid-template-columns: var(--task-grid-template);
-    grid-template-rows: 44px minmax(0, 1fr);
-    row-gap: 2px;
-    align-items: start;
-  }
-  #root .df-app .df-planning .df-eisenhower-task .df-task-checkbox-wrap {
-    grid-column: 1;
-    grid-row: 1;
-    justify-self: start;
-    align-self: start;
-    width: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    margin: 0;
-    justify-content: flex-start;
-  }
-  #root .df-app .df-planning .df-eisenhower-task .df-task-block-check {
-    grid-column: 1;
-    grid-row: 1;
-    justify-self: start;
-    align-self: start;
-    width: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    margin: 0;
-    justify-content: flex-start;
-  }
-  #root .df-app .df-planning .df-eisenhower-task .df-task-checkbox-wrap .df-block-check {
-    position: relative;
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    margin: 0;
-    border: 0;
-    background: transparent;
-    transform: none;
-  }
-  #root .df-app .df-planning .df-eisenhower-task .df-task-checkbox-wrap .df-block-check::before {
-    content: "";
-    position: absolute;
-    inset: 12px;
-    width: 18px;
-    height: 18px;
-    box-sizing: border-box;
-    border: 2px solid var(--task-checkbox-color);
-    border-radius: 4px;
-    background: color-mix(in srgb, var(--task-checkbox-color) 12%, transparent);
-    corner-shape: var(--corner-shape, squircle);
-  }
-  #root .df-app .df-planning .df-eisenhower-task .df-task-checkbox-wrap .df-block-check.completed::before {
-    background: color-mix(in srgb, var(--task-checkbox-color) 18%, transparent);
-  }
-  #root .df-app .df-planning .df-eisenhower-task .df-task-checkbox-wrap .df-block-check.completed::after {
-    content: "✓";
-    position: absolute;
-    inset: 12px;
-    z-index: 1;
-    color: var(--task-checkbox-color);
-    font: 700 13px/18px var(--paper-sans);
-    text-align: center;
-  }
-  #root .df-app .df-planning .df-eisenhower-task .df-task-actions {
-    grid-column: 3;
-    grid-row: 1;
-    align-self: center;
-    justify-self: end;
-  }
-  #root .df-app .df-planning .df-eisenhower-task .df-task-block-content {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    width: 100%;
-    min-width: 0;
-    align-self: stretch;
-  }
   /* The portrait filter lives in the fixed toolbar; the list needs only a small gap. */
   #root .df-app .df-planning .df-tree-wrap:not(:has(.df-planning-longrange-guide)) {
     padding-top: 8px;
@@ -20355,7 +19754,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-planning .df-category-branch { margin-bottom: 12px; }
   #root .df-app .df-planning .df-task-branch{margin-top:4px}
   #root .df-app .df-planning .df-plan-task-node{width:100%;min-width:0;max-width:none}
-  #root .df-app .df-planning .df-task-node-inner{width:100%;min-width:0;padding:5px 2px 5px 6px;gap:4px}
   #root .df-app .df-planning .df-task-node-actions{min-width:0}
   #root .df-app .df-planning .df-planning-longrange-guide {
     grid-template-columns: minmax(0, 1fr);
@@ -21550,19 +20948,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   border: 0;
   background: transparent;
 }
-#root .df-app.mode-execute .df-candidate-list .df-candidate-task-row .df-task-block[data-task-variant="candidate"] {
-  min-height: 56px;
-  margin: 0;
-  padding-block: var(--candidate-padding-block, 7px);
-  border: 1px solid var(--task-border);
-  border-left-width: var(--task-project-accent-size, 2px);
-  border-left-color: var(--task-project-color, var(--accent-active));
-  border-radius: var(--task-radius);
-  background: var(--task-bg);
-  box-shadow: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-#root .df-app.mode-execute .df-candidate-list .df-candidate-task-row .df-task-card {
+#root .df-app.mode-execute :is(.df-candidate-list .df-candidate-task-row .df-task-block[data-task-variant="candidate"], .df-shelf-view .df-task-card[data-task-variant="candidate"]) {
   min-height: 56px;
   margin: 0;
   padding-block: var(--candidate-padding-block, 7px);
@@ -23728,13 +23114,12 @@ html.product-demo-fullscreen #root .df-header .df-brand { color: var(--text-main
 html.product-demo-fullscreen #root .df-header-right { display: flex; gap: 12px; }
 html.product-demo-fullscreen #root .df-app > :is(.df-execute, .df-planning) { height: calc(100% - var(--product-header-height)); min-height: 0; }
 /* The outer feature page owns scrolling; native tasks remain interactive. */
-html.product-demo-fullscreen #root .df-app :is(.df-tree-wrap, .df-candidate-list, .df-timeline-scroll, .df-kanban-board, .df-kanban-column, .df-eisenhower-task-list, .df-planning-list) { overflow: clip; overscroll-behavior: auto; }
+html.product-demo-fullscreen #root .df-app :is(.df-tree-wrap, .df-candidate-list, .df-timeline-scroll, .df-kanban-board, .df-kanban-column, .df-eisenhower-task-list) { overflow: clip; overscroll-behavior: auto; }
 html.product-demo-fullscreen #root .df-app .df-planning .df-eisenhower-grid { height: min(540px, 100%); min-height: 0; grid-template-rows: repeat(2, minmax(0, 1fr)); }
 html.product-demo-fullscreen #root .df-app .df-planning .df-eisenhower-quadrant { min-height: 0; }
 html.product-demo-fullscreen #root .df-app .df-planning .df-project-tasks { margin-left: 112px; padding-left: 0; }
 html.product-demo-fullscreen #root .df-app .df-planning .df-category-branch { margin-bottom: 12px; }
 html.product-demo-fullscreen #root .df-app .df-planning .df-plan-task-node { width: max-content; max-width: min(360px, 100%); min-width: 260px; }
-html.product-demo-fullscreen #root .df-app .df-planning .df-task-node-inner { width: 100%; min-width: 0; }
 html.product-demo-fullscreen #root .df-app.mode-execute .df-project-group-name { font-family: var(--paper-sans); font-weight: 400; text-transform: none; }
 html.product-demo-fullscreen #root .df-app.mode-execute .df-candidate-panel .df-panel-title h2 { font: 600 18px/1.4 var(--paper-task); letter-spacing: 0; }
 @media (min-width: 1000px) and (orientation: landscape) {
@@ -24022,7 +23407,7 @@ body[data-navopath-base-theme="light"],
   max-width: none;
   min-width: 0;
 }
-#root .df-app .df-shelf-view :is(.df-kanban-board, .df-eisenhower-grid, .df-planning-list) {
+#root .df-app .df-shelf-view :is(.df-kanban-board, .df-eisenhower-grid) {
   min-width: 0;
   max-width: 100%;
   height: auto;
@@ -24070,8 +23455,10 @@ body[data-navopath-base-theme="light"],
 #root .df-app .df-metrics-utility .df-metrics-main-grid {
   grid-template-columns: minmax(0, 1fr) minmax(120px, .34fr);
 }
-@container (max-width: 320px) {
+@container (max-width: 520px) {
   #root .df-app .df-shelf-view .df-eisenhower-grid { grid-template-columns: minmax(0, 1fr); }
+  #root .df-app .df-shelf-view .df-kanban-board { flex-direction: column; }
+  #root .df-app .df-shelf-view .df-task-card > .df-task-recurrence-indicator { right: -6px; }
 }
 @media (orientation: portrait) {
   #root .df-app .df-metrics-utility .df-metrics-main-grid { grid-template-columns: minmax(0, 1fr); }
