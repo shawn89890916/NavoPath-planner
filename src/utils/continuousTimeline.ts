@@ -4,11 +4,6 @@ export const DAILY_CONTINUOUS_DAY_COUNT = 7;
 
 const MINUTES_PER_DAY = 24 * 60;
 
-function shortDate(date: string) {
-  const [, month, day] = date.split("-");
-  return `${Number(month)}.${Number(day)}`;
-}
-
 function dayOffset(date: string, anchorDate: string) {
   return Math.round((new Date(`${date}T00:00:00`).getTime() - new Date(`${anchorDate}T00:00:00`).getTime()) / 86400000);
 }
@@ -41,25 +36,6 @@ export function dailyContinuousBlockTop(
     offset -= 1;
   }
   return offset * MINUTES_PER_DAY / 60 * hourHeight + minutesFromDayStart / 60 * hourHeight;
-}
-
-export function dailyContinuousSlotLabel({
-  index,
-  anchorDate,
-  dayStartHour,
-  dateStep = 1,
-}: {
-  index: number;
-  anchorDate: string;
-  dayStartHour: number;
-  dateStep?: number;
-}): string {
-  const absoluteMinutes = Math.round(dayStartHour * 60 + index * SLOT_MINUTES);
-  const minuteOfDay = ((absoluteMinutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
-  if (minuteOfDay % 60 !== 0) return "";
-  const date = addDays(anchorDate, Math.floor(absoluteMinutes / MINUTES_PER_DAY) * Math.max(1, dateStep));
-  if (index > 0 && minuteOfDay === 0) return `${shortDate(date)} 0:00`;
-  return `${Math.floor(minuteOfDay / 60)}:00`;
 }
 
 export function getContinuousTimelineDateForOffset(anchorDate: string, offset: number, columnCount: number): string {

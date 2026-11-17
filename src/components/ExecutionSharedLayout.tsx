@@ -1,5 +1,6 @@
-import { dailyContinuousSlotLabel } from "../utils/continuousTimeline";
-import { timelineHourSlots } from "../timelineGeometry";
+import { dailyContinuousCanvasHeight, getContinuousTimelineDateForOffset } from "../utils/continuousTimeline";
+import { addDays, minutesToTime, timelineHourSlots } from "../timelineGeometry";
+import { weekdayName } from "../i18n";
 import React, { memo, type CSSProperties } from "react";
 import { TaskBlock } from "./TaskBlock";
 import { CloseButton } from "./UiPrimitives";
@@ -387,10 +388,52 @@ export function TimelineEventBlock({
   );
 }
 
-export const DailyTimelineGrid = memo(function DailyTimelineGrid({ slotCount, dayStartHour, slotHeight, anchorDate }: { slotCount: number; dayStartHour: number; slotHeight: number; anchorDate: string }) {
+export const DailyTimelineGrid = memo(function DailyTimelineGrid({ slotCount, dayStartHour, slotHeight }: { slotCount: number; dayStartHour: number; slotHeight: number }) {
   return <>{timelineHourSlots(slotCount, dayStartHour).map(({ index, minutes }) => {
     const isMajor = minutes % (6 * 60) === 0;
-    const label = dailyContinuousSlotLabel({ index, anchorDate, dayStartHour });
-    return <div className={`df-slot hour ${isMajor ? "major" : ""}`} style={{ top: `${index * slotHeight}px` }} key={index}><span>{label}</span></div>;
+    return <div className={`df-slot hour ${isMajor ? "major" : ""}`} style={{ top: `${index * slotHeight}px` }} key={index}><span>{`${minutes / 60}:00`}</span></div>;
+  })}</>;
+});
+
+export const TimelineDayBoundaries = memo(function TimelineDayBoundaries({
+  anchorDate,
+  bandCount,
+  columnCount,
+  dayStartHour,
+  slotHeight,
+  lang,
+}: {
+  anchorDate: string;
+  bandCount: number;
+  columnCount: number;
+  dayStartHour: number;
+  slotHeight: number;
+  lang: Language;
+}) {
+  const format = new Intl.DateTimeFormat(lang === "zh" ? "zh-CN" : "en-US", { month: "short", day: "numeric" });
+  const startMinutes = Math.round(dayStartHour * 60);
+  return <>{Array.from({ length: bandCount - 1 }, (_, index) => {
+    const band = index + 1;
+    const date = getContinuousTimelineDateForOffset(anchorDate, band, columnCount);
+    const first = new Date(`${date}T00:00:00`);
+    let label: string;
+    if (columnCount === 1) {
+      const weekday = weekdayName(lang, first.getDay());
+      label = lang === "zh" ? `${format.format(first)} · ${weekday}` : `${weekday}, ${format.format(first)}`;
+    } else {
+      const last = new Date(`${addDays(date, columnCount - 1)}T00:00:00`);
+      if (lang === "zh") {
+        label = first.getMonth() === last.getMonth()
+          ? `${first.getMonth() + 1}月${first.getDate()}–${last.getDate()}日`
+          : `${format.format(first)}–${format.format(last)}`;
+      } else {
+        label = format.formatRange(first, last);
+      }
+    }
+    return (
+      <div className="df-timeline-day-boundary" style={{ top: dailyContinuousCanvasHeight(band, slotHeight) }} data-date={date} key={date}>
+        <span>{label}{startMinutes % 60 !== 0 && ` · ${minutesToTime(startMinutes)}`}</span>
+      </div>
+    );
   })}</>;
 });

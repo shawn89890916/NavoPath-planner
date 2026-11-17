@@ -2,6 +2,12 @@
 
 ## 2026-11-17
 
+### 1.7.0 Beta 27
+
+#### 改进
+
+- 开启无限跨天滚动时，日、三日和周时间轴会在一天开始时间显示横贯时间轴的分隔线及新日期或日期范围。滚过分隔线后，顶部日期随之切换。
+
 ### 1.7.0 Beta 26
 
 #### 修复
@@ -652,6 +658,12 @@
 # NavoPath Changelog
 
 ## 2026-11-17
+
+### 1.7.0 Beta 27
+
+#### Improved
+
+- With continuous cross-day scrolling on, Day, Three-day, and Week timelines show a divider and the incoming date or date range at the configured day start. The date header updates as you scroll past the divider.
 
 ### 1.7.0 Beta 26
 

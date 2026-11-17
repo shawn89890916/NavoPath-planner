@@ -15,7 +15,7 @@ import { RightUtilityPanel } from "./components/RightUtilityPanel";
 import type { ExtensionContribution } from "./extensions/types";
 import { undoAiImportData } from "./utils/aiImportUndo";
 import { highlightTaskLocation } from "./utils/highlightTaskLocation";
-import { DailyTimelineGrid } from "./components/ExecutionSharedLayout";
+import { DailyTimelineGrid, TimelineDayBoundaries } from "./components/ExecutionSharedLayout";
 import { themeVars } from "./WorkspacePresentation";
 import { COMPACT_LAYOUT_MEDIA_QUERY, SLOT_MINUTES, DURATION_OPTIONS, DEFAULT_PROJECT_COLOR, PROJECT_COLOR_PRESETS, taskBlockPriorityFor, categories, isEventDisplayTask, isExternalCalendarDisplayTask, hexToRgb, minutesToTime, timeToMinutes, addMinutes, taskDuration, sortAiConversations, ProductIcon, recurrenceOptions, recurrenceLabel, TaskRecurrenceIndicator, TaskCard, formatMinutes, formatDuration, ReturnedToPlanIcon, TimeBlock, PreviewBlock, ProjectColorPicker, ProjectChoice, AiPanel, preloadAiPanel, type AutoScheduleState, type TimelineFocusTarget, type PlacementPreview, type PlacementChoice, type ResizePreview, type AiAttachmentSnapshot, type AiSessionMessage } from "./WorkspacePresentation";
 export { ProductIcon } from "./WorkspacePresentation";
@@ -47,7 +47,7 @@ import { candidateScheduleSummary, type CandidateScheduleSummary } from "./utils
 import { localIsoDate } from "./utils/localDate";
 import { buildWeekWindow } from "./utils/monthWindow";
 import { buildCommandSearchIndex, searchCommands, type CommandSearchResult } from "./utils/commandSearch";
-import { buildDailyContinuousDates, dailyContinuousBlockTop, dailyContinuousCanvasHeight, dailyContinuousSlotCount, dailyContinuousSlotLabel, dailyContinuousTargetFromContentY, getContinuousTimelineDateForOffset } from "./utils/continuousTimeline";
+import { buildDailyContinuousDates, dailyContinuousBlockTop, dailyContinuousCanvasHeight, dailyContinuousSlotCount, dailyContinuousTargetFromContentY, getContinuousTimelineDateForOffset } from "./utils/continuousTimeline";
 import { normalizeTaskCheckTone, normalizeTaskState, taskMetaPatch, validateProjectCompletion, workflowStatusForPatch } from "./utils/productivityModel";
 import { matchShortcut } from "./utils/shortcuts";
 import { buildTaskMetaBadges } from "./utils/taskMetaBadges";
@@ -2764,10 +2764,8 @@ if (cached?.data && cached?.settings) {
     const bufferBands = Math.max(1, Math.floor(effectBandCount / 4));
     // Label-only update: safe to call on init (no state shift, no loop risk).
     const updateVisibleLabel = () => {
-      // The daily all-day shelf follows the leading visible day. Using the
-      // viewport center switches it to tomorrow while today's hours remain.
-      const labelY = scrollElement.scrollTop + (timelineView === "daily" ? 0 : scrollElement.clientHeight / 2);
-      const bandIndex = Math.max(0, Math.min(effectBandCount - 1, Math.floor(labelY / dayHeight)));
+      // Keep the dates above the grid aligned with the band at its visible top.
+      const bandIndex = Math.max(0, Math.min(effectBandCount - 1, Math.floor(scrollElement.scrollTop / dayHeight)));
       const nextDate = getContinuousTimelineDateForOffset(effectStartDate, bandIndex, effectColumnCount);
       setVisibleTimelineDate((current) => current === nextDate ? current : nextDate);
     };
@@ -9922,13 +9920,9 @@ if (cached?.data && cached?.settings) {
                             <div className="df-timeline-canvas" style={{ height: `${canvasHeight}px`, width: "52px", margin: 0, borderLeft: "none", background: "transparent" }}>
                               {timelineHourSlots(slotCount, dayStartHour).map(({ index, minutes }) => {
                                 const isMajor = minutes % (6 * 60) === 0;
-                                const label = continuousTimelineEnabled ? dailyContinuousSlotLabel({ index, anchorDate: continuousTimelineStartDate, dayStartHour, dateStep: timelineColumnCount }) : hourLabel(minutes);
-                                const boundarySeparator = label.indexOf(" ");
-                                const boundaryDate = boundarySeparator > 0 ? label.slice(0, boundarySeparator) : "";
-                                const timeLabel = boundarySeparator > 0 ? label.slice(boundarySeparator + 1) : label;
                                 return (
                                   <div className={`df-slot-ruler hour ${isMajor ? "major" : ""}`} style={{ top: `${index * timelineSlotHeight}px` }} key={index}>
-                                    <span className={`df-timeline-ruler-label${boundaryDate ? " day-boundary" : ""}`}>{boundaryDate && <small>{boundaryDate}</small>}<b>{timeLabel}</b></span>
+                                    <span className="df-timeline-ruler-label"><b>{hourLabel(minutes)}</b></span>
                                   </div>
                                 );
                               })}
@@ -10120,6 +10114,7 @@ if (cached?.data && cached?.settings) {
                                   );
                                 })}
                               </div>
+                              {continuousTimelineEnabled && <TimelineDayBoundaries anchorDate={continuousTimelineStartDate} bandCount={continuousTimelineBandCount} columnCount={timelineColumnCount} dayStartHour={dayStartHour} slotHeight={timelineSlotHeight} lang={lang} />}
                               {/* Layer 3: Event blocks — absolutely positioned on the time-grid */}
                               <div className="df-event-blocks-layer" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 3 }}>
                                 {multiColWidth > 0 && multiDayScheduledTasks.map((task) => {
@@ -10500,7 +10495,8 @@ if (cached?.data && cached?.settings) {
                           });
                         }}
                     >
-                        <DailyTimelineGrid slotCount={dailyTimelineSlotCount} dayStartHour={dayStartHour} slotHeight={timelineSlotHeight} anchorDate={continuousTimelineStartDate} />
+                        <DailyTimelineGrid slotCount={dailyTimelineSlotCount} dayStartHour={dayStartHour} slotHeight={timelineSlotHeight} />
+                        {continuousTimelineEnabled && <TimelineDayBoundaries anchorDate={continuousTimelineStartDate} bandCount={continuousTimelineBandCount} columnCount={1} dayStartHour={dayStartHour} slotHeight={timelineSlotHeight} lang={lang} />}
                         {/* Now line — renders whenever today is inside the visible date range.
                             In non-continuous daily mode the range is [timelineDate], so this
                             evaluates to true only when viewing today. In continuous mode the
