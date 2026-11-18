@@ -1,5 +1,13 @@
 # NavoPath 更新日志
 
+## 2026-11-18
+
+### 1.7.0 Beta 30
+
+#### 改进
+
+- 任务短栏在添加子任务、标记完成或未完成、删除任务后自动收起，并在日程上显示对应的成功提示。
+
 ## 2026-11-17
 
 ### 1.7.0 Beta 29
@@ -668,6 +676,14 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-18
+
+### 1.7.0 Beta 30
+
+#### Improved
+
+- The compact task sheet closes after adding a subtask, marking a task complete or incomplete, or deleting it. The timeline shows a confirmation for each action.
 
 ## 2026-11-17
 

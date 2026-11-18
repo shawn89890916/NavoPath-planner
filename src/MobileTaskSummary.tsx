@@ -146,10 +146,11 @@ export default function MobileTaskSummary(props: {
   occurrence?: { scheduledDate: string; scheduledStart: string } | null;
   today: string;
   onClose: () => void;
-  onDelete: () => void;
+  onDelete: () => Promise<void> | undefined;
   onMore?: (inset: string) => void;
-  onIncomplete?: () => void;
-  onUpdate: (taskId: string, patch: Partial<Task>) => void;
+  onIncomplete: () => Promise<void> | undefined;
+  onUpdate: (taskId: string, patch: Partial<Task>) => Promise<void> | undefined;
+  onActionSuccess: (message: string) => void;
 }) {
   const zh = props.lang === "zh";
   const [addingSubtask, setAddingSubtask] = useState(false);
@@ -170,11 +171,17 @@ export default function MobileTaskSummary(props: {
   const subtasks: Array<{ item: Subtask; depth: number }> = [];
   const collect = (items: Subtask[], depth = 0) => items.forEach((item) => { subtasks.push({ item, depth }); collect(item.subtasks || [], depth + 1); });
   collect(props.task.subtasks || []);
+  async function finishAction(saving: Promise<void> | undefined, message: string) {
+    if (!saving) return;
+    await saving;
+    props.onActionSuccess(message);
+  }
+
   function addSubtask() {
     const title = subtaskTitle.trim();
     if (!title) return;
     const now = new Date().toISOString();
-    props.onUpdate(props.task.id, {
+    const saving = props.onUpdate(props.task.id, {
       subtasks: [...(props.task.subtasks || []), {
         id: `subtask_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 8)}`,
         title,
@@ -184,8 +191,7 @@ export default function MobileTaskSummary(props: {
         subtasks: [],
       }],
     });
-    setSubtaskTitle("");
-    setAddingSubtask(false);
+    void finishAction(saving, zh ? "已添加子任务" : "Subtask added");
   }
   function commitTime(edge: "start" | "end", raw: string) {
     const snapped = toTime(Math.round(toMinutes(raw) / 15) * 15);
@@ -211,11 +217,11 @@ export default function MobileTaskSummary(props: {
     </div>
     <div className="df-mobile-summary-actions df-mobile-summary-status-actions">
       <Button onClick={() => setAddingSubtask(true)}>＋ {zh ? "添加子任务" : "Add subtask"}</Button>
-      <Button aria-pressed={props.task.completed} onClick={() => props.onUpdate(props.task.id, { completed: true })}>✓ {zh ? "完成" : "Complete"}</Button>
-      <Button aria-pressed={!props.task.completed} onClick={() => props.onIncomplete ? props.onIncomplete() : props.onUpdate(props.task.id, { completed: false })}>↩ {zh ? "未完成" : "Incomplete"}</Button>
+      <Button aria-pressed={props.task.completed} onClick={() => void finishAction(props.onUpdate(props.task.id, { completed: true }), zh ? "任务已完成" : "Task completed")}>✓ {zh ? "完成" : "Complete"}</Button>
+      <Button aria-pressed={!props.task.completed} onClick={() => void finishAction(props.onIncomplete(), zh ? "已标记为未完成" : "Task marked incomplete")}>↩ {zh ? "未完成" : "Incomplete"}</Button>
     </div>
     <div className="df-mobile-summary-actions">
-      <Button variant="danger" onClick={props.onDelete}>{zh ? "删除任务" : "Delete task"}</Button>
+      <Button variant="danger" onClick={() => void finishAction(props.onDelete(), zh ? "任务已删除" : "Task deleted")}>{zh ? "删除任务" : "Delete task"}</Button>
     </div>
     {addingSubtask && <form className="df-mobile-summary-subtask-add" onSubmit={(event) => { event.preventDefault(); addSubtask(); }}>
       <input autoFocus value={subtaskTitle} onChange={(event) => setSubtaskTitle(event.target.value)} placeholder={zh ? "输入子任务名称" : "Subtask title"} onKeyDown={(event) => { if (event.key === "Escape") { setAddingSubtask(false); setSubtaskTitle(""); } }} />

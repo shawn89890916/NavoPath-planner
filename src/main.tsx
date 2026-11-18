@@ -4099,10 +4099,12 @@ if (cached?.data && cached?.settings) {
       })
     };
     const updated = typeof patch.completed === "boolean" ? setTaskCompletion(next, taskId, patch.completed, inferredAt) : next;
-    if (updated.habitDailyStates !== current.habitDailyStates) void saveData(updated);
-    else void saveTaskOperation(updated, typeof patch.completed === "boolean" && patch.completed !== existing?.completed
-      ? (patch.completed ? "complete" : "reopen") : "edit");
+    const saving = updated.habitDailyStates !== current.habitDailyStates
+      ? saveData(updated)
+      : saveTaskOperation(updated, typeof patch.completed === "boolean" && patch.completed !== existing?.completed
+        ? (patch.completed ? "complete" : "reopen") : "edit");
     if (titleChanged && updatedTask) void enrichTaskInBackground(updatedTask);
+    return saving;
   }
 
   /** Delete a subtask by ID — uses dataRef.current to avoid stale-closure races. */
@@ -7216,11 +7218,13 @@ if (cached?.data && cached?.settings) {
   function deleteEditingItem() {
     if (!dataRef.current || !editingId) return;
     const current = dataRef.current;
-    if (addType === "task") void saveData({ ...current, tasks: current.tasks.filter((task) => task.id !== editingId) });
-    if (addType === "project") void saveData({ ...current, projects: current.projects.filter((project) => project.id !== editingId) });
-    if (addType === "habit") void saveData({ ...current, habits: (current.habits || []).filter((habit) => habit.id !== editingId) });
-    if (addType === "event") void saveData({ ...current, events: current.events.filter((event) => event.id !== editingId) });
-    closeTaskDrawer();
+    let saving: Promise<void> | undefined;
+    if (addType === "task") saving = saveData({ ...current, tasks: current.tasks.filter((task) => task.id !== editingId) });
+    if (addType === "project") saving = saveData({ ...current, projects: current.projects.filter((project) => project.id !== editingId) });
+    if (addType === "habit") saving = saveData({ ...current, habits: (current.habits || []).filter((habit) => habit.id !== editingId) });
+    if (addType === "event") saving = saveData({ ...current, events: current.events.filter((event) => event.id !== editingId) });
+    if (!(addType === "task" && compactLayout && mobileTaskSummary)) closeTaskDrawer();
+    return saving;
   }
 
   function copyEditingTask() {
@@ -10628,7 +10632,7 @@ if (cached?.data && cached?.settings) {
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onLocateTimeline={locateTaskOnTimeline} onLocatePlanning={locateTaskInPlanning} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onShowMore={() => setMobileTaskSummary(false)} />}
+      {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onLocateTimeline={locateTaskOnTimeline} onLocatePlanning={locateTaskInPlanning} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel && workspaceChatPanel && <div className="df-utility-backdrop" data-workspace-backdrop data-motion-closing={aiPresence.closing || undefined} onMouseDown={closeWorkspaceChat} />}
       {!productAiPresentation && aiPanel}
       {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}
@@ -10790,7 +10794,7 @@ if (cached?.data && cached?.settings) {
       {dragOverlay && !dragOverlayTask && drag?.kind !== "block" && <UnifiedDragOverlay snapshot={dragOverlay} pointer={dragOverlayPointer} />}
       {toast && (
         <div className={toastAction ? "df-toast df-toast-undo" : "df-toast"}>
-          <span className="df-toast-message">{toast}</span>
+          <span className="df-toast-message" role="status">{toast}</span>
           {toastAction && (toastAction.undo
             ? <UndoButton onClick={toastAction.onClick}>{toastAction.label}</UndoButton>
             : <Button variant="text" onClick={toastAction.onClick}>{toastAction.label}</Button>)}
@@ -12431,8 +12435,8 @@ function NowLine({ extraStyle, dayStartHour = 0, hourHeight = HOUR_HEIGHT, highl
 
 function EditDrawer(props: {
   engagementEnabled?: boolean;
-  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; event?: CalendarEvent; today: string; onClose: () => void; onSave: () => void; onDelete: () => void; onCopy: () => void; onConvertToEvent: () => void; onConvertToTask: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => void; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onLocateTimeline: (date: string, startTime: string, taskId: string) => void; onLocatePlanning: (task: Task) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
-  editingRecordId?: string; setEditingRecordId?: (id: string | undefined) => void; editingOccurrence?: EditingOccurrence; data?: PlannerData | null; saveData?: (next: PlannerData) => Promise<void>; onSaveRecurrence: (taskId: string, recurrence?: TaskRecurrence) => void; onCancelOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onReplanOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onCancelAllRecurrence: (taskId: string, cutoffDate: string) => void; aiEnabled: boolean; subtaskAiLoading: boolean; subtaskAiRevealIds: string[]; onGenerateSubtasks: (taskId: string) => void; lang: Language; compactSummary?: boolean; onShowMore?: () => void;
+  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; event?: CalendarEvent; today: string; onClose: () => void; onSave: () => void; onDelete: () => Promise<void> | undefined; onCopy: () => void; onConvertToEvent: () => void; onConvertToTask: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => Promise<void> | undefined; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onLocateTimeline: (date: string, startTime: string, taskId: string) => void; onLocatePlanning: (task: Task) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
+  editingRecordId?: string; setEditingRecordId?: (id: string | undefined) => void; editingOccurrence?: EditingOccurrence; data?: PlannerData | null; saveData?: (next: PlannerData) => Promise<void>; onSaveRecurrence: (taskId: string, recurrence?: TaskRecurrence) => void; onCancelOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onReplanOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onCancelAllRecurrence: (taskId: string, cutoffDate: string) => void; aiEnabled: boolean; subtaskAiLoading: boolean; subtaskAiRevealIds: string[]; onGenerateSubtasks: (taskId: string) => void; lang: Language; compactSummary?: boolean; onCompactActionSuccess: (message: string) => void; onShowMore?: () => void;
 }) {
   const dialog = useInAppDialog(props.lang);
   const [newProjectTitle, setNewProjectTitle] = useState("");
@@ -12922,7 +12926,7 @@ function EditDrawer(props: {
       if (props.editingRecordId && props.data && props.saveData) {
         const now = workspaceNow().toISOString();
         const incompleteData = setTaskCompletion(props.data, props.editingRecordId, false, now);
-        void props.saveData({
+        return props.saveData({
           ...incompleteData,
           tasks: incompleteData.tasks.map((task) => task.id === props.task!.id
             ? {
@@ -12936,9 +12940,8 @@ function EditDrawer(props: {
               }
             : task),
         });
-        return;
       }
-      props.onTaskUpdate(props.task.id, { ...taskPatch, executionStatus });
+      return props.onTaskUpdate(props.task.id, { ...taskPatch, executionStatus });
     }
     const statusText = props.task.completed
       ? t(props.lang, "drawer.completed")
@@ -12973,7 +12976,7 @@ function EditDrawer(props: {
       return (
         <>
           {dialog.host}
-          <Suspense fallback={null}><MobileTaskSummary engagementEnabled={props.engagementEnabled} lang={props.lang} task={props.task} form={f} setForm={props.setForm} projects={props.projects} record={activeRecord} occurrence={activeOccurrence} today={props.today} onClose={props.onClose} onDelete={props.onDelete} onMore={showMore} onIncomplete={() => chooseIncompleteOutcome("unfinished-return")} onUpdate={props.onTaskUpdate} /></Suspense>
+          <Suspense fallback={null}><MobileTaskSummary engagementEnabled={props.engagementEnabled} lang={props.lang} task={props.task} form={f} setForm={props.setForm} projects={props.projects} record={activeRecord} occurrence={activeOccurrence} today={props.today} onClose={props.onClose} onDelete={props.onDelete} onMore={showMore} onIncomplete={() => chooseIncompleteOutcome("unfinished-return")} onUpdate={props.onTaskUpdate} onActionSuccess={props.onCompactActionSuccess} /></Suspense>
         </>
       );
     }
