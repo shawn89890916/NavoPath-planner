@@ -5,6 +5,7 @@ const path = require("node:path");
 const {
   broadcastToLiveWindows,
   createPrimaryWindowRegistry,
+  trackTrayIdle,
   windowFromEvent,
 } = require("./window-lifecycle.cjs");
 
@@ -91,4 +92,31 @@ test("uses the primary registry for desktop lifecycle actions and safe update br
   assert.match(source, /primaryWindowRegistry\.set\(win\)/);
   assert.match(source, /primaryWindowRegistry\.clear\(win\)/);
   assert.match(source, /click: \(\) => showMainWindow\(\)/);
+});
+
+
+test("parks an idle tray workspace, cancels early wakes, and tells a parked workspace to resume", () => {
+  const win = fakeWindow();
+  win.isVisible = () => false;
+  let pending;
+  const lifecycle = trackTrayIdle(win, {
+    setTimeout(callback, delay) {
+      assert.equal(delay, 60_000);
+      pending = callback;
+      return 1;
+    },
+    clearTimeout() { pending = undefined; },
+  });
+  lifecycle.arm();
+  lifecycle.wake();
+  assert.equal(pending, undefined);
+  assert.deepEqual(win.calls, []);
+
+  lifecycle.arm();
+  pending();
+  lifecycle.wake();
+  assert.deepEqual(win.calls, [["send", "workspace:idle", true], ["send", "workspace:idle", false]]);
+  lifecycle.arm();
+  lifecycle.dispose();
+  assert.equal(pending, undefined);
 });

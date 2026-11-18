@@ -825,6 +825,7 @@ declare global {
       setAutoLaunch: (enabled: boolean) => Promise<boolean>;
       extensions?: {
         fetch: (url: string) => Promise<number[]>;
+        readOfficialPackage: (id: string) => Promise<Uint8Array>;
         start: (key: string, sha256: string, files: Record<string, { encoding: "utf8" | "base64"; data: string }>, entry: string) => Promise<void>;
         invoke: (key: string, method: string, payload?: unknown) => Promise<unknown>;
         stop: (key: string) => Promise<void>;
@@ -864,6 +865,7 @@ declare global {
         /** Main side: push a snapshot to the widget window. */
         pushSnapshot: (snapshot: WidgetSnapshot) => void;
       };
+      onWorkspaceIdle?: (listener: (idle: boolean) => void) => () => void;
       isDesktop: () => boolean;
     };
   }

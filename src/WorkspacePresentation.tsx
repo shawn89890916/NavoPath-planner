@@ -1020,7 +1020,6 @@ function loadAiPanel() {
     throw error;
   });
 }
-export function preloadAiPanel() { void loadAiPanel().catch(() => undefined); }
 const AiPanelModule = lazy(loadAiPanel);
 
 export function AiPanelLoading({ lang, onClose, closing = false, embedded = false, docked }: Pick<React.ComponentProps<typeof AiPanelModule>, "lang" | "onClose" | "closing" | "embedded" | "docked">) {

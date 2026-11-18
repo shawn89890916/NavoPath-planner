@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { principleRoute, productFeature, siteLanguage } from "./productSite";
 import { loadFeature, loadPrinciple } from "./sitePages";
+import { isPasswordRecoveryCallback } from "./passwordRecovery";
 
 class SiteErrorBoundary extends React.Component<
   { children: React.ReactNode; demo: boolean },
@@ -44,7 +45,17 @@ const feature = productFeature(window.location.pathname, "features");
 const demo = productFeature(window.location.pathname, "product-demo");
 const principles = principleRoute(window.location.pathname);
 const privacy = /^\/privacy\/?$/.test(window.location.pathname);
-if (demo) {
+const address = new URL(window.location.href);
+const isWidgetPopover = address.searchParams.get("widgetPopover") === "1";
+const isWidget = address.searchParams.get("widget") === "1";
+if (!feature && !demo && !principles && !privacy && !isPasswordRecoveryCallback(address) && (isWidgetPopover || isWidget)) {
+  const Widget = lazy(() => import("./widget/WidgetApp").then(({ WidgetApp, WidgetPopoverApp }) => ({
+    default: isWidgetPopover ? WidgetPopoverApp : WidgetApp,
+  })));
+  createRoot(document.getElementById("root")!).render(
+    <SiteErrorBoundary demo={false}><Suspense fallback={null}><Widget /></Suspense></SiteErrorBoundary>,
+  );
+} else if (demo) {
   void import("./productDemoRuntime").then(({ installProductDemo }) => {
     installProductDemo(demo);
     return import("./main");

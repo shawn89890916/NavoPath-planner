@@ -31,6 +31,16 @@ channel selected by the version. It runs `scripts/verify-release.mjs` against
 the real version tag after publishing. If upload fails, the draft stays private;
 inspect it and use a new version or deliberately repair the incomplete draft.
 
+## Size and Windows memory checks
+
+The desktop release checks the download sizes, installed tree, expected Chromium locales, and production dependencies inside app.asar. The renderer check follows Vite's built import graph for the workspace and widget.
+
+Use the same Electron version and machine when comparing desktop builds. Run the following against each app.asar after closing other benchmark applications.
+
+    node scripts/benchmark-desktop.cjs <path-to-app.asar>
+
+The benchmark launches five isolated local-preview workspaces by default. It reports Windows private bytes for all Electron processes in the workspace, widget, popover, tray, and reopened states. The tray sample is taken after 70 seconds. A unique temporary profile and blocked external renderer requests keep the benchmark isolated from the user's workspace.
+
 ## Desktop update preference
 
 Accept Beta updates defaults off, including for manually installed Beta builds.

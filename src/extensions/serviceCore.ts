@@ -1,5 +1,5 @@
 import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativeShelfViewMode, PluginLauncherStatus } from "./types";
-import { compatibility, compareVersions, defaultExtensionPreferences, isRecord, MAX_PACKAGE_BYTES, normalizeExtensionPreferences, readPackage, publicHttps, sha256 } from "./packages";
+import { compatibility, compareVersions, defaultExtensionPreferences, isRecord, MAX_PACKAGE_BYTES, normalizeExtensionPreferences, readExtensionResponse, readPackage, publicHttps, sha256 } from "./packages";
 import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
 import { emitPluginEvent, loadPlugin, type LoadedPlugin } from "./runtime";
 import { fetchExtensionBytes, getExtensionValue, getPrivatePackage, putPrivatePackage, removeExtensionValue, setExtensionValue, subscribeExtensionValues } from "./transport";
@@ -136,13 +136,7 @@ export class ExtensionService {
     publicHttps(url);
     if (!window.desktopApi?.extensions) {
       try {
-        const response = await fetch(url, { credentials: "omit", signal: AbortSignal.timeout(20_000) });
-        if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-        const contentLength = Number(response.headers.get("content-length")); if (contentLength > MAX_PACKAGE_BYTES) throw new Error("Package exceeds 20 MiB");
-        const reader = response.body?.getReader(); if (!reader) throw new Error("Empty download");
-        const chunks: Uint8Array[] = []; let size = 0;
-        while (true) { const chunk = await reader.read(); if (chunk.done) break; size += chunk.value.length; if (size > MAX_PACKAGE_BYTES) { await reader.cancel(); throw new Error("Package exceeds 20 MiB"); } chunks.push(chunk.value); }
-        const bytes = new Uint8Array(size); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; } return bytes;
+        return await readExtensionResponse(await fetch(url, { credentials: "omit", signal: AbortSignal.timeout(20_000) }));
       } catch { /* Authenticated downloader handles source CORS restrictions. */ }
     }
     return fetchExtensionBytes(url);
@@ -150,7 +144,7 @@ export class ExtensionService {
   private async readCatalog(url: string, sourceId: string): Promise<CatalogEntry[]> {
     let raw: any;
     try { raw = JSON.parse(new TextDecoder().decode(await this.download(url))); }
-    catch (error) { if (sourceId !== "official") throw error; raw = (await import("./officialPackages")).officialCatalog; }
+    catch (error) { if (sourceId !== "official") throw error; raw = (await import("./officialCatalog")).officialCatalog; }
     if (!isRecord(raw) || raw.version !== 1 || !Array.isArray(raw.packages) || raw.packages.length > 1000) throw new Error("Invalid extension catalog");
     const { validateManifest } = await import("./packages");
     const entries: CatalogEntry[] = raw.packages.map((entry: any) => {
@@ -163,8 +157,8 @@ export class ExtensionService {
     if (sourceId === "official") {
       const retiredIndex = entries.findIndex((entry) => entry.manifest.id === "list");
       if (retiredIndex !== -1) entries.splice(retiredIndex, 1);
-      const { officialCatalog } = await import("./officialPackages");
-      for (const bundled of officialCatalog.packages as Omit<CatalogEntry, "sourceId">[]) {
+      const { officialCatalog } = await import("./officialCatalog");
+      for (const bundled of officialCatalog.packages) {
         if (!toolPageMigrations.has(bundled.manifest.id)) continue;
         const index = entries.findIndex((entry) => entry.manifest.id === bundled.manifest.id);
         const current = entries[index];
@@ -191,13 +185,20 @@ export class ExtensionService {
   }
   refreshCatalog = () => this.refreshCatalogImpl();
   private async packageBytes(item: Pick<InstalledExtension, "sha256" | "sourceId" | "manifest" | "downloadUrl">): Promise<Uint8Array> {
+    const account = this.account;
     const cacheKey = this.scope() + "package:" + item.sha256;
     let bytes = await cacheGet<Uint8Array>(cacheKey);
     if (!bytes && (item.sourceId === "official" || (item.sourceId === "imported" && toolPageMigrations.has(item.manifest.id)))) {
-      const official = (await import("./officialPackages")).officialPackageTexts[item.manifest.id];
-      if (official) { const candidate = new TextEncoder().encode(official); if (await sha256(candidate) === item.sha256) bytes = candidate; }
+      const { getBundledExtension, readBundledExtension } = await import("./officialCatalog");
+      const id = item.manifest.id;
+      if (getBundledExtension(id)?.sha256 === item.sha256) {
+        try {
+          const candidate = await readBundledExtension(id);
+          if (candidate && await sha256(candidate) === item.sha256) bytes = candidate;
+        } catch { /* Private storage and the public source may still restore the package. */ }
+      }
     }
-    if (!bytes && this.account !== "preview" && navigator.onLine) { try { bytes = await getPrivatePackage(item.sha256, this.account); } catch { /* Public sources remain available offline after caching. */ } }
+    if (!bytes && account !== "preview" && navigator.onLine) { try { bytes = await getPrivatePackage(item.sha256, account); } catch { /* Public sources remain available offline after caching. */ } }
     if (!bytes && item.downloadUrl) bytes = await this.download(item.downloadUrl);
     if (!bytes) throw new Error("Package unavailable; connect the device to restore it / 联网后重试恢复插件包");
     if (await sha256(bytes) !== item.sha256) throw new Error("Package integrity check failed / 插件包完整性校验失败");
@@ -377,16 +378,35 @@ export class ExtensionService {
   private async activate(item: InstalledExtension) {
     const generation = this.generation;
     const pkg = await readPackage(await this.packageBytes(item));
+    if (generation !== this.generation) return;
     const plugin = await loadPlugin(pkg, this.bridge(item.key));
     if (generation !== this.generation) { await plugin.dispose(); return; }
     this.loaded.set(item.key, { hash: item.sha256, plugin, config: JSON.stringify(this.getConfig(item.key)) });
   }
   private async restorePackages() { if (this.host) { this.failed.clear(); await this.reconcile(this.generation); } }
+  private async publishBundledMigration(entry: CatalogEntry, generation: number) {
+    let bytes: Uint8Array;
+    try { bytes = await this.packageBytes(entry); }
+    catch (error) {
+      if (generation === this.generation) this.setSnapshot({ error: errorText(error) });
+      return false;
+    }
+    if (generation !== this.generation) return false;
+    await this.publishPackage(entry.sha256, bytes);
+    return generation === this.generation;
+  }
   private async migrateLegacy() {
     const host = this.ensureHost(), preferences = this.snapshot.preferences, settings = host.getSettings();
     const generation = this.generation;
+    const { getBundledExtension } = await import("./officialCatalog");
+    if (generation !== this.generation) return;
     const next = { ...preferences, migratedLegacy: true, installed: { ...preferences.installed } };
     let changed = !preferences.migratedLegacy;
+    const addDefault = (entry: CatalogEntry, enabled: boolean, downloadUrl?: string) => {
+      const key = `official:${entry.manifest.id}`, now = new Date().toISOString();
+      next.installed[key] = { key, sourceId: "official", manifest: entry.manifest, sha256: entry.sha256, downloadUrl, enabled, installedAt: now, updatedAt: now };
+      changed = true;
+    };
     const retiredKey = "official:list";
     if (next.installed[retiredKey]) {
       delete next.installed[retiredKey];
@@ -396,10 +416,9 @@ export class ExtensionService {
     if (!preferences.migratedLegacy) {
       const needed = settings.enabledPlugins?.includes("pomodoro") || settings.focusModeDefault === "pomodoro" || settings.widgetTimerPreferences?.mode === "pomodoro";
       if (needed && !next.installed["official:pomodoro"] && !next.removed["official:pomodoro"]) {
-        const { officialPackages, officialPackageTexts } = await import("./officialPackages"); const pkg = officialPackages.pomodoro;
-        const bytes = new TextEncoder().encode(officialPackageTexts.pomodoro), hash = await sha256(bytes), now = new Date().toISOString();
-        await this.publishPackage(hash, bytes);
-        next.installed["official:pomodoro"] = { key: "official:pomodoro", sourceId: "official", manifest: pkg.manifest, sha256: hash, enabled: true, installedAt: now, updatedAt: now };
+        const entry = getBundledExtension("pomodoro")!;
+        if (!await this.publishBundledMigration(entry, generation)) return;
+        addDefault(entry, true);
         const config = { ...settings.pluginConfigs?.pomodoro, ...settings.widgetTimerPreferences };
         await host.saveSettings({ extensionConfigs: { ...settings.extensionConfigs, "official:pomodoro": config } });
       }
@@ -410,54 +429,39 @@ export class ExtensionService {
         { id: "matrix", enabled: true },
         { id: "metrics", enabled: settings.featureMetricsEnabled !== false },
       ];
-      const { officialPackages, officialPackageTexts } = await import("./officialPackages");
       for (const { id, enabled } of builtins) {
         if (!enabled && id !== "metrics") continue;
         const key = `official:${id}`;
         if (next.installed[key] || next.removed[key]) continue;
-        const pkg = officialPackages[id], text = officialPackageTexts[id];
-        if (!pkg || !text) continue;
-        const bytes = new TextEncoder().encode(text), hash = await sha256(bytes), now = new Date().toISOString();
-        await this.publishPackage(hash, bytes);
-        next.installed[key] = { key, sourceId: "official", manifest: pkg.manifest, sha256: hash, enabled, installedAt: now, updatedAt: now };
+        const entry = getBundledExtension(id);
+        if (!entry) continue;
+        if (!await this.publishBundledMigration(entry, generation)) return;
+        addDefault(entry, enabled);
       }
       next.migratedPlanningViews = true;
       next.migratedShelfViews = true;
       changed = true;
     }
     if (settings.featureTemplatesEnabled !== false && !next.installed["official:schedule-templates"] && !next.removed["official:schedule-templates"]) {
-      const { officialPackages, officialPackageTexts } = await import("./officialPackages"); const pkg = officialPackages["schedule-templates"];
-      const bytes = new TextEncoder().encode(officialPackageTexts["schedule-templates"]), hash = await sha256(bytes), now = new Date().toISOString();
-      await this.publishPackage(hash, bytes);
-      next.installed["official:schedule-templates"] = { key: "official:schedule-templates", sourceId: "official", manifest: pkg.manifest, sha256: hash, enabled: true, installedAt: now, updatedAt: now };
-      changed = true;
+      const entry = getBundledExtension("schedule-templates")!;
+      if (!await this.publishBundledMigration(entry, generation)) return;
+      addDefault(entry, true);
     }
     const historyKey = "official:activity-history";
     if (!next.installed[historyKey] && !next.removed[historyKey]) {
-      const { officialCatalog, officialPackages } = await import("./officialPackages");
-      const entry = officialCatalog.packages.find(({ manifest }) => manifest.id === "activity-history")!;
-      const now = new Date().toISOString();
-      next.installed[historyKey] = {
-        key: historyKey, sourceId: "official", manifest: officialPackages["activity-history"].manifest,
-        sha256: entry.sha256, downloadUrl: entry.downloadUrl, enabled: true, installedAt: now, updatedAt: now,
-      };
-      changed = true;
+      const entry = getBundledExtension("activity-history")!;
+      addDefault(entry, true, entry.downloadUrl);
     }
     const legacyTools = Object.values(next.installed).filter((item) =>
       toolPageMigrations.has(item.manifest.id) && (item.sourceId === "official" ||
         (item.sourceId === "imported" && item.manifest.author === "NavoPath" && item.manifest.repository === "https://github.com/shawn89890916/NavoPath-planner")));
-    if (legacyTools.length) {
-      const { officialCatalog, officialPackageTexts } = await import("./officialPackages");
-      for (const item of legacyTools) {
-        const entry = officialCatalog.packages.find((entry) => entry.manifest.id === item.manifest.id);
-        if (!entry || compareVersions(entry.manifest.version, item.manifest.version) <= 0) continue;
-        if (generation !== this.generation) return;
-        await this.publishPackage(entry.sha256, new TextEncoder().encode(officialPackageTexts[item.manifest.id]));
-        if (generation !== this.generation) return;
-        next.installed[item.key] = { ...item, manifest: entry.manifest as InstalledExtension["manifest"], sha256: entry.sha256, downloadUrl: entry.downloadUrl, updatedAt: new Date().toISOString(), previous: undefined };
-        this.failed.delete(item.key);
-        changed = true;
-      }
+    for (const item of legacyTools) {
+      const entry = getBundledExtension(item.manifest.id);
+      if (!entry || compareVersions(entry.manifest.version, item.manifest.version) <= 0) continue;
+      if (!await this.publishBundledMigration(entry, generation)) return;
+      next.installed[item.key] = { ...item, manifest: entry.manifest, sha256: entry.sha256, downloadUrl: entry.downloadUrl, updatedAt: new Date().toISOString(), previous: undefined };
+      this.failed.delete(item.key);
+      changed = true;
     }
     if (generation !== this.generation) return;
     if (!changed) return;

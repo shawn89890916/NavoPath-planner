@@ -1,3 +1,4 @@
+import "./PlanningView.css";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMotionPresence } from "./useMotionPresence";
@@ -794,7 +795,20 @@ function useTreeLines(
   return lines;
 }
 
+export type PlanningViewSession = {
+  collapsedSubtasks: Record<string, boolean>;
+  includeCompleted: boolean;
+  filterProjects: string[];
+  filterWorkflows: UiWorkflowStatus[];
+  filterImportances: StateFilterValue[];
+  filterUrgencies: StateFilterValue[];
+  filterDueDate: "overdue" | "this-week" | "no-date" | null;
+  filterScheduled: "scheduled" | "unscheduled" | null;
+  scrollTop: number;
+};
+
 export default function PlanningView(props: {
+  session?: React.RefObject<PlanningViewSession | null>;
   focusTaskId?: string | null;
   onFocusHandled?: () => void;
   presentationNote?: React.ReactNode;
@@ -836,9 +850,13 @@ export default function PlanningView(props: {
 }) {
   const safeProjects = Array.isArray(props.projects) ? props.projects : [];
   const safeTasks = Array.isArray(props.tasks) ? props.tasks : [];
-  const [collapsedSubtasks, setCollapsedSubtasks] = useState<Record<string, boolean>>({});
+  const { session } = props;
+  const [collapsedSubtasks, setCollapsedSubtasks] = useState<Record<string, boolean>>(() => session?.current?.collapsedSubtasks ?? {});
   const [dragNode, setDragNode] = useState<TreeDragNode | null>(null);
   const treeRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<HTMLDivElement>(null);
+  const releaseDragRef = useRef<(() => void) | null>(null);
+  useLayoutEffect(() => () => releaseDragRef.current?.(), []);
   const donutSvgRef = useRef<SVGSVGElement>(null);
   const dialog = useInAppDialog(props.lang);
   const { viewMode } = props;
@@ -854,11 +872,11 @@ export default function PlanningView(props: {
   const [metricsProjectFilter, setMetricsProjectFilter] = useState<string[]>([]);
   const [hoveredMetricGroupId, setHoveredMetricGroupId] = useState<string | null>(null);
   const [selectedMetricGroupId, setSelectedMetricGroupId] = useState<string | null>(null);
-  const [includeCompleted, setIncludeCompleted] = useState(false);
-  const [filterProjects, setFilterProjects] = useState<string[]>([]);
-  const [filterWorkflows, setFilterWorkflows] = useState<UiWorkflowStatus[]>([]);
-  const [filterImportances, setFilterImportances] = useState<StateFilterValue[]>([]);
-  const [filterUrgencies, setFilterUrgencies] = useState<StateFilterValue[]>([]);
+  const [includeCompleted, setIncludeCompleted] = useState(() => session?.current?.includeCompleted ?? false);
+  const [filterProjects, setFilterProjects] = useState<string[]>(() => session?.current?.filterProjects ?? []);
+  const [filterWorkflows, setFilterWorkflows] = useState<UiWorkflowStatus[]>(() => session?.current?.filterWorkflows ?? []);
+  const [filterImportances, setFilterImportances] = useState<StateFilterValue[]>(() => session?.current?.filterImportances ?? []);
+  const [filterUrgencies, setFilterUrgencies] = useState<StateFilterValue[]>(() => session?.current?.filterUrgencies ?? []);
   const [filterOpen, setFilterOpen] = useState(false);
   useEffect(() => {
     if (!filterOpen || !props.filterAnchor) return;
@@ -879,8 +897,21 @@ export default function PlanningView(props: {
     };
   }, [filterOpen, props.filterAnchor]);
   const [filterExpandedCategory, setFilterExpandedCategory] = useState<string | null>(null);
-  const [filterDueDate, setFilterDueDate] = useState<"overdue" | "this-week" | "no-date" | null>(null);
-  const [filterScheduled, setFilterScheduled] = useState<"scheduled" | "unscheduled" | null>(null);
+  const [filterDueDate, setFilterDueDate] = useState<PlanningViewSession["filterDueDate"]>(() => session?.current?.filterDueDate ?? null);
+  const [filterScheduled, setFilterScheduled] = useState<PlanningViewSession["filterScheduled"]>(() => session?.current?.filterScheduled ?? null);
+  useLayoutEffect(() => {
+    if (!session) return;
+    session.current = { collapsedSubtasks, includeCompleted, filterProjects, filterWorkflows, filterImportances, filterUrgencies,
+      filterDueDate, filterScheduled, scrollTop: session.current?.scrollTop ?? 0 };
+  }, [session, collapsedSubtasks, includeCompleted, filterProjects, filterWorkflows, filterImportances, filterUrgencies, filterDueDate, filterScheduled]);
+  useLayoutEffect(() => {
+    const scroll = viewRef.current?.closest<HTMLElement>("[data-shelf-scroll]");
+    if (!session?.current || !scroll) return;
+    scroll.scrollTop = session.current.scrollTop;
+    const saveScroll = () => { if (session.current) session.current.scrollTop = scroll.scrollTop; };
+    scroll.addEventListener("scroll", saveScroll, { passive: true });
+    return () => scroll.removeEventListener("scroll", saveScroll);
+  }, [session]);
   const [guideDismissed, setGuideDismissed] = useState(() => props.demo ? false : isGuideDismissed("planning"));
   const [planningDragTask, setPlanningDragTask] = useState<{
     task: Task;
@@ -1257,6 +1288,7 @@ export default function PlanningView(props: {
       ? bindHeldTouchScroll(dragElement, () => holdReady && !holdCancelled)
       : undefined;
     const cleanup = () => {
+      if (releaseDragRef.current === cleanup) releaseDragRef.current = null;
       releaseHeldTouch?.();
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
@@ -1352,6 +1384,8 @@ export default function PlanningView(props: {
     const cancel = () => cleanup();
     const keydown = (kb: KeyboardEvent) => { if (kb.key === "Escape") cancel(); };
 
+    releaseDragRef.current?.();
+    releaseDragRef.current = cleanup;
     window.addEventListener("pointermove", move, { passive: false });
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
@@ -1392,6 +1426,7 @@ export default function PlanningView(props: {
       ? bindHeldTouchScroll(dragElement, () => holdReady && !holdCancelled)
       : undefined;
     const cleanup = () => {
+      if (releaseDragRef.current === cleanup) releaseDragRef.current = null;
       releaseHeldTouch?.();
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
@@ -1533,6 +1568,8 @@ export default function PlanningView(props: {
     const cancel = () => cleanup();
     const keydown = (kb: KeyboardEvent) => { if (kb.key === "Escape") cancel(); };
 
+    releaseDragRef.current?.();
+    releaseDragRef.current = cleanup;
     window.addEventListener("pointermove", move, { passive: false });
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
@@ -1994,7 +2031,7 @@ export default function PlanningView(props: {
               )}
   </>);
   return (
-    <div className={`df-planning df-shelf-view${props.compact ? " compact-layout" : ""}`}>
+    <div ref={viewRef} className={`df-planning df-shelf-view${props.compact ? " compact-layout" : ""}`}>
       <section className={`df-planning-main is-view-${viewMode}`}>
         {props.filterAnchor && createPortal(projectFilters, props.filterAnchor)}
         <div className="df-planning-content">

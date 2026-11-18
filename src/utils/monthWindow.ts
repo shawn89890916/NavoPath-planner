@@ -19,3 +19,34 @@ export function buildWeekWindow(anchor: string, before = 16, after = 24, weekSta
     Array.from({ length: 7 }, (_, day) => addIsoDays(first, week * 7 + day)),
   );
 }
+
+export function layoutMonthWeeks(weeks: string[][], taskCount: (date: string) => number, compact: boolean) {
+  let totalHeight = 0;
+  const rows = weeks.map((dates, index) => {
+    const height = 72 + Math.max(1, ...dates.map(taskCount)) * (compact ? 50 : 46);
+    const row = { dates, index, top: totalHeight, height };
+    totalHeight += height;
+    return row;
+  });
+  return { rows, totalHeight };
+}
+
+type MonthWeekRow = ReturnType<typeof layoutMonthWeeks>["rows"][number];
+
+export function monthWeekAtOffset(rows: MonthWeekRow[], offset: number) {
+  const index = rows.findIndex(({ top, height }) => top + height > offset);
+  return index === -1 ? rows.length - 1 : index;
+}
+
+export function visibleMonthWeekRange(rows: MonthWeekRow[], scrollTop: number, viewportHeight: number) {
+  const overscan = 256;
+  return {
+    first: Math.max(0, monthWeekAtOffset(rows, scrollTop - overscan)),
+    last: monthWeekAtOffset(rows, scrollTop + viewportHeight + overscan),
+  };
+}
+
+export function monthScrollTopForDate(rows: MonthWeekRow[], date: string, viewportOffset: number) {
+  const row = rows.find(({ dates }) => dates.includes(date));
+  return row ? Math.max(0, row.top - viewportOffset) : undefined;
+}

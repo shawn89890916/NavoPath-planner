@@ -5,8 +5,17 @@ const os = require("node:os");
 const path = require("node:path");
 const { EventEmitter } = require("node:events");
 const crypto = require("node:crypto");
-const { createExtensionHost, decodeFiles } = require("./extension-host.cjs");
+const { createExtensionHost, decodeFiles, readOfficialPackage } = require("./extension-host.cjs");
 const { forbiddenAddress, validateDownloadUrl, fetchExtensionPackage } = require("./extension-download.cjs");
+
+test("reads only allowlisted official package IDs from the app assets", async () => {
+  const assetDirectory = path.join(__dirname, "..", "public");
+  const expected = fs.readFileSync(path.join(assetDirectory, "extensions", "packages", "weather.navopackage.json"));
+  assert.deepEqual(await readOfficialPackage(assetDirectory, "weather"), new Uint8Array(expected));
+  for (const id of [null, {}, "unshipped-extension", "../catalog", "weather.navopackage.json"]) {
+    await assert.rejects(readOfficialPackage(assetDirectory, id), /Unknown official extension ID/);
+  }
+});
 
 test("rejects package traversal, platform aliases, duplicate names and missing entry", () => {
   const file = { encoding: "utf8", data: "module.exports={}" };

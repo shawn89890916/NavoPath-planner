@@ -2,6 +2,14 @@
 
 ## 2026-11-18
 
+### 1.7.0 Beta 31
+
+#### 改进
+
+- Windows 安装包和便携包体积缩减，小组件独立加载，工作区闲置于托盘时释放界面资源。
+- 官方扩展按需读取，切出项目规划时保留筛选和滚动位置，解析附件结束或取消后及时释放资源。
+- 月视图仅渲染当前窗口附近的周，减少长距离滚动与切换视图的内存占用。
+
 ### 1.7.0 Beta 30
 
 #### 改进
@@ -678,6 +686,14 @@
 # NavoPath Changelog
 
 ## 2026-11-18
+
+### 1.7.0 Beta 31
+
+#### Improved
+
+- Reduced the Windows installer and portable download sizes. The widget loads independently, and the workspace releases UI resources when idle in the tray.
+- Official extensions load on demand, Planning restores filters and scroll position, and attachment parsing releases resources when it finishes or is canceled.
+- Month view renders weeks near the viewport to reduce memory during long scrolls and view changes.
 
 ### 1.7.0 Beta 30
 

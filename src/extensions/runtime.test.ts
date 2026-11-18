@@ -1,10 +1,12 @@
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { loadPlugin, patchMethod, type RuntimeBridge } from "./runtime";
 import { parsePackage } from "./packages";
-import { officialPackageTexts } from "./officialPackages";
 import type { PluginContext } from "./types";
 import { provider } from "../../community-plugins/pomodoro/main";
 import { getTimerMode } from "./timers";
+
+const weatherPackageBytes = new Uint8Array(readFileSync(new URL("../../public/extensions/packages/weather.navopackage.json", import.meta.url)));
 
 function bridge() {
   let data: any = { tasks: [], projects: [], events: [] };
@@ -31,7 +33,7 @@ describe("trusted plugin runtime", () => {
   it("runs lifecycle and collection APIs and unloads registered contributions", async () => {
     vi.stubGlobal("document", { createElement: () => ({ dataset: {}, remove: vi.fn() }), head: { append: vi.fn() } });
     vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test"); const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
-    const f = bridge(), pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather)); delete pkg.manifest.styles;
+    const f = bridge(), pkg = parsePackage(weatherPackageBytes); delete pkg.manifest.styles;
     let ctx!: PluginContext; const onSettingsChange = vi.fn();
     const loaded = await loadPlugin(pkg, f.value, async () => ({ default: { async onload(context) { ctx = context; context.ui.registerPage("Hello", () => {}); context.settings.registerPage("Settings", () => {}); await context.tasks.create({ title: "From plugin" } as any); }, onSettingsChange } }));
     expect(f.getData().tasks[0].title).toBe("From plugin");
@@ -42,7 +44,7 @@ describe("trusted plugin runtime", () => {
   });
   it("exposes one workspace page per plugin and keeps launcher status as data", async () => {
     vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
-    const f = bridge(), pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather)); delete pkg.manifest.styles;
+    const f = bridge(), pkg = parsePackage(weatherPackageBytes); delete pkg.manifest.styles;
     const loaded = await loadPlugin(pkg, f.value, async () => ({ default: { onload(context) {
       context.ui.registerPage("Forecast", () => {});
       context.ui.setLauncherStatus({ label: "Rain", weather: "rain" });
@@ -61,7 +63,7 @@ describe("trusted plugin runtime", () => {
   it("exposes a bundled launcher icon for the active plugin and revokes it on unload", async () => {
     const createUrl = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:launcher-icon");
     const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
-    const pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather));
+    const pkg = parsePackage(weatherPackageBytes);
     delete pkg.manifest.styles;
     pkg.manifest.icon = "icon.svg";
     pkg.files["icon.svg"] = { encoding: "utf8", data: '<svg viewBox="0 0 24 24"><path d="M4 12h16"/></svg>' };
@@ -76,13 +78,13 @@ describe("trusted plugin runtime", () => {
   });
   it("cleans partial activation when plugin startup throws", async () => {
     vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test"); vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
-    const f = bridge(), pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather)); delete pkg.manifest.styles;
+    const f = bridge(), pkg = parsePackage(weatherPackageBytes); delete pkg.manifest.styles;
     await expect(loadPlugin(pkg, f.value, async () => ({ default: { onload(ctx) { ctx.ui.registerPage("Partial", () => {}); throw new Error("broken"); } } }))).rejects.toThrow("broken");
     expect(f.clean).toHaveBeenCalledTimes(1);
   });
   it("registers a timer provider and unloads it while keeping the page launcher host-owned", async () => {
     vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test"); vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
-    const f = bridge(), pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather)); delete pkg.manifest.styles;
+    const f = bridge(), pkg = parsePackage(weatherPackageBytes); delete pkg.manifest.styles;
     const loaded = await loadPlugin(pkg, f.value, async () => ({ default: { onload(context) { context.timers.registerMode(provider as any); } } }));
     expect(getTimerMode("pomodoro")).toBeDefined();
     expect(loaded.context.timers).not.toHaveProperty("open");

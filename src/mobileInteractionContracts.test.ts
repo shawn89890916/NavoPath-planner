@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const main = (readFileSync(resolve(__dirname, "main.tsx"), "utf8") + readFileSync(resolve(__dirname, "SettingsPanel.tsx"), "utf8") + readFileSync(resolve(__dirname, "components/MobileQuickAddButton.tsx"), "utf8") + readFileSync(resolve(__dirname, "WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "AiPanel.tsx"), "utf8")).replace(/\r\n/g, "\n");
 const appCss = readFileSync(resolve(__dirname, "app.css"), "utf8").replace(/\r\n/g, "\n");
+const planningCss = readFileSync(resolve(__dirname, "PlanningView.css"), "utf8");
 const defaults = readFileSync(resolve(__dirname, "defaultSettings.ts"), "utf8");
 const planning = readFileSync(resolve(__dirname, "PlanningView.tsx"), "utf8");
 
@@ -166,7 +167,7 @@ describe("portrait interaction contracts", () => {
 
 
   it("mounts project task filters in the existing candidate header", () => {
-    expect(main).toContain('filterAnchor={projectManagement ? projectFilterAnchor : null}');
+    expect(main).toContain('filterAnchor={projectFilterAnchor}');
     expect(planning).toContain("createPortal(projectFilters, props.filterAnchor)");
     expect(planning).not.toContain("df-planning-sidebar");
     expect(appCss).toContain(".df-project-filter-anchor .df-filter-panel");
@@ -244,7 +245,7 @@ describe("portrait interaction contracts", () => {
 
 describe("portrait timeline and Planning control contracts", () => {
   it("keeps task action buttons borderless and the project filter in the shelf header", () => {
-    expect(appCss).toMatch(/\.df-plan-task-node \.df-task-node-actions \.df-tree-icon-button\s*\{[^}]*border:\s*0;/);
+    expect(planningCss).toMatch(/\.df-plan-task-node \.df-task-node-actions \.df-tree-icon-button\s*\{[^}]*border:\s*0;/);
     expect(appCss).toContain(".df-project-filter-anchor .df-filter-trigger");
     expect(appCss).toContain("width: 44px;");
   });

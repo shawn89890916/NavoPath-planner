@@ -1,4 +1,5 @@
 import type { Worker } from "tesseract.js";
+import type { PDFPageProxy } from "pdfjs-dist";
 import { assertSafeRasterDimensions, boundedCanvasScale } from "./imageSafety";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -80,10 +81,29 @@ function isUsefulPdfText(text: string) {
   return meaningful >= 32 && meaningful / Math.max(text.length, 1) >= 0.35;
 }
 
-function enhanceCanvas(source: HTMLCanvasElement) {
+async function abortable<T>(operation: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return operation;
+  let abort: (() => void) | undefined;
+  const cancelled = new Promise<never>((_, reject) => {
+    abort = () => reject(signal.reason);
+    if (signal.aborted) abort();
+    else signal.addEventListener("abort", abort, { once: true });
+  });
+  try {
+    return await Promise.race([cancelled, operation]);
+  } finally {
+    if (abort) signal.removeEventListener("abort", abort);
+  }
+}
+
+function releaseCanvas(canvas: HTMLCanvasElement) {
+  canvas.width = 0;
+  canvas.height = 0;
+}
+
+function enhanceCanvas(source: HTMLCanvasElement, canvas: HTMLCanvasElement) {
   const requestedScale = Math.min(2, Math.max(1, 2400 / source.width));
   const scale = boundedCanvasScale(source.width, source.height, requestedScale);
-  const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(source.width * scale));
   canvas.height = Math.max(1, Math.round(source.height * scale));
   const context = canvas.getContext("2d", { willReadFrequently: true });
@@ -102,31 +122,63 @@ function enhanceCanvas(source: HTMLCanvasElement) {
   return canvas;
 }
 
-async function blobToCanvas(source: Blob) {
-  assertSafeRasterDimensions(await source.arrayBuffer());
-  const bitmap = await createImageBitmap(source);
+async function canvasToOcrImage(source: HTMLCanvasElement, signal?: AbortSignal) {
+  const enhanced = document.createElement("canvas");
   try {
-    const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    canvas.getContext("2d")?.drawImage(bitmap, 0, 0);
-    return canvas;
+    const canvas = enhanceCanvas(source, enhanced);
+    const image = new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("未能生成 OCR 图片"));
+      });
+    });
+    return await abortable(image, signal);
   } finally {
-    bitmap.close();
+    releaseCanvas(enhanced);
   }
 }
 
-async function createOcrSession() {
+async function rasterToOcrImage(source: Blob, signal?: AbortSignal) {
+  assertSafeRasterDimensions(await abortable(source.arrayBuffer(), signal));
+  signal?.throwIfAborted();
+  const canvas = document.createElement("canvas");
+  try {
+    const bitmap = await createImageBitmap(source);
+    try {
+      signal?.throwIfAborted();
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      canvas.getContext("2d")?.drawImage(bitmap, 0, 0);
+    } finally {
+      bitmap.close();
+    }
+    return await canvasToOcrImage(canvas, signal);
+  } finally {
+    releaseCanvas(canvas);
+  }
+}
+
+function createOcrSession(signal?: AbortSignal) {
   let worker: Worker | null = null;
   return {
-    async recognize(source: Blob | HTMLCanvasElement) {
-      const canvas = source instanceof Blob ? await blobToCanvas(source) : source;
+    async recognize(image: Blob) {
+      signal?.throwIfAborted();
       if (!worker) {
-        const { createWorker } = await import("tesseract.js");
-        worker = await createWorker("eng+chi_sim");
-        await worker.setParameters({ preserve_interword_spaces: "1", user_defined_dpi: "300" });
+        const { createWorker } = await abortable(import("tesseract.js"), signal);
+        signal?.throwIfAborted();
+        const workerReady = createWorker("eng+chi_sim");
+        try {
+          worker = await abortable(workerReady, signal);
+        } catch (error) {
+          // Tesseract exposes the worker only once it finishes initializing.
+          if (signal?.aborted) void workerReady.then((instance) => instance.terminate()).catch(() => {});
+          throw error;
+        }
+        signal?.throwIfAborted();
+        await abortable(worker.setParameters({ preserve_interword_spaces: "1", user_defined_dpi: "300" }), signal);
       }
-      return (await worker.recognize(enhanceCanvas(canvas))).data.text;
+      signal?.throwIfAborted();
+      return (await abortable(worker.recognize(image), signal)).data.text;
     },
     async terminate() {
       await worker?.terminate();
@@ -140,45 +192,84 @@ async function loadPdfJs() {
   return pdfjs;
 }
 
-async function parsePdf(file: File, ocr: Awaited<ReturnType<typeof createOcrSession>>) {
-  const pdfjs = await loadPdfJs();
-  const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
-  if (doc.numPages > MAX_PDF_PAGES) throw new Error(`PDF 超过 ${MAX_PDF_PAGES} 页限制`);
-  const chunks: string[] = [];
-  const scanPages: number[] = [];
-
-  for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber += 1) {
-    const page = await doc.getPage(pageNumber);
-    const content = await page.getTextContent();
-    const text = content.items
-      .map((item) => ("str" in item ? `${item.str}${item.hasEOL ? "\n" : " "}` : ""))
-      .join("")
-      .replace(/[ \t]+\n/g, "\n")
-      .trim();
-    if (isUsefulPdfText(text)) chunks.push(`[第 ${pageNumber} 页]\n${text}`);
-    else scanPages.push(pageNumber);
-  }
-
-  for (const pageNumber of scanPages) {
-    const page = await doc.getPage(pageNumber);
-    const baseViewport = page.getViewport({ scale: 1 });
-    const requestedScale = Math.min(2.4, Math.max(1.6, 2200 / baseViewport.width));
-    const viewport = page.getViewport({
-      scale: boundedCanvasScale(baseViewport.width, baseViewport.height, requestedScale),
-    });
-    const canvas = document.createElement("canvas");
+async function renderPdfPage(page: PDFPageProxy, signal?: AbortSignal) {
+  const baseViewport = page.getViewport({ scale: 1 });
+  const requestedScale = Math.min(2.4, Math.max(1.6, 2200 / baseViewport.width));
+  const viewport = page.getViewport({
+    scale: boundedCanvasScale(baseViewport.width, baseViewport.height, requestedScale),
+  });
+  const canvas = document.createElement("canvas");
+  try {
     canvas.width = Math.ceil(viewport.width);
     canvas.height = Math.ceil(viewport.height);
     const context = canvas.getContext("2d");
-    if (!context) continue;
-    await page.render({ canvasContext: context, viewport, canvas }).promise;
-    chunks.push(`[第 ${pageNumber} 页 OCR]\n${await ocr.recognize(canvas)}`);
+    if (!context) return;
+    const render = page.render({ canvasContext: context, viewport, canvas });
+    const cancelRender = () => render.cancel();
+    signal?.addEventListener("abort", cancelRender, { once: true });
+    try {
+      if (signal?.aborted) cancelRender();
+      await render.promise;
+    } finally {
+      signal?.removeEventListener("abort", cancelRender);
+    }
+    signal?.throwIfAborted();
+    return await canvasToOcrImage(canvas, signal);
+  } finally {
+    releaseCanvas(canvas);
   }
-
-  return { text: chunks.join("\n\n"), pageCount: doc.numPages };
 }
 
-export async function parseAttachment(file: File): Promise<ParsedAttachment> {
+async function parsePdf(file: File, ocr: ReturnType<typeof createOcrSession>, signal?: AbortSignal) {
+  const pdfjs = await abortable(loadPdfJs(), signal);
+  const data = await abortable(file.arrayBuffer(), signal);
+  signal?.throwIfAborted();
+  const loadingTask = pdfjs.getDocument({ data });
+  try {
+    const doc = await abortable(loadingTask.promise, signal);
+    if (doc.numPages > MAX_PDF_PAGES) throw new Error(`PDF 超过 ${MAX_PDF_PAGES} 页限制`);
+    const chunks: string[] = [];
+    const scanPages: number[] = [];
+
+    for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber += 1) {
+      signal?.throwIfAborted();
+      const page = await abortable(doc.getPage(pageNumber), signal);
+      try {
+        signal?.throwIfAborted();
+        const content = await abortable(page.getTextContent(), signal);
+        const text = content.items
+          .map((item) => ("str" in item ? `${item.str}${item.hasEOL ? "\n" : " "}` : ""))
+          .join("")
+          .replace(/[ \t]+\n/g, "\n")
+          .trim();
+        if (isUsefulPdfText(text)) chunks.push(`[第 ${pageNumber} 页]\n${text}`);
+        else scanPages.push(pageNumber);
+      } finally {
+        page.cleanup();
+      }
+    }
+
+    for (const pageNumber of scanPages) {
+      signal?.throwIfAborted();
+      const page = await abortable(doc.getPage(pageNumber), signal);
+      let image: Blob | undefined;
+      try {
+        signal?.throwIfAborted();
+        image = await renderPdfPage(page, signal);
+      } finally {
+        page.cleanup();
+      }
+      if (image) chunks.push(`[第 ${pageNumber} 页 OCR]\n${await ocr.recognize(image)}`);
+    }
+
+    return { text: chunks.join("\n\n"), pageCount: doc.numPages };
+  } finally {
+    await loadingTask.destroy();
+  }
+}
+
+export async function parseAttachment(file: File, signal?: AbortSignal): Promise<ParsedAttachment> {
+  signal?.throwIfAborted();
   const ext = extension(file.name);
   if (!ACCEPTED_EXTENSIONS.has(ext)) throw new Error("不支持此文件格式");
   if (file.size > MAX_FILE_BYTES) throw new Error("文件超过 10 MB 限制");
@@ -186,26 +277,31 @@ export async function parseAttachment(file: File): Promise<ParsedAttachment> {
   let rawText = "";
   let pageCount: number | undefined;
   const needsOcr = ext === "pdf" || ["png", "jpg", "jpeg", "webp"].includes(ext);
-  const ocr = needsOcr ? await createOcrSession() : null;
+  const ocr = needsOcr ? createOcrSession(signal) : null;
   try {
     if (ext === "txt" || ext === "md") {
-      rawText = await file.text();
+      rawText = await abortable(file.text(), signal);
     } else if (ext === "docx") {
-      const arrayBuffer = await file.arrayBuffer();
+      const arrayBuffer = await abortable(file.arrayBuffer(), signal);
       assertSafeDocxArchive(arrayBuffer);
-      const mammoth = await import("mammoth");
-      rawText = (await mammoth.extractRawText({ arrayBuffer })).value;
+      const mammoth = await abortable(import("mammoth"), signal);
+      signal?.throwIfAborted();
+      rawText = (await abortable(mammoth.extractRawText({ arrayBuffer }), signal)).value;
     } else if (ext === "pdf") {
-      const parsed = await parsePdf(file, ocr!);
+      const parsed = await parsePdf(file, ocr!, signal);
       rawText = parsed.text;
       pageCount = parsed.pageCount;
     } else {
-      rawText = await ocr!.recognize(file);
+      rawText = await ocr!.recognize(await rasterToOcrImage(file, signal));
     }
+  } catch (error) {
+    signal?.throwIfAborted();
+    throw error;
   } finally {
     await ocr?.terminate();
   }
 
+  signal?.throwIfAborted();
   const result = trimText(rawText);
   if (!result.text) throw new Error("未能从文件中提取文本");
   return { name: file.name, size: file.size, text: result.text, truncated: result.truncated, pageCount };

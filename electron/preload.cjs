@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld("desktopApi", {
   setAutoLaunch: (enabled) => ipcRenderer.invoke("autolaunch:set", enabled),
   extensions: {
     fetch: (url) => ipcRenderer.invoke("extensions:fetch", url),
+    readOfficialPackage: (id) => ipcRenderer.invoke("extensions:read-official-package", id),
     start: (key, hash, files, entry) => ipcRenderer.invoke("extensions:start", key, hash, files, entry),
     invoke: (key, method, payload) => ipcRenderer.invoke("extensions:invoke", key, method, payload),
     stop: (key) => ipcRenderer.invoke("extensions:stop", key),
@@ -65,6 +66,11 @@ contextBridge.exposeInMainWorld("desktopApi", {
       return () => ipcRenderer.removeListener("widget:action", handler);
     },
     pushSnapshot: (snapshot) => ipcRenderer.send("widget:push-snapshot", snapshot),
+  },
+  onWorkspaceIdle: (listener) => {
+    const handler = (_event, idle) => listener(Boolean(idle));
+    ipcRenderer.on("workspace:idle", handler);
+    return () => ipcRenderer.removeListener("workspace:idle", handler);
   },
   isDesktop: () => true
 });

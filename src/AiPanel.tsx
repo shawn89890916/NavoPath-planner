@@ -1,3 +1,4 @@
+import "./ai-history-actions.css";
 import React, { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Suspense, lazy } from "react";

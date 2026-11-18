@@ -1,6 +1,6 @@
 {
   "name": "navopath",
-  "version": "1.7.0-beta.30",
+  "version": "1.7.0-beta.31",
   "description": "NavoPath — Navigate your next step.",
   "author": "NavoPath",
   "main": "electron/main.cjs",
@@ -17,7 +17,7 @@
     "terminology:check": "node scripts/terminology-check.mjs",
     "build:portfolio": "tsc && vite build --config vite.portfolio.config.ts",
     "preview:portfolio": "vite preview --config vite.portfolio.config.ts --host 127.0.0.1",
-    "dist": "node scripts/prepare-desktop-release.mjs --check-policy && npm run build:navopath -- --base=./ && electron-builder --win nsis portable --publish never && node scripts/prepare-desktop-release.mjs",
+    "dist": "node scripts/prepare-desktop-release.mjs --check-policy && npm run build:navopath -- --base=./ && electron-builder --win nsis portable --publish never && node scripts/prepare-desktop-release.mjs && node scripts/check-performance-budgets.mjs --desktop",
     "preview": "vite preview --host 127.0.0.1",
     "mobile:preview": "vite --host 0.0.0.0",
     "ios:sync": "npm run build:navopath -- --base=./ && cap sync ios && node scripts/normalize-capacitor-spm-paths.mjs",
@@ -25,7 +25,7 @@
     "ios:open": "cap open ios",
     "ios:run": "cap run ios",
     "size": "npm run build && size-limit",
-    "size:check": "size-limit",
+    "size:check": "size-limit && node scripts/check-performance-budgets.mjs",
     "css:check": "node scripts/check-css-architecture.mjs"
   },
   "size-limit": [
@@ -194,6 +194,7 @@
     "files": [
       "dist/**/*",
       "electron/**/*",
+      "!electron/**/*.test.cjs",
       "package.json"
     ],
     "directories": {
@@ -207,6 +208,12 @@
       "target": [
         "nsis",
         "portable"
+      ],
+      "electronLanguages": [
+        "en-US",
+        "en-GB",
+        "zh-CN",
+        "zh-TW"
       ]
     },
     "nsis": {
@@ -232,30 +239,27 @@
     }
   },
   "dependencies": {
-    "@capacitor/core": "^8.4.2",
-    "@capacitor/ios": "^8.4.2",
-    "@capacitor/status-bar": "^8.0.1",
-    "electron-updater": "^6.8.9",
-    "fflate": "0.8.3",
-    "lucide-react": "^1.24.0",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
-    "three": "^0.185.0"
+    "electron-updater": "^6.8.9"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.2",
+    "@capacitor/core": "^8.4.2",
+    "@capacitor/ios": "^8.4.2",
+    "@capacitor/status-bar": "^8.0.1",
     "@cloudflare/workers-types": "^5.20260726.1",
+    "@electron/asar": "3.4.1",
     "@size-limit/file": "^12.1.0",
     "@supabase/supabase-js": "^2.107.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/react-test-renderer": "19.1.0",
-    "@types/three": "^0.185.0",
     "@vitejs/plugin-react": "^5.0.0",
     "concurrently": "^9.2.4",
     "electron": "^43.1.1",
     "electron-builder": "^26.15.7",
+    "fflate": "0.8.3",
     "ical-expander": "^3.2.0",
+    "lucide-react": "^1.24.0",
     "mammoth": "^1.12.0",
     "pdfjs-dist": "^6.2.108",
     "png-to-ico": "^3.0.1",
@@ -263,7 +267,9 @@
     "rcedit": "^5.0.2",
     "react": "19.2.6",
     "react-dom": "19.2.6",
+    "react-markdown": "^10.1.0",
     "react-test-renderer": "19.2.6",
+    "remark-gfm": "^4.0.1",
     "size-limit": "^12.1.0",
     "terser": "^5.49.0",
     "tesseract.js": "^7.0.0",

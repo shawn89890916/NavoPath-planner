@@ -9,6 +9,7 @@ export default defineConfig({
     port: 5173
   },
   build: {
+    manifest: true,
     minify: "terser",
     terserOptions: {
       compress: { passes: 2 },

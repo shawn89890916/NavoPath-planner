@@ -1,7 +1,14 @@
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { zipSync, strToU8 } from "fflate";
 import { compareVersions, compatibility, mergeExtensionPreferences, normalizeExtensionPreferences, parsePackage, readPackage, sha256 } from "./packages";
-import { officialCatalog, officialPackageTexts } from "./officialPackages";
+import bundledIds from "../../electron/official-extension-ids.json";
+import { officialCatalog } from "./officialCatalog";
+
+const bundledDirectory = new URL("../../public/extensions/packages/", import.meta.url);
+const bundledBytes = (id: string) => readFileSync(new URL(`${id}.navopackage.json`, bundledDirectory));
+const linenPackageText = bundledBytes("linen").toString("utf8");
+const weatherPackageText = bundledBytes("weather").toString("utf8");
 
 describe("community extension packages", () => {
   it("orders numbered prereleases for compatibility and updates", () => {
@@ -12,7 +19,7 @@ describe("community extension packages", () => {
     expect(compareVersions("1.5.2-beta.2", "1.5.2-beta.2")).toBe(0);
   });
   it("validates both packaged light and dark previews", () => {
-    const pkg = JSON.parse(officialPackageTexts.linen);
+    const pkg = JSON.parse(linenPackageText);
     pkg.manifest.previews = { light: pkg.manifest.preview, dark: "missing.png" };
     expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("preview resource");
     pkg.manifest.previews.dark = "../dark.png";
@@ -21,27 +28,28 @@ describe("community extension packages", () => {
     expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("light and dark");
   });
   it("verifies every shipped offline package against the exact catalog bytes", async () => {
-    for (const entry of officialCatalog.packages) {
-      if (!officialPackageTexts[entry.manifest.id]) continue;
-      const bytes = new TextEncoder().encode(officialPackageTexts[entry.manifest.id]);
+    expect(readdirSync(bundledDirectory).sort()).toEqual(bundledIds.map(id => `${id}.navopackage.json`).sort());
+    for (const id of bundledIds) {
+      const entry = officialCatalog.packages.find(({ manifest }) => manifest.id === id)!;
+      const bytes = new Uint8Array(bundledBytes(id));
       expect(await sha256(bytes)).toBe(entry.sha256);
       expect(parsePackage(bytes).manifest).toEqual(entry.manifest);
     }
   });
   it("loads zipped plugin packages and rejects traversal before extraction", async () => {
-    const pkg = parsePackage(new TextEncoder().encode(officialPackageTexts.weather));
+    const pkg = parsePackage(new TextEncoder().encode(weatherPackageText));
     const zip = zipSync({ "weather/manifest.json": strToU8(JSON.stringify(pkg.manifest)), ...Object.fromEntries(Object.entries(pkg.files).map(([name, value]) => [`weather/${name}`, strToU8(value.data)])) });
     expect((await readPackage(zip)).manifest.id).toBe("weather");
     await expect(readPackage(zipSync({ "../outside.js": strToU8("bad") }))).rejects.toThrow("Unsafe");
   });
   it("rejects executable theme manifests and missing entry points", () => {
-    const pkg = JSON.parse(officialPackageTexts.linen); pkg.manifest.main = "main.js";
+    const pkg = JSON.parse(linenPackageText); pkg.manifest.main = "main.js";
     expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("CSS and resources only");
-    const plugin = JSON.parse(officialPackageTexts.weather); delete plugin.files[plugin.manifest.main];
+    const plugin = JSON.parse(weatherPackageText); delete plugin.files[plugin.manifest.main];
     expect(() => parsePackage(strToU8(JSON.stringify(plugin)))).toThrow("Missing text entry");
   });
   it("requires packaged raster previews and rejects remote or executable preview paths", () => {
-    const pkg = JSON.parse(officialPackageTexts.linen);
+    const pkg = JSON.parse(linenPackageText);
     pkg.manifest.preview = "preview.svg";
     expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("raster image");
     pkg.manifest.preview = "https://example.com/preview.png";
@@ -50,7 +58,7 @@ describe("community extension packages", () => {
     expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("preview resource");
   });
   it("accepts a square currentColor plugin icon and rejects colored or unsafe SVGs", () => {
-    const pkg = JSON.parse(officialPackageTexts.weather);
+    const pkg = JSON.parse(weatherPackageText);
     pkg.manifest.icon = "icon.svg";
     pkg.files["icon.svg"] = { encoding: "utf8", data: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" d="M4 4h16v16H4z"/></svg>' };
     expect(parsePackage(strToU8(JSON.stringify(pkg))).manifest.icon).toBe("icon.svg");
@@ -60,7 +68,7 @@ describe("community extension packages", () => {
     expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("monochrome SVG");
   });
   it("retains incompatible installations without pretending they can run", () => {
-    const manifest = JSON.parse(officialPackageTexts.weather).manifest;
+    const manifest = JSON.parse(weatherPackageText).manifest;
     expect(compatibility({ ...manifest, platforms: ["desktop"] }, "web")).toContain("Unsupported");
     expect(compatibility({ ...manifest, minAppVersion: "9.0.0" }, "desktop")).toContain("9.0.0");
   });

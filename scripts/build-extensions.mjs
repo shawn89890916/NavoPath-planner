@@ -64,7 +64,7 @@ for (const folder of (await readdir(resolve(root, 'community-plugins'))).sort())
   }
   catalog.packages.push({ manifest, downloadUrl: `${base}/packages/${filename}`, sha256: createHash('sha256').update(data).digest('hex'), ...(previewUrl ? { previewUrl } : {}), ...(previewUrls ? { previewUrls } : {}), ...(iconUrl ? { iconUrl } : {}) });
 }
-const bundledEntries = [...catalog.packages];
+const bundledIds = catalog.packages.map(({ manifest }) => manifest.id);
 const registry = JSON.parse(await readFile(resolve(root, 'community-plugins/registry.json'), 'utf8'));
 if (!Array.isArray(registry)) throw new Error('Community registry must be an array');
 const knownIds = new Set(catalog.packages.map(entry => entry.manifest.id));
@@ -87,9 +87,7 @@ for (const entry of registry) {
   catalog.packages.push({manifest,downloadUrl,sha256:entry.sha256,...(entry.previewUrl ? {previewUrl:publicHttps(entry.previewUrl)} : {}),...(entry.previewUrls ? {previewUrls:{light:publicHttps(entry.previewUrls.light),dark:publicHttps(entry.previewUrls.dark)}} : {}),...(iconUrl ? {iconUrl} : {}),...(entry.downloads !== undefined ? {downloads:entry.downloads} : {}),...(entry.publishedAt ? {publishedAt:entry.publishedAt} : {})});
 }
 await emit(resolve(root, 'public/extensions/catalog.json'), `${JSON.stringify(catalog, null, 2)}\n`);
-// JSON imports are lazy behind the service's offline official package fallback.
-const imports = bundledEntries.map(({ manifest }, index) => `import text${index} from "../../public/extensions/packages/${manifest.id}.navopackage.json?raw";`).join('\n');
-await emit(resolve(root, 'src/extensions/officialPackages.ts'), `${imports}\nimport catalog from "../../public/extensions/catalog.json";\nimport type { ExtensionPackage } from "./types";\nexport const officialCatalog = catalog;\nexport const officialPackageTexts: Record<string, string> = { ${bundledEntries.map(({ manifest }, index) => `${JSON.stringify(manifest.id)}: text${index}`).join(', ')} };\nexport const officialPackages: Record<string, ExtensionPackage> = Object.fromEntries(Object.entries(officialPackageTexts).map(([id,text])=>[id,JSON.parse(text) as ExtensionPackage]));\n`);
+await emit(resolve(root, 'electron/official-extension-ids.json'), `${JSON.stringify(bundledIds, null, 2)}\n`);
 console.log(`${check ? 'Validated' : 'Built'} ${catalog.packages.length} extension packages and catalog SHA-256 values.`);
 // Ship a standalone type-only SDK and self-contained references with each
 // copyable template. They are generated from the actual host contracts.

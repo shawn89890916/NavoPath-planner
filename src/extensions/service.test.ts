@@ -1,13 +1,23 @@
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ load: vi.fn(), put: vi.fn(), get: vi.fn(), setValue: vi.fn(), getValue: vi.fn(), removeValue: vi.fn(), theme: vi.fn() }));
 vi.mock("./runtime", () => ({ emitPluginEvent: vi.fn(), loadPlugin: mocks.load }));
 vi.mock("./theme", () => ({ applyExtensionTheme: mocks.theme }));
 vi.mock("./transport", () => ({ fetchExtensionBytes: vi.fn(() => Promise.reject(new Error("offline"))), getPrivatePackage: mocks.get, putPrivatePackage: mocks.put, getExtensionValue: mocks.getValue, setExtensionValue: mocks.setValue, removeExtensionValue: mocks.removeValue, subscribeExtensionValues: () => () => {} }));
 import { ExtensionService } from "./serviceCore";
-import { defaultExtensionPreferences } from "./packages";
-import { officialCatalog, officialPackageTexts } from "./officialPackages";
+import { defaultExtensionPreferences, sha256 } from "./packages";
+import { getBundledExtension, officialCatalog } from "./officialCatalog";
 import type { CatalogEntry, ExtensionHost } from "./types";
-import { cacheEntries } from "./cache";
+import { cacheDelete, cacheEntries, cachePut } from "./cache";
+
+const bundledDirectory = new URL("../../public/extensions/packages/", import.meta.url);
+const weatherPackageText = readFileSync(new URL("weather.navopackage.json", bundledDirectory), "utf8");
+const weatherPackageBytes = new TextEncoder().encode(weatherPackageText);
+async function fetchBundled(url: string) {
+  const packageFile = /^\/extensions\/packages\/([a-z-]+\.navopackage\.json)$/.exec(url)?.[1];
+  if (!packageFile) throw new Error("offline");
+  return new Response(new Uint8Array(readFileSync(new URL(packageFile, bundledDirectory))));
+}
 
 function fixture(account = "preview", extensions = defaultExtensionPreferences()) {
   let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true, migratedPlanningViews: extensions.migratedPlanningViews ?? true, migratedShelfViews: extensions.migratedShelfViews ?? true }, extensionConfigs: {} };
@@ -21,6 +31,7 @@ beforeEach(() => {
   const values = new Map<string, string>();
   vi.stubGlobal("localStorage", { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value), removeItem: (key: string) => values.delete(key) });
   vi.stubGlobal("window", new EventTarget()); vi.stubGlobal("location", new URL("https://navopath.test/app")); vi.stubGlobal("navigator", { onLine: false });
+  vi.stubGlobal("fetch", vi.fn(fetchBundled));
   mocks.load.mockImplementation(async () => ({ dispose: vi.fn(), configChanged: vi.fn(), context: {} }));
   mocks.get.mockResolvedValue(null); mocks.put.mockResolvedValue(undefined); mocks.theme.mockReturnValue(vi.fn()); mocks.getValue.mockResolvedValue(null);
   current = new ExtensionService();
@@ -34,6 +45,9 @@ describe("extension installation and account reconciliation", () => {
     const installed = current.getSnapshot().preferences.installed;
     expect(Object.keys(installed).sort()).toEqual(["official:activity-history", "official:kanban", "official:matrix", "official:metrics"]);
     expect(Object.values(installed).every((item) => item.enabled)).toBe(true);
+    expect(vi.mocked(fetch).mock.calls.map(([url]) => url).sort()).toEqual(
+      ["activity-history", "kanban", "matrix", "metrics"].map(id => `/extensions/packages/${id}.navopackage.json`),
+    );
   });
 
   it("migrates existing profiles while respecting explicit disabled and removed views", async () => {
@@ -90,7 +104,7 @@ describe("extension installation and account reconciliation", () => {
   });
   it("keeps local controls available during a slow update check and shares catalog requests", async () => {
     const f = fixture(); await current.configure(f.host);
-    await current.importFile(new File([officialPackageTexts.weather], "weather.navopackage.json"));
+    await current.importFile(new File([weatherPackageText], "weather.navopackage.json"));
     let resolve!: (response: Response) => void;
     const fetch = vi.fn(() => new Promise<Response>(done => { resolve = done; }));
     vi.stubGlobal("fetch", fetch);
@@ -112,10 +126,10 @@ describe("extension installation and account reconciliation", () => {
   it("discards a catalog response from a previous account", async () => {
     await current.configure(fixture("catalog-alice").host);
     let resolve!: (response: Response) => void;
-    const fetch = vi.fn(() => new Promise<Response>(done => { resolve = done; }));
-    vi.stubGlobal("fetch", fetch);
+    const fetchCatalog = vi.fn(() => new Promise<Response>(done => { resolve = done; }));
+    vi.stubGlobal("fetch", (url: string) => url.startsWith("/") ? fetchBundled(url) : fetchCatalog());
     const catalog = current.refreshCatalog();
-    await vi.waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(fetchCatalog).toHaveBeenCalledOnce());
     await current.configure(fixture("catalog-bob").host);
     resolve(new Response(JSON.stringify(officialCatalog)));
     await catalog;
@@ -162,6 +176,71 @@ describe("extension installation and account reconciliation", () => {
     expect(current.getSnapshot().preferences.removed["official:weather"]).toBeTruthy();
     expect(f.settings().extensions.installed["official:weather"]).toBeUndefined();
   });
+  it("reads offline desktop packages through the ID-only bridge", async () => {
+    const entry = getBundledExtension("weather")!;
+    const readOfficialPackage = vi.fn(async (id: string) =>
+      new Uint8Array(readFileSync(new URL(`${id}.navopackage.json`, bundledDirectory))));
+    Object.assign(window, { desktopApi: { isDesktop: () => true, extensions: { readOfficialPackage } } });
+    await current.configure(fixture("desktop-offline").host);
+    await current.install(entry);
+    expect(readOfficialPackage.mock.calls).toEqual([["activity-history"], ["weather"]]);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(mocks.get).not.toHaveBeenCalled();
+  });
+  it("uses the verified account cache before requesting the bundled asset", async () => {
+    await current.configure(fixture("already-cached").host);
+    const entry = getBundledExtension("weather")!;
+    await cachePut(`account:already-cached:package:${entry.sha256}`, weatherPackageBytes);
+    vi.mocked(fetch).mockClear();
+    await current.install(entry);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(mocks.get).not.toHaveBeenCalled();
+  });
+  it("falls back from altered bundled bytes to private storage and then the public download", async () => {
+    await current.configure(fixture("missing-bundle").host);
+    vi.stubGlobal("navigator", { onLine: true });
+    const entry = getBundledExtension("weather")!;
+    const fetch = vi.fn(async (url: string) =>
+      new Response(url === entry.downloadUrl ? weatherPackageBytes : "altered bundled bytes"));
+    vi.stubGlobal("fetch", fetch);
+    await current.install(entry);
+    expect(fetch.mock.calls).toEqual([["/extensions/packages/weather.navopackage.json", expect.anything()], [entry.downloadUrl, expect.anything()]]);
+    expect(mocks.get).toHaveBeenCalledWith(entry.sha256, "missing-bundle");
+    expect(mocks.get.mock.invocationCallOrder[0]).toBeGreaterThan(fetch.mock.invocationCallOrder[0]);
+    expect(mocks.get.mock.invocationCallOrder[0]).toBeLessThan(fetch.mock.invocationCallOrder[1]);
+    expect(current.getSnapshot().preferences.installed["official:weather"].sha256).toBe(entry.sha256);
+  });
+  it("rolls back through private storage when the previous hash is not bundled", async () => {
+    const entry = getBundledExtension("tree")!;
+    const oldPackage = JSON.parse(readFileSync(new URL("tree.navopackage.json", bundledDirectory), "utf8"));
+    oldPackage.manifest.version = "0.0.1";
+    const previousBytes = new TextEncoder().encode(JSON.stringify(oldPackage));
+    const previous = { manifest: oldPackage.manifest, sha256: await sha256(previousBytes), downloadUrl: entry.downloadUrl };
+    const key = "official:tree", account = "rollback";
+    const f = fixture(account, {
+      ...defaultExtensionPreferences(),
+      installed: { [key]: { ...entry, key, enabled: false, installedAt: "2026-11-10T00:00:00Z", previous } },
+    });
+    await cacheDelete(`account:${account}:package:${previous.sha256}`);
+    await current.configure(f.host);
+    vi.mocked(fetch).mockClear();
+    vi.stubGlobal("navigator", { onLine: true });
+    mocks.get.mockResolvedValueOnce(previousBytes);
+    await current.rollback(key);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(mocks.get).toHaveBeenCalledWith(previous.sha256, account);
+    expect(current.getSnapshot().preferences.installed[key]?.manifest.version).toBe(previous.manifest.version);
+  });
+  it("keeps startup ready and retries a default migration after an asset becomes available", async () => {
+    const f = fixture("migration-retry", { ...defaultExtensionPreferences(), migratedPlanningViews: false, migratedShelfViews: false });
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("offline"))));
+    await current.configure(f.host);
+    expect(current.isReady()).toBe(true);
+    expect(current.getSnapshot().preferences.migratedPlanningViews).toBe(false);
+    vi.stubGlobal("fetch", vi.fn(fetchBundled));
+    window.dispatchEvent(new Event("online"));
+    await vi.waitFor(() => expect(current.getSnapshot().preferences.migratedPlanningViews).toBe(true));
+  });
   it("restores installation, enable state, version and configuration on another device", async () => {
     const a = fixture("alice"); await current.configure(a.host);
     const entry = officialCatalog.packages.find(e => e.manifest.id === "weather")!;
@@ -175,7 +254,7 @@ describe("extension installation and account reconciliation", () => {
   });
   it("queues offline imported packages and values under the initiating account only", async () => {
     const a = fixture("alice-isolation"); await current.configure(a.host); mocks.put.mockRejectedValue(new Error("offline"));
-    await current.importFile(new File([officialPackageTexts.weather], "weather.navopackage.json"));
+    await current.importFile(new File([weatherPackageText], "weather.navopackage.json"));
     expect((await cacheEntries("account:alice-isolation:upload:")).length).toBe(1);
     const b = fixture("bob-isolation"); await current.configure(b.host);
     expect(current.getSnapshot().preferences.installed["imported:weather"]).toBeUndefined();
@@ -193,8 +272,8 @@ describe("extension installation and account reconciliation", () => {
   });
   it("keeps the previous version installed when replacement activation fails", async () => {
     const f = fixture(); await current.configure(f.host);
-    await current.importFile(new File([officialPackageTexts.weather], "weather.navopackage.json")); await current.toggle("imported:weather", true);
-    const pkg = JSON.parse(officialPackageTexts.weather); const previousVersion = pkg.manifest.version; pkg.manifest.version = "2.0.0";
+    await current.importFile(new File([weatherPackageText], "weather.navopackage.json")); await current.toggle("imported:weather", true);
+    const pkg = JSON.parse(weatherPackageText); const previousVersion = pkg.manifest.version; pkg.manifest.version = "2.0.0";
     mocks.load.mockRejectedValueOnce(new Error("bad update"));
     await expect(current.importFile(new File([JSON.stringify(pkg)], "weather.navopackage.json"))).rejects.toThrow("bad update");
     expect(current.getSnapshot().preferences.installed["imported:weather"].manifest.version).toBe(previousVersion);
@@ -202,7 +281,7 @@ describe("extension installation and account reconciliation", () => {
   });
   it("restricted mode unloads local code without changing synced enable preferences", async () => {
     const f = fixture(); await current.configure(f.host);
-    await current.importFile(new File([officialPackageTexts.weather], "weather.navopackage.json")); await current.toggle("imported:weather", true);
+    await current.importFile(new File([weatherPackageText], "weather.navopackage.json")); await current.toggle("imported:weather", true);
     await current.setSafeMode(true);
     expect(current.getSnapshot().safeMode).toBe(true); expect(f.settings().extensions.installed["imported:weather"].enabled).toBe(true);
     expect(current.getSnapshot().status["imported:weather"]).toContain("Restricted");

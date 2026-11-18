@@ -15,13 +15,14 @@ const {
   readAuthStorageFile,
   writeAuthStorageFile,
 } = require("./auth-storage-safety.cjs");
-const { createExtensionHost } = require("./extension-host.cjs");
+const { createExtensionHost, readOfficialPackage } = require("./extension-host.cjs");
 const {
   createWidgetIpcPolicy,
   sanitizeWidgetAction,
 } = require("./widget-ipc-policy.cjs");
 const {
   broadcastToLiveWindows,
+  trackTrayIdle,
   createPrimaryWindowRegistry,
   windowFromEvent,
 } = require("./window-lifecycle.cjs");
@@ -216,6 +217,9 @@ function removeAuthStorage(key) {
 }
 
 const extensionHost = createExtensionHost({ rootDirectory: () => getPaths().extensionsDir, utilityProcess, shell });
+const extensionAssetDirectory = !app.isPackaged && process.env.VITE_DEV_SERVER_URL
+  ? path.join(__dirname, "..", "public")
+  : path.dirname(localIndexPath);
 
 let isQuitting = false;
 let tray = null;
@@ -254,6 +258,9 @@ function createWindow({ showWhenReady = true } = {}) {
   });
   primaryWindowRegistry.set(win);
   dockWindowService.restore(win, "main");
+  const trayIdle = trackTrayIdle(win);
+  win.on("show", trayIdle.wake);
+  win.on("closed", trayIdle.dispose);
 
   // Show window when content is ready for faster perceived performance
   win.once("ready-to-show", () => {
@@ -264,6 +271,7 @@ function createWindow({ showWhenReady = true } = {}) {
     if (isQuitting) return;
     event.preventDefault();
     win.hide();
+    trayIdle.arm();
   });
   win.on("closed", () => primaryWindowRegistry.clear(win));
 
@@ -349,6 +357,7 @@ handleTrusted("auth-storage:get", (_event, key) => readAuthStorage(key));
 handleTrusted("auth-storage:set", (_event, key, value) => writeAuthStorage(key, value));
 handleTrusted("auth-storage:remove", (_event, key) => removeAuthStorage(key));
 handleTrusted("extensions:fetch", (_event, url) => extensionHost.fetch(url));
+handleTrusted("extensions:read-official-package", (_event, id) => readOfficialPackage(extensionAssetDirectory, id));
 handleTrusted("extensions:start", (event, key, hash, files, entry) => extensionHost.start(event.sender, key, hash, files, entry));
 handleTrusted("extensions:invoke", (event, key, method, payload) => extensionHost.invoke(event.sender, key, method, payload));
 handleTrusted("extensions:stop", (event, key) => extensionHost.stop(event.sender, key));

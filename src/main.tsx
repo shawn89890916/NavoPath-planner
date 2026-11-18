@@ -17,7 +17,7 @@ import { undoAiImportData } from "./utils/aiImportUndo";
 import { highlightTaskLocation } from "./utils/highlightTaskLocation";
 import { DailyTimelineGrid, TimelineDayBoundaries } from "./components/ExecutionSharedLayout";
 import { themeVars } from "./WorkspacePresentation";
-import { COMPACT_LAYOUT_MEDIA_QUERY, SLOT_MINUTES, DURATION_OPTIONS, DEFAULT_PROJECT_COLOR, PROJECT_COLOR_PRESETS, taskBlockPriorityFor, categories, isEventDisplayTask, isExternalCalendarDisplayTask, hexToRgb, minutesToTime, timeToMinutes, addMinutes, taskDuration, sortAiConversations, ProductIcon, recurrenceOptions, recurrenceLabel, TaskRecurrenceIndicator, TaskCard, formatMinutes, formatDuration, ReturnedToPlanIcon, TimeBlock, PreviewBlock, ProjectColorPicker, ProjectChoice, AiPanel, preloadAiPanel, type AutoScheduleState, type TimelineFocusTarget, type PlacementPreview, type PlacementChoice, type ResizePreview, type AiAttachmentSnapshot, type AiSessionMessage } from "./WorkspacePresentation";
+import { COMPACT_LAYOUT_MEDIA_QUERY, SLOT_MINUTES, DURATION_OPTIONS, DEFAULT_PROJECT_COLOR, PROJECT_COLOR_PRESETS, taskBlockPriorityFor, categories, isEventDisplayTask, isExternalCalendarDisplayTask, hexToRgb, minutesToTime, timeToMinutes, addMinutes, taskDuration, sortAiConversations, ProductIcon, recurrenceOptions, recurrenceLabel, TaskRecurrenceIndicator, TaskCard, formatMinutes, formatDuration, ReturnedToPlanIcon, TimeBlock, PreviewBlock, ProjectColorPicker, ProjectChoice, AiPanel, type AutoScheduleState, type TimelineFocusTarget, type PlacementPreview, type PlacementChoice, type ResizePreview, type AiAttachmentSnapshot, type AiSessionMessage } from "./WorkspacePresentation";
 export { ProductIcon } from "./WorkspacePresentation";
 import React, { Activity, type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal, flushSync } from "react-dom";
@@ -29,6 +29,7 @@ import { callAiAssistant, decideAgentRun, listAgentAuditRuns, type AiAction } fr
 import { compactText, extractLocalMemories, mergeAiMemories } from "./aiContext";
 
 import type { ParsedAttachment } from "./fileParser";
+import type { PlanningViewSession } from "./PlanningView";
 
 import { AI_PROVIDER_MODELS, readLocalAiProviderConfig } from "./aiProviderConfig";
 import { removeEmptyAiConversations } from "./aiConversationHistory";
@@ -109,7 +110,6 @@ import { useMotionSelection } from "./useMotionSelection";
 import "./app.css";
 import "./mobile-execution.css";
 import "./ui-primitives.css";
-void import("./ai-history-actions.css");
 import type { MobileShortSheetKind } from "./MobileTaskSummary";
 
 const productDemo = getWorkspaceDemoRuntime();
@@ -134,8 +134,6 @@ const EngagementRating = lazy(() => import("./components/EngagementRating").then
 const MobileQuickAddSheet = lazy(() => import("./MobileTaskSummary").then((module) => ({ default: module.MobileQuickAddSheet })));
 const MobileTimelineDraftSheet = lazy(() => import("./MobileTaskSummary").then((module) => ({ default: module.MobileTimelineDraftSheet })));
 const MonthView = lazy(() => import("./MonthView"));
-const WidgetAppLazy = lazy(() => import("./widget/WidgetApp").then((module) => ({ default: module.WidgetApp })));
-const WidgetPopoverAppLazy = lazy(() => import("./widget/WidgetApp").then((module) => ({ default: module.WidgetPopoverApp })));
 
 const ProactiveNotificationCenter = lazy(() => import("./components/ProactiveNotificationCenter").then((module) => ({ default: module.ProactiveNotificationCenter })));
 const UnfinishedTasksDialog = lazy(() => import("./components/UnfinishedTasksDialog").then((module) => ({ default: module.UnfinishedTasksDialog })));
@@ -1058,6 +1056,10 @@ function App() {
   const [data, setData] = useState<PlannerData | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const workspaceLoaded = Boolean(data && settings);
+  const [trayIdle, setTrayIdle] = useState(false);
+  const [workspaceParked, setWorkspaceParked] = useState(false);
+  const workspaceSuspended = trayIdle && workspaceParked;
+  useEffect(() => window.desktopApi?.onWorkspaceIdle?.(setTrayIdle), []);
   const [lang, setLang] = useState<Language>(productDemo?.language ?? detectSystemLanguage());
   const [authState, setAuthState] = useState<AuthState | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
@@ -1067,24 +1069,10 @@ function App() {
   const [taskOperations, setTaskOperations] = useState<TaskOperation[]>([]);
   const [shelfMenuOpen, setShelfMenuOpen] = useState(false);
   const [projectManagement, setProjectManagement] = useState(productDemo?.feature === "planning");
-  const [projectManagementVisited, setProjectManagementVisited] = useState(productDemo?.feature === "planning");
+  const planningSessionRef = useRef<PlanningViewSession | null>(null);
   const [projectFilterAnchor, setProjectFilterAnchor] = useState<HTMLSpanElement | null>(null);
   const [showScheduledCandidates, setShowScheduledCandidates] = useState(false);
   const shelfTitleRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!data || !settings) return;
-    const preload = () => {
-      preloadPlanningView();
-      preloadAiPanel();
-      void Promise.allSettled([loadSettingsPanel(), import("./MobileTaskSummary"), import("./MonthView")]);
-    };
-    if (window.requestIdleCallback) {
-      const idle = window.requestIdleCallback(preload, { timeout: 2000 });
-      return () => window.cancelIdleCallback(idle);
-    }
-    const timer = window.setTimeout(preload, 1000);
-    return () => window.clearTimeout(timer);
-  }, [Boolean(data), Boolean(settings)]);
   const [compactLayout, setCompactLayout] = useState(() => window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches);
   const [portraitLayout, setPortraitLayout] = useState(() => window.matchMedia("(orientation: portrait)").matches);
   const inlineTimelineDraft = Boolean(window.desktopApi) || !portraitLayout;
@@ -1218,6 +1206,8 @@ function App() {
   const [aiActionPatches, setAiActionPatches] = useState<Record<string, Record<number, Record<string, unknown>>>>({});
   const [aiAttachment, setAiAttachment] = useState<ParsedAttachment | null>(null);
   const [aiAttachmentStatus, setAiAttachmentStatus] = useState("");
+  const attachmentParseRef = useRef<AbortController | null>(null);
+  useEffect(() => () => attachmentParseRef.current?.abort(), []);
   const proactiveIntroShownRef = useRef(false);
   const [externalCalendarSources, setExternalCalendarSources] = useState<ExternalCalendarSource[]>([]);
   const [externalCalendarOccurrences, setExternalCalendarOccurrences] = useState<ExternalCalendarOccurrence[]>([]);
@@ -1667,7 +1657,7 @@ function App() {
     delete viewport.context;
     element.scrollTop = viewport.top;
     element.scrollLeft = viewport.left;
-  }, [timelineViewportContext, pendingTimelineFocus]);
+  }, [timelineViewportContext, pendingTimelineFocus, workspaceSuspended]);
   const previousTimelineDataRef = useRef(data);
   const [nowInTimelineViewport, setNowInTimelineViewport] = useState(true);
   const [nowLineReturnPulse, setNowLineReturnPulse] = useState(false);
@@ -1973,7 +1963,7 @@ function App() {
       scrollElement.removeEventListener("touchend", endPinch);
       scrollElement.removeEventListener("touchcancel", endPinch);
     };
-  }, [compactLayout, timelineView, data]);
+  }, [compactLayout, timelineView, data, workspaceSuspended]);
 
   useEffect(() => {
     const container = timelineRef.current;
@@ -2006,7 +1996,7 @@ function App() {
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [timelineView, selectedDate]);
+  }, [timelineView, selectedDate, workspaceSuspended]);
 
   useEffect(() => {
     dataRef.current = data;
@@ -2166,7 +2156,7 @@ function App() {
     setTaskOperations([]);
     dismissToast();
     setProjectManagement(productDemo?.feature === "planning");
-    setProjectManagementVisited(productDemo?.feature === "planning");
+    planningSessionRef.current = null;
     setShelfMenuOpen(false);
     setShowScheduledCandidates(false);
     setCompactExecuteView("schedule");
@@ -2188,8 +2178,7 @@ function App() {
     setAiConversationListOpen(false);
     setAiMemoryNotice("");
     setAiActionPatches({});
-    setAiAttachment(null);
-    setAiAttachmentStatus("");
+    clearAiAttachment();
     setSchedulePreviews([]);
     setAutoScheduleState("idle");
     setQuickTitle("");
@@ -2795,7 +2784,7 @@ if (cached?.data && cached?.settings) {
     updateVisibleLabel();
     scrollElement.addEventListener("scroll", handleTimelineScroll, { passive: true });
     return () => scrollElement.removeEventListener("scroll", handleTimelineScroll);
-  }, [settings?.continuousCrossDayScroll, timelineView, selectedDate, pendingTimelineFocus, timelineSlotHeight, workspaceLoaded]);
+  }, [settings?.continuousCrossDayScroll, timelineView, selectedDate, pendingTimelineFocus, timelineSlotHeight, workspaceLoaded, workspaceSuspended]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 899.98px) and (orientation: portrait)");
@@ -3568,7 +3557,9 @@ if (cached?.data && cached?.settings) {
   }, [continuousAnchorDate, continuousTimelineEnabled, timelineColumnCount, timelineDate, timelineView]);
   const continuousTimelineStartDate = continuousTimelineDates[0] || timelineDate;
   const continuousTimelineBandCount = Math.max(1, Math.ceil(continuousTimelineDates.length / timelineColumnCount));
-  const monthWeeks = useMemo(() => buildWeekWindow(timelineDate, 20, 30, settings?.weekStartsOn), [timelineDate, settings?.weekStartsOn]);
+  const monthWeeks = useMemo(() => timelineView === "month"
+    ? buildWeekWindow(timelineDate, 20, 30, settings?.weekStartsOn)
+    : [], [timelineView, timelineDate, settings?.weekStartsOn]);
   const visibleTimelineDates = useMemo(() => new Set(timelineView === "month" ? monthWeeks.flat() : continuousTimelineDates), [timelineView, monthWeeks, continuousTimelineDates]);
   const dailyTimelineDates = continuousTimelineDates;
   const dailyTimelineCanvasHeight = dailyContinuousCanvasHeight(continuousTimelineBandCount, timelineSlotHeight);
@@ -3611,7 +3602,7 @@ if (cached?.data && cached?.settings) {
       resizeObserver.disconnect();
       scrollElement.removeEventListener("scroll", updateNowVisibility);
     };
-  }, [compactExecuteView, continuousTimelineDates, continuousTimelineEnabled, continuousTimelineStartDate, dayStartHour, timelineColumnCount, timelineSlotHeight, timelineView, timelineWindowAnchorDate, today, workspaceLoaded]);
+  }, [compactExecuteView, continuousTimelineDates, continuousTimelineEnabled, continuousTimelineStartDate, dayStartHour, timelineColumnCount, timelineSlotHeight, timelineView, timelineWindowAnchorDate, today, workspaceLoaded, workspaceSuspended]);
 
   const showBackToNow = !productPresentation && !nowInTimelineViewport;
 
@@ -3930,7 +3921,7 @@ if (cached?.data && cached?.settings) {
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [timelineView, selectedDate, scheduledTasks]);
+  }, [timelineView, selectedDate, scheduledTasks, workspaceSuspended]);
 
   const todayCandidates = useMemo(
     () => tasks.filter((task) => {
@@ -7743,18 +7734,28 @@ if (cached?.data && cached?.settings) {
   }
 
   async function handleAiAttachment(file: File) {
+    clearAiAttachment();
+    const controller = new AbortController();
+    attachmentParseRef.current = controller;
     setAiAttachmentStatus("正在本地解析文件...");
     try {
       const { parseAttachment } = await import("./fileParser");
-      const parsed = await parseAttachment(file);
+      const parsed = await parseAttachment(file, controller.signal);
+      if (attachmentParseRef.current !== controller || controller.signal.aborted) return;
       setAiAttachment(parsed);
       setAiAttachmentStatus(parsed.truncated ? "文本已提取，超过 60,000 字符的部分已截断" : "文本已提取，仅文本会发送给 AI");
     } catch (error) {
-      setAiAttachmentStatus(error instanceof Error ? error.message : "文件解析失败");
+      if (attachmentParseRef.current === controller && !controller.signal.aborted) {
+        setAiAttachmentStatus(error instanceof Error ? error.message : "文件解析失败");
+      }
+    } finally {
+      if (attachmentParseRef.current === controller) attachmentParseRef.current = null;
     }
   }
 
   function clearAiAttachment() {
+    attachmentParseRef.current?.abort();
+    attachmentParseRef.current = null;
     setAiAttachment(null);
     setAiAttachmentStatus("");
   }
@@ -7762,6 +7763,7 @@ if (cached?.data && cached?.settings) {
   async function startNewAiConversation() {
     const current = dataRef.current || data;
     if (!current) return;
+    clearAiAttachment();
     const conversation = makeAiConversation();
     const nextConversations = [conversation, ...removeEmptyAiConversations(current.aiConversations || [])];
     setActiveAiConversationId(conversation.id);
@@ -7777,6 +7779,7 @@ if (cached?.data && cached?.settings) {
     if (!current) return;
     const conversation = (current.aiConversations || []).find((item) => item.id === conversationId);
     if (!conversation) return;
+    clearAiAttachment();
     setActiveAiConversationId(conversation.id);
     setAiMessages(chatToSessionMessages(conversation.messages || []));
     setAiConversationListOpen(false);
@@ -8922,7 +8925,6 @@ if (cached?.data && cached?.settings) {
     setShelfMenuOpen(false);
     setCandidatePanelCollapsed(false);
     setFullscreen(false);
-    setProjectManagementVisited(true);
     setProjectManagement(true);
     if (mobileExecution) setCandidateDrawerOpen(true);
     else setCompactExecuteView("tasks");
@@ -9110,6 +9112,41 @@ if (cached?.data && cached?.settings) {
     document.addEventListener("keydown", handleShortcut);
     return () => document.removeEventListener("keydown", handleShortcut);
   }, [drawerOpen, aiOpen, utilityPanel, habitPanel, timelineView, timerTaskId, timerRunning, headerTask, lang, today]);
+
+  const hasOpenEditor = Boolean(drawerOpen || quickAddOpen || allDayQuickAdd || monthQuickAdd || aiOpen || workspacePanel
+    || habitPanel || dialog.host || drag || dragCreate || dragOverlay || mobilePlacement || scheduleTemplateOpen);
+  const parkedScrollRef = useRef<{ month?: { date: string; top: number }; shelf?: number } | null>(null);
+  useLayoutEffect(() => {
+    const saved = parkedScrollRef.current;
+    if (!saved || workspaceSuspended) return;
+    parkedScrollRef.current = null;
+    if (saved.month?.date === selectedDate && monthScrollRef.current) monthScrollRef.current.scrollTop = saved.month.top;
+    const shelf = candidatePanelRef.current?.querySelector<HTMLElement>(".df-candidate-list");
+    if (saved.shelf !== undefined && shelf) shelf.scrollTop = saved.shelf;
+  }, [selectedDate, workspaceSuspended]);
+  useEffect(() => {
+    if (!trayIdle || !workspaceLoaded || hasOpenEditor) {
+      setWorkspaceParked(false);
+      return;
+    }
+    let retry: number | undefined;
+    const park = () => {
+      if (pendingDataSaveRef.current || pendingSettingsSaveRef.current || dataSaveInFlightRef.current
+        || settingsSaveInFlightRef.current || document.querySelector('[aria-modal="true"]')) {
+        retry = window.setTimeout(park, 5_000);
+        return;
+      }
+      parkedScrollRef.current = {
+        month: monthScrollRef.current ? { date: selectedDate, top: monthScrollRef.current.scrollTop } : undefined,
+        shelf: candidatePanelRef.current?.querySelector<HTMLElement>(".df-candidate-list")?.scrollTop,
+      };
+      setWorkspaceParked(true);
+    };
+    park();
+    return () => { if (retry !== undefined) window.clearTimeout(retry); };
+  }, [trayIdle, workspaceLoaded, hasOpenEditor, selectedDate]);
+
+  if (workspaceSuspended) return null;
 
   function daysInMonth(year: number, month: number): number {
     return new Date(year, month + 1, 0).getDate();
@@ -9553,7 +9590,7 @@ if (cached?.data && cached?.settings) {
                   <Button variant="ghost" aria-pressed={showScheduledCandidates} onClick={() => setShowScheduledCandidates((show) => !show)}>
                     {lang === "zh" ? "显示已安排" : "Show scheduled"}
                   </Button>
-                  {!treeView && <Button variant="ghost" onClick={openProjectManagement}>{manageProjectsLabel}</Button>}
+                  {!treeView && <Button variant="ghost" onPointerEnter={preloadPlanningView} onFocus={preloadPlanningView} onClick={openProjectManagement}>{manageProjectsLabel}</Button>}
                 </ActionDisclosure>}
                 </>}
                 {mobileExecution && <CloseButton className="df-mobile-candidate-close" label={lang === "zh" ? "关闭候选任务" : "Close candidates"} onClick={closeCandidateDrawer} />}
@@ -9565,7 +9602,7 @@ if (cached?.data && cached?.settings) {
             />
             {!projectManagement && <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu">
               <Button variant="ghost" aria-pressed={!shelfView} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
-              {treeView && <Button variant="ghost" onClick={openProjectManagement}><CandidateViewIcon view={treeView} />{candidateViewName(treeView, lang)}</Button>}
+              {treeView && <Button variant="ghost" onPointerEnter={preloadPlanningView} onFocus={preloadPlanningView} onClick={openProjectManagement}><CandidateViewIcon view={treeView} />{candidateViewName(treeView, lang)}</Button>}
               {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id} onClick={() => selectShelfView(view.id)}><CandidateViewIcon view={view} />{candidateViewName(view, lang)}</Button>)}
             </AnchoredNarrowMenu>}
             {candidateDropActive && (
@@ -9744,16 +9781,16 @@ if (cached?.data && cached?.settings) {
                 </Suspense>
               </div>
             </Activity>}
-            {projectManagementVisited && <Activity mode={projectManagement ? "visible" : "hidden"}>
+            {projectManagement && (
               <div className="df-shelf-scroll" data-shelf-scroll="projects">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
                   <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode="tree" tasks={tasks}
-                    filterAnchor={projectManagement ? projectFilterAnchor : null} focusTaskId={planningFocusTaskId}
+                    session={planningSessionRef} filterAnchor={projectFilterAnchor} focusTaskId={planningFocusTaskId}
                     onFocusHandled={() => setPlanningFocusTaskId(null)} demo={Boolean(productDemo)}
                     referenceDate={productDemo?.date} presentationNote={productDemo?.story} />
                 </Suspense>
               </div>
-            </Activity>}
+            )}
             {!productAiPresentation && <span className="df-candidate-resize-zone" aria-hidden="true" onPointerDown={startCandidatePanelResize} />}
               </>
             )}
@@ -10265,6 +10302,7 @@ if (cached?.data && cached?.settings) {
                     }}
                     onDragActivate={() => { setMonthQuickAdd(null); suppressBlockClickRef.current = true; }}
                     onDragFinish={suppressClickAfterDrag}
+                    quickAddDate={monthQuickAdd?.date}
                     renderQuickAdd={(day) => monthQuickAdd?.date === day && <AllDayQuickAddPopover absolute add={monthQuickAdd} projects={projects}
                       onSave={(title, projectId) => {
                         if (!title.trim()) return;
@@ -13311,17 +13349,11 @@ const root = rootWindow[rootKey] ?? createRoot(rootElement);
 rootWindow[rootKey] = root;
 const routeSearchParams = new URLSearchParams(window.location.search);
 const isCompactWindowRoute = routeSearchParams.get("compactWindow") === "1";
-const isWidgetPopoverRoute = routeSearchParams.get("widgetPopover") === "1";
-const isWidgetRoute = routeSearchParams.get("widget") === "1";
 const PasswordRecoveryPage = lazy(() => import("./PasswordRecoveryPage"));
 const isRecoveryCallback = isPasswordRecoveryCallback(new URL(window.location.href));
 root.render(
   isRecoveryCallback
     ? <Suspense fallback={<ExecuteSkeleton />}><PasswordRecoveryPage lang={detectSystemLanguage()} getApi={waitForPlannerApi} onRequest={sendPasswordResetEmail} /></Suspense>
-    : isWidgetPopoverRoute
-    ? <Suspense fallback={null}><WidgetPopoverAppLazy /></Suspense>
-    : isWidgetRoute
-    ? <Suspense fallback={null}><WidgetAppLazy /></Suspense>
     : window.location.pathname === "/changelog"
       ? <Suspense fallback={<div className="df-loading-inline">Loading changelog...</div>}><ChangelogPage /></Suspense>
       : window.location.pathname === "/plugin-guide"

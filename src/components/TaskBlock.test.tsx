@@ -208,7 +208,7 @@ describe("TaskBlock shared component contract", () => {
   });
 
   it("keeps alternative task views within the existing shelf width", () => {
-    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8") + readFileSync(resolve(__dirname, "../PlanningView.css"), "utf8");
     expect(css).toContain(".df-shelf-view :is(.df-kanban-board, .df-eisenhower-grid)");
     expect(css).toContain(".df-shelf-scroll");
     expect(css).toContain('[data-planning-drop="before"]::after');
@@ -236,7 +236,7 @@ describe("TaskBlock shared component contract", () => {
 
   it("keeps edit subtasks visible while matching planning checkbox and AI motion", () => {
     const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8") + readFileSync(resolve(__dirname, "../WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "../AiPanel.tsx"), "utf8");
-    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8") + readFileSync(resolve(__dirname, "../PlanningView.css"), "utf8");
 
     expect(main).toContain("function renderSubtaskRows(subtasks: Subtask[]");
     expect(main).toContain('className={`df-subtask-check${done ? " done" : ""}`}');
@@ -315,7 +315,7 @@ describe("TaskBlock shared component contract", () => {
 
   it("keeps project tree and timeline drag targets usable together", () => {
     const planning = readFileSync(resolve(__dirname, "../PlanningView.tsx"), "utf8");
-    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../app.css"), "utf8") + readFileSync(resolve(__dirname, "../PlanningView.css"), "utf8");
 
     expect(planning).toContain("props.onTimelineDrop?.(task, { x, y }, subtaskId)");
     expect(planning).toContain("props.onTimelineDrag?.(task, null, subtaskId)");

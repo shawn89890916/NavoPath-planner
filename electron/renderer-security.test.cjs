@@ -66,7 +66,7 @@ test("runs installed desktop entries through a trusted utility-process bridge", 
   assert.doesNotMatch(preloadSource, /readExternalPluginEntry|plugins:readExternalEntry/);
   assert.doesNotMatch(electronMainSource, /readExternalPluginEntry|plugins:readExternalEntry/);
   assert.doesNotMatch(preloadSource + electronMainSource, /plugins:listExternal|listExternalPlugins/);
-  for (const method of ["fetch", "start", "invoke", "stop"]) {
+  for (const method of ["fetch", "read-official-package", "start", "invoke", "stop"]) {
     assert.match(preloadSource, new RegExp(`extensions:${method}`));
     assert.match(electronMainSource, new RegExp(`handleTrusted\\("extensions:${method}"`));
   }

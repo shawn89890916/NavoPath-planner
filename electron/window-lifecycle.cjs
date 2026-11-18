@@ -47,8 +47,37 @@ function broadcastToLiveWindows(windows, channel, payload) {
   }
 }
 
+function trackTrayIdle(win, timers = globalThis) {
+  let timer;
+  let idle = false;
+  const dispose = () => {
+    if (timer !== undefined) timers.clearTimeout(timer);
+    timer = undefined;
+  };
+  return {
+    arm() {
+      dispose();
+      if (idle) return;
+      timer = timers.setTimeout(() => {
+        timer = undefined;
+        if (win.isDestroyed() || win.isVisible()) return;
+        idle = true;
+        broadcastToLiveWindows([win], "workspace:idle", true);
+      }, 60_000);
+    },
+    wake() {
+      dispose();
+      if (!idle) return;
+      idle = false;
+      broadcastToLiveWindows([win], "workspace:idle", false);
+    },
+    dispose,
+  };
+}
+
 module.exports = {
   broadcastToLiveWindows,
   createPrimaryWindowRegistry,
+  trackTrayIdle,
   windowFromEvent,
 };

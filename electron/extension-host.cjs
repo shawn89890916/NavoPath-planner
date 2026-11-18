@@ -1,8 +1,16 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
-const { fetchExtensionPackage } = require("./extension-download.cjs");
+const { fetchExtensionPackage, MAX_PACKAGE_BYTES } = require("./extension-download.cjs");
+const officialPackageIds = new Set(require("./official-extension-ids.json"));
 const MAX_EXPANDED_BYTES = 32 * 1024 * 1024;
+async function readOfficialPackage(assetDirectory, id) {
+  if (!officialPackageIds.has(id)) throw new Error("Unknown official extension ID");
+  const filename = path.join(assetDirectory, "extensions", "packages", `${id}.navopackage.json`);
+  const bytes = await fs.promises.readFile(filename);
+  if (bytes.length > MAX_PACKAGE_BYTES) throw new Error("Extension package exceeds 20 MB");
+  return new Uint8Array(bytes);
+}
 function validateKey(key) {
   if (typeof key !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,199}$/.test(key)) throw new Error("Invalid extension key");
 }
@@ -143,4 +151,4 @@ function createExtensionHost({ rootDirectory, utilityProcess, shell }) {
     dispose() { disposed = true; for (const worker of workers.values()) { worker.process.kill(); for (const pending of worker.pending.values()) pending.reject(new Error("Application closed")); } workers.clear(); },
   };
 }
-module.exports = { createExtensionHost, validateKey, validateFilePath, decodeFiles };
+module.exports = { createExtensionHost, validateKey, validateFilePath, decodeFiles, readOfficialPackage };

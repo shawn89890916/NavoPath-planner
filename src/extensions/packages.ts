@@ -9,6 +9,28 @@ export const DEFAULT_COMPACT_DOCK_LIMIT = 5;
 export const OFFICIAL_SOURCE: ExtensionSource = { id: "official", name: "NavoPath Community", url: "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/catalog.json" };
 export const MAX_PACKAGE_BYTES = 20 * 1024 * 1024;
 export const MAX_EXPANDED_BYTES = 32 * 1024 * 1024;
+export async function readExtensionResponse(response: Response): Promise<Uint8Array> {
+  if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+  if (Number(response.headers.get("content-length")) > MAX_PACKAGE_BYTES) throw new Error("Package exceeds 20 MiB");
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error("Empty download");
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  while (true) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+    size += chunk.value.length;
+    if (size > MAX_PACKAGE_BYTES) {
+      await reader.cancel();
+      throw new Error("Package exceeds 20 MiB");
+    }
+    chunks.push(chunk.value);
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+  return bytes;
+}
 export const isRecord = (value: unknown): value is Record<string, any> => !!value && typeof value === "object" && !Array.isArray(value);
 const safeId = (value: unknown) => typeof value === "string" && /^[a-z0-9][a-z0-9._-]{0,79}$/.test(value) && !["constructor", "prototype", "__proto__"].includes(value);
 export function safePath(path: string): boolean { return !!path && path.length < 240 && !path.startsWith("/") && !path.includes("\\") && !path.includes(":") && path.split("/").every(part => part && part !== "." && part !== ".." && !["__proto__", "constructor", "prototype"].includes(part)); }

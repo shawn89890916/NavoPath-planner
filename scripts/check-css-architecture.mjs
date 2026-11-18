@@ -4,7 +4,7 @@ import postcss from "postcss";
 import { fileURLToPath } from "node:url";
 
 const historicalSheets = ["app-redesign.css", "workspace-v0.css", "execute-review.css", "styles.css"];
-const canonicalSheets = new Set(["app.css", "ui-primitives.css", "SettingsControls.css"]);
+const canonicalSheets = new Set(["app.css", "ui-primitives.css", "SettingsControls.css", "MonthView.css", "PlanningView.css"]);
 
 function walk(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
