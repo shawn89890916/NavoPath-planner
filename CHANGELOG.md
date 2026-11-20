@@ -2,6 +2,12 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 41
+
+#### 改进
+
+- 番茄钟清楚显示当前阶段和下一步操作。可自动关联当前任务、搜索其他任务或直接添加新任务，并将实际专注用时记到本轮关联的任务。
+
 ### 1.7.0 Beta 40
 
 #### 改进
@@ -738,6 +744,12 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 41
+
+#### Improved
+
+- Pomodoro shows the current phase and next action. Auto-link the current task, search for another task, or add a new one, then log actual focus time to the task linked to the session.
 
 ### 1.7.0 Beta 40
 

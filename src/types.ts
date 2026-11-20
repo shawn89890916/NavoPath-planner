@@ -459,6 +459,9 @@ export interface WidgetTimerRuntime {
   countdownTargetAt?: number;
   countdownTaskId?: string;
   countdownRecordId?: string;
+  /** Absent before starting, null for an unlinked Pomodoro session. */
+  pomodoroTaskId?: string | null;
+  pomodoroStartedAt?: number;
   /** Serializable state owned by the mode provider. */
   [key: string]: any;
 }
@@ -803,6 +806,8 @@ export type WidgetAction =
   | { type: "resetWidgetTimer"; draft: WidgetTimerPreferences }
   | { type: "scheduleWidgetCountdown"; durationMinutes: number }
   | { type: "toggleWidgetTimer" }
+  | { type: "startPomodoro"; taskId?: string }
+  | { type: "finishPomodoro"; save: boolean; startedAt?: number }
   | { type: "updateWidgetAppearance"; patch: Partial<WidgetAppearance> }
   | { type: "resetPosition" };
 

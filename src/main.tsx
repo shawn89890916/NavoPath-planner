@@ -12,6 +12,7 @@ import { normalizeEngagement } from "./utils/engagement";
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
 import { ExtensionMount } from "./extensions/ExtensionMount";
 import { RightUtilityPanel } from "./components/RightUtilityPanel";
+import { FocusTimerPanel } from "./components/FocusTimerPanel";
 import type { ExtensionContribution } from "./extensions/types";
 import { undoAiImportData } from "./utils/aiImportUndo";
 import { highlightTaskLocation } from "./utils/highlightTaskLocation";
@@ -97,10 +98,10 @@ import { emitPluginEvent, subscribePluginEvent } from "./extensions/runtime";
 import { SelectionIndicator } from "./components/SelectionIndicator";
 import type { ExtensionHost } from "./extensions/types";
 import { normalizeWidgetAppearance } from "./widget/widgetPreferences";
-import { DEFAULT_WIDGET_RUNTIME, DEFAULT_WIDGET_TIMER_PREFERENCES, accumulateWidgetWorkTime, advanceTaskElapsedSeconds, advanceWidgetTimer, countsWidgetTimerPhaseAsWork, createWidgetTimerModeTransition, createDeadlineAlignedTimerRuntime, createWidgetTimerRuntime, getWidgetTimerNotificationDescriptor, getStopwatchTaskTimerAction, getWidgetTimerModeChangeTaskAction, getWidgetTimerSnapshotDisplaySeconds, normalizeStoredTaskTimer, normalizeWidgetTimerPreferences, normalizeWidgetTimerRuntime, resolveWidgetCountdownTarget, scheduleWidgetCountdown } from "./widget/widgetTimer";
+import { DEFAULT_WIDGET_RUNTIME, DEFAULT_WIDGET_TIMER_PREFERENCES, accumulateWidgetWorkTime, advanceTaskElapsedSeconds, advanceWidgetTimer, countsWidgetTimerPhaseAsWork, createWidgetTimerModeTransition, createDeadlineAlignedTimerRuntime, createWidgetTimerRuntime, getWidgetTimerNotificationDescriptor, getStopwatchTaskTimerAction, getWidgetTimerModeChangeTaskAction, getWidgetTimerSnapshotDisplaySeconds, normalizeStoredTaskTimer, normalizeWidgetTimerPreferences, normalizeWidgetTimerRuntime, preparePomodoroRuntime, resolvePomodoroSessionTaskId, resolveWidgetCountdownTarget, scheduleWidgetCountdown } from "./widget/widgetTimer";
 import { getTimerMode, getTimerModes, getTimerModeRevision, subscribeTimerModes, onTimerModeRemoving, onTimerModeOpening, openTimerMode } from "./extensions/timers";
 import { createTimerOwner, type TimerOwner } from "./extensions/timerOwner";
-import { extendActiveTimelineRecord, nextOverrunExtensionEnd, resolveWidgetTimelineSelection, timelineRecordBounds } from "./widget/widgetSchedule";
+import { extendActiveTimelineRecord, nextOverrunExtensionEnd, resolvePomodoroTask, resolveWidgetTimelineSelection, timelineRecordBounds } from "./widget/widgetSchedule";
 import { hasActiveTaskSchedule, applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, findScheduledTimelineRecord, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { anchoredTimelineScrollTop, timelineZoomFromPinch } from "./utils/timelineZoom";
 import { calendarEventDurationMinutes, expandTimedCalendarEvent } from "./utils/calendarEventSlices";
@@ -1238,6 +1239,7 @@ function App() {
   const focusOverlayMode = workspacePanel?.kind === "timer" ? workspacePanel.id : undefined;
   const setFocusOverlayMode = (mode: string | null) => setWorkspacePanel((current) =>
     mode ? { kind: "timer", id: mode, owner: current?.kind === "timer" ? current.owner : undefined } : current?.kind === "timer" ? null : current);
+  const [pomodoroTaskChoice, setPomodoroTaskChoice] = useState<string>();
   const timerIntervalRef = useRef<number | null>(null);
   const timerTaskRef = useRef<string | null>(null);
   const timerElapsedRef = useRef(0);
@@ -1289,6 +1291,7 @@ function App() {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerStart", taskId }); return; }
     const baseElapsed = timerTaskRef.current === taskId ? timerElapsedRef.current : 0;
     const now = Date.now();
+    timerElapsedRef.current = baseElapsed;
     timerElapsedBaseRef.current = baseElapsed;
     timerStartedAtRef.current = now;
     timerLastActivityAtRef.current = now;
@@ -1361,6 +1364,7 @@ function App() {
 
   const discardTimer = useCallback(() => {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "discardTimer" }); return; }
+    timerTaskRef.current = null;
     timerElapsedRef.current = 0; timerElapsedBaseRef.current = 0; timerStartedAtRef.current = null;
     setTimerTaskId(null); setTimerRunning(false); setTimerElapsed(0); setTimerStartedAt(null);
   }, []);
@@ -1387,6 +1391,10 @@ function App() {
   const [widgetTimerRuntime, setWidgetTimerRuntime] = useState<WidgetTimerRuntime>(loadWidgetTimerRuntime);
   const widgetTimerRuntimeRef = useRef(widgetTimerRuntime);
   widgetTimerRuntimeRef.current = widgetTimerRuntime;
+  const focusSessionTaskId = resolvePomodoroSessionTaskId(widgetTimerRuntime, timerTaskId);
+  useEffect(() => {
+    if (focusSessionTaskId !== undefined) setPomodoroTaskChoice(undefined);
+  }, [focusSessionTaskId]);
   const widgetTimerAdvancedAtRef = useRef<number>((() => {
     try {
       const stored = Number(localStorage.getItem(WIDGET_TIMER_ADVANCED_AT_KEY));
@@ -1420,9 +1428,8 @@ function App() {
     } catch { /* Ignore unavailable storage. */ }
   }, [widgetTimerRuntime]);
 
-  const advanceWidgetTimerNow = useCallback(() => {
+  const advanceWidgetTimerNow = useCallback((now = Date.now()) => {
     if (!timerOwnerRef.current?.isOwner()) return;
-    const now = Date.now();
     const current = widgetTimerRuntimeRef.current;
     const from = Math.min(now, Math.max(current.phaseStartedAt, widgetTimerAdvancedAtRef.current));
     const work = accumulateWidgetWorkTime(
@@ -3355,33 +3362,28 @@ if (cached?.data && cached?.settings) {
 
   const stopAndSaveTimer = useCallback(() => {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerStop" }); return; }
-    const elapsed = timerRunning && timerStartedAtRef.current !== null
+    const taskId = timerTaskRef.current;
+    const currentData = dataRef.current;
+    const elapsed = timerStartedAtRef.current !== null
       ? advanceTaskElapsedSeconds(timerElapsedBaseRef.current, timerStartedAtRef.current, Date.now())
       : timerElapsedRef.current;
-    if (!timerTaskId || elapsed < 1) {
-      timerElapsedRef.current = 0; timerElapsedBaseRef.current = 0; timerStartedAtRef.current = null;
-      setTimerTaskId(null); setTimerRunning(false); setTimerElapsed(0); setTimerStartedAt(null); return;
+    if (taskId && currentData && elapsed >= 1) {
+      const now = workspaceNow().toISOString();
+      const entry = {
+        id: `te-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        taskId,
+        projectId: currentData.tasks.find(task => task.id === taskId)?.projectId,
+        startAt: new Date(Date.now() - elapsed * 1000).toISOString(),
+        endAt: now,
+        durationMinutes: Math.max(1, Math.round(elapsed / 60)),
+        source: "timer" as const,
+        createdAt: now,
+        updatedAt: now,
+      };
+      void saveData({ ...currentData, timeEntries: [...(currentData.timeEntries || []), entry] });
     }
-    const now = workspaceNow().toISOString();
-    const start = new Date(Date.now() - elapsed * 1000).toISOString();
-    const entry = {
-      id: `te-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      taskId: timerTaskId,
-      projectId: timerTask?.projectId,
-      startAt: start,
-      endAt: now,
-      durationMinutes: Math.max(1, Math.round(elapsed / 60)),
-      source: "timer" as const,
-      createdAt: now,
-      updatedAt: now,
-    };
-    if (data) {
-      const nextData = { ...data, timeEntries: [...(data.timeEntries || []), entry] };
-      void saveData(nextData);
-    }
-    timerElapsedRef.current = 0; timerElapsedBaseRef.current = 0; timerStartedAtRef.current = null;
-    setTimerTaskId(null); setTimerRunning(false); setTimerElapsed(0); setTimerStartedAt(null);
-  }, [timerRunning, timerTaskId, timerTask, data, saveData]);
+    discardTimer();
+  }, [discardTimer, saveData]);
 
   /**
    * Build "virtual" Task objects for each active preview block. These are
@@ -4465,30 +4467,33 @@ if (cached?.data && cached?.settings) {
 
   /** Quick-add entry point used by the desktop widget (title comes from IPC). */
   function widgetQuickAdd(title: string) {
-    if (!data || !title.trim()) return;
-    const targetDate = today;
-    const task = makeSmartTask({
-      ...defaultForm("task"),
-      title,
-      projectId: "",
-    });
-    void saveData({ ...data, tasks: [...data.tasks, { ...task, plannedForDate: targetDate, executionLane: "candidate", order: Date.now() }] });
-    void enrichTaskInBackground(task);
+    const currentData = dataRef.current;
+    if (!currentData || !title.trim()) return;
+    const task = makeSmartTask({ ...defaultForm("task"), title: title.trim(), projectId: "" });
+    const candidate: Task = { ...task, plannedForDate: todayIso(), executionLane: "candidate", order: Date.now() };
+    void saveTaskOperation({ ...currentData, tasks: [...currentData.tasks, candidate] }, "create");
+    void enrichTaskInBackground(candidate);
     showToast(t(lang, "toast.addedToCandidates"));
+    return candidate.id;
   }
 
   /** Build a WidgetSnapshot from the current live React state. */
   function buildWidgetSnapshot(): WidgetSnapshot {
     const snapshotNow = Date.now();
     const snapshotTasks = dataRef.current?.tasks || tasks;
+    const pomodoroTaskId = resolvePomodoroSessionTaskId(widgetTimerRuntime, timerTaskId);
+    const pomodoroTask = snapshotTasks.find(task => task.id === pomodoroTaskId);
     let selection = resolveWidgetTimelineSelection(snapshotTasks, snapshotNow);
-    if (widgetTimerRuntime.unlinked) selection = undefined;
+    if (pomodoroTaskId !== undefined) {
+      const linked = pomodoroTask && resolveWidgetTimelineSelection([pomodoroTask], snapshotNow);
+      selection = linked?.state === "active" ? linked : undefined;
+    } else if (widgetTimerRuntime.unlinked) selection = undefined;
     if (widgetTimerRuntime.mode === "countdown" && widgetTimerRuntime.running && widgetTimerRuntime.countdownTaskId && widgetTimerRuntime.countdownTargetAt && snapshotNow >= widgetTimerRuntime.countdownTargetAt) {
       const overrunTask = snapshotTasks.find((item) => item.id === widgetTimerRuntime.countdownTaskId);
       const overrunBounds = timelineRecordBounds(overrunTask, widgetTimerRuntime.countdownRecordId, widgetTimerRuntime.countdownTargetAt - 1);
       if (overrunTask && overrunBounds) selection = { task: overrunTask, ...overrunBounds, state: "active" };
     }
-    const task = selection?.task;
+    const task = pomodoroTaskId !== undefined ? pomodoroTask : selection?.task;
     const project = task?.projectId ? projects.find((p) => String(p.id) === String(task.projectId)) || null : null;
     const widgetTimerTick = advanceWidgetTimer(widgetTimerRuntime, widgetTimerPreferences, snapshotNow);
     const taskTimerMatches = Boolean(task && timerTaskId === task.id);
@@ -4512,17 +4517,17 @@ if (cached?.data && cached?.settings) {
         : selection.endAt;
       timerDisplaySeconds = Math.max(0, Math.ceil(Math.abs(targetAt - snapshotNow) / 1_000));
       timerPhase = snapshotNow >= targetAt ? "overrun" : "countdown";
-    } else if (!selection && !widgetTimerRuntime.unlinked) {
+    } else if (!selection && !widgetTimerRuntime.unlinked && pomodoroTaskId === undefined) {
       timerDisplaySeconds = 0;
     }
     return {
-      taskId: task?.id,
-      taskTitle: task?.title || (widgetTimerRuntime.unlinked ? (lang === "zh" ? "未关联任务" : "No linked task") : ""),
+      taskId: pomodoroTaskId ?? task?.id,
+      taskTitle: task?.title || (pomodoroTaskId !== undefined || widgetTimerRuntime.unlinked ? (lang === "zh" ? "未关联任务" : "No linked task") : ""),
       taskDueDate: task?.dueDate,
       taskScheduleRecordId: selection?.recordId,
       taskScheduleStartAt: selection?.startAt,
       taskScheduleEndAt: selection?.endAt,
-      timelineState: selection?.state || "empty",
+      timelineState: pomodoroTaskId !== undefined ? "active" : selection?.state || "empty",
       taskProjectColor: project?.color,
       elapsedSeconds: timerElapsed,
       timerRunning: taskTimerMatches && timerRunning,
@@ -4537,7 +4542,7 @@ if (cached?.data && cached?.settings) {
       timerCountsAsWork: widgetTimerTick.countsAsWork,
       timerSnapshotAt: snapshotNow,
       timerPreferences: widgetTimerPreferences,
-      timerRuntime: widgetTimerTick.runtime,
+      timerRuntime: pomodoroTaskId === undefined ? widgetTimerTick.runtime : { ...widgetTimerTick.runtime, pomodoroTaskId },
       timerDisplaySeconds,
       timerPhase,
       popoverOpen: widgetPopoverOpen,
@@ -4558,6 +4563,67 @@ if (cached?.data && cached?.settings) {
     void saveData({ ...currentData, tasks: currentData.tasks.map((item) => item.id === task.id ? updatedTask : item) });
   }
 
+  function setPomodoroRuntime(runtime: WidgetTimerRuntime, now: number) {
+    widgetTimerRuntimeRef.current = runtime;
+    widgetTimerAdvancedAtRef.current = now;
+    setWidgetTimerRuntime(runtime);
+  }
+
+  function finishPomodoro(save: boolean) {
+    if (resolvePomodoroSessionTaskId(widgetTimerRuntimeRef.current, timerTaskRef.current) === undefined) return;
+    if (save) {
+      if (widgetTimerRuntimeRef.current.running) advanceWidgetTimerNow();
+      stopAndSaveTimer();
+    } else {
+      discardTimer();
+    }
+    widgetManagesTaskTimerRef.current = false;
+    widgetTimerRemainderMsRef.current = 0;
+    const now = Date.now();
+    setPomodoroRuntime(preparePomodoroRuntime(now, widgetTimerPreferences), now);
+  }
+
+  function togglePomodoro(requestedTaskId?: string, startOnly = false) {
+    const now = Date.now();
+    const current = widgetTimerRuntimeRef.current;
+    let taskId = resolvePomodoroSessionTaskId(current, timerTaskRef.current);
+    if (taskId !== undefined && startOnly) return;
+
+    if (current.running) {
+      advanceWidgetTimerNow(now);
+      const advanced = widgetTimerRuntimeRef.current;
+      setPomodoroRuntime({ ...advanced, pomodoroTaskId: taskId, running: false, pausedAt: advanced.pausedAt ?? now }, now);
+      timerStartedAtRef.current = null;
+      setTimerRunning(false);
+      setTimerStartedAt(null);
+      return;
+    }
+
+    let prepared = current;
+    if (taskId === undefined) {
+      const target = resolvePomodoroTask(dataRef.current?.tasks || [], now, requestedTaskId);
+      if (requestedTaskId && !target.task) {
+        showToast(lang === "zh" ? "任务暂不可用，请重新选择" : "Task unavailable. Choose a task again.");
+        return;
+      }
+      taskId = target.task?.id ?? null;
+      if (timerTaskRef.current && timerTaskRef.current !== taskId) stopAndSaveTimer();
+      prepared = { ...preparePomodoroRuntime(now, widgetTimerPreferences, target.scheduleEndAt), pomodoroStartedAt: now };
+      widgetTimerRemainderMsRef.current = 0;
+      if (taskId && timerTaskRef.current !== taskId) startTimer(taskId);
+    }
+
+    const tick = advanceWidgetTimer({ ...prepared, pomodoroTaskId: taskId, unlinked: taskId === null, running: true }, widgetTimerPreferences, now);
+    const runtime = tick.runtime;
+    setPomodoroRuntime(runtime, now);
+    widgetManagesTaskTimerRef.current = Boolean(taskId);
+    const counting = Boolean(taskId && runtime.running && tick.countsAsWork);
+    timerElapsedBaseRef.current = timerElapsedRef.current;
+    timerStartedAtRef.current = counting ? now : null;
+    setTimerRunning(counting);
+    setTimerStartedAt(counting ? now : null);
+  }
+
   /**
    * Process an action request relayed from the desktop widget. Reads the
    * latest state via refs so the handler stays correct even though the
@@ -4573,22 +4639,38 @@ if (cached?.data && cached?.settings) {
         widgetQuickAdd(action.title);
         break;
       case "timerStart":
-        if (action.taskId) startTimer(action.taskId);
+        if (widgetTimerRuntimeRef.current.mode === "pomodoro") togglePomodoro(action.taskId, true);
+        else if (action.taskId) startTimer(action.taskId);
         else {
           const selection = resolveWidgetTimelineSelection(dataRef.current?.tasks || [], Date.now());
           if (selection?.state === "active") startTimer(selection.task.id);
         }
         break;
       case "timerPause":
-        syncActiveTaskScheduleFromTimer(Date.now());
-        pauseTimer();
+        if (widgetTimerRuntimeRef.current.mode === "pomodoro") {
+          if (widgetTimerRuntimeRef.current.running) togglePomodoro();
+        } else {
+          syncActiveTaskScheduleFromTimer(Date.now());
+          pauseTimer();
+        }
         break;
       case "timerResume":
-        resumeTimer();
+        if (widgetTimerRuntimeRef.current.mode === "pomodoro") {
+          if (!widgetTimerRuntimeRef.current.running) togglePomodoro();
+        } else resumeTimer();
         break;
       case "timerStop":
-        syncActiveTaskScheduleFromTimer(Date.now());
-        stopAndSaveTimer();
+        if (widgetTimerRuntimeRef.current.mode === "pomodoro") finishPomodoro(true);
+        else {
+          syncActiveTaskScheduleFromTimer(Date.now());
+          stopAndSaveTimer();
+        }
+        break;
+      case "startPomodoro":
+        if (widgetTimerRuntimeRef.current.mode === "pomodoro") togglePomodoro(action.taskId, true);
+        break;
+      case "finishPomodoro":
+        if (widgetTimerRuntimeRef.current.pomodoroStartedAt === action.startedAt) finishPomodoro(action.save);
         break;
       case "discardTimer":
         discardTimer();
@@ -4612,6 +4694,10 @@ if (cached?.data && cached?.settings) {
         });
         break;
       case "setTimerMode": {
+        if (widgetTimerRuntimeRef.current.mode === "pomodoro") {
+          if (action.mode === "pomodoro") break;
+          finishPomodoro(true);
+        }
         const now = Date.now();
         const taskAction = getWidgetTimerModeChangeTaskAction(
           widgetTimerPreferences.mode,
@@ -4621,7 +4707,7 @@ if (cached?.data && cached?.settings) {
           now,
         );
         if (taskAction?.type === "pause") pauseTimerAt(now);
-        else if (widgetTimerRuntime.running && widgetTimerRuntime.mode !== "stopwatch") advanceWidgetTimerNow();
+        else if (widgetTimerRuntimeRef.current.running && widgetTimerRuntimeRef.current.mode !== "stopwatch") advanceWidgetTimerNow();
         widgetManagesTaskTimerRef.current = false;
         timerStartedAtRef.current = null;
         setTimerRunning(false);
@@ -4655,6 +4741,13 @@ if (cached?.data && cached?.settings) {
       case "saveTimerSettings": {
         const now = Date.now();
         const preferences = normalizeWidgetTimerPreferences(action.draft);
+        if (widgetTimerRuntimeRef.current.mode === "pomodoro") {
+          if (preferences.mode === "pomodoro" && resolvePomodoroSessionTaskId(widgetTimerRuntimeRef.current, timerTaskRef.current) !== undefined) {
+            void saveSettings({ widgetTimerPreferences: preferences });
+            break;
+          }
+          finishPomodoro(true);
+        }
         if (preferences.mode !== widgetTimerRuntimeRef.current.mode && widgetTimerRuntimeRef.current.running) {
           syncActiveTaskScheduleFromTimer(now);
           if (widgetTimerRuntimeRef.current.mode === "stopwatch") pauseTimerAt(now);
@@ -4684,6 +4777,10 @@ if (cached?.data && cached?.settings) {
         break;
       }
       case "resetWidgetTimer": {
+        if (widgetTimerRuntimeRef.current.mode === "pomodoro") {
+          finishPomodoro(false);
+          break;
+        }
         const now = Date.now();
         const preferences = normalizeWidgetTimerPreferences(action.draft);
         const selection = resolveWidgetTimelineSelection(dataRef.current?.tasks || [], now);
@@ -4722,6 +4819,10 @@ if (cached?.data && cached?.settings) {
         break;
       }
       case "toggleWidgetTimer": {
+        if (widgetTimerRuntimeRef.current.mode === "pomodoro") {
+          togglePomodoro();
+          break;
+        }
         const now = Date.now();
         const selection = resolveWidgetTimelineSelection(dataRef.current?.tasks || [], now);
         let current = widgetTimerRuntimeRef.current;
@@ -4848,9 +4949,12 @@ if (cached?.data && cached?.settings) {
       onSnapshot(next) {
         if (!settingsRef.current || !dataRef.current || (authStateRef.current?.user?.id || "preview") !== accountId) return;
         mirroredTimerRef.current = next;
-        timerTaskRef.current = next.timerRuntime.unlinked ? null : next.taskId || null; timerElapsedRef.current = next.elapsedSeconds; timerElapsedBaseRef.current = next.elapsedSeconds;
+        const taskId = next.timerRuntime.mode === "pomodoro"
+          ? next.timerRuntime.pomodoroTaskId ?? null
+          : next.timerRuntime.unlinked ? null : next.taskId || null;
+        timerTaskRef.current = taskId; timerElapsedRef.current = next.elapsedSeconds; timerElapsedBaseRef.current = next.elapsedSeconds;
         timerStartedAtRef.current = null; setTimerStartedAt(null);
-        setTimerTaskId(next.timerRuntime.unlinked ? null : next.taskId || null); setTimerElapsed(next.elapsedSeconds); setTimerRunning(next.timerRunning);
+        setTimerTaskId(taskId); setTimerElapsed(next.elapsedSeconds); setTimerRunning(next.timerRunning);
         widgetTimerRuntimeRef.current = next.timerRuntime; widgetTimerAdvancedAtRef.current = next.timerSnapshotAt || Date.now(); setWidgetTimerRuntime(next.timerRuntime);
         if (JSON.stringify(settingsRef.current.widgetTimerPreferences) !== JSON.stringify(next.timerPreferences)) {
           const mirrored = { ...settingsRef.current, widgetTimerPreferences: next.timerPreferences };
@@ -7240,8 +7344,8 @@ if (cached?.data && cached?.settings) {
   function applyAgentClientActions(agent?: AgentRunState) {
     for (const command of agent?.clientActions || []) {
       if (command.entity === "timer") {
-        if (command.operation === "pause") pauseTimer();
-        else if (command.operation === "start" && command.targetId && dataRef.current?.tasks.some((item) => item.id === command.targetId)) startTimer(command.targetId);
+        if (command.operation === "pause") handleWidgetAction({ type: "timerPause" });
+        else if (command.operation === "start" && command.targetId && dataRef.current?.tasks.some((item) => item.id === command.targetId)) handleWidgetAction({ type: "timerStart", taskId: command.targetId });
         continue;
       }
       if (command.entity !== "app" || command.operation !== "navigate") continue;
@@ -8891,6 +8995,10 @@ if (cached?.data && cached?.settings) {
   }
 
   function toggleTimerShortcut() {
+    if (widgetTimerRuntime.mode === "pomodoro") {
+      handleWidgetAction({ type: "toggleWidgetTimer" });
+      return;
+    }
     if (timerTaskId) {
       if (timerRunning) pauseTimer();
       else resumeTimer();
@@ -9110,16 +9218,25 @@ if (cached?.data && cached?.settings) {
   const timelineSnapActive = Boolean(draggedTask && (allDayDragDate || (hoverSlot && !drag?.outsideTimeline)));
   const showNotificationBadge = settings?.showInAppNotificationBadge !== false;
   const focusProvider = focusOverlayMode ? getTimerMode(focusOverlayMode) : undefined;
-  const focusSelection = focusProvider ? resolveWidgetTimelineSelection(tasks, Date.now()) : undefined;
-  const focusTask = focusProvider ? (widgetTimerRuntime.unlinked ? null : timerTask || (focusSelection?.state === "active" ? focusSelection.task : null)) : timerTask || headerTask;
-  const focusProject = focusProvider ? projects.find(project => project.id === focusTask?.projectId) : timerProject || headerProject;
+  const focusIsPomodoro = focusOverlayMode === "pomodoro" && Boolean(focusProvider);
+  const focusNow = Date.now();
+  const focusSessionStarted = focusIsPomodoro && focusSessionTaskId !== undefined;
+  const pomodoroTarget = focusIsPomodoro && !focusSessionStarted ? resolvePomodoroTask(tasks, focusNow, pomodoroTaskChoice) : undefined;
+  const focusSelection = focusProvider && !focusIsPomodoro ? resolveWidgetTimelineSelection(tasks, focusNow) : undefined;
+  const focusTask = focusIsPomodoro
+    ? focusSessionStarted ? tasks.find(task => task.id === focusSessionTaskId) : pomodoroTarget?.task
+    : focusProvider ? widgetTimerRuntime.unlinked ? null : timerTask || (focusSelection?.state === "active" ? focusSelection.task : null) : timerTask || headerTask;
+  const focusProject = focusTask?.projectId ? projects.find(project => project.id === focusTask.projectId) : undefined;
   const focusElapsed = timerTask ? timerElapsed : 0;
-  const focusTick = focusProvider ? advanceWidgetTimer(widgetTimerRuntime, widgetTimerPreferences, Date.now()) : null;
-  const focusClockDisplay = formatTimerDisplay(focusTick ? focusTick.displaySeconds : focusElapsed);
+  const focusRuntime = focusIsPomodoro && !focusSessionStarted
+    ? preparePomodoroRuntime(focusNow, widgetTimerPreferences, pomodoroTarget?.scheduleEndAt)
+    : widgetTimerRuntime;
+  const focusTick = focusProvider ? advanceWidgetTimer(focusRuntime, widgetTimerPreferences, focusNow) : null;
+  const focusClockDisplay = formatTimerDisplay(focusTick ? focusTick.displaySeconds : focusElapsed).padStart(5, "0");
   const flowBreakMinutes = Math.max(5, Math.round(Math.max(focusElapsed / 60, 25) / 5));
-  const focusModeNote = focusProvider ? focusProvider.label[lang]
-    : focusOverlayMode === "flowtime" ? (lang === "zh" ? `已专注 ${Math.floor(focusElapsed / 60)} 分钟，建议休息 ${flowBreakMinutes} 分钟` : `Focused ${Math.floor(focusElapsed / 60)}m, suggested break ${flowBreakMinutes}m`)
-    : (lang === "zh" ? "正计时" : "Stopwatch");
+  const focusModeNote = focusOverlayMode === "flowtime"
+    ? (lang === "zh" ? `已专注 ${Math.floor(focusElapsed / 60)} 分钟，建议休息 ${flowBreakMinutes} 分钟` : `Focused ${Math.floor(focusElapsed / 60)}m, suggested break ${flowBreakMinutes}m`)
+    : focusProvider?.label[lang];
   const chooseFocusMode = (mode: string) => {
     const chosen = mode === "flowtime" || mode === "stopwatch" || getTimerMode(mode) ? mode : "stopwatch";
     setFocusOverlayMode(chosen);
@@ -10521,33 +10638,65 @@ if (cached?.data && cached?.settings) {
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
       {focusOverlayMode && (
         <RightUtilityPanel workspace label={focusProvider?.label[lang] || (lang === "zh" ? "专注" : "Focus")} closeLabel={t(lang, "settings.close")} className="df-focus-utility" onClose={() => setFocusOverlayMode(null)}>
-          <div className="df-focus-panel" style={focusProject?.color ? { ["--focus-accent" as string]: projectColorInk(focusProject.color) } as React.CSSProperties : undefined}>
-            <div className="df-focus-mode-switch">
-              {["stopwatch", ...getTimerModes().filter((item) => getTimerMode(item.mode)).map((item) => item.mode), "flowtime"].map((m) => (
-                <button key={m} className={`df-focus-mode-btn${focusOverlayMode === m ? " active" : ""}`} onClick={() => chooseFocusMode(m)}>
-                  {m === "stopwatch" ? (lang === "zh" ? "秒表" : "Stopwatch") : getTimerMode(m)?.label[lang] || "Flowtime"}
-                </button>
-              ))}
-            </div>
-          <div className="df-focus-main">
-            <div className="df-focus-timer-display">{focusClockDisplay}</div>
-            <div className="df-focus-mode-note">{focusModeNote}</div>
-            <div className="df-focus-task-wrap">
-              <span className="df-focus-task-prefix">{lang === "zh" ? "正在做" : "Working"}</span>
-              <span className="df-focus-task-name">{focusTask?.title || (lang === "zh" ? "未关联任务 · 不记录任务用时" : "No linked task · no task work logged")}</span>
-            </div>
-            {focusProject && <div className="df-focus-project-name">{focusProject.title}</div>}
-          </div>
-          <div className="df-focus-controls">
-            {!(focusProvider ? widgetTimerRuntime.running : timerRunning) ? (
-              <button className="df-focus-play" onClick={() => focusProvider ? handleWidgetAction({ type: "toggleWidgetTimer" }) : timerTaskId ? resumeTimer() : focusTask ? startTimer(focusTask.id) : undefined} disabled={!focusTask && !focusProvider}>{timerTaskId || (focusProvider && widgetTimerRuntime.unlinked) ? (lang === "zh" ? "继续" : "Resume") : (lang === "zh" ? "开始" : "Start")}</button>
-            ) : (
-              <button className="df-focus-pause" onClick={() => focusProvider ? handleWidgetAction({ type: "toggleWidgetTimer" }) : pauseTimer()}>{lang === "zh" ? "暂停" : "Pause"}</button>
-            )}
-            <button className="df-focus-save" onClick={stopAndSaveTimer} disabled={!timerTaskId}>{lang === "zh" ? "保存" : "Save"}</button>
-            <button className="df-focus-discard" onClick={() => { if (focusProvider) handleWidgetAction({ type: "resetWidgetTimer", draft: widgetTimerPreferences }); discardTimer(); }}>{lang === "zh" ? "重置" : "Reset"}</button>
-          </div>
-          </div>
+          <FocusTimerPanel
+            lang={lang}
+            mode={focusOverlayMode}
+            modes={[...getTimerModes().filter(item => item.mode !== "countdown"), { mode: "flowtime", zh: "Flowtime", en: "Flowtime" }]}
+            onModeChange={chooseFocusMode}
+            clock={focusClockDisplay}
+            note={focusModeNote}
+            task={focusTask}
+            project={focusProject}
+            running={focusProvider ? Boolean(focusTick?.runtime.running) : timerRunning}
+            canStart={Boolean(focusTask || focusProvider || timerTaskId)}
+            canSave={focusIsPomodoro ? Boolean(focusSessionTaskId && focusElapsed > 0) : Boolean(timerTaskId)}
+            canReset={focusIsPomodoro ? focusSessionStarted || Boolean(pomodoroTaskChoice) : Boolean(timerTaskId || widgetTimerRuntime.unlinked)}
+            pomodoro={focusIsPomodoro && focusTick ? {
+              runtime: focusTick.runtime,
+              longBreakEvery: widgetTimerPreferences.longBreakEvery,
+              started: focusSessionStarted,
+              taskChoice: pomodoroTaskChoice,
+              tasks,
+              projects,
+              onTaskChoice: setPomodoroTaskChoice,
+              onCreateTask: async () => {
+                const title = await dialog.prompt(lang === "zh" ? "添加任务" : "Add task", "", {
+                  placeholder: lang === "zh" ? "任务名称" : "Task name",
+                  confirmLabel: lang === "zh" ? "添加" : "Add",
+                });
+                if (title?.trim()) {
+                  const taskId = widgetQuickAdd(title);
+                  if (taskId && resolvePomodoroSessionTaskId(widgetTimerRuntimeRef.current, timerTaskRef.current) === undefined) setPomodoroTaskChoice(taskId);
+                }
+              },
+              onEnd: () => handleWidgetAction({ type: "finishPomodoro", save: false, startedAt: focusRuntime.pomodoroStartedAt }),
+            } : undefined}
+            onToggle={() => {
+              if (focusIsPomodoro && !focusSessionStarted) handleWidgetAction({ type: "startPomodoro", taskId: pomodoroTaskChoice });
+              else if (focusProvider) handleWidgetAction({ type: "toggleWidgetTimer" });
+              else if (timerRunning) pauseTimer();
+              else if (timerTaskId) resumeTimer();
+              else if (focusTask) startTimer(focusTask.id);
+            }}
+            resuming={Boolean(timerTaskId || widgetTimerRuntime.unlinked)}
+            onSave={() => {
+              if (focusIsPomodoro) handleWidgetAction({ type: "finishPomodoro", save: true, startedAt: focusRuntime.pomodoroStartedAt });
+              else stopAndSaveTimer();
+            }}
+            onReset={async () => {
+              if (focusIsPomodoro) {
+                if (focusSessionTaskId && focusElapsed > 0 && !await dialog.confirm(lang === "zh" ? "重置本轮计时？" : "Reset this session?", {
+                  message: lang === "zh" ? "本轮尚未记录的专注用时会被清除。" : "Unsaved focus time from this session will be discarded.",
+                  confirmLabel: lang === "zh" ? "重置" : "Reset",
+                })) return;
+                setPomodoroTaskChoice(undefined);
+                handleWidgetAction({ type: "finishPomodoro", save: false, startedAt: focusRuntime.pomodoroStartedAt });
+              } else {
+                if (focusProvider) handleWidgetAction({ type: "resetWidgetTimer", draft: widgetTimerPreferences });
+                discardTimer();
+              }
+            }}
+          />
         </RightUtilityPanel>
       )}
       {scheduleTemplatePresence.present && (scheduleTemplateOpen || !workspacePanel) && data && (

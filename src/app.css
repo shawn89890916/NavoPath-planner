@@ -12160,19 +12160,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-app .df-template-modal-actions button:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
 .df-app .df-template-modal-actions button:disabled { opacity: .45; cursor: not-allowed; }
 /* Productivity core: quiet paper controls inspired by worklog tools, styled as NavoPath. */
-.df-focus-project {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.df-focus-project span {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--project-color, var(--accent-active));
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--project-color, var(--accent-active)) 28%, var(--surface-main));
-}
 .df-header-inner {
   display: grid; max-width: none; height: 58px; padding: 0 16px;
   grid-template-columns: minmax(170px, 1fr) auto minmax(240px, 1fr);
@@ -12421,139 +12408,76 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-candidate-task-row {
   position: relative;
 }
-/* ===== Focus overlay (super-productivity style) ===== */
-.df-focus-main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 24px 12px;
+/* Workspace timer */
+.df-focus-panel {
+  display: grid;
+  align-content: start;
+  gap: var(--space-5);
+  max-width: 440px;
+  margin-inline: auto;
+  padding: var(--space-4) var(--space-2);
+  color: var(--text-main);
 }
+
+.df-focus-mode-switch,
 .df-focus-controls {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 12px 0 8px;
-  justify-content: center;
-}
-.df-focus-controls button:hover {
-  border-color: var(--focus-accent, var(--accent-active));
-  color: var(--focus-accent, var(--accent-active));
-}
-/* Current task and focus mode final pass: editorial paper controls, not pills. */
-.df-focus-utility .df-utility-body {
-  display: flex;
-  flex-direction: column;
-  padding: 0 18px 18px;
-}
-.df-focus-panel {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--text-main);
-}
-.df-focus-mode-switch {
-  display: flex;
+  align-items: center;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px;
-  border-bottom: 1px solid var(--paper-rule);
-  padding: 18px 0 12px;
+  gap: var(--space-2);
 }
-.df-focus-mode-btn {
-  font-size: 13px;
-  padding: 8px 10px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  border-radius: var(--radius-control);
-  transition: border-color var(--motion-fade) var(--motion-ease), color var(--motion-fade) var(--motion-ease), background-color var(--motion-fade) var(--motion-ease);
-  border: 1px solid var(--paper-rule-strong);
-  font: 750 12px/1 var(--paper-mono);
-  letter-spacing: .04em;
-}
-.df-focus-mode-btn:hover {
-  color: var(--focus-accent, var(--accent-active)); border-color: rgba(255,255,255,0.2);
-  border-color: var(--focus-accent, var(--accent-active));
-  background: transparent;
-}
-.df-focus-mode-btn.active {
-  border-color: var(--focus-accent, var(--accent-active));
-  color: var(--focus-accent, var(--accent-active));
-  background: transparent;
-  border-color: var(--focus-accent, var(--accent-active));
-}
-.df-focus-timer-display {
-  font-size: clamp(52px, 10vw, 88px);
-  font-weight: 300;
-  font-family: var(--df-mono, "SF Mono", "Menlo", monospace);
-  color: var(--text-main);
-  letter-spacing: 0;
-  line-height: 1;
-}
-.df-focus-mode-note {
-  margin-top: -24px;
-  color: var(--text-muted);
-  font: 700 12px/1 var(--paper-mono);
-  letter-spacing: .04em;
-}
-.df-focus-task-wrap {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 12px 32px;
-  border: 2px solid var(--focus-accent, var(--accent-active));
-  border-radius: 8px;
-  max-width: 90vw;
-  width: fit-content;
-  border-bottom-width: 6px;
-  background: var(--navo-task-rest-bg, rgb(250, 249, 245));
-  color: var(--text-main);
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-focus-task-prefix {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--text-muted);
-  white-space: nowrap;
-  letter-spacing: 0.5px;
-}
-.df-focus-task-name {
-  font-size: clamp(22px, 3.5vw, 36px);
-  font-weight: 900;
-  color: var(--text-main);
+
+.df-focus-clock {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
   text-align: center;
-  line-height: 1.2;
-  font-family: var(--paper-task);
 }
-.df-focus-project-name {
-  font-size: 14px;
+
+.df-focus-timer-display {
+  font: 400 clamp(38px, 10vw, 64px)/1.05 var(--paper-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.df-focus-mode-note,
+.df-focus-task-label,
+.df-focus-task-project {
   color: var(--text-muted);
-  font: 700 12px/1 var(--paper-mono);
+  font: 500 12px/1.4 var(--paper-sans);
 }
-.df-focus-controls button {
-  font-size: 14px;
-  padding: 10px 30px;
-  background: transparent;
-  color: var(--text-main);
-  cursor: pointer;
-  border-radius: var(--radius-control);
-  transition: border-color var(--motion-fade) var(--motion-ease), color var(--motion-fade) var(--motion-ease), background-color var(--motion-fade) var(--motion-ease);
-  border: 1px solid var(--paper-rule-strong);
-  font: 750 13px/1 var(--paper-sans);
+
+.df-focus-task-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
 }
-.df-focus-controls button:hover:not(:disabled) {
-  color: var(--focus-accent, var(--accent-active));
-  border-color: var(--focus-accent, var(--accent-active));
+
+.df-focus-task-info,
+.df-focus-menu-task {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
-.df-focus-controls button:focus-visible:not(:disabled) {
-  color: var(--focus-accent, var(--accent-active));
-  border-color: var(--focus-accent, var(--accent-active));
+
+.df-focus-task-name {
+  font: 600 16px/1.4 var(--paper-task);
 }
-.df-focus-controls button:disabled {
-  opacity: .42;
-  cursor: not-allowed;
+
+.df-focus-menu-task small {
+  color: var(--text-muted);
+  font: 500 12px/1.4 var(--paper-sans);
+}
+
+.df-focus-menu-empty {
+  margin: 0;
+  padding: var(--space-2);
+  color: var(--text-muted);
+  font: 500 12px/1.4 var(--paper-sans);
 }
 /* 2026 planning card cleanup: one paper-card language, tighter controls. */
 .df-app .df-header-inner {

@@ -289,6 +289,24 @@ export function resetWidgetTimerRuntime(
   return { ...reset, running: false, pausedAt: now };
 }
 
+export function resolvePomodoroSessionTaskId(runtime: WidgetTimerRuntime, recordedTaskId: string | null): string | null | undefined {
+  if (runtime.mode !== "pomodoro") return undefined;
+  if (typeof runtime.pomodoroTaskId === "string" || runtime.pomodoroTaskId === null) return runtime.pomodoroTaskId;
+  // Restore sessions persisted before the runtime carried its task association.
+  if (runtime.unlinked) return null;
+  if (runtime.running || runtime.phase !== "focus" || runtime.round > 1 || (runtime.pausedAt ?? 0) > runtime.phaseStartedAt) {
+    return recordedTaskId;
+  }
+  return undefined;
+}
+
+export function preparePomodoroRuntime(now: number, preferences: WidgetTimerPreferences, endAt?: number): WidgetTimerRuntime {
+  const aligned = endAt !== undefined && endAt > now
+    ? createDeadlineAlignedTimerRuntime("pomodoro", now, endAt, preferences)
+    : undefined;
+  return aligned ?? createWidgetTimerModeTransition("pomodoro", preferences, now).runtime;
+}
+
 export function advanceWidgetTimer(
   value: WidgetTimerRuntime,
   preferenceValue: Partial<WidgetTimerPreferences>,

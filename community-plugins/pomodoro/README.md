@@ -5,11 +5,11 @@ Deadline-aligned focus cycles, short and long breaks, and accurate work accounti
 Install from NavoPath Settings → Community plugins → Browse, then enable it.
 Click **Pomodoro / 番茄钟** in the application header, or choose **Plugin tools →
 Open Pomodoro**. The plugin settings page also includes an Open Pomodoro action.
-Use **Start**, **Pause**, **Resume**, and **Save** in the host focus screen.
-An active timeline task receives actual focus work logs. With no active task,
-Pomodoro starts an unlinked session and clearly labels that no task work is logged.
-An unlinked session remains unlinked if a scheduled task starts later; **Reset**
-begins a fresh session that can link to the currently active timeline task.
+Use **Start focus**, **Pause**, **Resume**, and **End and log** in the workspace
+panel. Pomodoro links to the current timeline task by default. Before starting,
+open the task dropdown to select an unfinished task or add a new one. If no task
+is linked, Pomodoro still runs and labels the session as unlinked. The task
+association stays fixed until the session ends or is reset.
 The entry opens the same host timer session used by the desktop widget.
 All configuration is contributed by the installed plugin. Disabling or removing
 the package releases its UI, timers, network listeners and commands.

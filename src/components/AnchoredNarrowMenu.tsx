@@ -71,7 +71,12 @@ export function AnchoredNarrowMenu({
   if (!open || typeof document === "undefined") return null;
   return createPortal(
     <div ref={menuRef} className={["ui-narrow-menu-layer", className || ""].filter(Boolean).join(" ")} style={{ left: position.left, top: position.top, "--ui-narrow-menu-max-height": `${position.maxHeight}px` } as CSSProperties}>
-      <Popover role="group" aria-label={label} className="ui-narrow-menu ui-divided-list">{children}</Popover>
+      <Popover role="group" aria-label={label} className="ui-narrow-menu ui-divided-list" onKeyDown={event => {
+        if (event.key !== "Escape") return;
+        event.stopPropagation();
+        onClose();
+        anchorRef.current?.focus();
+      }}>{children}</Popover>
     </div>,
     document.getElementById("df-portal-target") || document.body,
   );

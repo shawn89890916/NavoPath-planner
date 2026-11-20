@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extendActiveTimelineRecord, nextOverrunExtensionEnd, resolveWidgetTimelineSelection, timelineRecordBounds } from "./widgetSchedule";
+import { extendActiveTimelineRecord, nextOverrunExtensionEnd, resolvePomodoroTask, resolveWidgetTimelineSelection, timelineRecordBounds } from "./widgetSchedule";
 import type { Task } from "../types";
 
 const task = { id: "task-1", estimatedHours: 1, timelineRecords: [{ id: "record-1", taskId: "task-1", scheduledDate: "2026-07-13", scheduledStart: "14:00", scheduledEndDate: "2026-07-13", scheduledEnd: "15:00", executionStatus: "scheduled", createdAt: "now" }] } as Task;
@@ -21,6 +21,17 @@ describe("widget timeline schedule", () => {
     expect(resolveWidgetTimelineSelection([earlier, task, later], new Date("2026-07-13T14:30:00").getTime())).toMatchObject({ task: { id: "task-1" }, recordId: "record-1", state: "active" });
     expect(resolveWidgetTimelineSelection([earlier, task, later], new Date("2026-07-13T15:30:00").getTime())).toMatchObject({ task: { id: "later" }, recordId: "later-record", state: "upcoming" });
     expect(resolveWidgetTimelineSelection([earlier, task, later], new Date("2026-07-13T18:00:00").getTime())).toBeUndefined();
+  });
+
+  it("auto-links an active task or uses the chosen task's own schedule", () => {
+    const now = new Date("2026-07-13T14:30:00").getTime();
+    const manual = { ...task, id: "manual", timelineRecords: [] };
+    const tasks = [task, manual, { ...manual, id: "completed", completed: true }];
+    expect(resolvePomodoroTask(tasks, now)).toEqual({ task, scheduleEndAt: new Date("2026-07-13T15:00:00").getTime() });
+    expect(resolvePomodoroTask(tasks, now, manual.id)).toEqual({ task: manual, scheduleEndAt: undefined });
+    expect(resolvePomodoroTask(tasks, now, "completed").task).toBeUndefined();
+    expect(resolvePomodoroTask(tasks, now, "missing").task).toBeUndefined();
+    expect(resolvePomodoroTask(tasks, new Date("2026-07-13T13:00:00").getTime()).task).toBeUndefined();
   });
 
   it("extends the current deadline only after each complete 15-minute overrun interval", () => {

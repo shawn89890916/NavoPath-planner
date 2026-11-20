@@ -37,6 +37,18 @@ export function resolveWidgetTimelineSelection(tasks: Task[], now = Date.now()):
   return upcoming ? { ...upcoming, state: "upcoming" } : undefined;
 }
 
+export function canLinkPomodoroTask(task: Task): boolean {
+  return !task.completed && !task.id.startsWith("preview_");
+}
+
+export function resolvePomodoroTask(tasks: Task[], now: number, taskId?: string) {
+  const requested = taskId === undefined ? undefined : tasks.find(task => task.id === taskId && canLinkPomodoroTask(task));
+  if (taskId !== undefined && !requested) return {};
+  const selection = resolveWidgetTimelineSelection(requested ? [requested] : tasks, now);
+  const active = selection?.state === "active" ? selection : undefined;
+  return { task: requested ?? active?.task, scheduleEndAt: active?.endAt };
+}
+
 export function nextOverrunExtensionEnd(currentEndAt: number, now: number, intervalMinutes = 15): number | undefined {
   const intervalMs = Math.max(1, Math.round(intervalMinutes)) * 60_000;
   const intervals = Math.floor((now - currentEndAt) / intervalMs);

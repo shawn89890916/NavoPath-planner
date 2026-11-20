@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Task } from "../types";
 import { provider, defaults } from "../../community-plugins/pomodoro/main";
 import { registerTimerMode, getTimerModes, onTimerModeRemoving } from "../extensions/timers";
-import { DEFAULT_WIDGET_TIMER_PREFERENCES as prefs, advanceTaskElapsedSeconds, advanceWidgetTimer, accumulateWidgetWorkTime, calculateWidgetWorkSeconds, createDeadlineAlignedTimerRuntime, createWidgetTimerModeTransition, createWidgetTimerRuntime, getStopwatchTaskTimerAction, getWidgetTimerModeChangeTaskAction, getWidgetTimerNotificationDescriptor, normalizeStoredTaskTimer, normalizeWidgetTimerPreferences, normalizeWidgetTimerRuntime, normalizeWidgetTimerMode, resetWidgetTimerRuntime, resolveWidgetCountdownTarget, scheduleWidgetCountdown } from "./widgetTimer";
+import { DEFAULT_WIDGET_TIMER_PREFERENCES as prefs, advanceTaskElapsedSeconds, advanceWidgetTimer, accumulateWidgetWorkTime, calculateWidgetWorkSeconds, createDeadlineAlignedTimerRuntime, createWidgetTimerModeTransition, createWidgetTimerRuntime, getStopwatchTaskTimerAction, getWidgetTimerModeChangeTaskAction, getWidgetTimerNotificationDescriptor, normalizeStoredTaskTimer, normalizeWidgetTimerPreferences, normalizeWidgetTimerRuntime, normalizeWidgetTimerMode, preparePomodoroRuntime, resetWidgetTimerRuntime, resolvePomodoroSessionTaskId, resolveWidgetCountdownTarget, scheduleWidgetCountdown } from "./widgetTimer";
 
 const disposers: Array<() => void> = [];
 const install = () => { const dispose = registerTimerMode(provider); disposers.push(dispose); return dispose; };
@@ -58,6 +58,23 @@ describe("installed official Pomodoro", () => {
     install(); expect(normalizeWidgetTimerPreferences({ mode: "pomodoro", focusMinutes: 0 })).toMatchObject({ mode: "pomodoro", focusMinutes: 25, longBreakMinutes: 15 });
     expect(prefs).toEqual({ mode: "stopwatch", countdownSeconds: 1500 });
   });
+  it("preserves an explicitly linked or unlinked session through phase changes and restoration", () => {
+    install();
+    const preferences = { ...prefs, ...defaults, mode: "pomodoro", focusMinutes: 1 };
+    const ready = preparePomodoroRuntime(1000, preferences);
+    expect(resolvePomodoroSessionTaskId(ready, "previous")).toBeUndefined();
+    const deadline = preparePomodoroRuntime(1000, preferences, 55_123);
+    expect(deadline.phaseEndsAt).toBe(55_123);
+
+    const linked = { ...ready, running: true, pomodoroTaskId: "manual", pomodoroStartedAt: 1000 };
+    delete linked.pausedAt;
+    const afterFocus = advanceWidgetTimer(linked, preferences, 61_000).runtime;
+    expect(afterFocus).toMatchObject({ phase: "break", running: false, pomodoroStartedAt: 1000 });
+    expect(resolvePomodoroSessionTaskId(normalizeWidgetTimerRuntime(afterFocus, preferences, 61_000), "new-timeline-task")).toBe("manual");
+    expect(resolvePomodoroSessionTaskId({ ...afterFocus, pomodoroTaskId: null }, "new-timeline-task")).toBeNull();
+    expect(resolvePomodoroSessionTaskId({ ...afterFocus, pomodoroTaskId: undefined }, "legacy-task")).toBe("legacy-task");
+  });
+
   it("waits at boundaries when automatic start is disabled", () => {
     install(); const p = { ...prefs, ...defaults, focusMinutes: 1, breakMinutes: 1 };
     const runtime = createWidgetTimerRuntime("pomodoro", 0, p);
