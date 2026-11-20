@@ -1,5 +1,12 @@
 # NavoPath 更新日志
 
+## 2026-11-20
+
+### 新增
+
+- 原有 NavoPath MCP 令牌可列出、新建和编辑日程模板。支持通过应用授权第三方插件向 Agent 开放指定设置。
+- 默认日程模板和自建模板都可直接编辑和保存。横竖屏共用左上角的模板菜单，收起后时间轴铺满可用宽度。
+
 ## 2026-11-16
 
 ### 新增
@@ -487,6 +494,13 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-20
+
+### Added
+
+- Use the existing NavoPath MCP token to list, create, and edit schedule templates. Authorize third-party plugins in the app to share selected settings with agents.
+- Edit and save built-in and custom schedule templates in place. Use the same top-left menu in landscape and portrait, with the full timeline width available when closed.
 
 ## 2026-11-16
 

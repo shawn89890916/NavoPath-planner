@@ -1,3 +1,4 @@
+import { SCHEDULE_TEMPLATE_PLUGIN } from "../../shared/pluginMcp";
 import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativePlanningViewMode, PluginUiPlacement } from "./types";
 import { compatibility, compareVersions, defaultExtensionPreferences, isRecord, MAX_PACKAGE_BYTES, normalizeExtensionPreferences, readPackage, publicHttps, sha256 } from "./packages";
 import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
@@ -286,7 +287,12 @@ export class ExtensionService {
     const guard = () => { if (generation !== this.generation || account !== this.account) throw new Error("Extension account changed"); };
     const scopedHost: ExtensionHost = {
       getData: () => { guard(); return host.getData(); }, saveData: data => { guard(); return host.saveData(data); },
-      getSettings: () => { guard(); return host.getSettings(); }, saveSettings: patch => { guard(); return host.saveSettings(patch); },
+      getSettings: () => {
+        guard();
+        const { extensionMcpAccess: _grants, ...settings } = host.getSettings();
+        return settings;
+      },
+      saveSettings: ({ extensionMcpAccess: _grants, ...patch }) => { guard(); return host.saveSettings(patch); },
       getAccountId: () => { guard(); return host.getAccountId(); }, toast: message => { guard(); host.toast(message); }, internal: host.internal,
     };
     return { host: scopedHost, key, platform: platform(), config: () => { guard(); return this.getConfig(key); }, saveConfig: async (patch: Record<string, unknown>) => { guard(); await this.saveConfig(key, patch); },
@@ -346,7 +352,9 @@ export class ExtensionService {
   private async unload(key: string) { const active = this.loaded.get(key); if (active) { this.loaded.delete(key); await active.plugin.dispose(); } }
   private async activate(item: InstalledExtension) {
     const generation = this.generation;
-    const pkg = await readPackage(await this.packageBytes(item));
+    const pkg = item.key === SCHEDULE_TEMPLATE_PLUGIN && compatibility(item.manifest, platform())
+      ? (await import("./officialPackages")).officialPackages["schedule-templates"]
+      : await readPackage(await this.packageBytes(item));
     const plugin = await loadPlugin(pkg, this.bridge(item.key));
     if (generation !== this.generation) { await plugin.dispose(); return; }
     this.loaded.set(item.key, { hash: item.sha256, plugin, config: JSON.stringify(this.getConfig(item.key)) });
@@ -410,7 +418,7 @@ export class ExtensionService {
       for (const item of Object.values(prefs.installed)) {
         if (generation !== this.generation) return;
         const incompatible = compatibility(item.manifest, platform());
-        if (incompatible) { statuses[item.key] = incompatible; continue; }
+        if (incompatible && item.key !== SCHEDULE_TEMPLATE_PLUGIN) { statuses[item.key] = incompatible; continue; }
         if (this.snapshot.safeMode) { statuses[item.key] = "受限模式 / Restricted mode"; continue; }
         if (item.manifest.kind === "theme") continue;
         if (!item.enabled) { statuses[item.key] = "已停用 / Disabled"; continue; }

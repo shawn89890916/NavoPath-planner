@@ -1,3 +1,4 @@
+import { isPluginMcpDeclaration } from "../../shared/pluginMcp.ts";
 type Json = Record<string, any>;
 
 const isRecord = (value: unknown): value is Json => !!value && typeof value === "object" && !Array.isArray(value);
@@ -22,6 +23,7 @@ function validManifest(value: unknown): value is Json {
   }
   if (![value.version, value.minAppVersion].every(version => /^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(version))) return false;
   if (!Array.isArray(value.platforms) || !value.platforms.length || !value.platforms.every((platform: unknown) => ["desktop", "web", "mobile"].includes(platform as string))) return false;
+  if (value.mcp !== undefined && (value.kind !== "plugin" || !isPluginMcpDeclaration(value.mcp))) return false;
   if (value.kind === "plugin") return safePath(value.main);
   return safePath(value.styles) && !value.main && !value.desktop;
 }

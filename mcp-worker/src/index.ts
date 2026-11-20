@@ -7,6 +7,9 @@ import { combineSyncSnapshot } from "./syncSnapshot";
 import { buildCalendarFeed } from "./calendarFeed";
 import { handleCalDav } from "./caldav";
 import { listEngagement } from "./engagement";
+import { PLUGIN_OWNER_PATTERN } from "../../shared/pluginMcp";
+import { listPluginMcpCapabilities, readPluginSettings, writePluginSettings } from "./pluginMcp";
+import { createScheduleTemplate, listScheduleTemplates, templateId, templateSlots, templateTitle, updateScheduleTemplate } from "./scheduleTemplates";
 import { validatePluginPreferences } from "./extensions";
 import {
   batchUpdateTasks,
@@ -252,6 +255,65 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
       const habits = (data.habits || []).filter((habit: Json) => (!habitId || habit.id === habitId) && (includeArchived || !habit.archived)).sort((a: Json, b: Json) => (a.order || 0) - (b.order || 0));
       const ids = new Set(habits.map((habit: Json) => habit.id));
       return result({ habits, dailyStates: (data.habitDailyStates || []).filter((state: Json) => ids.has(state.habitId) && (!from || state.date >= from) && (!to || state.date <= to)) });
+    });
+
+    this.server.registerTool("list_plugin_mcp_capabilities", {
+      description: "Discover the installed plugin MCP capabilities currently granted in this NavoPath account. Uses the same NavoPath authorization as the planner tools.",
+      annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: {},
+    }, async () => {
+      const { settings } = await getProfile(this.env, this.userId());
+      return result(listPluginMcpCapabilities(settings));
+    });
+
+    this.server.registerTool("get_plugin_mcp_settings", {
+      description: "Read just the declared and approved cloud-settings fields of an installed plugin. Use the owner from list_plugin_mcp_capabilities.",
+      annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: { owner: z.string().regex(PLUGIN_OWNER_PATTERN) },
+    }, async ({ owner }) => {
+      const { settings } = await getProfile(this.env, this.userId());
+      return result({ owner, settings: readPluginSettings(settings, owner) });
+    });
+
+    this.server.registerTool("update_plugin_mcp_settings", {
+      description: "Set the declared and approved cloud-settings fields of an installed plugin. Use the owner and write fields from list_plugin_mcp_capabilities.",
+      annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false }, inputSchema: { owner: z.string().regex(PLUGIN_OWNER_PATTERN), patch: z.record(z.string(), z.json()) },
+    }, async ({ owner, patch }) => {
+      const userId = this.userId();
+      const profile = await getProfile(this.env, userId);
+      await saveProfile(this.env, userId, profile, { settings: writePluginSettings(profile.settings, owner, patch, now()) });
+      return result({ owner, updatedFields: Object.keys(patch) });
+    });
+
+    this.server.registerTool("list_schedule_templates", {
+      description: "List reusable schedule templates, including built-in templates. Pass templateId to read all blocks and updatedAt for one template.",
+      annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      inputSchema: { templateId: templateId.optional(), offset: z.number().int().min(0).max(10_000).default(0), limit: z.number().int().min(1).max(100).default(50) },
+    }, async ({ templateId, offset, limit }) => {
+      return result(listScheduleTemplates(await getProfile(this.env, this.userId()), templateId, offset, limit));
+    });
+
+    this.server.registerTool("create_schedule_template", {
+      description: "Save a reusable schedule template. Provide its named blocks with exact local HH:mm clock times. End at or before start means the next day. This does not add dates or tasks to the calendar.",
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      inputSchema: { title: templateTitle, slots: templateSlots, idempotency_key: z.string().min(8).max(240) },
+    }, async ({ title, slots, idempotency_key }) => {
+      const userId = this.userId();
+      const id = "template_mcp_" + await sha256(idempotency_key);
+      const profile = await getProfile(this.env, userId);
+      const change = createScheduleTemplate(profile, { id, title, slots }, now(), () => uid("period"));
+      if (change.data) await saveProfile(this.env, userId, profile, { data: change.data });
+      return result({ template: change.template, created: Boolean(change.data) });
+    });
+
+    this.server.registerTool("update_schedule_template", {
+      description: "Edit an existing template in place, including an account's built-in template. Supplied slots replace the whole block list. Omitted title or slots remain as saved. Pass expectedUpdatedAt from list_schedule_templates to guard concurrent edits (empty string for an unedited built-in).",
+      annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
+      inputSchema: { templateId, title: templateTitle.optional(), slots: templateSlots.optional(), expectedUpdatedAt: z.string().max(64).optional() },
+    }, async ({ templateId, title, slots, expectedUpdatedAt }) => {
+      const userId = this.userId();
+      const profile = await getProfile(this.env, userId);
+      const change = updateScheduleTemplate(profile, { id: templateId, title, slots, expectedUpdatedAt }, now(), () => uid("period"));
+      await saveProfile(this.env, userId, profile, { data: change.data });
+      return result({ template: change.template });
     });
 
     this.server.registerTool("get_settings", { description: "Read safe display, AI, planning, Engagement, and plugin installation settings.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: {} }, async () => {

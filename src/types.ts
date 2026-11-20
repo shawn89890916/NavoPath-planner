@@ -1,3 +1,4 @@
+import type { PluginMcpAccess } from "../shared/pluginMcp";
 import type { ExtensionPreferences } from "./extensions/model";
 export type Category = "exam" | "uk" | "us" | "essay" | "materials" | "project" | "personal";
 export type Priority = "high" | "medium" | "low";
@@ -535,6 +536,7 @@ export interface Settings {
   theme: "light" | "dark";
   baseMode?: "light" | "dark" | "system";
   extensions?: ExtensionPreferences;
+  extensionMcpAccess?: PluginMcpAccess;
   extensionConfigs?: Record<string, Record<string, unknown>>;
   extensionConfigUpdatedAt?: Record<string, string>;
   typographyStyle: "editorial" | "balanced" | "sans";
