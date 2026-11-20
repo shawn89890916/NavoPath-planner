@@ -1,13 +1,14 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Language, ScheduleTemplate, Settings } from "../types";
-import { clamp, minutesToTime, pointerToDateTime, SLOT_MINUTES, timeBlockTop } from "../timelineGeometry";
+import { clamp, minutesToTime, pointerToDateTime, SLOT_MINUTES, timeBlockTop, timeToMinutes } from "../timelineGeometry";
+import { clockTimeSpanMinutes } from "../utils/timelineRecords";
 import { uid } from "../utils/ids";
 import { TaskDragLayer } from "../unifiedDrag";
 import { usePointerReorder } from "../usePointerReorder";
 import { readTemplatePeriods, saveTemplatePeriods, TEMPLATE_DAY_MINUTES, templatePeriodEnd, type TemplatePeriod, type templateApplication } from "../utils/scheduleTemplates";
 import { DateQuickPicker } from "./DateQuickPicker";
 import { CandidateBlock, CandidatePanelHeader, CandidatePanelShell, DailyTimelineGrid, ExecutionSplitLayout, TimelineCanvas, TimelineEventBlock } from "./ExecutionSharedLayout";
-import { Button, IconButton, Input } from "./UiPrimitives";
+import { Button, IconButton, Input, Modal } from "./UiPrimitives";
 import { UiChevronDownIcon, UiCopyIcon, UiPlusIcon, UiTrashIcon } from "./UiIcons";
 
 type BuiltInScheduleTemplateId = "school" | "study";
@@ -77,6 +78,46 @@ function customSelection(template: ScheduleTemplate): Selection {
   return { key: template.id, title: template.title, periods: readTemplatePeriods(template.slots) };
 }
 
+function TemplatePeriodEditor({ period, existing, lang, container, onClose, onSave, onDelete }: {
+  period: TemplatePeriod;
+  existing: boolean;
+  lang: Language;
+  container: Element | null;
+  onClose: () => void;
+  onSave: (period: TemplatePeriod) => void;
+  onDelete: () => void;
+}) {
+  const zh = lang === "zh";
+  const [title, setTitle] = useState(period.title);
+  const [start, setStart] = useState(minutesToTime(period.startMinutes));
+  const [end, setEnd] = useState(minutesToTime(templatePeriodEnd(period)));
+  const nextDay = Boolean(start && end && end <= start);
+  const label = existing ? (zh ? "编辑时段" : "Edit block") : (zh ? "添加时段" : "Add block");
+
+  return <Modal portalContainer={container} className="df-template-period-editor" label={label} onClose={onClose}>
+    <form onSubmit={(event) => {
+      event.preventDefault();
+      if (!title.trim() || !start || !end) return;
+      onSave({ id: period.id, title: title.trim(), startMinutes: timeToMinutes(start), durationMinutes: clockTimeSpanMinutes(start, end) });
+    }}>
+      <h2>{label}</h2>
+      <label>
+        <span>{zh ? "时段名称" : "Block name"}</span>
+        <Input required autoFocus value={title} onFocus={(event) => event.currentTarget.select()} onChange={(event) => setTitle(event.target.value)} />
+      </label>
+      <div className="df-template-period-times">
+        <label><span>{zh ? "开始时间" : "Start time"}</span><Input required type="time" value={start} onChange={(event) => setStart(event.target.value)} /></label>
+        <label><span>{zh ? "结束时间" : "End time"}{nextDay && (zh ? "（次日）" : " (next day)")}</span><Input required type="time" value={end} onChange={(event) => setEnd(event.target.value)} /></label>
+      </div>
+      <div className="df-dialog-actions">
+        {existing && <Button variant="danger" onClick={onDelete}>{zh ? "删除时段" : "Delete block"}</Button>}
+        <Button onClick={onClose}>{zh ? "取消" : "Cancel"}</Button>
+        <Button variant="primary" type="submit">{zh ? "确认" : "Done"}</Button>
+      </div>
+    </form>
+  </Modal>;
+}
+
 export default function ScheduleTemplatePanel({ active, lang, today, weekStartsOn, slotHeight, customTemplates, onSaveCustomTemplates, getApplication, onApply, confirmDelete }: Props) {
   const zh = lang === "zh";
   const [selection, setSelection] = useState(() => builtInSelection("school", lang));
@@ -85,7 +126,7 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
   const [pickerMonth, setPickerMonth] = useState(today.slice(0, 7));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [notice, setNotice] = useState("");
-  const [editing, setEditing] = useState<{ id: string; title: string } | null>(null);
+  const [editing, setEditing] = useState<TemplatePeriod | null>(null);
   const [preview, setPreview] = useState<TemplatePeriod | null>(null);
   const panelRef = useRef<HTMLElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -159,7 +200,11 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
     setEditing(null);
     setNotice("");
     setScrollStart(next.periods.length ? Math.min(...next.periods.map((period) => period.startMinutes)) : 9 * 60);
-    if (editName && next.key === selection.key) nameRef.current?.focus({ preventScroll: true });
+    if (editName && next.key === selection.key) {
+      focusName.current = false;
+      nameRef.current?.focus({ preventScroll: true });
+      nameRef.current?.select();
+    }
   }
 
   function createTemplate() {
@@ -167,38 +212,39 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
       nameRef.current?.focus({ preventScroll: true });
       return;
     }
+    activate({ key: "draft", title: "", periods: [] }, true);
+  }
+
+  function copyTemplate() {
     activate({
       key: "draft",
-      title: "",
-      periods: [
-        { id: uid("period"), title: zh ? "第一段" : "Period 1", startMinutes: 9 * 60, durationMinutes: 60 },
-        { id: uid("period"), title: zh ? "第二段" : "Period 2", startMinutes: 10 * 60 + 15, durationMinutes: 60 },
-      ],
+      title: selection.title.trim() + (zh ? " 副本" : " copy"),
+      periods: selection.periods.map((period) => ({ ...period, id: uid("period") })),
     }, true);
   }
 
-  function persist(copy: boolean) {
+  function persist() {
     const title = selection.title.trim();
     if (!title || !selection.periods.length) {
       setNotice(!title ? (zh ? "请填写模板名称。" : "Enter a template name.") : (zh ? "请添加至少一个时间段。" : "Add at least one time block."));
       if (!title) nameRef.current?.focus();
       return;
     }
-    const insert = copy || selection.key === "draft";
+    const insert = selection.key === "draft";
     const id = insert ? uid("template") : selection.key;
     const now = new Date().toISOString();
     const slots = saveTemplatePeriods(selection.periods, (position) => zh ? "第 " + position + " 段" : "Period " + position);
     const next: ScheduleTemplate = {
       id,
-      title: copy ? title + (zh ? " 副本" : " copy") : title,
-      slots: copy ? slots.map((slot) => ({ ...slot, id: uid("period") })) : slots,
+      title,
+      slots,
       createdAt: customTemplates.find((template) => template.id === id)?.createdAt || now,
       updatedAt: now,
     };
     onSaveCustomTemplates((current) => insert ? [...current, next] : current.map((item) => item.id === id ? next : item));
     if (insert) activate(customSelection(next));
     else setSelection(customSelection(next));
-    setNotice(copy ? (zh ? "已复制模板。" : "Template duplicated.") : (zh ? "已保存模板。" : "Template saved."));
+    setNotice(zh ? "已保存模板。" : "Template saved.");
   }
 
   async function deleteTemplate() {
@@ -214,9 +260,22 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
     setSelection((current) => ({ ...current, periods: update(current.periods) }));
   }
 
-  function commitTitle(id: string, title: string) {
-    updatePeriods((periods) => periods.map((period) => period.id === id ? { ...period, title: title.trim() || period.title } : period));
+  function savePeriod(period: TemplatePeriod) {
+    updatePeriods((periods) => periods.some((item) => item.id === period.id)
+      ? periods.map((item) => item.id === period.id ? period : item)
+      : [...periods, period]);
+    const scroll = scrollRef.current;
+    if (scroll && (period.startMinutes * pixelsPerMinute < scroll.scrollTop
+      || period.startMinutes * pixelsPerMinute >= scroll.scrollTop + scroll.clientHeight)) {
+      scroll.scrollTop = Math.max(0, (period.startMinutes - 30) * pixelsPerMinute);
+    }
     setEditing(null);
+  }
+
+  function addPeriod() {
+    const visibleMinutes = (scrollRef.current?.scrollTop || 0) / pixelsPerMinute;
+    const start = clamp(Math.ceil(visibleMinutes / SLOT_MINUTES) * SLOT_MINUTES + 2 * SLOT_MINUTES, 0, TEMPLATE_DAY_MINUTES - SLOT_MINUTES);
+    setEditing(newPeriod(start));
   }
 
   function minuteAt(clientX: number, clientY: number) {
@@ -292,11 +351,10 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
     const period = positionGesture(gesture, event);
     endGesture();
     if (gesture.kind === "create") {
-      updatePeriods((current) => [...current, period]);
       setEditing(period);
     } else if (period !== gesture.original) {
       updatePeriods((current) => current.map((item) => item.id === period.id ? period : item));
-    } else if (gesture.kind === "move") {
+    } else {
       setEditing(period);
     }
   }
@@ -319,10 +377,7 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
       if (event.key !== "Escape") return;
       if (pickerOpen) closePicker();
       else if (gestureRef.current) endGesture();
-      else if (editing) {
-        setEditing(null);
-        panelRef.current?.focus({ preventScroll: true });
-      }
+      else if (editing) setEditing(null);
       else if (reorder.drag) reorder.cancelDrag();
       else return;
       event.stopPropagation();
@@ -330,7 +385,7 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
       <ExecutionSplitLayout className="df-template-shell">
         <CandidatePanelShell ariaLabel={zh ? "模板列表" : "Template list"}>
           <CandidatePanelHeader title={zh ? "模板" : "Templates"} actions={
-            <IconButton icon={<UiPlusIcon size={16} />} label={zh ? "新建模板" : "New template"} onClick={createTemplate} />
+            <Button variant="ghost" onClick={createTemplate}><UiPlusIcon size={14} />{zh ? "新建模板" : "New template"}</Button>
           } />
           <div className="df-candidate-list">
             {(Object.keys(SCHEDULE_TEMPLATES) as BuiltInScheduleTemplateId[]).map((id) => {
@@ -360,13 +415,23 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
             <div className="df-timeline-content">
               <div className="df-timeline-daily">
                 <div className="df-template-name-bar">
-                  {builtIn ? <strong className="df-template-name-readonly">{selection.title}</strong> :
+                  {builtIn ? <>
+                    <strong className="df-template-name-readonly">{selection.title} <small>{zh ? "只读" : "Read-only"}</small></strong>
+                    <Button onClick={copyTemplate}>{zh ? "复制并编辑" : "Copy and edit"}</Button>
+                  </> : <>
                     <Input ref={nameRef} className="df-template-name-inline" value={selection.title}
-                      onChange={(event) => { setSelection({ ...selection, title: event.target.value }); setNotice(""); }}
-                      aria-label={zh ? "模板名称" : "Template name"} placeholder={zh ? "模板名称" : "Template name"} />}
-                  {selection.key !== "draft" && <IconButton icon={<UiCopyIcon size={16} />} label={zh ? "复制模板" : "Duplicate template"} onClick={() => persist(true)} />}
-                  {!builtIn && selection.key !== "draft" && <IconButton icon={<UiTrashIcon size={16} />} label={zh ? "删除模板" : "Delete template"} onClick={() => void deleteTemplate()} />}
-                  {!builtIn && <Button onClick={() => persist(false)}>{zh ? "保存" : "Save"}</Button>}
+                      onChange={(event) => { const title = event.target.value; setSelection((current) => ({ ...current, title })); setNotice(""); }}
+                      onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) persist(); }}
+                      aria-label={zh ? "模板名称" : "Template name"} placeholder={zh ? "模板名称" : "Template name"} />
+                    <Button variant="primary" onClick={persist}>{zh ? "保存模板" : "Save template"}</Button>
+                    <div className="df-template-edit-actions">
+                      <Button variant="ghost" onClick={addPeriod}><UiPlusIcon size={14} />{zh ? "添加时段" : "Add block"}</Button>
+                      {selection.key !== "draft" && <>
+                        <IconButton icon={<UiCopyIcon size={16} />} label={zh ? "复制模板" : "Duplicate template"} onClick={copyTemplate} />
+                        <IconButton icon={<UiTrashIcon size={16} />} label={zh ? "删除模板" : "Delete template"} onClick={() => void deleteTemplate()} />
+                      </>}
+                    </div>
+                  </>}
                 </div>
                 <TimelineCanvas
                   scrollRef={scrollRef}
@@ -384,7 +449,6 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
                     if ((event.nativeEvent as PointerEvent).pointerType !== "touch" || suppressTouchClick.current) return;
                     if (!(event.target instanceof Element) || event.target.closest("[data-template-period]")) return;
                     const period = newPeriod(minuteAt(event.clientX, event.clientY));
-                    updatePeriods((current) => [...current, period]);
                     setEditing(period);
                   }}
                 >
@@ -403,10 +467,6 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
                       onPointerDown={builtIn ? undefined : (event) => begin(event, period, "move")}
                       onEdit={builtIn ? undefined : () => setEditing(period)}
                       onResizeStart={builtIn ? undefined : (edge, event) => begin(event, period, edge)}
-                      onDelete={builtIn ? undefined : () => updatePeriods((current) => current.filter((item) => item.id !== period.id))}
-                      editingTitle={editing?.id === period.id ? editing.title : undefined}
-                      onTitleChange={(title) => setEditing({ id: period.id, title })}
-                      onTitleCommit={(title) => commitTitle(period.id, title)}
                       lang={lang}
                     />;
                   })}
@@ -441,6 +501,13 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
           {zh ? "应用" : "Apply"}{available.length > 0 && " (" + available.length + ")"}
         </Button>
       </footer>
+      {active && editing && <TemplatePeriodEditor key={editing.id} period={editing} lang={lang}
+        container={panelRef.current?.closest(".df-app") || null}
+        existing={selection.periods.some((period) => period.id === editing.id)}
+        onClose={() => setEditing(null)} onSave={savePeriod} onDelete={() => {
+          updatePeriods((current) => current.filter((item) => item.id !== editing.id));
+          setEditing(null);
+        }} />}
     </section>
   );
 }

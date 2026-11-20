@@ -11593,6 +11593,7 @@ body.df-timeline-pointer-drag * {
   --template-block-gutter: 8px;
 }
 .df-app .df-template-shell .df-timeline-scroll { overscroll-behavior: contain; }
+.df-app .df-template-shell .df-panel-title { flex-wrap: wrap; gap: 4px; }
 #root .df-app .df-template-shell .df-candidate-list { padding-bottom: 4px; overscroll-behavior: contain; }
 
 @container (max-width: 500px) {
@@ -11838,6 +11839,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 
 .df-app .df-template-name-bar {
   display: flex;
+  flex-wrap: wrap;
   flex: none;
   align-items: center;
   gap: 4px;
@@ -11846,6 +11848,9 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-bottom: 1px solid var(--paper-rule);
 }
 .df-app .df-template-name-readonly { flex: 1; }
+.df-app .df-template-name-readonly small { color: var(--text-muted); font: 500 11px var(--paper-sans); }
+.df-app .df-template-edit-actions { display: flex; width: 100%; align-items: center; gap: 4px; }
+.df-app .df-template-edit-actions .ui-button { margin-inline-end: auto; }
 .df-app .df-template-name-inline { flex: 1 1 0; min-width: 0; }
 .df-app .df-task-block.df-candidate-block { flex: none; width: 100%; min-width: 0; text-align: start; }
 .df-app .df-task-block.df-candidate-block .df-task-block-grid { grid-template-columns: 0 minmax(0, 1fr); column-gap: 0; }
@@ -11946,7 +11951,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   right: auto;
   width: min(32%, 52px);
   min-height: 0;
-  height: min(30%, 10px);
+  height: min(22%, 9px);
   transform: translateX(-50%);
   touch-action: none;
   pointer-events: auto;
@@ -11954,17 +11959,12 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 #root .df-app .df-template-period-block .df-resize-dot.top { top: 0; }
 #root .df-app .df-template-period-block .df-resize-dot.bottom { bottom: 0; }
 #root .df-app .df-template-period-block:is(:hover, :focus-within) .df-resize-dot { opacity: 1; }
-.df-app .df-template-period-delete {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  right: 3px;
-  translate: 0 -50%;
-  opacity: 0;
-}
-.df-app .df-template-period-block:is(:hover, :focus-within) .df-template-period-delete { opacity: 1; }
-.df-app .df-template-period-block[tabindex] .df-time-card-main { padding-inline-end: 24px; }
-.df-app .df-template-period-title-input { min-width: 0; min-height: 0; width: 100%; }
+.df-app .df-template-period-editor form { display: grid; gap: 14px; }
+.df-app .df-template-period-editor :is(h2, label) { margin: 0; }
+.df-app .df-template-period-editor label { display: grid; gap: 6px; min-width: 0; }
+.df-app .df-template-period-editor .ui-input { width: 100%; min-width: 0; color-scheme: inherit; }
+.df-app.theme-dark .df-template-period-editor { color-scheme: dark; }
+.df-app .df-template-period-times { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .df-app .df-template-modal-actions {
   position: relative;
   display: flex;

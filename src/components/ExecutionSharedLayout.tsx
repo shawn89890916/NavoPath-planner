@@ -3,7 +3,6 @@ import { addDays, minutesToTime, SLOT_MINUTES, timelineHourSlots } from "../time
 import { shortDateStr, t, weekdayName } from "../i18n";
 import React, { memo, type CSSProperties } from "react";
 import { TaskBlock, TaskBlockContent } from "./TaskBlock";
-import { CloseButton, Input } from "./UiPrimitives";
 import type { Language } from "../types";
 
 /**
@@ -221,8 +220,7 @@ export function TimelineCanvas({
 
 /** Scheduled task styling with controls that edit template periods. */
 export function TimelineEventBlock({
-  title, timeRange, style, conflicting, preview, onPointerDown, onEdit, onResizeStart, onDelete,
-  editingTitle, onTitleChange, onTitleCommit, lang,
+  title, timeRange, style, conflicting, preview, onPointerDown, onEdit, onResizeStart, lang,
 }: {
   title: string;
   timeRange?: string;
@@ -232,10 +230,6 @@ export function TimelineEventBlock({
   onPointerDown?: React.PointerEventHandler<HTMLElement>;
   onEdit?: () => void;
   onResizeStart?: (edge: "start" | "end", event: React.PointerEvent<HTMLElement>) => void;
-  onDelete?: () => void;
-  editingTitle?: string;
-  onTitleChange?: (value: string) => void;
-  onTitleCommit?: (value: string) => void;
   lang: Language;
 }) {
   const size = style.height < 56 ? "short" : style.height >= 120 ? "tall" : "normal";
@@ -244,9 +238,8 @@ export function TimelineEventBlock({
     <TaskBlock as="div" variant="scheduled" appearance="calm"
       className="df-time-block df-template-period-block"
       density={size === "short" ? "compact" : "normal"}
-      selected={editingTitle !== undefined}
       title={label}
-      ariaLabel={onEdit ? label : undefined}
+      ariaLabel={onEdit ? (lang === "zh" ? "编辑时段 · " : "Edit block · ") + label : undefined}
       style={style}
       tabIndex={onEdit ? 0 : undefined}
       dataAttrs={{ "template-period": "true", "schedule-size": size, "view-mode": "daily",
@@ -262,30 +255,12 @@ export function TimelineEventBlock({
       {onResizeStart && <button type="button" tabIndex={-1} className="df-resize-dot top" aria-label={t(lang, "timeBlock.adjustStart")}
         onPointerDown={(event) => onResizeStart("start", event)} />}
       <div className="df-time-card-shell">
-        <TaskBlockContent className="df-time-card-main" title={editingTitle === undefined ? title : undefined}>
-          {editingTitle !== undefined && <Input
-            className="df-template-period-title-input"
-            autoFocus
-            aria-label={lang === "zh" ? "时间段名称" : "Block name"}
-            value={editingTitle}
-            onFocus={(event) => event.currentTarget.select()}
-            onChange={(event) => onTitleChange?.(event.target.value)}
-            onBlur={(event) => onTitleCommit?.(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                event.currentTarget.blur();
-              }
-            }}
-            onPointerDown={(event) => event.stopPropagation()}
-          />}
+        <TaskBlockContent className="df-time-card-main" title={title}>
           {timeRange && <time className="df-template-period-time">{timeRange}</time>}
         </TaskBlockContent>
       </div>
       {onResizeStart && <button type="button" tabIndex={-1} className="df-resize-dot bottom" aria-label={t(lang, "timeBlock.adjustEnd")}
         onPointerDown={(event) => onResizeStart("end", event)} />}
-      {onDelete && <CloseButton className="df-template-period-delete" label={lang === "zh" ? "删除时间段" : "Delete block"}
-        onPointerDown={(event) => event.stopPropagation()} onClick={onDelete} />}
     </TaskBlock>
   );
 }

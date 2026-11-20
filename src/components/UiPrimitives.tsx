@@ -69,7 +69,7 @@ export function ActionDisclosure({ label, children }: { label: string; children:
   );
 }
 
-export function Modal({ open = true, role = "dialog", label, labelledBy, onClose, className, children, ...props }: Omit<HTMLAttributes<HTMLElement>, "role"> & { open?: boolean; role?: "dialog" | "alertdialog"; label?: string; labelledBy?: string; onClose?: () => void; children?: ReactNode }) {
+export function Modal({ open = true, role = "dialog", label, labelledBy, onClose, className, children, portalContainer, ...props }: Omit<HTMLAttributes<HTMLElement>, "role"> & { open?: boolean; role?: "dialog" | "alertdialog"; portalContainer?: Element | null; label?: string; labelledBy?: string; onClose?: () => void; children?: ReactNode }) {
   const presence = useMotionPresence(open);
   const ref = useRef<HTMLElement>(null);
   useModalFocus(open, ref);
@@ -91,5 +91,5 @@ export function Modal({ open = true, role = "dialog", label, labelledBy, onClose
       </section>
     </div>
   );
-  return typeof document === "undefined" ? modal : createPortal(modal, document.body);
+  return typeof document === "undefined" ? modal : createPortal(modal, portalContainer || document.body);
 }

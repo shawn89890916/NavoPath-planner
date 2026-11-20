@@ -2,6 +2,12 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 46
+
+#### 修复
+
+- 默认日程模板可通过「复制并编辑」创建可修改的副本。自定义模板可通过「添加时段」或点开卡片直接编辑名称、起止时间和跨午夜安排，再保存模板。修复短时段点不到编辑的问题。
+
 ### 1.7.0 Beta 45
 
 #### 改进
@@ -769,6 +775,12 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 46
+
+#### Fixed
+
+- Use Copy and Edit to customize a built-in schedule template. Add a block or open an existing block to edit its title and start and end times, including overnight schedules, then save the template. Short blocks now open for editing when clicked.
 
 ### 1.7.0 Beta 45
 
