@@ -58,7 +58,7 @@ async function checkDesktop() {
   const output = path.resolve(manifest.build.directories.output);
   const installed = path.join(output, "win-unpacked");
   const archive = path.join(installed, "resources", "app.asar");
-  const { getRawHeader } = require("@electron/asar");
+  const { getRawHeader, listPackage } = require("@electron/asar");
   const { header } = getRawHeader(archive);
   const modules = header.files.node_modules?.files ?? {};
   if (!modules["electron-updater"] || ["lucide-react", "three", "@capacitor", "react-markdown", "remark-gfm", "fflate"].some((name) => name in modules)) {
@@ -66,6 +66,9 @@ async function checkDesktop() {
   }
   if (Object.keys(header.files.electron.files).some((file) => file.endsWith(".test.cjs"))) {
     throw new Error("Desktop checks must stay outside the shipping archive");
+  }
+  if (listPackage(archive).some((file) => /\.m?js\.map$/.test(file))) {
+    throw new Error("JavaScript source maps must stay outside the shipping archive");
   }
   const locales = (await readdir(path.join(installed, "locales"))).filter((file) => file.endsWith(".pak")).sort();
   const expected = manifest.build.win.electronLanguages.map((locale) => locale + ".pak").sort();

@@ -25,6 +25,13 @@ The two YAML files describe the same build. `latest.yml` serves stable clients;
 with `--latest=false`; stable releases are published as the GitHub Latest
 release. Beta updates remain off by default.
 
+The installer and portable executable include the same complete x64 payload.
+The build uses separate BCJ/LZMA2 streams for each file so unchanged runtime
+files can be copied during updates. The runtime uses a 64 MiB dictionary and
+`app.asar` uses 1 MiB. When changing the compression settings or 7-Zip version,
+check native NSIS extraction as well as SHA-512 reconstruction with the updater
+blockmaps. An encoding change can make the first update substantially larger.
+
 The Desktop Release workflow rejects a mismatched tag, refuses existing
 releases, uploads the complete asset set to a draft, then publishes it on the
 channel selected by the version. It runs `scripts/verify-release.mjs` against
@@ -40,6 +47,18 @@ Use the same Electron version and machine when comparing desktop builds. Run the
     node scripts/benchmark-desktop.cjs <path-to-app.asar>
 
 The benchmark launches five isolated local-preview workspaces by default. It reports Windows private bytes for all Electron processes in the workspace, widget, popover, tray, and reopened states. The tray sample is taken after 70 seconds. A unique temporary profile and blocked external renderer requests keep the benchmark isolated from the user's workspace.
+
+Set `NAVOPATH_BENCH_TRAY_CYCLES=1` to measure 20 quick restores and 10 idle
+restores per run. Use `NAVOPATH_BENCH_SURFACE` to select `workspace`, `widget`,
+`dock`, or `dock-widget`. The idle samples include private bytes while hidden,
+peak private bytes during recovery, and samples at 15 and 60 seconds after
+activation. The wake time ends after the workspace is visible and two animation
+frames have run. Measure versions serially on the same display and scale factor.
+
+For separate diagnostic runs set `NAVOPATH_BENCH_DIAGNOSE=1` to capture DOM and
+V8 counters. Set `NAVOPATH_BENCH_TRACE` to a local output path in a single run to
+record a Chromium trace. Keep diagnosis and any shortened idle timeout out of
+the acceptance measurements.
 
 ## Desktop update preference
 

@@ -1,6 +1,6 @@
 {
   "name": "navopath",
-  "version": "1.7.0-beta.31",
+  "version": "1.7.0-beta.32",
   "description": "NavoPath — Navigate your next step.",
   "author": "NavoPath",
   "main": "electron/main.cjs",
@@ -17,7 +17,7 @@
     "terminology:check": "node scripts/terminology-check.mjs",
     "build:portfolio": "tsc && vite build --config vite.portfolio.config.ts",
     "preview:portfolio": "vite preview --config vite.portfolio.config.ts --host 127.0.0.1",
-    "dist": "node scripts/prepare-desktop-release.mjs --check-policy && npm run build:navopath -- --base=./ && electron-builder --win nsis portable --publish never && node scripts/prepare-desktop-release.mjs && node scripts/check-performance-budgets.mjs --desktop",
+    "dist": "node scripts/prepare-desktop-release.mjs --check-policy && npm run build:navopath -- --base=./ && node scripts/package-desktop.mjs && node scripts/prepare-desktop-release.mjs && node scripts/check-performance-budgets.mjs --desktop",
     "preview": "vite preview --host 127.0.0.1",
     "mobile:preview": "vite --host 0.0.0.0",
     "ios:sync": "npm run build:navopath -- --base=./ && cap sync ios && node scripts/normalize-capacitor-spm-paths.mjs",
@@ -195,6 +195,8 @@
       "dist/**/*",
       "electron/**/*",
       "!electron/**/*.test.cjs",
+      "!**/*.js.map",
+      "!**/*.mjs.map",
       "package.json"
     ],
     "directories": {
