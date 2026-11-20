@@ -20,7 +20,6 @@
   inset: calc(100% + 4px) 0 auto auto;
   z-index: 50;
   display: grid;
-  gap: var(--space-1);
   width: min(260px, calc(100vw - 24px));
   max-height: min(480px, var(--action-menu-max-height, 65dvh));
   overflow-y: auto;
@@ -33,34 +32,23 @@
   font: 500 13px/1.4 var(--paper-sans);
   corner-shape: var(--corner-shape, squircle);
 }
-#root .df-app .ui-action-disclosure-panel .ui-button {
+#root .df-app .ui-action-disclosure-panel > .ui-button {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
   width: 100%;
   min-height: 44px;
+  padding-inline: var(--space-2);
+  border: 0;
+  border-radius: 0;
   text-align: start;
 }
 #root .df-app .df-candidate-panel .ui-action-disclosure-panel {
-  gap: 0;
   padding: var(--space-2) var(--space-3);
 }
-#root .df-app .df-candidate-panel .ui-action-disclosure-panel > .ui-button {
-  min-height: 44px;
-  padding-inline: var(--space-2);
-  border: 0;
-  border-bottom: 1px solid var(--paper-rule);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-#root .df-app .df-candidate-panel .ui-action-disclosure-panel > .ui-button:last-child {
-  border-bottom: 0;
-}
-#root .df-app .df-candidate-panel .ui-action-disclosure-panel > .ui-button:hover:not(:disabled),
-#root .df-app .df-candidate-panel .ui-action-disclosure-panel > .ui-button:focus-visible:not(:disabled) {
-  border-color: var(--paper-rule);
+#root .df-app .ui-action-disclosure-panel > .ui-button:hover:not(:disabled),
+#root .df-app .ui-action-disclosure-panel > .ui-button:focus-visible:not(:disabled) {
   background: var(--paper-note);
   color: var(--text-main);
   box-shadow: none;
@@ -208,6 +196,18 @@
 .ui-input:hover { border-color: var(--border-default, rgba(88, 77, 61, .21)); }
 
 .ui-surface { color: var(--color-ink, #584d3d); background: var(--surface-default, #faf9f5); }
+
+/* The following row draws the divider independently of its interaction state. */
+:is(.ui-divided-list, .ui-action-disclosure-panel) > * + * { position: relative; }
+:is(.ui-divided-list, .ui-action-disclosure-panel) > * + *::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 1px;
+  background: var(--border-subtle);
+  pointer-events: none;
+}
 
 .ui-divider { height: 1px; margin: 0; border: 0; background: var(--border-subtle, rgba(88, 77, 61, .13)); }
 
@@ -831,7 +831,6 @@
 
 .ui-narrow-menu-layer .ui-narrow-menu {
   display: grid;
-  gap: 2px;
   max-height: min(320px, var(--ui-narrow-menu-max-height, 320px));
   padding: 6px;
   overflow-x: hidden;
@@ -846,7 +845,7 @@
   corner-shape: var(--corner-shape, squircle);
 }
 
-.ui-narrow-menu-layer .ui-narrow-menu > button,
+#root .ui-narrow-menu-layer .ui-narrow-menu > button,
 .ui-narrow-menu-layer .ui-narrow-menu > label {
   width: 100%;
   min-height: 36px;
@@ -854,7 +853,7 @@
   align-items: center;
   gap: 9px;
   padding: 7px 9px;
-  border: 1px solid transparent;
+  border: 0;
   border-radius: var(--radius-control, 4px);
   background: transparent;
   color: var(--text-main);
@@ -864,15 +863,17 @@
   corner-shape: var(--corner-shape, squircle);
 }
 
-.ui-narrow-menu-layer .ui-narrow-menu > button:hover,
-.ui-narrow-menu-layer .ui-narrow-menu > button:focus-visible {
-  border-color: var(--paper-rule);
+#root .ui-narrow-menu-layer .ui-narrow-menu > button:is(:hover, :focus-visible) {
   background: var(--paper-note);
 }
 
-.ui-narrow-menu-layer .ui-narrow-menu > button.active {
-  border-color: var(--paper-rule-strong);
+#root .ui-narrow-menu-layer .ui-narrow-menu > button:is(.active, [aria-pressed='true']) {
   background: color-mix(in srgb, var(--text-main) 7%, var(--surface-raised));
+}
+
+.ui-narrow-menu-layer .ui-narrow-menu > button:focus-visible {
+  outline: 1px solid var(--border-focus);
+  outline-offset: -2px;
 }
 
 .ui-narrow-menu-layer .ui-narrow-menu > button:active {
@@ -905,7 +906,7 @@
 }
 
 @media (pointer: coarse), (max-width: 620px) {
-  .ui-narrow-menu-layer .ui-narrow-menu > button,
+  #root .ui-narrow-menu-layer .ui-narrow-menu > button,
   .ui-narrow-menu-layer .ui-narrow-menu > label {
     min-height: 44px;
   }

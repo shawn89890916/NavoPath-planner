@@ -220,8 +220,8 @@ Project color may appear only as:
 Candidate rows should remain visually quieter than scheduled timeline items.
 The candidate list is a staging area, not the primary execution surface.
 
-Action menus use one quiet panel outline and fine row dividers rather than a
-separate box around every choice. Core header actions use the shared icon
+Action menus use one quiet panel outline and the shared row divider. Core
+header actions use the shared icon
 registry. Plugin entries use one unboxed 36px icon button with a 20px, 1.8px
 stroke icon, a localized accessible name, and a hover title for context. Plugin
 icons follow the NavoPath mark in their default install order; users can drag
@@ -473,6 +473,12 @@ visual values.
 
 - Page sections and ordinary task cards are borderless by default.
 - Inputs, popovers, and modals may use a subtle or default border to express structure.
+- Contiguous menu options and rows on a shared surface are borderless. Use one
+  `1px` line in `--border-subtle` per boundary, with no extra line above the first
+  row or below the last. Use `ui-divided-list` for stacked rows and apply the
+  same single-divider rule to horizontal groups.
+- Hover and selection in these lists use a subtle background or text change.
+  Keep the keyboard focus ring on the focused control.
 - Selected and drag-and-drop states may use the active accent as a one-pixel ring.
 - A button outline communicates its clickable boundary; other borders must communicate structure or state.
 

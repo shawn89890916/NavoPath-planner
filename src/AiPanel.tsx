@@ -336,7 +336,7 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
         })}
       </div>
     </section>}
-    {auditOpen && <div className="df-agent-audit-list">
+    {auditOpen && <div className="df-agent-audit-list ui-divided-list">
       <header><strong>{lang === "zh" ? "Agent 审计记录" : "Agent audit history"}</strong><small>{lang === "zh" ? "保留最近 30 天，最多显示 50 条" : "Last 30 days, up to 50 runs"}</small></header>
       {auditLoading && <p>{lang === "zh" ? "正在读取…" : "Loading…"}</p>}
       {auditError && <p className="error" role="alert">{auditError}</p>}

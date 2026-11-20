@@ -11437,7 +11437,7 @@ function AllDayQuickAddPopover({ add, projects, onSave, onCancel, absolute }: { 
           className="df-quick-add-confirm">✓</button>
       </div>
       {showProjectMenu && filtered.length > 0 && (
-        <div ref={menuRef} className="df-quick-add-project-menu"
+        <div ref={menuRef} className="df-quick-add-project-menu ui-divided-list"
           style={{
             position: "fixed", top: menuTop, left: menuLeft, width: menuWidth, zIndex: 1000000,
           }}
@@ -12122,7 +12122,7 @@ function DragCreateQuickAdd({ state, projects, onSave, onMore, onCancel, onRange
         />
       </div>
       {showProjectMenu && filtered.length > 0 && (
-        <div className="df-quick-add-project-menu drag-create-project-menu"
+        <div className="df-quick-add-project-menu drag-create-project-menu ui-divided-list"
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}>
           {filtered.map((p) => (
@@ -12206,7 +12206,7 @@ function QuickProjectPicker(props: {
         <span className="df-project-color-dot" style={{ "--project-color": projectColorInk(selectedColor) } as CSSProperties} />
         <span>{selected ? `# ${selected.title}` : "#"}</span>
       </button>
-      {props.open && <div className="df-project-popover df-quick-project-popover up">
+      {props.open && <div className="df-project-popover df-quick-project-popover up ui-divided-list">
         <button type="button" onClick={() => { props.onChange(""); props.onOpenChange(false); }}>{t(props.lang, "timeBlock.unassigned")}</button>
         {props.projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { props.onChange(project.id); props.onOpenChange(false); }} onColorChange={(color) => props.onProjectColorChange(project.id, color)} />)}
         <div className="df-project-create-line">
@@ -12271,11 +12271,11 @@ function AllDayBlock({ task, engagementEnabled, dragging, projectName, projects,
       </TaskBlockRow>
       {projectOpen && projectBtnRef.current && createPortal(
           <div style={{ position: 'fixed', inset: 0, zIndex: 99998 }} onClick={() => setProjectOpen(false)}>
-            <div className="df-project-popover-portal" onClick={(event) => event.stopPropagation()} style={{
+            <div className="df-project-popover-portal ui-divided-list" onClick={(event) => event.stopPropagation()} style={{
               top: projectBtnRef.current.getBoundingClientRect().bottom + 8,
               left: Math.max(8, projectBtnRef.current.getBoundingClientRect().right - 220),
             } as CSSProperties}>
-              <button style={{ textAlign: 'left', border: 0, background: 'transparent', padding: '7px 8px', color: 'var(--df-text)' }} onClick={() => { onProjectChange(""); setProjectOpen(false); }}>{t(lang, "timeBlock.unassigned")}</button>
+              <button type="button" onClick={() => { onProjectChange(""); setProjectOpen(false); }}>{t(lang, "timeBlock.unassigned")}</button>
               {projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { onProjectChange(project.id); setProjectOpen(false); }} onColorChange={(color) => onProjectColorChange(project.id, color)} />)}
               <div className="df-project-create-line"><input value={newProjectTitle} placeholder={t(lang, "timeBlock.newProjectPlaceholder")} onChange={(event) => setNewProjectTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); onCreateProject(newProjectTitle); setNewProjectTitle(""); setProjectOpen(false); } }} /><button onClick={() => { onCreateProject(newProjectTitle); setNewProjectTitle(""); setProjectOpen(false); }}>✓</button></div>
             </div>
@@ -12492,7 +12492,7 @@ function EditDrawer(props: {
       const done = Boolean(subtask.completed || subtask.done);
       const aiGenerated = props.subtaskAiRevealIds.includes(subtask.id);
       return (
-      <div className={`df-subtask-tree-item${depth > 0 ? " nested" : ""}${aiGenerated ? " ai-generated" : ""}`} key={subtask.id} style={{ "--subtask-depth": depth, "--subtask-reveal-index": index } as CSSProperties}>
+      <div className={`df-subtask-tree-item ui-divided-list${depth > 0 ? " nested" : ""}${aiGenerated ? " ai-generated" : ""}`} key={subtask.id} style={{ "--subtask-depth": depth, "--subtask-reveal-index": index } as CSSProperties}>
         <div className={`df-subtask-row-new${done ? " completed" : ""}`}>
           <TaskCheckbox lang={props.lang} checked={done} tone={done ? "done" : "muted"} className={`df-subtask-check${done ? " done" : ""}`} ariaLabel={done ? (props.lang === "zh" ? "标记为未完成" : "Mark incomplete") : (props.lang === "zh" ? "标记为完成" : "Mark complete")} onClick={() => updateSubtask(subtask.id, { completed: !done })}>
             {done ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 6l3 3 5-6" /></svg> : null}
@@ -12508,7 +12508,7 @@ function EditDrawer(props: {
             <svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 2v8M2 6h8" /></svg>
           </button>
         </div>
-        {(subtask.subtasks || []).length > 0 && <div className="df-subtask-tree-children">{renderSubtaskRows(subtask.subtasks || [], depth + 1)}</div>}
+        {(subtask.subtasks || []).length > 0 && <div className="df-subtask-tree-children ui-divided-list">{renderSubtaskRows(subtask.subtasks || [], depth + 1)}</div>}
       </div>
     );
     });
@@ -12735,7 +12735,7 @@ function EditDrawer(props: {
           </section>
 
           {projectPickerOpen && <section className="df-detail-project-pick df-quick-add-detail-picker">
-            <div className="df-drawer-project-list">
+            <div className="df-drawer-project-list ui-divided-list">
               <button onClick={() => { set("projectId", ""); setProjectPickerOpen(false); }}>{t(props.lang, "drawer.unassigned")}</button>
               {props.projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { set("projectId", project.id); setProjectPickerOpen(false); }} onColorChange={(color) => props.onProjectColorChange(project.id, color)} />)}
               <div className="df-project-create-line compact"><input value={newProjectTitle} placeholder={t(props.lang, "drawer.newProjectPlaceholder")} onChange={(event) => setNewProjectTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); createAndSelectProject(); } }} /><button onClick={createAndSelectProject}>✓</button></div>
@@ -12968,7 +12968,7 @@ function EditDrawer(props: {
           <div className="df-detail-popover-layer" onMouseDown={() => setProjectPickerOpen(false)}>
             <section ref={detailPopoverRef} className="df-detail-floating-popover project" style={detailPopoverPosition} onMouseDown={(event) => event.stopPropagation()}>
               <header><strong>{t(props.lang, "drawer.assignProject")}</strong><span>{selectedProjectTitle}</span></header>
-              <div className="df-drawer-project-list">
+              <div className="df-drawer-project-list ui-divided-list">
                 <button onClick={() => { set("projectId", ""); props.onTaskUpdate(props.task!.id, { projectId: undefined }); setProjectPickerOpen(false); }}>{t(props.lang, "drawer.unassigned")}</button>
                 {props.projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { set("projectId", project.id); props.onTaskUpdate(props.task!.id, { projectId: project.id }); setProjectPickerOpen(false); }} onColorChange={(color) => props.onProjectColorChange(project.id, color)} />)}
                 <div className="df-project-create-line compact"><input value={newProjectTitle} placeholder={t(props.lang, "drawer.newProjectPlaceholder")} onChange={(event) => setNewProjectTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); createAndSelectProject(); } }} /><button onClick={createAndSelectProject}>✓</button></div>
@@ -13042,7 +13042,7 @@ function EditDrawer(props: {
               </button>
             </div>
           </div>
-          <div className="df-subtask-list-new">
+          <div className="df-subtask-list-new ui-divided-list">
             {(props.task.subtasks || []).length === 0 ? (
               <div className="df-subtask-empty">{t(props.lang, "drawer.noSubtasks")}</div>
             ) : renderSubtaskRows(props.task.subtasks || [])}

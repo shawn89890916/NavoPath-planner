@@ -33,15 +33,6 @@
   max-height: min(340px, 54vh);
   z-index: 300;
 }
-.df-project-popover > button {
-  text-align: left;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 7px 8px;
-  color: var(--df-text);
-}
-.df-project-popover > button:hover { background: color-mix(in srgb, var(--accent-active) 12%, var(--bg-surface)); }
 .df-app .df-project-choice > button {
   min-width: 0;
   min-height: 34px;
@@ -92,6 +83,7 @@
 }
 .df-project-color-dot-button:hover { transform: scale(1.18); }
 .df-project-color-dot-button:active { transform: scale(.92); }
+#root .df-app :is(.df-project-popover, .df-project-popover-portal, .df-drawer-project-list, .df-quick-add-project-menu) > button:focus-visible,
 .df-app .df-project-choice button:focus-visible {
   outline: 1px solid var(--border-focus);
   outline-offset: -2px;
@@ -276,20 +268,6 @@
 .df-app.theme-dark .df-drawer-project-list {
   background: var(--surface-raised);
   border: 1px solid var(--border-soft);
-}
-.df-app.theme-dark .df-project-popover > button {
-  color: var(--text-main);
-  background: transparent;
-}
-.df-app.theme-dark .df-drawer-project-list > button {
-  color: var(--text-main);
-  background: transparent;
-}
-.df-app.theme-dark .df-project-popover > button:hover {
-  background: rgba(255,255,255,0.06);
-}
-.df-app.theme-dark .df-drawer-project-list > button:hover {
-  background: rgba(255,255,255,0.06);
 }
 /* Transparent backdrop for click-outside-to-close */
 /* ============================================================ */
@@ -1511,9 +1489,7 @@ input[type="range"] {
   grid-template-columns: minmax(0, 1fr) auto 28px;
   align-items: center;
   gap: 6px;
-  margin-top: 6px;
   padding-top: 8px;
-  border-top: 1px solid var(--border-soft);
 }
 .df-project-create-line.compact {
   grid-template-columns: minmax(0, 1fr) 28px;
@@ -4560,7 +4536,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   top: calc(100% + 6px);
   z-index: 50;
   display: grid;
-  gap: 4px;
   max-height: 260px;
   overflow: auto;
   padding: 10px;
@@ -4569,17 +4544,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: var(--surface-raised);
   box-shadow: 0 16px 34px color-mix(in srgb, var(--mode-primary-strong) 14%, transparent);
   corner-shape: var(--corner-shape, squircle);
-}
-.df-drawer-project-list > button {
-  text-align: left;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 7px 8px;
-  color: var(--df-text);
-}
-.df-drawer-project-list > button:hover {
-  background: var(--mode-primary-soft);
 }
 .df-drawer-actions {
   overflow: visible; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; }
@@ -5078,12 +5042,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: #FFFFFF;
   border: 1px solid rgba(15,23,42,0.12);
   box-shadow: 0 16px 36px rgba(15,23,42,0.12);
-}
-.df-app:not(.theme-dark) .df-drawer-project-list button {
-  color: #111827;
-}
-.df-app:not(.theme-dark) .df-drawer-project-list button:hover {
-  background: color-mix(in srgb, var(--accent-active) 8%, #FFFFFF);
 }
 .df-app:not(.theme-dark) .df-detail-section {
   background: #FFFFFF;
@@ -6331,7 +6289,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-detail-add-btn:hover { color: var(--text-main); border-color: var(--border-soft); }
 /* Sub-tasks */
-.df-subtask-list-new { display: flex; flex-direction: column; gap: 2px; }
+.df-subtask-list-new { display: flex; flex-direction: column; }
 .df-subtask-empty { font-size: 12px; color: var(--text-muted); padding: 2px 0; }
 .df-subtask-row-new.completed .df-subtask-title-input { text-decoration: line-through; color: var(--text-muted); }
 .df-subtask-row-new input[type="checkbox"] { width: 15px; height: 15px; flex-shrink: 0; accent-color: var(--accent-active); }
@@ -6442,7 +6400,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   color: var(--text-muted);
   font-size: 12px;
 }
-.df-detail-floating-popover .df-drawer-project-list {
+#root .df-app .df-detail-floating-popover .df-drawer-project-list {
   position: static;
   display: grid;
   width: auto;
@@ -6452,19 +6410,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border: 0;
   box-shadow: none;
   background: transparent;
-}
-.df-detail-floating-popover .df-drawer-project-list > button {
-  min-height: 40px;
-  padding: 9px 11px;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--text-main);
-  text-align: left;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-detail-floating-popover .df-drawer-project-list > button:hover {
-  background: color-mix(in srgb, var(--accent-active) 12%, transparent);
 }
 .df-detail-duration-options button:hover {
   background: color-mix(in srgb, var(--accent-active) 12%, transparent);
@@ -7995,7 +7940,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   max-height: 260px;
   overflow: auto;
   display: grid;
-  gap: 4px;
   padding: 10px;
   border: 1px solid var(--paper-rule-strong); border-radius: var(--paper-radius-soft);
   background: var(--surface-raised); box-shadow: var(--paper-float-shadow); backdrop-filter: none; corner-shape: var(--corner-shape, squircle);
@@ -8961,12 +8905,12 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   .df-mcp-create-row .ui-input { min-height:44px; }
 }
 .df-subtask-tree-item { position:relative; margin-inline-start:min(calc(var(--subtask-depth) * 14px), 154px); }
-.df-subtask-tree-item.nested::before { content:""; position:absolute; inset-inline-start:-8px; top:0; bottom:0; border-inline-start:1px solid var(--paper-rule); opacity:.72; }
-.df-subtask-tree-children { display:grid; gap:2px; }
+.df-subtask-tree-item.nested::after { content:""; position:absolute; inset-inline-start:-8px; top:0; bottom:0; border-inline-start:1px solid var(--paper-rule); opacity:.72; }
+.df-subtask-tree-children { display:grid; }
 .df-subtask-row-new {
   display: flex; align-items: center; gap: 8px;
   padding: 7px 9px; border-radius:0; cursor: pointer;
-  min-height: 38px; border-bottom:1px solid transparent; }
+  min-height: 38px; }
 .df-subtask-row-new:hover { background:color-mix(in srgb,var(--accent-active) 5%,transparent); border-bottom-color:var(--paper-rule); }
 .df-subtask-add-child { flex:0 0 34px; width:34px; height:34px; display:grid; place-items:center; border:0; border-bottom:1px solid transparent; background:transparent; color:var(--paper-ink-muted); cursor:pointer; transition:color var(--paper-motion),background-color var(--paper-motion),border-color var(--paper-motion); }
 .df-subtask-add-child:hover { color:var(--accent-active); background:color-mix(in srgb,var(--accent-active) 6%,transparent); border-bottom-color:var(--accent-active); }
@@ -8998,10 +8942,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   display:block;
   min-height:38px;
   padding:var(--task-padding-y) var(--task-padding-x);
-  border-bottom:0;
-  border:1px solid var(--paper-rule);
-  border-radius:6px;
-  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-detail-subtasks-new .df-subtask-row-new {
   display:grid;
@@ -9854,7 +9794,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 /* Project pickers share one compact paper-sheet language everywhere. */
 .df-app .df-project-popover { animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top;
   scrollbar-width: none;
-  gap: 2px;
   padding: 8px;
   border: 1px solid var(--paper-rule-strong);
   border-radius: 7px 4px 8px 3px;
@@ -9870,7 +9809,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   overflow: auto;
   display: grid;
   scrollbar-width: none;
-  gap: 4px;
   padding: 10px;
   border: 1px solid var(--paper-rule-strong);
   border-radius: 7px 4px 8px 3px;
@@ -9881,7 +9819,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app .df-project-popover::-webkit-scrollbar,
 .df-app .df-project-popover-portal::-webkit-scrollbar { display: none; }
 .df-app .df-drawer-project-list {
-  gap: 2px;
   padding: 8px;
   border: 1px solid var(--paper-rule-strong);
   border-radius: 7px 4px 8px 3px;
@@ -9889,42 +9826,17 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   box-shadow: var(--paper-float-shadow);
   corner-shape: var(--corner-shape, squircle);
 }
-.df-app .df-project-popover > button {
-  min-height: 34px;
-  border: 1px solid var(--paper-rule);
-  border-radius: var(--radius-control);
-  background: transparent;
-  box-shadow: none;
+#root .df-app :is(.df-project-popover, .df-project-popover-portal, .df-drawer-project-list) > button {
+  min-height: 38px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 0;
+  color: var(--text-main);
+  text-align: start;
 }
-.df-app .df-project-popover-portal > button {
-  min-height: 34px;
-  border: 1px solid var(--paper-rule);
-  border-radius: var(--radius-control);
-  background: transparent;
-  box-shadow: none;
-}
-.df-app .df-drawer-project-list > button {
-  min-height: 34px;
-  border: 1px solid var(--paper-rule);
-  border-radius: var(--radius-control);
-  background: transparent;
-  box-shadow: none;
-}
-.df-app .df-project-popover > button:hover {
-  border-color: var(--paper-rule-strong);
+#root .df-app :is(.df-project-popover, .df-project-popover-portal, .df-drawer-project-list) > button:hover:not(:disabled),
+.df-app .df-project-choice:hover {
   background: var(--paper-note);
-}
-.df-app .df-project-popover-portal > button:hover {
-  border-color: var(--paper-rule-strong);
-  background: var(--paper-note);
-}
-.df-app .df-drawer-project-list > button:hover {
-  border-color: var(--paper-rule-strong);
-  background: var(--paper-note);
-}
-.df-app .df-project-create-line {
-  border-top: 1px solid var(--paper-rule-strong);
-  background: transparent;
 }
 /* Project colors are rough paper swatches, not glossy circles. */
 .df-app .df-project-color-picker {
@@ -10003,30 +9915,13 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   align-items: center;
   gap: 6px;
   min-width: 0;
+  min-height: 38px;
   padding: 2px 4px;
-  min-height: 34px;
-  border: 1px solid var(--paper-rule);
-  border-radius: var(--radius-control);
-  background: transparent;
-  box-shadow: none;
-  background-color: transparent;
-  background-image: none;
-  filter: none;
-  text-shadow: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-project-choice:hover {
-  border-color: var(--paper-rule-strong);
-  background: var(--paper-note);
-  background-color: transparent;
-  background-image: none;
-  box-shadow: none;
-  filter: none;
-  text-shadow: none;
 }
 @media (pointer: coarse) {
   .df-app .df-project-choice { grid-template-columns: minmax(0, 1fr) 44px; }
-  .df-app .df-project-choice > button { min-height: 44px; }
+  .df-app .df-project-choice > button,
+  #root .df-app :is(.df-project-popover, .df-project-popover-portal, .df-drawer-project-list) > button { min-height: 44px; }
   .df-app .df-project-color-dot-button { width: 44px; height: 44px; }
 }
 .df-app button:not(.df-resize-dot):not(.df-level-option) {
@@ -13204,13 +13099,13 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-agent-confirm-card .primary { background: color-mix(in srgb, var(--surface-raised) 90%, var(--accent-active) 10%); color: var(--accent-active); border-color: var(--paper-rule); border-bottom-color: var(--accent-active); }
 .df-agent-forbidden { border-left: 2px solid var(--danger); padding-left: 8px; color: var(--danger); font-size: 12px; }
 .df-agent-decision-outcome { color: var(--text-muted); font-size: 12px; }
-.df-agent-audit-list { display: grid; gap: 8px; max-height: min(52vh, 520px); overflow: auto; padding: 14px 18px; border-bottom: 1px solid var(--paper-rule); background: var(--surface-main); }
-.df-agent-audit-list > header { display: grid; gap: 2px; }
+.df-agent-audit-list { display: grid; max-height: min(52vh, 520px); overflow: auto; padding: 14px 18px; border-bottom: 1px solid var(--paper-rule); background: var(--surface-main); }
+.df-agent-audit-list > header { display: grid; gap: 2px; padding-bottom: 8px; }
 .df-agent-audit-list > header small { color: var(--text-muted); }
 .df-agent-audit-list > p { color: var(--text-muted); }
 .df-agent-audit-list article small { color: var(--text-muted); }
 .df-agent-audit-list > p.error { color: var(--danger); }
-.df-agent-audit-list article { display: grid; gap: 4px; padding: 9px 10px; border: 1px solid var(--paper-rule); background: color-mix(in srgb, var(--surface-raised) 94%, var(--accent-active) 6%); }
+.df-agent-audit-list article { display: grid; gap: 4px; padding: 9px 10px; }
 .df-agent-audit-list article > div { display: flex; justify-content: space-between; gap: 10px; }
 .df-agent-audit-list article time { color: var(--text-muted); font-size: 11px; }
 .df-agent-audit-list article code { overflow-wrap: anywhere; color: var(--text-muted); font-size: 10px; }
@@ -19694,19 +19589,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
   height: 7px;
   border-radius: 50%;
 }
-#root .ui-narrow-menu-layer .ui-narrow-menu > button {
-  border-color: transparent;
-  background: transparent;
-}
-#root .ui-narrow-menu-layer .ui-narrow-menu > button:hover,
-#root .ui-narrow-menu-layer .ui-narrow-menu > button:focus-visible {
-  border-color: var(--paper-rule);
-  background: var(--paper-note);
-}
-#root .ui-narrow-menu-layer .ui-narrow-menu > button.active {
-  border-color: var(--paper-rule-strong);
-  background: color-mix(in srgb, var(--text-main) 7%, var(--surface-raised));
-}
 .ui-narrow-menu-layer :is(.df-priority-high, .df-priority-medium, .df-priority-low, .df-priority-none) {
   color: var(--text-muted);
 }
@@ -20880,7 +20762,7 @@ body[data-navopath-base-theme="light"],
 .df-shelf-title-button[aria-expanded="true"] svg { transform: rotate(180deg); }
 .df-shelf-view-menu .ui-button { width: 100%; justify-content: flex-start; }
 .df-shelf-view-menu .ui-button img { width: 16px; height: 16px; object-fit: contain; }
-.df-shelf-view-menu .ui-button[aria-pressed="true"] { background: var(--surface-raised); color: var(--text-main); font-weight: 650; }
+.df-shelf-view-menu .ui-button[aria-pressed="true"] { font-weight: 650; }
 .df-shelf-scroll {
   flex: 1 1 auto;
   min-width: 0;

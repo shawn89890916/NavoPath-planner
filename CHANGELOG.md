@@ -2,6 +2,12 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 37
+
+#### 修复
+
+- 项目选择器、任务操作菜单、子任务列表和 AI 审计记录中的相邻行改用单条细线分隔，消除双描边。
+
 ### 1.7.0 Beta 35
 
 #### 改进
@@ -713,6 +719,12 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 37
+
+#### Fixes
+
+- Project pickers, task action menus, subtask lists and AI audit history now use a single thin divider between adjacent rows.
 
 ### 1.7.0 Beta 35
 
