@@ -1,3 +1,4 @@
+import { pluginMcpGrant, SCHEDULE_TEMPLATE_PLUGIN, type PluginMcpAccess } from "../../shared/pluginMcp";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Language } from "../types";
 import { SettingActionButton, SettingColorInput, SettingDescription, SettingNumberInput, SettingRow, SettingSection, SettingSelect, SettingTextInput, SettingToggle } from "../components/SettingsControls";
@@ -51,7 +52,14 @@ function ThemePreview({ entry, lang, mode }: { entry: CatalogEntry; lang: Langua
   </div>;
 }
 
-export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: { lang: Language; kind: ExtensionKind; settingsPageId?: string | null; onSelectPage?: (id: string | null) => void }) {
+export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mcpAccess, onMcpAccessChange }: {
+  lang: Language;
+  kind: ExtensionKind;
+  settingsPageId?: string | null;
+  onSelectPage?: (id: string | null) => void;
+  mcpAccess?: PluginMcpAccess;
+  onMcpAccessChange?: (owner: string, grant: string | false) => void;
+}) {
   const snapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const { preferences, busy, safeMode, catalogLoading, checkingUpdates } = snapshot;
   const zh = lang === "zh", plugin = kind === "plugin";
@@ -75,6 +83,11 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
   const [fallbackSettingsKey, setFallbackSettingsKey] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const installed = Object.values(preferences.installed).filter((item) => item.manifest.kind === kind);
+  const mcpPlugins = installed.flatMap((item) => {
+    if (item.key === SCHEDULE_TEMPLATE_PLUGIN) return [{ item, grant: "enabled" }];
+    const grant = pluginMcpGrant(item);
+    return grant ? [{ item, grant }] : [];
+  });
   const toolbarOwners = plugin ? getAppHeaderPlugins(snapshot).owners : undefined;
   const matches = (name: string, description: string, author: string) => `${name} ${description} ${author}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase());
   const filtered = installed.filter(({ manifest }) => matches(manifest.name, manifest.description, manifest.author));
@@ -159,6 +172,22 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
           })}
         </div>
       </SettingSection>
+      {plugin && onMcpAccessChange && mcpPlugins.length > 0 && <SettingSection title={text("MCP 权限", "MCP access")}>
+        {mcpPlugins.map(({ item, grant }) => {
+          const official = item.key === SCHEDULE_TEMPLATE_PLUGIN;
+          const fields = item.manifest.mcp?.settings;
+          const read = fields?.read?.join(", ");
+          const write = fields?.write?.join(", ");
+          const description = official
+            ? text("允许 Agent 列出、新建和编辑日程模板。", "Let agents list, create, and edit schedule templates.")
+            : [read && text("读取 " + read, "Read " + read), write && text("修改 " + write, "Write " + write)].filter(Boolean).join(" · ");
+          const checked = official ? mcpAccess?.[item.key] !== false : mcpAccess?.[item.key] === grant;
+          return <SettingRow key={item.key} title={item.manifest.name} description={description}
+            control={<SettingToggle checked={checked} disabled={!item.enabled || busy}
+              ariaLabel={text(item.manifest.name + " MCP 权限", item.manifest.name + " MCP access")}
+              onChange={(enabled) => onMcpAccessChange(item.key, enabled ? grant : false)} />} />;
+        })}
+      </SettingSection>}
       {!plugin && active && Boolean(active.manifest.options?.length) && <SettingSection title={text("主题选项", "Theme options")}>
         {active.manifest.options!.map((option) => <SettingRow key={option.key} title={option.label} control={<ThemeOptionControl option={option} value={extensionService.getConfig(active.key)[option.key] ?? option.default} onChange={(value) => void run(() => extensionService.saveConfig(active.key, { [option.key]: value }))} />} />)}
         <SettingRow title={text("恢复主题选项", "Restore theme options")} control={<SettingActionButton onClick={() => void run(() => extensionService.saveConfig(active.key, Object.fromEntries(active.manifest.options!.map((option) => [option.key, option.default]))))}>{text("恢复默认", "Restore defaults")}</SettingActionButton>} />

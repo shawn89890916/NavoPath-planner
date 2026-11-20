@@ -18,6 +18,29 @@ NavoPath 通过 Streamable HTTP 提供远程 MCP 服务。连接后，支持 MCP
 | 传输方式 | Streamable HTTP |
 | 认证请求头 | `Authorization: Bearer nvp_...` |
 
+## 日程模板和插件权限
+
+使用原有的 NavoPath MCP 连接与设备令牌即可。
+
+- `list_schedule_templates` 列出模板。传入 `templateId` 可以读取单个模板的名称、时段和更新时间。
+- `create_schedule_template` 保存新模板。每个时段包含 `label`、`start` 和 `end`，时间使用本地 `HH:mm`。结束时间早于或等于开始时间时，按次日处理。重试同一次创建时沿用 `idempotency_key`。
+- `update_schedule_template` 按 ID 修改自建模板或当前账户的默认模板。可只传 `title` 或 `slots`，传入 `slots` 时会替换整个时段列表。可附上先前读到的 `expectedUpdatedAt` 防止覆盖期间发生的修改。创建和编辑模板只保存模板，需要在日程中使用时再选择日期应用。
+
+插件作者可在 `manifest.json` 声明希望 Agent 访问的云端设置（对应插件的 `ctx.settings`）。
+
+```json
+{
+  "mcp": {
+    "settings": {
+      "read": ["layout", "accentColor"],
+      "write": ["accentColor"]
+    }
+  }
+}
+```
+
+用户可在 **设置 → 插件 → MCP 权限** 逐个启用或撤销。社区插件默认关闭，更新插件包后需要重新授权。Agent 可用 `list_plugin_mcp_capabilities` 发现已开放的插件和字段，再用 `get_plugin_mcp_settings`、`update_plugin_mcp_settings` 读写指定插件的授权字段。应用发放的设备令牌由 NavoPath MCP 服务统一验证。官方模板工具随已启用的模板插件开放，也可单独关闭。现有完整工作区文件夹同步桥独立保留其整库同步权限。
+
 ## Codex
 
 Codex 桌面端、CLI 与 IDE 扩展共享本机的 `config.toml`。令牌保存在系统环境变量中，配置文件可以安全地在自己的设备间复制。

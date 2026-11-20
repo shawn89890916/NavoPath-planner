@@ -11847,8 +11847,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   padding: 4px 8px;
   border-bottom: 1px solid var(--paper-rule);
 }
-.df-app .df-template-name-readonly { flex: 1; }
-.df-app .df-template-name-readonly small { color: var(--text-muted); font: 500 11px var(--paper-sans); }
 .df-app .df-template-edit-actions { display: flex; width: 100%; align-items: center; gap: 4px; }
 .df-app .df-template-edit-actions .ui-button { margin-inline-end: auto; }
 .df-app .df-template-name-inline { flex: 1 1 0; min-width: 0; }

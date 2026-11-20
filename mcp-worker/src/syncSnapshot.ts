@@ -17,7 +17,14 @@ export function combineSyncSnapshot(profile: SyncProfile, input: Json, accountId
   // and deletion tombstones survive through the app's shared merge algorithm.
   const data = mergeWorkspaceData(input.data, profile.data, mergedAt);
   const cloudUpdatedAt = Date.parse(profile.updated_at || profile.data.savedAt || "") || 0;
-  const settings = Date.parse(input.updatedAt) > cloudUpdatedAt ? input.settings : profile.settings;
+  const settings = Date.parse(input.updatedAt) > cloudUpdatedAt ? { ...input.settings } : profile.settings;
+  // Folder sync is available to MCP clients. Grants come only from app settings.
+  if (settings !== profile.settings) {
+    delete settings.extensionMcpAccess;
+    if (profile.settings.extensionMcpAccess !== undefined) {
+      settings.extensionMcpAccess = profile.settings.extensionMcpAccess;
+    }
+  }
   const withoutSaveTime = (value: Json) => { const { savedAt: _savedAt, ...rest } = value; return JSON.stringify(rest); };
   const changed = withoutSaveTime(data) !== withoutSaveTime(profile.data)
     || JSON.stringify(settings) !== JSON.stringify(profile.settings);

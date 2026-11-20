@@ -2926,7 +2926,12 @@ if (cached?.data && cached?.settings) {
         } catch (caught) {
           const latestPending = pendingSettingsSaveRef.current as QueuedSettingsSave | null;
           if (latestPending && latestPending.version > job.version) {
-            pendingSettingsSaveRef.current = { ...latestPending, payload: { ...job.payload, ...latestPending.payload } };
+            pendingSettingsSaveRef.current = { ...latestPending, payload: {
+              ...job.payload, ...latestPending.payload,
+              ...((job.payload.extensionMcpAccess || latestPending.payload.extensionMcpAccess) && {
+                extensionMcpAccess: { ...job.payload.extensionMcpAccess, ...latestPending.payload.extensionMcpAccess },
+              }),
+            } };
           }
           const shouldRetry = shouldRequeueFailedSave(job.version, settingsSaveVersionRef.current, latestPending?.version);
           if (shouldRetry) {
@@ -3164,11 +3169,18 @@ if (cached?.data && cached?.settings) {
   async function persistSettings(patch: SettingsPatch) {
     const current = settingsRef.current || settings;
     if (!current) return;
-    const optimistic = normalizeSettings({ ...current, ...patch });
+    const optimistic = normalizeSettings({
+      ...current, ...patch,
+      extensionMcpAccess: { ...current.extensionMcpAccess, ...patch.extensionMcpAccess },
+    });
     const pendingSavedAt = workspaceNow().toISOString();
     const version = settingsSaveVersionRef.current + 1;
     settingsSaveVersionRef.current = version;
-    pendingSettingsSaveRef.current = { payload: { ...pendingSettingsSaveRef.current?.payload, ...patch }, version, pendingSavedAt };
+    const pending = pendingSettingsSaveRef.current?.payload;
+    pendingSettingsSaveRef.current = { payload: {
+      ...pending, ...patch,
+      ...(patch.extensionMcpAccess && { extensionMcpAccess: { ...pending?.extensionMcpAccess, ...patch.extensionMcpAccess } }),
+    }, version, pendingSavedAt };
     settingsRef.current = optimistic;
     setSettings(optimistic);
     if (optimistic.language) setLang(optimistic.language);
@@ -10710,7 +10722,10 @@ if (cached?.data && cached?.settings) {
               customTemplates={data.scheduleTemplates || []}
               onSaveCustomTemplates={(update) => {
                 const current = dataRef.current;
-                if (current) void saveData({ ...current, scheduleTemplates: update(current.scheduleTemplates || []) });
+                if (!current) return;
+                const previous = current.scheduleTemplates ?? [];
+                const next = update(previous);
+                if (next !== previous) void saveData({ ...current, scheduleTemplates: next });
               }}
               getApplication={getTemplateApplication}
               onApply={applyTemplateToDate}

@@ -2,6 +2,16 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 48
+
+#### 新增
+
+- NavoPath MCP 支持使用原有令牌列出、新建和编辑日程模板。插件可声明可供 Agent 读写的设置，用户可按插件授权。
+
+#### 改进
+
+- 两个默认日程模板和已有自建模板都可直接编辑并保存，保留原有模板。
+
 ### 1.7.0 Beta 47
 
 #### 修复
@@ -775,6 +785,16 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 48
+
+#### Added
+
+- List, create, and edit schedule templates through NavoPath MCP with your existing token. Plugins can declare settings for agents to read or write, with access granted per plugin.
+
+#### Improved
+
+- Edit and save both built-in schedule templates and existing custom templates in place.
 
 ### 1.7.0 Beta 47
 

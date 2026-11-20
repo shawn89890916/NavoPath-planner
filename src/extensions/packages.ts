@@ -1,3 +1,4 @@
+import { isPluginMcpDeclaration } from "../../shared/pluginMcp";
 import type { ExtensionManifest, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSource, InstalledExtension } from "./types";
 import type { Settings } from "../types";
 
@@ -43,6 +44,7 @@ export function validateManifest(input: unknown): ExtensionManifest {
   if (input.icon !== undefined && !/\.svg$/i.test(input.icon)) throw new Error("Plugin icon must be an SVG file");
   if (input.previews !== undefined && (!isRecord(input.previews) || typeof input.previews.light !== "string" || typeof input.previews.dark !== "string")) throw new Error("Previews require light and dark images");
   for (const preview of [input.preview, input.previews?.light, input.previews?.dark]) if (preview !== undefined && (typeof preview !== "string" || !safePath(preview) || !/\.(?:png|jpe?g|webp|avif)$/i.test(preview))) throw new Error("Preview must be a package-relative raster image");
+  if (input.mcp !== undefined && (input.kind !== "plugin" || !isPluginMcpDeclaration(input.mcp))) throw new Error("Invalid MCP settings declaration");
   if (input.kind === "plugin" && !input.main) throw new Error("Plugin main.js is required");
   if (input.kind === "theme" && (input.main || input.desktop)) throw new Error("Themes contain CSS and resources only");
   if (input.options !== undefined && (!Array.isArray(input.options) || input.options.length > 100 || input.options.some((o: any) => !isRecord(o) || !safeId(o.key) || typeof o.label !== "string" || !/^--[a-z][a-z0-9-]*$/.test(o.variable) || !["color", "number", "string", "boolean"].includes(o.type) || !["string", "number", "boolean"].includes(typeof o.default)))) throw new Error("Invalid theme options");
@@ -165,6 +167,7 @@ export function mergeExtensionPreferences(remote: unknown, local: unknown): Exte
 }
 export function mergeExtensionSettings(remote: Settings, patch: Partial<Settings>): Settings {
   const merged = { ...remote, ...patch };
+  if (patch.extensionMcpAccess) merged.extensionMcpAccess = { ...remote.extensionMcpAccess, ...patch.extensionMcpAccess };
   if (patch.extensions) merged.extensions = mergeExtensionPreferences(remote.extensions, patch.extensions);
   if (patch.extensionConfigs) {
     const configs = { ...remote.extensionConfigs }, dates = { ...remote.extensionConfigUpdatedAt };

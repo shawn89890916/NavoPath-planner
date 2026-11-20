@@ -309,7 +309,12 @@ export class ExtensionService {
     const guard = () => { if (generation !== this.generation || account !== this.account) throw new Error("Extension account changed"); };
     const scopedHost: ExtensionHost = {
       getData: () => { guard(); return host.getData(); }, saveData: data => { guard(); return host.saveData(data); },
-      getSettings: () => { guard(); return host.getSettings(); }, saveSettings: patch => { guard(); return host.saveSettings(patch); },
+      getSettings: () => {
+        guard();
+        const { extensionMcpAccess: _grants, ...settings } = host.getSettings();
+        return settings;
+      },
+      saveSettings: ({ extensionMcpAccess: _grants, ...patch }) => { guard(); return host.saveSettings(patch); },
       getAccountId: () => { guard(); return host.getAccountId(); }, toast: message => { guard(); host.toast(message); }, internal: host.internal,
     };
     return { host: scopedHost, key, platform: platform(), config: () => { guard(); return this.getConfig(key); }, saveConfig: async (patch: Record<string, unknown>) => { guard(); await this.saveConfig(key, patch); },

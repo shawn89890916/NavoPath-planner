@@ -1,3 +1,4 @@
+import { isSafePluginConfigKey, normalizePluginMcpAccess } from "../shared/pluginMcp";
 import type { Settings } from "./types";
 import { DEFAULT_WIDGET_APPEARANCE, normalizeWidgetAppearance } from "./widget/widgetPreferences";
 import { DEFAULT_WIDGET_TIMER_PREFERENCES, normalizeWidgetTimerPreferences } from "./widget/widgetTimer";
@@ -148,10 +149,6 @@ function isSafePluginId(value: string): boolean {
   return /^[a-zA-Z0-9_.-]{1,80}$/.test(value) && !unsafeStorageKeys.has(value);
 }
 
-function isSafePluginConfigKey(value: string): boolean {
-  return value.length > 0 && value.length <= 100 && !unsafeStorageKeys.has(value);
-}
-
 function normalizeEnabledPlugins(value: unknown[]): string[] {
   const result: string[] = [];
   const seen = new Set<string>();
@@ -289,6 +286,7 @@ export function normalizeSettings(value: unknown): Settings {
     }
   }
   normalized.extensionConfigs = configs;
+  normalized.extensionMcpAccess = normalizePluginMcpAccess(stored.extensionMcpAccess);
   for (const [key, fallback] of Object.entries(defaults)) {
     if (typeof fallback === "boolean" && typeof normalized[key] !== "boolean") normalized[key] = fallback;
     if (typeof fallback === "number" && (typeof normalized[key] !== "number" || !Number.isFinite(normalized[key]))) {
