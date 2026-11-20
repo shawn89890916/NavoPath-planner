@@ -20431,20 +20431,18 @@ body.df-unified-dragging .df-unified-drag-overlay {
   #root .df-app.mode-execute .df-compact-mode-label.tasks-label,
   #root .df-app.mode-execute .df-compact-mode-label.schedule-label { left: 12px; }
 }
-/* Keep the allocation ring and its labels inside one portrait paper panel. */
-/* On portrait touch screens, keep long-press gestures for the app instead of text selection. */
+/* Apply to the workspace and its body-level portals. */
+:where(body:has(> #root > .df-app)) {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+:where(body:has(> #root > .df-app)) :is(input, textarea, select, [contenteditable]:not([contenteditable="false"])) {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+}
 @media (pointer: coarse) and (orientation: portrait) {
-  #root .df-app,
-  #root .df-app * {
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-  }
-  #root .df-app :is(input, textarea, select, [contenteditable]:not([contenteditable="false"])), #root .df-app :is([contenteditable]:not([contenteditable="false"])) * {
-    user-select: text;
-    -webkit-user-select: text;
-    -webkit-touch-callout: default;
-  }
   #root .df-app.mode-execute .df-time-block .df-block-check {
     position: relative;
     z-index: 8;
@@ -21032,6 +21030,9 @@ body[data-navopath-base-theme="light"],
   border-radius: var(--workspace-panel-radius);
   transform: translateY(var(--mobile-sheet-drag-y, 0px));
 }
+#root .df-app .df-utility-panel[data-workspace-panel] {
+  box-shadow: var(--shadow-soft);
+}
 #root .df-app [data-workspace-panel]:not(.is-closing, [data-motion-closing]) {
   animation: ui-fade-in var(--motion-fade) var(--motion-ease) backwards;
 }
@@ -21041,5 +21042,6 @@ body[data-navopath-base-theme="light"],
   background: rgba(22, 19, 15, .48);
   backdrop-filter: none;
 }
+#root .df-app [data-workspace-backdrop="transparent"] { background: transparent; }
 #root .df-app .df-proactive-center-layer[data-workspace-backdrop] { z-index: 80; }
 #root .df-app [data-workspace-backdrop][data-motion-closing] { pointer-events: none; }

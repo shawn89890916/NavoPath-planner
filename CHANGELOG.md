@@ -2,6 +2,13 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 35
+
+#### 改进
+
+- 工作区的展示文字不可选取，输入框仍可选中文字。
+- 打开设置或插件页时，顶栏和背景保持原色，面板用轻微阴影和工作区分开。
+
 ### 1.7.0 Beta 34
 
 #### 改进
@@ -706,6 +713,13 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 35
+
+#### Improvements
+
+- Display text in the workspace is no longer selectable. Input fields still support text selection.
+- Settings and plugin panels use a soft shadow and keep the header and workspace at their original brightness.
 
 ### 1.7.0 Beta 34
 

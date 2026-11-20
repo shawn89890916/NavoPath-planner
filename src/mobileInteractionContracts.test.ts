@@ -55,13 +55,9 @@ describe("portrait interaction contracts", () => {
     expect(main).toContain('data-cross-day-scroll={settings.continuousCrossDayScroll !== false ? "true" : "false"}');
   });
 
-  it("disables long-press text selection only in portrait touch layouts and keeps editors selectable", () => {
-    expect(appCss).toContain("@media (pointer: coarse) and (orientation: portrait) {");
-    expect(appCss).toMatch(/#root \.df-app,\s*#root \.df-app \*\s*\{\s*user-select: none;/);
-    expect(appCss).toContain("-webkit-touch-callout: none;");
-    expect(appCss).toContain('input, textarea, select, [contenteditable]:not([contenteditable="false"])');
-    expect(appCss).toContain("user-select: text;");
-    expect(appCss).toContain("-webkit-touch-callout: default;");
+  it("disables workspace text selection and touch callouts while keeping editors selectable", () => {
+    expect(appCss).toMatch(/:where\(body:has\(> #root > \.df-app\)\) \{[^}]*user-select: none;[^}]*-webkit-touch-callout: none;/);
+    expect(appCss).toMatch(/:where\(body:has\(> #root > \.df-app\)\) :is\(input, textarea, select, \[contenteditable\]:not\(\[contenteditable="false"\]\)\) \{[^}]*user-select: text;[^}]*-webkit-touch-callout: default;/);
   });
 
   it("keeps project filters in the shelf header, checkboxes compact, and the dock at the viewport edge", () => {

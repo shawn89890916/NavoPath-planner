@@ -715,7 +715,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   );
   return (
     <>
-      <div className="df-utility-backdrop" data-workspace-backdrop onMouseDown={onClose} />
+      <div className="df-utility-backdrop" data-workspace-backdrop="transparent" onMouseDown={onClose} />
       <aside className="df-utility-panel" data-workspace-panel role="dialog" aria-labelledby="df-utility-title">
         <MobileSheetDismissHandle onDismiss={onClose} lang={lang} />
         <div className="df-utility-head">

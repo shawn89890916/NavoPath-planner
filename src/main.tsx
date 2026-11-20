@@ -842,7 +842,7 @@ function buildTaskFromEvent(event: CalendarEvent): Task {
 
 function SettingsLoading({ lang, onClose }: { lang: Language; onClose: () => void }) {
   return <>
-    <div className="df-utility-backdrop" data-workspace-backdrop onMouseDown={onClose} />
+    <div className="df-utility-backdrop" data-workspace-backdrop="transparent" onMouseDown={onClose} />
     <aside className="df-utility-panel" data-workspace-panel role="dialog" aria-busy="true" aria-label={lang === "zh" ? "正在打开设置" : "Opening Settings"} onKeyDown={(event) => { if (event.key === "Escape") onClose(); }}>
       <div className="df-utility-head"><h2>{lang === "zh" ? "设置" : "Settings"}</h2><CloseButton label={t(lang, "settings.close")} onClick={onClose} /></div>
       <div className="df-utility-body df-settings-shell" aria-hidden="true"><section>{Array.from({ length: 5 }, (_, index) => <div className="df-skeleton-task" key={index}><i /><span /><small /></div>)}</section></div>
