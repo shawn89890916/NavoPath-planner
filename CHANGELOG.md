@@ -2,6 +2,13 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 42
+
+#### 修复
+
+- 日程模板使用主页的任务卡片和时间轴，打开时定位到首个时段。修复自定义模板的新增、拖动、缩放和保存，应用时保留原始时刻及跨午夜时长。
+- 应用模板时默认选中今天。可下拉选择未来日期，预览冲突并仅添加可排入的时间块。
+
 ### 1.7.0 Beta 41
 
 #### 改进
@@ -744,6 +751,13 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 42
+
+#### Fixed
+
+- Schedule Templates use the home workspace’s task cards and timeline, with the first block in view on open. Adding, moving, resizing, and saving custom blocks work again, and applying a template preserves exact times and overnight durations.
+- Templates apply to today by default. Pick a future date from the dropdown to preview conflicts and add the available blocks.
 
 ### 1.7.0 Beta 41
 

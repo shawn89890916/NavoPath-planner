@@ -1,33 +1,10 @@
 import { dailyContinuousCanvasHeight, getContinuousTimelineDateForOffset } from "../utils/continuousTimeline";
 import { addDays, minutesToTime, SLOT_MINUTES, timelineHourSlots } from "../timelineGeometry";
-import { shortDateStr, weekdayName } from "../i18n";
+import { shortDateStr, t, weekdayName } from "../i18n";
 import React, { memo, type CSSProperties } from "react";
-import { TaskBlock } from "./TaskBlock";
-import { CloseButton } from "./UiPrimitives";
+import { TaskBlock, TaskBlockContent } from "./TaskBlock";
+import { CloseButton, Input } from "./UiPrimitives";
 import type { Language } from "../types";
-
-/**
- * ExecutionSharedLayout — the real shared layout primitives used by BOTH the
- * execution page and the template modal.
- *
- * These components are extracted into their own module so that reuse is
- * enforced via real ES-module `import` statements, not by being in the same
- * file scope. The execution page render path and the `ScheduleTemplateModal`
- * render path both `import` from this module — if either caller stops
- * importing these components, that is a real regression visible in the import
- * graph, not just a styling drift.
- *
- * Exported components:
- *   - ExecutionSplitLayout   (the `<main class="df-execute">` 2-column grid)
- *   - CandidatePanelShell    (`<section class="df-candidate-panel">`)
- *   - CandidatePanelHeader   (`<div class="df-panel-title">`)
- *   - CandidateBlock         (list-row primitive over `TaskBlock variant="candidate"`)
- *   - TimelineCanvas         (`df-timeline-scroll` + `df-timeline-canvas` container)
- *   - TimelineEventBlock     (scheduled-block primitive over `TaskBlock variant="scheduled"`)
- *
- * Every component renders a `data-reuse` attribute so the actual DOM path
- * can be inspected to prove the reused component is on screen.
- */
 
 /**
  * ExecutionSplitLayout — the real execution-page 2-column grid
@@ -141,68 +118,27 @@ export function CandidatePanelHeader({
   );
 }
 
-/**
- * CandidateBlock — the shared list-row visual primitive for items inside a
- * candidate panel. Renders `<TaskBlock variant="candidate">` — the SAME
- * shared component that `TaskCard` (execution page candidate items) composes.
- *
- * mode="template"      — a selectable template row (title + meta + actions)
- * mode="template-new"  — the "+ new template" row (icon + title + meta)
- */
-export function CandidateBlock({
-  mode,
-  selected,
-  title,
-  meta,
-  actions,
-  icon,
-  badge,
-  onClick,
-  onDoubleClick,
-  onPointerDown,
-  dataAttrs,
-  children,
-}: {
-  mode: "template" | "template-new";
+/** Template choices share the candidate block treatment and have a native button for selection. */
+export function CandidateBlock({ title, meta, selected, dataAttrs, onClick, onPointerDown }: {
+  title: string;
+  meta: string;
   selected?: boolean;
-  title: React.ReactNode;
-  meta?: React.ReactNode;
-  actions?: React.ReactNode;
-  icon?: React.ReactNode;
-  badge?: React.ReactNode;
-  onClick?: React.MouseEventHandler<HTMLElement>;
-  onDoubleClick?: React.MouseEventHandler<HTMLElement>;
-  onPointerDown?: React.PointerEventHandler<HTMLElement>;
-  /** Forwarded to TaskBlock so callers can attach data-* attributes used as
-   *  drag/drop selectors (e.g. data-template-row-key for sortable reorder). */
   dataAttrs?: Record<string, string | undefined>;
-  children?: React.ReactNode;
+  onClick?: React.MouseEventHandler<HTMLElement>;
+  onPointerDown?: React.PointerEventHandler<HTMLElement>;
 }) {
   return (
     <TaskBlock
-      as="div"
+      as={onClick ? "button" : "div"}
+      type={onClick ? "button" : undefined}
       variant="candidate"
-      appearance="calm"
+      className="df-candidate-block"
       selected={selected}
-      className={`df-candidate-block df-candidate-block--${mode}`}
+      ariaPressed={onClick ? selected : undefined}
       onClick={onClick}
-      onDoubleClick={onDoubleClick}
       onPointerDown={onPointerDown}
       dataAttrs={dataAttrs}
-      main={
-        <span className="df-candidate-block-content">
-          {children}
-          <span className="df-candidate-block-title">{title}</span>
-          {meta ? <small className="df-candidate-block-meta">{meta}</small> : null}
-        </span>
-      }
-      trailing={
-        <>
-          {badge ? <span className="df-candidate-block-badge">{badge}</span> : null}
-          {actions ? <span className="df-candidate-block-actions">{actions}</span> : null}
-          {icon ? <span className="df-candidate-block-icon">{icon}</span> : null}
-        </>
-      }
+      main={<TaskBlockContent className="df-template-choice" title={title}><small className="df-template-row-count">{meta}</small></TaskBlockContent>}
     />
   );
 }
@@ -283,108 +219,74 @@ export function TimelineCanvas({
   );
 }
 
-/**
- * TimelineEventBlock — the shared scheduled-block visual primitive for
- * timeline events. Renders `<TaskBlock variant="scheduled">` — the SAME
- * shared component that `TimeBlock` (execution page scheduled blocks)
- * composes. Template period blocks use this so the visual language matches
- * execution scheduled blocks by construction.
- *
- * mode="template"    — a template period block (resize dots + title + time range + delete)
- * mode="execution"   — reserved for future use; execution currently uses `TimeBlock`
- *                      which composes the same `TaskBlock variant="scheduled"` primitive.
- */
+/** Scheduled task styling with controls that edit template periods. */
 export function TimelineEventBlock({
-  mode,
-  title,
-  timeRange,
-  selected,
-  style,
-  className,
-  dataAttrs,
-  onPointerDown,
-  onClick,
-  onResizeStart,
-  onDelete,
-  editing,
-  editingTitle,
-  onTitleChange,
-  onTitleCommit,
-  onTitleCancel,
-  lang,
-  children,
+  title, timeRange, style, conflicting, preview, onPointerDown, onEdit, onResizeStart, onDelete,
+  editingTitle, onTitleChange, onTitleCommit, lang,
 }: {
-  mode: "template" | "execution";
   title: string;
   timeRange?: string;
-  selected?: boolean;
-  style?: CSSProperties;
-  className?: string;
-  dataAttrs?: Record<string, string | undefined>;
+  style: CSSProperties & { height: number };
+  conflicting?: boolean;
+  preview?: boolean;
   onPointerDown?: React.PointerEventHandler<HTMLElement>;
-  onClick?: React.MouseEventHandler<HTMLElement>;
-  onResizeStart?: (edge: "top" | "bottom") => React.PointerEventHandler<HTMLElement>;
-  onDelete?: React.MouseEventHandler<HTMLElement>;
-  editing?: boolean;
+  onEdit?: () => void;
+  onResizeStart?: (edge: "start" | "end", event: React.PointerEvent<HTMLElement>) => void;
+  onDelete?: () => void;
   editingTitle?: string;
   onTitleChange?: (value: string) => void;
-  onTitleCommit?: () => void;
-  onTitleCancel?: () => void;
-  lang?: Language;
-  children?: React.ReactNode;
+  onTitleCommit?: (value: string) => void;
+  lang: Language;
 }) {
-  const untitled = lang === "zh" ? "未命名" : "Untitled";
+  const size = style.height < 56 ? "short" : style.height >= 120 ? "tall" : "normal";
+  const label = timeRange ? title + " · " + timeRange : title;
   return (
-    <TaskBlock
-      as="div"
-      variant="scheduled"
-      appearance="calm"
-      selected={selected}
-      className={className}
+    <TaskBlock as="div" variant="scheduled" appearance="calm"
+      className="df-time-block df-template-period-block"
+      density={size === "short" ? "compact" : "normal"}
+      selected={editingTitle !== undefined}
+      title={label}
+      ariaLabel={onEdit ? label : undefined}
       style={style}
-      dataAttrs={{ ...dataAttrs, reuse: "timeline-event-block" }}
+      tabIndex={onEdit ? 0 : undefined}
+      dataAttrs={{ "template-period": "true", "schedule-size": size, "view-mode": "daily",
+        "template-conflict": conflicting ? "true" : undefined, "template-preview": preview ? "true" : undefined }}
       onPointerDown={onPointerDown}
-      onClick={onClick}
-      main={
-        <>
-          {onResizeStart ? (
-            <div className="df-resize-dot top" onPointerDown={onResizeStart("top")} />
-          ) : null}
-          <div className="df-time-block-body">
-            {editing && onTitleChange ? (
-              <input
-                className="df-template-period-title-input"
-                autoFocus
-                value={editingTitle}
-                onChange={(e) => onTitleChange(e.target.value)}
-                onBlur={onTitleCommit}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") onTitleCommit?.();
-                  if (e.key === "Escape") onTitleCancel?.();
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-              />
-            ) : (
-              <span className="df-time-block-title">{title || untitled}</span>
-            )}
-            {timeRange ? <span className="df-time-block-time">{timeRange}</span> : null}
-            {children}
-          </div>
-          {onResizeStart ? (
-            <div className="df-resize-dot bottom" onPointerDown={onResizeStart("bottom")} />
-          ) : null}
-          {onDelete ? (
-            <CloseButton
-              className="df-template-period-delete"
-              label={lang === "zh" ? "删除时间段" : "Delete period"}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); onDelete(e); }}
-            />
-          ) : null}
-        </>
-      }
-    />
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ") && onEdit) {
+          event.preventDefault();
+          onEdit();
+        }
+      }}
+    >
+      {onResizeStart && <button type="button" tabIndex={-1} className="df-resize-dot top" aria-label={t(lang, "timeBlock.adjustStart")}
+        onPointerDown={(event) => onResizeStart("start", event)} />}
+      <div className="df-time-card-shell">
+        <TaskBlockContent className="df-time-card-main" title={editingTitle === undefined ? title : undefined}>
+          {editingTitle !== undefined && <Input
+            className="df-template-period-title-input"
+            autoFocus
+            aria-label={lang === "zh" ? "时间段名称" : "Block name"}
+            value={editingTitle}
+            onFocus={(event) => event.currentTarget.select()}
+            onChange={(event) => onTitleChange?.(event.target.value)}
+            onBlur={(event) => onTitleCommit?.(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                event.currentTarget.blur();
+              }
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+          />}
+          {timeRange && <time className="df-template-period-time">{timeRange}</time>}
+        </TaskBlockContent>
+      </div>
+      {onResizeStart && <button type="button" tabIndex={-1} className="df-resize-dot bottom" aria-label={t(lang, "timeBlock.adjustEnd")}
+        onPointerDown={(event) => onResizeStart("end", event)} />}
+      {onDelete && <CloseButton className="df-template-period-delete" label={lang === "zh" ? "删除时间段" : "Delete block"}
+        onPointerDown={(event) => event.stopPropagation()} onClick={onDelete} />}
+    </TaskBlock>
   );
 }
 

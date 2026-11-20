@@ -25,7 +25,7 @@ import { createPortal, flushSync } from "react-dom";
 import { useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import { Suspense, lazy } from "react";
-import type { AgentAuditEntry, AgentRunState, AiConversation, CalendarEvent, Category, ExecutionLane, ExternalCalendarOccurrence, ExternalCalendarSource, Habit, HabitDailyState, HabitTrackingType, Language, NullablePriority, PlannerApi, PlannerData, Priority, Project, RecurrenceFrequency, ScheduleTemplate, Settings, Subtask, Task, TaskLevel, TaskRecurrence, TimelineRecord, WidgetAction, WidgetSnapshot, WidgetTimerRuntime } from "./types";
+import type { AgentAuditEntry, AgentRunState, AiConversation, CalendarEvent, Category, ExecutionLane, ExternalCalendarOccurrence, ExternalCalendarSource, Habit, HabitDailyState, HabitTrackingType, Language, NullablePriority, PlannerApi, PlannerData, Priority, Project, RecurrenceFrequency, Settings, Subtask, Task, TaskLevel, TaskRecurrence, TimelineRecord, WidgetAction, WidgetSnapshot, WidgetTimerRuntime } from "./types";
 import { callAiAssistant, decideAgentRun, listAgentAuditRuns, type AiAction } from "./aiAssistantApi";
 import { compactText, extractLocalMemories, mergeAiMemories } from "./aiContext";
 
@@ -66,7 +66,7 @@ import { useInAppDialog } from "./InAppDialog";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskGroup } from "./components/TaskBlock";
 import { projectColorInk } from "./utils/presentationColor";
 import { ProductStorySlot } from "./ProductStory";
-import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, CandidateBlock, TimelineCanvas, TimelineEventBlock } from "./components/ExecutionSharedLayout";
+import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, TimelineCanvas } from "./components/ExecutionSharedLayout";
 
 import { ActionDisclosure, Button, CloseButton, IconButton, UndoButton } from "./components/UiPrimitives";
 
@@ -81,7 +81,7 @@ import { UiChatIcon, UiChevronDownIcon, UiChevronLeftIcon, UiBellIcon, UiCalenda
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
-import { usePointerReorder } from "./usePointerReorder";
+import { templateApplication, type TemplatePeriod } from "./utils/scheduleTemplates";
 
 import { canAcknowledgeBootstrapSave, parseBootstrapCache, recoverAccountSettings, resolveBootstrap, type BootstrapCache } from "./syncBootstrap";
 
@@ -135,6 +135,7 @@ const EngagementRating = lazy(() => import("./components/EngagementRating").then
 const MobileQuickAddSheet = lazy(() => import("./MobileTaskSummary").then((module) => ({ default: module.MobileQuickAddSheet })));
 const MobileTimelineDraftSheet = lazy(() => import("./MobileTaskSummary").then((module) => ({ default: module.MobileTimelineDraftSheet })));
 const MonthView = lazy(() => import("./MonthView"));
+const ScheduleTemplatePanel = lazy(() => import("./components/ScheduleTemplatePanel"));
 
 const ProactiveNotificationCenter = lazy(() => import("./components/ProactiveNotificationCenter").then((module) => ({ default: module.ProactiveNotificationCenter })));
 const UnfinishedTasksDialog = lazy(() => import("./components/UnfinishedTasksDialog").then((module) => ({ default: module.UnfinishedTasksDialog })));
@@ -315,21 +316,6 @@ function mixHex(a: string, b: string, amount: number) {
 
 type ScheduleSuggestion = SchedulePreview; // legacy alias kept for compatibility; replaced by SchedulePreview
 type QuickSchedule = { startTime: string; title: string; projectId: string; isAllDay?: boolean } | null;
-type BuiltInScheduleTemplateId = "school" | "study";
-type BuiltInScheduleTemplateSlot = {
-  id: string;
-  labelZh: string;
-  labelEn: string;
-  start: string;
-  end: string;
-  titleZh: string;
-  titleEn: string;
-};
-type ScheduleTemplateApplySlot = {
-  title: string;
-  start: string;
-  end: string;
-};
 /** Floating popup for all‑day bar quick‑add */
 type AllDayQuickAdd = { date: string; left: number; top: number; width: number; dayIndex: number } | null;
 /** Drag‑create state for timeline area (day / 3‑day / week views) */
@@ -345,43 +331,6 @@ type DragCreateState = {
   committed: boolean;
 } | null;
 
-const SCHEDULE_TEMPLATES: Record<BuiltInScheduleTemplateId, {
-  labelZh: string;
-  labelEn: string;
-  descriptionZh: string;
-  descriptionEn: string;
-  slots: BuiltInScheduleTemplateSlot[];
-}> = {
-  school: {
-    labelZh: "\u9ed8\u8ba4 1",
-    labelEn: "Default 1",
-    descriptionZh: "按上课节奏预留固定时间段，当天再填写每节要推进的目标。",
-    descriptionEn: "Reserve fixed class-style blocks, then fill in the goal for each block.",
-    slots: [
-      { id: "morning-1", labelZh: "第一节", labelEn: "Period 1", start: "08:00", end: "08:45", titleZh: "第一节目标", titleEn: "Period 1 goal" },
-      { id: "morning-2", labelZh: "第二节", labelEn: "Period 2", start: "08:55", end: "09:40", titleZh: "第二节目标", titleEn: "Period 2 goal" },
-      { id: "morning-3", labelZh: "第三节", labelEn: "Period 3", start: "10:00", end: "10:45", titleZh: "第三节目标", titleEn: "Period 3 goal" },
-      { id: "morning-4", labelZh: "第四节", labelEn: "Period 4", start: "10:55", end: "11:40", titleZh: "第四节目标", titleEn: "Period 4 goal" },
-      { id: "afternoon-1", labelZh: "下午一", labelEn: "Afternoon 1", start: "13:30", end: "14:15", titleZh: "下午第一段目标", titleEn: "First afternoon goal" },
-      { id: "afternoon-2", labelZh: "下午二", labelEn: "Afternoon 2", start: "14:25", end: "15:10", titleZh: "下午第二段目标", titleEn: "Second afternoon goal" },
-      { id: "afternoon-3", labelZh: "下午三", labelEn: "Afternoon 3", start: "15:30", end: "16:15", titleZh: "下午第三段目标", titleEn: "Third afternoon goal" },
-      { id: "evening-review", labelZh: "晚间整理", labelEn: "Evening review", start: "19:30", end: "20:15", titleZh: "复盘与整理", titleEn: "Review and organize" },
-    ],
-  },
-  study: {
-    labelZh: "\u9ed8\u8ba4 2",
-    labelEn: "Default 2",
-    descriptionZh: "用较长专注块划分一天，适合假期、周末或备考日。",
-    descriptionEn: "Use longer focus blocks for weekends, holidays, or exam-prep days.",
-    slots: [
-      { id: "deep-1", labelZh: "上午深度", labelEn: "Morning focus", start: "09:00", end: "10:30", titleZh: "上午重点任务", titleEn: "Morning priority" },
-      { id: "deep-2", labelZh: "上午巩固", labelEn: "Morning review", start: "10:45", end: "12:00", titleZh: "巩固练习", titleEn: "Practice and review" },
-      { id: "deep-3", labelZh: "下午推进", labelEn: "Afternoon progress", start: "14:00", end: "15:30", titleZh: "下午重点任务", titleEn: "Afternoon priority" },
-      { id: "deep-4", labelZh: "输出整理", labelEn: "Output block", start: "15:45", end: "17:00", titleZh: "整理输出", titleEn: "Organize output" },
-      { id: "deep-5", labelZh: "晚间收束", labelEn: "Evening close", start: "19:30", end: "20:30", titleZh: "收尾与复盘", titleEn: "Wrap-up and review" },
-    ],
-  },
-};
 type AuthState = { mode: "local" | "cloud"; user: { id: string; email?: string } | null; configured: boolean };
 type AuthNotice = { type: "confirm-email"; email: string } | null;
 
@@ -3552,11 +3501,11 @@ if (cached?.data && cached?.settings) {
     };
   }
 
-  function expandRecurrenceOccurrences(dates: Set<string>) {
+  function expandRecurrenceOccurrences(dates: Set<string>, sourceTasks = tasks) {
     const ownerMap = new Map<string, Task>();
     const expanded: Task[] = [];
     if (dates.size === 0) return { tasks: expanded, ownerMap };
-    for (const task of tasks) {
+    for (const task of sourceTasks) {
       if (!isRecurringScheduledTask(task) || !task.recurrence?.startTime) continue;
       const blockedDates = new Set(
         (task.timelineRecords || [])
@@ -4266,42 +4215,46 @@ if (cached?.data && cached?.settings) {
     showToast(t(lang, "candidate.deletedTask"));
   }
 
-  function applyTemplateToDate(slots: ScheduleTemplateApplySlot[], conflictCount: number) {
-    const snapshot = dataRef.current;
-    if (!snapshot || slots.length === 0) return;
+  function getTemplateApplication(date: string, periods: TemplatePeriod[], currentTasks = tasks) {
+    return templateApplication(periods, date, (day) => {
+      const dateRange = new Set([addDays(day, -1), day]);
+      const recurrence = expandRecurrenceOccurrences(dateRange, currentTasks).tasks.map((task) => ({ ...task, timelineRecords: undefined }));
+      const external = expandExternalCalendarOccurrences(new Set([day])).tasks.map((task) =>
+        task.scheduledStart ? task : { ...task, scheduledStart: "00:00", scheduledEnd: "00:00" });
+      return scheduledTaskIntervalsOnDate([...currentTasks, ...recurrence, ...external], day);
+    }, lang === "zh" ? "模板时间段" : "Template block");
+  }
 
-    const createdTasks: Task[] = slots.map((slot) => {
-      const durationMinutes = Math.max(clockTimeSpanMinutes(slot.start, slot.end), SLOT_MINUTES);
-      const task = makeSmartTask({
+  function applyTemplateToDate(date: string, periods: TemplatePeriod[]) {
+    const snapshot = dataRef.current;
+    if (!snapshot || date < todayIso()) return;
+
+    const { available, skipped } = getTemplateApplication(date, periods, snapshot.tasks);
+    if (available.length === 0) return;
+    const createdTasks = available.map(({ title, startMinutes, durationMinutes }) => {
+      const task = makeTask({
         ...defaultForm("task"),
-        title: slot.title,
-        dueDate: addDays(timelineDate, 1),
+        title,
+        dueDate: addDays(date, 1),
         estimatedHours: durationMinutes / 60,
       });
-
       return {
         ...task,
-        plannedForDate: timelineDate,
+        estimatedHours: durationMinutes / 60,
+        plannedForDate: date,
         executionLane: undefined,
-        timelineRecords: [createScheduledRecord(task, timelineDate, slot.start, durationMinutes)],
+        timelineRecords: [createScheduledRecord(task, date, minutesToTime(startMinutes), durationMinutes, { preserveTime: true })],
       };
     });
 
     void saveTaskOperation({ ...snapshot, tasks: [...snapshot.tasks, ...createdTasks] }, "schedule");
     setScheduleTemplateOpen(false);
-
-    if (createdTasks[0]?.timelineRecords?.[0]) {
-      requestTimelineFocus({
-        date: timelineDate,
-        startTime: createdTasks[0].timelineRecords[0].scheduledStart,
-        taskId: createdTasks[0].timelineRecords[0].id,
-        source: "schedule",
-      });
-    }
-
-    showToast(conflictCount > 0
-      ? (lang === "zh" ? `已添加 ${createdTasks.length} 个时间块，含 ${conflictCount} 个重叠` : `Added ${createdTasks.length} blocks with ${conflictCount} overlaps`)
-      : (lang === "zh" ? `已添加 ${createdTasks.length} 个模板时间块` : `Added ${createdTasks.length} template blocks`));
+    const firstRecord = createdTasks[0].timelineRecords[0];
+    locateTaskOnTimeline(date, firstRecord.scheduledStart, firstRecord.id);
+    const added = createdTasks.length;
+    showToast(lang === "zh"
+      ? (skipped.size ? "已添加 " + added + " 个时间块，跳过 " + skipped.size + " 个冲突时间块" : "已添加 " + added + " 个模板时间块")
+      : (skipped.size ? "Added " + added + " blocks and skipped " + skipped.size + " conflicting blocks" : "Added " + added + " template blocks"));
   }
 
   function batchUpdateTasks(updates: { taskId: string; patch: Partial<Task> }[]) {
@@ -5732,10 +5685,10 @@ if (cached?.data && cached?.settings) {
     }
   }
 
-  function createScheduledRecord(task: Task, scheduledDate: string, scheduledStart: string, durationMinutes: number): TimelineRecord {
+  function createScheduledRecord(task: Task, scheduledDate: string, scheduledStart: string, durationMinutes: number, { preserveTime = false } = {}): TimelineRecord {
     const now = workspaceNow().toISOString();
-    const startTime = normalizeTaskStartTime(scheduledStart);
-    const duration = normalizeTaskDuration(durationMinutes);
+    const startTime = preserveTime ? scheduledStart : normalizeTaskStartTime(scheduledStart);
+    const duration = preserveTime ? durationMinutes : normalizeTaskDuration(durationMinutes);
     return {
       id: uid(`${task.id}_rec`),
       taskId: task.id,
@@ -7190,7 +7143,7 @@ if (cached?.data && cached?.settings) {
     if (timelineView === "month") setTimelineView("daily");
     setSelectedDate(date);
     setVisibleTimelineDate(date);
-    void closeTaskDrawer({ autoSave: true });
+    if (drawerOpen) void closeTaskDrawer({ autoSave: true });
     requestTimelineFocus({ date, startTime, taskId, source: "schedule", behavior: "auto", highlight: true });
   }
 
@@ -10701,15 +10654,25 @@ if (cached?.data && cached?.settings) {
       )}
       {scheduleTemplatePresence.present && (scheduleTemplateOpen || !workspacePanel) && data && (
         <RightUtilityPanel workspace label={lang === "zh" ? "日程模板" : "Schedule templates"} closeLabel={t(lang, "settings.close")} closing={scheduleTemplatePresence.closing} className="df-template-utility" onClose={() => setScheduleTemplateOpen(false)}>
-        <ScheduleTemplateModal
-          lang={lang}
-          date={timelineDate}
-          tasks={[...tasks, ...expandExternalCalendarOccurrences(new Set([timelineDate])).tasks.map((task) => task.scheduledStart ? task : { ...task, scheduledStart: "00:00", scheduledEnd: "23:59" })]}
-          customTemplates={data.scheduleTemplates || []}
-          onSaveCustomTemplates={(templates) => void saveData({ ...dataRef.current!, scheduleTemplates: templates })}
-          onApply={applyTemplateToDate}
-          onClose={() => setScheduleTemplateOpen(false)}
-        />
+          <Suspense fallback={null}>
+            <ScheduleTemplatePanel
+              active={scheduleTemplateOpen}
+              lang={lang}
+              today={today}
+              weekStartsOn={settings.weekStartsOn}
+              slotHeight={timelineSlotHeight}
+              customTemplates={data.scheduleTemplates || []}
+              onSaveCustomTemplates={(update) => {
+                const current = dataRef.current;
+                if (current) void saveData({ ...current, scheduleTemplates: update(current.scheduleTemplates || []) });
+              }}
+              getApplication={getTemplateApplication}
+              onApply={applyTemplateToDate}
+              confirmDelete={(name) => dialog.confirm(lang === "zh" ? "删除「" + name + "」？" : "Delete “" + name + "”?", {
+                confirmLabel: lang === "zh" ? "删除" : "Delete",
+              })}
+            />
+          </Suspense>
         </RightUtilityPanel>
       )}
       {drag?.kind === "block" && drag.pointer && draggedTask && !timelineSnapActive && (
@@ -10830,654 +10793,6 @@ function FloatingShelfDragPreview({ task, pointer, candidateTarget, lang }: { ta
     ? (lang === "zh" ? "放回任务" : "Return to Tasks")
     : (lang === "zh" ? "拖到时间轴安排" : "Drag to timeline to schedule");
   return <div className={`df-floating-unschedule df-floating-shelf-drag${candidateTarget ? " candidate-target" : ""}`} style={{ left: pointer.x + 14, top: pointer.y + 14 }}><strong>{task.title}</strong><span>{hint}</span></div>;
-}
-
-function ScheduleTemplateModal({
-  lang,
-  date,
-  tasks,
-  customTemplates,
-  onSaveCustomTemplates,
-  onApply,
-  onClose,
-}: {
-  lang: Language;
-  date: string;
-  tasks: Task[];
-  customTemplates: ScheduleTemplate[];
-  onSaveCustomTemplates: (templates: ScheduleTemplate[]) => void;
-  onApply: (slots: ScheduleTemplateApplySlot[], conflictCount: number) => void;
-  onClose: () => void;
-}) {
-  // Template mode = execution-page interaction model applied to date-less
-  // template periods. Left list visually corresponds to 任务; right
-  // timeline editor visually corresponds to the execution timeline. Periods
-  // store only { title, startMinutes, durationMinutes } and never pollute the
-  // real task store until Apply.
-  type TemplateKey = `builtin:${BuiltInScheduleTemplateId}` | `custom:${string}` | "draft:new";
-  type TemplatePeriod = { id: string; title: string; startMinutes: number; durationMinutes: number };
-  // Adapter isolates template-period data from the real task store. The
-  // template timeline operates purely on TemplatePeriod drafts via this
-  // interface; real scheduled tasks are only created on Apply.
-  type TimelineAdapter<T> = {
-    getId: (item: T) => string;
-    getTitle: (item: T) => string;
-    getStartMinutes: (item: T) => number;
-    getDurationMinutes: (item: T) => number;
-    createAt: (startMinutes: number) => void;
-    updateTime: (id: string, startMinutes: number, durationMinutes: number) => void;
-    updateTitle: (id: string, title: string) => void;
-    delete: (id: string) => void;
-  };
-  // NOTE: `zh` must be declared before any useState that calls helpers (e.g.
-  // makeBuiltInPeriods → slotToPeriod) which reference `zh`. Declaring it
-  // after the useState lines triggers a Temporal Dead Zone ReferenceError
-  // because the useState initializer runs during mount, before `zh` is
-  // initialized.
-  const zh = lang === "zh";
-  const [templateKey, setTemplateKey] = useState<TemplateKey>("builtin:school");
-  const [templateName, setTemplateName] = useState("");
-  const [periods, setPeriods] = useState<TemplatePeriod[]>(() => makeBuiltInPeriods("school"));
-  const [templateNotice, setTemplateNotice] = useState("");
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameDraft, setRenameDraft] = useState("");
-  const [editingPeriodId, setEditingPeriodId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState("");
-  const [dragState, setDragState] = useState<{ periodId: string; mode: "move" | "resize-top" | "resize-bottom"; originY: number; originStart: number; originDuration: number } | null>(null);
-  const [creatingState, setCreatingState] = useState<{ startMinutes: number; currentMinutes: number } | null>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const timelineRef = useRef<HTMLDivElement>(null);
-
-  // ── Template list drag-to-reorder ──
-  // Reuses the shared usePointerReorder hook, which mirrors Tasks
-  // drag feel (pointer capture, 5px threshold, half-height before/after,
-  // is-dragging-source placeholder, .df-list-insertion-line indicator).
-  // Only custom templates are draggable; built-ins are read-only/fixed and the
-  // "+ new template" affordance is a separate button. Custom order persists
-  // via onSaveCustomTemplates (the prop drives display order, so no local
-  // order state is needed).
-  const templateReorder = usePointerReorder<ListRow>({
-    getId: (row) => row.kind === "builtin" ? `builtin:${row.id}` : row.kind === "custom" ? `custom:${row.id}` : "draft:new",
-    selector: "[data-template-row-key]",
-    attrName: "templateRowKey",
-    onReorder: (dragKey, targetKey, position) => {
-      if (!dragKey.startsWith("custom:") || !targetKey.startsWith("custom:")) return;
-      const dragId = dragKey.replace("custom:", "");
-      const targetId = targetKey.replace("custom:", "");
-      const dragged = customTemplates.find((t) => t.id === dragId);
-      if (!dragged) return;
-      const without = customTemplates.filter((t) => t.id !== dragId);
-      const idx = without.findIndex((t) => t.id === targetId);
-      if (idx < 0) return;
-      without.splice(position === "before" ? idx : idx + 1, 0, dragged);
-      onSaveCustomTemplates(without);
-    },
-  });
-
-  useEffect(() => { titleRef.current?.focus(); }, []);
-
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (dragState || creatingState || renamingId || editingPeriodId) {
-          setDragState(null);
-          setCreatingState(null);
-          setRenamingId(null);
-          setEditingPeriodId(null);
-        } else if (templateReorder.drag) {
-          templateReorder.cancelDrag();
-        } else {
-          onClose();
-        }
-      }
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [onClose, dragState, creatingState, renamingId, editingPeriodId, templateReorder.drag, templateReorder.cancelDrag]);
-
-  // ── Period factory helpers ──
-  function slotToPeriod(slot: BuiltInScheduleTemplateSlot): TemplatePeriod {
-    const startMinutes = timeToMinutes(slot.start);
-    const endMinutes = timeToMinutes(slot.end);
-    return {
-      id: slot.id || uid("period"),
-      title: zh ? slot.labelZh : slot.labelEn,
-      startMinutes,
-      durationMinutes: Math.max(SLOT_MINUTES, endMinutes - startMinutes),
-    };
-  }
-
-  function makeBuiltInPeriods(id: BuiltInScheduleTemplateId): TemplatePeriod[] {
-    return SCHEDULE_TEMPLATES[id].slots.map(slotToPeriod);
-  }
-
-  function makeCustomPeriods(template: ScheduleTemplate): TemplatePeriod[] {
-    return template.slots.map((slot, index) => ({
-      id: slot.id || uid("period"),
-      title: slot.label || (zh ? `第 ${index + 1} 段` : `Period ${index + 1}`),
-      startMinutes: timeToMinutes(slot.start || "09:00"),
-      durationMinutes: Math.max(SLOT_MINUTES, clockTimeSpanMinutes(slot.start || "09:00", slot.end || "10:00")),
-    }));
-  }
-
-  function makeBlankPeriods(): TemplatePeriod[] {
-    return [
-      { id: uid("period"), title: zh ? "第一段" : "Period 1", startMinutes: 9 * 60, durationMinutes: 60 },
-      { id: uid("period"), title: zh ? "第二段" : "Period 2", startMinutes: 10 * 60 + 15, durationMinutes: 60 },
-    ];
-  }
-
-  function changeTemplate(key: TemplateKey) {
-    setTemplateKey(key);
-    setTemplateNotice("");
-    setRenamingId(null);
-    setEditingPeriodId(null);
-    if (key.startsWith("builtin:")) {
-      const id = key.replace("builtin:", "") as BuiltInScheduleTemplateId;
-      setTemplateName("");
-      setPeriods(makeBuiltInPeriods(id));
-      return;
-    }
-    if (key === "draft:new") {
-      setTemplateName("");
-      setPeriods(makeBlankPeriods());
-      return;
-    }
-    const id = key.replace("custom:", "");
-    const template = customTemplates.find((item) => item.id === id);
-    if (!template) return;
-    setTemplateName(template.title);
-    setPeriods(makeCustomPeriods(template));
-  }
-
-  // ── Period editing ──
-  function updatePeriod(periodId: string, patch: Partial<TemplatePeriod>) {
-    setPeriods((current) => current.map((p) => p.id === periodId ? { ...p, ...patch } : p));
-    setTemplateNotice("");
-  }
-
-  function removePeriod(periodId: string) {
-    setPeriods((current) => current.filter((p) => p.id !== periodId));
-    setEditingPeriodId(null);
-    setTemplateNotice("");
-  }
-
-  // ── Timeline pointer interactions ──
-  const TIMELINE_TOTAL_MINUTES = 24 * 60;
-  const TIMELINE_TOTAL_SLOTS = TIMELINE_TOTAL_MINUTES / SLOT_MINUTES;
-  const TIMELINE_HEIGHT = TIMELINE_TOTAL_SLOTS * SLOT_HEIGHT;
-
-  function pointerToMinutes(clientY: number): number {
-    const el = timelineRef.current;
-    if (!el) return 0;
-    const rect = el.getBoundingClientRect();
-    const raw = ((clientY - rect.top) / rect.height) * TIMELINE_TOTAL_MINUTES;
-    const snapped = Math.round(raw / SLOT_MINUTES) * SLOT_MINUTES;
-    return Math.max(0, Math.min(TIMELINE_TOTAL_MINUTES - SLOT_MINUTES, snapped));
-  }
-
-  // Adapter over TemplatePeriod drafts — isolates template data from the real
-  // task store. The template timeline operates purely through this interface;
-  // real scheduled tasks are only created on Apply.
-  const templatePeriodAdapter: TimelineAdapter<TemplatePeriod> = {
-    getId: (p) => p.id,
-    getTitle: (p) => p.title,
-    getStartMinutes: (p) => p.startMinutes,
-    getDurationMinutes: (p) => p.durationMinutes,
-    createAt: (startMinutes) => {
-      const id = uid("period");
-      setPeriods((prev) => [...prev, { id, title: "", startMinutes, durationMinutes: SLOT_MINUTES * 2 }]);
-      setEditingPeriodId(id);
-      setEditingTitle("");
-    },
-    updateTime: (id, startMinutes, durationMinutes) => {
-      setPeriods((prev) => prev.map((p) => (p.id === id ? { ...p, startMinutes, durationMinutes } : p)));
-    },
-    updateTitle: (id, title) => {
-      setPeriods((prev) => prev.map((p) => (p.id === id ? { ...p, title } : p)));
-    },
-    delete: (id) => removePeriod(id),
-  };
-
-  function handleTimelinePointerDown(event: React.PointerEvent<HTMLDivElement>) {
-    if (event.button !== 0) return;
-    if ((event.target as HTMLElement).closest("[data-template-period]")) return;
-    const startMinutes = pointerToMinutes(event.clientY);
-    setCreatingState({ startMinutes, currentMinutes: startMinutes + SLOT_MINUTES });
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-  }
-
-  function handleTimelinePointerMove(event: React.PointerEvent<HTMLDivElement>) {
-    if (creatingState) {
-      const current = pointerToMinutes(event.clientY);
-      setCreatingState((prev) => prev ? { ...prev, currentMinutes: Math.max(current, prev.startMinutes + SLOT_MINUTES) } : prev);
-      return;
-    }
-    if (!dragState) return;
-    const el = timelineRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const deltaMinutes = Math.round(((event.clientY - dragState.originY) / rect.height) * TIMELINE_TOTAL_MINUTES / SLOT_MINUTES) * SLOT_MINUTES;
-    if (dragState.mode === "move") {
-      const nextStart = Math.max(0, Math.min(TIMELINE_TOTAL_MINUTES - dragState.originDuration, dragState.originStart + deltaMinutes));
-      updatePeriod(dragState.periodId, { startMinutes: nextStart });
-    } else if (dragState.mode === "resize-top") {
-      const maxStart = dragState.originStart + dragState.originDuration - SLOT_MINUTES;
-      const nextStart = Math.max(0, Math.min(maxStart, dragState.originStart + deltaMinutes));
-      const nextDuration = dragState.originDuration - (nextStart - dragState.originStart);
-      updatePeriod(dragState.periodId, { startMinutes: nextStart, durationMinutes: nextDuration });
-    } else if (dragState.mode === "resize-bottom") {
-      const nextDuration = Math.max(SLOT_MINUTES, dragState.originDuration + deltaMinutes);
-      const cappedDuration = Math.min(nextDuration, TIMELINE_TOTAL_MINUTES - dragState.originStart);
-      updatePeriod(dragState.periodId, { durationMinutes: cappedDuration });
-    }
-  }
-
-  function handleTimelinePointerUp(event: React.PointerEvent<HTMLDivElement>) {
-    if (creatingState) {
-      const start = creatingState.startMinutes;
-      const end = creatingState.currentMinutes;
-      if (end > start) {
-        const newPeriod: TemplatePeriod = {
-          id: uid("period"),
-          title: zh ? "新时间段" : "New period",
-          startMinutes: start,
-          durationMinutes: end - start,
-        };
-        setPeriods((current) => [...current, newPeriod]);
-        setEditingPeriodId(newPeriod.id);
-        setEditingTitle(newPeriod.title);
-      }
-      setCreatingState(null);
-    }
-    if (dragState) setDragState(null);
-    try { (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId); } catch { /* ignore */ }
-  }
-
-  function beginPeriodDrag(event: React.PointerEvent<HTMLElement>, period: TemplatePeriod, mode: "move" | "resize-top" | "resize-bottom") {
-    event.stopPropagation();
-    setDragState({ periodId: period.id, mode, originY: event.clientY, originStart: period.startMinutes, originDuration: period.durationMinutes });
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-  }
-
-  // ── Save / delete / duplicate / rename ──
-  function currentTemplateTitle() {
-    return templateName.trim();
-  }
-
-  function templateSlotsForSave() {
-    return periods
-      .filter((p) => p.durationMinutes >= SLOT_MINUTES && p.startMinutes + p.durationMinutes <= TIMELINE_TOTAL_MINUTES)
-      .map((p, index) => ({
-        id: p.id,
-        label: p.title.trim() || (zh ? `第 ${index + 1} 段` : `Period ${index + 1}`),
-        start: minutesToTime(p.startMinutes),
-        end: minutesToTime(p.startMinutes + p.durationMinutes),
-      }));
-  }
-
-  function saveCurrentTemplate() {
-    const savedSlots = templateSlotsForSave();
-    const nextTitle = currentTemplateTitle();
-    if (!nextTitle) {
-      setTemplateNotice(zh ? "请先填写模板名称。" : "Name the template before saving.");
-      return;
-    }
-    if (savedSlots.length === 0) {
-      setTemplateNotice(zh ? "至少需要一个有效时间段。" : "Add at least one valid time block.");
-      return;
-    }
-    const nowIso = workspaceNow().toISOString();
-    if (templateKey.startsWith("custom:")) {
-      const id = templateKey.replace("custom:", "");
-      const next = customTemplates.map((template) => template.id === id
-        ? { ...template, title: nextTitle, slots: savedSlots, updatedAt: nowIso }
-        : template);
-      onSaveCustomTemplates(next);
-      setTemplateNotice(zh ? "模板已保存。" : "Template saved.");
-      return;
-    }
-    const created: ScheduleTemplate = {
-      id: uid("template"),
-      title: nextTitle,
-      slots: savedSlots,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-    };
-    onSaveCustomTemplates([...customTemplates, created]);
-    setTemplateKey(`custom:${created.id}`);
-    setTemplateName(created.title);
-    setTemplateNotice(zh ? "已保存为模板，可在自定义模板中复用。" : "Saved as a reusable template.");
-  }
-
-  function createCustomTemplate() {
-    setTemplateKey("draft:new");
-    setTemplateName("");
-    setPeriods(makeBlankPeriods());
-    setTemplateNotice(zh ? "正在编辑新模板：先填写模板名称，再保存到自定义模板列表。" : "Editing a new template: name it before saving to Custom templates.");
-  }
-
-  function duplicateCustomTemplate(id: string) {
-    const template = customTemplates.find((item) => item.id === id);
-    if (!template) return;
-    const nowIso = workspaceNow().toISOString();
-    const created: ScheduleTemplate = {
-      id: uid("template"),
-      title: template.title + (zh ? " 副本" : " copy"),
-      slots: template.slots.map((slot) => ({ ...slot, id: uid("slot") })),
-      createdAt: nowIso,
-      updatedAt: nowIso,
-    };
-    onSaveCustomTemplates([...customTemplates, created]);
-    setTemplateKey(`custom:${created.id}`);
-    setTemplateName(created.title);
-    setPeriods(makeCustomPeriods(created));
-    setTemplateNotice(zh ? "已复制模板。" : "Template duplicated.");
-  }
-
-  function deleteCustomTemplateById(id: string) {
-    const template = customTemplates.find((item) => item.id === id);
-    if (!template) return;
-    const ok = window.confirm(zh ? `删除“${template.title}”？已生成的任务不会受影响。` : `Delete "${template.title}"? Existing tasks will not be changed.`);
-    if (!ok) return;
-    onSaveCustomTemplates(customTemplates.filter((t) => t.id !== id));
-    if (templateKey === `custom:${id}`) {
-      setTemplateKey("builtin:school");
-      setTemplateName("");
-      setPeriods(makeBuiltInPeriods("school"));
-    }
-    setTemplateNotice(zh ? "模板已删除。" : "Template deleted.");
-  }
-
-  function startRename(template: ScheduleTemplate) {
-    setRenamingId(template.id);
-    setRenameDraft(template.title);
-  }
-
-  function commitRename() {
-    if (!renamingId) return;
-    const nextTitle = renameDraft.trim();
-    if (!nextTitle) { setRenamingId(null); return; }
-    const nowIso = workspaceNow().toISOString();
-    onSaveCustomTemplates(customTemplates.map((t) => t.id === renamingId ? { ...t, title: nextTitle, updatedAt: nowIso } : t));
-    if (templateKey === `custom:${renamingId}`) setTemplateName(nextTitle);
-    setRenamingId(null);
-  }
-
-  function commitPeriodTitle(periodId: string) {
-    const trimmed = editingTitle.trim();
-    if (trimmed) updatePeriod(periodId, { title: trimmed });
-    setEditingPeriodId(null);
-  }
-
-  // ── Conflict detection (existing schedule on `date`) ──
-  const existingIntervals = useMemo(() => {
-    return scheduledTaskIntervalsOnDate(tasks, date);
-  }, [date, tasks]);
-
-  const validPeriods = periods.filter((p) => p.durationMinutes >= SLOT_MINUTES && p.startMinutes + p.durationMinutes <= TIMELINE_TOTAL_MINUTES);
-  const conflictCount = validPeriods.filter((p) => {
-    const start = p.startMinutes;
-    const end = p.startMinutes + p.durationMinutes;
-    return existingIntervals.some((item) => start < item.end && end > item.start);
-  }).length;
-  const applySlots: ScheduleTemplateApplySlot[] = validPeriods
-    .filter((p) => !existingIntervals.some((item) => p.startMinutes < item.end && p.startMinutes + p.durationMinutes > item.start))
-    .map((p) => ({
-      title: p.title.trim() || (zh ? "模板时间段" : "Template block"),
-      start: minutesToTime(p.startMinutes),
-      end: minutesToTime(p.startMinutes + p.durationMinutes),
-    }));
-
-  const activeBuiltInId = templateKey.startsWith("builtin:") ? templateKey.replace("builtin:", "") as BuiltInScheduleTemplateId : null;
-  const activeCustom = templateKey.startsWith("custom:") ? customTemplates.find((item) => item.id === templateKey.replace("custom:", "")) : null;
-
-  // ── Template list rows (built-in + custom + new) ──
-  type ListRow =
-    | { kind: "builtin"; id: BuiltInScheduleTemplateId; title: string; periodCount: number; span: string }
-    | { kind: "custom"; id: string; title: string; periodCount: number; span: string }
-    | { kind: "draft"; title: string; periodCount: number; span: string };
-
-  // Template list metadata: period count only — no start/end time range,
-  // per spec ("去掉具体起止时间, 保留时间段数量").
-  function rowCount(periodCount: number): string {
-    if (periodCount === 0) return zh ? "无时间段" : "No periods";
-    return `${periodCount} ${zh ? "个时间段" : "blocks"}`;
-  }
-
-  const listRows: ListRow[] = [
-    ...(Object.keys(SCHEDULE_TEMPLATES) as BuiltInScheduleTemplateId[]).map((id) => ({
-      kind: "builtin" as const,
-      id,
-      title: zh ? SCHEDULE_TEMPLATES[id].labelZh : SCHEDULE_TEMPLATES[id].labelEn,
-      periodCount: SCHEDULE_TEMPLATES[id].slots.length,
-      span: rowCount(SCHEDULE_TEMPLATES[id].slots.length),
-    })),
-    ...customTemplates.map((t) => ({
-      kind: "custom" as const,
-      id: t.id,
-      title: t.title,
-      periodCount: t.slots.length,
-      span: rowCount(t.slots.length),
-    })),
-    ...(templateKey === "draft:new" ? [{
-      kind: "draft" as const,
-      title: zh ? "新模板草稿" : "New draft",
-      periodCount: periods.length,
-      span: rowCount(periods.length),
-    }] : []),
-  ];
-
-  return (
-      <section className="df-template-panel" aria-labelledby="df-template-modal-title">
-        <div className="df-template-header-actions">
-          <IconButton className="df-icon-template-new" icon={<UiPlusIcon size={16} />} label={zh ? "新建模板" : "New template"} onClick={createCustomTemplate} />
-        </div>
-
-        <ExecutionSplitLayout className="df-template-shell">
-          {/* ── Left: shared CandidatePanelShell (same component as execution page) ── */}
-          <CandidatePanelShell ariaLabel={zh ? "模板列表" : "Template list"}>
-            <CandidatePanelHeader
-              title={<span id="df-template-modal-title" ref={titleRef} tabIndex={-1}>{zh ? "模板" : "Templates"}</span>}
-            />
-            <div className="df-candidate-list">
-              {listRows.map((row) => {
-                const key = row.kind === "builtin" ? `builtin:${row.id}` : row.kind === "custom" ? `custom:${row.id}` : "draft:new";
-                const isActive = templateKey === key;
-                const isRenaming = row.kind === "custom" && renamingId === row.id;
-                // Only custom templates are reorder-draggable; built-ins are read-only and the
-                // draft row is a transient selection state (not a persistable list item).
-                const draggable = row.kind === "custom" && !isRenaming;
-                const insertion = templateReorder.insertion;
-                const showInsertionBefore = draggable && insertion && insertion.id === key && insertion.position === "before";
-                const showInsertionAfter = draggable && insertion && insertion.id === key && insertion.position === "after";
-                return (
-                  <React.Fragment key={key}>
-                    {showInsertionBefore ? <div className="df-list-insertion-line" aria-hidden="true" /> : null}
-                  <CandidateBlock
-                    mode="template"
-                    selected={isActive}
-                    title={isRenaming ? undefined : row.title}
-                    meta={row.span}
-                    badge={row.kind === "builtin" ? (zh ? "默认" : "Built-in") : undefined}
-                    dataAttrs={draggable ? { "template-row-key": key } : undefined}
-                    onPointerDown={draggable ? (e) => templateReorder.beginDrag(e, row) : undefined}
-                    onClick={() => { if (templateReorder.suppressedRef.current) return; changeTemplate(key as TemplateKey); }}
-                    onDoubleClick={(e) => { if (row.kind === "custom") { e.stopPropagation(); startRename(customTemplates.find((t) => t.id === row.id)!); } }}
-                  >
-                    {isRenaming ? (
-                      <input
-                        className="df-template-list-rename"
-                        autoFocus
-                        value={renameDraft}
-                        onChange={(e) => setRenameDraft(e.target.value)}
-                        onBlur={commitRename}
-                        onKeyDown={(e) => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") setRenamingId(null); }}
-                        onClick={(e) => e.stopPropagation()}
-                        onPointerDown={(e) => e.stopPropagation()}
-                      />
-                    ) : null}
-                    {row.kind === "custom" && !isRenaming ? (
-                      <span className="df-candidate-block-actions" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-                        <button type="button" className="df-icon-action" data-tip={zh ? "重命名" : "Rename"} aria-label={zh ? "重命名" : "Rename"} onClick={() => startRename(customTemplates.find((t) => t.id === row.id)!)}><UiPencilIcon size={13} /></button>
-                        <button type="button" className="df-icon-action" data-tip={zh ? "复制" : "Duplicate"} aria-label={zh ? "复制" : "Duplicate"} onClick={() => duplicateCustomTemplate(row.id)}><UiCopyIcon size={13} /></button>
-                        <button type="button" className="df-icon-action" data-tip={zh ? "删除" : "Delete"} aria-label={zh ? "删除" : "Delete"} onClick={() => deleteCustomTemplateById(row.id)}><UiTrashIcon size={13} /></button>
-                      </span>
-                    ) : null}
-                  </CandidateBlock>
-                    {showInsertionAfter ? <div className="df-list-insertion-line" aria-hidden="true" /> : null}
-                  </React.Fragment>
-                );
-              })}
-              {/* New-template entry — small, narrow, centered button (not a full card). */}
-              <div className="df-template-new-row">
-                <button type="button" className="df-template-new-btn" onClick={createCustomTemplate}>
-                  <UiPlusIcon size={14} strokeWidth={2} />
-                  <span>{zh ? "新建模板" : "New template"}</span>
-                </button>
-              </div>
-            </div>
-          </CandidatePanelShell>
-
-          {/* ── Right: real df-timeline-panel shell (same class as execution page) ──
-              Uses the SAME df-timeline-body > df-timeline-content > df-timeline-daily
-              wrapper hierarchy as the execution page so the flex layout path is
-              identical and the TimelineCanvas fills/scales correctly. */}
-          <section className="df-timeline-panel" id="df-template-timeline">
-            <div className="df-timeline-body">
-              <div className="df-timeline-content">
-            <div className="df-timeline-daily">
-              {/* Compact template-name bar — replaces the old big date-title + allday region.
-                  Keeps the shell layout intact: no giant title, no separate title row. */}
-              <div className="df-template-name-bar">
-                {(activeCustom || templateKey === "draft:new") ? (
-                  <input
-                    className="df-template-name-inline"
-                    value={templateName}
-                    onChange={(event) => { setTemplateName(event.target.value); setTemplateNotice(""); }}
-                    aria-label={zh ? "模板名称" : "Template name"}
-                    placeholder={zh ? "模板名称…" : "Template name…"}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  />
-                ) : activeBuiltInId ? (
-                  <span className="df-template-name-readonly">{zh ? "默认模板（不可重命名）" : "Built-in template (read-only)"}</span>
-                ) : null}
-                <span className="df-template-name-meta">{rowCount(periods.length)}</span>
-              </div>
-              <TimelineCanvas
-                scrollRef={timelineRef}
-                height={TIMELINE_HEIGHT}
-                onCanvasPointerDown={handleTimelinePointerDown}
-                onCanvasPointerMove={handleTimelinePointerMove}
-                onCanvasPointerUp={handleTimelinePointerUp}
-                onCanvasPointerCancel={handleTimelinePointerUp}
-              >
-                  {Array.from({ length: 96 }).map((_, index) => {
-                    const minutes = index * SLOT_MINUTES;
-                    const isHour = minutes % 60 === 0;
-                    if (!isHour) return null;
-                    const isMajor = minutes % (6 * 60) === 0;
-                    const hh = String(Math.floor(minutes / 60)).padStart(2, "0");
-                    const mm = String(minutes % 60).padStart(2, "0");
-                    return (
-                      <div
-                        key={index}
-                        className={`df-slot ${isHour ? "hour" : "quarter"}${isMajor ? " major" : ""}`}
-                        style={{ top: `${index * SLOT_HEIGHT}px` }}
-                      >
-                        <span>{hh}:{mm}</span>
-                      </div>
-                    );
-                  })}
-                  {periods.map((period) => {
-                    const top = (period.startMinutes / SLOT_MINUTES) * SLOT_HEIGHT;
-                    const height = Math.max(SLOT_HEIGHT, (period.durationMinutes / SLOT_MINUTES) * SLOT_HEIGHT);
-                    const isEditing = editingPeriodId === period.id;
-                    return (
-                      <TimelineEventBlock
-                        key={period.id}
-                        mode="template"
-                        title={period.title}
-                        className="df-template-period-block"
-                        style={{ position: "absolute", left: "8px", right: "8px", top: `${top}px`, height: `${height}px` }}
-                        dataAttrs={{ "template-period": "true" }}
-                        onPointerDown={(e) => beginPeriodDrag(e, period, "move")}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!dragState && !templateReorder.suppressedRef.current) {
-                            setEditingPeriodId(period.id);
-                            setEditingTitle(period.title);
-                          }
-                        }}
-                        onResizeStart={(edge) => (e) => beginPeriodDrag(e, period, edge === "top" ? "resize-top" : "resize-bottom")}
-                        onDelete={() => removePeriod(period.id)}
-                        editing={isEditing}
-                        editingTitle={editingTitle}
-                        onTitleChange={setEditingTitle}
-                        onTitleCommit={() => commitPeriodTitle(period.id)}
-                        onTitleCancel={() => setEditingPeriodId(null)}
-                        lang={lang}
-                      />
-                    );
-                  })}
-                  {creatingState && (
-                    <div
-                      className="df-time-block df-template-period-creating"
-                      style={{
-                        position: "absolute",
-                        left: "8px",
-                        right: "8px",
-                        top: `${(creatingState.startMinutes / SLOT_MINUTES) * SLOT_HEIGHT}px`,
-                        height: `${Math.max(SLOT_HEIGHT, ((creatingState.currentMinutes - creatingState.startMinutes) / SLOT_MINUTES) * SLOT_HEIGHT)}px`,
-                      }}
-                    />
-                  )}
-              </TimelineCanvas>
-            </div>
-              </div>
-            </div>
-          </section>
-        </ExecutionSplitLayout>
-
-        {templateNotice && <div className="df-template-status" role="status">{templateNotice}</div>}
-
-        {/* Template-list drag overlay — reuses TaskDragLayer (same component as
-            Tasks drag overlay) with a real CandidateBlock clone so
-            the dragged row keeps its exact card styling. */}
-        {templateReorder.drag && (
-          <TaskDragLayer
-            pointer={templateReorder.drag.pointer}
-            sourceRect={templateReorder.drag.sourceRect}
-            offset={templateReorder.drag.offset}
-          >
-            <CandidateBlock
-              mode="template"
-              title={templateReorder.drag.item.title}
-              meta={templateReorder.drag.item.span}
-              badge={templateReorder.drag.item.kind === "builtin" ? (zh ? "默认" : "Built-in") : undefined}
-            />
-          </TaskDragLayer>
-        )}
-
-        <footer className="df-template-modal-actions">
-          {conflictCount > 0 && (
-            <span className="df-template-conflict-note">
-              {zh ? `${conflictCount} 个时间段与现有安排重叠，将跳过。` : `${conflictCount} blocks overlap existing schedule and will be skipped.`}
-            </span>
-          )}
-          {activeCustom || templateKey === "draft:new" ? (
-            <button type="button" className="secondary" onClick={saveCurrentTemplate}>{zh ? "保存" : "Save"}</button>
-          ) : null}
-          <button type="button" className="secondary" onClick={onClose}>{zh ? "取消" : "Cancel"}</button>
-          <button
-            type="button"
-            className="primary"
-            disabled={applySlots.length === 0}
-            onClick={() => onApply(applySlots, conflictCount)}
-          >{zh ? `应用到今天${applySlots.length > 0 ? ` (${applySlots.length})` : ""}` : `Apply to today${applySlots.length > 0 ? ` (${applySlots.length})` : ""}`}</button>
-        </footer>
-      </section>
-  );
 }
 
 /** Quick-add popover for all-day bar clicks. */
@@ -13282,14 +12597,6 @@ function EditDrawer(props: {
     </aside>
   );
 }
-
-// ── Shared layout shells: imported from ./components/ExecutionSharedLayout ──
-// The six shared components (ExecutionSplitLayout, CandidatePanelShell,
-// CandidatePanelHeader, CandidateBlock, TimelineCanvas, TimelineEventBlock)
-// are imported at the top of this file (line 54). Both the execution page
-// and ScheduleTemplateModal render through these imported components, so
-// reuse is enforced by the ES-module import graph — not by being in the
-// same file scope.
 
 // ── AppErrorBoundary: permanent top-level error boundary ──
 // Catches React render errors and displays the error message + stack so the

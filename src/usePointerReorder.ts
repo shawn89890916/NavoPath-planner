@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * usePointerReorder — shared pointer-based list reorder hook.
@@ -92,12 +92,14 @@ export function usePointerReorder<T>(opts: ReorderOptions<T>): {
     ctxRef.current = null;
   }, []);
 
+  useEffect(() => cancelDrag, [cancelDrag]);
+
   const beginDrag = useCallback((event: React.PointerEvent, item: T) => {
     if (event.button !== 0) return;
     // Don't start a reorder drag from interactive controls (rename input, action buttons).
-    const target = event.target as HTMLElement;
-    if (target.closest("button,input,textarea,select,a")) return;
     const element = event.currentTarget as HTMLElement;
+    const control = (event.target as Element).closest("button,input,textarea,select,a");
+    if (control && control !== element) return;
     const pointerId = event.pointerId;
     const startX = event.clientX;
     const startY = event.clientY;

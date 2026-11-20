@@ -86,6 +86,7 @@ type TaskBlockProps = TaskBlockClassOptions & TaskBlockStyleOptions & {
   ariaPressed?: boolean;
   ariaGrabbed?: boolean;
   onClick?: React.MouseEventHandler<HTMLElement>;
+  onKeyDown?: React.KeyboardEventHandler<HTMLElement>;
   onDoubleClick?: React.MouseEventHandler<HTMLElement>;
   onMouseEnter?: React.MouseEventHandler<HTMLElement>;
   onMouseLeave?: React.MouseEventHandler<HTMLElement>;
@@ -132,6 +133,7 @@ export const TaskBlock = React.forwardRef<HTMLElement, TaskBlockProps>(function 
       aria-pressed={ariaPressed}
       aria-grabbed={props.ariaGrabbed}
       onClick={props.onClick}
+      onKeyDown={props.onKeyDown}
       onDoubleClick={props.onDoubleClick}
       onMouseEnter={props.onMouseEnter}
       onMouseLeave={props.onMouseLeave}
