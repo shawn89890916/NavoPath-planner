@@ -2,6 +2,12 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 34
+
+#### 改进
+
+- 移除顶栏日期按钮及其独立年历。时间轴的日期快选去掉日期描边，月份和年份用细线分格，今天仅以粗体标出，整格可点击。
+
 ### 1.7.0 Beta 33
 
 #### 改进
@@ -700,6 +706,12 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 34
+
+#### Improvements
+
+- Removed the top-bar date button and its standalone yearly calendar. In the timeline date picker, days have no borders, months and years use thin dividers, today is marked in bold, and each cell is fully clickable.
 
 ### 1.7.0 Beta 33
 

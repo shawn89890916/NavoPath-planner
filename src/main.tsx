@@ -945,111 +945,6 @@ function OnboardingGuide(props: {
   );
 }
 
-function YearCalendarOverview({
-  year,
-  selectedDate,
-  today,
-  lang,
-  tasks,
-  events,
-  onYearChange,
-  onSelectDate,
-  onToday,
-}: {
-  year: number;
-  selectedDate: string;
-  today: string;
-  lang: Language;
-  tasks: Task[];
-  events: CalendarEvent[];
-  onYearChange: (year: number) => void;
-  onSelectDate: (date: string) => void;
-  onToday: () => void;
-}) {
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const initialMonth = new Date(`${selectedDate}T00:00:00`).getMonth();
-  const monthNames = useMemo(
-    () => Array.from({ length: 12 }, (_, month) => new Intl.DateTimeFormat(lang === "zh" ? "zh-CN" : "en-US", { month: "long" }).format(new Date(year, month, 1))),
-    [lang, year],
-  );
-  const weekdays = lang === "zh" ? ["日", "一", "二", "三", "四", "五", "六"] : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const occupiedDates = useMemo(() => {
-    const dates = new Set<string>();
-    tasks.forEach((task) => {
-      const date = task.scheduledDate || task.plannedForDate || task.dueDate;
-      if (date) dates.add(date);
-    });
-    events.forEach((event) => dates.add(event.startDate || event.date));
-    return dates;
-  }, [events, tasks]);
-
-  useLayoutEffect(() => {
-    const scroller = scrollerRef.current;
-    const month = scroller?.querySelector<HTMLElement>(`[data-overview-month="${initialMonth}"]`);
-    if (scroller && month) scroller.scrollTop = Math.max(0, month.offsetTop - 12);
-  }, [initialMonth, year]);
-
-  useEffect(() => {
-    const scroller = scrollerRef.current;
-    if (!scroller || typeof ResizeObserver === "undefined") return;
-    let previousWidth = scroller.clientWidth;
-    const observer = new ResizeObserver(() => {
-      if (scroller.clientWidth === previousWidth) return;
-      previousWidth = scroller.clientWidth;
-      const month = scroller.querySelector<HTMLElement>(`[data-overview-month="${initialMonth}"]`);
-      if (month) window.requestAnimationFrame(() => { scroller.scrollTop = Math.max(0, month.offsetTop - 12); });
-    });
-    observer.observe(scroller);
-    return () => observer.disconnect();
-  }, [initialMonth, year]);
-
-  return (
-    <section className="df-year-overview" aria-label={lang === "zh" ? `${year} 年日历` : `${year} calendar`}>
-      <div className="df-year-overview-toolbar">
-        <button type="button" onClick={() => onYearChange(year - 1)}>{lang === "zh" ? "上一年" : "Previous year"}</button>
-        <button className="df-year-overview-today" type="button" onClick={onToday}>{lang === "zh" ? "回到今天" : "Go to today"}</button>
-      </div>
-      <div className="df-year-months" ref={scrollerRef}>
-        {monthNames.map((monthName, month) => {
-          const firstWeekday = new Date(year, month, 1).getDay();
-          const dayCount = new Date(year, month + 1, 0).getDate();
-          return (
-            <article className="df-year-month" data-overview-month={month} key={`${year}-${month}`}>
-              <button className="df-year-month-title" type="button" onClick={() => onSelectDate(`${year}-${String(month + 1).padStart(2, "0")}-01`)}>
-                {monthName}
-              </button>
-              <div className="df-year-weekdays" aria-hidden="true">
-                {weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
-              </div>
-              <div className="df-year-days">
-                {Array.from({ length: firstWeekday }, (_, index) => <span className="df-year-day-empty" key={`empty-${index}`} />)}
-                {Array.from({ length: dayCount }, (_, index) => {
-                  const day = index + 1;
-                  const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                  return (
-                    <button
-                      type="button"
-                      key={iso}
-                      className={`df-year-day${iso === today ? " today" : ""}${iso === selectedDate ? " selected" : ""}${occupiedDates.has(iso) ? " occupied" : ""}`}
-                      aria-label={new Intl.DateTimeFormat(lang === "zh" ? "zh-CN" : "en-US", { dateStyle: "full" }).format(new Date(`${iso}T00:00:00`))}
-                      aria-current={iso === today ? "date" : undefined}
-                      onClick={() => onSelectDate(iso)}
-                    >
-                      <span>{day}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </article>
-          );
-        })}
-      </div>
-      <div className="df-year-overview-toolbar df-year-overview-toolbar-bottom">
-        <button type="button" onClick={() => onYearChange(year + 1)}>{lang === "zh" ? "下一年" : "Next year"}</button>
-      </div>
-    </section>
-  );
-}
 function App() {
   const isOAuthConsentRoute = window.location.pathname === "/oauth/consent";
   const isWorkspaceRoute = Boolean(productDemo) || isOAuthConsentRoute || window.location.pathname === "/app" || window.location.pathname.startsWith("/app/") || Boolean(window.desktopApi);
@@ -1335,8 +1230,6 @@ function App() {
   const [subtaskAiRevealIds, setSubtaskAiRevealIds] = useState<string[]>([]);
   const subtaskAiRevealTimeoutRef = useRef<number | null>(null);
   const [collapsedBranches, setCollapsedBranches] = useState<Record<string, boolean>>((): Record<string, boolean> => productPresentation && productDemo?.feature === "planning" ? { life: true } : {});
-  const [yearOverviewOpen, setYearOverviewOpen] = useState(false);
-  const [overviewYear, setOverviewYear] = useState(() => new Date(`${todayIso()}T00:00:00`).getFullYear());
 
   const [timerTaskId, setTimerTaskId] = useState<string | null>(null);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -7189,8 +7082,6 @@ if (cached?.data && cached?.settings) {
   }
 
   function locateTaskOnTimeline(date: string, startTime: string, taskId: string) {
-    setYearOverviewOpen(false);
-
     setCompactExecuteView("schedule");
     if (timelineView === "month") setTimelineView("daily");
     setSelectedDate(date);
@@ -7202,7 +7093,6 @@ if (cached?.data && cached?.settings) {
   function locateTaskInPlanning(task: Task) {
     void closeTaskDrawer({ autoSave: true });
     setPlanningFocusTaskId(task.id);
-    setYearOverviewOpen(false);
     openProjectManagement();
   }
 
@@ -7962,7 +7852,7 @@ if (cached?.data && cached?.settings) {
     if (productPresentation) return;
     if (event.ctrlKey || event.metaKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
     const target = event.target as HTMLElement;
-    if (target.closest("input,textarea,select,[contenteditable=true],.df-drawer,.df-utility-panel,.df-project-popover-portal")) return;
+    if (target.closest("input,textarea,select,[contenteditable=true],.df-drawer,.df-utility-panel,.df-project-popover-portal,.df-mobile-date-picker")) return;
     const scrollElement = timelineView === "month" ? monthScrollRef.current : timelineRef.current;
     if (!scrollElement) return;
     const insideScroll = scrollElement.contains(target);
@@ -9085,11 +8975,9 @@ if (cached?.data && cached?.settings) {
           shiftTimeline(1);
           break;
         case "execute":
-          setYearOverviewOpen(false);
           showTimelineWorkspace();
           break;
         case "planning":
-          setYearOverviewOpen(false);
           openProjectManagement();
           break;
         case "day-view":
@@ -9302,6 +9190,7 @@ if (cached?.data && cached?.settings) {
   const metricsLabel = lang === "zh" ? "指标" : "Metrics";
   const compactOverlayOpen = Boolean(quickAddOpen || candidateDrawerOpen || drawerOpen || mobilePlacement);
   const compactToolbarBlocked = compactOverlayOpen || Boolean(workspacePanel);
+  const compactFloatingActionsHidden = compactToolbarBlocked || mobileDatePickerOpen || Boolean(dragCreate?.committed);
   const brandControl = window.desktopApi?.dockWindow
     ? <Suspense fallback={<button className="df-brand-ai-button" type="button" disabled aria-label="NavoPath"><ProductIcon compact /></button>}>
       <DesktopDockControls
@@ -9315,9 +9204,28 @@ if (cached?.data && cached?.settings) {
     : <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
       <ProductIcon compact />
     </button>;
+  function toggleTimelineDatePicker() {
+    setMobileDatePickerMonth(timelineWindowAnchorDate.slice(0, 7));
+    setMobileDatePickerOpen((open) => !open);
+  }
+  const timelineDatePicker = !productPresentation && (
+    <DateQuickPicker
+      open={mobileDatePickerOpen && (!compactLayout || !compactToolbarBlocked)}
+      month={mobileDatePickerMonth}
+      selectedDate={timelineWindowAnchorDate}
+      today={today}
+      weekStartsOn={settings.weekStartsOn}
+      lang={lang}
+      onMonthChange={setMobileDatePickerMonth}
+      onSelect={(date) => {
+        changeTimelineDate(date);
+        setMobileDatePickerOpen(false);
+      }}
+    />
+  );
   const compactChat = !productPresentation && !settings.hideAi && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />;
   return (
-    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked && !workspaceChatPanel ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked && !workspaceChatPanel ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       {(!compactLayout || productDemo) && <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
@@ -9325,23 +9233,6 @@ if (cached?.data && cached?.settings) {
             {brandControl}
             {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} activeOwner={workspacePanel?.owner} onOpenPage={openExtensionPage} /></Suspense>}
           </div>
-          <div className="df-month-year-selector">
-            <button className="df-month-year-btn" aria-expanded={yearOverviewOpen} onClick={() => {
-              const nextOpen = !yearOverviewOpen;
-              setYearOverviewOpen(nextOpen);
-              if (nextOpen) {
-                setOverviewYear(new Date(`${timelineDate}T00:00:00`).getFullYear());
-                setCompactExecuteView("schedule");
-
-              }
-            }}>
-              {yearOverviewOpen
-                ? overviewYear
-                : (() => { const d = new Date(`${timelineDate}T00:00:00`); return `${d.toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US", { month: "long" })} ${d.getFullYear()}`; })()}
-              <span className="df-month-year-chevron" />
-            </button>
-          </div>
-
           {!productDemo && <div className="df-header-right">
           <button
             className="df-user-avatar"
@@ -9456,10 +9347,7 @@ if (cached?.data && cached?.settings) {
                   inert={compactLayout && compactToolbarBlocked}
                   aria-expanded={mobileDatePickerOpen}
                   aria-label={lang === "zh" ? "打开日期快选" : "Open quick date picker"}
-                  onClick={() => {
-                    setMobileDatePickerMonth(timelineWindowAnchorDate.slice(0, 7));
-                    setMobileDatePickerOpen((open) => !open);
-                  }}
+                  onClick={toggleTimelineDatePicker}
                 >
                 {dateContents}
                 <UiChevronDownIcon className={`df-date-title-chevron${mobileDatePickerOpen ? " open" : ""}`} size={14} />
@@ -9487,21 +9375,7 @@ if (cached?.data && cached?.settings) {
               </>
             )}
           </div>}
-          {!productPresentation && compactExecuteView === "schedule" && (
-            <DateQuickPicker
-              open={mobileDatePickerOpen && !compactToolbarBlocked}
-              month={mobileDatePickerMonth}
-              selectedDate={timelineWindowAnchorDate}
-              today={today}
-              weekStartsOn={settings.weekStartsOn}
-              lang={lang}
-              onMonthChange={setMobileDatePickerMonth}
-              onSelect={(date) => {
-                changeTimelineDate(date);
-                setMobileDatePickerOpen(false);
-              }}
-            />
-          )}
+          {compactLayout && compactExecuteView === "schedule" && timelineDatePicker}
           {mobileExecution && <div className={`df-mobile-candidate-backdrop${candidateDrawerOpen ? " is-open" : ""}`} aria-hidden="true" />}
           <CandidatePanelShell
             panelRef={candidatePanelRef}
@@ -9823,28 +9697,6 @@ if (cached?.data && cached?.settings) {
             onWheelCapture={handleTimelinePanelWheel}
           >
 
-            {yearOverviewOpen ? (
-              <YearCalendarOverview
-                year={overviewYear}
-                selectedDate={selectedDate}
-                today={today}
-                lang={lang}
-                tasks={tasks}
-                events={events}
-                onYearChange={setOverviewYear}
-                onSelectDate={(date) => {
-                  changeTimelineDate(date);
-                  setTimelineView("daily");
-                  setYearOverviewOpen(false);
-                }}
-                onToday={() => {
-                  changeTimelineDate(today);
-                  setOverviewYear(new Date(`${today}T00:00:00`).getFullYear());
-                  setTimelineView("daily");
-                  setYearOverviewOpen(false);
-                }}
-              />
-            ) : <>
             <div className="df-timeline-body">
               {!productPresentation && !compactLayout && <>
                 <button className="df-date-arrow left" aria-label={t(lang, "timeline.prevSegment")} onClick={() => shiftTimeline(-1)}>‹</button>
@@ -10317,11 +10169,7 @@ if (cached?.data && cached?.settings) {
                       className={`df-date-title df-date-title-compact${productPresentation ? "" : " df-date-title-button"}${timelineWindowAnchorDate === today ? " today" : ""}`}
                       aria-expanded={productPresentation ? undefined : mobileDatePickerOpen}
                       aria-label={productPresentation ? (lang === "zh" ? "当前日期" : "Current date") : (lang === "zh" ? "打开日期快选" : "Open quick date picker")}
-                      onClick={productPresentation ? undefined : () => {
-                        if (compactLayout) return;
-                        setMobileDatePickerMonth(timelineWindowAnchorDate.slice(0, 7));
-                        setMobileDatePickerOpen((open) => !open);
-                      }}
+                      onClick={productPresentation || compactLayout ? undefined : toggleTimelineDatePicker}
                     >
                       <span className="df-date-num">{(() => { const d = new Date(`${timelineWindowAnchorDate}T00:00:00`); return d.getDate(); })()}</span>
                       <span className="df-date-sep"></span>
@@ -10334,21 +10182,7 @@ if (cached?.data && cached?.settings) {
                       </span>
                       {!productPresentation && <UiChevronDownIcon className={`df-date-title-chevron${mobileDatePickerOpen ? " open" : ""}`} size={14} />}
                     </TimelineDateTag>
-                    {!productPresentation && !compactLayout && (
-                      <DateQuickPicker
-                        open={mobileDatePickerOpen}
-                        month={mobileDatePickerMonth}
-                        selectedDate={timelineWindowAnchorDate}
-                        today={today}
-                        weekStartsOn={settings.weekStartsOn}
-                        lang={lang}
-                        onMonthChange={setMobileDatePickerMonth}
-                        onSelect={(date) => {
-                          changeTimelineDate(date);
-                          setMobileDatePickerOpen(false);
-                        }}
-                      />
-                    )}
+                    {!compactLayout && timelineDatePicker}
                     <div
                       className="df-timeline-allday"
                       data-all-day-date={timelineWindowAnchorDate}
@@ -10628,7 +10462,6 @@ if (cached?.data && cached?.settings) {
                 ] as Array<[TimelineView, string]>).map(([view, label]) => <button type="button" key={view} className={"ui-choice-item" + (timelineView === view ? " active" : "")} aria-pressed={timelineView === view} onClick={() => changeTimelineView(view)}>{label}</button>)}
               </div>}
             </div>
-            </>}
           </section>
         </ExecutionSplitLayout>
       {!inlineTimelineDraft && dragCreate?.committed && (
@@ -10656,7 +10489,7 @@ if (cached?.data && cached?.settings) {
       {!productPresentation && !compactLayout && !settings.hideAi && (!workspacePanel || aiOpen) && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />}
       {createPortal(<div className="df-mobile-floating-actions" style={themeVars(settings, "execute")}>
         {mobileExecution && <Suspense fallback={null}><MobileExecutionControls
-          hidden={compactToolbarBlocked || Boolean(dragCreate?.committed)}
+          hidden={compactFloatingActionsHidden}
           drawerOpen={candidateDrawerOpen} panelRef={candidatePanelRef} scrollRef={candidateScrollRef} onClose={closeCandidateDrawer}
           lang={lang} count={visibleCandidates.filter((task) => !task.completed).length} triggerRef={candidateTriggerRef}
           title={mobilePlacement ? (placementPreviewTask?.title || (lang === "zh" ? "任务已移除" : "Task removed")) : undefined}
@@ -10664,7 +10497,7 @@ if (cached?.data && cached?.settings) {
           conflict={Boolean(mobilePlacement && placementPreview && getScheduledEventsForRange([addDays(placementPreview.date, -1), placementPreview.date, addDays(placementPreview.date, 1)]).some((item) => item.scheduledStart && item.scheduledEnd && scheduledDateTimesOverlap(placementPreview.date, placementPreview.startTime, placementPreview.endTime, item.scheduledDate || placementPreview.date, item.scheduledStart, item.scheduledEnd)))}
           onOpen={() => { setCandidatePanelCollapsed(false); setCandidateDrawerExpanded(false); setCandidateDrawerOpen(true); }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
         <MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
-        drawerOpen={compactToolbarBlocked || Boolean(dragCreate?.committed)} notificationCenterOpen={notificationCenterOpen}
+        drawerOpen={compactFloatingActionsHidden} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, "execute")}
         onAdd={() => { setQuickTitle(""); setMobileQuickAddKind("task"); setMobileQuickAddDate(null); setQuickAddOpen(true); }}
       /></div>, document.body)}

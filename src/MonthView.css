@@ -152,50 +152,6 @@
   height: 100%;
   min-height: 0;
 }
-.df-month-year-selector {
-  display: inline-flex;
-  align-items: center;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10;
-}
-.df-month-year-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: none;
-  background: transparent;
-  color: var(--text-main);
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-  padding: 6px 10px;
-  font-family: inherit;
-}
-.df-month-year-btn:hover {
-  opacity: 0.7;
-}
-.df-month-year-chevron {
-  width: 0;
-  height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 4px solid currentColor;
-  transition: transform 0.15s ease;
-  opacity: 0.5;
-}
-.df-month-year-btn:hover .df-month-year-chevron {
-  transform: rotate(180deg);
-}
-.df-app.theme-dark .df-month-year-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-.df-app.theme-dark .df-month-year-btn {
-  color: var(--text-main);
-}
 .df-app.theme-dark .df-month-view {
   color: var(--text-main);
 }
@@ -283,23 +239,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] #df-execute-timeline :i
   background: transparent;
   box-shadow: none;
 }
-.df-app .df-month-year-btn {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.df-app .df-month-year-btn:hover {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.df-app .df-month-year-btn:focus-visible {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.df-month-year-btn[aria-expanded="true"] .df-month-year-chevron { transform: rotate(180deg); }
-.df-header .df-month-year-selector { display: none; }
 .df-month-title {
   text-align: center; font-size: clamp(22px, 2.4vw, 34px); font-weight: 500;
   color: var(--text-main);
@@ -334,27 +273,8 @@ html[data-motion-fallback][data-motion-scope="timeline"] #df-execute-timeline :i
   border-bottom-color: var(--accent-active);
 }
 .df-month-name[aria-expanded="true"] .df-month-name-chevron { transform: translateY(2px) rotate(225deg); }
-.df-app .df-month-year-selector {
-  justify-self: center;
-  min-width: 0;
-}
 @media (orientation: portrait),
        (max-width: 980px) and (orientation: landscape) {
-  .df-month-year-selector {
-    position: absolute;
-    left: 50%;
-    top: 6px;
-    transform: translateX(-50%);
-    z-index: 2;
-  }
-  .df-month-year-btn {
-    min-height: 44px;
-    color: var(--text-main);
-    background: transparent;
-    border: 1px solid var(--paper-rule-strong);
-    border-radius: var(--radius-control);
-    box-shadow: none;
-  }
   .df-month-body {
     min-height: 0;
   }
@@ -375,7 +295,6 @@ html[data-motion-fallback][data-motion-scope="timeline"] #df-execute-timeline :i
     padding: 4px 2px;
   }
 }
-#root .df-app .df-month-year-selector { color: var(--text-main); }
 @media (min-width: 981px) and (orientation: landscape) {
   #root .df-app.mode-execute.is-ai-docked :is(.df-timeline-content, .df-timeline-daily, .df-timeline-3day, .df-week-view, .df-month-view, .df-month-body) {
     min-width: 0;

@@ -105,25 +105,10 @@
     min-height: 44px; min-width: 44px; padding: 0 4px; border: 0; font-size: 12px;
   }
   #root .df-app[data-phone-execution] .df-execute > .df-mobile-date-picker {
-    left: 0; right: 0; top: 50px; margin: 0; box-sizing: border-box;
-    padding: 8px 8px 12px; max-height: calc(100dvh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    overflow-y: auto; overscroll-behavior: contain;
+    left: 0; right: 0; margin: 0; box-sizing: border-box;
+    padding: 8px 6px 12px; max-height: calc(100dvh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     border-radius: 0 0 12px 12px; border-bottom: 1px solid var(--paper-rule);
     background: var(--surface-main);
-  }
-  #root .df-app[data-phone-execution] .df-execute > .df-mobile-date-picker > header {
-    min-height: 44px; grid-template-columns: 44px minmax(0, 1fr) 44px;
-  }
-  #root .df-app[data-phone-execution] .df-execute > .df-mobile-date-picker > header button {
-    display: grid; place-items: center; min-width: 44px; min-height: 44px;
-  }
-  #root .df-app[data-phone-execution] .df-execute > .df-mobile-date-picker .df-mobile-date-grid button {
-    width: 100%; min-width: 0; height: 44px; min-height: 44px; border-radius: 6px;
-    border: 0;
-    font: 550 14px/1 var(--paper-mono); font-variant-numeric: tabular-nums;
-  }
-  #root .df-app[data-phone-execution] .df-execute > .df-mobile-date-picker .df-mobile-date-grid button.selected {
-    background: var(--accent-active); color: var(--accent-on); box-shadow: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -4,6 +4,7 @@ import { useMotionPresence } from "../useMotionPresence";
 import { monthTitle } from "../i18n";
 import { localIsoDate } from "../utils/localDate";
 import { UiChevronLeftIcon, UiChevronRightIcon } from "./UiIcons";
+import { Button, IconButton } from "./UiPrimitives";
 
 export type DateQuickPickerProps = {
   open?: boolean;
@@ -61,9 +62,20 @@ export function DateQuickPicker({ open = true, month, selectedDate, today, minDa
   return (
     <section className="df-mobile-date-picker" data-motion-closing={presence.closing || undefined} inert={presence.closing} aria-label={lang === "zh" ? "快速选择日期" : "Quick date picker"}>
       <header>
-        <button type="button" onClick={() => moveMonth(-navigationStep)} aria-label={navigationLabels[0]}><UiChevronLeftIcon size={18} /></button>
-        <div className="df-mobile-date-heading">{(zh ? ["years", "months"] as const : ["months", "years"] as const).map((period) => <button key={period} ref={period === "months" ? monthButton : undefined} type="button" aria-label={periodLabel(period)} aria-pressed={mode === period} onClick={() => setMode(mode === period ? "days" : period)}>{period === "months" ? monthLabels[monthNumber - 1] : `${mode === "years" ? `${firstYear}–${firstYear + 11}` : year}${zh ? "年" : ""}`}</button>)}</div>
-        <button type="button" onClick={() => moveMonth(navigationStep)} aria-label={navigationLabels[1]}><UiChevronRightIcon size={18} /></button>
+        <IconButton icon={<UiChevronLeftIcon size={18} />} label={navigationLabels[0]} onClick={() => moveMonth(-navigationStep)} />
+        <div className="df-mobile-date-heading">
+          {(zh ? ["years", "months"] as const : ["months", "years"] as const).map((period) => (
+            <Button
+              key={period}
+              ref={period === "months" ? monthButton : undefined}
+              variant="ghost"
+              aria-label={periodLabel(period)}
+              aria-expanded={mode === period}
+              onClick={() => setMode(mode === period ? "days" : period)}
+            >{period === "months" ? monthLabels[monthNumber - 1] : `${mode === "years" ? `${firstYear}–${firstYear + 11}` : year}${zh ? "年" : ""}`}</Button>
+          ))}
+        </div>
+        <IconButton icon={<UiChevronRightIcon size={18} />} label={navigationLabels[1]} onClick={() => moveMonth(navigationStep)} />
       </header>
       {mode === "days" && <div className="df-mobile-date-weekdays" aria-hidden="true">
         {orderedWeekdays.map((label) => <span key={label}>{label}</span>)}
@@ -76,16 +88,17 @@ export function DateQuickPicker({ open = true, month, selectedDate, today, minDa
           const end = mode === "days" ? date : localIsoDate(new Date(optionYear, mode === "years" ? 12 : index + 1, 0));
           const selected = mode === "days" ? date === selectedDate : mode === "years" ? optionYear === year : index + 1 === monthNumber;
           const isToday = mode === "days" && date === today;
-          return <button
+          return <Button
             key={date}
+            variant="ghost"
             data-date={mode === "days" ? date : undefined}
-            type="button"
-            className={`${mode === "days" && date.slice(0, 7) !== month ? "outside" : ""}${selected ? " selected" : ""}${isToday ? " today" : ""}`}
+            className={mode === "days" && date.slice(0, 7) !== month ? "outside" : undefined}
             aria-pressed={selected}
+            aria-current={isToday ? "date" : undefined}
             aria-label={mode === "days" ? date : undefined}
             disabled={outsideRange(date, end)}
             onClick={() => mode === "days" ? onSelect(date) : selectPeriod(optionYear, mode === "years" ? monthNumber : index + 1)}
-          >{mode === "days" ? Number(date.slice(8, 10)) : mode === "years" ? optionYear : monthLabels[index]}</button>;
+          >{mode === "days" ? Number(date.slice(8, 10)) : mode === "years" ? optionYear : monthLabels[index]}</Button>;
         })}
       </div>
     </section>
