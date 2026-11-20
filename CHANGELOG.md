@@ -2,6 +2,12 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 33
+
+#### 改进
+
+- Windows 离线安装包和便携包进一步缩小。
+
 ### 1.7.0 Beta 32
 
 #### 改进
@@ -694,6 +700,12 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 33
+
+#### Improvements
+
+- Further reduced the size of the Windows offline installer and portable package.
 
 ### 1.7.0 Beta 32
 

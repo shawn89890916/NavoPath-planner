@@ -26,11 +26,13 @@ with `--latest=false`; stable releases are published as the GitHub Latest
 release. Beta updates remain off by default.
 
 The installer and portable executable include the same complete x64 payload.
-The build uses separate BCJ/LZMA2 streams for each file so unchanged runtime
-files can be copied during updates. The runtime uses a 64 MiB dictionary and
-`app.asar` uses 1 MiB. When changing the compression settings or 7-Zip version,
-check native NSIS extraction as well as SHA-512 reconstruction with the updater
-blockmaps. An encoding change can make the first update substantially larger.
+Each file has its own compressed stream so unchanged runtime files can be copied
+during updates. The runtime uses a 64 MiB dictionary and `app.asar` uses 1 MiB.
+On Windows builds, the main executable uses BCJ2 and the native NSIS decoder
+must reproduce the SHA-512 of every payload file before either artifact is built.
+When changing compression settings or the 7-Zip version, also check SHA-512
+reconstruction with the updater blockmaps. An encoding change can make the
+first update substantially larger.
 
 The Desktop Release workflow rejects a mismatched tag, refuses existing
 releases, uploads the complete asset set to a draft, then publishes it on the
