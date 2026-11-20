@@ -1,4 +1,4 @@
-import { Bell, Check, ChartNoAxesColumn, Columns3, Grid2X2, History, List, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Ellipsis, ListChecks, PanelLeftClose, PanelLeftOpen, Pencil, Plus, RotateCw, Search, Settings, Sparkles, Trash2, X, Zap, type LucideIcon, type LucideProps } from "lucide-react";
+import { Bell, ChartNoAxesColumn, Columns3, Grid2X2, History, List, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Ellipsis, ListChecks, PanelLeftClose, PanelLeftOpen, Pencil, Plus, RotateCw, Search, Settings, Sparkles, Trash2, X, Zap, type LucideIcon, type LucideProps } from "lucide-react";
 
 function createNamedIcon(Icon: LucideIcon) {
   return function NamedUiIcon({ size = 16, strokeWidth = 1.8, ...props }: LucideProps) {
@@ -7,7 +7,6 @@ function createNamedIcon(Icon: LucideIcon) {
 }
 
 export const UiBellIcon = createNamedIcon(Bell);
-export const UiCheckIcon = createNamedIcon(Check);
 export const UiCloseIcon = createNamedIcon(X);
 export const UiCopyIcon = createNamedIcon(Copy);
 export const UiPencilIcon = createNamedIcon(Pencil);
@@ -37,6 +36,8 @@ function createPathIcon(path: string) {
   };
 }
 
+// Keep the stroke's bounds centered at (12, 12) in the 24-unit viewBox.
+export const UiCheckIcon = createPathIcon("M4 12.4 9.6 18 20 6");
 export const UiChatIcon = createPathIcon("M18.3 17.1c-1.9.6-3.5-.3-5.6-.3-2.2 0-4.1.9-5.8.2-1.1-.4-2.8.2-3.8-.1-1.4-.3-1.4-1.3-.3-2.1l1.5-1c.2-4.1 3.4-7.2 7.4-7.3 4.1-.1 7.5 3.1 7.4 7.3.1.3 1.5.4 2.3 1.3.7.8.5 1.4-.2 1.8M9.7 11.2v1.4m4-1.4v1.4");
 export const UiInfoIcon = createPathIcon("M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0ZM12 16v-4m0-4h.01");
 export const UiEyeIcon = createPathIcon("M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z");

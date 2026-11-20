@@ -2,6 +2,12 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 39
+
+#### 改进
+
+- 创建项目的确认图标换成短圆角勾，笔画在按钮中居中。
+
 ### 1.7.0 Beta 38
 
 #### 改进
@@ -725,6 +731,12 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 39
+
+#### Improvements
+
+- The create-project button uses a centered, compact check mark with rounded strokes.
 
 ### 1.7.0 Beta 38
 

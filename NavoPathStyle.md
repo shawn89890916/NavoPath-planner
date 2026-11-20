@@ -481,7 +481,8 @@ visual values.
   Keep the keyboard focus ring on the focused control.
 - Inline project creation uses an underlined name field with an accent-colored
   underline on focus. Center the shared check icon in a borderless button and
-  align it with the field and optional color swatch.
+  align its drawn strokes with the vertical center of the field and optional
+  color swatch.
 - Selected and drag-and-drop states may use the active accent as a one-pixel ring.
 - A button outline communicates its clickable boundary; other borders must communicate structure or state.
 

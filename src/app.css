@@ -1512,7 +1512,7 @@ input[type="range"] {
 }
 #root .df-app .df-project-create-line .df-project-create-confirm {
   border: 0;
-  color: var(--text-muted);
+  color: var(--text-main);
   box-shadow: none;
 }
 #root .df-app .df-project-create-line .df-project-create-confirm:hover:not(:disabled),

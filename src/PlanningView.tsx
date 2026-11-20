@@ -17,7 +17,7 @@ import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlockContent, TaskBlockDuration, TaskCheckbox, TaskSubtaskShelf } from "./components/TaskBlock";
 import { CloseButton, IconButton } from "./components/UiPrimitives";
-import { UiCalendarCheckIcon, UiFilterIcon } from "./components/UiIcons";
+import { UiCalendarCheckIcon, UiCheckIcon, UiFilterIcon } from "./components/UiIcons";
 import { TaskDragLayer } from "./unifiedDrag";
 import { bindHeldTouchScroll } from "./useUnifiedDrag";
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricCompletionFilter, type MetricDisplayMetric, type MetricGroupBy, type MetricHabitMode, type MetricRangePreset, type TimeAllocationGroup } from "./metrics/timeAllocation";
@@ -265,14 +265,6 @@ function createProjectShell(title: string): Project {
     createdAt: "",
     updatedAt: "",
   };
-}
-
-function CheckIcon({ size = 12 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 12 12" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 6.2 4.8 9 10 3" />
-    </svg>
-  );
 }
 
 function ChevronIcon({ open }: { open: boolean }) {
@@ -594,7 +586,7 @@ function PlanningProjectNode(props: {
               }}
               aria-label={props.lang === "zh" ? "完成项目" : "Complete project"}
             >
-              <CheckIcon />
+              <UiCheckIcon size={12} strokeWidth={4.4} />
             </button>
           )}
           {!props.demo && <button className="df-tree-icon-button df-project-add-btn" onClick={props.onAddTask} aria-label={t(props.lang, "planning.addTask")}>

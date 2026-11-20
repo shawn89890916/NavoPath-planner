@@ -988,7 +988,7 @@ export function ProjectCreateRow({ lang, value, onValueChange, onCreate, childre
         }}
       />
       {children}
-      <IconButton className="df-project-create-confirm" icon={<UiCheckIcon size={20} strokeWidth={2} />}
+      <IconButton className="df-project-create-confirm" icon={<UiCheckIcon size={20} strokeWidth={2.8} />}
         label={lang === "zh" ? "创建项目" : "Create project"} onClick={onCreate}
       />
     </div>
