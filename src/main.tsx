@@ -4,6 +4,7 @@ import { useMobileSheetGesture } from "./useMobileSheetGesture";
 import { uid } from "./utils/ids";
 import { toggleTaskCompletion, setTaskCompletion, habitScheduleForTask } from "./utils/taskCompletion";
 import { captureTaskUndo, refreshTaskCreationUndo, undoTaskChanges } from "./utils/taskUndo";
+import { recentTaskOperations, TASK_OPERATION_RETENTION_MS, updateSavedTaskOperations } from "./utils/taskOperationHistory";
 import type { TaskOperation, TaskOperationKind } from "./components/TaskOperationHistory";
 import { MobileQuickAddButton } from "./components/MobileQuickAddButton";
 import { NotificationBadge } from "./components/NotificationBadge";
@@ -913,6 +914,8 @@ function App() {
   const [authNotice, setAuthNotice] = useState<AuthNotice>(null);
   const [shelfViewId, setShelfViewId] = useState("");
   const [taskOperations, setTaskOperations] = useState<TaskOperation[]>([]);
+  const taskOperationsRef = useRef(taskOperations);
+  taskOperationsRef.current = taskOperations;
   const [shelfMenuOpen, setShelfMenuOpen] = useState(false);
   const [projectManagement, setProjectManagement] = useState(productDemo?.feature === "planning");
   const planningSessionRef = useRef<PlanningViewSession | null>(null);
@@ -1643,15 +1646,23 @@ function App() {
   }), [extensionSnapshot.views]);
   const shelfView = shelfViews.find((view) => view.id === shelfViewId);
   const taskHistoryOpen = shelfView?.nativeMode === "activity-history";
-  const taskHistoryEnabled = shelfViews.some((view) => view.nativeMode === "activity-history");
+  const taskHistoryKey = "official:activity-history";
+  const taskHistoryEnabled = !extensionSnapshot.safeMode
+    && !settings?.extensions?.removed[taskHistoryKey]
+    && settings?.extensions?.installed[taskHistoryKey]?.enabled !== false;
   const treeView = extensionSnapshot.views.find((view) => view.nativeMode === "tree");
   const metricsAvailable = extensionSnapshot.views.some((view) => view.nativeMode === "metrics");
   useEffect(() => {
     if (shelfViewId && !shelfView) setShelfViewId("");
   }, [shelfViewId, shelfView]);
+  const oldestTaskOperationAt = taskOperations.at(-1)?.at;
   useEffect(() => {
-    if (!taskHistoryEnabled) setTaskOperations((entries) => entries.length ? [] : entries);
-  }, [taskHistoryEnabled]);
+    if (productDemo || !oldestTaskOperationAt) return;
+    const workspaceKey = loadedWorkspaceKeyRef.current;
+    const delay = Date.parse(oldestTaskOperationAt) + TASK_OPERATION_RETENTION_MS - workspaceNow().getTime();
+    const timer = window.setTimeout(() => changeTaskOperations(workspaceKey, (entries) => entries), Math.max(0, delay));
+    return () => window.clearTimeout(timer);
+  }, [oldestTaskOperationAt, productDemo]);
   useEffect(() => {
     if (activeExtensionPanelId && !activeExtensionPanel) setWorkspacePanelOpen("extension", false);
   }, [activeExtensionPanelId, activeExtensionPanel]);
@@ -2084,6 +2095,20 @@ function App() {
       setSettings(null);
       return;
     }
+    if (!productDemo) {
+      const time = workspaceNow().getTime();
+      void updateSavedTaskOperations(workspaceKey, (entries) => entries, time).then((stored) => {
+        if (!isCurrentWorkspaceLoad(loadVersion, workspaceLoadVersionRef.current)
+          || workspaceKey !== loadedWorkspaceKeyRef.current) return;
+        setTaskOperations((current) => {
+          const byId = new Map(stored.map((entry) => [entry.id, entry]));
+          for (const entry of current) {
+            if (!byId.get(entry.id)?.undone) byId.set(entry.id, entry);
+          }
+          return recentTaskOperations([...byId.values()], workspaceNow().getTime());
+        });
+      }).catch((error) => console.warn("Activity history could not be loaded:", error));
+    }
     const cached = readBootstrapCache(auth.user?.id);
 if (cached?.data && cached?.settings) {
       dataRef.current = cached.data;
@@ -2343,6 +2368,8 @@ if (cached?.data && cached?.settings) {
       await flushPendingSettings({ urgent: true });
       const api = await waitForPlannerApi();
       await api.deleteAccount?.();
+      await updateSavedTaskOperations(loadedWorkspaceKeyRef.current, () => [], workspaceNow().getTime())
+        .catch((error) => console.warn("Activity history could not be cleared:", error));
       resetWorkspaceUi();
       setUtilityPanel(null);
       setData(null);
@@ -2925,6 +2952,16 @@ if (cached?.data && cached?.settings) {
     return extensionHostRef.current?.internal.services.saveData(next) ?? persistData(next);
   }
 
+  function changeTaskOperations(workspaceKey: string, update: (entries: TaskOperation[]) => TaskOperation[]) {
+    if (workspaceKey !== loadedWorkspaceKeyRef.current) return;
+    const now = workspaceNow().getTime();
+    setTaskOperations((entries) => recentTaskOperations(update(entries), now));
+    if (!productDemo) {
+      void updateSavedTaskOperations(workspaceKey, update, now)
+        .catch((error) => console.warn("Activity history could not be saved:", error));
+    }
+  }
+
   function saveTaskOperation(next: PlannerData, kind: TaskOperationKind, options?: { title?: string; titles?: string[]; toast?: string }) {
     if (!taskHistoryEnabled && !options?.toast) return saveData(next);
     const previous = dataRef.current;
@@ -2939,14 +2976,16 @@ if (cached?.data && cached?.settings) {
       titles: options?.titles || (options?.title ? [options.title] : [...undo.added, ...undo.removed, ...undo.changes].map(({ title }) => title)),
       undo,
     };
-    if (taskHistoryEnabled) setTaskOperations((current) => [operation, ...current].slice(0, 50));
+    if (taskHistoryEnabled) changeTaskOperations(operation.workspaceKey, (current) => [operation, ...current]);
     if (options?.toast) showUndoToast(options.toast, t(lang, "toast.undo"), () => undoTaskOperation(operation));
     return saving;
   }
 
   function undoTaskOperation(operation: TaskOperation) {
+    operation = taskOperationsRef.current.find((entry) => entry.id === operation.id) || operation;
     const current = dataRef.current;
-    if (!current || operation.undone || operation.workspaceKey !== loadedWorkspaceKeyRef.current) return;
+    if (!current || operation.undone || operation.workspaceKey !== loadedWorkspaceKeyRef.current
+      || Date.parse(operation.at) <= workspaceNow().getTime() - TASK_OPERATION_RETENTION_MS) return;
     const next = undoTaskChanges(current, operation.undo, workspaceNow().toISOString());
     if (next === current) {
       showToast(lang === "zh" ? "相关任务后来有改动，暂时无法撤销。" : "The affected tasks have since changed. This action can’t be undone yet.");
@@ -2954,7 +2993,8 @@ if (cached?.data && cached?.settings) {
     }
     preserveTimelineViewportOnNextDataChange();
     void saveData(next);
-    setTaskOperations((entries) => entries.map((entry) => entry.id === operation.id ? { ...entry, undone: true } : entry));
+    changeTaskOperations(operation.workspaceKey, (entries) => entries.map((entry) =>
+      entry.id === operation.id ? { ...entry, undone: true } : entry));
     showToast(t(lang, "toast.undone"));
   }
   async function persistData(next: PlannerData) {
@@ -3100,9 +3140,10 @@ if (cached?.data && cached?.settings) {
         ...latest,
         tasks: latest.tasks.map((item) => item.id === task.id ? updatedTask : item),
       };
+      const workspaceKey = loadedWorkspaceKeyRef.current;
       await saveData(next);
-      setTaskOperations((entries) => entries.map((entry) => {
-        if (entry.undone || entry.workspaceKey !== loadedWorkspaceKeyRef.current) return entry;
+      changeTaskOperations(workspaceKey, (entries) => entries.map((entry) => {
+        if (entry.undone) return entry;
         const undo = refreshTaskCreationUndo(entry.undo, currentTask, updatedTask, next);
         return undo === entry.undo ? entry : { ...entry, undo };
       }));

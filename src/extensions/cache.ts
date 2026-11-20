@@ -25,6 +25,33 @@ export async function cachePut(key: string, value: unknown): Promise<void> {
     tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error);
   });
 }
+export async function cacheUpdate<T>(key: string, update: (value: T | null) => T | null): Promise<T | null> {
+  if (typeof indexedDB === "undefined") {
+    const result = update((fallback.get(key) as T | undefined) ?? null);
+    if (result === null) fallback.delete(key);
+    else fallback.set(key, structuredClone(result));
+    return result;
+  }
+  const db = await database();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("records", "readwrite");
+    const store = tx.objectStore("records");
+    const request = store.get(key);
+    let result: T | null;
+    request.onsuccess = () => {
+      try {
+        result = update(request.result ?? null);
+        if (result === null) store.delete(key);
+        else store.put(result, key);
+      } catch (error) {
+        reject(error);
+        tx.abort();
+      }
+    };
+    tx.oncomplete = () => resolve(result);
+    tx.onabort = () => reject(tx.error);
+  });
+}
 export async function cacheDelete(key: string): Promise<void> {
   if (typeof indexedDB === "undefined") { fallback.delete(key); return; }
   const db = await database();

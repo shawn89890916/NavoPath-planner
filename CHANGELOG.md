@@ -2,6 +2,12 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 45
+
+#### 改进
+
+- 操作历史保留最近三天的任务操作和撤销状态，重新打开应用后仍可查看和撤销。
+
 ### 1.7.0 Beta 44
 
 #### 修复
@@ -763,6 +769,12 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 45
+
+#### Improved
+
+- Activity History keeps the last three days of task activity and undo status, so you can review and undo actions after reopening the app.
 
 ### 1.7.0 Beta 44
 

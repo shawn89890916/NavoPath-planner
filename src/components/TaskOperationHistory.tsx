@@ -163,7 +163,7 @@ export default function TaskOperationHistory({ operations, projects, lang, now, 
   return (
     <section className="df-task-history" aria-label={label}>
       {operations.length === 0 ? (
-        <p className="df-task-history-empty">{lang === "zh" ? "本次打开应用后还没有任务操作。" : "No task activity in this session yet."}</p>
+        <p className="df-task-history-empty">{lang === "zh" ? "最近三天没有任务操作。" : "No task activity in the last three days."}</p>
       ) : (
         <ol className="df-task-history-list">
           {operations.map((operation) => {
