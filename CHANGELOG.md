@@ -1,5 +1,13 @@
 # NavoPath 更新日志
 
+## 2026-11-21
+
+### 1.7.0 Beta 49
+
+#### 改进
+
+- 从左上角展开模板选择。横屏左侧显示模板列表，竖屏在当前模板下方逐行显示。每行可直接进入编辑或删除，底部可新建。收起后时间轴铺满可用宽度。
+
 ## 2026-11-20
 
 ### 1.7.0 Beta 48
@@ -783,6 +791,14 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-21
+
+### 1.7.0 Beta 49
+
+#### Improved
+
+- Open the template picker from the top left. The list appears beside the timeline in landscape and below the current template in portrait. Edit or delete individual templates from their rows, or create one at the bottom. The timeline fills the available width when the picker is closed.
 
 ## 2026-11-20
 

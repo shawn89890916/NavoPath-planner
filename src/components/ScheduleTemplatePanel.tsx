@@ -1,5 +1,5 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { INITIAL_TEMPLATE_ID, isBuiltInScheduleTemplate, resolveScheduleTemplates, upsertScheduleTemplate } from "../../shared/scheduleTemplates";
+import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { isBuiltInScheduleTemplate, resolveScheduleTemplates, upsertScheduleTemplate } from "../../shared/scheduleTemplates";
 import type { Language, ScheduleTemplate, Settings } from "../types";
 import { clamp, minutesToTime, pointerToDateTime, SLOT_MINUTES, timeBlockTop, timeToMinutes } from "../timelineGeometry";
 import { clockTimeSpanMinutes } from "../utils/timelineRecords";
@@ -8,9 +8,9 @@ import { TaskDragLayer } from "../unifiedDrag";
 import { usePointerReorder } from "../usePointerReorder";
 import { readTemplatePeriods, saveTemplatePeriods, TEMPLATE_DAY_MINUTES, templatePeriodEnd, type TemplatePeriod, type templateApplication } from "../utils/scheduleTemplates";
 import { DateQuickPicker } from "./DateQuickPicker";
-import { CandidateBlock, CandidatePanelHeader, CandidatePanelShell, DailyTimelineGrid, ExecutionSplitLayout, TimelineCanvas, TimelineEventBlock } from "./ExecutionSharedLayout";
+import { DailyTimelineGrid, TimelineCanvas, TimelineEventBlock } from "./ExecutionSharedLayout";
 import { Button, IconButton, Input, Modal } from "./UiPrimitives";
-import { UiChevronDownIcon, UiCopyIcon, UiPlusIcon, UiTrashIcon } from "./UiIcons";
+import { UiChevronDownIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiTrashIcon } from "./UiIcons";
 
 type Selection = { key: string; title: string; periods: TemplatePeriod[]; updatedAt?: string; dirty?: boolean };
 type Gesture = {
@@ -85,17 +85,20 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
   const [pickerMonth, setPickerMonth] = useState(today.slice(0, 7));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [notice, setNotice] = useState("");
+  const [templateEditing, setTemplateEditing] = useState(false);
+  const [selectorOpen, setSelectorOpen] = useState(false);
+  const listId = useId();
   const [editing, setEditing] = useState<TemplatePeriod | null>(null);
   const [preview, setPreview] = useState<TemplatePeriod | null>(null);
   const panelRef = useRef<HTMLElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
+  const selectorRef = useRef<HTMLButtonElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const dateGroupRef = useRef<HTMLDivElement>(null);
   const dateButtonRef = useRef<HTMLButtonElement>(null);
   const gestureRef = useRef<Gesture | null>(null);
   const suppressTouchClick = useRef(false);
-  const focusName = useRef(false);
   const wasOpen = useRef(active);
   const builtIn = isBuiltInScheduleTemplate(selection.key);
   const date = selectedDate < today ? today : selectedDate;
@@ -125,6 +128,7 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
   useLayoutEffect(() => {
     if (active && !wasOpen.current) {
       setSelectedDate(today);
+      setSelectorOpen(false);
       setPickerOpen(false);
     }
     if (active) panelRef.current?.focus({ preventScroll: true });
@@ -132,12 +136,13 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
   }, [active, today]);
   useLayoutEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = Math.max(0, (scrollStart - 30) * pixelsPerMinute);
-    if (focusName.current) {
-      focusName.current = false;
+  }, [selection.key, scrollStart, pixelsPerMinute]);
+  useLayoutEffect(() => {
+    if (templateEditing) {
       nameRef.current?.focus({ preventScroll: true });
       nameRef.current?.select();
     }
-  }, [selection.key, scrollStart, pixelsPerMinute]);
+  }, [templateEditing, selection.key]);
   useEffect(() => {
     if (selection.key === "draft" || selection.dirty || editing || gestureRef.current) return;
     const current = templates.find((item) => item.id === selection.key) ?? templates[0];
@@ -161,22 +166,25 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
     };
   }, [pickerOpen]);
 
-  function activate(next: Selection, editName = false) {
-    focusName.current = editName;
+  function activate(next: Selection, editTemplate = false) {
+    setTemplateEditing(editTemplate);
+    if (editTemplate) setSelectorOpen(false);
     setSelection(next);
     setEditing(null);
     setNotice("");
     setScrollStart(next.periods.length ? Math.min(...next.periods.map((period) => period.startMinutes)) : 9 * 60);
-    if (editName && next.key === selection.key) {
-      focusName.current = false;
-      nameRef.current?.focus({ preventScroll: true });
-      nameRef.current?.select();
-    }
+  }
+
+  function editCurrentTemplate() {
+    setSelectorOpen(false);
+    setTemplateEditing(true);
+    nameRef.current?.focus({ preventScroll: true });
+    nameRef.current?.select();
   }
 
   function createTemplate() {
     if (selection.key === "draft") {
-      nameRef.current?.focus({ preventScroll: true });
+      editCurrentTemplate();
       return;
     }
     activate({ key: "draft", title: "", periods: [] }, true);
@@ -194,7 +202,7 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
     const title = selection.title.trim();
     if (!title || !selection.periods.length) {
       setNotice(!title ? (zh ? "请填写模板名称。" : "Enter a template name.") : (zh ? "请添加至少一个时间段。" : "Add at least one time block."));
-      if (!title) nameRef.current?.focus();
+      if (!title) editCurrentTemplate();
       return;
     }
     const insert = selection.key === "draft";
@@ -220,15 +228,24 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
       return;
     }
     if (insert) activate(customSelection(next));
-    else setSelection(customSelection(next));
+    else {
+      setSelection(customSelection(next));
+      setTemplateEditing(false);
+    }
     setNotice(zh ? "已保存模板。" : "Template saved.");
+    selectorRef.current?.focus({ preventScroll: true });
   }
 
-  async function deleteTemplate() {
-    const id = selection.key;
-    if (!await confirmDelete(selection.title)) return;
-    onSaveCustomTemplates((current) => current.filter((item) => item.id !== id));
-    activate(customSelection(templates.find((item) => item.id === INITIAL_TEMPLATE_ID) ?? templates[0]));
+  function cancelTemplateEdit() {
+    const saved = templates.find((item) => item.id === selection.key) ?? templates[0];
+    activate(customSelection(saved));
+    selectorRef.current?.focus({ preventScroll: true });
+  }
+
+  async function deleteTemplate(template: { id: string; title: string }) {
+    if (isBuiltInScheduleTemplate(template.id) || template.id === "draft" || !await confirmDelete(template.title)) return;
+    onSaveCustomTemplates((current) => current.filter((item) => item.id !== template.id));
+    if (selection.key === template.id) activate(customSelection(templates[0]));
     setNotice(zh ? "已删除模板。" : "Template deleted.");
   }
 
@@ -341,76 +358,96 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
     dateButtonRef.current?.focus({ preventScroll: true });
   }
 
-  const blockCount = (count: number) => zh ? count + " 个时间段" : count + (count === 1 ? " block" : " blocks");
-  const positionBlock = (period: TemplatePeriod) => ({
-    top: timeBlockTop(minutesToTime(period.startMinutes), 0, hourHeight),
-    height: (Math.min(templatePeriodEnd(period), TEMPLATE_DAY_MINUTES) - period.startMinutes) * pixelsPerMinute,
-    left: "var(--template-block-gutter)",
-    right: "var(--template-block-gutter)",
-  });
+  const selectedTitle = selection.title || (zh ? "新模板" : "New template");
+  const positionBlock = (period: TemplatePeriod) => {
+    const height = (Math.min(templatePeriodEnd(period), TEMPLATE_DAY_MINUTES) - period.startMinutes) * pixelsPerMinute;
+    const inset = Math.min(4, height / 8);
+    return {
+      top: timeBlockTop(minutesToTime(period.startMinutes), 0, hourHeight) + inset,
+      height: height - 2 * inset,
+      left: "var(--template-block-gutter)",
+      right: "var(--template-block-gutter)",
+    };
+  };
 
   return (
-    <section ref={panelRef} tabIndex={-1} className="df-template-panel" onKeyDown={(event) => {
+    <section ref={panelRef} tabIndex={-1} className="df-template-panel df-template-shell" onKeyDown={(event) => {
       if (event.key !== "Escape") return;
       if (pickerOpen) closePicker();
       else if (gestureRef.current) endGesture();
       else if (editing) setEditing(null);
       else if (reorder.drag) reorder.cancelDrag();
+      else if (selectorOpen) {
+        setSelectorOpen(false);
+        selectorRef.current?.focus();
+      } else if (templateEditing) cancelTemplateEdit();
       else return;
       event.stopPropagation();
     }}>
-      <ExecutionSplitLayout className="df-template-shell">
-        <CandidatePanelShell ariaLabel={zh ? "模板列表" : "Template list"}>
-          <CandidatePanelHeader title={zh ? "模板" : "Templates"} actions={
-            <Button variant="ghost" onClick={createTemplate}><UiPlusIcon size={14} />{zh ? "新建模板" : "New template"}</Button>
-          } />
-          <div className="df-candidate-list">
-            {templates.filter((template) => isBuiltInScheduleTemplate(template.id)).map((template) => {
-              const row = customSelection(template);
-              return <CandidateBlock key={row.key} title={row.title} meta={blockCount(row.periods.length)} selected={selection.key === row.key} onClick={() => { if (selection.key !== row.key || selection.updatedAt !== row.updatedAt) activate(row); }} />;
-            })}
-            {templates.filter((template) => !isBuiltInScheduleTemplate(template.id)).map((template) => {
-              const position = reorder.insertion?.id === template.id ? reorder.insertion.position : null;
-              return <React.Fragment key={template.id}>
-                {position === "before" && <div className="df-list-insertion-line" aria-hidden="true" />}
-                <CandidateBlock
-                  selected={selection.key === template.id}
-                  title={template.title}
-                  meta={blockCount(template.slots.length)}
-                  dataAttrs={{ "template-row-key": template.id }}
-                  onClick={() => { if (!reorder.suppressedRef.current && (selection.key !== template.id || selection.updatedAt !== template.updatedAt)) activate(customSelection(template)); }}
-                  onPointerDown={(event) => reorder.beginDrag(event, template)}
-                />
-                {position === "after" && <div className="df-list-insertion-line" aria-hidden="true" />}
-              </React.Fragment>;
-            })}
-            {selection.key === "draft" && <CandidateBlock selected title={zh ? "新模板" : "New template"} meta={blockCount(selection.periods.length)} />}
+      <div className="df-template-workspace" data-selector-open={selectorOpen || undefined}>
+        <div className="df-template-selector">
+          <div className="df-template-picker-header">
+            <Button ref={selectorRef} variant="ghost" className="df-template-picker-title"
+              aria-expanded={selectorOpen} aria-controls={listId} title={selectedTitle}
+              onClick={() => setSelectorOpen((open) => !open)}>
+              <span>{selectedTitle}</span><UiChevronDownIcon size={16} />
+            </Button>
+            {selectorOpen && <div className="df-template-picker-actions">
+              <IconButton icon={<UiPencilIcon size={16} />} label={zh ? "编辑当前模板" : "Edit current template"} onClick={editCurrentTemplate} />
+              <IconButton icon={<UiTrashIcon size={16} />} label={zh ? "删除当前模板" : "Delete current template"}
+                disabled={builtIn || selection.key === "draft"} onClick={() => void deleteTemplate({ id: selection.key, title: selection.title })} />
+            </div>}
           </div>
-        </CandidatePanelShell>
+          {selectorOpen && <div id={listId} className="df-template-picker-body">
+            <div className="df-template-picker-list">
+              {templates.filter((template) => template.id !== selection.key).map((template) => {
+                const draggable = !isBuiltInScheduleTemplate(template.id);
+                const insertion = reorder.insertion?.id === template.id ? reorder.insertion.position : null;
+                return <div key={template.id} className="df-template-picker-row"
+                  data-insertion={insertion || undefined} data-template-row-key={draggable ? template.id : undefined}>
+                  <Button variant="ghost" className="df-template-picker-name" title={template.title}
+                    onPointerDown={draggable ? (event) => {
+                      if (event.pointerType !== "touch") reorder.beginDrag(event, template);
+                    } : undefined}
+                    onClick={() => { if (!reorder.suppressedRef.current) activate(customSelection(template)); }}>
+                    {template.title}
+                  </Button>
+                  <div className="df-template-picker-actions">
+                    <IconButton icon={<UiPencilIcon size={16} />} label={(zh ? "编辑 " : "Edit ") + template.title}
+                      onClick={() => activate(customSelection(template), true)} />
+                    <IconButton icon={<UiTrashIcon size={16} />} label={(zh ? "删除 " : "Delete ") + template.title}
+                      disabled={!draggable} onClick={() => void deleteTemplate(template)} />
+                  </div>
+                </div>;
+              })}
+            </div>
+            <Button variant="ghost" className="df-template-picker-new" onClick={createTemplate}>
+              <span>{zh ? "新建模板" : "New template"}</span><UiPlusIcon size={16} />
+            </Button>
+          </div>}
+        </div>
         <section className="df-timeline-panel" aria-label={zh ? "模板时间轴" : "Template timeline"}>
           <div className="df-timeline-body">
             <div className="df-timeline-content">
               <div className="df-timeline-daily">
-                <div className="df-template-name-bar">
+                {templateEditing && <div className="df-template-edit-toolbar">
                   <Input ref={nameRef} className="df-template-name-inline" value={selection.title}
                     onChange={(event) => { const title = event.target.value; setSelection((current) => ({ ...current, dirty: true, title })); setNotice(""); }}
                     onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) persist(); }}
                     aria-label={zh ? "模板名称" : "Template name"} placeholder={zh ? "模板名称" : "Template name"} />
-                  <Button variant="primary" onClick={persist}>{zh ? "保存模板" : "Save template"}</Button>
-                  <div className="df-template-edit-actions">
-                    <Button variant="ghost" onClick={addPeriod}><UiPlusIcon size={14} />{zh ? "添加时段" : "Add block"}</Button>
-                    {selection.key !== "draft" && <>
-                      <IconButton icon={<UiCopyIcon size={16} />} label={zh ? "复制模板" : "Duplicate template"} onClick={copyTemplate} />
-                      {!builtIn && <IconButton icon={<UiTrashIcon size={16} />} label={zh ? "删除模板" : "Delete template"} onClick={() => void deleteTemplate()} />}
-                    </>}
+                  <div className="df-template-edit-controls">
+                    <Button variant="ghost" onClick={addPeriod}><UiPlusIcon size={16} /><span>{zh ? "添加时段" : "Add block"}</span></Button>
+                    {selection.key !== "draft" && <IconButton icon={<UiCopyIcon size={16} />} label={zh ? "复制模板" : "Duplicate template"} onClick={copyTemplate} />}
+                    <Button variant="ghost" onClick={cancelTemplateEdit}>{zh ? "取消" : "Cancel"}</Button>
+                    <Button variant="primary" onClick={persist}>{zh ? "保存模板" : "Save template"}</Button>
                   </div>
-                </div>
+                </div>}
                 <TimelineCanvas
                   scrollRef={scrollRef}
                   canvasRef={canvasRef}
                   height={TEMPLATE_DAY_MINUTES * pixelsPerMinute}
-                  canvasClassName="df-template-canvas-editable"
-                  onCanvasPointerDown={startCreating}
+                  canvasClassName={templateEditing ? "df-template-canvas-editable" : undefined}
+                  onCanvasPointerDown={templateEditing ? startCreating : undefined}
                   onCanvasPointerMove={(event) => {
                     const gesture = gestureRef.current;
                     if (gesture?.pointerId === event.pointerId) setPreview(positionGesture(gesture, event));
@@ -418,7 +455,7 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
                   onCanvasPointerUp={finish}
                   onCanvasPointerCancel={(event) => { if (gestureRef.current?.pointerId === event.pointerId) endGesture(); }}
                   onCanvasClick={(event) => {
-                    if ((event.nativeEvent as PointerEvent).pointerType !== "touch" || suppressTouchClick.current) return;
+                    if (!templateEditing || (event.nativeEvent as PointerEvent).pointerType !== "touch" || suppressTouchClick.current) return;
                     if (!(event.target instanceof Element) || event.target.closest("[data-template-period]")) return;
                     const period = newPeriod(minuteAt(event.clientX, event.clientY));
                     setEditing(period);
@@ -436,9 +473,9 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
                       timeRange={label}
                       style={positionBlock(period)}
                       conflicting={skipped.has(period.id)}
-                      onPointerDown={(event) => begin(event, period, "move")}
-                      onEdit={() => setEditing(period)}
-                      onResizeStart={(edge, event) => begin(event, period, edge)}
+                      onPointerDown={templateEditing ? (event) => begin(event, period, "move") : undefined}
+                      onEdit={templateEditing ? () => setEditing(period) : undefined}
+                      onResizeStart={templateEditing ? (edge, event) => begin(event, period, edge) : undefined}
                       lang={lang}
                     />;
                   })}
@@ -448,9 +485,9 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
             </div>
           </div>
         </section>
-      </ExecutionSplitLayout>
+      </div>
       {reorder.drag && <TaskDragLayer pointer={reorder.drag.pointer} sourceRect={reorder.drag.sourceRect} offset={reorder.drag.offset}>
-        <CandidateBlock title={reorder.drag.item.title} meta={blockCount(reorder.drag.item.slots.length)} />
+        <div className="df-template-drag-row">{reorder.drag.item.title}</div>
       </TaskDragLayer>}
       <footer className="df-template-modal-actions">
         {(notice || skipped.size > 0) && <div className="df-template-status" role="status">
@@ -463,7 +500,7 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
             aria-expanded={pickerOpen} aria-haspopup="dialog" aria-label={(zh ? "应用日期，" : "Apply date, ") + dateLabel}
             title={date}
             onClick={() => { setPickerMonth(date.slice(0, 7)); setPickerOpen(!pickerOpen); }}>
-            {dateLabel}<UiChevronDownIcon size={14} />
+            <span>{dateLabel}</span><UiChevronDownIcon size={16} />
           </Button>
           <DateQuickPicker open={pickerOpen} month={pickerMonth} selectedDate={date} today={today} minDate={today}
             weekStartsOn={weekStartsOn} lang={lang} onMonthChange={setPickerMonth}
