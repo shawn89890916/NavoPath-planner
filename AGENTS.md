@@ -28,12 +28,22 @@ Visual and interaction work must follow `NavoPathStyle.md`.
 
 ## Reuse-first UI implementation
 
-- Before adding a component, hook, event wrapper, CSS selector, or icon, search
-  the current workspace for an existing implementation and extend that owner
-  when the behavior is shared.
+- Before adding or replacing a component, hook, utility, event handler, CSS
+  selector, or icon, find the existing owner and check how its callers use it.
+  Prefer reusing it as-is, then composing it, then making a focused change
+  at the shared owner.
+- Fix or extend existing components in place. A new implementation or a rewrite
+  requires a distinct requirement that the existing owner cannot reasonably
+  support. Explain that requirement in the change summary. When replacing an
+  implementation, migrate its callers before retiring the old path.
 - Reuse `TaskBlock`, `ExecutionSharedLayout`, `Button`, `IconButton`, `Modal`,
   and the canonical [`UiIcons`](src/components/UiIcons.tsx) registry. Do not
   add a second inline SVG for an icon already present in the registry.
+- Keep one source of truth for shared state, formatting, validation, and
+  interaction behavior. Execute, Planning, widgets, and responsive layouts
+  compose the same implementation wherever they share a contract. Keep
+  layout-specific differences at the caller or express them through a supported
+  variant on the shared component.
 - Shared icons must keep their accessible label on the owning button; the icon
   itself remains decorative unless it is the labeled control.
 - Delete a duplicate implementation in the same change after checking static
@@ -42,6 +52,12 @@ Visual and interaction work must follow `NavoPathStyle.md`.
 - Keep shared behavior and visual rules in their owning component. Page-level
   code may compose shared primitives, but it must not redefine their base
   geometry, icon drawing, or interaction states.
+- Check the available shared code before adding a dependency or moving code into
+  a shared module. Preserve lazy loading for optional features and keep shared
+  modules focused so widget and workspace startup load only what they use.
+- When changing a shared component, verify the affected callers for appearance,
+  keyboard interaction, state transitions, and accessibility. Apply the bundle
+  size verification policy when the change can materially affect shipped size.
 
 ## Verification policy
 

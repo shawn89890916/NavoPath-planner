@@ -478,6 +478,11 @@ visual values.
 
 ### Shared Component Rules
 
+- Compose existing components and tokens across views and screen sizes. Keep
+  shared geometry, typography, icons, focus, and interaction states in the
+  component that owns them. Express layout differences through composition or
+  an existing variant. Follow the [reuse-first implementation rules](AGENTS.md#reuse-first-ui-implementation)
+  when extending or replacing a shared component.
 - Use `Button`, `IconButton`, `CloseButton`, `Input`, `Surface`, `Divider`, `Popover`, and `Modal` for shared controls.
 - All close actions use the Lucide `X` icon through `CloseButton`; do not add a new close selector or a text `×`/`✕` implementation.
 - Hover may change ink, use a faint paper wash, or change a hairline rule. Active state is limited to `translateY(1px)`.
