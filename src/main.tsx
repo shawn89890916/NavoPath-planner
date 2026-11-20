@@ -17,7 +17,7 @@ import { undoAiImportData } from "./utils/aiImportUndo";
 import { highlightTaskLocation } from "./utils/highlightTaskLocation";
 import { DailyTimelineGrid, TimelineDayBoundaries } from "./components/ExecutionSharedLayout";
 import { themeVars } from "./WorkspacePresentation";
-import { COMPACT_LAYOUT_MEDIA_QUERY, SLOT_MINUTES, DURATION_OPTIONS, DEFAULT_PROJECT_COLOR, PROJECT_COLOR_PRESETS, taskBlockPriorityFor, categories, isEventDisplayTask, isExternalCalendarDisplayTask, hexToRgb, minutesToTime, timeToMinutes, addMinutes, taskDuration, sortAiConversations, ProductIcon, recurrenceOptions, recurrenceLabel, TaskRecurrenceIndicator, TaskCard, formatMinutes, formatDuration, ReturnedToPlanIcon, TimeBlock, PreviewBlock, ProjectColorPicker, ProjectChoice, AiPanel, type AutoScheduleState, type TimelineFocusTarget, type PlacementPreview, type PlacementChoice, type ResizePreview, type AiAttachmentSnapshot, type AiSessionMessage } from "./WorkspacePresentation";
+import { COMPACT_LAYOUT_MEDIA_QUERY, SLOT_MINUTES, DURATION_OPTIONS, DEFAULT_PROJECT_COLOR, PROJECT_COLOR_PRESETS, taskBlockPriorityFor, categories, isEventDisplayTask, isExternalCalendarDisplayTask, hexToRgb, minutesToTime, timeToMinutes, addMinutes, taskDuration, sortAiConversations, ProductIcon, recurrenceOptions, recurrenceLabel, TaskRecurrenceIndicator, TaskCard, formatMinutes, formatDuration, ReturnedToPlanIcon, TimeBlock, PreviewBlock, ProjectColorPicker, ProjectChoice, ProjectCreateRow, AiPanel, type AutoScheduleState, type TimelineFocusTarget, type PlacementPreview, type PlacementChoice, type ResizePreview, type AiAttachmentSnapshot, type AiSessionMessage } from "./WorkspacePresentation";
 export { ProductIcon } from "./WorkspacePresentation";
 import React, { Activity, type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal, flushSync } from "react-dom";
@@ -12209,16 +12209,14 @@ function QuickProjectPicker(props: {
       {props.open && <div className="df-project-popover df-quick-project-popover up ui-divided-list">
         <button type="button" onClick={() => { props.onChange(""); props.onOpenChange(false); }}>{t(props.lang, "timeBlock.unassigned")}</button>
         {props.projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { props.onChange(project.id); props.onOpenChange(false); }} onColorChange={(color) => props.onProjectColorChange(project.id, color)} />)}
-        <div className="df-project-create-line">
-          <input value={props.newTitle} placeholder="新项目名" onChange={(event) => props.onTitleChange(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); props.onCreate(); } }} />
+        <ProjectCreateRow lang={props.lang} value={props.newTitle} onValueChange={props.onTitleChange} onCreate={props.onCreate}>
           <span className="df-create-color-wrap" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="df-project-color-dot-button" aria-label="新项目颜色" onClick={() => setNewColorOpen((v) => !v)}>
               <span className="df-project-color-dot" style={{ "--project-color": projectColorInk(props.newColor) } as CSSProperties} />
             </button>
             {newColorOpen && <ProjectColorPicker value={props.newColor} onChange={(c) => { props.onColorChange(c); }} compact />}
           </span>
-          <button type="button" onClick={props.onCreate}>✓</button>
-        </div>
+        </ProjectCreateRow>
       </div>}
     </div>
   );
@@ -12277,7 +12275,7 @@ function AllDayBlock({ task, engagementEnabled, dragging, projectName, projects,
             } as CSSProperties}>
               <button type="button" onClick={() => { onProjectChange(""); setProjectOpen(false); }}>{t(lang, "timeBlock.unassigned")}</button>
               {projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { onProjectChange(project.id); setProjectOpen(false); }} onColorChange={(color) => onProjectColorChange(project.id, color)} />)}
-              <div className="df-project-create-line"><input value={newProjectTitle} placeholder={t(lang, "timeBlock.newProjectPlaceholder")} onChange={(event) => setNewProjectTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); onCreateProject(newProjectTitle); setNewProjectTitle(""); setProjectOpen(false); } }} /><button onClick={() => { onCreateProject(newProjectTitle); setNewProjectTitle(""); setProjectOpen(false); }}>✓</button></div>
+              <ProjectCreateRow lang={lang} value={newProjectTitle} onValueChange={setNewProjectTitle} onCreate={() => { onCreateProject(newProjectTitle); setNewProjectTitle(""); setProjectOpen(false); }} />
             </div>
           </div>,
           document.querySelector('.df-app') || document.body
@@ -12738,7 +12736,7 @@ function EditDrawer(props: {
             <div className="df-drawer-project-list ui-divided-list">
               <button onClick={() => { set("projectId", ""); setProjectPickerOpen(false); }}>{t(props.lang, "drawer.unassigned")}</button>
               {props.projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { set("projectId", project.id); setProjectPickerOpen(false); }} onColorChange={(color) => props.onProjectColorChange(project.id, color)} />)}
-              <div className="df-project-create-line compact"><input value={newProjectTitle} placeholder={t(props.lang, "drawer.newProjectPlaceholder")} onChange={(event) => setNewProjectTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); createAndSelectProject(); } }} /><button onClick={createAndSelectProject}>✓</button></div>
+              <ProjectCreateRow lang={props.lang} value={newProjectTitle} onValueChange={setNewProjectTitle} onCreate={createAndSelectProject} />
             </div>
           </section>}
 
@@ -12971,7 +12969,7 @@ function EditDrawer(props: {
               <div className="df-drawer-project-list ui-divided-list">
                 <button onClick={() => { set("projectId", ""); props.onTaskUpdate(props.task!.id, { projectId: undefined }); setProjectPickerOpen(false); }}>{t(props.lang, "drawer.unassigned")}</button>
                 {props.projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { set("projectId", project.id); props.onTaskUpdate(props.task!.id, { projectId: project.id }); setProjectPickerOpen(false); }} onColorChange={(color) => props.onProjectColorChange(project.id, color)} />)}
-                <div className="df-project-create-line compact"><input value={newProjectTitle} placeholder={t(props.lang, "drawer.newProjectPlaceholder")} onChange={(event) => setNewProjectTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); createAndSelectProject(); } }} /><button onClick={createAndSelectProject}>✓</button></div>
+                <ProjectCreateRow lang={props.lang} value={newProjectTitle} onValueChange={setNewProjectTitle} onCreate={createAndSelectProject} />
               </div>
             </section>
           </div>,

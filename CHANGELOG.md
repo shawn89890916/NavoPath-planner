@@ -2,6 +2,12 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 38
+
+#### 改进
+
+- 统一项目选择器底部的新项目名输入框和确认按钮。输入框仅保留底线，确认勾去掉描边并与输入框居中对齐。
+
 ### 1.7.0 Beta 37
 
 #### 修复
@@ -719,6 +725,12 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 38
+
+#### Improvements
+
+- Project pickers share an underlined name field and a centered, borderless check icon for creating a project.
 
 ### 1.7.0 Beta 37
 

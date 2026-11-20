@@ -16,9 +16,9 @@ import { normalizeTaskCheckTone } from "./utils/productivityModel";
 import { addDays, addMonths, hasRecurringRule } from "./utils/recurrence";
 import { countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockDragState } from "./components/TaskBlock";
-import { Button, CloseButton, IconButton } from "./components/UiPrimitives";
+import { Button, CloseButton, IconButton, Input } from "./components/UiPrimitives";
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
-import { UiCalendarCheckIcon, UiCalendarClockIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiReturnIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiCalendarCheckIcon, UiCalendarClockIcon, UiCheckIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiReturnIcon, UiTrashIcon } from "./components/UiIcons";
 import { clockTimeSpanMinutes } from "./utils/timelineRecords";
 import { projectColorInk } from "./utils/presentationColor";
 
@@ -931,7 +931,7 @@ export function TimeBlock({ task, engagementEnabled, preview, projectName, proje
           } as CSSProperties}>
             <button type="button" onClick={() => { onProjectChange(""); setProjectOpen(false); }}>{t(lang, "timeBlock.unassigned")}</button>
             {projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { onProjectChange(project.id); setProjectOpen(false); }} onColorChange={(color) => onProjectColorChange(project.id, color)} />)}
-            <div className="df-project-create-line"><input value={newProjectTitle} placeholder="新项目名" onChange={(event) => setNewProjectTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); onCreateProject(newProjectTitle); setNewProjectTitle(""); setProjectOpen(false); } }} /><button onClick={() => { onCreateProject(newProjectTitle); setNewProjectTitle(""); setProjectOpen(false); }}>✓</button></div>
+            <ProjectCreateRow lang={lang} value={newProjectTitle} onValueChange={setNewProjectTitle} onCreate={() => { onCreateProject(newProjectTitle); setNewProjectTitle(""); setProjectOpen(false); }} />
           </div>
         </div>,
         document.querySelector('.df-app') || document.body
@@ -964,6 +964,33 @@ export function ProjectColorPicker({ value, onChange, compact = false, presets =
         <input type="color" value={value} onChange={(event) => onChange(event.target.value)} />
         <span />
       </label>
+    </div>
+  );
+}
+
+export function ProjectCreateRow({ lang, value, onValueChange, onCreate, children }: {
+  lang: Language;
+  value: string;
+  onValueChange: (value: string) => void;
+  onCreate: () => void;
+  children?: ReactNode;
+}) {
+  const projectName = t(lang, "timeBlock.newProjectPlaceholder");
+  return (
+    <div className="df-project-create-line">
+      <Input className="df-project-create-name" value={value} aria-label={projectName} placeholder={projectName}
+        onChange={(event) => onValueChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            onCreate();
+          }
+        }}
+      />
+      {children}
+      <IconButton className="df-project-create-confirm" icon={<UiCheckIcon size={20} strokeWidth={2} />}
+        label={lang === "zh" ? "创建项目" : "Create project"} onClick={onCreate}
+      />
     </div>
   );
 }

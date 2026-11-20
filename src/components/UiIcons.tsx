@@ -1,4 +1,4 @@
-import { Bell, ChartNoAxesColumn, Columns3, Grid2X2, History, List, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Ellipsis, ListChecks, PanelLeftClose, PanelLeftOpen, Pencil, Plus, RotateCw, Search, Settings, Sparkles, Trash2, X, Zap, type LucideIcon, type LucideProps } from "lucide-react";
+import { Bell, Check, ChartNoAxesColumn, Columns3, Grid2X2, History, List, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Ellipsis, ListChecks, PanelLeftClose, PanelLeftOpen, Pencil, Plus, RotateCw, Search, Settings, Sparkles, Trash2, X, Zap, type LucideIcon, type LucideProps } from "lucide-react";
 
 function createNamedIcon(Icon: LucideIcon) {
   return function NamedUiIcon({ size = 16, strokeWidth = 1.8, ...props }: LucideProps) {
@@ -7,6 +7,7 @@ function createNamedIcon(Icon: LucideIcon) {
 }
 
 export const UiBellIcon = createNamedIcon(Bell);
+export const UiCheckIcon = createNamedIcon(Check);
 export const UiCloseIcon = createNamedIcon(X);
 export const UiCopyIcon = createNamedIcon(Copy);
 export const UiPencilIcon = createNamedIcon(Pencil);
