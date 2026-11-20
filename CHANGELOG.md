@@ -2,6 +2,13 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 40
+
+#### 改进
+
+- 统一设置页的卡片、行间细线和控件对齐。桌面设置按用途分区，高级设置用箭头和底色标明展开状态。
+- 小组件的浅色和深色配色可从带标签的下拉框切换，颜色控件同时显示色样和十六进制值。计时设置的保存与取消仅在有改动时可用，重置当前计时使用已保存的设置。
+
 ### 1.7.0 Beta 39
 
 #### 改进
@@ -731,6 +738,13 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 40
+
+#### Improvements
+
+- Settings use consistent cards, single row dividers, and aligned controls. Desktop settings are grouped by function, and Advanced Settings shows its expanded state with a chevron and a shaded background.
+- A labeled dropdown switches between light and dark widget palettes, and color controls show a swatch and hex value. Save and Cancel are enabled when timer settings change. Resetting the current timer uses the saved settings.
 
 ### 1.7.0 Beta 39
 

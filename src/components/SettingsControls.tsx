@@ -1,5 +1,6 @@
 import React, { type ReactNode } from "react";
-import { Button, Divider, Input } from "./UiPrimitives";
+import { Button, Input } from "./UiPrimitives";
+import { UiChevronDownIcon } from "./UiIcons";
 import "./SettingsControls.css";
 
 /**
@@ -20,7 +21,7 @@ import "./SettingsControls.css";
  *   - SettingNumberInput  (number input with optional min/max/step)
  *   - SettingTextInput    (text input)
  *   - SettingActionButton (secondary or danger action button)
- *   - SettingDivider      (fine rule between groups)
+ *   - SettingDisclosure   (expandable setting row)
  *   - SettingDescription  (small muted description text)
  */
 
@@ -30,18 +31,16 @@ export function SettingSection({
   children,
   tone = "normal",
   anchor,
-  presentation = "grouped",
 }: {
   title: ReactNode;
   description?: ReactNode;
   children: ReactNode;
   tone?: "normal" | "danger";
   anchor?: string;
-  presentation?: "grouped" | "plain";
 }) {
   return (
     <section
-      className={`df-settings-group${tone === "danger" ? " df-settings-group--danger" : ""}${presentation === "plain" ? " df-settings-group--plain" : ""}`}
+      className={`df-settings-group${tone === "danger" ? " df-settings-group--danger" : ""}`}
       data-settings-anchor={anchor}
       tabIndex={anchor ? -1 : undefined}
     >
@@ -115,6 +114,29 @@ export function SettingToggle({
   );
 }
 
+export function SettingDisclosure({ title, description, children, anchor, open, onToggle }: {
+  title: ReactNode;
+  description?: ReactNode;
+  children: ReactNode;
+  anchor?: string;
+  open?: boolean;
+  onToggle?: (open: boolean) => void;
+}) {
+  return (
+    <details className="df-settings-disclosure" data-settings-anchor={anchor} tabIndex={anchor ? -1 : undefined}
+      open={open} onToggle={onToggle ? (event) => onToggle(event.currentTarget.open) : undefined}>
+      <summary className="df-settings-disclosure-toggle">
+        <span className="df-settings-row-label">
+          <span className="df-settings-row-title">{title}</span>
+          {description && <span className="df-settings-row-desc">{description}</span>}
+        </span>
+        <UiChevronDownIcon size={16} />
+      </summary>
+      <div className="df-settings-disclosure-body">{children}</div>
+    </details>
+  );
+}
+
 export function SettingSelect<T extends string>({
   value,
   onChange,
@@ -180,7 +202,7 @@ export function SettingNumberInput({
           if (!Number.isNaN(n)) onChange(n);
         }}
       />
-      {suffix ? <span className="df-settings-number-suffix">{suffix}</span> : null}
+      {suffix ? <span className="df-settings-number-suffix" aria-hidden="true">{suffix}</span> : null}
     </span>
   );
 }
@@ -225,14 +247,18 @@ export function SettingColorInput({
   ariaLabel?: string;
 }) {
   return (
-    <input
-      type="color"
-      className="df-settings-color-input"
-      value={value}
-      aria-label={ariaLabel}
-      disabled={disabled}
-      onChange={(event) => onChange(event.target.value.toUpperCase())}
-    />
+    <label className="df-settings-color-field">
+      <span className="df-settings-color-swatch" style={{ backgroundColor: value }} aria-hidden="true" />
+      <span aria-hidden="true">{value.toUpperCase()}</span>
+      <input
+        type="color"
+        className="df-settings-color-input"
+        value={value}
+        aria-label={ariaLabel}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value.toUpperCase())}
+      />
+    </label>
   );
 }
 
@@ -266,10 +292,6 @@ export function SettingActionButton({
       {children}
     </Button>
   );
-}
-
-export function SettingDivider() {
-  return <Divider className="df-settings-divider" />;
 }
 
 export function SettingDescription({ children }: { children: ReactNode }) {

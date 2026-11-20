@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Language, PlannerData, Settings } from "../types";
-import { SettingActionButton, SettingDivider, SettingRow, SettingSelect, SettingToggle } from "./SettingsControls";
+import { SettingActionButton, SettingRow, SettingSelect, SettingToggle } from "./SettingsControls";
 import { readProactiveEmailEnabled, requestProactiveNotificationPermission, setProactiveEmailEnabled } from "../proactiveAssistant";
 
 export function ProactiveAssistantSettings({ settings, data, lang, cloudReady, onSave, onSaveData, onRequestLocation }: {
@@ -28,7 +28,6 @@ export function ProactiveAssistantSettings({ settings, data, lang, cloudReady, o
   };
   const enableSystemNotifications = async () => setNotificationPermission(await requestProactiveNotificationPermission());
   return <>
-    <SettingDivider />
     <SettingRow
       anchor="proactive-assistant"
       title={lang === "zh" ? "主动日程助理" : "Proactive schedule assistant"}

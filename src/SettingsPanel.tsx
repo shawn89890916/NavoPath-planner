@@ -22,7 +22,7 @@ import { exportDataAsJson, exportTasksAsCsv, isImportFileSizeAllowed, parsePlann
 import { preparePlannerDataRestore } from "./syncMerge";
 import { ProjectColorPicker, MobileSheetDismissHandle } from "./WorkspacePresentation";
 import { CloseButton } from "./components/UiPrimitives";
-import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDivider, SettingDescription } from "./components/SettingsControls";
+import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDisclosure, SettingDescription } from "./components/SettingsControls";
 import { reasoningModesForModel } from "./utils/aiModels";
 import { createPortal, flushSync } from "react-dom";
 import { runMotionTransition } from "./motion";
@@ -420,7 +420,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   const [navigationQuery, setNavigationQuery] = useState("");
   const navigationResults = searchSettings(navigationQuery, lang, isDesktopRuntime);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const [widgetThemeOpen, setWidgetThemeOpen] = useState<"light" | "dark">("light");
+  const [widgetColorScheme, setWidgetColorScheme] = useState<"light" | "dark">("light");
   const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "mcp" | "sync">("calendar");
   const settingsContentRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -455,8 +455,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   }, [onClose]);
   useEffect(() => {
     if (settingsTarget.anchor === "shortcuts") setShortcutsOpen(true);
-    if (settingsTarget.anchor?.startsWith("widget-light")) setWidgetThemeOpen("light");
-    if (settingsTarget.anchor?.startsWith("widget-dark")) setWidgetThemeOpen("dark");
+    if (settingsTarget.anchor?.startsWith("widget-light")) setWidgetColorScheme("light");
+    if (settingsTarget.anchor?.startsWith("widget-dark")) setWidgetColorScheme("dark");
     if (settingsTarget.anchor === "mcp") setIntegrationTab("mcp");
     if (settingsTarget.anchor === "sync-bridge") setIntegrationTab("sync");
 
@@ -481,8 +481,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
 
   function navigateSettings(target: SettingsTarget) {
     if (target.anchor === "shortcuts") setShortcutsOpen(true);
-    if (target.anchor?.startsWith("widget-light")) setWidgetThemeOpen("light");
-    if (target.anchor?.startsWith("widget-dark")) setWidgetThemeOpen("dark");
+    if (target.anchor?.startsWith("widget-light")) setWidgetColorScheme("light");
+    if (target.anchor?.startsWith("widget-dark")) setWidgetColorScheme("dark");
     if (target.anchor === "mcp") setIntegrationTab("mcp");
     if (target.anchor === "sync-bridge") setIntegrationTab("sync");
 
@@ -532,6 +532,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   useSyncExternalStore(subscribeTimerModes, getTimerModeRevision);
   const widgetTimerSettings = normalizeWidgetTimerPreferences(settings.widgetTimerPreferences);
   const [widgetTimerDraft, setWidgetTimerDraft] = useState(widgetTimerSettings);
+  const widgetTimerDirty = widgetTimerDraft.mode !== widgetTimerSettings.mode
+    || widgetTimerDraft.countdownSeconds !== widgetTimerSettings.countdownSeconds;
   useEffect(() => {
     setWidgetTimerDraft(widgetTimerSettings);
   }, [settings.widgetTimerPreferences]);
@@ -840,7 +842,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
             </SettingSection>}
 
-            {settingsTarget.category === "appearance" && <SettingSection presentation="plain" title={lang === "zh" ? "外观" : "Appearance"} description={settings.theme === "dark"
+            {settingsTarget.category === "appearance" && <SettingSection title={lang === "zh" ? "外观" : "Appearance"} description={settings.theme === "dark"
               ? (lang === "zh" ? "深色模式使用柔和白色交互高亮；已保存的强调色会在浅色模式下继续生效。" : "Dark mode uses a softened white interaction accent. Your saved accent returns in light mode.")
               : (lang === "zh" ? "纸面风格、字体与克制的点缀色。" : "Paper surface, typography, and restrained accent color.")}>
               <SettingRow
@@ -875,7 +877,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 title={lang === "zh" ? "时间轴字体大小" : "Timeline font size"}
                 description={lang === "zh" ? "调整时间轴任务标题字号。" : "Scale the timeline task title font size."}
                 control={
-                  <span className="df-settings-number-wrap">
+                  <span className="df-settings-range-control">
                     <input
                       type="range"
                       className="df-settings-range"
@@ -1065,18 +1067,13 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
             </SettingSection>}
 
-            {settingsTarget.category === "widget" && <SettingSection
-              anchor="desktop-window-settings"
-              title={lang === "zh" ? "桌面窗口" : "Desktop Windows"}
-              description={Boolean(window.desktopApi?.widget || window.desktopApi?.compactWindow)
-                ? (lang === "zh" ? "管理完整竖屏小窗与「正在做」小组件。" : "Manage the full portrait window and the current-task widget.")
-                : (lang === "zh" ? "桌面端启用后可用。当前环境未检测到桌面端。" : "Available on the desktop build. No desktop runtime detected in this environment.")}
-            >
+            {settingsTarget.category === "widget" && <>
+            {window.desktopApi?.dockWindow && <SettingSection anchor="desktop-window-settings" title={lang === "zh" ? "贴边栏" : "Dock"}>
               <Suspense fallback={null}><DesktopDockSettings lang={lang} /></Suspense>
-              <SettingDivider />
+            </SettingSection>}
+            <SettingSection anchor="portrait-window" title={lang === "zh" ? "竖屏小窗" : "Portrait window"}>
               <SettingRow
-                anchor="portrait-window"
-                title={lang === "zh" ? "竖屏小窗" : "Portrait window"}
+                title={lang === "zh" ? "窗口操作" : "Window controls"}
                 description={lang === "zh" ? "在独立窗口中打开完整应用的竖屏布局，不影响「正在做」小组件。" : "Open the complete app in an independent portrait layout without affecting the current-task widget."}
                 control={<><SettingActionButton disabled={!Boolean(window.desktopApi?.compactWindow)} onClick={() => { void window.desktopApi?.compactWindow?.open({ alwaysOnTop: settings.compactWindowAlwaysOnTop !== false }); }}>{lang === "zh" ? "打开" : "Open"}</SettingActionButton><SettingActionButton disabled={!Boolean(window.desktopApi?.compactWindow)} onClick={() => { void window.desktopApi?.compactWindow?.close(); }}>{lang === "zh" ? "关闭" : "Close"}</SettingActionButton></>}
               />
@@ -1084,9 +1081,9 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 title={lang === "zh" ? "竖屏小窗置顶" : "Portrait window always on top"}
                 control={<SettingToggle checked={settings.compactWindowAlwaysOnTop !== false} disabled={!Boolean(window.desktopApi?.compactWindow)} ariaLabel={lang === "zh" ? "竖屏小窗置顶" : "Portrait window always on top"} onChange={(next) => { onSave({ compactWindowAlwaysOnTop: next }); void window.desktopApi?.compactWindow?.setAlwaysOnTop(next); }} />}
               />
-              <SettingDivider />
+            </SettingSection>
+            <SettingSection anchor="desktop-widget" title={lang === "zh" ? "桌面小组件" : "Desktop widget"}>
               <SettingRow
-                anchor="desktop-widget"
                 title={lang === "zh" ? "启用桌面小组件" : "Enable desktop widget"}
                 description={lang === "zh" ? "置顶小窗快速查看正在做与计时。" : "Always-on-top mini panel for the current task and timer."}
                 control={<SettingToggle checked={settings.featureWidgetEnabled !== false} disabled={!Boolean(window.desktopApi?.widget)} ariaLabel={lang === "zh" ? "启用桌面小组件" : "Enable desktop widget"} onChange={(next) => onSave({ featureWidgetEnabled: next })} />}
@@ -1099,12 +1096,13 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 title={lang === "zh" ? "始终置顶" : "Always on top"}
                 control={<SettingToggle checked={settings.widgetAlwaysOnTop !== false} disabled={!Boolean(window.desktopApi?.widget)} ariaLabel={lang === "zh" ? "始终置顶" : "Always on top"} onChange={(next) => { onSave({ widgetAlwaysOnTop: next }); void window.desktopApi?.widget?.setAlwaysOnTop(next); }} />}
               />
+            </SettingSection>
+            <SettingSection title={lang === "zh" ? "小组件外观" : "Widget appearance"}>
               <SettingRow
                 title={lang === "zh" ? "背景透明度" : "Background opacity"}
                 description={lang === "zh" ? "只调整纸面背景，文字和计时始终清晰显示。" : "Adjusts only the paper background; text and timer remain visible."}
                 control={<SettingNumberInput value={Math.round(widgetAppearance.opacity * 100)} min={0} max={100} step={1} suffix="%" ariaLabel={lang === "zh" ? "小组件背景透明度" : "Widget background opacity"} onChange={(value) => saveWidgetAppearance({ opacity: value / 100 })} />}
               />
-              <SettingDivider />
               <SettingRow
                 anchor="widget-font"
                 title={lang === "zh" ? "字体" : "Font family"}
@@ -1119,36 +1117,49 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 title={lang === "zh" ? "字号比例" : "Font scale"}
                 control={<SettingNumberInput value={widgetAppearance.fontScale} min={0.5} max={2} step={0.05} suffix="×" ariaLabel={lang === "zh" ? "小组件字号比例" : "Widget font scale"} onChange={(fontScale) => saveWidgetAppearance({ fontScale })} />}
               />
-              <SettingDivider />
-              <div className="df-settings-subtabs ui-choice-list ui-choice-list--inline ui-choice-list--motion-selection" role="tablist" aria-label={lang === "zh" ? "小组件外观主题" : "Widget appearance theme"}>
-                <SelectionIndicator activeKey={`${widgetThemeOpen}:${lang}`} />
-                {(["light", "dark"] as const).map((theme) => <button key={theme} type="button" role="tab" aria-selected={widgetThemeOpen === theme} className={`ui-choice-item${widgetThemeOpen === theme ? " active" : ""}`} onClick={() => setWidgetThemeOpen(theme)}>{theme === "light" ? (lang === "zh" ? "浅色" : "Light") : (lang === "zh" ? "深色" : "Dark")}</button>)}
-              </div>
+            </SettingSection>
+            <SettingSection title={lang === "zh" ? "小组件配色" : "Widget colors"}>
+              <SettingRow
+                anchor={`widget-${widgetColorScheme}`}
+                title={lang === "zh" ? "编辑配色方案" : "Color scheme to edit"}
+                control={<SettingSelect value={widgetColorScheme} ariaLabel={lang === "zh" ? "编辑配色方案" : "Color scheme to edit"} onChange={setWidgetColorScheme} options={[
+                  { value: "light", label: lang === "zh" ? "浅色" : "Light" },
+                  { value: "dark", label: lang === "zh" ? "深色" : "Dark" },
+                ]} />}
+              />
               {(() => {
-                const theme = widgetThemeOpen;
+                const theme = widgetColorScheme;
                 const themeName = theme === "light" ? (lang === "zh" ? "浅色" : "Light") : (lang === "zh" ? "深色" : "Dark");
                 const colors = widgetAppearance[theme];
-                return <div className="df-settings-theme-fields" data-settings-anchor={theme === "light" ? "widget-light" : "widget-dark"} tabIndex={-1}>
+                return <>
                   <SettingRow anchor={`widget-${theme}-background`} title={lang === "zh" ? `${themeName}背景` : `${themeName} background`} control={<SettingColorInput value={colors.backgroundColor} ariaLabel={lang === "zh" ? `${themeName}背景颜色` : `${themeName} background color`} onChange={(backgroundColor) => saveWidgetThemeColor(theme, { backgroundColor })} />} />
                   <SettingRow anchor={`widget-${theme}-text`} title={lang === "zh" ? `${themeName}文字` : `${themeName} text`} control={<SettingColorInput value={colors.fontColor} ariaLabel={lang === "zh" ? `${themeName}文字颜色` : `${themeName} text color`} onChange={(fontColor) => saveWidgetThemeColor(theme, { fontColor })} />} />
                   <SettingRow anchor={`widget-${theme}-timer`} title={lang === "zh" ? `${themeName}计时` : `${themeName} timer`} control={<SettingColorInput value={colors.timerColor} ariaLabel={lang === "zh" ? `${themeName}计时颜色` : `${themeName} timer color`} onChange={(timerColor) => saveWidgetThemeColor(theme, { timerColor })} />} />
                   <SettingRow anchor={`widget-${theme}-overrun`} title={lang === "zh" ? `${themeName}超时` : `${themeName} overrun`} control={<SettingColorInput value={colors.overrunColor} ariaLabel={lang === "zh" ? `${themeName}超时颜色` : `${themeName} overrun color`} onChange={(overrunColor) => saveWidgetThemeColor(theme, { overrunColor })} />} />
-                </div>;
+                </>;
               })()}
-              <SettingDivider />
+            </SettingSection>
+            <SettingSection title={lang === "zh" ? "小组件计时器" : "Widget timer"}>
               <SettingRow
                 anchor="widget-timer"
                 title={lang === "zh" ? "计时模式" : "Timer mode"}
+                description={!["stopwatch", "countdown"].includes(widgetTimerDraft.mode) ? (lang === "zh" ? "请在插件设置中配置此计时模式。" : "Configure this timer mode in Plugin settings.") : undefined}
                 control={<SettingSelect value={widgetTimerDraft.mode} ariaLabel={lang === "zh" ? "小组件计时模式" : "Widget timer mode"} onChange={(mode) => updateWidgetTimerDraft({ mode })} options={getTimerModes().map((provider) => ({ value: provider.mode, label: provider[lang] }))} />}
               />
               {widgetTimerDraft.mode === "countdown" && <SettingRow title={lang === "zh" ? "倒计时时长" : "Countdown duration"} control={<SettingNumberInput value={Math.round(widgetTimerDraft.countdownSeconds / 60)} min={1} max={1440} step={1} suffix={lang === "zh" ? "分钟" : "min"} ariaLabel={lang === "zh" ? "倒计时时长" : "Countdown duration"} onChange={(minutes) => updateWidgetTimerDraft({ countdownSeconds: minutes * 60 })} />} />}
-              {!["stopwatch", "countdown"].includes(widgetTimerDraft.mode) && <SettingDescription>{lang === "zh" ? "请在插件设置页面调整此计时模式。" : "Adjust this timer mode in its plugin settings page."}</SettingDescription>}
-              {widgetTimerDraft.mode === "stopwatch" && <SettingDescription>{lang === "zh" ? "正计时无需设置时长。" : "Stopwatch mode has no duration settings."}</SettingDescription>}
               <SettingRow
-                title={lang === "zh" ? "计时器操作" : "Timer actions"}
-                control={<><SettingActionButton onClick={() => setWidgetTimerDraft(widgetTimerSettings)}>{lang === "zh" ? "取消" : "Cancel"}</SettingActionButton><SettingActionButton onClick={() => onWidgetAction({ type: "resetWidgetTimer", draft: widgetTimerDraft })}>{lang === "zh" ? "重置计时器" : "Reset timer"}</SettingActionButton><SettingActionButton onClick={() => onWidgetAction({ type: "saveTimerSettings", draft: widgetTimerDraft })}>{lang === "zh" ? "保存" : "Save"}</SettingActionButton></>}
+                title={lang === "zh" ? "计时设置" : "Timer settings"}
+                control={<>
+                  <SettingActionButton disabled={!widgetTimerDirty} onClick={() => setWidgetTimerDraft(widgetTimerSettings)}>{lang === "zh" ? "取消" : "Cancel"}</SettingActionButton>
+                  <SettingActionButton tone="primary" disabled={!widgetTimerDirty} onClick={() => onWidgetAction({ type: "saveTimerSettings", draft: widgetTimerDraft })}>{lang === "zh" ? "保存" : "Save"}</SettingActionButton>
+                </>}
               />
-              <SettingDivider />
+              <SettingRow
+                title={lang === "zh" ? "重置当前计时" : "Reset current timer"}
+                control={<SettingActionButton onClick={() => onWidgetAction({ type: "resetWidgetTimer", draft: widgetTimerSettings })}>{lang === "zh" ? "重置" : "Reset"}</SettingActionButton>}
+              />
+            </SettingSection>
+            <SettingSection title={lang === "zh" ? "恢复小组件默认设置" : "Restore widget defaults"}>
               <SettingRow
                 anchor="widget-reset"
                 title={lang === "zh" ? "恢复默认外观" : "Restore default appearance"}
@@ -1159,7 +1170,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 description={lang === "zh" ? "恢复为 400 × 80，并放回屏幕内的默认位置。" : "Restore 400 × 80 and return the widget to its default on-screen position."}
                 control={<SettingActionButton disabled={!Boolean(window.desktopApi?.widget)} onClick={() => { void window.desktopApi?.widget?.setBounds({ x: 80, y: 80, width: 400, height: 80 }); }}>{lang === "zh" ? "重置" : "Reset"}</SettingActionButton>}
               />
-            </SettingSection>}
+            </SettingSection>
+            </>}
             {settingsTarget.category === "general" && isDesktopRuntime && <SettingSection title={lang === "zh" ? "应用更新" : "App updates"}>
               <div data-settings-anchor="updates" tabIndex={-1}><Suspense fallback={null}><DesktopUpdateControl lang={lang} /></Suspense></div>
               <div data-settings-anchor="beta-updates" tabIndex={-1}><Suspense fallback={null}><BetaUpdatePreference lang={lang} onSave={onSave} /></Suspense></div>
@@ -1171,17 +1183,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 description={lang === "zh" ? "重新触发首次使用引导流程。" : "Re-trigger the first-run onboarding flow."}
                 control={<SettingActionButton onClick={() => onSave({ onboardingVersion: 1, onboardingStep: "add" })}>{lang === "zh" ? "重新开始" : "Restart"}</SettingActionButton>}
               />
-              <div className="df-settings-disclosure" data-settings-anchor="shortcuts" tabIndex={-1}>
-                <button
-                  type="button"
-                  className="df-settings-disclosure-toggle"
-                  aria-expanded={shortcutsOpen}
-                  onClick={() => setShortcutsOpen((open) => !open)}
-                >
-                  <span><strong>{lang === "zh" ? "快捷键参考" : "Shortcut reference"}</strong><small>{lang === "zh" ? "查看固定快捷键" : "View fixed shortcuts"}</small></span>
-                  <span aria-hidden="true">{shortcutsOpen ? "−" : "+"}</span>
-                </button>
-                {shortcutsOpen && <div className="df-settings-disclosure-body">
+              <SettingDisclosure anchor="shortcuts" title={lang === "zh" ? "快捷键参考" : "Shortcut reference"} description={lang === "zh" ? "查看固定快捷键" : "View fixed shortcuts"} open={shortcutsOpen} onToggle={setShortcutsOpen}>
                   <p className="df-settings-desc">{lang === "zh" ? "本版本暂不支持自定义快捷键。" : "Custom shortcuts are not enabled in this version."}</p>
                   <div className="df-shortcut-reference">
                     {shortcutGroups.map((group) => (
@@ -1198,8 +1200,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                       </section>
                     ))}
                   </div>
-                </div>}
-              </div>
+              </SettingDisclosure>
             </SettingSection>}
             {settingsTarget.category === "ai" && <SettingSection title="Navo AI" description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
               <SettingRow layout="stacked" anchor="ai-provider" title={lang === "zh" ? "AI 提供商与密钥" : "AI provider and key"} description={lang === "zh" ? "支持 DeepSeek、SiliconFlow、OpenAI、Anthropic、GLM 和通义千问。" : "Supports DeepSeek, SiliconFlow, OpenAI, Anthropic, GLM, and Qwen."} control={<Suspense fallback={null}><AiProviderSettings lang={lang} onSave={onSave} /></Suspense>} />
@@ -1250,10 +1251,10 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={`ui-choice-item${integrationTab === "mcp" ? " active" : ""}`} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "integrations", anchor: "mcp" }); }}>MCP</button>
               <button type="button" role="tab" aria-selected={integrationTab === "sync"} className={`ui-choice-item${integrationTab === "sync" ? " active" : ""}`} onClick={() => { setIntegrationTab("sync"); setSettingsTarget({ category: "integrations", anchor: "sync-bridge" }); }}>{lang === "zh" ? "同步" : "Sync"}</button>
             </div>}
-            {settingsTarget.category === "integrations" && integrationTab === "calendar" && <section className="df-settings-group" data-settings-anchor="calendar-feed" tabIndex={-1}><h3>{lang === "zh" ? "日历订阅" : "Calendar Subscription"}</h3><CalendarFeedManager lang={lang} /><Suspense fallback={null}><CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} /></Suspense></section>}
-            {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <section className="df-settings-group" data-settings-anchor="external-calendar" tabIndex={-1}><h3>{lang === "zh" ? "外部日历" : "External Calendars"}</h3><ExternalCalendarManager lang={lang} /></section>}
-            {settingsTarget.category === "integrations" && integrationTab === "mcp" && <section className="df-settings-group" data-settings-anchor="mcp" tabIndex={-1}><h3>MCP</h3><Suspense fallback={<p className="df-mcp-status">{lang === "zh" ? "正在打开 MCP…" : "Opening MCP…"}</p>}><McpTokenManager lang={lang} /></Suspense></section>}
-            {settingsTarget.category === "integrations" && integrationTab === "sync" && <section className="df-settings-group" data-settings-anchor="sync-bridge" tabIndex={-1}><h3>{lang === "zh" ? "同步" : "Sync"}</h3><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></section>}
+            {settingsTarget.category === "integrations" && integrationTab === "calendar" && <SettingSection anchor="calendar-feed" title={lang === "zh" ? "日历订阅" : "Calendar Subscription"}><CalendarFeedManager lang={lang} /><Suspense fallback={null}><CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} /></Suspense></SettingSection>}
+            {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <SettingSection anchor="external-calendar" title={lang === "zh" ? "外部日历" : "External Calendars"}><ExternalCalendarManager lang={lang} /></SettingSection>}
+            {settingsTarget.category === "integrations" && integrationTab === "mcp" && <SettingSection anchor="mcp" title="MCP"><Suspense fallback={<p className="df-mcp-status">{lang === "zh" ? "正在打开 MCP…" : "Opening MCP…"}</p>}><McpTokenManager lang={lang} /></Suspense></SettingSection>}
+            {settingsTarget.category === "integrations" && integrationTab === "sync" && <SettingSection anchor="sync-bridge" title={lang === "zh" ? "同步" : "Sync"}><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></SettingSection>}
             {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings lang={lang} kind="plugin" settingsPageId={settingsTarget.pluginPage ?? null} onSelectPage={(id) => navigateSettings({ category: "plugins", ...(id ? { pluginPage: id } : {}) })} /></Suspense>}
             {!compactLayout && settingsTarget.category === "account-data" && <SettingSection anchor="account-profile" title={lang === "zh" ? "个人资料" : "Profile"}>
               {profileHero}
@@ -1273,7 +1274,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 description={lang === "zh" ? "仅导出任务列表，便于表格工具查看。" : "Export the task list only, for use in spreadsheet tools."}
                 control={<SettingActionButton onClick={() => exportTasksAsCsv(data)}>{lang === "zh" ? "导出 CSV" : "Export CSV"}</SettingActionButton>}
               />
-              <SettingDivider />
               <SettingRow
                 title={lang === "zh" ? "导入 JSON（完整数据）" : "Import JSON (full data)"}
                 description={lang === "zh" ? "覆盖当前所有数据与设置。" : "Overwrites all current data and settings."}
@@ -1290,7 +1290,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
             </SettingSection>}
 
-            {settingsTarget.category === "account-data" && <section className="df-settings-group" data-settings-anchor="account" tabIndex={-1}><h3>{lang === "zh" ? "账户" : "Account"}</h3>
+            {settingsTarget.category === "account-data" && <SettingSection anchor="account" title={lang === "zh" ? "账户" : "Account"}>
               <SubscriptionPanel lang={lang} />
               {authEmail && <p className="df-settings-account">{authEmail}</p>}
               <div data-settings-anchor="sync" tabIndex={-1}><SyncSettingsControl
@@ -1308,7 +1308,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 description={lang === "zh" ? "退出当前 NavoPath 账户。" : "Sign out of the current NavoPath account."}
                 control={<SettingActionButton onClick={onSignOut}>{t(lang, "settings.logout")}</SettingActionButton>}
               />}
-            </section>}
+            </SettingSection>}
 
             {settingsTarget.category === "account-data" && <SettingSection anchor="recovery-settings" title={lang === "zh" ? "危险操作" : "Danger zone"} tone="danger">
               <SettingRow

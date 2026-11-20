@@ -94,7 +94,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
   const search = <label className="df-extension-search"><UiSearchIcon size={16} /><SettingTextInput value={query} placeholder={view === "market" ? text("搜索名称、作者或描述…", "Search name, author or description…") : text(plugin ? "搜索已安装的插件…" : "搜索已安装的主题…", plugin ? "Search installed plugins…" : "Search installed themes…")} ariaLabel={text("搜索扩展", "Search extensions")} onChange={setQuery} /></label>;
   const back = <div className="df-extension-back"><SettingActionButton onClick={() => navigate("installed")}>{text(plugin ? "返回插件" : "返回主题", plugin ? "Back to plugins" : "Back to themes")}</SettingActionButton></div>;
 
-  if (page) return <div className="df-extensions"><SettingSection presentation="plain" title={page.name}>
+  if (page) return <div className="df-extensions"><SettingSection title={page.name}>
     <div className="df-extension-back"><SettingActionButton onClick={() => setPageId(null)}>{text("返回插件", "Back to plugins")}</SettingActionButton></div>
     <ExtensionMount contribution={page} />
   </SettingSection></div>;
@@ -104,7 +104,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
     {(error || snapshot.error) && <p className="df-extension-error" role="alert">{error || snapshot.error}</p>}
     <div className="df-extension-feedback" role="status">{pending || notice}</div>
     {(view === "installed" || view === "market") && <>
-      <SettingSection presentation="plain" anchor={plugin ? "plugins" : "themes"} title={text(plugin ? "社区插件" : "主题", plugin ? "Community plugins" : "Themes")} description={plugin ? text("插件可以访问工作区与网络，请启用你信任的插件。", "Plugins can access your workspace and the network. Enable plugins you trust.") : text("选择主题，或探索社区制作的外观。", "Choose a theme or explore community designs.")}>
+      <SettingSection anchor={plugin ? "plugins" : "themes"} title={text(plugin ? "社区插件" : "主题", plugin ? "Community plugins" : "Themes")} description={plugin ? text("插件可以访问工作区与网络，请启用你信任的插件。", "Plugins can access your workspace and the network. Enable plugins you trust.") : text("选择主题，或探索社区制作的外观。", "Choose a theme or explore community designs.")}>
         {plugin ? <SettingRow title={text("受限模式", "Restricted mode")} description={text(safeMode ? "已暂停所有插件。关闭后恢复已启用的插件。" : "开启后暂停插件，保留安装与配置。", safeMode ? "All plugins are paused. Turn off to resume enabled plugins." : "Pause plugins while keeping installations and settings.")} control={<SettingToggle checked={safeMode} ariaLabel={text("受限模式", "Restricted mode")} onChange={(next) => void run(() => extensionService.setSafeMode(next))} />} /> : <SettingRow title={text("当前主题", "Current theme")} control={<SettingSelect value={preferences.activeTheme ?? ""} disabled={busy} ariaLabel={text("当前主题", "Current theme")} options={[{ value: "", label: text("NavoPath 默认", "NavoPath default") }, ...installed.map((item) => ({ value: item.key, label: item.manifest.name }))]} onChange={(key) => void run(() => extensionService.selectTheme(key || null), text("正在切换主题…", "Applying theme…"))} />} />}
         <SettingRow title={text(plugin ? "社区插件市场" : "社区主题", plugin ? "Community plugin market" : "Community themes")} description={text(plugin ? "浏览并安装社区制作的插件。" : "浏览并安装社区制作的主题。", plugin ? "Discover plugins made by the community." : "Discover themes made by the community.")} control={<SettingActionButton tone="primary" onClick={browseMarket}>{text("浏览市场", "Browse market")}</SettingActionButton>} />
         <SettingRow title={text(plugin ? "安装插件" : "安装主题", plugin ? "Install a plugin" : "Install a theme")} description={text("导入本地文件，或从发布网址安装。", "Import a file or install from a release URL.")} control={<><SettingActionButton onClick={() => fileInput.current?.click()}>{text("导入", "Import")}</SettingActionButton><ActionDisclosure label={text("更多安装方式", "More installation options")}><SettingActionButton onClick={() => navigate("url")}>{text("从网址安装", "Install from URL")}</SettingActionButton></ActionDisclosure></>} />
@@ -113,7 +113,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
         <SettingRow title={text("自动安装更新", "Install updates automatically")} description={text("关闭时，由你决定何时升级。", "When off, you choose when to upgrade.")} control={<SettingToggle checked={preferences.autoUpdate} disabled={busy} ariaLabel={text("自动安装更新", "Install updates automatically")} onChange={(autoUpdate) => void run(() => extensionService.setPreference({ autoUpdate }))} />} />
         <SettingRow title={text("扩展来源", "Extension sources")} description={text(`${preferences.sources.length} 个市场源`, `${preferences.sources.length} catalog sources`)} control={<SettingActionButton onClick={() => navigate("sources")}>{text("管理来源", "Manage sources")}</SettingActionButton>} />
       </SettingSection>
-      {plugin && <SettingSection presentation="plain" title={text("插件工具入口", "Plugin tool placement")}>
+      {plugin && <SettingSection title={text("插件工具入口", "Plugin tool placement")}>
         <SettingRow title={text("插件快捷栏数量", "Plugin dock slots")} control={<SettingSelect
           disabled={busy}
           value={String(preferences.compactDockLimit ?? DEFAULT_COMPACT_DOCK_LIMIT)}
@@ -123,7 +123,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
         />} />
         {installed.filter((item) => item.enabled && toolbarOwners?.has(item.key)).map((item) => <SettingRow key={`placement:${item.key}`} title={item.manifest.name} control={<SettingSelect disabled={safeMode || busy} value={preferences.compactPlacements?.[item.key] || "auto"} ariaLabel={text(`${item.manifest.name} 的入口位置`, `${item.manifest.name} placement`)} options={[{ value: "auto", label: text("自动", "Automatic") }, { value: "bottom", label: text("底栏", "Dock") }, { value: "more", label: text("更多", "More") }, { value: "settings", label: text("仅设置", "Settings only") }]} onChange={(value) => void run(() => extensionService.setCompactPlacement(item.key, value as CompactPluginPlacement))} />} />)}
       </SettingSection>}
-      <SettingSection presentation="plain" title={<>{text(plugin ? "已安装插件" : "已安装主题", plugin ? "Installed plugins" : "Installed themes")} <span className="df-extension-count">{installed.length}</span></>}>
+      <SettingSection title={<>{text(plugin ? "已安装插件" : "已安装主题", plugin ? "Installed plugins" : "Installed themes")} <span className="df-extension-count">{installed.length}</span></>}>
         {installed.length > 0 && search}
         {safeMode && plugin && installed.length > 0 && <p className="df-extension-note">{text("受限模式已暂停插件。关闭上方开关后即可启用。", "Restricted mode pauses plugins. Turn it off above to enable them.")}</p>}
         <div className="df-extension-list">
@@ -145,7 +145,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
           })}
         </div>
       </SettingSection>
-      {!plugin && active && Boolean(active.manifest.options?.length) && <SettingSection presentation="plain" title={text("主题选项", "Theme options")}>
+      {!plugin && active && Boolean(active.manifest.options?.length) && <SettingSection title={text("主题选项", "Theme options")}>
         {active.manifest.options!.map((option) => <SettingRow key={option.key} title={option.label} control={<ThemeOptionControl option={option} value={extensionService.getConfig(active.key)[option.key] ?? option.default} onChange={(value) => void run(() => extensionService.saveConfig(active.key, { [option.key]: value }))} />} />)}
         <SettingRow title={text("恢复主题选项", "Restore theme options")} control={<SettingActionButton onClick={() => void run(() => extensionService.saveConfig(active.key, Object.fromEntries(active.manifest.options!.map((option) => [option.key, option.default]))))}>{text("恢复默认", "Restore defaults")}</SettingActionButton>} />
       </SettingSection>}
@@ -184,11 +184,11 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
         </>}
       </div>
     </Modal>
-    {view === "url" && <SettingSection presentation="plain" title={text("从网址安装", "Install from URL")} description={text("输入 HTTPS 扩展包地址或 GitHub 仓库地址。", "Enter an HTTPS package URL or GitHub repository URL.")}>
+    {view === "url" && <SettingSection title={text("从网址安装", "Install from URL")} description={text("输入 HTTPS 扩展包地址或 GitHub 仓库地址。", "Enter an HTTPS package URL or GitHub repository URL.")}>
       {back}
       <SettingRow layout="stacked" title={text("扩展包或仓库地址", "Package or repository URL")} control={<div className="df-extension-form"><SettingTextInput value={packageUrl} placeholder="https://github.com/author/extension" ariaLabel={text("扩展包或仓库地址", "Package or repository URL")} onChange={setPackageUrl} /><SettingActionButton tone="primary" disabled={busy || !packageUrl.trim()} onClick={() => void run(async () => { await extensionService.installFromUrl(packageUrl.trim(), kind); setPackageUrl(""); navigate("installed"); }, text("正在安装…", "Installing…"))}>{text("安装", "Install")}</SettingActionButton></div>} />
     </SettingSection>}
-    {view === "sources" && <SettingSection presentation="plain" title={text("扩展来源", "Extension sources")} description={text("添加你信任的社区市场。来源名称会显示在每个扩展旁。", "Add catalogs you trust. Each package shows where it comes from.")}>
+    {view === "sources" && <SettingSection title={text("扩展来源", "Extension sources")} description={text("添加你信任的社区市场。来源名称会显示在每个扩展旁。", "Add catalogs you trust. Each package shows where it comes from.")}>
       {back}
       <div className="df-extension-sources">{preferences.sources.map((source) => <SettingRow key={source.id} title={source.name} description={source.url} control={source.id === "official" ? <span className="df-extension-state">{text("默认来源", "Default source")}</span> : <SettingActionButton disabled={busy} tone="danger" onClick={() => void run(() => extensionService.removeSource(source.id))}>{text("移除来源", "Remove source")}</SettingActionButton>} />)}</div>
       <SettingRow layout="stacked" title={text("添加来源", "Add source")} control={<div className="df-extension-form">

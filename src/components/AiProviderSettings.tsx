@@ -1,10 +1,10 @@
 import { useState } from "react";
 import type { Language, Settings } from "../types";
+import { SettingDisclosure } from "./SettingsControls";
 import { AI_PROVIDER_MODELS, aiProviderPreset, readLocalAiProviderConfig, writeLocalAiProviderConfig, clearLocalAiProviderConfig, type LocalAiProviderConfig } from "../aiProviderConfig";
 
 export default function AiProviderSettings({ lang, onSave }: { lang: Language; onSave: (patch: Partial<Settings>) => void }) {
   const [config, setConfig] = useState<LocalAiProviderConfig>(() => readLocalAiProviderConfig());
-  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [jsonText, setJsonText] = useState(() => JSON.stringify(readLocalAiProviderConfig(), null, 2));
   const save = (patch: Partial<LocalAiProviderConfig>) => {
     const next = writeLocalAiProviderConfig(patch);
@@ -31,7 +31,8 @@ export default function AiProviderSettings({ lang, onSave }: { lang: Language; o
       <label><span>{lang === "zh" ? "模型 ID" : "Model ID"}</span><input value={config.model} placeholder={lang === "zh" ? "输入供应商模型 ID" : "Enter the provider model ID"} onChange={(event) => save({ model: event.target.value })} /></label>
     </div>
     <small>{config.apiKey ? (lang === "zh" ? "Key 仅保存在本机浏览器/桌面应用中。" : "The key is stored only on this device.") : (lang === "zh" ? "请填写 API Key。" : "Enter an API key.")}</small>
-    <button type="button" className="df-settings-disclosure" onClick={() => setAdvancedOpen((open) => !open)}>{advancedOpen ? "−" : "+"} {lang === "zh" ? "高级配置" : "Advanced configuration"}</button>
-    {advancedOpen && <div className="df-ai-provider-advanced"><label><span>JSON</span><textarea value={jsonText} spellCheck={false} onChange={(event) => setJsonText(event.target.value)} onBlur={() => { try { save(JSON.parse(jsonText) as Partial<LocalAiProviderConfig>); } catch { /* Keep the draft visible until valid JSON is entered. */ } }} /></label><button type="button" onClick={() => { clearLocalAiProviderConfig(); const next = readLocalAiProviderConfig(); setConfig(next); setJsonText(JSON.stringify(next, null, 2)); onSave({ model: next.model, baseUrl: next.baseUrl }); }}>{lang === "zh" ? "清除本机 Key" : "Clear local key"}</button></div>}
+    <SettingDisclosure title={lang === "zh" ? "高级配置" : "Advanced configuration"}>
+      <div className="df-ai-provider-advanced"><label><span>JSON</span><textarea value={jsonText} spellCheck={false} onChange={(event) => setJsonText(event.target.value)} onBlur={() => { try { save(JSON.parse(jsonText) as Partial<LocalAiProviderConfig>); } catch { /* Keep the draft visible until valid JSON is entered. */ } }} /></label><button type="button" onClick={() => { clearLocalAiProviderConfig(); const next = readLocalAiProviderConfig(); setConfig(next); setJsonText(JSON.stringify(next, null, 2)); onSave({ model: next.model, baseUrl: next.baseUrl }); }}>{lang === "zh" ? "清除本机 Key" : "Clear local key"}</button></div>
+    </SettingDisclosure>
   </div>;
 }

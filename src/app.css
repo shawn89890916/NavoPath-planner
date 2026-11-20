@@ -8368,20 +8368,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 /* SettingActionButton: secondary text action by default, primary uses
    a fine accent rule, danger uses a muted coral rule. Never a filled
    SaaS pill. */
-.df-settings-color-input {
-  width: 48px;
-  height: 40px;
-  padding: 3px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  background: var(--surface-card);
-  cursor: pointer;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-settings-color-input:hover { border-color: var(--accent-active); }
-.df-settings-color-input:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
-.df-settings-color-input:disabled { opacity: .5; cursor: not-allowed; }
-/* SettingDivider: a single fine rule between sub-groups. */
 /* Accent color row: place the two ThemeColorSetting pickers side by
    side when there is room. */
 .df-settings-accent-row { display: flex; flex-wrap: wrap; gap: 18px; padding: 4px 0 8px; }
@@ -12939,30 +12925,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-plugin-update-notice strong { font-weight:600; }
 .df-plugin-update-notice small { color:var(--text-muted); font-size:11px; }
 .df-plugin-update-notice-dot { width:8px; height:8px; flex:0 0 8px; border-radius:50%; background:var(--accent-active); }
-.df-settings-disclosure-toggle {
-  display: flex;
-  width: 100%;
-  min-height: 58px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 10px 0;
-  border: 0;
-  border-bottom: 1px solid var(--paper-rule);
-  color: var(--text-main);
-  text-align: left;
-  background: transparent;
-  cursor: pointer;
-}
-.df-settings-disclosure-toggle span { display: grid; gap: 2px; }
-.df-settings-disclosure-toggle strong { font: 600 13px/1.4 var(--paper-sans); }
-.df-settings-disclosure-toggle small { color: var(--text-muted); font: 400 11px/1.45 var(--paper-sans); }
-.df-settings-disclosure-toggle i { color: var(--text-muted); font: 500 15px/1 var(--paper-mono); font-style: normal; }
-.df-settings-disclosure-toggle:hover { color: var(--accent-active); background: var(--paper-note); }
-.df-settings-disclosure-toggle:active { transform: translateY(1px); }
-.df-settings-disclosure-toggle:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
-.df-settings-disclosure { border-top: 1px solid var(--paper-rule); }
-.df-settings-disclosure-body { padding: 8px 0 2px; }
 .df-settings-subtabs {
   display: flex;
   gap: 18px;
@@ -12976,7 +12938,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border: 1px solid var(--paper-rule-strong);
   color: var(--text-muted);
   background: transparent;
-  font: 600 11px/1 var(--paper-mono);
+  font: 600 11px/1 var(--paper-sans);
   cursor: pointer;
 }
 .df-settings-subtabs button:hover { color: var(--text-main); border-color: var(--accent-active); }
@@ -12984,7 +12946,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-settings-subtabs button:active { transform: translateY(1px); }
 .df-settings-subtabs button:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
 .df-settings-integration-tabs { margin-top: 12px; }
-.df-settings-theme-fields { display: flex; flex-direction: column; }
 [data-settings-anchor]:focus { outline: none; }
 [data-settings-anchor]:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 3px; }
 .df-visually-hidden {
@@ -13006,7 +12967,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
     border-bottom: 1px solid var(--paper-rule);
   }
   .df-settings-content { padding-right: 1px; }
-  .df-settings-disclosure-toggle { min-height: 64px; }
   .df-settings-subtabs button { min-height: 44px; }
   .df-app .df-settings-shell {
     grid-template-columns: minmax(0, 1fr);
@@ -17797,10 +17757,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
     overflow-y: auto;
     scrollbar-gutter: auto;
   }
-  #root .df-app .df-settings-disclosure-toggle {
-    min-height: 64px;
-    padding: 10px 0;
-  }
   #root .df-app .df-task-detail .df-detail-close {
     position: absolute;
     inset: 30px 8px auto auto;
@@ -18790,7 +18746,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
     animation: none;
   }
   .df-list-insertion-line { animation: none; }
-  .df-settings-disclosure-toggle { transition: none; }
   .df-settings-subtabs button { transition: none; }
   .df-app .df-task-block[data-task-appearance] {
     transition: none;

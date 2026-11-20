@@ -37,7 +37,7 @@ function Review() {
       <div className="ui-choice-list ui-choice-list--inline"><Button className="ui-choice-item active" aria-pressed>{t("天", "Day")}</Button><Button className="ui-choice-item">{t("周", "Week")}</Button><Button className="ui-choice-item">{t("月", "Month")}</Button></div>
     </section>
     <div className="df-settings-content">
-      <SettingSection presentation="plain" title={t("设置行", "Settings rows")} description={t("文字、开关、选择与动作共享同一套比例。", "Text, switches, selections and actions share one scale.")}>
+      <SettingSection title={t("设置行", "Settings rows")} description={t("文字、开关、选择与动作共享同一套比例。", "Text, switches, selections and actions share one scale.")}>
         <SettingRow title={t("通知", "Notifications")} description={t("显示未读数量，关闭后仍可在通知中心查看。", "Show unread counts. Notifications remain available in the notification center when hidden.")} control={<SettingToggle checked={enabled} ariaLabel={t("通知", "Notifications")} onChange={setEnabled} />} />
         <SettingRow title={t("时间视图", "Timeline view")} description={t("窄面板将选择框放到说明下方，保留足够的阅读宽度。", "Narrow panels place the selection below its description to preserve reading space.")} control={<SettingSelect value="day" onChange={() => {}} ariaLabel={t("时间视图", "Timeline view")} options={[{value:"day",label:t("天", "Day")},{value:"week",label:t("周", "Week")}]} />} />
         <SettingRow title={t("名称", "Name")} control={<SettingTextInput value={value} onChange={setValue} ariaLabel={t("名称", "Name")} />} />

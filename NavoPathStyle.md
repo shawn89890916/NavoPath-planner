@@ -510,6 +510,7 @@ visual values.
 
 - Settings primitives own `src/components/SettingsControls.css`; pages compose them without redefining row typography or geometry. Settings navigation, section titles and controls use the sans-serif operational font; monospace is reserved for time and numeric metadata.
 - Setting rows use 14px labels, 12px supporting text, 64px minimum height and shared spacing tokens. Narrow rows respond to the content container, placing wide controls below their description.
+- Use the card surface for each settings section and one fine rule between adjacent setting rows. Let the card edge close the section. Align selects, numeric inputs and color controls along the same edge. Put units inside their fields and show color swatches alongside their hex values.
 - Keep pending button labels stable and expose `aria-busy` through `Button.pending`; status details belong in the existing live status region.
 - Candidate completion keeps the checked state visible before the row folds away over 320ms. Reduced motion commits immediately.
 - Use `/dev/ui-review.html` during development to inspect the actual shared controls in light/dark themes and both languages. This page is excluded from the production entrypoints.
