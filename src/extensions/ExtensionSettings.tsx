@@ -8,6 +8,7 @@ import type { CatalogEntry, CompactPluginPlacement, ExtensionKind, ThemeOption }
 import { getAppHeaderPlugins } from "./compactDock";
 import { COMPACT_DOCK_LIMITS, DEFAULT_COMPACT_DOCK_LIMIT } from "./packages";
 import { ExtensionMount } from "./ExtensionMount";
+import { normalizePomodoroClockFont, pomodoroClockFonts, POMODORO_EXTENSION_KEY } from "../widget/pomodoroAppearance";
 import "./ExtensionSettings.css";
 
 function ThemeOptionControl({ option, value, onChange }: { option: ThemeOption; value: unknown; onChange: (value: unknown) => void }) {
@@ -94,10 +95,23 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage }: 
   const search = <label className="df-extension-search"><UiSearchIcon size={16} /><SettingTextInput value={query} placeholder={view === "market" ? text("搜索名称、作者或描述…", "Search name, author or description…") : text(plugin ? "搜索已安装的插件…" : "搜索已安装的主题…", plugin ? "Search installed plugins…" : "Search installed themes…")} ariaLabel={text("搜索扩展", "Search extensions")} onChange={setQuery} /></label>;
   const back = <div className="df-extension-back"><SettingActionButton onClick={() => navigate("installed")}>{text(plugin ? "返回插件" : "返回主题", plugin ? "Back to plugins" : "Back to themes")}</SettingActionButton></div>;
 
-  if (page) return <div className="df-extensions"><SettingSection title={page.name}>
-    <div className="df-extension-back"><SettingActionButton onClick={() => setPageId(null)}>{text("返回插件", "Back to plugins")}</SettingActionButton></div>
-    <ExtensionMount contribution={page} />
-  </SettingSection></div>;
+  if (page) {
+    const focusClockFont = page.owner === POMODORO_EXTENSION_KEY
+      ? normalizePomodoroClockFont(extensionService.getConfig(page.owner).clockFont)
+      : undefined;
+    const fontLabel = text("计时数字字体", "Clock font");
+    return <div className="df-extensions"><SettingSection title={page.name}>
+      <div className="df-extension-back"><SettingActionButton onClick={() => setPageId(null)}>{text("返回插件", "Back to plugins")}</SettingActionButton></div>
+      {focusClockFont && <SettingRow title={fontLabel} control={<>
+        <span className="df-focus-font-preview" data-focus-clock-font={focusClockFont} aria-hidden="true">23:00</span>
+        <SettingSelect ariaLabel={fontLabel} value={focusClockFont} disabled={pending === fontLabel}
+          options={pomodoroClockFonts.map(option => ({ value: option.value, label: option[lang] }))}
+          onChange={(value) => void run(() => extensionService.saveConfig(page.owner, { clockFont: normalizePomodoroClockFont(value) }), fontLabel)} />
+      </>} />}
+      {error && <p className="df-extension-error" role="alert">{error}</p>}
+      <ExtensionMount contribution={page} />
+    </SettingSection></div>;
+  }
 
   return <div className="df-extensions">
     <input ref={fileInput} className="df-extension-file" type="file" accept=".zip,.navopackage.json,application/zip,application/json" aria-label={text("导入扩展包", "Import extension package")} onChange={(event) => { const file = event.target.files?.[0]; if (file) void run(() => extensionService.importFile(file, kind), text("正在导入…", "Importing…")); event.target.value = ""; }} />

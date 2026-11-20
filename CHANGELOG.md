@@ -2,6 +2,12 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 43
+
+#### 改进
+
+- 番茄钟放大计时数字，三种模式共用带滑动高亮的切换栏。点任务名即可切换任务，并可在番茄钟设置里选择数字字体。
+
 ### 1.7.0 Beta 42
 
 #### 修复
@@ -751,6 +757,12 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 43
+
+#### Improved
+
+- The focus timer has larger digits and a sliding highlight across its three modes. Click the task name to switch tasks, and choose a clock font in Pomodoro settings.
 
 ### 1.7.0 Beta 42
 

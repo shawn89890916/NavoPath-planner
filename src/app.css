@@ -12253,13 +12253,23 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   display: grid;
   align-content: start;
   gap: var(--space-5);
-  max-width: 440px;
+  width: min(100%, 720px);
+  min-width: 0;
   margin-inline: auto;
   padding: var(--space-4) var(--space-2);
   color: var(--text-main);
 }
 
-.df-focus-mode-switch,
+#root .df-app .df-focus-mode-switch.ui-choice-list {
+  justify-self: center;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-overlay);
+  background: color-mix(in srgb, var(--text-main) 4%, var(--surface-main));
+  --ui-choice-selected: color-mix(in srgb, var(--text-main) 11%, var(--surface-main));
+}
+
 .df-focus-controls {
   display: flex;
   align-items: center;
@@ -12269,31 +12279,67 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 }
 
 .df-focus-clock {
+  container-type: inline-size;
   display: grid;
   gap: var(--space-2);
   justify-items: center;
   text-align: center;
 }
 
+[data-focus-clock-font] {
+  --focus-clock-family: "Times New Roman", Times, var(--paper-serif);
+  --focus-clock-scale: 178cqi;
+  font-family: var(--focus-clock-family);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+[data-focus-clock-font="sans"] {
+  --focus-clock-family: var(--paper-sans);
+  --focus-clock-scale: 162cqi;
+}
+
+[data-focus-clock-font="mono"] {
+  --focus-clock-family: var(--paper-mono);
+  --focus-clock-scale: 146cqi;
+}
+
 .df-focus-timer-display {
-  font: 400 clamp(38px, 10vw, 64px)/1.05 var(--paper-mono);
-  font-variant-numeric: tabular-nums;
+  font-size: min(260px, calc(var(--focus-clock-scale) / var(--focus-clock-characters)));
+  font-weight: 400;
+  line-height: .94;
+  white-space: nowrap;
+}
+
+.df-focus-font-preview {
+  font-size: 24px;
+  line-height: 1;
 }
 
 .df-focus-mode-note,
-.df-focus-task-label,
 .df-focus-task-project {
   color: var(--text-muted);
   font: 500 12px/1.4 var(--paper-sans);
 }
 
 .df-focus-task-row {
+  width: min(100%, 460px);
+  justify-self: center;
+  padding-block-start: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+#root .df-app .ui-button.df-focus-task-trigger {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
   gap: var(--space-3);
-  padding-block: var(--space-3);
-  border-top: 1px solid var(--border-subtle);
+  width: 100%;
+  text-align: left;
+  white-space: normal;
+  border-color: transparent;
+}
+
+.df-focus-task-row > .df-focus-task-info {
+  padding: var(--space-2);
 }
 
 .df-focus-task-info,

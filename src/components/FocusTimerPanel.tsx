@@ -1,8 +1,10 @@
-import { useRef, useState } from "react";
+import { type CSSProperties, useRef, useState } from "react";
 import type { Language, Project, Task, WidgetTimerRuntime } from "../types";
 import { canLinkPomodoroTask } from "../widget/widgetSchedule";
 import { AnchoredNarrowMenu } from "./AnchoredNarrowMenu";
-import { Button, IconButton, Input } from "./UiPrimitives";
+import type { PomodoroClockFont } from "../widget/pomodoroAppearance";
+import { Button, Input } from "./UiPrimitives";
+import { SelectionIndicator } from "./SelectionIndicator";
 import { UiChevronDownIcon, UiPlusIcon } from "./UiIcons";
 
 type PomodoroControls = {
@@ -23,6 +25,7 @@ type FocusTimerPanelProps = {
   modes: { mode: string; zh: string; en: string }[];
   onModeChange: (mode: string) => void;
   clock: string;
+  clockFont: PomodoroClockFont;
   note?: string;
   task?: Task | null;
   project?: Project;
@@ -37,7 +40,12 @@ type FocusTimerPanelProps = {
   onReset: () => void;
 };
 
-function PomodoroTaskMenu({ lang, controls }: { lang: Language; controls: PomodoroControls }) {
+function PomodoroTaskMenu({ lang, controls, task, project }: {
+  lang: Language;
+  controls: PomodoroControls;
+  task?: Task | null;
+  project?: Project;
+}) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const anchorRef = useRef<HTMLButtonElement>(null);
@@ -58,7 +66,14 @@ function PomodoroTaskMenu({ lang, controls }: { lang: Language; controls: Pomodo
     (!query || task.title.toLocaleLowerCase().includes(query) || projects.get(task.projectId || "")?.toLocaleLowerCase().includes(query))) : [];
 
   return <>
-    <IconButton ref={anchorRef} icon={<UiChevronDownIcon />} label={label} aria-expanded={open} onClick={() => open ? close() : setOpen(true)} />
+    <Button ref={anchorRef} className="df-focus-task-trigger" variant="ghost" aria-expanded={open}
+      aria-label={task ? label + " · " + task.title : undefined} onClick={() => open ? close() : setOpen(true)}>
+      <span className="df-focus-task-info">
+        <span className="df-focus-task-name">{task?.title || (zh ? "选择任务" : "Choose a task")}</span>
+        {project && <span className="df-focus-task-project">{project.title}</span>}
+      </span>
+      <UiChevronDownIcon />
+    </Button>
     <AnchoredNarrowMenu open={open} anchorRef={anchorRef} onClose={close} placement="below" label={label} focusOnOpen>
       <Button variant="ghost" aria-pressed={controls.taskChoice === undefined} onClick={() => select()}>
         {zh ? "自动关联当前任务" : "Auto-link current task"}
@@ -85,7 +100,7 @@ function PomodoroTaskMenu({ lang, controls }: { lang: Language; controls: Pomodo
 }
 
 export function FocusTimerPanel({
-  lang, mode, modes, onModeChange, clock, note, task, project, running, canStart, canSave, canReset, resuming, pomodoro, onToggle, onSave, onReset,
+  lang, mode, modes, onModeChange, clock, clockFont, note, task, project, running, canStart, canSave, canReset, resuming, pomodoro, onToggle, onSave, onReset,
 }: FocusTimerPanelProps) {
   const zh = lang === "zh";
   let status = note;
@@ -110,11 +125,12 @@ export function FocusTimerPanel({
 
   const canEndUnlinked = pomodoro?.started && pomodoro.runtime.unlinked;
   return <div className="df-focus-panel">
-    <div className="df-focus-mode-switch ui-choice-list ui-choice-list--inline" role="group" aria-label={zh ? "计时模式" : "Timer mode"}>
+    <div className="df-focus-mode-switch ui-choice-list ui-choice-list--inline ui-choice-list--motion-selection" role="group" aria-label={zh ? "计时模式" : "Timer mode"}>
+      <SelectionIndicator activeKey={[mode, lang, ...modes.map(item => item.mode)].join(":")} />
       {modes.map(item => <Button key={item.mode} className="ui-choice-item" variant="ghost" aria-pressed={mode === item.mode} onClick={() => onModeChange(item.mode)}>{item[lang]}</Button>)}
     </div>
     <div className="df-focus-clock">
-      <div className="df-focus-timer-display" role="timer">{clock}</div>
+      <div className="df-focus-timer-display" data-focus-clock-font={clockFont} style={{ "--focus-clock-characters": clock.length } as CSSProperties} role="timer">{clock}</div>
       {status && <div className="df-focus-mode-note" role="status">{status}</div>}
     </div>
     <div className="df-focus-controls">
@@ -124,12 +140,12 @@ export function FocusTimerPanel({
       {canReset && !canEndUnlinked && <Button variant="ghost" onClick={onReset}>{zh ? "重置" : "Reset"}</Button>}
     </div>
     <div className="df-focus-task-row">
-      <div className="df-focus-task-info">
-        <span className="df-focus-task-label">{zh ? "关联任务" : "Linked task"}</span>
-        <span className="df-focus-task-name">{task?.title || (zh ? "未关联任务" : "No linked task")}</span>
-        {project && <span className="df-focus-task-project">{project.title}</span>}
-      </div>
-      {pomodoro && !pomodoro.started && <PomodoroTaskMenu lang={lang} controls={pomodoro} />}
+      {pomodoro && !pomodoro.started
+        ? <PomodoroTaskMenu lang={lang} controls={pomodoro} task={task} project={project} />
+        : <div className="df-focus-task-info">
+          <span className="df-focus-task-name">{task?.title || (zh ? "未关联任务" : "No linked task")}</span>
+          {project && <span className="df-focus-task-project">{project.title}</span>}
+        </div>}
     </div>
   </div>;
 }

@@ -13,6 +13,7 @@ import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
 import { ExtensionMount } from "./extensions/ExtensionMount";
 import { RightUtilityPanel } from "./components/RightUtilityPanel";
 import { FocusTimerPanel } from "./components/FocusTimerPanel";
+import { normalizePomodoroClockFont, POMODORO_EXTENSION_KEY } from "./widget/pomodoroAppearance";
 import type { ExtensionContribution } from "./extensions/types";
 import { undoAiImportData } from "./utils/aiImportUndo";
 import { highlightTaskLocation } from "./utils/highlightTaskLocation";
@@ -10597,6 +10598,7 @@ if (cached?.data && cached?.settings) {
             modes={[...getTimerModes().filter(item => item.mode !== "countdown"), { mode: "flowtime", zh: "Flowtime", en: "Flowtime" }]}
             onModeChange={chooseFocusMode}
             clock={focusClockDisplay}
+            clockFont={normalizePomodoroClockFont(settings.extensionConfigs?.[POMODORO_EXTENSION_KEY]?.clockFont)}
             note={focusModeNote}
             task={focusTask}
             project={focusProject}
