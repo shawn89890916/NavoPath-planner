@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { PlannerData, Task } from "../types";
 import { createDemoData } from "../productDemoData";
-import { captureTaskUndo, undoTaskChanges } from "./taskUndo";
+import { normalizeData } from "../browserFallback";
+import { captureTaskUndo, refreshTaskCreationUndo, undoTaskChanges } from "./taskUndo";
 import { applyMobilePlacement } from "./mobilePlacement";
 import { withDeletionTombstones } from "../syncMerge";
 
@@ -14,6 +15,47 @@ function schedule(task: Task) {
 }
 
 describe("operation-scoped task undo", () => {
+  it("undoes a quick-added task after the cloud canonicalizes its defaults and order", () => {
+    const before = normalizeData(createDemoData("en", "planning", 0));
+    const created: Task = {
+      ...before.tasks[0], id: "quick-add", title: "Quick add", order: 100,
+      projectId: undefined, goalId: "goal_admission", timelineRecords: undefined, workflowStatus: undefined,
+    };
+    const after = { ...before, tasks: [...before.tasks, created] };
+    const undo = captureTaskUndo(before, after);
+    const saved = normalizeData(JSON.parse(JSON.stringify(after)));
+
+    expect(undoTaskChanges(after, undo, stamp).tasks).toEqual(before.tasks);
+    expect(undoTaskChanges(saved, undo, stamp).tasks).toEqual(before.tasks);
+    const edited = { ...saved, tasks: saved.tasks.map((task) => task.id === created.id ? { ...task, notes: "Later edit" } : task) };
+    expect(undoTaskChanges(edited, undo, stamp)).toBe(edited);
+  });
+
+  it("restores subtasks edited before the cloud fills in their persisted fields", () => {
+    const before = normalizeData(createDemoData("en", "planning", 0));
+    const [task, ...rest] = before.tasks;
+    const after = { ...before, tasks: [{ ...task, subtasks: [{ id: "new-subtask", title: "Subtask", completed: false, createdAt: stamp }] }, ...rest] };
+    const undo = captureTaskUndo(before, after);
+    const saved = normalizeData(JSON.parse(JSON.stringify(after)));
+
+    expect(undoTaskChanges(saved, undo, stamp).tasks[0].subtasks).toEqual(task.subtasks);
+  });
+
+  it("undoes task creation after automatic enrichment of a cloud-saved task", () => {
+    const before = normalizeData(createDemoData("en", "planning", 0));
+    const created = { ...before.tasks[0], id: "enriched", order: 100 };
+    const after = { ...before, tasks: [...before.tasks, created] };
+    const undo = captureTaskUndo(before, after);
+    const saved = normalizeData(after);
+    const current = saved.tasks.find((task) => task.id === created.id)!;
+    const enriched = { ...current, estimatedHours: 2 };
+    const next = { ...saved, tasks: saved.tasks.map((task) => task.id === current.id ? enriched : task) };
+    const refreshed = refreshTaskCreationUndo(undo, current, enriched, next);
+
+    expect(undoTaskChanges(normalizeData(next), refreshed, stamp).tasks).toEqual(before.tasks);
+    expect(refreshTaskCreationUndo(undo, { ...current, title: "Manually renamed" }, enriched, next)).toBe(undo);
+  });
+
   it("blocks the entire undo when a later change overlaps, then permits it after that change is undone", () => {
     const before = createDemoData("en", "planning", 0);
     const first = { ...before, tasks: [schedule(before.tasks[0]), ...before.tasks.slice(1)] };

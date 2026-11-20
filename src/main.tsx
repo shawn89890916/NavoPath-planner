@@ -3,7 +3,7 @@ import { blockingCalendarEvents } from "./utils/courseBackground";
 import { useMobileSheetGesture } from "./useMobileSheetGesture";
 import { uid } from "./utils/ids";
 import { toggleTaskCompletion, setTaskCompletion, habitScheduleForTask } from "./utils/taskCompletion";
-import { captureTaskUndo, undoTaskChanges } from "./utils/taskUndo";
+import { captureTaskUndo, refreshTaskCreationUndo, undoTaskChanges } from "./utils/taskUndo";
 import type { TaskOperation, TaskOperationKind } from "./components/TaskOperationHistory";
 import { MobileQuickAddButton } from "./components/MobileQuickAddButton";
 import { NotificationBadge } from "./components/NotificationBadge";
@@ -3096,13 +3096,16 @@ if (cached?.data && cached?.settings) {
         },
         updatedAt: inferredAt,
       };
-      await saveData({
+      const next = {
         ...latest,
         tasks: latest.tasks.map((item) => item.id === task.id ? updatedTask : item),
-      });
-      if (currentTask === task) setTaskOperations((entries) => entries.map((entry) => entry.undo.added.includes(task)
-        ? { ...entry, undo: { ...entry.undo, added: entry.undo.added.map((item) => item === task ? updatedTask : item) } }
-        : entry));
+      };
+      await saveData(next);
+      setTaskOperations((entries) => entries.map((entry) => {
+        if (entry.undone || entry.workspaceKey !== loadedWorkspaceKeyRef.current) return entry;
+        const undo = refreshTaskCreationUndo(entry.undo, currentTask, updatedTask, next);
+        return undo === entry.undo ? entry : { ...entry, undo };
+      }));
       return updatedTask;
     })();
 

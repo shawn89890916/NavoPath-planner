@@ -2,6 +2,12 @@
 
 ## 2026-11-20
 
+### 1.7.0 Beta 44
+
+#### 修复
+
+- 修复操作历史在云端保存后误判任务已被修改、导致无法撤销的问题。
+
 ### 1.7.0 Beta 43
 
 #### 改进
@@ -757,6 +763,12 @@
 # NavoPath Changelog
 
 ## 2026-11-20
+
+### 1.7.0 Beta 44
+
+#### Fixed
+
+- Fixed Activity History undo being blocked when a cloud save made a task appear to have changed.
 
 ### 1.7.0 Beta 43
 
