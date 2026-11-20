@@ -11959,10 +11959,8 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 #root .df-app .df-template-period-block .df-resize-dot.top { top: 0; }
 #root .df-app .df-template-period-block .df-resize-dot.bottom { bottom: 0; }
 #root .df-app .df-template-period-block:is(:hover, :focus-within) .df-resize-dot { opacity: 1; }
-.df-app .df-template-period-editor form { display: grid; gap: 14px; }
-.df-app .df-template-period-editor :is(h2, label) { margin: 0; }
-.df-app .df-template-period-editor label { display: grid; gap: 6px; min-width: 0; }
-.df-app .df-template-period-editor .ui-input { width: 100%; min-width: 0; color-scheme: inherit; }
+.df-app .df-template-period-editor label { display: grid; gap: 6px; min-width: 0; margin: 0; }
+.df-app .df-template-period-editor .ui-input { min-width: 0; color-scheme: inherit; }
 .df-app.theme-dark .df-template-period-editor { color-scheme: dark; }
 .df-app .df-template-period-times { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .df-app .df-template-modal-actions {

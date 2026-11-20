@@ -94,7 +94,7 @@ function TemplatePeriodEditor({ period, existing, lang, container, onClose, onSa
   const nextDay = Boolean(start && end && end <= start);
   const label = existing ? (zh ? "编辑时段" : "Edit block") : (zh ? "添加时段" : "Add block");
 
-  return <Modal portalContainer={container} className="df-template-period-editor" label={label} onClose={onClose}>
+  return <Modal portalContainer={container} className="df-dialog df-template-period-editor" label={label} onClose={onClose}>
     <form onSubmit={(event) => {
       event.preventDefault();
       if (!title.trim() || !start || !end) return;
