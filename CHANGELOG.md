@@ -1,11 +1,17 @@
 # NavoPath 更新日志
 
+## 2026-11-21
+
+### 改进
+
+- 横屏展开左侧模板列表，右侧保留时间轴。竖屏把编辑和删除放到具体模板行，底部可新建。点击当前模板名即可收起。
+
 ## 2026-11-20
 
 ### 新增
 
 - 原有 NavoPath MCP 令牌可列出、新建和编辑日程模板。支持通过应用授权第三方插件向 Agent 开放指定设置。
-- 默认日程模板和自建模板都可直接编辑和保存。横竖屏共用左上角的模板菜单，收起后时间轴铺满可用宽度。
+- 默认日程模板和自建模板都可直接编辑和保存。
 
 ## 2026-11-16
 
@@ -495,12 +501,18 @@
 
 # NavoPath Changelog
 
+## 2026-11-21
+
+### Improved
+
+- The template picker opens beside the timeline in landscape. In portrait, edit and delete directly from template rows, or create one at the bottom. Click the current template name to collapse the picker.
+
 ## 2026-11-20
 
 ### Added
 
 - Use the existing NavoPath MCP token to list, create, and edit schedule templates. Authorize third-party plugins in the app to share selected settings with agents.
-- Edit and save built-in and custom schedule templates in place. Use the same top-left menu in landscape and portrait, with the full timeline width available when closed.
+- Edit and save built-in and custom schedule templates in place.
 
 ## 2026-11-16
 

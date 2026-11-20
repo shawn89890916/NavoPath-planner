@@ -34,7 +34,7 @@ export function Popover({ className, children, ...props }: HTMLAttributes<HTMLDi
   return <div role={props.role || "dialog"} className={["ui-popover", className || ""].filter(Boolean).join(" ")} {...props}>{children}</div>;
 }
 
-export function ActionDisclosure({ label, children, summary, className }: { label: string; children: ReactNode; summary?: ReactNode; className?: string }) {
+export function ActionDisclosure({ label, children }: { label: string; children: ReactNode }) {
   const disclosureRef = useRef<HTMLDetailsElement>(null);
   const [open, setOpen] = useState(false);
   const presence = useMotionPresence(open);
@@ -47,7 +47,7 @@ export function ActionDisclosure({ label, children, summary, className }: { labe
     return () => document.removeEventListener("pointerdown", closeOutside);
   }, []);
   return (
-    <details ref={disclosureRef} open={presence.present} className={["ui-action-disclosure", className].filter(Boolean).join(" ")} onBlur={(event) => {
+    <details ref={disclosureRef} open={presence.present} className="ui-action-disclosure" onBlur={(event) => {
       // Touch browsers may blur to the body before dispatching the menu item's click.
       if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false);
     }} onKeyDown={(event) => {
@@ -56,13 +56,10 @@ export function ActionDisclosure({ label, children, summary, className }: { labe
       setOpen(false);
       event.currentTarget.querySelector("summary")?.focus();
     }}>
-      <summary aria-label={label} title={label} aria-expanded={open} onClick={(event) => { event.preventDefault(); setOpen((current) => !current); }}>{summary ?? <UiMoreIcon />}</summary>
+      <summary aria-label={label} title={label} aria-expanded={open} onClick={(event) => { event.preventDefault(); setOpen((current) => !current); }}><UiMoreIcon /></summary>
       <Popover role="group" aria-label={label} className="ui-action-disclosure-panel" data-motion-closing={presence.closing || undefined} inert={!open} aria-hidden={!open || undefined} onClick={(event) => {
         const button = (event.target as HTMLElement).closest("button");
-        if (button && !event.defaultPrevented && !button.hasAttribute("aria-pressed")) {
-          setOpen(false);
-          if (summary && document.activeElement === button) disclosureRef.current?.querySelector("summary")?.focus();
-        }
+        if (button && !button.hasAttribute("aria-pressed")) setOpen(false);
       }}>{children}</Popover>
     </details>
   );

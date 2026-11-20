@@ -24846,124 +24846,155 @@ body[data-navopath-base-theme="light"],
   height: 100%;
   min-height: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: var(--space-2);
   position: relative;
   container-type: inline-size;
   outline: none;
 }
-#root .df-app .df-template-panel > .df-timeline-panel {
+.df-app .df-template-workspace {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  min-height: 0;
+  padding: var(--space-2) var(--space-3) 0;
+}
+#root .df-app .df-template-workspace > .df-timeline-panel {
   min-width: 0;
   min-height: 0;
   margin: 0;
   border: 0;
   background: transparent;
 }
-#root .df-app .df-template-panel > .df-timeline-panel .df-timeline-daily {
+#root .df-app .df-template-panel .df-template-workspace .df-timeline-daily {
   --df-daily-scroll-width: 100%;
   --template-block-gutter: var(--space-2);
 }
 .df-app .df-template-panel .df-timeline-scroll { overscroll-behavior: contain; }
 
-.df-app .df-template-toolbar {
+@media (orientation: landscape) {
+  @container (min-width: 500px) {
+    .df-app .df-template-workspace[data-selector-open] {
+      grid-template-columns: minmax(190px, 0.62fr) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
+      gap: var(--space-3);
+    }
+    .df-app .df-template-workspace[data-selector-open] .df-template-selector { align-self: stretch; max-height: none; }
+  }
+}
+
+.df-app .df-template-selector {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  min-width: 0;
+  max-width: 264px;
+  max-height: min(48dvh, 420px);
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+}
+.df-app .df-template-workspace[data-selector-open] .df-template-selector { max-width: none; }
+.df-app :is(.df-template-picker-header, .df-template-picker-row) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3) 0;
+  min-width: 0;
   position: relative;
-  z-index: 6;
 }
-.df-app .df-template-toolbar-actions {
+#root .df-app .df-template-selector :is(.df-template-picker-title, .df-template-picker-name, .df-template-picker-new) {
   display: flex;
   align-items: center;
-  justify-content: end;
-  gap: var(--space-2);
-}
-.df-app .df-template-selector {
-  min-width: 0;
-  width: min(100%, 264px);
-}
-#root .df-app .df-template-selector > summary {
   justify-content: space-between;
   gap: var(--space-2);
-  min-height: 34px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-control);
-  color: var(--text-main);
-  text-decoration: none;
-}
-#root .df-app .df-template-selector[open] > summary,
-#root .df-app .df-template-selector > summary:hover { background: var(--paper-note); }
-.df-app .df-template-selector > summary > span {
   min-width: 0;
-  white-space: nowrap;
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: 0;
+  text-align: start;
+}
+#root .df-app .df-template-selector .df-template-picker-title {
+  color: var(--text-main);
+  font-weight: 650;
+}
+.df-app .df-template-picker-title > span {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.df-app .df-template-selector svg,
-.df-app .df-template-toolbar-actions svg,
-.df-app .df-template-date-field svg { display: block; flex-shrink: 0; }
-#root .df-app .df-template-toolbar-actions > .ui-button,
-#root .df-app .df-template-date-field.ui-button {
+.df-app .df-template-picker-title[aria-expanded="true"] > svg { rotate: 180deg; }
+#root .df-app .df-template-selector .df-template-picker-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.df-app .df-template-picker-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-inline: var(--space-1) var(--space-2);
+}
+.df-app .df-template-picker-header .df-template-picker-actions { position: relative; }
+.df-app .df-template-picker-header .df-template-picker-actions::before {
+  content: "";
+  position: absolute;
+  inset-block: var(--space-2);
+  inset-inline-start: 0;
+  width: 1px;
+  background: var(--border-subtle);
+}
+#root .df-app .df-template-picker-actions > .ui-icon-button {
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+}
+.df-app .df-template-picker-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+}
+.df-app .df-template-picker-list { min-height: 0; overflow: auto; overscroll-behavior: contain; }
+.df-app :is(.df-template-picker-body, .df-template-picker-row + .df-template-picker-row, .df-template-picker-list:not(:empty) + .df-template-picker-new)::before {
+  content: "";
+  position: absolute;
+  inset: 0 var(--space-3) auto;
+  height: 1px;
+  background: var(--border-subtle);
+  pointer-events: none;
+}
+#root .df-app .df-template-selector .df-template-picker-new { flex: none; position: relative; }
+.df-app .df-template-picker-row[data-insertion="before"] { box-shadow: inset 0 1px var(--accent-active); }
+.df-app .df-template-picker-row[data-insertion="after"] { box-shadow: inset 0 -1px var(--accent-active); }
+@media (hover: hover) and (pointer: fine) {
+  .df-app .df-template-picker-row:not(:hover):not(:focus-within) .df-template-picker-actions { visibility: hidden; }
+}
+.df-app :is(.df-template-selector, .df-template-edit-controls, .df-template-date-field) svg { display: block; flex-shrink: 0; }
+.df-app .df-template-edit-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2) var(--space-2);
+}
+.df-app .df-template-name-inline { flex: 1 1 135px; min-width: 0; }
+.df-app .df-template-edit-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+#root .df-app :is(.df-template-edit-controls > .ui-button, .df-template-date-field.ui-button) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
   white-space: nowrap;
 }
-#root .df-app .df-template-selector > .ui-action-disclosure-panel {
-  inset: calc(100% + var(--space-1)) auto auto 0;
-  grid-template-rows: minmax(0, 1fr) auto;
-  width: min(264px, calc(100cqw - var(--space-3) * 2));
-  max-height: min(60dvh, 440px);
-  padding: var(--space-1) var(--space-2);
-}
-.df-app .df-template-menu-list { min-height: 0; overflow: auto; overscroll-behavior: contain; }
-.df-app .df-template-menu-actions { padding-top: var(--space-1); }
-#root .df-app .df-template-selector .df-template-menu-row.ui-button {
-  display: flex;
-  min-height: 36px;
-  width: 100%;
-  justify-content: flex-start;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  text-align: start;
-  border: 0;
-  border-radius: 0;
-}
-#root .df-app .df-template-selector .df-template-menu-list .df-template-menu-row { justify-content: space-between; cursor: pointer; }
-.df-app .df-template-menu-list [data-template-grip] { display: none; touch-action: none; cursor: grab; }
-@media (any-pointer: coarse) {
-  .df-app .df-template-menu-list [data-template-grip] { display: block; }
-}
-#root .df-app .df-template-selector .df-template-menu-row[aria-current="true"] { background: var(--paper-note); color: var(--text-main); }
-#root .df-app .df-template-menu-row[data-insertion="before"] { box-shadow: inset 0 1px var(--accent-active); }
-#root .df-app .df-template-menu-row[data-insertion="after"] { box-shadow: inset 0 -1px var(--accent-active); }
-.df-app .df-template-menu-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.df-app .df-template-menu-meta { display: flex; flex: none; align-items: center; gap: var(--space-1); }
-.df-app .df-template-menu-row small { flex-shrink: 0; color: var(--text-muted); font: 500 10px/1.2 var(--paper-mono); }
 .df-app .df-template-drag-row {
   padding: var(--space-2);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-control);
   background: var(--surface-raised);
   color: var(--text-main);
-}
-.df-app .df-template-name-inline { grid-column: 1 / -1; width: 100%; min-width: 0; }
-@container (max-width: 500px) {
-  #root .df-app .df-template-selector > summary { min-height: 44px; }
-}
-@container (max-width: 390px) {
-  .df-app .df-template-toolbar { grid-template-columns: minmax(0, 1fr); }
-  .df-app .df-template-selector,
-  #root .df-app .df-template-selector > .ui-action-disclosure-panel { width: 100%; }
-  .df-app .df-template-toolbar-actions { justify-content: space-between; }
-}
-@media (pointer: coarse) {
-  #root .df-app .df-template-selector > summary,
-  #root .df-app .df-template-selector .df-template-menu-row.ui-button { min-height: 44px; }
 }
 .df-app .df-template-period-time {
   color: var(--text-muted);
