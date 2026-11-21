@@ -2,11 +2,13 @@
 
 ## 2026-11-21
 
-### 1.7.0 Beta 53
+### 1.7.0 Beta 54
 
 #### 修复
 
-- 设置中的「重新开始新手指南」直接打开新版工作区设置页。旧教程进度不会再触发旧版引导。
+- 切换任务视图时，左侧顶栏分隔线保持原位。项目树统一通过 Tree 视图打开，移除旧的「管理项目」入口。
+
+### 1.7.0 Beta 53
 
 #### 改进
 
@@ -15,7 +17,7 @@
 
 #### 修复
 
-- 切换任务视图时，左侧顶栏分隔线保持原位。项目树统一通过 Tree 视图打开，移除旧的「管理项目」入口。
+- 设置中的「重新开始新手指南」直接打开新版工作区设置页。
 
 ### 1.7.0 Beta 52
 
@@ -833,11 +835,13 @@
 
 ## 2026-11-21
 
-### 1.7.0 Beta 53
+### 1.7.0 Beta 54
 
 #### Fixed
 
-- Restarting the onboarding guide from Settings opens the new workspace setup. Retired tutorial progress no longer affects the guide.
+- The Tasks header divider stays in place when switching views. Projects open in Tree, and the old Manage projects entry has been removed.
+
+### 1.7.0 Beta 53
 
 #### Improved
 
@@ -846,7 +850,7 @@
 
 #### Fixed
 
-- The Tasks header divider stays in place when switching views. Projects open in Tree, and the old Manage projects entry has been removed.
+- Restarting the onboarding guide from Settings opens the new workspace setup.
 
 ### 1.7.0 Beta 52
 
