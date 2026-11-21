@@ -2,6 +2,13 @@
 
 ## 2026-11-21
 
+### 1.7.0 Beta 52
+
+#### 修复
+
+- 从 Tasks 菜单打开树状视图时，左上角显示「Tree」，可直接从该菜单切换到其他视图。
+- 横屏从右下角添加项目或习惯时，抽屉宽度、标题和提交按钮与添加任务的界面对齐。
+
 ### 1.7.0 Beta 51
 
 #### 改进
@@ -12,8 +19,6 @@
 #### 修复
 
 - 手机端点「安排」后，可在时间轴上确认或取消排程。
-- 从 Tasks 菜单打开树状视图时，左上角显示「Tree」，可直接从该菜单切换到其他视图。
-- 横屏从右下角添加项目或习惯时，抽屉宽度、标题和提交按钮与添加任务的界面对齐。
 
 ### 1.7.0 Beta 50
 
@@ -813,6 +818,13 @@
 
 ## 2026-11-21
 
+### 1.7.0 Beta 52
+
+#### Fixed
+
+- Opening Tree from the Tasks menu shows Tree in the top-left switcher, where you can switch directly to another view.
+- When adding a project or habit from the lower-right corner in landscape, the drawer width, title, and submit button align with the task form.
+
 ### 1.7.0 Beta 51
 
 #### Improved
@@ -823,8 +835,6 @@
 #### Fixed
 
 - On phones, tapping Plan now shows the controls to confirm or cancel scheduling on the timeline.
-- Opening Tree from the Tasks menu shows Tree in the top-left switcher, where you can switch directly to another view.
-- When adding a project or habit from the lower-right corner in landscape, the drawer width, title, and submit button align with the task form.
 
 ### 1.7.0 Beta 50
 
