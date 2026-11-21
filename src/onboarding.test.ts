@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getDefaultSettings } from "./defaultSettings";
+import { getDefaultSettings, normalizeSettings } from "./defaultSettings";
 import { onboardingBlock, onboardingStage, onboardingTarget, ONBOARDING_DONE, ONBOARDING_START } from "./onboarding";
 import type { Task, TimelineRecord } from "./types";
 
@@ -15,22 +15,28 @@ const block: TimelineRecord = {
 };
 
 describe("workspace onboarding", () => {
-  it("preserves completed accounts and resumes old scheduling steps", () => {
+  it("opens the workspace setup when the current guide restarts", () => {
     const defaults = getDefaultSettings();
     expect(onboardingStage(defaults)).toBe("done");
     expect(onboardingStage({ ...defaults, ...ONBOARDING_START })).toBe("setup");
-    expect(onboardingStage({ ...defaults, ...ONBOARDING_START, onboardingStep: "add" })).toBe("add");
-    expect(onboardingStage({ ...defaults, onboardingVersion: 0, onboardingStep: "drag" })).toBe("schedule");
-    expect(onboardingStage({ ...defaults, onboardingVersion: 1, onboardingStep: "calendar" })).toBe("done");
+    expect(onboardingStage({ ...defaults, workspaceGuideStep: "add" })).toBe("add");
     expect(onboardingStage({ ...defaults, ...ONBOARDING_DONE })).toBe("done");
   });
 
+  it("discards retired tutorial state without resuming it", () => {
+    const retiredFields = { onboardingVersion: 1, onboardingStep: "add", onboardingTaskId: task.id };
+    const normalized = normalizeSettings(retiredFields);
+    expect(onboardingStage(normalized)).toBe("done");
+    for (const field of Object.keys(retiredFields)) expect(normalized).not.toHaveProperty(field);
+    expect(onboardingStage(normalizeSettings({ ...retiredFields, ...ONBOARDING_START }))).toBe("setup");
+  });
+
   it("tracks the saved task across refreshes and detects its removal", () => {
-    const settings = { ...getDefaultSettings(), ...ONBOARDING_START, onboardingStep: "schedule" as const };
+    const settings = { ...getDefaultSettings(), ...ONBOARDING_START, workspaceGuideStep: "schedule" as const };
     const other = { ...task, id: "other-task" };
-    expect(onboardingTarget(settings, [task, other])).toBe(task);
-    expect(onboardingTarget({ ...settings, onboardingTaskId: task.id }, [other, task])).toBe(task);
-    expect(onboardingTarget({ ...settings, onboardingTaskId: task.id }, [other])).toBeUndefined();
+    expect(onboardingTarget(settings, [task, other])).toBeUndefined();
+    expect(onboardingTarget({ ...settings, workspaceGuideTaskId: task.id }, [other, task])).toBe(task);
+    expect(onboardingTarget({ ...settings, workspaceGuideTaskId: task.id }, [other])).toBeUndefined();
   });
 
   it("completes only for a real timed block and supports legacy timed tasks", () => {

@@ -532,9 +532,8 @@ export interface Settings {
   apiKeyPreview: string;
   displayName: string;
   avatarDataUrl?: string;
-  onboardingVersion?: number;
-  onboardingTaskId?: string;
-  onboardingStep?: "setup" | "add" | "drag" | "candidates" | "schedule" | "calendar" | "planning" | "ai" | "done";
+  workspaceGuideStep?: "setup" | "add" | "schedule" | "done";
+  workspaceGuideTaskId?: string;
   dailyFocusTime: string;
   weekStartsOn: 0 | 1;
   theme: "light" | "dark";

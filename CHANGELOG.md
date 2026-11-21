@@ -2,6 +2,12 @@
 
 ## 2026-11-21
 
+### 1.7.0 Beta 53
+
+#### 修复
+
+- 设置中的「重新开始新手指南」直接打开新版工作区设置页。旧教程进度不会再触发旧版引导。
+
 #### 改进
 
 - 首次进入时可先设置语言、外观和时间轴偏好，再用可编辑的示例添加并安排第一条任务。完成后可探索任务视图、插件和集成。
@@ -826,6 +832,12 @@
 # NavoPath Changelog
 
 ## 2026-11-21
+
+### 1.7.0 Beta 53
+
+#### Fixed
+
+- Restarting the onboarding guide from Settings opens the new workspace setup. Retired tutorial progress no longer affects the guide.
 
 #### Improved
 

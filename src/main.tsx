@@ -3012,7 +3012,7 @@ if (cached?.data && cached?.settings) {
       setCandidateDrawerOpen(false);
       requestTimelineFocus({ date: block.scheduledDate, startTime: block.scheduledStart, taskId: block.id, source: "schedule", highlight: true });
     } else if (stage === "add") {
-      void saveSettings({ onboardingStep: "schedule", onboardingTaskId: task.id });
+      void saveSettings({ workspaceGuideStep: "schedule", workspaceGuideTaskId: task.id });
     }
   }
 
@@ -3021,9 +3021,6 @@ if (cached?.data && cached?.settings) {
     const task = onboardingTarget(settings, data.tasks);
     if (onboardingBlock(task)) void saveSettings(ONBOARDING_DONE);
     else if (!task || !isOnboardingTask(task)) void saveSettings(ONBOARDING_ADD);
-    else if (settings.onboardingStep !== "schedule" || !settings.onboardingTaskId) {
-      void saveSettings({ onboardingStep: "schedule", onboardingTaskId: task.id });
-    }
   }, [data, settings]);
 
   useEffect(() => {
@@ -9180,7 +9177,7 @@ if (cached?.data && cached?.settings) {
   }
 
   const unusableCloudCache = !data || !settings
-    || ((settings.onboardingVersion ?? 0) < 2 && settings.onboardingStep !== "done");
+    || onboardingStage(settings) !== "done";
   if (authState?.mode === "cloud" && authState.user && authError && unusableCloudCache) {
     return <CloudWorkspaceError
       lang={lang}
@@ -9668,7 +9665,7 @@ if (cached?.data && cached?.settings) {
               {guideInTasks && onboardingStep === "add" && onboardingGuide}
               {candidatesEmpty ? (
                 productDemo ? (
-                  <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.demoEmptyTitle")}</strong><span>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "在右侧查看安排，或试试改期与撤回。" : "Explore the timeline, reschedule a task, or undo.") : t(lang, "candidate.demoEmptyDesc")}</span>{compactLayout && !productAiPresentation && <img className="df-empty-add-guidance" src="/empty-add-guidance-v2.png" alt="" aria-hidden="true" />}</div>
+                  <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.demoEmptyTitle")}</strong><span>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "在右侧查看安排，或试试改期与撤回。" : "Explore the timeline, reschedule a task, or undo.") : t(lang, "candidate.demoEmptyDesc")}</span></div>
                 ) : (
                   guideInTasks && onboardingStep === "add" ? null : (
                     <EmptyState announce title={todayHasBlocks ? (lang === "zh" ? "待安排的任务已清空" : "You’re caught up on scheduling") : t(lang, "candidate.emptyTitle")}
