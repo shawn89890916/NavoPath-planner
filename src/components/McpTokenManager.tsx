@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import type { Language, McpTokenMetadata } from "../types";
+import { EmptyState } from "./EmptyState";
 import { Button, Input } from "./UiPrimitives";
 
 const MCP_ENDPOINT = import.meta.env.VITE_MCP_ENDPOINT || "https://navopath-mcp.shawn89890916.workers.dev/mcp";
@@ -141,7 +142,10 @@ export default function McpTokenManager({ lang }: { lang: Language }) {
           {!loading && <span>{tokens.length}</span>}
         </div>
         {loading && <p className="df-mcp-status">{lang === "zh" ? "正在读取令牌…" : "Loading tokens…"}</p>}
-        {!loading && tokens.length === 0 && !error && <p className="df-mcp-status muted">{lang === "zh" ? "还没有有效令牌。" : "No active tokens yet."}</p>}
+        {!loading && tokens.length === 0 && !error && <EmptyState compact announce title={lang === "zh" ? "还没有有效令牌" : "No active tokens yet"}
+          description={lang === "zh" ? "先为要接入的客户端生成专用令牌。" : "Generate a dedicated token for the client you want to connect."}>
+          <Button onClick={() => document.getElementById("mcp-token-name")?.focus()}>{lang === "zh" ? "设置令牌名称" : "Name a token"}</Button>
+        </EmptyState>}
         {tokens.map((token) => <div className="df-mcp-token-row" key={token.id}>
           <span><strong>{token.name}</strong><small>{token.tokenPrefix}… · {new Date(token.createdAt).toLocaleDateString()}</small></span>
           <Button variant="danger" disabled={busy} onClick={() => void revokeToken(token.id)}>{lang === "zh" ? "撤销" : "Revoke"}</Button>

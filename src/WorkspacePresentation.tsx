@@ -421,6 +421,7 @@ export function TaskCard({
   onClick,
   onPointerDragStart,
   onMobileSchedule,
+  scheduleTriggerRef,
   onStartPlacementPreview,
   onCancelPlacementPreview,
   onConfirmPlacementPreview,
@@ -453,6 +454,7 @@ export function TaskCard({
   onClick: () => void;
   onPointerDragStart: (event: React.PointerEvent) => void;
   onMobileSchedule?: () => void;
+  scheduleTriggerRef?: React.Ref<HTMLButtonElement>;
   onStartPlacementPreview: () => void;
   onCancelPlacementPreview: () => void;
   onConfirmPlacementPreview: () => void;
@@ -674,7 +676,7 @@ export function TaskCard({
           </TaskBlockContent>
           {!isEvent && <TaskBlockDuration>
             {scheduleSummary ? <button type="button" className="df-candidate-schedule-link" title={lang === "zh" ? `跳转到时间轴：${scheduleSummary.date} ${scheduleSummary.startTime}` : `Show on timeline: ${scheduleSummary.date} ${scheduleSummary.startTime}`} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onFocusSchedule?.(scheduleSummary); }}>{scheduleSummary.label}</button>
-              : isOverdueCandidate ? <button type="button" className={`df-overdue-time${isPlacementArmed ? " is-previewing" : ""}`} title={lang === "zh" ? "原安排时间保持不变；悬停可在时间轴预览建议位置" : "Keeps the original time; hover to preview a suggestion on the timeline"} onMouseEnter={queuePlacementPreview} onMouseLeave={cancelQueuedPlacementPreview} onBlur={cancelQueuedPlacementPreview} onFocus={previewPlacement} onClick={toggleSchedulePanel}>
+              : isOverdueCandidate ? <button ref={scheduleTriggerRef} type="button" aria-expanded={schedulePanelOpen} className={`df-overdue-time${isPlacementArmed ? " is-previewing" : ""}`} title={lang === "zh" ? "原安排时间保持不变；悬停可在时间轴预览建议位置" : "Keeps the original time; hover to preview a suggestion on the timeline"} onMouseEnter={queuePlacementPreview} onMouseLeave={cancelQueuedPlacementPreview} onBlur={cancelQueuedPlacementPreview} onFocus={previewPlacement} onClick={toggleSchedulePanel}>
                 <UiCalendarClockIcon size={15} />
                 <span>{overdueDisplayTime}</span>
               </button>
@@ -683,7 +685,7 @@ export function TaskCard({
 
           {!isEvent && <TaskActions>
             {!scheduleSummary && !isOverdueCandidate && <div className="df-candidate-schedule-actions" onMouseLeave={() => { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); } }}>
-              <>{onMobileSchedule ? <Button className="df-candidate-mobile-schedule" onClick={(event) => { event.stopPropagation(); onMobileSchedule(); }}>{lang === "zh" ? "安排" : "Plan"}</Button> : <IconButton className={`df-icon-button icon-schedule${schedulePanelOpen ? " is-active" : ""}`} icon={<UiCalendarClockIcon size={18} />} label={t(lang, "taskCard.openScheduling")} aria-expanded={schedulePanelOpen} onMouseEnter={queuePlacementPreview} onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) previewPlacement(); }} onClick={toggleSchedulePanel} />}</>
+              <>{onMobileSchedule ? <Button className="df-candidate-mobile-schedule" onClick={(event) => { event.stopPropagation(); onMobileSchedule(); }}>{lang === "zh" ? "安排" : "Plan"}</Button> : <IconButton ref={scheduleTriggerRef} className={`df-icon-button icon-schedule${schedulePanelOpen ? " is-active" : ""}`} icon={<UiCalendarClockIcon size={18} />} label={t(lang, "taskCard.openScheduling")} aria-expanded={schedulePanelOpen} onMouseEnter={queuePlacementPreview} onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) previewPlacement(); }} onClick={toggleSchedulePanel} />}</>
               {renderPlacementLocateAction()}
             </div>}
             {isOverdueCandidate && !scheduleSummary && isPlacementArmed && <div className="df-candidate-schedule-actions" onBlur={(event) => {

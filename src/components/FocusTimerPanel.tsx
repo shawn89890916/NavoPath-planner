@@ -4,6 +4,7 @@ import { canLinkPomodoroTask } from "../widget/widgetSchedule";
 import { AnchoredNarrowMenu } from "./AnchoredNarrowMenu";
 import type { PomodoroClockFont } from "../widget/pomodoroAppearance";
 import { Button, Input } from "./UiPrimitives";
+import { EmptyState } from "./EmptyState";
 import { SelectionIndicator } from "./SelectionIndicator";
 import { UiChevronDownIcon, UiPlusIcon } from "./UiIcons";
 
@@ -35,6 +36,7 @@ type FocusTimerPanelProps = {
   canReset: boolean;
   resuming: boolean;
   pomodoro?: PomodoroControls;
+  onOpenTasks?: () => void;
   onToggle: () => void;
   onSave: () => void;
   onReset: () => void;
@@ -94,13 +96,17 @@ function PomodoroTaskMenu({ lang, controls, task, project }: {
           </span>
         </Button>
       ))}
-      {matches.length === 0 && <p className="df-focus-menu-empty" role="status">{zh ? "没有匹配的任务" : "No matching tasks"}</p>}
+      {matches.length === 0 && <EmptyState compact announce title={search.trim()
+        ? (zh ? "没有匹配的任务" : "No matching tasks")
+        : (zh ? "没有可关联的任务" : "No tasks to link")}>
+        {search.trim() && <Button onClick={() => setSearch("")}>{zh ? "清除搜索" : "Clear search"}</Button>}
+      </EmptyState>}
     </AnchoredNarrowMenu>
   </>;
 }
 
 export function FocusTimerPanel({
-  lang, mode, modes, onModeChange, clock, clockFont, note, task, project, running, canStart, canSave, canReset, resuming, pomodoro, onToggle, onSave, onReset,
+  lang, mode, modes, onModeChange, clock, clockFont, note, task, project, running, canStart, canSave, canReset, resuming, pomodoro, onOpenTasks, onToggle, onSave, onReset,
 }: FocusTimerPanelProps) {
   const zh = lang === "zh";
   let status = note;
@@ -142,7 +148,11 @@ export function FocusTimerPanel({
     <div className="df-focus-task-row">
       {pomodoro && !pomodoro.started
         ? <PomodoroTaskMenu lang={lang} controls={pomodoro} task={task} project={project} />
-        : <div className="df-focus-task-info">
+        : !task && !running && !pomodoro?.started && onOpenTasks
+          ? <EmptyState compact title={zh ? "选一件事开始专注" : "Choose a task to focus on"}>
+              <Button onClick={onOpenTasks}>{zh ? "打开任务" : "Open Tasks"}</Button>
+            </EmptyState>
+          : <div className="df-focus-task-info">
           <span className="df-focus-task-name">{task?.title || (zh ? "未关联任务" : "No linked task")}</span>
           {project && <span className="df-focus-task-project">{project.title}</span>}
         </div>}

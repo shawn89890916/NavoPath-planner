@@ -92,7 +92,10 @@ console.log(`${check ? 'Validated' : 'Built'} ${catalog.packages.length} extensi
 // Ship a standalone type-only SDK and self-contained references with each
 // copyable template. They are generated from the actual host contracts.
 const apiTypes = (await readFile(resolve(root, 'src/extensions/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"../types"', '"./models"').replaceAll('"./timers"', '"./timer"').replaceAll('"./model"', '"./extensions"');
-const modelTypes = (await readFile(resolve(root, 'src/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"./extensions/model"', '"./extensions"');
+const modelTypes = (await readFile(resolve(root, 'src/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"./extensions/model"', '"./extensions"').replace('"../shared/pluginMcp"', '"./pluginMcp"');
+const extensionTypes = (await readFile(resolve(root, 'src/extensions/model.ts'), 'utf8')).replaceAll('\r\n','\n').replace('"../../shared/pluginMcp"', '"./pluginMcp"');
+const pluginMcpTypes = (await readFile(resolve(root, 'shared/pluginMcp.ts'), 'utf8')).match(/^export type PluginMcp\w* = [^\r\n]+/gm)?.join('\n');
+if (!pluginMcpTypes) throw new Error('Plugin MCP type declarations are missing');
 const timerTypes = (await readFile(resolve(root, 'src/extensions/timers.ts'), 'utf8')).replaceAll('\r\n','\n').split('const modes =')[0].replaceAll('"../types"', '"./models"');
 const apiDoc = await readFile(resolve(root, 'docs/plugin-development.md'), 'utf8');
 for (const folder of ['navopath-plugin-api', 'navopath-plugin-template', 'navopath-theme-template']) {
@@ -100,7 +103,8 @@ for (const folder of ['navopath-plugin-api', 'navopath-plugin-template', 'navopa
   await mkdir(directory, { recursive: true });
   await emit(resolve(directory, 'index.d.ts'), apiTypes + '\nexport type * from "./models";\nexport type * from "./timer";\n');
   await emit(resolve(directory, 'models.d.ts'), modelTypes);
-  await emit(resolve(directory, 'extensions.d.ts'), (await readFile(resolve(root, 'src/extensions/model.ts'), 'utf8')).replaceAll('\r\n','\n'));
+  await emit(resolve(directory, 'extensions.d.ts'), extensionTypes);
+  await emit(resolve(directory, 'pluginMcp.d.ts'), pluginMcpTypes + '\n');
   await emit(resolve(directory, 'timer.d.ts'), timerTypes.trimEnd() + '\n');
   if (folder !== 'navopath-plugin-api') await emit(resolve(directory, '../API.md'), apiDoc);
 }

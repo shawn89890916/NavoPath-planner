@@ -21,7 +21,8 @@ import { SHORTCUTS, groupShortcutsByScope, type ShortcutScope } from "./utils/sh
 import { exportDataAsJson, exportTasksAsCsv, isImportFileSizeAllowed, parsePlannerBackupJson, parseTasksCsv } from "./dataExport";
 import { preparePlannerDataRestore } from "./syncMerge";
 import { ProjectColorPicker, MobileSheetDismissHandle } from "./WorkspacePresentation";
-import { CloseButton } from "./components/UiPrimitives";
+import { EmptyState } from "./components/EmptyState";
+import { Button, CloseButton } from "./components/UiPrimitives";
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDisclosure, SettingDescription } from "./components/SettingsControls";
 import { reasoningModesForModel } from "./utils/aiModels";
 import { createPortal, flushSync } from "react-dom";
@@ -151,7 +152,8 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
       {error && <p className="df-mcp-status error" role="alert">{error}</p>}
       {notice && <p className="df-mcp-status" role="status">{notice}</p>}
       {loading && <p className="df-mcp-status">{lang === "zh" ? "正在读取订阅状态…" : "Loading subscription status…"}</p>}
-      {!loading && supported && tokens.length === 0 && !error && <p className="df-mcp-status muted">{lang === "zh" ? "还没有有效订阅。" : "No active subscription yet."}</p>}
+      {!loading && supported && tokens.length === 0 && !error && <EmptyState compact announce title={lang === "zh" ? "还没有日历订阅" : "No calendar subscription yet"}
+        description={lang === "zh" ? "生成链接后，把它添加到你的日历应用。" : "Create a link, then add it to your calendar app."} />}
       {tokens.map((token) => <div className="df-mcp-token-row" key={token.id}><span><strong>{lang === "zh" ? "NavoPath 日历" : "NavoPath Calendar"}</strong><small>{token.tokenPrefix}… · {new Date(token.createdAt).toLocaleDateString()}</small></span><button type="button" disabled={busy} onClick={async () => {
         if (!api.revokeCalendarFeedToken) return;
         setBusy(true);
@@ -174,6 +176,8 @@ function ExternalCalendarManager({ lang }: { lang: Language }) {
   const api = window.plannerApi;
   const supported = Boolean(api.listExternalCalendars && api.connectExternalCalendar && api.refreshExternalCalendar && api.removeExternalCalendar);
   const [sources, setSources] = useState<ExternalCalendarSource[]>([]);
+  const [loading, setLoading] = useState(supported);
+  const calendarNameRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [busyId, setBusyId] = useState("");
@@ -181,12 +185,15 @@ function ExternalCalendarManager({ lang }: { lang: Language }) {
   const [error, setError] = useState("");
   const load = useCallback(async () => {
     if (!api.listExternalCalendars) return;
+    setLoading(true);
     try {
       const result = await api.listExternalCalendars();
       setSources(result.sources);
       setError("");
     } catch (caught) {
       setError(calendarFeedErrorMessage(caught, lang));
+    } finally {
+      setLoading(false);
     }
   }, [api, lang]);
   useEffect(() => { if (supported) void load(); }, [load, supported]);
@@ -196,8 +203,14 @@ function ExternalCalendarManager({ lang }: { lang: Language }) {
     <p>{supported
       ? (lang === "zh" ? "最多连接 10 个 HTTPS ICS 地址。事项只作为忙碌时间参与冲突检测和 AI 规划，不会导入任务，也不会写回来源日历。" : "Connect up to 10 HTTPS ICS URLs. Events are used only as read-only busy time for conflicts and AI planning; they are never imported as tasks or written back.")
       : (lang === "zh" ? "登录云端账号并部署外部日历服务后可用。" : "Available after signing in and deploying the external-calendar service.")}</p>
+    {supported && !loading && !error && sources.length === 0 && (
+      <EmptyState compact announce title={lang === "zh" ? "尚未连接外部日历" : "No external calendars connected"}
+        description={lang === "zh" ? "用 ICS 订阅地址将其他日历的忙碌时段显示在这里。" : "Use an ICS link to bring in busy times from another calendar."}>
+        <Button onClick={() => calendarNameRef.current?.focus()}>{lang === "zh" ? "添加日历" : "Add calendar"}</Button>
+      </EmptyState>
+    )}
     {supported && <div className="df-external-calendar-connect">
-      <input value={name} maxLength={120} onChange={(event) => setName(event.target.value)} placeholder={lang === "zh" ? "日历名称" : "Calendar name"} />
+      <input ref={calendarNameRef} aria-label={lang === "zh" ? "日历名称" : "Calendar name"} value={name} maxLength={120} onChange={(event) => setName(event.target.value)} placeholder={lang === "zh" ? "日历名称" : "Calendar name"} />
       <input value={url} type="url" inputMode="url" onChange={(event) => setUrl(event.target.value)} placeholder="https://…/calendar.ics" />
       <button type="button" disabled={Boolean(busyId) || sources.length >= 10 || !name.trim() || !url.trim()} onClick={async () => {
         if (!api.connectExternalCalendar) return;
@@ -211,7 +224,7 @@ function ExternalCalendarManager({ lang }: { lang: Language }) {
     </div>}
     {error && <p className="df-mcp-status error" role="alert">{error}</p>}
     {!supported && <p className="df-mcp-status muted">{lang === "zh" ? "当前环境不可用" : "Unavailable in this environment"}</p>}
-    {supported && sources.length === 0 && !error && <p className="df-mcp-status muted">{lang === "zh" ? "尚未连接外部日历。" : "No external calendars connected."}</p>}
+    {loading && <p className="df-mcp-status" role="status">{lang === "zh" ? "正在读取外部日历…" : "Loading external calendars…"}</p>}
     <div className="df-external-calendar-list">{sources.map((source) => <article key={source.id} className={`df-external-calendar-source ${source.syncStatus}`}>
       <div><strong>{source.name}</strong><code>{source.displayUrl}</code><small>{source.syncStatus === "error" ? source.syncError : source.lastSyncedAt ? `${lang === "zh" ? "上次同步" : "Last synced"} ${new Date(source.lastSyncedAt).toLocaleString()}` : (lang === "zh" ? "等待首次同步" : "Waiting for first sync")}</small></div>
       <div>
@@ -407,7 +420,7 @@ function SettingsCategoryIcon({ category }: { category: SettingsCategory }) {
   }
 }
 
-export function UtilityPanel({ kind, settings, initialSection, compactLayout, data, authEmail, onClose, onSave, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language }) {
+export function UtilityPanel({ kind, settings, initialSection, compactLayout, data, authEmail, onClose, onRestartOnboarding, onSave, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onRestartOnboarding: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
   const isDesktopRuntime = Boolean(window.desktopApi);
   const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
@@ -813,6 +826,11 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 ))}
                 {pluginPages.length > 0 && <><h3 className="df-settings-nav-heading">{lang === "zh" ? "插件设置" : "Plugin settings"}</h3>{pluginPages.filter(page => page.name.toLocaleLowerCase().includes(navigationQuery.trim().toLocaleLowerCase())).map(page => <button type="button" key={page.id} className={`ui-choice-item${settingsTarget.pluginPage === page.id ? " active" : ""}`} aria-current={settingsTarget.pluginPage === page.id ? "page" : undefined} onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}>{page.name}</button>)}</>}
               </nav>
+              {navigationQuery.trim() && navigationResults.length === 0 && !pluginPages.some((page) => page.name.toLocaleLowerCase().includes(navigationQuery.trim().toLocaleLowerCase())) && (
+                <EmptyState compact announce title={lang === "zh" ? "未找到相关设置" : "No matching settings"}>
+                  <Button onClick={() => setNavigationQuery("")}>{lang === "zh" ? "清除搜索" : "Clear search"}</Button>
+                </EmptyState>
+              )}
               {!navigationQuery.trim() && pluginUpdateCount > 0 && <button type="button" className="df-plugin-update-notice" onClick={() => navigateSettings({ category: "plugins" })}><span className="df-plugin-update-notice-dot" aria-hidden="true" /><span><strong>{lang === "zh" ? `${pluginUpdateCount} 个插件可更新` : `${pluginUpdateCount} plugin updates`}</strong></span><span aria-hidden="true">›</span></button>}
             </div>
             <div ref={settingsContentRef} className="df-settings-content">
@@ -1176,7 +1194,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               <SettingRow
                 anchor="restart-onboarding"
                 title={lang === "zh" ? "重新开始新手指南" : "Restart onboarding guide"}
-                control={<SettingActionButton onClick={() => onSave({ onboardingVersion: 1, onboardingStep: "add" })}>{lang === "zh" ? "重新开始" : "Restart"}</SettingActionButton>}
+                control={<SettingActionButton onClick={onRestartOnboarding}>{lang === "zh" ? "重新开始" : "Restart"}</SettingActionButton>}
               />
               <SettingDisclosure anchor="shortcuts" title={lang === "zh" ? "快捷键参考" : "Shortcut reference"} open={shortcutsOpen} onToggle={setShortcutsOpen}>
                   <p className="df-settings-desc">{lang === "zh" ? "本版本暂不支持自定义快捷键。" : "Custom shortcuts are not enabled in this version."}</p>
@@ -1223,7 +1241,10 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                   <button onClick={addManualMemory}>{lang === "zh" ? "新增" : "Add"}</button>
                 </div>
                 <div className="df-ai-memory-list">
-                  {visibleMemories.length === 0 && <p className="df-ai-memory-empty">{lang === "zh" ? "还没有保存的记忆。可在这里新增，或从 AI 对话保存。" : "No saved memories yet. Add one here or save one from an AI conversation."}</p>}
+                  {visibleMemories.length === 0 && <EmptyState compact title={lang === "zh" ? "还没有保存的记忆" : "No saved memories yet"}
+                    description={lang === "zh" ? "可以在这里新增，也可以从 AI 对话保存。" : "Add one here or save one from an AI conversation."}>
+                    <Button onClick={addManualMemory}>{lang === "zh" ? "新增记忆" : "Add memory"}</Button>
+                  </EmptyState>}
                   {visibleMemories.map((memory) => (
                     <article key={memory.id} className={`df-ai-memory-item ${memory.pinned ? "pinned" : ""}`}>
                       <textarea value={memory.content} onChange={(event) => saveMemory(memory.id, { content: event.target.value })} />

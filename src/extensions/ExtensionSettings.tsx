@@ -2,6 +2,7 @@ import { pluginMcpGrant, SCHEDULE_TEMPLATE_PLUGIN, type PluginMcpAccess } from "
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Language } from "../types";
 import { SettingActionButton, SettingColorInput, SettingNumberInput, SettingRow, SettingSection, SettingSelect, SettingTextInput, SettingToggle } from "../components/SettingsControls";
+import { EmptyState } from "../components/EmptyState";
 import { ActionDisclosure, Button, CloseButton, Modal } from "../components/UiPrimitives";
 import { UiSearchIcon } from "../components/UiIcons";
 import { extensionService } from "./service";
@@ -153,7 +154,14 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
       <SettingSection title={text(plugin ? "已安装插件" : "已安装主题", plugin ? "Installed plugins" : "Installed themes")}>
         {installed.length > 0 && search}
         <div className="df-extension-list">
-          {filtered.length === 0 && <div className="df-extension-empty"><p>{query ? text("没有找到匹配项。", "No matches found.") : text(plugin ? "还没有安装插件" : "还没有安装社区主题", plugin ? "No plugins installed yet" : "No community themes installed yet")}</p></div>}
+          {filtered.length === 0 && !error && !snapshot.error && (
+            <EmptyState announce title={query.trim() ? text("没有找到匹配项", "No matches found")
+              : text(plugin ? "还没有安装插件" : "还没有安装社区主题", plugin ? "No plugins installed yet" : "No community themes installed yet")}>
+              {query.trim()
+                ? <Button onClick={() => setQuery("")}>{text("清除搜索", "Clear search")}</Button>
+                : <Button variant="primary" onClick={browseMarket}>{text("浏览市场", "Browse market")}</Button>}
+            </EmptyState>
+          )}
           {filtered.map((item) => {
             const ownedPages = snapshot.settingsPages.filter((contribution) => contribution.owner === item.key);
             const pages = Array.from(new Map((ownedPages.length ? ownedPages : snapshot.settingsPages.filter((contribution) => contribution.owner === item.manifest.id)).map((contribution) => [contribution.name.trim().toLocaleLowerCase(), contribution])).values());
@@ -208,7 +216,13 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
           <dl>{plugin && (() => { const stats = catalogStats(selectedCatalog, lang); return <><div><dt>{text("下载量", "Downloads")}</dt><dd>{stats.downloads}</dd></div><div><dt>{text("最新版上传", "Latest upload")}</dt><dd>{stats.published}</dd></div></>; })()}<div><dt>{text("来源", "Source")}</dt><dd>{preferences.sources.find(source => source.id === selectedCatalog.sourceId)?.name ?? selectedCatalog.sourceId}</dd></div><div><dt>{text("最低应用版本", "Requires NavoPath")}</dt><dd>{selectedCatalog.manifest.minAppVersion}</dd></div><div><dt>{text("支持平台", "Platforms")}</dt><dd>{selectedCatalog.manifest.platforms.join(" · ")}</dd></div></dl>
           {installed.some(item => item.sourceId === selectedCatalog.sourceId && item.manifest.id === selectedCatalog.manifest.id) ? <Button onClick={() => navigate("installed")}>{text("管理已安装", "Manage installed")}</Button> : <Button variant="primary" disabled={busy} onClick={() => void run(() => extensionService.install(selectedCatalog), text(`正在安装 ${selectedCatalog.manifest.name}…`, `Installing ${selectedCatalog.manifest.name}…`))}>{text("安装", "Install")}</Button>}
         </article> : <>
-          {catalog.length === 0 && !catalogLoading && <div className="df-extension-empty"><p>{text("没有找到匹配的扩展。", "No matching extensions.")}</p><Button onClick={() => void run(() => extensionService.refreshCatalog())}>{text("重新加载", "Reload catalog")}</Button><Button onClick={() => navigate("sources")}>{text("管理来源", "Manage sources")}</Button></div>}
+          {catalog.length === 0 && !catalogLoading && !error && !snapshot.error && (
+            <EmptyState announce title={query.trim() || onlyInstalled ? text("没有找到匹配的扩展", "No matching extensions") : text("暂无可用扩展", "No extensions available")}>
+              {query.trim() || onlyInstalled
+                ? <Button onClick={() => { setQuery(""); setOnlyInstalled(false); }}>{text("清除筛选", "Clear filters")}</Button>
+                : <Button onClick={() => navigate("sources")}>{text("管理来源", "Manage sources")}</Button>}
+            </EmptyState>
+          )}
           <div className="df-extension-market-grid">{catalog.map(entry => {
             const key = `${entry.sourceId}:${entry.manifest.id}`;
             const existing = installed.find(item => item.sourceId === entry.sourceId && item.manifest.id === entry.manifest.id);

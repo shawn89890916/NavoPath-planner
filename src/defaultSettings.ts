@@ -40,6 +40,7 @@ export const defaultSettings: Settings = {
   avatarDataUrl: "",
   onboardingVersion: 2,
   onboardingStep: "done",
+  onboardingTaskId: "",
   dailyFocusTime: "20:00",
   weekStartsOn: 0,
   theme: "light",
@@ -307,7 +308,8 @@ export function normalizeSettings(value: unknown): Settings {
   normalized.reasoningMode = allowedValue(normalized.reasoningMode, ["instant", "high", "xhigh"], defaults.reasoningMode);
   const legacySafetyLevel = normalized.aiSafetyLevel === "strict" ? "ask" : normalized.aiSafetyLevel === "standard" || normalized.aiSafetyLevel === "readonly" ? "approve" : normalized.aiSafetyLevel;
   normalized.aiSafetyLevel = allowedValue(legacySafetyLevel, ["ask", "approve", "full"], defaults.aiSafetyLevel);
-  normalized.onboardingStep = allowedValue(normalized.onboardingStep, ["add", "drag", "candidates", "schedule", "calendar", "planning", "ai", "done"], defaults.onboardingStep!);
+  normalized.onboardingTaskId = typeof normalized.onboardingTaskId === "string" ? normalized.onboardingTaskId : "";
+  normalized.onboardingStep = allowedValue(normalized.onboardingStep, ["setup", "add", "drag", "candidates", "schedule", "calendar", "planning", "ai", "done"], defaults.onboardingStep!);
   normalized.weekStartsOn = allowedValue(normalized.weekStartsOn, [0, 1], defaults.weekStartsOn);
   normalized.theme = allowedValue(normalized.theme, ["light", "dark"], defaults.theme);
   normalized.typographyStyle = allowedValue(normalized.typographyStyle, ["editorial", "balanced", "sans"], defaults.typographyStyle);

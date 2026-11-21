@@ -5,6 +5,7 @@ import { configureExtensionTransport, purgePrivatePackages } from "./extensions/
 import type { AiAction, CalendarFeedTokenMetadata, ExternalCalendarOccurrence, ExternalCalendarSource, McpTokenMetadata, PlannerApi, PlannerData, Settings } from "./types";
 import { fallbackData, normalizeData } from "./browserFallback";
 import { getDefaultSettings, normalizeSettings } from "./defaultSettings";
+import { ONBOARDING_START } from "./onboarding";
 import { mergePlannerData } from "./syncMerge";
 import { mergeExtensionSettings } from "./extensions/packages";
 
@@ -322,8 +323,8 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       const initialData = emptyCloudData();
       const initialSettings = {
         ...getDefaultSettings(),
+        ...ONBOARDING_START,
         onboardingVersion: 0,
-        onboardingStep: "add" as const,
       };
       if (!isCurrentAuth(user.id, requestAuthVersion)) throw new Error("Account changed while loading profile");
       const { error: insertError } = await retryTransientRequest(() => supabase

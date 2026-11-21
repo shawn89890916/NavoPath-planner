@@ -193,7 +193,7 @@ export function WidgetView({ snapshot, density, onToggleTimer, onTogglePopover, 
   return (
     <main className="df-widget-root" data-density={density} data-theme={snapshot.theme} data-phase={snapshot.timerPhase} style={appearanceStyle(snapshot)}>
       <section className="df-widget-card" aria-label={zh ? "桌面小组件" : "Desktop widget"}>
-        {showTask && <span className="df-widget-task-title" title={snapshot.taskTitle}>{snapshot.taskTitle || (zh ? "暂无后续任务" : "No upcoming task")}</span>}
+        {showTask && <span className="df-widget-task-title" title={snapshot.taskTitle || (zh ? "在 NavoPath 时间轴安排任务" : "Schedule a task on the NavoPath timeline")}>{snapshot.taskTitle || (zh ? "暂无后续任务" : "No upcoming task")}</span>}
         <div className="df-widget-right">
           <div className="df-widget-timer" onPointerDown={onTimerPointerDown} onPointerMove={onTimerPointerMove} onPointerUp={onTimerPointerUp} onPointerCancel={() => { pointer.current = null; suppressNextClick.current = false; }}>
             {timerContext && <span className="df-widget-timer-context">{timerContext}</span>}

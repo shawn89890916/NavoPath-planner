@@ -1,4 +1,4 @@
-import { isPluginMcpDeclaration } from "../../shared/pluginMcp";
+import { isPluginMcpDeclaration } from "../../shared/pluginMcp.ts";
 import type { ExtensionManifest, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSource, InstalledExtension } from "./types";
 import type { Settings } from "../types";
 

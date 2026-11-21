@@ -2903,14 +2903,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.df-timeline-empty {
-  position: sticky;
-  top: 38%;
-  margin: 140px auto 0;
-  width: max-content;
-  color: var(--df-muted);
-  font-weight: 600;
-}
 .df-time-block.project-open { z-index: 90; }
 .df-time-block.completed {
   background: color-mix(in srgb, var(--surface-tint, var(--text-main)) 3%, var(--bg-surface));
@@ -3539,16 +3531,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   z-index: 9999;
   opacity: 0.92;
   pointer-events: auto;
-}
-/* Empty state in overlay */
-.df-event-blocks-layer .df-timeline-empty.small {
-  position: absolute;
-  top: 60px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 11px;
-  opacity: .28;
-  text-align: center;
 }
 .df-slot.major {
   border-top-color: #E5E7EB;
@@ -6107,7 +6089,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-memory-settings-head > div { display: grid; gap: 2px; }
 .df-ai-memory-settings-head strong { color: var(--text-main); font-size: 13px; }
 .df-ai-memory-settings-head small { color: var(--text-muted); font-size: 11px; }
-.df-ai-memory-empty { color: var(--text-muted); font-size: 11px; }
 .df-ai-memory-settings button {
   color: var(--accent-active);
   background: transparent;
@@ -10526,57 +10507,12 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 @keyframes df-sync-spin {
   to { transform: rotate(360deg); }
 }
-/* First-use guide: a quiet editorial annotation tied to real workspace actions. */
-.df-app .df-onboarding-guide {
-  position: fixed;
-  z-index: 120;
-  width: min(330px, calc(100vw - 24px));
-  padding: 14px 16px 12px;
-  border: 1px solid var(--paper-rule-strong);
-  border-radius: 3px 5px 2px 4px;
-  color: var(--text-main);
-  background: var(--surface-main);
-  box-shadow: none;
-  corner-shape: var(--corner-shape, squircle);
+.df-timeline-guidance {
+  flex: none;
+  padding-inline: 12px;
 }
-.df-app .df-onboarding-guide::after {
-  content: "";
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: -4px;
-  border-bottom: 1px solid var(--pencil-rule);
-  transform: rotate(-0.4deg);
-}
-.df-app .df-onboarding-guide strong {
-  display: block;
-  font-family: var(--paper-display);
-  font-size: 18px;
-  line-height: 1.2;
-}
-.df-app .df-onboarding-guide p {
-  margin: 7px 0 12px;
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.55;
-}
-.df-app .df-onboarding-guide > div {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.df-app .df-onboarding-guide button {
-  min-height: 30px;
-  padding: 3px 8px;
-  border: 1px solid var(--pencil-rule-strong);
-  border-radius: var(--radius-control);
-  color: var(--text-main);
-  background: transparent;
-  box-shadow: none;
-}
-.df-app .df-onboarding-guide button.quiet {
-  color: var(--text-faint);
-}
+.df-timeline-guidance:empty { display: none; }
+
 /* Browser comment fixes: planning rows, dark logo, and app-native dialogs. */
 .df-app.theme-dark .dayflow-icon img {
   filter: invert(1) contrast(.96);
@@ -11044,11 +10980,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   white-space: nowrap;
   color: var(--text-muted);
   font: 11px/1.25 var(--paper-sans);
-}
-.df-command-empty {
-  margin: 18px 10px 24px;
-  color: var(--text-muted);
-  font: 12px/1.5 var(--paper-sans);
 }
 .df-shortcut-reference {
   display: grid;
@@ -11730,7 +11661,7 @@ body.df-timeline-pointer-drag * {
   transform-origin: top left;
 }
 /* Keep the candidate list free of stray frames and leftover drop slots. */
-.df-app:not(.onboarding-step-drag):not(.is-dragging) .df-candidate-list {
+.df-app:not(.is-dragging) .df-candidate-list {
   outline: none;
   border: none;
 }
@@ -12366,12 +12297,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   font: 500 12px/1.4 var(--paper-sans);
 }
 
-.df-focus-menu-empty {
-  margin: 0;
-  padding: var(--space-2);
-  color: var(--text-muted);
-  font: 500 12px/1.4 var(--paper-sans);
-}
 /* 2026 planning card cleanup: one paper-card language, tighter controls. */
 .df-app .df-header-inner {
   grid-template-columns: auto minmax(260px, 1fr) auto;
@@ -15659,19 +15584,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
 .df-app .df-habit-overview-cell:hover .df-habit-overview-dot {
   border-color: var(--accent-active);
 }
-/* Empty state */
-.df-app .df-habit-overview-empty {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 18px 12px;
-  border: 0;
-  border-radius: 6px;
-  color: var(--paper-muted);
-  font-size: 13px;
-  corner-shape: var(--corner-shape, squircle);
-}
 /* ===== Archived / disabled section ===== */
 .df-app .df-habit-overview-archived {
   margin-top: 6px;
@@ -15708,11 +15620,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
   font-style: normal;
   font-size: 11px;
   color: var(--paper-muted);
-}
-.df-app .df-habit-overview-archived-empty {
-  padding: 10px 2px;
-  color: var(--paper-muted);
-  font-size: 12.5px;
 }
 .df-app .df-habit-overview-archived-list {
   list-style: none;
@@ -15920,11 +15827,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
 }
 @media (max-width: 760px) {
   .df-ai-provider-grid { grid-template-columns: 1fr; }
-  .df-app .df-onboarding-guide {
-    position: fixed;
-    inset: auto 12px 12px;
-    width: auto;
-  }
 }
 @media (orientation: portrait),
        (max-width: 980px) and (orientation: landscape) {
@@ -17638,7 +17540,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
 .df-ai-conversation-preview { overflow: hidden; color: var(--text-muted); font: 450 12px/1.4 var(--paper-sans); text-overflow: ellipsis; white-space: nowrap; }
 .df-ai-conversation-copy small { color: color-mix(in srgb, var(--text-muted) 82%, transparent); font: 500 10px/1.3 var(--paper-mono); }
 .df-ai-conversation-pin { flex: 0 0 14px; width: 14px; height: 14px; fill: none; stroke: var(--accent-active); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.df-ai-history-empty { padding: 24px 12px; color: var(--text-muted); text-align: center; }
 #root .df-app .df-ai-panel-reference .df-ai-panel-body {
   padding: 26px clamp(22px, 5vw, 54px) 34px;
   background: var(--surface-main);
@@ -17663,32 +17564,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
   font: 650 clamp(24px, 2.2vw, 31px)/1.28 var(--paper-serif);
   letter-spacing: -.02em;
 }
-.df-ai-reference-empty:has(.df-ai-reference-suggestions) {
-  align-content: end;
-  padding: 0;
-}
-.df-ai-reference-suggestions {
-  display: grid;
-  gap: 0;
-  border-top: 1px solid var(--paper-rule);
-}
-#root .df-app .df-ai-reference-suggestions button {
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 2px;
-  border: 1px solid var(--paper-rule);
-  border-radius: var(--radius-control);
-  color: var(--text-main);
-  background: transparent;
-  box-shadow: none;
-  font: 520 14px/1.45 var(--paper-sans);
-  text-align: left;
-  cursor: pointer;
-}
-.df-ai-reference-suggestions button::after { content: "→"; color: var(--text-muted); }
-.df-ai-reference-suggestions button:hover { padding-left: 8px; background: var(--paper-note); }
 #root .df-app .df-ai-capability-state {
   display: flex;
   align-items: center;
@@ -18383,14 +18258,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
   ::view-transition-old(navo-motion-surface) { animation-duration: .001ms; }
   ::view-transition-new(navo-motion-surface) { animation-duration: .001ms; }
   .df-execute-skeleton * { animation: none; }
-  .df-app .df-onboarding-guide {
-    transition: none;
-    animation: none;
-  }
-  .df-app .df-onboarding-guide * {
-    transition: none;
-    animation: none;
-  }
   .df-list-insertion-line { animation: none; }
   .df-settings-subtabs button { transition: none; }
   .df-app .df-task-block[data-task-appearance] {
@@ -18400,7 +18267,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
     transition: none;
   }
   .df-ai-progress.thinking .df-ai-progress-icon { animation: none; }
-  .df-ai-reference-suggestions button { transition: none; }
 }/* Final Execute refinements are imported after the legacy workspace sheets. */
 #root .df-app:not(.theme-dark).mode-execute .df-execute { background: rgb(248, 247, 243); }
 #root .df-app:not(.theme-dark).mode-execute .df-candidate-panel { background: rgb(248, 247, 243); }
@@ -18438,22 +18304,9 @@ body.df-unified-dragging .df-unified-drag-overlay {
   -ms-overflow-style: none;
 }
 #root .df-app.mode-execute .df-candidate-list::-webkit-scrollbar { display: none; }
-#root .df-app.mode-execute .df-candidate-list:has(> .df-candidate-empty) {
-  flex: 0 1 auto;
-  padding-block-end: 0;
+#root .df-app.mode-execute .df-candidate-list > .df-empty-state {
+  margin-inline: 8px;
 }
-#root .df-app.mode-execute .df-candidate-list:has(> .df-candidate-empty) + .df-quick-add {
-  margin-top: 0;
-}
-.df-candidate-empty {
-  display: grid;
-  justify-items: start;
-  gap: 8px;
-  padding: 12px;
-  color: var(--text-muted);
-}
-.df-candidate-empty p { margin: 0; }
-.df-candidate-empty .ui-button { min-height: 44px; }
 /* Hang the recurrence mark from the upper-right corner without singling out its row width. */
 #root .df-app .df-task-block[data-task-appearance] > .df-task-recurrence-indicator {
   top: -12px;
@@ -20415,7 +20268,6 @@ body[data-navopath-base-theme="light"],
 .df-task-history-row time { color: var(--text-muted); font-size: 12px; }
 .df-task-history-row .df-task-history-detail { margin-top: 3px; color: var(--text-muted); font-size: 12px; }
 .df-task-history-undone { padding-inline: 8px; color: var(--text-muted); font-size: 12px; }
-.df-task-history-empty { margin: 16px 0; color: var(--text-muted); }
 .df-shelf-view,
 .df-shelf-view .df-planning-main,
 .df-shelf-view .df-planning-content {

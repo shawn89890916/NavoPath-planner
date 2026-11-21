@@ -1,3 +1,4 @@
+import { EmptyState } from "./EmptyState";
 import { useState } from "react";
 import { useMotionPresence } from "../useMotionPresence";
 import type { Language, PlannerData } from "../types";
@@ -56,7 +57,7 @@ export function ProactiveNotificationCenter({
         </span>
       </header>
       <div className="df-proactive-center-list">
-        {notifications.length === 0 && <p className="df-proactive-center-empty">{lang === "zh" ? "目前没有新的提醒。" : "No new messages."}</p>}
+        {notifications.length === 0 && <EmptyState compact title={lang === "zh" ? "目前没有新的提醒" : "You’re all caught up"} />}
         {notifications.map((item) => <article key={item.id} className="df-proactive-center-item">
           <CloseButton className="df-proactive-center-item-dismiss" onClick={() => onDismiss(item)} label={lang === "zh" ? `关闭${item.title}` : `Dismiss ${item.title}`} />
           <div className="df-proactive-center-item-copy"><strong>{item.title}</strong><p>{item.body}</p></div>

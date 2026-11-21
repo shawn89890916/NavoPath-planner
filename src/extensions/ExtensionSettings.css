@@ -8,9 +8,6 @@
 .df-extension-meta, .df-extension-state { display: block; color: var(--text-muted); font: 400 12px/1.5 var(--paper-sans); }
 .df-extension-meta { margin-top: 6px; overflow-wrap: anywhere; }
 .df-extension-note { margin: 12px 0; color: var(--text-muted); font: 400 12px/1.5 var(--paper-sans); }
-.df-extension-empty { display: flex; flex-wrap: wrap; gap: 12px; padding: 22px 0; }
-.df-extension-empty > p { flex-basis: 100%; margin: 0; }
-.df-extension-empty > p:first-child { color: var(--text-main); font: 500 14px/1.5 var(--paper-sans); }
 .df-extension-form { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; }
 .df-extension-search { display: flex; align-items: center; gap: 10px; position: relative; margin: 8px 0 14px; color: var(--text-muted); }
 .df-extension-search > svg { position: absolute; left: 12px; pointer-events: none; }

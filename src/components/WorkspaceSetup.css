@@ -1,0 +1,86 @@
+.df-app.df-workspace-setup {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100dvh;
+  min-height: 0;
+  overflow: auto;
+  background: var(--surface-main);
+  color: var(--text-main);
+  padding: clamp(20px, 5vw, 72px);
+  padding-block-start: max(24px, env(safe-area-inset-top));
+  padding-block-end: max(28px, env(safe-area-inset-bottom));
+}
+
+.df-workspace-setup-brand {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  padding-block-end: 16px;
+  border-block-end: 1px solid var(--paper-rule, var(--border-soft));
+  font-weight: 650;
+  -webkit-app-region: drag;
+}
+
+.df-workspace-setup-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(36px, 9vw, 120px);
+  width: min(100%, 1040px);
+  margin: auto;
+  padding-block: clamp(36px, 8vh, 96px);
+}
+
+.df-workspace-setup-intro h1 {
+  margin: 0;
+  max-inline-size: 13ch;
+  font: 600 clamp(2.2rem, 5.8vw, 4.5rem)/1.04 var(--paper-display, serif);
+  letter-spacing: -0.04em;
+}
+
+.df-workspace-setup-intro p {
+  max-inline-size: 34ch;
+  margin: 20px 0 0;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.df-workspace-setup-form > label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding-block: 10px;
+  border-block-start: 1px solid var(--paper-rule, var(--border-soft));
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.df-workspace-setup-form > label :is(input, select) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+}
+
+.df-workspace-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-block-start: 24px;
+  border-block-start: 1px solid var(--paper-rule, var(--border-soft));
+}
+
+.df-workspace-setup-actions > button { min-height: 44px; }
+
+@media (max-width: 720px) {
+  .df-workspace-setup-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    margin-block: 0 auto;
+    padding-block: 32px 0;
+  }
+  .df-workspace-setup-intro p { margin-block-start: 12px; }
+}

@@ -12,5 +12,4 @@
 .navopath-daily-overview-count { color: var(--text-secondary, var(--text-main)); font: 500 11px/1 var(--paper-mono, monospace); }
 .navopath-daily-overview-group ul { padding: 0; margin: 0; list-style: none; }
 .navopath-daily-overview-group li { padding: 10px 0; border-bottom: 1px solid var(--border-soft); overflow-wrap: anywhere; font-size: 13px; line-height: 1.5; }
-.navopath-daily-overview-empty { margin: 0; padding: 12px; border: 1px dashed var(--border-soft); border-radius: var(--radius-card, 10px); color: var(--text-secondary, var(--text-main)); font-size: 13px; }
 @media (max-width: 380px) { .navopath-daily-overview-summary { gap: 6px; } .navopath-daily-overview-metric { padding: 9px; } .navopath-daily-overview-metric strong { font-size: 20px; } }

@@ -34,7 +34,7 @@
         "name": "Class Timetable",
         "description": "Import weekly classes and self-study as timeline backgrounds; schedule tasks over classes.",
         "author": "Community",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "minAppVersion": "1.7.0-beta.13",
         "platforms": [
           "desktop",
@@ -45,12 +45,12 @@
         "license": "MIT"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/class-timetable.navopackage.json",
-      "sha256": "fd46ea74c029ab62ce47e0490879e9a7d28c8140b8ca3c59857d58fd80d77bda"
+      "sha256": "09405d29dec146af942588e1e654f0ef26fe6d0d59de2035f25892a16c627d69"
     },
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "apiVersion": 1,
         "minAppVersion": "1.7.0-beta.13",
         "platforms": [
@@ -68,7 +68,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/daily-overview.navopackage.json",
-      "sha256": "9c59d92c2a087dbabe3d504ccd658b730bd042cc979da9e3e3fba332a5f6477a"
+      "sha256": "d938cfc81c79be1ecbd1c840fe051eeae4d126199ca3c5a97ca42a13c2a01554"
     },
     {
       "manifest": {
@@ -609,7 +609,7 @@
     {
       "manifest": {
         "author": "NavoPath",
-        "version": "1.0.3",
+        "version": "1.0.4",
         "apiVersion": 1,
         "minAppVersion": "1.7.0-beta.13",
         "platforms": [
@@ -627,7 +627,7 @@
         "styles": "styles.css"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/weather.navopackage.json",
-      "sha256": "84b7dc33ba2248072cbfdbf7d094df602b640e35697cec85b3d76db51abb4270"
+      "sha256": "7acbb46f9166572887f749bc2c551182f3cb06fe132abaa5424acb76775bd6a1"
     }
   ]
 }

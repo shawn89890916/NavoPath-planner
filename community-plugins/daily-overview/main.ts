@@ -41,14 +41,14 @@ export default {
         const group = (groupTitle: string, rows: string[], emptyText: string) => {
           const section = document.createElement("section"); section.className = "navopath-daily-overview-group";
           const h = document.createElement("h3"); h.textContent = groupTitle; const count = document.createElement("span"); count.className = "navopath-daily-overview-count"; count.textContent = String(rows.length); h.append(count); section.append(h);
-          if (!rows.length) { const empty = document.createElement("p"); empty.className = "navopath-daily-overview-empty"; empty.textContent = emptyText; section.append(empty); }
+          if (!rows.length) { const empty = document.createElement("p"); empty.className = "df-empty-state"; empty.dataset.compact = "true"; empty.textContent = emptyText; section.append(empty); }
           else { const list = document.createElement("ul"); for (const row of rows) { const item = document.createElement("li"); item.textContent = row; list.append(item); } section.append(list); }
           content.append(section);
         };
         const taskLine = (task: Task) => `${task.title}${task.projectId && projects.has(task.projectId) ? ` · ${projects.get(task.projectId)}` : ""}${task.dueDate ? ` · ${task.dueDate.slice(0, 10)}` : ""}`;
-        group(zh ? "今天的任务" : "Today's tasks", data.today.map(taskLine), zh ? "今天没有任务。" : "No tasks for today.");
+        group(zh ? "今天的任务" : "Today's tasks", data.today.map(taskLine), zh ? "今天没有任务。可在「任务」添加一件今天要做的事。" : "No tasks for today. Add something for today in Tasks.");
         group(zh ? "逾期任务" : "Overdue tasks", data.overdue.map(taskLine), zh ? "没有逾期任务。" : "No overdue tasks.");
-        group(zh ? "日历安排" : "Calendar", data.calendar.map(event => `${event.startTime || (zh ? "全天" : "All day")}${event.endTime ? `–${event.endTime}` : ""} · ${event.title}`), zh ? "今天没有日历安排。" : "No calendar entries today.");
+        group(zh ? "日历安排" : "Calendar", data.calendar.map(event => `${event.startTime || (zh ? "全天" : "All day")}${event.endTime ? `–${event.endTime}` : ""} · ${event.title}`), zh ? "今天没有日历事件。可在日历中添加事件。" : "No calendar events today. Add an event from the calendar.");
       };
       const offClick = ctx.on(refresh, "click", render);
       const offData = ctx.events.on("data:changed", render);

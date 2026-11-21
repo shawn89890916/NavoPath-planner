@@ -1,3 +1,4 @@
+import { EmptyState } from "./EmptyState";
 import { t } from "../i18n";
 import type { Language, Project, Subtask, Task, TimelineRecord } from "../types";
 import { isIsoDate } from "../utils/localDate";
@@ -163,7 +164,8 @@ export default function TaskOperationHistory({ operations, projects, lang, now, 
   return (
     <section className="df-task-history" aria-label={label}>
       {operations.length === 0 ? (
-        <p className="df-task-history-empty">{lang === "zh" ? "最近三天没有任务操作。" : "No task activity in the last three days."}</p>
+        <EmptyState compact title={lang === "zh" ? "最近三天没有任务操作" : "No task activity in the last three days"}
+          description={lang === "zh" ? "添加、排程和其他任务修改会出现在这里。" : "Task additions, scheduling, and other changes will appear here."} />
       ) : (
         <ol className="df-task-history-list">
           {operations.map((operation) => {

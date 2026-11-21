@@ -1,3 +1,4 @@
+import type { PluginMcpAccess } from "./pluginMcp";
 import type { ExtensionPreferences } from "./extensions";
 export type Category = "exam" | "uk" | "us" | "essay" | "materials" | "project" | "personal";
 export type Priority = "high" | "medium" | "low";
@@ -459,6 +460,9 @@ export interface WidgetTimerRuntime {
   countdownTargetAt?: number;
   countdownTaskId?: string;
   countdownRecordId?: string;
+  /** Absent before starting, null for an unlinked Pomodoro session. */
+  pomodoroTaskId?: string | null;
+  pomodoroStartedAt?: number;
   /** Serializable state owned by the mode provider. */
   [key: string]: any;
 }
@@ -529,12 +533,14 @@ export interface Settings {
   displayName: string;
   avatarDataUrl?: string;
   onboardingVersion?: number;
-  onboardingStep?: "add" | "drag" | "candidates" | "schedule" | "calendar" | "planning" | "ai" | "done";
+  onboardingTaskId?: string;
+  onboardingStep?: "setup" | "add" | "drag" | "candidates" | "schedule" | "calendar" | "planning" | "ai" | "done";
   dailyFocusTime: string;
   weekStartsOn: 0 | 1;
   theme: "light" | "dark";
   baseMode?: "light" | "dark" | "system";
   extensions?: ExtensionPreferences;
+  extensionMcpAccess?: PluginMcpAccess;
   extensionConfigs?: Record<string, Record<string, unknown>>;
   extensionConfigUpdatedAt?: Record<string, string>;
   typographyStyle: "editorial" | "balanced" | "sans";
@@ -803,6 +809,8 @@ export type WidgetAction =
   | { type: "resetWidgetTimer"; draft: WidgetTimerPreferences }
   | { type: "scheduleWidgetCountdown"; durationMinutes: number }
   | { type: "toggleWidgetTimer" }
+  | { type: "startPomodoro"; taskId?: string }
+  | { type: "finishPomodoro"; save: boolean; startedAt?: number }
   | { type: "updateWidgetAppearance"; patch: Partial<WidgetAppearance> }
   | { type: "resetPosition" };
 

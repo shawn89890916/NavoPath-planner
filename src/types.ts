@@ -533,7 +533,8 @@ export interface Settings {
   displayName: string;
   avatarDataUrl?: string;
   onboardingVersion?: number;
-  onboardingStep?: "add" | "drag" | "candidates" | "schedule" | "calendar" | "planning" | "ai" | "done";
+  onboardingTaskId?: string;
+  onboardingStep?: "setup" | "add" | "drag" | "candidates" | "schedule" | "calendar" | "planning" | "ai" | "done";
   dailyFocusTime: string;
   weekStartsOn: 0 | 1;
   theme: "light" | "dark";

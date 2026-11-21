@@ -96,12 +96,14 @@ export default {
         const restoreRefreshFocus = panel.contains(document.activeElement);
         panel.replaceChildren();
         const heading = document.createElement("h3"); heading.textContent = s.city || (zh ? "天气" : "Weather"); panel.append(heading);
-        const description = document.createElement("p"); description.className = "navopath-weather-current";
+        const description = document.createElement("p");
+        description.className = !same && !error && !busy ? "df-empty-state" : "navopath-weather-current";
+        description.dataset.compact = "true";
         if (same) {
           description.append(weatherIcon(condition.icon));
           const temperature = document.createElement("strong"); temperature.textContent = `${Math.round(cache.current)}°${s.unit === "fahrenheit" ? "F" : "C"}`; description.append(temperature);
         }
-        const summary = document.createElement("span"); summary.textContent = same ? condition.label : s.city ? (zh ? "天气暂不可用" : "Weather unavailable") : (zh ? "请在下方搜索并选择城市。" : "Search and choose a city below."); description.append(summary); panel.append(description);
+        const summary = document.createElement("span"); summary.textContent = same ? condition.label : busy ? (zh ? "正在获取天气…" : "Loading weather…") : s.city ? (zh ? "天气暂不可用，可重试刷新。" : "Weather is unavailable. Try refreshing.") : (zh ? "还未选择城市。请在下方搜索城市。" : "Choose a city using the search below."); description.append(summary); panel.append(description);
         panel.setAttribute("aria-label", zh ? `${weatherCityName(s)}天气` : `${weatherCityName(s)} weather`);
         panel.setAttribute("aria-busy", String(busy));
         if (same) {

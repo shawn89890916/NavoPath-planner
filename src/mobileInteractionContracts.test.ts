@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const main = (readFileSync(resolve(__dirname, "main.tsx"), "utf8") + readFileSync(resolve(__dirname, "SettingsPanel.tsx"), "utf8") + readFileSync(resolve(__dirname, "components/MobileQuickAddButton.tsx"), "utf8") + readFileSync(resolve(__dirname, "WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "AiPanel.tsx"), "utf8")).replace(/\r\n/g, "\n");
+const main = (readFileSync(resolve(__dirname, "main.tsx"), "utf8") + readFileSync(resolve(__dirname, "SettingsPanel.tsx"), "utf8") + readFileSync(resolve(__dirname, "components/MobileQuickAddButton.tsx"), "utf8") + readFileSync(resolve(__dirname, "components/OnboardingGuide.tsx"), "utf8") + readFileSync(resolve(__dirname, "WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "AiPanel.tsx"), "utf8")).replace(/\r\n/g, "\n");
 const appCss = readFileSync(resolve(__dirname, "app.css"), "utf8").replace(/\r\n/g, "\n");
 const planningCss = readFileSync(resolve(__dirname, "PlanningView.css"), "utf8");
 const defaults = readFileSync(resolve(__dirname, "defaultSettings.ts"), "utf8");

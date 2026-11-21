@@ -14,6 +14,7 @@ import { normalizeTaskCheckTone } from "./utils/productivityModel";
 import { addDays, addMonths, hasRecurringRule } from "./utils/recurrence";
 import { countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockDragState } from "./components/TaskBlock";
+import { EmptyState } from "./components/EmptyState";
 import { Button, CloseButton, IconButton, UndoButton } from "./components/UiPrimitives";
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
 import { UiCalendarCheckIcon, UiCalendarClockIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiReturnIcon, UiTrashIcon } from "./components/UiIcons";
@@ -281,7 +282,8 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
         <button type="button" onClick={onNewConversation}>{text.newChat}<span aria-hidden="true">＋</span></button>
       </header>
       <div className="df-ai-conversation-items">
-        {sortedConversations.length === 0 && <div className="df-ai-history-empty">{text.noChats}</div>}
+        {sortedConversations.length === 0 && <EmptyState compact title={text.noChats}
+          description={lang === "zh" ? "发出第一条消息后，对话会保存在这里。" : "Conversations appear here after you send your first message."} />}
         {sortedConversations.map((conversation, conversationIndex) => {
           const active = conversation.id === activeConversationId;
           const renaming = renamingConversationId === conversation.id;
@@ -337,7 +339,7 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
       <header><strong>{lang === "zh" ? "Agent 审计记录" : "Agent audit history"}</strong><small>{lang === "zh" ? "保留最近 30 天，最多显示 50 条" : "Last 30 days, up to 50 runs"}</small></header>
       {auditLoading && <p>{lang === "zh" ? "正在读取…" : "Loading…"}</p>}
       {auditError && <p className="error" role="alert">{auditError}</p>}
-      {!auditLoading && !auditError && auditRuns.length === 0 && <p>{lang === "zh" ? "暂无审计记录" : "No audit runs yet"}</p>}
+      {!auditLoading && !auditError && auditRuns.length === 0 && <EmptyState compact title={lang === "zh" ? "暂无审计记录" : "No audit runs yet"} description={lang === "zh" ? "Agent 的工作区操作记录会显示在这里。" : "Agent actions in your workspace will appear here."} />}
       {auditRuns.map((run) => <article key={run.id}>
         <div><strong>{run.status}</strong><time>{new Date(run.createdAt).toLocaleString()}</time></div>
         <small>{run.trigger} · {run.tools.length} {lang === "zh" ? "次查询" : "queries"} · {run.commands.length} {lang === "zh" ? "个命令" : "commands"}</small>
@@ -351,9 +353,10 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
       {messages.length === 0 && <div className="df-ai-reference-empty">
         {demoControls && <div className="df-ai-reference-prompt">{lang === "zh" ? "今天想推进的几件事" : "A few things for today"}</div>}
         {demoControls}
-        {!demoControls && <div className="df-ai-reference-suggestions" role="group" aria-label={lang === "zh" ? "消息建议" : "Suggested messages"}>
-          {promptSuggestions.map((suggestion) => <button key={suggestion} type="button" onClick={() => { setInput(suggestion); composerTextareaRef.current?.focus(); }}>{suggestion}</button>)}
-        </div>}
+        {!demoControls && <EmptyState title={lang === "zh" ? "你想先推进哪件事？" : "What would you like to work on?"}
+          description={lang === "zh" ? "可以直接提问，也可以选一条建议再修改。" : "Start with your own question or edit one of these suggestions."}>
+          {promptSuggestions.map((suggestion) => <Button key={suggestion} onClick={() => { setInput(suggestion); composerTextareaRef.current?.focus(); }}>{suggestion}</Button>)}
+        </EmptyState>}
         {!demoControls && <div className={`df-ai-capability-state ${globalAgentAvailable ? "ready" : "locked"}`}>
           <span aria-hidden="true">{globalAgentAvailable ? "●" : "○"}</span>
           <small>{globalAgentAvailable ? (lang === "zh" ? "已连接工作区 · 写入前按安全等级确认" : "Workspace connected · writes follow your safety level") : (lang === "zh" ? "登录后可读取完整工作区" : "Sign in to access the full workspace")}</small>

@@ -1,0 +1,44 @@
+.df-empty-state {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  min-inline-size: 0;
+  align-self: stretch;
+  margin: 8px 0;
+  padding: 16px;
+  color: inherit;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+.df-empty-state[data-compact] {
+  padding: 10px 12px;
+  gap: 8px;
+}
+
+.df-empty-state-copy strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.df-empty-state-copy p {
+  margin: 4px 0 0;
+  color: var(--text-muted, inherit);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.df-empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (pointer: coarse) {
+  .df-empty-state-actions .ui-button {
+    min-block-size: 44px;
+  }
+}

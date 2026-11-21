@@ -2,6 +2,11 @@
 
 ## 2026-11-21
 
+#### 改进
+
+- 首次进入时可先设置语言、外观和时间轴偏好，再用可编辑的示例添加并安排第一条任务。完成后可探索任务视图、插件和集成。
+- 工作区各页面的空状态提供对应的添加、连接或清除筛选操作。
+
 ### 1.7.0 Beta 52
 
 #### 修复
@@ -817,6 +822,11 @@
 # NavoPath Changelog
 
 ## 2026-11-21
+
+#### Improved
+
+- First-time setup lets you choose the language, appearance, and timeline preferences. Then you can edit a starter task, schedule it, and explore views, plugins, and integrations.
+- Empty workspace pages offer actions suited to the context, such as adding an item, connecting a service, or clearing filters.
 
 ### 1.7.0 Beta 52
 
