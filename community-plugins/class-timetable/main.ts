@@ -1,6 +1,7 @@
 import {parseTimetableJson,mergeTimetable} from './parser';
 export default {onload(ctx:any){
  const zh=ctx.language==='zh',name=zh?'课表':'Class timetable';
+ if(typeof ctx.calendar?.registerBackground!=='function')throw Error(zh?'当前 Navopath 缺少课程背景接口，请升级至官方 1.6.2 或更高版本。':'This Navopath build lacks calendar backgrounds. Update to official 1.6.2 or later.');
  ctx.calendar.registerBackground((event:any)=>event.fixedCourse===true);
  ctx.settings.registerPage(name,(container:HTMLElement)=>{
   let mounted=true;const account=ctx.app.getAccountId();
