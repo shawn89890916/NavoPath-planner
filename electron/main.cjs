@@ -27,7 +27,7 @@ const {
   windowFromEvent,
 } = require("./window-lifecycle.cjs");
 const { createDesktopUpdater } = require("./desktop-updater.cjs");
-const { readAcceptBetaUpdates, writeAcceptBetaUpdates } = require("./update-preferences.cjs");
+const { readAcceptBetaUpdates, writeAcceptBetaUpdates, readLowMemoryMode, writeLowMemoryMode } = require("./device-preferences.cjs");
 
 // Let Windows integrations open the installed desktop app directly.
 if (process.platform === "win32") {
@@ -60,6 +60,10 @@ function getAutoUpdater() {
 }
 
 app.setName("NavoPath");
+const renderingPreferencesPath = path.join(app.getPath("userData"), "rendering-preferences.json");
+if (process.platform === "win32" && readLowMemoryMode(renderingPreferencesPath)) {
+  app.disableHardwareAcceleration();
+}
 nativeTheme.themeSource = "light";
 
 const localIndexPath = app.isPackaged
@@ -329,8 +333,28 @@ function createTray() {
     trayIcon = nativeImage.createEmpty();
   }
   tray = new Tray(trayIcon);
+  const zh = app.getLocale().startsWith("zh");
   const contextMenu = Menu.buildFromTemplate([
     { label: "显示 NavoPath", click: () => showMainWindow() },
+    {
+      id: "low-memory-mode",
+      label: zh ? "低内存模式（下次启动生效）" : "Low memory mode (applies on next launch)",
+      type: "checkbox",
+      visible: process.platform === "win32",
+      checked: readLowMemoryMode(renderingPreferencesPath),
+      click: (item) => {
+        try {
+          writeLowMemoryMode(renderingPreferencesPath, item.checked);
+        } catch (error) {
+          item.checked = readLowMemoryMode(renderingPreferencesPath);
+          console.warn("Could not save low memory mode:", error);
+          dialog.showErrorBox(
+            zh ? "低内存模式" : "Low memory mode",
+            zh ? "无法保存设置。请重试。" : "The preference could not be saved. Try again.",
+          );
+        }
+      },
+    },
     { type: "separator" },
     { label: "退出", click: () => { isQuitting = true; app.quit(); } }
   ]);

@@ -2,6 +2,12 @@
 
 ## 2026-11-21
 
+### 1.7.0 Beta 50
+
+#### 新增
+
+- Windows 托盘菜单新增低内存模式。开启后，下次启动将使用软件渲染，以降低桌面应用的内存占用。
+
 ### 1.7.0 Beta 49
 
 #### 改进
@@ -793,6 +799,12 @@
 # NavoPath Changelog
 
 ## 2026-11-21
+
+### 1.7.0 Beta 50
+
+#### Added
+
+- The Windows tray menu now offers Low memory mode. When enabled, NavoPath uses software rendering on the next launch to reduce desktop memory use.
 
 ### 1.7.0 Beta 49
 

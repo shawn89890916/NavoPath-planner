@@ -18,6 +18,7 @@ const recoveryMs = shortIdleMs ? [500, 2_000] : [15_000, 60_000];
 const surface = process.env.NAVOPATH_BENCH_SURFACE || "workspace";
 const idleTreatment = process.env.NAVOPATH_BENCH_IDLE_TREATMENT || "default";
 const tracePath = process.env.NAVOPATH_BENCH_TRACE;
+const lowMemoryMode = process.env.NAVOPATH_BENCH_LOW_MEMORY === "1";
 
 if (process.versions.electron) {
   runDesktop().catch((error) => {
@@ -110,6 +111,10 @@ async function runDesktop() {
   if (!profile || !path.basename(profile).startsWith("navopath-bench-")) throw new Error("Benchmark requires its isolated profile");
   app.setPath("userData", profile);
   app.setPath("sessionData", profile);
+  if (lowMemoryMode) {
+    const { writeLowMemoryMode } = require(path.join(source, "electron", "device-preferences.cjs"));
+    writeLowMemoryMode(path.join(profile, "rendering-preferences.json"), true);
+  }
   app.setAsDefaultProtocolClient = () => false;
   app.commandLine.appendSwitch("disable-background-networking");
   delete process.env.VITE_DEV_SERVER_URL;
@@ -165,7 +170,8 @@ async function runDesktop() {
     if (tracePath) await contentTracing.stopRecording(path.resolve(tracePath));
     const { size, scaleFactor } = screen.getDisplayMatching(main.getBounds());
     console.log("NAVOPATH_BENCH " + JSON.stringify({
-      electron: process.versions.electron, chrome: process.versions.chrome, size, scaleFactor, ...cycles,
+      electron: process.versions.electron, chrome: process.versions.chrome, size, scaleFactor,
+      lowMemoryMode, gpu: app.getGPUFeatureStatus(), ...cycles,
     }));
     app.quit();
     return;

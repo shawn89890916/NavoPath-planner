@@ -62,6 +62,10 @@ V8 counters. Set `NAVOPATH_BENCH_TRACE` to a local output path in a single run t
 record a Chromium trace. Keep diagnosis and any shortened idle timeout out of
 the acceptance measurements.
 
+Run the same benchmark with `NAVOPATH_BENCH_LOW_MEMORY=1` to enable the Windows
+tray preference in the isolated benchmark profile. The benchmark records the
+active GPU features alongside the samples in tray-cycle mode.
+
 ## Desktop update preference
 
 Accept Beta updates defaults off, including for manually installed Beta builds.
