@@ -1,19 +1,11 @@
 import type { Settings, Task, TimelineRecord } from "./types";
 
-export const ONBOARDING_START = { onboardingVersion: 1, onboardingStep: "setup", onboardingTaskId: "" } as const;
-export const ONBOARDING_ADD = { onboardingStep: "add", onboardingTaskId: "" } as const;
-export const ONBOARDING_DONE = { onboardingVersion: 2, onboardingStep: "done", onboardingTaskId: "" } as const;
+export const ONBOARDING_START = { workspaceGuideStep: "setup", workspaceGuideTaskId: "" } as const;
+export const ONBOARDING_ADD = { workspaceGuideStep: "add", workspaceGuideTaskId: "" } as const;
+export const ONBOARDING_DONE = { workspaceGuideStep: "done", workspaceGuideTaskId: "" } as const;
 
-export function onboardingStage(settings?: Settings | null): "setup" | "add" | "schedule" | "done" {
-  if (!settings || (settings.onboardingVersion ?? 0) >= ONBOARDING_DONE.onboardingVersion) return "done";
-  switch (settings.onboardingStep) {
-    case "setup": return "setup";
-    case "add": return "add";
-    case "candidates":
-    case "drag":
-    case "schedule": return "schedule";
-    default: return "done";
-  }
+export function onboardingStage(settings?: Settings | null) {
+  return settings?.workspaceGuideStep ?? "done";
 }
 
 export function onboardingBlock(task?: Task): Pick<TimelineRecord, "id" | "scheduledDate" | "scheduledStart"> | undefined {
@@ -33,6 +25,5 @@ export function isOnboardingTask(task: Task) {
 }
 
 export function onboardingTarget(settings: Settings, tasks: Task[]) {
-  if (settings.onboardingTaskId) return tasks.find((task) => task.id === settings.onboardingTaskId);
-  return tasks.find((task) => isOnboardingTask(task) && task.executionLane === "candidate");
+  return tasks.find((task) => task.id === settings.workspaceGuideTaskId);
 }

@@ -16664,17 +16664,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
     border: 0;
     background: transparent;
   }
-  #root .df-app.mode-execute .df-empty-add-guidance {
-    position: fixed;
-    z-index: 0;
-    left: -76px;
-    bottom: -170px;
-    width: 100%;
-    height: auto;
-    opacity: .3;
-    object-fit: contain;
-    pointer-events: none;
-  }
   #root .df-app.mode-execute .df-empty strong {
     z-index: 1;
   }

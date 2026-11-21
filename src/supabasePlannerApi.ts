@@ -324,7 +324,6 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       const initialSettings = {
         ...getDefaultSettings(),
         ...ONBOARDING_START,
-        onboardingVersion: 0,
       };
       if (!isCurrentAuth(user.id, requestAuthVersion)) throw new Error("Account changed while loading profile");
       const { error: insertError } = await retryTransientRequest(() => supabase

@@ -38,9 +38,8 @@ export const defaultSettings: Settings = {
   apiKeyPreview: "",
   displayName: "NavoPath",
   avatarDataUrl: "",
-  onboardingVersion: 2,
-  onboardingStep: "done",
-  onboardingTaskId: "",
+  workspaceGuideStep: "done",
+  workspaceGuideTaskId: "",
   dailyFocusTime: "20:00",
   weekStartsOn: 0,
   theme: "light",
@@ -259,6 +258,10 @@ function normalizeCollapsedSettingIds(value: unknown[]): string[] {
 export function normalizeSettings(value: unknown): Settings {
   const defaults = getDefaultSettings();
   const stored = isRecord(value) ? { ...value } : {};
+  // Discard retired tutorial fields when loading or saving preferences.
+  delete stored.onboardingVersion;
+  delete stored.onboardingStep;
+  delete stored.onboardingTaskId;
 
   if (stored.executeAccentColor === "#C69CF9") stored.executeAccentColor = "";
   if (stored.planningAccentColor === "#CAFF72") stored.planningAccentColor = "";
@@ -308,8 +311,7 @@ export function normalizeSettings(value: unknown): Settings {
   normalized.reasoningMode = allowedValue(normalized.reasoningMode, ["instant", "high", "xhigh"], defaults.reasoningMode);
   const legacySafetyLevel = normalized.aiSafetyLevel === "strict" ? "ask" : normalized.aiSafetyLevel === "standard" || normalized.aiSafetyLevel === "readonly" ? "approve" : normalized.aiSafetyLevel;
   normalized.aiSafetyLevel = allowedValue(legacySafetyLevel, ["ask", "approve", "full"], defaults.aiSafetyLevel);
-  normalized.onboardingTaskId = typeof normalized.onboardingTaskId === "string" ? normalized.onboardingTaskId : "";
-  normalized.onboardingStep = allowedValue(normalized.onboardingStep, ["setup", "add", "drag", "candidates", "schedule", "calendar", "planning", "ai", "done"], defaults.onboardingStep!);
+  normalized.workspaceGuideStep = allowedValue(normalized.workspaceGuideStep, ["setup", "add", "schedule", "done"], defaults.workspaceGuideStep!);
   normalized.weekStartsOn = allowedValue(normalized.weekStartsOn, [0, 1], defaults.weekStartsOn);
   normalized.theme = allowedValue(normalized.theme, ["light", "dark"], defaults.theme);
   normalized.typographyStyle = allowedValue(normalized.typographyStyle, ["editorial", "balanced", "sans"], defaults.typographyStyle);

@@ -13,6 +13,16 @@ Every agent turn that changes user-visible behavior must update `CHANGELOG.md` b
 
 Visual and interaction work must follow `NavoPathStyle.md`.
 
+## Feature removal
+
+- Remove retired feature code, routes, UI, styles, assets, state, flags, tests,
+  generated files, and active documentation in the same change. Move callers of
+  supported behavior to the current implementation.
+- Retire fallback paths with the old UI. Clean up persisted preferences at the
+  data boundary when needed, without reviving retired behavior.
+- Check former entry points and shipped artifacts for obsolete controls, blank
+  space, code, and assets before publishing.
+
 ## CSS architecture
 
 - Every component owns one canonical style surface; shared UI and behavior must
