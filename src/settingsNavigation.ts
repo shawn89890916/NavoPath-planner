@@ -145,7 +145,7 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("planning-views", { category: "workflow" }, "规划视图", "Planning views", "kanban matrix list 看板 四象限 列表"),
   entry("schedule-start", { category: "workflow" }, "规划开始", "Planning starts", "AI schedule 排程"),
   entry("schedule-end", { category: "workflow" }, "规划结束", "Planning ends", "AI schedule 排程"),
-  entry("schedule-buffer", { category: "workflow" }, "任务缓冲", "Task buffer", "minutes AI schedule 间隔 排程"),
+  entry("schedule-buffer", { category: "workflow" }, "排程任务间隔", "Gap between scheduled tasks", "任务缓冲 Task buffer minutes AI schedule 间隔 排程"),
   entry("templates", { category: "workflow" }, "模板", "Templates", "schedule template 时间段"),
   entry("habits", { category: "workflow" }, "习惯", "Habits", "candidate metrics 每日 每周"),
   entry("metrics", { category: "workflow" }, "指标", "Metrics", "range grouping completion 统计 范围 分组 完成"),

@@ -29,15 +29,12 @@ export default function AuthGate(props: {
       <section className="df-auth-card">
         <div className="df-auth-brand">
           <ProductIcon />
-          <div>
-            <strong>NavoPath</strong>
-            <span>{label("tagline")}</span>
-          </div>
+          <h1>NavoPath</h1>
         </div>
         {forgotPassword ? <PasswordResetRequest lang={props.lang} email={email} onRequest={props.onForgotPassword} onBack={() => setForgotPassword(false)} /> : <>
         <div className="df-auth-tabs">
-          <button className={intent === "signin" ? "active" : ""} onClick={() => { if (intent !== "signin") setPrivacyAccepted(false); setIntent("signin"); }}>{label("login")}</button>
-          <button className={intent === "signup" ? "active" : ""} onClick={() => { if (intent !== "signup") setPrivacyAccepted(false); setIntent("signup"); }}>{label("register")}</button>
+          <button type="button" aria-pressed={intent === "signin"} className={intent === "signin" ? "active" : ""} onClick={() => { if (intent !== "signin") setPrivacyAccepted(false); setIntent("signin"); }}>{label("login")}</button>
+          <button type="button" aria-pressed={intent === "signup"} className={intent === "signup" ? "active" : ""} onClick={() => { if (intent !== "signup") setPrivacyAccepted(false); setIntent("signup"); }}>{label("register")}</button>
         </div>
         <form onSubmit={(event) => {
           event.preventDefault();
@@ -51,14 +48,13 @@ export default function AuthGate(props: {
           <label className="df-auth-check"><input type="checkbox" checked={showPassword} onChange={(event) => setShowPassword(event.target.checked)} />{label("showPassword")}</label>
           {intent === "signin" && <Button variant="ghost" disabled={props.busy} onClick={() => setForgotPassword(true)}>{label("forgotPassword")}</Button>}
           <PrivacyConsent lang={props.lang} checked={privacyAccepted} onChange={setPrivacyAccepted} disabled={props.busy} />
-          {mismatch && <p className="df-auth-error">{label("passwordMismatch")}</p>}
-          {props.error && <p className="df-auth-error">{props.error}</p>}
+          {mismatch && <p className="df-auth-error" role="alert">{label("passwordMismatch")}</p>}
+          {props.error && <p className="df-auth-error" role="alert">{props.error}</p>}
           {props.notice?.type === "confirm-email" && <div className="df-auth-notice"><strong>{label("checkInbox")}</strong><span>{label("emailSent")} {props.notice.email}{label("confirmationSuffix")}</span><div className="df-auth-notice-actions"><button type="button" onClick={() => void props.onResend(props.notice!.email)}>{label("resend")}</button><button type="button" disabled={props.busy || !privacyAccepted} onClick={() => { if (privacyAccepted) void props.onContinueAfterConfirm(props.notice!.email); }}>{label("confirmedGoLogin")}</button></div></div>}
           <button className="df-auth-submit" type="submit" disabled={props.busy || !privacyAccepted || !email.trim() || password.length < 6 || Boolean(mismatch)}>
             {props.busy ? label("processing") : intent === "signin" ? label("enterApp") : label("createAccount")}
           </button>
         </form>
-        <p className="df-auth-note">{label("note")}</p>
         </>}
       </section>
     </main>

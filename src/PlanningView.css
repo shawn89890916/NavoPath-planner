@@ -1486,22 +1486,6 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   border-color: var(--accent-active);
   background: color-mix(in srgb, var(--accent-active) 5%, transparent);
 }
-#root .df-app .df-planning .df-planning-longrange-guide > span {
-  color: var(--text-muted);
-  font: 600 11px/1.3 var(--paper-mono);
-}
-#root .df-app .df-planning .df-planning-longrange-guide > strong {
-  min-width: 0;
-  color: var(--text-main);
-  font: 650 13px/1.3 var(--paper-sans);
-}
-#root .df-app .df-planning .df-planning-longrange-guide > div {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 6px;
-  color: var(--text-muted);
-  font: 600 10px/1 var(--paper-mono);
-}
 #root .df-app .df-planning .df-tree-wrap {
   grid-column: 2 / 3;
   grid-row: 1 / 2;
@@ -1517,38 +1501,6 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   border-radius: 7px;
   background: var(--surface-card);
   corner-shape: var(--corner-shape, squircle);
-}
-#root .df-app .df-planning .df-planning-longrange-guide {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 5px 10px;
-  margin: 0 0 16px;
-  padding: 0 0 14px;
-  border-bottom: 1px solid var(--paper-rule);
-  background: transparent;
-  position: relative;
-  padding-right: 52px;
-}
-#root .df-app .df-planning .df-planning-guide-close {
-  position: absolute;
-  top: -4px;
-  right: 52px;
-  width: 34px;
-  height: 34px;
-  min-height: 34px;
-  border: 1px solid var(--paper-rule-strong);
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--text-muted);
-}
-#root .df-app .df-planning .df-planning-guide-close:hover {
-  color: var(--accent-active);
-  border-color: var(--accent-active);
-  background: var(--paper-note);
-}
-#root .df-app .df-planning .df-planning-guide-close:focus-visible {
-  color: var(--accent-active);
-  border-color: var(--accent-active);
 }
 #root .df-app .df-planning .df-plan-project-node {
   position: relative;
@@ -1570,9 +1522,6 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 }
 @media (orientation: portrait),
        (max-width: 980px) and (orientation: landscape) {
-  #root .df-app .df-planning .df-tree-wrap:not(:has(.df-planning-longrange-guide)) {
-    padding-top: 8px;
-  }
   #root .df-app .df-planning .df-metrics-panel {
     min-width: 0;
     max-width: 100%;
@@ -1640,43 +1589,6 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   #root .df-app .df-planning .df-task-branch{margin-top:4px}
   #root .df-app .df-planning .df-plan-task-node{width:100%;min-width:0;max-width:none}
   #root .df-app .df-planning .df-task-node-actions{min-width:0}
-  #root .df-app .df-planning .df-planning-longrange-guide {
-    grid-template-columns: minmax(0, 1fr);
-    display: grid;
-    gap: 4px;
-    margin: 0 0 8px;
-    padding: 8px 50px 8px 2px;
-    border-block: 1px solid var(--paper-rule-strong);
-    color: var(--text-main);
-    background: transparent;
-  }
-  #root .df-app .df-planning .df-planning-guide-close {
-    top: 4px;
-    right: 2px;
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
-  }
-  #root .df-app .df-planning .df-planning-longrange-guide > span {
-    grid-column: 1 / -1;
-    color: var(--text-muted);
-    font: 700 10px/1.2 var(--paper-sans);
-    letter-spacing: .08em;
-  }
-  #root .df-app .df-planning .df-planning-longrange-guide > strong {
-    grid-column: 1 / -1;
-    font: 650 15px/1.4 var(--paper-serif);
-  }
-  #root .df-app .df-planning .df-planning-longrange-guide > div {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    color: var(--text-muted);
-    font: 650 10px/1 var(--paper-sans);
-  }
-  #root .df-app .df-planning .df-planning-longrange-guide b { font: inherit; }
-  #root .df-app .df-planning .df-planning-longrange-guide i { color: var(--accent-active); font-style: normal; }
   #root .df-app .df-tree-icon-button {
     width: 44px;
     min-width: 44px;

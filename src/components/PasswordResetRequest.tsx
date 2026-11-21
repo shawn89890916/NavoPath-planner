@@ -2,12 +2,13 @@ import { useState } from "react";
 import { t, type Language } from "../i18n";
 import { Button } from "./UiPrimitives";
 
-export default function PasswordResetRequest({ lang, email, onRequest, onBack, landing = false }: {
+export default function PasswordResetRequest({ lang, email, onRequest, onBack, landing = false, showEmailPrompt = landing }: {
   lang: Language;
   email: string;
   onRequest: (email: string) => Promise<void>;
   onBack: () => void;
   landing?: boolean;
+  showEmailPrompt?: boolean;
 }) {
   const [address, setAddress] = useState(email);
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -27,8 +28,8 @@ export default function PasswordResetRequest({ lang, email, onRequest, onBack, l
         setStatus("error");
       }
     }}>
-      <p className={landing ? undefined : "df-auth-note"}>{label("resetEmailPrompt")}</p>
-      <input type="email" aria-label={label("email")} placeholder={label("email")} autoComplete="email" value={address} disabled={busy} onChange={(event) => {
+      {showEmailPrompt && <p>{label("resetEmailPrompt")}</p>}
+      <input type="email" aria-label={label(showEmailPrompt ? "email" : "registrationEmail")} placeholder={label(showEmailPrompt ? "email" : "registrationEmail")} autoComplete="email" value={address} disabled={busy} onChange={(event) => {
         setAddress(event.target.value);
         setStatus("idle");
       }} required autoFocus />

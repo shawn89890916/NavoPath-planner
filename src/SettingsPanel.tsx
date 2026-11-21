@@ -423,6 +423,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   const [widgetColorScheme, setWidgetColorScheme] = useState<"light" | "dark">("light");
   const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "mcp" | "sync">("calendar");
   const settingsContentRef = useRef<HTMLDivElement | null>(null);
+  const settingsHeadingRef = useRef<HTMLHeadingElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [profileNameEditing, setProfileNameEditing] = useState(false);
   const [profileNameDraft, setProfileNameDraft] = useState(settings.displayName || "");
@@ -471,6 +472,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
         : null;
       if (!anchor) {
         content.scrollTop = 0;
+        if (settingsTarget.anchor) settingsHeadingRef.current?.focus({ preventScroll: true });
         return;
       }
       content.scrollTop = Math.max(0, anchor.offsetTop - 12);
@@ -723,7 +725,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
         <div className="df-utility-head">
           <div className="df-utility-head-leading">
             {kind === "settings" && compactLayout && !settingsHome && <button type="button" className="df-settings-back-button" onClick={backToSettingsHome} aria-label={lang === "zh" ? "返回设置" : "Back to settings"}><span aria-hidden="true">‹</span><span>{lang === "zh" ? "设置" : "Settings"}</span></button>}
-            <h2 id="df-utility-title">{kind === "settings" && !settingsHome ? selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang) : kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
+            <h2 id="df-utility-title" ref={settingsHeadingRef} tabIndex={-1}>{kind === "settings" && !settingsHome ? selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang) : kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
           </div>
           <CloseButton ref={closeButtonRef} label={t(lang, "settings.close")} onClick={onClose} />
         </div>
@@ -811,10 +813,10 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 ))}
                 {pluginPages.length > 0 && <><h3 className="df-settings-nav-heading">{lang === "zh" ? "插件设置" : "Plugin settings"}</h3>{pluginPages.filter(page => page.name.toLocaleLowerCase().includes(navigationQuery.trim().toLocaleLowerCase())).map(page => <button type="button" key={page.id} className={`ui-choice-item${settingsTarget.pluginPage === page.id ? " active" : ""}`} aria-current={settingsTarget.pluginPage === page.id ? "page" : undefined} onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}>{page.name}</button>)}</>}
               </nav>
-              {!navigationQuery.trim() && pluginUpdateCount > 0 && <button type="button" className="df-plugin-update-notice" onClick={() => navigateSettings({ category: "plugins" })}><span className="df-plugin-update-notice-dot" aria-hidden="true" /><span><strong>{lang === "zh" ? `${pluginUpdateCount} 个插件可更新` : `${pluginUpdateCount} plugin updates`}</strong><small>{lang === "zh" ? "查看并安装更新" : "Review and install updates"}</small></span><span aria-hidden="true">›</span></button>}
+              {!navigationQuery.trim() && pluginUpdateCount > 0 && <button type="button" className="df-plugin-update-notice" onClick={() => navigateSettings({ category: "plugins" })}><span className="df-plugin-update-notice-dot" aria-hidden="true" /><span><strong>{lang === "zh" ? `${pluginUpdateCount} 个插件可更新` : `${pluginUpdateCount} plugin updates`}</strong></span><span aria-hidden="true">›</span></button>}
             </div>
             <div ref={settingsContentRef} className="df-settings-content">
-            {settingsTarget.category === "general" && <SettingSection anchor="general-basics" title={lang === "zh" ? "基础" : "Basics"} description={lang === "zh" ? "语言、时间边界与通知显示。" : "Language, time boundary, and notification display."}>
+            {settingsTarget.category === "general" && <SettingSection anchor="general-basics" title={lang === "zh" ? "基础" : "Basics"}>
               <SettingRow
                 anchor="language"
                 title={lang === "zh" ? "语言" : "Language"}
@@ -842,9 +844,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
             </SettingSection>}
 
-            {settingsTarget.category === "appearance" && <SettingSection title={lang === "zh" ? "外观" : "Appearance"} description={settings.theme === "dark"
-              ? (lang === "zh" ? "深色模式使用柔和白色交互高亮；已保存的强调色会在浅色模式下继续生效。" : "Dark mode uses a softened white interaction accent. Your saved accent returns in light mode.")
-              : (lang === "zh" ? "纸面风格、字体与克制的点缀色。" : "Paper surface, typography, and restrained accent color.")}>
+            {settingsTarget.category === "appearance" && <SettingSection title={lang === "zh" ? "外观" : "Appearance"} description={settings.theme === "dark" ? (lang === "zh" ? "已保存的强调色在浅色模式生效。" : "Your saved accent applies in light mode.") : undefined}>
               <SettingRow
                 anchor="theme"
                 title={t(lang, "settings.uiMode")}
@@ -875,7 +875,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               <SettingRow
                 anchor="timeline-font"
                 title={lang === "zh" ? "时间轴字体大小" : "Timeline font size"}
-                description={lang === "zh" ? "调整时间轴任务标题字号。" : "Scale the timeline task title font size."}
                 control={
                   <span className="df-settings-range-control">
                     <input
@@ -906,7 +905,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             </SettingSection>}
 
             {settingsTarget.category === "appearance" && <Suspense fallback={null}><ExtensionSettings lang={lang} kind="theme" /></Suspense>}
-            {settingsTarget.category === "general" && <SettingSection anchor="execution-defaults" title={lang === "zh" ? "执行默认项" : "Execution defaults"} description={lang === "zh" ? "时间轴与完成任务的默认行为。" : "Default timeline and completed-task behavior."}>
+            {settingsTarget.category === "general" && <SettingSection anchor="execution-defaults" title={lang === "zh" ? "执行默认项" : "Execution defaults"}>
               <SettingRow
                 anchor="default-timeline"
                 title={lang === "zh" ? "默认时间轴视图" : "Default timeline view"}
@@ -925,22 +924,22 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               <SettingRow
                 anchor="continuous-scroll"
                 title={lang === "zh" ? "开启无限跨天滚动" : "Continuous cross-day scroll"}
-                description={lang === "zh" ? "时间轴可连续滚动到前后日期。" : "The timeline scrolls continuously across days."}
                 control={<SettingToggle checked={settings.continuousCrossDayScroll !== false} ariaLabel={lang === "zh" ? "无限跨天滚动" : "Continuous cross-day scroll"} onChange={(next) => onSave({ continuousCrossDayScroll: next })} />}
               />
               <SettingRow
                 anchor="hide-completed"
                 title={t(lang, "settings.hideCompleted")}
-                description={lang === "zh" ? "在时间轴上隐藏已完成任务。" : "Hide completed tasks from the timeline."}
                 control={<SettingToggle checked={Boolean(settings.hideCompleted)} ariaLabel={t(lang, "settings.hideCompleted")} onChange={(next) => onSave({ hideCompleted: next })} />}
               />
             </SettingSection>}
 
-            {settingsTarget.category === "workflow" && <SettingSection anchor="planning-views" title={lang === "zh" ? "规划视图" : "Planning views"} description={lang === "zh" ? "在插件设置中安装、启用或停用规划视图。" : "Install, enable, or disable Planning views in Plugin settings."}>
-              <SettingRow title={lang === "zh" ? "管理规划视图插件" : "Manage Planning view plugins"} description={lang === "zh" ? "树和指标是预装官方插件；看板、矩阵和列表可从插件市场安装。" : "Tree and Metrics are preinstalled official plugins. Kanban, Matrix, and List are available in the plugin market."} />
+            {settingsTarget.category === "workflow" && <SettingSection anchor="planning-views" title={lang === "zh" ? "规划视图" : "Planning views"}>
+              <SettingRow title={lang === "zh" ? "视图插件" : "View plugins"} control={
+                <SettingActionButton onClick={() => navigateSettings({ category: "plugins", anchor: "plugins" })}>{lang === "zh" ? "管理插件" : "Manage plugins"}</SettingActionButton>
+              } />
             </SettingSection>}
 
-            {settingsTarget.category === "workflow" && <SettingSection anchor="smart-scheduling" title={lang === "zh" ? "智能排程" : "Smart scheduling"} description={lang === "zh" ? "定义自动排程使用的工作时段与任务间隔。" : "Define the working window and task spacing used by automatic scheduling."}>
+            {settingsTarget.category === "workflow" && <SettingSection anchor="smart-scheduling" title={lang === "zh" ? "智能排程" : "Smart scheduling"}>
               <SettingRow
                 anchor="schedule-start"
                 title={lang === "zh" ? "规划开始" : "Planning starts"}
@@ -953,13 +952,12 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
               <SettingRow
                 anchor="schedule-buffer"
-                title={lang === "zh" ? "任务缓冲" : "Task buffer"}
-                description={lang === "zh" ? "自动排程在相邻任务间预留的时间。" : "Time reserved between adjacent automatically scheduled tasks."}
-                control={<SettingNumberInput value={settings.scheduleBufferMinutes ?? 5} min={0} max={60} step={5} suffix={lang === "zh" ? "分钟" : "min"} ariaLabel={lang === "zh" ? "任务缓冲" : "Task buffer"} onChange={(value) => onSave({ scheduleBufferMinutes: Math.max(0, Math.min(60, value)) })} />}
+                title={lang === "zh" ? "排程任务间隔" : "Gap between scheduled tasks"}
+                control={<SettingNumberInput value={settings.scheduleBufferMinutes ?? 5} min={0} max={60} step={5} suffix={lang === "zh" ? "分钟" : "min"} ariaLabel={lang === "zh" ? "排程任务间隔" : "Gap between scheduled tasks"} onChange={(value) => onSave({ scheduleBufferMinutes: Math.max(0, Math.min(60, value)) })} />}
               />
             </SettingSection>}
 
-            {settingsTarget.category === "workflow" && <SettingSection anchor="habits" title={lang === "zh" ? "习惯" : "Habits"} description={lang === "zh" ? "每日 / 每周重复行为的开关与显示。" : "Toggles and visibility for daily / weekly recurring behaviors."}>
+            {settingsTarget.category === "workflow" && <SettingSection anchor="habits" title={lang === "zh" ? "习惯" : "Habits"}>
               <SettingRow
                 title={lang === "zh" ? "启用习惯功能" : "Enable habits"}
                 description={lang === "zh" ? "关闭后隐藏今日候选中的习惯区与习惯入口。" : "When off, the habits area in today's candidates and habit entries are hidden."}
@@ -972,7 +970,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
               <SettingRow
                 title={lang === "zh" ? "习惯是否计入指标" : "Include habits in metrics"}
-                description={lang === "zh" ? "控制指标页是否统计习惯时间。" : "Control whether metrics include habit time."}
                 control={<SettingSelect<NonNullable<Settings["metricsIncludeHabits"]>>
                   value={settings.metricsIncludeHabits || "include"}
                   ariaLabel={lang === "zh" ? "习惯是否计入指标" : "Include habits in metrics"}
@@ -994,8 +991,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
             </SettingSection>}
 
-            {settingsTarget.category === "workflow" && <SettingSection anchor="metrics" title={lang === "zh" ? "指标" : "Metrics"} description={lang === "zh" ? "顶栏指标插件的默认范围与分组。" : "Default range and grouping for the Metrics plugin in the top bar."}>
-              <SettingRow title={lang === "zh" ? "指标插件状态" : "Metrics plugin status"} description={lang === "zh" ? "在设置 → 插件中管理指标插件；以下选项只调整显示方式。" : "Manage the Metrics plugin in Settings → Plugins. The options below adjust its display."} />
+            {settingsTarget.category === "workflow" && <SettingSection anchor="metrics" title={lang === "zh" ? "指标" : "Metrics"}>
               <SettingRow
                 title={lang === "zh" ? "默认时间范围" : "Default time range"}
                 control={<SettingSelect<NonNullable<Settings["metricsRangePreset"]>>
@@ -1180,10 +1176,9 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               <SettingRow
                 anchor="restart-onboarding"
                 title={lang === "zh" ? "重新开始新手指南" : "Restart onboarding guide"}
-                description={lang === "zh" ? "重新触发首次使用引导流程。" : "Re-trigger the first-run onboarding flow."}
                 control={<SettingActionButton onClick={() => onSave({ onboardingVersion: 1, onboardingStep: "add" })}>{lang === "zh" ? "重新开始" : "Restart"}</SettingActionButton>}
               />
-              <SettingDisclosure anchor="shortcuts" title={lang === "zh" ? "快捷键参考" : "Shortcut reference"} description={lang === "zh" ? "查看固定快捷键" : "View fixed shortcuts"} open={shortcutsOpen} onToggle={setShortcutsOpen}>
+              <SettingDisclosure anchor="shortcuts" title={lang === "zh" ? "快捷键参考" : "Shortcut reference"} open={shortcutsOpen} onToggle={setShortcutsOpen}>
                   <p className="df-settings-desc">{lang === "zh" ? "本版本暂不支持自定义快捷键。" : "Custom shortcuts are not enabled in this version."}</p>
                   <div className="df-shortcut-reference">
                     {shortcutGroups.map((group) => (
@@ -1262,7 +1257,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             {settingsTarget.category === "account-data" && <SettingSection
               anchor="data-backup"
               title={lang === "zh" ? "数据与备份" : "Data & Backup"}
-              description={lang === "zh" ? "导出与导入数据。导入会覆盖当前数据，请谨慎操作。" : "Export and import data. Importing overwrites current data — proceed with care."}
             >
               <SettingRow
                 title={lang === "zh" ? "导出为 JSON" : "Export as JSON"}
@@ -1305,7 +1299,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               <AccountMoreSection lang={lang} onShowAbout={onShowAbout} />
               {onSignOut && <SettingRow
                 title={t(lang, "settings.logout")}
-                description={lang === "zh" ? "退出当前 NavoPath 账户。" : "Sign out of the current NavoPath account."}
                 control={<SettingActionButton onClick={onSignOut}>{t(lang, "settings.logout")}</SettingActionButton>}
               />}
             </SettingSection>}
@@ -1336,7 +1329,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
         ) : (
           <div className="df-utility-body">
             <strong>NavoPath {formatVersionLabel(APP_VERSION)}</strong>
-            <p>{t(lang, "settings.aboutDesc")}</p>
             <small>{t(lang, "settings.lastUpdated")}</small>
             <Suspense fallback={null}><DesktopUpdateControl lang={lang} /></Suspense>
             <a className="df-settings-row" href="/changelog">

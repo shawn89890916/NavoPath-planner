@@ -1,5 +1,5 @@
 import { ProductMenu, SiteLanguageSwitch } from "./components/ProductMenu";
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { ProductIcon } from "./WorkspacePresentation";
 import { DESKTOP_DOWNLOAD_URL } from "./downloads";
 import { CloseButton, IconButton } from "./components/UiPrimitives";
@@ -9,6 +9,7 @@ import { PrivacyConsent } from "./components/PrivacyConsent";
 import PasswordResetRequest from "./components/PasswordResetRequest";
 import LandingPortals from "./LandingPortals";
 import { prefersReducedMotion } from "./motion";
+import { useModalFocus } from "./useModalFocus";
 import { PERSONAL_SITE_URL, PRODUCT_FEATURES, featureHref, featureNames, principleHref } from "./productSite";
 import "./landing.css";
 
@@ -78,8 +79,9 @@ function PlanningPreview({ lang }: { lang: Lang }) {
   </section>;
 }
 
-function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, onForgotPassword, busy, error, notice }: {
+function AuthDialog({ lang, workspace, onClose, onLogin, onResend, onContinueAfterConfirm, onForgotPassword, busy, error, notice }: {
   lang: Lang;
+  workspace: boolean;
   onClose: () => void;
   onLogin: (email: string, password: string, displayName: string, intent: AuthIntent, theme: "light" | "dark", privacyAccepted: boolean) => void;
   onResend: (email: string) => void;
@@ -89,6 +91,8 @@ function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, 
   error: string;
   notice: { type: "confirm-email"; email: string } | null;
 }) {
+  const dialogRef = useRef<HTMLElement>(null);
+  useModalFocus(workspace, dialogRef);
   const [authIntent, setAuthIntent] = useState<AuthIntent>("signin");
   const [forgotPassword, setForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -106,21 +110,21 @@ function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, 
   const passwordMismatch = authIntent === "signup" && password.length > 0 && confirmPassword.length > 0 && password !== confirmPassword;
 
   return <div className="landing-auth-overlay" onMouseDown={onClose}>
-    <section className="landing-auth-card" onMouseDown={(event) => event.stopPropagation()}>
+    <section ref={dialogRef} className="landing-auth-card" role={workspace ? "dialog" : undefined} aria-modal={workspace || undefined} aria-labelledby={workspace ? "workspace-auth-title" : undefined} onMouseDown={(event) => event.stopPropagation()} onKeyDown={workspace ? (event) => { if (event.key === "Escape") onClose(); } : undefined}>
       <CloseButton className="landing-auth-close" label={lang === "zh" ? "关闭" : "Close"} onClick={onClose} />
-      <div className="landing-auth-brand"><ProductIcon /><span className="landing-auth-label">{text.account}</span></div>
-      {forgotPassword ? <PasswordResetRequest lang={lang} email={email} onRequest={onForgotPassword} onBack={() => setForgotPassword(false)} landing /> : <>
-        <h2>{authIntent === "signin" ? text.welcome : text.begin}</h2>
-        <div className="landing-auth-tabs"><button className={authIntent === "signin" ? "active" : ""} onClick={() => { if (authIntent !== "signin") setPrivacyAccepted(false); setAuthIntent("signin"); }}>{text.signIn}</button><button className={authIntent === "signup" ? "active" : ""} onClick={() => { if (authIntent !== "signup") setPrivacyAccepted(false); setAuthIntent("signup"); }}>{text.signUp}</button></div>
+      <div className="landing-auth-brand"><ProductIcon />{workspace ? <h2 id="workspace-auth-title">NavoPath</h2> : <span className="landing-auth-label">{text.account}</span>}</div>
+      {forgotPassword ? <PasswordResetRequest lang={lang} email={email} onRequest={onForgotPassword} onBack={() => setForgotPassword(false)} landing showEmailPrompt={!workspace} /> : <>
+        {!workspace && <h2>{authIntent === "signin" ? text.welcome : text.begin}</h2>}
+        <div className="landing-auth-tabs"><button type="button" aria-pressed={authIntent === "signin"} className={authIntent === "signin" ? "active" : ""} onClick={() => { if (authIntent !== "signin") setPrivacyAccepted(false); setAuthIntent("signin"); }}>{text.signIn}</button><button type="button" aria-pressed={authIntent === "signup"} className={authIntent === "signup" ? "active" : ""} onClick={() => { if (authIntent !== "signup") setPrivacyAccepted(false); setAuthIntent("signup"); }}>{text.signUp}</button></div>
         <form autoComplete="on" onSubmit={(event) => { event.preventDefault(); if (!busy && privacyAccepted && !passwordMismatch) { setAuthPersistencePreference(savePassword); onLogin(email.trim(), password, displayName.trim(), authIntent, "light", privacyAccepted); } }}>
-          {authIntent === "signup" && <input name="name" autoComplete="name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder={text.name} maxLength={64} />}
-          <input name="email" autoComplete="username" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder={text.email} required />
+          {authIntent === "signup" && <input name="name" aria-label={text.name} autoComplete="name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder={text.name} maxLength={64} />}
+          <input name="email" aria-label={text.email} autoComplete="username" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder={text.email} required />
           <div className="landing-auth-password-field">
-            <input name="password" autoComplete={authIntent === "signin" ? "current-password" : "new-password"} type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={text.password} minLength={6} required />
+            <input name="password" aria-label={text.password} autoComplete={authIntent === "signin" ? "current-password" : "new-password"} type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={text.password} minLength={6} required />
             <IconButton className="landing-password-visibility" icon={<UiEyeIcon />} label={showPassword ? text.hide : text.show} onClick={() => setShowPassword((visible) => !visible)} />
           </div>
           {authIntent === "signup" && <div className="landing-auth-password-field">
-            <input name="confirm-password" autoComplete="new-password" type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder={text.confirm} minLength={6} required />
+            <input name="confirm-password" aria-label={text.confirm} autoComplete="new-password" type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder={text.confirm} minLength={6} required />
             <IconButton className="landing-password-visibility" icon={<UiEyeIcon />} label={showPassword ? text.hide : text.show} onClick={() => setShowPassword((visible) => !visible)} />
           </div>}
           <div className="landing-auth-account-actions">
@@ -129,7 +133,7 @@ function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, 
           </div>
           <PrivacyConsent lang={lang} checked={privacyAccepted} onChange={setPrivacyAccepted} disabled={busy} />
           {notice && <div className="landing-auth-notice"><strong>{text.inbox}</strong><p>{text.inboxBody}<br />{notice.email}</p><button type="button" onClick={() => onResend(notice.email)}>{text.resend}</button><button type="button" disabled={busy || !privacyAccepted} onClick={() => { if (privacyAccepted) onContinueAfterConfirm(notice.email); }}>{text.continue}</button></div>}
-          {passwordMismatch && <p className="landing-auth-error">{text.mismatch}</p>}{error && <p className="landing-auth-error">{error}</p>}
+          {passwordMismatch && <p className="landing-auth-error" role="alert">{text.mismatch}</p>}{error && <p className="landing-auth-error" role="alert">{error}</p>}
           <button className="landing-button primary full" disabled={busy || !privacyAccepted || passwordMismatch}>{busy ? text.working : authIntent === "signin" ? text.open : text.create}</button>
         </form>
       </>}
@@ -225,6 +229,6 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
       <section className="landing-cta"><span>03 / NAVOPATH</span><h2>{c.ctaTitle}</h2><p>{c.ctaBody}</p><div className="landing-actions"><button className="np-start-link" onClick={() => setShowAuth(true)}>{c.start}</button><a className="landing-button quiet" href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer">{c.download}<span>→</span></a></div></section>
     </main>
     <footer className="landing-footer"><nav aria-label={lang === "zh" ? "产品功能" : "Features"}>{PRODUCT_FEATURES.map(feature => <a key={feature} href={featureHref(feature, lang)}>{featureNames[lang][feature]}</a>)}<a href={`/privacy?lang=${lang}`}>{lang === "zh" ? "隐私政策" : "Privacy Policy"}</a></nav><a className="landing-footer-author" href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">© 2026 Xiaoyang Chen</a><a className="landing-footer-principles" href={principleHref("jev", lang)}>{lang === "zh" ? "设计原理" : "Principles"}</a></footer>
-    {showAuth && <AuthDialog lang={lang} onClose={() => setShowAuth(false)} onLogin={onLogin} onResend={onResend} onContinueAfterConfirm={onContinueAfterConfirm} onForgotPassword={onForgotPassword} busy={busy} error={error} notice={notice} />}
+    {showAuth && <AuthDialog lang={lang} workspace={initialShowAuth} onClose={() => setShowAuth(false)} onLogin={onLogin} onResend={onResend} onContinueAfterConfirm={onContinueAfterConfirm} onForgotPassword={onForgotPassword} busy={busy} error={error} notice={notice} />}
   </div>;
 }

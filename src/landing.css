@@ -147,6 +147,8 @@ html.landing-document #root {
 .landing-auth-brand .dayflow-icon, .landing-auth-brand .dayflow-icon img { width: 44px; height: 44px; }
 .landing-auth-label { color: var(--l-faint); font: 10px var(--l-mono); letter-spacing: .12em; text-transform: uppercase; }
 .landing-auth-card h2 { margin: 22px 0 14px; font-family: var(--l-display); font-size: 36px; font-weight: 600; letter-spacing: -.035em; line-height: 1.12; }
+.landing-auth-card .landing-auth-brand > h2 { margin: 0; }
+.landing-auth-brand:has(> h2) + .landing-auth-tabs { margin-top: 18px; }
 .landing-auth-card p { color: var(--l-muted); font-size: 13px; line-height: 1.55; }
 .landing-auth-close { position: absolute; top: 13px; right: 14px; width: 36px; height: 36px; color: var(--l-muted); font-size: 24px; }
 .landing-auth-close:hover { color: var(--l-ink); border-color: var(--l-ink); }

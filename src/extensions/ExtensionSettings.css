@@ -7,7 +7,6 @@
 .df-extension-back { margin-bottom: 16px; }
 .df-extension-meta, .df-extension-state { display: block; color: var(--text-muted); font: 400 12px/1.5 var(--paper-sans); }
 .df-extension-meta { margin-top: 6px; overflow-wrap: anywhere; }
-.df-extension-count { margin-left: 6px; font-weight: 400; color: var(--text-muted); }
 .df-extension-note { margin: 12px 0; color: var(--text-muted); font: 400 12px/1.5 var(--paper-sans); }
 .df-extension-empty { display: flex; flex-wrap: wrap; gap: 12px; padding: 22px 0; }
 .df-extension-empty > p { flex-basis: 100%; margin: 0; }
@@ -20,7 +19,6 @@
 .ui-modal.df-extension-market { display: flex; flex-direction: column; width: min(1120px, calc(100vw - 48px)); min-height: min(640px, calc(100dvh - 48px)); max-height: calc(100dvh - 48px); padding: 0; border: 1px solid var(--paper-rule-strong); border-radius: 12px; background: var(--surface-main, #faf9f5); color: var(--text-main, #25292e); font: 400 14px/1.55 var(--paper-sans, sans-serif); overflow: hidden; }
 .df-extension-market-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 24px 24px 18px; border-bottom: 1px solid var(--paper-rule); }
 .df-extension-market-head h2 { margin: 0; font: 600 21px/1.35 var(--paper-sans, sans-serif); }
-.df-extension-market-head p { margin: 6px 0 0; color: var(--text-muted); font-size: 13px; }
 .df-extension-market-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--paper-rule); }
 .df-extension-market-toolbar .df-extension-search { flex: 1 1 280px; margin: 0; }
 .df-extension-market-toolbar > .df-settings-select { width: auto; flex: 0 1 150px; appearance: auto; }

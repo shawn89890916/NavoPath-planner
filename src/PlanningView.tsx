@@ -11,12 +11,11 @@ import { highlightTaskLocation } from "./utils/highlightTaskLocation";
 import { projectColorInk } from "./utils/presentationColor";
 import { buildTaskMetaBadges } from "./utils/taskMetaBadges";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
-import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
 import { kanbanGroups, WORKFLOW_LABELS } from "./utils/productivity";
 import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch, type UiWorkflowStatus, type StateFilterValue } from "./utils/productivityModel";
 import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlockContent, TaskBlockDuration, TaskCheckbox, TaskSubtaskShelf } from "./components/TaskBlock";
-import { CloseButton, IconButton } from "./components/UiPrimitives";
+import { IconButton } from "./components/UiPrimitives";
 import { UiCalendarCheckIcon, UiCheckIcon, UiFilterIcon } from "./components/UiIcons";
 import { TaskDragLayer } from "./unifiedDrag";
 import { bindHeldTouchScroll } from "./useUnifiedDrag";
@@ -904,7 +903,6 @@ export default function PlanningView(props: {
     scroll.addEventListener("scroll", saveScroll, { passive: true });
     return () => scroll.removeEventListener("scroll", saveScroll);
   }, [session]);
-  const [guideDismissed, setGuideDismissed] = useState(() => props.demo ? false : isGuideDismissed("planning"));
   const [planningDragTask, setPlanningDragTask] = useState<{
     task: Task;
     sourceRect: { width: number; height: number };
@@ -1176,7 +1174,6 @@ export default function PlanningView(props: {
   const svgLines = useTreeLines(treeRef, safeProjects, viewFilteredTasks, props.collapsed, collapsedSubtasks);
 
   // This entry note stays dismissed after the user closes it.
-  const showLongRangeGuide = !props.demo && !guideDismissed;
 
   const renderTaskSubtasks = (task: Task) => {
     if (collapsedSubtasks[task.id] || !(task.subtasks || []).some(isIncompletePlanningSubtask)) return null;
@@ -2156,14 +2153,6 @@ export default function PlanningView(props: {
                 </header>
               )}
             <div className="df-tree-wrap">
-            {showLongRangeGuide && viewMode === "tree" && (
-              <aside className="df-planning-longrange-guide" role="note">
-                <CloseButton className="df-planning-guide-close" label={props.lang === "zh" ? "关闭规划说明" : "Dismiss planning note"} onClick={() => { if (!props.demo) dismissGuide("planning"); setGuideDismissed(true); }} />
-                <span>{props.lang === "zh" ? "长期任务，从这里开始规划" : "Plan long-range work here"}</span>
-                <strong>{props.lang === "zh" ? "先建立项目，再拆成任务，最后排进日程。" : "Create a project, break it into tasks, then schedule it."}</strong>
-                <div aria-hidden="true"><b>01 {props.lang === "zh" ? "项目" : "Project"}</b><i>→</i><b>02 {props.lang === "zh" ? "任务" : "Tasks"}</b><i>→</i><b>03 {props.lang === "zh" ? "排程" : "Schedule"}</b></div>
-              </aside>
-            )}
           {viewMode === "tree" && activeFilterChips.length > 0 && (
             <div className="df-active-filter-bar" role="region" aria-label={props.lang === "zh" ? "Active filters" : "Active filters"}>
               {activeFilterChips.map((chip) => (
@@ -2201,10 +2190,12 @@ export default function PlanningView(props: {
               )}
 
               {metricsResult.taskEntries.length === 0 ? (
-                <div className="df-metrics-empty">
+                <div className="df-metrics-empty" role={props.demo ? undefined : "status"}>
                   <h3>{props.lang === "zh" ? "暂无时间安排" : "No scheduled time"}</h3>
-                  <p>{props.lang === "zh" ? "这个时间范围内还没有安排任务。把任务拖入时间轴后，这里会显示时间占比。" : "Schedule tasks on the timeline and this report will show allocation."}</p>
-                  <button type="button" className="df-metrics-text-action" onClick={() => setMetricRange("today")}>{props.lang === "zh" ? "调整筛选" : "Adjust filters"}</button>
+                  {props.demo && <>
+                    <p>{props.lang === "zh" ? "这个时间范围内还没有安排任务。把任务拖入时间轴后，这里会显示时间占比。" : "Schedule tasks on the timeline and this report will show allocation."}</p>
+                    <button type="button" className="df-metrics-text-action" onClick={() => setMetricRange("today")}>{props.lang === "zh" ? "调整筛选" : "Adjust filters"}</button>
+                  </>}
                 </div>
               ) : (
                 <>

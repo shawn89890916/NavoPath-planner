@@ -18,9 +18,9 @@ import { Button, CloseButton, IconButton, UndoButton } from "./components/UiPrim
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
 import { UiCalendarCheckIcon, UiCalendarClockIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiReturnIcon, UiTrashIcon } from "./components/UiIcons";
 import { clockTimeSpanMinutes } from "./utils/timelineRecords";
-import { SLOT_MINUTES, ATTACHMENT_ACCEPT, AutoScheduleState, AiSessionMessage, AiClarificationQuestionsLazy, AiMarkdownLazy, addMinutes, sortAiConversations, formatMinutes, MobileSheetDismissHandle, aiStepLabel, AttachmentCard } from "./WorkspacePresentation";
+import { SLOT_MINUTES, ATTACHMENT_ACCEPT, AiSessionMessage, AiClarificationQuestionsLazy, AiMarkdownLazy, addMinutes, sortAiConversations, formatMinutes, MobileSheetDismissHandle, aiStepLabel, AttachmentCard } from "./WorkspacePresentation";
 
-export default function AiPanel({ embedded = false, workspace = false, closing = false, demoControls, docked, onDock, input, setInput, busy, onSend, onCancel, onPlanToday, planState, onClose, messages, conversations, activeConversationId, conversationListOpen, onToggleConversationList, auditOpen, auditRuns, auditLoading, auditError, onToggleAudit, onNewConversation, onSelectConversation, onRenameConversation, onToggleConversationPinned, onDeleteConversation, memoryNotice, onOpenMemorySettings, actionPatches, onPatchAction, onConfirmAction, onDismissAction, onToggleAction, onSetAllActions, onAdoptSelected, onRejectSelected, onViewImport, onUndoImport, projectList, taskList, lang, attachment, attachmentStatus, onAttachment, onClearAttachment, model, models, onModelChange, safetyLevel, onSafetyLevelChange, onApproveAgent, onRejectAgent, onUndoAgent, globalAgentAvailable }: { closing?: boolean; embedded?: boolean; workspace?: boolean; demoControls?: React.ReactNode; docked: boolean; onDock: (docked: boolean) => void; input: string; setInput: (v: string) => void; busy: boolean; onSend: (messageOverride?: string) => void | Promise<unknown>; onCancel: () => void; onPlanToday: () => void; planState: AutoScheduleState; onClose: () => void; messages: AiSessionMessage[]; conversations: AiConversation[]; activeConversationId: string; conversationListOpen: boolean; onToggleConversationList: () => void; auditOpen: boolean; auditRuns: AgentAuditEntry[]; auditLoading: boolean; auditError: string; onToggleAudit: () => void; onNewConversation: () => void; onSelectConversation: (conversationId: string) => void; onRenameConversation: (conversationId: string, title: string) => void; onToggleConversationPinned: (conversationId: string) => void; onDeleteConversation: (conversationId: string) => void; memoryNotice: string; onOpenMemorySettings: () => void; actionPatches: Record<string, Record<number, Record<string, unknown>>>; onPatchAction: (messageId: string, index: number, patch: Record<string, unknown>) => void; onConfirmAction: (messageId: string, action: AiAction, index: number) => void; onDismissAction: (messageId: string, action: AiAction, index: number) => void; onToggleAction: (messageId: string, index: number) => void; onSetAllActions: (messageId: string, checked: boolean) => void; onAdoptSelected: (messageId: string) => void; onRejectSelected: (messageId: string) => void; onViewImport: (messageId: string) => void; onUndoImport: (messageId: string) => void; projectList?: { id: string; title: string; color?: string }[]; taskList?: { id: string; title: string }[]; lang: Language; attachment?: ParsedAttachment | null; attachmentStatus?: string; onAttachment: (file: File) => void; onClearAttachment: () => void; model: string; models: readonly string[]; onModelChange: (model: string) => void; safetyLevel: Settings["aiSafetyLevel"]; onSafetyLevelChange: (level: Settings["aiSafetyLevel"]) => void; onApproveAgent: (messageId: string) => void; onRejectAgent: (messageId: string) => void; onUndoAgent: (messageId: string) => void; globalAgentAvailable: boolean }) {
+export default function AiPanel({ embedded = false, workspace = false, closing = false, demoControls, docked, onDock, input, setInput, busy, onSend, onCancel, onClose, messages, conversations, activeConversationId, conversationListOpen, onToggleConversationList, auditOpen, auditRuns, auditLoading, auditError, onToggleAudit, onNewConversation, onSelectConversation, onRenameConversation, onToggleConversationPinned, onDeleteConversation, memoryNotice, onOpenMemorySettings, actionPatches, onPatchAction, onConfirmAction, onDismissAction, onToggleAction, onSetAllActions, onAdoptSelected, onRejectSelected, onViewImport, onUndoImport, projectList, taskList, lang, attachment, attachmentStatus, onAttachment, onClearAttachment, model, models, onModelChange, safetyLevel, onSafetyLevelChange, onApproveAgent, onRejectAgent, onUndoAgent, globalAgentAvailable }: { closing?: boolean; embedded?: boolean; workspace?: boolean; demoControls?: React.ReactNode; docked: boolean; onDock: (docked: boolean) => void; input: string; setInput: (v: string) => void; busy: boolean; onSend: (messageOverride?: string) => void | Promise<unknown>; onCancel: () => void; onClose: () => void; messages: AiSessionMessage[]; conversations: AiConversation[]; activeConversationId: string; conversationListOpen: boolean; onToggleConversationList: () => void; auditOpen: boolean; auditRuns: AgentAuditEntry[]; auditLoading: boolean; auditError: string; onToggleAudit: () => void; onNewConversation: () => void; onSelectConversation: (conversationId: string) => void; onRenameConversation: (conversationId: string, title: string) => void; onToggleConversationPinned: (conversationId: string) => void; onDeleteConversation: (conversationId: string) => void; memoryNotice: string; onOpenMemorySettings: () => void; actionPatches: Record<string, Record<number, Record<string, unknown>>>; onPatchAction: (messageId: string, index: number, patch: Record<string, unknown>) => void; onConfirmAction: (messageId: string, action: AiAction, index: number) => void; onDismissAction: (messageId: string, action: AiAction, index: number) => void; onToggleAction: (messageId: string, index: number) => void; onSetAllActions: (messageId: string, checked: boolean) => void; onAdoptSelected: (messageId: string) => void; onRejectSelected: (messageId: string) => void; onViewImport: (messageId: string) => void; onUndoImport: (messageId: string) => void; projectList?: { id: string; title: string; color?: string }[]; taskList?: { id: string; title: string }[]; lang: Language; attachment?: ParsedAttachment | null; attachmentStatus?: string; onAttachment: (file: File) => void; onClearAttachment: () => void; model: string; models: readonly string[]; onModelChange: (model: string) => void; safetyLevel: Settings["aiSafetyLevel"]; onSafetyLevelChange: (level: Settings["aiSafetyLevel"]) => void; onApproveAgent: (messageId: string) => void; onRejectAgent: (messageId: string) => void; onUndoAgent: (messageId: string) => void; globalAgentAvailable: boolean }) {
   const projects = projectList || [];
   const tasks = taskList || [];
   const panelRef = useRef<HTMLElement>(null);
@@ -188,8 +188,6 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
     noChats: lang === "zh" ? "暂无对话" : "No conversations",
     historyTitle: lang === "zh" ? "历史对话" : "Conversation history",
     recentChats: lang === "zh" ? "最近的对话" : "Recent conversations",
-    currentChat: lang === "zh" ? "当前" : "Current",
-    chatUnit: lang === "zh" ? "个会话" : "conversations",
     untitled: lang === "zh" ? "未命名对话" : "Untitled",
     rename: lang === "zh" ? "重命名" : "Rename",
     pin: lang === "zh" ? "置顶" : "Pin",
@@ -279,11 +277,11 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
     </div>
     {conversationListOpen && <section className="df-ai-conversation-list" aria-label={text.historyTitle}>
       <header className="df-ai-history-head">
-        <div><strong>{text.recentChats}</strong><small>{sortedConversations.length} {text.chatUnit}</small></div>
+        <h2>{text.recentChats}</h2>
         <button type="button" onClick={onNewConversation}>{text.newChat}<span aria-hidden="true">＋</span></button>
       </header>
       <div className="df-ai-conversation-items">
-        {sortedConversations.length === 0 && <div className="df-ai-history-empty"><strong>{text.noChats}</strong><small>{lang === "zh" ? "开始一段新对话后，会在这里继续。" : "Start a new conversation and return to it here."}</small></div>}
+        {sortedConversations.length === 0 && <div className="df-ai-history-empty">{text.noChats}</div>}
         {sortedConversations.map((conversation, conversationIndex) => {
           const active = conversation.id === activeConversationId;
           const renaming = renamingConversationId === conversation.id;
@@ -302,12 +300,11 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
               <button type="submit" disabled={!conversationDraftTitle.trim()}>{text.save}</button>
               <button type="button" onClick={() => setRenamingConversationId(null)}>{text.cancel}</button>
             </form> : <>
-              <button type="button" className="df-ai-conversation-main" onClick={() => onSelectConversation(conversation.id)}>
+              <button type="button" className="df-ai-conversation-main" aria-current={active || undefined} onClick={() => onSelectConversation(conversation.id)}>
                 <span className="df-ai-conversation-copy">
                   <span className="df-ai-conversation-title-line">
                     {conversation.pinned && <svg className="df-ai-conversation-pin" viewBox="0 0 24 24" aria-label={text.pinned}><path d="M9 3h6l-.8 5.1 3.3 3.3v1.1h-11v-1.1l3.3-3.3L9 3Z" /><path d="M12 12.5V21" /></svg>}
                     <strong>{conversation.title || text.untitled}</strong>
-                    {active && <small className="df-ai-conversation-current">{text.currentChat}</small>}
                   </span>
                   <span className="df-ai-conversation-preview">{conversationPreview(conversation)}</span>
                   <small>{conversationDate(conversation)} · {conversation.messages.length} {lang === "zh" ? "条消息" : "messages"}</small>
@@ -352,10 +349,10 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
       followLatestRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 72;
     }}>
       {messages.length === 0 && <div className="df-ai-reference-empty">
-        <div className="df-ai-reference-prompt">{demoControls ? (lang === "zh" ? "今天想推进的几件事" : "A few things for today") : (lang === "zh" ? "今天想先推进什么？" : "What would you like to move forward today?")}</div>
+        {demoControls && <div className="df-ai-reference-prompt">{lang === "zh" ? "今天想推进的几件事" : "A few things for today"}</div>}
         {demoControls}
-        {!demoControls && <div className="df-ai-reference-suggestions">
-          {promptSuggestions.map((suggestion) => <button key={suggestion} onClick={() => setInput(suggestion)}>{suggestion}</button>)}
+        {!demoControls && <div className="df-ai-reference-suggestions" role="group" aria-label={lang === "zh" ? "消息建议" : "Suggested messages"}>
+          {promptSuggestions.map((suggestion) => <button key={suggestion} type="button" onClick={() => { setInput(suggestion); composerTextareaRef.current?.focus(); }}>{suggestion}</button>)}
         </div>}
         {!demoControls && <div className={`df-ai-capability-state ${globalAgentAvailable ? "ready" : "locked"}`}>
           <span aria-hidden="true">{globalAgentAvailable ? "●" : "○"}</span>
@@ -495,14 +492,10 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
       </section>)}
     </div>
     {!(demoControls && messages.length === 0) && <div className="df-ai-panel-foot">
-      {!demoControls && <button className={`df-ai-panel-plan${planState === "generating" || planState === "committing" ? " thinking" : ""}`} type="button" onClick={onPlanToday} disabled={planState === "generating" || planState === "committing"}>
-        <span>{lang === "zh" ? "安排建议" : "Schedule Suggestions"}</span>
-        <small>{planState === "generating" ? (lang === "zh" ? "分析中" : "Analyzing") : planState === "committing" ? (lang === "zh" ? "应用中" : "Applying") : planState === "preview" ? (lang === "zh" ? "重新生成" : "Regenerate") : (lang === "zh" ? "为今天生成时间安排" : "Build today's schedule")}</small>
-      </button>}
       {memoryNotice && <button className="df-ai-memory-notice" onClick={onOpenMemorySettings}>{memoryNotice} · {text.viewMemory}</button>}
       {(attachment || attachmentStatus) && <AttachmentCard attachment={attachment ? { name: attachment.name, size: attachment.size, pageCount: attachment.pageCount, truncated: attachment.truncated, status: "ready", statusText: attachmentStatus || "文本已提取", summary: attachment.text.slice(0, 120).replace(/\s+/g, " ") } : { name: "正在解析附件", size: 0, status: "error", statusText: attachmentStatus || "正在解析", summary: "" }} onRemove={onClearAttachment} />}
       {demoControls || <div className="df-ai-composer-row">
-        <textarea ref={composerTextareaRef} value={input} onChange={(event) => setInput(event.target.value)} placeholder={t(lang, "aiPanel.thinkPlaceholder")} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); onSend(); } }} />
+        <textarea ref={composerTextareaRef} value={input} onChange={(event) => setInput(event.target.value)} aria-label={t(lang, "aiPanel.message")} placeholder={t(lang, "aiPanel.message")} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); onSend(); } }} />
         <button ref={composerMenuButtonRef} type="button" className={`df-ai-attach-btn${composerMenuOpen ? " active" : ""}`} title={lang === "zh" ? "模型、安全与附件" : "Model, safety, and attachments"} aria-label={lang === "zh" ? "打开更多选项" : "Open more options"} aria-expanded={composerMenuOpen} onClick={() => setComposerMenuOpen((open) => !open)}>＋</button>
         <label className="df-ai-inline-model">
           <span className="df-visually-hidden">{lang === "zh" ? "选择模型" : "Choose model"}</span>

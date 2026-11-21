@@ -13,6 +13,8 @@ export default function CommandPalette(props: {
   onClose: () => void;
   onChoose: (result: CommandSearchResult) => void;
 }) {
+  const zh = props.lang === "zh";
+  const searchLabel = zh ? "搜索工作区" : "Search workspace";
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!props.closing) window.setTimeout(() => inputRef.current?.focus(), 0);
@@ -36,6 +38,8 @@ export default function CommandPalette(props: {
           <UiSearchIcon size={20} />
           <input
             ref={inputRef}
+            type="search"
+            aria-label={searchLabel}
             value={props.query}
             onChange={(event) => props.onQuery(event.target.value)}
             onKeyDown={(event) => {
@@ -48,7 +52,7 @@ export default function CommandPalette(props: {
                 props.onChoose(props.results[0]);
               }
             }}
-            placeholder={props.lang === "zh" ? "搜索任务、项目、习惯、设置" : "Search tasks, projects, habits, settings"}
+            placeholder={searchLabel}
           />
           <CloseButton label={props.lang === "zh" ? "关闭搜索" : "Close search"} onClick={props.onClose} />
         </div>
@@ -58,12 +62,11 @@ export default function CommandPalette(props: {
               <span className="df-command-kind">{kindLabel(result.kind)}</span>
               <span className="df-command-main">
                 <strong>{result.title}</strong>
-                <small>{result.subtitle}</small>
+                {result.subtitle && <small>{result.subtitle}</small>}
               </span>
-              {result.focusTarget && <span className="df-command-jump">{props.lang === "zh" ? "跳转" : "Jump"}</span>}
             </button>
           ))}
-          {props.results.length === 0 && <p className="df-command-empty">{props.lang === "zh" ? "没有匹配结果" : "No matching results"}</p>}
+          {props.results.length === 0 && <p className="df-command-empty" role="status">{zh ? "没有匹配结果" : "No matching results"}</p>}
         </div>
       </section>
     </>

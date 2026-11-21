@@ -60,7 +60,6 @@ import { expandTaskAllDayRecords, expandTaskTimelineSlices } from "./utils/taskT
 import { addDays, addMonths, buildRecurrenceOccurrenceId, enumerateRecurrenceDates, hasRecurrenceOccurrenceOnDate, hasRecurringRule, isRecurringScheduledTask, matchesOccurrence, parseRecurrenceOccurrenceId, startOfWeekIso } from "./utils/recurrence";
 import { appendAiSubtasks, getAiSubtaskSuggestions } from "./utils/aiSubtasks";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
-import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
 import { addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree } from "./utils/treeOrder";
 import { reorderTodayCandidates, returnScheduledTaskToToday } from "./utils/todayCandidates";
 import { reconcileOverdueTasks } from "./utils/overdueTasks";
@@ -855,6 +854,7 @@ type OnboardingStep = NonNullable<Settings["onboardingStep"]>;
 
 function OnboardingGuide(props: {
   lang: Language;
+  touch: boolean;
   step: OnboardingStep;
   projectManagement: boolean;
   onOpenPlanning: () => void;
@@ -869,7 +869,9 @@ function OnboardingGuide(props: {
   const copy = {
     add: [zh ? "添加第一个任务" : "Add your first task", zh ? "直接在工作区键入，或使用候选区下方的快速添加栏。" : "Type anywhere in the workspace, or use the quick-add field below Candidates."],
     candidates: [zh ? "管理任务" : "Manage Tasks", zh ? "在这里完成、恢复、调整时长，或把任务移回 Planning。" : "Complete, restore, resize, or move tasks back to Planning here."],
-    schedule: [zh ? "拖到时间轴排程" : "Schedule on the timeline", zh ? "把候选任务拖到时间轴，选择开始时间；任务块可继续拖动和调整。" : "Drag a candidate to a start time, then move or resize its timeline block."],
+    schedule: [zh ? "在时间轴安排任务" : "Schedule a task", props.touch
+      ? (zh ? "点任务旁的「安排」，或长按任务拖到时间轴。" : "Choose Plan beside a task, or press and hold to drag it onto the timeline.")
+      : (zh ? "把任务拖到时间轴，或打开任务旁的时间安排。" : "Drag a task onto the timeline or open its scheduling options.")],
     calendar: [zh ? "切换日历视图" : "Switch calendar views", zh ? "使用日、三日、周和连续月视图，并可随时回到今天。" : "Use Day, 3-Day, Week, and continuous Month views, then jump back to today."],
     planning: [zh ? "拆解长期目标" : "Break down long-term work", zh ? "整块拖动项目、任务与子任务；预览会显示即将放置的位置和层级。" : "Drag whole projects, tasks, and subtasks; the preview shows the resulting position and level."],
     ai: [zh ? "使用 AI 助手" : "Use the AI assistant", zh ? "AI 以你的本地日期和时区理解今天、明天等相对日期。" : "AI uses your local date and timezone for today, tomorrow, and other relative dates."],
@@ -879,7 +881,6 @@ function OnboardingGuide(props: {
 
   return (
     <aside className={`df-onboarding-guide step-${props.step}`} aria-live="polite">
-      <span className="df-onboarding-index">{String(index + 1).padStart(2, "0")} / 06</span>
       <strong>{content[0]}</strong>
       <p>{content[1]}</p>
       <div>
@@ -1164,7 +1165,6 @@ function App() {
   const [toastAction, setToastAction] = useState<{ label: string; onClick: () => void; undo?: boolean } | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const [showCompletedCandidates, setShowCompletedCandidates] = useState(false);
-  const [scheduleGuideOpen, setScheduleGuideOpen] = useState(() => !productDemo && !isGuideDismissed("schedule"));
   const [completingTaskIds, setCompletingTaskIds] = useState<Set<string>>(() => new Set());
   const completionHandlesRef = useRef(new Map<string, ReturnType<typeof scheduleMotionCommit> | null>());
   const [groupByProject, setGroupByProject] = useState(true);
@@ -2677,6 +2677,14 @@ if (cached?.data && cached?.settings) {
     }
     setCandidateDrawerOpen(false);
     candidateTriggerRef.current?.focus();
+  }
+
+  function openQuickTaskAdd() {
+    if (candidateDrawerOpen) closeCandidateDrawer();
+    setQuickTitle("");
+    setMobileQuickAddKind("task");
+    setMobileQuickAddDate(null);
+    setQuickAddOpen(true);
   }
 
   useEffect(() => {
@@ -9295,7 +9303,7 @@ if (cached?.data && cached?.settings) {
   </div> : undefined;
   const workspaceChatPanel = !productPresentation;
   const closeWorkspaceChat = () => { cancelAi(); setAiOpen(false); clearAiAttachment(); };
-  const aiPanel = aiPresence.present && (aiOpen || !workspacePanel) && <AiPanel workspace={workspaceChatPanel} closing={aiPresence.closing} demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onPlanToday={() => void planMyDay()} planState={autoScheduleState} onClose={closeWorkspaceChat} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
+  const aiPanel = aiPresence.present && (aiOpen || !workspacePanel) && <AiPanel workspace={workspaceChatPanel} closing={aiPresence.closing} demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onClose={closeWorkspaceChat} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
 
   const planningViewProps = {
     lang, data, projects, compact: compactLayout, collapsed: collapsedBranches, setCollapsed: setCollapsedBranches,
@@ -9312,6 +9320,7 @@ if (cached?.data && cached?.settings) {
     onTimelineDrop: commitShelfTimelineDrop,
   };
   const shelfTitle = term(lang, "todayCandidates");
+  const candidatesEmpty = visibleCandidates.length === 0 && !hasActiveHabits;
   const switchViewsLabel = lang === "zh" ? "切换左浮栏视图" : "Switch task views";
   const manageProjectsLabel = lang === "zh" ? "管理项目" : "Manage projects";
   const metricsLabel = lang === "zh" ? "指标" : "Metrics";
@@ -9434,6 +9443,7 @@ if (cached?.data && cached?.settings) {
         <OnboardingGuide
           lang={lang}
           step={onboardingStep}
+          touch={mobileExecution}
           projectManagement={projectManagement}
           onOpenPlanning={openProjectManagement}
           onOpenAi={() => setAiOpen(true)}
@@ -9611,28 +9621,6 @@ if (cached?.data && cached?.settings) {
                 {lang === "zh" ? "松手后移回任务" : "Release to return to Tasks"}
               </div>
             )}
-            {!projectManagement && !shelfView && compactLayout && compactExecuteView === "tasks" && scheduleGuideOpen && visibleCandidates.length > 0 && (
-              <aside className="df-schedule-drop-guide" aria-label={lang === "zh" ? "手机端拖拽排程说明" : "Mobile drag-to-schedule guide"}>
-                <div className="df-schedule-drop-guide-content">
-                  <p className="df-schedule-drop-guide-copy">
-                    <strong>{lang === "zh" ? "长按任务，松手后完成排程" : "Hold a task, then release to schedule"}</strong>
-                    <span>{lang === "zh" ? "页面会自动切到日程" : "The view switches to Schedule automatically"}</span>
-                  </p>
-                  <div className="df-schedule-drop-guide-demo" aria-hidden="true">
-                    <div className="df-schedule-drop-guide-source">
-                      <small>{lang === "zh" ? "任务" : "TASK"}</small>
-                      <strong>{lang === "zh" ? "探索 NavoPath" : "Explore NavoPath"}</strong>
-                    </div>
-                    <div className="df-schedule-drop-guide-route"><span /></div>
-                    <div className="df-schedule-drop-guide-target">
-                      <small>{lang === "zh" ? "日程 · 09:30" : "SCHEDULE · 09:30"}</small>
-                      <i />
-                    </div>
-                  </div>
-                </div>
-                <CloseButton label={lang === "zh" ? "关闭提示" : "Dismiss hint"} onClick={() => { dismissGuide("schedule"); setScheduleGuideOpen(false); }} />
-              </aside>
-            )}
             {!taskHistoryOpen && (schedulePreviews.length > 0 || scheduleUnscheduled.length > 0) && (
               <div className="df-ai-plan-feedback" role="status">
                 {schedulePreviews.length > 0 && <><span className="df-ai-plan-summary">{t(lang, "timeline.previewPlan").replace("X", String(schedulePreviews.length))}</span>{compactLayout && <div className="df-ai-plan-mobile-preview">{schedulePreviews.slice(0, 4).map((preview) => <button key={preview.id} type="button" onClick={() => { setCompactExecuteView("schedule"); setPendingTimelineFocus({ date: preview.scheduledDate, startTime: preview.scheduledStart, source: "autoschedule" }); }}><strong>{preview.title}</strong><small>{preview.scheduledDate} · {preview.scheduledStart}–{preview.scheduledEnd}</small></button>)}</div>}</>}
@@ -9647,8 +9635,15 @@ if (cached?.data && cached?.settings) {
             )}
             <Activity mode={projectManagement || shelfView ? "hidden" : "visible"}>
             <div className="df-candidate-list" data-shelf-scroll="candidates" inert={productAiPresentation && demoPresetBusy ? true : undefined}>
-              {visibleCandidates.length === 0 && !hasActiveHabits ? (
-                <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.emptyTitle")}</strong><span>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "在右侧查看安排，或试试改期与撤回。" : "Explore the timeline, reschedule a task, or undo.") : t(lang, "candidate.emptyDesc")}</span>{compactLayout && !productAiPresentation && <img className="df-empty-add-guidance" src="/empty-add-guidance-v2.png" alt="" aria-hidden="true" />}</div>
+              {candidatesEmpty ? (
+                productDemo ? (
+                  <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.demoEmptyTitle")}</strong><span>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "在右侧查看安排，或试试改期与撤回。" : "Explore the timeline, reschedule a task, or undo.") : t(lang, "candidate.demoEmptyDesc")}</span>{compactLayout && !productAiPresentation && <img className="df-empty-add-guidance" src="/empty-add-guidance-v2.png" alt="" aria-hidden="true" />}</div>
+                ) : (
+                  <div className="df-candidate-empty">
+                    <p>{t(lang, "candidate.emptyTitle")}</p>
+                    {compactLayout && <Button onClick={openQuickTaskAdd}>{t(lang, "planning.addTask")}</Button>}
+                  </div>
+                )
               ) : groupByProject ? (
                 (() => {
                   const candidatesByProject = new Map<string, Task[]>();
@@ -9751,7 +9746,7 @@ if (cached?.data && cached?.settings) {
               event.preventDefault();
               quickAddTask();
             }}>
-              <input ref={quickCandidateInputRef} value={quickTitle} onChange={(event) => setQuickTitle(event.target.value)} placeholder={t(lang, "candidate.addPlaceholder")} />
+              <input ref={quickCandidateInputRef} aria-label={lang === "zh" ? "任务名称" : "Task name"} value={quickTitle} onChange={(event) => setQuickTitle(event.target.value)} placeholder={t(lang, "candidate.addPlaceholder")} />
               <QuickProjectPicker
                 projects={projects}
                 value={quickProjectId}
@@ -9767,7 +9762,7 @@ if (cached?.data && cached?.settings) {
                 lang={lang}
               />
               <button className="df-quick-add-submit" type="submit" aria-label={t(lang, "candidate.add")} disabled={!quickTitle.trim()}>
-                Add
+                {t(lang, "candidate.add")}
               </button>
             </form>}
             </Activity>
@@ -10616,7 +10611,7 @@ if (cached?.data && cached?.settings) {
       {!productPresentation && !compactLayout && !settings.hideAi && (!workspacePanel || aiOpen) && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />}
       {createPortal(<div className="df-mobile-floating-actions" style={themeVars(settings, "execute")}>
         {mobileExecution && <Suspense fallback={null}><MobileExecutionControls
-          hidden={compactFloatingActionsHidden}
+          hidden={compactFloatingActionsHidden && !mobilePlacement}
           drawerOpen={candidateDrawerOpen} panelRef={candidatePanelRef} scrollRef={candidateScrollRef} onClose={closeCandidateDrawer}
           lang={lang} count={visibleCandidates.filter((task) => !task.completed).length} triggerRef={candidateTriggerRef}
           title={mobilePlacement ? (placementPreviewTask?.title || (lang === "zh" ? "任务已移除" : "Task removed")) : undefined}
@@ -10626,7 +10621,7 @@ if (cached?.data && cached?.settings) {
         <MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
         drawerOpen={compactFloatingActionsHidden} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, "execute")}
-        onAdd={() => { setQuickTitle(""); setMobileQuickAddKind("task"); setMobileQuickAddDate(null); setQuickAddOpen(true); }}
+        onAdd={openQuickTaskAdd}
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
@@ -12141,7 +12136,7 @@ function EditDrawer(props: {
       <aside className="df-drawer df-task-detail df-event-detail" onMouseDown={(event) => event.stopPropagation()}>
                   <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
         <section className="df-detail-hero-trevor">
-          <textarea className="df-detail-title-trevor" value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.eventTitlePlaceholder")} spellCheck={false} />
+          <textarea className="df-detail-title-trevor" aria-label={t(props.lang, "drawer.eventTitlePlaceholder")} value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.eventTitlePlaceholder")} spellCheck={false} />
         </section>
 
         <section className="df-detail-tag-row">
@@ -12198,14 +12193,14 @@ function EditDrawer(props: {
           </div>
           {notesEditing ? (
             <div className="df-notes-editor">
-              <textarea rows={4} value={f.details} onChange={(event) => { set("details", event.target.value); setNoteDraft(event.target.value); }} placeholder={t(props.lang, "drawer.addNotePlaceholder")} />
+              <textarea rows={4} aria-label={t(props.lang, "drawer.notes")} value={f.details} onChange={(event) => { set("details", event.target.value); setNoteDraft(event.target.value); }} placeholder={t(props.lang, "drawer.addNotePlaceholder")} />
               <div className="df-notes-editor-actions">
                 <button className="df-detail-pill-trevor action" onClick={() => { setNoteDraft(f.details); setNotesEditing(false); }}>{t(props.lang, "drawer.save")}</button>
               </div>
             </div>
-          ) : (
+          ) : f.details && (
             <div className="df-notes-preview" onClick={() => setNotesEditing(true)}>
-              {f.details ? <p>{f.details}</p> : <p className="placeholder">{t(props.lang, "drawer.noNotes")}</p>}
+              <p>{f.details}</p>
             </div>
           )}
         </section>
@@ -12231,7 +12226,7 @@ function EditDrawer(props: {
           <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
           <div className="df-segment df-detail-type-segment">{(["task", "project", "habit"] as AddType[]).map((type) => <button key={type} className={props.type === type ? "active" : ""} onClick={() => props.setType(type)}>{type === "task" ? t(props.lang, "form.task") : type === "project" ? t(props.lang, "form.project") : (props.lang === "zh" ? "习惯" : "Habit")}</button>)}</div>
           <section className="df-detail-hero-trevor">
-            <textarea ref={titleRef} className="df-detail-title-trevor" autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.titlePlaceholder")} spellCheck={false} />
+            <textarea ref={titleRef} className="df-detail-title-trevor" aria-label={t(props.lang, "drawer.titlePlaceholder")} autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.titlePlaceholder")} spellCheck={false} />
           </section>
 
           <section className="df-detail-tag-row">
@@ -12271,7 +12266,7 @@ function EditDrawer(props: {
 
           <section className="df-detail-notes-new">
             <div className="df-detail-section-head"><h3>{t(props.lang, "drawer.notes")}</h3></div>
-            <div className="df-notes-editor"><textarea rows={4} value={f.details} onChange={(event) => set("details", event.target.value)} placeholder={t(props.lang, "drawer.addNotePlaceholder")} /></div>
+            <div className="df-notes-editor"><textarea rows={4} aria-label={t(props.lang, "drawer.notes")} value={f.details} onChange={(event) => set("details", event.target.value)} placeholder={t(props.lang, "drawer.addNotePlaceholder")} /></div>
           </section>
 
           <div className="df-quick-add-detail-actions"><button className="primary" disabled={!f.title.trim()} onClick={props.onSave}>{t(props.lang, "form.add")}</button></div>
@@ -12381,7 +12376,7 @@ function EditDrawer(props: {
         <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
         {/* ── Hero title area ── */}
         <section className="df-detail-hero-trevor">
-          <textarea ref={titleRef} className="df-detail-title-trevor" value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.titlePlaceholder")} spellCheck={false} />
+          <textarea ref={titleRef} className="df-detail-title-trevor" aria-label={t(props.lang, "drawer.titlePlaceholder")} value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.titlePlaceholder")} spellCheck={false} />
         </section>
 
         {/* ── Project tag + action row ── */}
@@ -12565,11 +12560,9 @@ function EditDrawer(props: {
               </button>
             </div>
           </div>
-          <div className="df-subtask-list-new ui-divided-list">
-            {(props.task.subtasks || []).length === 0 ? (
-              <div className="df-subtask-empty">{t(props.lang, "drawer.noSubtasks")}</div>
-            ) : renderSubtaskRows(props.task.subtasks || [])}
-          </div>
+          {Boolean(props.task.subtasks?.length) && <div className="df-subtask-list-new ui-divided-list">
+            {renderSubtaskRows(props.task.subtasks || [])}
+          </div>}
         </section>
 
         {/* ── Notes ── */}
@@ -12589,9 +12582,9 @@ function EditDrawer(props: {
             <div className="df-notes-editor">
               <textarea autoFocus rows={4} value={noteDraft} onChange={(event) => setNoteDraft(event.target.value)} aria-label={t(props.lang, "drawer.notes")} placeholder={t(props.lang, "drawer.addNotePlaceholder")} />
             </div>
-          ) : (
+          ) : f.details && (
             <div className="df-notes-preview df-notes-preview--readonly">
-              {f.details ? <p>{f.details}</p> : <p className="placeholder">{t(props.lang, "drawer.noNotes")}</p>}
+              <p>{f.details}</p>
             </div>
           )}
         </section>
@@ -12605,11 +12598,7 @@ function EditDrawer(props: {
       <aside className="df-drawer df-task-detail df-project-detail" onMouseDown={(event) => event.stopPropagation()}>
         <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
         <section className="df-detail-hero-trevor">
-          <textarea className="df-detail-title-trevor" autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={props.lang === "zh" ? "项目名称" : "Project name"} spellCheck={false} />
-        </section>
-        <section className="df-detail-tag-row">
-          <span className="df-detail-pill-trevor project-kind">{props.lang === "zh" ? "项目" : "Project"}</span>
-          <span className="df-detail-pill-trevor"><i className="df-detail-project-dot" style={{ background: f.projectColor || props.project?.color || DEFAULT_PROJECT_COLOR }} />{props.lang === "zh" ? "项目颜色" : "Project color"}</span>
+          <textarea className="df-detail-title-trevor" aria-label={props.lang === "zh" ? "项目名称" : "Project name"} autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={props.lang === "zh" ? "项目名称" : "Project name"} spellCheck={false} />
         </section>
         <section className="df-detail-meta-settings" aria-label={props.lang === "zh" ? "项目优先级" : "Project priority"}>
           <div className="df-detail-meta-setting"><span>{props.lang === "zh" ? "重要程度" : "Importance"}</span>{taskLevelSelector("importance", importanceOptions)}</div>
@@ -12634,7 +12623,7 @@ function EditDrawer(props: {
         </section>
         <section className="df-detail-notes-new">
           <div className="df-detail-section-head"><h3>{t(props.lang, "drawer.notes")}</h3><button className="df-detail-add-btn" onClick={() => setNotesEditing((open) => !open)}><span>{notesEditing ? t(props.lang, "drawer.cancel") : t(props.lang, "drawer.edit")}</span></button></div>
-          {notesEditing ? <div className="df-notes-editor"><textarea rows={4} value={f.details} onChange={(event) => { set("details", event.target.value); setNoteDraft(event.target.value); }} placeholder={t(props.lang, "drawer.addNotePlaceholder")} /><div className="df-notes-editor-actions"><button className="df-detail-pill-trevor action" onClick={() => { setNoteDraft(f.details); setNotesEditing(false); }}>{t(props.lang, "drawer.save")}</button></div></div> : <div className="df-notes-preview" onClick={() => setNotesEditing(true)}>{f.details ? <p>{f.details}</p> : <p className="placeholder">{t(props.lang, "drawer.noNotes")}</p>}</div>}
+          {notesEditing ? <div className="df-notes-editor"><textarea rows={4} aria-label={t(props.lang, "drawer.notes")} value={f.details} onChange={(event) => { set("details", event.target.value); setNoteDraft(event.target.value); }} placeholder={t(props.lang, "drawer.addNotePlaceholder")} /><div className="df-notes-editor-actions"><button className="df-detail-pill-trevor action" onClick={() => { setNoteDraft(f.details); setNotesEditing(false); }}>{t(props.lang, "drawer.save")}</button></div></div> : f.details && <div className="df-notes-preview" onClick={() => setNotesEditing(true)}><p>{f.details}</p></div>}
         </section>
         {convertControl("project")}
       </aside>
@@ -12699,6 +12688,9 @@ const routeSearchParams = new URLSearchParams(window.location.search);
 const isCompactWindowRoute = routeSearchParams.get("compactWindow") === "1";
 const PasswordRecoveryPage = lazy(() => import("./PasswordRecoveryPage"));
 const isRecoveryCallback = isPasswordRecoveryCallback(new URL(window.location.href));
+if (!productDemo && (isRecoveryCallback || window.desktopApi || /^\/app(?:\/|$)/.test(window.location.pathname))) {
+  document.title = "NavoPath";
+}
 root.render(
   isRecoveryCallback
     ? <Suspense fallback={<ExecuteSkeleton />}><PasswordRecoveryPage lang={detectSystemLanguage()} getApi={waitForPlannerApi} onRequest={sendPasswordResetEmail} /></Suspense>

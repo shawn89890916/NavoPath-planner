@@ -11,6 +11,11 @@ export default function MobileExecutionControls({ lang, count, title, time, conf
 }) {
   const zh = lang === "zh";
   const wasOpen = useRef(false);
+  const placementRef = useRef<HTMLElement>(null);
+  const placing = title !== undefined;
+  useEffect(() => {
+    if (placing && !hidden) placementRef.current?.focus({ preventScroll: true });
+  }, [placing, hidden]);
   useEffect(() => {
     if (!drawerOpen) {
       if (wasOpen.current && title === undefined && !hidden) window.requestAnimationFrame(() => triggerRef.current?.focus());
@@ -31,8 +36,8 @@ export default function MobileExecutionControls({ lang, count, title, time, conf
     return () => window.removeEventListener("keydown", key, true);
   }, [drawerOpen]);
   if (hidden) return null;
-  return <div className="df-mobile-execution-controls" data-placing={title !== undefined || undefined}>
-    {title !== undefined ? <section className="df-mobile-placement" aria-label={zh ? "安排任务" : "Schedule task"}>
+  return <div className="df-mobile-execution-controls" data-placing={placing || undefined}>
+    {placing ? <section ref={placementRef} tabIndex={-1} className="df-mobile-placement" aria-label={zh ? "安排任务" : "Schedule task"}>
       <div aria-live="polite"><strong>{title}</strong><span>{time || (zh ? "点选时间安排" : "Tap the timeline to choose a time")}</span>
         {conflict && <span role="status">{zh ? "与已有日程重叠，仍可确认" : "Overlaps an existing event; you can still confirm"}</span>}</div>
       <div className="df-mobile-placement-actions"><Button onClick={onCancel}>{zh ? "取消" : "Cancel"}</Button>

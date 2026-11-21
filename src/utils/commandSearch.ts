@@ -16,6 +16,7 @@ export type CommandSearchResult = {
 };
 
 export function buildCommandSearchIndex(data: PlannerData, settings: Settings): CommandSearchResult[] {
+  const language = settings.language || "en";
   const taskResults = (data.tasks || []).map((task): CommandSearchResult => {
     const record = (task.timelineRecords || []).find((item) => item.executionStatus === "scheduled");
     return {
@@ -32,7 +33,7 @@ export function buildCommandSearchIndex(data: PlannerData, settings: Settings): 
     id: `project:${project.id}`,
     kind: "project",
     title: project.title,
-    subtitle: project.completed ? "Completed project" : "Project",
+    subtitle: project.completed ? (language === "zh" ? "已完成" : "Completed") : "",
     text: `${project.title} ${project.notes || ""}`.toLowerCase(),
     actions: ["open"],
   }));
@@ -40,18 +41,17 @@ export function buildCommandSearchIndex(data: PlannerData, settings: Settings): 
     id: `habit:${habit.id}`,
     kind: "habit",
     title: habit.title,
-    subtitle: "Habit",
+    subtitle: "",
     text: habit.title.toLowerCase(),
     actions: ["open", "schedule_now"],
   }));
-  const language = settings.language || "en";
   const visibleSettings = SETTINGS_SEARCH_ENTRIES.filter((item) => !(settings.theme === "dark" && item.id === "accent-colors"));
   const settingResults: CommandSearchResult[] = visibleSettings.map((item) => ({
     id: `setting:${item.id}`,
     kind: "setting",
     title: language === "zh" ? item.labelZh : item.labelEn,
     subtitle: settingsSearchPath(item, language),
-    text: [item.labelZh, item.labelEn, item.descriptionZh, item.descriptionEn, item.keywords].filter(Boolean).join(" "),
+    text: [item.labelZh, item.labelEn, item.descriptionZh, item.descriptionEn, item.keywords].filter(Boolean).join(" ").toLowerCase(),
     actions: ["open"],
   }));
   return [...taskResults, ...projectResults, ...habitResults, ...settingResults];

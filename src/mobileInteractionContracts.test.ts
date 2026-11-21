@@ -28,14 +28,12 @@ describe("portrait interaction contracts", () => {
     expect(main).toContain('className="df-detail-time-range"');
   });
 
-  it("explains the portrait long-press flow and respects reduced motion and dismissal", () => {
-    expect(main).toContain('aria-label={lang === "zh" ? "手机端拖拽排程说明" : "Mobile drag-to-schedule guide"}');
-    expect(main).toContain('"长按任务，松手后完成排程" : "Hold a task, then release to schedule"');
-    expect(main).toContain('"页面会自动切到日程" : "The view switches to Schedule automatically"');
-    expect(main).toContain('dismissGuide("schedule"); setScheduleGuideOpen(false);');
-    expect(appCss).toContain("animation: dfScheduleGuideMove 2.6s cubic-bezier(.2, 0, 0, 1) 1 both;");
-    expect(appCss).toMatch(/prefers-reduced-motion:\s*reduce[\s\S]*?\.df-schedule-drop-guide-route span\s*\{[\s\S]*?animation:\s*none;/);
-    expect(appCss).toMatch(/prefers-reduced-motion:\s*reduce[\s\S]*?\.df-schedule-drop-guide-target i\s*\{[\s\S]*?animation:\s*none;/);
+  it("gives portrait users a direct schedule action and teaches long-press in onboarding", () => {
+    expect(main).toContain('onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined}');
+    expect(main).toContain('event.stopPropagation(); onMobileSchedule();');
+    expect(main).toContain('press and hold to drag it onto the timeline');
+    expect(main).toContain('hidden={compactFloatingActionsHidden && !mobilePlacement}');
+    expect(main).not.toContain('df-schedule-drop-guide');
   });
 
   it("gives compact date and timeline view controls 44 pixel hit areas", () => {

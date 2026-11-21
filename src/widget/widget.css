@@ -112,7 +112,6 @@ html:has(.df-widget-popover-root), body:has(.df-widget-popover-root), #root:has(
 .df-widget-timer-settings-view { display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; gap: 8px; }
 .df-widget-timer-settings-view > .df-widget-mode-switch { flex: 0 0 auto; }
 .df-widget-schedule-guidance { padding: 6px 0; border-block: 1px solid var(--widget-border); }
-.df-widget-schedule-guidance p { margin: 0; color: var(--widget-muted); font-size: 13px; }
 .df-widget-pomodoro-preview { padding: 7px 8px; border-top: 1px solid var(--widget-border); font-size: 11px; }
 .df-widget-pomodoro-preview > div, .df-widget-deadline { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; color: var(--widget-muted); }
 .df-widget-pomodoro-preview time, .df-widget-deadline time { color: var(--widget-ink); font-family: "Cascadia Mono", Consolas, monospace; }

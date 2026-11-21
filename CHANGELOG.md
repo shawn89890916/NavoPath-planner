@@ -2,6 +2,17 @@
 
 ## 2026-11-21
 
+### 1.7.0 Beta 51
+
+#### 改进
+
+- 精简登录、任务、规划、搜索、AI、设置和插件界面的重复文字。空候选区直接提供添加入口，手机端在任务行显示排程入口，规划视图设置可直达插件管理。
+- 搜索结果保留区分同名项目所需的信息。AI 建议可直接填入输入框，对话列表用选中状态标明当前对话。
+
+#### 修复
+
+- 手机端点「安排」后，可在时间轴上确认或取消排程。
+
 ### 1.7.0 Beta 50
 
 #### 新增
@@ -799,6 +810,17 @@
 # NavoPath Changelog
 
 ## 2026-11-21
+
+### 1.7.0 Beta 51
+
+#### Improved
+
+- Removed repeated text from sign-in, Tasks, Planning, search, AI, settings, and plugins. The empty Tasks panel offers an add action, mobile task rows show the scheduling action, and Planning view settings link directly to plugin management.
+- Search results keep the details that distinguish items with the same name. Suggested AI messages go straight into the composer, and the selected row identifies the current conversation.
+
+#### Fixed
+
+- On phones, tapping Plan now shows the controls to confirm or cancel scheduling on the timeline.
 
 ### 1.7.0 Beta 50
 

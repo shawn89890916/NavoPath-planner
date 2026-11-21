@@ -406,6 +406,35 @@ ot-allowed` cursor.
 - Dense task and timeline layouts must remain legible at smaller widths.
 - Annotation color must never be the only signal for priority, selection, or completion.
 
+## Interface Copy
+
+Apply these rules to new or changed application views, dialogs, settings,
+official plugin surfaces, and widgets.
+
+- Give each visible string a job: identify a control or result, distinguish
+  items, explain a consequence, or give the user a next step. Remove slogans,
+  decorative numbering, repeated labels, and descriptions that restate a
+  heading or control. Keep Chinese and English equally concise.
+- If removing copy makes the next step unclear, move the existing action next
+  to the relevant content, group related controls, or clarify the selected
+  state. Empty states show what is empty and an action when one is available.
+  Put instructions for non-obvious gestures in the onboarding step that
+  teaches them. Keep contextual feedback during the gesture.
+- Keep information needed for a decision where it applies: field names,
+  units, dates, errors and recovery steps, conflicts, permission scope,
+  destructive consequences, and undo. Use stable accessible names, native
+  controls, programmatic states, and live status where appropriate. The
+  primary action must be discoverable by keyboard, touch, and in the
+  accessibility tree.
+- Reuse the existing component, navigation target, and action handler
+  when the interaction already exists. Remove unused strings and selectors
+  after checking their other callers. Verify the same user flow and agent
+  entry point after the layout changes.
+
+Use the Tasks empty state with its nearby add action, the Planning view
+settings link to plugin management, and the current AI conversation row
+as references for these patterns.
+
 ## Product Site And Portfolio Interfaces
 
 Product-site, authentication, and portfolio pages may use stronger editorial

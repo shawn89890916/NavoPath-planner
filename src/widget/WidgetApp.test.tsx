@@ -304,7 +304,7 @@ describe("WidgetPopoverView", () => {
     const changed = { ...snapshot, timerPreferences: { ...snapshot.timerPreferences, mode: "stopwatch" as const, countdownSeconds: 1800 } };
     await act(async () => { renderer.update(timerSettings(changed)); });
     expect(renderer.root.findByProps({ "data-mode": "stopwatch" }).props["aria-checked"]).toBe(true);
-    expect(renderer.root.findByProps({ className: "df-widget-no-duration" }).children).toEqual(["No duration"]);
+    expect(renderer.root.findAllByType("input")).toHaveLength(0);
     await act(async () => { renderer.unmount(); });
   });
 
@@ -318,15 +318,15 @@ describe("WidgetPopoverView", () => {
     expect(html).not.toContain('class="df-widget-timer-settings-actions"');
   });
 
-  it("shows scheduling guidance for a countdown without a task deadline", () => {
+  it("offers a duration and a scheduling action for a countdown without a task deadline", () => {
     const html = renderToStaticMarkup(<WidgetTimerSettingsView snapshot={countdownWithoutDeadline} onSave={() => undefined} onCancel={() => undefined} onReset={() => undefined} onSchedule={() => undefined} />);
-    expect(html).toContain("Please schedule it on the timeline first");
+    expect(html).toContain("Duration (minutes)");
     expect(html).toContain("Schedule for now");
   });
 
   it("does not require scheduling when a task due date can supply a countdown target", () => {
     const html = renderToStaticMarkup(<WidgetTimerSettingsView snapshot={{ ...countdownWithoutDeadline, taskDueDate: "2026-07-12" }} onSave={() => undefined} onCancel={() => undefined} onReset={() => undefined} onSchedule={() => undefined} />);
-    expect(html).not.toContain("Please schedule it on the timeline first");
+    expect(html).not.toContain("Duration (minutes)");
     expect(html).not.toContain("Schedule for now");
   });
 
@@ -368,7 +368,7 @@ describe("WidgetPopoverView", () => {
 
   it("shows no duration input for stopwatch settings", () => {
     const html = renderToStaticMarkup(<WidgetTimerSettingsView snapshot={{ ...snapshot, timerPreferences: { ...snapshot.timerPreferences, mode: "stopwatch" } }} onSave={() => undefined} onCancel={() => undefined} onReset={() => undefined} onSchedule={() => undefined} />);
-    expect(html).toContain("No duration");
+    expect(html).not.toContain('class="df-widget-mode-details"');
     expect(html).not.toContain('type="number"');
   });
 

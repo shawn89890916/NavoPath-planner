@@ -32,6 +32,12 @@ describe("command search", () => {
     expect(searchCommands(buildCommandSearchIndex(data, {} as Settings), "shortcuts")[0].kind).toBe("setting");
   });
 
+  it("finds the scheduling gap by its previous label and preserves the settings target", () => {
+    const index = buildCommandSearchIndex(data, { language: "en" } as Settings);
+    const result = searchCommands(index, "Task buffer")[0];
+    expect(result).toMatchObject({ id: "setting:schedule-buffer", title: "Gap between scheduled tasks" });
+  });
+
   it("keeps saved accent settings searchable in light mode but hides the entry in dark mode", () => {
     const lightSettings = { theme: "light", language: "en" } as Settings;
     const darkSettings = { theme: "dark", language: "en" } as Settings;
