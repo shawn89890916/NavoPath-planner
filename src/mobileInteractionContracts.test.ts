@@ -21,11 +21,12 @@ describe("portrait interaction contracts", () => {
     expect(main).not.toContain("const canResize = !isExternalEvent && !isReturnedUnfinished");
   });
 
-  it("uses the task-detail language for every new task with a start/end range", () => {
+  it("uses one detail drawer to create tasks, projects, and habits", () => {
     expect(main).not.toContain("quickAddDetail");
-    expect(main).toContain("if (!props.editing && props.type === \"task\")");
+    expect(main).toContain('if (!props.editing && props.type !== "event")');
     expect(main).toContain('className="df-drawer df-task-detail df-quick-add-detail"');
-    expect(main).toContain('className="df-detail-time-range"');
+    expect(main).toContain('(["task", "project", "habit"] as const).map');
+    expect(main).toContain('isTask && <section className="df-detail-time-range"');
   });
 
   it("gives portrait users a direct schedule action and teaches long-press in onboarding", () => {

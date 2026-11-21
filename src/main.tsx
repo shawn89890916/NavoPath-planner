@@ -7072,6 +7072,7 @@ if (cached?.data && cached?.settings) {
         id: uid("habit"),
         title: form.title.trim(),
         projectId: form.projectId || undefined,
+        notes: form.details,
         defaultDurationMinutes: Math.max(Math.round((form.estimatedHours || 0.5) * 60), SLOT_MINUTES),
         frequencyRule: "daily",
         activeWeekdays: [1, 2, 3, 4, 5],
@@ -11853,10 +11854,9 @@ function EditDrawer(props: {
   const f = props.form;
   const set = (key: keyof FormState, value: FormState[keyof FormState]) => props.setForm((current) => ({ ...current, [key]: value }));
   const selectedProjectTitle = props.projects.find((project) => String(project.id) === String(f.projectId))?.title || "未归属";
-  const addTypeHints: Record<AddType, string> = {
+  const addTypeHints: Record<Exclude<AddType, "event">, string> = {
     task: props.lang === "zh" ? "Task：需要完成的行动，可以安排到时间轴并标记完成。" : "Task: an action to complete, schedulable on the timeline and markable as done.",
     project: props.lang === "zh" ? "Project：一组任务的长期目标，用颜色和重要度组织计划。" : "Project: a longer-term goal that groups tasks with color and priority context.",
-    event: props.lang === "zh" ? "Event：固定发生的日程，不作为可完成任务处理。" : "Event: a fixed calendar item, not treated as a completable task.",
     habit: props.lang === "zh" ? "习惯：每天或每周重复的固定练习。" : "Habit: a recurring practice you want to keep on the day.",
   };
   useEffect(() => {
@@ -12207,7 +12207,12 @@ function EditDrawer(props: {
       </aside>
     );
   }
-  if (!props.editing && props.type === "task") {
+  if (!props.editing && props.type !== "event") {
+    const isTask = props.type === "task";
+    const isProject = props.type === "project";
+    const zh = props.lang === "zh";
+    const titlePlaceholder = isTask ? t(props.lang, "drawer.titlePlaceholder")
+      : isProject ? (zh ? "项目名称" : "Project name") : (zh ? "习惯名称" : "Habit name");
     const selectedProject = props.projects.find((project) => String(project.id) === String(f.projectId));
     const quickAddDuration = f.dueTime && f.endTime ? Math.max(clockTimeSpanMinutes(f.dueTime, f.endTime), SLOT_MINUTES) : Math.max(Math.round((f.estimatedHours || 0.5) * 60), SLOT_MINUTES);
     const setQuickAddStart = (startTime: string) => props.setForm((current) => ({
@@ -12221,57 +12226,73 @@ function EditDrawer(props: {
       estimatedHours: current.dueTime && endTime ? Math.max(clockTimeSpanMinutes(current.dueTime, endTime), SLOT_MINUTES) / 60 : current.estimatedHours,
     }));
     return (
-      <>
-        <aside className="df-drawer df-task-detail df-quick-add-detail" onMouseDown={(event) => event.stopPropagation()}>
-          <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
-          <div className="df-segment df-detail-type-segment">{(["task", "project", "habit"] as AddType[]).map((type) => <button key={type} className={props.type === type ? "active" : ""} onClick={() => props.setType(type)}>{type === "task" ? t(props.lang, "form.task") : type === "project" ? t(props.lang, "form.project") : (props.lang === "zh" ? "习惯" : "Habit")}</button>)}</div>
-          <section className="df-detail-hero-trevor">
-            <textarea ref={titleRef} className="df-detail-title-trevor" aria-label={t(props.lang, "drawer.titlePlaceholder")} autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.titlePlaceholder")} spellCheck={false} />
-          </section>
+      <aside className="df-drawer df-task-detail df-quick-add-detail" onMouseDown={(event) => event.stopPropagation()}>
+        <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
+        <div className="df-segment df-detail-type-segment" role="group" aria-label={zh ? "选择添加类型" : "Choose what to add"}>
+          {(["task", "project", "habit"] as const).map((type) => (
+            <button key={type} type="button" className={props.type === type ? "active" : ""} aria-pressed={props.type === type} onClick={() => {
+              if (props.type === type) return;
+              setProjectPickerOpen(false);
+              setDurationPickerOpen(false);
+              setNewProjectTitle("");
+              props.setType(type);
+            }}>{type === "habit" ? (zh ? "习惯" : "Habit") : t(props.lang, `form.${type}`)}</button>
+          ))}
+        </div>
+        <section className="df-detail-hero-trevor">
+          <textarea ref={titleRef} className="df-detail-title-trevor" aria-label={titlePlaceholder} autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} onKeyDown={(event) => {
+            if (!isTask && event.key === "Enter" && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              props.onSave();
+            }
+          }} rows={1} placeholder={titlePlaceholder} spellCheck={false} />
+        </section>
 
-          <section className="df-detail-tag-row">
-            <button ref={projectTriggerRef} className={`df-detail-pill-trevor ${projectPickerOpen ? "active" : ""}`} onClick={toggleProjectPicker}>
-              <span className="df-detail-project-dot" style={{ background: projectColorInk(selectedProject?.color || "#888") }} />
-              <span># {selectedProject?.title || t(props.lang, "candidate.unassigned")}</span>
-              <svg viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4l3 3 3-3" /></svg>
-            </button>
-            <button ref={durationTriggerRef} className={`df-detail-pill-trevor ${durationPickerOpen ? "active" : ""}`} onClick={toggleDurationPicker}>
-              <span>◷ {formatMinutes(quickAddDuration)}</span>
-              <svg viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4l3 3 3-3" /></svg>
-            </button>
-          </section>
-          <section className="df-detail-importance-row" aria-label={props.lang === "zh" ? "任务标记" : "Task flags"}>{taskLevelSelector(props.type === "task" ? "priority" : "importance", importanceOptions)}</section>
+        {isProject ? <section className="df-detail-project-color">
+          <span>{t(props.lang, "form.color")}</span>
+          <ProjectColorPicker value={f.projectColor} onChange={(color) => set("projectColor", color)} presets={COMMON_COLOR_PRESETS} />
+        </section> : <section className="df-detail-tag-row">
+          <button ref={projectTriggerRef} className={`df-detail-pill-trevor ${projectPickerOpen ? "active" : ""}`} onClick={toggleProjectPicker}>
+            <span className="df-detail-project-dot" style={{ background: projectColorInk(selectedProject?.color || "#888") }} />
+            <span># {selectedProject?.title || t(props.lang, "candidate.unassigned")}</span>
+            <svg viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4l3 3 3-3" /></svg>
+          </button>
+          <button ref={durationTriggerRef} className={`df-detail-pill-trevor ${durationPickerOpen ? "active" : ""}`} onClick={toggleDurationPicker}>
+            <span>◷ {formatMinutes(quickAddDuration)}</span>
+            <svg viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4l3 3 3-3" /></svg>
+          </button>
+        </section>}
+        {isTask && <section className="df-detail-importance-row" aria-label={zh ? "任务标记" : "Task flags"}>{taskLevelSelector("priority", importanceOptions)}</section>}
 
-          <section className="df-detail-time-range" aria-label={props.lang === "zh" ? "起止时间" : "Start and end time"}>
-            <label><span>{t(props.lang, "drawer.startTime")}</span><input type="time" step={SLOT_MINUTES * 60} value={f.dueTime} onChange={(event) => setQuickAddStart(event.target.value)} /></label>
-            <span className="df-detail-time-arrow" aria-hidden="true">→</span>
-            <label><span>{t(props.lang, "drawer.endTime")}</span><input type="time" step={SLOT_MINUTES * 60} value={f.endTime} disabled={!f.dueTime} onChange={(event) => setQuickAddEnd(event.target.value)} /></label>
-          </section>
-          <section className="df-detail-schedule-row df-detail-due-date">
-            <label className="df-detail-pill-trevor action"><svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="8" height="7" rx="1"/><path d="M2 5h8M4 2v2M8 2v2"/></svg><span>{props.lang === "zh" ? "截止日期" : "Due date"}</span><input type="date" lang={props.lang === "zh" ? "zh-CN" : "en-US"} value={f.dueDate} onChange={(event) => set("dueDate", event.target.value)} /></label>
-            <button className="df-detail-due-reset" type="button" onClick={() => set("dueDate", "")}>{props.lang === "zh" ? "重置" : "Reset"}</button>
-          </section>
+        {isTask && <section className="df-detail-time-range" aria-label={zh ? "起止时间" : "Start and end time"}>
+          <label><span>{t(props.lang, "drawer.startTime")}</span><input type="time" step={SLOT_MINUTES * 60} value={f.dueTime} onChange={(event) => setQuickAddStart(event.target.value)} /></label>
+          <span className="df-detail-time-arrow" aria-hidden="true">→</span>
+          <label><span>{t(props.lang, "drawer.endTime")}</span><input type="time" step={SLOT_MINUTES * 60} value={f.endTime} disabled={!f.dueTime} onChange={(event) => setQuickAddEnd(event.target.value)} /></label>
+        </section>}
+        {(isTask || isProject) && <section className="df-detail-schedule-row df-detail-due-date">
+          <label className="df-detail-pill-trevor action"><svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="8" height="7" rx="1"/><path d="M2 5h8M4 2v2M8 2v2"/></svg><span>{props.lang === "zh" ? "截止日期" : "Due date"}</span><input type="date" lang={props.lang === "zh" ? "zh-CN" : "en-US"} value={f.dueDate} onChange={(event) => set("dueDate", event.target.value)} /></label>
+          <button className="df-detail-due-reset" type="button" onClick={() => set("dueDate", "")}>{props.lang === "zh" ? "重置" : "Reset"}</button>
+        </section>}
 
-          {projectPickerOpen && <section className="df-detail-project-pick df-quick-add-detail-picker">
-            <div className="df-drawer-project-list ui-divided-list">
-              <button onClick={() => { set("projectId", ""); setProjectPickerOpen(false); }}>{t(props.lang, "drawer.unassigned")}</button>
-              {props.projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { set("projectId", project.id); setProjectPickerOpen(false); }} onColorChange={(color) => props.onProjectColorChange(project.id, color)} />)}
-              <ProjectCreateRow lang={props.lang} value={newProjectTitle} onValueChange={setNewProjectTitle} onCreate={createAndSelectProject} />
-            </div>
-          </section>}
+        {projectPickerOpen && <section className="df-detail-project-pick df-quick-add-detail-picker">
+          <div className="df-drawer-project-list ui-divided-list">
+            <button onClick={() => { set("projectId", ""); setProjectPickerOpen(false); }}>{t(props.lang, "drawer.unassigned")}</button>
+            {props.projects.map((project) => <ProjectChoice key={project.id} project={project} onChoose={() => { set("projectId", project.id); setProjectPickerOpen(false); }} onColorChange={(color) => props.onProjectColorChange(project.id, color)} />)}
+            {isTask && <ProjectCreateRow lang={props.lang} value={newProjectTitle} onValueChange={setNewProjectTitle} onCreate={createAndSelectProject} />}
+          </div>
+        </section>}
 
-          {durationPickerOpen && <section className="df-detail-project-pick df-quick-add-detail-picker"><div className="df-detail-duration-options">
-            {DURATION_OPTIONS.map((minutes) => <button key={minutes} className={quickAddDuration === minutes ? "active" : ""} onClick={() => { setDurationMinutes(minutes); setDurationPickerOpen(false); }}>{formatMinutes(minutes)}</button>)}
-          </div></section>}
+        {durationPickerOpen && <section className="df-detail-project-pick df-quick-add-detail-picker"><div className="df-detail-duration-options">
+          {DURATION_OPTIONS.map((minutes) => <button key={minutes} className={quickAddDuration === minutes ? "active" : ""} onClick={() => { setDurationMinutes(minutes); setDurationPickerOpen(false); }}>{formatMinutes(minutes)}</button>)}
+        </div></section>}
 
-          <section className="df-detail-notes-new">
-            <div className="df-detail-section-head"><h3>{t(props.lang, "drawer.notes")}</h3></div>
-            <div className="df-notes-editor"><textarea rows={4} aria-label={t(props.lang, "drawer.notes")} value={f.details} onChange={(event) => set("details", event.target.value)} placeholder={t(props.lang, "drawer.addNotePlaceholder")} /></div>
-          </section>
+        <section className="df-detail-notes-new">
+          <div className="df-detail-section-head"><h3>{t(props.lang, "drawer.notes")}</h3></div>
+          <div className="df-notes-editor"><textarea rows={4} aria-label={t(props.lang, "drawer.notes")} value={f.details} onChange={(event) => set("details", event.target.value)} placeholder={t(props.lang, "drawer.addNotePlaceholder")} /></div>
+        </section>
 
-          <div className="df-quick-add-detail-actions"><button className="primary" disabled={!f.title.trim()} onClick={props.onSave}>{t(props.lang, "form.add")}</button></div>
-        </aside>
-      </>
+        <div className="df-quick-add-detail-actions"><button className="primary" disabled={!f.title.trim()} onClick={props.onSave}>{t(props.lang, "form.add")}</button></div>
+      </aside>
     );
   }
   if (props.editing && props.type === "task" && props.task) {
@@ -12632,11 +12653,9 @@ function EditDrawer(props: {
   return (
     <aside className="df-drawer">
       <div className="df-drawer-head"><h2>{props.editing ? t(props.lang, "form.edit") : t(props.lang, "form.add")}</h2><CloseButton className="df-drawer-close" label={t(props.lang, "form.close")} onClick={props.onClose} /></div>
-      <div className="df-segment">{(["task", "project", "habit"] as AddType[]).map((type) => <button key={type} className={props.type === type ? "active" : ""} title={addTypeHints[type]} aria-label={addTypeHints[type]} onClick={() => props.setType(type)}>{type === "task" ? t(props.lang, "form.task") : type === "project" ? t(props.lang, "form.project") : (props.lang === "zh" ? "习惯" : "Habit")}</button>)}</div>
+      <div className="df-segment">{(["task", "project", "habit"] as const).map((type) => <button key={type} className={props.type === type ? "active" : ""} title={addTypeHints[type]} aria-label={addTypeHints[type]} onClick={() => props.setType(type)}>{type === "task" ? t(props.lang, "form.task") : type === "project" ? t(props.lang, "form.project") : (props.lang === "zh" ? "习惯" : "Habit")}</button>)}</div>
       {props.editing && props.type === "task" && <label className="df-check"><input type="checkbox" checked={Boolean(props.task?.completed)} onChange={props.onToggleDone} />{t(props.lang, "form.completed")}</label>}
       <label>{t(props.lang, "form.name")}<input autoFocus={!props.editing} value={f.title} onChange={(event) => set("title", event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); props.onSave(); } }} /></label>
-      {props.type === "project" && <div className="df-form-color-row"><label>{t(props.lang, "form.color")}</label><ProjectColorPicker value={f.projectColor} onChange={(color) => set("projectColor", color)} presets={COMMON_COLOR_PRESETS} /></div>}
-      {props.type === "project" && <label>{props.lang === "zh" ? "截止日期" : "Due date"}<input type="date" value={f.dueDate} onChange={(event) => set("dueDate", event.target.value)} /></label>}
       {props.type === "habit" && <label>{props.lang === "zh" ? "归属项目" : "Project"}<select value={f.projectId} onChange={(event) => set("projectId", event.target.value)}><option value="">{t(props.lang, "drawer.unassigned")}</option>{props.projects.map((project) => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>}
       {props.type === "event" && <div className="df-grid2"><label>{t(props.lang, "form.startDate")}<input type="date" value={f.dueDate} onChange={(event) => set("dueDate", event.target.value)} /></label><label>{t(props.lang, "form.startTime")}<input type="time" value={f.dueTime} onChange={(event) => set("dueTime", event.target.value)} /></label><label>{t(props.lang, "form.endDate")}<input type="date" value={f.endDate} onChange={(event) => set("endDate", event.target.value)} /></label><label>{t(props.lang, "form.endTime")}<input type="time" value={f.endTime} onChange={(event) => set("endTime", event.target.value)} /></label><label>重复<select value={f.recurrence?.frequency || "none"} onChange={(event) => {
         const frequency = event.target.value as RecurrenceFrequency;

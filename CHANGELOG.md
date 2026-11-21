@@ -12,6 +12,7 @@
 #### 修复
 
 - 手机端点「安排」后，可在时间轴上确认或取消排程。
+- 横屏从右下角添加项目或习惯时，抽屉宽度、标题和提交按钮与添加任务的界面对齐。
 
 ### 1.7.0 Beta 50
 
@@ -821,6 +822,7 @@
 #### Fixed
 
 - On phones, tapping Plan now shows the controls to confirm or cancel scheduling on the timeline.
+- When adding a project or habit from the lower-right corner in landscape, the drawer width, title, and submit button align with the task form.
 
 ### 1.7.0 Beta 50
 

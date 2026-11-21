@@ -6576,16 +6576,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   }
 }
 /* === Batch UI fixes === */
-/* Task & Project segment buttons: full width, 2 columns */
-.df-drawer .df-segment {
-  grid-template-columns: repeat(2, 1fr);
-}
-.df-drawer .df-segment button {
-  width: 100%;
-  text-align: center;
-  padding: 8px 0;
-  font-weight: 600;
-}
 /* Remove shadow from accent color picker */
 .df-theme-setting .df-project-color-picker {
   padding: 7px;
@@ -8510,6 +8500,10 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 }
 .df-detail-time-range input:disabled { opacity: .45; cursor: not-allowed; }
 .df-detail-time-arrow { align-self: center; color: var(--text-muted); font: 600 14px/1 var(--paper-mono); }
+.df-quick-add-detail {
+  align-content: start;
+  scrollbar-gutter: stable;
+}
 .df-quick-add-detail-picker { margin-top: 0; }
 .df-quick-add-detail-actions { display: flex; justify-content: flex-end; padding-top: 14px; }
 .df-quick-add-detail-actions .primary { min-width: 112px; }
@@ -10473,19 +10467,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app .df-utility-panel input[type="checkbox"]:checked::before {
   transform: translateY(-1px) rotate(-45deg) scale(1);
   filter: url("#crayon-texture");
-}
-.df-app .df-form-color-row {
-  display: grid;
-  gap: 8px;
-  margin: 12px 0;
-  color: var(--text-muted);
-  font-size: 12px;
-}
-.df-app .df-drawer .df-form-color-row .df-project-color-picker {
-  padding: 9px;
-  border-color: color-mix(in srgb, var(--text-main) 12%, transparent);
-  background: transparent;
-  box-shadow: none;
 }
 .df-app .df-drawer-primary-flow {
   display: flex;
@@ -18847,6 +18828,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   corner-shape: var(--corner-shape, squircle);
 }
 #root .df-app .df-drawer .df-segment button {
+  width: 100%;
   min-width: 0;
   min-height: 40px;
   padding: 6px 8px;
@@ -18855,6 +18837,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   color: var(--text-muted);
   background: transparent;
   font-weight: 650;
+  text-align: center;
   corner-shape: var(--corner-shape, squircle);
 }
 #root .df-app .df-drawer .df-segment button.active {
