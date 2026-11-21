@@ -1638,13 +1638,15 @@ function App() {
     showWorkspacePanel({ kind: "extension", id: page.id, owner: page.owner }, true);
   }
   const shelfViews = useMemo(() => extensionSnapshot.views.filter((view) =>
-    view.planningView && view.nativeMode !== "tree" && view.nativeMode !== "metrics"
+    view.planningView && view.nativeMode !== "metrics"
   ).sort((first, second) => {
-    const order = Object.keys(candidateViewNames);
+    const order = ["tree", ...Object.keys(candidateViewNames)];
     const rank = (view: ExtensionContribution) => view.nativeMode ? order.indexOf(view.nativeMode) : order.length;
     return rank(first) - rank(second);
   }), [extensionSnapshot.views]);
   const shelfView = shelfViews.find((view) => view.id === shelfViewId);
+  const shelfTreeOpen = shelfView?.nativeMode === "tree";
+  const projectTreeOpen = projectManagement || shelfTreeOpen;
   const taskHistoryOpen = shelfView?.nativeMode === "activity-history";
   const taskHistoryKey = "official:activity-history";
   const taskHistoryEnabled = !extensionSnapshot.safeMode
@@ -7472,7 +7474,7 @@ if (cached?.data && cached?.settings) {
         attachmentName: aiAttachment?.name,
         context: {
           currentViewDate: selectedDate || today,
-          page: projectManagement ? "planning" : "execute",
+          page: projectTreeOpen ? "planning" : "execute",
           language: settings?.language || lang,
           timerStatus: { taskId: timerTaskId || "", running: timerRunning, elapsedSeconds: timerElapsed },
         },
@@ -9445,7 +9447,7 @@ if (cached?.data && cached?.settings) {
           lang={lang}
           step={onboardingStep}
           touch={mobileExecution}
-          projectManagement={projectManagement}
+          projectManagement={projectTreeOpen}
           onOpenPlanning={openProjectManagement}
           onOpenAi={() => setAiOpen(true)}
           onChange={(step) => void saveSettings({ onboardingStep: step })}
@@ -9566,7 +9568,7 @@ if (cached?.data && cached?.settings) {
                 </button>
               )}
               actions={<>
-                {projectManagement ? <>
+                {projectTreeOpen ? <>
                   <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />
                   {!productDemo && <IconButton icon={<UiPlusIcon size={17} />} label={lang === "zh" ? "新建项目" : "New project"} onClick={() => openAdd("project")} />}
                 </> : !taskHistoryOpen && <>
@@ -9614,8 +9616,9 @@ if (cached?.data && cached?.settings) {
             />
             {!projectManagement && <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu">
               <Button variant="ghost" aria-pressed={!shelfView} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
-              {treeView && <Button variant="ghost" onPointerEnter={preloadPlanningView} onFocus={preloadPlanningView} onClick={openProjectManagement}><CandidateViewIcon view={treeView} />{candidateViewName(treeView, lang)}</Button>}
-              {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id} onClick={() => selectShelfView(view.id)}><CandidateViewIcon view={view} />{candidateViewName(view, lang)}</Button>)}
+              {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id}
+                onPointerEnter={view === treeView ? preloadPlanningView : undefined} onFocus={view === treeView ? preloadPlanningView : undefined}
+                onClick={() => selectShelfView(view.id)}><CandidateViewIcon view={view} />{candidateViewName(view, lang)}</Button>)}
             </AnchoredNarrowMenu>}
             {candidateDropActive && (
               <div className="df-candidate-return-hint" role="status">
@@ -9767,7 +9770,7 @@ if (cached?.data && cached?.settings) {
               </button>
             </form>}
             </Activity>
-            {shelfView && <Activity mode={projectManagement ? "hidden" : "visible"}>
+            {shelfView && !shelfTreeOpen && <Activity mode={projectManagement ? "hidden" : "visible"}>
               <div className="df-shelf-scroll" data-shelf-scroll="views">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
                   {shelfView.nativeMode === "activity-history"
@@ -9778,7 +9781,7 @@ if (cached?.data && cached?.settings) {
                 </Suspense>
               </div>
             </Activity>}
-            {projectManagement && (
+            {projectTreeOpen && (
               <div className="df-shelf-scroll" data-shelf-scroll="projects">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
                   <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode="tree" tasks={tasks}
