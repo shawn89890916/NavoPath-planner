@@ -81,7 +81,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiChatIcon, UiChevronDownIcon, UiChevronLeftIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiHistoryIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiChatIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiHistoryIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -118,6 +118,7 @@ import "./ui-primitives.css";
 import type { MobileShortSheetKind } from "./MobileTaskSummary";
 
 const productDemo = getWorkspaceDemoRuntime();
+const demoTreeView: ExtensionContribution = { id: "demo:tree", owner: "demo", name: "Tree", planningView: true, nativeMode: "tree", mount: () => {} };
 const productPresentation = Boolean(productDemo?.navigation);
 const productAiPresentation = productPresentation && productDemo?.feature === "ai";
 const TimelineDateTag = productPresentation ? "div" : "button";
@@ -870,12 +871,11 @@ function App() {
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authNotice, setAuthNotice] = useState<AuthNotice>(null);
-  const [shelfViewId, setShelfViewId] = useState("");
+  const [shelfViewId, setShelfViewId] = useState(productDemo?.feature === "planning" ? demoTreeView.id : "");
   const [taskOperations, setTaskOperations] = useState<TaskOperation[]>([]);
   const taskOperationsRef = useRef(taskOperations);
   taskOperationsRef.current = taskOperations;
   const [shelfMenuOpen, setShelfMenuOpen] = useState(false);
-  const [projectManagement, setProjectManagement] = useState(productDemo?.feature === "planning");
   const planningSessionRef = useRef<PlanningViewSession | null>(null);
   const [projectFilterAnchor, setProjectFilterAnchor] = useState<HTMLSpanElement | null>(null);
   const [showScheduledCandidates, setShowScheduledCandidates] = useState(false);
@@ -1595,7 +1595,7 @@ function App() {
     rememberLayerTrigger("utility");
     showWorkspacePanel({ kind: "extension", id: page.id, owner: page.owner }, true);
   }
-  const shelfViews = useMemo(() => extensionSnapshot.views.filter((view) =>
+  const shelfViews = useMemo(() => productDemo?.feature === "planning" ? [demoTreeView] : extensionSnapshot.views.filter((view) =>
     view.planningView && view.nativeMode !== "metrics"
   ).sort((first, second) => {
     const order = ["tree", ...Object.keys(candidateViewNames)];
@@ -1604,13 +1604,12 @@ function App() {
   }), [extensionSnapshot.views]);
   const shelfView = shelfViews.find((view) => view.id === shelfViewId);
   const shelfTreeOpen = shelfView?.nativeMode === "tree";
-  const projectTreeOpen = projectManagement || shelfTreeOpen;
   const taskHistoryOpen = shelfView?.nativeMode === "activity-history";
   const taskHistoryKey = "official:activity-history";
   const taskHistoryEnabled = !extensionSnapshot.safeMode
     && !settings?.extensions?.removed[taskHistoryKey]
     && settings?.extensions?.installed[taskHistoryKey]?.enabled !== false;
-  const treeView = extensionSnapshot.views.find((view) => view.nativeMode === "tree");
+  const treeView = shelfViews.find((view) => view.nativeMode === "tree");
   const metricsAvailable = extensionSnapshot.views.some((view) => view.nativeMode === "metrics");
   useEffect(() => {
     if (shelfViewId && !shelfView) setShelfViewId("");
@@ -1973,11 +1972,10 @@ function App() {
     cloudBaselineReadyRef.current = false;
     if (snapshotTimerRef.current) window.clearTimeout(snapshotTimerRef.current);
     snapshotTimerRef.current = null;
-    setShelfViewId("");
+    setShelfViewId(productDemo?.feature === "planning" ? demoTreeView.id : "");
     setOnboardingCelebration("");
     setTaskOperations([]);
     dismissToast();
-    setProjectManagement(productDemo?.feature === "planning");
     planningSessionRef.current = null;
     setShelfMenuOpen(false);
     setShowScheduledCandidates(false);
@@ -2633,7 +2631,7 @@ if (cached?.data && cached?.settings) {
 
   function closeCandidateDrawer() {
     setShelfMenuOpen(false);
-    if (!projectManagement && !shelfView) {
+    if (!shelfView) {
       candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
     }
     setCandidateDrawerOpen(false);
@@ -5569,7 +5567,7 @@ if (cached?.data && cached?.settings) {
     const date = timelineWindowAnchorDate;
     const session = { taskId, subtask, version: mobilePlacementVersion(task), view: timelineView, date: selectedDate, visibleDate: visibleTimelineDate,
       scrollTop: timelineRef.current?.scrollTop || 0, drawerOpen: candidateDrawerOpen };
-    if (!projectManagement && !shelfView) {
+    if (!shelfView) {
       candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
     }
     mobileCommitRef.current = false;
@@ -7203,10 +7201,11 @@ if (cached?.data && cached?.settings) {
     requestTimelineFocus({ date, startTime, taskId, source: "schedule", behavior: "auto", highlight: true });
   }
 
-  function locateTaskInPlanning(task: Task) {
+  function locateTaskInTree(task: Task) {
+    if (!treeView) return;
     void closeTaskDrawer({ autoSave: true });
     setPlanningFocusTaskId(task.id);
-    openProjectManagement();
+    openTreeView();
   }
 
   function deleteEditingItem() {
@@ -7359,7 +7358,7 @@ if (cached?.data && cached?.settings) {
       }
       if (command.entity !== "app" || command.operation !== "navigate") continue;
       const values = command.values || {};
-      if (values.mode === "planning") openProjectManagement();
+      if (values.mode === "planning") openTreeView();
       if (values.mode === "execute") showTimelineWorkspace();
       if (values.view === "daily" || values.view === "3day" || values.view === "weekly" || values.view === "month") setTimelineView(values.view);
       if (typeof values.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(values.date)) setSelectedDate(values.date);
@@ -7462,7 +7461,7 @@ if (cached?.data && cached?.settings) {
         attachmentName: aiAttachment?.name,
         context: {
           currentViewDate: selectedDate || today,
-          page: projectTreeOpen ? "planning" : "execute",
+          page: shelfTreeOpen ? "planning" : "execute",
           language: settings?.language || lang,
           timerStatus: { taskId: timerTaskId || "", running: timerRunning, elapsedSeconds: timerElapsed },
         },
@@ -8923,18 +8922,17 @@ if (cached?.data && cached?.settings) {
     shelfTitleRef.current?.focus({ preventScroll: true });
   }
 
-  function openProjectManagement() {
+  function openTreeView() {
+    if (!treeView) return;
     preloadPlanningView();
-    setShelfMenuOpen(false);
+    selectShelfView(treeView.id);
     setCandidatePanelCollapsed(false);
     setFullscreen(false);
-    setProjectManagement(true);
     if (mobileExecution) setCandidateDrawerOpen(true);
     else setCompactExecuteView("tasks");
   }
 
   function showTimelineWorkspace() {
-    setProjectManagement(false);
     setCompactExecuteView("schedule");
     if (mobileExecution && candidateDrawerOpen) closeCandidateDrawer();
   }
@@ -9093,9 +9091,6 @@ if (cached?.data && cached?.settings) {
           break;
         case "execute":
           showTimelineWorkspace();
-          break;
-        case "planning":
-          openProjectManagement();
           break;
         case "day-view":
           changeTimelineView("daily");
@@ -9320,7 +9315,7 @@ if (cached?.data && cached?.settings) {
   const shelfTitle = term(lang, "todayCandidates");
   const candidatesEmpty = visibleCandidates.length === 0 && !hasActiveHabits;
   const onboardingTask = onboardingStep === "schedule" ? onboardingTarget(settings, tasks) : undefined;
-  const guideInTasks = !projectManagement && !shelfView && !fullscreen
+  const guideInTasks = !shelfView && !fullscreen
     && (mobileExecution ? candidateDrawerOpen : !candidatePanelCollapsed && (!compactLayout || narrowSplitLayout || compactExecuteView === "tasks"))
     && (onboardingStep === "add" || visibleCandidates.some((task) => task.id === onboardingTask?.id));
   const onboardingGuide = onboardingStep !== "done" && !mobilePlacement && (
@@ -9355,7 +9350,6 @@ if (cached?.data && cached?.settings) {
   );
   const completionVisible = onboardingStep === "done" && Boolean(onboardingCelebration) && !productDemo;
   function revealTasks() {
-    setProjectManagement(false);
     setShelfViewId("");
     setFullscreen(false);
     setCandidatePanelCollapsed(false);
@@ -9376,7 +9370,6 @@ if (cached?.data && cached?.settings) {
     return timelineView === "month" ? date.startsWith(timelineWindowAnchorDate.slice(0, 7)) : timelineRange.includes(date);
   });
   const switchViewsLabel = lang === "zh" ? "切换左浮栏视图" : "Switch task views";
-  const manageProjectsLabel = lang === "zh" ? "管理项目" : "Manage projects";
   const metricsLabel = lang === "zh" ? "指标" : "Metrics";
   const compactOverlayOpen = Boolean(quickAddOpen || candidateDrawerOpen || drawerOpen || mobilePlacement);
   const compactToolbarBlocked = compactOverlayOpen || Boolean(workspacePanel);
@@ -9596,17 +9589,13 @@ if (cached?.data && cached?.settings) {
               <>
             <CandidatePanelHeader
               {...candidateHeaderGesture}
-              title={projectManagement ? (
-                <button type="button" className="df-shelf-title-button" onClick={() => { setProjectManagement(false); window.requestAnimationFrame(() => shelfTitleRef.current?.focus()); }}>
-                  <UiChevronLeftIcon size={15} />{manageProjectsLabel}
-                </button>
-              ) : (
+              title={
                 <button ref={shelfTitleRef} type="button" className="df-shelf-title-button" aria-label={switchViewsLabel} aria-expanded={shelfMenuOpen} onClick={() => setShelfMenuOpen((open) => !open)}>
                   <span>{shelfView ? candidateViewName(shelfView, lang) : shelfTitle}</span><UiChevronDownIcon size={15} />
                 </button>
-              )}
+              }
               actions={<>
-                {projectTreeOpen ? <>
+                {shelfTreeOpen ? <>
                   <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />
                   {!productDemo && <IconButton icon={<UiPlusIcon size={17} />} label={lang === "zh" ? "新建项目" : "New project"} onClick={() => openAdd("project")} />}
                 </> : !taskHistoryOpen && <>
@@ -9642,7 +9631,6 @@ if (cached?.data && cached?.settings) {
                   <Button variant="ghost" aria-pressed={showScheduledCandidates} onClick={() => setShowScheduledCandidates((show) => !show)}>
                     {lang === "zh" ? "显示已安排" : "Show scheduled"}
                   </Button>
-                  {!treeView && <Button variant="ghost" onPointerEnter={preloadPlanningView} onFocus={preloadPlanningView} onClick={openProjectManagement}>{manageProjectsLabel}</Button>}
                 </ActionDisclosure>}
                 </>}
                 {mobileExecution && <CloseButton className="df-mobile-candidate-close" label={lang === "zh" ? "关闭候选任务" : "Close candidates"} onClick={closeCandidateDrawer} />}
@@ -9652,12 +9640,12 @@ if (cached?.data && cached?.settings) {
               </>
             }
             />
-            {!projectManagement && <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu">
+            <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu">
               <Button variant="ghost" aria-pressed={!shelfView} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
               {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id}
                 onPointerEnter={view === treeView ? preloadPlanningView : undefined} onFocus={view === treeView ? preloadPlanningView : undefined}
                 onClick={() => selectShelfView(view.id)}><CandidateViewIcon view={view} />{candidateViewName(view, lang)}</Button>)}
-            </AnchoredNarrowMenu>}
+            </AnchoredNarrowMenu>
             {candidateDropActive && (
               <div className="df-candidate-return-hint" role="status">
                 {lang === "zh" ? "松手后移回任务" : "Release to return to Tasks"}
@@ -9675,7 +9663,7 @@ if (cached?.data && cached?.settings) {
                 </details>}
               </div>
             )}
-            <Activity mode={projectManagement || shelfView ? "hidden" : "visible"}>
+            <Activity mode={shelfView ? "hidden" : "visible"}>
             <div className="df-candidate-list" data-shelf-scroll="candidates" inert={productAiPresentation && demoPresetBusy ? true : undefined}>
               {guideInTasks && onboardingStep === "add" && onboardingGuide}
               {candidatesEmpty ? (
@@ -9819,7 +9807,7 @@ if (cached?.data && cached?.settings) {
               </button>
             </form>}
             </Activity>
-            {shelfView && !shelfTreeOpen && <Activity mode={projectManagement ? "hidden" : "visible"}>
+            {shelfView && !shelfTreeOpen && (
               <div className="df-shelf-scroll" data-shelf-scroll="views">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
                   {shelfView.nativeMode === "activity-history"
@@ -9829,8 +9817,8 @@ if (cached?.data && cached?.settings) {
                       : <ExtensionMount contribution={shelfView} />}
                 </Suspense>
               </div>
-            </Activity>}
-            {projectTreeOpen && (
+            )}
+            {shelfTreeOpen && (
               <div className="df-shelf-scroll" data-shelf-scroll="projects">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
                   <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode="tree" tasks={tasks}
@@ -10694,7 +10682,7 @@ if (cached?.data && cached?.settings) {
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onLocateTimeline={locateTaskOnTimeline} onLocatePlanning={locateTaskInPlanning} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
+      {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel && workspaceChatPanel && <div className="df-utility-backdrop" data-workspace-backdrop data-motion-closing={aiPresence.closing || undefined} onMouseDown={closeWorkspaceChat} />}
       {!productAiPresentation && aiPanel}
       {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}
@@ -10711,7 +10699,6 @@ if (cached?.data && cached?.settings) {
         closeUtilityPanel(() => {
           void saveSettings(ONBOARDING_START);
           setOnboardingCelebration("");
-          setProjectManagement(false);
           setShelfViewId("");
           setFullscreen(false);
           setCandidatePanelCollapsed(false);
@@ -11905,7 +11892,7 @@ function NowLine({ extraStyle, dayStartHour = 0, hourHeight = HOUR_HEIGHT, highl
 
 function EditDrawer(props: {
   engagementEnabled?: boolean;
-  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; event?: CalendarEvent; today: string; onClose: () => void; onSave: () => void; onDelete: () => Promise<void> | undefined; onCopy: () => void; onConvertToEvent: () => void; onConvertToTask: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => Promise<void> | undefined; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onLocateTimeline: (date: string, startTime: string, taskId: string) => void; onLocatePlanning: (task: Task) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
+  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; event?: CalendarEvent; today: string; onClose: () => void; onSave: () => void; onDelete: () => Promise<void> | undefined; onCopy: () => void; onConvertToEvent: () => void; onConvertToTask: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => Promise<void> | undefined; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onLocateTimeline: (date: string, startTime: string, taskId: string) => void; onLocateTree?: (task: Task) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
   editingRecordId?: string; setEditingRecordId?: (id: string | undefined) => void; editingOccurrence?: EditingOccurrence; data?: PlannerData | null; saveData?: (next: PlannerData) => Promise<void>; onSaveRecurrence: (taskId: string, recurrence?: TaskRecurrence) => void; onCancelOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onReplanOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onCancelAllRecurrence: (taskId: string, cutoffDate: string) => void; aiEnabled: boolean; subtaskAiLoading: boolean; subtaskAiRevealIds: string[]; onGenerateSubtasks: (taskId: string) => void; lang: Language; compactSummary?: boolean; onCompactActionSuccess: (message: string) => void; onShowMore?: () => void;
 }) {
   const dialog = useInAppDialog(props.lang);
@@ -12527,7 +12514,7 @@ function EditDrawer(props: {
           </div>}
           <ActionDisclosure label={props.lang === "zh" ? "更多" : "More"}>
             {timelineLocation && <Button onClick={() => props.onLocateTimeline(timelineLocation.date, timelineLocation.startTime, timelineLocation.taskId)}>{props.lang === "zh" ? `跳转到时间轴 · ${timelineLocation.date} ${timelineLocation.startTime}` : `Go to timeline · ${timelineLocation.date} ${timelineLocation.startTime}`}</Button>}
-            {!props.task.completed && props.task.workflowStatus !== "done" && <Button onClick={() => props.onLocatePlanning(props.task!)}>{props.lang === "zh" ? "跳转到规划中的对应位置" : "Go to task in Planning"}</Button>}
+            {props.onLocateTree && !props.task.completed && props.task.workflowStatus !== "done" && <Button onClick={() => props.onLocateTree?.(props.task!)}>{props.lang === "zh" ? "在 Tree 中查看任务" : "Go to task in Tree"}</Button>}
             <Button onClick={() => { setQuickActionMenu(null); setRecurrenceDraft({ ...fixedRecurrence, mode: "scheduled" }); setRecurrenceOpen(true); }}>{t(props.lang, "drawer.setRepeat")}</Button>
             <Button onClick={props.onCopy}>{t(props.lang, "drawer.duplicate")}</Button>
             <Button variant="danger" onClick={props.onDelete}>{t(props.lang, "drawer.remove")}</Button>

@@ -235,6 +235,9 @@ keep their current selected text treatment while one quiet surface slides
 between options in about 200ms. Respect reduced-motion preferences and retain
 pressed/current semantics for keyboard and assistive technology.
 
+Keep the Tasks header and its bottom rule at a fixed position within each
+layout when switching views, regardless of the title or available actions.
+
 ### Schedule Timeline
 
 The schedule timeline is the primary execution surface.

@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { SHORTCUTS, groupShortcutsByScope, isTypingContext } from "./shortcuts";
 
 describe("shortcuts", () => {
-  it("contains the fixed first-version shortcut set", () => {
-    expect(SHORTCUTS.map((shortcut) => shortcut.id)).toEqual(expect.arrayContaining(["command-search", "help", "new-task", "today", "execute", "planning", "timer-toggle"]));
+  it("lists the supported shortcuts without the retired Planning shortcut", () => {
+    const ids = SHORTCUTS.map((shortcut) => shortcut.id);
+    expect(ids).toEqual(expect.arrayContaining(["command-search", "help", "new-task", "today", "execute", "timer-toggle"]));
+    expect(ids).not.toContain("planning");
   });
 
   it("does not fire while typing", () => {

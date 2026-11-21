@@ -24,7 +24,6 @@ export const SHORTCUTS: ShortcutDefinition[] = [
   { id: "three-day-view", labelZh: "三日视图", labelEn: "3-day view", keys: ["3"], scope: "timeline" },
   { id: "week-view", labelZh: "周视图", labelEn: "Week view", keys: ["W"], scope: "timeline" },
   { id: "month-view", labelZh: "月视图", labelEn: "Month view", keys: ["M"], scope: "timeline" },
-  { id: "planning", labelZh: "Planning", labelEn: "Planning", keys: ["P"], scope: "mode" },
   { id: "execute", labelZh: "Execute", labelEn: "Execute", keys: ["E"], scope: "mode" },
   { id: "timer-toggle", labelZh: "开始/暂停计时", labelEn: "Start/pause timer", keys: ["Space"], scope: "timer" },
 ];

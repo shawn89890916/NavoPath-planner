@@ -17988,7 +17988,8 @@ body.df-unified-dragging .df-unified-drag-overlay {
 #root .df-app .df-tabs button { min-height: 38px; }
 #root .df-app .df-tabs button.active { font-weight: 680; }
 #root .df-app.mode-execute .df-candidate-panel .df-panel-title {
-  min-height: 46px;
+  height: 57px;
+  flex-shrink: 0;
   margin: 0;
   padding: 0 var(--candidate-header-padding-right, 2px) 12px 2px;
   border-bottom: 1px solid var(--paper-rule-strong);
@@ -20211,7 +20212,7 @@ body[data-navopath-base-theme="light"],
   overflow: hidden;
 }
 #root .df-app .df-panel-title .df-shelf-title-button {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
   max-width: 100%;
@@ -20348,7 +20349,6 @@ body[data-navopath-base-theme="light"],
     flex-shrink: 0;
   }
   #root .df-app.mode-execute > .df-execute.shelf-timeline-split .df-candidate-panel > .df-panel-title h2 { display: block; font-size: 14px; }
-  #root .df-app .shelf-timeline-split .df-shelf-title-button > span { white-space: normal; overflow-wrap: anywhere; }
   #root .df-app.mode-execute > .df-execute.shelf-timeline-split .df-candidate-panel > .df-panel-title > div { position: static; gap: 0; }
   #root .df-app.mode-execute .shelf-timeline-split .df-panel-title :is(.df-candidate-header-icon, .df-ai-plan-title-icon, .ui-action-disclosure > summary) {
     width: 36px;

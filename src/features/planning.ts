@@ -38,7 +38,7 @@ export default {
       ],
       [
         "排程后，任务是否仍保留在原项目中？",
-        "任务仍在原项目中。可以在项目管理中查看，或在「更多」里打开「显示已安排」。"
+        "任务仍在原项目中。可以从任务下拉菜单打开 Tree 查看，或在「更多」里打开「显示已安排」。"
       ],
       [
         "在介绍页交互演示中所做的更改会被保存吗？",
@@ -83,7 +83,7 @@ export default {
       ],
       [
         "Does a scheduled task remain in its project?",
-        "Yes. Find it under Manage projects or turn on Show scheduled in the More menu."
+        "Yes. Open Tree from the Tasks menu or turn on Show scheduled in the More menu."
       ],
       [
         "Are modifications made in the demo saved permanently?",
