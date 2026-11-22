@@ -1,4 +1,5 @@
 import { isUneditedMigratedCourse } from "./utils/courseBackground";
+import { calendarResourceForEvent } from "../shared/caldavResource";
 import type { AgentRunState, AiAction, AiPersonalizationProfile, ChatMessage, HabitDailyState, PlannerApi, PlannerData, Settings, Subtask, Task, TaskAiInference, TaskRecurrence, TimelineRecord } from "./types";
 import { normalizeSettings } from "./defaultSettings";
 import { normalizeEngagement } from "./utils/engagement";
@@ -599,7 +600,9 @@ function migrateEventsToTasks(data: PlannerData): Task[] {
       estimatedHours: duration / 60,
       plannedForDate: date,
       recurrence: event.recurrence,
-      caldav: event.calendarKind === "appointment" ? event.caldav : undefined,
+      caldav: event.calendarKind === "appointment"
+        ? event.caldav ?? { ...calendarResourceForEvent(event.id), endDate, endTime: end }
+        : undefined,
       subtasks: [],
       createdAt: event.createdAt || now(),
       updatedAt: event.createdAt || now(),

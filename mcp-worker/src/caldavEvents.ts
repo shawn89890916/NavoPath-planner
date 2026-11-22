@@ -1,4 +1,5 @@
 import ICAL from "ical.js";
+import { calendarResourceForEvent } from "../../shared/caldavResource.ts";
 import type { CalendarEvent, RecurrenceFrequency, TaskRecurrence } from "../../src/types";
 
 type Time = InstanceType<typeof ICAL.Time>;
@@ -51,21 +52,23 @@ function localEpoch(value: string, timezone: string) {
   return result;
 }
 
-function project(event: EventFields) {
-  return JSON.stringify([
-    event.title, event.details || "", event.startDate || event.date,
+export function appointmentSchedule(event: EventFields) {
+  return [event.startDate || event.date,
     event.endDate || event.startDate || event.date, event.startTime || "", event.endTime || "",
     event.recurrence?.frequency || "none", event.recurrence?.endDate || "", event.recurrence?.count || 0,
-  ]);
+  ];
+}
+
+function project(event: EventFields) {
+  return JSON.stringify([event.title, event.details || "", ...appointmentSchedule(event)]);
 }
 
 export function eventUid(event: CalendarEvent) {
-  return event.caldav?.uid || "event-" + event.id + "@navopath.app";
+  return event.caldav?.uid || calendarResourceForEvent(event.id).uid;
 }
 
 export function eventFile(event: CalendarEvent) {
-  return event.caldav?.file || "event-" + event.id.replace(/[^a-zA-Z0-9_-]/g, character =>
-    "_" + character.charCodeAt(0).toString(16) + "_") + ".ics";
+  return event.caldav?.file || calendarResourceForEvent(event.id).file;
 }
 
 function recurrenceFromIcs(component: Component, start: Time, date: string, endDate: string, startTime: string | undefined, endTime: string | undefined, timezone: string): TaskRecurrence | undefined {
@@ -197,8 +200,9 @@ function setEventDates(component: Component, event: CalendarEvent, timezone: str
 }
 
 export function writeAppointment(event: CalendarEvent, timezone: string) {
-  if (event.caldav?.projection === project(event)) return event.caldav.ics;
-  const calendar = event.caldav ? new ICAL.Component(ICAL.parse(event.caldav.ics)) : new ICAL.Component("vcalendar");
+  const ics = event.caldav?.ics;
+  if (ics && event.caldav?.projection === project(event)) return ics;
+  const calendar = ics ? new ICAL.Component(ICAL.parse(ics)) : new ICAL.Component("vcalendar");
   let component = calendar.getFirstSubcomponent("vevent");
   if (!component) {
     calendar.addPropertyWithValue("version", "2.0");
@@ -213,7 +217,7 @@ export function writeAppointment(event: CalendarEvent, timezone: string) {
   component.updatePropertyWithValue("dtstamp", ICAL.Time.fromJSDate(Number.isNaN(stamp.getTime()) ? new Date(0) : stamp, true));
   const previousFields = event.caldav?.projection ? JSON.parse(event.caldav.projection) as unknown[] : [];
   const currentFields = JSON.parse(project(event)) as unknown[];
-  if (currentFields.slice(2).some((value, index) => value !== previousFields[index + 2])) {
+  if (!ics || currentFields.slice(2).some((value, index) => value !== previousFields[index + 2])) {
     setEventDates(component, event, timezone);
   }
   return calendar.toString() + "\r\n";

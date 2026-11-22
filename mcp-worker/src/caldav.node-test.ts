@@ -122,6 +122,67 @@ test("round-trips all-day events and preserves Apple details after a native titl
   assert.equal(readAppointment(allDay, "Asia/Shanghai").fields.endDate, "2026-11-08");
 });
 
+test("keeps completed and historical execution records through a calendar edit", async () => {
+  const api = fixture();
+  assert.equal((await api.request("PUT", item, appleEvent)).status, 201);
+  const [task] = api.profile.data.tasks!;
+  const [record] = task.timelineRecords!;
+  task.completed = true;
+  task.workflowStatus = "done";
+  task.plannedForDate = undefined;
+  const completed = { ...record, executionStatus: "completed" as const, engagement: 95 };
+  const older = { ...record, id: "old", scheduledDate: "2026-11-05", executionStatus: "returned_unfinished" as const };
+  task.timelineRecords = [older, completed];
+  const read = await api.request("GET", item);
+  assert.match(await read.text(), /DTSTART:20261106T070000Z/);
+
+  const renamed = appleEvent.replace("Apple meeting", "Renamed from Calendar");
+  assert.equal((await api.request("PUT", item, renamed, { "If-Match": read.headers.get("ETag")! })).status, 204);
+  const edited = api.profile.data.tasks![0];
+  assert.equal(edited.title, "Renamed from Calendar");
+  assert.equal(edited.completed, true);
+  assert.equal(edited.workflowStatus, "done");
+  assert.equal(edited.plannedForDate, undefined);
+  assert.deepEqual(edited.timelineRecords, [older, completed]);
+
+  const moved = renamed.replace("T070000Z", "T073000Z").replace("T080000Z", "T083000Z");
+  assert.equal((await api.request("PUT", item, moved)).status, 204);
+  assert.deepEqual(api.profile.data.tasks![0].timelineRecords, [older, { ...completed, scheduledStart: "15:30", scheduledEnd: "16:30" }]);
+});
+
+test("syncs migrated native appointments at their original URL and keeps their task identity", async () => {
+  const api = fixture();
+  const eventId = "event_mi2x1q_123abc";
+  const id = `migrated_event_${eventId}_primary`;
+  api.profile.data.tasks = [{
+    id, title: "Native appointment", dueDate: "2026-11-06", category: "personal", priority: "medium",
+    notes: "", goalId: "", completed: false, subtasks: [],
+    timelineRecords: [{
+      id: `${id}_schedule`, taskId: id, scheduledDate: "2026-11-06", scheduledStart: "13:00", scheduledEnd: "14:00",
+      executionStatus: "scheduled", createdAt: native.createdAt,
+    }],
+    createdAt: native.createdAt, updatedAt: native.createdAt,
+  }];
+  // An older client can still have the original event in its workspace snapshot.
+  api.profile.data.events!.push({ ...native, id: eventId });
+  const path = calendar + `event-${eventId}.ics`;
+  const response = await api.request("GET", path);
+  assert.equal(response.status, 200);
+  const body = await response.text();
+  assert.match(body, new RegExp(`UID:event-${eventId}@navopath\\.app`));
+  const listing = await api.request("PROPFIND", calendar, undefined, { Depth: "1" });
+  assert.equal((await listing.text()).split(path).length - 1, 1);
+
+  const renamed = body.replace("Native appointment", "Edited appointment");
+  assert.equal((await api.request("PUT", path, renamed, { "If-Match": response.headers.get("ETag")! })).status, 204);
+  assert.equal(api.profile.data.tasks!.length, 1);
+  assert.equal(api.profile.data.tasks![0].id, id);
+  assert.equal(api.profile.data.tasks![0].title, "Edited appointment");
+  assert.ok(api.profile.data.sync?.deleted?.[`events:${eventId}`]);
+  assert.equal((await api.request("DELETE", path)).status, 204);
+  assert.equal((await api.request("GET", path)).status, 404);
+});
+
 test("handles time range discovery and rejects unsupported input without mutating the workspace", async () => {
   const api = fixture();
   const report = await api.request("REPORT", calendar, '<c:calendar-query xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:d="DAV:"><d:prop><d:getetag/></d:prop><c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT"><c:time-range start="20261106T050000Z" end="20261106T060000Z"/></c:comp-filter></c:comp-filter></c:filter></c:calendar-query>');

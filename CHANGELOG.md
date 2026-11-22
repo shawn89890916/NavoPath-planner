@@ -1,5 +1,12 @@
 # NavoPath 更新日志
 
+## 2026-11-22
+
+### 修复
+
+- 在 NavoPath 新建的事项可以同步到 Apple 日历。从 Apple 日历编辑事项时，会保留任务的完成状态和执行记录。
+- 插件 SDK、插件模板和主题模板可以独立使用其类型声明。
+
 ## 2026-11-21
 
 ### 改进
@@ -500,6 +507,13 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-22
+
+### Fixed
+
+- Appointments created in NavoPath sync to Apple Calendar. Editing an appointment from Apple Calendar preserves the task’s completion status and execution records.
+- The plugin SDK, plugin template, and theme template ship self-contained type declarations.
 
 ## 2026-11-21
 

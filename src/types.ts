@@ -1,5 +1,13 @@
 import type { PluginMcpAccess } from "../shared/pluginMcp";
 import type { ExtensionPreferences } from "./extensions/model";
+export type CalDavResource = {
+  file: string;
+  uid: string;
+  ics?: string;
+  projection?: string;
+  endDate?: string;
+  endTime?: string;
+};
 export type Category = "exam" | "uk" | "us" | "essay" | "materials" | "project" | "personal";
 export type Priority = "high" | "medium" | "low";
 export type NullablePriority = Priority | null;
@@ -170,7 +178,7 @@ export interface TaskRecurrence {
 export interface Task {
   fixedCourse?: boolean;
   /** Backing resource for tasks synchronized through CalDAV. */
-  caldav?: { file: string; uid: string; ics: string; projection: string; endDate?: string; endTime?: string };
+  caldav?: CalDavResource;
   /** Engagement for tasks without execution records. */
   engagement?: number;
   id: string;
@@ -225,7 +233,7 @@ export interface LongTermTask {
 
 export interface CalendarEvent {
   calendarKind?: "appointment";
-  caldav?: { file: string; uid: string; ics: string; projection: string; endDate?: string; endTime?: string };
+  caldav?: CalDavResource;
   updatedAt?: string;
   fixedCourse?: boolean;
   id: string;

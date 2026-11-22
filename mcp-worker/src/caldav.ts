@@ -1,6 +1,7 @@
 import { DOMParser, type Element } from "@xmldom/xmldom";
+import { calendarResourceForMigratedEvent } from "../../shared/caldavResource.ts";
 import type { CalendarEvent, Task } from "../../src/types";
-import { appointmentOverlaps, eventFile, eventUid, readAppointment, writeAppointment } from "./caldavEvents.ts";
+import { appointmentOverlaps, appointmentSchedule, eventFile, eventUid, readAppointment, writeAppointment } from "./caldavEvents.ts";
 
 const DAV = "DAV:";
 const CAL = "urn:ietf:params:xml:ns:caldav";
@@ -214,31 +215,43 @@ function collectionProperties(path: string, account: CalDavAccount, revision?: n
   return properties;
 }
 
+function appointmentRecord(task?: Task) {
+  const records = task?.timelineRecords || [];
+  return records.find(record => record.id === `${task?.id}_schedule`)
+    ?? records.find(record => record.executionStatus === "scheduled")
+    ?? (records.length === 1 ? records[0] : undefined);
+}
+
 function appointments(profile: CalDavProfile) {
-  const tasks = (profile.data.tasks || []).filter(task => task.caldav).map(task => {
-    const record = (task.timelineRecords || []).find(item => item.executionStatus === "scheduled");
+  const tasks = (profile.data.tasks || []).flatMap(task => {
+    const caldav = task.caldav ?? calendarResourceForMigratedEvent(task.id);
+    if (!caldav) return [];
+    const record = appointmentRecord(task);
     const date = task.recurrence?.startDate || record?.scheduledDate || task.scheduledDate || task.dueDate;
-    const startTime = task.recurrence?.startTime || record?.scheduledStart || task.scheduledStart || undefined;
+    const startTime = task.recurrence ? task.recurrence.startTime : record ? record.scheduledStart : task.scheduledStart;
     const recurrenceEnd = task.recurrence?.durationMinutes && startTime
       ? new Date(Date.parse(date + "T" + startTime + ":00Z") + task.recurrence.durationMinutes * 60_000).toISOString()
       : undefined;
-    return {
+    return [{
       id: task.id, title: task.title, date, startDate: date,
-      endDate: recurrenceEnd?.slice(0, 10) || record?.scheduledEndDate || task.caldav?.endDate || date,
-      startTime, endTime: recurrenceEnd?.slice(11, 16) || record?.scheduledEnd || task.scheduledEnd || task.caldav?.endTime,
+      endDate: recurrenceEnd?.slice(0, 10) || (startTime && record?.scheduledEndDate) || caldav.endDate || date,
+      startTime, endTime: startTime ? recurrenceEnd?.slice(11, 16) || record?.scheduledEnd || task.scheduledEnd || caldav.endTime : undefined,
       category: task.category, details: task.notes, recurrence: task.recurrence,
       createdAt: task.createdAt, updatedAt: task.updatedAt,
-      fixedCourse: true, calendarKind: "appointment" as const, caldav: task.caldav,
-    } satisfies CalendarEvent;
+      fixedCourse: true, calendarKind: "appointment", caldav,
+    } satisfies CalendarEvent];
   });
-  const taskFiles = new Set(tasks.map(event => event.caldav?.file));
+  const taskFiles = new Set(tasks.map(eventFile));
   return [
     ...tasks,
-    ...(profile.data.events || []).filter(event => event.calendarKind === "appointment" && !taskFiles.has(event.caldav?.file)),
+    ...(profile.data.events || []).filter(event => event.calendarKind === "appointment" && !taskFiles.has(eventFile(event))),
   ];
 }
 
-function taskFromAppointment(event: CalendarEvent, existing?: Task): Task {
+function taskFromAppointment(event: CalendarEvent, existing: Task | undefined, scheduleChanged: boolean): Task {
+  if (existing && !scheduleChanged) {
+    return { ...existing, title: event.title, notes: event.details || "", caldav: event.caldav, updatedAt: event.updatedAt || existing.updatedAt };
+  }
   const date = event.startDate || event.date;
   const start = event.startTime || "";
   const end = event.endTime || "";
@@ -246,26 +259,22 @@ function taskFromAppointment(event: CalendarEvent, existing?: Task): Task {
   const duration = start && end
     ? Math.max(15, (Date.parse(endDate + "T" + end + "Z") - Date.parse(date + "T" + start + "Z")) / 60_000)
     : existing?.estimatedHours ? Math.round(existing.estimatedHours * 60) : 30;
-  const timedRecord = start && end && !event.recurrence ? [{
-    id: existing?.timelineRecords?.find(record => record.executionStatus === "scheduled")?.id || event.id + "_schedule",
+  const records = existing?.timelineRecords || [];
+  const record = existing?.recurrence ? undefined : appointmentRecord(existing);
+  const updatedRecord = {
+    ...record,
+    id: record?.id || event.id + "_schedule",
     taskId: event.id,
     scheduledDate: date,
     scheduledStart: start,
     scheduledEndDate: endDate,
     scheduledEnd: end,
-    executionStatus: "scheduled" as const,
-    createdAt: event.createdAt,
-  }] : [];
-  const allDayRecord = !start && !event.recurrence ? [{
-    id: existing?.timelineRecords?.find(record => record.executionStatus === "scheduled")?.id || event.id + "_schedule",
-    taskId: event.id,
-    scheduledDate: date,
-    scheduledStart: "",
-    scheduledEndDate: date,
-    scheduledEnd: "",
-    executionStatus: "scheduled" as const,
-    createdAt: event.createdAt,
-  }] : [];
+    executionStatus: record?.executionStatus ?? (existing?.completed ? "completed" as const : "scheduled" as const),
+    createdAt: record?.createdAt || event.createdAt,
+  };
+  const timelineRecords = event.recurrence
+    ? records.filter(item => item !== record || item.executionStatus !== "scheduled")
+    : record ? records.map(item => item === record ? updatedRecord : item) : [...records, updatedRecord];
   return {
     ...existing,
     id: event.id,
@@ -282,7 +291,7 @@ function taskFromAppointment(event: CalendarEvent, existing?: Task): Task {
     scheduledDate: !start && !event.recurrence ? date : undefined,
     scheduledStart: undefined,
     scheduledEnd: undefined,
-    timelineRecords: event.recurrence ? (existing?.timelineRecords || []) : timedRecord.length ? timedRecord : allDayRecord,
+    timelineRecords,
     recurrence: event.recurrence,
     subtasks: existing?.subtasks || [],
     caldav: event.caldav,
@@ -371,6 +380,11 @@ async function writeResource(request: Request, store: Store, account: CalDavAcco
     originalEtag = item?.etag;
     if (!existing && request.method === "DELETE") return response(404);
     const timestamp = new Date().toISOString();
+    const workspaceEvents = profile.data.events || [];
+    const removedEvents = workspaceEvents.filter(event => event.calendarKind === "appointment" && eventFile(event) === file);
+    const remainingEvents = workspaceEvents.filter(event => !removedEvents.includes(event));
+    const deleted = { ...profile.data.sync?.deleted };
+    for (const event of removedEvents) deleted["events:" + event.id] = timestamp;
     let next: Workspace = { ...profile.data, savedAt: timestamp };
     let result: Response;
     if (parsed) {
@@ -393,16 +407,18 @@ async function writeResource(request: Request, store: Store, account: CalDavAcco
       if (item?.body === body) return response(204, null, { ETag: item.etag });
       const written = await representation(updated, account.timezone);
       if (!written) return response(400);
-      const updatedTask = taskFromAppointment(updated, existingTask);
-      next.events = (profile.data.events || []).filter(event => event.id !== updated.id);
+      const scheduleChanged = !existing || JSON.stringify(appointmentSchedule(existing)) !== JSON.stringify(appointmentSchedule(updated));
+      const updatedTask = taskFromAppointment(updated, existingTask, scheduleChanged);
+      next.events = remainingEvents;
+      if (removedEvents.length > 0) next.sync = { ...profile.data.sync, deleted };
       next.tasks = existingTask
         ? (profile.data.tasks || []).map(task => task.id === existingTask.id ? updatedTask : task)
         : [...(profile.data.tasks || []), updatedTask];
       result = response(existing ? 204 : 201, null, { ETag: written.etag });
     } else {
-      next.events = (profile.data.events || []).filter(event => event.id !== existing!.id);
+      next.events = remainingEvents;
       next.tasks = (profile.data.tasks || []).filter(task => task.id !== existing!.id);
-      next.sync = { ...profile.data.sync, deleted: { ...profile.data.sync?.deleted, ["tasks:" + existing!.id]: timestamp, ["events:" + existing!.id]: timestamp } };
+      next.sync = { ...profile.data.sync, deleted: { ...deleted, ["tasks:" + existing!.id]: timestamp, ["events:" + existing!.id]: timestamp } };
       result = response(204);
     }
     if (await store.save(account.userId, profile, next)) return result;

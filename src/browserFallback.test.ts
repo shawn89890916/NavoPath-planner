@@ -788,6 +788,33 @@ describe("browser fallback preview mode", () => {
     expect(migrated.every((task) => task.id.length <= 200)).toBe(true);
   });
 
+  it("keeps the CalDAV identity and date range when a native appointment becomes a task", () => {
+    const workspace = fallbackData();
+    workspace.events = [{
+      id: "event_mi2x1q_123abc",
+      title: "Offsite",
+      date: "2026-11-22",
+      endDate: "2026-11-24",
+      category: "personal",
+      details: "",
+      calendarKind: "appointment",
+      fixedCourse: true,
+      createdAt: "2026-11-22T00:00:00.000Z",
+    }];
+
+    const saved = normalizeData(workspace);
+    const id = "migrated_event_event_mi2x1q_123abc_primary";
+    const task = saved.tasks.find(item => item.id === id);
+    expect(saved.events).toHaveLength(0);
+    expect(task?.caldav).toEqual({
+      file: "event-event_mi2x1q_123abc.ics",
+      uid: "event-event_mi2x1q_123abc@navopath.app",
+      endDate: "2026-11-24",
+      endTime: undefined,
+    });
+    expect(normalizeData(saved).tasks.find(item => item.id === id)?.caldav).toEqual(task?.caldav);
+  });
+
   it("preserves a legacy event that crosses midnight", () => {
     const legacy = fallbackData();
     legacy.events = [{
