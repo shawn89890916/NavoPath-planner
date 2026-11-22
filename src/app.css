@@ -10574,18 +10574,15 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   align-self: center;
 }
 .df-workspace-guide-cue button { pointer-events: auto; }
-.df-workspace-guide-action {
-  display: inline-flex;
-  align-items: center;
+#root .df-app .df-workspace-guide-action.ui-button {
   gap: 3px;
   padding: 0;
-  border: 0;
-  background: transparent;
   font: inherit;
-  color: inherit;
-  cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+@media (pointer: fine) {
+  #root .df-app .df-workspace-guide-action.ui-button { min-height: 24px; min-width: auto; }
 }
 .df-workspace-guide-links {
   display: flex;

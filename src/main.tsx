@@ -9460,17 +9460,17 @@ if (cached?.data && cached?.settings) {
       </OnboardingCue>}
       {showGuide && onboardingTask && <OnboardingCue key={onboardingTask.id} anchor={guideRowVisible ? onboardingTaskRowRef : mobileExecution ? candidateTriggerRef : quickAddButtonRef}
         followRow={guideRowVisible} lang={lang} onClose={() => void saveSettings(ONBOARDING_DONE)}>
-        {!guideRowVisible && <button type="button" className="df-workspace-guide-action" onClick={revealTasks}>{lang === "zh" ? "打开任务列表" : "Open Tasks"}</button>}
+        {!guideRowVisible && <Button variant="text" className="df-workspace-guide-action" onClick={revealTasks}>{lang === "zh" ? "打开任务列表" : "Open Tasks"}</Button>}
         {" "}<OnboardingScheduleHint lang={lang} touch={mobileExecution} onSchedule={scheduleGuidedTask} />
       </OnboardingCue>}
       {showGuide && completionVisible && <OnboardingCue key="complete" anchor={taskPaneVisible ? shelfTitleRef : mobileExecution ? candidateTriggerRef : quickAddButtonRef}
         lang={lang} onClose={() => setOnboardingCelebration("")}>
         {lang === "zh" ? "第一条任务已排进时间轴" : "Your first task is on the timeline"}
         <div className="df-workspace-guide-links">
-          <button type="button" className="df-workspace-guide-action" onClick={() => { setOnboardingCelebration(""); revealTasks(); setShelfMenuOpen(true); }}>{lang === "zh" ? "任务视图" : "Task views"}</button>
-          <button type="button" className="df-workspace-guide-action" onClick={() => openSettingsSection("plugins")}>{lang === "zh" ? "插件" : "Plugins"}</button>
-          <button type="button" className="df-workspace-guide-action" onClick={() => openSettingsSection("mcp")}>MCP</button>
-          <button type="button" className="df-workspace-guide-action" onClick={() => openSettingsSection({ category: "ai", anchor: "ai-provider" })}>AI API</button>
+          <Button variant="text" className="df-workspace-guide-action" onClick={() => { setOnboardingCelebration(""); revealTasks(); setShelfMenuOpen(true); }}>{lang === "zh" ? "任务视图" : "Task views"}</Button>
+          <Button variant="text" className="df-workspace-guide-action" onClick={() => openSettingsSection("plugins")}>{lang === "zh" ? "插件" : "Plugins"}</Button>
+          <Button variant="text" className="df-workspace-guide-action" onClick={() => openSettingsSection("mcp")}>MCP</Button>
+          <Button variant="text" className="df-workspace-guide-action" onClick={() => openSettingsSection({ category: "ai", anchor: "ai-provider" })}>AI API</Button>
         </div>
       </OnboardingCue>}
       {dialog.host}
