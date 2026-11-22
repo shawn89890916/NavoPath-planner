@@ -8668,7 +8668,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-empty .blob-accent { width: 40px; height: 40px; opacity: .16; border: 1px solid var(--paper-accent-rule); border-radius: 50%; background: transparent; transform: none; }
 .df-empty .blob-accent::after { display: none; }
 .df-empty strong { color: var(--df-text); position: relative; margin-top: 14px; font-family: var(--paper-display); font-size: 15px; font-weight: 600; }
-.df-empty span { position: relative; max-width: 230px; color: var(--text-faint); font-size: 11px; line-height: 1.6; }
 .df-empty button { background: transparent;
   border-color: color-mix(in srgb, var(--accent-active) 38%, var(--border-soft)); color: var(--accent-active); position: relative; min-height: 32px; margin-top: 7px; border: 1px solid var(--accent-active); border-radius: var(--radius-control); box-shadow: none; }
 .df-app .df-candidate-list:has(> .df-empty) {
@@ -10533,6 +10532,20 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   font: 550 13px/1.5 var(--df-font-ui);
   pointer-events: none;
 }
+.df-workspace-guide-cue[data-outlined] {
+  border: 1px solid var(--paper-rule-strong, var(--border-default));
+}
+#root .df-app input[data-task-example]:placeholder-shown {
+  outline: 1px solid var(--paper-rule-strong, var(--border-default));
+  outline-offset: 2px;
+}
+#root .df-app input[data-task-example="typing"]:placeholder-shown {
+  caret-color: transparent;
+}
+.df-candidate-task-row[data-guide-target] > .df-task-card {
+  outline: 2px solid var(--accent-active);
+  outline-offset: -2px;
+}
 .df-workspace-guide-cue::before,
 .df-workspace-guide-cue::after {
   content: "";
@@ -10583,11 +10596,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 }
 @media (pointer: fine) {
   #root .df-app .df-workspace-guide-action.ui-button { min-height: 24px; min-width: auto; }
-}
-.df-workspace-guide-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 12px;
 }
 
 /* Browser comment fixes: planning rows, dark logo, and app-native dialogs. */
@@ -16744,9 +16752,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
   #root .df-app.mode-execute .df-empty strong {
     z-index: 1;
   }
-  #root .df-app.mode-execute .df-empty span {
-    z-index: 1;
-  }
   #root .df-app .df-candidate-return-hint {
     display: flex;
     align-items: center;
@@ -18371,8 +18376,17 @@ body.df-unified-dragging .df-unified-drag-overlay {
   -ms-overflow-style: none;
 }
 #root .df-app.mode-execute .df-candidate-list::-webkit-scrollbar { display: none; }
+#root .df-app.mode-execute .df-candidate-list:has(> .df-empty-state:only-child) {
+  padding-block: 0;
+}
 #root .df-app.mode-execute .df-candidate-list > .df-empty-state {
-  margin-inline: 8px;
+  flex: 1;
+  justify-items: center;
+  margin: 0;
+  text-align: center;
+}
+.df-candidate-list > .df-empty-state .df-empty-state-actions {
+  justify-content: center;
 }
 /* Hang the recurrence mark from the upper-right corner without singling out its row width. */
 #root .df-app .df-task-block[data-task-appearance] > .df-task-recurrence-indicator {

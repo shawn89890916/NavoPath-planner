@@ -26,20 +26,28 @@ export function AnchoredNarrowMenu({
 
   useLayoutEffect(() => {
     if (!open) return;
+    const panel = anchorRef.current?.closest(".df-candidate-panel");
     const update = () => {
       const anchor = anchorRef.current;
       if (!anchor) return;
       const anchorRect = anchor.getBoundingClientRect();
-      const width = menuRef.current?.offsetWidth || 220;
-      const height = menuRef.current?.offsetHeight || 240;
+      const menu = menuRef.current;
+      const width = menu?.offsetWidth || 224;
+      const height = Math.min(320, (menu?.firstElementChild?.scrollHeight || 240) + 2);
       const gap = 8, pad = 10;
-      let left = placement === "below" ? anchorRect.right - width : anchorRect.right + gap;
-      if (left + width > window.innerWidth - pad) left = placement === "side" ? anchorRect.left - width - gap : window.innerWidth - width - pad;
-      left = Math.max(pad, left);
-      let top = placement === "below" ? anchorRect.bottom + gap : anchorRect.top - 6;
-      if (top + height > window.innerHeight - pad) top = placement === "below" ? anchorRect.top - height - gap : window.innerHeight - height - pad;
-      top = Math.max(pad, top);
-      setPosition({ left, top, maxHeight: Math.max(132, window.innerHeight - top - pad) });
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const right = anchorRect.right + gap;
+      const preferredLeft = placement === "below" ? anchorRect.left : right + width <= viewportWidth - pad ? right : anchorRect.left - width - gap;
+      const left = Math.max(pad, Math.min(preferredLeft, viewportWidth - width - pad));
+      const below = viewportHeight - anchorRect.bottom - gap - pad;
+      const above = anchorRect.top - gap - pad;
+      const openAbove = placement === "below" && below < height && above > below;
+      const preferredTop = placement === "side" ? Math.min(anchorRect.top - 6, viewportHeight - height - pad)
+        : openAbove ? anchorRect.top - gap - Math.min(height, above) : anchorRect.bottom + gap;
+      const top = Math.max(pad, preferredTop);
+      const maxHeight = Math.max(0, openAbove ? above : viewportHeight - top - pad);
+      setPosition((current) => current.left === left && current.top === top && current.maxHeight === maxHeight ? current : { left, top, maxHeight });
     };
     const dismiss = (event: PointerEvent) => {
       const target = event.target as Node | null;
@@ -51,12 +59,18 @@ export function AnchoredNarrowMenu({
       onClose();
       anchorRef.current?.focus();
     };
+    const observer = new ResizeObserver(update);
+    if (anchorRef.current) observer.observe(anchorRef.current);
+    if (menuRef.current) observer.observe(menuRef.current);
+    panel?.addEventListener("transitionend", update);
     update();
     window.addEventListener("resize", update);
     document.addEventListener("scroll", update, true);
     document.addEventListener("pointerdown", dismiss);
     document.addEventListener("keydown", escape);
     return () => {
+      observer.disconnect();
+      panel?.removeEventListener("transitionend", update);
       window.removeEventListener("resize", update);
       document.removeEventListener("scroll", update, true);
       document.removeEventListener("pointerdown", dismiss);
@@ -65,7 +79,10 @@ export function AnchoredNarrowMenu({
   }, [anchorRef, onClose, open, placement]);
 
   useLayoutEffect(() => {
-    if (open && focusOnOpen) menuRef.current?.querySelector<HTMLElement>('button[aria-pressed="true"], button')?.focus({ preventScroll: true });
+    if (!open || !focusOnOpen) return;
+    const menu = menuRef.current;
+    const active = menu?.querySelector<HTMLElement>('button[aria-pressed="true"]') ?? menu?.querySelector<HTMLElement>("button");
+    active?.focus({ preventScroll: true });
   }, [open, focusOnOpen]);
 
   if (!open || typeof document === "undefined") return null;

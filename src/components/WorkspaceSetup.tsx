@@ -31,7 +31,6 @@ export function WorkspaceSetup({ settings, lang, onContinue }: {
       <div className="df-workspace-setup-layout">
         <div className="df-workspace-setup-intro">
           <h1>{zh ? "设置你的工作区" : "Set up your workspace"}</h1>
-          <p>{zh ? "选好常用的外观和时间轴。之后随时可以在设置中调整。" : "Choose how your workspace looks and how your timeline starts. You can change these anytime in Settings."}</p>
         </div>
         <form className="df-workspace-setup-form" onSubmit={(event) => {
           event.preventDefault();

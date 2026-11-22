@@ -82,8 +82,7 @@ export default function SyncBridgeManager({ lang }: { lang: Language }) {
       <div className="df-mcp-section-head"><strong>{lang === "zh" ? "桥接电脑" : "Bridge computer"}</strong><Button variant="ghost" onClick={() => void refresh()}>{lang === "zh" ? "刷新" : "Refresh"}</Button></div>
       {!api.listSyncBridgeStatuses && <p className="df-mcp-status muted">{lang === "zh" ? "登录 NavoPath 账户后可查看桥接状态。" : "Sign in to your NavoPath account to see bridge status."}</p>}
       {api.listSyncBridgeStatuses && !loaded && <p className="df-mcp-status muted">{lang === "zh" ? "正在读取桥接状态…" : "Loading bridge status…"}</p>}
-      {api.listSyncBridgeStatuses && loaded && !hasBridge && !error && <EmptyState compact announce title={lang === "zh" ? "尚未连接桥接电脑" : "No bridge computer connected"}
-        description={lang === "zh" ? "按下方的首次配置步骤连接一台电脑，启用云盘镜像。" : "Follow the setup below to connect a computer for cloud folder mirroring."} />}
+      {api.listSyncBridgeStatuses && loaded && !hasBridge && !error && <EmptyState compact announce title={lang === "zh" ? "尚未连接桥接电脑" : "No bridge computer connected"} />}
       {error && <p className="df-mcp-status error" role="alert">{error}</p>}
       {statuses.map((item) => <div className="df-sync-bridge-device" key={item.deviceId}>
         <div><strong>{item.deviceName}</strong><span>{bridgeState(item, lang)}</span></div>

@@ -152,8 +152,7 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
       {error && <p className="df-mcp-status error" role="alert">{error}</p>}
       {notice && <p className="df-mcp-status" role="status">{notice}</p>}
       {loading && <p className="df-mcp-status">{lang === "zh" ? "正在读取订阅状态…" : "Loading subscription status…"}</p>}
-      {!loading && supported && tokens.length === 0 && !error && <EmptyState compact announce title={lang === "zh" ? "还没有日历订阅" : "No calendar subscription yet"}
-        description={lang === "zh" ? "生成链接后，把它添加到你的日历应用。" : "Create a link, then add it to your calendar app."} />}
+      {!loading && supported && tokens.length === 0 && !error && <EmptyState compact announce title={lang === "zh" ? "还没有日历订阅" : "No calendar subscription yet"} />}
       {tokens.map((token) => <div className="df-mcp-token-row" key={token.id}><span><strong>{lang === "zh" ? "NavoPath 日历" : "NavoPath Calendar"}</strong><small>{token.tokenPrefix}… · {new Date(token.createdAt).toLocaleDateString()}</small></span><button type="button" disabled={busy} onClick={async () => {
         if (!api.revokeCalendarFeedToken) return;
         setBusy(true);
@@ -204,8 +203,7 @@ function ExternalCalendarManager({ lang }: { lang: Language }) {
       ? (lang === "zh" ? "最多连接 10 个 HTTPS ICS 地址。事项只作为忙碌时间参与冲突检测和 AI 规划，不会导入任务，也不会写回来源日历。" : "Connect up to 10 HTTPS ICS URLs. Events are used only as read-only busy time for conflicts and AI planning; they are never imported as tasks or written back.")
       : (lang === "zh" ? "登录云端账号并部署外部日历服务后可用。" : "Available after signing in and deploying the external-calendar service.")}</p>
     {supported && !loading && !error && sources.length === 0 && (
-      <EmptyState compact announce title={lang === "zh" ? "尚未连接外部日历" : "No external calendars connected"}
-        description={lang === "zh" ? "用 ICS 订阅地址将其他日历的忙碌时段显示在这里。" : "Use an ICS link to bring in busy times from another calendar."}>
+      <EmptyState compact announce title={lang === "zh" ? "尚未连接外部日历" : "No external calendars connected"}>
         <Button onClick={() => calendarNameRef.current?.focus()}>{lang === "zh" ? "添加日历" : "Add calendar"}</Button>
       </EmptyState>
     )}
@@ -1241,8 +1239,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                   <button onClick={addManualMemory}>{lang === "zh" ? "新增" : "Add"}</button>
                 </div>
                 <div className="df-ai-memory-list">
-                  {visibleMemories.length === 0 && <EmptyState compact title={lang === "zh" ? "还没有保存的记忆" : "No saved memories yet"}
-                    description={lang === "zh" ? "可以在这里新增，也可以从 AI 对话保存。" : "Add one here or save one from an AI conversation."}>
+                  {visibleMemories.length === 0 && <EmptyState compact title={lang === "zh" ? "还没有保存的记忆" : "No saved memories yet"}>
                     <Button onClick={addManualMemory}>{lang === "zh" ? "新增记忆" : "Add memory"}</Button>
                   </EmptyState>}
                   {visibleMemories.map((memory) => (

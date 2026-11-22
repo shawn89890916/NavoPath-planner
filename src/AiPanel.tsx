@@ -282,8 +282,7 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
         <button type="button" onClick={onNewConversation}>{text.newChat}<span aria-hidden="true">＋</span></button>
       </header>
       <div className="df-ai-conversation-items">
-        {sortedConversations.length === 0 && <EmptyState compact title={text.noChats}
-          description={lang === "zh" ? "发出第一条消息后，对话会保存在这里。" : "Conversations appear here after you send your first message."} />}
+        {sortedConversations.length === 0 && <EmptyState compact title={text.noChats} />}
         {sortedConversations.map((conversation, conversationIndex) => {
           const active = conversation.id === activeConversationId;
           const renaming = renamingConversationId === conversation.id;
@@ -339,7 +338,7 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
       <header><strong>{lang === "zh" ? "Agent 审计记录" : "Agent audit history"}</strong><small>{lang === "zh" ? "保留最近 30 天，最多显示 50 条" : "Last 30 days, up to 50 runs"}</small></header>
       {auditLoading && <p>{lang === "zh" ? "正在读取…" : "Loading…"}</p>}
       {auditError && <p className="error" role="alert">{auditError}</p>}
-      {!auditLoading && !auditError && auditRuns.length === 0 && <EmptyState compact title={lang === "zh" ? "暂无审计记录" : "No audit runs yet"} description={lang === "zh" ? "Agent 的工作区操作记录会显示在这里。" : "Agent actions in your workspace will appear here."} />}
+      {!auditLoading && !auditError && auditRuns.length === 0 && <EmptyState compact title={lang === "zh" ? "暂无审计记录" : "No audit runs yet"} />}
       {auditRuns.map((run) => <article key={run.id}>
         <div><strong>{run.status}</strong><time>{new Date(run.createdAt).toLocaleString()}</time></div>
         <small>{run.trigger} · {run.tools.length} {lang === "zh" ? "次查询" : "queries"} · {run.commands.length} {lang === "zh" ? "个命令" : "commands"}</small>
@@ -353,8 +352,7 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
       {messages.length === 0 && <div className="df-ai-reference-empty">
         {demoControls && <div className="df-ai-reference-prompt">{lang === "zh" ? "今天想推进的几件事" : "A few things for today"}</div>}
         {demoControls}
-        {!demoControls && <EmptyState title={lang === "zh" ? "你想先推进哪件事？" : "What would you like to work on?"}
-          description={lang === "zh" ? "可以直接提问，也可以选一条建议再修改。" : "Start with your own question or edit one of these suggestions."}>
+        {!demoControls && <EmptyState title={lang === "zh" ? "你想先推进哪件事？" : "What would you like to work on?"}>
           {promptSuggestions.map((suggestion) => <Button key={suggestion} onClick={() => { setInput(suggestion); composerTextareaRef.current?.focus(); }}>{suggestion}</Button>)}
         </EmptyState>}
         {!demoControls && <div className={`df-ai-capability-state ${globalAgentAvailable ? "ready" : "locked"}`}>

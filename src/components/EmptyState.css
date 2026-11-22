@@ -16,18 +16,11 @@
   gap: 8px;
 }
 
-.df-empty-state-copy strong {
+.df-empty-state > strong {
   display: block;
   font-size: 1rem;
   font-weight: 650;
   line-height: 1.35;
-}
-
-.df-empty-state-copy p {
-  margin: 4px 0 0;
-  color: var(--text-muted, inherit);
-  font-size: 0.8125rem;
-  line-height: 1.45;
 }
 
 .df-empty-state-actions {

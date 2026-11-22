@@ -40,11 +40,10 @@
   letter-spacing: -0.04em;
 }
 
-.df-workspace-setup-intro p {
-  max-inline-size: 34ch;
-  margin: 20px 0 0;
-  color: var(--text-muted);
-  line-height: 1.6;
+.df-workspace-setup:lang(zh) .df-workspace-setup-intro h1 {
+  max-inline-size: none;
+  font-size: clamp(1.75rem, 4vw, 4rem);
+  white-space: nowrap;
 }
 
 .df-workspace-setup-form > label {
@@ -82,5 +81,4 @@
     margin-block: 0 auto;
     padding-block: 32px 0;
   }
-  .df-workspace-setup-intro p { margin-block-start: 12px; }
 }

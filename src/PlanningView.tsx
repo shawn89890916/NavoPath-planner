@@ -2039,10 +2039,7 @@ export default function PlanningView(props: {
         <div className="df-planning-content">
           {taskViewEmpty && (filtersHideTasks || viewMode !== "tree" || safeProjects.length === 0) && !dragNode && !planningDragTask && (
             <EmptyState announce title={filtersHideTasks ? (zh ? "没有符合筛选条件的任务" : "No tasks match these filters")
-              : (zh ? "这里还没有任务" : "No tasks here yet")}
-              description={filtersHideTasks ? undefined : viewMode === "tree"
-                ? (zh ? "新建项目来组织任务，也可以先添加一件事。" : "Create a project to organize your work, or start with a task.")
-                : (zh ? "添加任务后，可以在这个视图中调整它的位置。" : "Add a task to start organizing work in this view.")}>
+              : (zh ? "这里还没有任务" : "No tasks here yet")}>
               {filtersHideTasks ? <Button onClick={clearAllFilters}>{zh ? "清除筛选" : "Clear filters"}</Button> : <>
                 {viewMode === "tree" && props.onProjectCreate && <Button variant="primary" onClick={props.onProjectCreate}>{zh ? "新建项目" : "New project"}</Button>}
                 <Button onClick={() => props.onTaskCreate("")}>{zh ? "添加任务" : "Add task"}</Button>
@@ -2211,12 +2208,8 @@ export default function PlanningView(props: {
               {metricsResult.taskEntries.length === 0 ? (
                 props.demo ? <div className="df-metrics-empty">
                   <h3>{props.lang === "zh" ? "暂无时间安排" : "No scheduled time"}</h3>
-                  {props.demo && <>
-                    <p>{props.lang === "zh" ? "这个时间范围内还没有安排任务。把任务拖入时间轴后，这里会显示时间占比。" : "Schedule tasks on the timeline and this report will show allocation."}</p>
-                    <button type="button" className="df-metrics-text-action" onClick={() => setMetricRange("today")}>{props.lang === "zh" ? "调整筛选" : "Adjust filters"}</button>
-                  </>}
-                </div> : <EmptyState announce title={zh ? "这个范围暂无时间统计" : "No time data in this range"}
-                  description={zh ? "安排任务后，这里会显示时间分布。" : "Schedule tasks to see how your time is allocated."}>
+                  <button type="button" className="df-metrics-text-action" onClick={() => setMetricRange("today")}>{props.lang === "zh" ? "调整筛选" : "Adjust filters"}</button>
+                </div> : <EmptyState announce title={zh ? "这个范围暂无时间统计" : "No time data in this range"}>
                   {metricActiveChips.length > 0
                     ? <Button onClick={clearMetricFilters}>{zh ? "清除筛选" : "Clear filters"}</Button>
                     : props.onOpenTimeline && <Button onClick={props.onOpenTimeline}>{zh ? "打开时间轴" : "Open timeline"}</Button>}

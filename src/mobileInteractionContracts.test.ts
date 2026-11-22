@@ -32,7 +32,7 @@ describe("portrait interaction contracts", () => {
   it("gives portrait users a direct schedule action and teaches long-press in onboarding", () => {
     expect(main).toContain('onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined}');
     expect(main).toContain('event.stopPropagation(); onMobileSchedule();');
-    expect(main).toContain('Long-press to drag it onto the timeline');
+    expect(main).toContain('Press and hold the task block, then move it onto the timeline');
     expect(main).toContain('hidden={compactFloatingActionsHidden && !mobilePlacement}');
     expect(main).not.toContain('df-schedule-drop-guide');
   });

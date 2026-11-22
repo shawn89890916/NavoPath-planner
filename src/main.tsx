@@ -70,7 +70,7 @@ import { ProductStorySlot } from "./ProductStory";
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, TimelineCanvas } from "./components/ExecutionSharedLayout";
 
 import { EmptyState } from "./components/EmptyState";
-import { OnboardingCue, OnboardingScheduleHint, useTaskExample } from "./components/OnboardingGuide";
+import { OnboardingCue, useTaskExample } from "./components/OnboardingGuide";
 import { isOnboardingTask, onboardingBlock, onboardingStage, onboardingTarget, ONBOARDING_ADD, ONBOARDING_DONE, ONBOARDING_START } from "./onboarding";
 import { ActionDisclosure, Button, CloseButton, IconButton, UndoButton } from "./components/UiPrimitives";
 
@@ -861,7 +861,6 @@ function App() {
   const [data, setData] = useState<PlannerData | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const workspaceLoaded = Boolean(data && settings);
-  const [onboardingCelebration, setOnboardingCelebration] = useState("");
   const [trayIdle, setTrayIdle] = useState(false);
   const [workspaceParked, setWorkspaceParked] = useState(false);
   const workspaceSuspended = trayIdle && workspaceParked;
@@ -1130,10 +1129,11 @@ function App() {
   const [quickProjectOpen, setQuickProjectOpen] = useState(false);
   const [quickProjectTitle, setQuickProjectTitle] = useState("");
   const [quickProjectColor, setQuickProjectColor] = useState(PROJECT_COLOR_PRESETS[0]);
-  const taskExample = useTaskExample(Boolean(settings && !productDemo && onboardingStage(settings) === "add" && !quickTitle), settings?.language || "en");
   const quickCandidateInputRef = useRef<HTMLInputElement>(null);
+  const quickExampleRef = useTaskExample(!productDemo && onboardingStage(settings) === "add", settings?.language || "en", quickCandidateInputRef);
   const quickComposerRef = useRef<HTMLFormElement>(null);
   const onboardingTaskRowRef = useRef<HTMLDivElement>(null);
+  const candidateExpandRef = useRef<HTMLButtonElement>(null);
   const quickAddButtonRef = useRef<HTMLButtonElement>(null);
   const compactQuickInputRef = useRef<HTMLInputElement>(null);
   const [candidatePanelCollapsed, setCandidatePanelCollapsed] = useState(false);
@@ -1976,7 +1976,6 @@ function App() {
     if (snapshotTimerRef.current) window.clearTimeout(snapshotTimerRef.current);
     snapshotTimerRef.current = null;
     setShelfViewId(productDemo?.feature === "planning" ? demoTreeView.id : "");
-    setOnboardingCelebration("");
     setTaskOperations([]);
     dismissToast();
     planningSessionRef.current = null;
@@ -3008,7 +3007,6 @@ if (cached?.data && cached?.settings) {
     const block = onboardingBlock(task);
     if (block) {
       void saveSettings(ONBOARDING_DONE);
-      setOnboardingCelebration(task.id);
       setSelectedDate(block.scheduledDate);
       setCompactExecuteView("schedule");
       if (timelineView === "month") setTimelineView("daily");
@@ -4041,7 +4039,7 @@ if (cached?.data && cached?.settings) {
       && (replaceLegacyAllDay || !hasActiveTaskSchedule(task)) && !hasRecurrenceOccurrenceOnDate(task, date);
   }
 
-  function commitShelfSchedule(taskId: string, date: string, startTime: string, options: { subtask?: ShelfSubtask; moveLegacyAllDay?: boolean } = {}): TimelineRecord | undefined {
+  function commitShelfSchedule(taskId: string, date: string, startTime: string, options: { subtask?: ShelfSubtask; moveLegacyAllDay?: boolean; dragged?: boolean } = {}): TimelineRecord | undefined {
     const current = dataRef.current;
     if (!current) return;
     const { subtask, moveLegacyAllDay } = options;
@@ -4070,7 +4068,13 @@ if (cached?.data && cached?.settings) {
     if (subtask && task.id === subtask.draftTaskId) nextTasks.push(nextTask);
     const next = { ...current, tasks: nextTasks };
     preserveTimelineViewportOnNextDataChange();
-    void saveTaskOperation(next, "schedule", { title: task.title, toast: lang === "zh" ? "已安排到时间轴" : "Scheduled on the timeline" });
+    const guide = settingsRef.current;
+    const firstDrag = options.dragged && startTime && guide?.workspaceGuideStep === "schedule" && guide.workspaceGuideTaskId === taskId;
+    const scheduledMessage = lang === "zh" ? "已安排到时间轴" : "Scheduled on the timeline";
+    const firstDragMessage = mobileExecution
+      ? (lang === "zh" ? "已安排。下次可点任务旁的「安排」。" : "Scheduled. Next time, tap Plan.")
+      : (lang === "zh" ? "已安排。下次可点任务旁的日历按钮。" : "Scheduled. Or use the task’s calendar.");
+    void saveTaskOperation(next, "schedule", { title: task.title, toast: firstDrag ? firstDragMessage : scheduledMessage });
     return record;
   }
 
@@ -6021,7 +6025,7 @@ if (cached?.data && cached?.settings) {
       dragTargetDateRef.current = "";
       return;
     }
-    if (!commitShelfSchedule(taskId, targetDate, startTime, { moveLegacyAllDay })) return;
+    if (!commitShelfSchedule(taskId, targetDate, startTime, { moveLegacyAllDay, dragged: true })) return;
     setHoverSlot("");
     setDrag(null);
     dragTargetDateRef.current = "";
@@ -9322,7 +9326,6 @@ if (cached?.data && cached?.settings) {
   const showGuide = !productDemo && !workspacePanel && !drawerOpen && !quickAddPresence.present
     && !commandOpen && !aiOpen && !notificationCenterOpen && !shelfMenuOpen && !mobileDatePickerOpen
     && !dialog.host && !drag && !dragCreate && !mobilePlacement;
-  const completionVisible = onboardingStep === "done" && Boolean(onboardingCelebration);
   function scheduleGuidedTask() {
     if (!onboardingTask) return;
     if (hasActiveTaskSchedule(onboardingTask)) {
@@ -9435,7 +9438,7 @@ if (cached?.data && cached?.settings) {
         <Suspense fallback={null}><MobileQuickAddSheet
           closing={quickAddPresence.closing}
           lang={lang}
-          taskPlaceholder={taskExample}
+          showTaskExample={onboardingStep === "add"}
           kind={mobileQuickAddKind}
           kinds={settings.featureHabitsEnabled === false ? ["task", "project"] : ["task", "project", "habit"]}
           title={quickTitle}
@@ -9454,24 +9457,18 @@ if (cached?.data && cached?.settings) {
         /></Suspense>
       )}
       <div id="df-portal-target" />
-      {showGuide && onboardingStep === "add" && <OnboardingCue key="add" anchor={taskPaneVisible ? quickComposerRef : quickAddButtonRef}
+      {showGuide && onboardingStep === "add" && <OnboardingCue key="add" outlined anchor={taskPaneVisible ? quickComposerRef : quickAddButtonRef}
         lang={lang} onClose={() => void saveSettings(ONBOARDING_DONE)}>
-        {lang === "zh" ? "输入第一条任务并添加" : "Type your first task and add it"}
+        {taskPaneVisible ? (lang === "zh" ? "输入第一条任务并添加" : "Type your first task and add it")
+          : (lang === "zh" ? "添加第一条任务" : "Add your first task")}
       </OnboardingCue>}
-      {showGuide && onboardingTask && <OnboardingCue key={onboardingTask.id} anchor={guideRowVisible ? onboardingTaskRowRef : mobileExecution ? candidateTriggerRef : quickAddButtonRef}
+      {showGuide && onboardingTask && (guideRowVisible || !taskPaneVisible) && <OnboardingCue key={onboardingTask.id}
+        anchor={guideRowVisible ? onboardingTaskRowRef : mobileExecution && !candidateDrawerOpen ? candidateTriggerRef : candidatePanelCollapsed ? candidateExpandRef : shelfTitleRef}
         followRow={guideRowVisible} lang={lang} onClose={() => void saveSettings(ONBOARDING_DONE)}>
-        {!guideRowVisible && <Button variant="text" className="df-workspace-guide-action" onClick={revealTasks}>{lang === "zh" ? "打开任务列表" : "Open Tasks"}</Button>}
-        {" "}<OnboardingScheduleHint lang={lang} touch={mobileExecution} onSchedule={scheduleGuidedTask} />
-      </OnboardingCue>}
-      {showGuide && completionVisible && <OnboardingCue key="complete" anchor={taskPaneVisible ? shelfTitleRef : mobileExecution ? candidateTriggerRef : quickAddButtonRef}
-        lang={lang} onClose={() => setOnboardingCelebration("")}>
-        {lang === "zh" ? "第一条任务已排进时间轴" : "Your first task is on the timeline"}
-        <div className="df-workspace-guide-links">
-          <Button variant="text" className="df-workspace-guide-action" onClick={() => { setOnboardingCelebration(""); revealTasks(); setShelfMenuOpen(true); }}>{lang === "zh" ? "任务视图" : "Task views"}</Button>
-          <Button variant="text" className="df-workspace-guide-action" onClick={() => openSettingsSection("plugins")}>{lang === "zh" ? "插件" : "Plugins"}</Button>
-          <Button variant="text" className="df-workspace-guide-action" onClick={() => openSettingsSection("mcp")}>MCP</Button>
-          <Button variant="text" className="df-workspace-guide-action" onClick={() => openSettingsSection({ category: "ai", anchor: "ai-provider" })}>AI API</Button>
-        </div>
+        {guideRowVisible ? (lang === "zh"
+          ? (mobileExecution ? "长按任务块并移动到时间轴" : "按住任务块并移动到时间轴")
+          : (mobileExecution ? "Press and hold the task block, then move it onto the timeline" : "Hold the task block and move it onto the timeline"))
+          : <Button variant="text" className="df-workspace-guide-action" onClick={revealTasks}>{lang === "zh" ? "打开任务列表" : "Open Tasks"}</Button>}
       </OnboardingCue>}
       {dialog.host}
       {!productDemo && (notificationCenterOpen || !workspacePanel) && <Suspense fallback={null}><ProactiveNotificationCenter
@@ -9585,7 +9582,7 @@ if (cached?.data && cached?.settings) {
           }}>
             {!mobileExecution && candidatePanelCollapsed ? (
               <div className="df-candidate-collapsed-strip">
-                <button className="df-candidate-expand-btn" title={t(lang, "candidate.expand")} aria-label={t(lang, "candidate.expand")} onClick={() => {
+                <button ref={candidateExpandRef} className="df-candidate-expand-btn" title={t(lang, "candidate.expand")} aria-label={t(lang, "candidate.expand")} onClick={() => {
                   setCandidatePanelCollapsed(false);
                 }}>&#9654;</button>
                 <span className="df-candidate-collapsed-label">{term(lang, "todayCandidates")}</span>
@@ -9675,12 +9672,9 @@ if (cached?.data && cached?.settings) {
             <div className="df-candidate-list" data-shelf-scroll="candidates" inert={productAiPresentation && demoPresetBusy ? true : undefined}>
               {candidatesEmpty ? (
                 productDemo ? (
-                  <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.demoEmptyTitle")}</strong><span>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "在右侧查看安排，或试试改期与撤回。" : "Explore the timeline, reschedule a task, or undo.") : t(lang, "candidate.demoEmptyDesc")}</span></div>
+                  <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.demoEmptyTitle")}</strong></div>
                 ) : (
-                  <EmptyState announce title={todayHasBlocks ? (lang === "zh" ? "待安排的任务已清空" : "You’re caught up on scheduling") : t(lang, "candidate.emptyTitle")}
-                    description={todayHasBlocks
-                      ? (lang === "zh" ? "今天的时间安排可在时间轴查看。" : "See what’s planned for today on the timeline.")
-                      : (lang === "zh" ? "添加一件想做的事，再给它安排时间。" : "Add something you want to do, then make time for it.")}>
+                  <EmptyState announce title={todayHasBlocks ? (lang === "zh" ? "待安排的任务已清空" : "You’re caught up on scheduling") : t(lang, "candidate.emptyTitle")}>
                     <Button variant="primary" onClick={todayHasBlocks ? () => { setSelectedDate(today); showTimelineWorkspace(); } : openTaskDraft}>
                       {todayHasBlocks ? (lang === "zh" ? "查看时间轴" : "View timeline") : t(lang, "planning.addTask")}
                     </Button>
@@ -9736,6 +9730,7 @@ if (cached?.data && cached?.settings) {
                             <div key={task.id}
                               className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}`}
                               ref={onboardingTask?.id === task.id ? onboardingTaskRowRef : undefined}
+                              data-guide-target={showGuide && guideRowVisible && onboardingTask?.id === task.id || undefined}
                               data-candidate-task-id={isEventDisplayTask(task) ? undefined : task.id}
                               onClickCapture={(event) => {
                                 if (!(event.target as HTMLElement).closest(".df-candidate-row .df-block-check")) return;
@@ -9756,6 +9751,7 @@ if (cached?.data && cached?.settings) {
                 return <div key={task.id}
                   className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}`}
                   ref={onboardingTask?.id === task.id ? onboardingTaskRowRef : undefined}
+                  data-guide-target={showGuide && guideRowVisible && onboardingTask?.id === task.id || undefined}
                   data-candidate-task-id={isEventDisplayTask(task) ? undefined : task.id}
                   onClickCapture={(event) => {
                     if (!(event.target as HTMLElement).closest(".df-candidate-row .df-block-check")) return;
@@ -9788,7 +9784,7 @@ if (cached?.data && cached?.settings) {
               event.preventDefault();
               quickAddTask();
             }}>
-              <input ref={quickCandidateInputRef} aria-label={lang === "zh" ? "任务名称" : "Task name"} value={quickTitle} onChange={(event) => setQuickTitle(event.target.value)} placeholder={taskExample || t(lang, "candidate.addPlaceholder")} />
+              <input ref={quickExampleRef} aria-label={lang === "zh" ? "任务名称" : "Task name"} value={quickTitle} onChange={(event) => setQuickTitle(event.target.value)} placeholder={t(lang, "candidate.addPlaceholder")} />
               <QuickProjectPicker
                 projects={projects}
                 value={quickProjectId}
@@ -10663,7 +10659,7 @@ if (cached?.data && cached?.settings) {
           title={mobilePlacement ? (placementPreviewTask?.title || (lang === "zh" ? "任务已移除" : "Task removed")) : undefined}
           time={mobilePlacement && placementPreview ? `${placementPreview.date} · ${placementPreview.startTime}–${placementPreview.endTime}` : undefined}
           conflict={Boolean(mobilePlacement && placementPreview && getScheduledEventsForRange([addDays(placementPreview.date, -1), placementPreview.date, addDays(placementPreview.date, 1)]).some((item) => item.scheduledStart && item.scheduledEnd && scheduledDateTimesOverlap(placementPreview.date, placementPreview.startTime, placementPreview.endTime, item.scheduledDate || placementPreview.date, item.scheduledStart, item.scheduledEnd)))}
-          onOpen={() => { setCandidatePanelCollapsed(false); setCandidateDrawerExpanded(false); setCandidateDrawerOpen(true); }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
+          onOpen={() => { setCandidateDrawerExpanded(false); if (onboardingTask) revealTasks(); else { setCandidatePanelCollapsed(false); setCandidateDrawerOpen(true); } }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
         <MobileQuickAddButton buttonRef={quickAddButtonRef} compactLayout={compactLayout} productPresentation={productPresentation}
         drawerOpen={compactFloatingActionsHidden} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, "execute")}
@@ -10687,7 +10683,6 @@ if (cached?.data && cached?.settings) {
       {utilityPanel && utilityPanel !== "metrics" && utilityPanel !== "extension" && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onRestartOnboarding={() => {
         closeUtilityPanel(() => {
           void saveSettings(ONBOARDING_START);
-          setOnboardingCelebration("");
           setShelfViewId("");
           setFullscreen(false);
           setCandidatePanelCollapsed(false);
@@ -11271,8 +11266,7 @@ function HabitOverviewBody(props: {
           </div>
 
           {metrics.perHabit.length === 0 ? (
-            <EmptyState announce title={zh ? "还没有启用习惯" : "No active habits yet"}
-              description={zh ? "选一件想反复做的事，设置它的频率。" : "Pick something you want to do regularly and choose how often."}>
+            <EmptyState announce title={zh ? "还没有启用习惯" : "No active habits yet"}>
               <Button variant="primary" onClick={props.onCreateHabit}>{zh ? "新增习惯" : "New habit"}</Button>
             </EmptyState>
           ) : metrics.perHabit.map((item) => (

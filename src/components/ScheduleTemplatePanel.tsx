@@ -401,8 +401,7 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
           </div>
           {selectorOpen && <div id={listId} className="df-template-picker-body">
             {!templates.some((template) => !isBuiltInScheduleTemplate(template.id)) && selection.key !== "draft" && (
-              <EmptyState compact title={zh ? "还没有自定义模板" : "No custom templates yet"}
-                description={zh ? "把经常重复的一天存成模板，下次直接使用。" : "Save a repeatable day to reuse its time blocks."} />
+              <EmptyState compact title={zh ? "还没有自定义模板" : "No custom templates yet"} />
             )}
             <div className="df-template-picker-list">
               {templates.filter((template) => template.id !== selection.key).map((template) => {
@@ -436,8 +435,7 @@ export default function ScheduleTemplatePanel({ active, lang, today, weekStartsO
             <div className="df-timeline-content">
               <div className="df-timeline-daily">
                 {templateEditing && selection.periods.length === 0 && (
-                  <EmptyState compact title={zh ? "模板里还没有时段" : "No time blocks in this template"}
-                    description={zh ? "添加一个时段，或直接在下方时间轴上选择一段时间。" : "Add a block or select time directly on the timeline below."} />
+                  <EmptyState compact title={zh ? "模板里还没有时段" : "No time blocks in this template"} />
                 )}
                 {templateEditing && <div className="df-template-edit-toolbar">
                   <Input ref={nameRef} className="df-template-name-inline" value={selection.title}

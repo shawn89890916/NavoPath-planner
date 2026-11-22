@@ -142,8 +142,7 @@ export default function McpTokenManager({ lang }: { lang: Language }) {
           {!loading && <span>{tokens.length}</span>}
         </div>
         {loading && <p className="df-mcp-status">{lang === "zh" ? "正在读取令牌…" : "Loading tokens…"}</p>}
-        {!loading && tokens.length === 0 && !error && <EmptyState compact announce title={lang === "zh" ? "还没有有效令牌" : "No active tokens yet"}
-          description={lang === "zh" ? "先为要接入的客户端生成专用令牌。" : "Generate a dedicated token for the client you want to connect."}>
+        {!loading && tokens.length === 0 && !error && <EmptyState compact announce title={lang === "zh" ? "还没有有效令牌" : "No active tokens yet"}>
           <Button onClick={() => document.getElementById("mcp-token-name")?.focus()}>{lang === "zh" ? "设置令牌名称" : "Name a token"}</Button>
         </EmptyState>}
         {tokens.map((token) => <div className="df-mcp-token-row" key={token.id}>

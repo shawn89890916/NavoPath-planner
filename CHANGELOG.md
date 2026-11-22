@@ -2,6 +2,17 @@
 
 ## 2026-11-22
 
+### 1.7.0 Beta 57
+
+#### 改进
+
+- 新手引导逐字输入和删除示例。竖屏先打开任务列表，再长按高亮任务块并移动到时间轴。成功后提示可用「安排」按钮。
+- 简化空状态，移除说明小字。任务列表空状态的标题和按钮在区域内居中。
+
+#### 修复
+
+- 横屏的中文工作区设置标题保持一行，任务视图菜单贴齐触发按钮。
+
 ### 1.7.0 Beta 56
 
 #### 改进
@@ -846,6 +857,17 @@
 # NavoPath Changelog
 
 ## 2026-11-22
+
+### 1.7.0 Beta 57
+
+#### Improved
+
+- The guide types and deletes task examples. In portrait, open Tasks first, then press and move the highlighted task onto the timeline. A successful drop introduces the Plan button.
+- Removed secondary copy from empty states. The title and action are centered in the empty Tasks list.
+
+#### Fixed
+
+- The Chinese setup heading fits on one line in landscape, and the task view menu aligns with its trigger.
 
 ### 1.7.0 Beta 56
 

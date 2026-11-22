@@ -68,7 +68,7 @@ export default function CommandPalette(props: {
             </button>
           ))}
           {props.results.length === 0 && (props.query.trim()
-            ? <EmptyState compact announce title={zh ? "没有匹配结果" : "No matching results"} description={zh ? "试试更短的词，或清除搜索。" : "Try a shorter term or clear the search."}>
+            ? <EmptyState compact announce title={zh ? "没有匹配结果" : "No matching results"}>
                 <Button onClick={() => { props.onQuery(""); inputRef.current?.focus(); }}>{zh ? "清除搜索" : "Clear search"}</Button>
               </EmptyState>
             : <EmptyState compact title={zh ? "搜索任务、项目或设置" : "Find tasks, projects, or settings"} />)}
