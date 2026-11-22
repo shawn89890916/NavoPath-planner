@@ -1,5 +1,5 @@
 import { EngagementRating } from "./components/EngagementRating";
-import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from "react";
 import type { Category, Language, NullablePriority, Project, Subtask, Task, TaskRecurrence, TimelineRecord } from "./types";
 import { clockTimeSpanMinutes, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { toggleSubtaskInTree } from "./utils/treeOrder";
@@ -43,7 +43,7 @@ export function beginVerticalResize(event: PointerEvent, stepHeight: number, onD
 
 export function MobileShortSheet(props: {
   closing?: boolean; lang: Language; kind?: MobileShortSheetKind; kinds?: MobileShortSheetKind[]; showKind?: boolean;
-  title: string; titlePlaceholder?: string; titleLabel?: string; autoFocus?: boolean; showTaskExample?: boolean;
+  title: string; titlePlaceholder?: string; titleLabel?: string; autoFocus?: boolean; showTaskExample?: boolean; titleInputRef?: RefObject<HTMLInputElement | null>;
   onTitleChange: (title: string) => void; onTitleBlur?: (title: string) => void; onTitleEnter?: () => void;
   onKindChange?: (kind: MobileShortSheetKind) => void; onClose: () => void; onMore?: (inset: string) => void;
   onSwipeDown?: () => void; moreDisabled?: boolean; className?: string; swipeDownToClose?: boolean; swipeUpForMore?: boolean; children?: ReactNode;
@@ -52,7 +52,7 @@ export function MobileShortSheet(props: {
   const kind = props.kind || "task";
   const kinds = props.kinds || ["task", "project", "habit"];
   const panelRef = useRef<HTMLElement>(null);
-  const exampleRef = useTaskExample(Boolean(props.showTaskExample && !props.closing), props.lang);
+  const exampleRef = useTaskExample(Boolean(props.showTaskExample && !props.closing), props.lang, props.titleInputRef);
   useLayoutEffect(() => {
     if (props.autoFocus && !props.closing) panelRef.current?.querySelector<HTMLInputElement>(".df-mobile-summary-head input")?.focus({ preventScroll: true });
   }, [props.autoFocus, props.closing]);
@@ -98,16 +98,19 @@ export function MobileQuickAddSheet(props: {
   projectId: string; projectColor: string; habitMinutes: number; onTitleChange: (title: string) => void;
   onKindChange: (kind: MobileShortSheetKind) => void; onProjectChange: (projectId: string) => void;
   onProjectColorChange: (color: string) => void; onHabitMinutesChange: (minutes: number) => void;
-  onClose: () => void; onSubmit: () => void; onMore: () => void;
+  onClose: () => void; onSubmit: (sample?: string) => void; onMore: () => void;
 }) {
   const zh = props.lang === "zh";
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const showExample = props.showTaskExample && props.kind === "task";
+  const submit = () => props.onSubmit(showExample ? titleInputRef.current?.dataset.taskExampleValue : undefined);
   const project = props.projects.find((item) => String(item.id) === String(props.projectId));
   const placeholder = props.kind === "task" ? (zh ? "任务名称" : "Task title") : props.kind === "project" ? (zh ? "项目名称" : "Project title") : (zh ? "习惯名称" : "Habit title");
-  return <MobileShortSheet closing={props.closing} lang={props.lang} kind={props.kind} kinds={props.kinds} showKind title={props.title} showTaskExample={props.showTaskExample && props.kind === "task"} titlePlaceholder={placeholder} titleLabel={zh ? "名称" : "Title"} autoFocus onTitleChange={props.onTitleChange} onTitleEnter={props.onSubmit} onKindChange={props.onKindChange} onClose={props.onClose} onMore={props.onMore} moreDisabled={props.kind === "habit" && !props.title.trim()} swipeDownToClose swipeUpForMore className="df-mobile-quick-add-sheet">
+  return <MobileShortSheet closing={props.closing} lang={props.lang} kind={props.kind} kinds={props.kinds} showKind title={props.title} showTaskExample={showExample} titleInputRef={titleInputRef} titlePlaceholder={placeholder} titleLabel={zh ? "名称" : "Title"} autoFocus onTitleChange={props.onTitleChange} onTitleEnter={submit} onKindChange={props.onKindChange} onClose={props.onClose} onMore={props.onMore} moreDisabled={props.kind === "habit" && !props.title.trim()} swipeDownToClose swipeUpForMore className="df-mobile-quick-add-sheet">
     {(props.kind === "task" || props.kind === "habit") && <label className="df-mobile-summary-project"><span className="df-detail-project-dot" style={{ background: project?.color || "#888" }} /><span>{zh ? "归属" : "Project"}</span><select value={props.projectId} onChange={(event) => props.onProjectChange(event.target.value)}><option value="">{zh ? "未归属" : "Unassigned"}</option>{props.projects.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>}
     {props.kind === "project" && <label className="df-mobile-short-sheet-field"><span>{zh ? "颜色" : "Color"}</span><input type="color" value={props.projectColor} onChange={(event) => props.onProjectColorChange(event.target.value)} /></label>}
     {props.kind === "habit" && <label className="df-mobile-short-sheet-field"><span>{zh ? "默认时长" : "Default duration"}</span><input type="number" min={5} max={480} step={5} value={props.habitMinutes} onChange={(event) => props.onHabitMinutesChange(Math.max(5, Math.min(480, Number(event.target.value) || 20)))} /><strong>min</strong></label>}
-    <div className="df-mobile-summary-actions"><Button disabled={!props.title.trim()} onClick={props.onSubmit}>{zh ? "添加" : "Add"}</Button></div>
+    <div className="df-mobile-summary-actions"><Button disabled={!props.title.trim() && !showExample} onClick={submit}>{zh ? "添加" : "Add"}</Button></div>
   </MobileShortSheet>;
 }
 

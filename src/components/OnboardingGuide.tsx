@@ -4,8 +4,8 @@ import type { OnboardingTourStep } from "../onboarding";
 import { Button, CloseButton } from "./UiPrimitives";
 
 const examples = {
-  zh: ["例如：整理桌面", "例如：回复一条消息", "例如：读两页书"],
-  en: ["E.g. tidy my desk", "E.g. reply to a message", "E.g. read two pages"],
+  zh: ["整理桌面", "回复一条消息", "读两页书"],
+  en: ["Tidy my desk", "Reply to a message", "Read two pages"],
 };
 
 export function useTaskExample(active: boolean, lang: Language, fieldRef?: RefObject<HTMLInputElement | null>) {
@@ -18,19 +18,27 @@ export function useTaskExample(active: boolean, lang: Language, fieldRef?: RefOb
     let example = 0;
     let length = 0;
     let deleting = false;
+    let blinks = 0;
 
     function tick() {
       if (!field || field.value) return;
       const text = examples[lang][example];
+      field.dataset.taskExampleValue = text;
+      if (!deleting && length === text.length && blinks < 6) {
+        field.placeholder = text + (blinks % 2 === 0 ? "▏" : "");
+        timer = window.setTimeout(tick, blinks++ === 0 ? 1000 : 135);
+        return;
+      }
+      if (length === text.length) deleting = true;
       field.placeholder = text.slice(0, length) + "▏";
-      let delay = deleting ? 38 : 72;
-      if (!deleting && length === text.length) {
-        deleting = true;
-        delay = 1050;
-      } else if (deleting && length === 0) {
-        deleting = false;
+      const progress = length / text.length;
+      let delay = deleting ? 20 + 26 * progress ** 2 : 39 + 45 * (2 * progress - 1) ** 2;
+      if (deleting && length === 0) {
         example = (example + 1) % examples[lang].length;
-        delay = 270;
+        length = 0;
+        deleting = false;
+        blinks = 0;
+        delay = 38;
       }
       length += deleting ? -1 : 1;
       timer = window.setTimeout(tick, delay);
@@ -41,24 +49,35 @@ export function useTaskExample(active: boolean, lang: Language, fieldRef?: RefOb
       window.clearTimeout(timer);
       if (field.value) {
         delete field.dataset.taskExample;
+        delete field.dataset.taskExampleValue;
         field.placeholder = placeholder;
         return;
       }
+      const text = examples[lang][example];
       field.dataset.taskExample = motion.matches ? "static" : "typing";
+      field.dataset.taskExampleValue = text;
       if (motion.matches) {
-        field.placeholder = examples[lang][0];
+        field.placeholder = text;
         return;
       }
-      length = 0;
+      length = text.length;
       deleting = false;
+      blinks = 0;
       tick();
     }
 
     field.addEventListener("input", restart);
     motion.addEventListener("change", restart);
     restart();
+    const focusFrame = window.requestAnimationFrame(() => {
+      if (field.getClientRects().length && !document.activeElement?.matches("input, textarea, select, [contenteditable=true]")) {
+        field.focus({ preventScroll: true });
+      }
+    });
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       window.clearTimeout(timer);
+      delete field.dataset.taskExampleValue;
       motion.removeEventListener("change", restart);
       field.removeEventListener("input", restart);
       delete field.dataset.taskExample;
@@ -168,12 +187,13 @@ export function OnboardingTour({ step, anchor, waitingForTasks, phone, lang, onN
   phone: boolean;
   lang: Language;
   onNext: () => void;
-  onSettings: () => void;
+  onSettings: (topic: OnboardingSettingsTopic) => void;
   onClose: () => void;
 }) {
   const zh = lang === "zh";
   const instructions: Record<OnboardingTourStep, string> = {
-    return: zh ? "第一条任务已经排进时间轴。我们先回到任务列表。" : "Your first task is on the timeline. Let’s go back to Tasks.",
+    return: zh ? (phone ? "长按刚安排的时间块，拖到左下角的任务按钮上，即可取消安排。" : "把刚安排的时间块拖回任务列表，即可取消安排。")
+      : (phone ? "Press and hold the time block, then drag it onto the Tasks button to unschedule it." : "Drag the time block back to Tasks to unschedule it."),
     plan: zh ? (phone ? "你也可以点「安排」按钮来选时间。" : "你也可以点任务旁的日历按钮来选时间。")
       : (phone ? "You can also tap Plan to pick a time." : "You can also use the task’s calendar button to pick a time."),
     views: zh ? "在这里切换视图，用不同方式查看你的任务。" : "Switch views here to see your tasks in different ways.",
@@ -181,16 +201,43 @@ export function OnboardingTour({ step, anchor, waitingForTasks, phone, lang, onN
     integrations: zh ? "在设置里配置你的 AI，或连接 MCP。" : "Set up your AI or connect MCP in Settings.",
     start: zh ? "开始规划你的一天吧！" : "Start planning your day!",
   };
-  const nextLabel = step === "return" || waitingForTasks ? (zh ? "回到任务" : "Back to Tasks")
-    : step === "integrations" ? (zh ? "稍后" : "Later")
+  const nextLabel = waitingForTasks ? (zh ? "打开任务" : "Open Tasks")
+    : step === "return" ? (zh ? "跳过" : "Skip")
+    : step === "views" ? (zh ? "查看视图" : "View options")
+    : step === "plugins" || step === "integrations" ? (zh ? "稍后" : "Later")
     : step === "start" ? (zh ? "开始规划" : "Start planning")
     : (zh ? "下一步" : "Next");
 
   return <OnboardingCue anchor={anchor} followRow={step === "plan" && !waitingForTasks} lang={lang} onClose={onClose}>
     {(!waitingForTasks || step === "return") && <div>{instructions[step]}</div>}
     <div className="df-workspace-guide-actions">
-      {step === "integrations" && <Button variant="text" className="df-workspace-guide-action" onClick={onSettings}>{zh ? "设置" : "Settings"}</Button>}
+      {step === "plugins" && !waitingForTasks && <Button variant="text" className="df-workspace-guide-action" onClick={() => onSettings("plugins")}>{zh ? "现在配置" : "Set up now"}</Button>}
+      {step === "integrations" && <>
+        <Button variant="text" className="df-workspace-guide-action" onClick={() => onSettings("ai")}>{zh ? "配置 AI" : "Set up AI"}</Button>
+        <Button variant="text" className="df-workspace-guide-action" onClick={() => onSettings("mcp")}>{zh ? "连接 MCP" : "Connect MCP"}</Button>
+      </>}
       <Button variant="text" className="df-workspace-guide-action" onClick={onNext}>{nextLabel}</Button>
     </div>
   </OnboardingCue>;
+}
+
+export type OnboardingSettingsTopic = "plugins" | "ai" | "mcp";
+
+export function OnboardingSettingsHint({ topic, lang, onContinue }: {
+  topic: OnboardingSettingsTopic;
+  lang: Language;
+  onContinue: () => void;
+}) {
+  const zh = lang === "zh";
+  const instructions: Record<OnboardingSettingsTopic, string> = {
+    plugins: zh ? "选一个视图插件，安装并启用后，它就会出现在任务视图菜单里。"
+      : "Install and enable a view plugin to add it to the Tasks view menu.",
+    ai: zh ? "选择 AI 提供商，填写 API 密钥并保存。" : "Choose an AI provider, enter your API key, and save.",
+    mcp: zh ? "创建令牌，再按此页的连接方式把 NavoPath 添加到 MCP 客户端。"
+      : "Create a token and follow this page’s steps to add NavoPath to your MCP client.",
+  };
+  return <section className="df-onboarding-settings-hint" aria-label={zh ? "新手引导" : "Getting started"}>
+    <span>{instructions[topic]}</span>
+    <Button variant="text" onClick={onContinue}>{zh ? "继续引导" : "Continue guide"}</Button>
+  </section>;
 }

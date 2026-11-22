@@ -1,3 +1,4 @@
+import { OnboardingSettingsHint, type OnboardingSettingsTopic } from "./components/OnboardingGuide";
 import { APP_VERSION } from "./extensions/packages";
 import { formatVersionLabel } from "./versionLabel";
 import { Suspense, lazy } from "react";
@@ -418,7 +419,7 @@ function SettingsCategoryIcon({ category }: { category: SettingsCategory }) {
   }
 }
 
-export function UtilityPanel({ kind, settings, initialSection, compactLayout, data, authEmail, onClose, onRestartOnboarding, onSave, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onRestartOnboarding: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language }) {
+export function UtilityPanel({ kind, settings, initialSection, onboardingSettings, compactLayout, data, authEmail, onClose, onRestartOnboarding, onSave, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; onboardingSettings?: OnboardingSettingsTopic; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onRestartOnboarding: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
   const isDesktopRuntime = Boolean(window.desktopApi);
   const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
@@ -432,7 +433,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   const navigationResults = searchSettings(navigationQuery, lang, isDesktopRuntime);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [widgetColorScheme, setWidgetColorScheme] = useState<"light" | "dark">("light");
-  const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "mcp" | "sync">("calendar");
+  const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "mcp" | "sync">(resolvedInitial.anchor === "mcp" ? "mcp" : "calendar");
   const settingsContentRef = useRef<HTMLDivElement | null>(null);
   const settingsHeadingRef = useRef<HTMLHeadingElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -740,6 +741,10 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
           </div>
           <CloseButton ref={closeButtonRef} label={t(lang, "settings.close")} onClick={onClose} />
         </div>
+        {onboardingSettings && (onboardingSettings === "plugins" ? settingsTarget.category === "plugins"
+          : onboardingSettings === "ai" ? settingsTarget.category === "ai"
+          : settingsTarget.category === "integrations" && integrationTab === "mcp") &&
+          <OnboardingSettingsHint topic={onboardingSettings} lang={lang} onContinue={onClose} />}
         {kind === "settings" ? (
           <div className={`df-utility-body df-settings-shell${settingsHome ? "" : " df-settings-detail-shell"}`}>
             {settingsHome ? (

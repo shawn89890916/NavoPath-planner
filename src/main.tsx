@@ -70,7 +70,7 @@ import { ProductStorySlot } from "./ProductStory";
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, TimelineCanvas } from "./components/ExecutionSharedLayout";
 
 import { EmptyState } from "./components/EmptyState";
-import { OnboardingCue, OnboardingTour, useTaskExample } from "./components/OnboardingGuide";
+import { OnboardingCue, OnboardingTour, useTaskExample, type OnboardingSettingsTopic } from "./components/OnboardingGuide";
 import { isOnboardingTask, onboardingBlock, onboardingStage, onboardingTarget, ONBOARDING_ADD, ONBOARDING_DONE, ONBOARDING_START, type OnboardingTourStep } from "./onboarding";
 import { ActionDisclosure, Button, CloseButton, IconButton, UndoButton } from "./components/UiPrimitives";
 
@@ -875,6 +875,7 @@ function App() {
   const taskOperationsRef = useRef(taskOperations);
   taskOperationsRef.current = taskOperations;
   const [shelfMenuOpen, setShelfMenuOpen] = useState(false);
+  const [onboardingSettings, setOnboardingSettings] = useState<OnboardingSettingsTopic>();
   const planningSessionRef = useRef<PlanningViewSession | null>(null);
   const [projectFilterAnchor, setProjectFilterAnchor] = useState<HTMLSpanElement | null>(null);
   const [showScheduledCandidates, setShowScheduledCandidates] = useState(false);
@@ -3014,6 +3015,7 @@ if (cached?.data && cached?.settings) {
       setCandidateDrawerOpen(false);
       requestTimelineFocus({ date: block.scheduledDate, startTime: block.scheduledStart, taskId: block.id, source: "schedule" });
     } else if (stage === "add") {
+      if (timelineView === "month") setTimelineView("daily");
       void saveSettings({ workspaceGuideStep: "schedule", workspaceGuideTaskId: task.id });
     }
   }
@@ -3025,7 +3027,7 @@ if (cached?.data && cached?.settings) {
     const task = onboardingTarget(settings, data.tasks);
     const block = onboardingBlock(task);
     if (stage === "return") {
-      if (task && isOnboardingTask(task) && !block) void saveSettings({ workspaceGuideStep: "schedule" });
+      if (!block) void saveSettings({ workspaceGuideStep: "plan" });
     } else if (block) void saveSettings({ workspaceGuideStep: "return" });
     else if (!task || !isOnboardingTask(task)) void saveSettings(ONBOARDING_ADD);
   }, [data, settings]);
@@ -4406,15 +4408,15 @@ if (cached?.data && cached?.settings) {
     window.requestAnimationFrame(() => quickCandidateInputRef.current?.focus());
   }
 
-  function quickAddTask() {
-    if (!data || !quickTitle.trim()) return;
-    let title = quickTitle;
+  function quickAddTask(sample = quickCandidateInputRef.current?.dataset.taskExampleValue) {
+    let title = quickTitle.trim() || sample || "";
+    if (!data || !title) return;
     let targetDate = today;
-    const yearMatch = quickTitle.match(/^\/(\d{4})\s+/);
+    const yearMatch = title.match(/^\/(\d{4})\s+/);
     if (yearMatch) {
       const year = parseInt(yearMatch[1], 10);
       if (year >= 2000 && year <= 2100) {
-        title = quickTitle.replace(yearMatch[0], "").trim();
+        title = title.replace(yearMatch[0], "").trim();
         const currentDateObj = new Date(`${selectedDate}T00:00:00`);
         const month = currentDateObj.getMonth();
         const day = Math.min(currentDateObj.getDate(), daysInMonth(year, month));
@@ -4445,16 +4447,16 @@ if (cached?.data && cached?.settings) {
     }
   }
 
-  function finishMobileQuickAdd(more = false) {
-    if (!data || (!quickTitle.trim() && (!more || mobileQuickAddKind === "habit"))) return;
-    const title = quickTitle.trim();
+  function finishMobileQuickAdd(more = false, sample?: string) {
+    const title = quickTitle.trim() || (!more && mobileQuickAddKind === "task" ? sample || "" : "");
+    if (!data || (!title && (!more || mobileQuickAddKind === "habit"))) return;
     if (!more && mobileQuickAddKind === "task") {
       if (mobileQuickAddDate) {
         createAllDayTask(title, mobileQuickAddDate, quickProjectId);
         setQuickAddOpen(false);
         return;
       }
-      quickAddTask();
+      quickAddTask(title);
       return;
     }
     setQuickAddOpen(false);
@@ -6212,7 +6214,13 @@ if (cached?.data && cached?.settings) {
     }
     if (next === current) return;
     preserveTimelineViewportOnNextDataChange();
+    const guide = settingsRef.current;
+    const guideTask = guide?.workspaceGuideStep === "return" && onboardingTarget(guide, current.tasks);
     void saveTaskOperation(next, "unschedule", { toast: lang === "zh" ? "已取消这个时间块" : "Time block removed" });
+    if (guideTask && onboardingBlock(guideTask, false)?.id === resolveTimelineRecordId(taskId)) {
+      void saveSettings({ workspaceGuideStep: "plan" });
+      revealTasks();
+    }
     setDrag(null);
     setHoverSlot("");
   }
@@ -7138,6 +7146,7 @@ if (cached?.data && cached?.settings) {
 
   async function closeTaskDrawer(options?: { autoSave?: boolean }) {
     if (!editingId
+      && (addType !== "task" || form.title.trim() || form.details.trim())
       && JSON.stringify(form) !== JSON.stringify(drawerInitialFormRef.current || defaultForm(addType))) {
       if (drawerSaveConfirmRef.current) return;
       drawerSaveConfirmRef.current = true;
@@ -8949,6 +8958,9 @@ if (cached?.data && cached?.settings) {
   function selectShelfView(id: string) {
     setShelfViewId(id);
     setShelfMenuOpen(false);
+    if (shelfMenuOpen && onboardingStage(settingsRef.current) === "views") {
+      void saveSettings({ workspaceGuideStep: "plugins" });
+    }
     shelfTitleRef.current?.focus({ preventScroll: true });
   }
 
@@ -9033,6 +9045,10 @@ if (cached?.data && cached?.settings) {
     const closingPanel = workspacePanel;
     requestLayerClose("utility", ".df-utility-backdrop, .df-utility-panel", () => {
       setWorkspacePanel((current) => current === closingPanel ? null : current);
+      if (onboardingSettings) {
+        setOnboardingSettings(undefined);
+        void saveSettings({ workspaceGuideStep: onboardingSettings === "plugins" ? "integrations" : "start" });
+      }
       afterClose?.();
     });
   }
@@ -9244,6 +9260,7 @@ if (cached?.data && cached?.settings) {
       if (onboardingStage(settingsRef.current) !== "setup") return;
       if (preferences?.defaultTimelineView) setTimelineView(preferences.defaultTimelineView);
       void saveSettings({ ...preferences, ...ONBOARDING_ADD });
+      if (compactLayout) openQuickTaskAdd();
     }} /></Suspense>;
   }
   const habits = data.habits || [];
@@ -9351,7 +9368,7 @@ if (cached?.data && cached?.settings) {
   const shelfTitle = term(lang, "todayCandidates");
   const candidatesEmpty = visibleCandidates.length === 0 && !hasActiveHabits;
   const teachingSchedule = onboardingStep === "schedule" || onboardingStep === "plan";
-  const trackedTask = teachingSchedule ? onboardingTarget(settings, tasks) : undefined;
+  const trackedTask = teachingSchedule || onboardingStep === "return" ? onboardingTarget(settings, tasks) : undefined;
   const onboardingTask = trackedTask && isOnboardingTask(trackedTask) ? trackedTask : undefined;
   const savedGuideBlock = onboardingStep === "plan" ? onboardingBlock(onboardingTask, false) : undefined;
   const shelfPaneVisible = !fullscreen
@@ -9360,6 +9377,12 @@ if (cached?.data && cached?.settings) {
   const guideRowVisible = taskPaneVisible && Boolean(onboardingTask && visibleCandidates.some((task) => task.id === onboardingTask.id));
   const tasksGuideAnchor = mobileExecution && !candidateDrawerOpen ? candidateTriggerRef
     : candidatePanelCollapsed ? candidateExpandRef : shelfPaneVisible ? shelfTitleRef : undefined;
+  const returningGuideBlock = onboardingStep === "return" && drag?.kind === "block" && onboardingBlock(onboardingTask, false)?.id === resolveTimelineRecordId(drag.taskId);
+  const guideSlot = onboardingStep === "schedule" && drag?.source === "candidate" && drag.taskId === onboardingTask?.id
+    ? onboardingDropSlot(drag.duration) : undefined;
+  const guideSlotHint = guideSlot && <div className="df-onboarding-drop-slot" style={guideSlot.style} aria-hidden="true">
+    <span>{lang === "zh" ? "放在这里" : "Drop here"} · {guideSlot.start}–{guideSlot.end}</span>
+  </div>;
   const showGuide = !productDemo && !workspacePanel && !drawerOpen && !quickAddPresence.present
     && !commandOpen && !aiOpen && !notificationCenterOpen && !shelfMenuOpen && !mobileDatePickerOpen
     && !dialog.host && !drag && !dragCreate && !mobilePlacement;
@@ -9369,6 +9392,31 @@ if (cached?.data && cached?.settings) {
   const guidePlanButtonVisible = tourStep === "plan" && guideRowVisible;
   const tourAnchor = guidePlanButtonVisible ? onboardingPlanButtonRef
     : tourStep === "integrations" || tourStep === "start" ? undefined : tasksGuideAnchor;
+
+  function onboardingDropSlot(duration: number) {
+    if (timelineView === "month") return;
+    const { gridEl, scrollEl, visDays } = getDropGridAndDays();
+    if (!gridEl || !scrollEl) return;
+    const grid = gridEl.getBoundingClientRect();
+    const viewport = scrollEl.getBoundingClientRect();
+    if (!grid.width || !viewport.height) return;
+    const target = hoverSlot && dragTargetDateRef.current
+      ? { startTime: hoverSlot, date: dragTargetDateRef.current }
+      : resolveDropTarget(grid.left + grid.width / 2, viewport.top + viewport.height * 0.43);
+    if (!target) return;
+    const columns = timelineView === "daily" ? 1 : timelineColumnCount;
+    const offset = continuousTimelineEnabled ? continuousDateOffset(target.date) : visDays.indexOf(target.date);
+    if (offset < 0) return;
+    const column = offset % columns;
+    const width = grid.width / columns;
+    const top = continuousTimelineEnabled ? continuousTimedTop(target.date, target.startTime)
+      : timeBlockTop(target.startTime, dayStartHour, timelineHourHeight);
+    return {
+      start: target.startTime,
+      end: addMinutes(target.startTime, duration),
+      style: { left: column * width + 4, width: Math.max(0, width - 8), top, height: Math.max(20, duration / SLOT_MINUTES * timelineSlotHeight) },
+    };
+  }
 
   function scheduleGuidedTask() {
     if (!onboardingTask) return;
@@ -9395,7 +9443,7 @@ if (cached?.data && cached?.settings) {
         void saveSettings({ workspaceGuideStep: "views" });
         break;
       case "views":
-        void saveSettings({ workspaceGuideStep: "plugins" });
+        setShelfMenuOpen(true);
         break;
       case "plugins":
         showTimelineWorkspace();
@@ -9409,6 +9457,14 @@ if (cached?.data && cached?.settings) {
         void saveSettings(ONBOARDING_DONE);
         break;
     }
+  }
+
+  function openOnboardingSettings(topic: OnboardingSettingsTopic) {
+    setOnboardingSettings(topic);
+    showTimelineWorkspace();
+    openSettingsSection(topic === "ai" ? { category: "ai", anchor: "ai-provider" }
+      : topic === "mcp" ? { category: "integrations", anchor: "mcp" }
+      : { category: "plugins" });
   }
 
   function revealTasks() {
@@ -9470,7 +9526,7 @@ if (cached?.data && cached?.settings) {
   );
   const compactChat = !productPresentation && !settings.hideAi && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />;
   return (
-    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${drag ? " is-dragging" : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked && !workspaceChatPanel ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${drag ? " is-dragging" : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked && !workspaceChatPanel ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-guide-return-drag={returningGuideBlock || undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       {(!compactLayout || productDemo) && <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
@@ -9524,7 +9580,7 @@ if (cached?.data && cached?.settings) {
           onHabitMinutesChange={setMobileQuickHabitMinutes}
           onClose={() => void closeMobileQuickAdd()}
           onMore={() => finishMobileQuickAdd(true)}
-          onSubmit={() => finishMobileQuickAdd()}
+          onSubmit={(sample) => finishMobileQuickAdd(false, sample)}
         /></Suspense>
       )}
       <div id="df-portal-target" />
@@ -9543,7 +9599,7 @@ if (cached?.data && cached?.settings) {
       </OnboardingCue>}
       {showGuide && tourStep && <OnboardingTour key={tourStep} step={tourStep} anchor={tourAnchor} waitingForTasks={tourWaitingForTasks}
         phone={mobileExecution} lang={lang} onClose={() => void saveSettings(ONBOARDING_DONE)}
-        onNext={() => advanceOnboardingTour(tourStep)} onSettings={() => { advanceOnboardingTour("integrations"); openSettingsHome(); }} />}
+        onNext={() => advanceOnboardingTour(tourStep)} onSettings={openOnboardingSettings} />}
       {dialog.host}
       {!productDemo && (notificationCenterOpen || !workspacePanel) && <Suspense fallback={null}><ProactiveNotificationCenter
         data={data}
@@ -9720,6 +9776,7 @@ if (cached?.data && cached?.settings) {
             }
             />
             <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu">
+              {tourStep === "views" && <p className="df-shelf-view-guide" role="status">{lang === "zh" ? "选一个视图试试看。" : "Pick a view to try."}</p>}
               <Button variant="ghost" aria-pressed={!shelfView} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
               {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id}
                 onPointerEnter={view === treeView ? preloadPlanningView : undefined} onFocus={view === treeView ? preloadPlanningView : undefined}
@@ -9871,7 +9928,7 @@ if (cached?.data && cached?.settings) {
                 onCreate={createQuickProject}
                 lang={lang}
               />
-              <button className="df-quick-add-submit" type="submit" aria-label={t(lang, "candidate.add")} disabled={!quickTitle.trim()}>
+              <button className="df-quick-add-submit" type="submit" aria-label={t(lang, "candidate.add")} disabled={!quickTitle.trim() && onboardingStep !== "add"}>
                 {t(lang, "candidate.add")}
               </button>
             </form>}
@@ -10283,6 +10340,7 @@ if (cached?.data && cached?.settings) {
                                   );
                                 })}
                                 {/* Preview block during drag */}
+                                {guideSlotHint}
                                 {multiColWidth > 0 && hoverSlot && drag && !drag.outsideTimeline && (() => {
                                   const tgtDate = dragTargetDateRef.current || threeDates[0];
                                   const dayOffset = continuousDateOffset(tgtDate);
@@ -10615,6 +10673,7 @@ if (cached?.data && cached?.settings) {
                             in non-continuous mode (via NowLine's internal timeBlockTop) and
                             the continuous absolute coordinate in continuous mode. */}
                         {continuousTimelineDates.includes(today) && (() => { const now = workspaceNow(); return <NowLine highlighted={nowLineReturnPulse} lang={lang} dayStartHour={dayStartHour} hourHeight={timelineHourHeight} extraStyle={{ top: continuousTimelineEnabled ? continuousTimedTop(today, `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`) : undefined }} />; })()}
+                        {guideSlotHint}
                         {hoverSlot && drag && !drag.outsideTimeline && <SnappedTimelineDragBlock task={draggedTask} startTime={hoverSlot} duration={drag.duration} projectName={draggedTask ? projectName(draggedTask) : ""} projects={projects} viewMode="daily" lang={lang} dayStartHour={dayStartHour} hourHeight={timelineHourHeight} extraStyle={continuousTimelineEnabled ? { top: continuousTimedTop(dragTargetDateRef.current || timelineWindowAnchorDate, hoverSlot) } : undefined} />}
                         {placementPreviewTask && placementPreview && placementChoices.filter((choice) => continuousTimelineDates.includes(choice.date)).map((choice) => (
                           <PreviewBlock
@@ -10722,7 +10781,7 @@ if (cached?.data && cached?.settings) {
 
       {!productPresentation && !compactLayout && !workspacePanel && <button ref={quickAddButtonRef} className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={showGuide && onboardingStep === "add" ? openTaskDraft : () => openAdd("task")} />}
       {!productPresentation && !compactLayout && !settings.hideAi && (!workspacePanel || aiOpen) && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />}
-      {createPortal(<div className="df-mobile-floating-actions" style={themeVars(settings, "execute")}>
+      {createPortal(<div className="df-mobile-floating-actions" data-guide-return-drag={returningGuideBlock || undefined} style={themeVars(settings, "execute")}>
         {(mobileExecution || mobilePlacement?.guided) && <Suspense fallback={null}><MobileExecutionControls
           desktop={!mobileExecution}
           hidden={compactFloatingActionsHidden && !mobilePlacement}
@@ -10733,7 +10792,7 @@ if (cached?.data && cached?.settings) {
           conflict={Boolean(mobilePlacement && placementPreview && getScheduledEventsForRange([addDays(placementPreview.date, -1), placementPreview.date, addDays(placementPreview.date, 1)]).some((item) => (!mobilePlacement.recordId || resolveTimelineRecordId(item.id) !== mobilePlacement.recordId) && item.scheduledStart && item.scheduledEnd && scheduledDateTimesOverlap(placementPreview.date, placementPreview.startTime, placementPreview.endTime, item.scheduledDate || placementPreview.date, item.scheduledStart, item.scheduledEnd)))}
           onOpen={() => {
             setCandidateDrawerExpanded(false);
-            if (tourStep === "return") advanceOnboardingTour(tourStep);
+            if (tourStep === "return") revealTasks();
             else if (onboardingTask || tourWaitingForTasks) revealTasks();
             else { setCandidatePanelCollapsed(false); setCandidateDrawerOpen(true); }
           }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
@@ -10757,7 +10816,7 @@ if (cached?.data && cached?.settings) {
             metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
         </Suspense>
       </RightUtilityPanel>}
-      {utilityPanel && utilityPanel !== "metrics" && utilityPanel !== "extension" && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onRestartOnboarding={() => {
+      {utilityPanel && utilityPanel !== "metrics" && utilityPanel !== "extension" && settings && <Suspense fallback={<SettingsLoading lang={lang} onClose={() => closeUtilityPanel()} />}><UtilityPanel kind={utilityPanel} settings={settings} initialSection={settingsSectionTarget} onboardingSettings={onboardingSettings} compactLayout={compactLayout} data={data} authEmail={authState?.user?.email || ""} onClose={() => closeUtilityPanel()} onRestartOnboarding={() => {
         closeUtilityPanel(() => {
           void saveSettings(ONBOARDING_START);
           setShelfViewId("");

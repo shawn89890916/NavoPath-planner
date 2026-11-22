@@ -2039,11 +2039,11 @@ export default function PlanningView(props: {
         <div className="df-planning-content">
           {taskViewEmpty && (filtersHideTasks || viewMode !== "tree" || safeProjects.length === 0) && !dragNode && !planningDragTask && (
             <EmptyState announce title={filtersHideTasks ? (zh ? "没有符合筛选条件的任务" : "No tasks match these filters")
-              : (zh ? "这里还没有任务" : "No tasks here yet")}>
-              {filtersHideTasks ? <Button onClick={clearAllFilters}>{zh ? "清除筛选" : "Clear filters"}</Button> : <>
-                {viewMode === "tree" && props.onProjectCreate && <Button variant="primary" onClick={props.onProjectCreate}>{zh ? "新建项目" : "New project"}</Button>}
-                <Button onClick={() => props.onTaskCreate("")}>{zh ? "添加任务" : "Add task"}</Button>
-              </>}
+              : viewMode === "tree" && props.onProjectCreate && !props.demo
+                ? (zh ? "点上方的「+」新建项目" : 'Click "+" above to create a project')
+                : (zh ? "这里还没有任务" : "No tasks here yet")}>
+              {filtersHideTasks ? <Button onClick={clearAllFilters}>{zh ? "清除筛选" : "Clear filters"}</Button>
+                : viewMode !== "tree" && <Button onClick={() => props.onTaskCreate("")}>{zh ? "添加任务" : "Add task"}</Button>}
             </EmptyState>
           )}
               {viewMode === "metrics" && (
@@ -2430,9 +2430,7 @@ export default function PlanningView(props: {
                   {!props.collapsed[project.id] && (
                     <div className="df-project-tasks" data-empty-project-drop={tasks.length === 0 ? project.id : undefined}>
                       {!props.demo && tasks.length === 0 && activeFilterChips.length === 0 && !dragNode && (
-                        <EmptyState compact title={zh ? "这个项目暂无待办任务" : "No open tasks in this project"}>
-                          <Button onClick={() => props.onTaskCreate(project.id)}>{zh ? "添加任务" : "Add task"}</Button>
-                        </EmptyState>
+                        <EmptyState compact title={zh ? "点上方的「+」添加待办任务" : 'Click "+" above to add a new open task'} />
                       )}
                       {tasks.map((task) => (
                         <div className="df-task-branch" key={task.id}>

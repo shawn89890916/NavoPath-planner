@@ -2,6 +2,18 @@
 
 ## 2026-11-22
 
+### 1.7.0 Beta 59
+
+#### 改进
+
+- 新手引导自动聚焦任务输入框，支持直接添加灰字示例。练习拖放时标出时间段，还可以把时间块拖回任务列表，再用日历安排。
+- 打开任务视图菜单时会提示下一步。插件可选现在配置或稍后，AI 和 MCP 分别打开对应的设置页并给出操作指引。
+- Tree 的空状态直接指向该层级可用的「+」。
+
+#### 修复
+
+- 关闭空白的新任务草稿时不再弹出保存确认。
+
 ### 1.7.0 Beta 58
 
 #### 改进
@@ -864,6 +876,18 @@
 # NavoPath Changelog
 
 ## 2026-11-22
+
+### 1.7.0 Beta 59
+
+#### Improved
+
+- Onboarding focuses the task input and lets you add the displayed example directly. Drag practice marks a time slot and teaches you to drag the block back to Tasks before scheduling with the calendar.
+- The task view menu guides your next action. You can set up plugins now or later, and AI and MCP each open the relevant settings with next steps.
+- Empty states in Tree point to the appropriate plus button.
+
+#### Fixed
+
+- Closing a blank new-task draft skips the save confirmation.
 
 ### 1.7.0 Beta 58
 
