@@ -1,5 +1,7 @@
 import type { PluginMcpAccess } from "./pluginMcp";
 import type { ExtensionPreferences } from "./extensions";
+export type WorkspaceGuideSteps = readonly ["setup", "add", "schedule", "return", "plan", "views", "plugins", "integrations", "start", "done"];
+export type WorkspaceGuideStep = WorkspaceGuideSteps[number];
 export type Category = "exam" | "uk" | "us" | "essay" | "materials" | "project" | "personal";
 export type Priority = "high" | "medium" | "low";
 export type NullablePriority = Priority | null;
@@ -532,7 +534,7 @@ export interface Settings {
   apiKeyPreview: string;
   displayName: string;
   avatarDataUrl?: string;
-  workspaceGuideStep?: "setup" | "add" | "schedule" | "done";
+  workspaceGuideStep?: WorkspaceGuideStep;
   workspaceGuideTaskId?: string;
   dailyFocusTime: string;
   weekStartsOn: 0 | 1;

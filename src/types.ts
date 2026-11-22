@@ -1,6 +1,7 @@
 import type { PluginMcpAccess } from "../shared/pluginMcp";
 import type { ExtensionPreferences } from "./extensions/model";
-import type { WorkspaceGuideStep } from "./onboarding";
+export type WorkspaceGuideSteps = readonly ["setup", "add", "schedule", "return", "plan", "views", "plugins", "integrations", "start", "done"];
+export type WorkspaceGuideStep = WorkspaceGuideSteps[number];
 export type Category = "exam" | "uk" | "us" | "essay" | "materials" | "project" | "personal";
 export type Priority = "high" | "medium" | "low";
 export type NullablePriority = Priority | null;

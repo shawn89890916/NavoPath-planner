@@ -1,7 +1,6 @@
-import type { Settings, Task, TimelineRecord } from "./types";
+import type { Settings, Task, TimelineRecord, WorkspaceGuideStep, WorkspaceGuideSteps } from "./types";
 
-export const WORKSPACE_GUIDE_STEPS = ["setup", "add", "schedule", "return", "plan", "views", "plugins", "integrations", "start", "done"] as const;
-export type WorkspaceGuideStep = (typeof WORKSPACE_GUIDE_STEPS)[number];
+export const WORKSPACE_GUIDE_STEPS: WorkspaceGuideSteps = ["setup", "add", "schedule", "return", "plan", "views", "plugins", "integrations", "start", "done"];
 export type OnboardingTourStep = Exclude<WorkspaceGuideStep, "setup" | "add" | "schedule" | "done">;
 
 export const ONBOARDING_START = { workspaceGuideStep: "setup", workspaceGuideTaskId: "" } as const;

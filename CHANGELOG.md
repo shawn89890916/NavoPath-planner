@@ -2,6 +2,10 @@
 
 ## 2026-11-22
 
+### 待发布
+
+- 修复插件 SDK、插件模板和主题模板的类型声明，使其可以独立使用。
+
 ### 1.7.0 Beta 58
 
 #### 改进
@@ -864,6 +868,10 @@
 # NavoPath Changelog
 
 ## 2026-11-22
+
+### Unreleased
+
+- Fixed the plugin SDK, plugin template, and theme template so their type declarations work independently.
 
 ### 1.7.0 Beta 58
 
