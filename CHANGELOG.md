@@ -4,7 +4,7 @@
 
 ### 改进
 
-- 官网首页改以一体化工作区、插件市场、Navo AI 和设计原理为入口。工作区演示串联项目树、今日候选和时间轴，并补充桌面 Dock 说明。功能页按横竖屏展示对应截图，横屏可直接试玩。
+- 官网首页改以一体化工作区、插件市场、Navo AI 和设计原理为入口。工作区演示串联项目树、今日候选和时间轴，并补充桌面 Dock 说明。功能页按横竖屏展示对应截图，横屏可直接试玩。本次官网改版可在 /beta 预览。
 
 ## 2026-11-21
 
@@ -511,7 +511,7 @@
 
 ### Improved
 
-- The homepage now leads with Workspace, Plugin Market, Navo AI, and Principles. The workspace demo connects the project tree, Today’s Candidates, and the timeline, with a guide to the desktop Dock. Feature pages show orientation-matched screenshots and interactive examples in landscape.
+- The homepage now leads with Workspace, Plugin Market, Navo AI, and Principles. The workspace demo connects the project tree, Today’s Candidates, and the timeline, with a guide to the desktop Dock. Feature pages show orientation-matched screenshots and interactive examples in landscape. Preview the redesign at /beta.
 
 ## 2026-11-21
 

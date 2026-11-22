@@ -1,4 +1,4 @@
-import { principleRoute, productFeature, type ProductFeature } from "./productSite";
+import { principleRoute, productFeature, sitePath, type ProductFeature } from "./productSite";
 
 const featureContent = {
   workspace: () => import("./features/workspace"),
@@ -26,6 +26,7 @@ export async function loadPrinciple(topic: NonNullable<ReturnType<typeof princip
 export function preloadSitePage(href: string) {
   const url = new URL(href, location.href);
   if (url.origin !== location.origin) return;
-  const feature = productFeature(url.pathname), topic = principleRoute(url.pathname);
+  const path = sitePath(url.pathname);
+  const feature = productFeature(path), topic = principleRoute(path);
   void (feature ? loadFeature(feature) : topic ? loadPrinciple(topic) : Promise.resolve()).catch(() => undefined);
 }

@@ -1,6 +1,6 @@
 import type { Language, PlannerData } from "./types";
 import type { AiSessionMessage } from "./WorkspacePresentation";
-import type { ProductDemo } from "./productSite";
+import { sitePath, type ProductDemo } from "./productSite";
 
 export type WorkspaceDemoRuntime = {
   feature: ProductDemo;
@@ -15,7 +15,7 @@ export type WorkspaceDemoRuntime = {
 };
 type DemoWindow = Window & { navopathDemoRuntime?: WorkspaceDemoRuntime };
 export function getWorkspaceDemoRuntime() {
-  return typeof window !== "undefined" && window.location.pathname.startsWith("/product-demo/")
+  return typeof window !== "undefined" && sitePath(window.location.pathname).startsWith("/product-demo/")
     ? (window as DemoWindow).navopathDemoRuntime
     : undefined;
 }

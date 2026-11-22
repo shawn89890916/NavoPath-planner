@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { UiPlusIcon } from "./components/UiIcons";
-import { featureNames, siteLanguage, type FeatureCopy, type ProductFeature } from "./productSite";
+import { featureNames, siteHref, siteLanguage, type FeatureCopy, type ProductFeature } from "./productSite";
 import ProductNavigation from "./ProductNavigation";
 import ProductScreenshot from "./ProductScreenshot";
 import ProductSiteFooter from "./ProductSiteFooter";
@@ -66,7 +66,7 @@ function ProductDemoFrame({ feature, lang }: { feature: "workspace" | "ai"; lang
     {mounted && status !== "failed" && <iframe
       key={attempt}
       ref={frame}
-      src={`/product-demo/${feature}?lang=${lang}&presentation=full`}
+      src={siteHref(`/product-demo/${feature}?lang=${lang}&presentation=full`)}
       title={`${featureNames[lang][feature]} · ${zh ? "交互演示" : "Interactive demo"}`}
       tabIndex={status === "ready" ? undefined : -1}
       aria-hidden={status !== "ready" || undefined}
@@ -109,7 +109,7 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
   }, [lang, feature, zh, c.description]);
 
   return <div className="np-feature np-feature--reading">
-    <header className="np-site-nav np-site-nav--product"><ProductNavigation feature={feature} lang={lang} icon={<img src="/navopath-icon.png" alt="" />} onLanguageChange={setLang} /></header>
+    <header className="np-site-nav np-site-nav--product"><ProductNavigation feature={feature} lang={lang} icon={<img src={siteHref("/navopath-icon.png")} alt="" />} onLanguageChange={setLang} /></header>
     <main>
       <section className="np-product-visual" aria-label={featureNames[lang][feature]}>
         {wide && feature !== "plugins"

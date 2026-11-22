@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import { ProductMenu, SiteLanguageSwitch } from "./components/ProductMenu";
-import type { ProductFeature } from "./productSite";
+import { siteHref, type ProductFeature } from "./productSite";
 import type { Language } from "./types";
 
 export default function ProductNavigation({ feature, lang, icon, onLanguageChange }: { feature: ProductFeature | "principles"; lang: Language; icon: ReactNode; onLanguageChange: (lang: Language) => void }) {
   return <div className="df-header-inner">
-    <a className="df-brand" href={`/?lang=${lang}`} target="_top">{icon}<strong>NavoPath</strong></a>
+    <a className="df-brand" href={siteHref(`/?lang=${lang}`)} target="_top">{icon}<strong>NavoPath</strong></a>
     <nav className="df-tabs df-tabs-center" aria-label={lang === "zh" ? "产品主导航" : "Main Navigation"}>
       <ProductMenu lang={lang} kind="product" active={feature !== "principles"} />
       <ProductMenu lang={lang} kind="principles" active={feature === "principles"} />

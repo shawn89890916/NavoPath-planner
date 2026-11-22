@@ -10,7 +10,7 @@ import PasswordResetRequest from "./components/PasswordResetRequest";
 import LandingPortals from "./LandingPortals";
 import ProductScreenshot from "./ProductScreenshot";
 import { prefersReducedMotion } from "./motion";
-import { PERSONAL_SITE_URL, PRODUCT_FEATURES, featureHref, featureNames, principleHref, siteLanguage } from "./productSite";
+import { PERSONAL_SITE_URL, PRODUCT_FEATURES, featureHref, featureNames, principleHref, siteHref, siteLanguage } from "./productSite";
 import "./landing.css";
 
 type AuthIntent = "signin" | "signup";
@@ -112,7 +112,7 @@ function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, 
   </div>;
 }
 
-export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm, onForgotPassword, busy, error, notice, initialShowAuth = false, signedIn = false }: {
+type LandingAuth = {
   onLogin: (email: string, password: string, displayName: string, intent: AuthIntent, theme: "light" | "dark", privacyAccepted: boolean) => void;
   onResend: (email: string) => void;
   onContinueAfterConfirm: (email: string) => void;
@@ -122,9 +122,12 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
   notice: { type: "confirm-email"; email: string } | null;
   initialShowAuth?: boolean;
   signedIn?: boolean;
-}) {
+};
+
+export default function LandingPage(props: LandingAuth | { preview: true }) {
+  const auth = "preview" in props ? null : props;
   const [lang, setLang] = useState<Lang>(() => siteLanguage(location.search));
-  const [showAuth, setShowAuth] = useState(initialShowAuth);
+  const [showAuth, setShowAuth] = useState(auth?.initialShowAuth ?? false);
   const [coverRecede, setCoverRecede] = useState(0);
   const [portalExit, setPortalExit] = useState(0);
   const [entering, setEntering] = useState(() => !prefersReducedMotion() && window.scrollY < 1 && !location.hash);
@@ -188,9 +191,9 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
 
   return <div className={`landing${entering ? " landing--entering" : ""}`} lang={lang} onPointerDownCapture={() => setEntering(false)} onKeyDownCapture={() => setEntering(false)} onFocusCapture={() => setEntering(false)} onAnimationEnd={event => { if (event.animationName === "landing-preview-arrive") setEntering(false); }}>
     <nav className="landing-nav" aria-label="NavoPath">
-      <a className="landing-brand" href="/"><ProductIcon compact /><span>NavoPath</span></a>
+      <a className="landing-brand" href={siteHref(`/?lang=${lang}`)}><ProductIcon compact /><span>NavoPath</span></a>
       <div className="landing-nav-links"><ProductMenu lang={lang} /><ProductMenu lang={lang} kind="principles" /><ProductMenu lang={lang} kind="support" includeGitHub /></div>
-      <div className="landing-nav-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><a className="np-start-link" href="/app" onClick={(event) => { if (!signedIn) { event.preventDefault(); setShowAuth(true); } }}>{lang === "zh" ? "立即开始" : "Start now"}</a></div>
+      <div className="landing-nav-actions"><SiteLanguageSwitch lang={lang} onChange={setLang} /><a className="np-start-link" href="/app" onClick={(event) => { if (auth && !auth.signedIn) { event.preventDefault(); setShowAuth(true); } }}>{lang === "zh" ? "立即开始" : "Start now"}</a></div>
     </nav>
     <main>
       <section className="landing-cover" id="top"><LandingPortals lang={lang} recede={portalExit} /><div className="landing-cover-content" style={coverStyle}><div className="landing-cover-logo"><ProductIcon /></div><div className="landing-brand-copy"><p className="landing-product-name">{c.productName}</p><h1 className="landing-slogan">{c.title}</h1></div></div><span className="landing-product-scroll-cue" aria-hidden="true"><i>↑</i>{c.scroll}</span></section>
@@ -205,9 +208,9 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
         <div className="landing-planning-copy"><h2>{c.marketTitle}</h2><p>{c.marketBody}</p><a className="landing-button quiet" href={featureHref("plugins", lang)}>{c.marketLink}<span aria-hidden="true">→</span></a></div>
         <div className="landing-planning-preview"><ProductScreenshot feature="plugins" lang={lang} alt={featureNames[lang].plugins} /></div>
       </section>
-      <section className="landing-cta"><span>03 / NAVOPATH</span><h2>{c.ctaTitle}</h2><p>{c.ctaBody}</p><div className="landing-actions"><button className="np-start-link" onClick={() => setShowAuth(true)}>{c.start}</button><a className="landing-button quiet" href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer">{c.download}<span>→</span></a></div></section>
+      <section className="landing-cta"><span>03 / NAVOPATH</span><h2>{c.ctaTitle}</h2><p>{c.ctaBody}</p><div className="landing-actions">{auth ? <button className="np-start-link" onClick={() => setShowAuth(true)}>{c.start}</button> : <a className="np-start-link" href="/app">{c.start}</a>}<a className="landing-button quiet" href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer">{c.download}<span>→</span></a></div></section>
     </main>
-    <footer className="landing-footer"><nav aria-label={lang === "zh" ? "产品功能" : "Features"}>{PRODUCT_FEATURES.map(feature => <a key={feature} href={featureHref(feature, lang)}>{featureNames[lang][feature]}</a>)}<a href={`/privacy?lang=${lang}`}>{lang === "zh" ? "隐私政策" : "Privacy Policy"}</a></nav><a className="landing-footer-author" href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">© 2026 Xiaoyang Chen</a><a className="landing-footer-principles" href={principleHref("index", lang)}>{lang === "zh" ? "设计原理" : "Principles"}</a></footer>
-    {showAuth && <AuthDialog lang={lang} onClose={() => setShowAuth(false)} onLogin={onLogin} onResend={onResend} onContinueAfterConfirm={onContinueAfterConfirm} onForgotPassword={onForgotPassword} busy={busy} error={error} notice={notice} />}
+    <footer className="landing-footer"><nav aria-label={lang === "zh" ? "产品功能" : "Features"}>{PRODUCT_FEATURES.map(feature => <a key={feature} href={featureHref(feature, lang)}>{featureNames[lang][feature]}</a>)}<a href={siteHref(`/privacy?lang=${lang}`)}>{lang === "zh" ? "隐私政策" : "Privacy Policy"}</a></nav><a className="landing-footer-author" href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">© 2026 Xiaoyang Chen</a><a className="landing-footer-principles" href={principleHref("index", lang)}>{lang === "zh" ? "设计原理" : "Principles"}</a></footer>
+    {auth && showAuth && <AuthDialog lang={lang} onClose={() => setShowAuth(false)} onLogin={auth.onLogin} onResend={auth.onResend} onContinueAfterConfirm={auth.onContinueAfterConfirm} onForgotPassword={auth.onForgotPassword} busy={auth.busy} error={auth.error} notice={auth.notice} />}
   </div>;
 }

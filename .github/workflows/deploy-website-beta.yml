@@ -1,0 +1,50 @@
+name: Deploy NavoPath website beta
+
+on:
+  push:
+    branches: [website-beta]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: navopath-website-beta
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            mcp-worker/package-lock.json
+
+      - run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - run: npm exec -- vitest run src/productSite.test.ts src/productDemoData.test.ts
+      - run: npm run build:navopath -- --base=/beta/ --outDir .wrangler/beta-assets/beta
+        env:
+          VITE_SUPABASE_URL: ''
+          VITE_SUPABASE_ANON_KEY: ''
+      - run: rm .wrangler/beta-assets/beta/{_headers,_redirects,_routes.json}
+      - run: npm ci --prefix mcp-worker
+
+      - name: Deploy the beta Worker
+        run: ./mcp-worker/node_modules/.bin/wrangler deploy --config wrangler.beta.toml
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Verify the public beta routes
+        run: |
+          for path in /beta /beta/features/workspace /beta/features/plugins /beta/features/ai /beta/principles; do
+            curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 \
+              "https://navopath.com${path}" --output "$RUNNER_TEMP/navopath-beta.html"
+            grep -Fq '/beta/assets/' "$RUNNER_TEMP/navopath-beta.html"
+          done

@@ -1,5 +1,18 @@
 import type { Language } from "./types";
 
+export const isBetaSite = import.meta.env.BASE_URL === "/beta/";
+const sitePrefix = isBetaSite ? "/beta" : "";
+
+export function siteHref(path: string) {
+  return sitePrefix + path;
+}
+
+export function sitePath(path: string) {
+  return sitePrefix && (path === sitePrefix || path.startsWith(sitePrefix + "/"))
+    ? path.slice(sitePrefix.length) || "/"
+    : path;
+}
+
 export const PRODUCT_FEATURES = ["workspace", "plugins", "ai"] as const;
 export type ProductFeature = typeof PRODUCT_FEATURES[number];
 const PRODUCT_DEMOS = ["workspace", "ai", "planning", "execute"] as const;
@@ -17,7 +30,7 @@ export function principleRoute(path: string): Principle | "index" | null {
   return value.length === 3 && value[1] === "principles" && PRINCIPLES.includes(value[2] as Principle) ? value[2] as Principle : null;
 }
 export function principleHref(topic: Principle | "index", lang: Language) {
-  return `/principles${topic === "index" ? "" : `/${topic}`}?lang=${lang}`;
+  return siteHref(`/principles${topic === "index" ? "" : `/${topic}`}?lang=${lang}`);
 }
 export type PrincipleCopy = { title: string; description: string; steps: [string, string][]; sections: [string, string][]; sources: [string, string][] };
 function routeEntry<T extends string>(path: string, prefix: string, entries: readonly T[]) {
@@ -44,7 +57,7 @@ export function siteLanguage(search: string, browserLanguage = "en"): Language {
       : "en";
 }
 export function featureHref(feature: ProductFeature, lang: Language) {
-  return `/features/${feature}?lang=${lang}`;
+  return siteHref(`/features/${feature}?lang=${lang}`);
 }
 export const featureNames = {
   zh: { workspace: "一体化工作区", plugins: "插件市场", ai: "Navo AI" },

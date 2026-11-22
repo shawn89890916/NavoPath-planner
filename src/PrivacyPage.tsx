@@ -1,3 +1,4 @@
+import { siteHref } from "./productSite";
 import { useEffect, useState } from "react";
 import { siteLanguage } from "./productSite";
 import "./privacy.css";
@@ -38,7 +39,7 @@ export default function PrivacyPage() {
   }, [zh]);
   return <main className="np-privacy-page">
     <nav aria-label={zh ? "页面导航" : "Page navigation"}>
-      <a href="/">NavoPath</a>
+      <a href={siteHref("/")}>NavoPath</a>
       <div>{(["zh", "en"] as const).map(value => <button key={value} type="button" aria-pressed={lang === value} onClick={() => {
         setLang(value);
         history.replaceState(null, "", `?lang=${value}`);
@@ -49,7 +50,7 @@ export default function PrivacyPage() {
       <h1>{zh ? "隐私政策" : "Privacy Policy"}</h1>
       <p>{zh ? "你的计划，包含属于你的生活。我们希望你清楚这些信息如何保存、使用，以及如何由你掌控。" : "Your plans reflect your everyday life. We believe you should have complete clarity on how your data is handled and kept under your control."}</p>
       {policy[lang].map(([title, body], i) => <section key={i}><h2>{String(i + 1).padStart(2, "0")} / {title}</h2><p>{body}</p></section>)}
-      <footer><a href="https://github.com/shawn89890916/NavoPath-planner/issues" target="_blank" rel="noopener noreferrer">{zh ? "联系维护者 / 项目反馈" : "Contact the maintainer / Project feedback"}</a><a href="/">{zh ? "返回首页" : "Back to home"}</a></footer>
+      <footer><a href="https://github.com/shawn89890916/NavoPath-planner/issues" target="_blank" rel="noopener noreferrer">{zh ? "联系维护者 / 项目反馈" : "Contact the maintainer / Project feedback"}</a><a href={siteHref("/")}>{zh ? "返回首页" : "Back to home"}</a></footer>
     </article>
   </main>;
 }

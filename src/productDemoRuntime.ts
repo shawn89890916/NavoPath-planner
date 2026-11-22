@@ -3,12 +3,12 @@ import type { AiAction } from "./aiAssistantApi";
 import type { PlannerApi, PlannerData, Settings } from "./types";
 import { getDefaultSettings } from "./defaultSettings";
 import { createDemoData, DEMO_DATE, DEMO_STAMP, firstDemoSlot, scheduleDemoTask } from "./productDemoData";
-import { isDemoVisibility, siteLanguage, type ProductDemo } from "./productSite";
+import { isDemoVisibility, siteLanguage, sitePath, type ProductDemo } from "./productSite";
 import { createMemoryStorage, installWorkspaceDemoRuntime } from "./workspaceEnvironment";
 import "./product-demo.css";
 
 export function installProductDemo(feature: ProductDemo) {
-  if (!location.pathname.startsWith("/product-demo/")) throw new Error("Example runtime requires an example route");
+  if (!sitePath(location.pathname).startsWith("/product-demo/")) throw new Error("Example runtime requires an example route");
   const language = siteLanguage(location.search, navigator.language);
   const fullscreen = new URLSearchParams(location.search).get("presentation") === "full";
   const planning = feature === "planning" || feature === "workspace";

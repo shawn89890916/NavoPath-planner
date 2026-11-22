@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { legacyFeatureRoute, principleRoute, productDemoRoute, productFeature, siteLanguage } from "./productSite";
+import { isBetaSite, legacyFeatureRoute, principleRoute, productDemoRoute, productFeature, siteHref, siteLanguage, sitePath } from "./productSite";
 import { loadFeature, loadPrinciple } from "./sitePages";
 
 class SiteErrorBoundary extends React.Component<
@@ -40,12 +40,13 @@ class SiteErrorBoundary extends React.Component<
   }
 }
 
-const feature = productFeature(window.location.pathname);
-const demo = productDemoRoute(window.location.pathname);
-const principles = principleRoute(window.location.pathname);
-const privacy = /^\/privacy\/?$/.test(window.location.pathname);
-if (legacyFeatureRoute(window.location.pathname)) {
-  location.replace(`/features/workspace${location.search}${location.hash}`);
+const path = sitePath(window.location.pathname);
+const feature = productFeature(path);
+const demo = productDemoRoute(path);
+const principles = principleRoute(path);
+const privacy = /^\/privacy\/?$/.test(path);
+if (legacyFeatureRoute(path)) {
+  location.replace(siteHref(`/features/workspace${location.search}${location.hash}`));
 } else if (demo) {
   void import("./productDemoRuntime").then(({ installProductDemo }) => {
     installProductDemo(demo);
@@ -54,6 +55,13 @@ if (legacyFeatureRoute(window.location.pathname)) {
     if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "error" }, location.origin);
     document.getElementById("root")!.textContent = "NavoPath…";
   });
+} else if (isBetaSite && path === "/") {
+  const LandingPage = lazy(() => import("./LandingPage"));
+  createRoot(document.getElementById("root")!).render(
+    <SiteErrorBoundary demo={false}>
+      <Suspense fallback={null}><LandingPage preview /></Suspense>
+    </SiteErrorBoundary>,
+  );
 } else if (feature || principles || privacy) {
   const Page = lazy(privacy ? () => import("./PrivacyPage") : feature ? () => loadFeature(feature) : () => loadPrinciple(principles!));
   createRoot(document.getElementById("root")!).render(

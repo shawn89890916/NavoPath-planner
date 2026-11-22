@@ -7,7 +7,6 @@
     <link rel="icon" href="%BASE_URL%navopath-icon.png" />
     <link rel="apple-touch-icon" href="%BASE_URL%icon.png" />
     <title>NavoPath — Navigate your next step.</title>
-    <link rel="preconnect" href="https://qplymrkgsnaaamxggwxw.supabase.co" crossorigin />
     <style>
       /* Minimal skeleton — visible instantly, replaced when React mounts */
       html, body { margin: 0; padding: 0; background: #F8F7F3; font-family: system-ui, sans-serif; }
@@ -32,12 +31,22 @@
       }
     </style>
     <script>
+      const betaSite = "%BASE_URL%" === "/beta/";
+      const bootPath = betaSite ? location.pathname.slice("/beta".length) || "/" : location.pathname;
+      const bootsDemo = bootPath.startsWith("/product-demo/");
       // Public introductions keep the paper background while their page loads.
-      if (/^\/(?:privacy|features\/(?:execute|planning|ai)|principles(?:\/(?:jev|feedback|time|control|views|records))?)\/?$/.test(location.pathname)) document.documentElement.classList.add("site-boot");
+      if (betaSite || /^\/(?:privacy|features\/(?:workspace|plugins|execute|planning|ai)|principles(?:\/(?:jev|feedback|time|control|views|records))?)\/?$/.test(bootPath)) document.documentElement.classList.add("site-boot");
+      if (!betaSite && !bootsDemo) {
+        const preconnect = document.createElement("link");
+        preconnect.rel = "preconnect";
+        preconnect.href = "https://qplymrkgsnaaamxggwxw.supabase.co";
+        preconnect.crossOrigin = "";
+        document.head.appendChild(preconnect);
+      }
       // Pre-React error handler: if the JS bundle fails to load or throws
       // before React mounts, display the error instead of a blank white page.
       window.addEventListener("error", function (event) {
-        if (/^\/product-demo\//.test(location.pathname)) {
+        if (bootsDemo) {
           if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "error" }, location.origin);
           return;
         }
@@ -54,7 +63,7 @@
       // bundle whose lazy chunk no longer exists. Vite emits this event before
       // rejecting the import; reload once to move the page to the new manifest.
       window.addEventListener("vite:preloadError", function (event) {
-        if (/^\/product-demo\//.test(location.pathname)) return;
+        if (bootsDemo) return;
         var key = "navopath:asset-recovery";
         var lastReload = Number(sessionStorage.getItem(key) || 0);
         if (Date.now() - lastReload < 60000) return;
@@ -63,7 +72,7 @@
         location.reload();
       });
       window.addEventListener("load", function () {
-        if (/^\/product-demo\//.test(location.pathname)) return;
+        if (bootsDemo) return;
         window.setTimeout(function () { sessionStorage.removeItem("navopath:asset-recovery"); }, 10000);
       });
     </script>
