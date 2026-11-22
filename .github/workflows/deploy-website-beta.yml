@@ -50,7 +50,7 @@ jobs:
           import sys
           from pathlib import Path
 
-          log = re.sub(r"\[[0-9;]*m", "", Path(sys.argv[1]).read_text())
+          log = re.sub(r"\x1b\[[0-9;]*m", "", Path(sys.argv[1]).read_text())
           codes = ", ".join(dict.fromkeys(re.findall(r"\[code: (\d+)\]", log)))
           area = next((label for path, label in (
               ("/workers/routes", "zone Worker routes"),
