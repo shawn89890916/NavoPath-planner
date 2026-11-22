@@ -10596,7 +10596,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 }
 .df-workspace-guide-cue[data-side="right"]::before {
   width: 15px;
-  top: 50%;
+  top: var(--guide-arrow-y);
   right: 100%;
   border-top: 1px solid currentColor;
 }
@@ -10604,7 +10604,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   width: 7px;
   height: 7px;
   right: calc(100% + 10px);
-  top: calc(50% - 4px);
+  top: calc(var(--guide-arrow-y) - 4px);
   border-bottom: 1px solid currentColor;
   border-left: 1px solid currentColor;
   transform: rotate(45deg);

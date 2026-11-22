@@ -87,11 +87,12 @@ export function useTaskExample(active: boolean, lang: Language, fieldRef?: RefOb
   }, [active, fieldRef, lang]);
 }
 
-export function OnboardingCue({ anchor, followRow, lang, onClose, children }: {
+export function OnboardingCue({ anchor, followRow, followTimeline, lang, onClose, children }: {
   anchor?: RefObject<HTMLElement | null>;
   followRow?: boolean;
+  followTimeline?: boolean;
   lang: Language;
-  onClose: () => void;
+  onClose?: () => void;
   children: ReactNode;
 }) {
   const cueRef = useRef<HTMLDivElement>(null);
@@ -113,24 +114,36 @@ export function OnboardingCue({ anchor, followRow, lang, onClose, children }: {
     const update = () => {
       const target = anchor.current;
       const box = target?.getBoundingClientRect();
-      const clip = followRow ? target?.closest(".df-candidate-list")?.getBoundingClientRect() : undefined;
-      if (!box || !box.width || !box.height || box.bottom < 0 || box.top > window.innerHeight
-        || (clip && (box.bottom <= clip.top || box.top >= clip.bottom))) {
-        cue.style.visibility = "hidden";
+      const clip = target?.closest(followTimeline ? ".df-timeline-scroll" : ".df-candidate-list")?.getBoundingClientRect();
+      const visibleTop = box ? Math.max(0, box.top, clip?.top ?? 0) : 0;
+      const visibleBottom = box ? Math.min(window.innerHeight, box.bottom, clip?.bottom ?? window.innerHeight) : 0;
+      const centered = !box || !box.width || visibleBottom <= visibleTop || box.right <= 0 || box.left >= window.innerWidth;
+      if (centered) {
+        if (followTimeline) {
+          cue.dataset.centered = "true";
+          delete cue.dataset.side;
+          cue.style.removeProperty("left");
+          cue.style.removeProperty("top");
+        }
+        cue.style.visibility = followTimeline ? "visible" : "hidden";
         return;
       }
+      delete cue.dataset.centered;
       const side = window.innerWidth >= 540 && window.innerWidth - box.right >= 248;
       const drawerTop = panel?.classList.contains("is-mobile-candidates") ? panel.getBoundingClientRect().top : undefined;
-      const topEdge = drawerTop !== undefined && drawerTop > cue.offsetHeight + 24 ? drawerTop : box.top;
+      const topEdge = drawerTop !== undefined && drawerTop > cue.offsetHeight + 24 ? drawerTop : visibleTop;
       cue.dataset.side = side ? "right" : topEdge > cue.offsetHeight + 24 ? "above" : "below";
       const width = cue.offsetWidth;
       const height = cue.offsetHeight;
       const x = side ? box.right + 20 : Math.min(box.left + (box.width - width) / 2, window.innerWidth - width - 10);
-      const y = side ? box.top + (box.height - height) / 2
-        : cue.dataset.side === "above" ? topEdge - height - 15 : box.bottom + 15;
+      const midY = (visibleTop + visibleBottom) / 2;
+      const y = side ? midY - height / 2
+        : cue.dataset.side === "above" ? topEdge - height - 15 : visibleBottom + 15;
       const left = Math.max(10, x);
+      const top = Math.max(10, Math.min(y, window.innerHeight - height - 10));
       cue.style.left = `${left}px`;
-      cue.style.top = `${Math.max(10, Math.min(y, window.innerHeight - height - 10))}px`;
+      cue.style.top = `${top}px`;
+      cue.style.setProperty("--guide-arrow-y", `${Math.max(10, Math.min(midY - top, height - 10))}px`);
       cue.style.setProperty("--guide-arrow-x", `${Math.max(12, Math.min(box.left + box.width / 2 - left, width - 12))}px`);
       cue.style.visibility = "visible";
     };
@@ -149,6 +162,8 @@ export function OnboardingCue({ anchor, followRow, lang, onClose, children }: {
     const afterInitialScroll = window.requestAnimationFrame(() => {
       const target = anchor.current;
       if (target) observer.observe(target);
+      const timeline = followTimeline ? target?.closest(".df-timeline-scroll") : null;
+      if (timeline) observer.observe(timeline);
       panel = target?.closest<HTMLElement>(".df-candidate-panel");
       if (panel) {
         openingDrawer = Boolean(followRow && panel.classList.contains("is-mobile-candidates"));
@@ -167,16 +182,18 @@ export function OnboardingCue({ anchor, followRow, lang, onClose, children }: {
       cue.style.removeProperty("top");
       cue.style.removeProperty("visibility");
       cue.style.removeProperty("--guide-arrow-x");
+      cue.style.removeProperty("--guide-arrow-y");
+      delete cue.dataset.centered;
       delete cue.dataset.side;
       window.cancelAnimationFrame(afterInitialScroll);
       panel?.removeEventListener("transitionend", afterDrawerTransition);
       window.removeEventListener("resize", update);
       document.removeEventListener("scroll", update, true);
     };
-  }, [anchor, followRow]);
+  }, [anchor, followRow, followTimeline]);
   return <div ref={cueRef} className="df-workspace-guide-cue" data-centered={!anchor || undefined}>
     <div className="df-workspace-guide-copy" aria-live="polite">{children}</div>
-    <CloseButton label={lang === "zh" ? "关闭教程提示" : "Dismiss guide"} onClick={onClose} />
+    {onClose && <CloseButton label={lang === "zh" ? "关闭教程提示" : "Dismiss guide"} onClick={onClose} />}
   </div>;
 }
 
@@ -208,7 +225,7 @@ export function OnboardingTour({ step, anchor, waitingForTasks, phone, lang, onN
     : step === "start" ? (zh ? "开始规划" : "Start planning")
     : (zh ? "下一步" : "Next");
 
-  return <OnboardingCue anchor={anchor} followRow={step === "plan" && !waitingForTasks} lang={lang} onClose={onClose}>
+  return <OnboardingCue anchor={anchor} followRow={step === "plan" && !waitingForTasks} followTimeline={step === "return"} lang={lang} onClose={onClose}>
     {(!waitingForTasks || step === "return") && <div>{instructions[step]}</div>}
     <div className="df-workspace-guide-actions">
       {step === "plugins" && !waitingForTasks && <Button variant="text" className="df-workspace-guide-action" onClick={() => onSettings("plugins")}>{zh ? "现在配置" : "Set up now"}</Button>}

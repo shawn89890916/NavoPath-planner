@@ -2,6 +2,13 @@
 
 ## 2026-11-22
 
+### 1.7.0 Beta 60
+
+#### 修复
+
+- 拖回任务列表前，引导指向刚安排的时间块。拖动时，箭头和提示会指向可放下的位置。
+- 使用「安排」时，如果当天没有足够的空档，会明确提示，并保留手动选时间的入口。
+
 ### 1.7.0 Beta 59
 
 #### 改进
@@ -876,6 +883,13 @@
 # NavoPath Changelog
 
 ## 2026-11-22
+
+### 1.7.0 Beta 60
+
+#### Fixed
+
+- The unscheduling guide points to the scheduled block, then shows where to drop it while you drag.
+- Plan explains when there is no time slot long enough and still lets you pick a time manually.
 
 ### 1.7.0 Beta 59
 

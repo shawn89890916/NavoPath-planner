@@ -911,7 +911,7 @@ function App() {
     enabled: mobileExecution && candidateDrawerOpen,
     onSwipeUp: () => setCandidateDrawerExpanded(true), onSwipeDown: () => setCandidateDrawerExpanded(false) });
   const mobileTapRef = useRef({ x: 0, y: 0, moved: false });
-  type MobilePlacementSession = { guided: boolean; taskId: string; subtask?: ShelfSubtask; recordId?: string; durationMinutes: number; version: string; view: TimelineView; date: string; visibleDate: string; scrollTop: number; drawerOpen: boolean };
+  type MobilePlacementSession = { guided: boolean; taskId: string; subtask?: ShelfSubtask; recordId?: string; durationMinutes: number; version: string; view: TimelineView; date: string; visibleDate: string; scrollTop: number; drawerOpen: boolean; noSuggestedSlotDate?: string };
   const [mobilePlacement, setMobilePlacement] = useState<MobilePlacementSession | null>(null);
   const mobilePlacementRef = useRef<MobilePlacementSession | null>(null);
   const mobileCommitRef = useRef(false);
@@ -1135,6 +1135,7 @@ function App() {
   const quickComposerRef = useRef<HTMLFormElement>(null);
   const onboardingTaskRowRef = useRef<HTMLDivElement>(null);
   const onboardingPlanButtonRef = useRef<HTMLButtonElement>(null);
+  const onboardingReturnBlockRef = useRef<HTMLElement>(null);
   const candidateExpandRef = useRef<HTMLButtonElement>(null);
   const quickAddButtonRef = useRef<HTMLButtonElement>(null);
   const compactQuickInputRef = useRef<HTMLInputElement>(null);
@@ -5580,8 +5581,12 @@ if (cached?.data && cached?.settings) {
       : savedBlock ? clockTimeSpanMinutes(savedBlock.scheduledStart, task.scheduledEnd || addMinutes(savedBlock.scheduledStart, taskDuration(task)))
       : taskDuration(task);
     const date = savedBlock?.scheduledDate ?? timelineWindowAnchorDate;
+    const choice: PlacementChoice | null = savedBlock ? {
+      taskId: task.id, date, startTime: savedBlock.scheduledStart, endTime: addMinutes(savedBlock.scheduledStart, durationMinutes),
+      durationMinutes, source: "candidate-calendar",
+    } : placementChoiceFromProposal(task.id, findCandidatePlacementForRange(task, [date]));
     const session = { guided, taskId, subtask, recordId, durationMinutes, version: mobilePlacementVersion(task), view: timelineView, date: selectedDate, visibleDate: visibleTimelineDate,
-      scrollTop: timelineRef.current?.scrollTop || 0, drawerOpen: candidateDrawerOpen };
+      scrollTop: timelineRef.current?.scrollTop || 0, drawerOpen: candidateDrawerOpen, noSuggestedSlotDate: choice ? undefined : date };
     if (!shelfView) {
       candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
     }
@@ -5596,10 +5601,6 @@ if (cached?.data && cached?.settings) {
     setSelectedDate(date);
     setVisibleTimelineDate(date);
     setTimelineView("daily");
-    const choice: PlacementChoice | null = savedBlock ? {
-      taskId: task.id, date, startTime: savedBlock.scheduledStart, endTime: addMinutes(savedBlock.scheduledStart, durationMinutes),
-      durationMinutes, source: "candidate-calendar",
-    } : placementChoiceFromProposal(task.id, findCandidatePlacementForRange(task, [date]));
     setPlacementPreview(choice);
     placementPreviewRef.current = choice;
     setPlacementChoices(choice ? [choice] : []);
@@ -5691,7 +5692,10 @@ if (cached?.data && cached?.settings) {
     const choices = findCandidatePlacementChoices(task, placementSnapshot);
     const preview = choices[0];
     if (!preview) {
-      showToast(t(lang, "toast.noSlotFound"));
+      const noSlotMessage = visibleRange.length === 1
+        ? visibleRange[0] === today ? "toast.noSlotToday" : "toast.noSlotOnDate"
+        : "toast.noSlotFound";
+      showToast(t(lang, noSlotMessage));
       return;
     }
     placementPreviewRef.current = preview;
@@ -5749,7 +5753,7 @@ if (cached?.data && cached?.settings) {
     const proposed = findCandidatePlacementForRange(task, [date]);
     const choice = placementChoiceFromProposal(taskId, proposed);
     if (!choice) {
-      showToast(t(lang, "toast.noSlotFound"));
+      showToast(t(lang, date === today ? "toast.noSlotToday" : "toast.noSlotOnDate"));
       return;
     }
     confirmPlacementChoice(choice);
@@ -9377,7 +9381,12 @@ if (cached?.data && cached?.settings) {
   const guideRowVisible = taskPaneVisible && Boolean(onboardingTask && visibleCandidates.some((task) => task.id === onboardingTask.id));
   const tasksGuideAnchor = mobileExecution && !candidateDrawerOpen ? candidateTriggerRef
     : candidatePanelCollapsed ? candidateExpandRef : shelfPaneVisible ? shelfTitleRef : undefined;
-  const returningGuideBlock = onboardingStep === "return" && drag?.kind === "block" && onboardingBlock(onboardingTask, false)?.id === resolveTimelineRecordId(drag.taskId);
+  const returnGuideRecord = onboardingStep === "return" ? onboardingBlock(onboardingTask, false) : undefined;
+  const returningGuideBlock = Boolean(returnGuideRecord && drag?.kind === "block" && returnGuideRecord.id === resolveTimelineRecordId(drag.taskId));
+  const returnToTasksButton = mobileExecution && !candidateDrawerOpen;
+  const returnDropAnchor = returnToTasksButton ? candidateTriggerRef : candidatePanelRef;
+  const returnGuideAnchorFor = (task: Task) => returnGuideRecord && task.scheduledDate === returnGuideRecord.scheduledDate
+    && resolveTimelineRecordId(task.id) === returnGuideRecord.id ? onboardingReturnBlockRef : undefined;
   const guideSlot = onboardingStep === "schedule" && drag?.source === "candidate" && drag.taskId === onboardingTask?.id
     ? onboardingDropSlot(drag.duration) : undefined;
   const guideSlotHint = guideSlot && <div className="df-onboarding-drop-slot" style={guideSlot.style} aria-hidden="true">
@@ -9390,7 +9399,8 @@ if (cached?.data && cached?.settings) {
   const tourWaitingForTasks = tourStep === "plan" ? !taskPaneVisible
     : (tourStep === "views" || tourStep === "plugins") && !shelfPaneVisible;
   const guidePlanButtonVisible = tourStep === "plan" && guideRowVisible;
-  const tourAnchor = guidePlanButtonVisible ? onboardingPlanButtonRef
+  const tourAnchor = tourStep === "return" ? onboardingReturnBlockRef
+    : guidePlanButtonVisible ? onboardingPlanButtonRef
     : tourStep === "integrations" || tourStep === "start" ? undefined : tasksGuideAnchor;
 
   function onboardingDropSlot(duration: number) {
@@ -9596,6 +9606,11 @@ if (cached?.data && cached?.settings) {
           ? (mobileExecution ? "长按任务块并移动到时间轴" : "按住任务块并移动到时间轴")
           : (mobileExecution ? "Press and hold the task block, then move it onto the timeline" : "Hold the task block and move it onto the timeline"))
           : <Button variant="text" className="df-workspace-guide-action" onClick={revealTasks}>{lang === "zh" ? "打开任务列表" : "Open Tasks"}</Button>}
+      </OnboardingCue>}
+      {returningGuideBlock && <OnboardingCue anchor={returnDropAnchor} lang={lang}>
+        {returnToTasksButton
+          ? (lang === "zh" ? "放到任务按钮上，取消安排" : "Drop on the Tasks button to unschedule")
+          : (lang === "zh" ? "放回任务列表，取消安排" : "Drop in Tasks to unschedule")}
       </OnboardingCue>}
       {showGuide && tourStep && <OnboardingTour key={tourStep} step={tourStep} anchor={tourAnchor} waitingForTasks={tourWaitingForTasks}
         phone={mobileExecution} lang={lang} onClose={() => void saveSettings(ONBOARDING_DONE)}
@@ -10323,7 +10338,7 @@ if (cached?.data && cached?.settings) {
                                   }
                                   const isPreview = previewIdByClonedId.has(task.id);
                                   return (
-                                    <TimeBlock engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
+                                    <TimeBlock blockRef={returnGuideAnchorFor(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
                                       if (!suppressBlockClickRef.current) openTaskEdit(task);
                                     }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
                                       createProjectForTask(task.id, title);
@@ -10707,7 +10722,7 @@ if (cached?.data && cached?.settings) {
 
                           const isPreview = previewIdByClonedId.has(task.id);
                           return (
-                            <TimeBlock engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
+                            <TimeBlock blockRef={returnGuideAnchorFor(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
                               if (!suppressBlockClickRef.current) openTaskEdit(task);
                             }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
                               createProjectForTask(task.id, title);
@@ -10789,6 +10804,7 @@ if (cached?.data && cached?.settings) {
           lang={lang} count={visibleCandidates.filter((task) => !task.completed).length} triggerRef={candidateTriggerRef}
           title={mobilePlacement ? (placementPreviewTask?.title || (lang === "zh" ? "任务已移除" : "Task removed")) : undefined}
           time={mobilePlacement && placementPreview ? `${placementPreview.date} · ${placementPreview.startTime}–${placementPreview.endTime}` : undefined}
+          noSlot={mobilePlacement?.noSuggestedSlotDate === timelineWindowAnchorDate ? (timelineWindowAnchorDate === today ? "today" : "selected") : undefined}
           conflict={Boolean(mobilePlacement && placementPreview && getScheduledEventsForRange([addDays(placementPreview.date, -1), placementPreview.date, addDays(placementPreview.date, 1)]).some((item) => (!mobilePlacement.recordId || resolveTimelineRecordId(item.id) !== mobilePlacement.recordId) && item.scheduledStart && item.scheduledEnd && scheduledDateTimesOverlap(placementPreview.date, placementPreview.startTime, placementPreview.endTime, item.scheduledDate || placementPreview.date, item.scheduledStart, item.scheduledEnd)))}
           onOpen={() => {
             setCandidateDrawerExpanded(false);
