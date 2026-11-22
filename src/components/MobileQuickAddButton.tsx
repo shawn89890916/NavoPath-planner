@@ -1,5 +1,5 @@
 import type { Language } from "../types";
-import type { CSSProperties } from "react";
+import type { CSSProperties, RefObject } from "react";
 import { UiPlusIcon } from "./UiIcons";
 
 type Props = {
@@ -11,6 +11,7 @@ type Props = {
   aiOpen: boolean;
   lang: Language;
   style?: CSSProperties;
+  buttonRef?: RefObject<HTMLButtonElement | null>;
   onAdd: () => void;
 };
 
@@ -18,7 +19,7 @@ export function MobileQuickAddButton(props: Props) {
   if (!props.compactLayout || props.productPresentation || props.drawerOpen
     || props.notificationCenterOpen || props.utilityPanelOpen || props.aiOpen) return null;
   const label = props.lang === "zh" ? "快速添加任务" : "Quick add task";
-  return <button type="button" className="df-mobile-quick-add-fab" style={props.style} aria-label={label} title={label} onClick={props.onAdd}>
+  return <button ref={props.buttonRef} type="button" className="df-mobile-quick-add-fab" style={props.style} aria-label={label} title={label} onClick={props.onAdd}>
     <UiPlusIcon size={20} />
   </button>;
 }

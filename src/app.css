@@ -10507,11 +10507,91 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 @keyframes df-sync-spin {
   to { transform: rotate(360deg); }
 }
-.df-timeline-guidance {
-  flex: none;
-  padding-inline: 12px;
+.df-timeline-empty-note {
+  position: absolute;
+  inset: 50% 12px auto;
+  z-index: 2;
+  margin: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-muted);
+  font: 500 13px/1.4 var(--df-font-ui);
+  text-align: center;
 }
-.df-timeline-guidance:empty { display: none; }
+.df-workspace-guide-cue {
+  position: fixed;
+  z-index: 1003;
+  visibility: hidden;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: min(228px, calc(100vw - 20px));
+  color: var(--text-main);
+  background: var(--surface-main);
+  padding: 4px 4px 4px 8px;
+  border-radius: var(--radius-control, 4px);
+  font: 550 13px/1.5 var(--df-font-ui);
+  pointer-events: none;
+}
+.df-workspace-guide-cue::before,
+.df-workspace-guide-cue::after {
+  content: "";
+  position: absolute;
+  color: inherit;
+}
+.df-workspace-guide-cue[data-side="right"]::before {
+  width: 15px;
+  top: 50%;
+  right: 100%;
+  border-top: 1px solid currentColor;
+}
+.df-workspace-guide-cue[data-side="right"]::after {
+  width: 7px;
+  height: 7px;
+  right: calc(100% + 10px);
+  top: calc(50% - 4px);
+  border-bottom: 1px solid currentColor;
+  border-left: 1px solid currentColor;
+  transform: rotate(45deg);
+}
+.df-workspace-guide-cue:is([data-side="above"], [data-side="below"])::after {
+  left: calc(var(--guide-arrow-x) - 4px);
+  width: 8px;
+  height: 8px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+}
+.df-workspace-guide-cue[data-side="above"]::after {
+  top: calc(100% + 1px);
+  transform: rotate(45deg);
+}
+.df-workspace-guide-cue[data-side="below"]::after {
+  bottom: calc(100% + 1px);
+  transform: rotate(225deg);
+}
+.df-workspace-guide-copy {
+  min-width: 0;
+  align-self: center;
+}
+.df-workspace-guide-cue button { pointer-events: auto; }
+.df-workspace-guide-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.df-workspace-guide-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+}
 
 /* Browser comment fixes: planning rows, dark logo, and app-native dialogs. */
 .df-app.theme-dark .dayflow-icon img {

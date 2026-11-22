@@ -1,5 +1,17 @@
 # NavoPath 更新日志
 
+## 2026-11-22
+
+### 1.7.0 Beta 55
+
+#### 改进
+
+- 新手引导用箭头指向现有任务输入框，输入框轮换显示示例。空时间轴仅在中央显示一行提示。
+
+#### 修复
+
+- 添加第一条任务后，可直接拖到时间轴，或点击日历选择并确认时间。
+
 ## 2026-11-21
 
 ### 1.7.0 Beta 54
@@ -832,6 +844,18 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-22
+
+### 1.7.0 Beta 55
+
+#### Improved
+
+- An arrow points to the existing task input, which cycles through examples. An empty timeline shows a single centered message.
+
+#### Fixed
+
+- After adding your first task, drag it onto the timeline or use the calendar to choose and confirm a time.
 
 ## 2026-11-21
 

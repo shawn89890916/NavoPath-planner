@@ -3,8 +3,8 @@ import { Button } from "./UiPrimitives";
 import { UiChevronUpIcon } from "./UiIcons";
 import type { Language } from "../types";
 
-export default function MobileExecutionControls({ lang, count, title, time, conflict, onOpen, onCancel, onConfirm, triggerRef, hidden, drawerOpen, panelRef, scrollRef, onClose }: {
-  hidden: boolean; drawerOpen: boolean; panelRef: React.RefObject<HTMLElement | null>; scrollRef: React.RefObject<number>; onClose: () => void;
+export default function MobileExecutionControls({ lang, count, title, time, conflict, onOpen, onCancel, onConfirm, triggerRef, desktop, hidden, drawerOpen, panelRef, scrollRef, onClose }: {
+  desktop?: boolean; hidden: boolean; drawerOpen: boolean; panelRef: React.RefObject<HTMLElement | null>; scrollRef: React.RefObject<number>; onClose: () => void;
   lang: Language; count: number; title?: string; time?: string; conflict?: boolean;
   onOpen: () => void; onCancel: () => void; onConfirm: () => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
@@ -36,9 +36,9 @@ export default function MobileExecutionControls({ lang, count, title, time, conf
     return () => window.removeEventListener("keydown", key, true);
   }, [drawerOpen]);
   if (hidden) return null;
-  return <div className="df-mobile-execution-controls" data-placing={placing || undefined}>
+  return <div className="df-mobile-execution-controls" data-placing={placing || undefined} data-desktop={desktop || undefined}>
     {placing ? <section ref={placementRef} tabIndex={-1} className="df-mobile-placement" aria-label={zh ? "安排任务" : "Schedule task"}>
-      <div aria-live="polite"><strong>{title}</strong><span>{time || (zh ? "点选时间安排" : "Tap the timeline to choose a time")}</span>
+      <div aria-live="polite"><strong>{title}</strong><span>{time || (zh ? "点击时间轴选择时间" : "Tap the timeline to choose a time")}</span>
         {conflict && <span role="status">{zh ? "与已有日程重叠，仍可确认" : "Overlaps an existing event; you can still confirm"}</span>}</div>
       <div className="df-mobile-placement-actions"><Button onClick={onCancel}>{zh ? "取消" : "Cancel"}</Button>
         <Button variant="primary" disabled={!time} onClick={onConfirm}>{zh ? "确认安排" : "Confirm schedule"}</Button></div>

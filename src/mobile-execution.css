@@ -1,3 +1,30 @@
+.df-mobile-execution-controls[data-desktop] {
+  position: fixed;
+  z-index: 1001;
+  right: 92px;
+  bottom: 20px;
+  width: min(290px, calc(100vw - 112px));
+  font: 500 13px/1.4 var(--df-font-ui);
+}
+.df-mobile-execution-controls[data-desktop] .df-mobile-placement {
+  padding: 12px;
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--paper-radius, 4px);
+}
+.df-mobile-placement {
+  display: grid; gap: 8px; padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+  background: var(--surface-main); border-top: 1px solid var(--paper-rule); color: var(--text-main);
+  pointer-events: auto;
+}
+.df-mobile-placement strong,
+.df-mobile-placement span {
+  display: block; overflow-wrap: anywhere; font-size: 13px;
+}
+.df-mobile-placement strong { max-height: 40px; overflow: hidden; }
+.df-mobile-placement span { color: var(--text-muted); }
+.df-mobile-placement-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.df-mobile-placement-actions .ui-button { min-height: 44px; }
+
 @media (max-width: 899.98px) and (orientation: portrait) {
   #root .df-app[data-phone-execution] .df-compact-execute-controls {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -86,19 +113,6 @@
     position: fixed;
     bottom: 0; left: 0; right: 0;
   }
-  .df-mobile-placement {
-    display: grid; gap: 8px; padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
-    background: var(--surface-main); border-top: 1px solid var(--paper-rule); color: var(--text-main);
-    pointer-events: auto;
-  }
-  .df-mobile-placement strong,
-  .df-mobile-placement span {
-    display: block; overflow-wrap: anywhere; font-size: 13px;
-  }
-  .df-mobile-placement strong { max-height: 40px; overflow: hidden; }
-  .df-mobile-placement span { color: var(--text-muted); }
-  .df-mobile-placement-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .df-mobile-placement-actions .ui-button { min-height: 44px; }
   #root .df-app[data-phone-execution] .df-timeline-scroll { padding-bottom: 64px; scroll-padding-bottom: 64px; }
   #root .df-app[data-phone-execution][data-mobile-placing] .df-timeline-scroll { padding-bottom: 180px; scroll-padding-bottom: 180px; }
   #root .df-app[data-phone-execution] .df-candidate-mobile-schedule {

@@ -1,55 +1,97 @@
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import type { Language } from "../types";
-import { EmptyState } from "./EmptyState";
-import { Button, CloseButton } from "./UiPrimitives";
+import { UiCalendarClockIcon } from "./UiIcons";
+import { CloseButton } from "./UiPrimitives";
 
-export function OnboardingGuide({ lang, step, taskTitle, touch, onDraft, onSchedule, onSkip }: {
-  lang: Language;
-  step: "add" | "schedule";
-  taskTitle?: string;
-  touch: boolean;
-  onDraft: (title: string) => void;
-  onSchedule: () => void;
-  onSkip: () => void;
-}) {
-  const zh = lang === "zh";
-  if (step === "schedule") {
-    return (
-      <EmptyState announce title={zh ? "给这件事安排时间" : "Make time for this task"} description={touch
-        ? (zh ? "选择开始时间，你也可以长按任务拖到时间轴。" : "Choose a time, or press and hold to drag it onto the timeline.")
-        : (zh ? "选择开始时间，或把任务拖到时间轴。" : "Choose a time or drag the task onto the timeline.")}>
-        <Button variant="primary" onClick={onSchedule} aria-label={taskTitle ? (zh ? `安排「${taskTitle}」` : `Schedule “${taskTitle}”`) : undefined}>{zh ? "安排时间" : "Schedule time"}</Button>
-        <Button variant="ghost" onClick={onSkip}>{zh ? "跳过教程" : "Skip guide"}</Button>
-      </EmptyState>
-    );
-  }
-  const starters = zh ? ["整理桌面", "回复一条消息", "读两页书"] : ["Tidy my desk", "Reply to a message", "Read two pages"];
-  return (
-    <EmptyState title={zh ? "先写下一件小事" : "Start with one small task"} description={zh ? "选一个例子带入编辑框，改成你今天想做的事。" : "Pick an example and make it something you want to do today."}>
-      {starters.map((title) => <Button key={title} onClick={() => onDraft(title)}>{title}</Button>)}
-      <Button variant="primary" onClick={() => onDraft("")}>{zh ? "自己写一条" : "Write my own"}</Button>
-      <Button variant="ghost" onClick={onSkip}>{zh ? "跳过教程" : "Skip guide"}</Button>
-    </EmptyState>
-  );
+const examples = {
+  zh: ["例如：整理桌面", "例如：回复一条消息", "例如：读两页书"],
+  en: ["E.g. tidy my desk", "E.g. reply to a message", "E.g. read two pages"],
+};
+
+export function useTaskExample(active: boolean, lang: Language) {
+  const [example, setExample] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const timer = window.setInterval(() => {
+      if (!motion.matches) setExample((index) => (index + 1) % examples[lang].length);
+    }, 2600);
+    return () => window.clearInterval(timer);
+  }, [active, lang]);
+  return active ? examples[lang][example] : undefined;
 }
 
-export function OnboardingComplete({ lang, onViews, onPlugins, onMcp, onApi, onClose }: {
+export function OnboardingCue({ anchor, followRow, lang, onClose, children }: {
+  anchor: RefObject<HTMLElement | null>;
+  followRow?: boolean;
   lang: Language;
-  onViews: () => void;
-  onPlugins: () => void;
-  onMcp: () => void;
-  onApi: () => void;
   onClose: () => void;
+  children: ReactNode;
+}) {
+  const cueRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const cue = cueRef.current;
+    if (!cue) return;
+    const row = followRow ? anchor.current : null;
+    const scroller = row?.closest<HTMLElement>(".df-candidate-list");
+    if (row && scroller) {
+      const bounds = row.getBoundingClientRect();
+      const viewport = scroller.getBoundingClientRect();
+      if (bounds.bottom > viewport.bottom) scroller.scrollTop += bounds.bottom - viewport.bottom + 8;
+      else if (bounds.top < viewport.top) scroller.scrollTop += bounds.top - viewport.top - 8;
+    }
+
+    const update = () => {
+      const target = anchor.current;
+      const box = target?.getBoundingClientRect();
+      const clip = followRow ? target?.closest(".df-candidate-list")?.getBoundingClientRect() : undefined;
+      if (!box || !box.width || !box.height || box.bottom < 0 || box.top > window.innerHeight
+        || (clip && (box.bottom <= clip.top || box.top >= clip.bottom))) {
+        cue.style.visibility = "hidden";
+        return;
+      }
+      const side = window.innerWidth - box.right >= 248;
+      cue.dataset.side = side ? "right" : box.top > cue.offsetHeight + 24 ? "above" : "below";
+      const width = cue.offsetWidth;
+      const height = cue.offsetHeight;
+      const x = side ? box.right + 20 : Math.min(box.right - width, window.innerWidth - width - 10);
+      const y = side ? box.top + (box.height - height) / 2
+        : cue.dataset.side === "above" ? box.top - height - 15 : box.bottom + 15;
+      const left = Math.max(10, x);
+      cue.style.left = `${left}px`;
+      cue.style.top = `${Math.max(10, Math.min(y, window.innerHeight - height - 10))}px`;
+      cue.style.setProperty("--guide-arrow-x", `${Math.max(12, Math.min(box.left + box.width / 2 - left, width - 12))}px`);
+      cue.style.visibility = "visible";
+    };
+    const observer = new ResizeObserver(update);
+    if (anchor.current) observer.observe(anchor.current);
+    observer.observe(cue);
+    window.addEventListener("resize", update);
+    document.addEventListener("scroll", update, true);
+    update();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+      document.removeEventListener("scroll", update, true);
+    };
+  }, [anchor, followRow]);
+  return <div ref={cueRef} className="df-workspace-guide-cue">
+    <div className="df-workspace-guide-copy" aria-live="polite">{children}</div>
+    <CloseButton label={lang === "zh" ? "关闭教程提示" : "Dismiss guide"} onClick={onClose} />
+  </div>;
+}
+
+export function OnboardingScheduleHint({ lang, touch, onSchedule }: {
+  lang: Language;
+  touch: boolean;
+  onSchedule: () => void;
 }) {
   const zh = lang === "zh";
-  return (
-    <EmptyState announce title={zh ? "第一件事已排进时间轴" : "Your first task is on the timeline"} description={zh
-      ? "在「任务 ▾」切换视图。你也可以在设置里添加插件、连接 MCP 或配置 AI API。"
-      : "Switch views from Tasks ▾. In Settings, you can add plugins, connect MCP, or configure an AI API."}>
-      <Button onClick={onViews}>{zh ? "查看任务视图" : "Explore task views"}</Button>
-      <Button variant="text" onClick={onPlugins}>{zh ? "插件" : "Plugins"}</Button>
-      <Button variant="text" onClick={onMcp}>MCP</Button>
-      <Button variant="text" onClick={onApi}>AI API</Button>
-      <CloseButton label={zh ? "关闭教程提示" : "Dismiss guide"} onClick={onClose} />
-    </EmptyState>
-  );
+  return <>
+    {zh ? (touch ? "长按任务拖到时间轴，或" : "把任务拖到时间轴，或")
+      : (touch ? "Long-press to drag it onto the timeline, or " : "Drag the task onto the timeline, or ")}
+    <button type="button" className="df-workspace-guide-action" onClick={onSchedule}>
+      <UiCalendarClockIcon size={14} />{zh ? "点日历安排" : "use the calendar"}
+    </button>
+  </>;
 }
