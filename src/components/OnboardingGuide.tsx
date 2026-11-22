@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import type { Language } from "../types";
 import type { OnboardingTourStep } from "../onboarding";
 import { Button, CloseButton } from "./UiPrimitives";
@@ -87,8 +87,9 @@ export function useTaskExample(active: boolean, lang: Language, fieldRef?: RefOb
   }, [active, fieldRef, lang]);
 }
 
-export function OnboardingCue({ anchor, followRow, followTimeline, lang, onClose, children }: {
+export function OnboardingCue({ anchor, targetSelector, followRow, followTimeline, lang, onClose, children }: {
   anchor?: RefObject<HTMLElement | null>;
+  targetSelector?: string;
   followRow?: boolean;
   followTimeline?: boolean;
   lang: Language;
@@ -99,6 +100,9 @@ export function OnboardingCue({ anchor, followRow, followTimeline, lang, onClose
   useLayoutEffect(() => {
     const cue = cueRef.current;
     if (!cue || !anchor) return;
+    const scope = targetSelector ? anchor.current : null;
+    const findTarget = () => targetSelector ? scope?.querySelector<HTMLElement>(targetSelector) : anchor.current;
+    const settingsHeader = scope?.closest(".df-utility-panel")?.querySelector(".df-utility-head");
     let panel: HTMLElement | null | undefined;
     const revealRow = () => {
       const target = followRow ? anchor.current : null;
@@ -112,9 +116,10 @@ export function OnboardingCue({ anchor, followRow, followTimeline, lang, onClose
     };
 
     const update = () => {
-      const target = anchor.current;
+      const target = findTarget();
       const box = target?.getBoundingClientRect();
-      const clip = target?.closest(followTimeline ? ".df-timeline-scroll" : ".df-candidate-list")?.getBoundingClientRect();
+      const clip = scope?.getBoundingClientRect()
+        ?? target?.closest(followTimeline ? ".df-timeline-scroll" : ".df-candidate-list")?.getBoundingClientRect();
       const visibleTop = box ? Math.max(0, box.top, clip?.top ?? 0) : 0;
       const visibleBottom = box ? Math.min(window.innerHeight, box.bottom, clip?.bottom ?? window.innerHeight) : 0;
       const centered = !box || !box.width || visibleBottom <= visibleTop || box.right <= 0 || box.left >= window.innerWidth;
@@ -129,18 +134,25 @@ export function OnboardingCue({ anchor, followRow, followTimeline, lang, onClose
         return;
       }
       delete cue.dataset.centered;
-      const side = window.innerWidth >= 540 && window.innerWidth - box.right >= 248;
-      const drawerTop = panel?.classList.contains("is-mobile-candidates") ? panel.getBoundingClientRect().top : undefined;
-      const topEdge = drawerTop !== undefined && drawerTop > cue.offsetHeight + 24 ? drawerTop : visibleTop;
-      cue.dataset.side = side ? "right" : topEdge > cue.offsetHeight + 24 ? "above" : "below";
       const width = cue.offsetWidth;
       const height = cue.offsetHeight;
-      const x = side ? box.right + 20 : Math.min(box.left + (box.width - width) / 2, window.innerWidth - width - 10);
+      const minTop = scope ? Math.max(10, (settingsHeader?.getBoundingClientRect().bottom ?? clip?.top ?? 6) + 4) : 10;
+      const maxBottom = scope && clip ? Math.min(window.innerHeight - 10, clip.bottom - 4) : window.innerHeight - 10;
+      const drawerTop = panel?.classList.contains("is-mobile-candidates") ? panel.getBoundingClientRect().top : undefined;
+      const topEdge = drawerTop !== undefined && drawerTop > height + 24 ? drawerTop : visibleTop;
+      const canPlaceAbove = topEdge - minTop >= height + 15;
+      const canPlaceBelow = maxBottom - visibleBottom >= height + 15;
+      const side = window.innerWidth >= 540 && !scope && window.innerWidth - box.right >= 248 ? "right"
+        : scope && clip && window.innerWidth >= 540 && box.left - clip.left >= width + 20 ? "left"
+        : canPlaceAbove || (scope && !canPlaceBelow && topEdge - minTop > maxBottom - visibleBottom) ? "above" : "below";
+      cue.dataset.side = side;
+      const x = side === "right" ? box.right + 20 : side === "left" ? box.left - width - 20
+        : Math.min(box.left + (box.width - width) / 2, window.innerWidth - width - 10);
       const midY = (visibleTop + visibleBottom) / 2;
-      const y = side ? midY - height / 2
-        : cue.dataset.side === "above" ? topEdge - height - 15 : visibleBottom + 15;
+      const y = side === "right" || side === "left" ? midY - height / 2
+        : side === "above" ? topEdge - height - 15 : visibleBottom + 15;
       const left = Math.max(10, x);
-      const top = Math.max(10, Math.min(y, window.innerHeight - height - 10));
+      const top = Math.max(minTop, Math.min(y, maxBottom - height));
       cue.style.left = `${left}px`;
       cue.style.top = `${top}px`;
       cue.style.setProperty("--guide-arrow-y", `${Math.max(10, Math.min(midY - top, height - 10))}px`);
@@ -149,6 +161,20 @@ export function OnboardingCue({ anchor, followRow, followTimeline, lang, onClose
     };
     const observer = new ResizeObserver(update);
     observer.observe(cue);
+    let observedTarget: HTMLElement | null | undefined;
+    const observeTarget = () => {
+      const target = findTarget();
+      if (observedTarget === target) return;
+      if (observedTarget) observer.unobserve(observedTarget);
+      if (target) observer.observe(target);
+      observedTarget = target;
+      update();
+    };
+    const lazyContent = scope ? new MutationObserver(observeTarget) : null;
+    if (scope) {
+      observer.observe(scope);
+      lazyContent?.observe(scope, { childList: true, subtree: true });
+    }
     let openingDrawer = false;
     const afterDrawerTransition = (event: TransitionEvent) => {
       if (event.target !== panel) return;
@@ -160,8 +186,8 @@ export function OnboardingCue({ anchor, followRow, followTimeline, lang, onClose
     };
     revealRow();
     const afterInitialScroll = window.requestAnimationFrame(() => {
-      const target = anchor.current;
-      if (target) observer.observe(target);
+      observeTarget();
+      const target = findTarget();
       const timeline = followTimeline ? target?.closest(".df-timeline-scroll") : null;
       if (timeline) observer.observe(timeline);
       panel = target?.closest<HTMLElement>(".df-candidate-panel");
@@ -177,6 +203,7 @@ export function OnboardingCue({ anchor, followRow, followTimeline, lang, onClose
     document.addEventListener("scroll", update, true);
     update();
     return () => {
+      lazyContent?.disconnect();
       observer.disconnect();
       cue.style.removeProperty("left");
       cue.style.removeProperty("top");
@@ -190,7 +217,7 @@ export function OnboardingCue({ anchor, followRow, followTimeline, lang, onClose
       window.removeEventListener("resize", update);
       document.removeEventListener("scroll", update, true);
     };
-  }, [anchor, followRow, followTimeline]);
+  }, [anchor, targetSelector, followRow, followTimeline]);
   return <div ref={cueRef} className="df-workspace-guide-cue" data-centered={!anchor || undefined}>
     <div className="df-workspace-guide-copy" aria-live="polite">{children}</div>
     {onClose && <CloseButton label={lang === "zh" ? "关闭教程提示" : "Dismiss guide"} onClick={onClose} />}
@@ -240,21 +267,46 @@ export function OnboardingTour({ step, anchor, waitingForTasks, phone, lang, onN
 
 export type OnboardingSettingsTopic = "plugins" | "ai" | "mcp";
 
-export function OnboardingSettingsHint({ topic, lang, onContinue }: {
+const settingsGuideTargets: Record<OnboardingSettingsTopic, string> = {
+  plugins: '[data-settings-anchor="plugin-market"] button',
+  ai: '[data-settings-anchor="ai-provider"] select',
+  mcp: ".df-mcp-create-row input, .df-mcp-settings:not(:has(.df-mcp-create-row)) .df-mcp-guide-link",
+};
+
+export function OnboardingSettingsHint({ topic, contentRef, lang, onContinue }: {
   topic: OnboardingSettingsTopic;
+  contentRef: RefObject<HTMLElement | null>;
   lang: Language;
   onContinue: () => void;
 }) {
   const zh = lang === "zh";
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    const content = contentRef.current;
+    if (dismissed || !content) return;
+    const dismissOnInteraction = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest("button, a, input, select, textarea, summary")) {
+        setDismissed(true);
+      }
+    };
+    content.addEventListener("click", dismissOnInteraction);
+    content.addEventListener("input", dismissOnInteraction);
+    return () => {
+      content.removeEventListener("click", dismissOnInteraction);
+      content.removeEventListener("input", dismissOnInteraction);
+    };
+  }, [contentRef, dismissed]);
   const instructions: Record<OnboardingSettingsTopic, string> = {
-    plugins: zh ? "选一个视图插件，安装并启用后，它就会出现在任务视图菜单里。"
-      : "Install and enable a view plugin to add it to the Tasks view menu.",
-    ai: zh ? "选择 AI 提供商，填写 API 密钥并保存。" : "Choose an AI provider, enter your API key, and save.",
+    plugins: zh ? "在市场里选择要添加的任务视图。" : "Browse the market for task views.",
+    ai: zh ? "选择提供商，再填写 API 密钥。" : "Choose a provider and enter your API key.",
     mcp: zh ? "创建令牌，再按此页的连接方式把 NavoPath 添加到 MCP 客户端。"
       : "Create a token and follow this page’s steps to add NavoPath to your MCP client.",
   };
-  return <section className="df-onboarding-settings-hint" aria-label={zh ? "新手引导" : "Getting started"}>
-    <span>{instructions[topic]}</span>
-    <Button variant="text" onClick={onContinue}>{zh ? "继续引导" : "Continue guide"}</Button>
-  </section>;
+  if (dismissed) return null;
+  return <OnboardingCue anchor={contentRef} targetSelector={settingsGuideTargets[topic]} lang={lang} onClose={() => setDismissed(true)}>
+    <div>{instructions[topic]}</div>
+    <div className="df-workspace-guide-actions">
+      <Button variant="text" className="df-workspace-guide-action" onClick={onContinue}>{zh ? "继续引导" : "Continue guide"}</Button>
+    </div>
+  </OnboardingCue>;
 }

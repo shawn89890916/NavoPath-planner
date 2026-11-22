@@ -9,6 +9,21 @@
   min-height: 0;
   overflow: visible;
 }
+#root .df-app .df-planning .df-category-branch:has(> .df-project-tasks > .df-tree-empty-hint) {
+  margin-block-end: 0;
+}
+#root .df-app .df-planning .df-project-tasks:has(> .df-tree-empty-hint) {
+  min-block-size: 64px;
+  margin-block: 0;
+  justify-content: center;
+}
+.df-tree-empty-hint {
+  margin: 0;
+  padding: 12px;
+  color: var(--text-muted);
+  font: 400 12px/1.45 var(--df-font-ui);
+  overflow-wrap: anywhere;
+}
 .df-app.theme-dark .df-tree-wrap {
   display: flex;
   flex-direction: column;

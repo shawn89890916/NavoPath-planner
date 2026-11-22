@@ -10567,19 +10567,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   color: var(--text-main);
   font: 600 13px/1.4 var(--df-font-ui);
 }
-.df-onboarding-settings-hint {
-  display: flex;
-  flex: 0 0 auto;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px 12px;
-  margin: 8px 14px;
-  padding: 6px 10px;
-  border: 1px solid var(--paper-rule-strong, var(--border-default));
-  border-radius: var(--radius-control, 4px);
-  font: 500 13px/1.45 var(--df-font-ui);
-}
 .df-workspace-guide-actions {
   display: flex;
   flex-wrap: wrap;
@@ -10607,6 +10594,21 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   top: calc(var(--guide-arrow-y) - 4px);
   border-bottom: 1px solid currentColor;
   border-left: 1px solid currentColor;
+  transform: rotate(45deg);
+}
+.df-workspace-guide-cue[data-side="left"]::before {
+  width: 15px;
+  top: var(--guide-arrow-y);
+  left: 100%;
+  border-top: 1px solid currentColor;
+}
+.df-workspace-guide-cue[data-side="left"]::after {
+  width: 7px;
+  height: 7px;
+  left: calc(100% + 10px);
+  top: calc(var(--guide-arrow-y) - 4px);
+  border-top: 1px solid currentColor;
+  border-right: 1px solid currentColor;
   transform: rotate(45deg);
 }
 .df-workspace-guide-cue:is([data-side="above"], [data-side="below"])::after {

@@ -2,6 +2,13 @@
 
 ## 2026-11-22
 
+### 1.7.0 Beta 61
+
+#### 改进
+
+- Tree 的空项目提示改为较小的灰字，在项目之间的留白中上下居中。
+- 插件、AI 和 MCP 设置引导使用贴近控件的浮层，保持设置页原有布局。
+
 ### 1.7.0 Beta 60
 
 #### 修复
@@ -883,6 +890,13 @@
 # NavoPath Changelog
 
 ## 2026-11-22
+
+### 1.7.0 Beta 61
+
+#### Improved
+
+- Empty projects in Tree use smaller, muted text centered vertically between project rows.
+- Plugin, AI, and MCP setup guidance appears next to the relevant controls without shifting the settings layout.
 
 ### 1.7.0 Beta 60
 

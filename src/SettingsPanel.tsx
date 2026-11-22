@@ -741,10 +741,6 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
           </div>
           <CloseButton ref={closeButtonRef} label={t(lang, "settings.close")} onClick={onClose} />
         </div>
-        {onboardingSettings && (onboardingSettings === "plugins" ? settingsTarget.category === "plugins"
-          : onboardingSettings === "ai" ? settingsTarget.category === "ai"
-          : settingsTarget.category === "integrations" && integrationTab === "mcp") &&
-          <OnboardingSettingsHint topic={onboardingSettings} lang={lang} onContinue={onClose} />}
         {kind === "settings" ? (
           <div className={`df-utility-body df-settings-shell${settingsHome ? "" : " df-settings-detail-shell"}`}>
             {settingsHome ? (
@@ -1361,6 +1357,10 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
           </div>
         )}
       </aside>
+      {!settingsHome && onboardingSettings && (onboardingSettings === "plugins" ? settingsTarget.category === "plugins" && !selectedPluginPage
+        : onboardingSettings === "ai" ? settingsTarget.category === "ai"
+        : settingsTarget.category === "integrations" && integrationTab === "mcp") &&
+        <OnboardingSettingsHint topic={onboardingSettings} contentRef={settingsContentRef} lang={lang} onContinue={onClose} />}
       {confirmResetSettings && createPortal(
         <div className="df-dialog-overlay" role="presentation" onMouseDown={() => setConfirmResetSettings(false)}>
           <section className="df-dialog" role="dialog" aria-modal="true" aria-labelledby="df-reset-settings-title" onMouseDown={(event) => event.stopPropagation()}>

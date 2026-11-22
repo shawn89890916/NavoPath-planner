@@ -2430,7 +2430,7 @@ export default function PlanningView(props: {
                   {!props.collapsed[project.id] && (
                     <div className="df-project-tasks" data-empty-project-drop={tasks.length === 0 ? project.id : undefined}>
                       {!props.demo && tasks.length === 0 && activeFilterChips.length === 0 && !dragNode && (
-                        <EmptyState compact title={zh ? "点上方的「+」添加待办任务" : 'Click "+" above to add a new open task'} />
+                        <p className="df-tree-empty-hint">{zh ? "点上方的「+」添加待办任务" : 'Click "+" above to add a new open task'}</p>
                       )}
                       {tasks.map((task) => (
                         <div className="df-task-branch" key={task.id}>
