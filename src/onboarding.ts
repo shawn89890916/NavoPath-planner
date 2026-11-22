@@ -1,5 +1,9 @@
 import type { Settings, Task, TimelineRecord } from "./types";
 
+export const WORKSPACE_GUIDE_STEPS = ["setup", "add", "schedule", "return", "plan", "views", "plugins", "integrations", "start", "done"] as const;
+export type WorkspaceGuideStep = (typeof WORKSPACE_GUIDE_STEPS)[number];
+export type OnboardingTourStep = Exclude<WorkspaceGuideStep, "setup" | "add" | "schedule" | "done">;
+
 export const ONBOARDING_START = { workspaceGuideStep: "setup", workspaceGuideTaskId: "" } as const;
 export const ONBOARDING_ADD = { workspaceGuideStep: "add", workspaceGuideTaskId: "" } as const;
 export const ONBOARDING_DONE = { workspaceGuideStep: "done", workspaceGuideTaskId: "" } as const;
@@ -8,14 +12,15 @@ export function onboardingStage(settings?: Settings | null) {
   return settings?.workspaceGuideStep ?? "done";
 }
 
-export function onboardingBlock(task?: Task): Pick<TimelineRecord, "id" | "scheduledDate" | "scheduledStart"> | undefined {
+export function onboardingBlock(task?: Task, includeCompleted = true): Pick<TimelineRecord, "id" | "scheduledDate" | "scheduledStart"> | undefined {
   if (!task) return;
   const records = task.timelineRecords ?? [];
-  const record = records.find((item) => item.scheduledDate && item.scheduledStart && item.scheduledEnd
-    && (item.executionStatus === "scheduled" || item.executionStatus === "completed"));
+  const timed = records.filter((item) => item.scheduledDate && item.scheduledStart && item.scheduledEnd);
+  const record = timed.find((item) => item.executionStatus === "scheduled")
+    ?? (includeCompleted ? timed.find((item) => item.executionStatus === "completed") : undefined);
   if (record) return record;
   if (records.length === 0 && task.scheduledDate && task.scheduledStart && task.scheduledEnd
-    && (!task.executionStatus || task.executionStatus === "scheduled" || task.executionStatus === "completed")) {
+    && (!task.executionStatus || task.executionStatus === "scheduled" || (includeCompleted && task.executionStatus === "completed"))) {
     return { id: task.id, scheduledDate: task.scheduledDate, scheduledStart: task.scheduledStart };
   }
 }

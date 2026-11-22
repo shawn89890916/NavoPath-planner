@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getDefaultSettings, normalizeSettings } from "./defaultSettings";
-import { onboardingBlock, onboardingStage, onboardingTarget, ONBOARDING_DONE, ONBOARDING_START } from "./onboarding";
+import { onboardingBlock, onboardingStage, onboardingTarget, ONBOARDING_DONE, ONBOARDING_START, WORKSPACE_GUIDE_STEPS } from "./onboarding";
 import type { Task, TimelineRecord } from "./types";
 
 const task: Task = {
@@ -21,6 +21,15 @@ describe("workspace onboarding", () => {
     expect(onboardingStage({ ...defaults, ...ONBOARDING_START })).toBe("setup");
     expect(onboardingStage({ ...defaults, workspaceGuideStep: "add" })).toBe("add");
     expect(onboardingStage({ ...defaults, ...ONBOARDING_DONE })).toBe("done");
+  });
+
+  it.each(WORKSPACE_GUIDE_STEPS)("preserves the %s step in saved settings", (step) => {
+    expect(onboardingStage(normalizeSettings({ workspaceGuideStep: step }))).toBe(step);
+  });
+
+  it("prefers the current scheduled block over completed history", () => {
+    const completed = { ...block, id: "completed", executionStatus: "completed" as const };
+    expect(onboardingBlock({ ...task, timelineRecords: [completed, block] })).toEqual(block);
   });
 
   it("discards retired tutorial state without resuming it", () => {

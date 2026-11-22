@@ -1,6 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 import type { Language } from "../types";
-import { CloseButton } from "./UiPrimitives";
+import type { OnboardingTourStep } from "../onboarding";
+import { Button, CloseButton } from "./UiPrimitives";
 
 const examples = {
   zh: ["例如：整理桌面", "例如：回复一条消息", "例如：读两页书"],
@@ -67,10 +68,9 @@ export function useTaskExample(active: boolean, lang: Language, fieldRef?: RefOb
   }, [active, fieldRef, lang]);
 }
 
-export function OnboardingCue({ anchor, followRow, outlined, lang, onClose, children }: {
-  anchor: RefObject<HTMLElement | null>;
+export function OnboardingCue({ anchor, followRow, lang, onClose, children }: {
+  anchor?: RefObject<HTMLElement | null>;
   followRow?: boolean;
-  outlined?: boolean;
   lang: Language;
   onClose: () => void;
   children: ReactNode;
@@ -78,11 +78,12 @@ export function OnboardingCue({ anchor, followRow, outlined, lang, onClose, chil
   const cueRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const cue = cueRef.current;
-    if (!cue) return;
-    const row = followRow ? anchor.current : null;
-    const panel = anchor.current?.closest<HTMLElement>(".df-candidate-panel");
-    const scroller = row?.closest<HTMLElement>(".df-candidate-list");
+    if (!cue || !anchor) return;
+    let panel: HTMLElement | null | undefined;
     const revealRow = () => {
+      const target = followRow ? anchor.current : null;
+      const row = target?.closest<HTMLElement>(".df-candidate-task-row") ?? target;
+      const scroller = row?.closest<HTMLElement>(".df-candidate-list");
       if (!row || !scroller) return;
       const bounds = row.getBoundingClientRect();
       const viewport = scroller.getBoundingClientRect();
@@ -115,10 +116,8 @@ export function OnboardingCue({ anchor, followRow, outlined, lang, onClose, chil
       cue.style.visibility = "visible";
     };
     const observer = new ResizeObserver(update);
-    if (anchor.current) observer.observe(anchor.current);
     observer.observe(cue);
-    if (panel) observer.observe(panel);
-    let openingDrawer = Boolean(row && panel?.classList.contains("is-mobile-candidates"));
+    let openingDrawer = false;
     const afterDrawerTransition = (event: TransitionEvent) => {
       if (event.target !== panel) return;
       if (openingDrawer && event.propertyName === "transform") {
@@ -127,22 +126,71 @@ export function OnboardingCue({ anchor, followRow, outlined, lang, onClose, chil
       }
       update();
     };
-    panel?.addEventListener("transitionend", afterDrawerTransition);
     revealRow();
-    const afterInitialScroll = window.requestAnimationFrame(() => { revealRow(); update(); });
+    const afterInitialScroll = window.requestAnimationFrame(() => {
+      const target = anchor.current;
+      if (target) observer.observe(target);
+      panel = target?.closest<HTMLElement>(".df-candidate-panel");
+      if (panel) {
+        openingDrawer = Boolean(followRow && panel.classList.contains("is-mobile-candidates"));
+        observer.observe(panel);
+        panel.addEventListener("transitionend", afterDrawerTransition);
+      }
+      revealRow();
+      update();
+    });
     window.addEventListener("resize", update);
     document.addEventListener("scroll", update, true);
     update();
     return () => {
       observer.disconnect();
+      cue.style.removeProperty("left");
+      cue.style.removeProperty("top");
+      cue.style.removeProperty("visibility");
+      cue.style.removeProperty("--guide-arrow-x");
+      delete cue.dataset.side;
       window.cancelAnimationFrame(afterInitialScroll);
       panel?.removeEventListener("transitionend", afterDrawerTransition);
       window.removeEventListener("resize", update);
       document.removeEventListener("scroll", update, true);
     };
   }, [anchor, followRow]);
-  return <div ref={cueRef} className="df-workspace-guide-cue" data-outlined={outlined || undefined}>
+  return <div ref={cueRef} className="df-workspace-guide-cue" data-centered={!anchor || undefined}>
     <div className="df-workspace-guide-copy" aria-live="polite">{children}</div>
     <CloseButton label={lang === "zh" ? "关闭教程提示" : "Dismiss guide"} onClick={onClose} />
   </div>;
+}
+
+export function OnboardingTour({ step, anchor, waitingForTasks, phone, lang, onNext, onSettings, onClose }: {
+  step: OnboardingTourStep;
+  anchor?: RefObject<HTMLElement | null>;
+  waitingForTasks: boolean;
+  phone: boolean;
+  lang: Language;
+  onNext: () => void;
+  onSettings: () => void;
+  onClose: () => void;
+}) {
+  const zh = lang === "zh";
+  const instructions: Record<OnboardingTourStep, string> = {
+    return: zh ? "第一条任务已经排进时间轴。我们先回到任务列表。" : "Your first task is on the timeline. Let’s go back to Tasks.",
+    plan: zh ? (phone ? "你也可以点「安排」按钮来选时间。" : "你也可以点任务旁的日历按钮来选时间。")
+      : (phone ? "You can also tap Plan to pick a time." : "You can also use the task’s calendar button to pick a time."),
+    views: zh ? "在这里切换视图，用不同方式查看你的任务。" : "Switch views here to see your tasks in different ways.",
+    plugins: zh ? "在「设置 → 插件」里可以添加更多任务视图。" : "Add more task views in Settings → Plugins.",
+    integrations: zh ? "在设置里配置你的 AI，或连接 MCP。" : "Set up your AI or connect MCP in Settings.",
+    start: zh ? "开始规划你的一天吧！" : "Start planning your day!",
+  };
+  const nextLabel = step === "return" || waitingForTasks ? (zh ? "回到任务" : "Back to Tasks")
+    : step === "integrations" ? (zh ? "稍后" : "Later")
+    : step === "start" ? (zh ? "开始规划" : "Start planning")
+    : (zh ? "下一步" : "Next");
+
+  return <OnboardingCue anchor={anchor} followRow={step === "plan" && !waitingForTasks} lang={lang} onClose={onClose}>
+    {(!waitingForTasks || step === "return") && <div>{instructions[step]}</div>}
+    <div className="df-workspace-guide-actions">
+      {step === "integrations" && <Button variant="text" className="df-workspace-guide-action" onClick={onSettings}>{zh ? "设置" : "Settings"}</Button>}
+      <Button variant="text" className="df-workspace-guide-action" onClick={onNext}>{nextLabel}</Button>
+    </div>
+  </OnboardingCue>;
 }

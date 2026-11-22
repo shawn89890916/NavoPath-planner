@@ -1,3 +1,4 @@
+import { WORKSPACE_GUIDE_STEPS } from "./onboarding";
 import { isSafePluginConfigKey, normalizePluginMcpAccess } from "../shared/pluginMcp";
 import type { Settings } from "./types";
 import { DEFAULT_WIDGET_APPEARANCE, normalizeWidgetAppearance } from "./widget/widgetPreferences";
@@ -311,7 +312,7 @@ export function normalizeSettings(value: unknown): Settings {
   normalized.reasoningMode = allowedValue(normalized.reasoningMode, ["instant", "high", "xhigh"], defaults.reasoningMode);
   const legacySafetyLevel = normalized.aiSafetyLevel === "strict" ? "ask" : normalized.aiSafetyLevel === "standard" || normalized.aiSafetyLevel === "readonly" ? "approve" : normalized.aiSafetyLevel;
   normalized.aiSafetyLevel = allowedValue(legacySafetyLevel, ["ask", "approve", "full"], defaults.aiSafetyLevel);
-  normalized.workspaceGuideStep = allowedValue(normalized.workspaceGuideStep, ["setup", "add", "schedule", "done"], defaults.workspaceGuideStep!);
+  normalized.workspaceGuideStep = allowedValue(normalized.workspaceGuideStep, WORKSPACE_GUIDE_STEPS, defaults.workspaceGuideStep!);
   normalized.weekStartsOn = allowedValue(normalized.weekStartsOn, [0, 1], defaults.weekStartsOn);
   normalized.theme = allowedValue(normalized.theme, ["light", "dark"], defaults.theme);
   normalized.typographyStyle = allowedValue(normalized.typographyStyle, ["editorial", "balanced", "sans"], defaults.typographyStyle);

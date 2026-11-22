@@ -33,8 +33,7 @@
     touch-action: none;
   }
   #root .df-app .df-mobile-summary-head input{min-width:0!important;height:40px!important;padding:0 2px!important;border:0!important;border-bottom:1px solid transparent!important;border-radius:0!important;background:transparent!important;color:var(--text-main)!important;font:750 17px/1.25 var(--paper-sans)!important;box-shadow:none!important}
-  #root .df-app .df-mobile-summary-head input:focus{border-bottom-color:var(--accent-active)!important}
-  #root .df-app .df-mobile-summary-head input:focus:not([data-task-example]){outline:0!important}
+  #root .df-app .df-mobile-summary-head input:focus{border-bottom-color:var(--accent-active)!important;outline:0!important}
   #root .df-app .df-mobile-short-sheet-kind-wrap{display:block!important;width:max-content!important;margin:0 0 2px!important}
   #root .df-app .df-mobile-short-sheet-kind{min-height:36px!important;padding:0 26px 0 4px!important;border:0!important;background-color:transparent!important;color:var(--text-main)!important;font:750 13px/1 var(--paper-sans)!important}
   #root .df-app .df-mobile-short-sheet .df-mobile-expand,

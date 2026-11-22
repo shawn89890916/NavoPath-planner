@@ -10527,24 +10527,26 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   max-width: min(228px, calc(100vw - 20px));
   color: var(--text-main);
   background: var(--surface-main);
+  border: 1px solid var(--paper-rule-strong, var(--border-default));
   padding: 4px 4px 4px 8px;
   border-radius: var(--radius-control, 4px);
   font: 550 13px/1.5 var(--df-font-ui);
   pointer-events: none;
 }
-.df-workspace-guide-cue[data-outlined] {
-  border: 1px solid var(--paper-rule-strong, var(--border-default));
+.df-workspace-guide-cue[data-centered] {
+  top: 50%;
+  left: 50%;
+  width: max-content;
+  transform: translate(-50%, -50%);
+  visibility: visible;
 }
-#root .df-app input[data-task-example]:placeholder-shown {
-  outline: 1px solid var(--paper-rule-strong, var(--border-default));
-  outline-offset: 2px;
+.df-workspace-guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 #root .df-app input[data-task-example="typing"]:placeholder-shown {
   caret-color: transparent;
-}
-.df-candidate-task-row[data-guide-target] > .df-task-card {
-  outline: 2px solid var(--accent-active);
-  outline-offset: -2px;
 }
 .df-workspace-guide-cue::before,
 .df-workspace-guide-cue::after {

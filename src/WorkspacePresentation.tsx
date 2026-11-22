@@ -422,6 +422,7 @@ export function TaskCard({
   onPointerDragStart,
   onMobileSchedule,
   onGuidedSchedule,
+  scheduleButtonRef,
   onStartPlacementPreview,
   onCancelPlacementPreview,
   onConfirmPlacementPreview,
@@ -455,6 +456,7 @@ export function TaskCard({
   onPointerDragStart: (event: React.PointerEvent) => void;
   onMobileSchedule?: () => void;
   onGuidedSchedule?: () => void;
+  scheduleButtonRef?: React.Ref<HTMLButtonElement>;
   onStartPlacementPreview: () => void;
   onCancelPlacementPreview: () => void;
   onConfirmPlacementPreview: () => void;
@@ -690,8 +692,12 @@ export function TaskCard({
           </TaskBlockDuration>}
 
           {!isEvent && <TaskActions>
-            {!scheduleSummary && !isOverdueCandidate && <div className="df-candidate-schedule-actions" onMouseLeave={() => { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); } }}>
-              <>{onMobileSchedule ? <Button className="df-candidate-mobile-schedule" onClick={(event) => { event.stopPropagation(); onMobileSchedule(); }}>{lang === "zh" ? "安排" : "Plan"}</Button> : <IconButton className={`df-icon-button icon-schedule${schedulePanelOpen ? " is-active" : ""}`} icon={<UiCalendarClockIcon size={18} />} label={t(lang, "taskCard.openScheduling")} aria-expanded={schedulePanelOpen} onMouseEnter={queuePlacementPreview} onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) previewPlacement(); }} onClick={toggleSchedulePanel} />}</>
+            {((!scheduleSummary && !isOverdueCandidate) || scheduleButtonRef) && <div className="df-candidate-schedule-actions" onMouseLeave={() => { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelQueuedPlacementPreview(); if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview(); } }}>
+              <>{onMobileSchedule ? <Button ref={scheduleButtonRef} className="df-candidate-mobile-schedule" onClick={(event) => {
+                event.stopPropagation();
+                if (onGuidedSchedule && scheduleButtonRef) onGuidedSchedule();
+                else onMobileSchedule();
+              }}>{lang === "zh" ? "安排" : "Plan"}</Button> : <IconButton ref={scheduleButtonRef} className={`df-icon-button icon-schedule${schedulePanelOpen ? " is-active" : ""}`} icon={<UiCalendarClockIcon size={18} />} label={t(lang, "taskCard.openScheduling")} aria-expanded={schedulePanelOpen} onMouseEnter={queuePlacementPreview} onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) previewPlacement(); }} onClick={toggleSchedulePanel} />}</>
               {renderPlacementLocateAction()}
             </div>}
             {isOverdueCandidate && !scheduleSummary && isPlacementArmed && <div className="df-candidate-schedule-actions" onBlur={(event) => {

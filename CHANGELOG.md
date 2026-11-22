@@ -2,6 +2,13 @@
 
 ## 2026-11-22
 
+### 1.7.0 Beta 58
+
+#### 改进
+
+- 排入第一条任务后，引导返回任务列表，依次介绍安排按钮、任务视图、插件和 AI／MCP 设置，最后回到时间轴。
+- 描边只用于引导提示框。
+
 ### 1.7.0 Beta 57
 
 #### 改进
@@ -857,6 +864,13 @@
 # NavoPath Changelog
 
 ## 2026-11-22
+
+### 1.7.0 Beta 58
+
+#### Improved
+
+- After scheduling the first task, the guide returns to Tasks and introduces Plan, task views, plugins, and AI and MCP settings before returning to the timeline.
+- The guide outline surrounds the instruction bubble.
 
 ### 1.7.0 Beta 57
 

@@ -70,8 +70,8 @@ import { ProductStorySlot } from "./ProductStory";
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, TimelineCanvas } from "./components/ExecutionSharedLayout";
 
 import { EmptyState } from "./components/EmptyState";
-import { OnboardingCue, useTaskExample } from "./components/OnboardingGuide";
-import { isOnboardingTask, onboardingBlock, onboardingStage, onboardingTarget, ONBOARDING_ADD, ONBOARDING_DONE, ONBOARDING_START } from "./onboarding";
+import { OnboardingCue, OnboardingTour, useTaskExample } from "./components/OnboardingGuide";
+import { isOnboardingTask, onboardingBlock, onboardingStage, onboardingTarget, ONBOARDING_ADD, ONBOARDING_DONE, ONBOARDING_START, type OnboardingTourStep } from "./onboarding";
 import { ActionDisclosure, Button, CloseButton, IconButton, UndoButton } from "./components/UiPrimitives";
 
 import { DateQuickPicker } from "./components/DateQuickPicker";
@@ -910,7 +910,7 @@ function App() {
     enabled: mobileExecution && candidateDrawerOpen,
     onSwipeUp: () => setCandidateDrawerExpanded(true), onSwipeDown: () => setCandidateDrawerExpanded(false) });
   const mobileTapRef = useRef({ x: 0, y: 0, moved: false });
-  type MobilePlacementSession = { guided: boolean; taskId: string; subtask?: ShelfSubtask; version: string; view: TimelineView; date: string; visibleDate: string; scrollTop: number; drawerOpen: boolean };
+  type MobilePlacementSession = { guided: boolean; taskId: string; subtask?: ShelfSubtask; recordId?: string; durationMinutes: number; version: string; view: TimelineView; date: string; visibleDate: string; scrollTop: number; drawerOpen: boolean };
   const [mobilePlacement, setMobilePlacement] = useState<MobilePlacementSession | null>(null);
   const mobilePlacementRef = useRef<MobilePlacementSession | null>(null);
   const mobileCommitRef = useRef(false);
@@ -1133,6 +1133,7 @@ function App() {
   const quickExampleRef = useTaskExample(!productDemo && onboardingStage(settings) === "add", settings?.language || "en", quickCandidateInputRef);
   const quickComposerRef = useRef<HTMLFormElement>(null);
   const onboardingTaskRowRef = useRef<HTMLDivElement>(null);
+  const onboardingPlanButtonRef = useRef<HTMLButtonElement>(null);
   const candidateExpandRef = useRef<HTMLButtonElement>(null);
   const quickAddButtonRef = useRef<HTMLButtonElement>(null);
   const compactQuickInputRef = useRef<HTMLInputElement>(null);
@@ -3006,21 +3007,26 @@ if (cached?.data && cached?.settings) {
     if (!task) return;
     const block = onboardingBlock(task);
     if (block) {
-      void saveSettings(ONBOARDING_DONE);
+      void saveSettings({ workspaceGuideStep: "return", workspaceGuideTaskId: task.id });
       setSelectedDate(block.scheduledDate);
       setCompactExecuteView("schedule");
       if (timelineView === "month") setTimelineView("daily");
       setCandidateDrawerOpen(false);
-      requestTimelineFocus({ date: block.scheduledDate, startTime: block.scheduledStart, taskId: block.id, source: "schedule", highlight: true });
+      requestTimelineFocus({ date: block.scheduledDate, startTime: block.scheduledStart, taskId: block.id, source: "schedule" });
     } else if (stage === "add") {
       void saveSettings({ workspaceGuideStep: "schedule", workspaceGuideTaskId: task.id });
     }
   }
 
   useEffect(() => {
-    if (productDemo || !data || !settings || !cloudBaselineReadyRef.current || onboardingStage(settings) !== "schedule") return;
+    if (productDemo || !data || !settings || !cloudBaselineReadyRef.current) return;
+    const stage = onboardingStage(settings);
+    if (stage !== "schedule" && stage !== "return") return;
     const task = onboardingTarget(settings, data.tasks);
-    if (onboardingBlock(task)) void saveSettings(ONBOARDING_DONE);
+    const block = onboardingBlock(task);
+    if (stage === "return") {
+      if (task && isOnboardingTask(task) && !block) void saveSettings({ workspaceGuideStep: "schedule" });
+    } else if (block) void saveSettings({ workspaceGuideStep: "return" });
     else if (!task || !isOnboardingTask(task)) void saveSettings(ONBOARDING_ADD);
   }, [data, settings]);
 
@@ -3893,14 +3899,16 @@ if (cached?.data && cached?.settings) {
   const unscheduledShelfTasks = useMemo(() => tasks.filter((task) =>
     !task.completed && !hasActiveTaskSchedule(task) && !hasRecurrenceOccurrenceOnDate(task, today)
   ), [tasks, today]);
+  const guidePlanTaskId = cloudBaselineReadyRef.current && onboardingStage(settings) === "plan" ? settings?.workspaceGuideTaskId : undefined;
   const visibleCandidates = useMemo(() => {
     const candidateTasks = productDemo ? (showCompletedCandidates ? [...todayCandidates, ...completedCandidates] : todayCandidates) :
       tasks.filter((task) =>
-        (showCompletedCandidates || !task.completed) &&
-        (showScheduledCandidates || (!hasActiveTaskSchedule(task) && !hasRecurrenceOccurrenceOnDate(task, today)))
+        (task.id === guidePlanTaskId && !task.completed) ||
+        ((showCompletedCandidates || !task.completed) &&
+          (showScheduledCandidates || (!hasActiveTaskSchedule(task) && !hasRecurrenceOccurrenceOnDate(task, today))))
       );
     return [...todayEventCandidates, ...candidateTasks].sort((first, second) => (first.order || 0) - (second.order || 0));
-  }, [tasks, today, todayCandidates, completedCandidates, todayEventCandidates, showScheduledCandidates, showCompletedCandidates]);
+  }, [tasks, today, todayCandidates, completedCandidates, todayEventCandidates, showScheduledCandidates, showCompletedCandidates, guidePlanTaskId]);
   function focusCandidateSchedule(schedule: CandidateScheduleSummary) {
     setCompactExecuteView("schedule");
     setTimelineView("daily");
@@ -4039,7 +4047,7 @@ if (cached?.data && cached?.settings) {
       && (replaceLegacyAllDay || !hasActiveTaskSchedule(task)) && !hasRecurrenceOccurrenceOnDate(task, date);
   }
 
-  function commitShelfSchedule(taskId: string, date: string, startTime: string, options: { subtask?: ShelfSubtask; moveLegacyAllDay?: boolean; dragged?: boolean } = {}): TimelineRecord | undefined {
+  function commitShelfSchedule(taskId: string, date: string, startTime: string, options: { subtask?: ShelfSubtask; moveLegacyAllDay?: boolean } = {}): TimelineRecord | undefined {
     const current = dataRef.current;
     if (!current) return;
     const { subtask, moveLegacyAllDay } = options;
@@ -4068,13 +4076,7 @@ if (cached?.data && cached?.settings) {
     if (subtask && task.id === subtask.draftTaskId) nextTasks.push(nextTask);
     const next = { ...current, tasks: nextTasks };
     preserveTimelineViewportOnNextDataChange();
-    const guide = settingsRef.current;
-    const firstDrag = options.dragged && startTime && guide?.workspaceGuideStep === "schedule" && guide.workspaceGuideTaskId === taskId;
-    const scheduledMessage = lang === "zh" ? "已安排到时间轴" : "Scheduled on the timeline";
-    const firstDragMessage = mobileExecution
-      ? (lang === "zh" ? "已安排。下次可点任务旁的「安排」。" : "Scheduled. Next time, tap Plan.")
-      : (lang === "zh" ? "已安排。下次可点任务旁的日历按钮。" : "Scheduled. Or use the task’s calendar.");
-    void saveTaskOperation(next, "schedule", { title: task.title, toast: firstDrag ? firstDragMessage : scheduledMessage });
+    void saveTaskOperation(next, "schedule", { title: task.title, toast: lang === "zh" ? "已安排到时间轴" : "Scheduled on the timeline" });
     return record;
   }
 
@@ -5563,13 +5565,20 @@ if (cached?.data && cached?.settings) {
     setPendingTimelineFocus(null);
   }
 
-  async function startMobilePlacement(taskId: string, subtask?: ShelfSubtask, guided = false) {
+  async function startMobilePlacement(taskId: string, subtask?: ShelfSubtask, guided = false, recordId?: string) {
     const { mobilePlacementVersion } = await import("./utils/mobilePlacement");
     if ((!mobileExecutionRef.current && !guided) || !dataRef.current || mobilePlacementRef.current) return;
     const task = shelfTask(dataRef.current, taskId, subtask);
-    if (!task || task.completed || hasActiveTaskSchedule(task)) return;
-    const date = timelineWindowAnchorDate;
-    const session = { guided, taskId, subtask, version: mobilePlacementVersion(task), view: timelineView, date: selectedDate, visibleDate: visibleTimelineDate,
+    if (!task || task.completed) return;
+    const savedBlock = recordId ? onboardingBlock(task, false) : undefined;
+    if (recordId ? savedBlock?.id !== recordId : hasActiveTaskSchedule(task)) return;
+    const existingRecord = task.timelineRecords?.find((item) => item.id === recordId);
+    if (existingRecord && existingRecord.executionStatus !== "scheduled") return;
+    const durationMinutes = existingRecord ? timelineRecordDurationMinutes(existingRecord)
+      : savedBlock ? clockTimeSpanMinutes(savedBlock.scheduledStart, task.scheduledEnd || addMinutes(savedBlock.scheduledStart, taskDuration(task)))
+      : taskDuration(task);
+    const date = savedBlock?.scheduledDate ?? timelineWindowAnchorDate;
+    const session = { guided, taskId, subtask, recordId, durationMinutes, version: mobilePlacementVersion(task), view: timelineView, date: selectedDate, visibleDate: visibleTimelineDate,
       scrollTop: timelineRef.current?.scrollTop || 0, drawerOpen: candidateDrawerOpen };
     if (!shelfView) {
       candidateScrollRef.current = candidatePanelRef.current?.querySelector(".df-candidate-list")?.scrollTop || 0;
@@ -5585,8 +5594,10 @@ if (cached?.data && cached?.settings) {
     setSelectedDate(date);
     setVisibleTimelineDate(date);
     setTimelineView("daily");
-    const proposal = findCandidatePlacementForRange(task, [date]);
-    const choice = placementChoiceFromProposal(task.id, proposal);
+    const choice: PlacementChoice | null = savedBlock ? {
+      taskId: task.id, date, startTime: savedBlock.scheduledStart, endTime: addMinutes(savedBlock.scheduledStart, durationMinutes),
+      durationMinutes, source: "candidate-calendar",
+    } : placementChoiceFromProposal(task.id, findCandidatePlacementForRange(task, [date]));
     setPlacementPreview(choice);
     placementPreviewRef.current = choice;
     setPlacementChoices(choice ? [choice] : []);
@@ -5623,12 +5634,25 @@ if (cached?.data && cached?.settings) {
       showToast(lang === "zh" ? "任务已变更，请重新安排" : "Task changed. Please schedule it again.");
       return;
     }
-    const record = commitShelfSchedule(session.taskId, choice.date, choice.startTime, { subtask: session.subtask });
-    if (!record) { cancelMobilePlacement(true); return; }
+    let recordId = session.recordId;
+    if (recordId) {
+      const block = onboardingBlock(task, false);
+      if (block?.id !== recordId) { cancelMobilePlacement(true); return; }
+      if (block.scheduledDate !== choice.date || block.scheduledStart !== choice.startTime) {
+        moveTimelineRecord(recordId, choice.startTime, choice.date);
+      }
+    } else {
+      recordId = commitShelfSchedule(session.taskId, choice.date, choice.startTime, { subtask: session.subtask })?.id;
+      if (!recordId) { cancelMobilePlacement(true); return; }
+    }
     mobilePlacementRef.current = null;
     setMobilePlacement(null);
     cancelPlacementPreview();
-    requestTimelineFocus({ date: choice.date, startTime: choice.startTime, taskId: record.id, source: "schedule" });
+    requestTimelineFocus({ date: choice.date, startTime: choice.startTime, taskId: recordId, source: "schedule" });
+    if (onboardingStage(settingsRef.current) === "plan" && session.guided) {
+      void saveSettings({ workspaceGuideStep: "views" });
+      revealTasks();
+    }
   }
 
   function selectMobilePlacement(event: React.MouseEvent) {
@@ -5638,7 +5662,7 @@ if (cached?.data && cached?.settings) {
     const target = resolveDropTarget(event.clientX, event.clientY);
     const task = dataRef.current && shelfTask(dataRef.current, session.taskId, session.subtask);
     if (target && task) {
-      const durationMinutes = taskDuration(task);
+      const durationMinutes = session.durationMinutes;
       const choice: PlacementChoice = { taskId: task.id, date: target.date, startTime: target.startTime, endTime: addMinutes(target.startTime, durationMinutes), durationMinutes, source: "candidate-calendar" };
       placementPreviewRef.current = choice;
       setPlacementPreview(choice);
@@ -6025,7 +6049,7 @@ if (cached?.data && cached?.settings) {
       dragTargetDateRef.current = "";
       return;
     }
-    if (!commitShelfSchedule(taskId, targetDate, startTime, { moveLegacyAllDay, dragged: true })) return;
+    if (!commitShelfSchedule(taskId, targetDate, startTime, { moveLegacyAllDay })) return;
     setHoverSlot("");
     setDrag(null);
     dragTargetDateRef.current = "";
@@ -6274,12 +6298,13 @@ if (cached?.data && cached?.settings) {
 
   /** Move a TimelineRecord to a new start time, preserving duration. */
   function moveTimelineRecord(recordId: string, newStart: string, newDate?: string, durationMinutes?: number) {
-    if (!data) return;
+    const current = dataRef.current;
+    if (!current) return;
     const sourceRecordId = resolveTimelineRecordId(recordId);
     const now = workspaceNow().toISOString();
     void saveTaskOperation({
-      ...data,
-      tasks: data.tasks.map((task) => {
+      ...current,
+      tasks: current.tasks.map((task) => {
         const records = task.timelineRecords;
         if ((!records || records.length === 0) && task.id === sourceRecordId && task.scheduledStart) {
           // Cross-midnight spans (e.g. 23:30→00:30) must keep their 60m duration
@@ -8989,6 +9014,12 @@ if (cached?.data && cached?.settings) {
     }, 1400);
   }
 
+  function openSettingsHome(toggle = false) {
+    rememberLayerTrigger("utility");
+    setSettingsSectionTarget(undefined);
+    showWorkspacePanel({ kind: "settings" }, toggle);
+  }
+
   function openSettingsSection(section: SettingsTargetInput, toggle = false) {
     if (productDemo) return;
     rememberLayerTrigger("utility");
@@ -9319,16 +9350,29 @@ if (cached?.data && cached?.settings) {
   };
   const shelfTitle = term(lang, "todayCandidates");
   const candidatesEmpty = visibleCandidates.length === 0 && !hasActiveHabits;
-  const onboardingTask = onboardingStep === "schedule" ? onboardingTarget(settings, tasks) : undefined;
-  const taskPaneVisible = !shelfView && !taskHistoryOpen && !fullscreen
+  const teachingSchedule = onboardingStep === "schedule" || onboardingStep === "plan";
+  const trackedTask = teachingSchedule ? onboardingTarget(settings, tasks) : undefined;
+  const onboardingTask = trackedTask && isOnboardingTask(trackedTask) ? trackedTask : undefined;
+  const savedGuideBlock = onboardingStep === "plan" ? onboardingBlock(onboardingTask, false) : undefined;
+  const shelfPaneVisible = !fullscreen
     && (mobileExecution ? candidateDrawerOpen : !candidatePanelCollapsed && (!compactLayout || narrowSplitLayout || compactExecuteView === "tasks"));
+  const taskPaneVisible = shelfPaneVisible && !shelfView && !taskHistoryOpen;
   const guideRowVisible = taskPaneVisible && Boolean(onboardingTask && visibleCandidates.some((task) => task.id === onboardingTask.id));
+  const tasksGuideAnchor = mobileExecution && !candidateDrawerOpen ? candidateTriggerRef
+    : candidatePanelCollapsed ? candidateExpandRef : shelfPaneVisible ? shelfTitleRef : undefined;
   const showGuide = !productDemo && !workspacePanel && !drawerOpen && !quickAddPresence.present
     && !commandOpen && !aiOpen && !notificationCenterOpen && !shelfMenuOpen && !mobileDatePickerOpen
     && !dialog.host && !drag && !dragCreate && !mobilePlacement;
+  const tourStep = onboardingStep !== "add" && onboardingStep !== "schedule" && onboardingStep !== "done" ? onboardingStep : undefined;
+  const tourWaitingForTasks = tourStep === "plan" ? !taskPaneVisible
+    : (tourStep === "views" || tourStep === "plugins") && !shelfPaneVisible;
+  const guidePlanButtonVisible = tourStep === "plan" && guideRowVisible;
+  const tourAnchor = guidePlanButtonVisible ? onboardingPlanButtonRef
+    : tourStep === "integrations" || tourStep === "start" ? undefined : tasksGuideAnchor;
+
   function scheduleGuidedTask() {
     if (!onboardingTask) return;
-    if (hasActiveTaskSchedule(onboardingTask)) {
+    if (!savedGuideBlock && hasActiveTaskSchedule(onboardingTask)) {
       const date = onboardingTask.timelineRecords?.find((record) => record.executionStatus === "scheduled")?.scheduledDate
         || onboardingTask.scheduledDate || today;
       setSelectedDate(date);
@@ -9337,7 +9381,34 @@ if (cached?.data && cached?.settings) {
       showTimelineWorkspace();
       return;
     }
-    void startMobilePlacement(onboardingTask.id, undefined, true);
+    void startMobilePlacement(onboardingTask.id, undefined, true, savedGuideBlock?.id);
+  }
+
+  function advanceOnboardingTour(step: OnboardingTourStep) {
+    if (tourWaitingForTasks) { revealTasks(); return; }
+    switch (step) {
+      case "return":
+        revealTasks();
+        void saveSettings({ workspaceGuideStep: "plan" });
+        break;
+      case "plan":
+        void saveSettings({ workspaceGuideStep: "views" });
+        break;
+      case "views":
+        void saveSettings({ workspaceGuideStep: "plugins" });
+        break;
+      case "plugins":
+        showTimelineWorkspace();
+        void saveSettings({ workspaceGuideStep: "integrations" });
+        break;
+      case "integrations":
+        void saveSettings({ workspaceGuideStep: "start" });
+        break;
+      case "start":
+        showTimelineWorkspace();
+        void saveSettings(ONBOARDING_DONE);
+        break;
+    }
   }
 
   function revealTasks() {
@@ -9426,7 +9497,7 @@ if (cached?.data && cached?.settings) {
             <UiBellIcon size={20} />
             <NotificationBadge count={proactiveNotifications.length} enabled={showNotificationBadge} />
           </button>}
-          <button className="df-user-avatar" onClick={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); showWorkspacePanel({ kind: "settings" }, true); }} aria-label={t(lang, "header.settings")}>
+          <button className="df-user-avatar" onClick={() => openSettingsHome(true)} aria-label={t(lang, "header.settings")}>
             <UiSettingsIcon size={20} />
           </button>
         </div>}
@@ -9457,19 +9528,22 @@ if (cached?.data && cached?.settings) {
         /></Suspense>
       )}
       <div id="df-portal-target" />
-      {showGuide && onboardingStep === "add" && <OnboardingCue key="add" outlined anchor={taskPaneVisible ? quickComposerRef : quickAddButtonRef}
+      {showGuide && onboardingStep === "add" && <OnboardingCue key="add" anchor={taskPaneVisible ? quickComposerRef : quickAddButtonRef}
         lang={lang} onClose={() => void saveSettings(ONBOARDING_DONE)}>
         {taskPaneVisible ? (lang === "zh" ? "输入第一条任务并添加" : "Type your first task and add it")
           : (lang === "zh" ? "添加第一条任务" : "Add your first task")}
       </OnboardingCue>}
-      {showGuide && onboardingTask && (guideRowVisible || !taskPaneVisible) && <OnboardingCue key={onboardingTask.id}
-        anchor={guideRowVisible ? onboardingTaskRowRef : mobileExecution && !candidateDrawerOpen ? candidateTriggerRef : candidatePanelCollapsed ? candidateExpandRef : shelfTitleRef}
+      {showGuide && onboardingStep === "schedule" && onboardingTask && (guideRowVisible || !taskPaneVisible) && <OnboardingCue key={onboardingTask.id}
+        anchor={guideRowVisible ? onboardingTaskRowRef : tasksGuideAnchor}
         followRow={guideRowVisible} lang={lang} onClose={() => void saveSettings(ONBOARDING_DONE)}>
         {guideRowVisible ? (lang === "zh"
           ? (mobileExecution ? "长按任务块并移动到时间轴" : "按住任务块并移动到时间轴")
           : (mobileExecution ? "Press and hold the task block, then move it onto the timeline" : "Hold the task block and move it onto the timeline"))
           : <Button variant="text" className="df-workspace-guide-action" onClick={revealTasks}>{lang === "zh" ? "打开任务列表" : "Open Tasks"}</Button>}
       </OnboardingCue>}
+      {showGuide && tourStep && <OnboardingTour key={tourStep} step={tourStep} anchor={tourAnchor} waitingForTasks={tourWaitingForTasks}
+        phone={mobileExecution} lang={lang} onClose={() => void saveSettings(ONBOARDING_DONE)}
+        onNext={() => advanceOnboardingTour(tourStep)} onSettings={() => { advanceOnboardingTour("integrations"); openSettingsHome(); }} />}
       {dialog.host}
       {!productDemo && (notificationCenterOpen || !workspacePanel) && <Suspense fallback={null}><ProactiveNotificationCenter
         data={data}
@@ -9730,7 +9804,6 @@ if (cached?.data && cached?.settings) {
                             <div key={task.id}
                               className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}`}
                               ref={onboardingTask?.id === task.id ? onboardingTaskRowRef : undefined}
-                              data-guide-target={showGuide && guideRowVisible && onboardingTask?.id === task.id || undefined}
                               data-candidate-task-id={isEventDisplayTask(task) ? undefined : task.id}
                               onClickCapture={(event) => {
                                 if (!(event.target as HTMLElement).closest(".df-candidate-row .df-block-check")) return;
@@ -9738,7 +9811,7 @@ if (cached?.data && cached?.settings) {
                                 toggleCandidateTaskDone(task);
                               }}
                             >
-                              <TaskCard demo={Boolean(productDemo)} task={task} onGuidedSchedule={onboardingTask?.id === task.id ? scheduleGuidedTask : undefined} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />
+                              <TaskCard demo={Boolean(productDemo)} task={task} scheduleButtonRef={guidePlanButtonVisible && onboardingTask?.id === task.id ? onboardingPlanButtonRef : undefined} onGuidedSchedule={onboardingTask?.id === task.id ? scheduleGuidedTask : undefined} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />
                             </div>
                           );
                         })}
@@ -9751,7 +9824,6 @@ if (cached?.data && cached?.settings) {
                 return <div key={task.id}
                   className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}`}
                   ref={onboardingTask?.id === task.id ? onboardingTaskRowRef : undefined}
-                  data-guide-target={showGuide && guideRowVisible && onboardingTask?.id === task.id || undefined}
                   data-candidate-task-id={isEventDisplayTask(task) ? undefined : task.id}
                   onClickCapture={(event) => {
                     if (!(event.target as HTMLElement).closest(".df-candidate-row .df-block-check")) return;
@@ -9759,7 +9831,7 @@ if (cached?.data && cached?.settings) {
                     toggleCandidateTaskDone(task);
                   }}
                 >
-                  {!isReorderSource && <TaskCard demo={Boolean(productDemo)} task={task} onGuidedSchedule={onboardingTask?.id === task.id ? scheduleGuidedTask : undefined} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
+                  {!isReorderSource && <TaskCard demo={Boolean(productDemo)} task={task} scheduleButtonRef={guidePlanButtonVisible && onboardingTask?.id === task.id ? onboardingPlanButtonRef : undefined} onGuidedSchedule={onboardingTask?.id === task.id ? scheduleGuidedTask : undefined} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
                 </div>
               })}
               {shouldShowHabitCandidates(settings) && (
@@ -10643,7 +10715,7 @@ if (cached?.data && cached?.settings) {
       {!productAiPresentation && compactLayout && !compactOverlayOpen && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}`} style={themeVars(settings, "execute")} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {productDemo ? <div className="df-mobile-dock-slots">{compactChat}</div> : <Suspense fallback={<div className="df-mobile-dock-slots">{compactChat}<IconButton className="df-mobile-dock-action df-mobile-more-wrap" label={lang === "zh" ? "更多" : "More"} icon={<UiMoreIcon />} /></div>}>
-            <CompactPluginDock lang={lang} chat={compactChat} activePanel={workspacePanel?.kind} activeOwner={workspacePanel?.owner} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => setNotificationCenterOpen(true)} onSearch={() => { setCommandQuery(""); setCommandOpen(true); }} onSettings={() => { rememberLayerTrigger("utility"); setSettingsSectionTarget(undefined); showWorkspacePanel({ kind: "settings" }); }} onOpenPage={openExtensionPage} />
+            <CompactPluginDock lang={lang} chat={compactChat} activePanel={workspacePanel?.kind} activeOwner={workspacePanel?.owner} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => setNotificationCenterOpen(true)} onSearch={() => { setCommandQuery(""); setCommandOpen(true); }} onSettings={() => openSettingsHome()} onOpenPage={openExtensionPage} />
           </Suspense>}
         </nav>, document.body)
       )}
@@ -10658,8 +10730,13 @@ if (cached?.data && cached?.settings) {
           lang={lang} count={visibleCandidates.filter((task) => !task.completed).length} triggerRef={candidateTriggerRef}
           title={mobilePlacement ? (placementPreviewTask?.title || (lang === "zh" ? "任务已移除" : "Task removed")) : undefined}
           time={mobilePlacement && placementPreview ? `${placementPreview.date} · ${placementPreview.startTime}–${placementPreview.endTime}` : undefined}
-          conflict={Boolean(mobilePlacement && placementPreview && getScheduledEventsForRange([addDays(placementPreview.date, -1), placementPreview.date, addDays(placementPreview.date, 1)]).some((item) => item.scheduledStart && item.scheduledEnd && scheduledDateTimesOverlap(placementPreview.date, placementPreview.startTime, placementPreview.endTime, item.scheduledDate || placementPreview.date, item.scheduledStart, item.scheduledEnd)))}
-          onOpen={() => { setCandidateDrawerExpanded(false); if (onboardingTask) revealTasks(); else { setCandidatePanelCollapsed(false); setCandidateDrawerOpen(true); } }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
+          conflict={Boolean(mobilePlacement && placementPreview && getScheduledEventsForRange([addDays(placementPreview.date, -1), placementPreview.date, addDays(placementPreview.date, 1)]).some((item) => (!mobilePlacement.recordId || resolveTimelineRecordId(item.id) !== mobilePlacement.recordId) && item.scheduledStart && item.scheduledEnd && scheduledDateTimesOverlap(placementPreview.date, placementPreview.startTime, placementPreview.endTime, item.scheduledDate || placementPreview.date, item.scheduledStart, item.scheduledEnd)))}
+          onOpen={() => {
+            setCandidateDrawerExpanded(false);
+            if (tourStep === "return") advanceOnboardingTour(tourStep);
+            else if (onboardingTask || tourWaitingForTasks) revealTasks();
+            else { setCandidatePanelCollapsed(false); setCandidateDrawerOpen(true); }
+          }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
         <MobileQuickAddButton buttonRef={quickAddButtonRef} compactLayout={compactLayout} productPresentation={productPresentation}
         drawerOpen={compactFloatingActionsHidden} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, "execute")}
