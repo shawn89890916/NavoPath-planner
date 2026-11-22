@@ -1,23 +1,96 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UiPlusIcon } from "./components/UiIcons";
-import { featureHref, featureNames, productFeature, siteLanguage, type DemoCommand, type FeatureCopy, type ProductFeature } from "./productSite";
-import ProductStory, { type MenuBounds, type StoryLayout } from "./ProductStory";
+import { featureNames, siteLanguage, type FeatureCopy, type ProductFeature } from "./productSite";
 import ProductNavigation from "./ProductNavigation";
+import ProductScreenshot from "./ProductScreenshot";
 import ProductSiteFooter from "./ProductSiteFooter";
 import "./product-feature.css";
 
+const landscape = "(orientation: landscape)";
+
+function ProductDemoFrame({ feature, lang }: { feature: "workspace" | "ai"; lang: "zh" | "en" }) {
+  const frame = useRef<HTMLIFrameElement>(null);
+  const host = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
+  const [attempt, setAttempt] = useState(0);
+  const zh = lang === "zh";
+
+  useEffect(() => {
+    const element = host.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      observer.disconnect();
+      setMounted(true);
+    }, { rootMargin: "400px" });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || status !== "loading") return;
+    const timeout = window.setTimeout(() => setStatus("failed"), 15000);
+    return () => window.clearTimeout(timeout);
+  }, [mounted, status, attempt]);
+
+  useEffect(() => {
+    const element = host.current;
+    if (!element) return;
+    let visible = false;
+    const sendVisibility = () => frame.current?.contentWindow?.postMessage(
+      { channel: "navopath-product-demo", type: "visibility", visible },
+      location.origin,
+    );
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      sendVisibility();
+    });
+    observer.observe(element);
+    const receive = (event: MessageEvent) => {
+      if (event.origin !== location.origin || event.source !== frame.current?.contentWindow || event.data?.channel !== "navopath-product-demo") return;
+      if (event.data.type === "ready") {
+        setStatus("ready");
+        sendVisibility();
+      }
+      if (event.data.type === "error") setStatus("failed");
+    };
+    addEventListener("message", receive);
+    return () => {
+      observer.disconnect();
+      removeEventListener("message", receive);
+    };
+  }, []);
+
+  return <div className="np-product-window" ref={host}>
+    {mounted && status !== "failed" && <iframe
+      key={attempt}
+      ref={frame}
+      src={`/product-demo/${feature}?lang=${lang}&presentation=full`}
+      title={`${featureNames[lang][feature]} · ${zh ? "交互演示" : "Interactive demo"}`}
+      tabIndex={status === "ready" ? undefined : -1}
+      aria-hidden={status !== "ready" || undefined}
+      onError={() => setStatus("failed")}
+    />}
+    <div className="np-demo-status" aria-hidden={status === "ready" || undefined}>
+      <ProductScreenshot feature={feature} lang={lang} alt={featureNames[lang][feature]} eager />
+      <div className="np-demo-loading-label">
+        <span role="status">{status === "failed" ? (zh ? "演示暂时无法加载。" : "Unable to load the demo.") : (zh ? "正在加载交互演示…" : "Loading interactive demo…")}</span>
+        {status === "failed" && <button type="button" onClick={() => { setAttempt(value => value + 1); setStatus("loading"); }}>{zh ? "重试" : "Retry"}</button>}
+      </div>
+    </div>
+  </div>;
+}
+
 export default function ProductFeaturePage({ feature, copy }: { feature: ProductFeature; copy: Record<"zh" | "en", FeatureCopy> }) {
   const [lang, setLang] = useState(() => siteLanguage(location.search, navigator.language));
-  const [portrait, setPortrait] = useState(() => matchMedia("(orientation: portrait)").matches);
-  const [mounted, setMounted] = useState(false), [ready, setReady] = useState(false), [failed, setFailed] = useState(false), [attempt, setAttempt] = useState(0);
-  const [storyLayout, setStoryLayout] = useState<StoryLayout | null>(null);
-  const [menu, setMenu] = useState<{ id: string; bounds: MenuBounds } | null>(null);
-  const frame = useRef<HTMLIFrameElement>(null), host = useRef<HTMLDivElement>(null), visible = useRef(true);
-  const c = copy[lang], zh = lang === "zh", immersive = !portrait;
-  const send = useCallback((type: DemoCommand["type"], inView?: boolean) => frame.current?.contentWindow?.postMessage({ channel: "navopath-product-demo", type, stage: feature === "execute" ? 2 : 1, lang, visible: inView } satisfies DemoCommand, location.origin), [feature, lang]);
+  const [wide, setWide] = useState(() => matchMedia(landscape).matches);
+  const c = copy[lang];
+  const zh = lang === "zh";
+
   useEffect(() => {
-    const media = matchMedia("(orientation: portrait)");
-    const update = () => { setPortrait(media.matches); setMounted(false); setReady(false); setFailed(false); setStoryLayout(null); setMenu(null); };
+    const media = matchMedia(landscape);
+    const update = () => setWide(media.matches);
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
@@ -28,57 +101,23 @@ export default function ProductFeaturePage({ feature, copy }: { feature: Product
   useEffect(() => {
     document.title = `${featureNames[lang][feature]} · NavoPath`;
     document.documentElement.lang = zh ? "zh-CN" : "en";
-    const meta = document.querySelector<HTMLMetaElement>('meta[name="description"]'); if (meta) meta.content = c.description;
-    const url = new URL(location.href); url.searchParams.set("lang", lang); history.replaceState(null, "", url);
-    setReady(false); setFailed(false);
-    setMenu(null);
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+    if (meta) meta.content = c.description;
+    const url = new URL(location.href);
+    url.searchParams.set("lang", lang);
+    history.replaceState(null, "", url);
   }, [lang, feature, zh, c.description]);
-  useEffect(() => {
-    if (portrait || !host.current) return;
-    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setMounted(true); }, { rootMargin: "400px" });
-    const visibility = new IntersectionObserver(([entry]) => { visible.current = entry.isIntersecting; send("visibility", entry.isIntersecting); });
-    observer.observe(host.current); visibility.observe(host.current);
-    return () => { observer.disconnect(); visibility.disconnect(); };
-  }, [send, portrait]);
-  useEffect(() => {
-    if (portrait || !mounted || ready) return;
-    const timer = setTimeout(() => setFailed(true), 15000); return () => clearTimeout(timer);
-  }, [mounted, ready, attempt, portrait]);
-  useEffect(() => {
-    const receive = (event: MessageEvent) => {
-      if (event.origin !== location.origin || event.source !== frame.current?.contentWindow || event.data?.channel !== "navopath-product-demo") return;
-      if (event.data.type === "ready") { setReady(true); setFailed(false); send("stage"); send("visibility", visible.current); }
-      if (event.data.type === "story-layout") {
-        const value = event.data.layout;
-        if (value && ["left", "top", "width", "height", "headerHeight"].every(key => typeof value[key] === "number" && Number.isFinite(value[key]) && value[key] >= 0) && value.left + value.width <= innerWidth + 1 && value.top + value.height <= innerHeight + 1) setStoryLayout(value.width > 0 && value.height > 0 ? value : null);
-      }
-      if (event.data.type === "menu-layout" && typeof event.data.id === "string") {
-        const { id, layout: bounds } = event.data;
-        if (bounds === null) setMenu(current => current?.id === id ? null : current);
-        else if (["left", "top", "width", "height"].every(key => typeof bounds?.[key] === "number" && Number.isFinite(bounds[key]) && bounds[key] >= 0) && bounds.left + bounds.width <= innerWidth + 1 && bounds.height <= innerHeight + 1) setMenu({ id, bounds });
-      }
-      if (event.data.type === "language" && (event.data.lang === "zh" || event.data.lang === "en")) setLang(event.data.lang);
-      if (event.data.type === "error") { setFailed(true); setReady(false); }
-      if (event.data.type === "navigate" && productFeature(`/features/${event.data.feature}`, "features")) location.assign(featureHref(event.data.feature, lang));
-    };
-    addEventListener("message", receive); return () => removeEventListener("message", receive);
-  }, [send, lang]);
-  return <div className={`np-feature np-feature--${feature}${portrait ? " np-feature--reading" : ""}${immersive ? " np-feature--immersive" : ""}${immersive && !storyLayout ? " np-feature--compact" : ""}`}>
-    {!immersive && <header className="np-site-nav np-site-nav--product"><ProductNavigation feature={feature} lang={lang} icon={<img src={`${import.meta.env.BASE_URL}navopath-icon.png`} alt="" />} onLanguageChange={setLang} /></header>}
+
+  return <div className="np-feature np-feature--reading">
+    <header className="np-site-nav np-site-nav--product"><ProductNavigation feature={feature} lang={lang} icon={<img src="/navopath-icon.png" alt="" />} onLanguageChange={setLang} /></header>
     <main>
-      {!immersive && <section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section>}
-      {portrait ? <section className="np-product-notes">{c.benefits.map(([title, description]) => <section key={title}><h2>{title}</h2><p>{description}</p></section>)}</section> : <>
-      <section className={`np-product-layout np-product-layout--${feature}${immersive ? " np-workspace-scroll" : ""}`} aria-label={featureNames[lang][feature]}>
-        <div className="np-product-window" ref={host}>
-          {mounted && <iframe key={attempt} ref={frame} src={`/product-demo/${feature}?lang=${lang}${immersive ? "&presentation=full" : ""}`} title={`${featureNames[lang][feature]} · ${zh ? "功能交互演示" : "Interactive Demo"}`} onError={() => setFailed(true)} />}
-          <div className="np-demo-status" role={ready && !failed ? undefined : "status"} aria-hidden={ready && !failed}>
-            {failed ? <><p>{zh ? "演示内容暂时无法加载。" : "Unable to load preview."}</p><button type="button" onClick={() => { setReady(false); setFailed(false); setAttempt(attempt + 1); }}>{zh ? "重试" : "Retry"}</button></> : <><img src={`/product-entry-${feature}-${lang}.jpg`} width={1280} height={800} alt="" /><span className="np-demo-loading-label">{zh ? "正在加载功能演示…" : "Loading interactive demo…"}</span></>}
-          </div>
-        </div>
-        {immersive && feature !== "ai" && storyLayout && <ProductStory lang={lang} copy={c} layout={storyLayout} menu={menu?.bounds} />}
+      <section className="np-product-visual" aria-label={featureNames[lang][feature]}>
+        {wide && feature !== "plugins"
+          ? <ProductDemoFrame key={lang} feature={feature} lang={lang} />
+          : <ProductScreenshot feature={feature} lang={lang} alt={featureNames[lang][feature]} eager />}
       </section>
-      {immersive && feature !== "ai" && !storyLayout && <><section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section><ProductStory lang={lang} copy={c} layout={null} /></>}
-      </>}
+      <section className="np-product-intro"><h1>{c.title}</h1><p>{c.description}</p></section>
+      <div className="np-product-notes">{c.benefits.map(([title, description]) => <section key={title}><h2>{title}</h2><p>{description}</p></section>)}</div>
       <section className="np-faq"><h2>{zh ? "常见问题" : "Frequently Asked Questions"}</h2><div>{c.faq.map(([question, answer]) => <details key={question}><summary><span>{question}</span><UiPlusIcon size={18} strokeWidth={1.2} className="np-faq-plus" /></summary><p>{answer}</p></details>)}</div></section>
       <ProductSiteFooter lang={lang} next={c.next} />
     </main>

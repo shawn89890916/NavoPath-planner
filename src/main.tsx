@@ -59,7 +59,6 @@ import { reconcileOverdueTasks } from "./utils/overdueTasks";
 import { useInAppDialog } from "./InAppDialog";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskGroup } from "./components/TaskBlock";
 import { projectColorInk } from "./utils/presentationColor";
-import { ProductStorySlot } from "./ProductStory";
 import { ExecutionSplitLayout, CandidatePanelShell, CandidatePanelHeader, TimelineCanvas } from "./components/ExecutionSharedLayout";
 
 import { ActionDisclosure, Button, CloseButton, IconButton } from "./components/UiPrimitives";
@@ -71,7 +70,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiListChecksIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiFolderInputIcon, UiListChecksIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -112,9 +111,8 @@ void import("./ai-history-actions.css");
 import type { MobileShortSheetKind } from "./MobileTaskSummary";
 
 const productDemo = getWorkspaceDemoRuntime();
-const productPresentation = Boolean(productDemo?.navigation);
-const productAiPresentation = productPresentation && productDemo?.feature === "ai";
-const TimelineDateTag = productPresentation ? "div" : "button";
+const productAiPresentation = Boolean(productDemo?.showcaseAi);
+const TimelineDateTag = productAiPresentation ? "div" : "button";
 const localStorage = getWorkspaceStorage();
 const sessionStorage = productDemo?.storage ?? window.sessionStorage;
 installBrowserFallback();
@@ -1016,9 +1014,9 @@ function App() {
     }).catch(() => { if (!cancelled) setDesktopDockReady(true); });
     return () => { cancelled = true; };
   }, []);
-  const [compactExecuteView, setCompactExecuteView] = useState<CompactExecuteView>("schedule");
+  const [compactExecuteView, setCompactExecuteView] = useState<CompactExecuteView>(productAiPresentation ? "tasks" : "schedule");
   const [phoneLayout, setPhoneLayout] = useState(() => window.matchMedia("(max-width: 899.98px) and (orientation: portrait)").matches);
-  const mobileExecution = phoneLayout && !productPresentation && mode === "execute";
+  const mobileExecution = phoneLayout && !productAiPresentation && mode === "execute";
   const mobileExecutionRef = useRef(mobileExecution);
   mobileExecutionRef.current = mobileExecution;
   const [candidateDrawerOpen, setCandidateDrawerOpen] = useState(false);
@@ -1095,7 +1093,6 @@ function App() {
   const [aiMessages, setAiMessages] = useState<AiSessionMessage[]>([]);
   const [demoReschedulesOpen, setDemoReschedulesOpen] = useState(false);
   const [demoPresetBusy, setDemoPresetBusy] = useState(false);
-  const [demoGuideDismissed, setDemoGuideDismissed] = useState(false);
   const demoPresetBusyRef = useRef(false);
   const [demoRevealing, setDemoRevealing] = useState(false);
   const [activeAiConversationId, setActiveAiConversationId] = useState("");
@@ -1234,7 +1231,7 @@ function App() {
   const [subtaskAiBusyId, setSubtaskAiBusyId] = useState("");
   const [subtaskAiRevealIds, setSubtaskAiRevealIds] = useState<string[]>([]);
   const subtaskAiRevealTimeoutRef = useRef<number | null>(null);
-  const [collapsedBranches, setCollapsedBranches] = useState<Record<string, boolean>>((): Record<string, boolean> => productPresentation && productDemo?.feature === "planning" ? { life: true } : {});
+  const [collapsedBranches, setCollapsedBranches] = useState<Record<string, boolean>>((): Record<string, boolean> => productDemo?.feature === "workspace" ? { life: true } : {});
   const [yearOverviewOpen, setYearOverviewOpen] = useState(false);
   const [overviewYear, setOverviewYear] = useState(() => new Date(`${todayIso()}T00:00:00`).getFullYear());
 
@@ -1745,7 +1742,7 @@ function App() {
 
   useEffect(() => {
     const scrollElement = timelineRef.current;
-    if (productPresentation || !scrollElement || !compactLayout || mode !== "execute" || timelineView === "month") return;
+    if (productAiPresentation || !scrollElement || !compactLayout || mode !== "execute" || timelineView === "month") return;
 
     const verticalDistance = (touches: TouchList) => Math.abs(touches[0].clientY - touches[1].clientY);
     const verticalCentre = (touches: TouchList) => (touches[0].clientY + touches[1].clientY) / 2;
@@ -1824,7 +1821,7 @@ function App() {
 
   useEffect(() => {
     const container = timelineRef.current;
-    if (!productPresentation || mode !== "execute" || !container || !settings) return;
+    if (!productAiPresentation || mode !== "execute" || !container || !settings) return;
     // Fit the example day using the same geometry as native task dragging.
     const minutes = timeToMinutes(settings.dayEndTime || "18:00") - timeToMinutes(settings.dayStartTime || "08:00");
     const fit = () => {
@@ -3437,7 +3434,7 @@ if (cached?.data && cached?.settings) {
     };
   }, [compactExecuteView, continuousTimelineDates, continuousTimelineEnabled, continuousTimelineStartDate, dayStartHour, mode, timelineColumnCount, timelineSlotHeight, timelineView, timelineWindowAnchorDate, today, workspaceLoaded]);
 
-  const showBackToNow = !productPresentation && !nowInTimelineViewport;
+  const showBackToNow = !productAiPresentation && !nowInTimelineViewport;
 
   function getTimelineRangeFor(view: TimelineView, anchorDate: string) {
     if (view === "daily") return [anchorDate];
@@ -7732,7 +7729,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function handleTimelinePanelWheel(event: React.WheelEvent<HTMLElement>) {
-    if (productPresentation) return;
+    if (productAiPresentation) return;
     if (event.ctrlKey || event.metaKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
     const target = event.target as HTMLElement;
     if (target.closest("input,textarea,select,[contenteditable=true],.df-drawer,.df-utility-panel,.df-project-popover-portal")) return;
@@ -8121,7 +8118,6 @@ if (cached?.data && cached?.settings) {
   async function runProductDemoPreset(request?: "undo" | { taskId: string; days: 1 | 2 }) {
     if (!productDemo || !dataRef.current || demoPresetBusyRef.current) return;
     demoPresetBusyRef.current = true;
-    setDemoGuideDismissed(true);
     setDemoPresetBusy(true);
     try {
       if (request === "undo") {
@@ -8149,7 +8145,10 @@ if (cached?.data && cached?.settings) {
         const date = message.actions[0].type === "schedule_task" ? message.actions[0].date || productDemo.date : productDemo.date;
         setSelectedDate(date);
         setVisibleTimelineDate(date);
-        if (productAiPresentation && !request) await productDemo.revealSchedule?.();
+        if (productAiPresentation) {
+          setCompactExecuteView("schedule");
+          if (!request) await productDemo.revealSchedule?.();
+        }
       }
       setDemoReschedulesOpen(false);
     } finally {
@@ -9033,9 +9032,8 @@ if (cached?.data && cached?.settings) {
 
   return (
     <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-${mode} theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${yearOverviewOpen ? " is-year-overview" : ""}${drag ? " is-dragging" : ""}${onboardingActive ? ` onboarding-active onboarding-step-${onboardingStep}` : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, mode), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
-      {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       <header className="df-header">
-        {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
+        <div className="df-header-inner">
           <div className="df-brand">
             {window.desktopApi?.dockWindow
               ? <Suspense fallback={<button className="df-brand-ai-button" type="button" disabled aria-label="NavoPath"><ProductIcon compact /></button>}>
@@ -9093,7 +9091,7 @@ if (cached?.data && cached?.settings) {
             <UiSettingsIcon size={20} />
           </button>
         </div>}
-        </div>}
+        </div>
       </header>
       <div className="df-header-fade" />
       {compactLayout && quickAddPresence.present && <div className={`df-drawer-backdrop${quickAddPresence.closing ? " is-closing" : ""}`} onMouseDown={() => void closeMobileQuickAdd()} />}
@@ -9155,7 +9153,7 @@ if (cached?.data && cached?.settings) {
 
       <Activity mode={mode === "execute" ? "visible" : "hidden"}>
         <ExecutionSplitLayout className={`${candidatePanelCollapsed ? "candidate-collapsed" : ""}${fullscreen ? " fullscreen" : ""}${simpleView ? " simple-view" : ""}`} style={candidatePanelCollapsed || candidatePanelWidth ? { "--df-candidate-width": candidatePanelCollapsed ? "44px" : `${candidatePanelWidth}px` } as CSSProperties : undefined}>
-          {!productAiPresentation && <div className="df-compact-execute-controls">
+          <div className="df-compact-execute-controls">
             {!mobileExecution && <nav className="df-compact-execute-tabs" aria-label={lang === "zh" ? "执行视图" : "Execute view"}>
               <button
                 className={`active ${compactExecuteView === "schedule" ? "schedule-state" : "tasks-state"}`}
@@ -9175,7 +9173,7 @@ if (cached?.data && cached?.settings) {
                 ) : (
                   <><strong>{date.getDate()}</strong><span>{weekdayName(lang, date.getDay()).replace(/^周/, "")}</span></>
                 );
-                if (productPresentation || compactExecuteView === "tasks") {
+                if (compactExecuteView === "tasks") {
                   return <div className="df-compact-date-display is-readonly" aria-label={lang === "zh" ? "当前日期" : "Current date"}>{dateContents}</div>;
                 }
                 return <button
@@ -9192,7 +9190,7 @@ if (cached?.data && cached?.settings) {
                 <UiChevronDownIcon className={`df-date-title-chevron${mobileDatePickerOpen ? " open" : ""}`} size={14} />
               </button>;
               })()}
-            {compactExecuteView === "schedule" && !productPresentation && (
+            {compactExecuteView === "schedule" && !productAiPresentation && (
               <>
               <nav className="df-compact-calendar-tabs" aria-label={t(lang, "timeline.switchView")}>
                 <button className="df-compact-date-arrow" aria-label={t(lang, "timeline.prevSegment")} onClick={() => shiftTimeline(-1)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m9.5 3-5 5 5 5" /></svg></button>
@@ -9213,8 +9211,8 @@ if (cached?.data && cached?.settings) {
               </nav>
               </>
             )}
-          </div>}
-          {!productPresentation && compactExecuteView === "schedule" && (
+          </div>
+          {!productAiPresentation && compactExecuteView === "schedule" && (
             <DateQuickPicker
               open={mobileDatePickerOpen}
               month={mobileDatePickerMonth}
@@ -9234,9 +9232,9 @@ if (cached?.data && cached?.settings) {
             panelRef={candidatePanelRef}
             role={mobileExecution && candidateDrawerOpen ? "dialog" : undefined}
             ariaLabel={mobileExecution ? (lang === "zh" ? "待安排任务" : "Tasks to schedule") : undefined}
-            className={`${mobileExecution ? `is-mobile-candidates ${candidateDrawerOpen ? "compact-active" : "compact-inactive"}${candidateDrawerExpanded ? " is-expanded" : ""}` : productAiPresentation || compactExecuteView === "tasks" ? "compact-active" : "compact-inactive"}${!mobileExecution && candidatePanelCollapsed ? " collapsed" : ""}${!mobileExecution && fullscreen ? " hidden" : ""}${candidateDropActive ? " drop-active" : ""}`}
+            className={`${mobileExecution ? `is-mobile-candidates ${candidateDrawerOpen ? "compact-active" : "compact-inactive"}${candidateDrawerExpanded ? " is-expanded" : ""}` : compactExecuteView === "tasks" ? "compact-active" : "compact-inactive"}${!mobileExecution && candidatePanelCollapsed ? " collapsed" : ""}${!mobileExecution && fullscreen ? " hidden" : ""}${candidateDropActive ? " drop-active" : ""}`}
             style={!mobileExecution && candidatePanelCollapsed ? { position: "relative", zIndex: 2, pointerEvents: "auto" } : undefined}
-            ariaHidden={mobileExecution ? !candidateDrawerOpen : !productAiPresentation && compactLayout && compactExecuteView !== "tasks"}
+            ariaHidden={mobileExecution ? !candidateDrawerOpen : compactLayout && compactExecuteView !== "tasks"}
             inert={mobileExecution && !candidateDrawerOpen}
             onPointerDown={(event) => {
               if (compactLayout || candidatePanelCollapsed || event.button) return;
@@ -9310,6 +9308,13 @@ if (cached?.data && cached?.settings) {
               </>
             }
             />
+            {productAiPresentation && <div id="product-ai-start-guide" className="df-ai-plan-feedback df-product-ai-feedback" role="status">
+              {demoPresetBusy
+                ? (lang === "zh" ? "正在安排今日任务…" : "Arranging today’s tasks…")
+                : demoHasSchedule
+                  ? (lang === "zh" ? "已排入时间轴，可以改期或撤回。" : "Tasks are on the timeline. Try rescheduling or undo.")
+                  : (lang === "zh" ? "点击 AI 安排，体验示例排程。" : "Select AI scheduling to try the example.")}
+            </div>}
             {candidateDropActive && (
               <div className="df-candidate-return-hint" role="status">
                 {lang === "zh" ? "松手后移回今日候选" : "Release to return to Today's Candidates"}
@@ -9454,7 +9459,6 @@ if (cached?.data && cached?.settings) {
                   draggedHabitId={drag?.source === "candidate" ? drag.taskId : null}
                 />
               )}
-              {productDemo && !productDemo.story && !productAiPresentation && <aside className="df-product-notes"><p>{lang === "zh" ? "从今日候选中挑选，再放进时间轴。" : "Pick a candidate and give it time on the timeline."}</p><p>{lang === "zh" ? "一天有变化，安排也可以调整。" : "Adjust the plan as your day changes."}</p></aside>}
             </div>
             {productAiPresentation ? demoAiControls : <form className="df-quick-add" onSubmit={(event) => {
               event.preventDefault();
@@ -9483,11 +9487,6 @@ if (cached?.data && cached?.settings) {
               </>
             )}
           </CandidatePanelShell>
-          {productAiPresentation ? <ProductStorySlot feature="ai"><div className="df-product-ai-intro" role="status" aria-live="polite" aria-atomic="true">
-            <h1>{demoRevealing ? (lang === "zh" ? "一步一步，\n各就各位。" : "Step by step.\nInto place.") : demoPresetBusy ? (lang === "zh" ? "正在为今天\n留出时间。" : "Making room\nfor your day.") : demoHasSchedule ? (lang === "zh" ? "一天有了\n自己的节奏。" : "A day with\nroom to breathe.") : (lang === "zh" ? "点一下，\n安排一整天。" : "Try one click.\nPlan your day.")}</h1>
-            <p id="product-ai-start-guide">{demoRevealing ? (lang === "zh" ? "从上午到傍晚，每项任务都有自己的位置。" : "From morning to evening, each task finds its time.") : demoPresetBusy ? (lang === "zh" ? "让任务、休息和生活，都有自己的时间。" : "Make room for tasks, breaks and everyday life.") : demoHasSchedule ? (lang === "zh" ? "午餐与休息也在计划里。你还可以调整任务，或试试改期与撤回。" : "Lunch and breaks belong here, too. Adjust a task, reschedule it, or undo.") : <>{lang === "zh" ? "点击左侧「今日候选」右上角的 " : "Click the pulsing "}<UiSparklesIcon /><strong>{lang === "zh" ? "AI 安排按钮" : "AI scheduling icon"}</strong>{lang === "zh" ? "，体验一次示例安排。" : " at the top right of Today’s Candidates to try the example."}</>}</p>
-            {demoPresetBusy && !demoRevealing && !demoHasSchedule && <div className="df-product-ai-arranging-notes"><p>{lang === "zh" ? "按任务估时留出完整时段，减少来回切换。" : "Give each task enough time, with fewer switches."}</p><p>{lang === "zh" ? "午餐与休息也排进去，计划才跟得上生活。" : "Lunch and breaks belong in the plan, too."}</p><p>{lang === "zh" ? "安排好后，仍可调整时间、改期或撤回。" : "Then adjust the time, move a task, or undo."}</p></div>}
-          </div></ProductStorySlot> : productDemo?.story}
           <section
             onPointerDownCapture={(event) => {
               mobileTapRef.current = { x: event.clientX, y: event.clientY, moved: false };
@@ -9503,8 +9502,8 @@ if (cached?.data && cached?.settings) {
               event.stopPropagation();
               if (!mobileTapRef.current.moved) closeCandidateDrawer();
             }}
-            className={`df-timeline-panel${productAiPresentation || compactExecuteView === "schedule" ? " compact-active" : " compact-inactive"}`}
-            aria-hidden={!productAiPresentation && compactLayout && compactExecuteView !== "schedule"}
+            className={`df-timeline-panel${compactExecuteView === "schedule" ? " compact-active" : " compact-inactive"}`}
+            aria-hidden={compactLayout && compactExecuteView !== "schedule"}
             id="df-execute-timeline"
             data-candidates-open={mobileExecution && candidateDrawerOpen || undefined}
             data-cross-day-scroll={settings.continuousCrossDayScroll !== false ? "true" : "false"}
@@ -9534,7 +9533,7 @@ if (cached?.data && cached?.settings) {
               />
             ) : <>
             <div className="df-timeline-body">
-              {!productPresentation && !compactLayout && <>
+              {!productAiPresentation && !compactLayout && <>
                 <button className="df-date-arrow left" aria-label={t(lang, "timeline.prevSegment")} onClick={() => shiftTimeline(-1)}>‹</button>
                 <button className="df-date-arrow right" aria-label={t(lang, "timeline.nextSegment")} onClick={() => shiftTimeline(1)}>›</button>
               </>}
@@ -9999,11 +9998,11 @@ if (cached?.data && cached?.settings) {
                 ) : (
                   <div className="df-timeline-daily">
                     <TimelineDateTag
-                      type={productPresentation ? undefined : "button"}
-                      className={`df-date-title df-date-title-compact${productPresentation ? "" : " df-date-title-button"}${timelineWindowAnchorDate === today ? " today" : ""}`}
-                      aria-expanded={productPresentation ? undefined : mobileDatePickerOpen}
-                      aria-label={productPresentation ? (lang === "zh" ? "当前日期" : "Current date") : (lang === "zh" ? "打开日期快选" : "Open quick date picker")}
-                      onClick={productPresentation ? undefined : () => {
+                      type={productAiPresentation ? undefined : "button"}
+                      className={`df-date-title df-date-title-compact${productAiPresentation ? "" : " df-date-title-button"}${timelineWindowAnchorDate === today ? " today" : ""}`}
+                      aria-expanded={productAiPresentation ? undefined : mobileDatePickerOpen}
+                      aria-label={productAiPresentation ? (lang === "zh" ? "当前日期" : "Current date") : (lang === "zh" ? "打开日期快选" : "Open quick date picker")}
+                      onClick={productAiPresentation ? undefined : () => {
                         if (compactLayout) return;
                         setMobileDatePickerMonth(timelineWindowAnchorDate.slice(0, 7));
                         setMobileDatePickerOpen((open) => !open);
@@ -10018,9 +10017,9 @@ if (cached?.data && cached?.settings) {
                           return weekdayShort[d.getDay()];
                         })()}
                       </span>
-                      {!productPresentation && <UiChevronDownIcon className={`df-date-title-chevron${mobileDatePickerOpen ? " open" : ""}`} size={14} />}
+                      {!productAiPresentation && <UiChevronDownIcon className={`df-date-title-chevron${mobileDatePickerOpen ? " open" : ""}`} size={14} />}
                     </TimelineDateTag>
-                    {!productPresentation && !compactLayout && (
+                    {!productAiPresentation && !compactLayout && (
                       <DateQuickPicker
                         open={mobileDatePickerOpen}
                         month={mobileDatePickerMonth}
@@ -10303,7 +10302,7 @@ if (cached?.data && cached?.settings) {
                   </div>
                 )}
               </div>
-              {!productPresentation && <div className="df-view-switch-vertical ui-choice-list ui-choice-list--motion-selection" aria-label={t(lang, "timeline.switchView")}>
+              {!productAiPresentation && <div className="df-view-switch-vertical ui-choice-list ui-choice-list--motion-selection" aria-label={t(lang, "timeline.switchView")}>
                 <SelectionIndicator activeKey={timelineView + ":" + lang} />
                 {([
                   ["daily", viewLabel(lang, "daily")],
@@ -10322,7 +10321,7 @@ if (cached?.data && cached?.settings) {
           <div className="df-planning-loading-toolbar" aria-hidden="true"><span className="df-skeleton-title" /><span className="df-skeleton-tab" /></div>
           <section aria-hidden="true"><span className="df-skeleton-title" />{Array.from({ length: 5 }, (_, index) => <div className="df-skeleton-task" key={index}><i /><span /><small /></div>)}</section>
         </main>}>
-          <PlanningViewLazy focusTaskId={planningFocusTaskId} onFocusHandled={() => setPlanningFocusTaskId(null)} presentationNote={productDemo?.story} demo={Boolean(productDemo)} referenceDate={productDemo?.date} lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled === true} featureQuadrant={settings.featureQuadrantViewEnabled === true} featureList={settings.featureListViewEnabled === true} featureMetrics={settings.featureMetricsEnabled !== false} planningSidebarCollapsed={settings.planningSidebarCollapsed === true} onPlanningSidebarCollapsedChange={(collapsed) => void saveSettings({ planningSidebarCollapsed: collapsed })} planningSidebarWidth={settings.planningSidebarWidth} onPlanningSidebarWidthChange={(width) => void saveSettings({ planningSidebarWidth: width })} engagementEnabled={settings.featureEngagementEnabled === true} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
+          <PlanningViewLazy focusTaskId={planningFocusTaskId} onFocusHandled={() => setPlanningFocusTaskId(null)} demo={Boolean(productDemo)} referenceDate={productDemo?.date} lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled === true} featureQuadrant={settings.featureQuadrantViewEnabled === true} featureList={settings.featureListViewEnabled === true} featureMetrics={settings.featureMetricsEnabled !== false} planningSidebarCollapsed={settings.planningSidebarCollapsed === true} onPlanningSidebarCollapsedChange={(collapsed) => void saveSettings({ planningSidebarCollapsed: collapsed })} planningSidebarWidth={settings.planningSidebarWidth} onPlanningSidebarWidthChange={(width) => void saveSettings({ planningSidebarWidth: width })} engagementEnabled={settings.featureEngagementEnabled === true} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
         </Suspense>
       </Activity>
 
@@ -10341,7 +10340,7 @@ if (cached?.data && cached?.settings) {
 
       {!productAiPresentation && compactLayout && !candidateDrawerOpen && !mobilePlacement && !drawerOpen && !commandOpen && !notificationCenterOpen && !scheduleTemplatePresence.present && utilityPanel !== "settings" && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}`} style={themeVars(settings, mode)} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
-          {!productPresentation && !settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
+          {!productAiPresentation && !settings.hideAi ? <button className="df-mobile-dock-action df-mobile-ai" onClick={() => { setQuickAddOpen(false); setAiOpen(true); }} aria-label={t(lang, "fab.askNavo")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/><path d="M9 10.5h6"/></svg>
           </button> : <span className="df-mobile-dock-spacer" aria-hidden="true" />}
           <WorkspaceModeTabs mode={mode} lang={lang} onChange={changeMode} onPlanningIntent={preloadPlanningView} className="df-mobile-mode-switch" as="div" />
@@ -10366,8 +10365,8 @@ if (cached?.data && cached?.settings) {
         </nav>, document.body)
       )}
 
-      {!productPresentation && !compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
-      {!productPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
+      {!productAiPresentation && !compactLayout && <button className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={() => openAdd("task")} />}
+      {!productAiPresentation && !compactLayout && !settings.hideAi && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} onClick={() => setAiOpen((open) => !open)} />}
       {createPortal(<div className="df-mobile-floating-actions" style={themeVars(settings, mode)}>
         {mobileExecution && <Suspense fallback={null}><MobileExecutionControls
           hidden={candidateDrawerOpen || drawerOpen || quickAddOpen || aiOpen || Boolean(utilityPanel) || commandOpen || notificationCenterOpen || scheduleTemplatePresence.present || Boolean(dragCreate?.committed)}
@@ -10377,7 +10376,7 @@ if (cached?.data && cached?.settings) {
           time={mobilePlacement && placementPreview ? `${placementPreview.date} · ${placementPreview.startTime}–${placementPreview.endTime}` : undefined}
           conflict={Boolean(mobilePlacement && placementPreview && getScheduledEventsForRange([addDays(placementPreview.date, -1), placementPreview.date, addDays(placementPreview.date, 1)]).some((item) => item.scheduledStart && item.scheduledEnd && scheduledDateTimesOverlap(placementPreview.date, placementPreview.startTime, placementPreview.endTime, item.scheduledDate || placementPreview.date, item.scheduledStart, item.scheduledEnd)))}
           onOpen={() => { setCandidatePanelCollapsed(false); setCandidateDrawerExpanded(false); setCandidateDrawerOpen(true); }} onCancel={() => cancelMobilePlacement(true)} onConfirm={() => void confirmMobilePlacement()} /></Suspense>}
-        <MobileQuickAddButton compactLayout={compactLayout} productPresentation={productPresentation}
+        <MobileQuickAddButton compactLayout={compactLayout} productPresentation={productAiPresentation}
         drawerOpen={drawerOpen || commandOpen || quickAddOpen || scheduleTemplatePresence.present || Boolean(dragCreate?.committed) || (mobileExecution && (candidateDrawerOpen || Boolean(mobilePlacement)))} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, mode)}
         onAdd={() => { setQuickTitle(""); setMobileQuickAddKind("task"); setMobileQuickAddDate(null); setQuickAddOpen(true); }}

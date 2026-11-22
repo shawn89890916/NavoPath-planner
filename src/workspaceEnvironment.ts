@@ -1,12 +1,10 @@
 import type { Language, PlannerData } from "./types";
 import type { AiSessionMessage } from "./WorkspacePresentation";
-import type { ProductFeature } from "./productSite";
-import type { ReactNode } from "react";
+import type { ProductDemo } from "./productSite";
 
 export type WorkspaceDemoRuntime = {
-  feature: ProductFeature;
-  story?: ReactNode;
-  navigation?: (icon: ReactNode) => ReactNode;
+  feature: ProductDemo;
+  showcaseAi: boolean;
   date: string;
   language: Language;
   storage: Storage;

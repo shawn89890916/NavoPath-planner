@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { principleRoute, productFeature, siteLanguage } from "./productSite";
+import { legacyFeatureRoute, principleRoute, productDemoRoute, productFeature, siteLanguage } from "./productSite";
 import { loadFeature, loadPrinciple } from "./sitePages";
 
 class SiteErrorBoundary extends React.Component<
@@ -40,11 +40,13 @@ class SiteErrorBoundary extends React.Component<
   }
 }
 
-const feature = productFeature(window.location.pathname, "features");
-const demo = productFeature(window.location.pathname, "product-demo");
+const feature = productFeature(window.location.pathname);
+const demo = productDemoRoute(window.location.pathname);
 const principles = principleRoute(window.location.pathname);
 const privacy = /^\/privacy\/?$/.test(window.location.pathname);
-if (demo) {
+if (legacyFeatureRoute(window.location.pathname)) {
+  location.replace(`/features/workspace${location.search}${location.hash}`);
+} else if (demo) {
   void import("./productDemoRuntime").then(({ installProductDemo }) => {
     installProductDemo(demo);
     return import("./main");

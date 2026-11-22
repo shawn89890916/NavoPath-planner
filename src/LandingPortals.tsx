@@ -1,10 +1,11 @@
 import { type CSSProperties, type MouseEvent, useEffect, useRef } from "react";
-import { featureHref, featureNames, principleHref } from "./productSite";
+import { PRODUCT_FEATURES, featureHref, featureNames, principleHref } from "./productSite";
 import { MOTION, prefersReducedMotion } from "./motion";
 import type { Language } from "./types";
 import { preloadSitePage } from "./sitePages";
+import ProductScreenshot from "./ProductScreenshot";
 
-const entries = ["execute", "planning", "ai", "principles"] as const;
+const entries = [...PRODUCT_FEATURES, "principles"] as const;
 
 export default function LandingPortals({ lang, recede }: { lang: Language; recede: number }) {
   const opening = useRef<{ element: HTMLElement; animation: Animation } | null>(null);
@@ -38,7 +39,7 @@ export default function LandingPortals({ lang, recede }: { lang: Language; reced
   return <nav className="landing-portals" aria-label={lang === "zh" ? "探索 NavoPath" : "Explore NavoPath"} inert={recede >= .95} style={{ opacity: Math.max(0, 1 - recede ** 1.5), "--portal-exit-x": `${recede * 110}%` } as CSSProperties}>
     {entries.map(entry => <a key={entry} className={`landing-portal landing-portal--${entry}`} href={entry === "principles" ? principleHref("index", lang) : featureHref(entry, lang)} onPointerEnter={event => { if (event.pointerType === "mouse") preloadSitePage(event.currentTarget.href); }} onFocus={event => preloadSitePage(event.currentTarget.href)} onClick={enter}>
       <span className="landing-portal-heading"><strong>{entry === "principles" ? (lang === "zh" ? "设计原理" : "Principles") : featureNames[lang][entry]}</strong><span aria-hidden="true">↗</span></span>
-      <img src={`/product-entry-${entry}-${lang}.jpg`} width={1280} height={800} alt="" decoding="async" draggable={false} />
+      <ProductScreenshot feature={entry} lang={lang} alt="" eager />
     </a>)}
   </nav>;
 }

@@ -1,5 +1,5 @@
 import type { Language, PlannerData, Task } from "./types";
-import type { ProductFeature } from "./productSite";
+import type { ProductDemo } from "./productSite";
 import { getFreeSlots } from "./autoSchedule";
 import {
   addDays,
@@ -14,7 +14,7 @@ export const DEMO_DATE = "2030-10-07";
 export const DEMO_STAMP = `${DEMO_DATE}T08:00:00.000Z`;
 export function createDemoData(
   lang: Language,
-  feature: ProductFeature,
+  feature: ProductDemo,
   stage: number,
 ): PlannerData {
   const zh = lang === "zh";
@@ -99,7 +99,7 @@ export function createDemoData(
     chat: [],
     aiMemories: [],
   };
-  if (feature === "planning") {
+  if (feature === "planning" || feature === "workspace") {
     const quadrants: Record<string, [Task["importance"], Task["urgency"]]> = {
       content: ["high", "high"], publish: ["high", "high"],
       lesson: ["high", "low"], exercise: ["high", "low"],

@@ -1,8 +1,10 @@
 import type { Language } from "./types";
 
-export type ProductFeature = "planning" | "execute" | "ai";
+export const PRODUCT_FEATURES = ["workspace", "plugins", "ai"] as const;
+export type ProductFeature = typeof PRODUCT_FEATURES[number];
+const PRODUCT_DEMOS = ["workspace", "ai", "planning", "execute"] as const;
+export type ProductDemo = typeof PRODUCT_DEMOS[number];
 export const PERSONAL_SITE_URL = "https://xiaoyang-chen-now.shawn89890916.chatgpt.site/";
-export const PRODUCT_FEATURES: ProductFeature[] = ["execute", "planning", "ai"];
 export const PRINCIPLES = ["jev", "feedback", "time", "control", "views", "records"] as const;
 export type Principle = typeof PRINCIPLES[number];
 export const principleNames = {
@@ -18,16 +20,20 @@ export function principleHref(topic: Principle | "index", lang: Language) {
   return `/principles${topic === "index" ? "" : `/${topic}`}?lang=${lang}`;
 }
 export type PrincipleCopy = { title: string; description: string; steps: [string, string][]; sections: [string, string][]; sources: [string, string][] };
-export function productFeature(
-  path: string,
-  prefix: "features" | "product-demo",
-): ProductFeature | null {
+function routeEntry<T extends string>(path: string, prefix: string, entries: readonly T[]) {
   const value = path.replace(/\/$/, "").split("/");
-  return value.length === 3 &&
-    value[1] === prefix &&
-    PRODUCT_FEATURES.includes(value[2] as ProductFeature)
-    ? (value[2] as ProductFeature)
+  return value.length === 3 && value[1] === prefix
+    ? entries.find(entry => entry === value[2]) ?? null
     : null;
+}
+export function productFeature(path: string) {
+  return routeEntry(path, "features", PRODUCT_FEATURES);
+}
+export function productDemoRoute(path: string) {
+  return routeEntry(path, "product-demo", PRODUCT_DEMOS);
+}
+export function legacyFeatureRoute(path: string) {
+  return /^\/features\/(execute|planning)\/?$/.test(path);
 }
 export function siteLanguage(search: string, browserLanguage = "en"): Language {
   const requested = new URLSearchParams(search).get("lang");
@@ -41,32 +47,19 @@ export function featureHref(feature: ProductFeature, lang: Language) {
   return `/features/${feature}?lang=${lang}`;
 }
 export const featureNames = {
-  zh: { planning: "规划", execute: "执行", ai: "Navo AI" },
-  en: { planning: "Planning", execute: "Execute", ai: "Navo AI" },
+  zh: { workspace: "一体化工作区", plugins: "插件市场", ai: "Navo AI" },
+  en: { workspace: "Workspace", plugins: "Plugin Market", ai: "Navo AI" },
 };
-export type DemoCommand = {
+export type DemoVisibility = {
   channel: "navopath-product-demo";
-  type: "stage" | "reset" | "visibility";
-  stage: number;
-  lang: Language;
-  visible?: boolean;
+  type: "visibility";
+  visible: boolean;
 };
-export type DemoEvent = {
-  channel: "navopath-product-demo";
-  type: "ready" | "interacting" | "error";
-};
-export function isDemoCommand(value: unknown): value is DemoCommand {
+
+export function isDemoVisibility(value: unknown): value is DemoVisibility {
   if (!value || typeof value !== "object") return false;
-  const v = value as Partial<DemoCommand>;
-  return (
-    v.channel === "navopath-product-demo" &&
-    ["stage", "reset", "visibility"].includes(v.type || "") &&
-    Number.isInteger(v.stage) &&
-    Number(v.stage) >= 0 &&
-    Number(v.stage) <= 3 &&
-    (v.lang === "en" || v.lang === "zh") &&
-    (v.type !== "visibility" || typeof v.visible === "boolean")
-  );
+  const message = value as Partial<DemoVisibility>;
+  return message.channel === "navopath-product-demo" && message.type === "visibility" && typeof message.visible === "boolean";
 }
 
 export type FeatureCopy = { title: string; description: string; benefits: [string, string][]; faq: [string, string][]; next: ProductFeature };

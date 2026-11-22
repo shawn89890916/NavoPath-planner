@@ -3,19 +3,18 @@ import type { AiAction } from "./aiAssistantApi";
 import type { PlannerApi, PlannerData, Settings } from "./types";
 import { getDefaultSettings } from "./defaultSettings";
 import { createDemoData, DEMO_DATE, DEMO_STAMP, firstDemoSlot, scheduleDemoTask } from "./productDemoData";
-import { siteLanguage, type ProductFeature } from "./productSite";
+import { isDemoVisibility, siteLanguage, type ProductDemo } from "./productSite";
 import { createMemoryStorage, installWorkspaceDemoRuntime } from "./workspaceEnvironment";
 import "./product-demo.css";
-import { createElement } from "react";
-import { ProductStorySlot } from "./ProductStory";
-import ProductNavigation from "./ProductNavigation";
 
-export function installProductDemo(feature: ProductFeature) {
+export function installProductDemo(feature: ProductDemo) {
   if (!location.pathname.startsWith("/product-demo/")) throw new Error("Example runtime requires an example route");
   const language = siteLanguage(location.search, navigator.language);
   const fullscreen = new URLSearchParams(location.search).get("presentation") === "full";
+  const planning = feature === "planning" || feature === "workspace";
+  const showcaseAi = fullscreen && feature === "ai";
   let data = createDemoData(language, feature, feature === "execute" ? 2 : 1);
-  let settings: Settings = { ...getDefaultSettings(), language, theme: "light", activeMode: feature === "planning" ? "planning" : "execute", continuousCrossDayScroll: false, dayStartTime: "08:00", dayEndTime: "18:00", featureHabitsEnabled: false, featureMetricsEnabled: false, featureKanbanViewEnabled: true, featureQuadrantViewEnabled: true, featureListViewEnabled: true, syncIntervalMinutes: 0 };
+  let settings: Settings = { ...getDefaultSettings(), language, theme: "light", activeMode: planning ? "planning" : "execute", continuousCrossDayScroll: false, dayStartTime: "08:00", dayEndTime: "18:00", featureHabitsEnabled: false, featureMetricsEnabled: false, featureKanbanViewEnabled: true, featureQuadrantViewEnabled: true, featureListViewEnabled: true, syncIntervalMinutes: 0 };
   const clone = <T,>(value: T): T => structuredClone(value);
   const auth = { mode: "local" as const, user: null, configured: false };
   const api: PlannerApi = {
@@ -36,10 +35,8 @@ export function installProductDemo(feature: ProductFeature) {
   window.plannerApi = api;
   let id = 0;
   installWorkspaceDemoRuntime({
-    feature, date: DEMO_DATE, language, storage,
-    story: fullscreen && feature !== "ai" ? createElement(ProductStorySlot, { feature }) : undefined,
-    navigation: fullscreen ? icon => createElement(ProductNavigation, { feature, lang: language, icon }) : undefined,
-    revealSchedule: fullscreen && feature === "ai" ? async () => {
+    feature, date: DEMO_DATE, language, storage, showcaseAi,
+    revealSchedule: showcaseAi ? async () => {
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       const animations = document.getAnimations().filter(animation => animation instanceof CSSAnimation && animation.animationName === "df-product-schedule-arrival");
@@ -51,7 +48,18 @@ export function installProductDemo(feature: ProductFeature) {
       finally { reduced.removeEventListener("change", finish); }
     } : undefined,
     now: () => new Date(`${DEMO_DATE}T09:00:00`),
-    ready: () => { if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "ready" }, location.origin); },
+    ready: () => {
+      if (parent === window) return;
+      const selector = planning ? ".mode-planning .df-planning:not(.df-planning-loading)" : ".mode-execute .df-timeline-panel";
+      const notify = () => {
+        if (!document.querySelector(selector)) return;
+        observer.disconnect();
+        parent.postMessage({ channel: "navopath-product-demo", type: "ready" }, location.origin);
+      };
+      const observer = new MutationObserver(notify);
+      observer.observe(document.getElementById("root")!, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+      notify();
+    },
     suggest: (state: PlannerData, request?: { taskId: string; days: 1 | 2 }, taskIds?: string[]) => {
       let working = state;
       const reschedule = request;
@@ -71,13 +79,11 @@ export function installProductDemo(feature: ProductFeature) {
     },
   });
   document.documentElement.classList.add("product-demo-document");
-  if (fullscreen) document.documentElement.classList.add("product-demo-fullscreen");
+  if (showcaseAi) document.documentElement.classList.add("product-demo-fullscreen");
   window.addEventListener("message", (event) => {
-    if (event.source !== parent || event.origin !== location.origin || event.data?.channel !== "navopath-product-demo") return;
-    if (event.data.type === "visibility") {
-      document.documentElement.classList.toggle("product-demo-paused", event.data.visible === false);
-      document.getAnimations().filter(animation => animation.id === "product-schedule-arrival")
-        .forEach(animation => event.data.visible === false ? animation.pause() : animation.play());
-    }
+    if (event.source !== parent || event.origin !== location.origin || !isDemoVisibility(event.data)) return;
+    document.documentElement.classList.toggle("product-demo-paused", !event.data.visible);
+    document.getAnimations().filter(animation => animation.id === "product-schedule-arrival")
+      .forEach(animation => event.data.visible ? animation.play() : animation.pause());
   });
 }

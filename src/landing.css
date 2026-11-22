@@ -60,22 +60,23 @@ html.landing-document #root {
 .landing-product-rise { position: relative; z-index: 10; width: 100%; margin: calc(-100svh + var(--l-nav-height) - var(--l-product-peek)) 0 0; overflow: hidden; border-top: 1px solid rgba(39, 35, 30, .16); border-bottom: 1px solid rgba(39, 35, 30, .16); background: var(--l-paper); box-shadow: 0 -28px 68px rgba(25, 35, 43, .2); }
 .landing-product-scroll-cue { position: fixed; z-index: 1; bottom: calc(var(--l-product-peek) + clamp(20px, 2.6vh, 30px)); left: 50%; display: grid; justify-items: center; gap: 2px; color: #7b8490; font: 10px var(--l-mono); letter-spacing: .15em; text-transform: uppercase; transform: translateX(-50%); }
 .landing-product-scroll-cue i { color: #59636f; font: 16px/1 var(--l-body); font-style: normal; letter-spacing: 0; animation: landing-scroll-nudge 1.35s ease-in-out infinite; }
-.landing-product-screenshot { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: rgb(248, 247, 243); object-fit: cover; }
+.landing :is(.landing-product-rise, .landing-planning-preview) .np-product-screenshot img { display: block; width: 100%; height: auto; background: rgb(248, 247, 243); }
 
 .landing-portals { position: fixed; z-index: 2; inset: calc(var(--l-nav-height) + 30px) 0 calc(var(--l-product-peek) + 58px); pointer-events: none; }
 .landing-portal { position: absolute; display: flex; flex-direction: column; width: clamp(280px, 32vw, 480px); height: clamp(184px, 30vh, 290px); overflow: hidden; border: 1px solid var(--l-rule-strong); border-radius: 12px; background: var(--l-paper); color: var(--l-ink); text-decoration: none; box-shadow: 0 18px 42px rgb(25 35 43 / 12%); pointer-events: auto; translate: calc(var(--portal-exit-x, 0%) * var(--portal-direction)) 0; transform: perspective(1100px) rotateY(var(--portal-turn)) rotateZ(var(--portal-tilt)); transition: transform 360ms cubic-bezier(.22, 1, .36, 1), box-shadow 360ms ease; }
-.landing-portal--execute { --portal-direction: -1; --portal-turn: 32deg; --portal-tilt: -7deg; --portal-entry-y: -12svh; --portal-entry-delay: 0ms; left: -8vw; top: 3%; }
-.landing-portal--planning { --portal-direction: -1; --portal-turn: 32deg; --portal-tilt: 6deg; --portal-entry-y: 12svh; --portal-entry-delay: 140ms; left: -8vw; bottom: 3%; }
-.landing-portal--ai { --portal-direction: 1; --portal-turn: -32deg; --portal-tilt: 7deg; --portal-entry-y: -12svh; --portal-entry-delay: 70ms; right: -8vw; top: 8%; }
+.landing-portal--workspace { --portal-direction: -1; --portal-turn: 32deg; --portal-tilt: -7deg; --portal-entry-y: -12svh; --portal-entry-delay: 0ms; left: -8vw; top: 3%; }
+.landing-portal--ai { --portal-direction: -1; --portal-turn: 32deg; --portal-tilt: 6deg; --portal-entry-y: 12svh; --portal-entry-delay: 140ms; left: -8vw; bottom: 3%; }
+.landing-portal--plugins { --portal-direction: 1; --portal-turn: -32deg; --portal-tilt: 7deg; --portal-entry-y: -12svh; --portal-entry-delay: 70ms; right: -8vw; top: 8%; }
 .landing-portal--principles { --portal-direction: 1; --portal-turn: -32deg; --portal-tilt: -6deg; --portal-entry-y: 12svh; --portal-entry-delay: 210ms; right: -8vw; bottom: -2%; }
 .landing-portal:hover, .landing-portal:focus-visible { z-index: 3; transform: perspective(1100px) rotateY(calc(var(--portal-turn) * .65)) rotateZ(calc(var(--portal-tilt) * .65)) translateY(-6px); box-shadow: 0 24px 56px rgb(25 35 43 / 18%); }
 .landing-portal:focus-visible { outline: 2px solid var(--l-brown); outline-offset: 5px; }
 .landing-portal-heading { display: flex; align-items: center; justify-content: space-between; flex: 0 0 44px; padding: 0 20px; border-bottom: 1px solid var(--l-rule); font-size: 15px; }
-.landing-portal--execute .landing-portal-heading, .landing-portal--planning .landing-portal-heading { padding-left: max(20px, 8vw); }
-.landing-portal--ai .landing-portal-heading, .landing-portal--principles .landing-portal-heading { padding-right: max(20px, 8vw); }
+.landing-portal--workspace .landing-portal-heading, .landing-portal--ai .landing-portal-heading { padding-left: max(20px, 8vw); }
+.landing-portal--plugins .landing-portal-heading, .landing-portal--principles .landing-portal-heading { padding-right: max(20px, 8vw); }
 .landing-portal-heading strong { font-weight: 680; }
 .landing-portal-heading > span { font-size: 19px; color: var(--l-muted); }
-.landing-portal img { display: block; flex: 1; min-height: 0; width: 100%; object-fit: cover; object-position: top; }
+.landing-portal picture { display: block; flex: 1; min-height: 0; }
+.landing-portal img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
 .landing .landing-portal--opening { position: fixed; z-index: 100; right: auto; bottom: auto; pointer-events: none; translate: none; transition: none; }
 .landing-portal--opening .landing-portal-heading { padding: 0 24px; }
 
@@ -130,7 +131,10 @@ html.landing-document #root {
 .landing-planning { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(48px, 7vw, 88px); align-items: start; padding: clamp(90px, 12vw, 160px) max(28px, calc((100vw - 1180px) / 2)); border-top: 1px solid var(--l-rule); }
 .landing-planning-copy p { max-width: 680px; margin: 24px 0 0; color: var(--l-muted); font-size: 16px; line-height: 1.75; }
 .landing-planning-preview { min-width: 0; overflow: hidden; border: 1px solid var(--l-rule-strong); border-radius: 10px; background: rgb(248, 247, 243); corner-shape: var(--corner-shape, squircle); }
-.landing-planning-screenshot { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+.landing-planning-copy > a { margin-top: 24px; }
+@media (orientation: portrait) {
+  .landing-planning-preview { width: min(100%, 390px); justify-self: center; }
+}
 
 .landing-cta { padding: clamp(88px, 12vw, 156px) max(28px, calc((100vw - 1180px) / 2)); border-top: 1px solid var(--l-rule); }
 .landing-cta p { max-width: 510px; margin: 22px 0 30px; color: var(--l-muted); font-size: 16px; line-height: 1.7; }
@@ -212,10 +216,10 @@ html.landing-document #root {
   .landing-product-scroll-cue { bottom: calc(var(--l-product-peek) + 16px); font-size: 9px; }
   .landing-portals { inset: calc(var(--l-nav-height) + 22px) 12px calc(var(--l-product-peek) + 40px); }
   .landing-portal { width: 43%; height: clamp(92px, 16vh, 136px); border-radius: 8px; }
-  .landing-portal--execute, .landing-portal--planning { left: 0; }
-  .landing-portal--ai, .landing-portal--principles { right: 0; }
-  .landing-portal--execute, .landing-portal--ai { top: 0; }
-  .landing-portal--planning, .landing-portal--principles { bottom: 0; }
+  .landing-portal--workspace, .landing-portal--ai { left: 0; }
+  .landing-portal--plugins, .landing-portal--principles { right: 0; }
+  .landing-portal--workspace, .landing-portal--plugins { top: 0; }
+  .landing-portal--ai, .landing-portal--principles { bottom: 0; }
   .landing-portal .landing-portal-heading { flex-basis: 30px; padding: 0 10px; font-size: 12px; }
   .landing-portal-heading > span { font-size: 15px; }
   .landing-product-shot { border-radius: 6px 6px 0 0; corner-shape: var(--corner-shape, squircle); }
@@ -245,10 +249,10 @@ html.landing-document #root {
   .landing-slogan { max-width: 340px; margin-top: 14px; font-size: 17px; }
   .landing-portals { inset: calc(var(--l-nav-height) + 22px) 0 calc(var(--l-product-peek) + 76px); }
   .landing-portal { width: clamp(135px, 23vw, 210px); height: clamp(96px, 24vh, 140px); }
-  .landing-portal--execute, .landing-portal--planning { left: -3vw; }
-  .landing-portal--ai, .landing-portal--principles { right: -3vw; }
-  .landing-portal--execute, .landing-portal--ai { top: 0; }
-  .landing-portal--planning, .landing-portal--principles { bottom: 0; }
+  .landing-portal--workspace, .landing-portal--ai { left: -3vw; }
+  .landing-portal--plugins, .landing-portal--principles { right: -3vw; }
+  .landing-portal--workspace, .landing-portal--plugins { top: 0; }
+  .landing-portal--ai, .landing-portal--principles { bottom: 0; }
   .landing-portal .landing-portal-heading { flex-basis: 28px; padding: 0 24px; font-size: 12px; }
   .landing-product-rise { margin-top: calc(-100svh + var(--l-nav-height) - var(--l-product-peek)); }
 }

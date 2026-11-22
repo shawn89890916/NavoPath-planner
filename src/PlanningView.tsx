@@ -915,7 +915,6 @@ type PlanningViewMode = NativePlanningViewMode | "plugin";
 export default function PlanningView(props: {
   focusTaskId?: string | null;
   onFocusHandled?: () => void;
-  presentationNote?: React.ReactNode;
   demo?: boolean;
   lang: Language;
   referenceDate?: string;
@@ -3105,7 +3104,6 @@ export default function PlanningView(props: {
           </div>
           )}
         </div>
-        {props.presentationNote}
       </section>
 
       {planningDragTask && (

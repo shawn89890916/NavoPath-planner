@@ -31,13 +31,9 @@ export function ProductMenu({ lang, kind = "product", includeGitHub = false, act
       const rect = panel.getBoundingClientRect();
       const shift = Math.max(12 - rect.left, Math.min(0, document.documentElement.clientWidth - 12 - rect.right));
       panel.style.setProperty("--menu-shift", `${shift}px`);
-      if (parent !== window) {
-        const { left, top, width, height } = panel.getBoundingClientRect();
-        parent.postMessage({ channel: "navopath-product-demo", type: "menu-layout", id: menuId, layout: { left, top, width, height } }, location.origin);
-      }
     };
     fit(); addEventListener("resize", fit);
-    return () => { removeEventListener("resize", fit); if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "menu-layout", id: menuId, layout: null }, location.origin); };
+    return () => removeEventListener("resize", fit);
   }, [open, lang]);
   const shared = { "aria-expanded": open, "aria-controls": menuId, "aria-haspopup": true as const };
   return <div className={`np-product-menu np-product-menu--${kind}${active ? " np-product-menu--active" : ""}`} ref={host}

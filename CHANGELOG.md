@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-11-22
+
+### 改进
+
+- 官网首页改以一体化工作区、插件市场、Navo AI 和设计原理为入口。工作区演示串联项目树、今日候选和时间轴，并补充桌面 Dock 说明。功能页按横竖屏展示对应截图，横屏可直接试玩。
+
 ## 2026-11-21
 
 ### 改进
@@ -500,6 +506,12 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-22
+
+### Improved
+
+- The homepage now leads with Workspace, Plugin Market, Navo AI, and Principles. The workspace demo connects the project tree, Today’s Candidates, and the timeline, with a guide to the desktop Dock. Feature pages show orientation-matched screenshots and interactive examples in landscape.
 
 ## 2026-11-21
 

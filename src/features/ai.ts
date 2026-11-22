@@ -22,7 +22,7 @@ export default {
     "faq": [
       [
         "示例演示与真实 AI 功能有何区别？",
-        "本演示完整复用正式界面与交互组件，但采用固定的示例数据与预设逻辑，不会发起远程 AI 请求。"
+        "横屏演示复用应用的工作区和操作组件，但采用固定的示例数据与预设逻辑，不会发起远程 AI 请求。"
       ],
       [
         "示例如何进行排程与撤回操作？",
@@ -45,7 +45,7 @@ export default {
         "不会。本演示完全基于本地静态数据，不会产生外部网络调用或消耗任何模型额度。"
       ]
     ],
-    "next": "planning"
+    "next": "workspace"
   },
   "en": {
     "title": "Thoughtful assistance with your next step.",
@@ -67,7 +67,7 @@ export default {
     "faq": [
       [
         "How does this demo differ from the real AI feature?",
-        "This demo uses the real application interface and layout but runs on preset data without sending live API requests."
+        "The landscape demo uses the application workspace and controls but runs on preset data without sending live API requests."
       ],
       [
         "How do preset scheduling and undo work in the demo?",
@@ -90,6 +90,6 @@ export default {
         "No. All interactions use local preset data and will not make external calls or use API credits."
       ]
     ],
-    "next": "planning"
+    "next": "workspace"
   }
 } satisfies Record<Language, FeatureCopy>;

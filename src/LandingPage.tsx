@@ -8,8 +8,9 @@ import { setAuthPersistencePreference } from "./authSessionStorage";
 import { PrivacyConsent } from "./components/PrivacyConsent";
 import PasswordResetRequest from "./components/PasswordResetRequest";
 import LandingPortals from "./LandingPortals";
+import ProductScreenshot from "./ProductScreenshot";
 import { prefersReducedMotion } from "./motion";
-import { PERSONAL_SITE_URL, PRODUCT_FEATURES, featureHref, featureNames, principleHref } from "./productSite";
+import { PERSONAL_SITE_URL, PRODUCT_FEATURES, featureHref, featureNames, principleHref, siteLanguage } from "./productSite";
 import "./landing.css";
 
 type AuthIntent = "signin" | "signup";
@@ -20,63 +21,37 @@ const copy = {
     productName: "NavoPath",
     title: "See what to do today — and when to do it.",
     scroll: "Scroll to explore", start: "Start now", download: "Download for Windows",
-    productKicker: "Execute / Today", productLabel: "Candidates · Timeline",
-    stepsKicker: "Execute", stepsTitle: "Shape your day and focus on the next realistic step.",
+    stepsKicker: "Workspace", stepsTitle: "Take a task from the project tree to today’s timeline.",
     steps: [
-      ["01", "Pick Today's Candidates", "Focus on what actually fits today instead of crowding the screen with everything."],
-      ["02", "Find open time", "Fit tasks into real openings alongside existing commitments to keep pacing realistic."],
-      ["03", "Focus on the next action", "A clear timeline keeps the next useful action visible without second-guessing."],
+      ["01", "Break down a project", "Turn a project into steps you can act on."],
+      ["02", "Choose what to advance today", "Move the next task into Today’s Candidates."],
+      ["03", "Make time for it", "Place that same task into an open slot on your timeline."],
     ],
-    planningKicker: "Planning", planningTitle: "Break long-term goals into clear, actionable steps.",
-    planningBody: "Organize related work into project trees so priorities stay clear over time.",
+    dockTitle: "Keep NavoPath at the edge of your screen.",
+    dockBody: "In the desktop app, use the N in the top left to dock on either side. Reopen from the screen-edge tab, or select N again to restore a normal window.",
+    marketTitle: "Add the views and tools you need.",
+    marketBody: "Browse the plugin market in Settings to add views such as Board, Matrix, and List to your workspace.",
+    marketLink: "Explore the plugin market",
     ctaTitle: "Do one thing well today.", ctaBody: "Open NavoPath and start planning your day.",
   },
   zh: {
     productName: "NavoPath",
     title: "今天要做的事，排得清清楚楚",
     scroll: "向下浏览", start: "立即开始", download: "下载 Windows 客户端",
-    productKicker: "今日执行", productLabel: "今日候选 · 时间轴",
-    stepsKicker: "执行", stepsTitle: "理清任务节奏，从容推进每天的安排。",
+    stepsKicker: "一体化工作区", stepsTitle: "让一项任务从项目树走到今天的时间轴。",
     steps: [
-      ["01", "筛选今日候选", "不必把所有任务堆在眼前。今天切实能推进的事，先挑出来。"],
-      ["02", "排入时间空档", "结合已有的日程安排，把任务放进合适的空闲时段，直观把握节奏。"],
-      ["03", "专注于当下", "清晰的时间轴指引下一步操作，减少反复纠结与犹豫。"],
+      ["01", "拆解项目", "把一个项目拆成可以着手的行动。"],
+      ["02", "挑选今天要推进的事", "将下一项任务加入今日候选。"],
+      ["03", "给任务留出时间", "把同一项任务排入时间轴上的空闲时段。"],
     ],
-    planningKicker: "规划", planningTitle: "把长期目标，拆解为可以落地的日常任务。",
-    planningBody: "用项目树梳理任务脉络，何时推进哪一步，一目了然。",
+    dockTitle: "把 NavoPath 停靠在屏幕边缘。",
+    dockBody: "在桌面端点击左上角的 N，选择停靠在左侧或右侧。通过屏幕边缘的小条重新展开，再点击 N 即可恢复普通窗口。",
+    marketTitle: "按需添加视图和工具。",
+    marketBody: "在设置中浏览插件市场，为工作区添加看板、矩阵、列表等视图。",
+    marketLink: "了解插件市场",
     ctaTitle: "从今天开始，理清节奏。", ctaBody: "打开 NavoPath，开始规划你的每日日程。",
   },
 } as const;
-
-function ProductPreview({ lang }: { lang: Lang }) {
-  const c = copy[lang];
-  return <section className="landing-product-rise" aria-label={c.productKicker}>
-    <img
-      className="landing-product-screenshot"
-      src={lang === "zh" ? "/navopath-execute-zh-v2.png" : "/navopath-execute-en-v2.png"}
-      width={2880}
-      height={1620}
-      loading="eager"
-      decoding="async"
-      alt={lang === "zh" ? "NavoPath 中文执行工作区：今日候选、习惯与时间轴" : "NavoPath Execute workspace in English: candidates, habits, and timeline"}
-    />
-  </section>;
-}
-
-function PlanningPreview({ lang }: { lang: Lang }) {
-  const c = copy[lang];
-  return <section className="landing-planning-preview" aria-label={c.planningTitle}>
-    <img
-      className="landing-planning-screenshot"
-      src={lang === "zh" ? "/navopath-planning-zh-v2.png" : "/navopath-planning-en-v2.png"}
-      width={2880}
-      height={1620}
-      loading="lazy"
-      decoding="async"
-      alt={lang === "zh" ? "NavoPath 中文规划工作区：目标拆解、项目树与多视图" : "NavoPath Planning workspace in English: project trees, views, and goal decomposition"}
-    />
-  </section>;
-}
 
 function AuthDialog({ lang, onClose, onLogin, onResend, onContinueAfterConfirm, onForgotPassword, busy, error, notice }: {
   lang: Lang;
@@ -148,7 +123,7 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
   initialShowAuth?: boolean;
   signedIn?: boolean;
 }) {
-  const [lang, setLang] = useState<Lang>("en");
+  const [lang, setLang] = useState<Lang>(() => siteLanguage(location.search));
   const [showAuth, setShowAuth] = useState(initialShowAuth);
   const [coverRecede, setCoverRecede] = useState(0);
   const [portalExit, setPortalExit] = useState(0);
@@ -219,12 +194,20 @@ export default function LandingPage({ onLogin, onResend, onContinueAfterConfirm,
     </nav>
     <main>
       <section className="landing-cover" id="top"><LandingPortals lang={lang} recede={portalExit} /><div className="landing-cover-content" style={coverStyle}><div className="landing-cover-logo"><ProductIcon /></div><div className="landing-brand-copy"><p className="landing-product-name">{c.productName}</p><h1 className="landing-slogan">{c.title}</h1></div></div><span className="landing-product-scroll-cue" aria-hidden="true"><i>↑</i>{c.scroll}</span></section>
-      <ProductPreview lang={lang} />
+      <section className="landing-product-rise" aria-label={featureNames[lang].workspace}>
+        <ProductScreenshot feature="workspace" lang={lang} alt={lang === "zh" ? "NavoPath 项目规划工作区" : "The NavoPath project workspace"} eager />
+      </section>
       <section className="landing-steps" id="how-it-works"><div className="landing-steps-intro"><span>01 / {c.stepsKicker}</span><h2>{c.stepsTitle}</h2></div><ol>{c.steps.map(([number, title, body]) => <li key={number}><span>{number}</span><div><h3>{title}</h3><p>{body}</p></div></li>)}</ol></section>
-      <section className="landing-planning" id="planning"><div className="landing-planning-copy"><span>02 / {c.planningKicker}</span><h2>{c.planningTitle}</h2><p>{c.planningBody}</p></div><PlanningPreview lang={lang} /></section>
+      <section className="landing-planning" id="desktop-dock">
+        <div className="landing-planning-copy"><h2>{c.dockTitle}</h2><p>{c.dockBody}</p></div>
+      </section>
+      <section className="landing-planning" id="plugin-market">
+        <div className="landing-planning-copy"><h2>{c.marketTitle}</h2><p>{c.marketBody}</p><a className="landing-button quiet" href={featureHref("plugins", lang)}>{c.marketLink}<span aria-hidden="true">→</span></a></div>
+        <div className="landing-planning-preview"><ProductScreenshot feature="plugins" lang={lang} alt={featureNames[lang].plugins} /></div>
+      </section>
       <section className="landing-cta"><span>03 / NAVOPATH</span><h2>{c.ctaTitle}</h2><p>{c.ctaBody}</p><div className="landing-actions"><button className="np-start-link" onClick={() => setShowAuth(true)}>{c.start}</button><a className="landing-button quiet" href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer">{c.download}<span>→</span></a></div></section>
     </main>
-    <footer className="landing-footer"><nav aria-label={lang === "zh" ? "产品功能" : "Features"}>{PRODUCT_FEATURES.map(feature => <a key={feature} href={featureHref(feature, lang)}>{featureNames[lang][feature]}</a>)}<a href={`/privacy?lang=${lang}`}>{lang === "zh" ? "隐私政策" : "Privacy Policy"}</a></nav><a className="landing-footer-author" href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">© 2026 Xiaoyang Chen</a><a className="landing-footer-principles" href={principleHref("jev", lang)}>{lang === "zh" ? "设计原理" : "Principles"}</a></footer>
+    <footer className="landing-footer"><nav aria-label={lang === "zh" ? "产品功能" : "Features"}>{PRODUCT_FEATURES.map(feature => <a key={feature} href={featureHref(feature, lang)}>{featureNames[lang][feature]}</a>)}<a href={`/privacy?lang=${lang}`}>{lang === "zh" ? "隐私政策" : "Privacy Policy"}</a></nav><a className="landing-footer-author" href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">© 2026 Xiaoyang Chen</a><a className="landing-footer-principles" href={principleHref("index", lang)}>{lang === "zh" ? "设计原理" : "Principles"}</a></footer>
     {showAuth && <AuthDialog lang={lang} onClose={() => setShowAuth(false)} onLogin={onLogin} onResend={onResend} onContinueAfterConfirm={onContinueAfterConfirm} onForgotPassword={onForgotPassword} busy={busy} error={error} notice={notice} />}
   </div>;
 }
