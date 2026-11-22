@@ -26,7 +26,7 @@ jobs:
 
       - name: Check access to the navopath.com Worker routes
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.NAVOPATH_BETA_CLOUDFLARE_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           node --input-type=module <<'NODE'
@@ -36,7 +36,7 @@ jobs:
             console.error(`::error::${message}`);
             process.exit(1);
           }
-          if (!token || !account) fail("Cloudflare deployment credentials are missing for this GitHub Actions job.");
+          if (!token || !account) fail("Configure the NAVOPATH_BETA_CLOUDFLARE_TOKEN and CLOUDFLARE_ACCOUNT_ID GitHub Actions secrets.");
           async function request(endpoint, operation) {
             const res = await fetch(`https://api.cloudflare.com/client/v4${endpoint}`, {
               headers: { Authorization: `Bearer ${token}` },
@@ -73,7 +73,7 @@ jobs:
         shell: bash
         run: |
           if [[ -z "$CLOUDFLARE_API_TOKEN" || -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
-            echo "::error::Cloudflare deployment credentials are missing for this GitHub Actions job."
+            echo "::error::Configure the NAVOPATH_BETA_CLOUDFLARE_TOKEN and CLOUDFLARE_ACCOUNT_ID GitHub Actions secrets."
             exit 1
           fi
           if ./mcp-worker/node_modules/.bin/wrangler deploy --config wrangler.beta.toml 2>&1 | tee "$RUNNER_TEMP/navopath-wrangler.log"; then
@@ -96,7 +96,7 @@ jobs:
           PYTHON
           exit 1
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.NAVOPATH_BETA_CLOUDFLARE_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Verify the public beta routes
