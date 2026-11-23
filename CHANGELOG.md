@@ -2,6 +2,12 @@
 
 ## 2026-11-23
 
+### 1.7.0 Beta 64
+
+#### 改进
+
+- 官网 Beta 首屏恢复围绕标志的四张可展开页面入口。下方可交互工作区恢复与正式首页相同的全宽 16:9 布局。
+
 ### 1.7.0 Beta 63
 
 #### 改进
@@ -904,6 +910,12 @@
 # NavoPath Changelog
 
 ## 2026-11-23
+
+### 1.7.0 Beta 64
+
+#### Improved
+
+- The Beta homepage restores the four expanding page previews around the logo. The interactive workspace below matches the full-width 16:9 layout of the main homepage.
 
 ### 1.7.0 Beta 63
 
