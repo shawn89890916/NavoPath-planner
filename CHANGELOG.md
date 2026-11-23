@@ -2,6 +2,12 @@
 
 ## 2026-11-23
 
+### 1.7.0 Beta 66
+
+#### 改进
+
+- 官网 Beta 插件市场改为顶部对齐的双排卡片，两排对向循环，支持暂停及切换到完整列表。
+
 ### 1.7.0 Beta 65
 
 #### 改进
@@ -917,6 +923,12 @@
 # NavoPath Changelog
 
 ## 2026-11-23
+
+### 1.7.0 Beta 66
+
+#### Improved
+
+- The Beta website displays the plugin market in two aligned rows that loop in opposite directions, with options to pause or view the full catalog.
 
 ### 1.7.0 Beta 65
 
