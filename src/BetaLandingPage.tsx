@@ -1,6 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { ProductMenu, SiteLanguageSwitch } from "./components/ProductMenu";
 import { ProductIcon } from "./ProductIcon";
+import { UiCalendarClockIcon } from "./components/UiIcons";
 import LandingPortals from "./LandingPortals";
 import { useLandingCover } from "./useLandingCover";
 import { DESKTOP_DOWNLOAD_URL, DESKTOP_RELEASES_URL } from "./downloads";
@@ -20,7 +21,7 @@ const copy = {
     workspace: "工作区", market: "插件市场", principles: "设计原理", web: "打开网页版",
     title: "挑任务、排时间、临时改，都在同一页",
     intro: "左边是待安排的任务，右边是今天的时间轴。",
-    play: "试排一个任务", reset: "重置试玩",
+    play: "试排一个任务", reset: "重置试玩", scrollTimeline: "滚动时间轴", scrollPage: "返回网页滚动",
     drag: "把「调整网站布局」拖进右侧空档。",
     tap: "给「调整网站布局」选一个空档。",
     marketTitle: "需要什么，就加什么",
@@ -35,7 +36,7 @@ const copy = {
     workspace: "Workspace", market: "Plugin Market", principles: "Design Notes", web: "Open web app",
     title: "Pick tasks, block time, and shift plans—all on one page.",
     intro: "Tasks on the left, today’s timeline on the right.",
-    play: "Try scheduling a task", reset: "Reset demo",
+    play: "Try scheduling a task", reset: "Reset demo", scrollTimeline: "Scroll timeline", scrollPage: "Resume page scrolling",
     drag: "Drag “Refine the website layout” into an open slot.",
     tap: "Pick an open slot for “Refine the website layout.”",
     marketTitle: "Add what you need",
@@ -49,11 +50,17 @@ const copy = {
 } as const;
 
 export default function BetaLandingPage() {
-  const { coverStyle, portalExit, entrance } = useLandingCover();
+  const { coverStyle, portalExit, entrance } = useLandingCover({ fadeWithPortals: true });
   const [lang, setLang] = useState(() => siteLanguage(location.search, navigator.language));
   const [ready, setReady] = useState(false);
   const [scheduled, setScheduled] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [timelineScroll, setTimelineScroll] = useState(false);
+  const scrollButton = useRef<HTMLButtonElement>(null);
+  const exitTimelineScroll = useCallback((restoreFocus: boolean) => {
+    setTimelineScroll(false);
+    if (restoreFocus) scrollButton.current?.focus({ preventScroll: true });
+  }, []);
   const c = copy[lang];
   const marketPage = featureHref("plugins", lang);
   const notesPage = principleHref("index", lang);
@@ -96,7 +103,7 @@ export default function BetaLandingPage() {
         <ProductMenu lang={lang} kind="support" includeGitHub />
       </div>
       <div className="landing-nav-actions">
-        <SiteLanguageSwitch lang={lang} onChange={(next) => { setReady(false); setScheduled(false); setLang(next); }} />
+        <SiteLanguageSwitch lang={lang} onChange={(next) => { setReady(false); setScheduled(false); setTimelineScroll(false); setLang(next); }} />
         <a className="np-start-link" href="/app">{c.web}</a>
       </div>
     </nav>
@@ -110,20 +117,25 @@ export default function BetaLandingPage() {
             <p className="landing-product-name">NavoPath</p>
             <h1 className="landing-slogan">{c.title}</h1>
             <p className="beta-hero-intro">{c.intro}</p>
-            <a className="beta-primary" href="#workspace">{c.play}</a>
+            <a className="beta-primary" href="#workspace" inert={portalExit === 1}>{c.play}</a>
           </div>
         </div>
       </section>
 
       <section className="landing-product-rise beta-workspace-window" id="workspace" aria-label={c.workspace} tabIndex={-1}>
-        <ProductDemoFrame key={`${lang}-${attempt}`} feature="execute" lang={lang} onReady={setReady} onProgress={setScheduled} />
+        {ready && <div className="beta-scroll-rail">
+          <button ref={scrollButton} type="button" className="beta-link-button beta-scroll-mode" data-active={timelineScroll} onClick={() => setTimelineScroll(value => !value)} onKeyDown={event => {
+            if (event.key === "Escape" && timelineScroll) exitTimelineScroll(false);
+          }}><UiCalendarClockIcon size={16} />{timelineScroll ? c.scrollPage : c.scrollTimeline}</button>
+        </div>}
+        <ProductDemoFrame key={`${lang}-${attempt}`} feature="execute" lang={lang} onReady={setReady} onProgress={setScheduled} timelineScroll={timelineScroll} onExitTimelineScroll={exitTimelineScroll} />
         {/* Scheduling instructions stay outside the measured workspace frame. */}
         {ready && <div className="beta-container beta-demo-controls">
           {!scheduled && <p>
             <span className="beta-drag-instruction">{c.drag}</span>
             <span className="beta-tap-instruction">{c.tap}</span>
           </p>}
-          <button type="button" onClick={() => { setReady(false); setScheduled(false); setAttempt(value => value + 1); }}>{c.reset}</button>
+          <button type="button" onClick={() => { setReady(false); setScheduled(false); setTimelineScroll(false); setAttempt(value => value + 1); }}>{c.reset}</button>
         </div>}
       </section>
 

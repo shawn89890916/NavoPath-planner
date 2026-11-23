@@ -28,7 +28,8 @@
 .df-extension-market .df-settings-select { max-width: 100%; min-height: 40px; padding: 0 10px; color: var(--text-main); background: var(--surface-card); border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-control); font: inherit; }
 .df-extension-market-filter { display: flex; align-items: center; gap: 10px; font-size: 13px; white-space: nowrap; }
 .df-extension-market-count { flex-basis: 100%; color: var(--text-muted); font-size: 12px; }
-.df-extension-market-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 22px 24px 28px; }
+.df-extension-market-body { min-height: 0; padding: 22px 24px 28px; }
+.ui-modal.df-extension-market .df-extension-market-body { overflow-y: auto; overscroll-behavior: contain; }
 .df-extension-market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 18px; }
 .df-extension-market-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: 10px; background: var(--surface-card); }
 .df-extension-market-open { flex: 1; display: block; width: 100%; padding: 18px; border: 0; border-radius: 0; background: transparent; color: inherit; text-align: start; font: inherit; cursor: pointer; }
@@ -37,7 +38,7 @@
 .df-extension-plugin-heading { display: flex; min-width: 0; align-items: center; gap: 12px; }
 .df-extension-plugin-heading > div { min-width: 0; }
 .df-extension-plugin-heading h3 { margin: 0; overflow-wrap: anywhere; }
-.df-extension-plugin-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; overflow: hidden; border: 1px solid var(--paper-rule); border-radius: 11px; color: var(--text-main); background: var(--paper-note); font: 600 20px/1 var(--paper-sans); }
+.df-extension-plugin-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; overflow: hidden; border: 1px solid var(--paper-rule); border-radius: 11px; color: var(--text-main); background: var(--paper-note); }
 .df-extension-plugin-icon img { width: 24px; height: 24px; object-fit: contain; }
 .df-extension-market-stats { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; color: var(--text-muted); font: 400 11px/1.5 var(--paper-sans); }
 .df-extension-market-stats span { color: var(--paper-rule-strong); }

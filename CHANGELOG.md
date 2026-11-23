@@ -4,7 +4,8 @@
 
 ### 改进
 
-- 官网 Beta 恢复围绕品牌标志的四张可展开页面入口及悬停导航。下方以全宽展示可操作的任务与时间轴，插件市场支持搜索、排序和查看详情。
+- 官网 Beta 恢复围绕品牌标志的四张可展开页面入口及悬停导航。首屏标志和文案随页面滚动退出，避免遮挡后续内容。
+- 官网时间轴默认随网页滚动，可切换到时间轴内部滚动。插件市场沿网页展开，每款插件使用独立图标，并保留搜索、排序和详情。
 
 ## 2026-11-22
 
@@ -517,7 +518,8 @@
 
 ### Improvements
 
-- The Beta homepage restores the four expanding page previews around the logo and the hover menus. The interactive Tasks and timeline workspace spans the full page width, and the marketplace supports search, sorting, and plugin details.
+- The Beta homepage restores the four expanding page previews around the logo and the hover menus. The hero logo and text fade out as you scroll so the sections below stay clear.
+- Scrolling over the timeline moves the page until you switch to timeline scrolling. The plugin market flows with the page and gives each plugin a distinct icon alongside search, sorting, and details.
 
 ## 2026-11-22
 

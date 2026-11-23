@@ -5,6 +5,7 @@ import { getDefaultSettings } from "./defaultSettings";
 import { createDemoData, DEMO_DATE, DEMO_STAMP, firstDemoSlot, scheduleDemoTask } from "./productDemoData";
 import { isDemoVisibility, siteLanguage, sitePath, type ProductDemo } from "./productSite";
 import { createMemoryStorage, installWorkspaceDemoRuntime } from "./workspaceEnvironment";
+import { installProductDemoPageScroll } from "./productDemoPageScroll";
 import "./product-demo.css";
 
 export function installProductDemo(feature: ProductDemo) {
@@ -13,6 +14,7 @@ export function installProductDemo(feature: ProductDemo) {
   const presentation = new URLSearchParams(location.search).get("presentation");
   const fullscreen = presentation === "full";
   const showcaseHome = presentation === "home" && feature === "execute";
+  if (showcaseHome) installProductDemoPageScroll();
   const planning = feature === "planning" || feature === "workspace";
   const showcaseAi = fullscreen && feature === "ai";
   let data = createDemoData(language, feature, feature === "execute" ? 2 : 1);

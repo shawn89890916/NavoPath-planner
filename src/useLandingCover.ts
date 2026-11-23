@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties, type HTMLAttributes } from "react";
 import { prefersReducedMotion } from "./motion";
 
-export function useLandingCover() {
+export function useLandingCover({ fadeWithPortals = false } = {}) {
   const [coverRecede, setCoverRecede] = useState(0);
   const [portalExit, setPortalExit] = useState(0);
   const [entering, setEntering] = useState(() => !prefersReducedMotion() && window.scrollY < 1 && !location.hash);
@@ -18,7 +18,7 @@ export function useLandingCover() {
       const progress = distance ** .34;
       setCoverRecede((current) => Math.abs(current - progress) < .01 ? current : progress);
       const exit = Math.min(1, Math.max(0, window.scrollY / (viewport * .58)));
-      setPortalExit(current => Math.abs(current - exit) < .004 ? current : exit);
+      setPortalExit(current => exit === 1 || exit === 0 || Math.abs(current - exit) >= .004 ? exit : current);
     };
     const requestUpdate = () => { if (!frame) frame = window.requestAnimationFrame(update); };
     requestUpdate();
@@ -37,7 +37,7 @@ export function useLandingCover() {
     "--landing-cover-scale": String(1 - coverRecede * .16),
     "--landing-cover-gray": String(coverRecede * .98),
     "--landing-cover-brightness": String(1 - coverRecede * .22),
-    "--landing-cover-opacity": String(1 - coverRecede * .56),
+    "--landing-cover-opacity": String((1 - coverRecede * .56) * (fadeWithPortals ? 1 - portalExit : 1)),
   } as CSSProperties;
 
   const finishEntrance = () => setEntering(false);

@@ -6,13 +6,19 @@ import "./product-demo-frame.css";
 
 type DemoFrameProps =
   | { feature: "workspace" | "ai"; lang: Language }
-  | { feature: "execute"; lang: Language; onReady: (ready: boolean) => void; onProgress: (scheduled: boolean) => void };
+  | {
+    feature: "execute"; lang: Language;
+    onReady: (ready: boolean) => void; onProgress: (scheduled: boolean) => void;
+    timelineScroll: boolean; onExitTimelineScroll: (restoreFocus: boolean) => void;
+  };
 
 export default function ProductDemoFrame(props: DemoFrameProps) {
   const { feature, lang } = props;
   const home = props.feature === "execute" ? props : undefined;
   const onReady = home?.onReady;
   const onProgress = home?.onProgress;
+  const timelineScroll = home?.timelineScroll;
+  const onExitTimelineScroll = home?.onExitTimelineScroll;
   const frame = useRef<HTMLIFrameElement>(null);
   const host = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -49,6 +55,7 @@ export default function ProductDemoFrame(props: DemoFrameProps) {
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
       sendVisibility();
+      if (!visible && timelineScroll) onExitTimelineScroll?.(false);
     });
     observer.observe(element);
     const receive = (event: MessageEvent) => {
@@ -59,13 +66,23 @@ export default function ProductDemoFrame(props: DemoFrameProps) {
       }
       if (event.data.type === "error") setStatus("failed");
       if (event.data.type === "progress" && typeof event.data.scheduled === "boolean") onProgress?.(event.data.scheduled);
+      if (event.data.type === "page-scroll" && timelineScroll === false && Number.isFinite(event.data.deltaY)) {
+        window.scrollBy({ top: event.data.deltaY, behavior: "instant" });
+      }
+      if (event.data.type === "exit-timeline-scroll" && timelineScroll) onExitTimelineScroll?.(true);
     };
     addEventListener("message", receive);
     return () => {
       observer.disconnect();
       removeEventListener("message", receive);
     };
-  }, [onProgress]);
+  }, [onProgress, onExitTimelineScroll, timelineScroll]);
+
+  useEffect(() => {
+    if (status === "ready" && timelineScroll !== undefined) {
+      frame.current?.contentWindow?.postMessage({ channel: "navopath-product-demo", type: "scroll-mode", timelineScroll }, location.origin);
+    }
+  }, [status, timelineScroll]);
 
   useEffect(() => {
     onReady?.(status === "ready");
