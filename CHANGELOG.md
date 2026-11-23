@@ -1,5 +1,14 @@
 # NavoPath 更新日志
 
+## 2026-11-24
+
+### 1.7.0 Beta 74
+
+#### 改进
+
+- 已排程任务在详情顶部显示日期、起止时间和时长。悬停可看到编辑入口，点击即可调整日期与时间，任务进行中还会显示剩余时间。
+- 统一任务详情的项目、完成状态和排程按钮的尺寸与间距，将移除操作放到未完成右侧，子任务的添加与 AI 拆解改用无描边图标。
+
 ## 2026-11-23
 
 ### 1.7.0 Beta 73
@@ -951,6 +960,15 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-24
+
+### 1.7.0 Beta 74
+
+#### Improvements
+
+- Scheduled tasks show their date, start and end times, and duration at the top of the details panel. Hover to reveal the editing affordance, then click to adjust the date or time. In-progress tasks also show the time remaining.
+- Standardize project, completion, and scheduling button sizes and spacing, put Remove beside Incomplete, and use borderless icons for adding and breaking down subtasks.
 
 ## 2026-11-23
 

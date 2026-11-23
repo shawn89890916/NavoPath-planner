@@ -75,6 +75,7 @@ import { isOnboardingTask, onboardingBlock, onboardingStage, onboardingTarget, O
 import { ActionDisclosure, Button, CloseButton, IconButton, UndoButton } from "./components/UiPrimitives";
 
 import { DateQuickPicker } from "./components/DateQuickPicker";
+import { TaskDetailSchedule, type TaskScheduleRange } from "./components/TaskDetailSchedule";
 
 const INCOMPLETE_OUTCOMES = ["unfinished-return", "unfinished-stay", "skipped-return", "skipped-stay"] as const;
 const INCOMPLETE_LABELS = {
@@ -106,7 +107,7 @@ import { DEFAULT_WIDGET_RUNTIME, DEFAULT_WIDGET_TIMER_PREFERENCES, accumulateWid
 import { getTimerMode, getTimerModes, getTimerModeRevision, subscribeTimerModes, onTimerModeRemoving, onTimerModeOpening, openTimerMode } from "./extensions/timers";
 import { createTimerOwner, type TimerOwner } from "./extensions/timerOwner";
 import { extendActiveTimelineRecord, nextOverrunExtensionEnd, resolvePomodoroTask, resolveWidgetTimelineSelection, timelineRecordBounds } from "./widget/widgetSchedule";
-import { hasActiveTaskSchedule, applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, findScheduledTimelineRecord, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
+import { hasActiveTaskSchedule, applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, findScheduledTimelineRecord, normalizeTimelineRecord, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { anchoredTimelineScrollTop, timelineZoomFromPinch } from "./utils/timelineZoom";
 import { calendarEventDurationMinutes, expandTimedCalendarEvent } from "./utils/calendarEventSlices";
 import { MOTION, runMotionTransition, scheduleMotionCommit } from "./motion";
@@ -5909,6 +5910,45 @@ if (cached?.data && cached?.settings) {
     showToast(t(lang, "toast.cancelledPlan"));
   }
 
+  function editTaskSchedule(taskId: string, source: TaskScheduleRange, next: TaskScheduleRange, duration: number, recordId?: string, occurrence?: EditingOccurrence) {
+    const current = dataRef.current;
+    const task = current?.tasks.find((item) => item.id === taskId);
+    if (!current || !task) return lang === "zh" ? "找不到此任务。" : "This task is no longer available.";
+    const records = task.timelineRecords || [];
+    const record = records.find((item) => item.id === recordId);
+    const previousDate = record?.scheduledDate || occurrence?.scheduledDate || task.scheduledDate;
+    const previousStart = record?.scheduledStart || occurrence?.scheduledStart || task.scheduledStart;
+    if ((recordId && !record) || previousDate !== source.date || previousStart !== source.start
+      || (record && (record.scheduledEnd !== source.end || normalizeTimelineRecord(record).scheduledEndDate !== source.endDate))
+      || (occurrence && (!hasRecurrenceOccurrenceOnDate(task, occurrence.scheduledDate) || records.some((item) => item.scheduledDate === occurrence.scheduledDate)))) {
+      return lang === "zh" ? "日程已更新，请关闭弹窗后重试。" : "This schedule changed. Close the editor and try again.";
+    }
+    if (next.date !== source.date && hasRecurrenceOccurrenceOnDate(task, next.date)
+      && !records.some((item) => item.scheduledDate === next.date)) {
+      return lang === "zh" ? "这天已有此任务的重复日程，请选另一天。" : "This task already repeats on that date. Choose another date.";
+    }
+    const moved = record
+      ? rescheduleTimelineRecord(record, next.date, next.start, duration)
+      : createScheduledRecord(task, next.date, next.start, duration, { preserveTime: true });
+    const nextRecords = record ? records.map((item) => item.id === record.id ? moved : item) : [...records, moved];
+    if (next.date !== source.date && hasRecurrenceOccurrenceOnDate(task, source.date)
+      && !nextRecords.some((item) => item.scheduledDate === source.date)) {
+      nextRecords.push(createOccurrenceExceptionRecord(task, source.date, task.recurrence!.startTime!, "cancelled"));
+    }
+    const legacy = !record && !occurrence;
+    if (legacy) moved.executionStatus = task.executionStatus || (task.completed ? "completed" : "scheduled");
+    const updated: Task = {
+      ...task,
+      ...(legacy ? { scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, executionStatus: undefined } : {}),
+      timelineRecords: nextRecords,
+      updatedAt: workspaceNow().toISOString(),
+    };
+    void saveTaskOperation({ ...current, tasks: current.tasks.map((item) => item.id === taskId ? updated : item) }, "reschedule");
+    setEditingRecordId(moved.id);
+    setEditingOccurrence(null);
+    return undefined;
+  }
+
   function replanRecurringOccurrence(taskId: string, occurrence: EditingOccurrence) {
     if (!data || !occurrence) return;
     const sourceTask = data.tasks.find((task) => task.id === taskId);
@@ -10818,7 +10858,7 @@ if (cached?.data && cached?.settings) {
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
+      {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onEditSchedule={editTaskSchedule} weekStartsOn={settings.weekStartsOn} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel && workspaceChatPanel && <div className="df-utility-backdrop" data-workspace-backdrop data-motion-closing={aiPresence.closing || undefined} onMouseDown={closeWorkspaceChat} />}
       {!productAiPresentation && aiPanel}
       {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}
@@ -12027,6 +12067,7 @@ function NowLine({ extraStyle, dayStartHour = 0, hourHeight = HOUR_HEIGHT, highl
 function EditDrawer(props: {
   engagementEnabled?: boolean;
   type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; event?: CalendarEvent; today: string; onClose: () => void; onSave: () => void; onDelete: () => Promise<void> | undefined; onCopy: () => void; onConvertToEvent: () => void; onConvertToTask: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => Promise<void> | undefined; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onLocateTimeline: (date: string, startTime: string, taskId: string) => void; onLocateTree?: (task: Task) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
+  onEditSchedule: (taskId: string, source: TaskScheduleRange, next: TaskScheduleRange, duration: number, recordId?: string, occurrence?: EditingOccurrence) => string | undefined; weekStartsOn: 0 | 1;
   editingRecordId?: string; setEditingRecordId?: (id: string | undefined) => void; editingOccurrence?: EditingOccurrence; data?: PlannerData | null; saveData?: (next: PlannerData) => Promise<void>; onSaveRecurrence: (taskId: string, recurrence?: TaskRecurrence) => void; onCancelOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onReplanOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onCancelAllRecurrence: (taskId: string, cutoffDate: string) => void; aiEnabled: boolean; subtaskAiLoading: boolean; subtaskAiRevealIds: string[]; onGenerateSubtasks: (taskId: string) => void; lang: Language; compactSummary?: boolean; onCompactActionSuccess: (message: string) => void; onShowMore?: () => void;
 }) {
   const dialog = useInAppDialog(props.lang);
@@ -12506,6 +12547,22 @@ function EditDrawer(props: {
       scheduledStart: activeRecord.scheduledStart,
     } : null);
     const timelineRecord = activeRecord || (props.task.timelineRecords || []).find((record) => record.executionStatus === "scheduled") || (props.task.timelineRecords || []).at(-1);
+    const scheduleRecord = activeRecord || (!props.editingOccurrence ? timelineRecord : undefined);
+    const scheduleDate = scheduleRecord?.scheduledDate || props.editingOccurrence?.scheduledDate || props.task.scheduledDate;
+    const scheduleStart = scheduleRecord ? scheduleRecord.scheduledStart : props.editingOccurrence?.scheduledStart || props.task.scheduledStart;
+    let scheduleRange: TaskScheduleRange | undefined;
+    const clockTime = /^([01]\d|2[0-3]):[0-5]\d$/;
+    if (scheduleDate && scheduleStart && validIsoDate(scheduleDate) && clockTime.test(scheduleStart)) {
+      const fallbackDuration = props.task.recurrence?.durationMinutes || taskDuration(props.task);
+      const legacyDuration = props.task.scheduledEnd && !props.editingOccurrence && clockTime.test(props.task.scheduledEnd)
+        ? clockTimeSpanMinutes(scheduleStart, props.task.scheduledEnd) : fallbackDuration;
+      const end = (scheduleRecord?.scheduledEnd && normalizeTimelineRecord(scheduleRecord))
+        || calculateTimelineRecordEnd(scheduleDate, scheduleStart, legacyDuration);
+      const endDate = end.scheduledEndDate || scheduleDate;
+      if (validIsoDate(endDate) && clockTime.test(end.scheduledEnd)) {
+        scheduleRange = { date: scheduleDate, start: scheduleStart, endDate, end: end.scheduledEnd };
+      }
+    }
     const timelineLocation = timelineRecord
       ? { date: timelineRecord.scheduledDate, startTime: timelineRecord.scheduledStart, taskId: timelineRecord.id }
       : activeOccurrence
@@ -12594,24 +12651,27 @@ function EditDrawer(props: {
     return (
       <>
       {dialog.host}
-      <aside className={`df-drawer df-task-detail${summaryExpanded.current ? " is-expanded-from-summary" : ""}`} style={{ "--mobile-sheet-start-inset": summaryExpanded.current } as CSSProperties} onMouseDown={(event) => event.stopPropagation()}>
+      <aside className={`df-drawer df-task-detail df-task-detail--editing${summaryExpanded.current ? " is-expanded-from-summary" : ""}`} style={{ "--mobile-sheet-start-inset": summaryExpanded.current } as CSSProperties} onMouseDown={(event) => event.stopPropagation()}>
         <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
         {/* ── Hero title area ── */}
         <section className="df-detail-hero-trevor">
           <textarea ref={titleRef} className="df-detail-title-trevor" aria-label={t(props.lang, "drawer.titlePlaceholder")} value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.titlePlaceholder")} spellCheck={false} />
+          {scheduleRange && <TaskDetailSchedule range={scheduleRange} today={props.today} weekStartsOn={props.weekStartsOn} lang={props.lang}
+            countdown={!props.task.completed && (!scheduleRecord || scheduleRecord.executionStatus === "scheduled")}
+            onSave={(source, next, duration) => props.onEditSchedule(props.task!.id, source, next, duration, scheduleRecord?.id, props.editingOccurrence || undefined)} />}
         </section>
 
         {/* ── Project tag + action row ── */}
         <section className="df-detail-tag-row">
-          <button ref={projectTriggerRef} className={`df-detail-pill-trevor ${projectPickerOpen ? "active" : ""}`} onClick={toggleProjectPicker}>
+          <button ref={projectTriggerRef} className={`df-detail-pill-trevor ${projectPickerOpen ? "active" : ""}`} onClick={toggleProjectPicker} title={selectedProjectTitle}>
             <span className="df-detail-project-dot" style={{ background: projectColorInk(props.projects.find((p) => String(p.id) === String(f.projectId))?.color || "#888") }} />
-            <span># {selectedProjectTitle}</span>
-            <svg viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4l3 3 3-3" /></svg>
+            <span className="df-detail-project-name"># {selectedProjectTitle}</span>
+            <UiChevronDownIcon size={12} />
           </button>
-          <button ref={durationTriggerRef} className={`df-detail-pill-trevor ${durationPickerOpen ? "active" : ""}`} onClick={toggleDurationPicker}>
+          {!scheduleRange && <button ref={durationTriggerRef} className={`df-detail-pill-trevor ${durationPickerOpen ? "active" : ""}`} onClick={toggleDurationPicker}>
             <span>◷ {formatDuration(f.estimatedHours || 0.5)}</span>
-            <svg viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4l3 3 3-3" /></svg>
-          </button>
+            <UiChevronDownIcon size={12} />
+          </button>}
           {recurrenceText ? <span className="df-detail-pill-trevor">↻ {recurrenceText}</span> : null}
         </section>
         <section className="df-detail-importance-row" aria-label={props.lang === "zh" ? "任务标记" : "Task flags"}>
@@ -12646,12 +12706,12 @@ function EditDrawer(props: {
               {INCOMPLETE_OUTCOMES.map((outcome, index) => <button key={outcome} type="button" role="menuitem" onClick={() => chooseIncompleteOutcome(outcome)}>{INCOMPLETE_LABELS[props.lang === "zh" ? "zh" : "en"][index]}</button>)}
             </div>}
           </div>}
+          <Button variant="danger" className="df-detail-remove" onClick={props.onDelete}><UiTrashIcon size={14} />{t(props.lang, "drawer.remove")}</Button>
           <ActionDisclosure label={props.lang === "zh" ? "更多" : "More"}>
             {timelineLocation && <Button onClick={() => props.onLocateTimeline(timelineLocation.date, timelineLocation.startTime, timelineLocation.taskId)}>{props.lang === "zh" ? `跳转到时间轴 · ${timelineLocation.date} ${timelineLocation.startTime}` : `Go to timeline · ${timelineLocation.date} ${timelineLocation.startTime}`}</Button>}
             {props.onLocateTree && !props.task.completed && props.task.workflowStatus !== "done" && <Button onClick={() => props.onLocateTree?.(props.task!)}>{props.lang === "zh" ? "在 Tree 中查看任务" : "Go to task in Tree"}</Button>}
             <Button onClick={() => { setQuickActionMenu(null); setRecurrenceDraft({ ...fixedRecurrence, mode: "scheduled" }); setRecurrenceOpen(true); }}>{t(props.lang, "drawer.setRepeat")}</Button>
             <Button onClick={props.onCopy}>{t(props.lang, "drawer.duplicate")}</Button>
-            <Button variant="danger" onClick={props.onDelete}>{t(props.lang, "drawer.remove")}</Button>
           </ActionDisclosure>
         </section>
 
@@ -12665,7 +12725,7 @@ function EditDrawer(props: {
         </section>
 
         {/* ── Scheduling: shown only for a task currently on the timeline ── */}
-        {isScheduled && <section className="df-detail-schedule-row">
+        {isScheduled && <section className="df-detail-schedule-row df-detail-schedule-actions">
           <div className={`df-detail-incomplete-menu${quickActionMenu === "reschedule" ? " open" : ""}`} onMouseEnter={() => {
             if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
             quickRescheduleHoverTimer.current = window.setTimeout(() => { setQuickActionMenu("reschedule"); quickRescheduleHoverTimer.current = null; }, 100);
@@ -12762,24 +12822,16 @@ function EditDrawer(props: {
           <div className="df-detail-section-head">
             <h3>{t(props.lang, "drawer.subtasks")}</h3>
             <div className="df-detail-subtask-tools">
-              {props.aiEnabled && <button
-                type="button"
-                className={`df-detail-add-btn df-detail-icon-tool df-detail-ai-subtasks${props.subtaskAiLoading ? " loading" : ""}`}
+              {props.aiEnabled && <IconButton
+                className={`ui-icon-button--borderless df-detail-ai-subtasks${props.subtaskAiLoading ? " loading" : ""}`}
+                icon={<UiSparklesIcon size={15} />}
                 title={props.lang === "zh" ? "AI 自动拆解" : "Break down with AI"}
-                aria-label={props.lang === "zh" ? `使用 AI 拆解“${props.task.title}”` : `Break down “${props.task.title}” with AI`}
+                label={props.lang === "zh" ? `使用 AI 拆解“${props.task.title}”` : `Break down “${props.task.title}” with AI`}
                 aria-busy={props.subtaskAiLoading}
                 disabled={props.subtaskAiLoading}
                 onClick={() => props.onGenerateSubtasks(props.task!.id)}
-              >
-                <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M10 2.5l1.1 3.2 3.4 1.1-3.4 1.1L10 11.1 8.9 7.9 5.5 6.8l3.4-1.1L10 2.5z" />
-                  <path d="M4.8 11.5l.7 2 2.1.7-2.1.7-.7 2-.7-2-2.1-.7 2.1-.7.7-2z" />
-                  <path d="M15.6 12.5l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5.5-1.4z" />
-                </svg>
-              </button>}
-              <button type="button" className="df-detail-add-btn df-detail-icon-tool" title={t(props.lang, "drawer.addSubtask")} aria-label={t(props.lang, "drawer.addSubtask")} onClick={() => void addSubtask()}>
-                <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2v8M2 6h8"/></svg>
-              </button>
+              />}
+              <IconButton className="ui-icon-button--borderless" icon={<UiPlusIcon size={15} />} label={t(props.lang, "drawer.addSubtask")} onClick={() => void addSubtask()} />
             </div>
           </div>
           {Boolean(props.task.subtasks?.length) && <div className="df-subtask-list-new ui-divided-list">

@@ -8841,17 +8841,12 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-subtask-add-child:focus-visible { outline:1px solid var(--accent-active); outline-offset:2px; }
 /* Task detail subtask tools: one baseline, compact icon actions, active-theme ink. */
 .df-detail-subtask-tools { display:flex; align-items:center; gap:2px; }
-.df-app .df-detail-subtask-tools .df-detail-add-btn {
-  width:34px; height:34px; min-width:34px; padding:0; display:grid; place-items:center;
-  border:1px solid var(--paper-rule); border-radius:var(--paper-radius);
-  corner-shape:var(--corner-shape, squircle);
-  color:var(--paper-ink-muted); background:transparent; box-shadow:none;
+#root .df-app .df-detail-subtask-tools .ui-icon-button {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
 }
-.df-app .df-detail-subtask-tools .df-detail-add-btn:hover:not(:disabled) {
-  color:var(--accent-active); border-color:var(--accent-active);
-  background:color-mix(in srgb,var(--accent-active) 6%,transparent); box-shadow:none;
-}
-.df-app .df-detail-subtask-tools .df-detail-add-btn:focus-visible { outline:1px solid var(--accent-active); outline-offset:2px; }
 .df-app .df-detail-subtask-tools .df-detail-ai-subtasks.loading svg {
   transform-origin:center;
   animation:df-subtask-ai-orbit 1.15s cubic-bezier(.5,0,.5,1) infinite;
@@ -8910,7 +8905,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-ai-subtask-preview li > strong { color:var(--text-main); font:500 12px/1.45 var(--paper-sans); }
 .df-ai-subtask-preview li > small { color:var(--text-faint); font:600 10px/1 var(--paper-mono); }
 @media (pointer:coarse) {
-  .df-app .df-detail-subtask-tools .df-detail-add-btn { width:44px; height:44px; min-width:44px; } .df-calendar-generate { min-height:44px; } .df-calendar-actions button { min-height:44px; } .df-subtask-add-child { flex-basis:44px; width:44px; height:44px; }
+  #root .df-app .df-detail-subtask-tools .ui-icon-button { width:44px; height:44px; min-width:44px; min-height:44px; } .df-calendar-generate { min-height:44px; } .df-calendar-actions button { min-height:44px; } .df-subtask-add-child { flex-basis:44px; width:44px; height:44px; }
   #root .df-app .df-detail-subtasks-new .df-subtask-row-new { grid-template-columns:44px minmax(0,1fr) 44px; min-height:56px; gap:8px; padding:6px 8px; }
   #root .df-app .df-detail-subtasks-new .df-task-checkbox-wrap { width:44px; height:44px; }
   #root .df-app .df-detail-subtasks-new .df-subtask-title-input { min-height:44px; }
@@ -10445,6 +10440,113 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   background: var(--paper-note);
 }
 .df-task-detail .df-detail-hero-trevor { padding-right: 52px; }
+.df-task-detail--editing {
+  --detail-action-width: min(148px, calc((100% - 56px) / 3));
+  --detail-action-height: 34px;
+  align-content: start;
+  gap: 8px;
+}
+.df-task-detail--editing .df-detail-hero-trevor { padding-bottom: 5px; }
+.df-task-schedule-summary {
+  display: grid;
+  gap: 2px;
+  color: var(--text-muted);
+  font: 500 14px/1.4 var(--paper-sans);
+}
+.df-task-schedule-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 5px;
+}
+#root .df-app .df-task-detail--editing .df-task-schedule-range > .ui-button,
+#root .df-app .df-task-detail--editing .df-task-schedule-range > .ui-button:is(:hover, :active, :focus-visible) {
+  min-width: 0;
+  min-height: 26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  transform: none;
+  transition: none;
+  color: var(--text-main);
+  font: inherit;
+  text-underline-offset: 3px;
+}
+#root .df-app .df-task-schedule-range > .ui-button:is(:hover, :focus-visible) {
+  text-decoration: underline;
+}
+#root .df-app .df-task-schedule-range > .ui-button:focus-visible { text-decoration-thickness: 2px; }
+.df-task-schedule-summary p {
+  margin: 0;
+  color: var(--warning-ink, var(--accent-active));
+  font-weight: 650;
+}
+.df-task-detail--editing :is(.df-detail-tag-row, .df-detail-status-row, .df-detail-schedule-row) {
+  align-items: center;
+  gap: 8px;
+}
+.df-task-detail--editing .df-detail-status-row > .ui-action-disclosure { margin-inline-start: auto; }
+.df-task-detail--editing .df-detail-status-row > .ui-action-disclosure > summary {
+  min-width: 32px;
+  min-height: var(--detail-action-height);
+  padding: 0;
+}
+.df-task-detail--editing .df-detail-subtasks-new,
+.df-task-detail--editing .df-detail-notes-new { padding: 10px 0; }
+.df-task-detail--editing .df-detail-section-head:last-child { margin-bottom: 0; }
+.df-task-detail--editing .df-detail-project-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#root .df-app .df-task-detail--editing :is(.df-detail-tag-row, .df-detail-status-row, .df-detail-schedule-actions) :is(button.df-detail-pill-trevor, .df-detail-remove) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: var(--detail-action-height);
+  padding: 2px 5px;
+  gap: 4px;
+  font: 600 12.5px/1.1 var(--paper-sans);
+  text-align: center;
+  white-space: normal;
+}
+#root .df-app .df-task-detail--editing :is(.df-detail-tag-row, .df-detail-status-row, .df-detail-schedule-actions) > :is(button.df-detail-pill-trevor, .df-detail-remove, .df-detail-incomplete-menu) {
+  flex: 0 0 var(--detail-action-width);
+}
+.df-task-detail--editing :is(.df-detail-pill-trevor, .df-detail-remove) > svg { flex: none; }
+#root .df-app .df-task-detail--editing .df-detail-remove:not(:disabled) {
+  border: 0;
+  background: transparent;
+  color: var(--df-danger);
+}
+#root .df-app .df-task-detail--editing .df-detail-remove:is(:hover, :focus-visible):not(:disabled) {
+  background: color-mix(in srgb, var(--df-danger) 8%, transparent);
+}
+.df-app .df-task-detail--editing .df-detail-due-date > label {
+  flex: 0 1 216px;
+  min-height: var(--detail-action-height);
+  margin: 0;
+  padding: 4px 7px;
+}
+#root .df-app .df-task-detail--editing .df-detail-due-reset {
+  display: inline-grid;
+  place-items: center;
+  min-height: var(--detail-action-height);
+  padding: 2px 8px;
+  font: 600 12.5px/1.1 var(--paper-sans);
+}
+.df-task-detail--editing .df-detail-incomplete-options { min-width: max(100%, 190px); }
+@media (max-width: 640px), (pointer: coarse) {
+  .df-task-detail--editing { --detail-action-height: 44px; }
+  .df-task-detail--editing .df-detail-status-row > .ui-action-disclosure > summary { min-width: 40px; }
+}
+@media (pointer: coarse) {
+  #root .df-app .df-task-detail--editing .df-task-schedule-range > .ui-button { min-height: 44px; }
+}
 .df-app .df-drawer input[type="checkbox"]:checked::before {
   transform: translateY(-1px) rotate(-45deg) scale(1);
   filter: url("#crayon-texture");
@@ -10676,6 +10778,48 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   gap: 14px;
   padding: 24px;
 }
+.ui-modal-overlay:has(> .df-task-schedule-editor) {
+  background: rgb(0 0 0 / 46%);
+}
+.df-task-schedule-editor {
+  width: min(360px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  border-radius: var(--paper-radius-soft);
+  box-shadow: var(--paper-float-shadow);
+}
+.df-task-schedule-editor form { gap: 10px; padding: 18px; }
+.df-task-schedule-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--paper-rule);
+}
+#root .df-app .df-task-schedule-panels .ui-button[aria-pressed="true"] {
+  border-bottom-color: var(--accent-active);
+  border-radius: 0;
+  color: var(--accent-active);
+}
+.df-task-schedule-editor .df-mobile-date-picker {
+  display: block;
+  --date-picker-cell-height: 36px;
+  --date-picker-font-size: 13px;
+}
+#root .df-app .df-task-schedule-editor .df-mobile-date-grid > button[aria-pressed="true"] {
+  color: var(--accent-active);
+  background: var(--paper-note);
+  box-shadow: inset 0 0 0 1px var(--accent-active);
+  border-radius: var(--radius-control);
+}
+.df-task-schedule-picker > label {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 12px 4px;
+  color: var(--text-muted);
+  font: 600 13px/1.25 var(--paper-sans);
+}
+.df-task-schedule-footer { display: flex; justify-content: flex-end; gap: 8px; }
+#root .df-app .df-task-schedule-footer > button { width: 84px; min-height: 36px; }
 .df-dialog h2 {
   margin: 0;
   color: var(--text-main, #211d18);
