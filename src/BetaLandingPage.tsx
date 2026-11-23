@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { ProductMenu, SiteLanguageSwitch } from "./components/ProductMenu";
 import { ProductIcon } from "./ProductIcon";
+import LandingPortals from "./LandingPortals";
+import { useLandingCover } from "./useLandingCover";
 import { DESKTOP_DOWNLOAD_URL, DESKTOP_RELEASES_URL } from "./downloads";
 import ProductDemoFrame from "./ProductDemoFrame";
 import { featureHref, principleHref, siteHref, siteLanguage } from "./productSite";
@@ -47,6 +49,7 @@ const copy = {
 } as const;
 
 export default function BetaLandingPage() {
+  const { coverStyle, portalExit, entrance } = useLandingCover();
   const [lang, setLang] = useState(() => siteLanguage(location.search, navigator.language));
   const [ready, setReady] = useState(false);
   const [scheduled, setScheduled] = useState(false);
@@ -84,7 +87,7 @@ export default function BetaLandingPage() {
     }
   }, [lang]);
 
-  return <div className="landing beta-landing" lang={lang}>
+  return <div className={`landing beta-landing${entrance.entering ? " landing--entering" : ""}`} lang={lang} {...entrance.events}>
     <nav className="landing-nav" aria-label="NavoPath">
       <a className="landing-brand" href={siteHref(`/?lang=${lang}`)}><ProductIcon compact /><span>NavoPath</span></a>
       <div className="landing-nav-links">
@@ -98,9 +101,10 @@ export default function BetaLandingPage() {
       </div>
     </nav>
 
-    <main className="beta-container">
+    <main>
       <section className="landing-cover beta-hero" id="top">
-        <div className="landing-cover-content">
+        <LandingPortals lang={lang} recede={portalExit} />
+        <div className="landing-cover-content" style={coverStyle}>
           <div className="landing-cover-logo"><ProductIcon /></div>
           <div className="landing-brand-copy">
             <p className="landing-product-name">NavoPath</p>
@@ -111,41 +115,41 @@ export default function BetaLandingPage() {
         </div>
       </section>
 
-      <section id="workspace" aria-label={c.workspace} tabIndex={-1}>
-        {/* The real workspace loads on approach. Show one instruction until the sample task is scheduled. */}
-        {ready && <div className="beta-demo-controls">
+      <section className="landing-product-rise beta-workspace-window" id="workspace" aria-label={c.workspace} tabIndex={-1}>
+        <ProductDemoFrame key={`${lang}-${attempt}`} feature="execute" lang={lang} onReady={setReady} onProgress={setScheduled} />
+        {/* Scheduling instructions stay outside the measured workspace frame. */}
+        {ready && <div className="beta-container beta-demo-controls">
           {!scheduled && <p>
             <span className="beta-drag-instruction">{c.drag}</span>
             <span className="beta-tap-instruction">{c.tap}</span>
           </p>}
           <button type="button" onClick={() => { setReady(false); setScheduled(false); setAttempt(value => value + 1); }}>{c.reset}</button>
         </div>}
-        <div className="beta-workspace-window">
-          <ProductDemoFrame key={`${lang}-${attempt}`} feature="execute" lang={lang} onReady={setReady} onProgress={setScheduled} />
-        </div>
       </section>
 
-      <section className="beta-market" id="plugins" aria-labelledby="beta-market-title">
-        <div className="beta-market-copy">
-          <h2 id="beta-market-title">{c.marketTitle}</h2>
-          <p>{c.marketBody}</p>
-          <dl>
-            <div><dt>{c.timetable}</dt><dd>{c.timetableBody}</dd></div>
-            <div><dt>{c.capture}</dt><dd>{c.captureBody}</dd></div>
-          </dl>
-          <a className="beta-link-button" href="#plugin-catalog">{c.browse}</a>
-        </div>
-        <div className="beta-market-preview" id="plugin-catalog" tabIndex={-1}>
-          <Suspense fallback={null}><BetaPluginMarket lang={lang} /></Suspense>
-        </div>
-      </section>
+      <div className="beta-container">
+        <section className="beta-market" id="plugins" aria-labelledby="beta-market-title">
+          <div className="beta-market-copy">
+            <h2 id="beta-market-title">{c.marketTitle}</h2>
+            <p>{c.marketBody}</p>
+            <dl>
+              <div><dt>{c.timetable}</dt><dd>{c.timetableBody}</dd></div>
+              <div><dt>{c.capture}</dt><dd>{c.captureBody}</dd></div>
+            </dl>
+            <a className="beta-link-button" href="#plugin-catalog">{c.browse}</a>
+          </div>
+          <div className="beta-market-preview" id="plugin-catalog" tabIndex={-1}>
+            <Suspense fallback={null}><BetaPluginMarket lang={lang} /></Suspense>
+          </div>
+        </section>
 
-      <div className="beta-final-actions">
-        <a className="beta-primary" href="/app">{c.web}</a>
-        <a className="beta-link-button" href={DESKTOP_DOWNLOAD_URL}>{c.download}</a>
-        <div className="beta-secondary-links">
-          <a href={featureHref("ai", lang)}>Navo AI</a>
-          <a href={featureHref("workspace", lang)}>{c.dock}</a>
+        <div className="beta-final-actions">
+          <a className="beta-primary" href="/app">{c.web}</a>
+          <a className="beta-link-button" href={DESKTOP_DOWNLOAD_URL}>{c.download}</a>
+          <div className="beta-secondary-links">
+            <a href={featureHref("ai", lang)}>Navo AI</a>
+            <a href={featureHref("workspace", lang)}>{c.dock}</a>
+          </div>
         </div>
       </div>
     </main>

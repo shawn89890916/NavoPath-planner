@@ -1,5 +1,5 @@
 import { ProductMenu, SiteLanguageSwitch } from "./components/ProductMenu";
-import { type CSSProperties, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ProductIcon } from "./WorkspacePresentation";
 import { DESKTOP_DOWNLOAD_URL } from "./downloads";
 import { CloseButton, IconButton } from "./components/UiPrimitives";
@@ -9,7 +9,7 @@ import { PrivacyConsent } from "./components/PrivacyConsent";
 import PasswordResetRequest from "./components/PasswordResetRequest";
 import LandingPortals from "./LandingPortals";
 import ProductScreenshot from "./ProductScreenshot";
-import { prefersReducedMotion } from "./motion";
+import { useLandingCover } from "./useLandingCover";
 import { PERSONAL_SITE_URL, PRODUCT_FEATURES, featureHref, featureNames, principleHref, siteHref, siteLanguage } from "./productSite";
 import "./landing.css";
 
@@ -127,9 +127,7 @@ type LandingAuth = {
 export default function LandingPage(auth: LandingAuth) {
   const [lang, setLang] = useState<Lang>(() => siteLanguage(location.search));
   const [showAuth, setShowAuth] = useState(auth?.initialShowAuth ?? false);
-  const [coverRecede, setCoverRecede] = useState(0);
-  const [portalExit, setPortalExit] = useState(0);
-  const [entering, setEntering] = useState(() => !prefersReducedMotion() && window.scrollY < 1 && !location.hash);
+  const { coverStyle, portalExit, entrance } = useLandingCover();
   const c = copy[lang];
 
   useEffect(() => {
@@ -154,41 +152,7 @@ export default function LandingPage(auth: LandingAuth) {
     };
   }, []);
 
-  useEffect(() => {
-    let frame = 0;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const endEntrance = () => setEntering(false);
-    const update = () => {
-      frame = 0;
-      const viewport = Math.max(window.innerHeight, 1);
-      if (window.scrollY > 0) setEntering(false);
-      const distance = Math.min(1, Math.max(0, (window.scrollY - viewport * .1) / (viewport * 1.4)));
-      const progress = distance ** .34;
-      setCoverRecede((current) => Math.abs(current - progress) < .01 ? current : progress);
-      const exit = Math.min(1, Math.max(0, window.scrollY / (viewport * .58)));
-      setPortalExit(current => Math.abs(current - exit) < .004 ? current : exit);
-    };
-    const requestUpdate = () => { if (!frame) frame = window.requestAnimationFrame(update); };
-    requestUpdate();
-    window.addEventListener("scroll", requestUpdate, { passive: true });
-    window.addEventListener("resize", requestUpdate);
-    reduced.addEventListener("change", endEntrance);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", requestUpdate);
-      window.removeEventListener("resize", requestUpdate);
-      reduced.removeEventListener("change", endEntrance);
-    };
-  }, []);
-
-  const coverStyle = {
-    "--landing-cover-scale": String(1 - coverRecede * .16),
-    "--landing-cover-gray": String(coverRecede * .98),
-    "--landing-cover-brightness": String(1 - coverRecede * .22),
-    "--landing-cover-opacity": String(1 - coverRecede * .56),
-  } as CSSProperties;
-
-  return <div className={`landing${entering ? " landing--entering" : ""}`} lang={lang} onPointerDownCapture={() => setEntering(false)} onKeyDownCapture={() => setEntering(false)} onFocusCapture={() => setEntering(false)} onAnimationEnd={event => { if (event.animationName === "landing-preview-arrive") setEntering(false); }}>
+  return <div className={`landing${entrance.entering ? " landing--entering" : ""}`} lang={lang} {...entrance.events}>
     <nav className="landing-nav" aria-label="NavoPath">
       <a className="landing-brand" href={siteHref(`/?lang=${lang}`)}><ProductIcon compact /><span>NavoPath</span></a>
       <div className="landing-nav-links"><ProductMenu lang={lang} /><ProductMenu lang={lang} kind="principles" /><ProductMenu lang={lang} kind="support" includeGitHub /></div>

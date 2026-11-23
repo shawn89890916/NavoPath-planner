@@ -4,7 +4,7 @@
 
 ### 改进
 
-- 官网 Beta 恢复居中大标志和悬停导航。首页直接展示可操作的任务与时间轴，插件市场支持搜索、排序和查看详情。
+- 官网 Beta 恢复围绕品牌标志的四张可展开页面入口及悬停导航。下方以全宽展示可操作的任务与时间轴，插件市场支持搜索、排序和查看详情。
 
 ## 2026-11-22
 
@@ -517,7 +517,7 @@
 
 ### Improvements
 
-- The Beta homepage restores the centered logo and hover menus, opens directly onto an interactive Tasks and timeline workspace, and adds search, sorting, and plugin details to the marketplace.
+- The Beta homepage restores the four expanding page previews around the logo and the hover menus. The interactive Tasks and timeline workspace spans the full page width, and the marketplace supports search, sorting, and plugin details.
 
 ## 2026-11-22
 

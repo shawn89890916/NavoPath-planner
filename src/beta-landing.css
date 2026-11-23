@@ -36,23 +36,14 @@ html.beta-landing-document body, html.beta-landing-document #root { height: auto
 .beta-landing .beta-primary:hover { background: #423b31; border-color: #423b31; }
 .beta-link-button:hover { border-color: var(--beta-focus); }
 
-.beta-hero.landing-cover { width: 100%; min-height: calc(100svh - var(--l-product-peek)); }
-.beta-hero .landing-cover-content {
-  position: relative;
-  width: min(100%, 720px);
-  min-height: inherit;
-  padding: calc(var(--l-nav-height) + 22px) 0 0;
-  pointer-events: auto;
-  transform: none;
-  will-change: auto;
-}
-.beta-hero .landing-slogan { margin: 23px auto 0; color: var(--beta-ink); }
+.beta-hero .landing-slogan { margin-inline: auto; color: var(--beta-ink); }
+.beta-hero .beta-primary { pointer-events: auto; }
 .beta-hero-intro { margin: 10px auto 19px; color: var(--beta-muted); font-size: clamp(14px, 1.4vw, 18px); text-wrap: balance; }
 
-.beta-workspace-window { overflow: hidden; border: 1px solid var(--beta-rule); border-radius: 12px; background: var(--beta-paper); }
-.beta-workspace-window .np-product-window { height: auto; aspect-ratio: 8 / 5; border-radius: 0; }
+.beta-workspace-window { background: var(--beta-paper); }
+.beta-workspace-window .np-product-window { height: auto; aspect-ratio: 16 / 9; border-radius: 0; }
 .beta-workspace-window .np-demo-status { background: var(--beta-paper); }
-.beta-demo-controls { display: flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 12px; margin-bottom: 8px; }
+.beta-demo-controls { display: flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 12px; }
 .beta-demo-controls p { margin: 0; color: var(--beta-muted); font-size: 14px; }
 .beta-demo-controls button { margin-inline-start: auto; font: 600 14px var(--l-body); color: inherit; background: none; border: 0; padding: 8px 2px; text-decoration: underline; text-underline-offset: .25em; cursor: pointer; }
 .beta-tap-instruction { display: none; }
@@ -104,8 +95,8 @@ html.beta-landing-document body, html.beta-landing-document #root { height: auto
 .beta-secondary-links a:hover, .beta-footer a:hover { text-decoration: underline; }
 .beta-footer nav { border-top: 1px solid var(--beta-rule); padding-block: 22px 28px; display: flex; flex-wrap: wrap; gap: 12px 23px; color: var(--beta-muted); font-size: 13px; }
 
-@media (min-width: 641px) and (max-width: 959px) {
-  .beta-workspace-window .np-product-window { aspect-ratio: auto; height: min(730px, 84svh); }
+@media (max-width: 899.98px) {
+  .beta-workspace-window .np-product-window { aspect-ratio: auto; height: min(730px, 82svh); }
 }
 @media (max-width: 790px) {
   .beta-market { grid-template-columns: 1fr; }
@@ -115,7 +106,6 @@ html.beta-landing-document body, html.beta-landing-document #root { height: auto
   .beta-landing .landing-nav { grid-template-columns: 1fr auto; grid-template-rows: 45px 43px; gap: 0 10px; padding-block-start: 4px; }
   .beta-landing .landing-nav-links { grid-column: 1 / -1; grid-row: 2; justify-content: start; gap: 18px; }
   .beta-landing .landing-nav-actions { grid-column: 2; grid-row: 1; }
-  .beta-workspace-window .np-product-window { height: min(730px, 82svh); aspect-ratio: auto; }
   .beta-drag-instruction { display: none; }
   .beta-tap-instruction { display: inline; }
   .beta-secondary-links { width: 100%; margin: 4px 0 0; }
