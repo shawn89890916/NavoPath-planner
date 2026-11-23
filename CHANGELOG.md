@@ -2,6 +2,12 @@
 
 ## 2026-11-23
 
+### 1.7.0 Beta 71
+
+#### 改进
+
+- 官网 /beta2 固定旧版首屏，四张卡片随滚动依次放大到中央，展示完再回到原位。
+
 ### 1.7.0 Beta 70
 
 #### 改进
@@ -941,6 +947,12 @@
 # NavoPath Changelog
 
 ## 2026-11-23
+
+### 1.7.0 Beta 71
+
+#### Improved
+
+- The /beta2 tour keeps the original cover fixed as each of its four cards grows into the center and returns to its corner.
 
 ### 1.7.0 Beta 70
 
