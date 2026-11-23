@@ -4143,7 +4143,8 @@ if (cached?.data && cached?.settings) {
 
   function moveTodayCandidateToProjectGroup(taskId: string, projectId: string | undefined) {
     const sourceId = resolveOwningTask(taskId)?.id || taskId;
-    updateTask(sourceId, { projectId });
+    const source = dataRef.current?.tasks.find((task) => task.id === sourceId);
+    if (source && (source.projectId || undefined) !== projectId) updateTask(sourceId, { projectId });
   }
 
   function deleteSubtaskById(subtaskId: string) {
@@ -4178,9 +4179,10 @@ if (cached?.data && cached?.settings) {
     }, "reschedule");
   }
 
-  function toggleTaskDone(taskId: string) {
+  function toggleTaskDone(taskId: string, announceCompletion = false) {
     const current = dataRef.current;
     if (!current) return;
+    const toast = announceCompletion ? t(lang, "toast.taskCompleted") : undefined;
     const occurrenceMeta = parseRecurrenceOccurrenceId(taskId);
     if (occurrenceMeta) {
       const realTask = current.tasks.find((task) => task.id === occurrenceMeta.taskId);
@@ -4202,7 +4204,7 @@ if (cached?.data && cached?.settings) {
         tasks: current.tasks.map((task) => task.id === realTask.id
           ? { ...task, timelineRecords: [...(task.timelineRecords || []), completedRecord], updatedAt: completedRecord.createdAt }
           : task),
-      }, "complete");
+      }, "complete", { toast });
       return;
     }
 
@@ -4212,8 +4214,13 @@ if (cached?.data && cached?.settings) {
     const record = owner.timelineRecords?.find((item) => item.id === sourceRecordId);
     const next = toggleTaskCompletion(current, sourceRecordId, workspaceNow().toISOString());
     if (next === current) return;
-    if (next.habitDailyStates !== current.habitDailyStates) void saveData(next);
-    else void saveTaskOperation(next, (record ? record.executionStatus === "completed" : owner.completed) ? "reopen" : "complete");
+    const wasCompleted = record ? record.executionStatus === "completed" : owner.completed;
+    if (next.habitDailyStates !== current.habitDailyStates) {
+      void saveData(next);
+      if (!wasCompleted && toast) showToast(toast);
+    } else {
+      void saveTaskOperation(next, wasCompleted ? "reopen" : "complete", { toast: wasCompleted ? undefined : toast });
+    }
   }
 
   function candidatePositions() {
@@ -4231,7 +4238,7 @@ if (cached?.data && cached?.settings) {
 
   function toggleCandidateTaskDone(task: Task) {
     const positions = candidatePositions();
-    flushSync(() => toggleTaskDone(task.id));
+    flushSync(() => toggleTaskDone(task.id, true));
     void animateListPositions(positions);
   }
 
@@ -8185,53 +8192,25 @@ if (cached?.data && cached?.settings) {
       const monthDate = onCandidatePanel ? "" : monthDateAtPointer({ x: pointerEvent.clientX, y: pointerEvent.clientY });
       setMonthDropDate(monthDate);
       const candidateRow = source === "candidate" && options.allowCandidateReorder !== false ? pointedElement?.closest<HTMLElement>("[data-candidate-task-id]") : null;
-      if (candidateRow) {
-        const targetTaskId = candidateRow.dataset.candidateTaskId || "";
-        const targetTask = dataRef.current?.tasks.find((item) => item.id === targetTaskId);
-        if (targetTask && targetTaskId !== task.id && targetTask.completed === task.completed
-          && (!groupByProject || targetTask.projectId === task.projectId)) {
-          // Keep candidate groups stationary during drag; the pointer's half
-          // of the target card determines the insertion position on release.
-          const rect = (candidateRow.querySelector<HTMLElement>(".df-task-card") || candidateRow).getBoundingClientRect();
-          const position = (pointerEvent.clientY - rect.top) < rect.height / 2 ? "before" : "after";
-          setCandidateReorderTarget({
-            kind: "task",
-            taskId: targetTaskId,
-            position,
-            intent: position === "before" ? "reorder-before" : "reorder-after",
-          });
-        } else if (targetTask && targetTaskId !== task.id && groupByProject && targetTask.projectId !== task.projectId) {
-          setCandidateReorderTarget({ kind: "project", projectId: targetTask.projectId || null });
-        } else {
-          setCandidateReorderTarget(null);
-        }
-        setCandidateDropActive(false);
-        setAllDayDragOver(false);
-        setAllDayDragDate("");
-        dropTime = "";
-        setHoverSlot("");
-        dragTargetDateRef.current = "";
-        return;
-      }
+      const targetTask = candidateRow && dataRef.current?.tasks.find((item) => item.id === candidateRow.dataset.candidateTaskId);
       const candidateProjectGroup = source === "candidate" && groupByProject
         ? pointedElement?.closest<HTMLElement>("[data-candidate-project-id]")
         : null;
-      if (candidateProjectGroup) {
-        const projectId = candidateProjectGroup.dataset.candidateProjectId || null;
-        if (projectId === (task.projectId || null)) {
-          setCandidateReorderTarget(null);
-        } else {
-          setCandidateReorderTarget({ kind: "project", projectId });
-        }
-        setCandidateDropActive(false);
-        setAllDayDragOver(false);
-        setAllDayDragDate("");
-        dropTime = "";
-        setHoverSlot("");
-        dragTargetDateRef.current = "";
-        return;
+      if (candidateRow && targetTask && targetTask.id !== task.id && targetTask.completed === task.completed
+        && (!groupByProject || targetTask.projectId === task.projectId)) {
+        const rect = (candidateRow.querySelector<HTMLElement>(".df-task-card") || candidateRow).getBoundingClientRect();
+        const position = pointerEvent.clientY - rect.top < rect.height / 2 ? "before" : "after";
+        setCandidateReorderTarget({
+          kind: "task",
+          taskId: targetTask.id,
+          position,
+          intent: position === "before" ? "reorder-before" : "reorder-after",
+        });
+      } else if (candidateProjectGroup) {
+        setCandidateReorderTarget({ kind: "project", projectId: candidateProjectGroup.dataset.candidateProjectId || null });
+      } else {
+        setCandidateReorderTarget(null);
       }
-      setCandidateReorderTarget(null);
       setCandidateDropActive(source === "allDay" && onCandidatePanel);
       if (onCandidatePanel) {
         setAllDayDragOver(false);
@@ -9350,6 +9329,11 @@ if (cached?.data && cached?.settings) {
           })()
         : undefined)
     : undefined;
+  const candidateDropProject = candidateDropTarget?.kind === "project"
+    ? candidateDropTarget.projectId || "__unassigned__"
+    : candidateDropTarget?.kind === "task" && groupByProject && draggedTask
+      ? draggedTask.projectId || "__unassigned__"
+      : undefined;
   const timelineSnapActive = Boolean(draggedTask && (allDayDragDate || (hoverSlot && !drag?.outsideTimeline)));
   const showNotificationBadge = settings?.showInAppNotificationBadge !== false;
   const focusProvider = focusOverlayMode ? getTimerMode(focusOverlayMode) : undefined;
@@ -9914,7 +9898,7 @@ if (cached?.data && cached?.settings) {
                         key={gid}
                         className="df-project-group"
                         data-candidate-project-id={gid === "__events__" ? undefined : gid === "__unassigned__" ? "" : gid}
-                        data-candidate-drop-project={(candidateDropTarget?.kind === "project" && (candidateDropTarget.projectId || "__unassigned__") === gid) || undefined}
+                        data-candidate-drop-project={candidateDropProject === gid || undefined}
                       >
                         <div className="df-project-group-header">
                           <span className="df-project-group-dot" style={{ background: projectColorInk(projectColor) }} />

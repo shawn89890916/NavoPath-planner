@@ -4,7 +4,8 @@
 
 #### 改进
 
-- 拖动任务时保持 Tasks 展开，方便放回项目。时间轴悬停稳定显示细线拉伸手柄。
+- 拖动任务时保持 Tasks 展开，经过可放置的项目区域时显示描边，包括任务原本的项目。时间轴悬停时显示细线拉伸手柄。
+- 在 Tasks 完成任务后显示简短确认，并可撤回。
 
 ## 2026-11-23
 
@@ -966,7 +967,8 @@
 
 #### Improvements
 
-- Tasks stays open during dragging, and timeline blocks reveal a thin resize handle on hover.
+- Tasks stays open during dragging and outlines valid project targets, including the task’s original project. Timeline blocks reveal a thin resize handle on hover.
+- Completing a task in Tasks shows a short confirmation with an undo action.
 
 ## 2026-11-23
 
