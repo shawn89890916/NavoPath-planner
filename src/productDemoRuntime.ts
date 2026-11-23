@@ -10,7 +10,9 @@ import "./product-demo.css";
 export function installProductDemo(feature: ProductDemo) {
   if (!sitePath(location.pathname).startsWith("/product-demo/")) throw new Error("Example runtime requires an example route");
   const language = siteLanguage(location.search, navigator.language);
-  const fullscreen = new URLSearchParams(location.search).get("presentation") === "full";
+  const presentation = new URLSearchParams(location.search).get("presentation");
+  const fullscreen = presentation === "full";
+  const showcaseHome = presentation === "home" && feature === "execute";
   const planning = feature === "planning" || feature === "workspace";
   const showcaseAi = fullscreen && feature === "ai";
   let data = createDemoData(language, feature, feature === "execute" ? 2 : 1);
@@ -21,7 +23,15 @@ export function installProductDemo(feature: ProductDemo) {
     getAuthState: async () => auth,
     getBootstrap: async () => ({ auth, data: clone(data), settings: clone(settings) }),
     getData: async () => clone(data),
-    saveData: async (next) => { data = clone(next); return clone(data); },
+    saveData: async (next) => {
+      data = clone(next);
+      if (showcaseHome && parent !== window) {
+        const task = data.tasks.find(item => item.id === "layout");
+        const scheduled = Boolean(task?.timelineRecords?.some(record => record.executionStatus === "scheduled"));
+        parent.postMessage({ channel: "navopath-product-demo", type: "progress", scheduled }, location.origin);
+      }
+      return clone(data);
+    },
     getSettings: async () => clone(settings),
     saveSettings: async (patch) => { settings = { ...settings, ...patch }; return clone(settings); },
     applyActions: async () => ({ data: clone(data), applied: [] }),
@@ -35,7 +45,7 @@ export function installProductDemo(feature: ProductDemo) {
   window.plannerApi = api;
   let id = 0;
   installWorkspaceDemoRuntime({
-    feature, date: DEMO_DATE, language, storage, showcaseAi,
+    feature, date: DEMO_DATE, language, storage, showcaseAi, showcaseHome,
     revealSchedule: showcaseAi ? async () => {
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -51,14 +61,21 @@ export function installProductDemo(feature: ProductDemo) {
     ready: () => {
       if (parent === window) return;
       const selector = planning ? ".mode-planning .df-planning:not(.df-planning-loading)" : ".mode-execute .df-timeline-panel";
-      const notify = () => {
+      const sendReady = () => parent.postMessage(
+        { channel: "navopath-product-demo", type: "ready" }, location.origin,
+      );
+      if (document.querySelector(selector)) {
+        sendReady();
+        return;
+      }
+      const root = document.getElementById("root");
+      if (!root) return;
+      const observer = new MutationObserver(() => {
         if (!document.querySelector(selector)) return;
         observer.disconnect();
-        parent.postMessage({ channel: "navopath-product-demo", type: "ready" }, location.origin);
-      };
-      const observer = new MutationObserver(notify);
-      observer.observe(document.getElementById("root")!, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
-      notify();
+        sendReady();
+      });
+      observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
     },
     suggest: (state: PlannerData, request?: { taskId: string; days: 1 | 2 }, taskIds?: string[]) => {
       let working = state;

@@ -1,0 +1,107 @@
+html.beta-landing-document { min-height: 100%; height: auto; overflow-x: clip; overflow-y: auto; background: #f8f7f3; }
+html.beta-landing-document body, html.beta-landing-document #root { height: auto; min-height: 100%; margin: 0; overflow: visible; }
+
+.beta-landing {
+  --beta-ink: #27231e;
+  --beta-muted: #625a50;
+  --beta-paper: #f8f7f3;
+  --beta-rule: #ded8ce;
+  --beta-focus: #584d3d;
+  --beta-gutter: clamp(18px, 4.7vw, 68px);
+  --beta-section: clamp(72px, 10vw, 144px);
+  --beta-display: Georgia, "Songti SC", "Noto Serif CJK SC", SimSun, serif;
+  --beta-body: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  min-height: 100vh;
+  color: var(--beta-ink);
+  background: var(--beta-paper);
+  font: 16px/1.6 var(--beta-body);
+  color-scheme: light;
+}
+.beta-landing *, .beta-landing *::before, .beta-landing *::after { box-sizing: border-box; }
+.beta-container { max-width: 1376px; margin-inline: auto; padding-inline: var(--beta-gutter); }
+.beta-landing a { color: inherit; text-underline-offset: .22em; }
+.beta-landing :is(a, button):focus-visible { outline: 2px solid var(--beta-focus); outline-offset: 4px; }
+.beta-landing :is(h1, h2) { margin: 0; font-family: var(--beta-display); font-weight: 700; text-wrap: balance; }
+.beta-landing p { text-wrap: pretty; }
+
+.beta-header { border-bottom: 1px solid var(--beta-rule); }
+.beta-header-inner { min-height: 70px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; }
+.beta-wordmark { display: inline-flex; align-items: center; gap: 9px; width: fit-content; text-decoration: none; font-weight: 670; }
+.beta-wordmark img { display: block; object-fit: contain; }
+.beta-nav, .beta-header-actions { display: flex; align-items: center; gap: clamp(14px, 3vw, 36px); font-size: 14px; }
+.beta-nav a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+.beta-nav a:hover, .beta-footer a:hover, .beta-secondary-links a:hover { text-decoration: underline; }
+.beta-header-actions { justify-self: end; gap: 12px; }
+
+.beta-primary, .beta-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 18px;
+  border: 1px solid var(--beta-rule);
+  border-radius: 6px;
+  text-decoration: none;
+  white-space: nowrap;
+  font: 650 14px/1.35 var(--beta-body);
+}
+.beta-landing .beta-primary { background: var(--beta-ink); border-color: var(--beta-ink); color: #fff; }
+.beta-landing .beta-primary:hover { background: #423b31; border-color: #423b31; }
+.beta-link-button:hover { border-color: var(--beta-focus); }
+.beta-hero { padding-block: clamp(48px, 7vw, 106px) clamp(30px, 4.2vw, 60px); }
+.beta-hero h1 { max-width: 1010px; font-size: clamp(37px, 5.8vw, 86px); line-height: 1.14; letter-spacing: -.052em; }
+.beta-landing:lang(zh) .beta-hero h1 { max-width: 13em; font-size: clamp(35px, 5.1vw, 75px); line-height: 1.24; letter-spacing: -.045em; }
+.beta-hero p { margin: 16px 0 24px; color: var(--beta-muted); font-size: clamp(16px, 1.8vw, 21px); }
+.beta-landing :is(#workspace, #plugins) { scroll-margin-block-start: 18px; }
+.beta-workspace-window { overflow: hidden; border: 1px solid var(--beta-rule); border-radius: 12px; background: var(--beta-paper); }
+.beta-workspace-preview, .beta-workspace-preview img { display: block; width: 100%; }
+.beta-workspace-preview img { height: auto; aspect-ratio: 8 / 5; }
+.beta-workspace-window .np-product-window { height: auto; aspect-ratio: 8 / 5; border-radius: 0; }
+.beta-workspace-window .np-demo-status > .beta-workspace-preview { width: 100%; }
+.beta-demo-controls { display: flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 12px; margin-bottom: 8px; }
+.beta-demo-controls p { margin: 0; color: var(--beta-muted); font-size: 14px; }
+.beta-demo-controls button { margin-inline-start: auto; font: 600 14px var(--beta-body); color: inherit; background: none; border: 0; padding: 8px 2px; text-decoration: underline; text-underline-offset: .25em; cursor: pointer; }
+.beta-tap-instruction { display: none; }
+
+.beta-market {
+  display: grid;
+  grid-template-columns: minmax(0, .81fr) minmax(0, 1.19fr);
+  align-items: center;
+  gap: clamp(30px, 5vw, 90px);
+  margin-top: var(--beta-section);
+  padding-block: clamp(32px, 6vw, 78px);
+  border-block: 1px solid var(--beta-rule);
+}
+.beta-market h2 { font-size: clamp(34px, 4.25vw, 61px); line-height: 1.1; letter-spacing: -.042em; }
+.beta-market-copy > p { margin-block: 16px 24px; color: var(--beta-muted); }
+.beta-market dl { margin: 0 0 24px; border-top: 1px solid var(--beta-rule); }
+.beta-market dl > div { padding-block: 11px; border-bottom: 1px solid var(--beta-rule); }
+.beta-market dt { font-weight: 670; }
+.beta-market dd { margin: 4px 0 0; font-size: 15px; color: var(--beta-muted); }
+.beta-market-preview { margin: 0; border: 1px solid var(--beta-rule); border-radius: 9px; overflow: hidden; background: var(--beta-paper); }
+.beta-market-preview img { display: block; width: 100%; height: auto; }
+.beta-final-actions { padding-block: clamp(38px, 6.5vw, 94px); display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.beta-secondary-links { display: flex; flex-wrap: wrap; gap: 20px; margin-inline-start: auto; color: var(--beta-muted); font-size: 14px; }
+.beta-secondary-links a, .beta-footer a { text-decoration: none; }
+.beta-footer nav { border-top: 1px solid var(--beta-rule); padding-block: 22px 28px; display: flex; flex-wrap: wrap; gap: 12px 23px; color: var(--beta-muted); font-size: 13px; }
+
+@media (min-width: 601px) and (max-width: 959px) {
+  .beta-workspace-window .np-product-window { aspect-ratio: auto; height: min(730px, 84svh); }
+}
+@media (max-width: 790px) {
+  .beta-header-inner { grid-template-columns: 1fr auto; gap: 0 10px; padding-block-start: 8px; }
+  .beta-nav { grid-row: 2; grid-column: 1 / -1; gap: 22px; }
+  .beta-market { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .beta-workspace-preview img { aspect-ratio: 412 / 850; }
+  .beta-workspace-window .np-product-window { height: min(730px, 82svh); aspect-ratio: auto; }
+  .beta-workspace-window .np-demo-status > .beta-workspace-preview { height: 100%; overflow: hidden; }
+  .beta-drag-instruction { display: none; }
+  .beta-tap-instruction { display: inline; }
+  .beta-secondary-links { width: 100%; margin: 4px 0 0; }
+}
+@media (max-width: 360px) {
+  .beta-header-actions { gap: 7px; }
+  .beta-header-actions .beta-link-button { padding-inline: 9px; }
+}

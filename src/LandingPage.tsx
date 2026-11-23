@@ -124,8 +124,7 @@ type LandingAuth = {
   signedIn?: boolean;
 };
 
-export default function LandingPage(props: LandingAuth | { preview: true }) {
-  const auth = "preview" in props ? null : props;
+export default function LandingPage(auth: LandingAuth) {
   const [lang, setLang] = useState<Lang>(() => siteLanguage(location.search));
   const [showAuth, setShowAuth] = useState(auth?.initialShowAuth ?? false);
   const [coverRecede, setCoverRecede] = useState(0);

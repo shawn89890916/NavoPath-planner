@@ -5429,7 +5429,8 @@ if (cached?.data && cached?.settings) {
     cancelPlacementPreview();
     void saveData(next);
     requestTimelineFocus({ date: choice.date, startTime: choice.startTime, taskId: record.id, source: "schedule" });
-    showUndoToast(lang === "zh" ? "已安排到日程" : "Scheduled", lang === "zh" ? "撤销" : "Undo", () => undoLastCommit(undo));
+    const notice = productDemo?.showcaseHome ? homeScheduleMessage(task.title, record) : lang === "zh" ? "已安排到日程" : "Scheduled";
+    showUndoToast(notice, lang === "zh" ? "撤销" : "Undo", () => undoLastCommit(undo));
   }
 
   function selectMobilePlacement(event: React.MouseEvent) {
@@ -5750,6 +5751,16 @@ if (cached?.data && cached?.settings) {
     showToast(t(lang, "toast.futureRecurringCleared"));
   }
 
+  function homeScheduleMessage(title: string, record: TimelineRecord) {
+    const format = (time: string) => {
+      if (lang === "zh") return time;
+      return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" })
+        .format(new Date(`2000-01-01T${time}:00`));
+    };
+    const range = `${format(record.scheduledStart)}–${format(record.scheduledEnd)}`;
+    return lang === "zh" ? `「${title}」已安排在 ${range}` : `“${title}” scheduled for ${range}`;
+  }
+
   function applyCandidateTimeSettings(taskId: string, settings: CandidateTimeSettings, options: { focusTimeline?: boolean } = {}) {
     const task = data?.tasks.find((item) => item.id === taskId);
     if (!task || !data) return;
@@ -5797,7 +5808,11 @@ if (cached?.data && cached?.settings) {
         source: "schedule",
       });
     }
-    showToast(settings.clearSchedule ? t(lang, "toast.clearedSchedule") : settings.allDay ? t(lang, "toast.setToAllDay") : t(lang, "drawer.scheduledOnTimeline"));
+    const scheduled = updatedTask.timelineRecords?.slice(-1)[0];
+    showToast(settings.clearSchedule ? t(lang, "toast.clearedSchedule")
+      : settings.allDay ? t(lang, "toast.setToAllDay")
+      : productDemo?.showcaseHome && scheduled ? homeScheduleMessage(task.title, scheduled)
+      : t(lang, "drawer.scheduledOnTimeline"));
   }
 
   function scheduleTask(taskId: string, startTime: string) {

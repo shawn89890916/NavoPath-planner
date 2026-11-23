@@ -1,0 +1,12 @@
+{
+  "zh": {
+    "title": "NavoPath Beta · 任务与日程工作台",
+    "description": "在同一页挑任务、排时间、改日程。通过插件市场按需添加课表、快速收集等功能。",
+    "share": "左边选任务，右边排时间。打开 NavoPath Beta，免登录试排一个任务。"
+  },
+  "en": {
+    "title": "NavoPath Beta · Tasks and timeline",
+    "description": "Pick tasks, schedule them, and adjust your day on one page. Add tools like Class Timetable and Quick Capture from the plugin market.",
+    "share": "Pick a task on the left and schedule it on the right. Try NavoPath Beta without signing in."
+  }
+}

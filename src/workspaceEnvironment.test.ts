@@ -10,7 +10,7 @@ function demoWindow() {
   const location = { pathname: "/product-demo/ai", search: "?lang=en", origin: "http://localhost" };
   const target = { localStorage: realStorage, location, addEventListener: vi.fn() };
   vi.stubGlobal("window", target); vi.stubGlobal("location", location); vi.stubGlobal("navigator", { language: "zh-CN" }); vi.stubGlobal("parent", parent);
-  vi.stubGlobal("document", { documentElement: { classList: { add: vi.fn(), toggle: vi.fn() } } });
+  vi.stubGlobal("document", { querySelector: vi.fn(() => ({})), documentElement: { classList: { add: vi.fn(), toggle: vi.fn() } } });
   return { target, realStorage, parent };
 }
 describe("workspace example boundary", () => {

@@ -56,10 +56,10 @@ if (legacyFeatureRoute(path)) {
     document.getElementById("root")!.textContent = "NavoPath…";
   });
 } else if (isBetaSite && path === "/") {
-  const LandingPage = lazy(() => import("./LandingPage"));
+  const BetaLandingPage = lazy(() => import("./BetaLandingPage"));
   createRoot(document.getElementById("root")!).render(
     <SiteErrorBoundary demo={false}>
-      <Suspense fallback={null}><LandingPage preview /></Suspense>
+      <Suspense fallback={null}><BetaLandingPage /></Suspense>
     </SiteErrorBoundary>,
   );
 } else if (feature || principles || privacy) {

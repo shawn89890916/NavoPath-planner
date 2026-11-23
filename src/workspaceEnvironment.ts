@@ -5,6 +5,7 @@ import { sitePath, type ProductDemo } from "./productSite";
 export type WorkspaceDemoRuntime = {
   feature: ProductDemo;
   showcaseAi: boolean;
+  showcaseHome?: boolean;
   date: string;
   language: Language;
   storage: Storage;
