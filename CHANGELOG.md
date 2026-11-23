@@ -7,6 +7,7 @@
 - 官网 Beta 恢复围绕品牌标志的四张可展开页面入口及悬停导航。首屏标志和文案随页面滚动退出，避免遮挡后续内容。
 - 官网时间轴默认随网页滚动，可切换到时间轴内部滚动。插件市场用两排对向循环的卡片展示各插件的独立图标，可暂停或查看完整列表，支持搜索、排序和详情。
 - 首屏入口可在首页临时展开子页面，点击外侧即可关闭。工作区子页展示从今日候选拖任务到时间轴的流程，插件卡片在鼠标悬停时继续滚动。
+- 官网 /beta2 新增一体式滚动介绍，依次展示工作区排程、插件、Navo AI 与 MCP、设计原理。
 
 ## 2026-11-22
 
@@ -522,6 +523,7 @@
 - The Beta homepage restores the four expanding page previews around the logo and the hover menus. The hero logo and text fade out as you scroll so the sections below stay clear.
 - Scrolling over the timeline moves the page until you switch to timeline scrolling. Plugin cards have distinct icons and loop in two opposite directions, with controls to pause or browse all plugins, plus search, sorting, and details.
 - The homepage previews open in place and close on an outside click. The Workspace page demonstrates dragging tasks from the candidate list to the timeline, and plugin cards keep moving on hover.
+- The /beta2 website introduces one continuous scroll through workspace scheduling, plugins, Navo AI and MCP, and the design principles.
 
 ## 2026-11-22
 

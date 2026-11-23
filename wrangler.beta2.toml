@@ -1,0 +1,16 @@
+name = "navopath-website-beta2"
+main = "deploy/beta2-site.mjs"
+compatibility_date = "2026-06-04"
+workers_dev = false
+preview_urls = false
+
+routes = [
+  { pattern = "navopath.com/beta2", zone_name = "navopath.com" },
+  { pattern = "navopath.com/beta2/*", zone_name = "navopath.com" },
+]
+
+[assets]
+directory = "./.wrangler/beta2-assets"
+binding = "ASSETS"
+html_handling = "none"
+run_worker_first = true

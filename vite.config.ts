@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: "/",
   plugins: [react()],
   server: {
@@ -15,6 +15,7 @@ export default defineConfig({
       format: { comments: false },
     },
     rollupOptions: {
+      input: mode === "beta2" ? "beta2.html" : undefined,
       output: {
         manualChunks(id) {
           if (id.includes("node_modules/react-dom/") || id.includes("node_modules/react/")) {
@@ -44,4 +45,4 @@ export default defineConfig({
     chunkSizeWarningLimit: 550,
     target: "es2020",
   },
-});
+}));
