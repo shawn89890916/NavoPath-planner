@@ -1,6 +1,6 @@
-:root { color-scheme: light dark; --cl-paper:#f4efe5; --cl-ink:#27231e; --cl-rule:rgba(39,35,30,.2); }
-@media (prefers-color-scheme:dark) { :root { --cl-paper:#171614; --cl-ink:#eee9df; --cl-rule:rgba(238,233,223,.18); } }
-body { background:var(--cl-paper); color:var(--cl-ink); }
+html.changelog-page { color-scheme:light; --cl-paper:#f4efe5; --cl-ink:#27231e; --cl-rule:rgba(39,35,30,.2); background:var(--cl-paper); color:var(--cl-ink); }
+@media (prefers-color-scheme:dark) { html.changelog-page { color-scheme:dark; --cl-paper:#171614; --cl-ink:#eee9df; --cl-rule:rgba(238,233,223,.18); } }
+.changelog-page body { background:transparent; }
 .np-changelog { min-height:100vh; max-width:1280px; margin:auto; padding:clamp(24px,6vw,72px); box-sizing:border-box; }
 .np-changelog > nav { display:flex; justify-content:space-between; border-bottom:1px solid var(--cl-rule); padding-bottom:14px; font:600 11px/1.4 ui-monospace,monospace; letter-spacing:.1em; }
 .np-changelog a { color:inherit; text-decoration:none; border-bottom:1px solid currentColor; }
@@ -15,7 +15,7 @@ body { background:var(--cl-paper); color:var(--cl-ink); }
 .np-changelog article { max-width:720px; margin-top:72px; min-width:0; }
 .np-changelog-toc { position:sticky; top:24px; min-width:0; max-height:calc(100vh - 48px); margin-top:126px; }
 .np-changelog-desktop-toc,
-.np-changelog-mobile-toc nav { display:flex; flex-direction:column; justify-content:flex-start; gap:10px; max-height:calc(100vh - 48px); overflow-y:auto; overscroll-behavior:contain; border:0; padding:0 8px 0 0; font:inherit; letter-spacing:0; scrollbar-width:thin; }
+.np-changelog-mobile-toc nav { display:flex; flex-direction:column; justify-content:flex-start; gap:10px; max-height:calc(100vh - 48px); overflow-y:auto; border:0; padding:0 8px 0 0; font:inherit; letter-spacing:0; scrollbar-width:thin; }
 .np-changelog-desktop-toc > span { margin-bottom:6px; color:color-mix(in srgb,var(--cl-ink) 55%,transparent); font:600 10px/1.4 ui-monospace,monospace; letter-spacing:.1em; }
 .np-changelog-toc a { border:0; color:color-mix(in srgb,var(--cl-ink) 68%,transparent); font:400 13px/1.45 sans-serif; letter-spacing:0; }
 .np-changelog-toc a:hover,
@@ -25,7 +25,8 @@ body { background:var(--cl-paper); color:var(--cl-ink); }
 .np-changelog h2 { scroll-margin-top:24px; }
 .np-changelog h1 { font:500 clamp(42px,8vw,82px)/.95 Georgia,serif; letter-spacing:-.045em; margin:0 0 72px; }
 .np-changelog h2 { font:500 clamp(24px,4vw,38px)/1.15 Georgia,serif; margin:64px 0 24px; padding-top:22px; border-top:1px solid var(--cl-rule); }
-.np-changelog h3 { margin:26px 0 10px; font:700 11px/1.4 ui-monospace,monospace; letter-spacing:.09em; text-transform:uppercase; }
+.np-changelog h3 { margin:26px 0 10px; font:600 18px/1.3 Georgia,serif; }
+.np-changelog h4 { margin:14px 0 8px; font:700 11px/1.4 ui-monospace,monospace; letter-spacing:.09em; text-transform:uppercase; }
 .np-changelog p { font:400 15px/1.8 sans-serif; margin:7px 0; }
 .np-changelog .entry { position:relative; padding-left:18px; }
 .np-changelog .entry::before { content:""; position:absolute; left:0; top:.8em; width:7px; border-top:1px solid currentColor; opacity:.5; }

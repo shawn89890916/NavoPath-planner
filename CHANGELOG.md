@@ -1,10 +1,158 @@
 # NavoPath 更新日志
 
+## 2026-11-23
+
+### 1.7.0 Beta 68
+
+#### 修复
+
+- 更新日志在窄窗口和手机上可正常滚动，缩放时保持当前配色。中英文页面都能显示最新发布记录。
+
+### 1.7.0 Beta 67
+
+#### 改进
+
+- 官网 Beta 的四个首屏入口在首页临时展开，点击外部可收起。工作区子页改用候选任务与时间轴的演示，插件卡片悬停时继续滚动。
+
+### 1.7.0 Beta 66
+
+#### 改进
+
+- 官网 Beta 插件市场改为顶部对齐的双排卡片，两排对向循环，支持暂停及切换到完整列表。
+
+### 1.7.0 Beta 65
+
+#### 改进
+
+- 官网 Beta 的时间轴默认随网页滚动，可手动切换滚动范围。插件市场沿网页展开，滚出首屏后标志和文案会完全退出。
+- 插件市场为各款社区插件显示独立图标，列表和详情保持一致。
+
+### 1.7.0 Beta 64
+
+#### 改进
+
+- 官网 Beta 首屏恢复围绕标志的四张可展开页面入口。下方可交互工作区恢复与正式首页相同的全宽 16:9 布局。
+
+### 1.7.0 Beta 63
+
+#### 改进
+
+- 官网 Beta 恢复居中大标志和悬停导航。首页直接展示可操作的任务与时间轴，插件市场支持搜索、排序和查看详情。
+
+### 1.7.0 Beta 62
+
+#### 改进
+
+- 官网 Beta 首页展示实际 Beta 工作区。访客可以直接试玩同页排程，并通过独立区块探索课表和快速收集等插件。
+
+## 2026-11-22
+
+### 1.7.0 Beta 61
+
+#### 改进
+
+- Tree 的空项目提示改为较小的灰字，在项目之间的留白中上下居中。
+- 插件、AI 和 MCP 设置引导使用贴近控件的浮层，保持设置页原有布局。
+
+### 1.7.0 Beta 60
+
+#### 修复
+
+- 拖回任务列表前，引导指向刚安排的时间块。拖动时，箭头和提示会指向可放下的位置。
+- 使用「安排」时，如果当天没有足够的空档，会明确提示，并保留手动选时间的入口。
+
+### 1.7.0 Beta 59
+
+#### 改进
+
+- 新手引导自动聚焦任务输入框，支持直接添加灰字示例。练习拖放时标出时间段，还可以把时间块拖回任务列表，再用日历安排。
+- 打开任务视图菜单时会提示下一步。插件可选现在配置或稍后，AI 和 MCP 分别打开对应的设置页并给出操作指引。
+- Tree 的空状态直接指向该层级可用的「+」。
+
+#### 修复
+
+- 关闭空白的新任务草稿时不再弹出保存确认。
+
+### 1.7.0 Beta 58
+
+#### 改进
+
+- 排入第一条任务后，引导返回任务列表，依次介绍安排按钮、任务视图、插件和 AI／MCP 设置，最后回到时间轴。
+- 描边只用于引导提示框。
+
+### 1.7.0 Beta 57
+
+#### 改进
+
+- 新手引导逐字输入和删除示例。竖屏先打开任务列表，再长按高亮任务块并移动到时间轴。成功后提示可用「安排」按钮。
+- 简化空状态，移除说明小字。任务列表空状态的标题和按钮在区域内居中。
+
+#### 修复
+
+- 横屏的中文工作区设置标题保持一行，任务视图菜单贴齐触发按钮。
+
+### 1.7.0 Beta 56
+
+#### 改进
+
+- 新手引导用箭头指向现有任务输入框，输入框轮换显示示例。空时间轴仅在中央显示一行提示。
+
+#### 修复
+
+- 添加第一条任务后，可直接拖到时间轴，或点击日历选择并确认时间。
+
 ## 2026-11-21
 
 ### 改进
 
 - 横屏展开左侧模板列表，右侧保留时间轴。竖屏把编辑和删除放到具体模板行，底部可新建。点击当前模板名即可收起。
+
+### 1.7.0 Beta 54
+
+#### 修复
+
+- 切换任务视图时，左侧顶栏分隔线保持原位。项目树统一通过 Tree 视图打开，移除旧的「管理项目」入口。
+
+### 1.7.0 Beta 53
+
+#### 改进
+
+- 首次进入时可先设置语言、外观和时间轴偏好，再用可编辑的示例添加并安排第一条任务。完成后可探索任务视图、插件和集成。
+- 工作区各页面的空状态提供对应的添加、连接或清除筛选操作。
+
+#### 修复
+
+- 设置中的「重新开始新手指南」直接打开新版工作区设置页。
+
+### 1.7.0 Beta 52
+
+#### 修复
+
+- 从 Tasks 菜单打开树状视图时，左上角显示「Tree」，可直接从该菜单切换到其他视图。
+- 横屏从右下角添加项目或习惯时，抽屉宽度、标题和提交按钮与添加任务的界面对齐。
+
+### 1.7.0 Beta 51
+
+#### 改进
+
+- 精简登录、任务、规划、搜索、AI、设置和插件界面的重复文字。空候选区直接提供添加入口，手机端在任务行显示排程入口，规划视图设置可直达插件管理。
+- 搜索结果保留区分同名项目所需的信息。AI 建议可直接填入输入框，对话列表用选中状态标明当前对话。
+
+#### 修复
+
+- 手机端点「安排」后，可在时间轴上确认或取消排程。
+
+### 1.7.0 Beta 50
+
+#### 新增
+
+- Windows 托盘菜单新增低内存模式。开启后，下次启动将使用软件渲染，以降低桌面应用的内存占用。
+
+### 1.7.0 Beta 49
+
+#### 改进
+
+- 从左上角展开模板选择。横屏左侧显示模板列表，竖屏在当前模板下方逐行显示。每行可直接进入编辑或删除，底部可新建。收起后时间轴铺满可用宽度。
 
 ## 2026-11-20
 
@@ -13,11 +161,233 @@
 - 原有 NavoPath MCP 令牌可列出、新建和编辑日程模板。支持通过应用授权第三方插件向 Agent 开放指定设置。
 - 默认日程模板和自建模板都可直接编辑和保存。
 
+### 1.7.0 Beta 48
+
+#### 新增
+
+- NavoPath MCP 支持使用原有令牌列出、新建和编辑日程模板。插件可声明可供 Agent 读写的设置，用户可按插件授权。
+
+#### 改进
+
+- 两个默认日程模板和已有自建模板都可直接编辑并保存，保留原有模板。
+
+### 1.7.0 Beta 47
+
+#### 修复
+
+- 默认日程模板可通过「复制并编辑」创建可修改的副本。自定义模板可通过「添加时段」或点开卡片直接编辑名称、起止时间和跨午夜安排，再保存模板。修复短时段点不到编辑的问题。
+
+### 1.7.0 Beta 45
+
+#### 改进
+
+- 操作历史保留最近三天的任务操作和撤销状态，重新打开应用后仍可查看和撤销。
+
+### 1.7.0 Beta 44
+
+#### 修复
+
+- 修复操作历史在云端保存后误判任务已被修改、导致无法撤销的问题。
+
+### 1.7.0 Beta 43
+
+#### 改进
+
+- 番茄钟放大计时数字，三种模式共用带滑动高亮的切换栏。点任务名即可切换任务，并可在番茄钟设置里选择数字字体。
+
+### 1.7.0 Beta 42
+
+#### 修复
+
+- 日程模板使用主页的任务卡片和时间轴，打开时定位到首个时段。修复自定义模板的新增、拖动、缩放和保存，应用时保留原始时刻及跨午夜时长。
+- 应用模板时默认选中今天。可下拉选择未来日期，预览冲突并仅添加可排入的时间块。
+
+### 1.7.0 Beta 41
+
+#### 改进
+
+- 番茄钟清楚显示当前阶段和下一步操作。可自动关联当前任务、搜索其他任务或直接添加新任务，并将实际专注用时记到本轮关联的任务。
+
+### 1.7.0 Beta 40
+
+#### 改进
+
+- 统一设置页的卡片、行间细线和控件对齐。桌面设置按用途分区，高级设置用箭头和底色标明展开状态。
+- 小组件的浅色和深色配色可从带标签的下拉框切换，颜色控件同时显示色样和十六进制值。计时设置的保存与取消仅在有改动时可用，重置当前计时使用已保存的设置。
+
+### 1.7.0 Beta 39
+
+#### 改进
+
+- 创建项目的确认图标换成短圆角勾，笔画在按钮中居中。
+
+### 1.7.0 Beta 38
+
+#### 改进
+
+- 统一项目选择器底部的新项目名输入框和确认按钮。输入框仅保留底线，确认勾去掉描边并与输入框居中对齐。
+
+### 1.7.0 Beta 37
+
+#### 修复
+
+- 项目选择器、任务操作菜单、子任务列表和 AI 审计记录中的相邻行改用单条细线分隔，消除双描边。
+
+### 1.7.0 Beta 35
+
+#### 改进
+
+- 工作区的展示文字不可选取，输入框仍可选中文字。
+- 打开设置或插件页时，顶栏和背景保持原色，面板用轻微阴影和工作区分开。
+
+### 1.7.0 Beta 34
+
+#### 改进
+
+- 移除顶栏日期按钮及其独立年历。时间轴的日期快选去掉日期描边，月份和年份用细线分格，今天仅以粗体标出，整格可点击。
+
+### 1.7.0 Beta 33
+
+#### 改进
+
+- Windows 离线安装包和便携包进一步缩小。
+
+### 1.7.0 Beta 32
+
+#### 改进
+
+- Windows 安装包和便携包进一步缩小，仍可完整离线安装。
+
+## 2026-11-18
+
+### 1.7.0 Beta 31
+
+#### 改进
+
+- Windows 安装包和便携包体积缩减，小组件独立加载，工作区闲置于托盘时释放界面资源。
+- 官方扩展按需读取，切出项目规划时保留筛选和滚动位置，解析附件结束或取消后及时释放资源。
+- 月视图仅渲染当前窗口附近的周，减少长距离滚动与切换视图的内存占用。
+
+### 1.7.0 Beta 30
+
+#### 改进
+
+- 任务短栏在添加子任务、标记完成或未完成、删除任务后自动收起，并在日程上显示对应的成功提示。
+
+## 2026-11-17
+
+### 1.7.0 Beta 29
+
+#### 修复
+
+- 跨天分隔线的日期移到左侧时间刻度栏，避免盖住跨天任务的标题和勾选框。
+
+### 1.7.0 Beta 28
+
+#### 改进
+
+- 加粗时间轴的当前时间线和跨天分隔线，滚动时更容易辨认。
+
+### 1.7.0 Beta 27
+
+#### 改进
+
+- 开启无限跨天滚动时，日、三日和周时间轴会在一天开始时间显示横贯时间轴的分隔线及新日期或日期范围。滚过分隔线后，顶部日期随之切换。
+
+### 1.7.0 Beta 26
+
+#### 修复
+
+- 修复 Windows 解除贴边后的宽屏窗口中打开插件面板时，底部遮罩断开且快捷添加等控件仍可点击的问题。
+
+### 1.7.0 Beta 25
+
+#### 修复
+
+- 管理项目中拖动任务或项目时，插入位置保持稳定，靠近侧栏边缘会自动滚动，拖到时间轴会显示排程预览。
+
+#### 改进
+
+- 管理项目、矩阵和看板沿用任务卡的样式，显示预计时长和重复标记。矩阵在窄栏改为单列，看板支持显示已完成任务。
+- 移除列表视图。已有任务、排序和排程保留。
+
 ## 2026-11-16
 
 ### 新增
 
 - 登录页支持通过注册邮箱重置密码。
+
+### 1.7.0 Beta 24
+
+#### 改进
+
+- 操作历史改为默认安装、可卸载的插件。记录会说明改期前后的时段，以及任务名称、截止日期、所属项目或预计时长的具体变化。
+- 移除任务浮栏里的容量横幅，统一操作历史、提示和 AI 面板里的撤销按钮。
+
+### 1.7.0 Beta 23
+
+#### 新增
+
+- 任务视图菜单新增「操作历史」，按时间显示本次使用中的任务创建、编辑、完成、删除与排程操作，可在提示消失后逐条撤销。撤销时保留之后的其他修改。
+
+### 1.7.0 Beta 22
+
+#### 新增
+
+- 网页版和 Windows 桌面版登录页支持通过注册邮箱重置密码。
+
+### 1.7.0 Beta 21
+
+#### 修复
+
+- 修复桌面 Dock 模式下打开任务树后时间轴变白的问题，关闭 Tree 或 Tasks 抽屉后即可继续使用时间轴。
+
+## 2026-11-09
+
+### 1.7.0 Beta 20
+
+#### 修复
+
+- 修复桌面贴边窗口左上角 N 无法接收鼠标点击的问题。点击 N 可退出 Dock 并恢复原窗口大小和位置。
+
+### 1.7.0 Beta 19
+
+#### 修复
+
+- 左上角 N 通过原生 Dock 状态直接恢复窗口，避免界面状态过期导致点击无效。
+
+### 1.7.0 Beta 18
+
+#### 修复
+
+- Dock 窗口左上角的 N 始终可点击，并根据原生窗口的实时贴边状态恢复普通窗口。
+
+## 2026-11-08
+
+### 1.7.0 Beta 17
+
+#### 修复
+
+- 点击左上角 N 时会先读取窗口当前贴边状态；贴边时立即恢复普通窗口。
+
+### 1.7.0 Beta 16
+
+#### 修复
+
+- 桌面端设置与插件面板按窗口宽度展开，恢复网页端参考布局中的宽版面板。
+
+### 1.7.0 Beta 15
+
+#### 修复
+
+- 整个窗口贴边时，工作区面板打开也可直接点击左上角 N 恢复普通窗口，且只显示一个 N。
+
+### 1.7.0 Beta 14
+
+#### 修复
+
+- 整个窗口贴边时，即使工作区面板打开，也能从左上角 N 恢复普通窗口。
+- 修复连续跨日时间轴中凌晨任务块与日期轴错位的问题；现在可按实际日期显示并正常拖动。
 
 ## 2026-11-06
 
@@ -26,6 +396,75 @@
 
 ### 修复
 - 修复日历应用无法验证有效订阅链接的问题，订阅地址使用 NavoPath 主站的 HTTPS 域名。
+
+### 1.7.0 Beta 13
+
+#### 改进
+
+- 工作区插件统一使用一页内容。天气的预报、城市选择和刷新设置集中在同一页。
+- 底栏「更多」恢复为右下角小菜单，打开时保留当前页面。
+
+### 1.7.0 Beta 12
+
+#### 改进
+
+- 底栏的活动入口统一使用单个方框。再次点击会关闭面板，点击另一个入口会直接切换。
+- 插件和工作区控件共用番茄钟面板的范围。竖屏给底栏留出空间，横屏统一靠右。
+
+### 1.7.0 Beta 11
+
+#### 修复
+
+- 竖屏将 NavoPath 标志、日期和视图切换放在同一工具栏。打开浮层时，整条工具栏一起退到背景。
+- Windows 更新重启后恢复贴边窗口、贴边方向和取消贴边前的窗口位置。
+- 底栏和「更多」显示插件的实时顶栏控件，天气图标会跟随预报更新。
+
+### 1.7.0 Beta 10
+
+#### 修复
+
+- 竖屏底栏和「更多」仅显示横屏顶栏的插件，树、看板、矩阵和列表统一在 Tasks 下拉框中切换，并修复插件图标破图。
+
+#### 改进
+
+- 底栏采用等间距图标，对话入口换成圆顶、波浪底边的新气泡，并移除快捷项标签和「更多」中的拖动说明。
+
+### 1.7.0 Beta 8
+
+#### 改进
+
+- 紧凑窗口的插件快捷栏居中显示，默认按安装顺序补齐 5 个快捷位，可在插件设置中调整为 4 到 7 个。
+- 可在底栏和「更多」之间拖动插件。快捷栏已满时，拖到某个快捷项上即可将它换回「更多」。
+
+### 1.7.0 Beta 7
+
+#### 改进
+
+- 手机底栏支持自选插件快捷项；“更多”改为应用内菜单，其他插件可在设置的长列表中管理入口位置。
+
+### 1.7.0 Beta 6
+
+#### 修复
+
+- 移除普通日历事件在时间轴上的独立卡片显示，同步条目继续作为任务显示。
+
+### 1.7.0 Beta 5
+
+#### 修复
+
+- 苹果日历同步的项目会作为普通任务显示，旧的同步事件也会自动迁移为任务。
+
+### 1.7.0 Beta 4
+
+#### 新增
+
+- 支持通过 CalDAV 账户在苹果日历与 NavoPath 双向同步日程。
+
+### 1.7.0 Beta 3
+
+#### 修复
+
+- 桌面端生成的日历订阅链接改用 NavoPath 主站的 HTTPS 地址。
 
 ## 2026-11-05
 
@@ -501,11 +940,159 @@
 
 # NavoPath Changelog
 
+## 2026-11-23
+
+### 1.7.0 Beta 68
+
+#### Fixed
+
+- The changelog scrolls in narrow windows and on phones and keeps its colors when zoomed. Both languages show the latest published notes.
+
+### 1.7.0 Beta 67
+
+#### Improved
+
+- The four Beta homepage previews open in place and close on outside clicks. The Workspace page shows the candidate list with the timeline, and plugin cards keep moving on hover.
+
+### 1.7.0 Beta 66
+
+#### Improved
+
+- The Beta website displays the plugin market in two aligned rows that loop in opposite directions, with options to pause or view the full catalog.
+
+### 1.7.0 Beta 65
+
+#### Improved
+
+- Scrolling over the Beta homepage timeline moves the page until you switch to timeline scrolling. The marketplace flows with the page, and the hero logo and text fade out as you leave the first screen.
+- The community marketplace shows a distinct icon for each plugin in both the catalog and its details.
+
+### 1.7.0 Beta 64
+
+#### Improved
+
+- The Beta homepage restores the four expanding page previews around the logo. The interactive workspace below matches the full-width 16:9 layout of the main homepage.
+
+### 1.7.0 Beta 63
+
+#### Improved
+
+- The Beta homepage restores the centered logo and hover menus, opens directly onto an interactive Tasks and timeline workspace, and adds search, sorting, and plugin details to the marketplace.
+
+### 1.7.0 Beta 62
+
+#### Improved
+
+- The Beta homepage shows the actual Beta workspace. Visitors can try scheduling on the same page and explore plugins such as Class Timetable and Quick Capture in a dedicated section.
+
+## 2026-11-22
+
+### 1.7.0 Beta 61
+
+#### Improved
+
+- Empty projects in Tree use smaller, muted text centered vertically between project rows.
+- Plugin, AI, and MCP setup guidance appears next to the relevant controls without shifting the settings layout.
+
+### 1.7.0 Beta 60
+
+#### Fixed
+
+- The unscheduling guide points to the scheduled block, then shows where to drop it while you drag.
+- Plan explains when there is no time slot long enough and still lets you pick a time manually.
+
+### 1.7.0 Beta 59
+
+#### Improved
+
+- Onboarding focuses the task input and lets you add the displayed example directly. Drag practice marks a time slot and teaches you to drag the block back to Tasks before scheduling with the calendar.
+- The task view menu guides your next action. You can set up plugins now or later, and AI and MCP each open the relevant settings with next steps.
+- Empty states in Tree point to the appropriate plus button.
+
+#### Fixed
+
+- Closing a blank new-task draft skips the save confirmation.
+
+### 1.7.0 Beta 58
+
+#### Improved
+
+- After scheduling the first task, the guide returns to Tasks and introduces Plan, task views, plugins, and AI and MCP settings before returning to the timeline.
+- The guide outline surrounds the instruction bubble.
+
+### 1.7.0 Beta 57
+
+#### Improved
+
+- The guide types and deletes task examples. In portrait, open Tasks first, then press and move the highlighted task onto the timeline. A successful drop introduces the Plan button.
+- Removed secondary copy from empty states. The title and action are centered in the empty Tasks list.
+
+#### Fixed
+
+- The Chinese setup heading fits on one line in landscape, and the task view menu aligns with its trigger.
+
+### 1.7.0 Beta 56
+
+#### Improved
+
+- An arrow points to the existing task input, which cycles through examples. An empty timeline shows a single centered message.
+
+#### Fixed
+
+- After adding your first task, drag it onto the timeline or use the calendar to choose and confirm a time.
+
 ## 2026-11-21
 
 ### Improved
 
 - The template picker opens beside the timeline in landscape. In portrait, edit and delete directly from template rows, or create one at the bottom. Click the current template name to collapse the picker.
+
+### 1.7.0 Beta 54
+
+#### Fixed
+
+- The Tasks header divider stays in place when switching views. Projects open in Tree, and the old Manage projects entry has been removed.
+
+### 1.7.0 Beta 53
+
+#### Improved
+
+- First-time setup lets you choose the language, appearance, and timeline preferences. Then you can edit a starter task, schedule it, and explore views, plugins, and integrations.
+- Empty workspace pages offer actions suited to the context, such as adding an item, connecting a service, or clearing filters.
+
+#### Fixed
+
+- Restarting the onboarding guide from Settings opens the new workspace setup.
+
+### 1.7.0 Beta 52
+
+#### Fixed
+
+- Opening Tree from the Tasks menu shows Tree in the top-left switcher, where you can switch directly to another view.
+- When adding a project or habit from the lower-right corner in landscape, the drawer width, title, and submit button align with the task form.
+
+### 1.7.0 Beta 51
+
+#### Improved
+
+- Removed repeated text from sign-in, Tasks, Planning, search, AI, settings, and plugins. The empty Tasks panel offers an add action, mobile task rows show the scheduling action, and Planning view settings link directly to plugin management.
+- Search results keep the details that distinguish items with the same name. Suggested AI messages go straight into the composer, and the selected row identifies the current conversation.
+
+#### Fixed
+
+- On phones, tapping Plan now shows the controls to confirm or cancel scheduling on the timeline.
+
+### 1.7.0 Beta 50
+
+#### Added
+
+- The Windows tray menu now offers Low memory mode. When enabled, NavoPath uses software rendering on the next launch to reduce desktop memory use.
+
+### 1.7.0 Beta 49
+
+#### Improved
+
+- Open the template picker from the top left. The list appears beside the timeline in landscape and below the current template in portrait. Edit or delete individual templates from their rows, or create one at the bottom. The timeline fills the available width when the picker is closed.
 
 ## 2026-11-20
 
@@ -514,11 +1101,233 @@
 - Use the existing NavoPath MCP token to list, create, and edit schedule templates. Authorize third-party plugins in the app to share selected settings with agents.
 - Edit and save built-in and custom schedule templates in place.
 
+### 1.7.0 Beta 48
+
+#### Added
+
+- List, create, and edit schedule templates through NavoPath MCP with your existing token. Plugins can declare settings for agents to read or write, with access granted per plugin.
+
+#### Improved
+
+- Edit and save both built-in schedule templates and existing custom templates in place.
+
+### 1.7.0 Beta 47
+
+#### Fixed
+
+- Use Copy and Edit to customize a built-in schedule template. Add a block or open an existing block to edit its title and start and end times, including overnight schedules, then save the template. Short blocks now open for editing when clicked.
+
+### 1.7.0 Beta 45
+
+#### Improved
+
+- Activity History keeps the last three days of task activity and undo status, so you can review and undo actions after reopening the app.
+
+### 1.7.0 Beta 44
+
+#### Fixed
+
+- Fixed Activity History undo being blocked when a cloud save made a task appear to have changed.
+
+### 1.7.0 Beta 43
+
+#### Improved
+
+- The focus timer has larger digits and a sliding highlight across its three modes. Click the task name to switch tasks, and choose a clock font in Pomodoro settings.
+
+### 1.7.0 Beta 42
+
+#### Fixed
+
+- Schedule Templates use the home workspace’s task cards and timeline, with the first block in view on open. Adding, moving, resizing, and saving custom blocks work again, and applying a template preserves exact times and overnight durations.
+- Templates apply to today by default. Pick a future date from the dropdown to preview conflicts and add the available blocks.
+
+### 1.7.0 Beta 41
+
+#### Improved
+
+- Pomodoro shows the current phase and next action. Auto-link the current task, search for another task, or add a new one, then log actual focus time to the task linked to the session.
+
+### 1.7.0 Beta 40
+
+#### Improvements
+
+- Settings use consistent cards, single row dividers, and aligned controls. Desktop settings are grouped by function, and Advanced Settings shows its expanded state with a chevron and a shaded background.
+- A labeled dropdown switches between light and dark widget palettes, and color controls show a swatch and hex value. Save and Cancel are enabled when timer settings change. Resetting the current timer uses the saved settings.
+
+### 1.7.0 Beta 39
+
+#### Improvements
+
+- The create-project button uses a centered, compact check mark with rounded strokes.
+
+### 1.7.0 Beta 38
+
+#### Improvements
+
+- Project pickers share an underlined name field and a centered, borderless check icon for creating a project.
+
+### 1.7.0 Beta 37
+
+#### Fixes
+
+- Project pickers, task action menus, subtask lists and AI audit history now use a single thin divider between adjacent rows.
+
+### 1.7.0 Beta 35
+
+#### Improvements
+
+- Display text in the workspace is no longer selectable. Input fields still support text selection.
+- Settings and plugin panels use a soft shadow and keep the header and workspace at their original brightness.
+
+### 1.7.0 Beta 34
+
+#### Improvements
+
+- Removed the top-bar date button and its standalone yearly calendar. In the timeline date picker, days have no borders, months and years use thin dividers, today is marked in bold, and each cell is fully clickable.
+
+### 1.7.0 Beta 33
+
+#### Improvements
+
+- Further reduced the size of the Windows offline installer and portable package.
+
+### 1.7.0 Beta 32
+
+#### Improvements
+
+- Smaller Windows installer and portable package, with full offline installation.
+
+## 2026-11-18
+
+### 1.7.0 Beta 31
+
+#### Improved
+
+- Reduced the Windows installer and portable download sizes. The widget loads independently, and the workspace releases UI resources when idle in the tray.
+- Official extensions load on demand, Planning restores filters and scroll position, and attachment parsing releases resources when it finishes or is canceled.
+- Month view renders weeks near the viewport to reduce memory during long scrolls and view changes.
+
+### 1.7.0 Beta 30
+
+#### Improved
+
+- The compact task sheet closes after adding a subtask, marking a task complete or incomplete, or deleting it. The timeline shows a confirmation for each action.
+
+## 2026-11-17
+
+### 1.7.0 Beta 29
+
+#### Fixed
+
+- Moved cross-day divider dates into the time ruler so they stay clear of task titles and checkboxes.
+
+### 1.7.0 Beta 28
+
+#### Improved
+
+- Made the current-time line and cross-day dividers thicker so they are easier to spot when scrolling.
+
+### 1.7.0 Beta 27
+
+#### Improved
+
+- With continuous cross-day scrolling on, Day, Three-day, and Week timelines show a divider and the incoming date or date range at the configured day start. The date header updates as you scroll past the divider.
+
+### 1.7.0 Beta 26
+
+#### Fixed
+
+- Fixed a gap below the backdrop in wide undocked Windows windows that allowed quick add and other workspace controls to remain clickable behind plugin panels.
+
+### 1.7.0 Beta 25
+
+#### Fixed
+
+- In Manage projects, insertion targets stay in place while you drag tasks or projects. Drag near the panel edge to scroll, or over the timeline to preview scheduling.
+
+#### Improved
+
+- Manage projects, Matrix, and Kanban share the Tasks card style, including estimated duration and recurrence. Matrix uses one column in narrow panels, and Kanban can show completed tasks.
+- The List view has been retired. Existing tasks, order, and schedules are preserved.
+
 ## 2026-11-16
 
 ### Added
 
 - Reset your password using your registered email from the sign-in screen.
+
+### 1.7.0 Beta 24
+
+#### Improved
+
+- Activity history is now a preinstalled plugin you can uninstall. Entries show previous and new schedule slots, as well as changes to task titles, due dates, projects, or estimated durations.
+- Removed the capacity banner from the task shelf and unified Undo controls in activity history, notifications, and the AI panel.
+
+### 1.7.0 Beta 23
+
+#### Added
+
+- Open Activity history from the task view menu to review when tasks were created, edited, completed, deleted, or scheduled during this session. Undo individual actions after their notifications expire while preserving later edits.
+
+### 1.7.0 Beta 22
+
+#### Added
+
+- Reset your password using your registered email from the web and Windows sign-in screens.
+
+### 1.7.0 Beta 21
+
+#### Fixed
+
+- Fixed a blank timeline after opening Tree while docked. Close the Tree or Tasks drawer to continue using the timeline.
+
+## 2026-11-09
+
+### 1.7.0 Beta 20
+
+#### Fixed
+
+- Fixed the top-left N in the desktop Dock window ignoring mouse clicks. Clicking N exits Dock and restores the original window size and position.
+
+### 1.7.0 Beta 19
+
+#### Fixed
+
+- The top-left N restores the window directly from native Dock state, avoiding stale UI state that could leave the click ineffective.
+
+### 1.7.0 Beta 18
+
+#### Fixed
+
+- The top-left N in a docked window stays clickable and restores the window using its live native Dock state.
+
+## 2026-11-08
+
+### 1.7.0 Beta 17
+
+#### Fixed
+
+- The top-left N now checks the window's current Dock state and immediately restores the normal window when docked.
+
+### 1.7.0 Beta 16
+
+#### Fixed
+
+- Desktop settings and plugin panels now scale with the window width to match the wider web layout.
+
+### 1.7.0 Beta 15
+
+#### Fixed
+
+- While desktop Dock is active, click the single top-left N to restore the normal window even with a workspace panel open.
+
+### 1.7.0 Beta 14
+
+#### Fixed
+
+- Restore the normal window from the top-left N while a workspace panel is open in desktop Dock mode.
+- Fixed early-morning task blocks being offset from their calendar dates in the continuous timeline; they now display on the correct date and can be dragged normally.
 
 ## 2026-11-06
 
@@ -527,6 +1336,75 @@
 
 ### Fixed
 - Fixed calendar apps rejecting valid subscription links. Subscription links use the main NavoPath HTTPS domain.
+
+### 1.7.0 Beta 13
+
+#### Improvements
+
+- Workspace plugins use a single page. Weather shows the forecast, city selection, and refresh settings on that page.
+- More opens a small menu in the bottom-right corner and keeps the current page open.
+
+### 1.7.0 Beta 12
+
+#### Improved
+
+- Active dock entries use one rectangular outline. Activate the same entry to close its panel or another entry to switch directly.
+- Plugins and workspace controls share the timer panel bounds. Portrait leaves the dock visible, and landscape aligns panels to the right.
+
+### 1.7.0 Beta 11
+
+#### Fixed
+
+- Portrait mode places the NavoPath logo, date, and view controls in one toolbar that stays behind overlays.
+- Windows restores the docked window, screen edge, and original window position after an update restarts the app.
+- The dock and More show live plugin controls, so the weather icon follows forecast updates.
+
+### 1.7.0 Beta 10
+
+#### Fixed
+
+- The portrait dock and More show plugins from the landscape toolbar. Tree, Kanban, Matrix, and List are available in the Tasks dropdown, and plugin icons load correctly.
+
+#### Improved
+
+- Space dock icons evenly, give chat a new bubble with a rounded top and wavy base, and remove shortcut labels and drag instructions from More.
+
+### 1.7.0 Beta 8
+
+#### Improved
+
+- Compact windows center plugin shortcuts and fill five dock slots by installation order by default. Plugin settings let you choose four to seven slots.
+- Drag plugins between the dock and More. When the dock is full, drop onto a shortcut to move that shortcut back to More.
+
+### 1.7.0 Beta 7
+
+#### Improved
+
+- Choose plugin shortcuts for the mobile dock; More now opens an in-app menu, with other plugin placements managed in a long Settings list.
+
+### 1.7.0 Beta 6
+
+#### Fixed
+
+- Remove standalone calendar event cards from the timeline while keeping synchronized items as tasks.
+
+### 1.7.0 Beta 5
+
+#### Fixed
+
+- Show Apple Calendar sync items as ordinary tasks and migrate existing synced events to tasks.
+
+### 1.7.0 Beta 4
+
+#### Added
+
+- Sync events both ways between Apple Calendar and NavoPath with a CalDAV account.
+
+### 1.7.0 Beta 3
+
+#### Fixed
+
+- Desktop calendar subscription links now use the main NavoPath HTTPS address.
 
 ## 2026-11-05
 
