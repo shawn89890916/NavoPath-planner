@@ -4,7 +4,7 @@
 
 ### 改进
 
-- AI 排程的批量确认与单条采纳使用统一的无边框对勾。
+- AI 排程的批量确认与单条采纳使用统一的无描边对勾，并保留键盘聚焦提示。
 
 ### 1.7.0 Beta 69
 
@@ -948,7 +948,7 @@
 
 ### Improvements
 
-- Bulk confirmation and individual acceptance in AI scheduling use matching borderless checkmarks.
+- AI scheduling uses matching borderless checkmarks for bulk confirmation and individual acceptance, with a visible keyboard focus indicator.
 
 ### 1.7.0 Beta 69
 

@@ -154,6 +154,11 @@
 }
 
 .ui-icon-button--close { color: var(--color-muted, #7b7062); }
+.ui-icon-button--borderless,
+#root .df-app .ui-icon-button.ui-icon-button--borderless {
+  --ui-icon-button-outline: 0;
+  border: 0;
+}
 
 .ui-input {
   font: inherit;
@@ -647,7 +652,7 @@
   .df-tabs button,
   .df-view-switch-vertical button
 ) {
-  border: 1px solid var(--paper-rule-strong);
+  border: var(--ui-icon-button-outline, 1px solid var(--paper-rule-strong));
   border-radius: var(--radius-control);
   box-shadow: none;
 }
