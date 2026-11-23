@@ -3,11 +3,14 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Language } from "../types";
 import { SettingActionButton, SettingColorInput, SettingDescription, SettingNumberInput, SettingRow, SettingSection, SettingSelect, SettingTextInput, SettingToggle } from "../components/SettingsControls";
 import { ActionDisclosure, Button, CloseButton, Modal } from "../components/UiPrimitives";
+import { UiIcon } from "../components/UiIconRegistry";
 import { UiSearchIcon } from "../components/UiIcons";
+import { prefersReducedMotion } from "../motion";
 import { extensionService } from "./service";
 import type { CatalogEntry, ExtensionKind, ThemeOption } from "./types";
 import { ExtensionMount } from "./ExtensionMount";
 import { PluginMarketIdentity } from "./PluginMarketIdentity";
+import { PluginMarketLanes } from "./PluginMarketLanes";
 import "./ExtensionSettings.css";
 
 function ThemeOptionControl({ option, value, onChange }: { option: ThemeOption; value: unknown; onChange: (value: unknown) => void }) {
@@ -71,6 +74,9 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
   const setPageId = onSelectPage || setLocalPageId;
   const [onlyInstalled, setOnlyInstalled] = useState(false);
   const [marketSort, setMarketSort] = useState("name");
+  const [showGrid, setShowGrid] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(() => inline && prefersReducedMotion());
   const [previewMode, setPreviewMode] = useState<PreviewMode>("split");
   const [selectedCatalogKey, setSelectedCatalogKey] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -81,6 +87,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
   const fileInput = useRef<HTMLInputElement>(null);
   const inlineMarket = useRef<HTMLElement>(null);
   const marketOpener = useRef<string>(null);
+  const marketLayout = useRef<HTMLButtonElement>(null);
   const installed = inline ? [] : Object.values(preferences.installed).filter((item) => item.manifest.kind === kind);
   const mcpPlugins = installed.flatMap((item) => {
     if (item.key === SCHEDULE_TEMPLATE_PLUGIN) return [{ item, grant: "enabled" }];
@@ -90,6 +97,9 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
   const matches = (name: string, description: string, author: string) => `${name} ${description} ${author}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase());
   const filtered = installed.filter(({ manifest }) => matches(manifest.name, manifest.description, manifest.author));
   const catalog = marketEntries.filter(({ manifest, sourceId }) => manifest.kind === kind && matches(manifest.name, manifest.description, manifest.author) && (!onlyInstalled || installed.some(item => item.sourceId === sourceId && item.manifest.id === manifest.id))).sort((a, b) => marketSort === "downloads" ? (b.downloads ?? -1) - (a.downloads ?? -1) : marketSort === "updated" ? (Date.parse(b.publishedAt || "") || 0) - (Date.parse(a.publishedAt || "") || 0) : a.manifest[marketSort === "author" ? "author" : "name"].localeCompare(b.manifest[marketSort === "author" ? "author" : "name"], lang));
+  // Each row needs enough original cards to span the widest homepage content area.
+  const canLoop = inline && plugin && !reduceMotion && !query.trim() && catalog.length >= 10;
+  const loop = canLoop && !showGrid;
   const selectedCatalog = marketEntries.find(entry => `${entry.sourceId}:${entry.manifest.id}` === selectedCatalogKey && entry.manifest.kind === kind);
   const page = snapshot.settingsPages.find((item) => item.id === pageId);
   const active = installed.find((item) => item.key === preferences.activeTheme);
@@ -104,6 +114,13 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
   function statusLabel(value: string) { const parts = value.split(" / "); return parts.length === 2 ? parts[zh ? 0 : 1] : value; }
   useEffect(() => { if (pageId && !page) setPageId(null); }, [pageId, page]);
   useEffect(() => {
+    if (!inline) return;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduceMotion(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, [inline]);
+  useEffect(() => {
     const market = inlineMarket.current;
     const opener = marketOpener.current;
     if (!market || !opener) return;
@@ -113,17 +130,50 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
       if (top < 0) window.scrollBy({ top, behavior: "instant" });
       market.querySelector<HTMLButtonElement>(".df-extension-detail > button")?.focus({ preventScroll: true });
     } else {
-      market.querySelector<HTMLButtonElement>(`[data-market-entry="${CSS.escape(opener)}"]`)?.focus();
+      const target = market.querySelector<HTMLButtonElement>(`[data-market-entry="${CSS.escape(opener)}"]`) ?? marketLayout.current;
+      target?.focus();
       marketOpener.current = null;
     }
   }, [selectedCatalogKey]);
   const search = <label className="df-extension-search"><UiSearchIcon size={16} /><SettingTextInput value={query} placeholder={inline || view === "market" ? text("搜索名称、作者或描述…", "Search name, author or description…") : text(plugin ? "搜索已安装的插件…" : "搜索已安装的主题…", plugin ? "Search installed plugins…" : "Search installed themes…")} ariaLabel={text("搜索扩展", "Search extensions")} onChange={setQuery} /></label>;
   const back = <div className="df-extension-back"><SettingActionButton onClick={() => navigate("installed")}>{text(plugin ? "返回插件" : "返回主题", plugin ? "Back to plugins" : "Back to themes")}</SettingActionButton></div>;
 
+  function marketCard(entry: CatalogEntry, moving = false) {
+    const key = `${entry.sourceId}:${entry.manifest.id}`;
+    const existing = installed.find(item => item.sourceId === entry.sourceId && item.manifest.id === entry.manifest.id);
+    return <article className="df-extension-market-card" key={key}>
+      <button type="button" className="df-extension-market-open" tabIndex={moving ? -1 : undefined} data-market-entry={inline && !moving ? key : undefined} aria-label={text(`查看 ${entry.manifest.name}`, `View ${entry.manifest.name}`)} onMouseDown={moving ? event => event.preventDefault() : undefined} onClick={() => {
+        if (inline) marketOpener.current = key;
+        setSelectedCatalogKey(key);
+      }}>
+        {!plugin && <ThemePreview entry={entry} lang={lang} mode={previewMode} />}
+        {plugin && <div className="df-extension-plugin-heading"><PluginMarketIdentity entry={entry} /><div><h3>{entry.manifest.name}</h3><span className="df-extension-meta">{entry.manifest.author} · v{entry.manifest.version}</span></div></div>}
+        {!plugin && <><h3>{entry.manifest.name}</h3><span className="df-extension-meta">{entry.manifest.author} · v{entry.manifest.version}</span></>}
+        <p>{entry.manifest.description}</p>
+        {plugin && !inline && <span className="df-extension-market-stats">{(() => { const stats = catalogStats(entry, lang); return <>{text("下载", "Downloads")} {stats.downloads}<span aria-hidden="true">·</span>{text("上传", "Updated")} {stats.published}</>; })()}</span>}
+      </button>
+      {!inline && <footer><span className="df-extension-state">{existing ? text("已安装", "Installed") : preferences.sources.find(source => source.id === entry.sourceId)?.name ?? entry.sourceId}</span>{existing ? <Button onClick={() => navigate("installed")}>{text("管理", "Manage")}</Button> : <Button variant="primary" disabled={busy} onClick={() => void run(() => extensionService.install(entry), text(`正在安装 ${entry.manifest.name}…`, `Installing ${entry.manifest.name}…`))}>{text("安装", "Install")}</Button>}</footer>}
+    </article>;
+  }
+
   const marketContent = <>
-      <header className="df-extension-market-head"><div><h2>{text(plugin ? "社区插件市场" : "社区主题", plugin ? "Community plugin market" : "Community themes")}</h2>{!inline && <p>{text(plugin ? "为你的工作区添加新能力。" : "找到适合你的工作区外观。", plugin ? "Add new capabilities to your workspace." : "Find an appearance that feels right for your workspace.")}</p>}</div>{!inline && <CloseButton label={text("关闭市场", "Close market")} onClick={() => navigate("installed")} />}</header>
+      {!inline && <header className="df-extension-market-head"><div><h2>{text(plugin ? "社区插件市场" : "社区主题", plugin ? "Community plugin market" : "Community themes")}</h2><p>{text(plugin ? "为你的工作区添加新能力。" : "找到适合你的工作区外观。", plugin ? "Add new capabilities to your workspace." : "Find an appearance that feels right for your workspace.")}</p></div><CloseButton label={text("关闭市场", "Close market")} onClick={() => navigate("installed")} /></header>}
       {!plugin && <label className="df-extension-preview-control"><span>{text("预览外观", "Preview appearance")}</span><SettingSelect value={previewMode} ariaLabel={text("预览外观", "Preview appearance")} options={[{ value: "split", label: text("浅色与深色", "Light and dark") }, { value: "light", label: text("浅色", "Light") }, { value: "dark", label: text("深色", "Dark") }]} onChange={value => setPreviewMode(value as PreviewMode)} /></label>}
-      {!selectedCatalog && <div className="df-extension-market-toolbar">{search}{!inline && <label className="df-extension-market-filter"><span>{text("仅显示已安装", "Installed only")}</span><SettingToggle checked={onlyInstalled} ariaLabel={text("仅显示已安装", "Installed only")} onChange={setOnlyInstalled} /></label>}<SettingSelect value={marketSort} ariaLabel={text("市场排序", "Sort market")} options={[{ value: "name", label: text("按名称", "Name") }, { value: "author", label: text("按作者", "Author") }, ...(plugin && !inline ? [{ value: "downloads", label: text("下载量", "Downloads") }, { value: "updated", label: text("最近上传", "Recently updated") }] : [])]} onChange={setMarketSort} /><span className="df-extension-market-count">{text(`${catalog.length} 个${plugin ? "插件" : "主题"}`, `${catalog.length} ${plugin ? "plugins" : "themes"}`)}</span></div>}
+      {!selectedCatalog && <div className="df-extension-market-toolbar">
+        {search}
+        {!inline && <label className="df-extension-market-filter"><span>{text("仅显示已安装", "Installed only")}</span><SettingToggle checked={onlyInstalled} ariaLabel={text("仅显示已安装", "Installed only")} onChange={setOnlyInstalled} /></label>}
+        <SettingSelect value={marketSort} ariaLabel={text("市场排序", "Sort market")} options={[{ value: "name", label: text("按名称", "Name") }, { value: "author", label: text("按作者", "Author") }, ...(plugin && !inline ? [{ value: "downloads", label: text("下载量", "Downloads") }, { value: "updated", label: text("最近上传", "Recently updated") }] : [])]} onChange={value => {
+          setMarketSort(value);
+          if (inline) setShowGrid(true);
+        }} />
+        {!inline && <span className="df-extension-market-count">{text(`${catalog.length} 个${plugin ? "插件" : "主题"}`, `${catalog.length} ${plugin ? "plugins" : "themes"}`)}</span>}
+        {canLoop && <button ref={marketLayout} className="beta-link-button" type="button" onClick={() => setShowGrid(value => !value)}>
+          {loop ? text("查看全部插件", "View all plugins") : text("循环展示", "Show moving cards")}
+        </button>}
+        {loop && <button type="button" className="beta-link-button df-extension-market-playback" aria-label={paused ? text("继续滚动插件", "Resume plugin cards") : text("暂停滚动插件", "Pause plugin cards")} onClick={() => setPaused(value => !value)}>
+          <UiIcon name={paused ? "play" : "pause"} />
+        </button>}
+      </div>}
       <div className="df-extension-market-body">
         {!inline && (pending || notice || catalogLoading) && <p className="df-extension-note" role="status">{pending || notice || text("正在刷新市场…你可以继续浏览或返回。", "Refreshing catalog… You can keep browsing or go back.")}</p>}
         {!inline && (error || snapshot.error) && <p className="df-extension-error" role="alert">{error || snapshot.error}</p>}
@@ -136,23 +186,9 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
           {inline ? <a className="beta-link-button" href="/app">{text("在 NavoPath 中安装", "Install in NavoPath")}</a> : installed.some(item => item.sourceId === selectedCatalog.sourceId && item.manifest.id === selectedCatalog.manifest.id) ? <Button onClick={() => navigate("installed")}>{text("管理已安装", "Manage installed")}</Button> : <Button variant="primary" disabled={busy} onClick={() => void run(() => extensionService.install(selectedCatalog), text(`正在安装 ${selectedCatalog.manifest.name}…`, `Installing ${selectedCatalog.manifest.name}…`))}>{text("安装", "Install")}</Button>}
         </article> : <>
           {catalog.length === 0 && !catalogLoading && <div className="df-extension-empty"><p>{text("没有找到匹配的扩展。", "No matching extensions.")}</p>{!inline && <><Button onClick={() => void run(() => extensionService.refreshCatalog())}>{text("重新加载", "Reload catalog")}</Button><Button onClick={() => navigate("sources")}>{text("管理来源", "Manage sources")}</Button></>}</div>}
-          <div className="df-extension-market-grid">{catalog.map(entry => {
-            const key = `${entry.sourceId}:${entry.manifest.id}`;
-            const existing = installed.find(item => item.sourceId === entry.sourceId && item.manifest.id === entry.manifest.id);
-            return <article className="df-extension-market-card" key={key}>
-              <button type="button" className="df-extension-market-open" data-market-entry={inline ? key : undefined} aria-label={text(`查看 ${entry.manifest.name}`, `View ${entry.manifest.name}`)} onClick={() => {
-                if (inline) marketOpener.current = key;
-                setSelectedCatalogKey(key);
-              }}>
-                {!plugin && <ThemePreview entry={entry} lang={lang} mode={previewMode} />}
-                {plugin && <div className="df-extension-plugin-heading"><PluginMarketIdentity entry={entry} /><div><h3>{entry.manifest.name}</h3><span className="df-extension-meta">{entry.manifest.author} · v{entry.manifest.version}</span></div></div>}
-                {!plugin && <><h3>{entry.manifest.name}</h3><span className="df-extension-meta">{entry.manifest.author} · v{entry.manifest.version}</span></>}
-                <p>{entry.manifest.description}</p>
-                {plugin && !inline && <span className="df-extension-market-stats">{(() => { const stats = catalogStats(entry, lang); return <>{text("下载", "Downloads")} {stats.downloads}<span aria-hidden="true">·</span>{text("上传", "Updated")} {stats.published}</>; })()}</span>}
-              </button>
-              {!inline && <footer><span className="df-extension-state">{existing ? text("已安装", "Installed") : preferences.sources.find(source => source.id === entry.sourceId)?.name ?? entry.sourceId}</span>{existing ? <Button onClick={() => navigate("installed")}>{text("管理", "Manage")}</Button> : <Button variant="primary" disabled={busy} onClick={() => void run(() => extensionService.install(entry), text(`正在安装 ${entry.manifest.name}…`, `Installing ${entry.manifest.name}…`))}>{text("安装", "Install")}</Button>}</footer>}
-            </article>;
-          })}</div>
+          {loop
+            ? <PluginMarketLanes paused={paused} cards={catalog.map(entry => marketCard(entry, true))} />
+            : <div className="df-extension-market-grid">{catalog.map(entry => marketCard(entry))}</div>}
         </>}
       </div>
   </>;

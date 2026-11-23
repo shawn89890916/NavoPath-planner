@@ -31,6 +31,18 @@
 .df-extension-market-body { min-height: 0; padding: 22px 24px 28px; }
 .ui-modal.df-extension-market .df-extension-market-body { overflow-y: auto; overscroll-behavior: contain; }
 .df-extension-market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 18px; }
+.df-extension-market-lanes { --lane-gap: 14px; --lane-card-width: clamp(216px, 22vw, 248px); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--lane-gap); }
+.df-extension-market-lane { overflow: clip; mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent); }
+.df-extension-market-track { display: flex; width: max-content; animation: df-extension-market-loop linear infinite; }
+.df-extension-market-lane:first-child .df-extension-market-track { animation-direction: reverse; animation-delay: -2.4s; }
+.df-extension-market-lane:last-child .df-extension-market-track { animation-delay: -6s; }
+.df-extension-market-sequence { display: grid; grid-auto-flow: column; grid-auto-columns: var(--lane-card-width); gap: var(--lane-gap); padding-inline-end: var(--lane-gap); }
+.df-extension-market-lanes .df-extension-market-card { min-block-size: 160px; }
+.df-extension-market-lanes .df-extension-market-open p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.df-extension-market-lanes[data-paused="true"] .df-extension-market-track { animation-play-state: paused; }
+@media (hover: hover) { .df-extension-market-lanes:hover .df-extension-market-track { animation-play-state: paused; } }
+@media (prefers-reduced-motion: reduce) { .df-extension-market-lanes .df-extension-market-track { animation-play-state: paused; } }
+@keyframes df-extension-market-loop { to { transform: translateX(-50%); } }
 .df-extension-market-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: 10px; background: var(--surface-card); }
 .df-extension-market-open { flex: 1; display: block; width: 100%; padding: 18px; border: 0; border-radius: 0; background: transparent; color: inherit; text-align: start; font: inherit; cursor: pointer; }
 .df-extension-market-open:focus-visible { outline: 2px solid var(--border-focus, var(--accent-active)); outline-offset: -4px; }

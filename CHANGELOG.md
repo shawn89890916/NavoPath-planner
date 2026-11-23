@@ -5,7 +5,7 @@
 ### 改进
 
 - 官网 Beta 恢复围绕品牌标志的四张可展开页面入口及悬停导航。首屏标志和文案随页面滚动退出，避免遮挡后续内容。
-- 官网时间轴默认随网页滚动，可切换到时间轴内部滚动。插件市场沿网页展开，每款插件使用独立图标，并保留搜索、排序和详情。
+- 官网时间轴默认随网页滚动，可切换到时间轴内部滚动。插件市场用两排对向循环的卡片展示各插件的独立图标，可暂停或查看完整列表，支持搜索、排序和详情。
 
 ## 2026-11-22
 
@@ -519,7 +519,7 @@
 ### Improvements
 
 - The Beta homepage restores the four expanding page previews around the logo and the hover menus. The hero logo and text fade out as you scroll so the sections below stay clear.
-- Scrolling over the timeline moves the page until you switch to timeline scrolling. The plugin market flows with the page and gives each plugin a distinct icon alongside search, sorting, and details.
+- Scrolling over the timeline moves the page until you switch to timeline scrolling. Plugin cards have distinct icons and loop in two opposite directions, with controls to pause or browse all plugins, plus search, sorting, and details.
 
 ## 2026-11-22
 

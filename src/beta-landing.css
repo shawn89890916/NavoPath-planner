@@ -53,19 +53,14 @@ html.beta-landing-document body, html.beta-landing-document #root { height: auto
 
 .beta-market {
   display: grid;
-  grid-template-columns: minmax(230px, .65fr) minmax(0, 1.35fr);
-  align-items: start;
-  gap: clamp(28px, 5vw, 80px);
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(22px, 3vw, 38px);
   margin-top: var(--beta-section);
   padding-block: clamp(32px, 6vw, 78px);
   border-block: 1px solid var(--beta-rule);
 }
 .beta-market h2#beta-market-title { margin: 0; font: 700 clamp(34px, 4vw, 58px)/1.1 var(--l-display); letter-spacing: -.042em; text-wrap: balance; }
-.beta-market-copy > p { margin-block: 16px 24px; color: var(--beta-muted); line-height: 1.65; }
-.beta-market-copy dl { margin: 0 0 24px; border-top: 1px solid var(--beta-rule); }
-.beta-market-copy dl > div { padding-block: 11px; border-bottom: 1px solid var(--beta-rule); }
-.beta-market-copy dt { font-weight: 670; }
-.beta-market-copy dd { margin: 4px 0 0; font-size: 15px; color: var(--beta-muted); }
+.beta-market-copy > p { max-inline-size: 55ch; margin: 14px 0 0; color: var(--beta-muted); line-height: 1.65; }
 .beta-market-preview {
   --paper-sans: var(--l-body);
   --paper-rule: var(--beta-rule);
@@ -77,17 +72,19 @@ html.beta-landing-document body, html.beta-landing-document #root { height: auto
   --border-focus: var(--beta-focus);
   --radius-control: 6px;
   min-width: 0;
-  min-height: 500px;
-  border: 1px solid var(--beta-rule);
-  border-radius: 9px;
-  overflow: clip;
   background: var(--beta-paper);
 }
-.beta-market-status { display: grid; justify-items: center; align-content: center; min-height: 500px; margin: 0; padding: 20px; color: var(--beta-muted); }
+.beta-market-status { display: grid; justify-items: center; align-content: center; min-height: 365px; margin: 0; padding: 20px; color: var(--beta-muted); }
 .beta-market-preview .df-extension-market--inline { font: 14px/1.55 var(--l-body); scroll-margin-block-start: calc(var(--l-nav-height) + 12px); }
-.beta-market-preview .df-extension-market-count { display: none; }
+.beta-market-preview .df-extension-market-toolbar { gap: 8px; padding: 0; border: 0; }
+.beta-market-preview .df-extension-market-toolbar .df-extension-search { flex: 0 1 340px; }
+.beta-market-preview .df-extension-market-toolbar > button { min-height: 40px; background: var(--surface-card); cursor: pointer; }
+.beta-market-preview .df-extension-market-toolbar > button:first-of-type { margin-inline-start: auto; }
+.beta-market-preview .df-extension-market-playback { width: 40px; padding: 0; }
+.beta-market-preview .df-extension-market-body { padding: 16px 0 0; }
 .beta-market-preview .df-extension-market-grid { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
 .beta-market-preview .df-extension-market-open { display: flex; flex-direction: column; align-items: stretch; }
+.beta-market-preview .df-extension-plugin-heading { align-items: flex-start; }
 .beta-market-preview .df-settings-input { padding: 8px 10px 8px 38px; border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-control); background: var(--surface-card); color: var(--text-main); }
 .beta-market-preview .df-extension-market-open p { min-height: 0; }
 .beta-market-preview .df-extension-detail > button { min-height: 36px; padding: 6px 12px; border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-control); background: var(--surface-card); cursor: pointer; }
@@ -102,9 +99,6 @@ html.beta-landing-document body, html.beta-landing-document #root { height: auto
 @media (max-width: 899.98px) {
   .beta-workspace-window .np-product-window { aspect-ratio: auto; height: min(730px, 82svh); }
 }
-@media (max-width: 790px) {
-  .beta-market { grid-template-columns: 1fr; }
-}
 @media (max-width: 640px) {
   .landing.beta-landing { --l-nav-height: 94px; }
   .beta-landing .landing-nav { grid-template-columns: 1fr auto; grid-template-rows: 45px 43px; gap: 0 10px; padding-block-start: 4px; }
@@ -113,4 +107,5 @@ html.beta-landing-document body, html.beta-landing-document #root { height: auto
   .beta-drag-instruction { display: none; }
   .beta-tap-instruction { display: inline; }
   .beta-secondary-links { width: 100%; margin: 4px 0 0; }
+  .beta-market-preview .df-extension-market-toolbar .df-extension-search { flex-basis: 100%; }
 }

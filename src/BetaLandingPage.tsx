@@ -26,9 +26,7 @@ const copy = {
     tap: "给「调整网站布局」选一个空档。",
     marketTitle: "需要什么，就加什么",
     marketBody: "日常排程用默认工作区。想导入课表、快速记下想法，再到插件市场添加。",
-    timetable: "课表", timetableBody: "把固定课程放到时间轴背景，看看课间还能安排什么。",
-    capture: "快速收集", captureBody: "临时想到的事，先放进今天的任务列表。",
-    browse: "浏览插件市场", dock: "Windows 停靠",
+    dock: "Windows 停靠",
     download: "下载 Windows 客户端",
     changelog: "更新日志", privacy: "隐私政策", issues: "问题反馈", sitemap: "页脚导航",
   },
@@ -41,9 +39,7 @@ const copy = {
     tap: "Pick an open slot for “Refine the website layout.”",
     marketTitle: "Add what you need",
     marketBody: "Use the default workspace to plan your day. Add plugins when you want to bring in your class timetable or capture ideas on the fly.",
-    timetable: "Class Timetable", timetableBody: "See your classes behind your timeline and plan tasks around them.",
-    capture: "Quick Capture", captureBody: "Send a thought straight to today’s task list.",
-    browse: "Browse the plugin market", dock: "Windows Dock",
+    dock: "Windows Dock",
     download: "Download for Windows",
     changelog: "Changelog", privacy: "Privacy Policy", issues: "Report an issue", sitemap: "Footer navigation",
   },
@@ -67,6 +63,12 @@ export default function BetaLandingPage() {
 
   useEffect(() => {
     document.documentElement.classList.add("beta-landing-document");
+    // On a direct link the browser may resolve the fragment before React mounts its section.
+    const target = document.getElementById(location.hash.slice(1));
+    if (target && window.scrollY === 0) {
+      const scrollMargin = parseFloat(getComputedStyle(target).scrollMarginBlockStart) || 0;
+      window.scrollTo({ top: target.getBoundingClientRect().top - scrollMargin, behavior: "instant" });
+    }
     return () => document.documentElement.classList.remove("beta-landing-document");
   }, []);
 
@@ -144,11 +146,6 @@ export default function BetaLandingPage() {
           <div className="beta-market-copy">
             <h2 id="beta-market-title">{c.marketTitle}</h2>
             <p>{c.marketBody}</p>
-            <dl>
-              <div><dt>{c.timetable}</dt><dd>{c.timetableBody}</dd></div>
-              <div><dt>{c.capture}</dt><dd>{c.captureBody}</dd></div>
-            </dl>
-            <a className="beta-link-button" href="#plugin-catalog">{c.browse}</a>
           </div>
           <div className="beta-market-preview" id="plugin-catalog" tabIndex={-1}>
             <Suspense fallback={null}><BetaPluginMarket lang={lang} /></Suspense>
