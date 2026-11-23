@@ -12,20 +12,23 @@ const hasChinese = (value: string) => /\p{Script=Han}/u.test(value);
 export function localizeChangelog(source: string, language: Language) {
   const lines = source.split(/\r?\n/);
   const sectionStarts = lines.flatMap((line, index) => /^#{1,2} /.test(line) ? [index] : []);
+  const chapterTitles = new Set<string>();
   let sectionLanguage: Language = "zh";
+  let mixedArchive = false;
   const sections = sectionStarts.flatMap((start, index) => {
     const line = lines[start];
     if (line.startsWith("# ")) {
       sectionLanguage = hasChinese(line) ? "zh" : "en";
+      mixedArchive = chapterTitles.has(line);
+      chapterTitles.add(line);
       return [];
     }
     const end = sectionStarts[index + 1] ?? lines.length;
     const heading = line.slice(3).trim();
-    // Date-only headings inherit their section language. Older mixed-language
-    // archives have descriptive headings that identify each entry's language.
-    const entryLanguage = /^\d{4}-\d{2}-\d{2}$/.test(heading)
-      ? sectionLanguage
-      : hasChinese(heading) ? "zh" : "en";
+    // The repeated chapter heading starts a legacy archive with entries in both languages.
+    const entryLanguage = mixedArchive && !/^\d{4}-\d{2}-\d{2}$/.test(heading)
+      ? hasChinese(heading) ? "zh" : "en"
+      : sectionLanguage;
     return [{ heading, body: lines.slice(start + 1, end).join("\n").trim(), entryLanguage }];
   });
   const seen = new Set<string>();
