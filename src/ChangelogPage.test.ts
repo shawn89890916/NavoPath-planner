@@ -7,10 +7,14 @@ describe("localizeChangelog", () => {
     "## 2026-11-23",
     "### 1.7.0 Beta 66",
     "- 中文更新",
+    "## 2026-11-04 · 1.6.3 Beta 7",
+    "- 中文旧版",
     "# NavoPath Changelog",
     "## 2026-11-23",
     "### 1.7.0 Beta 66",
     "- English update",
+    "## 2026-11-04 · 1.6.3 Beta 7",
+    "- Older English release",
     "# NavoPath Changelog",
     "## 2026-08-30 · 中文归档",
     "- 中文历史",
@@ -26,12 +30,14 @@ describe("localizeChangelog", () => {
   it("renders date headings in their own language and retains mixed-language archives", () => {
     const zh = localizeChangelog(source, "zh");
     expect(zh).toContain("## 2026-11-23\n\n### 1.7.0 Beta 66\n- 中文更新");
+    expect(zh).toContain("## 2026-11-04 · 1.6.3 Beta 7\n\n- 中文旧版");
     expect(zh).toContain("## 2026-08-30 · 中文归档");
     expect(zh).toContain("## 历史补充记录\n\n### 新增\n- 中文补充");
     expect(zh).not.toContain("English");
 
     const en = localizeChangelog(source, "en");
     expect(en).toContain("## 2026-11-23\n\n### 1.7.0 Beta 66\n- English update");
+    expect(en).toContain("## 2026-11-04 · 1.6.3 Beta 7\n\n- Older English release");
     expect(en).toContain("## 2026-08-30 · English archive");
     expect(en).toContain("## Earlier updates\n\n### Added\n- English supplement");
     expect(en).not.toContain("中文");
