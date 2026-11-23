@@ -12546,10 +12546,13 @@ function EditDrawer(props: {
       scheduledDate: activeRecord.scheduledDate,
       scheduledStart: activeRecord.scheduledStart,
     } : null);
-    const timelineRecord = activeRecord || (props.task.timelineRecords || []).find((record) => record.executionStatus === "scheduled") || (props.task.timelineRecords || []).at(-1);
-    const scheduleRecord = activeRecord || (!props.editingOccurrence ? timelineRecord : undefined);
-    const scheduleDate = scheduleRecord?.scheduledDate || props.editingOccurrence?.scheduledDate || props.task.scheduledDate;
-    const scheduleStart = scheduleRecord ? scheduleRecord.scheduledStart : props.editingOccurrence?.scheduledStart || props.task.scheduledStart;
+    const scheduledRecord = props.task.timelineRecords?.find((record) => record.executionStatus === "scheduled");
+    const timelineRecord = activeRecord || scheduledRecord || props.task.timelineRecords?.at(-1);
+    const scheduleRecord = activeRecord || (!props.editingOccurrence ? scheduledRecord : undefined);
+    const legacySchedule = !props.task.executionStatus || props.task.executionStatus === "scheduled" || props.task.completed;
+    const scheduleDate = scheduleRecord?.scheduledDate || props.editingOccurrence?.scheduledDate || (legacySchedule ? props.task.scheduledDate : undefined);
+    const scheduleStart = scheduleRecord ? scheduleRecord.scheduledStart
+      : props.editingOccurrence?.scheduledStart || (legacySchedule ? props.task.scheduledStart : undefined);
     let scheduleRange: TaskScheduleRange | undefined;
     const clockTime = /^([01]\d|2[0-3]):[0-5]\d$/;
     if (scheduleDate && scheduleStart && validIsoDate(scheduleDate) && clockTime.test(scheduleStart)) {
