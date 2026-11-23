@@ -1,17 +1,24 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { PRODUCT_ICON_SRC } from "./ProductIcon";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { ProductIcon, PRODUCT_ICON_SRC } from "./ProductIcon";
 import { UiCalendarClockIcon, UiChevronDownIcon, UiListChecksIcon, UiReturnIcon } from "./components/UiIcons";
 import { PluginMarketIdentity } from "./extensions/PluginMarketIdentity";
 import { OFFICIAL_SOURCE } from "./extensions/packages";
 import type { CatalogEntry } from "./extensions/types";
 import type { Language } from "./types";
+import "./landing.css";
 import "./beta-story.css";
 
 const base = import.meta.env.BASE_URL;
 const portraitMedia = "(max-width: 980px), (max-aspect-ratio: 4/5)";
+const chapters = ["workspace", "plugins", "ai", "principles"] as const;
+type ChapterId = typeof chapters[number];
+const openingEnd = .25;
+const closingStart = .78;
+const clamp = (value: number) => Math.max(0, Math.min(1, value));
+const smooth = (value: number) => value * value * (3 - 2 * value);
 const copy = {
   zh: {
-    hero: "安排一天，只用一页。", lead: "挑任务、排时间、临时改，都在同一个工作区。", scroll: "向下滑动",
+    hero: "挑任务、排时间、临时改，都在同一页", lead: "左边是待安排的任务，右边是今天的时间轴。", scroll: "向下滑动", aiPreview: "Navo AI",
     workspace: ["一体化工作区", "从待办，直接排到时间轴。", "把左边的一项任务拖进右侧的空档，再就地调整。"],
     workspaceBefore: "NavoPath 工作区。左侧是今日候选，右侧是今天的时间轴。",
     workspaceAfter: "「调整网站布局」已从候选排入时间轴。",
@@ -29,7 +36,7 @@ const copy = {
     ],
   },
   en: {
-    hero: "Plan your day on one page.", lead: "Pick tasks, block time, and adjust plans in the same workspace.", scroll: "Scroll to explore",
+    hero: "Pick tasks, block time, and shift plans—all on one page.", lead: "Tasks on the left, today’s timeline on the right.", scroll: "Scroll to explore", aiPreview: "Navo AI",
     workspace: ["Workspace", "From your list to your timeline.", "Drag a task from the left into an open slot on the right. Adjust it in place."],
     workspaceBefore: "The NavoPath workspace with today’s candidate tasks on the left and the timeline on the right.",
     workspaceAfter: "Refine the website layout moves from the candidate list into the timeline.",
@@ -92,9 +99,19 @@ function StoryPicture({ feature, lang, after, alt, className }: {
   </picture>;
 }
 
-function Chapter({ id, text, children }: { id: string; text: readonly [string, string, string?]; children: ReactNode }) {
-  return <section className={`story-chapter story-${id}`} id={id} aria-labelledby={`${id}-title`}>
-    <div className="story-stage">
+function Chapter({ id, lang, text, label, children }: {
+  id: ChapterId; lang: Language; text: readonly [string, string, string?]; label?: string; children: ReactNode;
+}) {
+  const preview = id === "principles" ? `product-entry-principles-${lang}.jpg` : `product-${id}-${lang}-landscape.webp`;
+  return <section className={`story-card story-${id} landing-portal--${id}`} id={id} aria-labelledby={`${id}-title`}>
+    <div className="story-thumbnail" aria-hidden="true">
+      <div className="landing-portal-heading"><strong>{label ?? text[0]}</strong></div>
+      <picture>
+        <source media={portraitMedia} srcSet={`${base}product-${id}-${lang}-portrait.webp`} />
+        <img src={base + preview} alt="" decoding="async" />
+      </picture>
+    </div>
+    <div className="story-detail">
       <header className="story-intro">
         <p>{text[0]}</p>
         <h2 id={`${id}-title`}>{text[1]}</h2>
@@ -108,86 +125,135 @@ function Chapter({ id, text, children }: { id: string; text: readonly [string, s
 export default function BetaStory({ lang }: { lang: Language }) {
   const root = useRef<HTMLDivElement>(null);
   const c = copy[lang];
-  useEffect(() => {
+  useLayoutEffect(() => {
     const page = root.current;
     if (!page) return;
-    const chapters = Array.from(page.querySelectorAll<HTMLElement>(".story-chapter"));
-    const clamp = (value: number) => Math.max(0, Math.min(1, value));
+    const screen = page.querySelector<HTMLElement>(".story-screen")!;
+    const bar = page.querySelector<HTMLElement>(".story-brand")!;
+    const cards = Array.from(screen.querySelectorAll<HTMLElement>(".story-card"));
+    const docks = Array.from(screen.querySelectorAll<HTMLElement>(".story-dock"));
+    const results = cards.map(card => card.querySelector<HTMLImageElement>(".story-result img"));
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    const html = document.documentElement;
     let frame = 0;
+    let measuring = true;
+    let isStatic = false;
+    let scrollRange = 1;
+    let last = -1;
+    const measure = () => {
+      isStatic = reduced.matches || html.clientHeight - bar.offsetHeight < 420;
+      page.dataset.static = String(isStatic);
+      scrollRange = Math.max(1, html.scrollHeight - html.clientHeight);
+      if (!isStatic) {
+        const origin = screen.getBoundingClientRect();
+        const geometry = docks.map((dock, index) => {
+          const bounds = dock.getBoundingClientRect(), card = cards[index];
+          return {
+            x: bounds.left - origin.left + (bounds.width - card.offsetWidth) / 2 - card.offsetLeft,
+            y: bounds.top - origin.top + (bounds.height - card.offsetHeight) / 2 - card.offsetTop,
+            sx: bounds.width / card.offsetWidth,
+            sy: bounds.height / card.offsetHeight,
+          };
+        });
+        geometry.forEach((position, index) => {
+          const style = cards[index].style;
+          style.setProperty("--from-x", `${position.x}px`);
+          style.setProperty("--from-y", `${position.y}px`);
+          style.setProperty("--from-sx", String(position.sx));
+          style.setProperty("--from-sy", String(position.sy));
+        });
+      }
+      last = -1;
+      measuring = false;
+    };
     const update = () => {
       frame = 0;
-      const height = Math.max(1, innerHeight);
-      const topBar = page.querySelector(".story-brand")?.getBoundingClientRect().height ?? 0;
-      page.style.setProperty("--cover", String(clamp(window.scrollY / height)));
-      page.style.setProperty("--read", String(clamp(window.scrollY / Math.max(1, document.documentElement.scrollHeight - height))));
-      for (const chapter of chapters) {
-        const bounds = chapter.getBoundingClientRect();
-        const stageHeight = chapter.firstElementChild?.getBoundingClientRect().height ?? height;
-        const progress = clamp((topBar - bounds.top) / Math.max(1, bounds.height - stageHeight));
-        chapter.style.setProperty("--enter", String(clamp((height * .92 - bounds.top) / (height * .66))));
-        chapter.style.setProperty("--progress", String(progress));
-      }
+      if (measuring) measure();
+      const progress = clamp(window.scrollY / scrollRange);
+      if (progress === last) return;
+      last = progress;
+      page.style.setProperty("--read", String(progress));
+      if (isStatic) return;
+      cards.forEach((card, index) => {
+        const place = progress * cards.length - index;
+        const active = place > 0 && place < 1;
+        const zoom = active ? smooth(clamp(Math.min(place / openingEnd, (1 - place) / (1 - closingStart)))) : 0;
+        const review = clamp((place - openingEnd) / (closingStart - openingEnd));
+        card.style.setProperty("--zoom", String(zoom));
+        card.style.setProperty("--reveal", String(smooth(clamp((zoom - .68) / .32))));
+        card.style.setProperty("--progress", String(review));
+        card.toggleAttribute("data-active", active);
+        const image = results[index];
+        card.toggleAttribute("data-result", !!image?.complete && image.naturalWidth > 0 && review >= (index === 0 ? .58 : .52));
+      });
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    const layout = () => { measuring = true; schedule(); };
     update();
     window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    const resize = new ResizeObserver(schedule);
+    window.addEventListener("resize", layout);
+    screen.addEventListener("load", layout, true);
+    reduced.addEventListener("change", layout);
+    const resize = new ResizeObserver(layout);
     resize.observe(page);
+    resize.observe(screen);
     return () => {
       window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
+      window.removeEventListener("resize", layout);
+      screen.removeEventListener("load", layout, true);
+      reduced.removeEventListener("change", layout);
       cancelAnimationFrame(frame);
       resize.disconnect();
     };
   }, []);
 
-  return <div className="beta-story" ref={root}>
+  return <div className="landing beta-story" ref={root}>
     <header className="story-brand">
       <img src={PRODUCT_ICON_SRC} alt="" width="24" height="24" />
       <span>NavoPath</span>
       <span className="story-progress" aria-hidden="true" />
     </header>
-    <main>
-      <section className="story-hero" aria-labelledby="story-hero-title">
-        <div className="story-orbit" aria-hidden="true">
-          <span><StoryPicture feature="workspace" lang={lang} alt="" /></span>
-          <span><img src={`${base}product-plugins-${lang}-landscape.webp`} alt="" width="1440" height="900" /></span>
-          <span><StoryPicture feature="ai" lang={lang} alt="" after /></span>
-          <span><img src={`${base}product-entry-principles-${lang}.jpg`} alt="" width="1280" height="800" /></span>
+    <main className="story-tour">
+      <div className="story-screen">
+        <section className="story-cover landing-cover-content" aria-labelledby="story-hero-title">
+          <div className="landing-cover-logo"><ProductIcon /></div>
+          <div className="landing-brand-copy">
+            <p className="landing-product-name">NavoPath</p>
+            <h1 className="landing-slogan" id="story-hero-title">{c.hero}</h1>
+            <p className="story-lead">{c.lead}</p>
+            <span className="story-scroll-hint">{c.scroll}<UiChevronDownIcon size={17} /></span>
+          </div>
+        </section>
+        <div className="landing-portals story-docks" aria-hidden="true">
+          {chapters.map(id => <span className={`landing-portal landing-portal--${id} story-dock`} key={id} />)}
         </div>
-        <div className="story-hero-copy">
-          <img src={PRODUCT_ICON_SRC} alt="" width="180" height="180" />
-          <h1 id="story-hero-title">{c.hero}</h1>
-          <p>{c.lead}</p>
-        </div>
-        <span className="story-scroll-hint">{c.scroll}<UiChevronDownIcon size={17} /></span>
-      </section>
-      <Chapter id="workspace" text={c.workspace}>
-        <figure className="story-visual">
-          <StoryPicture feature="workspace" lang={lang} alt={c.workspaceBefore} />
-          <StoryPicture feature="workspace" lang={lang} alt="" after className="story-result" />
-          <span className="story-task" aria-hidden="true">{c.task}</span>
-          <figcaption className="story-sr">{c.workspaceAfter}</figcaption>
-        </figure>
-      </Chapter>
-      <Chapter id="plugins" text={c.plugins}><StoryPlugins lang={lang} /></Chapter>
-      <Chapter id="ai" text={c.ai}>
-        <figure className="story-visual">
-          <StoryPicture feature="ai" lang={lang} alt={c.aiBefore} />
-          <StoryPicture feature="ai" lang={lang} alt="" after className="story-result" />
-          <figcaption className="story-sr">{c.aiAfter}</figcaption>
-        </figure>
-        <div className="story-mcp"><strong>Agent</strong><span aria-hidden="true">→</span><strong>MCP</strong><span aria-hidden="true">→</span><strong>NavoPath</strong><span>{c.bridge}</span></div>
-      </Chapter>
-      <Chapter id="principles" text={c.principles}>
-        <ol className="story-ideas">
-          {c.ideas.map(([title, body], index) => {
-            const Icon = [UiListChecksIcon, UiCalendarClockIcon, UiReturnIcon][index];
-            return <li key={title}><Icon size={25} /><div><h3>{title}</h3><p>{body}</p></div></li>;
-          })}
-        </ol>
-      </Chapter>
+        <Chapter id="workspace" lang={lang} text={c.workspace}>
+          <div className="story-art"><figure className="story-visual">
+            <StoryPicture feature="workspace" lang={lang} alt={c.workspaceBefore} className="story-before" />
+            <StoryPicture feature="workspace" lang={lang} alt="" after className="story-result" />
+            <span className="story-task" aria-hidden="true">{c.task}</span>
+            <figcaption className="story-sr">{c.workspaceAfter}</figcaption>
+          </figure></div>
+        </Chapter>
+        <Chapter id="plugins" lang={lang} text={c.plugins}><StoryPlugins lang={lang} /></Chapter>
+        <Chapter id="ai" lang={lang} text={c.ai} label={c.aiPreview}>
+          <div className="story-art"><figure className="story-visual">
+            <StoryPicture feature="ai" lang={lang} alt={c.aiBefore} className="story-before" />
+            <StoryPicture feature="ai" lang={lang} alt="" after className="story-result" />
+            <figcaption className="story-sr">{c.aiAfter}</figcaption>
+          </figure></div>
+          <div className="story-mcp"><strong>Agent</strong><span aria-hidden="true">→</span><strong>MCP</strong><span aria-hidden="true">→</span><strong>NavoPath</strong><span>{c.bridge}</span></div>
+        </Chapter>
+        <Chapter id="principles" lang={lang} text={c.principles}>
+          <ol className="story-ideas">
+            {c.ideas.map(([title, body], index) => {
+              const Icon = [UiListChecksIcon, UiCalendarClockIcon, UiReturnIcon][index];
+              return <li key={title}><Icon size={25} /><div><h3>{title}</h3><p>{body}</p></div></li>;
+            })}
+          </ol>
+        </Chapter>
+      </div>
+      <div className="story-scroll-space" aria-hidden="true" />
     </main>
   </div>;
 }
