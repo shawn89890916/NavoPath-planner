@@ -2,6 +2,12 @@
 
 ## 2026-11-23
 
+### 1.7.0 Beta 70
+
+#### 改进
+
+- 官网 /beta2 新增一体式滚动介绍，依次展示工作区排程、插件、Navo AI 与 MCP、设计原理。
+
 ### 1.7.0 Beta 69
 
 #### 修复
@@ -935,6 +941,12 @@
 # NavoPath Changelog
 
 ## 2026-11-23
+
+### 1.7.0 Beta 70
+
+#### Improved
+
+- The /beta2 website introduces one continuous scroll through workspace scheduling, plugins, Navo AI and MCP, and the design principles.
 
 ### 1.7.0 Beta 69
 
