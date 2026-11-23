@@ -8,7 +8,7 @@ export type ProductPageEmbed = {
 };
 
 export const isBetaSite = import.meta.env.BASE_URL === "/beta/";
-const sitePrefix = isBetaSite ? "/beta" : "";
+const sitePrefix = isBetaSite ? "/beta" : import.meta.env.BASE_URL === "/beta2/" ? "/beta2" : "";
 
 export function siteHref(path: string) {
   return sitePrefix + path;

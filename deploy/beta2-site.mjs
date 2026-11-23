@@ -6,7 +6,7 @@ export default {
     if (url.pathname !== prefix && !url.pathname.startsWith(`${prefix}/`)) {
       return new Response("Not found", { status: 404 });
     }
-    if (url.pathname === prefix || url.pathname === `${prefix}/`) {
+    if (url.pathname === prefix || url.pathname === `${prefix}/` || /^\/beta2\/product-demo\/(execute|ai)\/?$/.test(url.pathname)) {
       url.pathname = `${prefix}/beta2.html`;
       url.search = "";
     }

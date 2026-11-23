@@ -1080,7 +1080,7 @@ function App() {
   const [editingId, setEditingId] = useState("");
   const [editingRecordId, setEditingRecordId] = useState<string | undefined>(undefined);
   const [form, setForm] = useState<FormState>(defaultForm());
-  const [aiOpen, setAiOpen] = useState(productDemo?.feature === "ai" && !productAiPresentation);
+  const [aiOpen, setAiOpen] = useState(productDemo?.feature === "ai" && !productAiPresentation && !productDemo.story);
   const aiPresence = useMotionPresence(aiOpen, MOTION.layout);
   const [aiDocked, setAiDocked] = useState(loadAiDockedPreference);
   const freshAiConversationRef = useRef(true);
@@ -1114,6 +1114,30 @@ function App() {
   const [scheduleUnscheduled, setScheduleUnscheduled] = useState<UnscheduledTask[]>([]);
   const [dismissedCapacityDate, setDismissedCapacityDate] = useState("");
   const [autoScheduleState, setAutoScheduleState] = useState<AutoScheduleState>("idle");
+  const storyReady = Boolean(data && settings);
+  useEffect(() => {
+    if (!storyReady) return;
+    return productDemo?.story?.connect(({ data: next, proposal, step, jump }) => {
+      dataRef.current = next;
+      setData(next);
+      if (!jump) setCandidateDrawerOpen(step === 0 && phoneLayout);
+      if (!proposal) return;
+      const previews = step === 2 ? (proposal.actions ?? []).flatMap((action, index): SchedulePreview[] => {
+        if (action.type !== "schedule_task" || !action.taskId || !action.start || !action.end) return [];
+        const source = next.tasks.find(task => task.id === action.taskId);
+        if (!source) return [];
+        return [{
+          id: `story-preview-${index}`, sourceTaskId: source.id, clonedTaskId: `story-plan-${source.id}`,
+          title: source.title, projectId: source.projectId, scheduledDate: action.date || todayIso(),
+          scheduledStart: action.start, scheduledEnd: action.end, durationMinutes: timeToMinutes(action.end) - timeToMinutes(action.start),
+          priority: source.priority ?? "medium", reason: proposal.content,
+        }];
+      }) : [];
+      setSchedulePreviews(previews);
+      setAutoScheduleState(step === 1 ? "generating" : previews.length ? "preview" : "idle");
+    });
+  }, [storyReady, phoneLayout]);
+  useLayoutEffect(() => { productDemo?.story?.painted(); }, [data]);
   const [aiPlanMenuOpen, setAiPlanMenuOpen] = useState(false);
   const [aiPlanPrefs, setAiPlanPrefs] = useState<AiPlanPrefs>({ source: "today", scope: "day", strategy: "longShort" });
   const [timelineView, setTimelineView] = useState<TimelineView>("daily");
@@ -2932,6 +2956,11 @@ if (cached?.data && cached?.settings) {
     return extensionHostRef.current?.internal.services.saveData(next) ?? persistData(next);
   }
   async function persistData(next: PlannerData) {
+    if (productDemo?.story?.save(next)) {
+      dataRef.current = next;
+      setData(next);
+      return;
+    }
     const savedAt = workspaceNow().toISOString();
     const previous = dataRef.current;
     const previousEvents = new Map(previous?.events.map(event => [event.id, event]));
@@ -9377,7 +9406,7 @@ if (cached?.data && cached?.settings) {
             )}
             <div className="df-candidate-list" inert={productAiPresentation && demoPresetBusy ? true : undefined}>
               {visibleCandidates.length === 0 && !hasActiveHabits ? (
-                <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.emptyTitle")}</strong><span>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "在右侧查看安排，或试试改期与撤回。" : "Explore the timeline, reschedule a task, or undo.") : t(lang, "candidate.emptyDesc")}</span>{compactLayout && !productAiPresentation && <img className="df-empty-add-guidance" src="/empty-add-guidance-v2.png" alt="" aria-hidden="true" />}</div>
+                <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.emptyTitle")}</strong><span>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "在右侧查看安排，或试试改期与撤回。" : "Explore the timeline, reschedule a task, or undo.") : t(lang, "candidate.emptyDesc")}</span>{compactLayout && !productAiPresentation && !productDemo?.story && <img className="df-empty-add-guidance" src="/empty-add-guidance-v2.png" alt="" aria-hidden="true" />}</div>
               ) : groupByProject ? (
                 (() => {
                   const candidatesByProject = new Map<string, Task[]>();
@@ -12527,7 +12556,18 @@ const isWidgetPopoverRoute = routeSearchParams.get("widgetPopover") === "1";
 const isWidgetRoute = routeSearchParams.get("widget") === "1";
 const PasswordRecoveryPage = lazy(() => import("./PasswordRecoveryPage"));
 const isRecoveryCallback = isPasswordRecoveryCallback(new URL(window.location.href));
+function StoryWorkspace() {
+  const [generation, setGeneration] = useState(0);
+  useEffect(() => {
+    const reset = () => setGeneration(current => current + 1);
+    window.addEventListener("navopath-story-reset", reset);
+    return () => window.removeEventListener("navopath-story-reset", reset);
+  }, []);
+  return <AppErrorBoundary key={generation}><App /></AppErrorBoundary>;
+}
+
 root.render(
+  productDemo?.story ? <StoryWorkspace /> :
   isRecoveryCallback
     ? <Suspense fallback={<ExecuteSkeleton />}><PasswordRecoveryPage lang={detectSystemLanguage()} getApi={waitForPlannerApi} onRequest={sendPasswordResetEmail} /></Suspense>
     : isWidgetPopoverRoute

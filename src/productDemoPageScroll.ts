@@ -1,4 +1,4 @@
-export function installProductDemoPageScroll(portal = false) {
+export function installProductDemoPageScroll(portal = false, story = false) {
   if (parent === window) return;
   const channel = "navopath-product-demo";
   let timelineScroll = false;
@@ -18,7 +18,7 @@ export function installProductDemoPageScroll(portal = false) {
 
   window.addEventListener("wheel", event => {
     if (timelineScroll || event.ctrlKey || event.metaKey || event.shiftKey || !event.cancelable) return;
-    if (event.target instanceof Element && event.target.closest(nativePanel)) return;
+    if (!story && event.target instanceof Element && event.target.closest(nativePanel)) return;
     if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
     const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? window.innerHeight : 1;
     event.preventDefault();
@@ -29,7 +29,7 @@ export function installProductDemoPageScroll(portal = false) {
   window.addEventListener("touchstart", event => {
     swipe = undefined;
     if (timelineScroll || event.touches.length !== 1) return;
-    if (event.target instanceof Element && event.target.closest(`${nativePanel}, .df-task-card, .df-time-block, .df-all-day-block, input, select, textarea, [contenteditable]`)) return;
+    if (!story && event.target instanceof Element && event.target.closest(`${nativePanel}, .df-task-card, .df-time-block, .df-all-day-block, input, select, textarea, [contenteditable]`)) return;
     const touch = event.touches[0];
     swipe = { x: touch.screenX, y: touch.screenY };
   }, { capture: true, passive: true });
@@ -54,6 +54,18 @@ export function installProductDemoPageScroll(portal = false) {
   const endSwipe = () => { swipe = undefined; };
   window.addEventListener("touchend", endSwipe, { capture: true, passive: true });
   window.addEventListener("touchcancel", endSwipe, { capture: true, passive: true });
+
+  if (story) window.addEventListener("keydown", event => {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey
+      || (event.target instanceof Element && event.target.closest('button, input, select, textarea, [contenteditable], [role="dialog"]'))) return;
+    const delta = {
+      ArrowDown: 48, ArrowUp: -48, PageDown: innerHeight * .9, PageUp: -innerHeight * .9,
+      End: 10000, Home: -10000, " ": innerHeight * (event.shiftKey ? -.9 : .9),
+    }[event.key];
+    if (!delta) return;
+    event.preventDefault();
+    send({ type: "page-scroll", deltaY: delta });
+  });
 
   // Leave Escape to the workspace while it is closing a dialog or ending a drag.
   window.addEventListener("keydown", event => {

@@ -1,4 +1,5 @@
 import type { Language, PlannerData } from "./types";
+import type { ProductDemoStory } from "./productDemoStory";
 import type { AiSessionMessage } from "./WorkspacePresentation";
 import { sitePath, type ProductDemo } from "./productSite";
 
@@ -6,6 +7,7 @@ export type WorkspaceDemoRuntime = {
   feature: ProductDemo;
   showcaseAi: boolean;
   showcaseHome?: boolean;
+  story?: ProductDemoStory;
   date: string;
   language: Language;
   storage: Storage;

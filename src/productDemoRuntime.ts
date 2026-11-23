@@ -1,4 +1,6 @@
 import { addDays } from "./timelineGeometry";
+import type { createProductDemoStory } from "./productDemoStory";
+import type { AiSessionMessage } from "./WorkspacePresentation";
 import type { AiAction } from "./aiAssistantApi";
 import type { PlannerApi, PlannerData, Settings } from "./types";
 import { getDefaultSettings } from "./defaultSettings";
@@ -8,14 +10,14 @@ import { createMemoryStorage, installWorkspaceDemoRuntime } from "./workspaceEnv
 import { installProductDemoPageScroll } from "./productDemoPageScroll";
 import "./product-demo.css";
 
-export function installProductDemo(feature: ProductDemo) {
+export function installProductDemo(feature: ProductDemo, storyFactory?: typeof createProductDemoStory) {
   if (!sitePath(location.pathname).startsWith("/product-demo/")) throw new Error("Example runtime requires an example route");
   const language = siteLanguage(location.search, navigator.language);
   const presentation = new URLSearchParams(location.search).get("presentation");
   const portal = presentation === "portal";
   const fullscreen = presentation === "full" || portal;
   const showcaseHome = presentation === "home" && feature === "execute";
-  if (showcaseHome || portal) installProductDemoPageScroll(portal);
+  if (showcaseHome || portal || storyFactory) installProductDemoPageScroll(portal, Boolean(storyFactory));
   const planning = feature === "planning" || feature === "workspace";
   const showcaseAi = fullscreen && feature === "ai";
   let data = createDemoData(language, feature, feature === "execute" ? 2 : 1);
@@ -47,7 +49,7 @@ export function installProductDemo(feature: ProductDemo) {
   Object.defineProperty(window, "sessionStorage", { configurable: true, value: storage });
   window.plannerApi = api;
   let id = 0;
-  installWorkspaceDemoRuntime({
+  const runtime = {
     feature, date: DEMO_DATE, language, storage, showcaseAi, showcaseHome,
     revealSchedule: showcaseAi ? async () => {
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
@@ -80,7 +82,7 @@ export function installProductDemo(feature: ProductDemo) {
       });
       observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
     },
-    suggest: (state: PlannerData, request?: { taskId: string; days: 1 | 2 }, taskIds?: string[]) => {
+    suggest: (state: PlannerData, request?: { taskId: string; days: 1 | 2 }, taskIds?: string[]): AiSessionMessage => {
       let working = state;
       const reschedule = request;
       const date = reschedule ? addDays(DEMO_DATE, reschedule.days) : DEMO_DATE;
@@ -97,8 +99,17 @@ export function installProductDemo(feature: ProductDemo) {
       });
       return { id: `demo-suggestion-${++id}`, role: "assistant", content: reschedule ? (language === "zh" ? `已将「${tasks[0]?.title || "任务"}」改到${reschedule.days === 1 ? "明天" : "后天"} ${actions[0]?.start || ""}。` : `Moved ${tasks[0]?.title || "the task"} to ${reschedule.days === 1 ? "tomorrow" : "the day after tomorrow"} at ${actions[0]?.start || ""}.`) : feature === "ai" ? (language === "zh" ? `已安排 ${actions.length} 项待办：上午写作与学习，中午午餐与休息，下午完善网站、整理课程笔记，傍晚运动。` : `Your ${actions.length} tasks are spread across the day, including lunch and an afternoon notes session.`) : (language === "zh" ? "给这些事留出时间。" : "Make room for these tasks."), createdAt: DEMO_STAMP, status: "done", actionState: "pending", actions };
     },
-  });
+  };
+  const story = storyFactory && (feature === "ai" || feature === "execute")
+    ? storyFactory(feature, data, runtime.suggest, next => { data = clone(next); }, () => {
+      data = createDemoData(language, feature, feature === "execute" ? 2 : 1);
+      storage.clear();
+      window.dispatchEvent(new Event("navopath-story-reset"));
+    })
+    : undefined;
+  installWorkspaceDemoRuntime({ ...runtime, story });
   document.documentElement.classList.add("product-demo-document");
+  if (story) document.documentElement.classList.add("product-demo-story");
   if (showcaseAi) document.documentElement.classList.add("product-demo-fullscreen");
   window.addEventListener("message", (event) => {
     if (event.source !== parent || event.origin !== location.origin || !isDemoVisibility(event.data)) return;
