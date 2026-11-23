@@ -1,8 +1,10 @@
+import { CANDIDATE_TOUCH_HOLD_MS } from "./utils/candidateDragTiming";
+
 export function installProductDemoPageScroll(portal = false, story = false) {
   if (parent === window) return;
   const channel = "navopath-product-demo";
   let timelineScroll = false;
-  let swipe: { x: number; y: number; direction?: "vertical" | "horizontal" } | undefined;
+  let swipe: { x: number; y: number; direction?: "vertical" | "horizontal"; candidateSince?: number } | undefined;
   const nativePanel = '[role="dialog"], dialog[open], .df-candidate-panel.is-mobile-candidates';
 
   const send = (message: { type: "page-scroll"; deltaY: number } | { type: "escape" }) => {
@@ -31,11 +33,14 @@ export function installProductDemoPageScroll(portal = false, story = false) {
     if (timelineScroll || event.touches.length !== 1) return;
     if (!story && event.target instanceof Element && event.target.closest(`${nativePanel}, .df-task-card, .df-time-block, .df-all-day-block, input, select, textarea, [contenteditable]`)) return;
     const touch = event.touches[0];
-    swipe = { x: touch.screenX, y: touch.screenY };
+    const candidate = story && event.target instanceof Element && event.target.closest(".df-task-card");
+    swipe = { x: touch.screenX, y: touch.screenY, candidateSince: candidate ? event.timeStamp : undefined };
   }, { capture: true, passive: true });
   window.addEventListener("touchmove", event => {
     if (!swipe || event.touches.length !== 1 || !event.cancelable) return;
-    if (document.querySelector(".df-app.is-dragging")) {
+    const heldCandidate = !swipe.direction && swipe.candidateSince !== undefined
+      && event.timeStamp - swipe.candidateSince >= CANDIDATE_TOUCH_HOLD_MS;
+    if (heldCandidate || document.body.classList.contains("df-timeline-pointer-drag") || document.querySelector(".df-app.is-dragging")) {
       swipe = undefined;
       return;
     }

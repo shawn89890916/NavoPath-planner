@@ -70,11 +70,12 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiFolderInputIcon, UiListChecksIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiCheckIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiFolderInputIcon, UiListChecksIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
 import { usePointerReorder } from "./usePointerReorder";
+import { CANDIDATE_TOUCH_HOLD_MS } from "./utils/candidateDragTiming";
 
 import { canAcknowledgeBootstrapSave, parseBootstrapCache, recoverAccountSettings, resolveBootstrap, type BootstrapCache } from "./syncBootstrap";
 
@@ -269,7 +270,6 @@ type CandidateDragOptions = {
 };
 
 const DRAG_START_THRESHOLD_PX = 5;
-const CANDIDATE_TOUCH_HOLD_MS = 360;
 const TOUCH_SCROLL_CANCEL_DISTANCE_PX = 8;
 const SUPPRESS_CLICK_AFTER_DRAG_MS = 220;
 
@@ -999,8 +999,8 @@ function App() {
     const timer = window.setTimeout(preload, 1000);
     return () => window.clearTimeout(timer);
   }, [Boolean(data), Boolean(settings)]);
-  const [compactLayout, setCompactLayout] = useState(() => window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches);
-  const [portraitLayout, setPortraitLayout] = useState(() => window.matchMedia("(orientation: portrait)").matches);
+  const [compactLayout, setCompactLayout] = useState(() => productDemo?.story?.narrow ?? window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches);
+  const [portraitLayout, setPortraitLayout] = useState(() => productDemo?.story?.narrow ?? window.matchMedia("(orientation: portrait)").matches);
   const inlineTimelineDraft = Boolean(window.desktopApi) || !portraitLayout;
   const [desktopDockSide, setDesktopDockSide] = useState<"left" | "right" | null>(null);
   const [desktopDockReady, setDesktopDockReady] = useState(false);
@@ -1015,7 +1015,7 @@ function App() {
     return () => { cancelled = true; };
   }, []);
   const [compactExecuteView, setCompactExecuteView] = useState<CompactExecuteView>(productAiPresentation ? "tasks" : "schedule");
-  const [phoneLayout, setPhoneLayout] = useState(() => window.matchMedia("(max-width: 899.98px) and (orientation: portrait)").matches);
+  const [phoneLayout, setPhoneLayout] = useState(() => productDemo?.story?.narrow ?? window.matchMedia("(max-width: 899.98px) and (orientation: portrait)").matches);
   const mobileExecution = phoneLayout && !productAiPresentation && mode === "execute";
   const mobileExecutionRef = useRef(mobileExecution);
   mobileExecutionRef.current = mobileExecution;
@@ -1117,10 +1117,10 @@ function App() {
   const storyReady = Boolean(data && settings);
   useEffect(() => {
     if (!storyReady) return;
-    return productDemo?.story?.connect(({ data: next, proposal, step, jump }) => {
+    return productDemo?.story?.connect(({ data: next, proposal, step, drawer }) => {
       dataRef.current = next;
       setData(next);
-      if (!jump) setCandidateDrawerOpen(step === 0 && phoneLayout);
+      setCandidateDrawerOpen(drawer);
       if (!proposal) return;
       const previews = step === 2 ? (proposal.actions ?? []).flatMap((action, index): SchedulePreview[] => {
         if (action.type !== "schedule_task" || !action.taskId || !action.start || !action.end) return [];
@@ -1136,8 +1136,8 @@ function App() {
       setSchedulePreviews(previews);
       setAutoScheduleState(step === 1 ? "generating" : previews.length ? "preview" : "idle");
     });
-  }, [storyReady, phoneLayout]);
-  useLayoutEffect(() => { productDemo?.story?.painted(); }, [data]);
+  }, [storyReady]);
+  useLayoutEffect(() => { productDemo?.story?.painted(); }, [data, candidateDrawerOpen]);
   const [aiPlanMenuOpen, setAiPlanMenuOpen] = useState(false);
   const [aiPlanPrefs, setAiPlanPrefs] = useState<AiPlanPrefs>({ source: "today", scope: "day", strategy: "longShort" });
   const [timelineView, setTimelineView] = useState<TimelineView>("daily");
@@ -1521,12 +1521,16 @@ function App() {
     const media = window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY);
     const portrait = window.matchMedia("(orientation: portrait)");
     const sync = () => {
-      setCompactLayout(media.matches);
-      setPortraitLayout(portrait.matches);
+      setCompactLayout(productDemo?.story?.narrow ?? media.matches);
+      setPortraitLayout(productDemo?.story?.narrow ?? portrait.matches);
     };
     sync();
     window.addEventListener("resize", sync);
-    return () => window.removeEventListener("resize", sync);
+    window.addEventListener("navopath-story-layout", sync);
+    return () => {
+      window.removeEventListener("resize", sync);
+      window.removeEventListener("navopath-story-layout", sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -2667,9 +2671,13 @@ if (cached?.data && cached?.settings) {
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 899.98px) and (orientation: portrait)");
-    const update = () => setPhoneLayout(media.matches);
+    const update = () => setPhoneLayout(productDemo?.story?.narrow ?? media.matches);
     media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
+    window.addEventListener("navopath-story-layout", update);
+    return () => {
+      media.removeEventListener("change", update);
+      window.removeEventListener("navopath-story-layout", update);
+    };
   }, []);
 
   function closeCandidateDrawer() {
@@ -9329,7 +9337,7 @@ if (cached?.data && cached?.settings) {
                       onClick={() => { setAiPlanMenuOpen(false); if (productAiPresentation) void runProductDemoPreset(); else void planMyDay(); }}
                     />
                     {schedulePreviews.length > 0 && autoScheduleState === "preview" && <>
-                      <button className="df-icon-action df-ai-plan-confirm" onClick={() => acceptAllPreviews()} title={t(lang, "timeline.adoptAll")} aria-label={t(lang, "timeline.adoptAll")}>✓</button>
+                      <IconButton className="df-icon-action df-ai-plan-confirm ui-icon-button--borderless" icon={<UiCheckIcon />} label={t(lang, "timeline.adoptAll")} onClick={acceptAllPreviews} />
             <CloseButton className="df-ai-plan-cancel" onClick={() => cancelAutoSchedule()} label={t(lang, "timeline.cancelPreview")} />
                     </>}
                     {aiPlanMenuOpen && <span className="df-ai-plan-menu df-ai-plan-menu-visible open" onClick={(event) => event.stopPropagation()}>

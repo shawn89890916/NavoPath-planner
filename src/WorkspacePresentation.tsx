@@ -19,7 +19,7 @@ import { countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockPriority, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockDragState } from "./components/TaskBlock";
 import { Button, CloseButton, IconButton } from "./components/UiPrimitives";
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
-import { UiCalendarCheckIcon, UiCalendarClockIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiReturnIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiCheckIcon, UiCalendarCheckIcon, UiCalendarClockIcon, UiDockSidebarIcon, UiFlagIcon, UiFolderInputIcon, UiReturnIcon, UiTrashIcon } from "./components/UiIcons";
 import { clockTimeSpanMinutes } from "./utils/timelineRecords";
 import { projectColorInk } from "./utils/presentationColor";
 
@@ -895,7 +895,7 @@ export function TimeBlock({ task, engagementEnabled, preview, projectName, proje
       </div>
       {isPreview && (
         <span className="df-preview-actions">
-          <button className="df-preview-action accept" onClick={(e) => { e.stopPropagation(); onAcceptPreview?.(); }} aria-label={t(lang, "timeBlock.adopt")} title={t(lang, "timeBlock.adopt")}>✓</button>
+          <IconButton className="df-preview-action accept ui-icon-button--borderless" icon={<UiCheckIcon />} label={t(lang, "timeBlock.adopt")} onClick={(e) => { e.stopPropagation(); onAcceptPreview?.(); }} />
           <CloseButton className="df-preview-action cancel" onClick={(e) => { e.stopPropagation(); onCancelPreview?.(); }} label={t(lang, "timeBlock.cancel")} />
         </span>
       )}

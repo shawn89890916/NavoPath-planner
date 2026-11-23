@@ -1,0 +1,1 @@
+export const CANDIDATE_TOUCH_HOLD_MS = 360;
