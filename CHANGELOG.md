@@ -2,6 +2,12 @@
 
 ## 2026-11-23
 
+### 1.7.0 Beta 63
+
+#### 改进
+
+- 官网 Beta 恢复居中大标志和悬停导航。首页直接展示可操作的任务与时间轴，插件市场支持搜索、排序和查看详情。
+
 ### 1.7.0 Beta 62
 
 #### 改进
@@ -898,6 +904,12 @@
 # NavoPath Changelog
 
 ## 2026-11-23
+
+### 1.7.0 Beta 63
+
+#### Improved
+
+- The Beta homepage restores the centered logo and hover menus, opens directly onto an interactive Tasks and timeline workspace, and adds search, sorting, and plugin details to the marketplace.
 
 ### 1.7.0 Beta 62
 
