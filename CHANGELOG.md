@@ -2,6 +2,12 @@
 
 ## 2026-11-23
 
+### 1.7.0 Beta 72
+
+#### 改进
+
+- AI 排程的批量确认与单条采纳使用统一的无边框对勾。
+
 ### 1.7.0 Beta 71
 
 #### 改进
@@ -947,6 +953,12 @@
 # NavoPath Changelog
 
 ## 2026-11-23
+
+### 1.7.0 Beta 72
+
+#### Improvements
+
+- Bulk confirmation and individual acceptance in AI scheduling use matching borderless checkmarks.
 
 ### 1.7.0 Beta 71
 

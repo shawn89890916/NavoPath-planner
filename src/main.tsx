@@ -81,7 +81,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiChatIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiHistoryIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiCheckIcon, UiChatIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiHistoryIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
 import { normalizeSettings } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -9761,7 +9761,7 @@ if (cached?.data && cached?.settings) {
                       onClick={() => { setAiPlanMenuOpen(false); if (productAiPresentation) void runProductDemoPreset(); else void planMyDay(); }}
                     />
                     {schedulePreviews.length > 0 && autoScheduleState === "preview" && <>
-                      <button className="df-icon-action df-ai-plan-confirm" onClick={() => acceptAllPreviews()} title={t(lang, "timeline.adoptAll")} aria-label={t(lang, "timeline.adoptAll")}>✓</button>
+                      <IconButton className="df-icon-action df-ai-plan-confirm" icon={<UiCheckIcon />} label={t(lang, "timeline.adoptAll")} onClick={acceptAllPreviews} />
             <CloseButton className="df-ai-plan-cancel" onClick={() => cancelAutoSchedule()} label={t(lang, "timeline.cancelPreview")} />
                     </>}
                     {aiPlanMenuOpen && <span className="df-ai-plan-menu df-ai-plan-menu-visible open" onClick={(event) => event.stopPropagation()}>
