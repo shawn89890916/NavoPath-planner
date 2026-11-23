@@ -2,6 +2,12 @@
 
 ## 2026-11-23
 
+### 1.7.0 Beta 67
+
+#### 改进
+
+- 官网 Beta 的四个首屏入口在首页临时展开，点击外部可收起。工作区子页改用候选任务与时间轴的演示，插件卡片悬停时继续滚动。
+
 ### 1.7.0 Beta 66
 
 #### 改进
@@ -923,6 +929,12 @@
 # NavoPath Changelog
 
 ## 2026-11-23
+
+### 1.7.0 Beta 67
+
+#### Improved
+
+- The four Beta homepage previews open in place and close on outside clicks. The Workspace page shows the candidate list with the timeline, and plugin cards keep moving on hover.
 
 ### 1.7.0 Beta 66
 
