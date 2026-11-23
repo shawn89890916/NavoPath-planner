@@ -1,5 +1,13 @@
 # NavoPath 更新日志
 
+## 2026-11-23
+
+### 1.7.0 Beta 62
+
+#### 改进
+
+- 官网 Beta 首页展示实际 Beta 工作区。访客可以直接试玩同页排程，并通过独立区块探索课表和快速收集等插件。
+
 ## 2026-11-22
 
 ### 1.7.0 Beta 61
@@ -888,6 +896,14 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-23
+
+### 1.7.0 Beta 62
+
+#### Improved
+
+- The Beta homepage shows the actual Beta workspace. Visitors can try scheduling on the same page and explore plugins such as Class Timetable and Quick Capture in a dedicated section.
 
 ## 2026-11-22
 
