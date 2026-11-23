@@ -7,7 +7,10 @@ import ProductScreenshot from "./ProductScreenshot";
 
 const entries = [...PRODUCT_FEATURES, "principles"] as const;
 
-export default function LandingPortals({ lang, recede }: { lang: Language; recede: number }) {
+export default function LandingPortals({ lang, recede, openPortal, covered }: {
+  lang: Language; recede: number; covered?: boolean;
+  openPortal?: (href: string, opener: HTMLAnchorElement) => void;
+}) {
   const opening = useRef<{ element: HTMLElement; animation: Animation } | null>(null);
   useEffect(() => {
     const clear = () => { opening.current?.animation.cancel(); opening.current?.element.remove(); opening.current = null; };
@@ -16,7 +19,13 @@ export default function LandingPortals({ lang, recede }: { lang: Language; reced
     return () => { clear(); removeEventListener("pageshow", clear); removeEventListener("keydown", escape); };
   }, []);
   const enter = async (event: MouseEvent<HTMLAnchorElement>) => {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || prefersReducedMotion() || !event.currentTarget.animate) return;
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (openPortal) {
+      event.preventDefault();
+      openPortal(event.currentTarget.href, event.currentTarget);
+      return;
+    }
+    if (prefersReducedMotion() || !event.currentTarget.animate) return;
     event.preventDefault();
     if (opening.current) return;
     preloadSitePage(event.currentTarget.href);
@@ -36,8 +45,8 @@ export default function LandingPortals({ lang, recede }: { lang: Language; reced
     opening.current = { element, animation };
     try { await animation.finished; location.assign(source.href); } catch { /* Escape or unmount cancels the transition. */ }
   };
-  return <nav className="landing-portals" aria-label={lang === "zh" ? "探索 NavoPath" : "Explore NavoPath"} inert={recede >= .95} style={{ opacity: Math.max(0, 1 - recede ** 1.5), "--portal-exit-x": `${recede * 110}%` } as CSSProperties}>
-    {entries.map(entry => <a key={entry} className={`landing-portal landing-portal--${entry}`} href={entry === "principles" ? principleHref("index", lang) : featureHref(entry, lang)} onPointerEnter={event => { if (event.pointerType === "mouse") preloadSitePage(event.currentTarget.href); }} onFocus={event => preloadSitePage(event.currentTarget.href)} onClick={enter}>
+  return <nav className="landing-portals" aria-label={lang === "zh" ? "探索 NavoPath" : "Explore NavoPath"} inert={covered || recede >= .95} style={{ opacity: Math.max(0, 1 - recede ** 1.5), "--portal-exit-x": `${recede * 110}%` } as CSSProperties}>
+    {entries.map(entry => <a key={entry} className={`landing-portal landing-portal--${entry}`} href={entry === "principles" ? principleHref("index", lang) : featureHref(entry, lang)} aria-haspopup={openPortal ? "dialog" : undefined} onPointerEnter={event => { if (event.pointerType === "mouse") preloadSitePage(event.currentTarget.href); }} onFocus={event => preloadSitePage(event.currentTarget.href)} onClick={enter}>
       <span className="landing-portal-heading"><strong>{entry === "principles" ? (lang === "zh" ? "设计原理" : "Principles") : featureNames[lang][entry]}</strong><span aria-hidden="true">↗</span></span>
       <ProductScreenshot feature={entry} lang={lang} alt="" eager />
     </a>)}

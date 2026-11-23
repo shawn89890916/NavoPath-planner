@@ -1,11 +1,11 @@
-export function installProductDemoPageScroll() {
+export function installProductDemoPageScroll(portal = false) {
   if (parent === window) return;
   const channel = "navopath-product-demo";
   let timelineScroll = false;
   let swipe: { x: number; y: number; direction?: "vertical" | "horizontal" } | undefined;
   const nativePanel = '[role="dialog"], dialog[open], .df-candidate-panel.is-mobile-candidates';
 
-  const send = (message: { type: "page-scroll"; deltaY: number } | { type: "exit-timeline-scroll" }) => {
+  const send = (message: { type: "page-scroll"; deltaY: number } | { type: "escape" }) => {
     parent.postMessage({ channel, ...message }, location.origin);
   };
   window.addEventListener("message", event => {
@@ -57,7 +57,7 @@ export function installProductDemoPageScroll() {
 
   // Leave Escape to the workspace while it is closing a dialog or ending a drag.
   window.addEventListener("keydown", event => {
-    if (!timelineScroll || event.key !== "Escape" || event.defaultPrevented || document.querySelector(`${nativePanel}, .df-app.is-dragging`)) return;
-    send({ type: "exit-timeline-scroll" });
+    if ((!timelineScroll && !portal) || event.key !== "Escape" || event.defaultPrevented || document.querySelector(`${nativePanel}, .df-app.is-dragging`)) return;
+    send({ type: "escape" });
   });
 }

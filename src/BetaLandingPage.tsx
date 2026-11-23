@@ -3,6 +3,7 @@ import { ProductMenu, SiteLanguageSwitch } from "./components/ProductMenu";
 import { ProductIcon } from "./ProductIcon";
 import { UiCalendarClockIcon } from "./components/UiIcons";
 import LandingPortals from "./LandingPortals";
+import LandingPortalPanel from "./LandingPortalPanel";
 import { useLandingCover } from "./useLandingCover";
 import { DESKTOP_DOWNLOAD_URL, DESKTOP_RELEASES_URL } from "./downloads";
 import ProductDemoFrame from "./ProductDemoFrame";
@@ -52,6 +53,8 @@ export default function BetaLandingPage() {
   const [scheduled, setScheduled] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [timelineScroll, setTimelineScroll] = useState(false);
+  const [openPortal, setOpenPortal] = useState<{ href: string; opener: HTMLAnchorElement } | null>(null);
+  const closePortal = useCallback(() => setOpenPortal(null), []);
   const scrollButton = useRef<HTMLButtonElement>(null);
   const exitTimelineScroll = useCallback((restoreFocus: boolean) => {
     setTimelineScroll(false);
@@ -96,7 +99,7 @@ export default function BetaLandingPage() {
     }
   }, [lang]);
 
-  return <div className={`landing beta-landing${entrance.entering ? " landing--entering" : ""}`} lang={lang} {...entrance.events}>
+  return <div className={`landing beta-landing${entrance.entering ? " landing--entering" : ""}`} lang={lang} data-portal-open={openPortal ? "" : undefined} {...entrance.events}>
     <nav className="landing-nav" aria-label="NavoPath">
       <a className="landing-brand" href={siteHref(`/?lang=${lang}`)}><ProductIcon compact /><span>NavoPath</span></a>
       <div className="landing-nav-links">
@@ -112,8 +115,8 @@ export default function BetaLandingPage() {
 
     <main>
       <section className="landing-cover beta-hero" id="top">
-        <LandingPortals lang={lang} recede={portalExit} />
-        <div className="landing-cover-content" style={coverStyle}>
+        <LandingPortals lang={lang} recede={portalExit} covered={!!openPortal} openPortal={(href, opener) => setOpenPortal({ href, opener })} />
+        <div className="landing-cover-content" style={coverStyle} inert={!!openPortal}>
           <div className="landing-cover-logo"><ProductIcon /></div>
           <div className="landing-brand-copy">
             <p className="landing-product-name">NavoPath</p>
@@ -130,7 +133,7 @@ export default function BetaLandingPage() {
             if (event.key === "Escape" && timelineScroll) exitTimelineScroll(false);
           }}><UiCalendarClockIcon size={16} />{timelineScroll ? c.scrollPage : c.scrollTimeline}</button>
         </div>}
-        <ProductDemoFrame key={`${lang}-${attempt}`} feature="execute" lang={lang} onReady={setReady} onProgress={setScheduled} timelineScroll={timelineScroll} onExitTimelineScroll={exitTimelineScroll} />
+        <ProductDemoFrame key={`${lang}-${attempt}`} feature="execute" lang={lang} home={{ onReady: setReady, onProgress: setScheduled, timelineScroll, onExitTimelineScroll: exitTimelineScroll }} />
         {/* Scheduling instructions stay outside the measured workspace frame. */}
         {ready && <div className="beta-container beta-demo-controls">
           {!scheduled && <p>
@@ -162,6 +165,8 @@ export default function BetaLandingPage() {
         </div>
       </div>
     </main>
+
+    {openPortal && <LandingPortalPanel {...openPortal} lang={lang} onClose={closePortal} />}
 
     <footer className="beta-container beta-footer">
       <nav aria-label={c.sitemap}>

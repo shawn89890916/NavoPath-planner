@@ -1,4 +1,11 @@
 import type { Language } from "./types";
+import type { RefObject } from "react";
+
+export type ProductPageEmbed = {
+  lang: Language;
+  scroller: RefObject<HTMLDivElement | null>;
+  close: () => void;
+};
 
 export const isBetaSite = import.meta.env.BASE_URL === "/beta/";
 const sitePrefix = isBetaSite ? "/beta" : "";

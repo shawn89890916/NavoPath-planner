@@ -12,6 +12,7 @@ html.beta-landing-document body, html.beta-landing-document #root { height: auto
   --l-ground: var(--beta-paper);
   --l-ink: var(--beta-ink);
   --l-rule: var(--beta-rule);
+  position: relative;
   color-scheme: light;
 }
 .beta-container { max-width: 1376px; margin-inline: auto; padding-inline: var(--beta-gutter); }
@@ -39,6 +40,31 @@ html.beta-landing-document body, html.beta-landing-document #root { height: auto
 .beta-hero .landing-slogan { margin-inline: auto; color: var(--beta-ink); }
 .beta-hero .beta-primary { pointer-events: auto; }
 .beta-hero-intro { margin: 10px auto 19px; color: var(--beta-muted); font-size: clamp(14px, 1.4vw, 18px); text-wrap: balance; }
+
+.beta-portal-panel {
+  --portal-top: calc(var(--l-nav-height) + clamp(10px, 1.8vh, 20px));
+  --portal-overhang: clamp(18px, 3.4vh, 38px);
+  --radius-control: 6px;
+  position: absolute;
+  z-index: 6;
+  inset: var(--portal-top) clamp(10px, 2.2vw, 38px) auto;
+  height: calc(var(--portal-workspace-edge, 85svh) - var(--portal-top) + var(--portal-overhang));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--paper-rule-strong, #d6cec1);
+  border-radius: 10px;
+  background: var(--beta-paper);
+  box-shadow: 0 18px 48px rgb(39 35 30 / 16%);
+}
+.beta-portal-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding-inline: 16px 8px; border-bottom: 1px solid var(--beta-rule); background: var(--beta-paper); }
+.beta-portal-bar h2 { margin: 0; font: 650 15px/1.35 var(--l-body); }
+.beta-portal-bar h2:focus { outline: 0; }
+.beta-portal-reader { overflow: auto; padding-block-end: var(--portal-overhang); scroll-padding-block-end: var(--portal-overhang); }
+.beta-portal-reader .np-feature { min-height: 0; background: var(--beta-paper); }
+.beta-portal-reader .np-product-window { height: min(74svh, 730px); }
+.beta-portal-loading { margin: 16px; color: var(--beta-muted); }
+.beta-landing[data-portal-open] .beta-workspace-window iframe { pointer-events: none; }
 
 .beta-workspace-window { overflow: clip; background: var(--beta-paper); }
 .beta-workspace-window .np-product-window { height: auto; aspect-ratio: 16 / 9; border-radius: 0; }

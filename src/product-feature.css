@@ -5,7 +5,7 @@ html.product-site-document body, html.product-site-document #root { height: auto
 .np-feature button { cursor: pointer; }
 .np-feature a { text-decoration: none; }
 .np-site-nav { position: sticky; z-index: 30; top: 0; display: flex; justify-content: space-between; align-items: center; height: 64px; padding: 0 32px; background: #f4f7f9; }
-.np-feature > main { width: calc(100% - 64px); max-width: 1500px; margin: auto; }
+.np-feature > .np-page-content { width: calc(100% - 64px); max-width: 1500px; margin: auto; }
 .np-product-intro { padding: 36px 0 30px; }
 .np-product-intro h1 { margin: 0 0 9px; font-size: var(--product-heading-size); font-weight: 660; line-height: 1.25; letter-spacing: -.045em; }
 .np-product-intro p { max-width: 680px; margin: 0; color: #69717c; font-size: 15px; line-height: 1.75; }
@@ -50,7 +50,7 @@ html.product-site-document body, html.product-site-document #root { height: auto
 @media (max-width: 640px) { .np-site-nav--product .df-tabs button { padding-inline: 6px; font-size: 12px; } }
 @media (max-width: 640px) {
   .np-site-nav { height: 58px; padding: 0 20px; }
-  .np-feature > main { width: calc(100% - 40px); }
+  .np-feature > .np-page-content { width: calc(100% - 40px); }
   .np-product-intro { padding: 28px 0 22px; }
   .np-product-intro h1 { font-size: var(--product-heading-size); letter-spacing: -.04em; }
   .np-product-intro p { font-size: 13px; }
@@ -63,13 +63,13 @@ html.product-site-document body, html.product-site-document #root { height: auto
 }
 
 
-.np-feature--reading > main { max-width: 1240px; }
+.np-feature--reading > .np-page-content { max-width: 1240px; }
 .np-product-visual { margin-top: 20px; }
 .np-product-visual .np-product-screenshot { display: block; width: 100%; }
 .np-product-visual .np-product-screenshot img { display: block; width: 100%; height: auto; }
 .np-product-visual > .np-product-screenshot { overflow: hidden; border-radius: 12px; background: #f8f7f3; }
 @media (orientation: portrait) {
-  .np-feature--reading > main { max-width: 680px; }
+  .np-feature--reading > .np-page-content { max-width: 680px; }
   .np-product-visual > .np-product-screenshot { max-width: 390px; margin-inline: auto; }
   .np-feature--reading .np-product-notes { grid-template-columns: 1fr; }
 }

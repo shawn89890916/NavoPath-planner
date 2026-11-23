@@ -3,30 +3,30 @@ import type { Language } from "../types";
 
 export default {
   zh: {
-    title: "从项目计划到今天的时间轴。",
-    description: "在一体化工作区里拆解项目、挑选今天要推进的事，再给任务留出实际可用的时间。",
+    title: "从左侧待办，到右侧时间轴。",
+    description: "左边选今天要做的事，右边直接安排时间。临时有变，也在这一页调整。",
     benefits: [
-      ["拆解项目", "在项目树展开「推进个人网站」，找到「撰写个人介绍」。"],
-      ["选为今日候选", "把任务加入今日候选，再切到执行视图确认它已出现在列表中。"],
-      ["排入时间轴", "将同一项任务拖到空闲时段，按需要调整时长。"],
+      ["挑出今天要做的事", "从左侧今日候选中选一项，比如「调整网站布局」。"],
+      ["安排实际的时间", "把任务拖进右侧空档。如果需要多一点时间，直接拉长任务块。"],
+      ["计划有变时就地调整", "拖动任务块即可改时间。还没想好几点做，可以把它放回候选。"],
     ],
     faq: [
-      ["规划和执行会创建两份任务吗？", "两处使用同一项任务。排程为它添加一条执行记录。"],
-      ["浏览器里试玩会修改我的工作区吗？", "横屏试玩使用独立的示例数据，刷新页面即可恢复。"],
+      ["一个任务可以分几次做吗？", "可以。同一个任务可以安排多条执行记录。"],
+      ["浏览器里试玩会修改我的工作区吗？", "试玩使用独立的示例数据，重新打开即可恢复。"],
     ],
     next: "plugins",
   },
   en: {
-    title: "From a project plan to today’s timeline.",
-    description: "Break down a project, choose what to advance today, and make room for it in the same workspace.",
+    title: "From your task list to today’s timeline.",
+    description: "Pick what you want to work on from the left, block time on the right, and adjust it all in one place.",
     benefits: [
-      ["Break down a project", "Open Build a personal website in the project tree and find Write your introduction."],
-      ["Choose it for today", "Add the task to Today’s Candidates, then switch to Execute to find it in the list."],
-      ["Make time for it", "Drag the same task to an open slot on the timeline and adjust its duration as needed."],
+      ["Pick a task for today", "Choose a task in the list on the left, such as Refine the website layout."],
+      ["Give it a time", "Drag it into an open slot on the right. Stretch the block if you need more time."],
+      ["Adjust when plans change", "Move a block to a new time, or drag it back to the list if you’ll schedule it later."],
     ],
     faq: [
-      ["Do Planning and Execute create separate tasks?", "Both views use the same task. Scheduling adds an execution record to it."],
-      ["Will the demo change my workspace?", "The landscape demo uses its own sample data. Refresh the page to reset it."],
+      ["Can I split a task across several sessions?", "Yes. You can schedule multiple sessions for the same task."],
+      ["Will the demo change my workspace?", "The demo uses its own sample data. Reopen it to reset the example."],
     ],
     next: "plugins",
   },

@@ -12,9 +12,10 @@ export function installProductDemo(feature: ProductDemo) {
   if (!sitePath(location.pathname).startsWith("/product-demo/")) throw new Error("Example runtime requires an example route");
   const language = siteLanguage(location.search, navigator.language);
   const presentation = new URLSearchParams(location.search).get("presentation");
-  const fullscreen = presentation === "full";
+  const portal = presentation === "portal";
+  const fullscreen = presentation === "full" || portal;
   const showcaseHome = presentation === "home" && feature === "execute";
-  if (showcaseHome) installProductDemoPageScroll();
+  if (showcaseHome || portal) installProductDemoPageScroll(portal);
   const planning = feature === "planning" || feature === "workspace";
   const showcaseAi = fullscreen && feature === "ai";
   let data = createDemoData(language, feature, feature === "execute" ? 2 : 1);

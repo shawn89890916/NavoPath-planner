@@ -1,24 +1,26 @@
 import { useEffect, useRef, useState } from "react";
-import { featureNames, siteHref } from "./productSite";
+import { featureNames, siteHref, type ProductPageEmbed } from "./productSite";
 import type { Language } from "./types";
 import ProductScreenshot from "./ProductScreenshot";
 import "./product-demo-frame.css";
 
-type DemoFrameProps =
-  | { feature: "workspace" | "ai"; lang: Language }
-  | {
-    feature: "execute"; lang: Language;
+type DemoFrameProps = {
+  feature: "execute" | "ai";
+  lang: Language;
+  embedded?: ProductPageEmbed;
+  home?: {
     onReady: (ready: boolean) => void; onProgress: (scheduled: boolean) => void;
     timelineScroll: boolean; onExitTimelineScroll: (restoreFocus: boolean) => void;
   };
+};
 
-export default function ProductDemoFrame(props: DemoFrameProps) {
-  const { feature, lang } = props;
-  const home = props.feature === "execute" ? props : undefined;
+export default function ProductDemoFrame({ feature, lang, home, embedded }: DemoFrameProps) {
   const onReady = home?.onReady;
   const onProgress = home?.onProgress;
-  const timelineScroll = home?.timelineScroll;
+  const timelineScroll = embedded ? false : home?.timelineScroll;
   const onExitTimelineScroll = home?.onExitTimelineScroll;
+  const portalScroller = embedded?.scroller;
+  const closePortal = embedded?.close;
   const frame = useRef<HTMLIFrameElement>(null);
   const host = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -67,16 +69,26 @@ export default function ProductDemoFrame(props: DemoFrameProps) {
       if (event.data.type === "error") setStatus("failed");
       if (event.data.type === "progress" && typeof event.data.scheduled === "boolean") onProgress?.(event.data.scheduled);
       if (event.data.type === "page-scroll" && timelineScroll === false && Number.isFinite(event.data.deltaY)) {
-        window.scrollBy({ top: event.data.deltaY, behavior: "instant" });
+        let deltaY = event.data.deltaY;
+        const scroller = portalScroller?.current;
+        if (scroller) {
+          const previous = scroller.scrollTop;
+          scroller.scrollBy({ top: deltaY, behavior: "instant" });
+          deltaY -= scroller.scrollTop - previous;
+        }
+        if (Math.abs(deltaY) >= 1) window.scrollBy({ top: deltaY, behavior: "instant" });
       }
-      if (event.data.type === "exit-timeline-scroll" && timelineScroll) onExitTimelineScroll?.(true);
+      if (event.data.type === "escape") {
+        if (timelineScroll) onExitTimelineScroll?.(true);
+        else closePortal?.();
+      }
     };
     addEventListener("message", receive);
     return () => {
       observer.disconnect();
       removeEventListener("message", receive);
     };
-  }, [onProgress, onExitTimelineScroll, timelineScroll]);
+  }, [onProgress, onExitTimelineScroll, timelineScroll, portalScroller, closePortal]);
 
   useEffect(() => {
     if (status === "ready" && timelineScroll !== undefined) {
@@ -88,19 +100,20 @@ export default function ProductDemoFrame(props: DemoFrameProps) {
     onReady?.(status === "ready");
   }, [onReady, status]);
 
-  const presentation = home ? "home" : "full";
+  const presentation = home ? "home" : embedded ? "portal" : "full";
+  const fallback = feature === "execute" ? "workspace" : feature;
   return <div className="np-product-window" ref={host}>
     {mounted && status !== "failed" && <iframe
       key={attempt}
       ref={frame}
       src={siteHref(`/product-demo/${feature}?lang=${lang}&presentation=${presentation}`)}
-      title={home ? (zh ? "NavoPath 排程演示" : "NavoPath scheduling demo") : (zh ? "NavoPath 交互演示" : "NavoPath interactive demo")}
+      title={feature === "execute" ? (zh ? "NavoPath 排程演示" : "NavoPath scheduling demo") : (zh ? "NavoPath 交互演示" : "NavoPath interactive demo")}
       tabIndex={status === "ready" ? undefined : -1}
       aria-hidden={status !== "ready" || undefined}
       onError={() => setStatus("failed")}
     />}
     <div className="np-demo-status" aria-hidden={!mounted || status === "ready" || undefined}>
-      {props.feature !== "execute" && <ProductScreenshot feature={props.feature} lang={lang} alt={featureNames[lang][props.feature]} eager />}
+      {!home && <ProductScreenshot feature={fallback} lang={lang} alt={featureNames[lang][fallback]} eager />}
       <div className="np-demo-loading-label">
         <span role="status">{status === "failed" ? (zh ? "试玩未能加载。" : "The demo couldn’t load.") : (zh ? "正在加载试玩…" : "Loading demo…")}</span>
         {status === "failed" && <>

@@ -40,7 +40,6 @@
 .df-extension-market-lanes .df-extension-market-card { min-block-size: 160px; }
 .df-extension-market-lanes .df-extension-market-open p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .df-extension-market-lanes[data-paused="true"] .df-extension-market-track { animation-play-state: paused; }
-@media (hover: hover) { .df-extension-market-lanes:hover .df-extension-market-track { animation-play-state: paused; } }
 @media (prefers-reduced-motion: reduce) { .df-extension-market-lanes .df-extension-market-track { animation-play-state: paused; } }
 @keyframes df-extension-market-loop { to { transform: translateX(-50%); } }
 .df-extension-market-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: 10px; background: var(--surface-card); }

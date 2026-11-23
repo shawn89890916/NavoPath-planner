@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ProductNavigation from "./ProductNavigation";
 import ProductSiteFooter from "./ProductSiteFooter";
-import { PRINCIPLES, principleNames, principleHref, siteLanguage, type Principle, type PrincipleCopy } from "./productSite";
+import { PRINCIPLES, principleNames, principleHref, siteLanguage, type Principle, type PrincipleCopy, type ProductPageEmbed } from "./productSite";
 import type { Language } from "./types";
 import "./product-feature.css";
 import "./product-principles.css";
@@ -33,26 +33,30 @@ const directory = {
   },
 };
 
-export default function ProductPrinciplesPage({ topic, copy }: { topic?: Principle; copy?: Record<Language, PrincipleCopy> }) {
-  const [lang, setLang] = useState(() => siteLanguage(location.search, navigator.language));
+export default function ProductPrinciplesPage({ topic, copy, embedded }: { topic?: Principle; copy?: Record<Language, PrincipleCopy>; embedded?: ProductPageEmbed }) {
+  const [language, setLang] = useState(() => siteLanguage(location.search, navigator.language));
+  const lang = embedded?.lang ?? language;
+  const Content = embedded ? "div" : "main";
   const d = directory[lang], article = copy?.[lang], c = article || d;
   const next = topic ? PRINCIPLES[(PRINCIPLES.indexOf(topic) + 1) % PRINCIPLES.length] : null;
   useEffect(() => {
+    if (embedded) return;
     document.documentElement.classList.add("product-site-document");
     return () => document.documentElement.classList.remove("product-site-document");
-  }, []);
+  }, [embedded]);
   useEffect(() => {
+    if (embedded) return;
     document.title = `${article ? c.title : d.label} · NavoPath`;
     document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
     const meta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (meta) meta.content = c.description;
     const url = new URL(location.href); url.searchParams.set("lang", lang); history.replaceState(null, "", url);
-  }, [lang, c, d, article]);
+  }, [lang, c, d, article, embedded]);
   return <div className={`np-feature np-principles${article ? " np-principles--article" : ""}`}>
-    <header className="np-site-nav np-site-nav--product">
+    {!embedded && <header className="np-site-nav np-site-nav--product">
       <ProductNavigation feature="principles" lang={lang} icon={<img src={`${import.meta.env.BASE_URL}navopath-icon.png`} alt="" />} onLanguageChange={setLang} />
-    </header>
-    <main>
+    </header>}
+    <Content className="np-page-content">
       <section className="np-principles-intro">
         <div>
           {article ? <a className="np-principles-label np-principle-link" href={principleHref("index", lang)}>{d.back}</a> : <p className="np-principles-label">{d.label}</p>}
@@ -68,6 +72,6 @@ export default function ProductPrinciplesPage({ topic, copy }: { topic?: Princip
         {PRINCIPLES.map((id, index) => <a className="np-principle-entry" key={id} href={principleHref(id, lang)}><span className="np-principles-label">{String(index + 1).padStart(2, "0")}</span><h2>{principleNames[lang][id]}</h2><p>{d.topics[id]}</p><span className="np-principle-link">{d.read}</span></a>)}
       </nav>}
       <ProductSiteFooter lang={lang} next="ai" />
-    </main>
+    </Content>
   </div>;
 }
