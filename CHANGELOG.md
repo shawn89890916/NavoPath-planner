@@ -2,6 +2,12 @@
 
 ## 2026-11-23
 
+### 1.7.0 Beta 68
+
+#### 修复
+
+- 更新日志在窄窗口和手机上可正常滚动，缩放时保持当前配色。中英文页面都能显示最新发布记录。
+
 ### 1.7.0 Beta 67
 
 #### 改进
@@ -929,6 +935,12 @@
 # NavoPath Changelog
 
 ## 2026-11-23
+
+### 1.7.0 Beta 68
+
+#### Fixed
+
+- The changelog scrolls in narrow windows and on phones and keeps its colors when zoomed. Both languages show the latest published notes.
 
 ### 1.7.0 Beta 67
 

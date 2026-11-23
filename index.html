@@ -12,6 +12,7 @@
       /* Minimal skeleton — visible instantly, replaced when React mounts */
       html, body { margin: 0; padding: 0; background: #F8F7F3; font-family: system-ui, sans-serif; }
       #root { min-height: 100vh; position: relative; }
+      .changelog-page .boot-skeleton { display:none; }
       .boot-skeleton { min-height:100vh; background:#F8F7F3; }
       .boot-head { height:62px; border-bottom:1px solid #E7E2D8; display:flex; align-items:center; padding:0 24px; gap:16px; }
       .boot-dot,.boot-line,.boot-card { display:block; background:#E9E5DD; }
@@ -24,7 +25,7 @@
       html.site-boot, html.site-boot body, .site-boot .boot-skeleton { background:#f4f7f9; }
       .site-boot .boot-skeleton > * { visibility:hidden; }
       @media (max-width:899.98px) {
-        html,body,#root,.boot-skeleton { width:100%; min-width:0; min-height:0; height:100%; overflow:hidden; }
+        html:not(.changelog-page), html:not(.changelog-page) :is(body,#root,.boot-skeleton) { width:100%; min-width:0; min-height:0; height:100%; overflow:hidden; }
         .boot-head { height:56px; padding:0 14px; }
         .boot-body { display:block; min-height:calc(100dvh - 56px); }
         .boot-list { display:none; }
@@ -32,6 +33,7 @@
       }
     </style>
     <script>
+      if (/^\/changelog\/?$/.test(location.pathname)) document.documentElement.classList.add("changelog-page");
       // Public introductions keep the paper background while their page loads.
       if (/^\/(?:privacy|features\/(?:execute|planning|ai)|principles(?:\/(?:jev|feedback|time|control|views|records))?)\/?$/.test(location.pathname)) document.documentElement.classList.add("site-boot");
       // Pre-React error handler: if the JS bundle fails to load or throws

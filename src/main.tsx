@@ -128,7 +128,6 @@ installBrowserFallback();
 
 const AuthGate = lazy(() => import("./AuthGate"));
 const DesktopDockControls = lazy(() => import("./components/DesktopDockControls"));
-const ChangelogPage = lazy(() => import("./ChangelogPage"));
 const PluginGuidePageLazy = lazy(() => import("./PluginGuidePage"));
 const loadSettingsPanel = () => import("./SettingsPanel");
 const UtilityPanel = lazy(() => loadSettingsPanel().then((module) => ({ default: module.UtilityPanel })));
@@ -12915,9 +12914,7 @@ if (!productDemo && (isRecoveryCallback || window.desktopApi || /^\/app(?:\/|$)/
 root.render(
   isRecoveryCallback
     ? <Suspense fallback={<ExecuteSkeleton />}><PasswordRecoveryPage lang={detectSystemLanguage()} getApi={waitForPlannerApi} onRequest={sendPasswordResetEmail} /></Suspense>
-    : window.location.pathname === "/changelog"
-      ? <Suspense fallback={<div className="df-loading-inline">Loading changelog...</div>}><ChangelogPage /></Suspense>
-      : window.location.pathname === "/plugin-guide"
+    : window.location.pathname === "/plugin-guide"
         ? <Suspense fallback={<div className="df-loading-inline">Loading guide...</div>}><PluginGuidePageLazy /></Suspense>
       : window.location.pathname === "/guidelines" || window.location.pathname === "/plugin-guidelines"
         ? <Suspense fallback={<div className="df-loading-inline">Loading API docs...</div>}><PluginGuidePageLazy /></Suspense>

@@ -45,10 +45,11 @@ const feature = productFeature(window.location.pathname, "features");
 const demo = productFeature(window.location.pathname, "product-demo");
 const principles = principleRoute(window.location.pathname);
 const privacy = /^\/privacy\/?$/.test(window.location.pathname);
+const changelog = document.documentElement.classList.contains("changelog-page");
 const address = new URL(window.location.href);
 const isWidgetPopover = address.searchParams.get("widgetPopover") === "1";
 const isWidget = address.searchParams.get("widget") === "1";
-if (!feature && !demo && !principles && !privacy && !isPasswordRecoveryCallback(address) && (isWidgetPopover || isWidget)) {
+if (!feature && !demo && !principles && !privacy && !changelog && !isPasswordRecoveryCallback(address) && (isWidgetPopover || isWidget)) {
   const Widget = lazy(() => import("./widget/WidgetApp").then(({ WidgetApp, WidgetPopoverApp }) => ({
     default: isWidgetPopover ? WidgetPopoverApp : WidgetApp,
   })));
@@ -63,19 +64,24 @@ if (!feature && !demo && !principles && !privacy && !isPasswordRecoveryCallback(
     if (parent !== window) parent.postMessage({ channel: "navopath-product-demo", type: "error" }, location.origin);
     document.getElementById("root")!.textContent = "NavoPath…";
   });
-} else if (feature || principles || privacy) {
-  const Page = lazy(privacy ? () => import("./PrivacyPage") : feature ? () => loadFeature(feature) : () => loadPrinciple(principles!));
+} else if (feature || principles || privacy || changelog) {
+  const Page = lazy(
+    changelog ? () => import("./ChangelogPage")
+      : privacy ? () => import("./PrivacyPage")
+      : feature ? () => loadFeature(feature)
+      : () => loadPrinciple(principles!),
+  );
   createRoot(document.getElementById("root")!).render(
     <SiteErrorBoundary demo={Boolean(demo)}>
       <Suspense
-        fallback={
+        fallback={changelog ? null : (
           <div
             role="status"
             style={{ padding: 32, background: "#f4f7f9", color: "#27231e" }}
           >
             NavoPath…
           </div>
-        }
+        )}
       >
         <Page />
       </Suspense>

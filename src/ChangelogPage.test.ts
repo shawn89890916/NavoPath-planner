@@ -1,5 +1,43 @@
 import { describe, expect, it } from "vitest";
-import { resolveChangelogLanguage } from "./ChangelogPage";
+import { localizeChangelog, resolveChangelogLanguage } from "./ChangelogPage";
+
+describe("localizeChangelog", () => {
+  const source = [
+    "# NavoPath 更新日志",
+    "## 2026-11-23",
+    "### 1.7.0 Beta 66",
+    "- 中文更新",
+    "# NavoPath Changelog",
+    "## 2026-11-23",
+    "### 1.7.0 Beta 66",
+    "- English update",
+    "# NavoPath Changelog",
+    "## 2026-08-30 · 中文归档",
+    "- 中文历史",
+    "## 2026-08-30 · English archive",
+    "- English history",
+    "## 本轮补充 / Current update",
+    "### 新增",
+    "- 中文补充",
+    "### Added",
+    "- English supplement",
+  ].join("\n");
+
+  it("renders date headings in their own language and retains mixed-language archives", () => {
+    const zh = localizeChangelog(source, "zh");
+    expect(zh).toContain("## 2026-11-23\n\n### 1.7.0 Beta 66\n- 中文更新");
+    expect(zh).toContain("## 2026-08-30 · 中文归档");
+    expect(zh).toContain("## 历史补充记录\n\n### 新增\n- 中文补充");
+    expect(zh).not.toContain("English");
+
+    const en = localizeChangelog(source, "en");
+    expect(en).toContain("## 2026-11-23\n\n### 1.7.0 Beta 66\n- English update");
+    expect(en).toContain("## 2026-08-30 · English archive");
+    expect(en).toContain("## Earlier updates\n\n### Added\n- English supplement");
+    expect(en).not.toContain("中文");
+    expect(en.match(/^# NavoPath Changelog$/gm)).toHaveLength(1);
+  });
+});
 
 function createStorage(entries: Record<string, string>) {
   const keys = Object.keys(entries);

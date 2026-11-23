@@ -3,21 +3,33 @@ import changelog from "../CHANGELOG.md?raw";
 import type { Language } from "./types";
 import "./changelog.css";
 
-type Block = { type: "h1" | "h2" | "h3" | "li" | "p"; text: string; id?: string };
+type Block = { type: "h1" | "h2" | "h3" | "h4" | "li" | "p"; text: string; id?: string };
 type LanguageStorage = Pick<Storage, "getItem" | "key" | "length">;
 type StoredLanguage = { language: Language; savedAt: string };
 
 const hasChinese = (value: string) => /\p{Script=Han}/u.test(value);
 
-function localizedSource(language: Language) {
-  const lines = changelog.split(/\r?\n/);
-  const sectionStarts = lines.flatMap((line, index) => line.startsWith("## ") ? [index] : []);
-  const sections = sectionStarts.map((start, index) => {
+export function localizeChangelog(source: string, language: Language) {
+  const lines = source.split(/\r?\n/);
+  const sectionStarts = lines.flatMap((line, index) => /^#{1,2} /.test(line) ? [index] : []);
+  let sectionLanguage: Language = "zh";
+  const sections = sectionStarts.flatMap((start, index) => {
+    const line = lines[start];
+    if (line.startsWith("# ")) {
+      sectionLanguage = hasChinese(line) ? "zh" : "en";
+      return [];
+    }
     const end = sectionStarts[index + 1] ?? lines.length;
-    return { heading: lines[start].slice(3).trim(), body: lines.slice(start + 1, end).join("\n").trim() };
+    const heading = line.slice(3).trim();
+    // Date-only headings inherit their section language. Older mixed-language
+    // archives have descriptive headings that identify each entry's language.
+    const entryLanguage = /^\d{4}-\d{2}-\d{2}$/.test(heading)
+      ? sectionLanguage
+      : hasChinese(heading) ? "zh" : "en";
+    return [{ heading, body: lines.slice(start + 1, end).join("\n").trim(), entryLanguage }];
   });
   const seen = new Set<string>();
-  const selected = sections.flatMap(({ heading, body }) => {
+  const selected = sections.flatMap(({ heading, body, entryLanguage }) => {
     if (heading === "本轮补充 / Current update") {
       const bodyLines = body.split("\n");
       const subsectionStarts = bodyLines.flatMap((line, index) => line.startsWith("### ") ? [index] : []);
@@ -32,7 +44,7 @@ function localizedSource(language: Language) {
       return [`## ${localizedHeading}\n\n${subsections.join("\n\n")}`];
     }
 
-    if (hasChinese(heading) !== (language === "zh")) return [];
+    if (entryLanguage !== language) return [];
     const section = `## ${heading}\n\n${body}`.trim();
     if (seen.has(section)) return [];
     seen.add(section);
@@ -51,6 +63,7 @@ function parseMarkdown(source: string): Block[] {
   return source.split(/\r?\n/).flatMap((line): Block[] => {
     const value = line.trim();
     if (!value) return [];
+    if (value.startsWith("#### ")) return [{ type: "h4", text: value.slice(5) }];
     if (value.startsWith("### ")) return [{ type: "h3", text: value.slice(4) }];
     if (value.startsWith("## ")) {
       const text = value.slice(3);
@@ -128,7 +141,7 @@ function accountLanguage(): Language {
 
 export default function ChangelogPage() {
   const [language, setLanguage] = useState<Language>(accountLanguage);
-  const blocks = parseMarkdown(localizedSource(language));
+  const blocks = parseMarkdown(localizeChangelog(changelog, language));
   const navigation = blocks.filter((block): block is Block & { id: string } => block.type === "h2" && Boolean(block.id));
 
   useEffect(() => {
@@ -159,6 +172,7 @@ export default function ChangelogPage() {
         </Fragment>;
         if (block.type === "h2") return <h2 id={block.id} key={index}>{block.text}</h2>;
         if (block.type === "h3") return <h3 key={index}>{block.text}</h3>;
+        if (block.type === "h4") return <h4 key={index}>{block.text}</h4>;
         if (block.type === "li") return <p className="entry" key={index}>{block.text}</p>;
         return <p key={index}>{block.text}</p>;
       })}</article>
