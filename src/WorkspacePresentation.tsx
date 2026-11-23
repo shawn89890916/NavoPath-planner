@@ -926,7 +926,7 @@ export function TimeBlock({ task, blockRef, engagementEnabled, preview, projectN
       </div>
       {isPreview && (
         <span className="df-preview-actions">
-          <IconButton className="df-preview-action accept" icon={<UiCheckIcon />} label={t(lang, "timeBlock.adopt")} onClick={(e) => { e.stopPropagation(); onAcceptPreview?.(); }} />
+          <IconButton className="df-preview-action accept ui-icon-button--borderless" icon={<UiCheckIcon />} label={t(lang, "timeBlock.adopt")} onClick={(e) => { e.stopPropagation(); onAcceptPreview?.(); }} />
           <CloseButton className="df-preview-action cancel" onClick={(e) => { e.stopPropagation(); onCancelPreview?.(); }} label={t(lang, "timeBlock.cancel")} />
         </span>
       )}

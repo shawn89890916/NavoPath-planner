@@ -5286,7 +5286,8 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-time-block:focus-within .df-preview-actions {
   opacity: 1;
 }
-#root .df-app .df-time-block .df-preview-action {
+.df-time-block .df-preview-action,
+#root .df-app .df-time-block .df-preview-action.accept {
   width: 22px;
   height: 22px;
   padding: 0;

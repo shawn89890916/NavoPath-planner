@@ -9761,7 +9761,7 @@ if (cached?.data && cached?.settings) {
                       onClick={() => { setAiPlanMenuOpen(false); if (productAiPresentation) void runProductDemoPreset(); else void planMyDay(); }}
                     />
                     {schedulePreviews.length > 0 && autoScheduleState === "preview" && <>
-                      <IconButton className="df-icon-action df-ai-plan-confirm" icon={<UiCheckIcon />} label={t(lang, "timeline.adoptAll")} onClick={acceptAllPreviews} />
+                      <IconButton className="df-icon-action df-ai-plan-confirm ui-icon-button--borderless" icon={<UiCheckIcon />} label={t(lang, "timeline.adoptAll")} onClick={acceptAllPreviews} />
             <CloseButton className="df-ai-plan-cancel" onClick={() => cancelAutoSchedule()} label={t(lang, "timeline.cancelPreview")} />
                     </>}
                     {aiPlanMenuOpen && <span className="df-ai-plan-menu df-ai-plan-menu-visible open" onClick={(event) => event.stopPropagation()}>
