@@ -1,3 +1,4 @@
+import { PRODUCT_ICON_SRC } from "./ProductIcon";
 import { courseBackgroundColor } from "./utils/courseBackground";
 import { useMobileSheetGesture } from "./useMobileSheetGesture";
 import { normalizeEngagement } from "./utils/engagement";
@@ -194,16 +195,7 @@ export function sortAiConversations(conversations: AiConversation[]) {
   });
 }
 
-export const PRODUCT_ICON_SRC = `${import.meta.env.BASE_URL}navopath-icon.png`;
-
-export function ProductIcon({ compact = false }: { compact?: boolean }) {
-  const size = compact ? 32 : 36;
-  return (
-    <div className={`dayflow-icon ${compact ? "compact" : ""}`} aria-hidden="true">
-      <img src={PRODUCT_ICON_SRC} alt="" width={size} height={size} />
-    </div>
-  );
-}
+export { ProductIcon, PRODUCT_ICON_SRC } from "./ProductIcon";
 
 export function recurrenceOptions(lang: Language): Array<{ value: RecurrenceFrequency; label: string }> {
   const labels: Record<RecurrenceFrequency, { zh: string; en: string }> = {

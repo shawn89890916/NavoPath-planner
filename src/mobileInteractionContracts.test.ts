@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const main = readFileSync(resolve(__dirname, "main.tsx"), "utf8") + readFileSync(resolve(__dirname, "SettingsPanel.tsx"), "utf8") + readFileSync(resolve(__dirname, "components/MobileQuickAddButton.tsx"), "utf8") + readFileSync(resolve(__dirname, "WorkspacePresentation.tsx"), "utf8") + readFileSync(resolve(__dirname, "AiPanel.tsx"), "utf8");
+const productIcon = readFileSync(resolve(__dirname, "ProductIcon.tsx"), "utf8");
 const appCss = readFileSync(resolve(__dirname, "app.css"), "utf8");
 const defaults = readFileSync(resolve(__dirname, "defaultSettings.ts"), "utf8");
 const planning = readFileSync(resolve(__dirname, "PlanningView.tsx"), "utf8");
@@ -225,9 +226,9 @@ describe("portrait interaction contracts", () => {
   });
 
   it("resolves the product mark from the Vite base path", () => {
-    expect(main).toContain("const PRODUCT_ICON_SRC = `${import.meta.env.BASE_URL}navopath-icon.png`;");
-    expect(main).toContain("const size = compact ? 32 : 36;");
-    expect(main).toContain("<img src={PRODUCT_ICON_SRC} alt=\"\" width={size} height={size} />");
+    expect(productIcon).toContain("const PRODUCT_ICON_SRC = `${import.meta.env.BASE_URL}navopath-icon.png`;");
+    expect(productIcon).toContain("const size = compact ? 32 : 36;");
+    expect(productIcon).toContain("<img src={PRODUCT_ICON_SRC} alt=\"\" width={size} height={size} />");
   });
 
   it("snaps the real task block into timeline slots instead of covering a white target preview", () => {

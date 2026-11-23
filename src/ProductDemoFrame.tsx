@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { featureNames, siteHref } from "./productSite";
 import type { Language } from "./types";
 import ProductScreenshot from "./ProductScreenshot";
@@ -6,7 +6,7 @@ import "./product-demo-frame.css";
 
 type DemoFrameProps =
   | { feature: "workspace" | "ai"; lang: Language }
-  | { feature: "execute"; lang: Language; fallback: ReactNode; onReady: (ready: boolean) => void; onProgress: (scheduled: boolean) => void };
+  | { feature: "execute"; lang: Language; onReady: (ready: boolean) => void; onProgress: (scheduled: boolean) => void };
 
 export default function ProductDemoFrame(props: DemoFrameProps) {
   const { feature, lang } = props;
@@ -15,7 +15,7 @@ export default function ProductDemoFrame(props: DemoFrameProps) {
   const onProgress = home?.onProgress;
   const frame = useRef<HTMLIFrameElement>(null);
   const host = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(Boolean(home));
+  const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [attempt, setAttempt] = useState(0);
   const zh = lang === "zh";
@@ -82,8 +82,8 @@ export default function ProductDemoFrame(props: DemoFrameProps) {
       aria-hidden={status !== "ready" || undefined}
       onError={() => setStatus("failed")}
     />}
-    <div className="np-demo-status" aria-hidden={status === "ready" || undefined}>
-      {props.feature === "execute" ? props.fallback : <ProductScreenshot feature={props.feature} lang={lang} alt={featureNames[lang][props.feature]} eager />}
+    <div className="np-demo-status" aria-hidden={!mounted || status === "ready" || undefined}>
+      {props.feature !== "execute" && <ProductScreenshot feature={props.feature} lang={lang} alt={featureNames[lang][props.feature]} eager />}
       <div className="np-demo-loading-label">
         <span role="status">{status === "failed" ? (zh ? "试玩未能加载。" : "The demo couldn’t load.") : (zh ? "正在加载试玩…" : "Loading demo…")}</span>
         {status === "failed" && <>

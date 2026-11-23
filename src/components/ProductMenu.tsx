@@ -1,10 +1,10 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { Language } from "../types";
-import { PERSONAL_SITE_URL, PRINCIPLES, PRODUCT_FEATURES, featureHref, featureNames, principleHref, principleNames } from "../productSite";
+import { PERSONAL_SITE_URL, PRINCIPLES, PRODUCT_FEATURES, featureHref, featureNames, principleHref, principleNames, type ProductFeature } from "../productSite";
 import "./product-menu.css";
 import { preloadSitePage } from "../sitePages";
 
-export function ProductMenu({ lang, kind = "product", includeGitHub = false, active = false }: { lang: Language; kind?: "product" | "support" | "principles"; includeGitHub?: boolean; active?: boolean }) {
+export function ProductMenu({ lang, kind = "product", includeGitHub = false, active = false, productLinks }: { lang: Language; kind?: "product" | "support" | "principles"; includeGitHub?: boolean; active?: boolean; productLinks?: Partial<Record<ProductFeature, string>> }) {
   const [open, setOpen] = useState(false);
   const host = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null);
   const menuId = useId(), closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -50,7 +50,7 @@ export function ProductMenu({ lang, kind = "product", includeGitHub = false, act
     {open && <nav id={menuId} className="np-quick-menu" aria-label={kind === "support" ? (zh ? "支持与个人主页" : "Support & Personal Site") : kind === "principles" ? (zh ? "设计原理主题" : "Principle Topics") : (zh ? "全站导航" : "Site Navigation")}>
       {kind === "support" ? <><a href="https://afdian.com/a/233cxy/plan" target="_blank" rel="noreferrer">{zh ? "爱发电" : "Afdian"}</a>{includeGitHub && <a href="https://github.com/shawn89890916/NavoPath-planner" target="_blank" rel="noreferrer">GitHub</a>}<a href={PERSONAL_SITE_URL} target="_blank" rel="noreferrer">{zh ? "个人主页" : "Personal Website"}</a></>
         : kind === "principles" ? PRINCIPLES.map(topic => <a key={topic} href={principleHref(topic, lang)} target="_top" onPointerEnter={event => { if (event.pointerType === "mouse") preloadSitePage(event.currentTarget.href); }} onFocus={event => preloadSitePage(event.currentTarget.href)}>{principleNames[lang][topic]}</a>)
-        : PRODUCT_FEATURES.map((feature) => <a key={feature} href={featureHref(feature, lang)} target="_top" onPointerEnter={event => { if (event.pointerType === "mouse") preloadSitePage(event.currentTarget.href); }} onFocus={event => preloadSitePage(event.currentTarget.href)}><strong>{featureNames[lang][feature]}</strong></a>)}
+        : PRODUCT_FEATURES.map((feature) => <a key={feature} href={productLinks?.[feature] ?? featureHref(feature, lang)} target="_top" onClick={() => { if (productLinks?.[feature]) setOpen(false); }} onPointerEnter={event => { if (event.pointerType === "mouse") preloadSitePage(event.currentTarget.href); }} onFocus={event => preloadSitePage(event.currentTarget.href)}><strong>{featureNames[lang][feature]}</strong></a>)}
     </nav>}
   </div>;
 }

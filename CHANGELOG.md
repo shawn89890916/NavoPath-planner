@@ -4,7 +4,7 @@
 
 ### 改进
 
-- 官网 Beta 首页展示实际 Beta 工作区。访客可以直接试玩同页排程，并通过独立区块探索课表和快速收集等插件。
+- 官网 Beta 恢复居中大标志和悬停导航。首页直接展示可操作的任务与时间轴，插件市场支持搜索、排序和查看详情。
 
 ## 2026-11-22
 
@@ -517,7 +517,7 @@
 
 ### Improvements
 
-- The Beta homepage shows the actual Beta workspace. Visitors can try scheduling on the same page and explore plugins such as Class Timetable and Quick Capture in a dedicated section.
+- The Beta homepage restores the centered logo and hover menus, opens directly onto an interactive Tasks and timeline workspace, and adds search, sorting, and plugin details to the marketplace.
 
 ## 2026-11-22
 
