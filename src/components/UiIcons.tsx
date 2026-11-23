@@ -20,6 +20,7 @@ export const UiSettingsIcon = createNamedIcon(Settings);
 export const UiTrashIcon = createNamedIcon(Trash2);
 export const UiMoreIcon = createNamedIcon(Ellipsis);
 export const UiSparklesIcon = createNamedIcon(Sparkles);
+export const UiCheckIcon = createPathIcon("M4 12.4 9.6 18 20 6");
 export const UiListChecksIcon = createNamedIcon(ListChecks);
 export const UiPanelLeftCloseIcon = createNamedIcon(PanelLeftClose);
 export const UiPanelLeftOpenIcon = createNamedIcon(PanelLeftOpen);
