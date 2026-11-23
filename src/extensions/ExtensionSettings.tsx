@@ -5,6 +5,7 @@ import { SettingActionButton, SettingColorInput, SettingNumberInput, SettingRow,
 import { EmptyState } from "../components/EmptyState";
 import { ActionDisclosure, Button, CloseButton, Modal } from "../components/UiPrimitives";
 import { UiSearchIcon } from "../components/UiIcons";
+import { PluginMarketIdentity } from "./PluginMarketIdentity";
 import { extensionService } from "./service";
 import type { CatalogEntry, CompactPluginPlacement, ExtensionKind, ThemeOption } from "./types";
 import { getAppHeaderPlugins } from "./compactDock";
@@ -21,10 +22,6 @@ function ThemeOptionControl({ option, value, onChange }: { option: ThemeOption; 
 }
 
 type PreviewMode = "split" | "light" | "dark";
-function PluginMarketIdentity({ name, iconUrl }: { name: string; iconUrl?: string }) {
-  const [failed, setFailed] = useState(false);
-  return <span className="df-extension-plugin-icon" aria-hidden="true">{iconUrl && !failed ? <img src={iconUrl} alt="" loading="lazy" onError={() => setFailed(true)} /> : Array.from(name.trim())[0]?.toLocaleUpperCase() || "P"}</span>;
-}
 function catalogStats(entry: CatalogEntry, lang: Language) {
   const downloads = typeof entry.downloads === "number" && Number.isFinite(entry.downloads) && entry.downloads >= 0
     ? new Intl.NumberFormat(lang === "zh" ? "zh-CN" : "en-US").format(entry.downloads)
@@ -211,7 +208,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
         {selectedCatalog ? <article className="df-extension-detail">
           <Button onClick={() => setSelectedCatalogKey(null)}>{text("返回市场", "Back to market")}</Button>
           {!plugin && <ThemePreview entry={selectedCatalog} lang={lang} mode={previewMode} />}
-          <div className="df-extension-plugin-heading"><PluginMarketIdentity name={selectedCatalog.manifest.name} iconUrl={plugin ? selectedCatalog.iconUrl : undefined} /><div><h3>{selectedCatalog.manifest.name}</h3><p className="df-extension-meta">{selectedCatalog.manifest.author} · v{selectedCatalog.manifest.version}</p></div></div>
+          <div className="df-extension-plugin-heading">{plugin && <PluginMarketIdentity entry={selectedCatalog} />}<div><h3>{selectedCatalog.manifest.name}</h3><p className="df-extension-meta">{selectedCatalog.manifest.author} · v{selectedCatalog.manifest.version}</p></div></div>
           <p>{selectedCatalog.manifest.description}</p>
           <dl>{plugin && (() => { const stats = catalogStats(selectedCatalog, lang); return <><div><dt>{text("下载量", "Downloads")}</dt><dd>{stats.downloads}</dd></div><div><dt>{text("最新版上传", "Latest upload")}</dt><dd>{stats.published}</dd></div></>; })()}<div><dt>{text("来源", "Source")}</dt><dd>{preferences.sources.find(source => source.id === selectedCatalog.sourceId)?.name ?? selectedCatalog.sourceId}</dd></div><div><dt>{text("最低应用版本", "Requires NavoPath")}</dt><dd>{selectedCatalog.manifest.minAppVersion}</dd></div><div><dt>{text("支持平台", "Platforms")}</dt><dd>{selectedCatalog.manifest.platforms.join(" · ")}</dd></div></dl>
           {installed.some(item => item.sourceId === selectedCatalog.sourceId && item.manifest.id === selectedCatalog.manifest.id) ? <Button onClick={() => navigate("installed")}>{text("管理已安装", "Manage installed")}</Button> : <Button variant="primary" disabled={busy} onClick={() => void run(() => extensionService.install(selectedCatalog), text(`正在安装 ${selectedCatalog.manifest.name}…`, `Installing ${selectedCatalog.manifest.name}…`))}>{text("安装", "Install")}</Button>}
@@ -229,7 +226,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
             return <article className="df-extension-market-card" key={key}>
               <button type="button" className="df-extension-market-open" aria-label={text(`查看 ${entry.manifest.name}`, `View ${entry.manifest.name}`)} onClick={() => setSelectedCatalogKey(key)}>
                 {!plugin && <ThemePreview entry={entry} lang={lang} mode={previewMode} />}
-                {plugin && <div className="df-extension-plugin-heading"><PluginMarketIdentity name={entry.manifest.name} iconUrl={entry.iconUrl} /><div><h3>{entry.manifest.name}</h3><span className="df-extension-meta">{entry.manifest.author} · v{entry.manifest.version}</span></div></div>}
+                {plugin && <div className="df-extension-plugin-heading"><PluginMarketIdentity entry={entry} /><div><h3>{entry.manifest.name}</h3><span className="df-extension-meta">{entry.manifest.author} · v{entry.manifest.version}</span></div></div>}
                 {!plugin && <><h3>{entry.manifest.name}</h3><span className="df-extension-meta">{entry.manifest.author} · v{entry.manifest.version}</span></>}
                 <p>{entry.manifest.description}</p>
                 {plugin && <span className="df-extension-market-stats">{(() => { const stats = catalogStats(entry, lang); return <>{text("下载", "Downloads")} {stats.downloads}<span aria-hidden="true">·</span>{text("上传", "Updated")} {stats.published}</>; })()}</span>}

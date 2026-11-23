@@ -2,6 +2,13 @@
 
 ## 2026-11-23
 
+### 1.7.0 Beta 65
+
+#### 改进
+
+- 官网 Beta 的时间轴默认随网页滚动，可手动切换滚动范围。插件市场沿网页展开，滚出首屏后标志和文案会完全退出。
+- 插件市场为各款社区插件显示独立图标，列表和详情保持一致。
+
 ### 1.7.0 Beta 64
 
 #### 改进
@@ -910,6 +917,13 @@
 # NavoPath Changelog
 
 ## 2026-11-23
+
+### 1.7.0 Beta 65
+
+#### Improved
+
+- Scrolling over the Beta homepage timeline moves the page until you switch to timeline scrolling. The marketplace flows with the page, and the hero logo and text fade out as you leave the first screen.
+- The community marketplace shows a distinct icon for each plugin in both the catalog and its details.
 
 ### 1.7.0 Beta 64
 

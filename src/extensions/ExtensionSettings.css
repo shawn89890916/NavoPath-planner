@@ -32,7 +32,7 @@
 .df-extension-plugin-heading { display: flex; min-width: 0; align-items: center; gap: 12px; }
 .df-extension-plugin-heading > div { min-width: 0; }
 .df-extension-plugin-heading h3 { margin: 0; overflow-wrap: anywhere; }
-.df-extension-plugin-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; overflow: hidden; border: 1px solid var(--paper-rule); border-radius: 11px; color: var(--text-main); background: var(--paper-note); font: 600 20px/1 var(--paper-sans); }
+.df-extension-plugin-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; overflow: hidden; border: 1px solid var(--paper-rule); border-radius: 11px; color: var(--text-main); background: var(--paper-note); }
 .df-extension-plugin-icon img { width: 24px; height: 24px; object-fit: contain; }
 .df-extension-market-stats { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; color: var(--text-muted); font: 400 11px/1.5 var(--paper-sans); }
 .df-extension-market-stats span { color: var(--paper-rule-strong); }

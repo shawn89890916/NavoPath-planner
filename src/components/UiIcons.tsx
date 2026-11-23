@@ -1,4 +1,5 @@
 import { Bell, ChartNoAxesColumn, Columns3, Grid2X2, History, List, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Ellipsis, ListChecks, PanelLeftClose, PanelLeftOpen, Pencil, Plus, RotateCw, Search, Settings, Sparkles, Trash2, X, Zap, type LucideIcon, type LucideProps } from "lucide-react";
+import { CalendarDays, CloudSun, LayoutTemplate, ListTree, Puzzle } from "lucide-react";
 
 function createNamedIcon(Icon: LucideIcon) {
   return function NamedUiIcon({ size = 16, strokeWidth = 1.8, ...props }: LucideProps) {
@@ -30,6 +31,11 @@ export const UiPanelLeftCloseIcon = createNamedIcon(PanelLeftClose);
 export const UiPanelLeftOpenIcon = createNamedIcon(PanelLeftOpen);
 export const UiRefreshIcon = createNamedIcon(RotateCw);
 export const UiZapIcon = createNamedIcon(Zap);
+export const UiCalendarDaysIcon = createNamedIcon(CalendarDays);
+export const UiCloudSunIcon = createNamedIcon(CloudSun);
+export const UiLayoutTemplateIcon = createNamedIcon(LayoutTemplate);
+export const UiListTreeIcon = createNamedIcon(ListTree);
+export const UiPuzzleIcon = createNamedIcon(Puzzle);
 function createPathIcon(path: string) {
   return function PathIcon({ size = 16, strokeWidth = 1.8, absoluteStrokeWidth: _absoluteStrokeWidth, ...props }: LucideProps) {
     return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden={props["aria-label"] ? undefined : true} {...props}><path d={path} /></svg>;
