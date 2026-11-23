@@ -6741,7 +6741,7 @@ if (cached?.data && cached?.settings) {
       showToast(lang === "zh" ? "外部日历事项为只读" : "External calendar events are read-only");
       return;
     }
-    if (resizeHintTaskId !== resolveTimelineRecordId(task.id) && hoveredBlock !== task.id) return;
+    if (event.pointerType !== "mouse" && resizeHintTaskId !== resolveTimelineRecordId(task.id) && hoveredBlock !== task.id) return;
     event.preventDefault();
     event.stopPropagation();
     if (event.button !== 0 && event.pointerType === "mouse") return;
@@ -8153,10 +8153,8 @@ if (cached?.data && cached?.settings) {
       else if (control?.classList.contains("df-compact-date-picker-trigger")) setMobileDatePickerOpen(true);
     };
     const movesCandidateRow = source === "candidate" && Boolean(dragElement.closest(".df-candidate-task-row"));
-    let mobileDropCommitted = false;
     const cleanup = () => {
       if (active && movesCandidateRow) candidateDragPositionsRef.current = candidatePositions();
-      if (active && mobileExecution && source === "candidate" && !mobileDropCommitted) setCandidateDrawerOpen(true);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", cancel);
@@ -8180,9 +8178,11 @@ if (cached?.data && cached?.settings) {
       if (dragElement.hasPointerCapture(pointerId)) dragElement.releasePointerCapture(pointerId);
       if (active) suppressClickAfterDrag();
     };
+    const isOnCandidatePanel = (element: Element | null) => Boolean(element?.closest(".df-candidate-panel"));
     const updateTarget = (pointerEvent: PointerEvent) => {
       const pointedElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
-      const monthDate = monthDateAtPointer({ x: pointerEvent.clientX, y: pointerEvent.clientY });
+      const onCandidatePanel = isOnCandidatePanel(pointedElement);
+      const monthDate = onCandidatePanel ? "" : monthDateAtPointer({ x: pointerEvent.clientX, y: pointerEvent.clientY });
       setMonthDropDate(monthDate);
       const candidateRow = source === "candidate" && options.allowCandidateReorder !== false ? pointedElement?.closest<HTMLElement>("[data-candidate-task-id]") : null;
       if (candidateRow) {
@@ -8232,9 +8232,8 @@ if (cached?.data && cached?.settings) {
         return;
       }
       setCandidateReorderTarget(null);
-      const candidatePanel = source === "allDay" ? pointedElement?.closest<HTMLElement>(".df-candidate-panel") : null;
-      setCandidateDropActive(Boolean(candidatePanel));
-      if (candidatePanel) {
+      setCandidateDropActive(source === "allDay" && onCandidatePanel);
+      if (onCandidatePanel) {
         setAllDayDragOver(false);
         setAllDayDragDate("");
         dropTime = "";
@@ -8315,11 +8314,6 @@ if (cached?.data && cached?.settings) {
           sourceVariant: source === "candidate" ? "candidate" : "allDay",
           taskSnapshot: task,
         });
-        if (compactLayout && source === "candidate") {
-          if (mobileExecution) closeCandidateDrawer();
-          setCompactExecuteView("schedule");
-          window.requestAnimationFrame(() => updateTarget(pointerEvent));
-        }
       }
       pointerEvent.preventDefault();
       setDragOverlayPointer({ x: pointerEvent.clientX, y: pointerEvent.clientY });
@@ -8363,7 +8357,11 @@ if (cached?.data && cached?.settings) {
           cleanup();
           return;
         }
-        const candidatePanel = source === "allDay" ? pointedElement?.closest<HTMLElement>(".df-candidate-panel") : null;
+        if (isOnCandidatePanel(pointedElement)) {
+          if (source === "allDay") returnTimelineTaskToCandidates(task.id, today);
+          cleanup();
+          return;
+        }
         const allDayCell = pointedElement?.closest<HTMLElement>("[data-all-day-date]");
         const monthDate = monthDateAtPointer({ x: pointerEvent.clientX, y: pointerEvent.clientY });
         if (monthDate || allDayCell) {
@@ -8375,10 +8373,7 @@ if (cached?.data && cached?.settings) {
             scheduleHabitAt(task.id.slice("habit:".length), date, minutesToTime(dayStartHour * 60), false);
           } else if (options.onSchedule) options.onSchedule(date, "");
           else commitShelfSchedule(task.id, date, "");
-        } else if (candidatePanel) {
-          returnTimelineTaskToCandidates(task.id, today);
         } else if (dropTime && dragTargetDateRef.current) {
-          mobileDropCommitted = true;
           if (options.onSchedule) options.onSchedule(dragTargetDateRef.current, dropTime);
           else scheduleTask(task.id, dropTime, source === "allDay");
         }
@@ -9919,7 +9914,6 @@ if (cached?.data && cached?.settings) {
                         key={gid}
                         className="df-project-group"
                         data-candidate-project-id={gid === "__events__" ? undefined : gid === "__unassigned__" ? "" : gid}
-                        data-candidate-lifted={(tasks.length === 1 && tasks[0]?.id === liftedCandidateId) || undefined}
                         data-candidate-drop-project={(candidateDropTarget?.kind === "project" && (candidateDropTarget.projectId || "__unassigned__") === gid) || undefined}
                       >
                         <div className="df-project-group-header">

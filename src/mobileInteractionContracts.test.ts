@@ -43,10 +43,12 @@ describe("portrait interaction contracts", () => {
     expect(appCss).toMatch(/\.df-compact-view-trigger select\s*\{[^}]*inset:\s*0;[^}]*width:\s*100%;[^}]*height:\s*100%;/);
   });
 
-  it("keeps touch candidate drag hold, automatic schedule switching, and both cross-day modes", () => {
+  it("keeps touch candidate drag hold and leaves Tasks open in both cross-day modes", () => {
     expect(main).toContain('let holdReady = !(source === "candidate" && event.pointerType === "touch");');
     expect(main).toContain("const holdTimer = holdReady ? undefined : window.setTimeout(() => {");
-    expect(main).toContain('setCompactExecuteView("schedule");\n          window.requestAnimationFrame(() => updateTarget(pointerEvent));');
+    const shelfDrag = main.slice(main.indexOf("function beginShelfDrag"), main.indexOf("function refreshQueuedRemote"));
+    expect(shelfDrag).not.toContain("closeCandidateDrawer()");
+    expect(shelfDrag).not.toContain('setCompactExecuteView("schedule")');
     expect(main).toContain('if (monthDate) void moveTaskToMonthDate(task, date);');
     expect(defaults).toContain("continuousCrossDayScroll: true");
     expect(main).toContain("settings?.continuousCrossDayScroll !== false");

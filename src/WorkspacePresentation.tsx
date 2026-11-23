@@ -876,6 +876,7 @@ export function TimeBlock({ task, blockRef, engagementEnabled, preview, projectN
   );
   const recurringTextColor = isLightColor(stripeColor) ? "#10212F" : "#F8FBFF";
   const canResize = !isExternalEvent && (isEvent || !hasRecurringRule(task));
+  const mountResizeHandles = canResize && !dragState && !isPreview;
   const eventId = task.id;
   const sizeClass = height < 56 ? "short" : height >= 120 ? "tall" : "normal";
   const originalStart = task.scheduledStart || "09:00";
@@ -900,12 +901,12 @@ export function TimeBlock({ task, blockRef, engagementEnabled, preview, projectN
   }
 
   return (
-    <TaskBlock ref={blockRef} lang={lang} engagement={engagementEnabled && !isEvent ? normalizeEngagement(task.engagement) : undefined} as="div" variant="scheduled" appearance="calm" priority={taskBlockPriorityFor(task.priority)} density={height < 56 ? "compact" : "normal"} checked={!isEvent && task.completed} selected={Boolean(showResizeHint || projectOpen || preview)} dragState={dragState} projectColor={stripeColor} className={`df-time-block priority-${task.priority} ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${preview ? "resizing" : ""} ${showResizeHint ? "show-resize-hint" : ""} ${projectOpen ? "project-open" : ""} ${isPreview ? "df-time-block-preview" : ""} ${isWeekView ? "df-time-block-week" : ""} ${isRecurring ? "recurring" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", preview: isPreview ? "true" : undefined, "view-mode": viewMode, "schedule-size": sizeClass, "timeline-event-id": eventId, "task-id": task.id, readonly: isExternalEvent ? "true" : undefined, "mouse-optimized": mouseOptimized ? "true" : undefined }} style={{ zIndex: 1, ...extraStyle, top: resolvedTop, height, bottom: "auto", "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px", "--recurring-text": recurringTextColor } as CSSProperties} onPointerEnter={(event) => { if (event.pointerType === "mouse" && (projectInteractive || mouseOptimized)) onHover(task.id); }} onMouseLeave={() => {
+    <TaskBlock ref={blockRef} lang={lang} engagement={engagementEnabled && !isEvent ? normalizeEngagement(task.engagement) : undefined} as="div" variant="scheduled" appearance="calm" priority={taskBlockPriorityFor(task.priority)} density={height < 56 ? "compact" : "normal"} checked={!isEvent && task.completed} selected={Boolean(showResizeHint || projectOpen || preview)} dragState={dragState} projectColor={stripeColor} className={`df-time-block priority-${task.priority} ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${preview ? "resizing" : ""} ${hovered ? "is-resize-hovered" : ""} ${showResizeHint ? "show-resize-hint" : ""} ${projectOpen ? "project-open" : ""} ${isPreview ? "df-time-block-preview" : ""} ${isWeekView ? "df-time-block-week" : ""} ${isRecurring ? "recurring" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", preview: isPreview ? "true" : undefined, "view-mode": viewMode, "schedule-size": sizeClass, "timeline-event-id": eventId, "task-id": task.id, readonly: isExternalEvent ? "true" : undefined, "mouse-optimized": mouseOptimized ? "true" : undefined }} style={{ zIndex: 1, ...extraStyle, top: resolvedTop, height, bottom: "auto", "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px", "--recurring-text": recurringTextColor } as CSSProperties} onPointerEnter={(event) => { if (event.pointerType === "mouse") onHover(task.id); }} onMouseLeave={() => {
       onHover("");
     }} onPointerDown={isExternalEvent || isSkipped ? undefined : onDragStart} onClick={(event) => { event.stopPropagation(); onSelect(event); }} onDoubleClick={projectInteractive ? (event) => { event.stopPropagation(); onEdit(); } : undefined} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? t(lang, "timeBlock.returnedHint") : undefined}>
       {isPreview && <span className="df-preview-badge">{t(lang, "timeBlock.pending")}</span>}
       <TaskRecurrenceIndicator recurrence={task.recurrence} lang={lang} />
-      {canResize && (hovered || showResizeHint || preview) && resizeEdges?.start !== false && <button type="button" className="df-resize-dot top" aria-label={t(lang, "timeBlock.adjustStart")} onPointerDown={(event) => onResizeStart(event, "start")} onClick={(event) => event.stopPropagation()} />}
+      {mountResizeHandles && resizeEdges?.start !== false && <button type="button" className="df-resize-dot top" aria-label={t(lang, "timeBlock.adjustStart")} onPointerDown={(event) => onResizeStart(event, "start")} onClick={(event) => event.stopPropagation()} />}
       <div className="df-time-card-shell">
       <TaskBlockRow className="df-time-card-row" align="start">
         {isEvent ? (
@@ -930,13 +931,13 @@ export function TimeBlock({ task, blockRef, engagementEnabled, preview, projectN
           <CloseButton className="df-preview-action cancel" onClick={(e) => { e.stopPropagation(); onCancelPreview?.(); }} label={t(lang, "timeBlock.cancel")} />
         </span>
       )}
-      {!isEvent && (hovered || showResizeHint) && <span className="df-block-project-wrap" onMouseDown={(event) => { if (projectInteractive) event.stopPropagation(); }} onClick={(event) => { if (projectInteractive) event.stopPropagation(); }}>
+      {!isEvent && (hovered && (projectInteractive || mouseOptimized) || showResizeHint) && <span className="df-block-project-wrap" onMouseDown={(event) => { if (projectInteractive) event.stopPropagation(); }} onClick={(event) => { if (projectInteractive) event.stopPropagation(); }}>
         {projectInteractive ? <button ref={projectBtnRef} className="df-block-project" title={projectName} onClick={(event) => {
           event.stopPropagation();
           setProjectOpen((open) => !open);
         }}># {projectName}</button> : <span className="df-block-project" title={projectName}># {projectName}</span>}
       </span>}
-      {canResize && (hovered || showResizeHint || preview) && resizeEdges?.end !== false && <button type="button" className="df-resize-dot bottom" aria-label={t(lang, "timeBlock.adjustEnd")} onPointerDown={(event) => onResizeStart(event, "end")} onClick={(event) => event.stopPropagation()} />}
+      {mountResizeHandles && resizeEdges?.end !== false && <button type="button" className="df-resize-dot bottom" aria-label={t(lang, "timeBlock.adjustEnd")} onPointerDown={(event) => onResizeStart(event, "end")} onClick={(event) => event.stopPropagation()} />}
       {projectOpen && projectBtnRef.current && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 99998 }} onClick={() => setProjectOpen(false)}>
           <div className="df-project-popover-portal ui-divided-list" onClick={(event) => event.stopPropagation()} style={{

@@ -2346,9 +2346,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-week-view .df-event-blocks-layer .df-time-block .df-resize-dot.bottom {
   bottom: -1px;
 }
-.df-week-view .df-event-blocks-layer .df-time-block .df-resize-dot::after {
-  width: min(24px, calc(100% - 8px));
-}
 .df-task-card[draggable="false"] {
   cursor: default;
 }
@@ -2966,12 +2963,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
    The .df-time-block-week (week view) variants keep their check button visible
    via higher-specificity rules further down, so this generic rule must
    not target the week view. */
-.df-time-block.short-block:not(.df-time-block-week) .df-resize-dot::after {
-  width: min(28px, calc(100% - 4px));
-  height: 3px;
-  background: var(--accent-active, #2A6E8E);
-  opacity: 0.85;
-}
 .df-time-block.recurring .df-next {
   color: var(--recurring-text);
 }
@@ -3042,31 +3033,22 @@ body:has(:active)::-webkit-scrollbar-thumb {
   z-index: 8;
   cursor: ns-resize;
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
   transition: none;
 }
 .df-resize-dot.top { top: 0; }
 .df-resize-dot.bottom { bottom: 0; }
-/* Visual thin line indicator */
 .df-resize-dot::after {
   content: "";
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 24px;
-  height: 3px;
-  border-radius: 2px;
-  background: transparent;
-  transition: none;
-  opacity: 0;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-time-block.resizing .df-resize-dot { opacity: 0; }
-.df-time-block:hover .df-resize-dot { opacity: 1; }
-.df-resize-dot:hover::after {
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 60%, transparent);
-  opacity: 1;
+  width: min(18px, calc(100% - 6px));
+  height: 1px;
+  background: var(--accent-active);
+  pointer-events: none;
 }
 .df-next {
   display: block;
@@ -6457,27 +6439,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-app .df-week-view .df-time-block.is-event.df-time-block-week .df-block-check {
   display: none;
 }
-.df-app .df-time-block .df-resize-dot::after {
-  width: min(20px, calc(100% - 6px));
-  height: 2px;
-  opacity: 0.75;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-}
-.df-app .df-week-view .df-time-block.df-time-block-week .df-resize-dot::after {
-  width: min(20px, calc(100% - 6px));
-  height: 2px;
-  opacity: 0.75;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-}
-.df-app .df-week-view .df-event-blocks-layer .df-time-block .df-resize-dot::after {
-  width: min(20px, calc(100% - 6px));
-  height: 2px;
-  opacity: 0.75;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-}
 .df-app .df-event-detail-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -7086,107 +7047,17 @@ body:has(:active)::-webkit-scrollbar-thumb {
   transform: translateX(-50%);
   opacity: 0;
 }
-.df-app .df-time-block:hover .df-resize-dot {
+#root .df-app .df-time-block:is(:focus-within, .show-resize-hint, .is-resize-hovered, .resizing) .df-resize-dot {
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
-.df-app .df-time-block:focus-within .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-time-block.resizing .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block:hover .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block:focus-within .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block.resizing .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-week-view .df-time-block.df-time-block-week:hover .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-week-view .df-time-block.df-time-block-week:focus-within .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-week-view .df-time-block.df-time-block-week.resizing .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-time-block.short-block:not(.df-time-block-week) .df-resize-dot::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  transform: translate(-50%, -50%);
-  width: min(18px, 70%);
-  height: 2px;
-  border-radius: 1px;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-  opacity: 0;
-  pointer-events: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-time-block:not(.short-block) .df-resize-dot::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  transform: translate(-50%, -50%);
-  width: min(18px, 70%);
-  height: 2px;
-  border-radius: 1px;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-  opacity: 0;
-  pointer-events: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-event-blocks-layer .df-time-block .df-resize-dot::after {
-  width: min(18px, 70%);
-  height: 2px;
-  opacity: 0;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  transform: translate(-50%, -50%);
-  border-radius: 1px;
-  pointer-events: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-time-block.short-block:not(.df-time-block-week) .df-resize-dot:hover::after {
-  opacity: 1;
-}
-.df-app .df-time-block.short-block:not(.df-time-block-week) .df-resize-dot:active::after {
-  opacity: 1;
-}
-.df-app .df-time-block:hover .df-resize-dot::after {
-  opacity: 1;
-}
-.df-app .df-time-block:focus-within .df-resize-dot::after {
-  opacity: 1;
-}
-.df-app .df-time-block.resizing .df-resize-dot::after {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block:hover .df-resize-dot::after {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block:focus-within .df-resize-dot::after {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block.resizing .df-resize-dot::after {
-  opacity: 1;
+@media (any-hover: hover) and (any-pointer: fine) {
+  #root .df-app .df-time-block:hover .df-resize-dot {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
 }
 .df-app .df-time-block.short-block:not(.df-time-block-week) .df-resize-dot::before {
   content: "";
@@ -7302,9 +7173,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-time-block.show-resize-hint .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-time-block.show-resize-hint .df-resize-dot::after {
   opacity: 1;
 }
 .df-detail-due-date .df-detail-pill-trevor{display:flex;align-items:center;gap:7px;min-width:0;flex:1 1 278px;margin:0}.df-detail-due-date input[type="date"]{width:auto;min-width:0;flex:1;padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer}.df-detail-due-date input[type="date"]:focus{outline:0}.df-detail-due-reset{flex:0 0 auto;align-self:center;min-height:30px;padding:5px 9px;border:1px solid var(--paper-rule-strong);background:transparent;color:var(--text-muted);font:600 11px/1 var(--paper-sans);cursor:pointer}.df-detail-due-reset:hover{color:var(--accent-active);border-color:var(--accent-active)}.df-detail-type-segment{margin:0 52px 16px 0}.df-detail-importance-row{display:flex;align-items:center;justify-content:flex-start;gap:16px;padding:12px 0;border-top:1px solid color-mix(in srgb,var(--text-muted) 10%,transparent)}.df-task-detail .df-detail-tag-row{padding-top:8px;padding-bottom:8px}.df-task-detail .df-detail-status-row{padding-top:8px;padding-bottom:8px}.df-task-detail .df-detail-schedule-row{padding-top:8px;padding-bottom:8px}.df-reschedule-editor{display:flex;align-items:end;justify-content:space-between;gap:12px}.df-reschedule-editor label{display:grid;gap:6px;flex:1;color:var(--text-muted);font:600 12px/1.2 var(--paper-sans)}.df-reschedule-editor input{min-height:36px;padding:6px 9px;border:1px solid var(--paper-rule);border-radius:var(--paper-radius);background:transparent;color:var(--text-main);font:inherit;corner-shape: var(--corner-shape, squircle)}
@@ -17126,10 +16994,8 @@ body.df-unified-dragging .df-unified-drag-overlay {
     background: transparent;
     box-shadow: none;
     transform: none;
-    opacity: 0;
     z-index: 11;
     touch-action: none;
-    pointer-events:none;
   }
   #root .df-app .df-time-block .df-resize-dot.top {
     left: -22px;
@@ -17149,46 +17015,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     transform: translateX(-50%);
   }
   #root .df-app .df-time-block .df-resize-dot::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    right: auto;
-    bottom: auto;
-    transform: translate(-50%, -50%);
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 2px solid var(--accent-active);
-    background: var(--surface-main);
-    box-shadow: none;
-    opacity: 1;
-    pointer-events: none;
-  }
-  #root .df-app .df-time-block .df-resize-dot::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    right: auto;
-    bottom: auto;
-    transform: translate(-50%, -50%);
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 2px solid var(--accent-active);
-    background: var(--surface-main);
-    box-shadow: none;
-    opacity: 1;
-    pointer-events: none; display:none; }
-  #root .df-app .df-time-block.resizing .df-resize-dot {
-    opacity: 1;
-    pointer-events:auto;
-  }
-  #root .df-app .df-time-block.show-resize-hint .df-resize-dot,
-  #root .df-app .df-time-block[data-mouse-optimized="true"]:hover .df-resize-dot {
-    opacity: 1;
-    pointer-events:auto;
+    content: none;
   }
   #root .df-app .df-time-block .df-task-block-check{
     width: 24px;
@@ -17196,9 +17023,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
     height: 24px;
     min-height: 24px;
     border-width: 1.5px;position:relative;z-index:8}
-  #root .df-app .df-time-block:not(.show-resize-hint) .df-resize-dot::after {
-    display: none;
-  }
   #root .df-app .df-task-detail.df-drawer {
     animation: navo-sheet-in var(--motion-layout) var(--motion-ease-settle) backwards;
     position: fixed;
