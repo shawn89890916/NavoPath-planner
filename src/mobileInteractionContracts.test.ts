@@ -142,7 +142,8 @@ describe("portrait interaction contracts", () => {
     expect(main).toContain("targetTop - timelineFocusViewportOffset(container)");
     expect(main).toContain("alignAfterLayoutSettles");
     expect(main.slice(previewStart, previewEnd)).not.toContain("setPendingTimelineFocus");
-    expect(main).toContain("preserveTimelineViewportOnNextDataChange();\n    applyCandidateTimeSettings");
+    const confirm = main.slice(main.indexOf("function confirmPlacementChoice"), main.indexOf("function scheduleCandidateOnDate"));
+    expect(confirm).toMatch(/preserveTimelineViewportOnNextDataChange\(\);[\s\S]*applyCandidateTimeSettings\(/);
     expect(main).toContain("focusTimeline: false");
   });
 

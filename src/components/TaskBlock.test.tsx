@@ -224,7 +224,7 @@ describe("TaskBlock shared component contract", () => {
     expect(main).toContain("df-candidate-subtask-toggle");
     expect(main).toContain('variant="habit-child"');
     expect(main).toContain("df-candidate-subtask-nest");
-    expect(main.match(/closest\("\.df-candidate-row \.df-block-check"\)/g)).toHaveLength(2);
+    expect(main.match(/onToggleDone=\{\(\) => toggleCandidateTaskDone\(task\)\}/g)).toHaveLength(2);
     const candidateRow = css.match(/\.df-app \.df-candidate-task-row \{([^}]+)\}/)?.[1];
     expect(candidateRow).toBeDefined();
     expect(candidateRow).not.toMatch(/max-height\s*:/);

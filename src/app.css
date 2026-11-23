@@ -11603,37 +11603,17 @@ body.df-timeline-pointer-drag * {
   border-radius: 0;
   cursor: pointer;
   overflow: visible;
-  interpolate-size: allow-keywords;
   transition: background var(--motion-instant) var(--motion-ease);
 }
-.df-app .df-candidate-task-row.is-completing {
+#root .df-app.mode-execute .df-candidate-list [data-candidate-lifted] {
+  position: absolute;
+  inset-inline: 0;
+  height: 0;
+  min-height: 0;
+  padding: 0;
   overflow: clip;
+  opacity: 0;
   pointer-events: none;
-  animation: candidate-complete var(--motion-complete) var(--motion-ease-settle) forwards;
-}
-@keyframes candidate-complete {
-  0%, 30% { opacity: 1; }
-  100% { opacity: 0; }
-}
-@supports (interpolate-size: allow-keywords) {
-  @keyframes candidate-complete {
-    0%, 30% { height: auto; opacity: 1; }
-    100% { height: 0; opacity: 0; }
-  }
-}
-.df-app .df-candidate-task-row.is-completing .df-candidate-main {
-  text-decoration: line-through;
-  color: var(--ink-faint);
-}
-.df-app .df-candidate-task-row.is-completing .df-block-check {
-  border-color: var(--accent-active);
-  background: var(--accent-active);
-  color: var(--surface-main);
-}
-.df-app .df-candidate-task-row.is-completing .df-block-check::after {
-  content: "✓";
-  font-size: 10px;
-  line-height: 1;
 }
 /* Neutralize the global .df-task-card margin-bottom (historical stylesheet ~21202) inside
    the candidate list so it doesn't stack with the list-level gap. The card's
@@ -11779,20 +11759,15 @@ body.df-timeline-pointer-drag * {
   background: transparent;
   box-shadow: none;
 }
-#root .df-app .df-project-drop-hint {
-  position: absolute;
-  top: calc(100% + 3.5px);
-  left: var(--task-project-accent-size, 4px);
-  z-index: 1;
-  padding: 3px 7px;
-  border: 1px solid var(--paper-rule-strong);
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--surface-tint, var(--text-main)) 6%, var(--surface-main));
-  color: var(--text-secondary);
-  font: 500 10px/1.2 var(--paper-ui);
-  white-space: nowrap;
-  transform: rotate(-1deg);
-  transform-origin: top left;
+#root .df-app .df-candidate-task-row[data-candidate-drop="before"] {
+  box-shadow: inset 0 2px var(--accent-active);
+}
+#root .df-app .df-candidate-task-row[data-candidate-drop="after"] {
+  box-shadow: inset 0 -2px var(--accent-active);
+}
+#root .df-app .df-project-group[data-candidate-drop-project] {
+  outline: 1px solid var(--accent-active);
+  outline-offset: -1px;
 }
 /* Keep the candidate list free of stray frames and leftover drop slots. */
 .df-app:not(.is-dragging) .df-candidate-list {
@@ -14890,7 +14865,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --motion-fast: 140ms;
   --motion-base: 180ms;
   --motion-layout: 240ms;
-  --motion-complete: 320ms;
   --motion-ease: cubic-bezier(.2,.75,.25,1);
   --df-ai-sidebar-width: clamp(400px, 32vw, 500px);
   --icon-size-sm: 14px;
@@ -16801,16 +16775,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
   #root .df-app.mode-execute .df-empty strong {
     z-index: 1;
   }
-  #root .df-app .df-candidate-return-hint {
-    display: flex;
-    align-items: center;
-    min-height: 44px;
-    margin: -2px 0 8px;
-    padding: 0 12px;
-    border-block: 1px solid var(--paper-rule-strong);
-    color: var(--text-main);
-    font: 650 11px/1 var(--paper-sans);
-  }
   #root .df-app .df-ai-plan-mobile-preview{display:grid;gap:4px;width:100%;margin-top:6px}
   #root .df-app .df-ai-plan-mobile-preview button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-height:38px;padding:6px 8px;border:1px solid var(--paper-rule);border-radius:8px;background:transparent;text-align:left;corner-shape: var(--corner-shape, squircle)}
   #root .df-app .df-ai-plan-mobile-preview strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
@@ -18368,7 +18332,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
     --motion-fast: 1ms;
     --motion-base: 1ms;
     --motion-layout: 1ms;
-    --motion-complete: 1ms;
     --motion-fade: 1ms;
     --motion-story: 1ms;
   }

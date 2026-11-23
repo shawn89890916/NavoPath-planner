@@ -3,9 +3,40 @@ export const MOTION = {
   fade: 140,
   base: 180,
   layout: 240,
-  complete: 320,
   story: 520,
 } as const;
+
+const layoutMotionId = "list-reflow";
+
+export function captureListPositions(list: HTMLElement | null | undefined, selector: string) {
+  const positions = new Map<HTMLElement, number>();
+  if (!list || prefersReducedMotion(list.ownerDocument.defaultView)) return positions;
+  const viewport = list.getBoundingClientRect();
+  for (const row of list.querySelectorAll<HTMLElement>(selector)) {
+    if (typeof row.animate !== "function") continue;
+    const rect = row.getBoundingClientRect();
+    if (rect.height > 0 && rect.bottom > viewport.top && rect.top < viewport.bottom) positions.set(row, rect.top);
+  }
+  return positions;
+}
+
+export function animateListPositions(positions: Map<HTMLElement, number>) {
+  const rows = [...positions].filter(([row]) => row.isConnected && !row.closest("[data-candidate-lifted]"));
+  for (const [row] of rows) {
+    row.getAnimations().find((animation) => animation.id === layoutMotionId)?.cancel();
+  }
+  const changes = rows.map(([row, top]) => ({ row, offset: top - row.getBoundingClientRect().top }));
+  const animations = changes.flatMap(({ row, offset }) => {
+    if (Math.abs(offset) < 1) return [];
+    const animation = row.animate([{ transform: `translateY(${offset}px)` }, { transform: "none" }], {
+      duration: MOTION.base,
+      easing: "cubic-bezier(.2,.75,.25,1)",
+    });
+    animation.id = layoutMotionId;
+    return [animation.finished.catch(() => undefined)];
+  });
+  return Promise.all(animations);
+}
 
 export type MotionDirection = "backward" | "forward" | "neutral";
 export type MotionScope = "timeline" | "workspace" | "settings" | "planning";

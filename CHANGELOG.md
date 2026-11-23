@@ -2,6 +2,10 @@
 
 ## 2026-11-23
 
+#### 改进
+
+- 新任务直接出现，拖起或完成任务时其余任务平滑补位。确认规划后，任务移到时间轴再提示安排完成。
+
 ### 1.7.0 Beta 73
 
 #### 改进
@@ -953,6 +957,10 @@
 # NavoPath Changelog
 
 ## 2026-11-23
+
+#### Improvements
+
+- New tasks appear immediately. The list closes the gap when a task is picked up or completed. Confirmed tasks move to the timeline before the scheduling confirmation.
 
 ### 1.7.0 Beta 73
 
