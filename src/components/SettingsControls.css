@@ -78,7 +78,7 @@
   box-shadow: none; color-scheme: light;
   transition: border-color var(--paper-motion), background-color var(--paper-motion);
 }
-#root .df-app.theme-dark :is(.df-settings-select, .df-settings-input, .df-settings-number) { color-scheme: dark; }
+#root .df-app.theme-dark :is(.df-settings-select, .df-settings-input, .df-settings-number, .df-settings-color-field) { color-scheme: dark; }
 #root .df-app .df-settings-select {
   padding-right: 30px; appearance: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
   background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%), linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
@@ -107,7 +107,7 @@
   width: 20px; height: 20px; flex: none; border: 1px solid var(--paper-rule-strong); border-radius: 50%;
 }
 .df-settings-color-input {
-  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: inherit;
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; color-scheme: inherit; cursor: inherit;
 }
 #root .df-app .df-settings-home-quick-row .df-settings-select { width: auto; min-width: 108px; max-width: 180px; }
 #root .df-app .df-settings-accent-native .df-settings-select { min-width: 0; padding: 5px 0; border: 0; background: transparent; font-size: 12px; font-weight: 600; }

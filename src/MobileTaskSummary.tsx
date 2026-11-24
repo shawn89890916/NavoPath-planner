@@ -1,3 +1,4 @@
+import { EditorRemove } from "./components/EntityEditor";
 import { EngagementRating } from "./components/EngagementRating";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from "react";
 import type { Category, Language, NullablePriority, Project, Subtask, Task, TaskRecurrence, TimelineRecord } from "./types";
@@ -152,7 +153,8 @@ export default function MobileTaskSummary(props: {
   occurrence?: { scheduledDate: string; scheduledStart: string } | null;
   today: string;
   onClose: () => void;
-  onDelete: () => Promise<void> | undefined;
+  onDelete: () => void;
+  removeConfirmLabel?: string;
   onMore?: (inset: string) => void;
   onIncomplete: () => Promise<void> | undefined;
   onUpdate: (taskId: string, patch: Partial<Task>) => Promise<void> | undefined;
@@ -227,7 +229,7 @@ export default function MobileTaskSummary(props: {
       <Button aria-pressed={!props.task.completed} onClick={() => void finishAction(props.onIncomplete(), zh ? "已标记为未完成" : "Task marked incomplete")}>↩ {zh ? "未完成" : "Incomplete"}</Button>
     </div>
     <div className="df-mobile-summary-actions">
-      <Button variant="danger" onClick={() => void finishAction(props.onDelete(), zh ? "任务已删除" : "Task deleted")}>{zh ? "删除任务" : "Delete task"}</Button>
+      <EditorRemove confirmLabel={props.removeConfirmLabel} onClick={props.onDelete}>{zh ? "删除任务" : "Delete task"}</EditorRemove>
     </div>
     {addingSubtask && <form className="df-mobile-summary-subtask-add" onSubmit={(event) => { event.preventDefault(); addSubtask(); }}>
       <input autoFocus value={subtaskTitle} onChange={(event) => setSubtaskTitle(event.target.value)} placeholder={zh ? "输入子任务名称" : "Subtask title"} onKeyDown={(event) => { if (event.key === "Escape") { setAddingSubtask(false); setSubtaskTitle(""); } }} />

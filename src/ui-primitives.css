@@ -32,6 +32,9 @@
   font: 500 13px/1.4 var(--paper-sans);
   corner-shape: var(--corner-shape, squircle);
 }
+#root .df-app .ui-action-disclosure[data-menu-placement="above"] > .ui-action-disclosure-panel {
+  inset: auto 0 calc(100% + 4px) auto;
+}
 #root .df-app .ui-action-disclosure-panel > .ui-button {
   display: flex;
   align-items: center;

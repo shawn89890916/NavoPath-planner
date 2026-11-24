@@ -31,8 +31,20 @@ export function EditorActionRow({ children, className = "" }: { children: ReactN
   return <section className={`df-detail-status-row ${className}`.trim()}>{children}</section>;
 }
 
-export function EditorRemove({ children, ...props }: ComponentProps<typeof Button>) {
-  return <Button {...props} variant="danger" className="df-detail-remove"><UiTrashIcon size={14} />{children}</Button>;
+export function EditorRemove({ children, confirmLabel, onClick, ...props }: ComponentProps<typeof Button> & { confirmLabel?: string }) {
+  const [confirming, setConfirming] = useState(false);
+  const armed = confirming && Boolean(confirmLabel);
+  return <Button {...props} variant="danger" className="df-detail-remove" data-confirming={armed || undefined}
+    onClick={(event) => {
+      if (confirmLabel && !armed) { setConfirming(true); return; }
+      onClick?.(event);
+    }}
+    onBlur={() => setConfirming(false)}
+    onKeyDown={(event) => {
+      if (event.key !== "Escape" || !armed) return;
+      event.stopPropagation();
+      setConfirming(false);
+    }}><UiTrashIcon size={14} />{armed ? confirmLabel : children}</Button>;
 }
 
 type EntityType = "task" | "project" | "habit";

@@ -2,6 +2,13 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 84
+
+#### 改进
+
+- 未排期任务把时长移到完成按钮旁边，并在下方提供快速安排。已排期任务的移除按钮会先变为确认，确认后关闭编辑页并播放统一的任务删除提示动效。
+- 习惯的「更多」菜单会根据可用空间展开。项目颜色选择器适配当前主题，空白创建页可直接退出。
+
 ### 1.7.0 Beta 83
 
 #### 修复
@@ -1003,6 +1010,13 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 84
+
+#### Improvements
+
+- Unscheduled tasks show the duration beside Complete and offer quick scheduling below. On scheduled tasks, Remove first becomes Confirm. The editor closes before the shared task deletion animation plays.
+- The habit More menu fits the available space. The project color picker follows the current theme, and a blank creation form can be closed directly.
 
 ### 1.7.0 Beta 83
 

@@ -8798,6 +8798,18 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   font-weight: 650;
   line-height: 1.35;
   text-shadow: none; animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; corner-shape: var(--corner-shape, squircle); }
+.df-toast-message:has(.df-toast-delete-icon) { display: inline-flex; align-items: center; gap: 6px; }
+.df-toast-delete-icon {
+  color: var(--text-muted);
+  animation: df-toast-delete-icon var(--motion-layout) var(--motion-ease) both;
+}
+@keyframes df-toast-delete-icon {
+  from { opacity: 0; transform: translateY(-5px) rotate(-12deg) scale(1.1); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .df-toast-delete-icon { animation: none; }
+}
 .df-app .df-modal-backdrop { animation: dfFadeIn var(--motion-fade) var(--motion-ease) both; }
 .df-app .df-drawer-backdrop { animation: dfFadeIn var(--motion-fade) var(--motion-ease) both; }
 .df-app .df-utility-backdrop { animation: dfFadeIn var(--motion-fade) var(--motion-ease) both; }
@@ -10300,6 +10312,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-editor-metadata .df-detail-tag-row { padding-block: 0; }
 .df-editor-metadata .df-detail-importance-row { border: 0; padding: 4px 0 8px; flex-wrap: wrap; }
 .df-editor-metadata .df-detail-meta-setting { min-height: var(--detail-action-height); }
+#root .df-app .df-editor-metadata .df-settings-color-field { background-color: var(--surface-main); }
 .df-editor-project-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .df-editor-date-range { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
 #root .df-app .df-entity-editor .df-editor-task-fields > button.df-detail-pill-trevor:first-child {
@@ -10405,7 +10418,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   background: transparent;
   color: var(--df-danger);
 }
-#root .df-app .df-entity-editor .df-detail-remove:is(:hover, :focus-visible):not(:disabled) {
+#root .df-app .df-entity-editor .df-detail-remove:is(:hover, :focus-visible, [data-confirming]):not(:disabled) {
   background: color-mix(in srgb, var(--df-danger) 8%, transparent);
 }
 .df-entity-editor .df-detail-incomplete-options { min-width: max(100%, 190px); }
@@ -10416,7 +10429,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   align-items: stretch;
 }
 .df-editor-action-row--equal.df-detail-schedule-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.df-editor-action-row--equal > .df-detail-remove:only-child { grid-column: 3; }
+.df-detail-schedule-actions--unscheduled > .df-detail-incomplete-menu { grid-column: span 2; }
 .df-editor-action-row--equal .df-detail-pill-trevor > span { min-width: 0; overflow-wrap: anywhere; }
 .df-entity-editor .df-editor-action-row--equal > .ui-action-disclosure { min-width: 0; margin-inline-start: 0; }
 .df-editor-action-row--equal > .ui-action-disclosure > summary { height: 100%; }
