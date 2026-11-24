@@ -2,12 +2,13 @@
 
 ## 2026-11-24
 
-### 1.7.0 Beta 76
+### 1.7.0 Beta 77
 
 #### 改进
 
 - 统一 Task、Project 和 Habit 编辑界面的标题、日期、备注和操作按钮。主要按钮略微加高，类型转换移到「更多」菜单。
 - 任务详情把截止日期放在所属项目右侧，同一枚单描边按钮可打开日期选择器。快捷改期与取消排程仍并排显示。
+- 子任务默认预留两行高度，备注从下方开始。
 
 ### 1.7.0 Beta 75
 
@@ -970,12 +971,13 @@
 
 ## 2026-11-24
 
-### 1.7.0 Beta 76
+### 1.7.0 Beta 77
 
 #### Improvements
 
 - Align the title, date, notes, and action controls across the Task, Project, and Habit editors. Give primary actions more height and move type conversion into More.
 - In task details, the due date sits beside the assigned project in a single outlined date button. Quick Reschedule and Unschedule stay together.
+- Subtasks reserve room for two rows, with Notes starting below them.
 
 ### 1.7.0 Beta 75
 

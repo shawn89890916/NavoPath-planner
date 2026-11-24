@@ -8178,6 +8178,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   grid-template-columns: 52px minmax(0, 1fr); border-bottom: 1px solid var(--paper-rule); box-shadow: none;
 }
 .df-detail-subtasks-new {
+  --detail-subtask-row-height: 48px;
   margin: 0;
   padding: 16px 0;
   border: 0; border-radius: 0;
@@ -8829,7 +8830,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   grid-template-columns:16px minmax(0,1fr) 34px;
   gap:8px;
   align-items:center;
-  min-height:48px;
+  min-height:var(--detail-subtask-row-height);
   padding:6px 10px;
 }
 .df-app .df-detail-subtasks-new .df-task-checkbox-wrap { width:16px; height:20px; }
@@ -8868,8 +8869,9 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-ai-subtask-preview li > strong { color:var(--text-main); font:500 12px/1.45 var(--paper-sans); }
 .df-ai-subtask-preview li > small { color:var(--text-faint); font:600 10px/1 var(--paper-mono); }
 @media (pointer:coarse) {
+  .df-detail-subtasks-new { --detail-subtask-row-height: 56px; }
   #root .df-app .df-detail-subtask-tools .ui-icon-button { width:44px; height:44px; min-width:44px; min-height:44px; } .df-calendar-generate { min-height:44px; } .df-calendar-actions button { min-height:44px; } .df-subtask-add-child { flex-basis:44px; width:44px; height:44px; }
-  #root .df-app .df-detail-subtasks-new .df-subtask-row-new { grid-template-columns:44px minmax(0,1fr) 44px; min-height:56px; gap:8px; padding:6px 8px; }
+  #root .df-app .df-detail-subtasks-new .df-subtask-row-new { grid-template-columns:44px minmax(0,1fr) 44px; gap:8px; padding:6px 8px; }
   #root .df-app .df-detail-subtasks-new .df-task-checkbox-wrap { width:44px; height:44px; }
   #root .df-app .df-detail-subtasks-new .df-subtask-title-input { min-height:44px; }
   #root .df-app .df-detail-subtasks-new .df-subtask-add-child { width:44px; min-width:44px; height:44px; min-height:44px; }
@@ -10484,6 +10486,9 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 }
 .df-entity-editor .df-detail-subtasks-new,
 .df-entity-editor .df-detail-notes-new { padding: 10px 0; }
+.df-entity-editor .df-detail-subtasks-new > .df-subtask-list-new {
+  min-block-size: calc(2 * var(--detail-subtask-row-height));
+}
 .df-entity-editor .df-detail-section-head:last-child { margin-bottom: 0; }
 .df-entity-editor .df-detail-notes-new:last-child { border-bottom: 0; }
 .df-entity-editor .df-detail-project-name {

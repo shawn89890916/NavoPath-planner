@@ -12790,9 +12790,9 @@ function EditDrawer(props: {
               <IconButton className="ui-icon-button--borderless" icon={<UiPlusIcon size={15} />} label={t(props.lang, "drawer.addSubtask")} onClick={() => void addSubtask()} />
             </div>
           </div>
-          {Boolean(props.task.subtasks?.length) && <div className="df-subtask-list-new ui-divided-list">
+          <div className="df-subtask-list-new ui-divided-list">
             {renderSubtaskRows(props.task.subtasks || [])}
-          </div>}
+          </div>
         </section>
 
         <EditorNotes key={props.task.id} lang={props.lang} value={f.details} onChange={(notes) => set("details", notes)}
