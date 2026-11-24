@@ -61,7 +61,9 @@ describe("course backgrounds", () => {
     expect(html).toContain('data-kind="course"');
     expect(html).toContain("pointer-events:none");
     expect(html).toContain("left:8px;width:200px;top:60px;height:60px");
-    expect(html).toContain("课程详情: 语言文学, 09:00–10:00");
+    expect(html).toContain('<span class="df-course-background-title">语言文学</span>');
+    expect(html).toContain("09:00–10:00");
+    expect(html).not.toContain("<button");
     expect(html).not.toContain("df-resize-dot");
     expect(html).not.toContain("df-task-block-check");
     expect(html).not.toContain("df-block-project");

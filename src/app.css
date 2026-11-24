@@ -3208,31 +3208,12 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 #root .df-app .df-course-background .df-course-background-title {
   display: block;
-  min-height: 0;
   max-width: 100%;
-  padding: 0;
-  border: 0;
-  border-bottom: 1px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
   font-size: 12px;
   line-height: 1.3;
-  text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: pointer;
-  pointer-events: auto;
-  box-shadow: none;
-}
-#root .df-app .df-course-background .df-course-background-title:hover {
-  border-bottom-color: var(--accent-active);
-}
-#root .df-app .df-course-background-title:focus-visible {
-  outline: 1px solid var(--accent-active);
-  outline-offset: 1px;
 }
 .df-course-background-meta {
   display: flex;
@@ -3243,9 +3224,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   line-height: 1.3;
 }
 .df-course-background-meta small { font-size: inherit; }
-@media (pointer: coarse) {
-  #root .df-app .df-course-background .df-course-background-title { min-height: 44px; }
-}
 .df-event-blocks-layer {
   position: absolute;
   inset: 0;
@@ -3304,7 +3282,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-color: color-mix(in srgb, var(--cat, var(--accent-active)) 42%, var(--border-soft));
   box-shadow: none;
 }
-.df-event-kind-label {
+.df-external-calendar-label {
   display: inline-flex;
   align-items: center;
   margin-right: 5px;
@@ -3321,31 +3299,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   display: inline-flex;
   align-items: center;
   min-width: 0;
-}
-.df-event-detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 12px;
-  padding: 12px 0;
-  border-top: 1px solid var(--border-soft);
-}
-.df-event-date-time { display: grid; gap: 8px; min-width: 0; }
-.df-app .df-event-detail-grid label {
-  display: grid;
-  gap: 5px;
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-.df-event-detail-grid input {
-  width: 100%;
-  min-height: 38px;
-  padding: 4px 8px;
-}
-.df-detail-pill-trevor.event-kind {
-  color: var(--accent-active);
-  border-color: color-mix(in srgb, var(--accent-active) 34%, var(--border-soft));
 }
 /* Compact 3-day block style (still applies within event-blocks-layer) */
 .df-event-blocks-layer .df-time-block {
@@ -6429,9 +6382,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   opacity: 0.75;
   background: var(--accent-active, #2A6E8E);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-}
-.df-app .df-event-detail-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .df-app.theme-dark .df-time-grid {
   background: repeating-linear-gradient(
@@ -10351,7 +10301,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-editor-metadata .df-detail-importance-row { border: 0; padding: 4px 0 8px; flex-wrap: wrap; }
 .df-editor-metadata .df-detail-meta-setting { min-height: var(--detail-action-height); }
 .df-editor-project-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.df-editor-date-range { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
 #root .df-app .df-entity-editor .df-editor-task-fields > button.df-detail-pill-trevor:first-child {
   flex: 0 1 148px;
 }
@@ -13029,7 +12978,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 }
 .df-all-day-block.is-external-calendar { cursor: default; opacity: .76; border-style: solid; }
 .df-time-block.is-external-calendar .df-time-card-event-mark { opacity: .55; }
-.df-time-block.is-external-calendar .df-event-kind-label { letter-spacing: .04em; }
+.df-time-block.is-external-calendar .df-external-calendar-label { letter-spacing: .04em; }
 .df-external-calendar-settings { display: grid; gap: 12px; }
 .df-external-calendar-settings > p { margin: 0; color: var(--text-muted); }
 .df-external-calendar-connect { display: grid; grid-template-columns: minmax(120px, .55fr) minmax(220px, 1.45fr) auto; gap: 8px; }
@@ -13061,9 +13010,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   .df-detail-schedule-row .df-detail-pill-trevor.action {
     flex-basis: calc(50% - 6px);
   }
-  .df-app .df-event-detail-grid {
-    grid-template-columns: 1fr;
-  } .df-ai-provider-grid { grid-template-columns: 1fr; }
+  .df-ai-provider-grid { grid-template-columns: 1fr; }
   .df-skeleton-workbench { grid-template-columns: 1fr; }
   .df-skeleton-timeline { display: none; }
   .df-command-results button {
@@ -14347,7 +14294,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"][data-schedule-size="short"] .df-time-card-next {
   display: none;
 }
-.df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"][data-schedule-size="short"] .df-event-kind-label {
+.df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"][data-schedule-size="short"] .df-external-calendar-label {
   display: none;
 }
 .navo-demo-app .df-task-block[data-task-appearance][data-task-variant="scheduled"][data-schedule-size="short"] .df-next {

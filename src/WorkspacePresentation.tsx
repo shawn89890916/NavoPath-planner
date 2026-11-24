@@ -136,7 +136,7 @@ export type AiSessionMessage = {
     focus?: TimelineFocusTarget;
     addedCount: number;
     addedTaskIds: string[];
-    addedEventIds: string[];
+    addedEventIds?: string[];
     previousTasks: Task[];
   };
 };
@@ -875,7 +875,7 @@ export function TimeBlock({ task, blockRef, engagementEnabled, preview, projectN
     !isPreview
   );
   const recurringTextColor = isLightColor(stripeColor) ? "#10212F" : "#F8FBFF";
-  const canResize = !isExternalEvent && (isEvent || !hasRecurringRule(task));
+  const canResize = !isEvent && !hasRecurringRule(task);
   const eventId = task.id;
   const sizeClass = height < 56 ? "short" : height >= 120 ? "tall" : "normal";
   const originalStart = task.scheduledStart || "09:00";
@@ -890,10 +890,7 @@ export function TimeBlock({ task, blockRef, engagementEnabled, preview, projectN
       <TaskBlock as="div" variant="course" className="df-course-background" accent={<></>}
         dataAttrs={{ kind: "course", "course-id": task.id, "view-mode": viewMode }}
         style={{ ...extraStyle, top: resolvedTop, height, bottom: "auto", pointerEvents: "none", zIndex: 0, "--course-color": courseBackgroundColor(task.title) } as CSSProperties}>
-        <button type="button" className="df-course-background-title" title={`${task.title} · ${start}–${end}`}
-          aria-label={`${lang === "zh" ? "课程详情" : "Class details"}: ${task.title}, ${start}–${end}`}
-          onPointerDown={event => event.stopPropagation()} onMouseDown={event => event.stopPropagation()}
-          onClick={event => { event.stopPropagation(); onEdit(); }}>{task.title}</button>
+        <span className="df-course-background-title">{task.title}</span>
         <span className="df-course-background-meta"><time>{start}–{end}</time><small>{lang === "zh" ? "课程" : "Class"}</small></span>
       </TaskBlock>
     );
@@ -909,7 +906,7 @@ export function TimeBlock({ task, blockRef, engagementEnabled, preview, projectN
       <div className="df-time-card-shell">
       <TaskBlockRow className="df-time-card-row" align="start">
         {isEvent ? (
-          <span className="df-task-block-check df-time-card-event-mark" title={t(lang, "timeBlock.eventTooltip")} aria-label={t(lang, "timeBlock.eventTooltip")} />
+          <span className="df-task-block-check df-time-card-event-mark" aria-hidden="true" />
         ) : (
           <TaskCheckbox lang={lang} checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority} returned={isReturnedUnfinished || isSkipped} onMouseDown={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => {
             event.stopPropagation();
@@ -919,7 +916,7 @@ export function TimeBlock({ task, blockRef, engagementEnabled, preview, projectN
           </TaskCheckbox>
         )}
         <TaskBlockContent className="df-time-card-main" title={task.title}>
-          {isEvent ? <span className="df-event-kind-label">{isExternalEvent ? (lang === "zh" ? "外部日历" : "External") : t(lang, "form.event")}</span> : null}
+          {isExternalEvent && <span className="df-external-calendar-label">{lang === "zh" ? "外部日历" : "External"}</span>}
           {next && <span className="df-next df-time-card-next">{t(lang, "timeBlock.nextStep")}：{next}</span>}
         </TaskBlockContent>
       </TaskBlockRow>

@@ -2,6 +2,13 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 81
+
+#### 改进
+
+- 项目创建和编辑复用设置中的颜色选择器，以单个色点和色值显示当前颜色。
+- 移除独立 Event 类型的创建、编辑和转换界面。旧日程保留为任务，课程背景和外部日历继续显示。
+
 ### 1.7.0 Beta 80
 
 #### 改进
@@ -990,6 +997,13 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 81
+
+#### Improvements
+
+- Project creation and editing reuse the Settings color picker, with a single swatch and the current color value.
+- Remove creation, editing, and conversion for the standalone Event type. Legacy appointments remain available as tasks. Class backgrounds and external calendars still appear on the timeline.
 
 ### 1.7.0 Beta 80
 

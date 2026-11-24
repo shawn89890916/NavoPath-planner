@@ -2,7 +2,7 @@ import type { PlannerData, Settings } from "../types";
 import { SETTINGS_SEARCH_ENTRIES, settingsSearchPath } from "../settingsNavigation";
 import { focusTargetForRecord, type TimelineFocusTarget } from "./timelineRecords";
 
-export type CommandKind = "task" | "project" | "event" | "note" | "habit" | "setting";
+export type CommandKind = "task" | "project" | "note" | "habit" | "setting";
 export type CommandAction = "open" | "focus" | "complete" | "start_timer" | "add_today" | "schedule_now";
 
 export type CommandSearchResult = {

@@ -20,6 +20,7 @@ import { undoAiImportData } from "./utils/aiImportUndo";
 import { highlightTaskLocation } from "./utils/highlightTaskLocation";
 import { DailyTimelineGrid, TimelineDayBoundaries } from "./components/ExecutionSharedLayout";
 import { themeVars } from "./WorkspacePresentation";
+import { SettingColorInput } from "./components/SettingsControls";
 import { COMPACT_LAYOUT_MEDIA_QUERY, SLOT_MINUTES, DURATION_OPTIONS, DEFAULT_PROJECT_COLOR, PROJECT_COLOR_PRESETS, taskBlockPriorityFor, categories, isEventDisplayTask, isExternalCalendarDisplayTask, hexToRgb, minutesToTime, timeToMinutes, addMinutes, taskDuration, sortAiConversations, ProductIcon, recurrenceOptions, recurrenceLabel, TaskRecurrenceIndicator, TaskCard, formatMinutes, formatDuration, ReturnedToPlanIcon, TimeBlock, PreviewBlock, ProjectColorPicker, ProjectChoice, ProjectCreateRow, AiPanel, type AutoScheduleState, type TimelineFocusTarget, type PlacementPreview, type PlacementChoice, type ResizePreview, type AiAttachmentSnapshot, type AiSessionMessage } from "./WorkspacePresentation";
 export { ProductIcon } from "./WorkspacePresentation";
 import React, { Activity, type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -110,7 +111,7 @@ import { createTimerOwner, type TimerOwner } from "./extensions/timerOwner";
 import { extendActiveTimelineRecord, nextOverrunExtensionEnd, resolvePomodoroTask, resolveWidgetTimelineSelection, timelineRecordBounds } from "./widget/widgetSchedule";
 import { hasActiveTaskSchedule, applyScheduledTimelineRecord, calculateTimelineRecordEnd, calendarDateTimeSpanMinutes, clockTimeSpanMinutes, findScheduledTimelineRecord, normalizeTimelineRecord, rescheduleTimelineRecord, timelineRecordDurationMinutes } from "./utils/timelineRecords";
 import { anchoredTimelineScrollTop, timelineZoomFromPinch } from "./utils/timelineZoom";
-import { calendarEventDurationMinutes, expandTimedCalendarEvent } from "./utils/calendarEventSlices";
+import { expandTimedCalendarEvent } from "./utils/calendarEventSlices";
 import { MOTION, runMotionTransition, scheduleMotionCommit } from "./motion";
 import { useMotionPresence } from "./useMotionPresence";
 import { useMotionSelection } from "./useMotionSelection";
@@ -153,7 +154,6 @@ const TIMELINE_END = 24;
 
 const SLOT_HEIGHT = 20;
 
-const COMMON_COLOR_PRESETS = ["#EF4444", "#F97316", "#EAB308", "#22C55E", "#06B6D4", "#3B82F6", "#8B5CF6", "#1F2937", "#F9FAFB", "#6B7280"];
 
 const PLANNING_THEME_PRESETS_LIGHT = ["#7EA172", "#584D3D", "#D7816A", "#0F0326", "#BE185D", "#D97706", "#2563EB"];
 const PLANNING_THEME_PRESETS_DARK  = ["#7EA172", "#FBF9FF", "#D7816A", "#584D3D", "#EC4899", "#F59E0B", "#3B82F6"];
@@ -210,7 +210,7 @@ function loadWidgetTimerRuntime(): WidgetTimerRuntime {
   const now = Date.now();
   return { ...DEFAULT_WIDGET_RUNTIME, phaseStartedAt: now, pausedAt: now };
 }
-type AddType = "task" | "project" | "event" | "habit";
+type AddType = "task" | "project" | "habit";
 type CompactExecuteView = "tasks" | "schedule";
 type WorkspacePanelKind = "ai" | "settings" | "about" | "search" | "notifications" | "metrics" | "extension" | "templates" | "timer";
 type UtilityPanelKind = "settings" | "about" | "metrics" | "extension";
@@ -583,14 +583,13 @@ function writeBootstrapCache(
 }
 
 function defaultForm(type: AddType = "task"): FormState {
-  const today = todayIso();
   return {
     title: "",
     projectId: "",
     projectColor: DEFAULT_PROJECT_COLOR,
-    dueDate: type === "event" ? today : "",
+    dueDate: "",
     dueTime: "",
-    endDate: today,
+    endDate: todayIso(),
     endTime: "",
     category: type === "project" ? "project" : "personal",
     priority: "medium",
@@ -668,25 +667,6 @@ function makeProject(form: FormState): Project {
   };
 }
 
-function makeEvent(form: FormState): CalendarEvent {
-  return {
-    // The legacy marker keeps older NavoPath builds from migrating this event into a task.
-    fixedCourse: true,
-    calendarKind: "appointment",
-    id: uid("event"),
-    title: form.title.trim(),
-    date: form.dueDate || todayIso(),
-    startDate: form.dueDate || todayIso(),
-    endDate: form.endDate || form.dueDate || todayIso(),
-    startTime: form.dueTime,
-    endTime: form.endTime,
-    category: form.category,
-    details: form.details,
-    recurrence: form.recurrence,
-    createdAt: workspaceNow().toISOString()
-  };
-}
-
 const MAX_RENDERED_AI_MESSAGES = 80;
 const MAX_RENDERED_AI_MESSAGE_LENGTH = 30_000;
 
@@ -718,83 +698,6 @@ function aiConversationTitle(message: string) {
 function makeAiConversation(title = "新对话"): AiConversation {
   const now = workspaceNow().toISOString();
   return { id: uid("conversation"), title, messages: [], createdAt: now, updatedAt: now };
-}
-
-function buildEventFromTask(task: Task, activeRecord?: TimelineRecord): CalendarEvent {
-  const scheduledDate = activeRecord?.scheduledDate || task.scheduledDate || task.plannedForDate || task.dueDate || todayIso();
-  const scheduledStart = activeRecord?.scheduledStart || task.scheduledStart || task.recurrence?.startTime || "";
-  const activeSchedule = activeRecord
-    ? rescheduleTimelineRecord(activeRecord, activeRecord.scheduledDate, activeRecord.scheduledStart)
-    : undefined;
-  const fallbackEnd = scheduledStart
-    ? calculateTimelineRecordEnd(scheduledDate, scheduledStart, taskDuration(task))
-    : undefined;
-  const scheduledEnd = activeSchedule?.scheduledEnd || task.scheduledEnd || fallbackEnd?.scheduledEnd || "";
-  const scheduledEndDate = activeSchedule?.scheduledEndDate || fallbackEnd?.scheduledEndDate || scheduledDate;
-  return {
-    // The legacy marker keeps older NavoPath builds from migrating this event into a task.
-    fixedCourse: true,
-    calendarKind: "appointment",
-    id: uid("event"),
-    title: task.title,
-    date: scheduledDate,
-    startDate: scheduledDate,
-    endDate: scheduledEndDate,
-    startTime: scheduledStart || undefined,
-    endTime: scheduledEnd || undefined,
-    category: task.category,
-    details: task.notes || "",
-    recurrence: task.recurrence,
-    createdAt: workspaceNow().toISOString()
-  };
-}
-
-function buildTaskFromEvent(event: CalendarEvent): Task {
-  const now = workspaceNow().toISOString();
-  const id = uid("task");
-  const date = event.startDate || event.date || todayIso();
-  const start = event.startTime || undefined;
-  let end = start ? event.endTime : undefined;
-  let endDate = event.endDate || date;
-  if (start && !end) {
-    const calculated = calculateTimelineRecordEnd(date, start, event.recurrence?.durationMinutes || 60);
-    end = calculated.scheduledEnd;
-    endDate = calculated.scheduledEndDate || date;
-  } else if (start && end && endDate === date && timeToMinutes(end) <= timeToMinutes(start)) {
-    endDate = calculateTimelineRecordEnd(date, start, clockTimeSpanMinutes(start, end)).scheduledEndDate || date;
-  }
-  const durationMinutes = start && end
-    ? Math.max(calendarDateTimeSpanMinutes(date, start, endDate, end), SLOT_MINUTES)
-    : 30;
-  const timelineRecords: TimelineRecord[] = start && end ? [{
-    id: `${id}_rec_0`,
-    taskId: id,
-    scheduledDate: date,
-    scheduledStart: start,
-    scheduledEndDate: endDate,
-    scheduledEnd: end,
-    executionStatus: "scheduled",
-    createdAt: now,
-  }] : [];
-  return {
-    id,
-    title: event.title,
-    dueDate: date,
-    category: event.category,
-    priority: "medium",
-    notes: event.details || "",
-    goalId: "goal_admission",
-    completed: false,
-    estimatedHours: durationMinutes / 60,
-    plannedForDate: start ? undefined : date,
-    executionLane: start ? undefined : "candidate",
-    timelineRecords,
-    recurrence: event.recurrence,
-    order: Date.now(),
-    subtasks: [],
-    createdAt: now,
-    updatedAt: now
-  };
 }
 
 function SettingsLoading({ lang, onClose }: { lang: Language; onClose: () => void }) {
@@ -3607,16 +3510,14 @@ if (cached?.data && cached?.settings) {
     return { tasks: expanded, ownerMap };
   }
 
-  function expandEventOccurrences(dates: Set<string>) {
-    const ownerMap = new Map<string, CalendarEvent>();
-    const resizeEdges = new Map<string, { start: boolean; end: boolean }>();
+  function expandCourseBackgrounds(dates: Set<string>) {
     const expanded: Task[] = [];
     for (const event of events) {
       if (event.startTime) {
         for (const slice of expandTimedCalendarEvent(event, [...dates])) {
           expanded.push({
             id: slice.id,
-            fixedCourse: event.fixedCourse && event.calendarKind !== "appointment",
+            fixedCourse: true,
             title: event.title,
             dueDate: slice.date,
             category: event.category,
@@ -3632,11 +3533,6 @@ if (cached?.data && cached?.settings) {
             createdAt: event.createdAt,
             updatedAt: event.createdAt,
           });
-          ownerMap.set(slice.id, event);
-          resizeEdges.set(slice.id, {
-            start: !slice.continuesBefore,
-            end: !slice.continuesAfter,
-          });
         }
         continue;
       }
@@ -3646,15 +3542,14 @@ if (cached?.data && cached?.settings) {
       for (const date of occurrenceDates) {
         const id = `event_occ_${event.id}_${date}_all`;
         expanded.push({
-          id, fixedCourse: event.fixedCourse && event.calendarKind !== "appointment", title: event.title, dueDate: date, category: event.category, priority: "medium",
+          id, fixedCourse: true, title: event.title, dueDate: date, category: event.category, priority: "medium",
           notes: event.details, goalId: "", completed: false, estimatedHours: 0.5,
           scheduledDate: date,
           recurrence: event.recurrence, createdAt: event.createdAt, updatedAt: event.createdAt,
         });
-        ownerMap.set(id, event);
       }
     }
-    return { tasks: expanded, ownerMap, resizeEdges };
+    return expanded;
   }
 
   function expandExternalCalendarOccurrences(dates: Set<string>) {
@@ -3724,10 +3619,8 @@ if (cached?.data && cached?.settings) {
   }, [tasks, visibleTimelineDates]);
 
   const eventVisibleTimeline = useMemo(() => {
-    const internal = expandEventOccurrences(visibleTimelineDates);
     const external = expandExternalCalendarOccurrences(visibleTimelineDates);
-    external.resizeEdges.forEach((edges, id) => internal.resizeEdges.set(id, edges));
-    return { ...internal, tasks: [...internal.tasks, ...external.tasks] };
+    return { ...external, tasks: [...expandCourseBackgrounds(visibleTimelineDates), ...external.tasks] };
   }, [events, externalCalendarOccurrences, externalCalendarSources, visibleTimelineDates]);
 
   const conflictTimelineDates = useMemo(() => {
@@ -3744,7 +3637,6 @@ if (cached?.data && cached?.settings) {
     return [
       ...expandTimelineRecords(dates).tasks,
       ...expandRecurrenceOccurrences(dates).tasks,
-      ...expandEventOccurrences(dates).tasks.filter((task) => task.scheduledStart && !task.fixedCourse),
       ...expandExternalCalendarOccurrences(dates).tasks.filter((task) => task.scheduledStart),
       ...previewTasks.filter((task) => dates.has(task.scheduledDate || "")),
     ];
@@ -3752,7 +3644,7 @@ if (cached?.data && cached?.settings) {
 
   const conflictTimelineTasks = useMemo(
     () => expandConflictTimelineTasks(conflictTimelineDates),
-    [tasks, events, externalCalendarOccurrences, externalCalendarSources, conflictTimelineDates, previewTasks],
+    [tasks, externalCalendarOccurrences, externalCalendarSources, conflictTimelineDates, previewTasks],
   );
 
   const expandedVisibleTimelineTasks = useMemo(
@@ -3785,7 +3677,6 @@ if (cached?.data && cached?.settings) {
   }, [tasks, explicitVisibleTimeline.recordByDisplayId]);
 
   const occurrenceToTaskMap = recurrenceVisibleTimeline.ownerMap;
-  const occurrenceToEventMap = eventVisibleTimeline.ownerMap;
 
   function resolveOwningTask(taskOrId: Task | string) {
     const id = typeof taskOrId === "string" ? taskOrId : taskOrId.id;
@@ -3794,11 +3685,6 @@ if (cached?.data && cached?.settings) {
 
   function resolveTimelineRecordId(displayId: string) {
     return explicitVisibleTimeline.sourceIdByDisplayId.get(displayId) || displayId;
-  }
-
-  function resolveOwningEvent(taskOrId: Task | string) {
-    const id = typeof taskOrId === "string" ? taskOrId : taskOrId.id;
-    return occurrenceToEventMap.get(id) || events.find((event) => id.startsWith(`event_occ_${event.id}_`));
   }
 
   const placementPreviewTask = useMemo(
@@ -3869,12 +3755,6 @@ if (cached?.data && cached?.settings) {
     )).sort((a, b) => (a.order || 0) - (b.order || 0)),
     [tasks, today]
   );
-  const todayEventCandidates = useMemo(
-    () => expandEventOccurrences(new Set([today])).tasks
-      .filter((task) => !task.scheduledStart && task.scheduledDate === today)
-      .sort((a, b) => (a.title || "").localeCompare(b.title || "")),
-    [events, today],
-  );
   // Conflict layout: maps taskId → { index, count } for overlapping tasks
   const conflictLayout = useMemo(() => {
     const map = new Map<string, { index: number; count: number }>();
@@ -3911,8 +3791,8 @@ if (cached?.data && cached?.settings) {
         ((showCompletedCandidates || !task.completed) &&
           (showScheduledCandidates || (!hasActiveTaskSchedule(task) && !hasRecurrenceOccurrenceOnDate(task, today))))
       );
-    return [...todayEventCandidates, ...candidateTasks].sort((first, second) => (first.order || 0) - (second.order || 0));
-  }, [tasks, today, todayCandidates, completedCandidates, todayEventCandidates, showScheduledCandidates, showCompletedCandidates, guidePlanTaskId]);
+    return [...candidateTasks].sort((first, second) => (first.order || 0) - (second.order || 0));
+  }, [tasks, today, todayCandidates, completedCandidates, showScheduledCandidates, showCompletedCandidates, guidePlanTaskId]);
   function focusCandidateSchedule(schedule: CandidateScheduleSummary) {
     setCompactExecuteView("schedule");
     setTimelineView("daily");
@@ -4405,7 +4285,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function focusQuickAddForProject(projectId: string) {
-    setQuickProjectId(projectId === "__unassigned__" || projectId === "__events__" ? "" : projectId);
+    setQuickProjectId(projectId === "__unassigned__" ? "" : projectId);
     setQuickProjectOpen(false);
     window.requestAnimationFrame(() => quickCandidateInputRef.current?.focus());
   }
@@ -5212,43 +5092,13 @@ if (cached?.data && cached?.settings) {
     setDrag(null);
   }
 
-  function makeEventCandidate(occurrenceId: string, targetDate: string = today) {
-    if (!data) return;
-    const event = resolveOwningEvent(occurrenceId);
-    if (!event) return;
-    void saveData({
-      ...data,
-      events: data.events.map((item) => item.id === event.id ? {
-        ...item,
-        date: targetDate,
-        startDate: targetDate,
-        endDate: targetDate,
-        startTime: undefined,
-        endTime: undefined,
-        recurrence: item.recurrence ? {
-          ...item.recurrence,
-          mode: "flexible",
-          startDate: targetDate,
-          startTime: undefined,
-          durationMinutes: undefined,
-        } : item.recurrence,
-      } : item),
-    });
-    showToast(t(lang, "toast.movedBackToCandidates"));
-    setDrag(null);
-    setHoverSlot("");
-    dragTargetDateRef.current = "";
-  }
-
   function hasScheduleConflict(date: string, startTime: string, endTime: string, ignoreTaskId?: string, timelineTasks = conflictTimelineTasks) {
     const ignoredRecordId = ignoreTaskId ? recordByIdMap.get(ignoreTaskId)?.id : undefined;
-    const ignoredEvent = ignoreTaskId ? resolveOwningEvent(ignoreTaskId) : undefined;
     return timelineTasks.some((task) => {
       if (task.fixedCourse) return false;
       const sameRecord = ignoredRecordId
         && (task.id === ignoredRecordId || task.id.startsWith(`${ignoredRecordId}__day__`));
-      const sameEvent = ignoredEvent && task.id.startsWith(`event_occ_${ignoredEvent.id}_`);
-      if (task.id === ignoreTaskId || sameRecord || sameEvent || !task.scheduledDate || !task.scheduledStart || !task.scheduledEnd) return false;
+      if (task.id === ignoreTaskId || sameRecord || !task.scheduledDate || !task.scheduledStart || !task.scheduledEnd) return false;
       return scheduledDateTimesOverlap(date, startTime, endTime, task.scheduledDate, task.scheduledStart, task.scheduledEnd);
     });
   }
@@ -6080,7 +5930,6 @@ if (cached?.data && cached?.settings) {
       return;
     }
     if (isEventDisplayTask(taskId)) {
-      moveEventOccurrence(taskId, startTime, targetDate);
       setHoverSlot("");
       setDrag(null);
       dragTargetDateRef.current = "";
@@ -6385,84 +6234,6 @@ if (cached?.data && cached?.settings) {
     }, "reschedule");
   }
 
-  function moveEventOccurrence(occurrenceId: string, newStart: string, newDate?: string) {
-    if (!data) return;
-    const event = resolveOwningEvent(occurrenceId);
-    if (!event) return;
-    const duration = Math.max(calendarEventDurationMinutes(event), SLOT_MINUTES);
-    const date = newDate || event.startDate || event.date;
-    const nextEnd = calculateTimelineRecordEnd(date, newStart, duration);
-    void saveData({
-      ...data,
-      events: data.events.map((item) => item.id === event.id ? {
-        ...item,
-        date,
-        startDate: date,
-        endDate: nextEnd.scheduledEndDate,
-        startTime: newStart,
-        endTime: nextEnd.scheduledEnd,
-        recurrence: item.recurrence ? {
-          ...item.recurrence,
-          mode: "scheduled",
-          startDate: date,
-          startTime: newStart,
-          durationMinutes: duration,
-        } : item.recurrence,
-      } : item),
-    });
-  }
-
-  function makeEventAllDay(occurrenceId: string, targetDate: string) {
-    if (!data) return;
-    const event = resolveOwningEvent(occurrenceId);
-    if (!event) return;
-    void saveData({
-      ...data,
-      events: data.events.map((item) => item.id === event.id ? {
-        ...item,
-        date: targetDate,
-        startDate: targetDate,
-        endDate: targetDate,
-        startTime: undefined,
-        endTime: undefined,
-        recurrence: item.recurrence ? {
-          ...item.recurrence,
-          mode: "flexible",
-          startDate: targetDate,
-          startTime: undefined,
-          durationMinutes: undefined,
-        } : item.recurrence,
-      } : item),
-    });
-  }
-
-  function resizeEventOccurrence(occurrenceId: string, nextStartDate: string, nextStart: string, durationMinutes: number) {
-    if (!data) return;
-    const event = resolveOwningEvent(occurrenceId);
-    if (!event) return;
-    const duration = Math.max(durationMinutes, SLOT_MINUTES);
-    const end = calculateTimelineRecordEnd(nextStartDate, nextStart, duration);
-    void saveData({
-      ...data,
-      events: data.events.map((item) => item.id === event.id ? {
-        ...item,
-        date: nextStartDate,
-        startDate: nextStartDate,
-        startTime: nextStart,
-        endDate: end.scheduledEndDate,
-        endTime: end.scheduledEnd,
-        recurrence: item.recurrence ? {
-          ...item.recurrence,
-          mode: "scheduled",
-          startDate: nextStartDate,
-          startTime: nextStart,
-          durationMinutes: duration,
-        } : item.recurrence,
-      } : item),
-    });
-    showToast(t(lang, "toast.durationAdjusted"));
-  }
-
   function beginBlockDrag(event: React.PointerEvent, task: Task) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     if ((event.target as HTMLElement).closest("button,input,textarea,select")) return;
@@ -6470,7 +6241,7 @@ if (cached?.data && cached?.settings) {
       showToast(lang === "zh" ? "外部日历事项为只读" : "External calendar events are read-only");
       return;
     }
-    const isEvent = isEventDisplayTask(task);
+    if (isEventDisplayTask(task)) return;
     const target = event.currentTarget as HTMLElement;
     const startX = event.clientX;
     const startY = event.clientY;
@@ -6615,11 +6386,7 @@ if (cached?.data && cached?.settings) {
             }
             const allDayCell = document.elementFromPoint(upEvent.clientX, upEvent.clientY)?.closest<HTMLElement>("[data-all-day-date]");
             targetDate = allDayCell?.dataset.allDayDate || targetDate;
-            if (isEvent) {
-              makeEventAllDay(task.id, targetDate);
-            } else {
-              makeAllDay(task.id, targetDate);
-            }
+            makeAllDay(task.id, targetDate);
             window.removeEventListener("pointermove", move);
             window.removeEventListener("pointerup", up);
             window.removeEventListener("pointercancel", cancel);
@@ -6640,9 +6407,7 @@ if (cached?.data && cached?.settings) {
         const dropElement = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
         const droppedOnCandidatePanel = Boolean(dropElement?.closest(".df-candidate-panel, .df-mobile-candidates-trigger"));
         const droppedOutsideTimeline = pointerOutsideTimeline(upEvent.clientX, upEvent.clientY);
-        if (isEvent && droppedOnCandidatePanel) {
-          makeEventCandidate(task.id, today);
-        } else if (droppedOnCandidatePanel) {
+        if (droppedOnCandidatePanel) {
           returnTimelineTaskToCandidates(task.id, today);
         } else if (droppedOutsideTimeline) {
           // Outside either drop target, retain the existing time block.
@@ -6653,12 +6418,10 @@ if (cached?.data && cached?.settings) {
           if (pointerTarget) {
             const adjusted = subtractOffsetFromDateTime(pointerTarget.date, pointerTarget.startTime, offsetMinutes);
             dragTargetDateRef.current = adjusted.date;
-            if (isEvent) moveEventOccurrence(task.id, adjusted.startTime, adjusted.date);
-            else moveTimelineRecord(task.id, adjusted.startTime, adjusted.date);
+            moveTimelineRecord(task.id, adjusted.startTime, adjusted.date);
           } else {
             const nextStart = slotFromPointer(upEvent.clientY, offsetMinutes, upEvent.clientX);
-            if (isEvent) moveEventOccurrence(task.id, nextStart);
-            else moveTimelineRecord(task.id, nextStart);
+            moveTimelineRecord(task.id, nextStart);
           }
         }
       }
@@ -6711,7 +6474,7 @@ if (cached?.data && cached?.settings) {
       showToast(lang === "zh" ? "外部日历事项为只读" : "External calendar events are read-only");
       return;
     }
-    if (resizeHintTaskId !== resolveTimelineRecordId(task.id) && hoveredBlock !== task.id) return;
+    if (isEventDisplayTask(task) || (resizeHintTaskId !== resolveTimelineRecordId(task.id) && hoveredBlock !== task.id)) return;
     event.preventDefault();
     event.stopPropagation();
     if (event.button !== 0 && event.pointerType === "mouse") return;
@@ -6719,15 +6482,10 @@ if (cached?.data && cached?.settings) {
     suppressBlockClickRef.current = true;
     setDragCreate(null);
     document.body.classList.add("df-resizing");
-    const owningEvent = isEventDisplayTask(task) ? resolveOwningEvent(task) : undefined;
     const owningRecord = recordByIdMap.get(task.id);
-    const taskAnchorDate = owningEvent?.startDate || owningEvent?.date || owningRecord?.scheduledDate || task.scheduledDate || timelineWindowAnchorDate;
-    const origStart = owningEvent?.startTime || owningRecord?.scheduledStart || task.scheduledStart || "09:00";
-    const origDuration = owningEvent
-      ? Math.max(calendarEventDurationMinutes(owningEvent), SLOT_MINUTES)
-      : owningRecord
-        ? Math.max(timelineRecordDurationMinutes(owningRecord), SLOT_MINUTES)
-        : taskDuration(task);
+    const taskAnchorDate = owningRecord?.scheduledDate || task.scheduledDate || timelineWindowAnchorDate;
+    const origStart = owningRecord?.scheduledStart || task.scheduledStart || "09:00";
+    const origDuration = owningRecord ? Math.max(timelineRecordDurationMinutes(owningRecord), SLOT_MINUTES) : taskDuration(task);
     const initialEnd = calculateTimelineRecordEnd(taskAnchorDate, origStart, origDuration);
     setResizePreview({
       taskId: task.id,
@@ -6787,12 +6545,6 @@ if (cached?.data && cached?.settings) {
       const { nextStart, nextEnd, nextDuration, nextStartDate } = computeResize(upEvent.clientX, upEvent.clientY);
       const durationHours = nextDuration / 60;
       const now = workspaceNow().toISOString();
-      if (isEventDisplayTask(task)) {
-        resizeEventOccurrence(task.id, nextStartDate, nextStart, nextDuration);
-        setResizePreview(null);
-        cleanup();
-        return;
-      }
       // Start-edge resize may shift the scheduled date when the new start
       // crosses midnight backwards; end-edge resize keeps the start (and
       // therefore the date) fixed.
@@ -6884,14 +6636,8 @@ if (cached?.data && cached?.settings) {
       showToast(lang === "zh" ? "外部日历事项为只读；请在来源日历中修改" : "External calendar events are read-only; edit them in the source calendar");
       return;
     }
-    if (suppressBlockClickRef.current) return;
+    if (suppressBlockClickRef.current || isEventDisplayTask(task)) return;
     rememberLayerTrigger("drawer");
-    const event = occurrenceToEventMap.get(task.id) || events.find((item) => task.id.startsWith(`event_occ_${item.id}_`));
-    if (event) {
-      revealResizeHandles(resolveTimelineRecordId(task.id));
-      openEventEdit(event);
-      return;
-    }
     const realTask = resolveOwningTask(task) || task;
     const recordId = recordByIdMap.get(task.id)?.id;
     if (recordId) revealResizeHandles(resolveTimelineRecordId(task.id));
@@ -6975,17 +6721,6 @@ if (cached?.data && cached?.settings) {
       details: habit.notes || "",
       estimatedHours: Math.max((habit.defaultDurationMinutes || 30) / 60, 0.25),
     });
-    setDrawerOpen(true);
-  }
-
-  function openEventEdit(event: CalendarEvent) {
-    rememberLayerTrigger("drawer");
-    setAddType("event");
-    setEditingId(event.id);
-    setEditingRecordId(undefined);
-    setEditingOccurrence(null);
-    setMobileTaskSummary(false);
-    setForm({ ...defaultForm("event"), title: event.title, dueDate: event.startDate || event.date, endDate: event.endDate || event.date, dueTime: event.startTime || "", endTime: event.endTime || "", category: event.category, details: event.details, recurrence: event.recurrence });
     setDrawerOpen(true);
   }
 
@@ -7116,8 +6851,6 @@ if (cached?.data && cached?.settings) {
         void saveData({ ...data, projects: data.projects.map((project) => project.id === editingId ? { ...project, title: form.title.trim(), dueDate: form.dueDate || undefined, category: form.category, color: form.projectColor || categories[form.category].color, notes: form.details, importance: form.importance, updatedAt: now } : project) });
       } else if (addType === "habit") {
         void saveData(updateHabit(data, editingId, { title: form.title.trim(), projectId: form.projectId || undefined, notes: form.details, defaultDurationMinutes: Math.max(Math.round((form.estimatedHours || 0.5) * 60), SLOT_MINUTES) }, now));
-      } else {
-        void saveData({ ...data, events: data.events.map((event) => event.id === editingId ? { ...event, title: form.title.trim(), date: form.dueDate, startDate: form.dueDate, endDate: form.endDate || form.dueDate, startTime: form.dueTime, endTime: form.endTime, category: form.category, details: form.details, recurrence: form.recurrence } : event) });
       }
     } else if (addType === "task") {
       const task = makeSmartTask(form);
@@ -7151,8 +6884,6 @@ if (cached?.data && cached?.settings) {
         updatedAt: now,
       };
       void saveData({ ...data, habits: [...(data.habits || []), habit] });
-    } else {
-      void saveData({ ...data, events: [...data.events, makeEvent(form)] });
     }
     requestLayerClose("drawer", ".df-drawer-backdrop, .df-drawer", () => {
       setEditingId("");
@@ -7167,8 +6898,8 @@ if (cached?.data && cached?.settings) {
 
   function confirmNewItemSave(type: AddType) {
     const name = lang === "zh"
-      ? { task: "任务", project: "项目", habit: "习惯", event: "日程" }[type]
-      : { task: "task", project: "project", habit: "habit", event: "event" }[type];
+      ? { task: "任务", project: "项目", habit: "习惯" }[type]
+      : { task: "task", project: "project", habit: "habit" }[type];
     return dialog.confirm(lang === "zh" ? `保存新建${name}？` : `Save this new ${name}?`, {
       message: lang === "zh" ? "保存后退出，或放弃本次新增。" : "Save and close, or discard this new item.",
       confirmLabel: lang === "zh" ? "保存" : "Save",
@@ -7296,7 +7027,6 @@ if (cached?.data && cached?.settings) {
     if (addType === "task") saving = saveData({ ...current, tasks: current.tasks.filter((task) => task.id !== editingId) });
     if (addType === "project") saving = saveData({ ...current, projects: current.projects.filter((project) => project.id !== editingId) });
     if (addType === "habit") saving = saveData({ ...current, habits: (current.habits || []).filter((habit) => habit.id !== editingId) });
-    if (addType === "event") saving = saveData({ ...current, events: current.events.filter((event) => event.id !== editingId) });
     if (!(addType === "task" && compactLayout && mobileTaskSummary)) closeTaskDrawer();
     return saving;
   }
@@ -7335,91 +7065,6 @@ if (cached?.data && cached?.settings) {
       }]
     });
     showToast(t(lang, "toast.taskDuplicated"));
-  }
-
-  async function convertTaskToEvent(taskId: string) {
-    if (!data) return;
-    const task = data.tasks.find((item) => item.id === taskId);
-    if (!task) return;
-    if (!await dialog.confirm(t(lang, "confirm.convertTaskToEvent"))) return;
-    const now = workspaceNow().toISOString();
-    const activeRecord = editingRecordId
-      ? (task.timelineRecords || []).find((record) => record.id === editingRecordId)
-      : undefined;
-    const sourceTask: Task = editingId === task.id
-      ? {
-          ...task,
-          title: form.title.trim() || task.title,
-          dueDate: form.dueDate || task.dueDate,
-          category: form.category,
-          priority: form.priority,
-          notes: form.details,
-          recurrence: form.recurrence || task.recurrence,
-          estimatedHours: Math.max(form.estimatedHours || task.estimatedHours || 0.25, 0.25),
-          updatedAt: now,
-        }
-      : task;
-    const event = buildEventFromTask(sourceTask, activeRecord);
-    void saveData({
-      ...dataRef.current!,
-      tasks: dataRef.current!.tasks.filter((item) => item.id !== task.id),
-      events: [...dataRef.current!.events, event],
-    });
-    setEditingId(event.id);
-    setEditingRecordId(undefined);
-    setEditingOccurrence(null);
-    setAddType("event");
-    setForm({ ...defaultForm("event"), title: event.title, dueDate: event.startDate || event.date, endDate: event.endDate || event.date, dueTime: event.startTime || "", endTime: event.endTime || "", category: event.category, details: event.details, recurrence: event.recurrence });
-    showToast(t(lang, "toast.convertedToEvent"));
-  }
-
-  async function convertEventToTask(eventId: string) {
-    if (!data) return;
-    const event = data.events.find((item) => item.id === eventId);
-    if (!event) return;
-    if (!await dialog.confirm(t(lang, "confirm.convertEventToTask"))) return;
-    const sourceEvent: CalendarEvent = editingId === event.id
-      ? {
-          ...event,
-          title: form.title.trim() || event.title,
-          date: form.dueDate || event.date,
-          startDate: form.dueDate || event.startDate || event.date,
-          endDate: form.endDate || form.dueDate || event.endDate || event.date,
-          startTime: form.dueTime || undefined,
-          endTime: form.endTime || undefined,
-          category: form.category,
-          details: form.details,
-          recurrence: form.recurrence,
-        }
-      : event;
-    const task = buildTaskFromEvent(sourceEvent);
-    const convertedRecord = task.timelineRecords?.[0];
-    void saveData({
-      ...data,
-      events: data.events.filter((item) => item.id !== event.id),
-      tasks: [...data.tasks, task],
-    });
-    setEditingId(task.id);
-    setEditingRecordId(undefined);
-    setEditingOccurrence(null);
-    setAddType("task");
-    setForm({
-      title: task.title,
-      projectId: "",
-      projectColor: DEFAULT_PROJECT_COLOR,
-      dueDate: task.dueDate,
-      dueTime: convertedRecord?.scheduledStart || "",
-      endDate: convertedRecord?.scheduledEndDate || task.dueDate,
-      endTime: convertedRecord?.scheduledEnd || "",
-      category: task.category,
-      priority: task.priority,
-      importance: task.importance ?? null,
-      urgency: task.urgency !== undefined ? task.urgency : null,
-      estimatedHours: task.estimatedHours || 0.5,
-      details: task.notes || "",
-      recurrence: task.recurrence,
-    });
-    showToast(t(lang, "toast.convertedToTask"));
   }
 
   function askAi(taskId: string) {
@@ -7942,9 +7587,7 @@ if (cached?.data && cached?.settings) {
     if (selected.length === 0) return;
     const now = workspaceNow().toISOString();
     const nextTasks = [...currentData.tasks];
-    const nextEvents = [...currentData.events];
     const addedTaskIds: string[] = [];
-    const addedEventIds: string[] = [];
     const previousTasks: Task[] = [];
     let focus: TimelineFocusTarget | undefined;
     for (const action of selected) {
@@ -7961,32 +7604,11 @@ if (cached?.data && cached?.settings) {
         continue;
       }
       if (action.type === "import_schedule_item" && action.title && action.date) {
-        const a = action as Record<string, any>;
-        if (a.kind === "event") {
-          const eventId = uid("event");
-          nextEvents.push({
-            id: eventId, title: action.title, date: a.date, startDate: a.date, endDate: a.endDate || a.date,
-            startTime: a.startTime || "", endTime: a.endTime || "", category: validCategory(a.category),
-            details: a.notes || "", recurrence: normalizeAiRecurrence(a.recurrence, a.date, a.startTime, a.durationMinutes),
-            imported: true, createdAt: now,
-          });
-          addedEventIds.push(eventId);
-          focus ||= { date: a.date, startTime: a.startTime || "09:00", source: "schedule" };
-        } else {
-          const projectId = projects.some((project) => project.id === a.projectId) ? a.projectId : undefined;
-          const learnedDuration = learnedTaskDurationMinutes(action.title, nextTasks, projectId);
-          const recurrence = normalizeAiRecurrence(a.recurrence, a.date, a.startTime, a.durationMinutes);
-          const duration = normalizeTaskDuration(Number(a.durationMinutes) || (a.startTime && a.endTime ? clockTimeSpanMinutes(a.startTime, a.endTime) : learnedDuration));
-          const task: Task = {
-            ...makeSmartTask({ ...defaultForm("task"), title: action.title, projectId: projectId || "", dueDate: a.date, estimatedHours: Math.max(duration, 15) / 60 }),
-            category: validCategory(a.category), priority: validPriority(a.priority), notes: a.notes || "",
-            recurrence, createdAt: now, updatedAt: now,
-          };
-          if (!recurrence && a.startTime) task.timelineRecords = [createScheduledRecord(task, a.date, a.startTime, Math.max(duration, 15))];
-          nextTasks.push(task);
-          addedTaskIds.push(task.id);
-          if (a.startTime || recurrence?.startTime) focus ||= { date: a.date, startTime: a.startTime || recurrence?.startTime, taskId: task.id, source: "schedule" };
-        }
+        const task = buildImportedTask(action, nextTasks);
+        nextTasks.push(task);
+        addedTaskIds.push(task.id);
+        const startTime = action.startTime || task.recurrence?.startTime;
+        if (startTime) focus ||= { date: action.date, startTime, taskId: task.id, source: "schedule" };
         continue;
       }
       if ((action.type === "create_scheduled_task" || action.type === "create_task") && action.title) {
@@ -8026,8 +7648,8 @@ if (cached?.data && cached?.settings) {
         }
       }
     }
-    await saveData({ ...currentData, tasks: nextTasks, events: nextEvents });
-    setAiMessages((current) => current.map((item) => item.id === messageId ? { ...item, actionState: "adopted", actions: [], importCommit: { focus, addedCount: selected.length, addedTaskIds, addedEventIds, previousTasks } } : item));
+    await saveData({ ...currentData, tasks: nextTasks });
+    setAiMessages((current) => current.map((item) => item.id === messageId ? { ...item, actionState: "adopted", actions: [], importCommit: { focus, addedCount: selected.length, addedTaskIds, previousTasks } } : item));
     persistAiMessage(messageId, { actionState: "adopted", actions: [] });
     setAiActionPatches((current) => {
       const next = { ...current };
@@ -8505,6 +8127,27 @@ if (cached?.data && cached?.settings) {
     }
   }
 
+  function buildImportedTask(action: Extract<AiAction, { type: "import_schedule_item" }>, existingTasks: Task[]): Task {
+    const { title = "", date = today, startTime, endTime, endDate } = action;
+    const projectId = projects.find((project) => project.id === action.projectId)?.id;
+    const recurrence = normalizeAiRecurrence(action.recurrence, date, startTime, action.durationMinutes);
+    const span = startTime && endTime
+      ? endDate && validIsoDate(endDate) && endDate > date
+        ? calendarDateTimeSpanMinutes(date, startTime, endDate, endTime)
+        : clockTimeSpanMinutes(startTime, endTime)
+      : undefined;
+    const duration = normalizeTaskDuration(action.durationMinutes || span || learnedTaskDurationMinutes(title, existingTasks, projectId));
+    const task: Task = {
+      ...makeSmartTask({ ...defaultForm("task"), title, projectId: projectId || "", dueDate: date, estimatedHours: duration / 60 }),
+      category: validCategory(action.category),
+      priority: validPriority(action.priority),
+      notes: action.notes || "",
+      recurrence,
+    };
+    if (!recurrence && startTime) task.timelineRecords = [createScheduledRecord(task, date, startTime, duration)];
+    return task;
+  }
+
   async function confirmAiAction(action: AiAction, messageId?: string, actionIndex?: number) {
     const currentData = dataRef.current;
     if (!currentData) return;
@@ -8525,38 +8168,8 @@ if (cached?.data && cached?.settings) {
       return;
     }
     if (action.type === "import_schedule_item" && action.title && action.date) {
-      const a = action as Record<string, any>;
-      const now = workspaceNow().toISOString();
-      if (a.kind === "event") {
-        const event: CalendarEvent = {
-          fixedCourse: true,
-          calendarKind: "appointment",
-          id: uid("event"),
-          title: action.title,
-          date: a.date,
-          startDate: a.date,
-          endDate: a.endDate || a.date,
-          startTime: a.startTime || "",
-          endTime: a.endTime || "",
-          category: validCategory(a.category),
-          details: a.notes || "",
-          recurrence: normalizeAiRecurrence(a.recurrence, a.date, a.startTime, a.durationMinutes),
-          imported: true,
-          createdAt: now,
-        };
-        await saveData({ ...currentData, events: [...currentData.events, event] });
-      } else {
-        const projectId = projects.some((project) => project.id === a.projectId) ? a.projectId : undefined;
-        const recurrence = normalizeAiRecurrence(a.recurrence, a.date, a.startTime, a.durationMinutes);
-        const duration = normalizeTaskDuration(Number(a.durationMinutes) || (a.startTime && a.endTime ? clockTimeSpanMinutes(a.startTime, a.endTime) : learnedTaskDurationMinutes(action.title, currentData.tasks, projectId)));
-        const task: Task = {
-          ...makeSmartTask({ ...defaultForm("task"), title: action.title, projectId: projectId || "", dueDate: a.date, estimatedHours: Math.max(duration, 15) / 60 }),
-          category: validCategory(a.category), priority: validPriority(a.priority), notes: a.notes || "",
-          recurrence, createdAt: now, updatedAt: now,
-        };
-        if (!recurrence && a.startTime) task.timelineRecords = [createScheduledRecord(task, a.date, a.startTime, Math.max(duration, 15))];
-        await saveData({ ...currentData, tasks: [...currentData.tasks, task] });
-      }
+      const task = buildImportedTask(action, currentData.tasks);
+      await saveData({ ...currentData, tasks: [...currentData.tasks, task] });
       if (messageId) removeAiMessageAction(messageId, action, actionIndex);
       return;
     }
@@ -9754,14 +9367,7 @@ if (cached?.data && cached?.settings) {
             onDrop={(event) => {
             event.preventDefault();
             const taskId = drag?.taskId || event.dataTransfer.getData("taskId");
-            if (taskId) {
-              const isDroppedEvent = events.some((e) => taskId.startsWith(`event_occ_${e.id}_`)) || recordToTaskMap.get(taskId) && isEventDisplayTask(recordToTaskMap.get(taskId)!);
-              if (isDroppedEvent) {
-                makeEventCandidate(taskId, today);
-              } else {
-                returnTimelineTaskToCandidates(taskId, today);
-              }
-            }
+            if (taskId && !isEventDisplayTask(taskId)) returnTimelineTaskToCandidates(taskId, today);
           }}>
             {!mobileExecution && candidatePanelCollapsed ? (
               <div className="df-candidate-collapsed-strip">
@@ -9869,31 +9475,26 @@ if (cached?.data && cached?.settings) {
                   const candidatesByProject = new Map<string, Task[]>();
                   projects.forEach((project) => candidatesByProject.set(String(project.id), []));
                   candidatesByProject.set("__unassigned__", []);
-                  const events: Task[] = [];
                   visibleCandidates.forEach((task) => {
-                    if (isEventDisplayTask(task)) { events.push(task); return; }
                     const gid = task.projectId || "__unassigned__";
                     if (!candidatesByProject.has(gid)) candidatesByProject.set(gid, []);
                     candidatesByProject.get(gid)!.push(task);
                   });
-                  const groups: Array<[string, Task[]]> = [
-                    ...(events.length ? [["__events__", events] as [string, Task[]]] : []),
-                    ...Array.from(candidatesByProject.entries()).filter(([, tasks]) => tasks.length > 0),
-                  ];
+                  const groups = [...candidatesByProject].filter(([, tasks]) => tasks.length > 0);
                   return groups.map(([gid, tasks]) => {
-                    const project = gid === "__unassigned__" || gid === "__events__" ? null : projects.find(p => String(p.id) === String(gid));
-                    const projectColor = gid === "__events__" ? "var(--accent-active)" : project?.color || "var(--accent-active)";
-                    const projectTitle = gid === "__events__" ? "EVENTS" : project?.title || t(lang, "candidate.unassigned");
+                    const project = gid === "__unassigned__" ? null : projects.find(p => String(p.id) === String(gid));
+                    const projectColor = project?.color || "var(--accent-active)";
+                    const projectTitle = project?.title || t(lang, "candidate.unassigned");
                     return (
                       <div
                         key={gid}
                         className="df-project-group"
-                        data-candidate-project-id={gid === "__events__" ? undefined : gid === "__unassigned__" ? "" : gid}
+                        data-candidate-project-id={gid === "__unassigned__" ? "" : gid}
                       >
                         <div className="df-project-group-header">
                           <span className="df-project-group-dot" style={{ background: projectColorInk(projectColor) }} />
                           <span className="df-project-group-name">{projectTitle}</span>
-                          {!productAiPresentation && gid !== "__events__" && <span className="df-project-group-actions">
+                          {!productAiPresentation && <span className="df-project-group-actions">
                             <IconButton
                               className="df-project-group-action"
                               icon={<UiCalendarCheckIcon size={16} />}
@@ -10857,7 +10458,7 @@ if (cached?.data && cached?.settings) {
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} event={events.find((event) => event.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onConvertToEvent={() => convertTaskToEvent(editingId)} onConvertToTask={() => convertEventToTask(editingId)} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onEditSchedule={editTaskSchedule} weekStartsOn={settings.weekStartsOn} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
+      {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) setForm(defaultForm(type)); }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onEditSchedule={editTaskSchedule} weekStartsOn={settings.weekStartsOn} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel && workspaceChatPanel && <div className="df-utility-backdrop" data-workspace-backdrop data-motion-closing={aiPresence.closing || undefined} onMouseDown={closeWorkspaceChat} />}
       {!productAiPresentation && aiPanel}
       {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}
@@ -12015,7 +11616,7 @@ function AllDayBlock({ task, engagementEnabled, dragging, projectName, projects,
     }
   }, [hovered]);
   return (
-    <TaskBlock lang={lang} engagement={engagementEnabled && !isEvent ? normalizeEngagement(task.engagement) : undefined} as="article" variant="allDay" appearance="calm" priority={taskBlockPriorityFor(task.priority)} checked={!isEvent && task.completed} selected={projectOpen} dragging={dragging} projectColor={stripeColor} className={`df-all-day-block ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${projectOpen ? "project-open" : ""} ${isShortName ? "short-name" : ""}${dragging ? " is-dragging" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", readonly: isExternalEvent ? "true" : undefined }} style={{ "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px" } as CSSProperties} onPointerDown={isEvent || isSkipped ? undefined : onPointerDragStart} onClick={onEdit} onMouseEnter={() => setHovered(true)} onMouseLeave={() => { setProjectOpen(false); setHovered(false); }} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? "已回到规划，可重新安排" : undefined}>
+    <TaskBlock lang={lang} engagement={engagementEnabled && !isEvent ? normalizeEngagement(task.engagement) : undefined} as="article" variant="allDay" appearance="calm" priority={taskBlockPriorityFor(task.priority)} checked={!isEvent && task.completed} selected={projectOpen} dragging={dragging} projectColor={stripeColor} className={`df-all-day-block ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${projectOpen ? "project-open" : ""} ${isShortName ? "short-name" : ""}${dragging ? " is-dragging" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", readonly: isEvent ? "true" : undefined }} style={{ "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px" } as CSSProperties} onPointerDown={isEvent || isSkipped ? undefined : onPointerDragStart} onClick={task.fixedCourse ? undefined : onEdit} onMouseEnter={() => setHovered(true)} onMouseLeave={() => { setProjectOpen(false); setHovered(false); }} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? "已回到规划，可重新安排" : undefined}>
       <TaskRecurrenceIndicator recurrence={task.recurrence} lang={lang} />
       <TaskBlockRow className="df-all-day-row">
         {!isEvent && <TaskCheckbox lang={lang} checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority} returned={isReturnedUnfinished || isSkipped} onClick={(event) => {
@@ -12023,7 +11624,7 @@ function AllDayBlock({ task, engagementEnabled, dragging, projectName, projects,
           onToggleDone();
         }}>{task.completed ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-6" /></svg> : isSkipped ? <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l6 6M9 3L3 9" /></svg> : isReturnedUnfinished ? <ReturnedToPlanIcon /> : ""}</TaskCheckbox>}
         <TaskBlockContent className="df-all-day-main" title={task.title}>
-          {isEvent ? <span className="df-event-kind-label">{isExternalEvent ? (lang === "zh" ? "外部日历" : "External") : t(lang, "form.event")}</span> : null}
+          {isExternalEvent && <span className="df-external-calendar-label">{lang === "zh" ? "外部日历" : "External"}</span>}
         </TaskBlockContent>
         {!isEvent && hovered && <TaskActions className="df-all-day-actions" onClick={(event) => event.stopPropagation()}>
           <button ref={projectBtnRef} className="df-block-project" title={projectName} onClick={(event) => { event.stopPropagation(); setProjectOpen((open) => !open); }}># {projectName}</button>
@@ -12066,7 +11667,7 @@ function NowLine({ extraStyle, dayStartHour = 0, hourHeight = HOUR_HEIGHT, highl
 
 function EditDrawer(props: {
   engagementEnabled?: boolean;
-  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; event?: CalendarEvent; today: string; onClose: () => void; onSave: () => void; onDelete: () => Promise<void> | undefined; onCopy: () => void; onConvertToEvent: () => void; onConvertToTask: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => Promise<void> | undefined; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onLocateTimeline: (date: string, startTime: string, taskId: string) => void; onLocateTree?: (task: Task) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
+  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; today: string; onClose: () => void; onSave: () => void; onDelete: () => Promise<void> | undefined; onCopy: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => Promise<void> | undefined; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onLocateTimeline: (date: string, startTime: string, taskId: string) => void; onLocateTree?: (task: Task) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
   onEditSchedule: (taskId: string, source: TaskScheduleRange, next: TaskScheduleRange, duration: number, recordId?: string, occurrence?: EditingOccurrence) => string | undefined; weekStartsOn: 0 | 1;
   editingRecordId?: string; setEditingRecordId?: (id: string | undefined) => void; editingOccurrence?: EditingOccurrence; data?: PlannerData | null; saveData?: (next: PlannerData) => Promise<void>; onSaveRecurrence: (taskId: string, recurrence?: TaskRecurrence) => void; onCancelOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onReplanOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onCancelAllRecurrence: (taskId: string, cutoffDate: string) => void; aiEnabled: boolean; subtaskAiLoading: boolean; subtaskAiRevealIds: string[]; onGenerateSubtasks: (taskId: string) => void; lang: Language; compactSummary?: boolean; onCompactActionSuccess: (message: string) => void; onShowMore?: () => void;
 }) {
@@ -12094,7 +11695,7 @@ function EditDrawer(props: {
   const zh = props.lang === "zh";
   const selectedProject = props.projects.find((project) => String(project.id) === String(f.projectId));
   const selectedProjectTitle = selectedProject?.title || (zh ? "未归属" : "Unassigned");
-  const addTypeHints: Record<Exclude<AddType, "event">, string> = {
+  const addTypeHints: Record<AddType, string> = {
     task: props.lang === "zh" ? "Task：需要完成的行动，可以安排到时间轴并标记完成。" : "Task: an action to complete, schedulable on the timeline and markable as done.",
     project: props.lang === "zh" ? "Project：一组任务的长期目标，用颜色和重要度组织计划。" : "Project: a longer-term goal that groups tasks with color and priority context.",
     habit: props.lang === "zh" ? "习惯：每天或每周重复的固定练习。" : "Habit: a recurring practice you want to keep on the day.",
@@ -12311,17 +11912,6 @@ function EditDrawer(props: {
       </button>)}
     </div>;
   }
-  const eventDurationMinutes = f.dueTime
-    ? Math.max(clockTimeSpanMinutes(f.dueTime, f.endTime || addMinutes(f.dueTime, f.recurrence?.durationMinutes || 60)), SLOT_MINUTES)
-    : 0;
-  const eventRecurrence = f.recurrence || {
-    mode: f.dueTime ? "scheduled" as const : "flexible" as const,
-    frequency: "weekly" as RecurrenceFrequency,
-    startDate: f.dueDate || props.today,
-    startTime: f.dueTime || undefined,
-    durationMinutes: f.dueTime ? eventDurationMinutes || 60 : undefined,
-    endDate: f.endDate || undefined,
-  };
   const dueLabel = props.lang === "zh" ? "截止日期" : "Due date";
   const editDueDate = (onChange: (date: string) => void) => <EditorDate outlined clearable label={dueLabel} value={f.dueDate} today={props.today} weekStartsOn={props.weekStartsOn} lang={props.lang} emptyLabel={props.lang === "zh" ? "未设置" : "Not set"} onChange={onChange} />;
   const selectProject = <button ref={projectTriggerRef} type="button" className={`df-detail-pill-trevor ${projectPickerOpen ? "active" : ""}`} onClick={toggleProjectPicker} title={selectedProjectTitle} aria-expanded={projectPickerOpen}>
@@ -12381,62 +11971,13 @@ function EditDrawer(props: {
     </div>
     <div className="df-detail-meta-setting">
       <span>{t(props.lang, "form.color")}</span>
-      <ProjectColorPicker value={f.projectColor || props.project?.color || DEFAULT_PROJECT_COLOR} onChange={(color) => set("projectColor", color)} presets={COMMON_COLOR_PRESETS} />
+      <SettingColorInput ariaLabel={zh ? "项目颜色" : "Project color"} value={f.projectColor || props.project?.color || DEFAULT_PROJECT_COLOR} onChange={(color) => set("projectColor", color)} />
     </div>
   </section>;
-  const typeName = (type: Exclude<AddType, "event">) => type === "habit" ? (zh ? "习惯" : "Habit") : t(props.lang, `form.${type}`);
-  const createLabel = (type: Exclude<AddType, "event">) => props.editing
+  const typeName = (type: AddType) => type === "habit" ? (zh ? "习惯" : "Habit") : t(props.lang, `form.${type}`);
+  const createLabel = (type: AddType) => props.editing
     ? (zh ? `转换为${typeName(type)}` : `Convert to ${typeName(type)}`)
     : (zh ? `创建${typeName(type)}` : `Create ${typeName(type).toLowerCase()}`);
-  if (props.type === "event") {
-    const recurrenceText = recurrenceLabel(f.recurrence);
-    return (
-      <aside className="df-drawer df-task-detail df-event-detail df-entity-editor" onMouseDown={(event) => event.stopPropagation()}>
-        <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
-        <section className="df-detail-hero-trevor">
-          <EditorTitle autoFocus={!props.editing} label={t(props.lang, "drawer.eventTitlePlaceholder")} value={f.title} onChange={(event) => set("title", event.target.value)} />
-          <div className="df-editor-date-range">
-            <span className="df-detail-pill-trevor event-kind">{t(props.lang, "form.event")}</span>
-            {f.dueTime ? <span>{formatMinutes(eventDurationMinutes || 60)}</span> : <span>{t(props.lang, "drawer.allDayEvent")}</span>}
-            {recurrenceText && <span>↻ {recurrenceText}</span>}
-          </div>
-        </section>
-
-        <section className="df-event-detail-grid" aria-label={zh ? "日程时间" : "Event schedule"}>
-          {(["start", "end"] as const).map((edge) => {
-            const start = edge === "start";
-            return <div key={edge} className="df-event-date-time">
-              <EditorDate outlined label={t(props.lang, `drawer.${edge}Date`)} value={start ? f.dueDate : f.endDate} today={props.today}
-                weekStartsOn={props.weekStartsOn} lang={props.lang} onChange={(date) => set(start ? "dueDate" : "endDate", date)} />
-              <label><span>{t(props.lang, `drawer.${edge}Time`)}</span><input type="time" value={start ? f.dueTime : f.endTime}
-                onChange={(event) => set(start ? "dueTime" : "endTime", event.target.value)} /></label>
-            </div>;
-          })}
-        </section>
-
-        <EditorActionRow className="df-editor-action-row--equal">
-          <Button className="df-editor-action" variant="primary" disabled={!f.title.trim()} onClick={props.onSave}><UiCheckIcon size={14} />{props.editing ? t(props.lang, "drawer.save") : (zh ? "创建日程" : "Create event")}</Button>
-          <Button className="df-editor-action" aria-expanded={recurrenceOpen} onClick={() => setRecurrenceOpen((open) => !open)}>{t(props.lang, "drawer.setRepeat")}</Button>
-          {props.event && <EditorRemove onClick={props.onDelete}>{t(props.lang, "drawer.remove")}</EditorRemove>}
-        </EditorActionRow>
-
-        {recurrenceOpen && (
-          <section className="df-detail-project-pick">
-            <div className="df-repeat-form">
-              <label><span>{t(props.lang, "drawer.frequency")}</span><select value={f.recurrence?.frequency || "none"} onChange={(event) => {
-                const frequency = event.target.value as RecurrenceFrequency;
-                set("recurrence", frequency === "none" ? undefined : { ...eventRecurrence, frequency, startDate: f.dueDate, startTime: f.dueTime || undefined, durationMinutes: f.dueTime ? eventDurationMinutes || 60 : undefined, endDate: f.endDate || undefined });
-              }}>{recurrenceOptions(props.lang).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-              <label><span>{t(props.lang, "drawer.startDate")}</span><input type="date" value={eventRecurrence.startDate || f.dueDate || props.today} onChange={(event) => set("recurrence", { ...eventRecurrence, startDate: event.target.value })} /></label>
-              <label><span>{t(props.lang, "drawer.startTime")}</span><input type="time" value={eventRecurrence.startTime || f.dueTime || ""} onChange={(event) => set("recurrence", { ...eventRecurrence, mode: event.target.value ? "scheduled" : "flexible", startTime: event.target.value || undefined })} /></label>
-            </div>
-          </section>
-        )}
-
-        <EditorNotes key={props.event?.id} lang={props.lang} value={f.details} onChange={(notes) => set("details", notes)} />
-      </aside>
-    );
-  }
   if (!props.editing || props.type === "habit" || (props.type === "task" && !props.task)) {
     const type = props.type;
     const isTask = type === "task";

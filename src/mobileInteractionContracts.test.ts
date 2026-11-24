@@ -17,8 +17,8 @@ describe("portrait interaction contracts", () => {
   });
 
   it("does not use returned-unfinished status as a resize lock", () => {
-    expect(main).toContain("const canResize = !isExternalEvent && (isEvent || !hasRecurringRule(task));");
-    expect(main).not.toContain("const canResize = !isExternalEvent && !isReturnedUnfinished");
+    expect(main).toContain("const canResize = !isEvent && !hasRecurringRule(task);");
+    expect(main).not.toContain("const canResize = !isEvent && !isReturnedUnfinished");
   });
 
   it("uses one detail drawer to create tasks, projects, and habits", () => {

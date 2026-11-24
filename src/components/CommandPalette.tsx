@@ -26,7 +26,6 @@ export default function CommandPalette(props: {
       if (kind === "project") return "项目";
       if (kind === "habit") return "习惯";
       if (kind === "setting") return "设置";
-      if (kind === "event") return "事件";
       return "备注";
     }
     return kind.charAt(0).toUpperCase() + kind.slice(1);

@@ -30,7 +30,7 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
   const composerMenuRef = useRef<HTMLDivElement>(null);
   const composerMenuButtonRef = useRef<HTMLButtonElement>(null);
   const composerTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const [editMenu, setEditMenu] = useState<{ messageId: string; index: number; kind: "time" | "duration" | "project" | "type" } | null>(null);
+  const [editMenu, setEditMenu] = useState<{ messageId: string; index: number; kind: "time" | "duration" | "project" } | null>(null);
   const [mobileCollapsed, setMobileCollapsed] = useState(false);
   const [composerMenuOpen, setComposerMenuOpen] = useState(false);
   const [conversationMenuId, setConversationMenuId] = useState<string | null>(null);
@@ -217,8 +217,8 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
     || messages.slice(index + 1).some((next) => next.role === "user")
     || busy
     || Boolean(message.agent?.decisionState === "pending" && message.agent.pending.length > 0);
-  const menuIs = (messageId: string, index: number, kind: "time" | "duration" | "project" | "type") => editMenu?.messageId === messageId && editMenu.index === index && editMenu.kind === kind;
-  const toggleMenu = (messageId: string, index: number, kind: "time" | "duration" | "project" | "type") => {
+  const menuIs = (messageId: string, index: number, kind: "time" | "duration" | "project") => editMenu?.messageId === messageId && editMenu.index === index && editMenu.kind === kind;
+  const toggleMenu = (messageId: string, index: number, kind: "time" | "duration" | "project") => {
     setEditMenu((current) => current?.messageId === messageId && current.index === index && current.kind === kind ? null : { messageId, index, kind });
   };
   const patchTime = (messageId: string, index: number, action: Record<string, unknown>, startTime: string) => {
@@ -231,15 +231,6 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
   const patchDuration = (messageId: string, index: number, action: Record<string, unknown>, minutes: number) => {
     const startTime = (action.start || action.startTime) as string | undefined;
     onPatchAction(messageId, index, { durationMinutes: minutes, ...(startTime ? { end: addMinutes(startTime, minutes), endTime: addMinutes(startTime, minutes) } : {}) });
-    setEditMenu(null);
-  };
-  const patchType = (messageId: string, index: number, action: Record<string, unknown>, kind: "task" | "event") => {
-    const startTime = (action.start || action.startTime || "09:00") as string;
-    const minutes = Number(action.durationMinutes) || 60;
-    onPatchAction(messageId, index, {
-      kind,
-      ...(kind === "event" ? { type: "import_schedule_item", startTime, endTime: (action.end || action.endTime || addMinutes(startTime, minutes)) } : {}),
-    });
     setEditMenu(null);
   };
   const acceptAttachment = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -431,7 +422,6 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
             const proj = projectId ? projects.find((p: any) => String(p.id) === String(projectId)) : null;
             const finalProjectName = projectName || proj?.title || text.unassigned;
             const projColor = proj?.color;
-            const kind = a.kind === "event" ? "event" : "task";
             return (
             <div key={i} className={`df-ai-task-card ${isAccepted ? "accepted" : ""}`}>
               {(patchedAction.type === "import_schedule_item" || patchedAction.type === "schedule_task") && <input className="df-ai-import-check" aria-label={lang === "zh" ? `选择 ${title}` : `Select ${title}`} type="checkbox" checked={message.selectedActions?.[i] !== false} onChange={() => onToggleAction(message.id, i)} />}

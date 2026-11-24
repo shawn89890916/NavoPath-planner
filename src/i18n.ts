@@ -326,7 +326,6 @@ export const TR = {
       unassigned: "# 未归属",
       newProjectPlaceholder: "新项目名",
       newProjectColor: "新项目颜色",
-      eventTooltip: "这是个事件",
     },
     en: {
       returnedHint: "Returned to planning — reschedule",
@@ -342,7 +341,6 @@ export const TR = {
       unassigned: "# Unassigned",
       newProjectPlaceholder: "New Project Name",
       newProjectColor: "New Project Color",
-      eventTooltip: "This is an event",
     },
   },
 
@@ -379,10 +377,6 @@ export const TR = {
       save: "保存",
       endDate: "结束日期",
       endTime: "结束时间",
-      allDayEvent: "全天事件",
-      eventTitlePlaceholder: "未命名事件",
-      convertToTask: "转为任务",
-      convertToEvent: "转为事件",
     },
     en: {
       todayUnscheduled: "Today · No specific time",
@@ -415,10 +409,6 @@ export const TR = {
       save: "Save",
       endDate: "End Date",
       endTime: "End Time",
-      allDayEvent: "All-day event",
-      eventTitlePlaceholder: "Untitled Event",
-      convertToTask: "Convert to Task",
-      convertToEvent: "Convert to Event",
     },
   },
 
@@ -430,7 +420,6 @@ export const TR = {
       close: "关闭",
       task: "任务",
       project: "项目",
-      event: "事件",
       completed: "已完成",
       name: "名称",
       projectLabel: "项目",
@@ -457,7 +446,6 @@ export const TR = {
       close: "Close",
       task: "Task",
       project: "Project",
-      event: "Event",
       completed: "Done",
       name: "Name",
       projectLabel: "Project",
@@ -628,8 +616,6 @@ export const TR = {
       movedBackToCandidates: "已移回任务列表",
       durationAdjusted: "已调整时长",
       taskDuplicated: "已复制任务",
-      convertedToEvent: "已转为事件",
-      convertedToTask: "已转为任务",
       clarifyTask: "请帮我明确「%TITLE%」的下一步行动。",
       analyzingRequest: "正在分析你的请求...",
       planGenerated: "已生成安排",
@@ -676,8 +662,6 @@ export const TR = {
       movedBackToCandidates: "Moved back to Tasks",
       durationAdjusted: "Duration Adjusted",
       taskDuplicated: "Task Duplicated",
-      convertedToEvent: "Converted to Event",
-      convertedToTask: "Converted to Task",
       clarifyTask: "Help me clarify the next action for \"%TITLE%\".",
       analyzingRequest: "Analyzing your request...",
       planGenerated: "Plan Generated",
@@ -697,17 +681,6 @@ export const TR = {
       clarifyHint: "Open the relevant materials and complete the minimum checkable version of %TITLE%.",
       clarifyHintGeneric: "Open the relevant materials and complete the minimum checkable version.",
       loading: "Loading NavoPath...",
-    },
-  },
-
-  confirm: {
-    zh: {
-      convertTaskToEvent: "确认将这个任务转为事件？会迁移标题、日期/时间、分类、备注和重复规则；完成状态、子任务、项目归属、优先级不会作为事件功能保留。",
-      convertEventToTask: "确认将这个事件转为任务？会迁移标题、日期/时间、分类、备注和重复规则；任务将使用默认中等优先级，且没有项目和子任务。",
-    },
-    en: {
-      convertTaskToEvent: "Convert this task to an event? Title, date/time, category, notes, and repeat rule will be moved. Completion state, subtasks, project, and priority will not remain as event features.",
-      convertEventToTask: "Convert this event to a task? Title, date/time, category, notes, and repeat rule will be moved. The task will use medium priority with no project or subtasks.",
     },
   },
 
