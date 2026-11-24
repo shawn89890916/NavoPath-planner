@@ -2,6 +2,12 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 93
+
+#### 改进
+
+- 投入度在任务块左侧项目色条中按比例自上而下填充，并与任务块边缘保持一致。
+
 ### 1.7.0 Beta 92
 
 #### 修复
@@ -1067,6 +1073,12 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 93
+
+#### Improvements
+
+- Fill the project-color stripe from top to bottom according to the task's engagement, aligned to the task block edge.
 
 ### 1.7.0 Beta 92
 

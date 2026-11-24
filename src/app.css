@@ -13091,6 +13091,18 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: inherit;
   corner-shape: var(--corner-shape, squircle);
 }
+/* Engagement fills the existing project stripe from the top down. The stripe
+   width and rounded border-box clip stay tied to the shared TaskBlock tokens. */
+.df-app .df-task-block[data-task-appearance][data-engagement] {
+  background-image: linear-gradient(
+    to bottom,
+    var(--task-project-color) 0 var(--task-engagement),
+    transparent var(--task-engagement) 100%
+  );
+  background-size: var(--task-project-accent-size, 2px) 100%;
+  background-repeat: no-repeat;
+  background-origin: border-box;
+}
 .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--bottom {
   left: 0;
   right: 0;
