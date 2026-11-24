@@ -8986,7 +8986,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   display: grid;
   gap: 12px;
   padding: 14px 0;
-  border-top: 1px solid var(--paper-rule);
   border-bottom: 1px solid var(--paper-rule);
 }
 .df-update-card > div { display: grid; gap: 4px; }
@@ -19497,6 +19496,9 @@ body.df-unified-dragging .df-unified-drag-overlay {
 }
 #root .df-app .df-settings-home-entry:last-child {
   border-bottom: 0;
+}
+#root .df-app .df-settings-home-detail-card .df-settings-home-entry {
+  border-radius: 0;
 }
 #root .df-app .df-settings-home-entry:hover,
 #root .df-app .df-settings-home-entry:focus-visible {
