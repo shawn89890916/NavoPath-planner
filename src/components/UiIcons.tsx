@@ -1,5 +1,5 @@
 import { Bell, ChartNoAxesColumn, Columns3, Grid2X2, History, List, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Ellipsis, ListChecks, PanelLeftClose, PanelLeftOpen, Pencil, Plus, RotateCw, Search, Settings, Sparkles, Trash2, X, Zap, type LucideIcon, type LucideProps } from "lucide-react";
-import { CalendarDays, CloudSun, LayoutTemplate, ListTree, Puzzle } from "lucide-react";
+import { CalendarDays, CloudSun, LayoutTemplate, ListTree, MoveDiagonal, Puzzle } from "lucide-react";
 
 function createNamedIcon(Icon: LucideIcon) {
   return function NamedUiIcon({ size = 16, strokeWidth = 1.8, ...props }: LucideProps) {
@@ -11,6 +11,7 @@ export const UiBellIcon = createNamedIcon(Bell);
 export const UiCloseIcon = createNamedIcon(X);
 export const UiCopyIcon = createNamedIcon(Copy);
 export const UiPencilIcon = createNamedIcon(Pencil);
+export const UiExpandIcon = createNamedIcon(MoveDiagonal);
 export const UiPlusIcon = createNamedIcon(Plus);
 export const UiChevronUpIcon = createNamedIcon(ChevronUp);
 export const UiChevronDownIcon = createNamedIcon(ChevronDown);

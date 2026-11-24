@@ -3,7 +3,7 @@ import { t } from "../i18n";
 import type { Language } from "../types";
 import { isIsoDate } from "../utils/localDate";
 import { DateQuickPicker } from "./DateQuickPicker";
-import { UiCalendarDaysIcon, UiPencilIcon, UiTrashIcon } from "./UiIcons";
+import { UiCalendarDaysIcon, UiExpandIcon, UiPencilIcon, UiTrashIcon } from "./UiIcons";
 import { Button, IconButton, Modal } from "./UiPrimitives";
 
 export function EditorTitle({ label, value, ...props }: ComponentProps<"textarea"> & { label: string; value: string }) {
@@ -51,16 +51,30 @@ export function EditorNotes({ lang, value, onChange, onCommit }: {
   lang: Language; value: string; onChange: (value: string) => void; onCommit?: (value: string) => void;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
+  const [expandedDraft, setExpandedDraft] = useState("");
+  const [expanded, setExpanded] = useState(false);
   const editing = draft !== null;
   const notes = t(lang, "drawer.notes");
+  const expandLabel = lang === "zh" ? "放大备注" : "Expand notes";
+  const saveNote = (next: string) => {
+    if (next !== value) {
+      onChange(next);
+      onCommit?.(next);
+    }
+    setDraft(null);
+  };
   return <section className="df-detail-notes-new">
     <div className="df-detail-section-head">
       <h3>{notes}</h3>
-      {editing && onCommit && draft !== value ? <div className="df-notes-editor-actions">
-        <Button variant="text" onClick={() => { onChange(draft); onCommit(draft); setDraft(null); }}>{t(lang, "drawer.save")}</Button>
-        <Button variant="text" onClick={() => setDraft(null)}>{t(lang, "drawer.cancel")}</Button>
-      </div> : <IconButton icon={<UiPencilIcon size={14} />} label={editing ? t(lang, "form.close") : t(lang, "taskCard.editNotes")}
-        className="ui-icon-button--borderless" aria-expanded={editing} onClick={() => setDraft(editing ? null : value)} />}
+      <div className="df-notes-editor-actions">
+        {editing && onCommit && draft !== value ? <>
+          <Button variant="text" onClick={() => saveNote(draft)}>{t(lang, "drawer.save")}</Button>
+          <Button variant="text" onClick={() => setDraft(null)}>{t(lang, "drawer.cancel")}</Button>
+        </> : <IconButton icon={<UiPencilIcon size={14} />} label={editing ? t(lang, "form.close") : t(lang, "taskCard.editNotes")}
+          className="ui-icon-button--borderless" aria-expanded={editing} onClick={() => setDraft(editing ? null : value)} />}
+        <IconButton icon={<UiExpandIcon size={15} />} label={expandLabel} className="ui-icon-button--borderless" aria-haspopup="dialog"
+          onClick={() => { setExpandedDraft(draft ?? value); setExpanded(true); }} />
+      </div>
     </div>
     {editing ? <div className="df-notes-editor">
       <textarea autoFocus rows={4} aria-label={notes} placeholder={t(lang, "drawer.addNotePlaceholder")} value={draft} onChange={(event) => {
@@ -68,6 +82,24 @@ export function EditorNotes({ lang, value, onChange, onCommit }: {
         if (!onCommit) onChange(event.target.value);
       }} />
     </div> : value && <div className="df-notes-preview df-notes-preview--readonly"><p>{value}</p></div>}
+    <Modal open={expanded} label={notes} portalContainer={typeof document === "undefined" ? undefined : document.querySelector?.(".df-app")}
+      className="df-dialog df-notes-editor-modal" onClose={() => setExpanded(false)} onKeyDown={(event) => {
+        if (event.key === "Escape") { event.stopPropagation(); setExpanded(false); }
+      }}>
+      <form className="df-notes-editor" onSubmit={(event) => {
+        event.preventDefault();
+        saveNote(expandedDraft);
+        setExpanded(false);
+      }}>
+        <h2>{notes}</h2>
+        <textarea aria-label={notes} placeholder={t(lang, "drawer.addNotePlaceholder")} value={expandedDraft}
+          onChange={(event) => setExpandedDraft(event.target.value)} />
+        <div className="df-notes-editor-actions">
+          <Button variant="text" onClick={() => setExpanded(false)}>{t(lang, "drawer.cancel")}</Button>
+          <Button variant="primary" type="submit">{t(lang, "drawer.save")}</Button>
+        </div>
+      </form>
+    </Modal>
   </section>;
 }
 
@@ -93,9 +125,9 @@ export function EditorDateDialog({ open, label, lang, onClose, onSave, children 
   </Modal>;
 }
 
-export function EditorDate({ label, value, today, weekStartsOn, minDate, lang, onChange, clearable, outlined }: {
+export function EditorDate({ label, value, emptyLabel, today, weekStartsOn, minDate, lang, onChange, clearable, outlined }: {
   label: string; value: string; today: string; weekStartsOn: 0 | 1; minDate?: string;
-  lang: Language; onChange: (value: string) => void; clearable?: boolean; outlined?: boolean;
+  lang: Language; onChange: (value: string) => void; clearable?: boolean; outlined?: boolean; emptyLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
@@ -103,6 +135,7 @@ export function EditorDate({ label, value, today, weekStartsOn, minDate, lang, o
   const localizedDate = isIsoDate(value) ? new Intl.DateTimeFormat(lang === "zh" ? "zh-CN" : "en-US", {
     year: "numeric", month: "short", day: "numeric", timeZone: "UTC",
   }).format(new Date(`${value}T00:00:00Z`)) : "";
+  const dateLabel = localizedDate || emptyLabel;
   const Trigger = outlined ? Button : EditorInlineButton;
   return <>
     <Trigger className={outlined ? "df-editor-date" : undefined} aria-haspopup="dialog" onClick={() => {
@@ -110,7 +143,7 @@ export function EditorDate({ label, value, today, weekStartsOn, minDate, lang, o
       setDraft(selected);
       setMonth((selected || (minDate && minDate > today ? minDate : today)).slice(0, 7));
       setOpen(true);
-    }}>{outlined && <UiCalendarDaysIcon size={14} />}<span>{label}{localizedDate && ` · ${localizedDate}`}</span></Trigger>
+    }}>{outlined && <UiCalendarDaysIcon size={14} />}<span>{label}{dateLabel && ` · ${dateLabel}`}</span></Trigger>
     <EditorDateDialog open={open} label={label} lang={lang} onClose={() => setOpen(false)} onSave={() => {
       if (draft !== value) onChange(draft);
       setOpen(false);

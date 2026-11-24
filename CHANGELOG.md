@@ -2,6 +2,13 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 78
+
+#### 改进
+
+- 将任务状态和排程操作移到子任务下方，Remove 与快捷改期、取消排程同排。
+- 备注支持放大编辑，未填写的截止日期明确显示「未设置」。
+
 ### 1.7.0 Beta 77
 
 #### 改进
@@ -970,6 +977,13 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 78
+
+#### Improvements
+
+- Move task status and scheduling actions below Subtasks, with Remove beside Quick Reschedule and Unschedule.
+- Open Notes in a larger editor and label empty due dates as Not set.
 
 ### 1.7.0 Beta 77
 

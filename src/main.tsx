@@ -6909,7 +6909,7 @@ if (cached?.data && cached?.settings) {
       title: realTask.title,
       projectId: realTask.projectId || "",
       projectColor: DEFAULT_PROJECT_COLOR,
-      dueDate: realTask.dueDate || addDays(task.scheduledDate || today, 1),
+      dueDate: realTask.dueDate || "",
       dueTime: task.scheduledStart || "",
       endDate: task.scheduledDate || realTask.dueDate || today,
       endTime: task.scheduledEnd || "",
@@ -7218,8 +7218,6 @@ if (cached?.data && cached?.settings) {
           tasks: current.tasks.map((task) => task.id === editingId ? {
             ...task,
             title: safeTitle,
-            dueDate: form.dueDate,
-            dueDateSource: form.dueDate ? "manual" : undefined,
             category: form.category,
             priority: form.priority,
             projectId: form.projectId || undefined,
@@ -12328,7 +12326,7 @@ function EditDrawer(props: {
     endDate: f.endDate || undefined,
   };
   const dueLabel = props.lang === "zh" ? "截止日期" : "Due date";
-  const editDueDate = (onChange: (date: string) => void) => <EditorDate outlined clearable label={dueLabel} value={f.dueDate} today={props.today} weekStartsOn={props.weekStartsOn} lang={props.lang} onChange={onChange} />;
+  const editDueDate = (onChange: (date: string) => void) => <EditorDate outlined clearable label={dueLabel} value={f.dueDate} today={props.today} weekStartsOn={props.weekStartsOn} lang={props.lang} emptyLabel={props.lang === "zh" ? "未设置" : "Not set"} onChange={onChange} />;
   if (props.editing && props.type === "event" && props.event) {
     const eventSchedule = f.dueTime
       ? `${f.dueDate} ${f.dueTime} - ${f.endTime || addMinutes(f.dueTime, eventDurationMinutes || 60)}`
@@ -12631,7 +12629,7 @@ function EditDrawer(props: {
             <span className="df-detail-project-name"># {selectedProjectTitle}</span>
             <UiChevronDownIcon size={12} />
           </button>
-          {editDueDate((dueDate) => { set("dueDate", dueDate); props.onTaskUpdate(props.task!.id, { dueDate }); })}
+          {editDueDate((dueDate) => { set("dueDate", dueDate); props.onTaskUpdate(props.task!.id, { dueDate, dueDateSource: dueDate ? "manual" : undefined }); })}
           {!scheduleRange && <button ref={durationTriggerRef} className={`df-detail-pill-trevor ${durationPickerOpen ? "active" : ""}`} onClick={toggleDurationPicker}>
             <span>◷ {formatDuration(f.estimatedHours || 0.5)}</span>
             <UiChevronDownIcon size={12} />
@@ -12642,6 +12640,28 @@ function EditDrawer(props: {
           {taskLevelSelector("priority", importanceOptions)}
           {props.engagementEnabled && <Suspense fallback={null}><EngagementRating task={props.task} record={activeRecord} lang={props.lang} onUpdate={props.onTaskUpdate} /></Suspense>}
         </div>
+        </section>
+
+        {/* ── Sub-tasks ── */}
+        <section className="df-detail-subtasks-new">
+          <div className="df-detail-section-head">
+            <h3>{t(props.lang, "drawer.subtasks")}</h3>
+            <div className="df-detail-subtask-tools">
+              {props.aiEnabled && <IconButton
+                className={`ui-icon-button--borderless df-detail-ai-subtasks${props.subtaskAiLoading ? " loading" : ""}`}
+                icon={<UiSparklesIcon size={15} />}
+                title={props.lang === "zh" ? "AI 自动拆解" : "Break down with AI"}
+                label={props.lang === "zh" ? `使用 AI 拆解“${props.task.title}”` : `Break down “${props.task.title}” with AI`}
+                aria-busy={props.subtaskAiLoading}
+                disabled={props.subtaskAiLoading}
+                onClick={() => props.onGenerateSubtasks(props.task!.id)}
+              />}
+              <IconButton className="ui-icon-button--borderless" icon={<UiPlusIcon size={15} />} label={t(props.lang, "drawer.addSubtask")} onClick={() => void addSubtask()} />
+            </div>
+          </div>
+          <div className="df-subtask-list-new ui-divided-list">
+            {renderSubtaskRows(props.task.subtasks || [])}
+          </div>
         </section>
 
         <EditorActionRow>
@@ -12670,7 +12690,6 @@ function EditDrawer(props: {
               {INCOMPLETE_OUTCOMES.map((outcome, index) => <button key={outcome} type="button" role="menuitem" onClick={() => chooseIncompleteOutcome(outcome)}>{INCOMPLETE_LABELS[props.lang === "zh" ? "zh" : "en"][index]}</button>)}
             </div>}
           </div>}
-          <EditorRemove onClick={props.onDelete}>{t(props.lang, "drawer.remove")}</EditorRemove>
           <ActionDisclosure label={props.lang === "zh" ? "更多" : "More"}>
             {timelineLocation && <Button onClick={() => props.onLocateTimeline(timelineLocation.date, timelineLocation.startTime, timelineLocation.taskId)}>{props.lang === "zh" ? `跳转到时间轴 · ${timelineLocation.date} ${timelineLocation.startTime}` : `Go to timeline · ${timelineLocation.date} ${timelineLocation.startTime}`}</Button>}
             {props.onLocateTree && !props.task.completed && props.task.workflowStatus !== "done" && <Button onClick={() => props.onLocateTree?.(props.task!)}>{props.lang === "zh" ? "在 Tree 中查看任务" : "Go to task in Tree"}</Button>}
@@ -12680,35 +12699,37 @@ function EditDrawer(props: {
           </ActionDisclosure>
         </EditorActionRow>
 
-        {/* ── Scheduling: shown only for a task currently on the timeline ── */}
-        {isScheduled && <section className="df-detail-schedule-row df-detail-schedule-actions">
-          <div className={`df-detail-incomplete-menu${quickActionMenu === "reschedule" ? " open" : ""}`} onMouseEnter={() => {
-            if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
-            quickRescheduleHoverTimer.current = window.setTimeout(() => { setQuickActionMenu("reschedule"); quickRescheduleHoverTimer.current = null; }, 100);
-          }} onMouseLeave={() => {
-            if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
-            quickRescheduleHoverTimer.current = null;
-            setQuickActionMenu(null);
-          }} onFocus={() => setQuickActionMenu("reschedule")} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setQuickActionMenu(null); }} onKeyDown={(event) => { if (event.key === "Escape") { setQuickActionMenu(null); event.currentTarget.querySelector("button")?.focus(); } }}>
-            <button type="button" className="df-detail-pill-trevor action df-detail-incomplete-trigger" aria-haspopup="menu" aria-expanded={quickActionMenu === "reschedule"} onClick={() => {
+        <section className="df-detail-schedule-row df-detail-schedule-actions">
+          {isScheduled && <>
+            <div className={`df-detail-incomplete-menu${quickActionMenu === "reschedule" ? " open" : ""}`} onMouseEnter={() => {
+              if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
+              quickRescheduleHoverTimer.current = window.setTimeout(() => { setQuickActionMenu("reschedule"); quickRescheduleHoverTimer.current = null; }, 100);
+            }} onMouseLeave={() => {
               if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
               quickRescheduleHoverTimer.current = null;
-              setQuickActionMenu((open) => open === "reschedule" ? null : "reschedule");
-            }}>
-              <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v4l2 2"/><circle cx="6" cy="6" r="5"/></svg>
-              <span>{t(props.lang, "drawer.quickReschedule")}</span>
-              <svg className="df-detail-incomplete-chevron" viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 2l4 3-4 3" /></svg>
+              setQuickActionMenu(null);
+            }} onFocus={() => setQuickActionMenu("reschedule")} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setQuickActionMenu(null); }} onKeyDown={(event) => { if (event.key === "Escape") { setQuickActionMenu(null); event.currentTarget.querySelector("button")?.focus(); } }}>
+              <button type="button" className="df-detail-pill-trevor action df-detail-incomplete-trigger" aria-haspopup="menu" aria-expanded={quickActionMenu === "reschedule"} onClick={() => {
+                if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
+                quickRescheduleHoverTimer.current = null;
+                setQuickActionMenu((open) => open === "reschedule" ? null : "reschedule");
+              }}>
+                <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v4l2 2"/><circle cx="6" cy="6" r="5"/></svg>
+                <span>{t(props.lang, "drawer.quickReschedule")}</span>
+                <svg className="df-detail-incomplete-chevron" viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 2l4 3-4 3" /></svg>
+              </button>
+              {quickActionMenu === "reschedule" && <div className="df-detail-incomplete-options" role="menu" aria-label={props.lang === "zh" ? "快速改期选项" : "Quick reschedule options"}>
+                {quickRescheduleOptions.map((option) => <button key={option.date} type="button" role="menuitem" onClick={() => setCandidateReschedule(option.date)}>{props.lang === "zh" ? option.zh : option.en}</button>)}
+                <button type="button" role="menuitem" onClick={() => { setQuickActionMenu(null); setRescheduleDate(props.task!.plannedForDate || props.today); setRescheduleOpen(true); }}>{props.lang === "zh" ? "选择日期…" : "Choose a date…"}</button>
+              </div>}
+            </div>
+            <button className="df-detail-pill-trevor action" onClick={() => props.onTaskUpdate(props.task!.id, { scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, timelineRecords: (props.task!.timelineRecords || []).filter((record) => record.executionStatus !== "scheduled") })}>
+              <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3l-6 6M3 3l6 6"/></svg>
+              <span>{t(props.lang, "drawer.cancelSchedule")}</span>
             </button>
-            {quickActionMenu === "reschedule" && <div className="df-detail-incomplete-options" role="menu" aria-label={props.lang === "zh" ? "快速改期选项" : "Quick reschedule options"}>
-              {quickRescheduleOptions.map((option) => <button key={option.date} type="button" role="menuitem" onClick={() => setCandidateReschedule(option.date)}>{props.lang === "zh" ? option.zh : option.en}</button>)}
-              <button type="button" role="menuitem" onClick={() => { setQuickActionMenu(null); setRescheduleDate(props.task!.plannedForDate || props.today); setRescheduleOpen(true); }}>{props.lang === "zh" ? "选择日期…" : "Choose a date…"}</button>
-            </div>}
-          </div>
-          <button className="df-detail-pill-trevor action" onClick={() => props.onTaskUpdate(props.task!.id, { scheduledDate: undefined, scheduledStart: undefined, scheduledEnd: undefined, timelineRecords: (props.task!.timelineRecords || []).filter((record) => record.executionStatus !== "scheduled") })}>
-            <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3l-6 6M3 3l6 6"/></svg>
-            <span>{t(props.lang, "drawer.cancelSchedule")}</span>
-          </button>
-        </section>}
+          </>}
+          <EditorRemove onClick={props.onDelete}>{t(props.lang, "drawer.remove")}</EditorRemove>
+        </section>
 
         {isScheduled && rescheduleOpen && (
           <section className="df-detail-project-pick df-reschedule-editor">
@@ -12772,28 +12793,6 @@ function EditDrawer(props: {
             </div>
           </section>
         )}
-
-        {/* ── Sub-tasks ── */}
-        <section className="df-detail-subtasks-new">
-          <div className="df-detail-section-head">
-            <h3>{t(props.lang, "drawer.subtasks")}</h3>
-            <div className="df-detail-subtask-tools">
-              {props.aiEnabled && <IconButton
-                className={`ui-icon-button--borderless df-detail-ai-subtasks${props.subtaskAiLoading ? " loading" : ""}`}
-                icon={<UiSparklesIcon size={15} />}
-                title={props.lang === "zh" ? "AI 自动拆解" : "Break down with AI"}
-                label={props.lang === "zh" ? `使用 AI 拆解“${props.task.title}”` : `Break down “${props.task.title}” with AI`}
-                aria-busy={props.subtaskAiLoading}
-                disabled={props.subtaskAiLoading}
-                onClick={() => props.onGenerateSubtasks(props.task!.id)}
-              />}
-              <IconButton className="ui-icon-button--borderless" icon={<UiPlusIcon size={15} />} label={t(props.lang, "drawer.addSubtask")} onClick={() => void addSubtask()} />
-            </div>
-          </div>
-          <div className="df-subtask-list-new ui-divided-list">
-            {renderSubtaskRows(props.task.subtasks || [])}
-          </div>
-        </section>
 
         <EditorNotes key={props.task.id} lang={props.lang} value={f.details} onChange={(notes) => set("details", notes)}
           onCommit={(notes) => props.onTaskUpdate(props.task!.id, { notes })} />

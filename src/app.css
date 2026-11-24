@@ -10433,7 +10433,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   text-align: center;
 }
 #root .df-app .df-entity-editor .df-editor-date:hover { border-color: var(--accent-active); }
-#root .df-app .df-entity-editor .df-detail-section-head > .ui-icon-button { width: 34px; height: 34px; }
+#root .df-app .df-entity-editor .df-detail-section-head .df-notes-editor-actions > .ui-icon-button { width: 34px; height: 34px; }
 .df-habit-panel .df-entity-editor .df-detail-title-trevor { width: 100%; resize: none; }
 .df-habit-panel .df-entity-editor .df-detail-status-row { margin-bottom: 4px; }
 .df-habit-delete-status { flex-basis: 100%; color: var(--df-danger); font-size: 12px; }
@@ -10484,8 +10484,12 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   min-height: var(--detail-action-height);
   padding: 0;
 }
-.df-entity-editor .df-detail-subtasks-new,
 .df-entity-editor .df-detail-notes-new { padding: 10px 0; }
+.df-entity-editor .df-detail-subtasks-new {
+  padding: 10px 0;
+  border-block-start: 1px solid var(--paper-rule);
+  border-block-end: 0;
+}
 .df-entity-editor .df-detail-subtasks-new > .df-subtask-list-new {
   min-block-size: calc(2 * var(--detail-subtask-row-height));
 }
@@ -10522,6 +10526,8 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   background: color-mix(in srgb, var(--df-danger) 8%, transparent);
 }
 .df-entity-editor .df-detail-incomplete-options { min-width: max(100%, 190px); }
+.df-entity-editor .df-detail-schedule-actions > .df-detail-remove { margin-inline-start: auto; }
+.df-entity-editor .df-detail-schedule-actions ~ .df-detail-notes-new { border-block-start: 1px solid var(--paper-rule); }
 @media (max-width: 640px), (pointer: coarse) {
   .df-entity-editor { --detail-action-height: 44px; }
   .df-entity-editor .df-detail-status-row > .ui-action-disclosure > summary { min-width: 40px; }
@@ -10760,8 +10766,24 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   gap: 14px;
   padding: 24px;
 }
-.ui-modal-overlay:has(> .df-task-schedule-editor) {
+.ui-modal-overlay:has(> :is(.df-task-schedule-editor, .df-notes-editor-modal)) {
   background: rgb(0 0 0 / 46%);
+}
+.df-notes-editor-modal {
+  width: min(740px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  border-radius: var(--paper-radius-soft);
+  box-shadow: var(--paper-float-shadow);
+}
+.df-notes-editor-modal textarea {
+  height: clamp(160px, 46dvh, 480px);
+  min-height: 0;
+  resize: none;
+}
+.df-notes-editor-modal textarea:focus-visible {
+  outline: 1px solid var(--border-focus);
+  outline-offset: 2px;
 }
 .df-task-schedule-editor {
   width: min(360px, 100%);
