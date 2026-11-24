@@ -1,5 +1,11 @@
 # NavoPath 更新日志
 
+## 2026-11-25
+
+### 新增
+
+- 社区插件市场新增 Super Productivity Sync，可在 NavoPath 与 Super Productivity 之间双向同步项目和任务；需要 NavoPath Beta 91 或更新版本。
+
 ## 2026-11-23
 
 ### 改进
@@ -943,6 +949,12 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-25
+
+### Added
+
+- Added Super Productivity Sync to the community plugin market for bidirectional project and task sync between NavoPath and Super Productivity; requires NavoPath Beta 91 or newer.
 
 ## 2026-11-23
 

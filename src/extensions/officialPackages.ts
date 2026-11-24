@@ -12,11 +12,12 @@ import text10 from "../../public/extensions/packages/pomodoro.navopackage.json?r
 import text11 from "../../public/extensions/packages/quick-capture.navopackage.json?raw";
 import text12 from "../../public/extensions/packages/sage.navopackage.json?raw";
 import text13 from "../../public/extensions/packages/schedule-templates.navopackage.json?raw";
-import text14 from "../../public/extensions/packages/tree.navopackage.json?raw";
-import text15 from "../../public/extensions/packages/typewriter.navopackage.json?raw";
-import text16 from "../../public/extensions/packages/weather.navopackage.json?raw";
+import text14 from "../../public/extensions/packages/super-productivity-sync.navopackage.json?raw";
+import text15 from "../../public/extensions/packages/tree.navopackage.json?raw";
+import text16 from "../../public/extensions/packages/typewriter.navopackage.json?raw";
+import text17 from "../../public/extensions/packages/weather.navopackage.json?raw";
 import catalog from "../../public/extensions/catalog.json";
 import type { ExtensionPackage } from "./types";
 export const officialCatalog = catalog;
-export const officialPackageTexts: Record<string, string> = { "class-timetable": text0, "daily-overview": text1, "graphite": text2, "kanban": text3, "linen": text4, "list": text5, "matrix": text6, "metrics": text7, "minimal": text8, "ocean": text9, "pomodoro": text10, "quick-capture": text11, "sage": text12, "schedule-templates": text13, "tree": text14, "typewriter": text15, "weather": text16 };
+export const officialPackageTexts: Record<string, string> = { "class-timetable": text0, "daily-overview": text1, "graphite": text2, "kanban": text3, "linen": text4, "list": text5, "matrix": text6, "metrics": text7, "minimal": text8, "ocean": text9, "pomodoro": text10, "quick-capture": text11, "sage": text12, "schedule-templates": text13, "super-productivity-sync": text14, "tree": text15, "typewriter": text16, "weather": text17 };
 export const officialPackages: Record<string, ExtensionPackage> = Object.fromEntries(Object.entries(officialPackageTexts).map(([id,text])=>[id,JSON.parse(text) as ExtensionPackage]));

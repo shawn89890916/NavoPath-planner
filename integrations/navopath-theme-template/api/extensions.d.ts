@@ -1,3 +1,5 @@
+import type { PluginMcpDeclaration } from "../../shared/pluginMcp";
+
 export type ExtensionKind = "plugin" | "theme";
 export type ExtensionPlatform = "desktop" | "web" | "mobile";
 export interface ThemeOption { key: string; label: string; type: "color" | "number" | "string" | "boolean"; variable: string; default: string | number | boolean; min?: number; max?: number }
@@ -8,6 +10,7 @@ export interface ExtensionManifest {
   /** Optional square, single-color SVG used by the market and host launcher. */
   icon?: string;
   repository?: string; license?: string;
+  mcp?: PluginMcpDeclaration;
 }
 export interface PackageFile { encoding: "utf8" | "base64"; data: string }
 export interface ExtensionPackage { manifest: ExtensionManifest; files: Record<string, PackageFile> }

@@ -1,3 +1,4 @@
+import type { PluginMcpAccess } from "../shared/pluginMcp";
 import type { ExtensionPreferences } from "./extensions";
 export type Category = "exam" | "uk" | "us" | "essay" | "materials" | "project" | "personal";
 export type Priority = "high" | "medium" | "low";
@@ -168,6 +169,8 @@ export interface TaskRecurrence {
 
 export interface Task {
   fixedCourse?: boolean;
+  /** Backing resource for tasks synchronized through CalDAV. */
+  caldav?: { file: string; uid: string; ics: string; projection: string; endDate?: string; endTime?: string };
   /** Engagement for tasks without execution records. */
   engagement?: number;
   id: string;
@@ -221,6 +224,9 @@ export interface LongTermTask {
 }
 
 export interface CalendarEvent {
+  calendarKind?: "appointment";
+  caldav?: { file: string; uid: string; ics: string; projection: string; endDate?: string; endTime?: string };
+  updatedAt?: string;
   fixedCourse?: boolean;
   id: string;
   title: string;
@@ -530,6 +536,7 @@ export interface Settings {
   theme: "light" | "dark";
   baseMode?: "light" | "dark" | "system";
   extensions?: ExtensionPreferences;
+  extensionMcpAccess?: PluginMcpAccess;
   extensionConfigs?: Record<string, Record<string, unknown>>;
   extensionConfigUpdatedAt?: Record<string, string>;
   typographyStyle: "editorial" | "balanced" | "sans";
@@ -700,9 +707,9 @@ export interface PlannerApi {
   }>;
   signOut?: () => Promise<void>;
   deleteAccount?: () => Promise<void>;
-  sendPasswordResetEmail?: (email: string) => Promise<{ message?: string }>;
-  resetPassword?: (newPassword: string) => Promise<{ success: boolean; message?: string }>;
-  clearAuthCallbackUrl?: () => void;
+  sendPasswordResetEmail?: (email: string) => Promise<void>;
+  completePasswordRecovery?: () => Promise<boolean>;
+  resetPassword?: (newPassword: string) => Promise<boolean>;
   getData: () => Promise<PlannerData>;
   saveData: (data: PlannerData) => Promise<PlannerData>;
   subscribeToRemoteChanges?: (listener: (payload: { data: PlannerData; settings: Settings; revision?: number }) => void) => () => void;
@@ -714,6 +721,9 @@ export interface PlannerApi {
   createMcpToken?: (name: string) => Promise<{ token: string; metadata: McpTokenMetadata }>;
   revokeMcpToken?: (id: string) => Promise<void>;
   listSyncBridgeStatuses?: () => Promise<SyncBridgeStatus[]>;
+  getCalDavCredential?: () => Promise<{ username: string; timezone: string } | null>;
+  createCalDavCredential?: () => Promise<{ username: string; password: string; timezone: string }>;
+  revokeCalDavCredential?: () => Promise<void>;
   listCalendarFeedTokens?: () => Promise<CalendarFeedTokenMetadata[]>;
   createCalendarFeedToken?: () => Promise<{ token: string; metadata: CalendarFeedTokenMetadata }>;
   revokeCalendarFeedToken?: (id: string) => Promise<void>;
