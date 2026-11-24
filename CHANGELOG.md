@@ -2,6 +2,12 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 79
+
+#### 改进
+
+- 任务状态和排程按钮等宽铺满各自的一行，子任务排在操作区与备注之间。
+
 ### 1.7.0 Beta 78
 
 #### 改进
@@ -977,6 +983,12 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 79
+
+#### Improvements
+
+- Distribute task status and scheduling actions evenly across each row and place Subtasks between the actions and Notes.
 
 ### 1.7.0 Beta 78
 

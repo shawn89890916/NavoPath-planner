@@ -10488,7 +10488,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-entity-editor .df-detail-subtasks-new {
   padding: 10px 0;
   border-block-start: 1px solid var(--paper-rule);
-  border-block-end: 0;
 }
 .df-entity-editor .df-detail-subtasks-new > .df-subtask-list-new {
   min-block-size: calc(2 * var(--detail-subtask-row-height));
@@ -10526,8 +10525,17 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   background: color-mix(in srgb, var(--df-danger) 8%, transparent);
 }
 .df-entity-editor .df-detail-incomplete-options { min-width: max(100%, 190px); }
-.df-entity-editor .df-detail-schedule-actions > .df-detail-remove { margin-inline-start: auto; }
-.df-entity-editor .df-detail-schedule-actions ~ .df-detail-notes-new { border-block-start: 1px solid var(--paper-rule); }
+.df-entity-editor .df-task-action-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch;
+}
+.df-task-action-row.df-detail-schedule-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.df-task-action-row > .df-detail-remove:only-child { grid-column: 3; }
+.df-task-action-row .df-detail-pill-trevor > span { min-width: 0; overflow-wrap: anywhere; }
+.df-entity-editor .df-task-action-row > .ui-action-disclosure { min-width: 0; margin-inline-start: 0; }
+.df-task-action-row > .ui-action-disclosure > summary { height: 100%; }
 @media (max-width: 640px), (pointer: coarse) {
   .df-entity-editor { --detail-action-height: 44px; }
   .df-entity-editor .df-detail-status-row > .ui-action-disclosure > summary { min-width: 40px; }

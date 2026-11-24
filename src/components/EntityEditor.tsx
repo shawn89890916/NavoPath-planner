@@ -27,8 +27,8 @@ export function EditorTitle({ label, value, ...props }: ComponentProps<"textarea
   return <textarea {...props} ref={ref} className="df-detail-title-trevor" aria-label={label} value={value} rows={1} placeholder={label} spellCheck={false} />;
 }
 
-export function EditorActionRow({ children }: { children: ReactNode }) {
-  return <section className="df-detail-status-row">{children}</section>;
+export function EditorActionRow({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <section className={`df-detail-status-row ${className}`.trim()}>{children}</section>;
 }
 
 export function EditorRemove({ children, ...props }: ComponentProps<typeof Button>) {

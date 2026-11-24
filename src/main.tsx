@@ -12642,29 +12642,7 @@ function EditDrawer(props: {
         </div>
         </section>
 
-        {/* ── Sub-tasks ── */}
-        <section className="df-detail-subtasks-new">
-          <div className="df-detail-section-head">
-            <h3>{t(props.lang, "drawer.subtasks")}</h3>
-            <div className="df-detail-subtask-tools">
-              {props.aiEnabled && <IconButton
-                className={`ui-icon-button--borderless df-detail-ai-subtasks${props.subtaskAiLoading ? " loading" : ""}`}
-                icon={<UiSparklesIcon size={15} />}
-                title={props.lang === "zh" ? "AI 自动拆解" : "Break down with AI"}
-                label={props.lang === "zh" ? `使用 AI 拆解“${props.task.title}”` : `Break down “${props.task.title}” with AI`}
-                aria-busy={props.subtaskAiLoading}
-                disabled={props.subtaskAiLoading}
-                onClick={() => props.onGenerateSubtasks(props.task!.id)}
-              />}
-              <IconButton className="ui-icon-button--borderless" icon={<UiPlusIcon size={15} />} label={t(props.lang, "drawer.addSubtask")} onClick={() => void addSubtask()} />
-            </div>
-          </div>
-          <div className="df-subtask-list-new ui-divided-list">
-            {renderSubtaskRows(props.task.subtasks || [])}
-          </div>
-        </section>
-
-        <EditorActionRow>
+        <EditorActionRow className="df-task-action-row">
           <button className={`df-detail-pill-trevor action ${props.task.completed ? "green" : ""}`} onClick={props.onToggleDone}>
             <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 6l3 3 5-6"/></svg>
             <span>{t(props.lang, "drawer.complete")}</span>
@@ -12699,7 +12677,7 @@ function EditDrawer(props: {
           </ActionDisclosure>
         </EditorActionRow>
 
-        <section className="df-detail-schedule-row df-detail-schedule-actions">
+        <section className="df-detail-schedule-row df-detail-schedule-actions df-task-action-row">
           {isScheduled && <>
             <div className={`df-detail-incomplete-menu${quickActionMenu === "reschedule" ? " open" : ""}`} onMouseEnter={() => {
               if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
@@ -12793,6 +12771,28 @@ function EditDrawer(props: {
             </div>
           </section>
         )}
+
+        {/* ── Sub-tasks ── */}
+        <section className="df-detail-subtasks-new">
+          <div className="df-detail-section-head">
+            <h3>{t(props.lang, "drawer.subtasks")}</h3>
+            <div className="df-detail-subtask-tools">
+              {props.aiEnabled && <IconButton
+                className={`ui-icon-button--borderless df-detail-ai-subtasks${props.subtaskAiLoading ? " loading" : ""}`}
+                icon={<UiSparklesIcon size={15} />}
+                title={props.lang === "zh" ? "AI 自动拆解" : "Break down with AI"}
+                label={props.lang === "zh" ? `使用 AI 拆解“${props.task.title}”` : `Break down “${props.task.title}” with AI`}
+                aria-busy={props.subtaskAiLoading}
+                disabled={props.subtaskAiLoading}
+                onClick={() => props.onGenerateSubtasks(props.task!.id)}
+              />}
+              <IconButton className="ui-icon-button--borderless" icon={<UiPlusIcon size={15} />} label={t(props.lang, "drawer.addSubtask")} onClick={() => void addSubtask()} />
+            </div>
+          </div>
+          <div className="df-subtask-list-new ui-divided-list">
+            {renderSubtaskRows(props.task.subtasks || [])}
+          </div>
+        </section>
 
         <EditorNotes key={props.task.id} lang={props.lang} value={f.details} onChange={(notes) => set("details", notes)}
           onCommit={(notes) => props.onTaskUpdate(props.task!.id, { notes })} />
