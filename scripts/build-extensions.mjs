@@ -3,8 +3,10 @@ import { resolve, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { build } from 'esbuild';
-import { validateManifest, publicHttps } from '../src/extensions/packages.ts';
+import { tsImport } from 'tsx/esm/api';
 import { fetchExtensionPackage } from '../electron/extension-download.cjs';
+
+const { validateManifest, publicHttps } = await tsImport('../src/extensions/packages.ts', import.meta.url);
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const base = 'https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions';
