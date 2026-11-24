@@ -52,7 +52,7 @@ export function taskBlockStyle(options: TaskBlockStyleOptions): CSSProperties {
     ...options.style,
     ...(options.engagement === undefined ? {} : {
       "--task-engagement": `${options.engagement}%`,
-      borderLeftColor: "var(--task-border)",
+      borderLeftColor: "transparent",
     }),
   } as CSSProperties;
 }

@@ -13092,18 +13092,28 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: inherit;
   corner-shape: var(--corner-shape, squircle);
 }
-#root .df-app .df-task-block[data-task-appearance][data-engagement] {
+#root .df-app.mode-execute .df-timeline-panel .df-task-block[data-task-appearance]:not(.df-course-background)[data-engagement] {
   /* Keep the neutral track behind the stripe in compact multi-day views. */
   border-left-width: var(--task-project-accent-size, 2px);
+  background-image: linear-gradient(
+    to bottom,
+    var(--task-project-color) 0 var(--task-engagement),
+    transparent var(--task-engagement) 100%
+  );
+  background-position: left top;
+  background-size: var(--task-project-accent-size, 4px) 100%;
+  background-repeat: no-repeat;
+  background-origin: border-box;
+  background-clip: border-box;
 }
 .df-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent {
   top: -1px;
   bottom: -1px;
   left: calc(-1 * var(--task-project-accent-size, 2px));
   width: var(--task-project-accent-size, 2px);
-  border-radius: var(--radius-detail) 0 0 var(--radius-detail);
-  background: linear-gradient(to bottom, var(--task-project-color) 0 var(--task-engagement), transparent var(--task-engagement) 100%);
-  opacity: 1;
+  border-radius: 0;
+  background: transparent;
+  opacity: 0;
   pointer-events: auto;
 }
 .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--bottom {
