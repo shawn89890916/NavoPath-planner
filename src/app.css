@@ -13156,28 +13156,28 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-app .df-task-block[data-task-appearance]:hover {
   border-color: var(--task-border-hover);
   border-left-color: var(--task-project-color, var(--accent-active));
-  background: var(--task-bg);
+  background-color: var(--task-bg);
   box-shadow: none;
   transform: none;
 }
 .df-app .df-task-block[data-task-appearance]:focus-within {
   border-color: var(--task-border-hover);
   border-left-color: var(--task-project-color, var(--accent-active));
-  background: var(--task-bg);
+  background-color: var(--task-bg);
   box-shadow: none;
   transform: none;
 }
 .navo-demo-app .df-task-block[data-task-appearance]:hover {
   border-color: var(--task-border-hover);
   border-left-color: var(--task-project-color, var(--accent-active));
-  background: var(--task-bg);
+  background-color: var(--task-bg);
   box-shadow: none;
   transform: none;
 }
 .navo-demo-app .df-task-block[data-task-appearance]:focus-within {
   border-color: var(--task-border-hover);
   border-left-color: var(--task-project-color, var(--accent-active));
-  background: var(--task-bg);
+  background-color: var(--task-bg);
   box-shadow: none;
   transform: none;
 }
@@ -13191,14 +13191,14 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-app .df-task-block[data-task-appearance].is-selected {
   border-color: var(--task-selected-border);
   border-left-color: var(--task-project-color, var(--accent-active));
-  background: var(--task-bg);
+  background-color: var(--task-bg);
   box-shadow: none;
   transform: none;
 }
 .navo-demo-app .df-task-block[data-task-appearance].is-selected {
   border-color: var(--task-selected-border);
   border-left-color: var(--task-project-color, var(--accent-active));
-  background: var(--task-bg);
+  background-color: var(--task-bg);
   box-shadow: none;
   transform: none;
 }
@@ -13211,7 +13211,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-app .df-task-block[data-task-appearance].is-dragging {
   border-color: var(--task-selected-border);
   border-left-color: var(--task-project-color, var(--accent-active));
-  background: var(--task-bg);
+  background-color: var(--task-bg);
   box-shadow: none;
   transform: none;
   opacity: .9;
@@ -13219,7 +13219,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .navo-demo-app .df-task-block[data-task-appearance].is-dragging {
   border-color: var(--task-selected-border);
   border-left-color: var(--task-project-color, var(--accent-active));
-  background: var(--task-bg);
+  background-color: var(--task-bg);
   box-shadow: none;
   transform: none;
   opacity: .9;
@@ -15659,7 +15659,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
 }
 .df-app .df-task-block[data-task-appearance].is-checked {
   opacity: 1;
-  background: var(--task-bg);
+  background-color: var(--task-bg);
 }
 /* ===== Planning Time Allocation Metrics ===== */
 /* Single transparent hit disk on top of the donut. It is the ONLY element
@@ -18522,7 +18522,8 @@ body.df-unified-dragging .df-unified-drag-overlay {
 #root .df-app.mode-execute .df-timeline-panel .df-task-block[data-task-appearance]:not(.df-course-background) {
   /* Project color annotates the active theme surface. */
   border-left-color: var(--task-project-color);
-  background: var(--task-bg);
+  /* Keep the shared engagement stripe image visible over the task surface. */
+  background-color: var(--task-bg);
 }
 /* The pointer overlay is the actual candidate row, retained as white paper
    even after it leaves the candidate-list selector above. */

@@ -2,6 +2,12 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 94
+
+#### 修复
+
+- 修复时间轴任务块表面样式覆盖投入度色条渐变的问题。
+
 ### 1.7.0 Beta 93
 
 #### 改进
@@ -1073,6 +1079,12 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 94
+
+#### Fixed
+
+- Prevent the timeline task surface style from hiding the engagement stripe gradient.
 
 ### 1.7.0 Beta 93
 
