@@ -2,6 +2,13 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 88
+
+#### 改进
+
+- 搜索面板保持工作区亮度，搜索结果与通知列表使用单线分隔。统一设置圆角的默认值为 12px，并修正搜索结果行圆角。
+- 设置搜索框、投入度任务色条和强调色预览遵循统一圆角。移除账户信息下方分隔线，输入框聚焦时保留单层边界。
+
 ### 1.7.0 Beta 87
 
 #### 改进
@@ -1036,6 +1043,13 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 88
+
+#### Improvements
+
+- Keep the workspace bright behind Search and separate search results and notifications with single-line rules. Set the shared default corner radius to 12px and remove the unused rounding on search rows.
+- Apply the shared radius to settings search, effort task stripes and the accent preview. Remove the divider under account details and keep field focus to one border.
 
 ### 1.7.0 Beta 87
 

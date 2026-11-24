@@ -5109,7 +5109,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   position: relative;
   min-height: 50px;
   padding-left: 28px;
-  border-bottom: 0;
+  border-bottom: 1px solid var(--paper-rule);
 }
 .df-timeline-draft-sheet input {
   height: 50px;
@@ -10882,17 +10882,18 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   overflow: auto;
   display: grid;
   gap: 0;
-  padding: 8px;
+  padding: 8px 20px;
 }
-.df-command-results button {
+#root .df-app .df-command-results button {
   min-height: 52px;
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   padding: 9px 10px;
-  border: 1px solid var(--paper-rule);
-  border-radius: var(--radius-control);
+  border: 0;
+  border-bottom: 1px solid var(--paper-rule);
+  border-radius: 0;
   background: transparent;
   color: var(--text-main);
   text-align: left;
@@ -10901,6 +10902,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-command-results button:hover {
   background: color-mix(in srgb, var(--surface-main) 93%, var(--accent-active) 7%);
 }
+.df-command-results button:last-of-type { border-bottom: 0; }
 .df-command-results button:focus-visible {
   background: color-mix(in srgb, var(--surface-main) 93%, var(--accent-active) 7%);
   outline: 1px solid var(--accent-active);
@@ -14687,7 +14689,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --space-6: 32px;
   --radius-control: var(--radius-card);
   /* Workspace Appearance owns the radius shared by cards, controls, and overlays. */
-  --radius-card: var(--workspace-corner-radius, 18px);
+  --radius-card: var(--workspace-corner-radius, 12px);
   --radius-detail: calc(var(--radius-card) / 4);
   --radius-overlay: var(--radius-card);
   --radius-round: var(--radius-card);
@@ -18993,7 +18995,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   gap: 14px;
   min-width: 0;
   padding: 4px 0 16px;
-  border-bottom: 1px solid var(--paper-rule);
+  border-bottom: 0;
 }
 #root .df-app .df-settings-profile-hero .df-settings-avatar {
   flex: 0 0 56px;
@@ -19094,7 +19096,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   height: 22px;
   flex: 0 0 22px;
   border: 2px solid color-mix(in srgb, var(--project-color) 55%, var(--text-faint));
-  border-radius: 50%;
+  border-radius: var(--radius-detail);
   background: var(--project-color);
 }
 #root .df-app .df-theme-accent-setting .df-project-color-picker {
@@ -20266,11 +20268,8 @@ body[data-navopath-base-theme="light"],
 #root .df-app .df-proactive-center-layer[data-workspace-backdrop] { z-index: 80; }
 #root .df-app [data-workspace-backdrop][data-motion-closing] { pointer-events: none; }
 
-/* Keep text field focus to one colored border, without a second inset ring. */
-#root .df-app :is(input:not([type=checkbox]):not([type=color]):not([type=file]):not([type=range]), select, textarea):focus {
+/* One field border is enough; the root ID keeps legacy, more-specific field rules from adding a second ring. */
+#root .df-app :is(input:not([type=checkbox]):not([type=color]):not([type=file]):not([type=range]), select, textarea):is(:focus, :focus-visible) {
   outline: none;
   box-shadow: none;
-}
-#root .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--left {
-  border-radius: var(--radius-detail) 0 0 var(--radius-detail);
 }
