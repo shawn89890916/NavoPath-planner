@@ -2,12 +2,17 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 90
+
+#### 修复
+
+- 设置首页的分类选项在竖屏与 Dock 布局中采用单线分隔；移除 App Updates 区域的重复分隔线。
+
 ### 1.7.0 Beta 89
 
 #### 修复
 
 - 投入度任务色条按任务块圆角边界裁切；关闭投入度后重新开启，原有评分仍会恢复。
-- 设置首页的分类选项在竖屏与 Dock 布局中采用单线分隔；移除 App Updates 区域的重复分隔线。
 
 ### 1.7.0 Beta 88
 
@@ -1051,12 +1056,17 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 90
+
+#### Fixed
+
+- Use single-line dividers for settings categories in portrait and Dock layouts, and remove the duplicate rule in App Updates.
+
 ### 1.7.0 Beta 89
 
 #### Fixed
 
 - Clip timeline engagement stripes to task block corners. Existing ratings remain available after engagement is disabled and re-enabled.
-- Use single-line dividers for settings categories in portrait and Dock layouts, and remove the duplicate rule in App Updates.
 
 ### 1.7.0 Beta 88
 
