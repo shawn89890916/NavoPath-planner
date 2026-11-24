@@ -23,10 +23,10 @@ describe("portrait interaction contracts", () => {
 
   it("uses one detail drawer to create tasks, projects, and habits", () => {
     expect(main).not.toContain("quickAddDetail");
-    expect(main).toContain('if (!props.editing && props.type !== "event")');
-    expect(main).toContain('className="df-drawer df-task-detail df-quick-add-detail"');
+    expect(main).toContain('className="df-drawer df-task-detail df-entity-editor df-create-editor"');
     expect(main).toContain('(["task", "project", "habit"] as const).map');
-    expect(main).toContain('isTask && <section className="df-detail-time-range"');
+    expect(main).toContain('isTask && !props.editing && <section className="df-detail-time-range"');
+    expect(main).toContain('className="df-create-editor-actions"');
   });
 
   it("gives portrait users a direct schedule action and teaches long-press in onboarding", () => {

@@ -2,6 +2,13 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 80
+
+#### 改进
+
+- 统一任务、项目和习惯创建页的布局，让标题、项目、截止日期、备注及创建按钮与编辑页一致。项目创建可直接设置颜色和重要度。
+- 完整习惯创建页集中显示日期、追踪方式和星期设置，在主动创建后才保存。日程编辑使用同一套日期、备注和操作栏。
+
 ### 1.7.0 Beta 79
 
 #### 改进
@@ -983,6 +990,13 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 80
+
+#### Improvements
+
+- Give task, project, and habit creation the same layout and controls as their editors. Set the project color and importance directly when creating a project.
+- The full habit creation form groups dates, tracking, and weekdays, and saves when you choose Create. Event editing uses the same date, notes, and action controls.
 
 ### 1.7.0 Beta 79
 
