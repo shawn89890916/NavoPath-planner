@@ -3533,7 +3533,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   cursor: pointer;
   transition: var(--nv-transition);
 }
-.df-timeline-3day-date {
+#root .df-app .df-timeline-3day-date {
   flex: 1 1 0;
   min-width: 0;
   text-align: center;
@@ -3542,7 +3542,26 @@ body:has(:active)::-webkit-scrollbar-thumb {
   flex-direction: row;
   align-items: baseline;
   gap: 4px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
 }
+#root .df-app .df-timeline-3day-date:is(:hover, :active, :focus-visible) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+#root .df-app .df-timeline-3day-date:is(:hover, :focus-visible) :is(.df-timeline-3day-date-num, .df-timeline-3day-date-wd) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+#root .df-app .df-timeline-3day-date:focus-visible {
+  outline: 1px solid var(--border-focus);
+  outline-offset: -2px;
+}
+
 .df-day-col {
   min-width: 0;
 }
@@ -7554,19 +7573,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 }
 #root .df-app .df-brand-dock-option:disabled {
   opacity: .5;
-}
-#root .df-app .df-panel-title > div > .df-candidate-collapse {
-  border: 0;
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-}
-#root .df-app .df-panel-title > div > .df-candidate-collapse:hover {
-  background: var(--paper-note);
-}
-#root .df-app .df-panel-title > div > .df-candidate-collapse:focus-visible {
-  outline: 2px solid var(--border-focus);
-  outline-offset: 2px;
 }
 .df-icon-action {
   transition: all .15s ease;
@@ -13478,7 +13484,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   text-decoration-thickness: 1px;
   color: var(--task-meta-color);
 }
-.df-app .df-task-block[data-task-appearance].completed .df-task-block-title {
+.df-app .df-task-block[data-task-appearance]:is(.completed, [data-resolved-unfinished="true"]) .df-task-block-title {
   text-decoration: line-through;
   text-decoration-thickness: 1px;
   color: var(--task-meta-color);
@@ -16808,9 +16814,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
     min-width: 44px;
     height: 44px;
     min-height: 44px;
-  }
-  #root .df-app .df-candidate-panel .df-candidate-collapse {
-    display: none;
   }
   #root .df-app .df-candidate-panel .df-ai-plan-title-tools {
     flex: 0 0 auto;

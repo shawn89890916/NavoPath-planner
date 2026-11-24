@@ -2,6 +2,16 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 86
+
+#### 改进
+
+- 将收起侧栏移入任务列表的「更多」菜单。周视图和三天视图支持点击日期打开当天日视图。
+
+#### 修复
+
+- 未完成的任务重新安排并完成后，时间轴上的旧记录标题也会划掉，执行历史仍保留。
+
 ### 1.7.0 Beta 85
 
 #### 修复
@@ -1016,6 +1026,16 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 86
+
+#### Improvements
+
+- Move Collapse Panel into the Tasks More menu. Click a date in Week or 3-Day view to open it in Day view.
+
+#### Fixes
+
+- After an unfinished task is rescheduled and completed, its earlier timeline entries also show the completed title styling while retaining their execution history.
 
 ### 1.7.0 Beta 85
 

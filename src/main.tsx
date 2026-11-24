@@ -3684,6 +3684,10 @@ if (cached?.data && cached?.settings) {
     return occurrenceToTaskMap.get(id) || recordToTaskMap.get(id);
   }
 
+  function isResolvedUnfinished(task: Task) {
+    return task.executionStatus === "returned_unfinished" && resolveOwningTask(task)?.completed === true;
+  }
+
   function resolveTimelineRecordId(displayId: string) {
     return explicitVisibleTimeline.sourceIdByDisplayId.get(displayId) || displayId;
   }
@@ -6981,15 +6985,17 @@ if (cached?.data && cached?.settings) {
     });
   }
 
-  function openMonthDate(date: string, dayTasks: Task[]) {
+  function openTimelineDay(date: string, dayTasks?: Task[]) {
     if (drawerOpen || drag || suppressBlockClickRef.current) return;
-    const firstTimed = dayTasks.find((task) => task.scheduledStart);
+    const focus = dayTasks
+      ? { startTime: dayTasks.find((task) => task.scheduledStart)?.scheduledStart || minutesToTime(dayStartHour * 60) }
+      : currentTimelineViewportFocus();
     setMonthQuickAdd(null);
     setSelectedDate(date);
     setVisibleTimelineDate(date);
     setTimelineView("daily");
     setCompactExecuteView("schedule");
-    requestTimelineFocus({ date, startTime: firstTimed?.scheduledStart || minutesToTime(dayStartHour * 60), source: "schedule" });
+    requestTimelineFocus({ ...focus, date, source: "schedule" });
   }
 
   async function moveTaskToMonthDate(display: Task, date: string) {
@@ -9038,6 +9044,7 @@ if (cached?.data && cached?.settings) {
   const shelfPaneVisible = !fullscreen
     && (mobileExecution ? candidateDrawerOpen : !candidatePanelCollapsed && (!compactLayout || narrowSplitLayout || compactExecuteView === "tasks"));
   const taskPaneVisible = shelfPaneVisible && !shelfView && !taskHistoryOpen;
+  const canCollapseCandidatePanel = !compactLayout && !mobileExecution && timelineView !== "daily";
   const guideRowVisible = taskPaneVisible && Boolean(onboardingTask && visibleCandidates.some((task) => task.id === onboardingTask.id));
   const tasksGuideAnchor = mobileExecution && !candidateDrawerOpen ? candidateTriggerRef
     : candidatePanelCollapsed ? candidateExpandRef : shelfPaneVisible ? shelfTitleRef : undefined;
@@ -9430,16 +9437,14 @@ if (cached?.data && cached?.settings) {
                     </span>}
                   </span>
                 )}
-                {!productDemo && <ActionDisclosure label={lang === "zh" ? "更多候选操作" : "More task options"}>
-                  <Button variant="ghost" aria-pressed={showScheduledCandidates} onClick={() => setShowScheduledCandidates((show) => !show)}>
+                {(!productDemo || canCollapseCandidatePanel) && <ActionDisclosure label={lang === "zh" ? "更多候选操作" : "More task options"}>
+                  {!productDemo && <Button variant="ghost" aria-pressed={showScheduledCandidates} onClick={() => setShowScheduledCandidates((show) => !show)}>
                     {lang === "zh" ? "显示已安排" : "Show scheduled"}
-                  </Button>
+                  </Button>}
+                  {canCollapseCandidatePanel && <Button variant="ghost" onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }}>{t(lang, "candidate.collapse")}</Button>}
                 </ActionDisclosure>}
                 </>}
                 {mobileExecution && <CloseButton className="df-mobile-candidate-close" label={lang === "zh" ? "关闭候选任务" : "Close candidates"} onClick={closeCandidateDrawer} />}
-                {!mobileExecution && (timelineView === "3day" || timelineView === "weekly" || timelineView === "month") && (
-                  <button className="df-icon-action df-candidate-collapse" data-tip={t(lang, "candidate.collapse")} aria-label={t(lang, "candidate.collapse")} onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }}>«</button>
-                )}
               </>
             }
             />
@@ -9688,11 +9693,14 @@ if (cached?.data && cached?.settings) {
                             const isToday = colDate === today;
                             const dateObj = new Date(`${colDate}T00:00:00`);
                             return (
-                              <div key={colDate} data-date={colDate} className={`df-timeline-3day-date${isToday ? " today" : ""}`}>
+                              <button type="button" key={colDate} data-date={colDate} className={`df-timeline-3day-date${isToday ? " today" : ""}`}
+                                aria-current={isToday ? "date" : undefined}
+                                aria-label={dateObj.toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US", { dateStyle: "full" })}
+                                onClick={() => openTimelineDay(colDate)}>
                                 <span className="df-timeline-3day-date-num">{dateObj.getDate()}</span>
                                 <span className="df-timeline-3day-date-sep"></span>
                                 <span className="df-timeline-3day-date-wd">{weekdayShort[dateObj.getDay()]}</span>
-                              </div>
+                              </button>
                             );
                           })}
                         </div>
@@ -9757,7 +9765,7 @@ if (cached?.data && cached?.settings) {
                                 )}
                                 {allDayDragDate === colDate && drag && draggedTask && <AllDayDropPreview task={draggedTask} projects={projects} lang={lang} />}
                                 {adTasks.map((task) => (
-                                  <AllDayBlock engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
+                                  <AllDayBlock resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
                                 ))}
                               </div>
                             );
@@ -9986,7 +9994,7 @@ if (cached?.data && cached?.settings) {
                                   }
                                   const isPreview = previewIdByClonedId.has(task.id);
                                   return (
-                                    <TimeBlock blockRef={returnGuideAnchorFor(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
+                                    <TimeBlock blockRef={returnGuideAnchorFor(task)} resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
                                       if (!suppressBlockClickRef.current) openTaskEdit(task);
                                     }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
                                       createProjectForTask(task.id, title);
@@ -10086,14 +10094,12 @@ if (cached?.data && cached?.settings) {
                   );
                 })() : timelineView === "month" ? (
                   <Suspense fallback={null}><MonthView weeks={monthWeeks} tasks={tasks} projects={projects}
-                    schedules={[...explicitVisibleTimeline.tasks, ...recurrenceVisibleTimeline.tasks, ...allDayTimelineTasks, ...eventVisibleTimeline.tasks].map((task) => {
-                      const record = recordByIdMap.get(task.id);
-                      return record ? { ...task, completed: record.executionStatus === "completed" } : task;
-                    })}
+                    schedules={[...explicitVisibleTimeline.tasks, ...recurrenceVisibleTimeline.tasks, ...allDayTimelineTasks, ...eventVisibleTimeline.tasks]
+                      .map((task) => isResolvedUnfinished(task) ? { ...task, completed: true } : task)}
                     selectedDate={timelineDate} today={today} lang={lang} weekStartsOn={settings.weekStartsOn}
                     compact={compactLayout} dragging={Boolean(drag)} dropDate={monthDropDate} scrollRef={monthScrollRef}
                     projectColor={(task) => categories[task.category].color} isEvent={isEventDisplayTask}
-                    onSelectDate={setSelectedDate} onOpenDate={openMonthDate} onMoveTask={moveTaskToMonthDate}
+                    onSelectDate={setSelectedDate} onOpenDate={openTimelineDay} onMoveTask={moveTaskToMonthDate}
                     onReturnTask={(task, point) => {
                       if (!isEventDisplayTask(task) &&
                         document.elementFromPoint(point.x, point.y)?.closest(".df-candidate-panel")) returnTimelineTaskToCandidates(task.id);
@@ -10182,7 +10188,7 @@ if (cached?.data && cached?.settings) {
                           ...allDayTimelineTasks.filter((task) => task.scheduledDate === timelineWindowAnchorDate),
                           ...eventVisibleTimeline.tasks.filter((task) => !task.scheduledStart && task.scheduledDate === timelineWindowAnchorDate),
                         ].map((task) => (
-                          <AllDayBlock engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
+                          <AllDayBlock resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
                         ))}
                       </div>
                     </div>
@@ -10370,7 +10376,7 @@ if (cached?.data && cached?.settings) {
 
                           const isPreview = previewIdByClonedId.has(task.id);
                           return (
-                            <TimeBlock blockRef={returnGuideAnchorFor(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
+                            <TimeBlock blockRef={returnGuideAnchorFor(task)} resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
                               if (!suppressBlockClickRef.current) openTaskEdit(task);
                             }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
                               createProjectForTask(task.id, title);
@@ -11605,7 +11611,7 @@ function AllDayDropPreview({ task, projects, lang }: { task: Task; projects: Pro
   </TaskBlock>;
 }
 
-function AllDayBlock({ task, engagementEnabled, dragging, projectName, projects, onEdit, onToggleDone, onProjectChange, onProjectColorChange, onCreateProject, onPointerDragStart, lang }: { task: Task; engagementEnabled?: boolean; dragging?: boolean; projectName: string; projects: Project[]; onEdit: () => void; onToggleDone: () => void; onProjectChange: (projectId: string) => void; onProjectColorChange: (projectId: string, color: string) => void; onCreateProject: (title: string) => void; onPointerDragStart: (event: React.PointerEvent) => void; lang: Language }) {
+function AllDayBlock({ task, resolvedUnfinished, engagementEnabled, dragging, projectName, projects, onEdit, onToggleDone, onProjectChange, onProjectColorChange, onCreateProject, onPointerDragStart, lang }: { task: Task; resolvedUnfinished: boolean; engagementEnabled?: boolean; dragging?: boolean; projectName: string; projects: Project[]; onEdit: () => void; onToggleDone: () => void; onProjectChange: (projectId: string) => void; onProjectColorChange: (projectId: string, color: string) => void; onCreateProject: (title: string) => void; onPointerDragStart: (event: React.PointerEvent) => void; lang: Language }) {
   const [projectOpen, setProjectOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [newProjectTitle, setNewProjectTitle] = useState("");
@@ -11625,7 +11631,7 @@ function AllDayBlock({ task, engagementEnabled, dragging, projectName, projects,
     }
   }, [hovered]);
   return (
-    <TaskBlock lang={lang} engagement={engagementEnabled && !isEvent ? normalizeEngagement(task.engagement) : undefined} as="article" variant="allDay" appearance="calm" priority={taskBlockPriorityFor(task.priority)} checked={!isEvent && task.completed} selected={projectOpen} dragging={dragging} projectColor={stripeColor} className={`df-all-day-block ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${projectOpen ? "project-open" : ""} ${isShortName ? "short-name" : ""}${dragging ? " is-dragging" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", readonly: isEvent ? "true" : undefined }} style={{ "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px" } as CSSProperties} onPointerDown={isEvent || isSkipped ? undefined : onPointerDragStart} onClick={task.fixedCourse ? undefined : onEdit} onMouseEnter={() => setHovered(true)} onMouseLeave={() => { setProjectOpen(false); setHovered(false); }} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? "已回到规划，可重新安排" : undefined}>
+    <TaskBlock lang={lang} engagement={engagementEnabled && !isEvent ? normalizeEngagement(task.engagement) : undefined} as="article" variant="allDay" appearance="calm" priority={taskBlockPriorityFor(task.priority)} checked={!isEvent && task.completed} selected={projectOpen} dragging={dragging} projectColor={stripeColor} className={`df-all-day-block ${!isEvent && task.completed ? "completed" : ""} ${isEvent ? "is-event" : ""} ${isExternalEvent ? "is-external-calendar" : ""} ${isReturnedUnfinished ? "returned-unfinished" : ""} ${isSkipped ? "skipped" : ""} ${projectOpen ? "project-open" : ""} ${isShortName ? "short-name" : ""}${dragging ? " is-dragging" : ""}`} dataAttrs={{ kind: isEvent ? "event" : "task", "resolved-unfinished": resolvedUnfinished ? "true" : undefined, readonly: isEvent ? "true" : undefined }} style={{ "--badge-width": badgeWidth ? `${badgeWidth}px` : "0px" } as CSSProperties} onPointerDown={isEvent || isSkipped ? undefined : onPointerDragStart} onClick={task.fixedCourse ? undefined : onEdit} onMouseEnter={() => setHovered(true)} onMouseLeave={() => { setProjectOpen(false); setHovered(false); }} title={isExternalEvent ? (lang === "zh" ? "外部日历（只读）" : "External calendar (read-only)") : isReturnedUnfinished ? "已回到规划，可重新安排" : undefined}>
       <TaskRecurrenceIndicator recurrence={task.recurrence} lang={lang} />
       <TaskBlockRow className="df-all-day-row">
         {!isEvent && <TaskCheckbox lang={lang} checked={task.completed} tone={normalizeTaskCheckTone(task)} priority={task.priority} returned={isReturnedUnfinished || isSkipped} onClick={(event) => {
