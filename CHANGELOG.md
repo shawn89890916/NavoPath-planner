@@ -2,6 +2,12 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 92
+
+#### 修复
+
+- 投入度开启时，时间轴任务块的项目色条与今日候选保持一致。
+
 ### 1.7.0 Beta 91
 
 #### 新增
@@ -1061,6 +1067,12 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 92
+
+#### Fixed
+
+- Keep the project-color stripe consistent between scheduled timeline tasks and today's candidates when engagement is enabled.
 
 ### 1.7.0 Beta 91
 

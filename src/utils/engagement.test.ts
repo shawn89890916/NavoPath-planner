@@ -57,11 +57,11 @@ describe("engagement ratings", () => {
     expect(expanded.find(item => item.id === "second")?.engagement).toBeUndefined();
   });
 
-  it("sets stripe fill without changing background, content opacity, or block geometry", () => {
+  it("preserves the project stripe without changing background, content opacity, or block geometry", () => {
     expect(taskBlockStyle({ projectColor: "#7EA172" }).opacity).toBeUndefined();
     const baseStyle = taskBlockStyle({ projectColor: "#7EA172", style: { height: 80 } });
     const style = taskBlockStyle({ engagement: 10, projectColor: "#7EA172", style: { height: 80 } });
-    expect(style).toMatchObject({ ...baseStyle, "--task-engagement": "10%", borderLeftColor: "transparent" });
+    expect(style).toMatchObject({ ...baseStyle, "--task-engagement": "10%" });
     expect(style.opacity).toBeUndefined();
     for (const engagement of [10, 50, 100]) {
       expect(taskBlockStyle({ engagement }).backgroundColor).toBeUndefined();
