@@ -29,7 +29,7 @@ import { reasoningModesForModel } from "./utils/aiModels";
 import { createPortal, flushSync } from "react-dom";
 import { runMotionTransition } from "./motion";
 import { SelectionIndicator } from "./components/SelectionIndicator";
-import { getDefaultSettings } from "./defaultSettings";
+import { getDefaultSettings, WORKSPACE_CORNER_RADIUS } from "./defaultSettings";
 import { uid } from "./utils/ids";
 const localStorage = getWorkspaceStorage();
 
@@ -887,6 +887,20 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                     { value: "balanced", label: lang === "zh" ? "平衡混排" : "Balanced" },
                     { value: "sans", label: lang === "zh" ? "现代无衬线" : "Modern Sans" },
                   ]}
+                />}
+              />
+              <SettingRow
+                anchor="corner-radius"
+                title={lang === "zh" ? "界面圆角" : "Corner radius"}
+                control={<SettingNumberInput
+                  value={settings.workspaceCornerRadius ?? WORKSPACE_CORNER_RADIUS.defaultValue}
+                  min={WORKSPACE_CORNER_RADIUS.min}
+                  max={WORKSPACE_CORNER_RADIUS.max}
+                  step={1}
+                  suffix="px"
+                  ariaLabel={lang === "zh" ? "界面圆角（像素）" : "Corner radius (pixels)"}
+                  commitOnBlur
+                  onChange={(workspaceCornerRadius) => onSave({ workspaceCornerRadius })}
                 />}
               />
               <SettingRow

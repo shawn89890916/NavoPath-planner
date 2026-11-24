@@ -36,7 +36,7 @@ describe("portrait mobile navigation", () => {
     expect(mobileStyles).toContain("#root .df-app .df-ai-panel-reference {");
     expect(mobileStyles).toContain("#root .df-app .df-utility-panel {");
     expect(mobileStyles).toContain("inset: 4dvh 0 0;");
-    expect(mobileStyles).toContain("border-radius: 18px 18px 0 0;");
+    expect(mobileStyles).toContain("border-radius: var(--radius-card) var(--radius-card) 0 0;");
   });
 
   it("uses an iOS-sized switch while keeping the active theme accent", () => {

@@ -13,7 +13,7 @@
 .df-extension-search > svg { position: absolute; left: 12px; pointer-events: none; }
 .df-extension-guide { margin: 18px 0; font: 400 12px/1.5 var(--paper-sans); }
 .df-extension-guide a { color: var(--text-muted); text-underline-offset: 3px; }
-.ui-modal.df-extension-market { display: flex; flex-direction: column; width: min(1120px, calc(100vw - 48px)); min-height: min(640px, calc(100dvh - 48px)); max-height: calc(100dvh - 48px); padding: 0; border: 1px solid var(--paper-rule-strong); border-radius: 12px; background: var(--surface-main, #faf9f5); color: var(--text-main, #25292e); font: 400 14px/1.55 var(--paper-sans, sans-serif); overflow: hidden; }
+.ui-modal.df-extension-market { display: flex; flex-direction: column; width: min(1120px, calc(100vw - 48px)); min-height: min(640px, calc(100dvh - 48px)); max-height: calc(100dvh - 48px); padding: 0; border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-card); background: var(--surface-main, #faf9f5); color: var(--text-main, #25292e); font: 400 14px/1.55 var(--paper-sans, sans-serif); overflow: hidden; }
 .df-extension-market-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 24px 24px 18px; border-bottom: 1px solid var(--paper-rule); }
 .df-extension-market-head h2 { margin: 0; font: 600 21px/1.35 var(--paper-sans, sans-serif); }
 .df-extension-market-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--paper-rule); }
@@ -25,14 +25,14 @@
 .df-extension-market-count { flex-basis: 100%; color: var(--text-muted); font-size: 12px; }
 .df-extension-market-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 22px 24px 28px; }
 .df-extension-market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 18px; }
-.df-extension-market-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: 10px; background: var(--surface-card); }
-.df-extension-market-open { flex: 1; display: block; width: 100%; padding: 18px; border: 0; border-radius: 0; background: transparent; color: inherit; text-align: start; font: inherit; cursor: pointer; }
+.df-extension-market-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-card); background: var(--surface-card); }
+.df-extension-market-open { flex: 1; display: block; width: 100%; padding: 18px; border: 0; border-radius: var(--radius-card); background: transparent; color: inherit; text-align: start; font: inherit; cursor: pointer; }
 .df-extension-market-open:focus-visible { outline: 2px solid var(--border-focus, var(--accent-active)); outline-offset: -4px; }
 .df-extension-market-open h3 { margin: 0 0 5px; font: 600 17px/1.4 var(--paper-sans, sans-serif); }
 .df-extension-plugin-heading { display: flex; min-width: 0; align-items: center; gap: 12px; }
 .df-extension-plugin-heading > div { min-width: 0; }
 .df-extension-plugin-heading h3 { margin: 0; overflow-wrap: anywhere; }
-.df-extension-plugin-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; overflow: hidden; border: 1px solid var(--paper-rule); border-radius: 11px; color: var(--text-main); background: var(--paper-note); }
+.df-extension-plugin-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; overflow: hidden; border: 1px solid var(--paper-rule); border-radius: var(--radius-card); color: var(--text-main); background: var(--paper-note); }
 .df-extension-plugin-icon img { width: 24px; height: 24px; object-fit: contain; }
 .df-extension-market-stats { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; color: var(--text-muted); font: 400 11px/1.5 var(--paper-sans); }
 .df-extension-market-stats span { color: var(--paper-rule-strong); }
@@ -40,11 +40,11 @@
 .df-extension-market-card footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 18px 18px; }
 .df-extension-preview-control { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--paper-rule); color: var(--text-muted); font-size: 12px; }
 .df-extension-preview-control .df-settings-select { width: auto; }
-.df-extension-preview { position: relative; aspect-ratio: 16 / 10; margin-bottom: 16px; overflow: hidden; border-radius: 6px; background: var(--surface-raised); color: var(--text-muted); font-size: 12px; }
+.df-extension-preview { position: relative; aspect-ratio: 16 / 10; margin-bottom: 16px; overflow: hidden; border-radius: var(--radius-card); background: var(--surface-raised); color: var(--text-muted); font-size: 12px; }
 .df-extension-preview-image { position: absolute; inset: 0; display: grid; place-items: center; }
 .df-extension-preview--split .df-extension-preview-image--dark { clip-path: polygon(100% 0, 100% 100%, 0 100%); }
 .df-extension-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.df-extension-preview-label { position: absolute; padding: 3px 7px; border-radius: 4px; font-size: 10px; line-height: 1.4; background: #fffffff0; color: #202020; }
+.df-extension-preview-label { position: absolute; padding: 3px 7px; border-radius: var(--radius-card); font-size: 10px; line-height: 1.4; background: #fffffff0; color: #202020; }
 .df-extension-preview-label--light { top: 8px; left: 8px; }
 .df-extension-preview-label--dark { right: 8px; bottom: 8px; background: #202020eb; color: #fff; }
 .df-extension-detail { max-width: 780px; margin: 0 auto; }
@@ -56,7 +56,7 @@
 .df-extension-detail dl > div { display: grid; grid-template-columns: minmax(100px, .4fr) minmax(0, 1fr); gap: 18px; padding: 12px 0; border-bottom: 1px solid var(--paper-rule); }
 .df-extension-detail dt { color: var(--text-muted); }
 .df-extension-detail dd { margin: 0; overflow-wrap: anywhere; }
-.ui-modal.df-extension-info { width:min(560px, calc(100vw - 32px)); padding:24px; border:1px solid var(--paper-rule-strong); border-radius:12px; color:var(--text-main); background:var(--surface-main); }
+.ui-modal.df-extension-info { width:min(560px, calc(100vw - 32px)); padding:24px; border:1px solid var(--paper-rule-strong); border-radius:var(--radius-card); color:var(--text-main); background:var(--surface-main); }
 .df-extension-info > header { display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .df-extension-info h2 { margin:0; font:600 20px/1.35 var(--paper-sans); }
 .df-extension-info dl { margin:20px 0; }

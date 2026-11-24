@@ -358,7 +358,7 @@ Use for cancel, navigation, filters, and low-priority actions.
 
 - Transparent by default, with a fine complete outline for action buttons.
 - Hover changes ink color and strengthens the outline.
-- Keep ordinary secondary actions compact, with the control radius rather than a pill.
+- Keep ordinary secondary actions compact and use the shared control radius.
 - Keep secondary controls visually quiet.
 
 ### Icon Tool
@@ -539,6 +539,8 @@ visual values.
 - Each plugin registers one workspace page with `ui.registerPage`. The host mounts that content in both orientations. The portrait More button opens an anchored launcher menu above the dock. Use fluid widths, allow content to wrap, and return cleanup when mounting listeners or resources. Leave viewport positioning and opening state to the host.
 
 ### Settings and motion ownership
+
+- Workspace cards, controls, and overlays read the same radius from Appearance. The default matches the recurring timeline card at 18 px. Small details such as checkbox corners use one quarter of that value. Circular indicators and edge-to-edge joins retain their geometry.
 
 - Settings primitives own `src/components/SettingsControls.css`; pages compose them without redefining row typography or geometry. Settings navigation, section titles and controls use the sans-serif operational font; monospace is reserved for time and numeric metadata.
 - Setting rows use 14px labels, 12px supporting text, 64px minimum height and shared spacing tokens. Narrow rows respond to the content container, placing wide controls below their description.

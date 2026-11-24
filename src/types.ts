@@ -588,6 +588,7 @@ export interface Settings {
   autoAssignTaskProject?: boolean;
   /** 时间轴任务标题字体缩放系数（0.85 ~ 1.3）。1 表示默认大小。 */
   timelineFontScale?: number;
+  workspaceCornerRadius?: number;
   /** 任务块以归属项目色整块填充（true）或仅描边（false）。 */
   taskBlockFill?: boolean;
   /** 自动同步频率（分钟）。0 或未设置表示仅手动同步。 */

@@ -86,7 +86,7 @@ const INCOMPLETE_LABELS = {
 };
 import { UiCheckIcon, UiChatIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiHistoryIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTimerIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
-import { normalizeSettings } from "./defaultSettings";
+import { normalizeSettings, WORKSPACE_CORNER_RADIUS } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
 import { templateApplication, type TemplatePeriod } from "./utils/scheduleTemplates";
 
@@ -1842,13 +1842,8 @@ function App() {
     void startNewAiConversation();
   }, [aiOpen, data]);
 
-  // Daily view resets range-only panel controls.
   useEffect(() => {
-    const supportsRangeControls = timelineView === "3day" || timelineView === "weekly" || timelineView === "month";
-    if (!supportsRangeControls) {
-      setCandidatePanelCollapsed(false);
-      setFullscreen(false);
-    }
+    if (timelineView === "daily") setFullscreen(false);
   }, [timelineView]);
 
   // Range views become the compact reading mode when the candidate shelf is
@@ -3255,6 +3250,13 @@ if (cached?.data && cached?.settings) {
     apply(); media.addEventListener("change", apply);
     return () => media.removeEventListener("change", apply);
   }, [settings?.theme, settings?.baseMode, settings?.language]);
+
+  const workspaceCornerRadius = settings?.workspaceCornerRadius ?? WORKSPACE_CORNER_RADIUS.defaultValue;
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--workspace-corner-radius", `${workspaceCornerRadius}px`);
+    return () => { root.style.removeProperty("--workspace-corner-radius"); };
+  }, [workspaceCornerRadius]);
 
   const today = todayIso();
   const timelineDate = selectedDate;
@@ -9044,7 +9046,7 @@ if (cached?.data && cached?.settings) {
   const shelfPaneVisible = !fullscreen
     && (mobileExecution ? candidateDrawerOpen : !candidatePanelCollapsed && (!compactLayout || narrowSplitLayout || compactExecuteView === "tasks"));
   const taskPaneVisible = shelfPaneVisible && !shelfView && !taskHistoryOpen;
-  const canCollapseCandidatePanel = !compactLayout && !mobileExecution && timelineView !== "daily";
+  const canCollapseCandidatePanel = !compactLayout && !mobileExecution;
   const guideRowVisible = taskPaneVisible && Boolean(onboardingTask && visibleCandidates.some((task) => task.id === onboardingTask.id));
   const tasksGuideAnchor = mobileExecution && !candidateDrawerOpen ? candidateTriggerRef
     : candidatePanelCollapsed ? candidateExpandRef : shelfPaneVisible ? shelfTitleRef : undefined;
@@ -9391,9 +9393,9 @@ if (cached?.data && cached?.settings) {
                   setCandidatePanelCollapsed(false);
                 }}>&#9654;</button>
                 <span className="df-candidate-collapsed-label">{term(lang, "todayCandidates")}</span>
-                <div className="df-candidate-collapsed-actions">
+                {timelineView !== "daily" && <div className="df-candidate-collapsed-actions">
                   <button className={`df-candidate-strip-btn${fullscreen ? " active" : ""}`} title={t(lang, "candidate.fullscreen")} aria-label={t(lang, "candidate.fullscreen")} onClick={() => setFullscreen((value) => !value)}>⛶</button>
-                </div>
+                </div>}
               </div>
             ) : (
               <>
@@ -10069,7 +10071,7 @@ if (cached?.data && cached?.settings) {
                               </div>
                               {dragCreate && (
                                 <div className="drag-create-preview df-task-block df-task-block--scheduled df-time-block-quick-add" style={{
-                                  position: "absolute", zIndex: 99998, borderRadius: "12px",
+                                  position: "absolute", zIndex: 99998,
                                   overflow: "visible",
                                   top: `${dragCreate.top}px`, height: `${dragCreate.height}px`,
                                   ...draftConflictStyle(dragCreate, timelineView),
@@ -10393,7 +10395,7 @@ if (cached?.data && cached?.settings) {
                         })}
                         {dragCreate && (
                           <div className="drag-create-preview df-task-block df-task-block--scheduled df-time-block-quick-add" style={{
-                            position: "absolute", zIndex: 99998, borderRadius: "12px",
+                            position: "absolute", zIndex: 99998,
                             overflow: "visible",
                             top: `${dragCreate.top}px`, height: `${dragCreate.height}px`,
                             ...draftConflictStyle(dragCreate, "daily"),

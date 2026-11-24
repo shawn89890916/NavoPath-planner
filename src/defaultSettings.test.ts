@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { normalizeSettings } from "./defaultSettings";
 
+describe("workspace corner radius", () => {
+  it("uses the recurring card radius for older profiles and invalid values", () => {
+    for (const value of [undefined, null, "12", NaN, Infinity]) {
+      expect(normalizeSettings({ workspaceCornerRadius: value }).workspaceCornerRadius).toBe(18);
+    }
+  });
+
+  it("keeps zero and constrains custom values to whole pixels in the supported range", () => {
+    for (const [input, expected] of [[0, 0], [9.6, 10], [90, 32], [-3, 0]]) {
+      expect(normalizeSettings({ workspaceCornerRadius: input }).workspaceCornerRadius).toBe(expected);
+    }
+  });
+});
+
 describe("plugin settings normalization", () => {
   it("defaults Beta updates off and only preserves boolean opt-in values", () => {
     for (const value of [undefined, null, "true", 1, {}]) {

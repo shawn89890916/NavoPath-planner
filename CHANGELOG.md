@@ -2,6 +2,14 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 87
+
+#### 改进
+
+- 单日视图也可以从 Tasks 的「更多」收起侧栏。周视图在侧栏收起时显示任务勾选框。
+- 时间轴任务块的上下缩放手柄改为居中、无描边的短横条。
+- 卡片、按钮、输入框和面板采用统一圆角，可在「设置 → 外观」输入数值调整。
+
 ### 1.7.0 Beta 86
 
 #### 改进
@@ -1026,6 +1034,14 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 87
+
+#### Improvements
+
+- Collapse the sidebar from Tasks More in Day view. Week view shows task checkboxes when the sidebar is collapsed.
+- Timeline blocks use a single centered, borderless resize bar along each edge.
+- Cards, buttons, fields, and panels share a corner radius that you can set in Settings → Appearance.
 
 ### 1.7.0 Beta 86
 

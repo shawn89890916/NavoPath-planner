@@ -171,7 +171,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] #df-execute-timeline :i
   overflow-y: auto;
   overflow-x: hidden;
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   background: var(--surface-card); background-color: var(--surface-main); box-shadow: none; corner-shape: var(--corner-shape, squircle); }
 .df-month-cell {
   position: relative;
@@ -183,7 +183,7 @@ html[data-motion-fallback][data-motion-scope="timeline"] #df-execute-timeline :i
   display: flex;
   flex-direction: column;
   border: 1px solid #EEF0F4;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   transition: all .15s ease; border-color: var(--paper-rule); corner-shape: var(--corner-shape, squircle); }
 .df-month-weekdays span {

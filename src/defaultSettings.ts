@@ -15,6 +15,8 @@ import { normalizeExtensionPreferences } from "./extensions/packages";
  * own internal copies for now to avoid a larger refactor, but any new field
  * added to {@link Settings} should land here first.
  */
+export const WORKSPACE_CORNER_RADIUS = { min: 0, max: 32, defaultValue: 18 } as const;
+
 export const defaultSettings: Settings = {
   activeMode: "execute",
   defaultTimelineView: "daily",
@@ -45,6 +47,7 @@ export const defaultSettings: Settings = {
   weekStartsOn: 0,
   theme: "light",
   typographyStyle: "editorial",
+  workspaceCornerRadius: WORKSPACE_CORNER_RADIUS.defaultValue,
   accentColor: "",
   executeAccentColor: "",
   planningAccentColor: "",
@@ -388,6 +391,10 @@ export function normalizeSettings(value: unknown): Settings {
   if (typeof stored.lastSyncedAt !== "string") normalized.lastSyncedAt = undefined;
   if (typeof stored.aiLastStartBriefDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(stored.aiLastStartBriefDate)) normalized.aiLastStartBriefDate = undefined;
   if (typeof stored.aiLastEndReviewDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(stored.aiLastEndReviewDate)) normalized.aiLastEndReviewDate = undefined;
+  const cornerRadius = stored.workspaceCornerRadius;
+  normalized.workspaceCornerRadius = typeof cornerRadius === "number" && Number.isFinite(cornerRadius)
+    ? Math.min(WORKSPACE_CORNER_RADIUS.max, Math.max(WORKSPACE_CORNER_RADIUS.min, Math.round(cornerRadius)))
+    : defaults.workspaceCornerRadius;
   if (stored.timelineFontScale !== undefined) {
     normalized.timelineFontScale = typeof stored.timelineFontScale === "number" && Number.isFinite(stored.timelineFontScale)
       ? Math.min(1.3, Math.max(0.85, stored.timelineFontScale))

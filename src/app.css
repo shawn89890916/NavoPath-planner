@@ -17,7 +17,7 @@
 .day-cell {
   background: #FFFFFF;
   border: 1px solid #EEF0F4;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   transition: all .15s ease;
   corner-shape: var(--corner-shape, squircle);
@@ -106,7 +106,7 @@
   gap: 7px;
   padding: 8px;
   border: 1px solid color-mix(in srgb, var(--accent-active) 22%, var(--border-soft));
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
   corner-shape: var(--corner-shape, squircle);
@@ -283,7 +283,7 @@
   width: max-content;
   max-width: 180px;
   padding: 5px 8px;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: #111827;
   color: #fff;
   font-size: 11px;
@@ -306,7 +306,7 @@
 .df-utility-body input:not([type="checkbox"]) {
   height: 40px;
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-control);
   padding: 0 12px;
   background: var(--input-bg, var(--bg-surface));
   color: var(--df-text);
@@ -414,13 +414,13 @@
   justify-content: flex-start;
   min-height: 42px;
   padding: 0 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-settings-about-icon {
   width: 20px;
   height: 20px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--mode-primary) 14%, #fff);
   color: var(--mode-primary-strong);
   display: inline-grid;
@@ -443,7 +443,7 @@
   display: block;
   margin-top: 3px;
   padding: 1px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   font-size: 11px;
   font-weight: 700;
   background: color-mix(in srgb, var(--accent-active) 12%, transparent);
@@ -860,7 +860,7 @@ h3 { margin: 0;
   gap: 2px;
   padding: 3px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: var(--surface-subtle);
   corner-shape: var(--corner-shape, squircle);
 }
@@ -868,7 +868,7 @@ h3 { margin: 0;
   min-width: 68px;
   height: 30px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--muted);
   font-size: 12px;
@@ -901,7 +901,7 @@ h3 { margin: 0;
   width: 36px;
   height: 36px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   background: var(--accent-active, #584D3D);
   color: #fff;
   font-size: 15px;
@@ -930,7 +930,7 @@ h3 { margin: 0;
 .subtask-list {
   margin-top: 9px;
   padding: 8px 10px;
-  border-radius: 7px;
+  border-radius: var(--radius-card);
   background: var(--surface-subtle);
   border: 1px solid var(--border);
   display: flex;
@@ -976,7 +976,7 @@ h3 { margin: 0;
 .panel {
   background: color-mix(in srgb, var(--surface) 96%, transparent);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow);
   overflow: hidden;
   corner-shape: var(--corner-shape, squircle);
@@ -1000,7 +1000,7 @@ h3 { margin: 0;
 .task-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   padding: 10px 10px 10px 14px;
   border-left: 4px solid var(--border);
   corner-shape: var(--corner-shape, squircle);
@@ -1038,7 +1038,7 @@ h3 { margin: 0;
   color: var(--muted);
   background: var(--surface-subtle);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   padding: 2px 7px;
   font-size: 11px;
   line-height: 1.25;
@@ -1097,7 +1097,7 @@ textarea:focus {
 }
 .task-list.drag-over {
   background-color: var(--focus);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .task-card.editing {
@@ -1108,7 +1108,7 @@ textarea:focus {
   position: absolute;
   inset: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   pointer-events: none;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -1147,7 +1147,7 @@ textarea:focus {
   top: -5px;
   width: 8px;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-detail);
   background: var(--color-primary-strong, var(--mode-primary));
   corner-shape: var(--corner-shape, squircle);
 }
@@ -1196,7 +1196,7 @@ textarea:focus {
   padding: 18px;
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -1254,7 +1254,7 @@ input[type="range"] {
   position: relative;
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   box-shadow: 0 12px 28px rgba(17, 24, 39, 0.06);
   corner-shape: var(--corner-shape, squircle);
 }
@@ -1317,7 +1317,7 @@ input[type="range"] {
   background: var(--mode-primary-soft);
   border: 1px solid color-mix(in srgb, var(--mode-primary) 48%, transparent);
   border-left: 4px solid var(--color-primary-strong);
-  border-radius: 9px;
+  border-radius: var(--radius-card);
   padding: 6px 8px;
   overflow: hidden;
   cursor: pointer;
@@ -1513,15 +1513,15 @@ body.df-resizing * {
   user-select: none;
 }
 @keyframes dfSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-.df-segment { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; margin: 14px 0; border: 1px solid var(--df-border); border-radius: 12px; corner-shape: var(--corner-shape, squircle); }
+.df-segment { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; margin: 14px 0; border: 1px solid var(--df-border); border-radius: var(--radius-card); corner-shape: var(--corner-shape, squircle); }
 .df-segment button { border: 0; box-shadow: none; }
 .danger-lite { color: var(--df-danger); border-color: rgba(239,68,68,.35); }
 .df-task-detail textarea {
   resize: vertical;
   min-height: 110px;
 }
-.df-ai-panel textarea { width: 100%; min-height: 96px; border: 1px solid var(--df-border); border-radius: 10px; padding: 10px; corner-shape: var(--corner-shape, squircle); }
-.df-ai-panel pre { white-space: pre-wrap; background: color-mix(in srgb, var(--mode-primary) 4%, #FFFFFF); border: 1px solid color-mix(in srgb, var(--mode-primary) 18%, var(--df-border)); border-radius: 10px; padding: 10px; max-height: 240px; overflow: auto; corner-shape: var(--corner-shape, squircle); }
+.df-ai-panel textarea { width: 100%; min-height: 96px; border: 1px solid var(--df-border); border-radius: var(--radius-card); padding: 10px; corner-shape: var(--corner-shape, squircle); }
+.df-ai-panel pre { white-space: pre-wrap; background: color-mix(in srgb, var(--mode-primary) 4%, #FFFFFF); border: 1px solid color-mix(in srgb, var(--mode-primary) 18%, var(--df-border)); border-radius: var(--radius-card); padding: 10px; max-height: 240px; overflow: auto; corner-shape: var(--corner-shape, squircle); }
 .df-auth-shell {
   min-height: 100vh;
   display: grid;
@@ -1534,7 +1534,7 @@ body.df-resizing * {
   width: min(420px, calc(100vw - 40px));
   padding: 32px;
   border: 1px solid #D8D1C7;
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   background: #FFFDF8;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -1605,7 +1605,7 @@ body.df-resizing * {
   height: 42px;
   padding: 0 12px;
   border: 1px solid #D8D1C7;
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   background: #F8F7F3;
   color: #27231E;
   outline: none;
@@ -1632,7 +1632,7 @@ body.df-resizing * {
   gap: 8px;
   padding: 12px;
   border: 1px solid color-mix(in srgb, var(--mode-primary) 18%, white);
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--mode-primary) 6%, white);
   corner-shape: var(--corner-shape, squircle);
 }
@@ -1649,7 +1649,7 @@ body.df-resizing * {
   flex: 1;
   height: 34px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   background: #fff;
   color: var(--color-text);
   font-size: 12px;
@@ -1658,7 +1658,7 @@ body.df-resizing * {
 }
 .df-auth-submit {
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-card);
   cursor: pointer;
   font-weight: 650;
   transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease, opacity 160ms ease;
@@ -1675,7 +1675,7 @@ body.df-resizing * {
 .df-auth-error {
   padding: 10px 12px;
   border: 1px solid rgba(239, 68, 68, 0.22);
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: rgba(239, 68, 68, 0.07);
   color: #b91c1c;
   font-size: 12px;
@@ -1706,7 +1706,7 @@ body.df-resizing * {
   place-items: center;
   color: var(--text-muted);
   border: 0;
-  border-radius: 20px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--bg-surface) 80%, transparent);
   gap: 10px;
   font-size: 13px;
@@ -1819,7 +1819,7 @@ body.df-resizing * {
 .ProjectColorPicker {
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   corner-shape: var(--corner-shape, squircle);
 }
@@ -1964,7 +1964,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
     linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.94)),
     color-mix(in srgb, var(--mode-primary) 4%, #fff);
   box-shadow: 0 12px 28px color-mix(in srgb, var(--mode-primary) 10%, transparent);
-  border-radius: 16px;
+  border-radius: var(--radius-card);
   padding: 10px 14px 10px 44px;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -1978,7 +1978,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .mode-execute .df-quick-add-submit {
   min-width: 80px;
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   background: linear-gradient(135deg, var(--mode-primary-strong), var(--mode-primary));
   color: var(--mode-on-primary);
   corner-shape: var(--corner-shape, squircle);
@@ -2317,22 +2317,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   from { opacity: .72; transform: scale(.992); }
   to { opacity: 1; transform: scale(1); }
 }
-.df-week-view .df-event-blocks-layer .df-time-block .df-resize-dot {
-  left: 0;
-  right: 0;
-  width: auto;
-  height: 10px;
-  transform: none;
-}
-.df-week-view .df-event-blocks-layer .df-time-block .df-resize-dot.top {
-  top: -1px;
-}
-.df-week-view .df-event-blocks-layer .df-time-block .df-resize-dot.bottom {
-  bottom: -1px;
-}
-.df-week-view .df-event-blocks-layer .df-time-block .df-resize-dot::after {
-  width: min(24px, calc(100% - 8px));
-}
 .df-task-card[draggable="false"] {
   cursor: default;
 }
@@ -2342,7 +2326,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   left: 12px;
   width: 22px;
   height: 22px;
-  border-radius: 8px;
+  border-radius: var(--radius-detail);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-task-card.completed .df-block-check {
@@ -2394,7 +2378,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   max-height: min(720px, calc(100vh - 32px));
   display: flex;
   flex-direction: column;
-  border-radius: 26px;
+  border-radius: var(--radius-card);
   border: 1px solid color-mix(in srgb, var(--accent-active) 16%, var(--border-soft));
   background: var(--surface-card);
   color: var(--text-main);
@@ -2429,7 +2413,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   grid-template-columns: 20px minmax(0, 1fr);
   gap: 12px;
   padding: 14px 16px;
-  border-radius: 18px;
+  border-radius: var(--radius-card);
   border: 1px solid var(--border-soft);
   background: color-mix(in srgb, var(--accent-active) 4%, var(--surface-card));
   cursor: pointer;
@@ -2543,7 +2527,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   width: 20px;
   height: 20px;
   padding: 0;
-  border-radius: 7px;
+  border-radius: var(--radius-detail);
   border: 2px solid color-mix(in srgb, var(--cat, var(--accent-active)) 50%, var(--border-subtle));
   background: var(--surface-card);
   color: transparent;
@@ -2600,7 +2584,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-candidate-panel {
   background: #FFFFFF;
   border: 1px solid color-mix(in srgb, var(--mode-primary) 32%, #E5E7EB);
-  border-radius: 22px;
+  border-radius: var(--radius-card);
   box-shadow: 0 12px 30px color-mix(in srgb, var(--mode-primary) 10%, transparent);
   padding: 12px 14px;
   overflow: hidden;
@@ -2618,7 +2602,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   padding: 12px 14px 12px 28px;
   margin-bottom: 6px;
   border: 1px solid color-mix(in srgb, var(--mode-primary) 24%, #E5E7EB);
-  border-radius: 16px;
+  border-radius: var(--radius-card);
   background: #FFFFFF;
   box-shadow: 0 8px 18px color-mix(in srgb, var(--mode-primary-strong) 10%, transparent);
   cursor: grab;
@@ -2780,7 +2764,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   display: none;
   gap: 14px;
   padding: 18px;
-  border-radius: 0 20px 20px 20px;
+  border-radius: 0 var(--radius-card) var(--radius-card) var(--radius-card);
   background: var(--bg-surface);
   border: 1px solid var(--border-soft);
   box-shadow: var(--shadow-soft);
@@ -2946,16 +2930,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   word-break: normal;
   overflow-wrap: normal;
 }
-/* Short time blocks: hide non-essential elements.
-   The .df-time-block-week (week view) variants keep their check button visible
-   via higher-specificity rules further down, so this generic rule must
-   not target the week view. */
-.df-time-block.short-block:not(.df-time-block-week) .df-resize-dot::after {
-  width: min(28px, calc(100% - 4px));
-  height: 3px;
-  background: var(--accent-active, #2A6E8E);
-  opacity: 0.85;
-}
 .df-time-block.recurring .df-next {
   color: var(--recurring-text);
 }
@@ -3010,48 +2984,47 @@ body:has(:active)::-webkit-scrollbar-thumb {
   text-overflow: ellipsis;
   word-break: break-word;
 }
-.df-resize-dot {
+#root .df-app .df-time-block .df-resize-dot {
+  --resize-outset: 4px;
   position: absolute;
   left: 50%;
-  right: auto;
-  width: 44%;
-  min-width: 30px;
-  max-width: 74px;
-  transform: translateX(-50%);
-  height: 8px;
+  width: min(64px, 100%);
+  height: calc(var(--resize-outset) + min(var(--resize-hit-depth, 12px), 50%));
   padding: 0;
-  border: none;
+  border: 0;
   background: transparent;
   box-shadow: none;
+  transform: translateX(-50%);
   z-index: 8;
   cursor: ns-resize;
-  opacity: 0;
-  transition: none;
+  touch-action: none;
 }
-.df-resize-dot.top { top: 0; }
-.df-resize-dot.bottom { bottom: 0; }
-/* Visual thin line indicator */
+#root .df-app .df-time-block .df-resize-dot:is(:active, :focus-visible) {
+  box-shadow: none;
+  outline: 0;
+}
+.df-resize-dot:focus-visible::after { background: var(--text-main); }
+.df-resize-dot { pointer-events: none; opacity: 0; }
+.df-resize-dot.top { top: calc(-1 * var(--resize-outset)); }
+.df-resize-dot.bottom { bottom: calc(-1 * var(--resize-outset)); }
 .df-resize-dot::after {
   content: "";
   position: absolute;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 24px;
-  height: 3px;
-  border-radius: 2px;
-  background: transparent;
-  transition: none;
-  opacity: 0;
-  corner-shape: var(--corner-shape, squircle);
+  transform: translateX(-50%);
+  width: min(32px, 68%);
+  height: 4px;
+  border-radius: var(--radius-detail);
+  background: var(--accent-active);
+  pointer-events: none;
 }
-.df-time-block.resizing .df-resize-dot { opacity: 0; }
-.df-time-block:hover .df-resize-dot { opacity: 1; }
-.df-resize-dot:hover::after {
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 60%, transparent);
+.df-resize-dot.top::after { top: calc(var(--resize-outset) - 2px); }
+.df-resize-dot.bottom::after { bottom: calc(var(--resize-outset) - 2px); }
+.df-time-block:is(:hover, :focus-within, .show-resize-hint, .resizing) .df-resize-dot {
+  pointer-events: auto;
   opacity: 1;
 }
+.df-time-block.is-dragging .df-resize-dot { display: none; }
 .df-next {
   display: block;
   margin-top: 4px;
@@ -3197,7 +3170,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   overflow: hidden;
   padding: 4px 7px;
   border: 0;
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--course-color) 14%, transparent);
   color: var(--df-text, var(--text-primary));
   box-shadow: none;
@@ -3313,13 +3286,12 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: #fff;
   border: 1px solid color-mix(in srgb, var(--mode-primary) 34%, #CBD5E1);
   box-shadow: 0 8px 18px color-mix(in srgb, var(--mode-primary-strong) 12%, transparent);
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   padding: 6px 10px 6px 28px;
   left: 8px;
   right: 8px;
   corner-shape: var(--corner-shape, squircle);
 }
-.df-event-blocks-layer .df-resize-dot { width: 7px; height: 7px; }
 .df-event-blocks-layer .df-time-block[style*="height: 3"] {
   display: none;
 }
@@ -3345,7 +3317,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-week-view .df-time-block.df-time-block-week {
   padding: 6px 8px 6px 30px;
   min-width: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   background: rgba(24, 30, 42, 0.92);
   border: 1px solid rgba(255,255,255,0.10);
@@ -3354,7 +3326,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-week-view .df-event-blocks-layer .df-time-block {
   padding: 6px 8px 6px 30px;
   min-width: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   background: rgba(24, 30, 42, 0.92);
   border: 1px solid rgba(255,255,255,0.10);
@@ -3385,7 +3357,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   transform: none;
   width: 16px;
   height: 16px;
-  border-radius: 5px;
+  border-radius: var(--radius-detail);
   border-width: 1.5px;
   opacity: 1;
   pointer-events: auto;
@@ -3398,7 +3370,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   transform: none;
   width: 16px;
   height: 16px;
-  border-radius: 5px;
+  border-radius: var(--radius-detail);
   border-width: 1.5px;
   opacity: 1;
   pointer-events: auto;
@@ -3418,12 +3390,12 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-week-view .df-time-block.df-time-block-week.recurring {
   padding: 6px 8px 6px 30px;
-  border-radius: 18px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-week-view .df-event-blocks-layer .df-time-block.recurring {
   padding: 6px 8px 6px 30px;
-  border-radius: 18px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-week-view .df-time-block.df-time-block-week.recurring .df-block-check {
@@ -3478,7 +3450,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   position: absolute;
   left: 8px;
   right: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   padding: 8px 32px 8px 34px;
   overflow: hidden;
   display: flex;
@@ -3523,7 +3495,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   height: 34px;
   padding: 0 14px;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-card);
   background: transparent;
   box-shadow: none;
   font-weight: 600;
@@ -3595,7 +3567,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-day-col .df-time-block {
   left: 10px;
   right: 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-all-day-block .df-block-project-wrap {
@@ -3711,7 +3683,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-all-day-block {
   transition: box-shadow .14s ease, background .14s ease;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   position: relative;
   display: flex;
   align-items: center;
@@ -4121,7 +4093,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   height: 10px;
   transform: translate(-50%, -50%);
   border: 2px solid var(--accent-active);
-  border-radius: 50%;
+  border-radius: var(--radius-detail);
   background: var(--surface-main);
   box-shadow:none;
   pointer-events: none;
@@ -4147,7 +4119,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   width: min(28px, 100%);
   height: 4px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-detail);
   background: var(--text-main);
   box-shadow: none;
 }
@@ -4240,7 +4212,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   box-shadow: 0 1px 3px color-mix(in srgb, var(--mode-primary-strong) 24%, transparent);
   transition: all .15s ease;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-quick-add-submit:hover {
@@ -4260,7 +4232,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: #FFFFFF;
   color: var(--df-text);
   font-size: 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   padding: 7px 10px;
   transition: all .15s ease;
@@ -4313,7 +4285,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   top: 12px;
   bottom: 12px;
   width: 4px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--mode-primary) 72%, #FFFFFF);
   opacity: .9;
   corner-shape: var(--corner-shape, squircle);
@@ -4328,7 +4300,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   padding: 7px 10px;
   color: inherit;
   font-size: 14px;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   transition: all .15s ease;
   padding-left: 16px;
@@ -4351,7 +4323,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   bottom: 38px;
   width: 44px;
   height: 44px;
-  border-radius: 13px;
+  border-radius: var(--radius-card);
   color: var(--mode-on-primary);
   background: linear-gradient(135deg, color-mix(in srgb, var(--mode-primary-strong) 90%, #111827), var(--mode-primary));
   border: 1px solid color-mix(in srgb, var(--mode-primary) 48%, transparent);
@@ -4368,7 +4340,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, color-mix(in srgb, var(--mode-primary-strong) 90%, #111827), var(--mode-primary));
   color: var(--mode-on-primary);
   border-color: transparent;
-  border-radius: 13px;
+  border-radius: var(--radius-card);
   border: 1px solid color-mix(in srgb, var(--mode-primary) 48%, transparent);
   transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
   width: 44px;
@@ -4384,7 +4356,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   height: 32px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: var(--accent-active, #584D3D);
   color: #fff;
   font-size: 16px;
@@ -4419,7 +4391,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--accent-active, #584D3D) 12%, transparent);
 }
 .df-quick-add-project-menu button:last-child {
-  border-radius: 0 0 14px 14px;
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 /* Dark theme */
@@ -4444,7 +4416,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   justify-content: flex-start;
   height: 36px;
   padding: 4px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
@@ -4456,9 +4428,9 @@ body:has(:active)::-webkit-scrollbar-thumb {
 /* ============================================================ */
 .df-drawer h2 { margin: 0; font-size: 18px; font-weight: 600; }
 .df-drawer label { display: grid; gap: 6px; margin: 10px 0; color: var(--df-muted); font-size: 12px; }
-.df-drawer input { border: 1px solid var(--df-border); border-radius: 10px; padding: 9px 10px; background: var(--input-bg); color: var(--df-text); corner-shape: var(--corner-shape, squircle); }
-.df-drawer select { border: 1px solid var(--df-border); border-radius: 10px; padding: 9px 10px; background: var(--input-bg); color: var(--df-text); corner-shape: var(--corner-shape, squircle); }
-.df-drawer textarea { border: 1px solid var(--df-border); border-radius: 10px; padding: 9px 10px; background: var(--input-bg); color: var(--df-text); corner-shape: var(--corner-shape, squircle); }
+.df-drawer input { border: 1px solid var(--df-border); border-radius: var(--radius-card); padding: 9px 10px; background: var(--input-bg); color: var(--df-text); corner-shape: var(--corner-shape, squircle); }
+.df-drawer select { border: 1px solid var(--df-border); border-radius: var(--radius-card); padding: 9px 10px; background: var(--input-bg); color: var(--df-text); corner-shape: var(--corner-shape, squircle); }
+.df-drawer textarea { border: 1px solid var(--df-border); border-radius: var(--radius-card); padding: 9px 10px; background: var(--input-bg); color: var(--df-text); corner-shape: var(--corner-shape, squircle); }
 .df-drawer-project-list {
   position: absolute;
   left: 0;
@@ -4470,7 +4442,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   overflow: auto;
   padding: 10px;
   border: 1px solid color-mix(in srgb, var(--mode-primary) 32%, var(--border-soft));
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: var(--surface-raised);
   box-shadow: 0 16px 34px color-mix(in srgb, var(--mode-primary-strong) 14%, transparent);
   corner-shape: var(--corner-shape, squircle);
@@ -4483,7 +4455,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   margin: 16px 0 12px;
   padding: 12px;
   border: 1px solid var(--border-soft);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   background: var(--surface-card);
   corner-shape: var(--corner-shape, squircle);
 }
@@ -4520,7 +4492,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   margin: 12px 0;
   padding: 12px;
   border: 1px solid var(--border-soft);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   background: var(--surface-card);
   corner-shape: var(--corner-shape, squircle);
 }
@@ -4685,7 +4657,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   height: 22px;
   min-width: 22px;
   padding: 0 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
@@ -4698,7 +4670,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   height: 22px;
   min-width: 22px;
   padding: 0 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
@@ -4714,7 +4686,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   height: 22px;
   min-width: 22px;
   padding: 0 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
@@ -4854,7 +4826,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   width: 16px;
   height: 16px;
   min-width: 16px;
-  border-radius: 50%;
+  border-radius: var(--radius-detail);
   cursor: pointer;
   flex-shrink: 0;
   padding: 0;
@@ -4870,7 +4842,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   width: 16px;
   height: 16px;
   min-width: 16px;
-  border-radius: 50%;
+  border-radius: var(--radius-detail);
   cursor: pointer;
   flex-shrink: 0;
   padding: 0;
@@ -5020,7 +4992,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   bottom: 0;
   width: 2px;
   background: color-mix(in srgb, var(--accent-active) 8%, var(--border-subtle));
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   transition: background .14s ease;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -5032,7 +5004,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   bottom: 0;
   width: 2px;
   background: color-mix(in srgb, var(--accent-active) 8%, var(--border-subtle));
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   transition: background .14s ease;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -5044,7 +5016,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   bottom: 0;
   width: 2px;
   background: color-mix(in srgb, var(--accent-active) 8%, var(--border-subtle));
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   transition: background .14s ease;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -5097,7 +5069,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   font-weight: 700;
   letter-spacing: .03em;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: rgba(var(--accent-rgb), 0.16);
   color: var(--accent-active);
   pointer-events: none;
@@ -5120,7 +5092,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   padding: 10px 20px 20px;
   border: 1px solid var(--paper-rule);
   border-bottom: 0;
-  border-radius: 24px 24px 0 0;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
   background: color-mix(in srgb, var(--surface-raised) 96%, transparent);
   box-shadow: 0 -10px 30px color-mix(in srgb, var(--text-main) 10%, transparent);
   backdrop-filter: blur(18px);
@@ -5228,7 +5200,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   height: 22px;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -5272,7 +5244,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   font-size: 13px;
   font-weight: 500;
   border: 1px solid var(--border-soft);
@@ -5381,7 +5353,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-plan-dur { color: var(--text-muted); font-size: 11px; }
 .df-ai-task-strip {
   width: 3px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   flex-shrink: 0;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -5405,7 +5377,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-task-cancel {
   width: 24px;
   height: 24px;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   border: 1px solid;
   cursor: pointer;
   display: inline-flex;
@@ -5438,7 +5410,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-attachment small { grid-column: 1; color: var(--df-muted); }
 .df-ai-attachment button { grid-column: 2; grid-row: 1 / span 2; }
 .df-ai-import-bulk button {
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   padding: 6px 10px;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -5523,7 +5495,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   animation: dfAiSlideUp .22s ease-out; transform-origin: right bottom;
   background: color-mix(in srgb, var(--surface-card) 92%, transparent);
   border: 1px solid color-mix(in srgb, var(--mode-primary) 22%, var(--border-soft));
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   transition: all .15s ease;
   max-height: none;
   display: flex;
@@ -5570,7 +5542,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border: 1px solid color-mix(in srgb, var(--accent-active, #584D3D) 22%, transparent);
   color: var(--text-main);
   padding: 10px 14px;
-  border-radius: 18px 18px 5px 18px;
+  border-radius: var(--radius-card) var(--radius-card) var(--radius-card) var(--radius-card);
   font-size: 13px;
   line-height: 1.45;
   word-break: break-word;
@@ -5655,7 +5627,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   line-height: 1.5;
   padding: 11px 13px;
   background: color-mix(in srgb, var(--mode-primary) 5%, var(--surface-card));
-  border-radius: 6px 16px 16px 16px;
+  border-radius: var(--radius-card) var(--radius-card) var(--radius-card) var(--radius-card);
   border-left: 3px solid var(--mode-primary);
   margin-left: 38px;
   border: 1px solid color-mix(in srgb, var(--mode-primary) 14%, var(--border-soft));
@@ -5668,7 +5640,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   margin-top: 12px;
   background: color-mix(in srgb, var(--mode-primary) 4%, var(--surface-card));
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
+  border-radius: var(--radius-card);
   overflow: visible;
   flex: none;
   min-height: 0;
@@ -5692,7 +5664,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-action-header > div { display: flex; align-items: center; gap: 6px; }
 .df-ai-action-header button {
   padding: 3px 7px;
-  border-radius: 7px;
+  border-radius: var(--radius-card);
   color: var(--text-muted);
   background: color-mix(in srgb, var(--mode-primary) 7%, var(--surface-card));
   border: 1px solid color-mix(in srgb, var(--mode-primary) 14%, var(--border-soft));
@@ -5747,7 +5719,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-task-dur {
   font-size: 11px; color: var(--text-muted); background: color-mix(in srgb, var(--mode-primary) 7%, var(--surface-card));
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle); }
 .df-ai-chip-button {
   max-width: 100%;
@@ -5814,7 +5786,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-task-accept {
   width: 24px;
   height: 24px;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   border: 1px solid;
   cursor: pointer;
   display: inline-flex;
@@ -5857,7 +5829,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-ai-import-bulk button:disabled { opacity: .45; cursor: not-allowed; }
 .df-ai-action-outcome {
-  margin-left: 38px; width: min(390px, calc(100% - 38px)); padding: 8px 10px; border-radius: 12px;
+  margin-left: 38px; width: min(390px, calc(100% - 38px)); padding: 8px 10px; border-radius: var(--radius-card);
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   font-size: 10px; color: var(--mode-primary);
   background: color-mix(in srgb, var(--mode-primary) 10%, var(--surface-card));
@@ -5872,14 +5844,14 @@ body:has(:active)::-webkit-scrollbar-thumb {
   align-items: start;
   gap: 10px;
   padding: 10px;
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   border: 1px solid color-mix(in srgb, var(--mode-primary) 22%, var(--border-soft));
   background: color-mix(in srgb, var(--mode-primary) 7%, var(--surface-card));
   corner-shape: var(--corner-shape, squircle);
 }
 .df-ai-file-icon {
   display: grid; place-items: center;
-  width: 36px; height: 40px; border-radius: 9px;
+  width: 36px; height: 40px; border-radius: var(--radius-card);
   color: var(--mode-primary); font-size: 8px; font-weight: 800;
   background: color-mix(in srgb, var(--mode-primary) 12%, var(--surface-card));
   border: 1px solid color-mix(in srgb, var(--mode-primary) 24%, var(--border-soft));
@@ -5889,7 +5861,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-attachment-card strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main); font-size: 12px; }
 .df-ai-attachment-card small { color: var(--text-muted); font-size: 10px; }
 .df-ai-attachment-card p { color: var(--text-muted); font-size: 10px; margin: 3px 0 0; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.df-ai-attachment-card button { width: 26px; height: 26px; border-radius: 8px; corner-shape: var(--corner-shape, squircle); }
+.df-ai-attachment-card button { width: 26px; height: 26px; border-radius: var(--radius-card); corner-shape: var(--corner-shape, squircle); }
 .df-ai-attachment-card.error { border-color: color-mix(in srgb, var(--danger, #ef4444) 38%, var(--border-soft)); }
 .df-ai-panel-foot {
   display: grid;
@@ -5905,7 +5877,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border: 1px solid color-mix(in srgb, var(--mode-primary) 18%, var(--border-soft));
   background: color-mix(in srgb, var(--mode-primary) 5%, var(--surface-card));
   color: var(--mode-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   justify-self: start;
   padding: 6px 8px;
   border-left: 2px solid var(--mode-primary);
@@ -5919,7 +5891,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   align-items: stretch;
   gap: 2px 6px;
   padding: 7px 7px 7px 10px;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   border: 1px solid color-mix(in srgb, var(--mode-primary) 10%, var(--border-soft));
   background: color-mix(in srgb, var(--surface-main) 88%, transparent);
   box-shadow: none;
@@ -5932,7 +5904,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   min-height: 62px; max-height: 112px;
   resize: none; background: transparent;
   border: 0;
-  border-radius: 10px; padding: 9px 4px;
+  border-radius: var(--radius-card); padding: 9px 4px;
   color: var(--text-main);
   font-size: 13px;
   font-family: inherit;
@@ -5945,7 +5917,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-attach-btn {
   width: 28px;
   height: 28px;
-  border-radius: 0;
+  border-radius: var(--radius-card);
   border: 0;
   color: var(--mode-primary);
   display: grid;
@@ -5966,7 +5938,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-ai-send-btn {
   width: 28px;
   height: 28px;
-  border-radius: 0;
+  border-radius: var(--radius-card);
   border: 0;
   background: transparent;
   color: var(--mode-primary);
@@ -6006,7 +5978,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   gap: 2px 8px;
   padding: 8px 10px;
   border: 1px solid color-mix(in srgb, var(--mode-primary) 28%, var(--df-border));
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--mode-primary) 8%, var(--df-surface));
   font-size: 11px;
   corner-shape: var(--corner-shape, squircle); }
@@ -6099,7 +6071,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   align-items: start;
   padding: 22px 22px 20px 22px;
   border: 1px solid color-mix(in srgb, var(--accent-active) 18%, var(--border-soft));
-  border-radius: 28px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--accent-active) 4%, var(--surface-card));
   corner-shape: var(--corner-shape, squircle);
 }
@@ -6113,7 +6085,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-detail-pill {
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   border: 1px solid color-mix(in srgb, var(--accent-active) 22%, var(--border-soft));
   background: color-mix(in srgb, var(--accent-active) 8%, var(--surface-card));
   color: var(--text-main);
@@ -6126,7 +6098,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 }
 .df-detail-section.compact {
   padding: 16px 18px;
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-detail-section.compact h3 {
@@ -6167,7 +6139,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-drawer {
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
-  border-radius: 28px 0 0 28px;
+  border-radius: var(--radius-card) 0 0 var(--radius-card);
   box-shadow: -28px 0 64px rgba(17,24,39,.14);
   transition: all .15s ease; position: fixed; top: 0; right: 0; bottom: 0;
   width: min(460px, 94vw); z-index: 40; padding: 18px; overflow: auto; animation: dfSlideIn .2s ease-out; corner-shape: var(--corner-shape, squircle);
@@ -6219,7 +6191,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-task-detail.df-drawer {
   width: min(620px, 94vw);
   padding: 34px 32px 28px;
-  border-radius: 34px 0 0 34px;
+  border-radius: var(--radius-card) 0 0 var(--radius-card);
   background: color-mix(in srgb, var(--accent-active) 3%, var(--bg-surface));
   border-color: color-mix(in srgb, var(--accent-active) 14%, var(--border-subtle));
   box-shadow: -28px 0 80px rgba(10, 15, 24, .2);
@@ -6282,7 +6254,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   cursor: pointer;
   min-height: 92px;
   font-size: 13px; color: var(--text-main); line-height: 1.5;
-  border-radius: 16px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-detail-popover-layer {
@@ -6325,7 +6297,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   min-height: 40px;
   padding: 9px 11px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--text-main);
   text-align: center;
@@ -6381,27 +6353,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-app .df-week-view .df-time-block.is-event.df-time-block-week .df-block-check {
   display: none;
 }
-.df-app .df-time-block .df-resize-dot::after {
-  width: min(20px, calc(100% - 6px));
-  height: 2px;
-  opacity: 0.75;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-}
-.df-app .df-week-view .df-time-block.df-time-block-week .df-resize-dot::after {
-  width: min(20px, calc(100% - 6px));
-  height: 2px;
-  opacity: 0.75;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-}
-.df-app .df-week-view .df-event-blocks-layer .df-time-block .df-resize-dot::after {
-  width: min(20px, calc(100% - 6px));
-  height: 2px;
-  opacity: 0.75;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-}
 .df-app.theme-dark .df-time-grid {
   background: repeating-linear-gradient(
     to bottom,
@@ -6414,22 +6365,16 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-app .df-now-line span {
   display: none;
 }
-.df-app .df-time-block.is-dragging .df-resize-dot {
-  display: none;
-}
-.df-app .df-event-blocks-layer .df-time-block.is-dragging .df-resize-dot {
-  display: none;
-}
 .df-app .df-time-block.is-dragging {
   opacity: 0;
   pointer-events: none;
-  border-radius: 5px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-event-blocks-layer .df-time-block.is-dragging {
   opacity: 0;
   pointer-events: none;
-  border-radius: 5px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 @keyframes df-drag-border-flow {
@@ -6446,7 +6391,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   display: inline-flex;
   width: max-content;
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--cat, var(--accent-active)) 14%, transparent);
   color: color-mix(in srgb, var(--cat, var(--accent-active)) 70%, var(--text-muted));
   font-size: 9px;
@@ -6488,7 +6433,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   justify-content: flex-start;
   width: max-content;
   max-width: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -6724,9 +6669,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-app.theme-dark .df-time-block .df-next {
   color: var(--text-main);
 }
-.df-app.theme-dark .df-time-block .df-resize-dot {
-  color: var(--text-main);
-}
 .df-app.theme-dark .df-time-block .df-preview-badge {
   background: rgba(var(--accent-rgb), 0.20);
   color: var(--text-main);
@@ -6748,7 +6690,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   color: var(--text-main);
   box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-active) 22%, transparent);
   height: 40px;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app.theme-dark .df-quick-schedule {
@@ -6791,7 +6733,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   height: 32px;
   margin-left: 0;
   padding: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   font-size: 16px;
   cursor: pointer;
   display: flex;
@@ -6811,7 +6753,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   margin-left: 0;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   font-size: 16px;
   cursor: pointer;
   display: flex;
@@ -6846,15 +6788,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 /* Remove vertical padding and use row layout for better vertical centering */
 /* Title row takes remaining space and aligns center */
 /* Improve font rendering for short block titles */
-/* Larger resize dots for short blocks with expanded hit area */
-.df-time-block.short-block:not(.df-time-block-week) .df-resize-dot::before {
-  content: "";
-  position: absolute;
-  top: -4px;
-  bottom: -4px;
-  left: 0;
-  right: 0;
-}
 /* Adjust short-block threshold to match new minimum height */
 /* Note: The threshold is set in JS (height < 38), we'll adjust that too */
 /* ===== Optimization: Fix right date arrow hit area ===== */
@@ -6961,158 +6894,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-app.task-block-fill .df-time-block.is-event {
   background: color-mix(in srgb, var(--cat, var(--accent-active)) 16%, var(--surface-card));
 }
-/* === Unified timeline resize + short-block hover affordances =============== */
-.df-app .df-time-block .df-resize-dot {
-  left: 50%;
-  right: auto;
-  width: 25%;
-  min-width: 24px;
-  max-width: 64px;
-  height: 10px;
-  transform: translateX(-50%);
-  opacity: 0;
-}
-.df-app .df-event-blocks-layer .df-time-block .df-resize-dot {
-  left: 50%;
-  right: auto;
-  width: 25%;
-  min-width: 24px;
-  max-width: 64px;
-  height: 10px;
-  transform: translateX(-50%);
-  opacity: 0;
-}
-.df-app .df-week-view .df-time-block.df-time-block-week .df-resize-dot {
-  left: 50%;
-  right: auto;
-  width: 25%;
-  min-width: 24px;
-  max-width: 64px;
-  height: 10px;
-  transform: translateX(-50%);
-  opacity: 0;
-}
-.df-app .df-week-view .df-event-blocks-layer .df-time-block .df-resize-dot {
-  left: 50%;
-  right: auto;
-  width: 25%;
-  min-width: 24px;
-  max-width: 64px;
-  height: 10px;
-  transform: translateX(-50%);
-  opacity: 0;
-}
-.df-app .df-time-block:hover .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-time-block:focus-within .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-time-block.resizing .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block:hover .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block:focus-within .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block.resizing .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-week-view .df-time-block.df-time-block-week:hover .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-week-view .df-time-block.df-time-block-week:focus-within .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-week-view .df-time-block.df-time-block-week.resizing .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-time-block.short-block:not(.df-time-block-week) .df-resize-dot::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  transform: translate(-50%, -50%);
-  width: min(18px, 70%);
-  height: 2px;
-  border-radius: 1px;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-  opacity: 0;
-  pointer-events: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-time-block:not(.short-block) .df-resize-dot::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  transform: translate(-50%, -50%);
-  width: min(18px, 70%);
-  height: 2px;
-  border-radius: 1px;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-  opacity: 0;
-  pointer-events: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-event-blocks-layer .df-time-block .df-resize-dot::after {
-  width: min(18px, 70%);
-  height: 2px;
-  opacity: 0;
-  background: var(--accent-active, #2A6E8E);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface-main, #fff) 50%, transparent);
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  transform: translate(-50%, -50%);
-  border-radius: 1px;
-  pointer-events: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-app .df-time-block.short-block:not(.df-time-block-week) .df-resize-dot:hover::after {
-  opacity: 1;
-}
-.df-app .df-time-block.short-block:not(.df-time-block-week) .df-resize-dot:active::after {
-  opacity: 1;
-}
-.df-app .df-time-block:hover .df-resize-dot::after {
-  opacity: 1;
-}
-.df-app .df-time-block:focus-within .df-resize-dot::after {
-  opacity: 1;
-}
-.df-app .df-time-block.resizing .df-resize-dot::after {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block:hover .df-resize-dot::after {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block:focus-within .df-resize-dot::after {
-  opacity: 1;
-}
-.df-app .df-event-blocks-layer .df-time-block.resizing .df-resize-dot::after {
-  opacity: 1;
-}
-.df-app .df-time-block.short-block:not(.df-time-block-week) .df-resize-dot::before {
-  content: "";
-  position: absolute;
-  top: -6px;
-  bottom: -6px;
-  left: 0;
-  right: 0;
-  pointer-events: auto;
-}
 .df-detail-incomplete-menu {
   position: relative;
   z-index: 1;
@@ -7172,20 +6953,14 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-radius: inherit;
   corner-shape: var(--corner-shape, squircle);
 }
-.df-app .df-time-block.show-resize-hint .df-resize-dot {
-  opacity: 1;
-}
-.df-app .df-time-block.show-resize-hint .df-resize-dot::after {
-  opacity: 1;
-}
 .df-detail-type-segment{margin:0 52px 8px 0}.df-detail-importance-row{display:flex;align-items:center;justify-content:flex-start;gap:16px;padding:12px 0;border-top:1px solid color-mix(in srgb,var(--text-muted) 10%,transparent)}.df-task-detail .df-detail-tag-row{padding-top:8px;padding-bottom:8px}.df-task-detail .df-detail-status-row{padding-top:8px;padding-bottom:8px}.df-task-detail .df-detail-schedule-row{padding-top:8px;padding-bottom:8px}.df-reschedule-editor{display:flex;align-items:end;justify-content:space-between;gap:12px}.df-reschedule-editor label{display:grid;gap:6px;flex:1;color:var(--text-muted);font:600 12px/1.2 var(--paper-sans)}.df-reschedule-editor input{min-height:36px;padding:6px 9px;border:1px solid var(--paper-rule);border-radius:var(--paper-radius);background:transparent;color:var(--text-main);font:inherit;corner-shape: var(--corner-shape, squircle)}
 /* Local AI provider settings */
 .df-ai-provider-settings label { display: grid; gap: 4px; font-size: 12px; }
 .df-ai-provider-advanced label { display: grid; gap: 4px; font-size: 12px; }
-.df-ai-provider-settings input { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--paper); color: var(--ink); corner-shape: var(--corner-shape, squircle); }
-.df-ai-provider-settings select { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--paper); color: var(--ink); corner-shape: var(--corner-shape, squircle); }
+.df-ai-provider-settings input { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius-card); padding: 7px 8px; background: var(--paper); color: var(--ink); corner-shape: var(--corner-shape, squircle); }
+.df-ai-provider-settings select { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius-card); padding: 7px 8px; background: var(--paper); color: var(--ink); corner-shape: var(--corner-shape, squircle); }
 .df-ai-provider-advanced { display: grid; gap: 8px; }
-.df-ai-provider-advanced textarea { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--paper); color: var(--ink); min-height: 130px; font: 12px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; corner-shape: var(--corner-shape, squircle); }
+.df-ai-provider-advanced textarea { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius-card); padding: 7px 8px; background: var(--paper); color: var(--ink); min-height: 130px; font: 12px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; corner-shape: var(--corner-shape, squircle); }
 .df-ai-provider-settings button { justify-self: start; }/* NavoPath UI tokens. Theme-specific values continue to resolve from the
  * active .df-app theme through the paper aliases below. *//* NavoPath paper editorial application layer. Shared accents follow --accent-active. */
 /* Keep the dock and other persistent controls live outside content snapshots. */
@@ -7311,7 +7086,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app input { font: inherit;
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   color: var(--df-text);
   padding: 7px 10px;
@@ -7322,7 +7097,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app select { font: inherit;
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   color: var(--df-text);
   padding: 7px 10px;
@@ -7333,7 +7108,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app textarea { font: inherit;
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   color: var(--df-text);
   padding: 7px 10px;
@@ -7346,7 +7121,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   border: 1px solid #E5E7EB;
   background: #FFFFFF;
   color: var(--df-text);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   padding: 8px 12px;
   transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion), transform var(--paper-motion);
   box-shadow: none;
@@ -7426,7 +7201,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-timeline-panel {
   background: var(--bg-surface);
   border: 1px solid color-mix(in srgb, var(--mode-primary) 32%, #E5E7EB);
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow-soft);
   transition: all .15s ease;
   border-color: var(--border-soft);
@@ -7509,7 +7284,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   place-items: center;
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--text-muted);
   cursor: help;
@@ -7688,7 +7463,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-quick-add-submit {
   height: 34px;
   min-width: 84px; border: 0;
-  border-radius: 0; background: transparent;
+  border-radius: var(--radius-card); background: transparent;
   color: var(--accent-active);
   font-weight: 800; box-shadow: none;
   transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
@@ -7698,7 +7473,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 }
 .df-quick-add-confirm:not(:disabled) {
   color: var(--accent-active); border: 0; border-bottom: 1px solid var(--accent-active);
-  border-radius: 0; background: transparent; box-shadow: none; filter: none;
+  border-radius: var(--radius-card); background: transparent; box-shadow: none; filter: none;
 }
 .df-project-group-header {
   display: flex;
@@ -7712,7 +7487,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   color: var(--mode-primary-strong);
   font-weight: 600;
   padding: 3px 2px;
-  min-width: 46px; border-radius: 0; font-family: var(--paper-mono);
+  min-width: 46px; border-radius: var(--radius-card); font-family: var(--paper-mono);
 }
 .df-quick-add-project-menu {
   max-height: 220px;
@@ -7881,7 +7656,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   left: -50px;
   top: -10px; background: var(--surface-main); color: var(--accent-active);
   padding: 2px 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-detail);
   font-size: 11px; box-shadow: none; border: 0; font-family: var(--paper-mono); text-shadow: none; corner-shape: var(--corner-shape, squircle); }
 .df-view-switch-vertical {
   border-color: color-mix(in srgb, var(--mode-primary) 34%, #d1d5db);
@@ -8032,7 +7807,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   flex-direction: column;
   overflow: hidden;
   border: 1px solid #E5E7EB;
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   background: #FFFFFF;
   box-shadow: 0 8px 32px rgba(0,0,0,.08);
   animation: dfPanelPop .18s ease-out;
@@ -8322,7 +8097,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   min-height: 42px;
   padding: 8px 10px;
   border: 1px solid var(--paper-rule);
-  border-radius: var(--paper-radius);
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--text-main);
   font: 600 14px/1 var(--paper-mono);
@@ -8345,7 +8120,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-entity-editor .df-detail-notes-new:has(+ .df-create-editor-actions) { border-bottom: 0; }
 .df-entity-editor .df-detail-notes-new:has(+ .df-create-editor-actions) .df-notes-preview { min-height: 0; }
 .df-app .df-level-selector {
-  --level-radius: 12px;
+  --level-radius: var(--radius-card);
   display: inline-flex;
   width: max-content;
   flex: 0 0 auto;
@@ -8421,15 +8196,15 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   background: color-mix(in srgb, var(--option-color, var(--df-option-color, #8E8478)) 6%, var(--paper-bg));
 }
 .df-app .df-level-selector .df-level-option:first-child[data-selected="true"]::after {
-  border-top-left-radius: calc(var(--level-radius) - 1px);
-  border-bottom-left-radius: calc(var(--level-radius) - 1px);
+  border-top-left-radius: max(0px, calc(var(--level-radius) - 1px));
+  border-bottom-left-radius: max(0px, calc(var(--level-radius) - 1px));
 }
 .df-app .df-level-selector .df-level-option:last-child[data-selected="true"]::after {
-  border-top-right-radius: calc(var(--level-radius) - 1px);
-  border-bottom-right-radius: calc(var(--level-radius) - 1px);
+  border-top-right-radius: max(0px, calc(var(--level-radius) - 1px));
+  border-bottom-right-radius: max(0px, calc(var(--level-radius) - 1px));
 }
 .df-app .df-level-selector .df-level-option:first-child:last-child[data-selected="true"]::after {
-  border-radius: calc(var(--level-radius) - 1px);
+  border-radius: max(0px, calc(var(--level-radius) - 1px));
   corner-shape: var(--corner-shape, squircle);
 }
 /* Unselected option: quiet paper background. */
@@ -8518,7 +8293,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   overflow: hidden;
   background: #FAFAFA;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle); }
 .df-empty .blob-accent { width: 40px; height: 40px; opacity: .16; border: 1px solid var(--paper-accent-rule); border-radius: 50%; background: transparent; transform: none; }
@@ -8792,7 +8567,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   background: rgba(255, 255, 255, .98);
   border: 1px solid color-mix(in srgb, var(--mode-primary) 62%, #CBD5E1);
   border-left: 4px solid var(--mode-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   box-shadow:
     0 10px 28px rgba(17, 24, 39, .15),
     0 0 0 1px color-mix(in srgb, var(--mode-primary) 10%, transparent);
@@ -8947,7 +8722,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   .df-view-switch-vertical { top: 7px; right: 6px; }
   .df-utility-panel { width: 100vw; border-radius: var(--paper-radius-soft) var(--paper-radius-soft) 0 0; corner-shape: var(--corner-shape, squircle); }
   .df-task-detail.df-drawer { width: 100vw; border-radius: var(--paper-radius-soft) var(--paper-radius-soft) 0 0; corner-shape: var(--corner-shape, squircle); }
-  .df-ai-panel { right: 8px; bottom: 76px; width: calc(100vw - 16px); height: min(76vh, 720px); border-radius: 20px; corner-shape: var(--corner-shape, squircle); }
+  .df-ai-panel { right: 8px; bottom: 76px; width: calc(100vw - 16px); height: min(76vh, 720px); border-radius: var(--radius-card); corner-shape: var(--corner-shape, squircle); }
   .df-ai-panel-body { padding: 14px; }
   .df-ai-reply { margin-left: 0; }
   .df-ai-actions { margin-left: 0; }
@@ -9268,7 +9043,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   width: 38px;
   height: 36px;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-card);
   background: var(--surface-main);
   box-shadow: none; filter: none; bottom: 64px;
   color: var(--accent-active); border-color: var(--accent-active);
@@ -9282,7 +9057,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   width: 38px;
   height: 36px;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-card);
   background: var(--surface-main);
   box-shadow: none; filter: none; bottom: 14px; color: var(--text-muted);
   background-image: none; text-shadow: none;
@@ -9469,7 +9244,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 /* Timeline tasks are plain canvas paper outlined by their project color. */
 .df-app .df-event-blocks-layer .df-time-block {
   border: 1px solid color-mix(in srgb, var(--cat, #8b6f47) 24%, var(--paper-rule));
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   background: var(--surface-main);
   box-shadow: none;
   filter: none;
@@ -9481,7 +9256,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app.theme-dark .df-time-block {
   background: var(--surface-raised);
   border: 1px solid color-mix(in srgb, var(--cat, #8b6f47) 24%, var(--paper-rule));
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   color: var(--text-main);
   box-shadow: none;
   filter: none; text-shadow: none;
@@ -9491,7 +9266,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app:not(.theme-dark) .df-time-block {
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   filter: none; text-shadow: none;
   border: 1px solid color-mix(in srgb, var(--cat, #8b6f47) 24%, var(--paper-rule));
@@ -9528,7 +9303,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app.theme-dark .df-all-day-block {
   background: var(--surface-raised);
   border: 1px solid color-mix(in srgb, var(--accent-active) 24%, rgba(255,255,255,0.10));
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   color: var(--text-main);
   box-shadow: none; filter: none; text-shadow: none;
   align-items: center;
@@ -9539,7 +9314,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app:not(.theme-dark) .df-all-day-block {
   background: var(--surface-main);
   border: 1px solid rgba(15,23,42,0.10);
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   box-shadow: none; filter: none; text-shadow: none;
   align-items: center;
   padding: 0 12px 0 28px;
@@ -9579,7 +9354,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   scrollbar-width: none;
   padding: 8px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 7px 4px 8px 3px;
+  border-radius: var(--radius-card) var(--radius-card) var(--radius-card) var(--radius-card);
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
   corner-shape: var(--corner-shape, squircle);
@@ -9594,7 +9369,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   scrollbar-width: none;
   padding: 10px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 7px 4px 8px 3px;
+  border-radius: var(--radius-card) var(--radius-card) var(--radius-card) var(--radius-card);
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
   corner-shape: var(--corner-shape, squircle);
@@ -9604,7 +9379,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app .df-drawer-project-list {
   padding: 8px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 7px 4px 8px 3px;
+  border-radius: var(--radius-card) var(--radius-card) var(--radius-card) var(--radius-card);
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
   corner-shape: var(--corner-shape, squircle);
@@ -9626,7 +9401,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   gap: 7px;
   padding: 8px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 6px 3px 7px 2px;
+  border-radius: var(--radius-card) var(--radius-card) var(--radius-card) var(--radius-card);
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
   corner-shape: var(--corner-shape, squircle);
@@ -9650,7 +9425,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app .df-ai-plan:hover:not(:disabled) {
   min-width: 0;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 6px 3px 7px 2px;
+  border-radius: var(--radius-card) var(--radius-card) var(--radius-card) var(--radius-card);
   background: var(--surface-main);
   color: var(--text-main);
   font-family: var(--paper-display);
@@ -9709,7 +9484,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 }
 .df-app button:not(.df-resize-dot):not(.df-level-option) {
   border-color: var(--pencil-rule);
-  border-radius: 5px 2px 6px 3px;
+  border-radius: var(--radius-control);
   background-color: transparent;
   background-image: none;
   box-shadow: none;
@@ -9738,7 +9513,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   width: 20px;
   height: 20px;
   border: 1px solid color-mix(in srgb, var(--cat, var(--accent-active)) 42%, var(--paper-rule-strong));
-  border-radius: 2px;
+  border-radius: var(--radius-detail);
   background: transparent;
   box-shadow: none;
   transform: translateY(-50%);
@@ -9753,7 +9528,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   width: 16px;
   height: 16px;
   min-width: 16px;
-  border-radius: 50%;
+  border-radius: var(--radius-detail);
   cursor: pointer;
   flex-shrink: 0;
   padding: 0;
@@ -9770,7 +9545,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   opacity: 1;
   filter: none;
   border: 1px solid color-mix(in srgb, var(--project-color) 54%, var(--paper-rule-strong));
-  border-radius: 4px 2px 5px 1px;
+  border-radius: var(--radius-detail);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
   transform: none;
   width: 16px;
@@ -9779,7 +9554,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 }
 .df-app .df-project-color-picker button {
   border: 1px solid color-mix(in srgb, var(--project-color) 54%, var(--paper-rule-strong));
-  border-radius: 4px 2px 5px 1px;
+  border-radius: var(--radius-detail);
   background-color: var(--project-color);
   background-image:
     linear-gradient(97deg, rgba(255,255,255,.12), transparent 42%),
@@ -9800,7 +9575,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 }
 .df-app .df-project-color-custom span {
   border: 1px solid color-mix(in srgb, var(--project-color) 54%, var(--paper-rule-strong));
-  border-radius: 4px 2px 5px 1px;
+  border-radius: var(--radius-detail);
   background-color: var(--project-color);
   background-image:
     linear-gradient(97deg, rgba(255,255,255,.12), transparent 42%),
@@ -10041,7 +9816,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   width: 44px;
   height: 44px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 4px 2px 5px 3px;
+  border-radius: var(--radius-card);
   background: var(--surface-main);
   color: var(--text-main);
   box-shadow: none;
@@ -10237,7 +10012,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 3px;
+  border-radius: var(--radius-detail);
   background: transparent;
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
@@ -10249,7 +10024,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 3px;
+  border-radius: var(--radius-detail);
   background: transparent;
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
@@ -10647,7 +10422,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-dialog {
   width: min(420px, 100%);
   border: 1px solid var(--paper-rule-strong, rgba(33, 29, 24, .4));
-  border-radius: 3px;
+  border-radius: var(--radius-card);
   background: var(--surface-main, #f7f2e9);
   color: var(--text-main, #211d18);
   box-shadow: none;
@@ -10909,7 +10684,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app .df-floating-shelf-drag {
   min-width: 180px;
   max-width: min(280px, calc(100vw - 32px));
-  border-radius: 3px;
+  border-radius: var(--radius-card);
   background: var(--surface-raised);
   border-color: var(--paper-rule-strong);
   box-shadow: none;
@@ -10991,7 +10766,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-habit-back-btn {
   flex: 1;
   padding: 9px 12px;
-  border-radius: 7px;
+  border-radius: var(--radius-card);
   border: 1px solid var(--paper-rule-strong, var(--paper-rule));
   background: transparent;
   font-family: var(--paper-sans);
@@ -11013,7 +10788,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-habit-archive-btn {
   flex: 1;
   padding: 9px 12px;
-  border-radius: 7px;
+  border-radius: var(--radius-card);
   border: 1px solid var(--paper-rule-strong, var(--paper-rule));
   background: transparent;
   font-family: var(--paper-sans);
@@ -11084,7 +10859,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   padding: 2px 7px;
   border: 1px solid var(--paper-rule);
   border-bottom-color: var(--paper-rule-strong);
-  border-radius: 5px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--surface-main) 94%, var(--surface-tint, var(--text-main)) 6%);
   color: var(--text-muted);
   font: 650 10px/1.2 var(--paper-mono);
@@ -11097,7 +10872,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   padding: 2px 7px;
   border: 1px solid var(--paper-rule);
   border-bottom-color: var(--paper-rule-strong);
-  border-radius: 5px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--surface-main) 94%, var(--surface-tint, var(--text-main)) 6%);
   color: var(--text-muted);
   font: 650 10px/1.2 var(--paper-mono);
@@ -11213,7 +10988,7 @@ body.df-timeline-pointer-drag * {
   padding-right: 32px;
   overflow: visible;
   border: 1px solid color-mix(in srgb, var(--cat, #8b6f47) 24%, var(--paper-rule));
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   background: var(--surface-main);
   box-shadow: none;
   filter: none; text-shadow: none; transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion);
@@ -11230,7 +11005,7 @@ body.df-timeline-pointer-drag * {
   width: 4px;
   height: 36px;
   max-height: calc(100% - 8px);
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   transform: translateY(-50%);
   background: color-mix(in srgb, var(--cat, var(--accent-active)) 65%, white); display:none; animation:none; corner-shape: var(--corner-shape, squircle); }
 .df-app .df-drop-preview.moving-block::after {
@@ -11261,7 +11036,7 @@ body.df-timeline-pointer-drag * {
   width: 4px;
   height: 36px;
   max-height: calc(100% - 8px);
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   transform: translateY(-50%);
   background: color-mix(in srgb, var(--cat, var(--accent-active)) 65%, white); display:none; animation:none; corner-shape: var(--corner-shape, squircle); }
 .df-floating-drag-block::after { display:none; animation:none; }
@@ -11324,12 +11099,12 @@ body.df-timeline-pointer-drag * {
 .df-app .df-ai-clarification legend { display: flex; align-items: flex-start; gap: 7px; width: 100%; padding: 0; color: var(--text-main); font: 600 12px/1.4 var(--paper-sans); }
 .df-app .df-ai-clarification legend span { flex: 0 0 auto; color: var(--accent-active); font: 700 10px/1.5 var(--paper-mono); }
 .df-app .df-ai-clarification-options { display: flex; flex-wrap: wrap; gap: 6px; }
-.df-app .df-ai-clarification-options button { min-height: 28px; padding: 4px 8px; border: 1px solid var(--paper-rule); border-radius: 2px; color: var(--text-muted); background: transparent; font: 600 11px/1.3 var(--paper-sans); text-align: left; corner-shape: var(--corner-shape, squircle); }
+.df-app .df-ai-clarification-options button { min-height: 28px; padding: 4px 8px; border: 1px solid var(--paper-rule); border-radius: var(--radius-card); color: var(--text-muted); background: transparent; font: 600 11px/1.3 var(--paper-sans); text-align: left; corner-shape: var(--corner-shape, squircle); }
 .df-app .df-ai-clarification-options button:hover:not(:disabled) { color: var(--accent-active); border-color: var(--accent-active); background: color-mix(in srgb, var(--paper-note) 82%, var(--accent-active) 18%); }
 .df-app .df-ai-clarification-options button.selected { color: var(--accent-active); border-color: var(--accent-active); background: color-mix(in srgb, var(--paper-note) 82%, var(--accent-active) 18%); }
 .df-app .df-ai-clarification input { width: 100%; min-height: 30px; padding: 6px 8px; border: 0; border-bottom: 1px solid var(--paper-rule); border-radius: 0; color: var(--text-main); background: transparent; font: 500 12px/1.35 var(--paper-sans); }
 .df-app .df-ai-clarification input:focus { border-bottom-color: var(--accent-active); outline: 0; }
-.df-app .df-ai-clarification-submit { justify-self: start; min-height: 30px; padding: 5px 10px; border: 1px solid var(--accent-active); border-radius: 2px; color: var(--accent-active); background: transparent; font: 700 11px/1.3 var(--paper-sans); corner-shape: var(--corner-shape, squircle); }
+.df-app .df-ai-clarification-submit { justify-self: start; min-height: 30px; padding: 5px 10px; border: 1px solid var(--accent-active); border-radius: var(--radius-card); color: var(--accent-active); background: transparent; font: 700 11px/1.3 var(--paper-sans); corner-shape: var(--corner-shape, squircle); }
 .df-app .df-ai-clarification-submit:hover:not(:disabled) { color: var(--paper-note); background: var(--accent-active); }
 .df-app .df-ai-clarification-submit:disabled { opacity: .42; cursor: not-allowed; }
 .df-app.theme-dark .df-toast {
@@ -11516,7 +11291,7 @@ body.df-timeline-pointer-drag * {
   min-height: 92px;
   padding: 12px;
   border: 1px solid var(--paper-rule);
-  border-radius: 0;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--surface-card) 94%, transparent);
 }
 .df-app .df-plan-choice.active {
@@ -11640,7 +11415,7 @@ body.df-timeline-pointer-drag * {
   margin: 0;
   background: transparent;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-card);
   cursor: pointer;
   overflow: visible;
   interpolate-size: allow-keywords;
@@ -11701,7 +11476,7 @@ body.df-timeline-pointer-drag * {
   inset: calc(100% + 8px) 0 auto auto;
   width: min(280px, calc(100vw - 24px));
   z-index: 40;
-  border-radius: 14px 4px 14px 14px;
+  border-radius: var(--radius-card) var(--radius-card) var(--radius-card) var(--radius-card);
   background: var(--surface-raised);
   border-color: var(--paper-rule-strong);
   box-shadow: var(--paper-float-shadow);
@@ -11779,7 +11554,7 @@ body.df-timeline-pointer-drag * {
   min-height: 28px;
   padding: 0 8px;
   border: 1px solid var(--paper-rule);
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   color: var(--accent-active);
   background: transparent;
   font: inherit;
@@ -11826,7 +11601,7 @@ body.df-timeline-pointer-drag * {
   z-index: 1;
   padding: 3px 7px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 3px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--surface-tint, var(--text-main)) 6%, var(--surface-main));
   color: var(--text-secondary);
   font: 500 10px/1.2 var(--paper-ui);
@@ -12061,6 +11836,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-app .df-template-period-block[data-template-conflict] { opacity: .6; }
 .df-app .df-template-period-block:focus-visible { outline: 1px solid var(--accent-active); }
 #root .df-app .df-template-period-block.df-time-block .df-resize-dot {
+  --resize-outset: 0px;
   left: 50%;
   right: auto;
   width: min(32%, 52px);
@@ -12182,7 +11958,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   white-space: nowrap;
   padding: 3px 6px;
   border: 1px solid var(--paper-rule);
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: var(--surface-main);
   color: var(--text-muted);
   font-size: 10px;
@@ -12220,7 +11996,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   height: 14px;
   padding: 0 3px;
   border: 1px solid var(--bg-app);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   color: var(--bg-app);
   background: var(--accent-active);
   font: 700 9px/12px var(--paper-mono);
@@ -12233,7 +12009,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   height: 15px;
   display: block;
   border: 1.5px solid currentColor;
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   background:
     linear-gradient(currentColor 0 0) 4px 0 / 1px 100% no-repeat,
     linear-gradient(currentColor 0 0) 0 5px / 100% 1px no-repeat;
@@ -12339,7 +12115,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   overflow-y: auto;
   background: var(--df-surface, #fff);
   border: 1px solid var(--df-hairline, rgba(0,0,0,0.08));
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   box-shadow: 0 6px 20px rgba(0,0,0,0.1);
   padding: 4px;
   margin-top: 2px;
@@ -12503,7 +12279,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   padding: 0;
   border: 0;
   border-right: 1px solid transparent;
-  border-radius: 0;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--text-muted);
   font: 650 11px/1 var(--paper-mono);
@@ -12574,7 +12350,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   width: 18px;
   height: 18px;
   border: 2px solid var(--navo-card-project);
-  border-radius: 4px;
+  border-radius: var(--radius-detail);
   background: transparent;
   box-shadow: none;
   transform: translateY(-50%);
@@ -12588,7 +12364,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 }
 .df-app .df-all-day-block {
   border: 1px solid rgba(0, 0, 0, .18);
-  border-radius:3px;
+  border-radius:var(--radius-card);
   background: var(--surface-main);
   box-shadow:none; filter: none; text-shadow: none; transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion);
   align-items: center;
@@ -12632,7 +12408,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   gap: 5px;
   padding: 3px 7px 3px 9px;
   border: 1px solid color-mix(in srgb, var(--accent-active) 32%, var(--paper-rule));
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--surface-main) 94%, var(--accent-active) 6%);
   color: var(--text-main);
   font: 500 11px/1.3 var(--paper-sans);
@@ -12696,7 +12472,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   gap: 4px;
   padding: 10px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: var(--surface-main);
   color: var(--text-main);
   box-shadow: var(--paper-float-shadow);
@@ -12720,7 +12496,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   width: 100%;
   padding: 7px 6px;
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--text-main);
   font: 500 12px/1.3 var(--paper-sans);
@@ -12744,7 +12520,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-filter-cat-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .df-filter-cat-count {
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+  min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--accent-active) 22%, transparent);
   color: var(--accent-active); font: 600 10px/1 var(--paper-sans); corner-shape: var(--corner-shape, squircle);
 }
@@ -12774,7 +12550,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   padding: 5px 8px; border: 1px solid transparent;
   border-bottom-color: var(--paper-rule);
   color: var(--text-muted);
-  font-size: 11px; border-radius: 5px; font: 500 12px/1.3 var(--paper-sans);
+  font-size: 11px; border-radius: var(--radius-card); font: 500 12px/1.3 var(--paper-sans);
   cursor: pointer; transition: background .12s ease, color .12s ease; corner-shape: var(--corner-shape, squircle);
 }
 .df-filter-option:hover {
@@ -12803,7 +12579,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-list-insertion-line {
   height: 2px;
   margin: 0 2px;
-  border-radius: 1px;
+  border-radius: var(--radius-detail);
   background: var(--accent-active);
   pointer-events: none;
   animation: dfFadeIn var(--motion-instant) var(--motion-ease) both;
@@ -13019,7 +12795,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   .df-task-detail.df-drawer {
     width: 100vw;
     padding: 24px 18px;
-    border-radius: 24px 24px 0 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
     corner-shape: var(--corner-shape, squircle);
   }
   .df-detail-schedule-row .df-detail-pill-trevor.action {
@@ -13171,9 +12947,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
  * beyond the task border. Keep the shell visible; inner content clips itself. */
 #root .df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"] {
   overflow: visible;
-}
-#root .df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"].show-resize-hint .df-resize-dot {
-  opacity: 1;
 }
 /* ============================================================
  * Appearance mode 1 — Calm (default)
@@ -13939,7 +13712,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   margin: 0;
   padding: 0;
   border: 2px solid var(--task-checkbox-color);
-  border-radius: 4px;
+  border-radius: var(--radius-detail);
   background: transparent;
   color: var(--task-checkbox-color);
   opacity: 1;
@@ -13965,7 +13738,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   margin: 0;
   padding: 0;
   border: 2px solid var(--task-checkbox-color);
-  border-radius: 4px;
+  border-radius: var(--radius-detail);
   background: transparent;
   color: var(--task-checkbox-color);
   opacity: 1;
@@ -13991,7 +13764,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   margin: 0;
   padding: 0;
   border: 2px solid var(--task-checkbox-color);
-  border-radius: 4px;
+  border-radius: var(--radius-detail);
   background: transparent;
   color: var(--task-checkbox-color);
   opacity: 1;
@@ -14434,7 +14207,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --task-gap: 10px;
   --task-align-items: center;
   --task-grid-template: auto minmax(0, 1fr) auto;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .navo-demo-app .df-task-block[data-task-appearance][data-task-variant="habit-child"] {
@@ -14444,7 +14217,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --task-gap: 10px;
   --task-align-items: center;
   --task-grid-template: auto minmax(0, 1fr) auto;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 /* ============================================================
@@ -14461,7 +14234,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border: 1px solid var(--task-border);
   border-left-width: var(--task-project-accent-size, 2px);
   border-left-color: var(--task-project-color, var(--accent-active));
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   margin-bottom: 4px;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -14469,7 +14242,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border: 1px solid var(--task-border);
   border-left-width: var(--task-project-accent-size, 2px);
   border-left-color: var(--task-project-color, var(--accent-active));
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   margin-bottom: 4px;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -14556,7 +14329,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--task-action-color);
   padding: 0;
@@ -14573,7 +14346,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--task-action-color);
   padding: 0;
@@ -14590,7 +14363,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--task-action-color);
   padding: 0;
@@ -14616,7 +14389,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   white-space: nowrap;
   color: var(--task-duration-color);
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: transparent;
   font-family: var(--paper-mono, var(--paper-ui, inherit));
   font-size: 11px;
@@ -14628,7 +14401,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 }
 .navo-demo-app .df-task-block[data-task-appearance] .df-duration-pill {
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--task-duration-color);
   font-family: var(--paper-mono, var(--paper-ui, inherit));
@@ -14648,15 +14421,9 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-color: var(--task-border-hover);
 }
 /* ============================================================
- * Scheduled block extras — resize dots, project chip, preview.
+ * Scheduled block extras — project chip and preview.
  * Kept here so the scheduled variant shares the same tokens.
  * ============================================================ */
-.df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"] .df-resize-dot {
-  color: var(--task-project-color, var(--accent-active));
-}
-.navo-demo-app .df-task-block[data-task-appearance][data-task-variant="scheduled"] .df-resize-dot {
-  color: var(--task-project-color, var(--accent-active));
-}
 .df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"] .df-block-project-wrap {
   position: absolute;
   right: 8px;
@@ -14673,7 +14440,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 }
 .df-app .df-task-block[data-task-appearance][data-task-variant="scheduled"] .df-block-project {
   border: 1px solid var(--task-border);
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: var(--task-bg);
   color: var(--task-meta-color);
   font-family: var(--paper-ui, var(--paper-sans, inherit));
@@ -14684,7 +14451,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 }
 .navo-demo-app .df-task-block[data-task-appearance][data-task-variant="scheduled"] .df-block-project {
   border: 1px solid var(--task-border);
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: var(--task-bg);
   color: var(--task-meta-color);
   font-family: var(--paper-ui, var(--paper-sans, inherit));
@@ -14737,11 +14504,11 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
  * Habit / group child task blocks
  * ============================================================ */
 .df-app .df-task-group .df-task-block[data-task-appearance][data-task-variant="habit-child"] {
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .navo-demo-app .df-task-group .df-task-block[data-task-appearance][data-task-variant="habit-child"] {
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-task-group .df-task-block[data-task-appearance][data-task-variant="habit-child"]:last-child {
@@ -14872,7 +14639,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --workspace-panel-bottom: max(var(--workspace-panel-gap), var(--workspace-dock-height));
   --workspace-panel-gap: 12px;
   --workspace-panel-top: calc(var(--workspace-panel-toolbar) + var(--workspace-panel-gap));
-  --workspace-panel-radius: 14px;
+  --workspace-panel-radius: var(--radius-card);
   --workspace-panel-width: min(60vw, 1200px);
   --df-font-brand: "Sora", Inter, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei UI", "Noto Sans SC", system-ui, sans-serif;
   --df-font-ui: Inter, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei UI", "Noto Sans SC", system-ui, sans-serif;
@@ -14890,10 +14657,10 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --text-faint: #9CA3AF;
   --border-soft: #E5E7EB;
   --border-subtle: #EEF0F4;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-sm: var(--radius-card);
+  --radius-md: var(--radius-card);
+  --radius-lg: var(--radius-card);
+  --radius-xl: var(--radius-card);
   --corner-shape: squircle;
   --shadow-soft: 0 10px 30px rgba(17, 24, 39, 0.06);
   --shadow-hl: 0 0 24px color-mix(in srgb, var(--accent-active, #584D3D) 14%, transparent);
@@ -14918,10 +14685,12 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
-  --radius-control: 4px;
-  --radius-card: 8px;
-  --radius-overlay: 12px;
-  --radius-round: 999px;
+  --radius-control: var(--radius-card);
+  /* Workspace Appearance owns the radius shared by cards, controls, and overlays. */
+  --radius-card: var(--workspace-corner-radius, 18px);
+  --radius-detail: calc(var(--radius-card) / 4);
+  --radius-overlay: var(--radius-card);
+  --radius-round: var(--radius-card);
   --shadow-none: none;
   --shadow-floating: 0 20px 48px rgba(20, 18, 15, .18);
   --motion-instant: 90ms;
@@ -14992,8 +14761,8 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --paper-display: var(--paper-serif);
   --paper-task: var(--paper-serif);
   --paper-complete: var(--navo-sage);
-  --paper-radius: 4px;
-  --paper-radius-soft: 8px;
+  --paper-radius: var(--radius-card);
+  --paper-radius-soft: var(--radius-card);
   --paper-ease: var(--motion-ease);
   --paper-motion: var(--motion-base) var(--motion-ease);
   --paper-rule: var(--border-subtle);
@@ -15031,7 +14800,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   --task-bg: var(--surface-card, var(--surface-main, #F8F7F3));
   --task-border: color-mix(in srgb, var(--paper-rule, var(--border-subtle, #E7E2D8)) 90%, transparent);
   --task-border-hover: color-mix(in srgb, var(--text-faint, #807A70) 38%, var(--paper-rule, #E7E2D8));
-  --task-radius: 6px;
+  --task-radius: var(--radius-card);
   --task-padding-x: 12px;
   --task-padding-y: 9px;
   --task-min-height: 42px;
@@ -15224,7 +14993,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   right: 0;
   height: 2px;
   background: var(--accent-active);
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   pointer-events: none;
   top: -1px;
   box-shadow: -3px 0 0 0 var(--accent-active);
@@ -15237,7 +15006,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   right: 0;
   height: 2px;
   background: var(--accent-active);
-  border-radius: 2px;
+  border-radius: var(--radius-card);
   pointer-events: none;
   bottom: -1px;
   box-shadow: -3px 0 0 0 var(--accent-active);
@@ -15397,7 +15166,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
 }
 .df-app .df-candidate-subtask-row {
   min-height: 34px;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -15417,7 +15186,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   height: 26px;
   min-width: 26px;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--paper-muted);
   box-shadow: none;
@@ -15538,7 +15307,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   min-height: 30px;
   padding: 0 10px;
   border: 1px solid var(--paper-rule);
-  border-radius: 5px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--paper-ink);
   font-family: var(--paper-sans);
@@ -15570,7 +15339,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   min-height: 30px;
   padding: 0 10px;
   border: 1px solid var(--paper-rule);
-  border-radius: 5px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--accent-active);
   font-family: var(--paper-sans);
@@ -15704,7 +15473,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   padding: 4px;
   cursor: pointer;
   box-shadow: none;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   transition: background 150ms;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -15723,7 +15492,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   width: 25px;
   height: 25px;
   box-sizing: border-box;
-  border-radius: 3px;
+  border-radius: var(--radius-card);
   border: 2px solid var(--paper-rule-strong, var(--paper-rule));
   background: transparent;
   transition: background 150ms, border-color 150ms;
@@ -15853,7 +15622,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   width: 28px;
   height: 28px;
   border: 1px solid transparent;
-  border-radius: 5px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--paper-muted);
   cursor: pointer;
@@ -16146,7 +15915,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     min-height: 44px;
     padding: 0 5px;
     border: 0;
-    border-radius: 12px;
+    border-radius: var(--radius-card);
     background: transparent;
     color: var(--text-main);
     font-family: inherit;
@@ -16244,7 +16013,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   .df-date-title-button {
     min-width: 112px;
     min-height: 54px;
-    border-radius: 12px;
+    border-radius: var(--radius-card);
     -webkit-tap-highlight-color: transparent;
     corner-shape: var(--corner-shape, squircle);
   }
@@ -16386,7 +16155,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     top: 0;
   }
   .df-mobile-floating-actions {
-    --radius-control: var(--paper-radius, 4px);
+    --radius-control: var(--radius-card);
     position: fixed;
     inset: 0;
     z-index: 1001;
@@ -16407,7 +16176,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     min-height: 48px;
     padding: 0;
     border: 1px solid var(--text-main);
-    border-radius: 12px;
+    border-radius: var(--radius-card);
     color: var(--text-main);
     background: var(--surface-main);
     box-shadow: none;
@@ -16612,7 +16381,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     gap: 0;
     padding: 0;
     border: 1px solid var(--paper-rule);
-    border-radius: 7px;
+    border-radius: var(--radius-card);
     background: var(--surface-main);
     corner-shape: var(--corner-shape, squircle);
   }
@@ -16621,7 +16390,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     gap: 0;
     padding: 0;
     border: 0;
-    border-radius: 6px;
+    border-radius: var(--radius-card);
     background: transparent;
     corner-shape: var(--corner-shape, squircle);
   }
@@ -16632,7 +16401,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     height: 44px;
     padding: 0;
     border: 1px solid var(--paper-rule-strong);
-    border-radius: 6px;
+    border-radius: var(--radius-card);
     color: var(--text-muted);
     background: transparent;
     box-shadow: none;
@@ -16740,7 +16509,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     min-height: 44px;
     padding: 0;
     border: 0;
-    border-radius: 4px;
+    border-radius: var(--radius-card);
     background: transparent;
     box-shadow: none;
     color: var(--text-main);
@@ -16758,7 +16527,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     min-height: 44px;
     padding: 0;
     border: 0;
-    border-radius: 4px;
+    border-radius: var(--radius-card);
     background: transparent;
     box-shadow: none;
     color: var(--text-main);
@@ -16847,7 +16616,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     font: 650 11px/1 var(--paper-sans);
   }
   #root .df-app .df-ai-plan-mobile-preview{display:grid;gap:4px;width:100%;margin-top:6px}
-  #root .df-app .df-ai-plan-mobile-preview button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-height:38px;padding:6px 8px;border:1px solid var(--paper-rule);border-radius:8px;background:transparent;text-align:left;corner-shape: var(--corner-shape, squircle)}
+  #root .df-app .df-ai-plan-mobile-preview button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-height:38px;padding:6px 8px;border:1px solid var(--paper-rule);border-radius:var(--radius-card);background:transparent;text-align:left;corner-shape: var(--corner-shape, squircle)}
   #root .df-app .df-ai-plan-mobile-preview strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
   #root .df-app .df-ai-plan-mobile-preview small{font:650 9px/1.2 var(--paper-mono);color:var(--text-muted);white-space:nowrap}
   #root .df-app .df-back-to-now {
@@ -16865,7 +16634,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     padding: 0 7px;
     font: 750 12px/1 var(--paper-sans);
     border: 0;
-    border-radius: 5px;
+    border-radius: var(--radius-card);
     background: transparent;
     color: var(--text-main);
     box-shadow: none;
@@ -16920,7 +16689,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   }
   #root .df-app .df-compact-date-display[aria-expanded="true"] {
     background: var(--surface-raised);
-    border-radius: 6px;
+    border-radius: var(--radius-card);
   }
   #root .df-app .df-compact-date-display.is-readonly {
     position: absolute;
@@ -17188,78 +16957,15 @@ body.df-unified-dragging .df-unified-drag-overlay {
     -webkit-overflow-scrolling: touch;
   }
   #root .df-app .df-time-block .df-resize-dot {
-    width: 44px;
-    height: 44px;
-    min-width: 0;
-    min-height: 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-    transform: none;
-    opacity: 0;
+    --resize-outset: 22px;
+    --resize-hit-depth: 22px;
     z-index: 11;
-    touch-action: none;
-    pointer-events:none;
-  }
-  #root .df-app .df-time-block .df-resize-dot.top {
-    left: -22px;
-    right: auto;
-    top: -22px;
-    bottom: auto;
-  }
-  #root .df-app .df-time-block .df-resize-dot.bottom {
-    left: auto;
-    right: -22px;
-    top: auto;
-    bottom: -22px;
-  }
-  #root .df-app .df-time-block[data-mouse-optimized="true"] .df-resize-dot {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-  }
-  #root .df-app .df-time-block .df-resize-dot::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    right: auto;
-    bottom: auto;
-    transform: translate(-50%, -50%);
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 2px solid var(--accent-active);
-    background: var(--surface-main);
-    box-shadow: none;
-    opacity: 1;
     pointer-events: none;
+    opacity: 0;
   }
-  #root .df-app .df-time-block .df-resize-dot::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    right: auto;
-    bottom: auto;
-    transform: translate(-50%, -50%);
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 2px solid var(--accent-active);
-    background: var(--surface-main);
-    box-shadow: none;
+  #root .df-app .df-time-block:is(.show-resize-hint, .resizing, [data-mouse-optimized="true"]:hover) .df-resize-dot {
+    pointer-events: auto;
     opacity: 1;
-    pointer-events: none; display:none; }
-  #root .df-app .df-time-block.resizing .df-resize-dot {
-    opacity: 1;
-    pointer-events:auto;
-  }
-  #root .df-app .df-time-block.show-resize-hint .df-resize-dot,
-  #root .df-app .df-time-block[data-mouse-optimized="true"]:hover .df-resize-dot {
-    opacity: 1;
-    pointer-events:auto;
   }
   #root .df-app .df-time-block .df-task-block-check{
     width: 24px;
@@ -17267,9 +16973,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
     height: 24px;
     min-height: 24px;
     border-width: 1.5px;position:relative;z-index:8}
-  #root .df-app .df-time-block:not(.show-resize-hint) .df-resize-dot::after {
-    display: none;
-  }
   #root .df-app .df-task-detail.df-drawer {
     animation: navo-sheet-in var(--motion-layout) var(--motion-ease-settle) backwards;
     position: fixed;
@@ -17278,7 +16981,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     max-width: none;
     padding: 30px 16px calc(18px + env(safe-area-inset-bottom));
     box-sizing: border-box;
-    border-radius: 18px 18px 0 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
     height: auto;
     min-height: 0;
     max-height: calc(100dvh - 4dvh);
@@ -17314,7 +17017,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     display: block;
     gap: 0;
     padding: 24px 12px calc(10px + env(safe-area-inset-bottom));
-    border-radius: 18px 18px 0 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
     overflow-y: auto;
     transform:translateY(var(--mobile-sheet-drag-y, 0px));
     transition:transform var(--motion-base) cubic-bezier(.22,.72,.2,1);
@@ -17335,7 +17038,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     height: auto;
     max-height: none;
     padding: 0;
-    border-radius: 18px 18px 0 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
     overflow: hidden;
     box-sizing: border-box;
     transform: translateY(var(--mobile-sheet-drag-y, 0px));
@@ -17370,7 +17073,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     left: 50%;
     width: 34px;
     height: 5px;
-    border-radius: 999px;
+    border-radius: var(--radius-detail);
     background: color-mix(in srgb, var(--text-muted) 42%, transparent);
     transform: translateX(-50%);
     corner-shape: var(--corner-shape, squircle);
@@ -17394,7 +17097,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     height: 44px;
     min-height: 44px;
     border: 0;
-    border-radius: 12px;
+    border-radius: var(--radius-card);
     background: transparent;
     box-shadow: none;
     corner-shape: var(--corner-shape, squircle);
@@ -17412,7 +17115,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     height: auto;
     max-height: none;
     padding: 0;
-    border-radius: 18px 18px 0 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
     overflow: hidden;
     box-sizing: border-box;
     transform: translateY(var(--mobile-sheet-drag-y, 0px));
@@ -17479,7 +17182,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   max-width: calc(100vw - 32px);
   overflow: hidden;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 18px;
+  border-radius: var(--radius-card);
   background: var(--surface-main);
   box-shadow: 0 18px 50px rgba(39, 35, 30, .14);
   corner-shape: var(--corner-shape, squircle);
@@ -17530,7 +17233,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   place-items: center;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   color: var(--text-muted);
   background: transparent;
   box-shadow: none;
@@ -17572,7 +17275,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   display: grid;
   padding: 6px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   background: var(--surface-raised);
   box-shadow: var(--paper-float-shadow);
   corner-shape: var(--corner-shape, squircle);
@@ -17581,7 +17284,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   min-height: 38px;
   padding: 0 10px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   color: var(--text-main);
   background: transparent;
   text-align: left;
@@ -17657,7 +17360,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   gap: 4px;
   border: 0;
   border-bottom: 1px solid var(--paper-rule);
-  border-radius: 0;
+  border-radius: var(--radius-card);
   color: var(--text-main);
   background: transparent;
   box-shadow: none;
@@ -17758,7 +17461,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   max-width: min(82%, 450px);
   padding: 10px 14px;
   border: 1px solid var(--paper-rule);
-  border-radius: 14px 14px 4px 14px;
+  border-radius: var(--radius-card) var(--radius-card) var(--radius-card) var(--radius-card);
   color: var(--text-main);
   background: color-mix(in srgb, var(--surface-main) 90%, var(--surface-tint, var(--text-main)) 10%);
   box-shadow: none;
@@ -17845,12 +17548,12 @@ body.df-unified-dragging .df-unified-drag-overlay {
 .df-ai-markdown li::marker { color: var(--text-muted); }
 .df-ai-markdown blockquote { margin: 1em 0; padding: .15em 0 .15em 15px; border-left: 2px solid var(--accent-active); color: var(--text-muted); }
 .df-ai-markdown a { color: var(--accent-active); text-decoration-thickness: 1px; text-underline-offset: 3px; }
-.df-ai-markdown code { padding: .12em .36em; border-radius: 4px; background: color-mix(in srgb, var(--text-main) 8%, transparent); font: .88em/1.5 var(--paper-mono); corner-shape: var(--corner-shape, squircle); }
+.df-ai-markdown code { padding: .12em .36em; border-radius: var(--radius-card); background: color-mix(in srgb, var(--text-main) 8%, transparent); font: .88em/1.5 var(--paper-mono); corner-shape: var(--corner-shape, squircle); }
 .df-ai-markdown table { width: 100%; margin: 1em 0; border-collapse: collapse; font-size: 13px; }
 .df-ai-markdown :is(th, td) { padding: 8px 10px; border: 1px solid var(--paper-rule); text-align: left; vertical-align: top; }
 .df-ai-markdown th { background: color-mix(in srgb, var(--surface-main) 94%, var(--surface-tint, var(--text-main)) 6%); font-weight: 650; }
 .df-ai-markdown input[type="checkbox"] { margin-right: 8px; accent-color: var(--accent-active); }
-.df-ai-code-block { max-width: 100%; margin: 1em 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: 8px; background: color-mix(in srgb, var(--surface-main) 88%, var(--surface-tint, var(--text-main)) 12%); corner-shape: var(--corner-shape, squircle); }
+.df-ai-code-block { max-width: 100%; margin: 1em 0; overflow: hidden; border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-card); background: color-mix(in srgb, var(--surface-main) 88%, var(--surface-tint, var(--text-main)) 12%); corner-shape: var(--corner-shape, squircle); }
 .df-ai-code-head { min-height: 34px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 13px; border-bottom: 1px solid var(--paper-rule); color: var(--text-muted); font: 550 10px/1 var(--paper-mono); }
 .df-ai-code-head button { min-height: 28px; padding: 0 6px; border: 0; color: inherit; background: transparent; cursor: pointer; }
 .df-ai-code-block pre { max-width: 100%; margin: 0; padding: 14px; overflow-x: auto; }
@@ -17861,7 +17564,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   border: 1px solid var(--paper-rule);
   background: color-mix(in srgb, var(--surface-raised) 92%, var(--accent-active) 8%);
   padding: 11px 12px; margin-top: 22px; }
-.df-agent-run-card :is(.df-agent-applied, .df-agent-confirm-card) { margin-top: 16px; border-radius: 8px; box-shadow: none; corner-shape: var(--corner-shape, squircle); }
+.df-agent-run-card :is(.df-agent-applied, .df-agent-confirm-card) { margin-top: 16px; border-radius: var(--radius-card); box-shadow: none; corner-shape: var(--corner-shape, squircle); }
 .df-agent-applied {
   display: grid;
   gap: 8px;
@@ -17902,7 +17605,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   gap: 6px;
   padding: 8px 9px 9px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 18px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--surface-main) 98%, var(--surface-tint, var(--text-main)) 2%);
   box-shadow: 0 10px 26px rgba(39, 35, 30, .1);
   corner-shape: var(--corner-shape, squircle);
@@ -17937,7 +17640,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   place-items: center;
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-card);
   box-shadow: none; grid-column: 1; grid-row: 2; color: var(--text-muted); background: transparent; }
 #root .df-app .df-ai-panel-reference .df-ai-attach-btn:hover { color: var(--text-main); background: var(--paper-note); }
 #root .df-app .df-ai-panel-reference .df-ai-attach-btn.active { color: var(--text-main); background: var(--paper-note); }
@@ -17996,7 +17699,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   place-items: center;
   padding: 0;
   border: 1px solid var(--paper-accent-rule);
-  border-radius: 50%;
+  border-radius: var(--radius-card);
   box-shadow: none;
   grid-column: 4;
   grid-row: 2;
@@ -18018,7 +17721,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   opacity: .64;
 }
 #root .df-app .df-ai-panel-reference .df-ai-send-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.df-ai-stop-icon { width: 8px; height: 8px; border-radius: 2px; background: currentColor; corner-shape: var(--corner-shape, squircle); }
+.df-ai-stop-icon { width: 8px; height: 8px; border-radius: var(--radius-card); background: currentColor; corner-shape: var(--corner-shape, squircle); }
 #root .df-app .df-ai-panel-reference .df-ai-attach-menu.df-ai-composer-menu {
   position: absolute;
   z-index: 90;
@@ -18026,7 +17729,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   left: 0;
   width: min(330px, calc(100vw - 52px));
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   background: var(--surface-raised);
   box-shadow: var(--paper-float-shadow);
   corner-shape: var(--corner-shape, squircle);
@@ -18050,7 +17753,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     max-width: none;
     height: calc(100dvh - max(8px, env(safe-area-inset-top)));
     border-bottom: 0;
-    border-radius: 18px 18px 0 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
     transform: translateY(var(--mobile-sheet-drag-y, 0px));
     display: flex;
     flex-direction: column;
@@ -18125,7 +17828,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     max-width: calc(100vw - 360px);
     border-right: 0;
     border-bottom: 0;
-    border-radius: 14px 0 0;
+    border-radius: var(--radius-card) 0 0;
     box-shadow: -12px 0 30px color-mix(in srgb, var(--text-main) 10%, transparent);
     corner-shape: var(--corner-shape, squircle);
   }
@@ -18624,7 +18327,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     inset: 0 6px 6px;
     border: 1px solid var(--paper-rule);
     border-top: 0;
-    border-radius: 20px;
+    border-radius: var(--radius-card);
     background: var(--surface-main);
     corner-shape: var(--corner-shape, squircle);
   }
@@ -18636,7 +18339,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     position: relative;
     padding: 17px 14px 12px;
     border: 1px solid var(--paper-rule-strong);
-    border-radius: 14px;
+    border-radius: var(--radius-card);
     background: #fff;
     box-shadow: 0 12px 28px color-mix(in srgb, var(--text-main) 11%, transparent);
     z-index: 2;
@@ -18653,7 +18356,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
     position: relative;
     border: 0;
     min-width: 0;
-    border-radius: 0 14px 14px 0;
+    border-radius: 0 var(--radius-card) var(--radius-card) 0;
     background: transparent;
     z-index: 1;
     overflow: hidden;
@@ -18729,13 +18432,13 @@ body.df-unified-dragging .df-unified-drag-overlay {
     min-width: 0;
     margin-inline: auto;
   }
-  #root .df-app.mode-execute .df-week-view .df-time-card-row {
+  #root .df-app.mode-execute .df-execute:not(.candidate-collapsed) .df-week-view .df-time-card-row {
     grid-template-columns: minmax(0, 1fr);
   }
-  #root .df-app.mode-execute .df-week-view .df-task-checkbox-wrap {
+  #root .df-app.mode-execute .df-execute:not(.candidate-collapsed) .df-week-view .df-task-checkbox-wrap {
     display: none;
   }
-  #root .df-app.mode-execute .df-week-view .df-time-card-main {
+  #root .df-app.mode-execute .df-execute:not(.candidate-collapsed) .df-week-view .df-time-card-main {
     grid-column: 1 / -1;
     width: 100%;
     min-width: 0;
@@ -18784,14 +18487,14 @@ body.df-unified-dragging .df-unified-drag-overlay {
   #root .df-app.mode-execute .df-candidate-panel {
     padding: 17px 16px 12px;
     border: 1px solid color-mix(in srgb, var(--accent-active) 28%, var(--paper-rule-strong));
-    border-radius: 6px;
+    border-radius: var(--radius-card);
     background: color-mix(in srgb, var(--surface-main) 97%, var(--surface-tint, var(--text-main)) 3%);
     box-shadow: none;
     corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app.mode-execute > .df-execute > .df-timeline-panel {
     border: 1px solid color-mix(in srgb, var(--accent-active) 28%, var(--paper-rule-strong));
-    border-radius: 6px;
+    border-radius: var(--radius-card);
     background: var(--bg-app);
     box-shadow: none;
     corner-shape: var(--corner-shape, squircle);
@@ -18841,7 +18544,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   gap: 4px;
   padding: 4px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: var(--surface-main);
   corner-shape: var(--corner-shape, squircle);
 }
@@ -18851,7 +18554,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   min-height: 40px;
   padding: 6px 8px;
   border: 1px solid transparent;
-  border-radius: 5px;
+  border-radius: var(--radius-card);
   color: var(--text-muted);
   background: transparent;
   font-weight: 650;
@@ -18969,7 +18672,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   min-width: 66px;
   height: 40px;
   padding: 0 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   font-size: 13px;
   font-weight: 800;
   letter-spacing: .1em;
@@ -19403,7 +19106,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   box-sizing: border-box;
   padding: 14px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--surface-main) 88%, var(--bg-app));
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
@@ -19514,7 +19217,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   .df-mobile-dock--viewport .df-mobile-more-button { position: relative; z-index: 3; }
   .df-mobile-dock--viewport .df-mobile-menu-scrim { position: fixed; inset: 0 0 var(--workspace-dock-height); z-index: 1; border: 0; background: transparent; }
   .df-mobile-dock--viewport .df-mobile-more-menu { position: absolute; right: -2px; bottom: calc(100% + 10px); z-index: 2; display: flex; width: min(280px, calc(100vw - 24px)); max-height: min(65dvh, 480px); flex-direction: column; overflow-y: auto; padding: 6px; border: 1px solid var(--border-soft); background: var(--bg-surface); color: var(--text-main); box-shadow: var(--paper-float-shadow); }
-  .df-mobile-dock--viewport .df-mobile-menu-item { display: flex; min-height: 42px; align-items: center; gap: 11px; padding: 7px 10px; border: 0; border-radius: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .df-mobile-dock--viewport .df-mobile-menu-item { display: flex; min-height: 42px; align-items: center; gap: 11px; padding: 7px 10px; border: 0; border-radius: var(--radius-card); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
   .df-mobile-dock--viewport .df-mobile-menu-item:hover,
   .df-mobile-dock--viewport .df-mobile-menu-item:focus-visible { background: color-mix(in srgb, var(--text-main) 7%, transparent); }
   .df-mobile-dock--viewport .df-mobile-menu-item img { width: 20px; height: 20px; object-fit: contain; }
@@ -19613,7 +19316,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
        (max-width: 980px) and (orientation: landscape) {
   #root .df-app .df-utility-panel:is(:has(.df-settings-shell), .df-metrics-utility) {
     background: var(--bg-app);
-    border-radius: 22px 22px 0 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
     corner-shape: var(--corner-shape, squircle);
   }
   #root .df-app .df-utility-panel:is(:has(.df-settings-shell), .df-metrics-utility) .df-utility-head {
@@ -19702,7 +19405,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   overflow: hidden;
   padding: 4px 16px;
   border: 1px solid var(--paper-rule);
-  border-radius: 16px;
+  border-radius: var(--radius-card);
   background: var(--surface-card);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--text-main) 6%, transparent);
   corner-shape: var(--corner-shape, squircle);
@@ -19774,7 +19477,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   padding: 10px 0;
   border: 0;
   border-bottom: 1px solid var(--paper-rule);
-  border-radius: 0;
+  border-radius: var(--radius-card);
   color: var(--text-main);
   text-align: left;
   background: transparent;
@@ -19884,7 +19587,7 @@ body.df-unified-dragging .df-unified-drag-overlay {
   min-height: 32px;
   padding: 3px 8px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 7px;
+  border-radius: var(--radius-card);
   color: var(--text-main);
   background: var(--surface-card);
   font: 700 18px/1.2 var(--paper-display);
@@ -20133,7 +19836,7 @@ li.oauth-consent-scope,
   min-height: 42px;
   padding: 0 16px;
   border: 1px solid var(--border-default, #bdb8ae);
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   color: inherit;
   background: transparent;
   font: inherit;
@@ -20239,11 +19942,11 @@ html.product-demo-fullscreen #root .df-app[data-product-revealing="true"] .df-ti
 }
 .df-product-ai-presets, .df-product-ai-candidates { display: grid; gap: 12px; }
 .df-product-ai-requests { display: flex; flex-wrap: wrap; gap: 8px; }
-#root .df-app .df-product-ai-requests > .ui-button[class~="ui-button--ghost"] { min-height: 40px; padding: 9px 16px; border: 0; border-radius: 12px; color: var(--text-main); font: 600 13px/1.4 var(--paper-sans); }
+#root .df-app .df-product-ai-requests > .ui-button[class~="ui-button--ghost"] { min-height: 40px; padding: 9px 16px; border: 0; border-radius: var(--radius-card); color: var(--text-main); font: 600 13px/1.4 var(--paper-sans); }
 #root .df-app[data-product-feature="ai"] .df-product-ai-requests .ui-button--ghost { background: var(--paper-note); }
 #root .df-app .df-product-ai-requests > .ui-button[class~="ui-button--ghost"]:disabled { opacity: .42; cursor: default; }
 .df-product-ai-reschedules { display: grid; grid-template-columns: 1fr; gap: 8px; }
-#root .df-app .df-product-ai-reschedules .ui-button { display: grid; gap: 6px; text-align: left; min-width: 0; padding: 12px; border: 0; border-radius: 12px; background: var(--paper-note); font: 500 13px/1.5 var(--paper-sans); }
+#root .df-app .df-product-ai-reschedules .ui-button { display: grid; gap: 6px; text-align: left; min-width: 0; padding: 12px; border: 0; border-radius: var(--radius-card); background: var(--paper-note); font: 500 13px/1.5 var(--paper-sans); }
 .df-product-ai-reschedules .ui-button span { color: var(--text-muted); font-size: 12px; }
 @media (max-width: 999px) {
   html.product-demo-fullscreen #root .df-app[data-product-feature="ai"] > .df-execute:not(.df-template-shell):not(.fullscreen) { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(170px, .85fr) minmax(0, 1.4fr); gap: 0; padding: 12px; }
@@ -20531,7 +20234,7 @@ body[data-navopath-base-theme="light"],
   :root {
     --workspace-panel-top: 4dvh;
     --workspace-panel-gap: 0px;
-    --workspace-panel-radius: 18px 18px 0 0;
+    --workspace-panel-radius: var(--radius-card) var(--radius-card) 0 0;
     --workspace-panel-width: 100%;
   }
 }

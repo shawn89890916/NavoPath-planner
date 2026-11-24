@@ -1,4 +1,4 @@
-import React, { type ReactNode } from "react";
+import React, { useState, type ReactNode } from "react";
 import { Button, Input } from "./UiPrimitives";
 import { UiChevronDownIcon } from "./UiIcons";
 import "./SettingsControls.css";
@@ -176,6 +176,7 @@ export function SettingNumberInput({
   disabled,
   ariaLabel,
   suffix,
+  commitOnBlur = false,
 }: {
   value: number;
   onChange: (next: number) => void;
@@ -185,22 +186,36 @@ export function SettingNumberInput({
   disabled?: boolean;
   ariaLabel?: string;
   suffix?: ReactNode;
+  commitOnBlur?: boolean;
 }) {
+  const [draft, setDraft] = useState<string | null>(null);
   return (
     <span className="df-settings-number-wrap">
       <Input
         type="number"
         className="df-settings-number df-utility-input"
-        value={value}
+        value={draft ?? value}
         min={min}
         max={max}
         step={step}
         aria-label={ariaLabel}
         disabled={disabled}
         onChange={(e) => {
-          const n = Number(e.target.value);
+          if (commitOnBlur) {
+            setDraft(e.currentTarget.value);
+            return;
+          }
+          const n = Number(e.currentTarget.value);
           if (!Number.isNaN(n)) onChange(n);
         }}
+        onBlur={commitOnBlur ? (event) => {
+          const next = event.currentTarget.valueAsNumber;
+          setDraft(null);
+          if (Number.isFinite(next) && next !== value) onChange(next);
+        } : undefined}
+        onKeyDown={commitOnBlur ? (event) => {
+          if (event.key === "Enter") event.currentTarget.blur();
+        } : undefined}
       />
       {suffix ? <span className="df-settings-number-suffix" aria-hidden="true">{suffix}</span> : null}
     </span>

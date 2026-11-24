@@ -4,7 +4,7 @@
   height: 44px !important;
   padding: 0 0 5px !important;
   border: 0 !important;
-  border-radius: 50% !important;
+  border-radius: var(--radius-card) !important;
   color: var(--text-muted) !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -38,7 +38,7 @@
   gap: 9px;
   padding: 0 10px !important;
   border: 0 !important;
-  border-radius: 4px !important;
+  border-radius: var(--radius-card) !important;
   color: var(--text-main) !important;
   background: transparent !important;
   box-shadow: none !important;

@@ -52,7 +52,7 @@
   transform: translateY(-50%);
   width: 4px;
   height: 30px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: var(--project-color, var(--accent-active));
   opacity: 0.85;
   pointer-events: none;
@@ -66,7 +66,7 @@
   transform: translateY(-50%);
   width: 4px;
   height: 30px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: var(--project-color, var(--accent-active));
   opacity: 0.85;
   pointer-events: none;
@@ -80,7 +80,7 @@
   transform: translateY(-50%);
   width: 4px;
   height: 30px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: var(--project-color, var(--accent-active));
   opacity: 0.85;
   pointer-events: none;
@@ -126,7 +126,7 @@
   height: 28px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: transparent;
   cursor: pointer;
   flex-shrink: 0;
@@ -142,7 +142,7 @@
   height: 28px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: transparent;
   cursor: pointer;
   flex-shrink: 0;
@@ -159,7 +159,7 @@
   height: 28px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: transparent;
   cursor: pointer;
   flex-shrink: 0;
@@ -240,7 +240,7 @@
   position: fixed;
   transform: translate(-50%, -100%);
   padding: 5px 10px;
-  border-radius: 7px;
+  border-radius: var(--radius-card);
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
@@ -253,7 +253,7 @@
   position: fixed;
   transform: translate(-50%, -100%);
   padding: 5px 10px;
-  border-radius: 7px;
+  border-radius: var(--radius-card);
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
@@ -270,7 +270,7 @@
   position: fixed;
   transform: translate(-50%, -100%);
   padding: 5px 10px;
-  border-radius: 7px;
+  border-radius: var(--radius-card);
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
@@ -291,7 +291,7 @@
   z-index: 200;
   min-width: 160px;
   padding: 4px;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-tree-menu[data-motion-closing] {
@@ -307,7 +307,7 @@
   z-index: 200;
   min-width: 160px;
   padding: 4px;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: #20242D;
   border: 1px solid rgba(255,255,255,0.12);
   box-shadow: 0 16px 36px rgba(0,0,0,0.32);
@@ -320,7 +320,7 @@
   z-index: 200;
   min-width: 160px;
   padding: 4px;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
@@ -331,7 +331,7 @@
   width: 100%;
   padding: 7px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   background: transparent;
   font-size: 13px;
   text-align: left;
@@ -344,7 +344,7 @@
   width: 100%;
   padding: 7px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   background: transparent;
   font-size: 13px;
   text-align: left;
@@ -419,7 +419,7 @@
   width: 100%;
   padding: 7px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   background: transparent;
   font-size: 13px;
   text-align: left;
@@ -481,7 +481,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   max-width: 340px;
   min-width: 280px;
   height: 52px;
-  padding: 0 14px 0 48px; border-radius: 2px;
+  padding: 0 14px 0 48px; border-radius: var(--radius-card);
   position: relative;
   flex-shrink: 0;
   cursor: default; transition: color var(--paper-motion), background-color var(--paper-motion), border-color var(--paper-motion), opacity var(--paper-motion);
@@ -500,7 +500,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   max-width: 340px;
   min-width: 280px;
   height: 52px;
-  padding: 0 14px 0 48px; border-radius: 2px;
+  padding: 0 14px 0 48px; border-radius: var(--radius-card);
   position: relative;
   flex-shrink: 0;
   cursor: default;
@@ -521,7 +521,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   max-width: 340px;
   min-width: 280px;
   height: 52px;
-  padding: 0 14px 0 48px; border-radius: 2px;
+  padding: 0 14px 0 48px; border-radius: var(--radius-card);
   position: relative;
   flex-shrink: 0;
   cursor: default;
@@ -669,14 +669,14 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   display: flex;
   flex-direction: column;
   border: 1px solid var(--paper-rule);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--surface-main) 97%, var(--surface-tint, var(--text-main)) 3%);
   transition: border-color 0.15s;
   corner-shape: var(--corner-shape, squircle);
 }
 .df-eisenhower-quadrant {
   border: 1px solid var(--paper-rule);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   display: flex;
   flex-direction: column;
   background: color-mix(in srgb, var(--surface-main) 97%, var(--surface-tint, var(--text-main)) 3%);
@@ -700,7 +700,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 .df-kanban-column-duration {
   margin-left: auto;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--surface-main) 90%, var(--surface-tint, var(--text-main)) 10%);
   color: var(--text-muted);
   font: 500 10px/1.4 var(--paper-mono);
@@ -793,7 +793,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   max-height: min(520px, calc(100vh - 118px));
   padding: 5px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
   corner-shape: var(--corner-shape, squircle);
@@ -819,7 +819,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   width: 100%;
   padding: 4px 6px;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--paper-muted);
   font: 500 11px/1.25 var(--paper-sans);
@@ -866,7 +866,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 .df-app .df-planning .df-filter-cat-count {
   min-width: 15px;
   padding: 1px 4px;
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--accent-active) 14%, transparent);
   color: var(--accent-active);
   font: 700 9px/1.2 var(--paper-sans);
@@ -882,7 +882,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   max-height: min(390px, calc(100vh - 150px));
   padding: 6px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   background: var(--surface-main);
   box-shadow: var(--paper-float-shadow);
   overflow-y: auto;
@@ -907,7 +907,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   min-height: 28px;
   padding: 4px 5px;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   color: var(--paper-muted);
   font: 500 11px/1.25 var(--paper-sans);
   corner-shape: var(--corner-shape, squircle);
@@ -939,7 +939,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   margin-top: 5px;
   padding: 5px 6px;
   border: 1px solid var(--paper-rule);
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--paper-muted);
   font: 500 11px/1.25 var(--paper-sans);
@@ -951,7 +951,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   margin-top: 5px;
   padding: 5px 6px;
   border: 1px solid var(--paper-rule);
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: transparent;
   color: var(--paper-muted);
   font: 500 11px/1.25 var(--paper-sans);
@@ -967,7 +967,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   min-height: 34px;
   padding: 0;
   border: 1px solid var(--paper-rule);
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--surface-main) 96%, transparent);
   color: var(--text-muted);
   box-shadow: none;
@@ -978,7 +978,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   min-height: 34px;
   border: 0;
   border-right: 2px solid transparent;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -998,14 +998,14 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 }
 .df-app .df-planning .df-kanban-column {
   border: 1px solid var(--paper-rule);
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--paper-bg) 96%, var(--paper-rule) 4%);
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-planning .df-eisenhower-quadrant {
   border: 1px solid var(--paper-rule);
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--paper-bg) 96%, var(--paper-rule) 4%);
   box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
@@ -1072,7 +1072,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 .df-app .df-planning .df-metrics-custom-dates input {
   height: 34px;
   border: 1px solid var(--line, var(--paper-rule));
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--paper, var(--paper-bg)) 96%, var(--surface-tint, var(--ink, var(--paper-ink))) 4%);
   color: var(--ink, var(--paper-ink));
   padding: 0 10px;
@@ -1128,7 +1128,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   gap: 0;
   margin: 0;
   border: 1px solid color-mix(in srgb, var(--line, var(--paper-rule)) 86%, transparent);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: transparent;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -1165,7 +1165,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 }
 .df-app .df-planning .df-metrics-panel {
   border: 1px solid color-mix(in srgb, var(--line, var(--paper-rule)) 86%, transparent);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--paper, var(--paper-bg)) 97%, var(--surface-tint, var(--ink, var(--paper-ink))) 3%);
   padding: 16px;
   corner-shape: var(--corner-shape, squircle);
@@ -1318,7 +1318,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
 }
 .df-app .df-planning .df-metrics-empty {
   border: 1px solid color-mix(in srgb, var(--line, var(--paper-rule)) 86%, transparent);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--paper, var(--paper-bg)) 97%, var(--surface-tint, var(--ink, var(--paper-ink))) 3%);
   padding: 42px 24px;
   text-align: center;
@@ -1432,7 +1432,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   width: auto;
   min-width: 0;
   min-height: 0;
-  border-radius: 0;
+  border-radius: var(--radius-card);
   border: 0;
   border-left: 1px solid var(--paper-rule, var(--line));
   background: var(--surface-main);
@@ -1440,12 +1440,12 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   corner-shape: var(--corner-shape, squircle);
 }
 #root .df-app .df-planning .df-metrics-filter-panel .df-filter-cat-row {
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: transparent;
   corner-shape: var(--corner-shape, squircle);
 }
 #root .df-app .df-planning .df-metrics-filter-flyout .df-filter-option {
-  border-radius: 4px;
+  border-radius: var(--radius-card);
   background: transparent;
   corner-shape: var(--corner-shape, squircle);
 }
@@ -1508,7 +1508,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   min-width: 38px;
   min-height: 36px;
   border: 1px solid var(--paper-rule-strong);
-  border-radius: 7px;
+  border-radius: var(--radius-card);
   background: var(--surface-card);
   corner-shape: var(--corner-shape, squircle);
 }
@@ -1517,7 +1517,7 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   min-height: 52px;
   padding-left: 20px;
   border: 2px solid var(--project-color);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: var(--surface-card);
   corner-shape: var(--corner-shape, squircle);
 }
