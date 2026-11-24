@@ -12239,7 +12239,7 @@ function EditDrawer(props: {
               setQuickActionMenu((open) => open === "reschedule" ? null : "reschedule");
             }}>
               <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v4l2 2"/><circle cx="6" cy="6" r="5"/></svg>
-              <span>{isScheduled ? t(props.lang, "drawer.quickReschedule") : zh ? "快速安排至" : "Quick reschedule to"}</span>
+              <span>{isScheduled ? t(props.lang, "drawer.quickReschedule") : zh ? "安排至" : "Schedule to"}</span>
               <svg className="df-detail-incomplete-chevron" viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 2l4 3-4 3" /></svg>
             </button>
             {quickActionMenu === "reschedule" && <div className="df-detail-incomplete-options" role="menu" aria-label={props.lang === "zh" ? "快速改期选项" : "Quick reschedule options"}>

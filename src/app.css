@@ -6559,11 +6559,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   border-color: color-mix(in srgb, var(--accent-active) 14%, var(--border-subtle));
   color: var(--text-main);
 }
-.df-app.theme-dark .df-detail-notes-new {
-  background: color-mix(in srgb, var(--accent-active) 3%, var(--surface-card));
-  border-color: color-mix(in srgb, var(--accent-active) 14%, var(--border-subtle));
-  color: var(--text-main);
-}
 .df-app.theme-dark .df-detail-project-pick { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.06);
   color: var(--text-main);
 }

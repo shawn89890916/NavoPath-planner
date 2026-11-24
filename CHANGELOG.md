@@ -2,6 +2,12 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 85
+
+#### 修复
+
+- 未排期任务的安排按钮显示「安排至」。深色模式下，备注区域沿用编辑面板底色。
+
 ### 1.7.0 Beta 84
 
 #### 改进
@@ -1010,6 +1016,12 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 85
+
+#### Fixes
+
+- Label the scheduling action for unscheduled tasks “Schedule to”. Notes use the editor’s background in dark mode.
 
 ### 1.7.0 Beta 84
 
