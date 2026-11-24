@@ -732,6 +732,8 @@ export interface PlannerApi {
   listCalendarFeedTokens?: () => Promise<CalendarFeedTokenMetadata[]>;
   createCalendarFeedToken?: () => Promise<{ token: string; metadata: CalendarFeedTokenMetadata }>;
   revokeCalendarFeedToken?: (id: string) => Promise<void>;
+  createSuperProductivityPairingCode?: () => Promise<{ code: string; expiresAt: string }>;
+  requestSuperProductivitySync?: (path: string, method?: "GET" | "POST" | "DELETE", body?: unknown) => Promise<any>;
   invokeEdgeFunction?: (name: string, body: unknown, signal?: AbortSignal) => Promise<unknown>;
   listExternalCalendars?: (range?: { from?: string; to?: string }) => Promise<{ sources: ExternalCalendarSource[]; occurrences: ExternalCalendarOccurrence[] }>;
   connectExternalCalendar?: (input: { name: string; url: string; color?: string }) => Promise<{ source: ExternalCalendarSource; occurrenceCount: number }>;

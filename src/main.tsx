@@ -3224,6 +3224,10 @@ if (cached?.data && cached?.settings) {
       getSettings: () => settingsRef.current!, saveSettings: patch => saveSettings(patch),
       getAccountId: () => authStateRef.current?.user?.id || null,
       toast: message => showToast(message),
+      superProductivity: {
+        createPairingCode: () => window.plannerApi?.createSuperProductivityPairingCode?.() ?? Promise.reject(new Error("Cloud account required")),
+        request: (path, method, body) => window.plannerApi?.requestSuperProductivitySync?.(path, method, body) ?? Promise.reject(new Error("Cloud account required")),
+      },
       internal: { apiVersion: "1.5", services: { saveData: persistData, saveSettings: persistSettings }, plannerApi: window.plannerApi, window, document },
     };
     void extensionService.configure(extensionHostRef.current).catch(error => console.warn("[extensions] startup failed", error));

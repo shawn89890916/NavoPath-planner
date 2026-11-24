@@ -2,6 +2,12 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 91
+
+#### 新增
+
+- 可连接 Super Productivity 同步项目与任务。首次导入支持预览和匹配确认，冲突由用户选择，并可在 30 天内恢复同步删除的任务和项目。
+
 ### 1.7.0 Beta 90
 
 #### 修复
@@ -1055,6 +1061,12 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 91
+
+#### Added
+
+- Connect Super Productivity to sync projects and tasks. Review and confirm the first import, choose conflict resolutions, and restore sync-deleted tasks and projects for 30 days.
 
 ### 1.7.0 Beta 90
 

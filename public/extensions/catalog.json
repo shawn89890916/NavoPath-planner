@@ -522,6 +522,28 @@
     },
     {
       "manifest": {
+        "id": "super-productivity-sync",
+        "name": "Super Productivity Sync",
+        "description": "Sync projects and tasks between NavoPath and Super Productivity through your NavoPath account.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.7.0-beta.91",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner",
+        "license": "MIT"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/super-productivity-sync.navopackage.json",
+      "sha256": "1f7a4ca92bd42f9f053c9f2a96307757c43390364dfee78201fd5114c96977e6"
+    },
+    {
+      "manifest": {
         "id": "tree",
         "name": "Tree",
         "description": "Organize projects and tasks as an editable hierarchy.",

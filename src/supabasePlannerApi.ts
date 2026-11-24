@@ -10,6 +10,7 @@ import { mergePlannerData } from "./syncMerge";
 import { mergeExtensionSettings } from "./extensions/packages";
 
 const PROFILE_TABLE = "dayflow_profiles";
+const SUPER_PRODUCTIVITY_SYNC_ENDPOINT = (import.meta.env.VITE_MCP_ENDPOINT || "https://navopath-mcp.shawn89890916.workers.dev/mcp").replace(/\/mcp\/?$/, "");
 
 type ScopedProfile = {
   userId: string;
@@ -715,6 +716,31 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       await requireUser();
       const { error } = await retryTransientRequest(() => supabase.rpc("revoke_mcp_token", { token_id: id }), { retryAuthRejection: true });
       if (error) throw new Error(error.message);
+    },
+    createSuperProductivityPairingCode: async () => {
+      const user = await requireUser();
+      const bytes = crypto.getRandomValues(new Uint8Array(32));
+      const code = btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join("")).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+      const expiresAt = new Date(Date.now() + 5 * 60_000).toISOString();
+      const codeHash = await sha256(code);
+      const { error } = await retryTransientRequest(() => supabase.from("navopath_sp_pairing_codes").insert({
+        code_hash: codeHash, user_id: user.id, expires_at: expiresAt,
+      }));
+      if (error) throw new Error(error.message);
+      return { code, expiresAt };
+    },
+    requestSuperProductivitySync: async (path, method = "GET", body) => {
+      await requireUser();
+      if (!/^\/(state|snapshot|confirm|resolve|restore|revoke)(\?.*)?$/.test(path)) throw new Error("Invalid integration request");
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session?.access_token) throw new Error("Sign in to NavoPath Cloud to manage this connection");
+      const response = await fetch(`${SUPER_PRODUCTIVITY_SYNC_ENDPOINT}/api/super-productivity${path}`, {
+        method, headers: { authorization: `Bearer ${sessionData.session.access_token}`, ...(body === undefined ? {} : { "content-type": "application/json" }) },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(20_000), redirect: "error",
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || `Connection request failed (${response.status})`);
+      return result;
     },
     listSyncBridgeStatuses: async () => (await import("./syncBridgeStatusApi")).listSyncBridgeStatuses(supabase, await requireUser()),
     getCalDavCredential: async () => {

@@ -316,6 +316,7 @@ export class ExtensionService {
       },
       saveSettings: ({ extensionMcpAccess: _grants, ...patch }) => { guard(); return host.saveSettings(patch); },
       getAccountId: () => { guard(); return host.getAccountId(); }, toast: message => { guard(); host.toast(message); }, internal: host.internal,
+      superProductivity: host.superProductivity ? { createPairingCode: () => { guard(); return host.superProductivity!.createPairingCode(); }, request: (path, method, body) => { guard(); return host.superProductivity!.request(path, method, body); } } : undefined,
     };
     return { host: scopedHost, key, platform: platform(), config: () => { guard(); return this.getConfig(key); }, saveConfig: async (patch: Record<string, unknown>) => { guard(); await this.saveConfig(key, patch); },
       getValue: async <T>(name: string): Promise<T | null> => { guard(); return this.getValue(key, name) as Promise<T | null>; },

@@ -83,6 +83,7 @@ contain an executable entry point. Safe mode suspends plugin execution.
 | --- | --- |
 | Identity | `apiVersion`, `id`, `manifest`, `platform`, `window`, `language` |
 | App | `app.getData/saveData`, `getSettings/saveSettings`, `getAccountId`, `toast`; host settings/data writes use the normal app persistence path |
+| NavoPath integrations | `integrations.superProductivity.createPairingCode()` and `request(path, method?, body?)`; requires a signed-in cloud account and provides the scoped sync connection API |
 | Collections | `tasks`, `projects`, `calendar`: `list`, `get(id)`, async `create`, `update`, `remove` |
 | Settings | `settings.get()`, async `save(patch)`, `registerPage(name, mount)` |
 | Synced storage | Async `storage.get(key)`, `set`, `remove`; use for plugin data |
@@ -136,6 +137,13 @@ export default {
 `app.internal` is reserved for host integration. Prefer the documented collections and
 registrations. If you patch an owning function, restore it, keep the change
 bounded to your plugin lifecycle, and declare the compatibility assumptions.
+
+The Super Productivity connection API is available to plugins through
+`ctx.integrations.superProductivity`. Pairing codes are single-use and expire
+after five minutes. The plugin should retain the returned code only long enough
+to show it to the user, and should use the allowlisted sync paths (`state`,
+`snapshot`, `confirm`, `resolve`, `restore`, and `revoke`) for its connection.
+Do not request or store a user's full NavoPath MCP token.
 
 ## Timer mode providers
 

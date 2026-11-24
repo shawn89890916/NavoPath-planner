@@ -1,5 +1,6 @@
 import type { PluginMcpAccess } from "./pluginMcp";
 import type { ExtensionPreferences } from "./extensions";
+import type { WorkspaceGuideStep } from "./onboarding";
 export type Category = "exam" | "uk" | "us" | "essay" | "materials" | "project" | "personal";
 export type Priority = "high" | "medium" | "low";
 export type NullablePriority = Priority | null;
@@ -532,7 +533,7 @@ export interface Settings {
   apiKeyPreview: string;
   displayName: string;
   avatarDataUrl?: string;
-  workspaceGuideStep?: "setup" | "add" | "schedule" | "done";
+  workspaceGuideStep?: WorkspaceGuideStep;
   workspaceGuideTaskId?: string;
   dailyFocusTime: string;
   weekStartsOn: 0 | 1;
@@ -587,6 +588,7 @@ export interface Settings {
   autoAssignTaskProject?: boolean;
   /** 时间轴任务标题字体缩放系数（0.85 ~ 1.3）。1 表示默认大小。 */
   timelineFontScale?: number;
+  workspaceCornerRadius?: number;
   /** 任务块以归属项目色整块填充（true）或仅描边（false）。 */
   taskBlockFill?: boolean;
   /** 自动同步频率（分钟）。0 或未设置表示仅手动同步。 */
@@ -730,6 +732,8 @@ export interface PlannerApi {
   listCalendarFeedTokens?: () => Promise<CalendarFeedTokenMetadata[]>;
   createCalendarFeedToken?: () => Promise<{ token: string; metadata: CalendarFeedTokenMetadata }>;
   revokeCalendarFeedToken?: (id: string) => Promise<void>;
+  createSuperProductivityPairingCode?: () => Promise<{ code: string; expiresAt: string }>;
+  requestSuperProductivitySync?: (path: string, method?: "GET" | "POST" | "DELETE", body?: unknown) => Promise<any>;
   invokeEdgeFunction?: (name: string, body: unknown, signal?: AbortSignal) => Promise<unknown>;
   listExternalCalendars?: (range?: { from?: string; to?: string }) => Promise<{ sources: ExternalCalendarSource[]; occurrences: ExternalCalendarOccurrence[] }>;
   connectExternalCalendar?: (input: { name: string; url: string; color?: string }) => Promise<{ source: ExternalCalendarSource; occurrenceCount: number }>;

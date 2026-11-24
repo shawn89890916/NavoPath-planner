@@ -88,6 +88,7 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
         return registerPage(name, () => {}, tool);
       },
     } },
+    integrations: { superProductivity: bridge.host.superProductivity || { createPairingCode: async () => { throw new Error("Cloud account required"); }, request: async () => { throw new Error("Cloud account required"); } } },
     tasks: collection<Task>("tasks"), projects: collection<Project>("projects"), calendar: { ...collection<CalendarEvent>("events"), registerBackground: predicate => { const off=registerCalendarBackground(predicate); emitPluginEvent("calendar:backgrounds-changed"); return register(()=>{ off(); emitPluginEvent("calendar:backgrounds-changed"); }); } }, register,
     on(target, event, listener) { target.addEventListener(event, listener); return register(() => target.removeEventListener(event, listener)); },
     interval(callback, ms) { const timer = window.setInterval(callback, ms); return register(() => window.clearInterval(timer)); },

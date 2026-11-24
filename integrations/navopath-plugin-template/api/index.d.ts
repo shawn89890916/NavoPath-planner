@@ -21,6 +21,7 @@ export interface ExtensionHost {
   getData(): PlannerData; saveData(data: PlannerData): void | Promise<void>;
   getSettings(): Settings; saveSettings(patch: Partial<Settings>): void | Promise<void>;
   toast(message: string): void; getAccountId(): string | null;
+  superProductivity?: { createPairingCode(): Promise<{ code: string; expiresAt: string }>; request(path: string, method?: "GET" | "POST" | "DELETE", body?: unknown): Promise<any> };
   internal: Record<string, any>;
 }
 export interface PluginContext {
@@ -40,6 +41,7 @@ export interface PluginContext {
   patch(target: Record<string, any>, key: string, wrapper: (original: any) => any): Dispose;
   resourceUrl(path: string): string;
   desktop: { invoke(method: string, payload?: unknown): Promise<unknown> } | null;
+  integrations: { superProductivity: NonNullable<ExtensionHost["superProductivity"]> };
 }
 export interface PluginModule { onload(context: PluginContext): void | Dispose | Promise<void | Dispose>; onunload?(): void | Promise<void>; onSettingsChange?(settings: Record<string, unknown>): void | Promise<void> }
 export interface CollectionApi<T extends { id: string }> { list(): T[]; get(id: string): T | undefined; create(value: Omit<T, "id">): Promise<T>; update(id: string, patch: Partial<T>): Promise<void>; remove(id: string): Promise<void> }
