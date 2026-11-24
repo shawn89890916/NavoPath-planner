@@ -1,7 +1,7 @@
 .df-proactive-center-layer { position: fixed; animation: ui-fade-in var(--motion-fade) var(--motion-ease) backwards; }
-.df-proactive-center-layer .df-proactive-center { animation: ui-surface-in var(--motion-base) var(--motion-ease) backwards; }
+.df-proactive-center-layer .df-proactive-center { animation: ui-surface-in var(--motion-base) var(--motion-ease) backwards; border-radius: var(--radius-card); corner-shape: var(--corner-shape, squircle); }
 .df-proactive-center-layer[data-motion-closing] { pointer-events: none; animation: ui-fade-out var(--motion-fade) var(--motion-ease) forwards; }
-.df-proactive-center { overflow: auto; padding: 18px 20px; color: var(--text-main); background: var(--timeline-paper, var(--surface-main)); border: 1px solid var(--paper-rule); box-shadow: 0 14px 34px rgb(39 35 30 / 14%); }
+.df-proactive-center { overflow: auto; padding: 18px 20px; color: var(--text-main); background: var(--timeline-paper, var(--surface-main)); border: 0; border-radius: var(--radius-card); box-shadow: 0 14px 34px rgb(39 35 30 / 14%); corner-shape: var(--corner-shape, squircle); }
 .df-proactive-center-head { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--paper-rule); }
 .df-proactive-center-head > div { display: grid; gap: 4px; }
 .df-proactive-center-head-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }

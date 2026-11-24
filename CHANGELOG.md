@@ -9,6 +9,8 @@
 - 单日视图也可以从 Tasks 的「更多」收起侧栏。周视图在侧栏收起时显示任务勾选框。
 - 时间轴任务块的上下缩放手柄改为居中、无描边的短横条。
 - 卡片、按钮、输入框和面板采用统一圆角，可在「设置 → 外观」输入数值调整。
+- 搜索结果与通知列表改用单线分隔，打开搜索时保留页面亮度。
+- 修正投入度任务色条、强调色色块与设置搜索框的圆角，移除个人信息下方的分隔线，并去除输入框焦点的第二圈边线。
 
 ### 1.7.0 Beta 86
 
@@ -1042,6 +1044,8 @@
 - Collapse the sidebar from Tasks More in Day view. Week view shows task checkboxes when the sidebar is collapsed.
 - Timeline blocks use a single centered, borderless resize bar along each edge.
 - Cards, buttons, fields, and panels share a corner radius that you can set in Settings → Appearance.
+- Search results and notifications use single-line dividers, and opening Search keeps the workspace bright.
+- Align timeline stripes, accent swatches and settings search corners, remove the divider under account details, and remove the extra input focus ring.
 
 ### 1.7.0 Beta 86
 

@@ -15,7 +15,7 @@ import { normalizeExtensionPreferences } from "./extensions/packages";
  * own internal copies for now to avoid a larger refactor, but any new field
  * added to {@link Settings} should land here first.
  */
-export const WORKSPACE_CORNER_RADIUS = { min: 0, max: 32, defaultValue: 18 } as const;
+export const WORKSPACE_CORNER_RADIUS = { min: 0, max: 32, defaultValue: 12 } as const;
 
 export const defaultSettings: Settings = {
   activeMode: "execute",

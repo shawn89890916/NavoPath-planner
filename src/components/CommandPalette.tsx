@@ -32,7 +32,7 @@ export default function CommandPalette(props: {
   };
   return (
     <>
-      <button className="df-command-backdrop" data-workspace-backdrop data-motion-closing={props.closing || undefined} disabled={props.closing} type="button" aria-label={props.lang === "zh" ? "关闭搜索" : "Close search"} onClick={props.onClose} />
+      <button className="df-command-backdrop" data-workspace-backdrop="transparent" data-motion-closing={props.closing || undefined} disabled={props.closing} type="button" aria-label={props.lang === "zh" ? "关闭搜索" : "Close search"} onClick={props.onClose} />
       <section className="df-command-palette" data-workspace-panel data-motion-closing={props.closing || undefined} inert={props.closing} role="dialog" aria-label={props.lang === "zh" ? "搜索" : "Search"}>
         <div className="df-command-input-row">
           <UiSearchIcon size={20} />

@@ -5109,7 +5109,7 @@ body:has(:active)::-webkit-scrollbar-thumb {
   position: relative;
   min-height: 50px;
   padding-left: 28px;
-  border-bottom: 1px solid var(--paper-rule);
+  border-bottom: 0;
 }
 .df-timeline-draft-sheet input {
   height: 50px;
@@ -13099,7 +13099,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   bottom: -1px;
   left: calc(-1 * var(--task-project-accent-size, 2px));
   width: var(--task-project-accent-size, 2px);
-  border-radius: var(--task-radius) 0 0 var(--task-radius);
+  border-radius: var(--radius-detail) 0 0 var(--radius-detail);
   background: linear-gradient(to bottom, var(--task-project-color) 0 var(--task-engagement), transparent var(--task-engagement) 100%);
   opacity: 1;
   pointer-events: auto;
@@ -13126,7 +13126,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   left: -1px;
   width: 4px;
   height: auto;
-  border-radius: var(--task-radius) 0 0 var(--task-radius);
+  border-radius: var(--radius-detail) 0 0 var(--radius-detail);
   corner-shape: var(--corner-shape, squircle);
 }
 .navo-demo-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--left {
@@ -13135,7 +13135,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   left: -1px;
   width: 4px;
   height: auto;
-  border-radius: var(--task-radius) 0 0 var(--task-radius);
+  border-radius: var(--radius-detail) 0 0 var(--radius-detail);
   corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--full {
@@ -20265,3 +20265,12 @@ body[data-navopath-base-theme="light"],
 #root .df-app [data-workspace-backdrop="transparent"] { background: transparent; }
 #root .df-app .df-proactive-center-layer[data-workspace-backdrop] { z-index: 80; }
 #root .df-app [data-workspace-backdrop][data-motion-closing] { pointer-events: none; }
+
+/* Keep text field focus to one colored border, without a second inset ring. */
+#root .df-app :is(input:not([type=checkbox]):not([type=color]):not([type=file]):not([type=range]), select, textarea):focus {
+  outline: none;
+  box-shadow: none;
+}
+#root .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--left {
+  border-radius: var(--radius-detail) 0 0 var(--radius-detail);
+}

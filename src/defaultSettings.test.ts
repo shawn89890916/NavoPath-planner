@@ -4,7 +4,7 @@ import { normalizeSettings } from "./defaultSettings";
 describe("workspace corner radius", () => {
   it("uses the recurring card radius for older profiles and invalid values", () => {
     for (const value of [undefined, null, "12", NaN, Infinity]) {
-      expect(normalizeSettings({ workspaceCornerRadius: value }).workspaceCornerRadius).toBe(18);
+      expect(normalizeSettings({ workspaceCornerRadius: value }).workspaceCornerRadius).toBe(12);
     }
   });
 
