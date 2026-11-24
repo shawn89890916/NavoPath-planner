@@ -7124,7 +7124,7 @@ if (cached?.data && cached?.settings) {
       return false;
     }
     const submittedInput = messageOverride === undefined ? aiInput : null;
-    const msg = (messageOverride ?? aiInput).trim() || "解析附件中的任务和事件";
+    const msg = (messageOverride ?? aiInput).trim() || "把附件中的安排整理成任务";
     const latestAssistantMessage = [...aiMessages].reverse().find((message) => message.role === "assistant");
     const pendingAgentMessage = latestAssistantMessage?.agent?.decisionState === "pending" && latestAssistantMessage.agent.pending.length > 0
       ? latestAssistantMessage

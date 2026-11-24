@@ -203,7 +203,6 @@ export default function AiPanel({ embedded = false, workspace = false, closing =
     selectNone: lang === "zh" ? "全不选" : "None",
     itemUnit: lang === "zh" ? "项" : "items",
     task: lang === "zh" ? "任务" : "Task",
-    event: lang === "zh" ? "事件" : "Event",
     unassigned: lang === "zh" ? "未归属" : "Unassigned",
     cancelRound: lang === "zh" ? "取消本轮" : "Reject round",
     addSelected: lang === "zh" ? "一键添加选中项" : "Add selected",

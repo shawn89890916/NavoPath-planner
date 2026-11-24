@@ -122,11 +122,11 @@ export default function MonthView({ weeks, tasks, schedules, projects, selectedD
                   onClick={(event) => { event.stopPropagation(); onAddTask(date); }} />
               </div>
               <div className="df-month-cell-tasks">
-                {dayTasks.map((task) => <TaskBlock key={task.id} as="button" type="button" variant="compact" appearance="calm" checked={!isEvent(task) && task.completed}
+                {dayTasks.map((task) => <TaskBlock key={task.id} as={task.fixedCourse ? "div" : "button"} type={task.fixedCourse ? undefined : "button"} variant="compact" appearance="calm" checked={!isEvent(task) && task.completed}
                   projectColor={projects.find((project) => project.id === task.projectId)?.color || projectColor(task)}
                   className={`df-month-task${isEvent(task) ? " is-event" : ""}`} dataAttrs={{ kind: isEvent(task) ? "event" : "task", "task-id": task.id }}
                   ariaLabel={`${task.scheduledStart || ""} ${task.title}`} title={task.title}
-                  onClick={(event) => { event.stopPropagation(); onEditTask(task); }}
+                  onClick={task.fixedCourse ? undefined : (event) => { event.stopPropagation(); onEditTask(task); }}
                   onPointerDown={(event) => {
                     if (isEvent(task)) return;
                     monthDrag.beginDrag(event, { taskId: task.id, requireHoldMs: 360, onActivate: onDragActivate,
@@ -134,7 +134,7 @@ export default function MonthView({ weeks, tasks, schedules, projects, selectedD
                       onDrop: (pointer) => { const date = dateAtPointer(pointer); if (date) onMoveTask(task, date); else onReturnTask?.(task, pointer); setPointerDropDate(""); onDragFinish(); },
                       onCancel: () => { setPointerDropDate(""); onDragFinish(); } });
                   }}
-                  main={<TaskBlockContent title={task.title}>{task.scheduledStart ? <time>{task.scheduledStart}</time> : isEvent(task) ? <small>{lang === "zh" ? "事件" : "Event"}</small> : null}</TaskBlockContent>}
+                  main={<TaskBlockContent title={task.title}>{task.scheduledStart ? <time>{task.scheduledStart}</time> : task.fixedCourse ? <small>{lang === "zh" ? "课程" : "Class"}</small> : isEvent(task) ? <small>{lang === "zh" ? "外部日历" : "External"}</small> : null}</TaskBlockContent>}
                 />)}
                 {!activeDrag && renderQuickAdd(date)}
               </div>
