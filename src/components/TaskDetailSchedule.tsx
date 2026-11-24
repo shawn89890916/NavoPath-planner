@@ -3,8 +3,9 @@ import type { Language } from "../types";
 import { calculateTimelineRecordEnd, calendarDateTimeSpanMinutes } from "../utils/timelineRecords";
 import { workspaceNow } from "../workspaceEnvironment";
 import { DateQuickPicker } from "./DateQuickPicker";
+import { EditorDateDialog, EditorInlineButton } from "./EntityEditor";
 import { UiCalendarDaysIcon, UiTimerIcon } from "./UiIcons";
-import { Button, Input, Modal } from "./UiPrimitives";
+import { Button, Input } from "./UiPrimitives";
 
 export type TaskScheduleRange = { date: string; start: string; endDate: string; end: string };
 type Edge = "start" | "end";
@@ -91,18 +92,14 @@ export function TaskDetailSchedule({ range, today, weekStartsOn, lang, countdown
   return <>
     <div className="df-task-schedule-summary">
       <div className="df-task-schedule-range">
-        <Button variant="ghost" aria-label={`${startTitle} · ${startLabel}`} aria-haspopup="dialog" onClick={() => openEditor("start")}>{startLabel}</Button>
+        <EditorInlineButton aria-label={`${startTitle} · ${startLabel}`} onClick={() => openEditor("start")}>{startLabel}</EditorInlineButton>
         <span aria-hidden="true">–</span>
-        <Button variant="ghost" aria-label={`${endTitle} · ${endLabel}`} aria-haspopup="dialog" onClick={() => openEditor("end")}>{endLabel}</Button>
+        <EditorInlineButton aria-label={`${endTitle} · ${endLabel}`} onClick={() => openEditor("end")}>{endLabel}</EditorInlineButton>
         <span>· {formatSpan(duration)}</span>
       </div>
       {left > 0 && <p>{zh ? `剩余 ${formatSpan(left)}` : `${formatSpan(left)} left`}</p>}
     </div>
-    <Modal open={!!editor} portalContainer={document.querySelector(".df-app")} className="df-dialog df-task-schedule-editor" label={edge === "end" ? endTitle : startTitle} onClose={() => setEditor(null)} onKeyDown={(event) => {
-      if (event.key === "Escape") { event.stopPropagation(); setEditor(null); }
-    }}>
-      <form onSubmit={(event) => { event.preventDefault(); save(); }}>
-        <h2>{edge === "end" ? endTitle : startTitle}</h2>
+    <EditorDateDialog open={!!editor} lang={lang} label={edge === "end" ? endTitle : startTitle} onClose={() => setEditor(null)} onSave={save}>
         <div className="df-task-schedule-panels" role="group" aria-label={zh ? "选择日期或时间" : "Choose date or time"}>
           <Button variant="text" aria-pressed={panel === "date"} onClick={() => setPanel("date")}><UiCalendarDaysIcon />{formatDate(date)}</Button>
           <Button variant="text" aria-pressed={panel === "time"} onClick={() => setPanel("time")}><UiTimerIcon />{time ? formatTime(time) : (zh ? "时间" : "Time")}</Button>
@@ -112,11 +109,6 @@ export function TaskDetailSchedule({ range, today, weekStartsOn, lang, countdown
             : <label>{zh ? "时间" : "Time"}<Input type="time" value={time} onChange={(event) => { setTime(event.target.value); setError(""); }} /></label>}
         </div>
         {error && <p role="alert">{error}</p>}
-        <div className="df-task-schedule-footer">
-          <Button variant="text" onClick={() => setEditor(null)}>{zh ? "取消" : "Cancel"}</Button>
-          <Button variant="primary" type="submit">{zh ? "确认" : "Confirm"}</Button>
-        </div>
-      </form>
-    </Modal>
+    </EditorDateDialog>
   </>;
 }

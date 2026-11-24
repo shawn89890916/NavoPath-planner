@@ -2,7 +2,9 @@ import { useCallback, useEffect, useImperativeHandle, useRef, useState, type Ref
 import type { Habit, HabitDailyState, HabitTrackingType, Project } from "../types";
 import { habitStartDate, isHabitDueOnDate, isHabitWithinDateRange } from "../utils/habits";
 import { addDays } from "../utils/recurrence";
-import { ActionDisclosure, Button } from "./UiPrimitives";
+import { ActionDisclosure, Button, IconButton } from "./UiPrimitives";
+import { EditorActionRow, EditorConversion, EditorDate, EditorNotes, EditorRemove, EditorTitle } from "./EntityEditor";
+import { UiCheckIcon, UiChevronLeftIcon, UiChevronRightIcon, UiReturnIcon } from "./UiIcons";
 import { SettingToggle } from "./SettingsControls";
 import { DateQuickPicker } from "./DateQuickPicker";
 import "./habit-detail.css";
@@ -215,9 +217,36 @@ export default function HabitDetailBody({ ref, habit, projects, dailyStates, tod
   const endYear = visibleRange[1].slice(0, 4);
   const range = `${startYear !== endYear ? `${startYear}/` : ""}${visibleRange[0].slice(5).replace("-", "/")} - ${startYear !== endYear ? `${endYear}/` : ""}${visibleRange[1].slice(5).replace("-", "/")}`;
 
-  return <>
+  const lang = zh ? "zh" : "en";
+  return <div className="df-entity-editor">
+    <section className="df-detail-hero-trevor">
+      <EditorTitle label={zh ? "习惯名称" : "Habit name"} value={title} onChange={(event) => setTitle(event.target.value)} />
+      <div className="df-editor-date-range">
+        <EditorDate label={zh ? "开始于" : "Starts"} value={startDate} today={today} weekStartsOn={1} lang={lang} onChange={(next) => {
+          setStartDate(next);
+          if (endDate && next && endDate < next) setEndDate("");
+        }} />
+        <EditorDate label={zh ? "截止于" : "Ends"} value={endDate} today={today} weekStartsOn={1} minDate={rangeHabit.startDate} lang={lang} onChange={setEndDate} clearable />
+      </div>
+    </section>
+    <EditorActionRow>
+      <Button className="df-editor-action" variant="primary" onClick={saveChanges}><UiCheckIcon size={14} />{zh ? "保存" : "Save"}</Button>
+      <Button className="df-editor-action" onClick={onBack}><UiReturnIcon size={14} />{zh ? "返回总览" : "Back to overview"}</Button>
+      <EditorRemove aria-describedby={confirmDelete ? "df-habit-delete-status" : undefined} onBlur={() => setConfirmDelete(false)} onClick={() => {
+        if (confirmDelete) onDelete(); else setConfirmDelete(true);
+      }}>{confirmDelete ? (zh ? "确认删除" : "Confirm delete") : (zh ? "永久删除" : "Delete permanently")}</EditorRemove>
+      <ActionDisclosure label={zh ? "更多" : "More"}>
+        <Button onClick={() => setHabitEnabled(!enabled)}>{enabled ? (zh ? "归档习惯" : "Archive Habit") : (zh ? "恢复习惯" : "Restore Habit")}</Button>
+        <EditorConversion targets={["task", "project"]} lang={lang} onConvert={onConvertTo} />
+      </ActionDisclosure>
+      {confirmDelete && <span className="df-habit-delete-status" id="df-habit-delete-status" role="status">{zh ? "再次点击以永久删除此习惯" : "Click again to permanently delete this habit"}</span>}
+    </EditorActionRow>
     <section className="df-habit-detail-progress" aria-label={zh ? "习惯完成情况" : "Habit completion"}>
-      <header><div><button type="button" className="df-habit-detail-progress-range" aria-expanded={datePickerOpen} onClick={() => { setDatePickerMonth(visibleRange[0].slice(0, 7)); setDatePickerOpen((open) => !open); }}>{range}<span className="df-date-title-chevron" aria-hidden="true">⌄</span></button><span>{zh ? `本周完成 ${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length}` : `${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length} complete this week`}</span></div><div className="df-habit-detail-progress-actions"><button type="button" aria-label={zh ? "上一周" : "Previous week"} onClick={() => navigateWeek(-1)}>‹</button><button type="button" onClick={goToToday}>{zh ? "今天" : "Today"}</button><button type="button" aria-label={zh ? "下一周" : "Next week"} onClick={() => navigateWeek(1)}>›</button></div></header>
+      <header><div><button type="button" className="df-habit-detail-progress-range" aria-expanded={datePickerOpen} onClick={() => { setDatePickerMonth(visibleRange[0].slice(0, 7)); setDatePickerOpen((open) => !open); }}>{range}<span className="df-date-title-chevron" aria-hidden="true">⌄</span></button><span>{zh ? `本周完成 ${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length}` : `${dueDays.filter((date) => completedDates.has(date)).length}/${dueDays.length} complete this week`}</span></div><div className="df-habit-detail-progress-actions">
+        <IconButton icon={<UiChevronLeftIcon />} label={zh ? "上一周" : "Previous week"} className="ui-icon-button--borderless" onClick={() => navigateWeek(-1)} />
+        <Button variant="text" onClick={goToToday}>{zh ? "今天" : "Today"}</Button>
+        <IconButton icon={<UiChevronRightIcon />} label={zh ? "下一周" : "Next week"} className="ui-icon-button--borderless" onClick={() => navigateWeek(1)} />
+      </div></header>
       {<DateQuickPicker open={datePickerOpen} month={datePickerMonth} selectedDate={visibleRange[0]} today={today} minDate={rangeHabit.startDate} maxDate={rangeHabit.endDate} weekStartsOn={1} lang={zh ? "zh" : "en"} onMonthChange={setDatePickerMonth} onSelect={positionDateAtSecond} />}
       <div className="df-habit-detail-progress-days" ref={progressDaysRef} onScroll={handleProgressScroll}>{progressDays.map(({ date, dayOffset }) => {
         const day = new Date(`${date}T00:00:00`).getDay();
@@ -228,17 +257,12 @@ export default function HabitDetailBody({ ref, habit, projects, dailyStates, tod
       })}</div>
     </section>
     <section className="df-habit-settings-form">
-      <label className="df-habit-setting-field df-habit-setting-field-title"><span>{zh ? "标题" : "Title"}</span><input type="text" value={title} onChange={(event) => setTitle(event.target.value)} /></label>
       <label className="df-habit-setting-field"><span>{zh ? "归属项目" : "Project"}</span><select value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="">{zh ? "未归属" : "Unassigned"}</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>
       <div className="df-habit-setting-field df-habit-setting-toggle"><span>{zh ? "启用" : "Enabled"}</span><SettingToggle checked={enabled} ariaLabel={zh ? "启用习惯" : "Enable habit"} onChange={setHabitEnabled} /></div>
       <div className="df-habit-setting-field df-habit-type-field"><span>{zh ? "类型" : "Type"}</span><div className="df-habit-type-options" role="group" aria-label={zh ? "习惯类型" : "Habit type"}><button type="button" className={trackingType === "click-counter" ? "is-selected" : ""} aria-pressed={trackingType === "click-counter"} onClick={() => setTrackingType("click-counter")}>{zh ? "点击计数" : "Click Counter"}</button><button type="button" className={trackingType === "duration" ? "is-selected" : ""} aria-pressed={trackingType === "duration"} onClick={() => setTrackingType("duration")}>{zh ? "累积时长" : "Duration"}</button></div></div>
       {trackingType === "click-counter" ? <label className="df-habit-setting-field"><span>{zh ? "目标次数" : "Target Count"}</span><input type="number" min={0} value={targetCount} onChange={(event) => setTargetCount(event.target.value)} /></label> : <label className="df-habit-setting-field"><span>{zh ? "时长" : "Duration"}</span><input type="number" min={STEP_MINUTES} max={480} step={STEP_MINUTES} value={duration} onChange={(event) => setDuration(event.target.value)} /><small>{zh ? "以 15 分钟为单位" : "Set in 15-minute increments"}</small></label>}
-      <label className="df-habit-setting-field df-habit-date-field"><span>{zh ? "开始于" : "Start From"}</span><input type="date" value={startDate} onChange={(event) => { const next = event.target.value; setStartDate(next); if (endDate && next && endDate < next) setEndDate(""); }} /></label>
-      <label className="df-habit-setting-field df-habit-date-field"><span>{zh ? "截止于" : "Till"}</span><input type="date" value={endDate} min={rangeHabit.startDate} onChange={(event) => setEndDate(event.target.value)} /></label>
       <div className="df-habit-setting-field df-habit-weekday-field"><span>{zh ? "检查连续的星期几 *" : "Weekdays to check *"}</span><div className="df-habit-weekday-checks">{weekOrder.map((day) => <button key={day} type="button" className={`df-habit-weekday-check${activeWeekdays.includes(day) ? " is-selected" : ""}`} onClick={() => toggleWeekday(day)} aria-pressed={activeWeekdays.includes(day)}><i aria-hidden="true">{activeWeekdays.includes(day) && <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l2.5 2.5L10 3" /></svg>}</i><strong>{zh ? `星期${weekdays[day]}` : weekdays[day]}</strong></button>)}</div></div>
-      <label className="df-habit-setting-field"><span>{zh ? "备注" : "Notes"}</span><textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
     </section>
-    <section className="df-habit-detail-actions"><button type="button" className="df-habit-back-btn" onClick={onBack}>{zh ? "返回总览" : "Back to overview"}</button><button type="button" className="df-habit-save-btn" onClick={saveChanges}>{zh ? "保存" : "Save"}</button><ActionDisclosure label={zh ? "更多习惯操作" : "More habit actions"}><Button onClick={() => setHabitEnabled(Boolean(habit.archived))}>{habit.archived ? (zh ? "恢复习惯" : "Restore Habit") : (zh ? "归档习惯" : "Archive Habit")}</Button><Button variant="danger" aria-pressed={confirmDelete} onClick={() => { if (confirmDelete) onDelete(); else setConfirmDelete(true); }}>{confirmDelete ? (zh ? "确认" : "Confirm") : (zh ? "永久删除" : "Delete permanently")}</Button></ActionDisclosure><span className="df-habit-delete-status" role="status">{confirmDelete ? (zh ? "再次点击以永久删除此习惯" : "Click Confirm to permanently delete this habit") : ""}</span></section>
-    <section className="df-habit-settings-form df-habit-convert-section"><label className="df-habit-setting-field df-habit-convert-field"><span>{zh ? "转换为" : "Convert to"}</span><select value="" onChange={(event) => { const target = event.target.value as "task" | "project" | ""; if (target) onConvertTo(target); }}><option value="">{zh ? "选择类型…" : "Choose a type…"}</option><option value="task">{zh ? "任务" : "Task"}</option><option value="project">{zh ? "项目" : "Project"}</option></select></label></section>
-  </>;
+    <EditorNotes lang={lang} value={notes} onChange={setNotes} />
+  </div>;
 }

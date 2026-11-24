@@ -7197,21 +7197,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   right: 0;
   pointer-events: auto;
 }
-.df-detail-convert {
-  margin: 12px 4px 0;
-  padding: 12px 0 0;
-  border-top: 1px solid var(--paper-rule);
-}
-.df-detail-convert label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--text-muted);
-  font: 600 11px/1.2 var(--paper-mono);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-}
 .df-detail-project-color {
   margin: 12px 4px 0;
   padding: 12px 0 0;
@@ -7224,23 +7209,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   font: 600 11px/1.2 var(--paper-mono);
   letter-spacing: .06em;
   text-transform: uppercase;
-}
-.df-detail-convert select {
-  min-width: 146px;
-  padding: 7px 24px 7px 9px;
-  border: 1px solid var(--paper-rule-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface-main);
-  color: var(--text-main);
-  font: 600 12px/1.2 var(--paper-sans);
-  corner-shape: var(--corner-shape, squircle);
-}
-.df-project-detail .df-detail-project-color {
-  margin-top: 4px;
-}
-.df-task-detail > .df-detail-convert {
-  margin: 0 4px;
-  padding-top: 16px;
 }
 .df-detail-incomplete-menu {
   position: relative;
@@ -8324,7 +8292,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   width: min(560px,94vw); padding: 30px 28px; border-radius: var(--paper-radius-soft) 0 0 var(--paper-radius-soft);
   background: var(--surface-main); border-color: var(--paper-rule-strong); box-shadow: var(--paper-float-shadow); corner-shape: var(--corner-shape, squircle);
 }
-.df-app .df-task-detail .df-detail-title-trevor {
+.df-app :is(.df-task-detail, .df-entity-editor) .df-detail-title-trevor {
   display: block;
   width: 100%;
   font-size: clamp(24px, 2.5vw, 30px);
@@ -8351,7 +8319,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   background: transparent;
   box-shadow: none;
 }
-.df-task-detail .df-detail-title-trevor:focus {
+:is(.df-task-detail, .df-entity-editor) .df-detail-title-trevor:focus {
   border: 0;
   border-bottom: 1px solid var(--paper-rule-strong);
   background: transparent;
@@ -8359,7 +8327,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   box-shadow: none;
   outline: none;
 }
-.df-task-detail .df-detail-title-trevor:focus-visible {
+:is(.df-task-detail, .df-entity-editor) .df-detail-title-trevor:focus-visible {
   border: 0;
   border-bottom: 1px solid var(--paper-rule-strong);
   background: transparent;
@@ -8367,48 +8335,48 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   box-shadow: none;
   outline: none;
 }
-.df-app.theme-dark .df-task-detail .df-detail-title-trevor {
+.df-app.theme-dark :is(.df-task-detail, .df-entity-editor) .df-detail-title-trevor {
   border: 0;
   border-bottom: 1px solid transparent;
   background: transparent;
   background-image: none;
   box-shadow: none;
 }
-.df-app:not(.theme-dark) .df-task-detail .df-detail-title-trevor {
+.df-app:not(.theme-dark) :is(.df-task-detail, .df-entity-editor) .df-detail-title-trevor {
   border: 0;
   border-bottom: 1px solid transparent;
   background: transparent;
   background-image: none;
   box-shadow: none;
 }
-.df-app.theme-dark .df-task-detail .df-detail-title-trevor:hover {
+.df-app.theme-dark :is(.df-task-detail, .df-entity-editor) .df-detail-title-trevor:hover {
   border-bottom-color: var(--paper-rule);
 }
-.df-app:not(.theme-dark) .df-task-detail .df-detail-title-trevor:hover {
+.df-app:not(.theme-dark) :is(.df-task-detail, .df-entity-editor) .df-detail-title-trevor:hover {
   border-bottom-color: var(--paper-rule);
 }
-.df-app.theme-dark .df-task-detail .df-detail-title-trevor:focus {
+.df-app.theme-dark :is(.df-task-detail, .df-entity-editor) .df-detail-title-trevor:focus {
   border: 0;
   border-bottom: 1px solid var(--paper-rule-strong);
   background: transparent;
   box-shadow: none;
   outline: none;
 }
-.df-app.theme-dark .df-task-detail .df-detail-title-trevor:focus-visible {
+.df-app.theme-dark :is(.df-task-detail, .df-entity-editor) .df-detail-title-trevor:focus-visible {
   border: 0;
   border-bottom: 1px solid var(--paper-rule-strong);
   background: transparent;
   box-shadow: none;
   outline: none;
 }
-.df-app:not(.theme-dark) .df-task-detail .df-detail-title-trevor:focus {
+.df-app:not(.theme-dark) :is(.df-task-detail, .df-entity-editor) .df-detail-title-trevor:focus {
   border: 0;
   border-bottom: 1px solid var(--paper-rule-strong);
   background: transparent;
   box-shadow: none;
   outline: none;
 }
-.df-app:not(.theme-dark) .df-task-detail .df-detail-title-trevor:focus-visible {
+.df-app:not(.theme-dark) :is(.df-task-detail, .df-entity-editor) .df-detail-title-trevor:focus-visible {
   border: 0;
   border-bottom: 1px solid var(--paper-rule-strong);
   background: transparent;
@@ -8430,11 +8398,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-detail-pill-trevor.active { background: var(--paper-note); border-color: var(--paper-accent-rule); color: var(--accent-active); box-shadow: none; }
 .df-detail-pill-trevor.action.active { background: var(--paper-note); border-color: var(--paper-accent-rule); color: var(--accent-active); box-shadow: none; }
 .df-detail-pill-trevor.action.green { border-color: var(--paper-accent-rule); color: var(--accent-active); background: var(--paper-note); box-shadow: none; }
-.df-detail-meta-settings {
-  display: grid;
-  gap: 14px;
-  padding: 12px 0;
-}
 .df-detail-meta-setting {
   display: grid;
   grid-template-columns: 72px max-content;
@@ -8842,10 +8805,10 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 /* Task detail subtask tools: one baseline, compact icon actions, active-theme ink. */
 .df-detail-subtask-tools { display:flex; align-items:center; gap:2px; }
 #root .df-app .df-detail-subtask-tools .ui-icon-button {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  min-height: 28px;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
 }
 .df-app .df-detail-subtask-tools .df-detail-ai-subtasks.loading svg {
   transform-origin:center;
@@ -10440,13 +10403,39 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   background: var(--paper-note);
 }
 .df-task-detail .df-detail-hero-trevor { padding-right: 52px; }
-.df-task-detail--editing {
+.df-entity-editor {
   --detail-action-width: min(148px, calc((100% - 56px) / 3));
-  --detail-action-height: 34px;
+  --detail-action-height: 38px;
+  display: grid;
   align-content: start;
-  gap: 8px;
+  gap: 6px;
 }
-.df-task-detail--editing .df-detail-hero-trevor { padding-bottom: 5px; }
+.df-entity-editor .df-detail-hero-trevor { padding-bottom: 3px; }
+.df-editor-metadata { display: grid; gap: 6px; }
+.df-editor-metadata .df-detail-tag-row { padding-block: 0; }
+.df-editor-metadata .df-detail-importance-row { border: 0; padding: 4px 0 8px; flex-wrap: wrap; }
+.df-editor-metadata .df-detail-meta-setting { min-height: var(--detail-action-height); }
+.df-editor-date-range { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
+#root .df-app .df-entity-editor .df-editor-task-fields > button.df-detail-pill-trevor:first-child {
+  flex: 0 1 148px;
+}
+#root .df-app .df-entity-editor .df-editor-date {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: var(--detail-action-height);
+  padding: 3px 10px;
+  border: 1px solid var(--paper-rule-strong);
+  font: 600 13px/1.2 var(--paper-sans);
+  text-align: center;
+}
+#root .df-app .df-entity-editor .df-editor-date:hover { border-color: var(--accent-active); }
+#root .df-app .df-entity-editor .df-detail-section-head > .ui-icon-button { width: 34px; height: 34px; }
+.df-habit-panel .df-entity-editor .df-detail-title-trevor { width: 100%; resize: none; }
+.df-habit-panel .df-entity-editor .df-detail-status-row { margin-bottom: 4px; }
+.df-habit-delete-status { flex-basis: 100%; color: var(--df-danger); font-size: 12px; }
+
 .df-task-schedule-summary {
   display: grid;
   gap: 2px;
@@ -10459,8 +10448,8 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   align-items: center;
   column-gap: 5px;
 }
-#root .df-app .df-task-detail--editing .df-task-schedule-range > .ui-button,
-#root .df-app .df-task-detail--editing .df-task-schedule-range > .ui-button:is(:hover, :active, :focus-visible) {
+#root .df-app .df-entity-editor .ui-button.df-editor-inline,
+#root .df-app .df-entity-editor .ui-button.df-editor-inline:is(:hover, :active, :focus-visible) {
   min-width: 0;
   min-height: 26px;
   padding: 0;
@@ -10474,35 +10463,36 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   font: inherit;
   text-underline-offset: 3px;
 }
-#root .df-app .df-task-schedule-range > .ui-button:is(:hover, :focus-visible) {
+#root .df-app .df-entity-editor .df-editor-inline:is(:hover, :focus-visible) {
   text-decoration: underline;
 }
-#root .df-app .df-task-schedule-range > .ui-button:focus-visible { text-decoration-thickness: 2px; }
+#root .df-app .df-entity-editor .df-editor-inline:focus-visible { text-decoration-thickness: 2px; }
 .df-task-schedule-summary p {
   margin: 0;
   color: var(--warning-ink, var(--accent-active));
   font-weight: 650;
 }
-.df-task-detail--editing :is(.df-detail-tag-row, .df-detail-status-row, .df-detail-schedule-row) {
+.df-entity-editor :is(.df-detail-tag-row, .df-detail-status-row, .df-detail-schedule-row) {
   align-items: center;
   gap: 8px;
 }
-.df-task-detail--editing .df-detail-status-row > .ui-action-disclosure { margin-inline-start: auto; }
-.df-task-detail--editing .df-detail-status-row > .ui-action-disclosure > summary {
+.df-entity-editor .df-detail-status-row > .ui-action-disclosure { margin-inline-start: auto; }
+.df-entity-editor .df-detail-status-row > .ui-action-disclosure > summary {
   min-width: 32px;
   min-height: var(--detail-action-height);
   padding: 0;
 }
-.df-task-detail--editing .df-detail-subtasks-new,
-.df-task-detail--editing .df-detail-notes-new { padding: 10px 0; }
-.df-task-detail--editing .df-detail-section-head:last-child { margin-bottom: 0; }
-.df-task-detail--editing .df-detail-project-name {
+.df-entity-editor .df-detail-subtasks-new,
+.df-entity-editor .df-detail-notes-new { padding: 10px 0; }
+.df-entity-editor .df-detail-section-head:last-child { margin-bottom: 0; }
+.df-entity-editor .df-detail-notes-new:last-child { border-bottom: 0; }
+.df-entity-editor .df-detail-project-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-#root .df-app .df-task-detail--editing :is(.df-detail-tag-row, .df-detail-status-row, .df-detail-schedule-actions) :is(button.df-detail-pill-trevor, .df-detail-remove) {
+#root .df-app .df-entity-editor :is(.df-detail-tag-row, .df-detail-status-row, .df-detail-schedule-actions) :is(button.df-detail-pill-trevor, .df-detail-remove, .df-editor-action) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -10510,42 +10500,29 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   min-height: var(--detail-action-height);
   padding: 2px 5px;
   gap: 4px;
-  font: 600 12.5px/1.1 var(--paper-sans);
+  font: 600 13px/1.15 var(--paper-sans);
   text-align: center;
   white-space: normal;
 }
-#root .df-app .df-task-detail--editing :is(.df-detail-tag-row, .df-detail-status-row, .df-detail-schedule-actions) > :is(button.df-detail-pill-trevor, .df-detail-remove, .df-detail-incomplete-menu) {
+#root .df-app .df-entity-editor :is(.df-detail-tag-row, .df-detail-status-row, .df-detail-schedule-actions) > :is(button.df-detail-pill-trevor, .df-detail-remove, .df-editor-action, .df-detail-incomplete-menu) {
   flex: 0 0 var(--detail-action-width);
 }
-.df-task-detail--editing :is(.df-detail-pill-trevor, .df-detail-remove) > svg { flex: none; }
-#root .df-app .df-task-detail--editing .df-detail-remove:not(:disabled) {
+.df-entity-editor :is(.df-detail-pill-trevor, .df-detail-remove, .df-editor-action) > svg { flex: none; }
+#root .df-app .df-entity-editor .df-detail-remove:not(:disabled) {
   border: 0;
   background: transparent;
   color: var(--df-danger);
 }
-#root .df-app .df-task-detail--editing .df-detail-remove:is(:hover, :focus-visible):not(:disabled) {
+#root .df-app .df-entity-editor .df-detail-remove:is(:hover, :focus-visible):not(:disabled) {
   background: color-mix(in srgb, var(--df-danger) 8%, transparent);
 }
-.df-app .df-task-detail--editing .df-detail-due-date > label {
-  flex: 0 1 216px;
-  min-height: var(--detail-action-height);
-  margin: 0;
-  padding: 4px 7px;
-}
-#root .df-app .df-task-detail--editing .df-detail-due-reset {
-  display: inline-grid;
-  place-items: center;
-  min-height: var(--detail-action-height);
-  padding: 2px 8px;
-  font: 600 12.5px/1.1 var(--paper-sans);
-}
-.df-task-detail--editing .df-detail-incomplete-options { min-width: max(100%, 190px); }
+.df-entity-editor .df-detail-incomplete-options { min-width: max(100%, 190px); }
 @media (max-width: 640px), (pointer: coarse) {
-  .df-task-detail--editing { --detail-action-height: 44px; }
-  .df-task-detail--editing .df-detail-status-row > .ui-action-disclosure > summary { min-width: 40px; }
+  .df-entity-editor { --detail-action-height: 44px; }
+  .df-entity-editor .df-detail-status-row > .ui-action-disclosure > summary { min-width: 40px; }
 }
 @media (pointer: coarse) {
-  #root .df-app .df-task-detail--editing .df-task-schedule-range > .ui-button { min-height: 44px; }
+  #root .df-app .df-entity-editor .ui-button.df-editor-inline { min-height: 44px; }
 }
 .df-app .df-drawer input[type="checkbox"]:checked::before {
   transform: translateY(-1px) rotate(-45deg) scale(1);
@@ -10819,7 +10796,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   font: 600 13px/1.25 var(--paper-sans);
 }
 .df-task-schedule-footer { display: flex; justify-content: flex-end; gap: 8px; }
-#root .df-app .df-task-schedule-footer > button { width: 84px; min-height: 36px; }
+#root .df-app .df-task-schedule-footer > button { width: 84px; min-height: 38px; }
 .df-dialog h2 {
   margin: 0;
   color: var(--text-main, #211d18);

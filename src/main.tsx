@@ -76,6 +76,7 @@ import { ActionDisclosure, Button, CloseButton, IconButton, UndoButton } from ".
 
 import { DateQuickPicker } from "./components/DateQuickPicker";
 import { TaskDetailSchedule, type TaskScheduleRange } from "./components/TaskDetailSchedule";
+import { EditorActionRow, EditorConversion, EditorDate, EditorNotes, EditorRemove, EditorTitle } from "./components/EntityEditor";
 
 const INCOMPLETE_OUTCOMES = ["unfinished-return", "unfinished-stay", "skipped-return", "skipped-stay"] as const;
 const INCOMPLETE_LABELS = {
@@ -12078,12 +12079,9 @@ function EditDrawer(props: {
   const detailPopoverRef = useRef<HTMLElement>(null);
   const projectTriggerRef = useRef<HTMLButtonElement>(null);
   const durationTriggerRef = useRef<HTMLButtonElement>(null);
-  const titleRef = useRef<HTMLTextAreaElement>(null);
   const summaryExpanded = useRef("");
   const showMore = (inset: string) => { summaryExpanded.current = inset; props.onShowMore?.(); };
-  const [notesOpen, setNotesOpen] = useState(false);
   const [notesEditing, setNotesEditing] = useState(false);
-  const [noteDraft, setNoteDraft] = useState("");
   const [recurrenceOpen, setRecurrenceOpen] = useState(false);
   const [recurrenceDraft, setRecurrenceDraft] = useState<TaskRecurrence | null>(null);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
@@ -12102,8 +12100,6 @@ function EditDrawer(props: {
     habit: props.lang === "zh" ? "习惯：每天或每周重复的固定练习。" : "Habit: a recurring practice you want to keep on the day.",
   };
   useEffect(() => {
-    setNoteDraft(props.task?.notes || props.project?.notes || props.habit?.notes || "");
-    setNotesOpen(true);
     setNotesEditing(false);
     setRecurrenceOpen(false);
     setRecurrenceDraft(null);
@@ -12114,25 +12110,6 @@ function EditDrawer(props: {
     if (quickRescheduleHoverTimer.current !== null) window.clearTimeout(quickRescheduleHoverTimer.current);
     setCancelAllConfirm(false);
   }, [props.task?.id, props.task?.notes, props.project?.id, props.project?.notes, props.habit?.id, props.habit?.notes, props.editingOccurrence?.scheduledDate, props.editingRecordId]);
-  useLayoutEffect(() => {
-    const textarea = titleRef.current;
-    if (!textarea) return;
-    const resize = () => {
-      textarea.style.height = "auto";
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    };
-    resize();
-    let width = textarea.clientWidth;
-    let frame = 0;
-    const observer = new ResizeObserver(() => {
-      if (textarea.clientWidth === width) return;
-      width = textarea.clientWidth;
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(resize);
-    });
-    observer.observe(textarea);
-    return () => { observer.disconnect(); cancelAnimationFrame(frame); };
-  }, [f.title, props.task?.id]);
   function positionDetailPopover(trigger: HTMLButtonElement | null, width: number) {
     const panel = detailPopoverRef.current;
     if (!trigger || !panel) return;
@@ -12350,25 +12327,8 @@ function EditDrawer(props: {
     durationMinutes: f.dueTime ? eventDurationMinutes || 60 : undefined,
     endDate: f.endDate || undefined,
   };
-  const convertChoices: Record<"task" | "project" | "habit", Array<"task" | "project" | "habit">> = {
-    task: ["project", "habit"],
-    project: ["task", "habit"],
-    habit: ["task", "project"],
-  };
-  const convertControl = (sourceType: "task" | "project" | "habit") => (
-    <section className="df-detail-convert">
-      <label>
-        <span>{props.lang === "zh" ? "转换为" : "Convert to"}</span>
-        <select value="" aria-label={props.lang === "zh" ? "转换为" : "Convert to"} onChange={(event) => {
-          const next = event.target.value as "task" | "project" | "habit" | "";
-          if (next) props.setType(next);
-        }}>
-          <option value="">{props.lang === "zh" ? "选择类型…" : "Choose a type…"}</option>
-          {convertChoices[sourceType].map((type) => <option key={type} value={type}>{type === "task" ? (props.lang === "zh" ? "任务" : "Task") : type === "project" ? (props.lang === "zh" ? "项目" : "Project") : (props.lang === "zh" ? "习惯" : "Habit")}</option>)}
-        </select>
-      </label>
-    </section>
-  );
+  const dueLabel = props.lang === "zh" ? "截止日期" : "Due date";
+  const editDueDate = (onChange: (date: string) => void) => <EditorDate outlined clearable label={dueLabel} value={f.dueDate} today={props.today} weekStartsOn={props.weekStartsOn} lang={props.lang} onChange={onChange} />;
   if (props.editing && props.type === "event" && props.event) {
     const eventSchedule = f.dueTime
       ? `${f.dueDate} ${f.dueTime} - ${f.endTime || addMinutes(f.dueTime, eventDurationMinutes || 60)}`
@@ -12435,9 +12395,9 @@ function EditDrawer(props: {
           </div>
           {notesEditing ? (
             <div className="df-notes-editor">
-              <textarea rows={4} aria-label={t(props.lang, "drawer.notes")} value={f.details} onChange={(event) => { set("details", event.target.value); setNoteDraft(event.target.value); }} placeholder={t(props.lang, "drawer.addNotePlaceholder")} />
+              <textarea rows={4} aria-label={t(props.lang, "drawer.notes")} value={f.details} onChange={(event) => set("details", event.target.value)} placeholder={t(props.lang, "drawer.addNotePlaceholder")} />
               <div className="df-notes-editor-actions">
-                <button className="df-detail-pill-trevor action" onClick={() => { setNoteDraft(f.details); setNotesEditing(false); }}>{t(props.lang, "drawer.save")}</button>
+                <button className="df-detail-pill-trevor action" onClick={() => setNotesEditing(false)}>{t(props.lang, "drawer.save")}</button>
               </div>
             </div>
           ) : f.details && (
@@ -12482,12 +12442,12 @@ function EditDrawer(props: {
           ))}
         </div>
         <section className="df-detail-hero-trevor">
-          <textarea ref={titleRef} className="df-detail-title-trevor" aria-label={titlePlaceholder} autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} onKeyDown={(event) => {
+          <EditorTitle label={titlePlaceholder} autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} onKeyDown={(event) => {
             if (!isTask && event.key === "Enter" && !event.nativeEvent.isComposing) {
               event.preventDefault();
               props.onSave();
             }
-          }} rows={1} placeholder={titlePlaceholder} spellCheck={false} />
+          }} />
         </section>
 
         {isProject ? <section className="df-detail-project-color">
@@ -12654,36 +12614,37 @@ function EditDrawer(props: {
     return (
       <>
       {dialog.host}
-      <aside className={`df-drawer df-task-detail df-task-detail--editing${summaryExpanded.current ? " is-expanded-from-summary" : ""}`} style={{ "--mobile-sheet-start-inset": summaryExpanded.current } as CSSProperties} onMouseDown={(event) => event.stopPropagation()}>
+      <aside className={`df-drawer df-task-detail df-entity-editor${summaryExpanded.current ? " is-expanded-from-summary" : ""}`} style={{ "--mobile-sheet-start-inset": summaryExpanded.current } as CSSProperties} onMouseDown={(event) => event.stopPropagation()}>
         <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
         {/* ── Hero title area ── */}
         <section className="df-detail-hero-trevor">
-          <textarea ref={titleRef} className="df-detail-title-trevor" aria-label={t(props.lang, "drawer.titlePlaceholder")} value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={t(props.lang, "drawer.titlePlaceholder")} spellCheck={false} />
+          <EditorTitle label={t(props.lang, "drawer.titlePlaceholder")} value={f.title} onChange={(event) => set("title", event.target.value)} />
           {scheduleRange && <TaskDetailSchedule range={scheduleRange} today={props.today} weekStartsOn={props.weekStartsOn} lang={props.lang}
             countdown={!props.task.completed && (!scheduleRecord || scheduleRecord.executionStatus === "scheduled")}
             onSave={(source, next, duration) => props.onEditSchedule(props.task!.id, source, next, duration, scheduleRecord?.id, props.editingOccurrence || undefined)} />}
         </section>
 
-        {/* ── Project tag + action row ── */}
-        <section className="df-detail-tag-row">
+        <section className="df-editor-metadata">
+          <div className="df-detail-tag-row df-editor-task-fields">
           <button ref={projectTriggerRef} className={`df-detail-pill-trevor ${projectPickerOpen ? "active" : ""}`} onClick={toggleProjectPicker} title={selectedProjectTitle}>
             <span className="df-detail-project-dot" style={{ background: projectColorInk(props.projects.find((p) => String(p.id) === String(f.projectId))?.color || "#888") }} />
             <span className="df-detail-project-name"># {selectedProjectTitle}</span>
             <UiChevronDownIcon size={12} />
           </button>
+          {editDueDate((dueDate) => { set("dueDate", dueDate); props.onTaskUpdate(props.task!.id, { dueDate }); })}
           {!scheduleRange && <button ref={durationTriggerRef} className={`df-detail-pill-trevor ${durationPickerOpen ? "active" : ""}`} onClick={toggleDurationPicker}>
             <span>◷ {formatDuration(f.estimatedHours || 0.5)}</span>
             <UiChevronDownIcon size={12} />
           </button>}
           {recurrenceText ? <span className="df-detail-pill-trevor">↻ {recurrenceText}</span> : null}
-        </section>
-        <section className="df-detail-importance-row" aria-label={props.lang === "zh" ? "任务标记" : "Task flags"}>
+          </div>
+        <div className="df-detail-importance-row" role="group" aria-label={props.lang === "zh" ? "任务标记" : "Task flags"}>
           {taskLevelSelector("priority", importanceOptions)}
           {props.engagementEnabled && <Suspense fallback={null}><EngagementRating task={props.task} record={activeRecord} lang={props.lang} onUpdate={props.onTaskUpdate} /></Suspense>}
+        </div>
         </section>
 
-        {/* ── Status: COMPLETE / UNFINISHED / REMOVE ── */}
-        <section className="df-detail-status-row">
+        <EditorActionRow>
           <button className={`df-detail-pill-trevor action ${props.task.completed ? "green" : ""}`} onClick={props.onToggleDone}>
             <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 6l3 3 5-6"/></svg>
             <span>{t(props.lang, "drawer.complete")}</span>
@@ -12709,23 +12670,15 @@ function EditDrawer(props: {
               {INCOMPLETE_OUTCOMES.map((outcome, index) => <button key={outcome} type="button" role="menuitem" onClick={() => chooseIncompleteOutcome(outcome)}>{INCOMPLETE_LABELS[props.lang === "zh" ? "zh" : "en"][index]}</button>)}
             </div>}
           </div>}
-          <Button variant="danger" className="df-detail-remove" onClick={props.onDelete}><UiTrashIcon size={14} />{t(props.lang, "drawer.remove")}</Button>
+          <EditorRemove onClick={props.onDelete}>{t(props.lang, "drawer.remove")}</EditorRemove>
           <ActionDisclosure label={props.lang === "zh" ? "更多" : "More"}>
             {timelineLocation && <Button onClick={() => props.onLocateTimeline(timelineLocation.date, timelineLocation.startTime, timelineLocation.taskId)}>{props.lang === "zh" ? `跳转到时间轴 · ${timelineLocation.date} ${timelineLocation.startTime}` : `Go to timeline · ${timelineLocation.date} ${timelineLocation.startTime}`}</Button>}
             {props.onLocateTree && !props.task.completed && props.task.workflowStatus !== "done" && <Button onClick={() => props.onLocateTree?.(props.task!)}>{props.lang === "zh" ? "在 Tree 中查看任务" : "Go to task in Tree"}</Button>}
             <Button onClick={() => { setQuickActionMenu(null); setRecurrenceDraft({ ...fixedRecurrence, mode: "scheduled" }); setRecurrenceOpen(true); }}>{t(props.lang, "drawer.setRepeat")}</Button>
             <Button onClick={props.onCopy}>{t(props.lang, "drawer.duplicate")}</Button>
+            <EditorConversion targets={["project", "habit"]} lang={props.lang} onConvert={props.setType} />
           </ActionDisclosure>
-        </section>
-
-        <section className="df-detail-schedule-row df-detail-due-date">
-          <label className="df-detail-pill-trevor action">
-            <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="8" height="7" rx="1"/><path d="M2 5h8M4 2v2M8 2v2"/></svg>
-            <span>{props.lang === "zh" ? "截止日期" : "Due date"}</span>
-            <input type="date" lang={props.lang === "zh" ? "zh-CN" : "en-US"} value={f.dueDate} onChange={(event) => { set("dueDate", event.target.value); props.onTaskUpdate(props.task!.id, { dueDate: event.target.value }); }} />
-          </label>
-          <button className="df-detail-due-reset" type="button" onClick={() => { set("dueDate", ""); props.onTaskUpdate(props.task!.id, { dueDate: "" }); }}>{props.lang === "zh" ? "重置" : "Reset"}</button>
-        </section>
+        </EditorActionRow>
 
         {/* ── Scheduling: shown only for a task currently on the timeline ── */}
         {isScheduled && <section className="df-detail-schedule-row df-detail-schedule-actions">
@@ -12842,67 +12795,38 @@ function EditDrawer(props: {
           </div>}
         </section>
 
-        {/* ── Notes ── */}
-        <section className="df-detail-notes-new">
-          <div className="df-detail-section-head">
-            <h3>{t(props.lang, "drawer.notes")}</h3>
-            {notesEditing && noteDraft !== f.details ? (
-              <div className="df-notes-editor-actions">
-                <Button className="df-detail-add-btn" onClick={() => { set("details", noteDraft); props.onTaskUpdate(props.task!.id, { notes: noteDraft }); setNotesEditing(false); }}>{t(props.lang, "drawer.save")}</Button>
-                <Button className="df-detail-add-btn" onClick={() => { setNoteDraft(f.details); setNotesEditing(false); }}>{t(props.lang, "drawer.cancel")}</Button>
-              </div>
-            ) : (
-              <IconButton icon={<UiPencilIcon size={14} />} label={t(props.lang, "taskCard.editNotes")} className="df-detail-add-btn" onClick={() => { setNoteDraft(f.details); setNotesEditing((open) => !open); }} />
-            )}
-          </div>
-          {notesEditing ? (
-            <div className="df-notes-editor">
-              <textarea autoFocus rows={4} value={noteDraft} onChange={(event) => setNoteDraft(event.target.value)} aria-label={t(props.lang, "drawer.notes")} placeholder={t(props.lang, "drawer.addNotePlaceholder")} />
-            </div>
-          ) : f.details && (
-            <div className="df-notes-preview df-notes-preview--readonly">
-              <p>{f.details}</p>
-            </div>
-          )}
-        </section>
-        {convertControl("task")}
+        <EditorNotes key={props.task.id} lang={props.lang} value={f.details} onChange={(notes) => set("details", notes)}
+          onCommit={(notes) => props.onTaskUpdate(props.task!.id, { notes })} />
       </aside>
       </>
     );
   }
   if (props.editing && props.type === "project") {
     return (
-      <aside className="df-drawer df-task-detail df-project-detail" onMouseDown={(event) => event.stopPropagation()}>
-        <CloseButton className="df-detail-close" type="button" label={t(props.lang, "form.close")} onClick={props.onClose} />
+      <aside className="df-drawer df-task-detail df-project-detail df-entity-editor" onMouseDown={(event) => event.stopPropagation()}>
+        <CloseButton className="df-detail-close" label={t(props.lang, "form.close")} onClick={props.onClose} />
         <section className="df-detail-hero-trevor">
-          <textarea className="df-detail-title-trevor" aria-label={props.lang === "zh" ? "项目名称" : "Project name"} autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} rows={1} placeholder={props.lang === "zh" ? "项目名称" : "Project name"} spellCheck={false} />
+          <EditorTitle label={props.lang === "zh" ? "项目名称" : "Project name"} autoFocus value={f.title} onChange={(event) => set("title", event.target.value)} />
         </section>
-        <section className="df-detail-meta-settings" aria-label={props.lang === "zh" ? "项目优先级" : "Project priority"}>
-          <div className="df-detail-meta-setting"><span>{props.lang === "zh" ? "重要程度" : "Importance"}</span>{taskLevelSelector("importance", importanceOptions)}</div>
+        <section className="df-editor-metadata">
+          <div className="df-detail-tag-row">{editDueDate((date) => set("dueDate", date))}</div>
+          <div className="df-detail-meta-setting">
+            <span>{props.lang === "zh" ? "重要程度" : "Importance"}</span>
+            {taskLevelSelector("importance", importanceOptions)}
+          </div>
+          <div className="df-detail-meta-setting">
+            <span>{t(props.lang, "form.color")}</span>
+            <ProjectColorPicker value={f.projectColor || props.project?.color || DEFAULT_PROJECT_COLOR} onChange={(color) => set("projectColor", color)} presets={COMMON_COLOR_PRESETS} />
+          </div>
         </section>
-        <section className="df-detail-project-color">
-          <span>{t(props.lang, "form.color")}</span>
-          <ProjectColorPicker value={f.projectColor || props.project?.color || DEFAULT_PROJECT_COLOR} onChange={(color) => set("projectColor", color)} presets={COMMON_COLOR_PRESETS} />
-        </section>
-        <section className="df-detail-schedule-row df-detail-due-date">
-          <label className="df-detail-pill-trevor action"><svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="8" height="7" rx="1"/><path d="M2 5h8M4 2v2M8 2v2"/></svg><span>{props.lang === "zh" ? "截止日期" : "Due date"}</span><input type="date" lang={props.lang === "zh" ? "zh-CN" : "en-US"} value={f.dueDate} onChange={(event) => set("dueDate", event.target.value)} /></label>
-          <button className="df-detail-due-reset" type="button" onClick={() => set("dueDate", "")}>{props.lang === "zh" ? "重置" : "Reset"}</button>
-        </section>
-        <section className="df-detail-status-row">
-          {props.project && <button className="df-detail-pill-trevor action danger" onClick={props.onDelete}>
-            <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 3h8M4 3V2h4v1M3 3v6.5a1 1 0 001 1h4a1 1 0 001-1V3"/></svg>
-            <span>{t(props.lang, "drawer.remove")}</span>
-          </button>}
-          <button className="df-detail-pill-trevor action" onClick={props.onSave}>
-            <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 7l2.5 2.5L10 3"/></svg>
-            <span>{t(props.lang, "drawer.save")}</span>
-          </button>
-        </section>
-        <section className="df-detail-notes-new">
-          <div className="df-detail-section-head"><h3>{t(props.lang, "drawer.notes")}</h3><button className="df-detail-add-btn" onClick={() => setNotesEditing((open) => !open)}><span>{notesEditing ? t(props.lang, "drawer.cancel") : t(props.lang, "drawer.edit")}</span></button></div>
-          {notesEditing ? <div className="df-notes-editor"><textarea rows={4} aria-label={t(props.lang, "drawer.notes")} value={f.details} onChange={(event) => { set("details", event.target.value); setNoteDraft(event.target.value); }} placeholder={t(props.lang, "drawer.addNotePlaceholder")} /><div className="df-notes-editor-actions"><button className="df-detail-pill-trevor action" onClick={() => { setNoteDraft(f.details); setNotesEditing(false); }}>{t(props.lang, "drawer.save")}</button></div></div> : f.details && <div className="df-notes-preview" onClick={() => setNotesEditing(true)}><p>{f.details}</p></div>}
-        </section>
-        {convertControl("project")}
+        <EditorActionRow>
+          <Button className="df-editor-action" variant="primary" onClick={props.onSave}><UiCheckIcon size={14} />{t(props.lang, "drawer.save")}</Button>
+          {props.project && <EditorRemove onClick={props.onDelete}>{t(props.lang, "drawer.remove")}</EditorRemove>}
+          <ActionDisclosure label={props.lang === "zh" ? "更多" : "More"}>
+            <EditorConversion targets={["task", "habit"]} lang={props.lang} onConvert={props.setType} />
+          </ActionDisclosure>
+        </EditorActionRow>
+        <EditorNotes key={props.project?.id} lang={props.lang} value={f.details} onChange={(notes) => set("details", notes)} />
       </aside>
     );
   }

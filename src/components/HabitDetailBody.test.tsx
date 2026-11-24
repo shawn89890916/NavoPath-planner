@@ -28,9 +28,12 @@ describe("habit editor save on exit", () => {
       onBack={vi.fn()} onConvertTo={vi.fn()} />;
     act(() => { tree = create(render(habit)); });
     act(() => {
-      tree.root.findByProps({ type: "text" }).props.onChange({ target: { value: "晨读" } });
+      tree.root.findByProps({ "aria-label": "习惯名称" }).props.onChange({ target: { value: "晨读" } });
       tree.root.findAllByType("select")[0].props.onChange({ target: { value: "project-reading" } });
-      tree.root.findByType("textarea").props.onChange({ target: { value: "保留编辑内容" } });
+      tree.root.findByProps({ "aria-label": "编辑备注" }).props.onClick();
+    });
+    act(() => {
+      tree.root.findByProps({ "aria-label": "备注" }).props.onChange({ target: { value: "保留编辑内容" } });
     });
     // A data refresh must not replace edits that are still in the open form.
     act(() => tree.update(render({ ...habit, updatedAt: "2026-11-02T01:00:00Z" })));
