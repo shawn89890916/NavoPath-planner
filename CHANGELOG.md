@@ -2,6 +2,12 @@
 
 ## 2026-11-24
 
+### 1.7.0 Beta 83
+
+#### 修复
+
+- 习惯创建和编辑页为起止日期保留间距，并标明未设置的结束日期。
+
 ### 1.7.0 Beta 82
 
 #### 改进
@@ -997,6 +1003,12 @@
 # NavoPath Changelog
 
 ## 2026-11-24
+
+### 1.7.0 Beta 83
+
+#### Fixes
+
+- Space the start and end date controls in habit editors and show when the end date is unset.
 
 ### 1.7.0 Beta 82
 

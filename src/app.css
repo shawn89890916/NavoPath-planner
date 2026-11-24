@@ -10301,6 +10301,7 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-editor-metadata .df-detail-importance-row { border: 0; padding: 4px 0 8px; flex-wrap: wrap; }
 .df-editor-metadata .df-detail-meta-setting { min-height: var(--detail-action-height); }
 .df-editor-project-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.df-editor-date-range { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
 #root .df-app .df-entity-editor .df-editor-task-fields > button.df-detail-pill-trevor:first-child {
   flex: 0 1 148px;
 }

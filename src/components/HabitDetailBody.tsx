@@ -228,7 +228,7 @@ export default function HabitDetailBody({ ref, habit, creating = false, projects
           setStartDate(next);
           if (endDate && next && endDate < next) setEndDate("");
         }} />
-        <EditorDate label={zh ? "截止于" : "Ends"} value={endDate} today={today} weekStartsOn={1} minDate={rangeHabit.startDate} lang={lang} onChange={setEndDate} clearable />
+        <EditorDate label={zh ? "截止于" : "Ends"} value={endDate} emptyLabel={zh ? "未设置" : "Not set"} today={today} weekStartsOn={1} minDate={rangeHabit.startDate} lang={lang} onChange={setEndDate} clearable />
       </div>
     </section>
     {!creating && <section className="df-habit-detail-progress" aria-label={zh ? "习惯完成情况" : "Habit completion"}>
