@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      deploy_pages:
+        description: Deploy the Cloudflare Pages production site
+        required: true
+        type: boolean
+        default: true
 
 jobs:
   deploy:
@@ -73,6 +79,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare Pages
+        if: github.event_name != 'workflow_dispatch' || inputs.deploy_pages
         run: npx wrangler pages deploy dist --project-name navopath-xiaoyang --branch production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
