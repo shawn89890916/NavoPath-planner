@@ -1,5 +1,13 @@
 # NavoPath 更新日志
 
+## 2026-11-25
+
+### 1.7.0 Beta 95
+
+#### 修复
+
+- 投入度色条改为沿任务块左边缘绘制，圆角和完成状态下的比例填充保持一致。
+
 ## 2026-11-24
 
 ### 1.7.0 Beta 94
@@ -1077,6 +1085,14 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-25
+
+### 1.7.0 Beta 95
+
+#### Fixed
+
+- Draw the engagement stripe along the task block's left edge, preserving its rounded shape and proportional fill after completion.
 
 ## 2026-11-24
 

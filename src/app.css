@@ -13091,17 +13091,21 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: inherit;
   corner-shape: var(--corner-shape, squircle);
 }
-/* Engagement fills the existing project stripe from the top down. The stripe
-   width and rounded border-box clip stay tied to the shared TaskBlock tokens. */
-.df-app .df-task-block[data-task-appearance][data-engagement] {
-  background-image: linear-gradient(
+/* Engagement fills the shared project stripe from the top down. Keeping it on
+   the accent layer preserves the stripe's rounded ends in every task state. */
+.df-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent {
+  top: -1px;
+  bottom: -1px;
+  left: -1px;
+  width: var(--task-project-accent-size, 2px);
+  background: linear-gradient(
     to bottom,
     var(--task-project-color) 0 var(--task-engagement),
     transparent var(--task-engagement) 100%
   );
-  background-size: var(--task-project-accent-size, 2px) 100%;
-  background-repeat: no-repeat;
-  background-origin: border-box;
+  opacity: 1;
+  border-radius: var(--task-radius) 0 0 var(--task-radius);
+  corner-shape: var(--corner-shape, squircle);
 }
 .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--bottom {
   left: 0;
@@ -13241,15 +13245,19 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 /* Completed — clean styling, no opacity or gray overlay. */
 .df-app .df-task-block[data-task-appearance].completed {
   opacity: 1;
-  background: var(--task-bg);
+  background-color: var(--task-bg);
+}
+.df-app .df-task-block[data-task-appearance].is-checked {
+  opacity: 1;
+  background-color: var(--task-bg);
 }
 .navo-demo-app .df-task-block[data-task-appearance].is-checked {
   opacity: 1;
-  background: var(--task-bg);
+  background-color: var(--task-bg);
 }
 .navo-demo-app .df-task-block[data-task-appearance].completed {
   opacity: 1;
-  background: var(--task-bg);
+  background-color: var(--task-bg);
 }
 .df-app .df-task-block[data-task-appearance].is-checked .df-task-block-title {
   text-decoration: line-through;
@@ -15656,10 +15664,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
     width: 25px;
     height: 25px;
   }
-}
-.df-app .df-task-block[data-task-appearance].is-checked {
-  opacity: 1;
-  background-color: var(--task-bg);
 }
 /* ===== Planning Time Allocation Metrics ===== */
 /* Single transparent hit disk on top of the donut. It is the ONLY element
