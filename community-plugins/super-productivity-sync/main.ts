@@ -31,20 +31,10 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     let previewView: ReturnType<typeof createInitialPreviewView> | undefined;
     let previewKey = "";
     const surface = mountIsolatedPluginSurface(container, `
-      :host { display: block; min-width: 0; }
-      .nvp-sp-sync { --p-bg: var(--surface-main, #f8f7f3); --p-text: var(--text-main, #27231e); --p-muted: var(--text-muted, #716a60); --p-border: var(--paper-rule-strong, #a8a096); --p-rule: var(--paper-rule, #d9d1c5); --p-accent: var(--accent-active, #584d3d); --p-on-accent: var(--accent-on, #fff); width: 100%; max-width: 920px; margin-inline: auto; padding: 16px clamp(12px, 3vw, 24px) 24px; display: grid; gap: 16px; color: var(--p-text); font: 14px/1.55 var(--paper-sans, system-ui, sans-serif); }
-      .nvp-sp-sync, .nvp-sp-sync * { box-sizing: border-box; min-width: 0; }
-      [hidden] { display: none; }
+      .nvp-sp-sync { width: 100%; max-width: 920px; margin-inline: auto; padding: 16px clamp(12px, 3vw, 24px) 24px; display: grid; gap: 16px; }
       p, h2 { margin: 0; }
       p { color: var(--p-muted); }
       h2 { font-size: 17px; font-weight: 650; }
-      button, select, input { font: inherit; color: var(--p-text); }
-      button, select, input[type=search] { min-height: 40px; padding: 8px 12px; border: 1px solid var(--p-border); border-radius: 7px; background: var(--p-bg); }
-      button { cursor: pointer; font-weight: 600; }
-      button:hover:not(:disabled) { border-color: var(--p-accent); }
-      button:disabled { cursor: not-allowed; opacity: .65; }
-      button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--p-accent); outline-offset: 2px; }
-      button.nvp-sp-sync-primary { color: var(--p-on-accent); background: var(--p-accent); border-color: var(--p-accent); }
       .nvp-sp-sync-pairing { display: grid; justify-items: start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--p-rule); }
       .nvp-sp-sync-code-row, .nvp-sp-sync-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
       code { flex: 1 1 260px; overflow-wrap: anywhere; padding: 8px 10px; border: 1px solid var(--p-rule); }
@@ -63,9 +53,9 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       li { padding-block: 4px; }
       @media (max-width: 560px) { .nvp-sp-sync-actions > button { flex: 1 1 140px; } }
     `);
-    const panel = surface.content; panel.className = "nvp-sp-sync";
+    const panel = surface.content; panel.classList.add("nvp-sp-sync");
     const description = document.createElement("p"); description.textContent = zh ? "连接后同步全部项目和任务。首次导入会先预览；冲突由你选择。" : "Sync all projects and tasks. Review the first import and choose how to resolve conflicts.";
-    const connect = document.createElement("button"); connect.type = "button"; connect.className = "nvp-sp-sync-primary"; connect.textContent = zh ? "生成配对码" : "Create pairing code";
+    const connect = document.createElement("button"); connect.type = "button"; connect.dataset.variant = "primary"; connect.textContent = zh ? "生成配对码" : "Create pairing code";
     const code = document.createElement("code"); code.hidden = true;
     const copy = document.createElement("button"); copy.type = "button"; copy.textContent = zh ? "复制配对码" : "Copy pairing code"; copy.hidden = true;
     const pairing = document.createElement("div"); pairing.className = "nvp-sp-sync-pairing"; pairing.append(description, connect);
@@ -73,19 +63,20 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     const line = document.createElement("p"); line.className = "nvp-sp-sync-status"; line.setAttribute("role", "status"); line.setAttribute("aria-live", "polite");
     const details = document.createElement("div"); details.className = "nvp-sp-sync-details";
     const actions = document.createElement("div"); actions.className = "nvp-sp-sync-actions";
-    const refresh = document.createElement("button"); refresh.type = "button"; refresh.className = "nvp-sp-sync-primary"; refresh.textContent = zh ? "立即同步" : "Sync now";
+    const refresh = document.createElement("button"); refresh.type = "button";  refresh.textContent = zh ? "立即同步" : "Sync now";
     refresh.hidden = true;
     const confirm = document.createElement("button"); confirm.type = "button"; confirm.textContent = zh ? "确认首次导入" : "Confirm initial import"; confirm.hidden = true;
     const disconnect = document.createElement("button"); disconnect.type = "button"; disconnect.textContent = zh ? "断开连接" : "Disconnect"; disconnect.hidden = true;
     actions.append(refresh, confirm, disconnect);
-    confirm.className = "nvp-sp-sync-primary"; refresh.className = "";
+    confirm.dataset.variant = "primary";
     panel.append(line, pairing, codeRow, actions, details);
     const persist = async () => ctx.storage.set(STORAGE, { links, pairId });
     const getState = async () => api.request(`/state${pairId ? `?pairId=${encodeURIComponent(pairId)}` : ""}`);
     const discoverConnection = async () => { try { displayState(await api.request("/state")); } catch { /* No connection exists until a pairing code is redeemed. */ } };
     const displayState = (state: any) => {
       pairId = state.pairId || pairId; status = state.status || "waiting";
-      pairing.hidden = Boolean(pairId); codeRow.hidden = Boolean(pairId);
+      pairing.hidden = status === "preview"; codeRow.hidden = status === "preview" || !pairingCode;
+      connect.textContent = pairId ? t("为另一设备生成配对码", "Pair another device") : t("生成配对码", "Create pairing code");
       disconnect.hidden = !pairId; refresh.hidden = !pairId || status === "preview";
       confirm.hidden = status !== "preview";
       if (status === "preview" && state.preview) {
@@ -222,7 +213,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       } catch (error) { lastError = error instanceof Error ? error.message : String(error); }
       finally { busy = false; renderStatus(); }
     };
-    connect.onclick = () => void api.createPairingCode().then(({ code: value, expiresAt }) => { pairingCode = value; code.textContent = `${value} · ${new Date(expiresAt).toLocaleTimeString()}`; code.hidden = false; copy.hidden = false; lastError = ""; renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
+    connect.onclick = () => void api.createPairingCode().then(({ code: value, expiresAt }) => { pairingCode = value; code.textContent = `${value} · ${new Date(expiresAt).toLocaleTimeString()}`; code.hidden = false; copy.hidden = false; codeRow.hidden = false; lastError = ""; renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
     copy.onclick = () => { if (pairingCode) void navigator.clipboard?.writeText(pairingCode); };
     refresh.onclick = () => void sync();
     confirm.onclick = () => {
@@ -235,8 +226,8 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
         return api.request("/confirm", "POST", { pairId: state.pairId, matches, expectedRevision: state.revision });
       }).then(displayState).catch(error => { lastError = String(error); renderStatus(); }).finally(() => { busy = false; renderStatus(); if (status === "active") void sync(); });
     };
-    disconnect.onclick = () => void api.request("/revoke", "POST", { pairId }).then(() => { pairId = ""; status = "waiting"; pairing.hidden = false; codeRow.hidden = false; code.hidden = copy.hidden = true; refresh.hidden = confirm.hidden = disconnect.hidden = true; previewView = undefined; previewKey = ""; details.replaceChildren(); links = { projects: {}, tasks: {}, tombstones: {} }; void persist(); renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
-    void ctx.storage.get<LinkStore & { pairId?: string }>(STORAGE).then(saved => { if (saved) { links = saved; pairId = (saved as any).pairId || ""; } running = true; void sync(); });
+    disconnect.onclick = () => void api.request("/revoke", "POST", { pairId }).then(() => { pairId = ""; pairingCode = ""; status = "waiting"; pairing.hidden = false; codeRow.hidden = true; connect.textContent = t("生成配对码", "Create pairing code"); code.hidden = copy.hidden = true; refresh.hidden = confirm.hidden = disconnect.hidden = true; previewView = undefined; previewKey = ""; details.replaceChildren(); links = { projects: {}, tasks: {}, tombstones: {} }; void persist(); renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
+    void ctx.storage.get<{ links?: LinkStore; pairId?: string } & Partial<LinkStore>>(STORAGE).then(saved => { if (saved) { const stored = saved.links || saved; if (stored.projects && stored.tasks && stored.tombstones) links = { projects: stored.projects, tasks: stored.tasks, tombstones: stored.tombstones }; pairId = saved.pairId || ""; } running = true; void sync(); }).catch(error => { lastError = String(error); renderStatus(); });
     const timer = window.setInterval(() => { void sync(); }, 30_000);
     return () => { running = false; clearInterval(timer); surface.dispose(); };
   });
