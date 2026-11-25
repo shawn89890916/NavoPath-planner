@@ -32,7 +32,47 @@ packaging; bump it for every published change using `MAJOR.MINOR.PATCH` (a
 pre-release suffix such as `1.2.0-beta.1` is allowed). The installed app checks
 this value against the catalog and offers an update when it increases.
 
-### Plugin presentation standard
+### Plugin UI design contract
+
+Inspired by the separate UI document, theme tokens and reusable controls in the
+[Super Productivity plugin guide](https://github.com/super-productivity/super-productivity/blob/master/docs/plugin-development.md),
+NavoPath treats a plugin page as a self-contained surface with host-owned
+navigation and a stable visual contract. NavoPath's own visual language remains
+defined by `NavoPathStyle.md`.
+
+1. **Boundary.** Prefer an opt-in Shadow DOM for self-contained pages. The host
+   owns launchers, close actions, page size and navigation; the plugin owns its
+   content. Do not write global styles, modify host controls, add competing
+   application navigation or assume a fixed viewport. Existing light-DOM
+   plugins remain compatible. A shadow root is CSS isolation, not a permission
+   or security sandbox. The repository helper `mountIsolatedPluginSurface` in
+   `src/extensions/pluginSurface.ts` creates and cleans up such a surface.
+2. **Theme.** Inherit `--surface-main`, `--surface-card`, `--text-main`,
+   `--text-muted`, `--paper-rule`, `--paper-rule-strong`,
+   `--accent-active`, `--accent-on`, and `--paper-sans` from the mount.
+   Define fallback values for independent previews. Pair accent foreground
+   and fill on the same rule; never use a white label on a transparent
+   button. Maintain at least 4.5:1 normal-text contrast and visible focus.
+3. **Controls.** Use native buttons, inputs, checkboxes and selects with
+   accessible labels, explicit disabled states and a visible focus ring.
+   Keep the primary action distinct and use plain language; do not expose
+   internal states such as `preview` or raw errors as the only explanation.
+4. **Layout.** Use a responsive single-column flow, flex-wrap for controls,
+   compact row separators and progressive disclosure for long lists.
+   In import flows show a summary of creations, links, field changes and
+   deletions before confirmation; separate matches from unmatched items.
+   Keep bulk operations reversible before confirmation. Distinguish a
+   field overwrite from deleting unique records. Never silently perform a
+   destructive replacement.
+5. **State and lifecycle.** Use localized UI, preserve user selections during
+   polling, prevent duplicate submissions and clean up styles, listeners and
+   timers when unmounted. Show actionable errors without leaking secrets.
+   Do not reset a user's draft on a routine refresh.
+6. **Release checks.** Verify light/dark and custom themes, narrow and wide
+   panels, keyboard navigation, busy/error/empty states, long lists and
+   cleanup. Validate generated packages and hashes before release.
+
+### Plugin presentation and compatibility
 
 - Keep `description` short, specific and action-oriented. Explain what the
   plugin adds and mention external services or data use.
