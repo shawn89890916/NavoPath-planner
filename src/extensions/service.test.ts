@@ -38,6 +38,48 @@ beforeEach(() => {
 });
 afterEach(async () => { await current.configure(null); vi.unstubAllGlobals(); });
 
+describe("official plugin update recovery", () => {
+  it("discovers an update through the website when a verified official sync plugin was imported and keeps its original key", async () => {
+    const old = getBundledExtension("super-productivity-sync")!;
+    const key = "imported:super-productivity-sync";
+    const pkg = JSON.parse(readFileSync(new URL("super-productivity-sync.navopackage.json", bundledDirectory), "utf8"));
+    pkg.manifest.version = "1.0.2";
+    const bytes = new TextEncoder().encode(JSON.stringify(pkg));
+    const entry = { ...old, manifest: pkg.manifest, sha256: await sha256(bytes) };
+    const f = fixture("preview", { ...defaultExtensionPreferences(), installed: { [key]: { ...old, key, sourceId: "imported", enabled: false, installedAt: "2026-11-24T00:00:00Z" } } });
+    await current.configure(f.host);
+    await f.host.saveSettings({ extensionConfigs: { [key]: { preserved: true } } });
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.startsWith("https://navopath.com/extensions/catalog.json?")) return new Response(JSON.stringify({ version: 1, packages: [entry] }));
+      if (url.startsWith("https://navopath.com/extensions/packages/")) return new Response(bytes);
+      throw new Error("GitHub Raw unavailable");
+    }));
+    await current.checkUpdates();
+    expect(current.getSnapshot().updates[key]?.manifest.version).toBe("1.0.2");
+    await current.update(key);
+    const installed = current.getSnapshot().preferences.installed;
+    expect(installed[key].manifest.version).toBe("1.0.2");
+    expect(installed[key].enabled).toBe(false);
+    expect(installed["official:super-productivity-sync"]).toBeUndefined();
+    expect(f.settings().extensionConfigs[key]).toEqual({ preserved: true });
+  });
+  it("does not adopt a modified imported package solely on its manifest identity", async () => {
+    const old = getBundledExtension("super-productivity-sync")!;
+    const key = "imported:super-productivity-sync";
+    const f = fixture("preview", { ...defaultExtensionPreferences(), installed: { [key]: { ...old, key, sourceId: "imported", sha256: "a".repeat(64), enabled: false, installedAt: "2026-11-24T00:00:00Z" } } });
+    await current.configure(f.host);
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ version: 1, packages: [{ ...old, manifest: { ...old.manifest, version: "1.0.2" } }] }))));
+    await current.checkUpdates();
+    expect(current.getSnapshot().updates[key]).toBeUndefined();
+  });
+  it("reports the offline catalog instead of claiming a successful online check", async () => {
+    await current.configure(fixture().host);
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
+    await current.checkUpdates();
+    expect(current.getSnapshot().error).toContain("Online plugin catalog unavailable");
+  });
+});
+
 describe("extension installation and account reconciliation", () => {
   it("preinstalls Activity history, Matrix, Kanban and Metrics on a clean installation", async () => {
     const f = fixture("preview", { ...defaultExtensionPreferences(), migratedPlanningViews: false, migratedShelfViews: false });
