@@ -9,6 +9,7 @@
 ### 改进
 
 - 修复 Super Productivity 20.1.0 中 iframe 未暴露本机密钥接口导致的错误版本提示；连接令牌改存本机插件页面存储。
+- 同步插件首次导入增加批量匹配、双向字段覆盖、搜索和导入数量预览；改善主题对比度与插件界面隔离。
 
 ### 修复
 
@@ -967,6 +968,7 @@
 ### Improvements
 
 - Fixed a false version warning on Super Productivity 20.1.0 caused by secret-storage methods missing from its iframe bridge; the connection token now stays in local plugin-page storage.
+- First import adds bulk matching, either source for shared fields, search and import totals; improves plugin theme contrast and UI isolation.
 
 ### Fixed
 
