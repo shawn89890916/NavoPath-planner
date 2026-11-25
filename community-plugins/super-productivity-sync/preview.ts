@@ -37,30 +37,32 @@ export function createInitialPreviewView(preview: InitialPreview, zh: boolean, p
     const nt = preview.tasks.superproductivity.length - selectedTasks, st = preview.tasks.navopath.length - selectedTasks;
     summary.textContent = t(`合并 ${selectedProjects} 个项目、${selectedTasks} 条任务；NavoPath 新增 ${np} 个项目、${nt} 条任务；SP 新增 ${sp} 个项目、${st} 条任务。`, `Link ${selectedProjects} projects and ${selectedTasks} tasks; add ${np} projects / ${nt} tasks to NavoPath and ${sp} projects / ${st} tasks to SP.`);
   }
-  function render() {
+  const disclosure = new Map<string, boolean>();
+  function render(focusKey?: string) {
     const q = search.value.trim().toLocaleLowerCase();
+    for (const el of list.querySelectorAll<HTMLDetailsElement>("details[data-import-section]")) disclosure.set(el.dataset.importSection!, el.open);
     list.replaceChildren();
     const visible = (item: Entity) => !q || [item.fields.title, item.fields.projectTitle].some(v => String(v || "").toLocaleLowerCase().includes(q));
     for (const [kind, group] of groups) {
       const kindTitle = kind === "project" ? t("项目", "Projects") : t("任务", "Tasks");
       const groupRecords = records.filter(r => r.match.kind === kind);
-      const section = document.createElement("details"); section.open = kind === "project" || Boolean(q);
+      const section = document.createElement("details"); section.dataset.importSection = kind; section.open = Boolean(q) || (disclosure.get(kind) ?? kind === "project");
       const heading = document.createElement("summary"); heading.textContent = `${kindTitle} · ${groupRecords.length} ${t("个建议匹配", "suggested matches")}`; section.append(heading);
       for (const r of groupRecords.filter(r => visible(r.left) || visible(r.right))) {
         const row = document.createElement("div"); row.className = "import-row";
         const label = document.createElement("label");
-        const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.checked = r.selected;
+        const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.checked = r.selected; checkbox.dataset.matchKey = r.key;
         const name = document.createElement("span"); name.textContent = `${String(r.left.fields.title || t("未命名", "Untitled"))} ↔ ${String(r.right.fields.title || t("未命名", "Untitled"))}`;
         const side = document.createElement("select"); side.setAttribute("aria-label", t("共有字段来源", "Shared field source"));
         for (const [value, label] of [["navopath", "NavoPath"], ["superproductivity", "Super Productivity"]]) { const option = document.createElement("option"); option.value = value; option.textContent = label; side.append(option); }
         side.value = r.match.preferredSide; side.disabled = !r.selected;
-        checkbox.onchange = () => { r.selected = checkbox.checked; render(); };
+        checkbox.onchange = () => { r.selected = checkbox.checked; render(r.key); };
         side.onchange = () => { r.match.preferredSide = side.value as Side; };
         label.append(checkbox, name); row.append(label, side); section.append(row);
       }
       for (const [side, items] of [["navopath", group.navopath], ["superproductivity", group.superproductivity]] as const) {
         const unmatched = items.filter(item => !groupRecords.some(r => r.selected && (side === "navopath" ? r.left.id : r.right.id) === item.id));
-        const other = document.createElement("details"); other.open = Boolean(q);
+        const other = document.createElement("details"); other.dataset.importSection = kind + ":" + side; other.open = Boolean(q) || (disclosure.get(other.dataset.importSection) ?? false);
         const label = document.createElement("summary"); label.textContent = `${side === "navopath" ? "NavoPath" : "Super Productivity"} · ${unmatched.length} ${t("条独立导入", "separate imports")}`; other.append(label);
         const ul = document.createElement("ul");
         for (const item of unmatched.filter(visible)) { const li = document.createElement("li"); li.textContent = String(item.fields.title || t("未命名", "Untitled")); ul.append(li); }
@@ -69,13 +71,14 @@ export function createInitialPreviewView(preview: InitialPreview, zh: boolean, p
       list.append(section);
     }
     updateSummary();
+    if (focusKey) Array.from(list.querySelectorAll<HTMLInputElement>("input[data-match-key]")).find(el => el.dataset.matchKey === focusKey)?.focus();
   }
   function setAll(selected: boolean, preferredSide?: Side) { for (const r of records) { r.selected = selected; if (preferredSide) r.match.preferredSide = preferredSide; } render(); }
   button(t("全选匹配", "Select all matches"), () => setAll(true));
   button(t("取消全选", "Clear all matches"), () => setAll(false));
   button(t("全部以 NavoPath 为准", "All matches: NavoPath wins"), () => setAll(true, "navopath"));
   button(t("全部以 SP 为准", "All matches: SP wins"), () => setAll(true, "superproductivity"));
-  search.oninput = render;
+  search.oninput = () => render();
   root.append(title, note, summary, toolbar, search, list); render();
   return { root, matches: () => records.filter(r => r.selected).map(r => ({ ...r.match })), selections: () => new Map(records.map(r => [r.key, { selected: r.selected, preferredSide: r.match.preferredSide }])) };
 }
