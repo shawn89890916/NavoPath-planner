@@ -3,7 +3,7 @@
   "name": "Super Productivity Sync",
   "description": "Sync projects and tasks between NavoPath and Super Productivity through your NavoPath account.",
   "author": "NavoPath",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "kind": "plugin",
   "apiVersion": 1,
   "minAppVersion": "1.7.0-beta.91",
