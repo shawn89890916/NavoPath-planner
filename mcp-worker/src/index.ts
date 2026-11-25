@@ -134,7 +134,7 @@ async function superProductivitySyncApi(request: Request, env: Env, ctx: Executi
     }
     const rows = await response.json().catch(() => null);
     if (!response.ok) {
-      if (rows?.code === "P0001" && rows?.message === "Pairing code is invalid or expired") return syncResponse({ error: "Pairing code is invalid, expired, or already used" }, 401);
+      if (typeof rows === "object" && rows !== null && "code" in rows && "message" in rows && rows.code === "P0001" && rows.message === "Pairing code is invalid or expired") return syncResponse({ error: "Pairing code is invalid, expired, or already used" }, 401);
       return syncResponse({ error: "Pairing service temporarily unavailable; retry with a new pairing code if needed" }, 503);
     }
     if (!Array.isArray(rows) || !rows[0]?.pair_id) return syncResponse({ error: "Pairing service returned an invalid response; retry with a new pairing code" }, 503);
