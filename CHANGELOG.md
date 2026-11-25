@@ -2,6 +2,12 @@
 
 ## 2026-11-25
 
+### 1.7.0 Beta 97
+
+#### 修复
+
+- 投入度改为沿用任务原有左侧色条轮廓，仅按比例显示上色部分。
+
 ### 1.7.0 Beta 96
 
 #### 修复
@@ -1093,6 +1099,12 @@
 # NavoPath Changelog
 
 ## 2026-11-25
+
+### 1.7.0 Beta 97
+
+#### Fixed
+
+- Engagement now preserves the task's original left stripe shape and only colors its proportional portion.
 
 ### 1.7.0 Beta 96
 

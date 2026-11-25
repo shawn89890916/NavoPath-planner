@@ -13091,23 +13091,24 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: inherit;
   corner-shape: var(--corner-shape, squircle);
 }
-.df-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent,
-.navo-demo-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent {
+/* Draw engagement over the same rounded border-box as the normal project stripe. */
+.df-app .df-task-block[data-task-appearance][data-engagement]::after,
+.navo-demo-app .df-task-block[data-task-appearance][data-engagement]::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: calc(-1 * var(--task-project-accent-size, 4px));
+  right: -1px;
   top: -1px;
   bottom: -1px;
-  left: -1px;
-  width: var(--task-project-accent-size, 4px);
+  border-radius: inherit;
+  corner-shape: inherit;
   background: linear-gradient(
     to bottom,
     var(--task-project-color) 0 var(--task-engagement),
     transparent var(--task-engagement) 100%
-  );
-  opacity: 1;
-  border-radius:
-    calc(var(--task-project-accent-size, 4px) / 2)
-    calc(var(--task-project-accent-size, 4px) / 2)
-    0 0 / var(--task-radius) var(--task-radius) 0 0;
-  corner-shape: round;
+  ) no-repeat left top / var(--task-project-accent-size, 4px) 100%;
+  pointer-events: none;
 }
 .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--bottom {
   left: 0;
