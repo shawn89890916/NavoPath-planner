@@ -54,7 +54,7 @@ export function createInitialPreviewView(preview: InitialPreview, zh: boolean, p
         const side = document.createElement("select"); side.setAttribute("aria-label", t("共有字段来源", "Shared field source"));
         for (const [value, label] of [["navopath", "NavoPath"], ["superproductivity", "Super Productivity"]]) { const option = document.createElement("option"); option.value = value; option.textContent = label; side.append(option); }
         side.value = r.match.preferredSide; side.disabled = !r.selected;
-        checkbox.onchange = () => { r.selected = checkbox.checked; side.disabled = !r.selected; updateSummary(); };
+        checkbox.onchange = () => { r.selected = checkbox.checked; render(); };
         side.onchange = () => { r.match.preferredSide = side.value as Side; };
         label.append(checkbox, name); row.append(label, side); section.append(row);
       }
