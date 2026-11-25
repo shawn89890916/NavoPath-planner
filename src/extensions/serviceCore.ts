@@ -9,6 +9,20 @@ import type { CompactPluginPlacement } from "./model";
 
 type PendingValue = { owner: string; key: string; value: unknown; remove: boolean; id: string };
 const toolPageMigrations = new Set(["weather", "pomodoro", "schedule-templates", "daily-overview", "quick-capture", "class-timetable"]);
+const OFFICIAL_RAW = "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/";
+const OFFICIAL_MIRROR = "https://navopath.com/extensions/";
+const SYNC_PLUGIN_ID = "super-productivity-sync";
+// Only exact hashes of previously published official packages are eligible for
+// cross-source adoption. Manifest author/repository strings alone are not proof.
+const trustedSyncHashes = new Set([
+  "1f7a4ca92bd42f9f053c9f2a96307757c43390364dfee78201fd5114c96977e6",
+  "0faed8855de1529929b5bc5e4dedf6f7b0cb8473396dc92159a6d9e06ead60e5",
+  "9dfc5a9fa767994eab19d32c43e2539b8efb1400eceb31a74af6a75657676fed",
+]);
+const canUseOfficialUpdate = (item: InstalledExtension, entry: CatalogEntry) =>
+  entry.sourceId === item.sourceId ||
+  (entry.sourceId === "official" && (item.sourceId === "imported" || item.sourceId.startsWith("direct-")) &&
+    item.manifest.id === SYNC_PLUGIN_ID && trustedSyncHashes.has(item.sha256));
 const errorText = (error: unknown) => error instanceof Error ? error.message : String(error);
 const platform = (): ExtensionPlatform => window.desktopApi?.isDesktop?.() ? "desktop" : /^(capacitor|ionic):/.test(location.protocol) || !!(window as any).Capacitor?.isNativePlatform?.() ? "mobile" : "web";
 export class ExtensionService {
@@ -132,19 +146,32 @@ export class ExtensionService {
     await this.savePreferences({ ...this.snapshot.preferences, sources: this.snapshot.preferences.sources.filter(s => s.id !== id) });
     this.setSnapshot({ catalog: this.snapshot.catalog.filter(e => e.sourceId !== id) });
   });
-  private async download(url: string): Promise<Uint8Array> {
+  private async download(url: string, fresh = false): Promise<Uint8Array> {
     publicHttps(url);
     if (!window.desktopApi?.extensions) {
       try {
-        return await readExtensionResponse(await fetch(url, { credentials: "omit", signal: AbortSignal.timeout(20_000) }));
+        return await readExtensionResponse(await fetch(url, { credentials: "omit", ...(fresh ? { cache: "no-store" } : {}), signal: AbortSignal.timeout(20_000) }));
       } catch { /* Authenticated downloader handles source CORS restrictions. */ }
     }
     return fetchExtensionBytes(url);
   }
-  private async readCatalog(url: string, sourceId: string): Promise<CatalogEntry[]> {
+  private async readCatalog(url: string, sourceId: string): Promise<{ entries: CatalogEntry[]; warning?: string }> {
     let raw: any;
-    try { raw = JSON.parse(new TextDecoder().decode(await this.download(url))); }
-    catch (error) { if (sourceId !== "official") throw error; raw = (await import("./officialCatalog")).officialCatalog; }
+    let warning: string | undefined;
+    if (sourceId === "official") {
+      const load = async (address: string) => {
+        const fresh = new URL(address);
+        fresh.searchParams.set("_nvp", String(Date.now()));
+        const value = JSON.parse(new TextDecoder().decode(await this.download(fresh.href, true)));
+        if (!isRecord(value) || value.version !== 1 || !Array.isArray(value.packages)) throw new Error("Invalid extension catalog");
+        return value;
+      };
+      try { raw = await load(OFFICIAL_MIRROR + "catalog.json"); }
+      catch {
+        try { raw = await load(OFFICIAL_RAW + "catalog.json"); }
+        catch { raw = (await import("./officialCatalog")).officialCatalog; warning = "无法访问在线插件市场，当前显示离线目录，可能不是最新版。 / Online plugin catalog unavailable; showing bundled versions."; }
+      }
+    } else raw = JSON.parse(new TextDecoder().decode(await this.download(url, true)));
     if (!isRecord(raw) || raw.version !== 1 || !Array.isArray(raw.packages) || raw.packages.length > 1000) throw new Error("Invalid extension catalog");
     const { validateManifest } = await import("./packages");
     const entries: CatalogEntry[] = raw.packages.map((entry: any) => {
@@ -166,7 +193,7 @@ export class ExtensionService {
         else if (compareVersions(bundled.manifest.version, current.manifest.version) > 0) entries[index] = { ...bundled, sourceId };
       }
     }
-    return entries;
+    return { entries, warning };
   }
   private refreshCatalogImpl(): Promise<void> {
     const generation = this.generation, sources = this.snapshot.preferences.sources;
@@ -175,7 +202,7 @@ export class ExtensionService {
     const request = { signature, promise: Promise.resolve().then(async () => {
       const catalog: CatalogEntry[] = [], errors: string[] = [];
       const results = await Promise.allSettled(sources.map(s => this.readCatalog(s.url, s.id)));
-      results.forEach((result, index) => { if (result.status === "fulfilled") catalog.push(...result.value); else errors.push(`${sources[index].name}: ${errorText(result.reason)}`); });
+      results.forEach((result, index) => { if (result.status === "fulfilled") { catalog.push(...result.value.entries); if (result.value.warning) errors.push(result.value.warning); } else errors.push(`${sources[index].name}: ${errorText(result.reason)}`); });
       if (generation === this.generation && JSON.stringify(sources) === JSON.stringify(this.snapshot.preferences.sources)) this.setSnapshot({ catalog, error: errors.join("\n") });
     }).finally(() => {
       if (this.catalogRequest === request) { this.catalogRequest = undefined; this.setSnapshot({ catalogLoading: false }); }
@@ -199,7 +226,16 @@ export class ExtensionService {
       }
     }
     if (!bytes && account !== "preview" && navigator.onLine) { try { bytes = await getPrivatePackage(item.sha256, account); } catch { /* Public sources remain available offline after caching. */ } }
-    if (!bytes && item.downloadUrl) bytes = await this.download(item.downloadUrl);
+    if (!bytes && item.downloadUrl) {
+      const address = item.downloadUrl;
+      if (address.startsWith(OFFICIAL_RAW + "packages/")) {
+        try {
+          const candidate = await this.download(address);
+          if (await sha256(candidate) === item.sha256) bytes = candidate;
+        } catch { /* Try the first-party deployment mirror. */ }
+        if (!bytes) bytes = await this.download(OFFICIAL_MIRROR + address.slice(OFFICIAL_RAW.length));
+      } else bytes = await this.download(address);
+    }
     if (!bytes) throw new Error("Package unavailable; connect the device to restore it / 联网后重试恢复插件包");
     if (await sha256(bytes) !== item.sha256) throw new Error("Package integrity check failed / 插件包完整性校验失败");
     await cachePut(cacheKey, bytes); return bytes;
@@ -285,7 +321,7 @@ export class ExtensionService {
       if (generation !== this.generation) return;
       this.lastCheck = Date.now(); const updates: Record<string, CatalogEntry> = {};
       for (const item of Object.values(this.snapshot.preferences.installed)) {
-        const candidates = this.snapshot.catalog.filter(e => e.sourceId === item.sourceId && e.manifest.id === item.manifest.id && e.manifest.kind === item.manifest.kind && !compatibility(e.manifest, platform()) && compareVersions(e.manifest.version, item.manifest.version) > 0);
+        const candidates = this.snapshot.catalog.filter(e => canUseOfficialUpdate(item, e) && e.manifest.id === item.manifest.id && e.manifest.kind === item.manifest.kind && !compatibility(e.manifest, platform()) && compareVersions(e.manifest.version, item.manifest.version) > 0);
         candidates.sort((a,b) => compareVersions(b.manifest.version, a.manifest.version)); if (candidates[0]) updates[item.key] = candidates[0];
       }
       this.setSnapshot({ updates });
@@ -300,8 +336,13 @@ export class ExtensionService {
     return request;
   };
   update = (key: string) => this.operation(async () => {
-    const entry = this.snapshot.updates[key]; if (!entry) return;
-    await this.installBytes(await this.packageBytes(entry), entry.sourceId, entry.downloadUrl, entry.sha256);
+    const entry = this.snapshot.updates[key], item = this.snapshot.preferences.installed[key];
+    if (!entry || !item || !canUseOfficialUpdate(item, entry) || entry.manifest.id !== item.manifest.id || entry.manifest.kind !== item.manifest.kind) return;
+    const bytes = await this.packageBytes(entry);
+    const pkg = await readPackage(bytes);
+    if (pkg.manifest.id !== item.manifest.id || pkg.manifest.kind !== item.manifest.kind || pkg.manifest.version !== entry.manifest.version) throw new Error("Catalog manifest does not match package");
+    // Keep the original key and therefore its settings, storage and enabled state.
+    await this.installBytes(bytes, item.sourceId, entry.downloadUrl, entry.sha256);
     const updates = { ...this.snapshot.updates }; delete updates[key]; this.setSnapshot({ updates });
   });
   private bridge(key: string) {
