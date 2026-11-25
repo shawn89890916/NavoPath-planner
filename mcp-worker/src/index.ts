@@ -173,6 +173,7 @@ async function superProductivitySyncApi(request: Request, env: Env, ctx: Executi
     }
     if (url.pathname.endsWith("/confirm") && request.method === "POST") {
       if (state.status !== "preview" || !Array.isArray(body.matches) || body.matches.length > 10_000) return syncResponse({ error: "Initial import is not ready" }, 409);
+      if (body.expectedRevision !== undefined && body.expectedRevision !== state.baseRevision) return syncResponse({ error: "Initial preview changed; review before confirming" }, 409);
       confirmInitialSync(state, body.matches);
       await save(state);
       return syncResponse({ status: state.status, conflicts: state.conflicts, revision: state.baseRevision });
