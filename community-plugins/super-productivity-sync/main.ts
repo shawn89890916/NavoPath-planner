@@ -26,7 +26,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     let links: LinkStore = { projects: {}, tasks: {}, tombstones: {} };
     let pairId = ""; let pairingCode = ""; let status = ""; let busy = false; let lastError = ""; let running = false;
     const api = ctx.integrations.superProductivity;
-    const zh = String(ctx.language).startsWith("zh");
+    const zh = String(ctx.app.getSettings().language || ctx.language).startsWith("zh");
     const t = (cn: string, en: string) => zh ? cn : en;
     let previewView: ReturnType<typeof createInitialPreviewView> | undefined;
     let previewKey = "";
@@ -208,7 +208,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       await persist();
     };
     const sync = async () => {
-      if (busy || !running || status === "preview") return; busy = true; lastError = ""; renderStatus();
+      if (busy || !running) return; busy = true; lastError = ""; renderStatus();
       try {
         if (!pairId) { await discoverConnection(); if (!pairId) return; }
         const state = await getState(); displayState(state);
@@ -232,7 +232,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       busy = true; lastError = ""; renderStatus();
       void getState().then(state => {
         if (state.status !== "preview" || JSON.stringify(state.preview) !== previewKey) { displayState(state); throw new Error(t("预览已改变，请重新检查后确认。", "Preview changed. Review it before confirming.")); }
-        return api.request("/confirm", "POST", { pairId: state.pairId, matches });
+        return api.request("/confirm", "POST", { pairId: state.pairId, matches, expectedRevision: state.revision });
       }).then(displayState).catch(error => { lastError = String(error); renderStatus(); }).finally(() => { busy = false; renderStatus(); if (status === "active") void sync(); });
     };
     disconnect.onclick = () => void api.request("/revoke", "POST", { pairId }).then(() => { pairId = ""; status = "waiting"; pairing.hidden = false; codeRow.hidden = false; code.hidden = copy.hidden = true; refresh.hidden = confirm.hidden = disconnect.hidden = true; previewView = undefined; previewKey = ""; details.replaceChildren(); links = { projects: {}, tasks: {}, tombstones: {} }; void persist(); renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
