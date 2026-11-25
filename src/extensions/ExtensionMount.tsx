@@ -17,5 +17,5 @@ export function ExtensionMount({ contribution }: { contribution: ExtensionContri
     }).catch((caught) => { if (!closed) setError(String(caught)); });
     return () => { closed = true; if (dispose) void Promise.resolve(dispose()).catch(console.error); element.replaceChildren(); };
   }, [contribution]);
-  return <><div ref={container} />{error && <p role="alert">{error}</p>}</>;
+  return <><div ref={container} data-nvp-plugin-host="" style={{ minWidth: 0, maxWidth: "100%" }} />{error && <p role="alert">{error}</p>}</>;
 }
