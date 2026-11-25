@@ -11,6 +11,7 @@ import { PLUGIN_OWNER_PATTERN } from "../../shared/pluginMcp";
 import { listPluginMcpCapabilities, readPluginSettings, writePluginSettings } from "./pluginMcp";
 import { createScheduleTemplate, listScheduleTemplates, templateId, templateSlots, templateTitle, updateScheduleTemplate } from "./scheduleTemplates";
 import { validatePluginPreferences } from "./extensions";
+import { applySyncSnapshot, buildActions, confirmInitialSync, createInitialPreview, emptySyncState, normalizeSyncSnapshot, resolveSyncConflict, restoreSyncEntity, type SyncSide, type SyncState } from "./superProductivitySync";
 import {
   batchUpdateTasks,
   confirmChange,
@@ -91,6 +92,113 @@ async function authenticateCalendarToken(token: string, env: Env, ctx: Execution
   if (!match) return null;
   ctx.waitUntil(db(env, `navopath_calendar_tokens?id=eq.${match.id}`, { method: "PATCH", body: JSON.stringify({ last_used_at: now() }) }));
   return match.user_id;
+}
+
+async function authenticateSuperProductivityToken(token: string, env: Env, ctx: ExecutionContext) {
+  if (!/^nvs_[a-f0-9]{64}$/.test(token)) return null;
+  const response = await db(env, `navopath_sp_sync_tokens?select=id,user_id&token_hash=eq.${await sha256(token)}&revoked_at=is.null&limit=1`);
+  if (!response.ok) return null;
+  const match = (await response.json() as Array<{ id: string; user_id: string }>)[0];
+  if (!match) return null;
+  ctx.waitUntil(db(env, `navopath_sp_sync_tokens?id=eq.${match.id}`, { method: "PATCH", body: JSON.stringify({ last_used_at: now() }) }));
+  return { userId: match.user_id, tokenId: match.id };
+}
+
+async function authenticateAccountBearer(request: Request, env: Env) {
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  if (!token || token.startsWith("nvp_") || token.startsWith("nvs_")) return null;
+  const response = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, { headers: { apikey: env.SUPABASE_PUBLISHABLE_KEY, authorization: `Bearer ${token}` } });
+  if (!response.ok) return null;
+  const user = await response.json() as { id?: string };
+  return user.id ? { userId: user.id, token } : null;
+}
+
+const syncCors = { "access-control-allow-origin": "*", "access-control-allow-methods": "GET, POST, DELETE, OPTIONS", "access-control-allow-headers": "authorization, content-type", "cache-control": "no-store", "content-type": "application/json; charset=utf-8" };
+const syncResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: syncCors });
+
+async function superProductivitySyncApi(request: Request, env: Env, ctx: ExecutionContext) {
+  const url = new URL(request.url);
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: syncCors });
+  const rawBody = request.method === "POST" ? await request.text() : "";
+  if (new TextEncoder().encode(rawBody).byteLength > 10 * 1024 * 1024) return syncResponse({ error: "Payload too large" }, 413);
+  let body: Json = {};
+  try { if (rawBody) body = JSON.parse(rawBody); } catch { return syncResponse({ error: "Invalid JSON" }, 400); }
+  if (url.pathname.endsWith("/exchange")) {
+    if (request.method !== "POST" || typeof body.code !== "string" || body.code.length < 30 || body.code.length > 100) return syncResponse({ error: "Invalid pairing code" }, 400);
+    const token = `nvs_${Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, "0")).join("")}`;
+    let response: Response;
+    try {
+      response = await db(env, "rpc/exchange_navopath_sp_pairing_code", { method: "POST", body: JSON.stringify({ pairing_code_hash: await sha256(body.code), new_token_hash: await sha256(token), new_token_prefix: token.slice(0, 12) }) });
+    } catch {
+      return syncResponse({ error: "Pairing service temporarily unavailable; retry with a new pairing code if needed" }, 503);
+    }
+    const rows = await response.json().catch(() => null);
+    if (!response.ok) {
+      if (rows?.code === "P0001" && rows?.message === "Pairing code is invalid or expired") return syncResponse({ error: "Pairing code is invalid, expired, or already used" }, 401);
+      return syncResponse({ error: "Pairing service temporarily unavailable; retry with a new pairing code if needed" }, 503);
+    }
+    if (!Array.isArray(rows) || !rows[0]?.pair_id) return syncResponse({ error: "Pairing service returned an invalid response; retry with a new pairing code" }, 503);
+    return syncResponse({ token, pairId: rows[0].pair_id });
+  }
+  const bearer = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] || "";
+  const isSyncToken = bearer.startsWith("nvs_");
+  const auth = isSyncToken ? await authenticateSuperProductivityToken(bearer, env, ctx) : await authenticateAccountBearer(request, env);
+  if (!auth) return syncResponse({ error: "Invalid or revoked connection" }, 401);
+  const pairId = String(body.pairId || url.searchParams.get("pairId") || "");
+  if (url.pathname.endsWith("/revoke")) {
+    if (request.method !== "POST" || isSyncToken || !/^[0-9a-f-]{36}$/i.test(pairId)) return syncResponse({ error: "Invalid revoke request" }, 400);
+    const result = await db(env, "rpc/revoke_navopath_sp_sync_pair", { method: "POST", body: JSON.stringify({ target_user_id: auth.userId, target_pair_id: pairId }) });
+    return result.ok ? syncResponse({ disconnected: true }) : syncResponse({ error: "Could not revoke the connection" }, 400);
+  }
+  const stateResponse = await db(env, `navopath_sp_sync_state?select=pair_id,state,revision&user_id=eq.${auth.userId}&limit=1`);
+  const rows = await stateResponse.json() as Array<{ pair_id: string; state: SyncState; revision: number }>;
+  const row = rows[0];
+  if (!stateResponse.ok || !row || (pairId && row.pair_id !== pairId) || (isSyncToken && row.pair_id !== pairId)) return syncResponse({ error: "Connection not found" }, 404);
+  let state = row.state || emptySyncState();
+  const save = async (next: SyncState) => {
+    const result = await db(env, "rpc/save_navopath_sp_sync_state", { method: "POST", body: JSON.stringify({ target_user_id: auth.userId, expected_revision: row.revision, next_state: next }) });
+    const saved = await result.json().catch(() => []);
+    if (!result.ok || !Array.isArray(saved) || !saved[0]) throw new Error("Connection changed concurrently; retry");
+    state = saved[0].state;
+  };
+  try {
+    if (url.pathname.endsWith("/snapshot") && request.method === "POST") {
+      const side = body.platform as SyncSide;
+      if ((side !== "navopath" && side !== "superproductivity") || (isSyncToken ? side !== "superproductivity" : side !== "navopath")) return syncResponse({ error: "Invalid sync side" }, 403);
+      const result = applySyncSnapshot(state, side, normalizeSyncSnapshot(body.snapshot), now());
+      state = result.state;
+      if (state.status === "waiting" && state.latest.navopath && state.latest.superproductivity) state.status = "preview";
+      await save(state);
+      return syncResponse({ pairId: row.pair_id, status: state.status, assignments: result.assignments, actions: state.status === "active" ? result.actions : [], preview: state.status === "preview" ? createInitialPreview(state) : undefined, conflicts: state.conflicts, revision: state.baseRevision });
+    }
+    if (url.pathname.endsWith("/confirm") && request.method === "POST") {
+      if (state.status !== "preview" || !Array.isArray(body.matches) || body.matches.length > 10_000) return syncResponse({ error: "Initial import is not ready" }, 409);
+      confirmInitialSync(state, body.matches);
+      await save(state);
+      return syncResponse({ status: state.status, conflicts: state.conflicts, revision: state.baseRevision });
+    }
+    if (url.pathname.endsWith("/resolve") && request.method === "POST") {
+      if (!["navopath", "superproductivity"].includes(body.chosen)) return syncResponse({ error: "Invalid conflict resolution" }, 400);
+      resolveSyncConflict(state, String(body.conflictId || ""), body.chosen);
+      await save(state);
+      return syncResponse({ status: state.status, conflicts: state.conflicts, revision: state.baseRevision });
+    }
+    if (url.pathname.endsWith("/restore") && request.method === "POST") {
+      const side: SyncSide = isSyncToken ? "superproductivity" : "navopath";
+      restoreSyncEntity(state, side, String(body.syncId || ""), String(body.localId || ""));
+      await save(state);
+      return syncResponse({ status: state.status, conflicts: state.conflicts, revision: state.baseRevision });
+    }
+    if (url.pathname.endsWith("/state") && request.method === "GET") {
+      const side = (url.searchParams.get("platform") || (isSyncToken ? "superproductivity" : "navopath")) as SyncSide;
+      if ((isSyncToken ? side !== "superproductivity" : side !== "navopath")) return syncResponse({ error: "Invalid sync side" }, 403);
+      return syncResponse({ pairId: row.pair_id, status: state.status, actions: state.status === "active" ? buildActions(state, side) : [], preview: state.status === "preview" ? createInitialPreview(state) : undefined, conflicts: state.conflicts, revision: state.baseRevision });
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Synchronization failed";
+    return syncResponse({ error: message }, /concurrently|changed/i.test(message) ? 409 : 400);
+  }
+  return syncResponse({ error: "Not found" }, 404);
 }
 
 async function getProfile(env: Env, userId: string): Promise<Profile> {
@@ -483,6 +591,7 @@ function protectedResourceMetadata(request: Request, env: Env) {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
+    if (url.pathname.startsWith("/api/super-productivity/")) return superProductivitySyncApi(request, env, ctx);
     if (url.pathname === "/") return new Response(JSON.stringify({ name: env.MCP_SERVER_NAME, endpoint: "/mcp", transport: "streamable-http", version: "2.0.0" }), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
     if (url.pathname === oauthProtectedResourcePath) return protectedResourceMetadata(request, env);
     if (url.pathname === "/caldav" || url.pathname.startsWith("/caldav/")) {

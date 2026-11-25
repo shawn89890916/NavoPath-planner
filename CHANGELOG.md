@@ -10,6 +10,10 @@
 
 - 修复 Super Productivity 20.1.0 中 iframe 未暴露本机密钥接口导致的错误版本提示；连接令牌改存本机插件页面存储。
 
+### 修复
+
+- 修复 Super Productivity 插件配对时云端同步接口缺失导致的 401 错误；服务暂时不可用时返回独立错误。
+
 ## 2026-11-23
 
 ### 改进
@@ -963,6 +967,10 @@
 ### Improvements
 
 - Fixed a false version warning on Super Productivity 20.1.0 caused by secret-storage methods missing from its iframe bridge; the connection token now stays in local plugin-page storage.
+
+### Fixed
+
+- Fixed a 401 during Super Productivity pairing caused by missing cloud sync endpoints; temporary service failures now return a distinct error.
 
 ## 2026-11-23
 
