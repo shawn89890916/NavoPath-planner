@@ -39,6 +39,12 @@ beforeEach(() => {
 afterEach(async () => { await current.configure(null); vi.unstubAllGlobals(); });
 
 describe("official plugin update recovery", () => {
+  // These tests create packages under the shared preview account. Clear the
+  // test-only in-memory cache so the subsequent clean-install test starts cold.
+  afterEach(async () => {
+    await current.configure(null);
+    for (const [key] of await cacheEntries("account:preview:")) await cacheDelete(key);
+  });
   it("discovers an update through the website when a verified official sync plugin was imported and keeps its original key", async () => {
     const old = getBundledExtension("super-productivity-sync")!;
     const key = "imported:super-productivity-sync";
