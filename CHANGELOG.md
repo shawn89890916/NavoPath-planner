@@ -7,6 +7,7 @@
 #### 修复
 
 - 投入度改为沿用任务原有左侧色条轮廓，仅按比例显示上色部分。
+- 插件更新检查增加官网镜像和离线提示；已验证的官方同步插件可保留原安装来源及配置原位更新。
 
 ### 1.7.0 Beta 96
 
@@ -1105,6 +1106,7 @@
 #### Fixed
 
 - Engagement now preserves the task's original left stripe shape and only colors its proportional portion.
+- Plugin update checks use a first-party catalog mirror and report offline fallback; verified official sync packages can update in place without losing their original installation or settings.
 
 ### 1.7.0 Beta 96
 
