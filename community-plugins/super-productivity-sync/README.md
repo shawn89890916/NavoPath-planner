@@ -4,7 +4,7 @@ Connect one Super Productivity installation to NavoPath using a five-minute pair
 
 The sync service transfers common project and task fields, including titles, notes, completion state, due dates, estimates, project assignment, and the nearest scheduled block. NavoPath keeps its full multi-block schedule. Historical time tracking, recurrence rules, priorities, tags, and other NavoPath-only fields are outside the shared field set.
 
-Conflicts keep both values until the user chooses one. Deletions propagate and tasks or projects deleted by the other app remain restorable there for 30 days. NavoPath Cloud stores an encrypted-transport sync snapshot and scoped token hashes; the Super Productivity plugin stores the device token in its secret store.
+Conflicts keep both values until the user chooses one. Deletions propagate and tasks or projects deleted by the other app remain restorable there for 30 days. NavoPath Cloud stores an encrypted-transport sync snapshot and scoped token hashes; the Super Productivity plugin keeps the device token in its local plugin-page storage.
 
 Install **Super Productivity Sync** from the NavoPath extension catalog. Create a pairing code in its settings page, then paste it into the Super Productivity plugin. To disconnect all paired devices, use **Disconnect** in NavoPath.
 
