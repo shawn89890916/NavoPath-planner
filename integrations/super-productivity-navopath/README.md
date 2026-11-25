@@ -8,13 +8,13 @@ This plugin pairs with the NavoPath community plugin to sync projects and tasks 
 2. Install this plugin in Super Productivity, paste the code and select **Connect**.
 3. Review the first-import preview. Exact title matches are suggestions; you can uncheck any match. Confirm to start syncing.
 
-Create a new pairing code for each Super Productivity device. The connection token is kept in Super Productivity's local plugin secret store; task links and sync state use Super Productivity's synced plugin data.
+Create a new pairing code for each Super Productivity device. The connection token is kept in this plugin page's local browser storage on this device; task links and sync state use Super Productivity's synced plugin data.
 
 ## Data and scheduling
 
 Project and task titles, notes, due dates, estimates, project names, completion state and the nearest scheduled block are sent to the NavoPath Cloud connection API. NavoPath keeps its complete schedule history; Super Productivity receives the nearest scheduled block and its duration as the task's start time and estimate. NavoPath-only fields and time-tracking history are not synchronized.
 
-The plugin uses the guarded `PluginAPI.request` host permission and stores credentials with `PluginAPI.setSecret`. Revoke the connection from the NavoPath plugin page to invalidate its tokens.
+The plugin uses the guarded `PluginAPI.request` host permission. Its token stays in local browser storage and is not written to synced plugin data or exports. Revoke the connection from the NavoPath plugin page to invalidate its tokens.
 
 ## Development
 

@@ -8,7 +8,7 @@
 
 ### 改进
 
-- 两端同步插件优化了留白和窄屏布局；Super Productivity 低于 20.0.0 时会显示升级提示，避免插件面板报错。
+- 修复 Super Productivity 20.1.0 中 iframe 未暴露本机密钥接口导致的错误版本提示；连接令牌改存本机插件页面存储。
 
 ## 2026-11-23
 
@@ -962,7 +962,7 @@
 
 ### Improvements
 
-- Improved spacing and narrow-pane layouts across both sync plugins. Super Productivity versions below 20.0.0 now show an update prompt before pairing.
+- Fixed a false version warning on Super Productivity 20.1.0 caused by secret-storage methods missing from its iframe bridge; the connection token now stays in local plugin-page storage.
 
 ## 2026-11-23
 

@@ -57,14 +57,16 @@
     const API = window.PluginAPI;
     const BASE = 'https://navopath-mcp.shawn89890916.workers.dev';
     const STORE = 'navopath-sync-state';
-    const SECRET = 'navopath-sync-token';
+    const TOKEN_KEY = 'navopath-sync:token:v1';
     const $ = id => document.getElementById(id);
     let local = { pairId: '', links: { tasks: {}, projects: {} }, tombstones: {} };
     let token = null, busy = false, preview = null, stopped = false;
     const setStatus = (text, error = false) => { $('status').textContent = text; $('status').className = error ? 'error' : ''; };
-    const requiredMethods = ['request', 'persistDataSynced', 'loadSyncedData', 'setSecret', 'getSecret', 'deleteSecret', 'getAllProjects', 'getAllTags', 'getTasks', 'addTask', 'updateTask', 'deleteTask', 'addProject', 'updateProject', 'deleteProject', 'addTag'];
-    if (!API || requiredMethods.some(method => typeof API[method] !== 'function')) {
-      setStatus('Super Productivity 20.0.0 or newer is required. Update the app, then reopen this plugin.', true);
+    const requiredMethods = ['request', 'persistDataSynced', 'loadSyncedData', 'getAllProjects', 'getAllTags', 'getTasks', 'addTask', 'updateTask', 'deleteTask', 'addProject', 'updateProject', 'deleteProject', 'addTag'];
+    const missingMethods = !API ? ['PluginAPI'] : requiredMethods.filter(method => typeof API[method] !== 'function');
+    if (missingMethods.length) {
+      const version = API?.cfg?.appVersion ? ` (app ${API.cfg.appVersion})` : '';
+      setStatus(`Super Productivity plugin bridge is missing: ${missingMethods.join(', ')}${version}. Update or restart the app, then reopen this plugin.`, true);
       $('code').disabled = $('connect').disabled = true;
     } else {
     const request = (path, method = 'GET', body, auth = token) => API.request(`${BASE}/api/super-productivity/${path}`, {
@@ -72,6 +74,9 @@
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     const persist = () => API.persistDataSynced(JSON.stringify(local), STORE);
+    const readToken = () => localStorage.getItem(TOKEN_KEY);
+    const writeToken = value => localStorage.setItem(TOKEN_KEY, value);
+    const clearToken = () => localStorage.removeItem(TOKEN_KEY);
     const syncId = (kind, id) => local.links[kind][id];
     const projects = () => API.getAllProjects();
     const tasks = () => API.getTasks();
@@ -223,7 +228,7 @@
     $('connect').onclick = () => void withBusy(async () => {
       const code = $('code').value.trim(); if (!code) throw new Error('Paste a pairing code first');
       const result = await request('exchange', 'POST', { code }, null);
-      token = result.token; local.pairId = result.pairId; await API.setSecret(SECRET, token); await persist();
+      token = result.token; local.pairId = result.pairId; writeToken(token); await persist();
       $('code').value = ''; await runSync();
     });
     $('sync').onclick = () => void withBusy(runSync);
@@ -232,13 +237,13 @@
       await renderState(await request('confirm', 'POST', { pairId: local.pairId, matches })); await runSync();
     });
     $('disconnect').onclick = () => void withBusy(async () => {
-      await API.deleteSecret(SECRET); token = null; local = { pairId: '', links: { tasks: {}, projects: {} }, tombstones: {} }; await persist();
+      clearToken(); token = null; local = { pairId: '', links: { tasks: {}, projects: {} }, tombstones: {} }; await persist();
       $('pairing').hidden = false; $('sync').hidden = $('disconnect').hidden = true; setStatus('Disconnected');
     });
     (async () => {
       try {
         const stored = await API.loadSyncedData(STORE); if (stored) local = { ...local, ...JSON.parse(stored) };
-        token = await API.getSecret(SECRET); $('pairing').hidden = Boolean(token && local.pairId); $('sync').hidden = !(token && local.pairId); $('disconnect').hidden = !(token && local.pairId);
+        token = readToken(); $('pairing').hidden = Boolean(token && local.pairId); $('sync').hidden = !(token && local.pairId); $('disconnect').hidden = !(token && local.pairId);
         if (token && local.pairId) await withBusy(runSync); else if (local.pairId) setStatus('This device needs its own pairing code');
       } catch (error) { setStatus(error?.message || String(error), true); }
       window.setInterval(() => { if (!busy && token && local.pairId) void withBusy(runSync); }, 30_000);

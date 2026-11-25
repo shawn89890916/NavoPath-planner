@@ -10,4 +10,4 @@ Install **Super Productivity Sync** from the NavoPath extension catalog. Create 
 
 ## Super Productivity companion plugin
 
-The companion plugin requires Super Productivity 20.0.0 or newer. [Download the Super Productivity plugin ZIP](../../integrations/super-productivity-navopath/navopath-sync-1.0.1.zip), then upload it from Settings → Plugins. Re-uploading a ZIP with the same plugin ID updates the existing installation.
+The companion plugin requires Super Productivity 20.0.0 or newer. [Download the Super Productivity plugin ZIP](../../integrations/super-productivity-navopath/navopath-sync-1.0.2.zip), then upload it from Settings → Plugins. Re-uploading a ZIP with the same plugin ID updates the existing installation.
