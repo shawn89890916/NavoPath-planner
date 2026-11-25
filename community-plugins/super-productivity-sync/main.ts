@@ -24,23 +24,53 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     let links: LinkStore = { projects: {}, tasks: {}, tombstones: {} };
     let pairId = ""; let pairingCode = ""; let status = ""; let busy = false; let lastError = ""; let running = false;
     const api = ctx.integrations.superProductivity;
+    const style = document.createElement("style");
+    style.textContent = `
+      .nvp-sp-sync { width: min(100%, 760px); margin: 0 auto; padding: 8px clamp(16px, 3vw, 30px) 28px; box-sizing: border-box; display: grid; gap: 18px; color: var(--text-main); }
+      .nvp-sp-sync, .nvp-sp-sync * { min-width: 0; box-sizing: border-box; }
+      .nvp-sp-sync [hidden] { display: none; }
+      .nvp-sp-sync > p { margin: 0; max-width: 62ch; color: var(--text-muted); line-height: 1.65; }
+      .nvp-sp-sync button { min-height: 40px; max-width: 100%; padding: 9px 15px; border: 1px solid var(--paper-rule-strong); border-radius: 8px; color: var(--text-main); background: var(--surface-main); font: 600 13px/1.35 var(--paper-sans); cursor: pointer; }
+      .nvp-sp-sync button:hover { border-color: var(--accent-active); }
+      .nvp-sp-sync button:focus-visible { outline: 2px solid var(--accent-active); outline-offset: 2px; }
+      .nvp-sp-sync .nvp-sp-sync-primary { color: var(--accent-on); border-color: var(--accent-active); background: var(--accent-active); }
+      .nvp-sp-sync .nvp-sp-sync-primary:hover { filter: brightness(.96); }
+      .nvp-sp-sync .nvp-sp-sync-pairing { display: grid; justify-items: start; gap: 12px; padding: 18px 20px; border: 1px solid var(--paper-rule); border-left: 2px solid var(--accent-active); background: var(--surface-card); }
+      .nvp-sp-sync .nvp-sp-sync-pairing > p { margin: 0; color: var(--text-muted); line-height: 1.55; }
+      .nvp-sp-sync .nvp-sp-sync-code-row, .nvp-sp-sync .nvp-sp-sync-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; width: 100%; }
+      .nvp-sp-sync code { display: block; flex: 1 1 280px; max-width: 100%; padding: 11px 13px; overflow-wrap: anywhere; border: 1px solid var(--paper-rule); background: var(--surface-main); color: var(--text-main); font: 500 13px/1.5 var(--paper-mono); }
+      .nvp-sp-sync .nvp-sp-sync-status { width: fit-content; max-width: 100%; padding: 7px 11px; border-left: 2px solid var(--paper-rule-strong); color: var(--text-muted); overflow-wrap: anywhere; }
+      .nvp-sp-sync .nvp-sp-sync-status.is-error { border-left-color: #A13D32; color: #A13D32; }
+      .nvp-sp-sync .nvp-sp-sync-details { display: grid; gap: 12px; overflow-wrap: anywhere; }
+      .nvp-sp-sync .nvp-sp-sync-details > p { margin: 0; color: var(--text-muted); line-height: 1.55; }
+      .nvp-sp-sync .nvp-sp-sync-details label { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-top: 1px solid var(--paper-rule); line-height: 1.5; }
+      .nvp-sp-sync .nvp-sp-sync-details input[type=checkbox] { flex: 0 0 auto; margin-top: 4px; accent-color: var(--accent-active); }
+      .nvp-sp-sync .nvp-sp-sync-conflict { display: grid; gap: 9px; padding: 14px 0; border-top: 1px solid var(--paper-rule); }
+      .nvp-sp-sync .nvp-sp-sync-conflict p { margin: 0; color: var(--text-muted); overflow-wrap: anywhere; }
+      @media (max-width: 560px) { .nvp-sp-sync { padding-inline: 14px; gap: 15px; } .nvp-sp-sync .nvp-sp-sync-pairing { padding: 15px; } .nvp-sp-sync .nvp-sp-sync-actions > button { flex: 1 1 140px; } }
+    `;
+    document.head.append(style);
     const panel = document.createElement("section"); panel.className = "nvp-sp-sync";
-    const heading = document.createElement("h2"); heading.textContent = ctx.language === "zh" ? "Super Productivity 同步" : "Super Productivity Sync";
     const description = document.createElement("p"); description.textContent = ctx.language === "zh" ? "连接后同步全部项目和任务。首次导入会先预览；冲突由你选择。" : "Sync all projects and tasks. Review the first import and choose how to resolve conflicts.";
-    const connect = document.createElement("button"); connect.type = "button"; connect.textContent = ctx.language === "zh" ? "生成配对码" : "Create pairing code";
+    const connect = document.createElement("button"); connect.type = "button"; connect.className = "nvp-sp-sync-primary"; connect.textContent = ctx.language === "zh" ? "生成配对码" : "Create pairing code";
     const code = document.createElement("code"); code.hidden = true;
     const copy = document.createElement("button"); copy.type = "button"; copy.textContent = ctx.language === "zh" ? "复制配对码" : "Copy pairing code"; copy.hidden = true;
-    const line = document.createElement("p"); line.setAttribute("role", "status");
+    const pairing = document.createElement("div"); pairing.className = "nvp-sp-sync-pairing"; pairing.append(description, connect);
+    const codeRow = document.createElement("div"); codeRow.className = "nvp-sp-sync-code-row"; codeRow.append(code, copy);
+    const line = document.createElement("p"); line.className = "nvp-sp-sync-status"; line.setAttribute("role", "status"); line.setAttribute("aria-live", "polite");
     const details = document.createElement("div"); details.className = "nvp-sp-sync-details";
-    const refresh = document.createElement("button"); refresh.type = "button"; refresh.textContent = ctx.language === "zh" ? "立即同步" : "Sync now";
+    const actions = document.createElement("div"); actions.className = "nvp-sp-sync-actions";
+    const refresh = document.createElement("button"); refresh.type = "button"; refresh.className = "nvp-sp-sync-primary"; refresh.textContent = ctx.language === "zh" ? "立即同步" : "Sync now";
+    refresh.hidden = true;
     const confirm = document.createElement("button"); confirm.type = "button"; confirm.textContent = ctx.language === "zh" ? "确认首次导入" : "Confirm initial import"; confirm.hidden = true;
     const disconnect = document.createElement("button"); disconnect.type = "button"; disconnect.textContent = ctx.language === "zh" ? "断开连接" : "Disconnect"; disconnect.hidden = true;
-    panel.append(heading, description, connect, code, copy, refresh, confirm, disconnect, line, details); container.append(panel);
+    actions.append(refresh, confirm, disconnect);
+    panel.append(pairing, codeRow, actions, line, details); container.append(panel);
     const persist = async () => ctx.storage.set(STORAGE, { links, pairId });
     const getState = async () => api.request(`/state${pairId ? `?pairId=${encodeURIComponent(pairId)}` : ""}`);
     const discoverConnection = async () => { try { displayState(await api.request("/state")); } catch { /* No connection exists until a pairing code is redeemed. */ } };
     const displayState = (state: any) => {
-      pairId = state.pairId || pairId; status = state.status || "waiting"; disconnect.hidden = !pairId;
+      pairId = state.pairId || pairId; status = state.status || "waiting"; disconnect.hidden = !pairId; refresh.hidden = !pairId;
       confirm.hidden = status !== "preview"; details.replaceChildren();
       if (status === "preview" && state.preview) {
         const label = document.createElement("p"); label.textContent = ctx.language === "zh" ? `项目：NavoPath ${state.preview.projects.navopath.length} / Super Productivity ${state.preview.projects.superproductivity.length}；任务：NavoPath ${state.preview.tasks.navopath.length} / Super Productivity ${state.preview.tasks.superproductivity.length}。勾选相同项目或任务以沿用 NavoPath 字段。` : `Projects: NavoPath ${state.preview.projects.navopath.length} / Super Productivity ${state.preview.projects.superproductivity.length}; tasks: NavoPath ${state.preview.tasks.navopath.length} / Super Productivity ${state.preview.tasks.superproductivity.length}. Select matching items to keep NavoPath values.`;
@@ -93,7 +123,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       }
       renderStatus();
     };
-    const renderStatus = () => { line.textContent = lastError || (pairId ? `${status}${busy ? " · syncing" : ""}` : (ctx.language === "zh" ? "尚未配对" : "Not paired")); };
+    const renderStatus = () => { line.textContent = lastError || (pairId ? `${status}${busy ? " · syncing" : ""}` : (ctx.language === "zh" ? "尚未配对" : "Not paired")); line.classList.toggle("is-error", Boolean(lastError)); };
     const ensureMappings = (assignments: Array<{ kind: "project" | "task"; id: string; syncId: string }>) => {
       for (const item of assignments) (item.kind === "task" ? links.tasks : links.projects)[item.id] = item.syncId;
     };
@@ -176,10 +206,10 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       const matches = [...details.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked')].map(input => ({ kind: input.dataset.kind, navopathId: input.dataset.left, superproductivityId: input.dataset.right }));
       void getState().then(state => api.request("/confirm", "POST", { pairId: state.pairId, matches })).then(displayState).then(sync).catch(error => { lastError = String(error); renderStatus(); });
     };
-    disconnect.onclick = () => void api.request("/revoke", "POST", { pairId }).then(() => { pairId = ""; status = "waiting"; links = { projects: {}, tasks: {}, tombstones: {} }; void persist(); renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
+    disconnect.onclick = () => void api.request("/revoke", "POST", { pairId }).then(() => { pairId = ""; status = "waiting"; refresh.hidden = true; links = { projects: {}, tasks: {}, tombstones: {} }; void persist(); renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
     void ctx.storage.get<LinkStore & { pairId?: string }>(STORAGE).then(saved => { if (saved) { links = saved; pairId = (saved as any).pairId || ""; } running = true; void sync(); });
     const timer = window.setInterval(() => { void sync(); }, 30_000);
-    return () => { running = false; clearInterval(timer); panel.remove(); };
+    return () => { running = false; clearInterval(timer); panel.remove(); style.remove(); };
   });
 } };
 

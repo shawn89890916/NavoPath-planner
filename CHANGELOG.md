@@ -6,6 +6,10 @@
 
 - 社区插件市场新增 Super Productivity Sync，可在 NavoPath 与 Super Productivity 之间双向同步项目和任务；需要 NavoPath Beta 91 或更新版本。
 
+### 改进
+
+- 两端同步插件优化了留白和窄屏布局；Super Productivity 低于 20.0.0 时会显示升级提示，避免插件面板报错。
+
 ## 2026-11-23
 
 ### 改进
@@ -955,6 +959,10 @@
 ### Added
 
 - Added Super Productivity Sync to the community plugin market for bidirectional project and task sync between NavoPath and Super Productivity; requires NavoPath Beta 91 or newer.
+
+### Improvements
+
+- Improved spacing and narrow-pane layouts across both sync plugins. Super Productivity versions below 20.0.0 now show an update prompt before pairing.
 
 ## 2026-11-23
 
