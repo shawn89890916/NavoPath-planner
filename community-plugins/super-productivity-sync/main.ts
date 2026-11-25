@@ -1,5 +1,7 @@
 import type { PluginContext, PluginModule } from "../../src/extensions/types";
 import type { Project, Task, TimelineRecord } from "../../src/types";
+import { mountIsolatedPluginSurface } from "../../src/extensions/pluginSurface";
+import { createInitialPreviewView } from "./preview";
 
 type LinkStore = { projects: Record<string, string>; tasks: Record<string, string>; tombstones: Record<string, { kind: "task" | "project"; item: Task | Project; deletedAt: string; taskIds?: string[] }> };
 type Entity = { id: string; syncId?: string; fields: Record<string, any> };
@@ -24,45 +26,73 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     let links: LinkStore = { projects: {}, tasks: {}, tombstones: {} };
     let pairId = ""; let pairingCode = ""; let status = ""; let busy = false; let lastError = ""; let running = false;
     const api = ctx.integrations.superProductivity;
-    const panel = document.createElement("section"); panel.className = "nvp-sp-sync";
-    const heading = document.createElement("h2"); heading.textContent = ctx.language === "zh" ? "Super Productivity 同步" : "Super Productivity Sync";
-    const description = document.createElement("p"); description.textContent = ctx.language === "zh" ? "连接后同步全部项目和任务。首次导入会先预览；冲突由你选择。" : "Sync all projects and tasks. Review the first import and choose how to resolve conflicts.";
-    const connect = document.createElement("button"); connect.type = "button"; connect.textContent = ctx.language === "zh" ? "生成配对码" : "Create pairing code";
+    const zh = String(ctx.app.getSettings().language || ctx.language).startsWith("zh");
+    const t = (cn: string, en: string) => zh ? cn : en;
+    let previewView: ReturnType<typeof createInitialPreviewView> | undefined;
+    let previewKey = "";
+    const surface = mountIsolatedPluginSurface(container, `
+      .nvp-sp-sync { width: 100%; max-width: 920px; margin-inline: auto; padding: 16px clamp(12px, 3vw, 24px) 24px; display: grid; gap: 16px; }
+      p, h2 { margin: 0; }
+      p { color: var(--p-muted); }
+      h2 { font-size: 17px; font-weight: 650; }
+      .nvp-sp-sync-pairing { display: grid; justify-items: start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--p-rule); }
+      .nvp-sp-sync-code-row, .nvp-sp-sync-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      code { flex: 1 1 260px; overflow-wrap: anywhere; padding: 8px 10px; border: 1px solid var(--p-rule); }
+      .nvp-sp-sync-status { padding: 7px 10px; border-left: 2px solid var(--p-border); overflow-wrap: anywhere; }
+      .nvp-sp-sync-status.is-error { border-left-color: currentColor; color: var(--text-danger, #a13d32); }
+      .nvp-sp-sync-details, .import-preview, .nvp-sp-sync-conflict { display: grid; gap: 12px; overflow-wrap: anywhere; }
+      .import-summary { padding: 10px 0; border-block: 1px solid var(--p-rule); color: var(--p-text); font-variant-numeric: tabular-nums; }
+      details { border-bottom: 1px solid var(--p-rule); padding: 7px 0; }
+      details details { margin-inline-start: 12px; border: 0; }
+      summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
+      .import-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--p-rule); }
+      .import-row label { flex: 1 1 180px; display: flex; align-items: center; gap: 8px; }
+      input[type=checkbox] { flex: 0 0 auto; width: 18px; height: 18px; accent-color: var(--p-accent); }
+      input[type=search] { width: 100%; }
+      ul { margin: 0; padding-inline-start: 24px; max-height: 250px; overflow: auto; }
+      li { padding-block: 4px; }
+      @media (max-width: 560px) { .nvp-sp-sync-actions > button { flex: 1 1 140px; } }
+    `);
+    const panel = surface.content; panel.classList.add("nvp-sp-sync");
+    const description = document.createElement("p"); description.textContent = zh ? "连接后同步全部项目和任务。首次导入会先预览；冲突由你选择。" : "Sync all projects and tasks. Review the first import and choose how to resolve conflicts.";
+    const connect = document.createElement("button"); connect.type = "button"; connect.dataset.variant = "primary"; connect.textContent = zh ? "生成配对码" : "Create pairing code";
     const code = document.createElement("code"); code.hidden = true;
-    const copy = document.createElement("button"); copy.type = "button"; copy.textContent = ctx.language === "zh" ? "复制配对码" : "Copy pairing code"; copy.hidden = true;
-    const line = document.createElement("p"); line.setAttribute("role", "status");
+    const copy = document.createElement("button"); copy.type = "button"; copy.textContent = zh ? "复制配对码" : "Copy pairing code"; copy.hidden = true;
+    const pairing = document.createElement("div"); pairing.className = "nvp-sp-sync-pairing"; pairing.append(description, connect);
+    const codeRow = document.createElement("div"); codeRow.className = "nvp-sp-sync-code-row"; codeRow.append(code, copy);
+    const line = document.createElement("p"); line.className = "nvp-sp-sync-status"; line.setAttribute("role", "status"); line.setAttribute("aria-live", "polite");
     const details = document.createElement("div"); details.className = "nvp-sp-sync-details";
-    const refresh = document.createElement("button"); refresh.type = "button"; refresh.textContent = ctx.language === "zh" ? "立即同步" : "Sync now";
-    const confirm = document.createElement("button"); confirm.type = "button"; confirm.textContent = ctx.language === "zh" ? "确认首次导入" : "Confirm initial import"; confirm.hidden = true;
-    const disconnect = document.createElement("button"); disconnect.type = "button"; disconnect.textContent = ctx.language === "zh" ? "断开连接" : "Disconnect"; disconnect.hidden = true;
-    panel.append(heading, description, connect, code, copy, refresh, confirm, disconnect, line, details); container.append(panel);
+    const actions = document.createElement("div"); actions.className = "nvp-sp-sync-actions";
+    const refresh = document.createElement("button"); refresh.type = "button";  refresh.textContent = zh ? "立即同步" : "Sync now";
+    refresh.hidden = true;
+    const confirm = document.createElement("button"); confirm.type = "button"; confirm.textContent = zh ? "确认首次导入" : "Confirm initial import"; confirm.hidden = true;
+    const disconnect = document.createElement("button"); disconnect.type = "button"; disconnect.textContent = zh ? "断开连接" : "Disconnect"; disconnect.hidden = true;
+    actions.append(refresh, confirm, disconnect);
+    confirm.dataset.variant = "primary";
+    panel.append(line, pairing, codeRow, actions, details);
     const persist = async () => ctx.storage.set(STORAGE, { links, pairId });
     const getState = async () => api.request(`/state${pairId ? `?pairId=${encodeURIComponent(pairId)}` : ""}`);
     const discoverConnection = async () => { try { displayState(await api.request("/state")); } catch { /* No connection exists until a pairing code is redeemed. */ } };
     const displayState = (state: any) => {
-      pairId = state.pairId || pairId; status = state.status || "waiting"; disconnect.hidden = !pairId;
-      confirm.hidden = status !== "preview"; details.replaceChildren();
+      pairId = state.pairId || pairId; status = state.status || "waiting";
+      pairing.hidden = status === "preview"; codeRow.hidden = status === "preview" || !pairingCode;
+      connect.textContent = pairId ? t("为另一设备生成配对码", "Pair another device") : t("生成配对码", "Create pairing code");
+      disconnect.hidden = !pairId; refresh.hidden = !pairId || status === "preview";
+      confirm.hidden = status !== "preview";
       if (status === "preview" && state.preview) {
-        const label = document.createElement("p"); label.textContent = ctx.language === "zh" ? `项目：NavoPath ${state.preview.projects.navopath.length} / Super Productivity ${state.preview.projects.superproductivity.length}；任务：NavoPath ${state.preview.tasks.navopath.length} / Super Productivity ${state.preview.tasks.superproductivity.length}。勾选相同项目或任务以沿用 NavoPath 字段。` : `Projects: NavoPath ${state.preview.projects.navopath.length} / Super Productivity ${state.preview.projects.superproductivity.length}; tasks: NavoPath ${state.preview.tasks.navopath.length} / Super Productivity ${state.preview.tasks.superproductivity.length}. Select matching items to keep NavoPath values.`;
-        details.append(label);
-        const matches = document.createElement("div");
-        for (const kind of ["project", "task"] as const) {
-          const group = kind === "project" ? state.preview.projects : state.preview.tasks;
-          const suggested = new Map(group.suggestions.map((item: any) => [item.navopathId, item.superproductivityId]));
-          for (const item of group.navopath) {
-            const row = document.createElement("label"); const input = document.createElement("input"); input.type = "checkbox"; input.dataset.kind = kind; input.dataset.left = item.id; input.dataset.right = String(suggested.get(item.id) || ""); input.checked = suggested.has(item.id);
-            const text = document.createElement("span"); text.textContent = `${kind}: ${item.fields.title || "(untitled)"} ↔ ${suggested.has(item.id) ? group.superproductivity.find((other: any) => other.id === suggested.get(item.id))?.fields.title : "separate"}`;
-            row.append(input, text); matches.append(row);
-          }
-        }
-        details.append(matches);
-      }
+        const key = JSON.stringify(state.preview);
+        if (previewView && key === previewKey) { renderStatus(); return; }
+        const previous = previewView?.selections();
+        previewView = createInitialPreviewView(state.preview, zh, previous);
+        previewKey = key;
+        details.replaceChildren(previewView.root);
+      } else { previewView = undefined; previewKey = ""; details.replaceChildren(); }
       const now = Date.now();
       for (const [syncId, item] of Object.entries(links.tombstones)) {
         const saved = item;
         if (now - Date.parse(saved.deletedAt) > 30 * 86400_000) { delete links.tombstones[syncId]; continue; }
-        const row = document.createElement("div"); const text = document.createElement("span"); text.textContent = `${saved.item.title} · ${ctx.language === "zh" ? "可恢复" : "Restorable"}`;
-        const restore = document.createElement("button"); restore.type = "button"; restore.textContent = ctx.language === "zh" ? "恢复" : "Restore";
+        const row = document.createElement("div"); const text = document.createElement("span"); text.textContent = `${saved.item.title} · ${zh ? "可恢复" : "Restorable"}`;
+        const restore = document.createElement("button"); restore.type = "button"; restore.textContent = zh ? "恢复" : "Restore";
         restore.onclick = () => void (async () => {
           if (saved.kind === "project") {
             const project = await ctx.projects.create({ ...(saved.item as Project), id: undefined } as unknown as Omit<Project, "id">);
@@ -93,7 +123,12 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       }
       renderStatus();
     };
-    const renderStatus = () => { line.textContent = lastError || (pairId ? `${status}${busy ? " · syncing" : ""}` : (ctx.language === "zh" ? "尚未配对" : "Not paired")); };
+    const renderStatus = () => {
+      const labels: Record<string, string> = { waiting: t("等待另一端上传数据", "Waiting for the other app"), preview: t("已连接 · 等待确认首次导入", "Connected · review first import"), active: t("已连接 · 自动同步", "Connected · automatic sync") };
+      line.textContent = lastError || (pairId ? (labels[status] || t("已连接", "Connected")) + (busy ? t(" · 同步中", " · syncing") : "") : t("尚未配对", "Not paired"));
+      line.classList.toggle("is-error", Boolean(lastError));
+      confirm.disabled = busy; refresh.disabled = busy; disconnect.disabled = busy;
+    };
     const ensureMappings = (assignments: Array<{ kind: "project" | "task"; id: string; syncId: string }>) => {
       for (const item of assignments) (item.kind === "task" ? links.tasks : links.projects)[item.id] = item.syncId;
     };
@@ -116,18 +151,27 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
         }
         if (action.kind === "project") {
           const value = { id: currentId || "", title: action.fields.title || "Imported project", category: action.fields.category || "project", notes: action.fields.notes || "", color: action.fields.color || undefined, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as Project;
-          if (currentId && ctx.projects.get(currentId)) await ctx.projects.update(currentId, value);
+          if (currentId && ctx.projects.get(currentId)) {
+            const current = ctx.projects.get(currentId)!;
+            const patch: Partial<Project> = {};
+            if (Object.hasOwn(action.fields, "title")) patch.title = action.fields.title || current.title;
+            if (Object.hasOwn(action.fields, "color")) patch.color = action.fields.color || undefined;
+            await ctx.projects.update(currentId, patch);
+            if (patch.title) { projectIds.delete(current.title); projectIds.set(patch.title, currentId); }
+          }
           else { const created = await ctx.projects.create(value); map[created.id] = action.syncId; projectIds.set(created.title, created.id); }
           continue;
         }
         const fields = action.fields;
         const projectId = projectIds.get(fields.projectTitle || "");
         const current = currentId ? ctx.tasks.get(currentId) : undefined;
-        const patch: Partial<Task> = {
-          title: fields.title || "Imported task", notes: fields.notes || "", completed: fields.completed === true,
-          dueDate: fields.dueDate || "", estimatedHours: Math.max(0, Number(fields.estimateMinutes || 0) / 60),
-          projectId,
-        };
+        const patch: Partial<Task> = current ? {} : { title: "Imported task", notes: "", completed: false, dueDate: "", estimatedHours: 0 };
+        if (Object.hasOwn(fields, "title")) patch.title = fields.title || "Imported task";
+        if (Object.hasOwn(fields, "notes")) patch.notes = fields.notes || "";
+        if (Object.hasOwn(fields, "completed")) patch.completed = fields.completed === true;
+        if (Object.hasOwn(fields, "dueDate")) patch.dueDate = fields.dueDate || "";
+        if (Object.hasOwn(fields, "estimateMinutes")) patch.estimatedHours = Math.max(0, Number(fields.estimateMinutes || 0) / 60);
+        if (Object.hasOwn(fields, "projectTitle")) patch.projectId = projectId;
         if (current && Object.hasOwn(fields, "scheduledAt")) {
           const records = [...(current.timelineRecords || [])];
           const nearest = records.map((record, index) => ({ record, index })).filter(item => item.record.executionStatus === "scheduled").sort((a, b) => `${a.record.scheduledDate}T${a.record.scheduledStart}`.localeCompare(`${b.record.scheduledDate}T${b.record.scheduledStart}`))[0];
@@ -159,7 +203,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       try {
         if (!pairId) { await discoverConnection(); if (!pairId) return; }
         const state = await getState(); displayState(state);
-        if (state.status === "preview") { displayState(state); return; }
+        if (state.status === "preview") return;
         if (state.status !== "active") {
           const initial = await api.request("/snapshot", "POST", { pairId, platform: "navopath", snapshot: snapshot() });
           ensureMappings(initial.assignments || []); displayState(initial); return;
@@ -169,17 +213,23 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       } catch (error) { lastError = error instanceof Error ? error.message : String(error); }
       finally { busy = false; renderStatus(); }
     };
-    connect.onclick = () => void api.createPairingCode().then(({ code: value, expiresAt }) => { pairingCode = value; code.textContent = `${value} · ${new Date(expiresAt).toLocaleTimeString()}`; code.hidden = false; copy.hidden = false; lastError = ""; renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
+    connect.onclick = () => void api.createPairingCode().then(({ code: value, expiresAt }) => { pairingCode = value; code.textContent = `${value} · ${new Date(expiresAt).toLocaleTimeString()}`; code.hidden = false; copy.hidden = false; codeRow.hidden = false; lastError = ""; renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
     copy.onclick = () => { if (pairingCode) void navigator.clipboard?.writeText(pairingCode); };
     refresh.onclick = () => void sync();
     confirm.onclick = () => {
-      const matches = [...details.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked')].map(input => ({ kind: input.dataset.kind, navopathId: input.dataset.left, superproductivityId: input.dataset.right }));
-      void getState().then(state => api.request("/confirm", "POST", { pairId: state.pairId, matches })).then(displayState).then(sync).catch(error => { lastError = String(error); renderStatus(); });
+      if (busy || !previewView) return;
+      const matches = previewView.matches();
+      if (!window.confirm(t("确认关联选中的记录，并将独有项目和任务导入另一端？共有字段将以所选来源为准；不会删除独有记录。", "Link selected records and import unique projects and tasks? Shared fields use the selected source; unique records are not deleted."))) return;
+      busy = true; lastError = ""; renderStatus();
+      void getState().then(state => {
+        if (state.status !== "preview" || JSON.stringify(state.preview) !== previewKey) { displayState(state); throw new Error(t("预览已改变，请重新检查后确认。", "Preview changed. Review it before confirming.")); }
+        return api.request("/confirm", "POST", { pairId: state.pairId, matches, expectedRevision: state.revision });
+      }).then(displayState).catch(error => { lastError = String(error); renderStatus(); }).finally(() => { busy = false; renderStatus(); if (status === "active") void sync(); });
     };
-    disconnect.onclick = () => void api.request("/revoke", "POST", { pairId }).then(() => { pairId = ""; status = "waiting"; links = { projects: {}, tasks: {}, tombstones: {} }; void persist(); renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
-    void ctx.storage.get<LinkStore & { pairId?: string }>(STORAGE).then(saved => { if (saved) { links = saved; pairId = (saved as any).pairId || ""; } running = true; void sync(); });
+    disconnect.onclick = () => void api.request("/revoke", "POST", { pairId }).then(() => { pairId = ""; pairingCode = ""; status = "waiting"; pairing.hidden = false; codeRow.hidden = true; connect.textContent = t("生成配对码", "Create pairing code"); code.hidden = copy.hidden = true; refresh.hidden = confirm.hidden = disconnect.hidden = true; previewView = undefined; previewKey = ""; details.replaceChildren(); links = { projects: {}, tasks: {}, tombstones: {} }; void persist(); renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
+    void ctx.storage.get<{ links?: LinkStore; pairId?: string } & Partial<LinkStore>>(STORAGE).then(saved => { if (saved) { const stored = saved.links || saved; if (stored.projects && stored.tasks && stored.tombstones) links = { projects: stored.projects, tasks: stored.tasks, tombstones: stored.tombstones }; pairId = saved.pairId || ""; } running = true; void sync(); }).catch(error => { lastError = String(error); renderStatus(); });
     const timer = window.setInterval(() => { void sync(); }, 30_000);
-    return () => { running = false; clearInterval(timer); panel.remove(); };
+    return () => { running = false; clearInterval(timer); surface.dispose(); };
   });
 } };
 
