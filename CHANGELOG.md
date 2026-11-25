@@ -12,7 +12,7 @@
 
 ### 修复
 
-- 修复 Super Productivity 插件配对时云端同步接口缺失导致的 401 错误；服务暂时不可用时返回独立错误。
+- 修复 Super Productivity 插件配对时云端同步接口缺失导致的 401 错误；服务暂时不可用时返回独立错误。 修复配对错误处理导致的云端构建失败。
 
 ## 2026-11-23
 
@@ -970,7 +970,7 @@
 
 ### Fixed
 
-- Fixed a 401 during Super Productivity pairing caused by missing cloud sync endpoints; temporary service failures now return a distinct error.
+- Fixed a 401 during Super Productivity pairing caused by missing cloud sync endpoints; temporary service failures now return a distinct error. Fixed the cloud build failure in pairing error handling.
 
 ## 2026-11-23
 
