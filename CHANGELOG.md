@@ -9,10 +9,11 @@
 ### 改进
 
 - 修复 Super Productivity 20.1.0 中 iframe 未暴露本机密钥接口导致的错误版本提示；连接令牌改存本机插件页面存储。
+- 同步插件首次导入增加批量匹配、双向字段覆盖、搜索和导入数量预览；改善主题对比度与插件界面隔离。
 
 ### 修复
 
-- 修复 Super Productivity 插件配对时云端同步接口缺失导致的 401 错误；服务暂时不可用时返回独立错误。 修复配对错误处理导致的云端构建失败。
+- 修复 Super Productivity 插件配对时云端同步接口缺失导致的 401 错误；服务暂时不可用时返回独立错误。 修复配对错误处理导致的云端构建失败。 修复数据库配对函数字段歧义导致的 503 错误。
 
 ## 2026-11-23
 
@@ -967,10 +968,11 @@
 ### Improvements
 
 - Fixed a false version warning on Super Productivity 20.1.0 caused by secret-storage methods missing from its iframe bridge; the connection token now stays in local plugin-page storage.
+- First import adds bulk matching, either source for shared fields, search and import totals; improves plugin theme contrast and UI isolation.
 
 ### Fixed
 
-- Fixed a 401 during Super Productivity pairing caused by missing cloud sync endpoints; temporary service failures now return a distinct error. Fixed the cloud build failure in pairing error handling.
+- Fixed a 401 during Super Productivity pairing caused by missing cloud sync endpoints; temporary service failures now return a distinct error. Fixed the cloud build failure in pairing error handling. Fixed a 503 caused by an ambiguous column reference in the database pairing function.
 
 ## 2026-11-23
 

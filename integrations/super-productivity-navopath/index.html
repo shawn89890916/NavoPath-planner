@@ -113,7 +113,10 @@
       for (const [kind, source, target] of [['project', preview.projects, 'project-matches'], ['task', preview.tasks, 'task-matches']]) {
         const root = $(target); root.replaceChildren();
         const suggestedById = new Map(source.suggestions.map(item => [item.navopathId, item.superproductivityId]));
-        for (const item of source.navopath) root.append(matchRow(kind, item, [...suggestedById.keys()], suggestedById.get(item.id) || ''));
+        for (const item of source.navopath) {
+          if (suggestedById.has(item.id)) root.append(matchRow(kind, item, [...suggestedById.keys()], suggestedById.get(item.id)));
+          else { const note = document.createElement('p'); note.textContent = `${item.fields.title || '(untitled)'} · import separately`; root.append(note); }
+        }
         for (const item of source.superproductivity) if (!source.suggestions.some(match => match.superproductivityId === item.id)) {
           const note = document.createElement('p'); note.textContent = `${item.fields.title || '(untitled)'} · Super Productivity only`; root.append(note);
         }
@@ -183,20 +186,24 @@
           continue;
         }
         const current = (await tasks()).find(item => item.id === id);
-        const projectId = allProjects.find(project => project.title === fields.projectTitle)?.id || null;
-        const tagList = await API.getAllTags();
-        const tagIds = [];
-        for (const title of fields.tags || []) {
-          let tag = tagList.find(item => item.title === title);
-          if (!tag) { const createdTag = await API.addTag({ title }); tag = { id: createdTag, title }; tagList.push(tag); }
-          tagIds.push(tag.id);
+        const updates = current ? {} : { title: 'Imported task' };
+        if (Object.hasOwn(fields, 'title')) updates.title = fields.title || 'Imported task';
+        if (Object.hasOwn(fields, 'notes')) updates.notes = fields.notes || '';
+        if (Object.hasOwn(fields, 'completed')) updates.isDone = fields.completed === true;
+        if (Object.hasOwn(fields, 'estimateMinutes')) updates.timeEstimate = Math.max(0, Number(fields.estimateMinutes || 0) * 60000);
+        if (Object.hasOwn(fields, 'projectTitle')) updates.projectId = allProjects.find(project => project.title === fields.projectTitle)?.id || null;
+        if (Object.hasOwn(fields, 'dueDate')) updates.dueDay = fields.dueDate || null;
+        if (Object.hasOwn(fields, 'scheduledAt')) updates.dueWithTime = fields.scheduledAt ? new Date(fields.scheduledAt).getTime() : null;
+        if (Object.hasOwn(fields, 'tags')) {
+          const tagList = await API.getAllTags();
+          const tagIds = [];
+          for (const title of fields.tags || []) {
+            let tag = tagList.find(item => item.title === title);
+            if (!tag) { const createdTag = await API.addTag({ title }); tag = { id: createdTag, title }; tagList.push(tag); }
+            tagIds.push(tag.id);
+          }
+          updates.tagIds = tagIds;
         }
-        const updates = {
-          title: fields.title || 'Imported task', notes: fields.notes || '', isDone: fields.completed === true,
-          timeEstimate: Math.max(0, Number(fields.estimateMinutes || 0) * 60000), projectId, tagIds,
-          dueDay: fields.dueDate || null,
-          dueWithTime: fields.scheduledAt ? new Date(fields.scheduledAt).getTime() : null,
-        };
         if (current) await API.updateTask(current.id, updates, { isIgnoreShortSyntax: true });
         else {
           const created = await API.addTask({ ...updates, isIgnoreShortSyntax: true });

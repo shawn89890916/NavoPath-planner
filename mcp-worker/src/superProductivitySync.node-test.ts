@@ -67,3 +67,23 @@ test("new linked records created after the first sync are created on the other s
   assert.deepEqual(result.actions, []);
   assert.deepEqual(buildActions(state, "superproductivity").map(item => [item.kind, item.fields.title]), [["project", "Project"], ["task", "Task"]]);
 });
+
+test("first import allows either source for matched fields without deleting unmatched records", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", { notes: "NavoPath", completed: true }), entity("n2", "Local only")] }, "2026-11-25T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task", { notes: "SP", completed: false }), entity("s2", "SP only")] }, "2026-11-25T00:00:01Z");
+  confirmInitialSync(state, [{ kind: "task", navopathId: "n1", superproductivityId: "s1", preferredSide: "superproductivity" }]);
+  const id = state.latest.navopath.tasks[0].syncId;
+  assert.equal(state.canonical[id].fields.notes, "SP");
+  assert.equal(state.canonical[id].fields.completed, false);
+  assert.equal(state.pending[id].notes, "navopath");
+  assert.ok(buildActions(state, "navopath").some(action => action.fields.title === "SP only"));
+  assert.ok(buildActions(state, "superproductivity").some(action => action.fields.title === "Local only"));
+  assert.ok(Object.values(state.canonical).every(item => !item.deleted));
+});
+test("duplicate titles on either side are not proposed as one-to-one matches", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task"), entity("n2", "Task")] }, "2026-11-25T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task")] }, "2026-11-25T00:00:01Z");
+  assert.deepEqual(createInitialPreview(state).tasks.suggestions, []);
+});
