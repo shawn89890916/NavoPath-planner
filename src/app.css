@@ -13091,21 +13091,23 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: inherit;
   corner-shape: var(--corner-shape, squircle);
 }
-/* Engagement fills the shared project stripe from the top down. Keeping it on
-   the accent layer preserves the stripe's rounded ends in every task state. */
-.df-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent {
+.df-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent,
+.navo-demo-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent {
   top: -1px;
   bottom: -1px;
   left: -1px;
-  width: var(--task-project-accent-size, 2px);
+  width: var(--task-project-accent-size, 4px);
   background: linear-gradient(
     to bottom,
     var(--task-project-color) 0 var(--task-engagement),
     transparent var(--task-engagement) 100%
   );
   opacity: 1;
-  border-radius: var(--task-radius) 0 0 var(--task-radius);
-  corner-shape: var(--corner-shape, squircle);
+  border-radius:
+    calc(var(--task-project-accent-size, 4px) / 2)
+    calc(var(--task-project-accent-size, 4px) / 2)
+    0 0 / var(--task-radius) var(--task-radius) 0 0;
+  corner-shape: round;
 }
 .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--bottom {
   left: 0;

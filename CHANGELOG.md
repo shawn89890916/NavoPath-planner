@@ -2,6 +2,12 @@
 
 ## 2026-11-25
 
+### 1.7.0 Beta 96
+
+#### 修复
+
+- 恢复投入度色条随任务块圆角收边，并让完成状态继续显示对应比例的色条填充。
+
 ### 1.7.0 Beta 95
 
 #### 修复
@@ -1087,6 +1093,12 @@
 # NavoPath Changelog
 
 ## 2026-11-25
+
+### 1.7.0 Beta 96
+
+#### Fixed
+
+- Restore rounded ends on the engagement stripe and keep its proportional fill visible after completion.
 
 ### 1.7.0 Beta 95
 
