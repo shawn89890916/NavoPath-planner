@@ -1,6 +1,6 @@
 # Super Productivity Sync
 
-Connect one Super Productivity installation to NavoPath using a five-minute pairing code. The first exchange previews both task and project lists; exact-title matches are suggestions, and the user confirms which records represent the same item.
+Connect one Super Productivity installation to NavoPath using a five-minute pairing code. The first exchange previews both task and project lists. Unique exact-title matches are suggestions. Select all or clear matches, search, and choose which app supplies shared fields per match. Unmatched records import separately; this is not a destructive workspace replacement. Review import totals and confirm before applying changes.
 
 The sync service transfers common project and task fields, including titles, notes, completion state, due dates, estimates, project assignment, and the nearest scheduled block. NavoPath keeps its full multi-block schedule. Historical time tracking, recurrence rules, priorities, tags, and other NavoPath-only fields are outside the shared field set.
 
