@@ -46,7 +46,8 @@ describe("official plugin update recovery", () => {
     for (const [key] of await cacheEntries("account:preview:")) await cacheDelete(key);
   });
   it("discovers an update through the website when a verified official sync plugin was imported and keeps its original key", async () => {
-    const old = getBundledExtension("super-productivity-sync")!;
+    const bundled = getBundledExtension("super-productivity-sync")!;
+    const old = { ...bundled, manifest: { ...bundled.manifest, version: "1.0.0" }, sha256: "1f7a4ca92bd42f9f053c9f2a96307757c43390364dfee78201fd5114c96977e6" };
     const key = "imported:super-productivity-sync";
     const pkg = JSON.parse(readFileSync(new URL("super-productivity-sync.navopackage.json", bundledDirectory), "utf8"));
     pkg.manifest.version = "1.0.2";
@@ -70,7 +71,8 @@ describe("official plugin update recovery", () => {
     expect(f.settings().extensionConfigs[key]).toEqual({ preserved: true });
   });
   it("does not adopt a modified imported package solely on its manifest identity", async () => {
-    const old = getBundledExtension("super-productivity-sync")!;
+    const bundled = getBundledExtension("super-productivity-sync")!;
+    const old = { ...bundled, manifest: { ...bundled.manifest, version: "1.0.0" }, sha256: "1f7a4ca92bd42f9f053c9f2a96307757c43390364dfee78201fd5114c96977e6" };
     const key = "imported:super-productivity-sync";
     const f = fixture("preview", { ...defaultExtensionPreferences(), installed: { [key]: { ...old, key, sourceId: "imported", sha256: "a".repeat(64), enabled: false, installedAt: "2026-11-24T00:00:00Z" } } });
     await current.configure(f.host);

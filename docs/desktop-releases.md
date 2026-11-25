@@ -37,7 +37,10 @@ first update substantially larger.
 The Desktop Release workflow rejects a mismatched tag, refuses existing
 releases, uploads the complete asset set to a draft, then publishes it on the
 channel selected by the version. It runs `scripts/verify-release.mjs` against
-the real version tag after publishing. If upload fails, the draft stays private;
+the real version tag after publishing. For an explicitly dispatched run on
+`desktop-beta` with a new Beta version, the workflow creates its immutable
+semver tag at the built commit only after a successful build. Existing tags
+and releases are never overwritten. If upload fails, the draft stays private;
 inspect it and use a new version or deliberately repair the incomplete draft.
 
 ## Size and Windows memory checks

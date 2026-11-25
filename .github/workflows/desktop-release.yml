@@ -38,6 +38,9 @@ jobs:
           if ($env:GITHUB_REF_TYPE -eq "tag" -and $env:GITHUB_REF_NAME -ne "v$version") {
             throw "Release tag must match package.json version v$version"
           }
+          if ($env:GITHUB_REF_TYPE -ne "tag" -and ($env:GITHUB_EVENT_NAME -ne "workflow_dispatch" -or $env:GITHUB_REF_NAME -ne "desktop-beta" -or $version -notmatch '-beta\.\d+$')) {
+            throw "Manual untagged releases must use desktop-beta and a new Beta version"
+          }
 
       - name: Build desktop release
         run: npm run dist
@@ -70,6 +73,16 @@ jobs:
           $label = $version -replace '-beta\.', ' Beta '
           $createFlags = @("--draft", "--title", "NavoPath $label")
           if ($isBeta) { $createFlags += "--prerelease" }
+          # Only explicit manual runs from desktop-beta may create a tag.
+          if ($env:GITHUB_REF_TYPE -ne "tag") {
+            $remoteTag = git ls-remote --tags origin "refs/tags/$tag"
+            if ($LASTEXITCODE -ne 0) { throw "Could not verify release tag" }
+            if ($remoteTag) { throw "Tag $tag already exists; use a new version" }
+            git tag $tag $env:GITHUB_SHA
+            if ($LASTEXITCODE -ne 0) { throw "Creating release tag failed" }
+            git push origin "refs/tags/$tag"
+            if ($LASTEXITCODE -ne 0) { throw "Publishing release tag failed" }
+          }
           gh release create $tag @assets --verify-tag @createFlags
           if ($LASTEXITCODE -ne 0) { throw "Creating the desktop draft release failed" }
           if ($isBeta) {
