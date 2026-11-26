@@ -142,7 +142,8 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
       const old = previous[key].find(entry => entry.id === item.id);
       const suppliedSyncId = item.syncId;
       const discarded = Object.entries(state.canonical).find(([, entry]) => entry.overwriteTarget === side && entry.deleted && entry.kind === kind && entry.ids[side] === item.id)?.[0];
-      const syncId = discarded || old?.syncId || (item.syncId && state.canonical[item.syncId] && !state.canonical[item.syncId].deleted && (!state.canonical[item.syncId].ids[side] || state.canonical[item.syncId].ids[side] === item.id || state.pending[item.syncId]?.$create === side) ? item.syncId : undefined) || crypto.randomUUID(); item.syncId = syncId;
+      const knownDuringOverwrite = overwritingTarget ? Object.entries(state.canonical).find(([, entry]) => entry.kind === kind && entry.ids[side] === item.id)?.[0] : undefined;
+      const syncId = discarded || old?.syncId || knownDuringOverwrite || (item.syncId && state.canonical[item.syncId] && !state.canonical[item.syncId].deleted && (!state.canonical[item.syncId].ids[side] || state.canonical[item.syncId].ids[side] === item.id || state.pending[item.syncId]?.$create === side) ? item.syncId : undefined) || crypto.randomUUID(); item.syncId = syncId;
       let canonical = state.canonical[syncId];
       if (!canonical) {
         canonical = state.canonical[syncId] = { kind, fields: { ...item.fields }, ids: {} };
