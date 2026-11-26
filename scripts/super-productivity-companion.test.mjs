@@ -40,17 +40,18 @@ test("host runtime polls without mounting the UI and schedules a newly imported 
     async setSecret() {}, async deleteSecret() {},
     async loadSyncedData() { return JSON.stringify({ pairId, links: { tasks: {}, projects: {} }, tombstones: {} }); },
     async persistDataSynced(value) { persisted = value; },
-    async getAllProjects() { return []; }, async getAllTags() { return []; },
+    async getAllProjects() { return [{ id: "INBOX_PROJECT", title: "Inbox" }]; }, async getAllTags() { return []; },
     async getTasks() { return tasks; },
     async addTask(fields) { assert.ok(!Object.hasOwn(fields, "dueWithTime")); tasks.push({ ...fields, id: "sp-created" }); return "sp-created"; },
     async updateTask(id, patch) { updates.push({ id, patch }); Object.assign(tasks.find(task => task.id === id), patch); },
-    async deleteTask() {}, async addProject() {}, async updateProject() {}, async deleteProject() {}, async addTag() {},
+    async deleteTask() {}, async addProject() {}, async updateProject(id) { assert.notEqual(id, "INBOX_PROJECT"); }, async deleteProject(id) { assert.notEqual(id, "INBOX_PROJECT"); }, async addTag() {},
     async request(url, options) {
       assert.equal(options.headers.Authorization, "Bearer local-test-token");
       if (url.includes("/state?")) return state;
       assert.ok(url.endsWith("/snapshot"));
+      assert.ok(!JSON.parse(options.body).snapshot.projects.some(project => project.id === "INBOX_PROJECT"));
       polls++;
-      return { ...state, assignments: [], actions: polls === 1 ? [{ kind: "task", syncId: "sync-task", fields: { title: "Scheduled task", scheduledAt, scheduledMinutes: 90, estimateMinutes: 90 } }] : [] };
+      return { ...state, assignments: [], actions: polls === 1 ? [{ kind: "project", syncId: "stale-inbox", id: "INBOX_PROJECT", fields: {}, deleted: true }, { kind: "task", syncId: "sync-task", fields: { title: "Scheduled task", scheduledAt, scheduledMinutes: 90, estimateMinutes: 90 } }] : [] };
     },
   };
   vm.runInNewContext(code, { PluginAPI: API, document, console, setInterval(fn) { interval = fn; return 1; }, clearInterval() { interval = undefined; }, setTimeout(fn) { timeout = fn; return 2; }, clearTimeout() { timeout = undefined; } });

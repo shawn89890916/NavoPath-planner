@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 112
+
+#### 修复
+
+- Super Productivity Sync 1.0.6 自动解除旧连接的系统收件箱删除指令；修复遗漏旧格式、跨午夜定时任务以及新任务创建后的排程重试，单项操作失败时继续同步其他任务。
+
 ### 1.7.0 Beta 111
 
 #### 改进
@@ -1195,6 +1201,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 112
+
+#### Fixes
+
+- Super Productivity Sync 1.0.6 retires invalid system Inbox deletion commands in older connections, recovers legacy and overnight timed slots, and retries missing schedules on newly created tasks without blocking unrelated changes.
 
 ### 1.7.0 Beta 111
 

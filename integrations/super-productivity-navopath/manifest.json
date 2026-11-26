@@ -1,7 +1,7 @@
 {
   "id": "navopath-sync",
   "name": "NavoPath Sync",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Background sync of projects, tasks and scheduled blocks with NavoPath Cloud.",
   "manifestVersion": 1,
   "minSupVersion": "20.1.0",
