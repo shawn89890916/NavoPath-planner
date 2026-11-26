@@ -9,6 +9,19 @@ const defaults = readFileSync(resolve(__dirname, "defaultSettings.ts"), "utf8");
 const planning = readFileSync(resolve(__dirname, "PlanningView.tsx"), "utf8");
 
 describe("portrait interaction contracts", () => {
+  it("opens the shared add short sheet with the clicked project in compact layouts", () => {
+    const sheet = readFileSync(resolve(__dirname, "MobileTaskSummary.tsx"), "utf8");
+    expect(main).toContain("if (compactLayout) return openQuickTaskAdd(projectId);");
+    expect(main).toContain("if (compactLayout) return openQuickTaskAdd(projectId, true);");
+    expect(main).toContain('if (projectId !== undefined) setQuickProjectId(projectId === "__unassigned__" ? "" : projectId);');
+    expect(main).toContain('quickAddTask(title, !mobileQuickAddFromProjectTree);');
+    expect(main).toContain('addToToday ? { ...task, plannedForDate: targetDate, executionLane: "candidate", order: Date.now() } : task');
+    expect(main).toContain("projectId={quickProjectId}");
+    expect(sheet).toContain('titleInputRef={titleInputRef}');
+    expect(sheet).toContain('autoFocus onTitleChange={props.onTitleChange}');
+    expect(sheet).toContain('?.focus({ preventScroll: true })');
+  });
+
   it("opens the task short sheet on the second tap after selection", () => {
     expect(main).toContain("function selectTimelineTask(task: Task, event: React.MouseEvent)");
     expect(main).toContain("if (resizeHintTaskId === taskId)");

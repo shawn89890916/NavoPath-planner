@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 100
+
+#### 改进
+
+- Dock 和竖屏布局中，点击项目旁的添加按钮直接打开添加短栏，预选该项目并聚焦名称输入框。
+
 ### 1.7.0 Beta 99
 
 #### 修复
@@ -1114,6 +1120,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 100
+
+#### Improved
+
+- In Dock and portrait layouts, adding from a project opens the quick-add sheet with that project selected and the title input focused.
 
 ### 1.7.0 Beta 99
 

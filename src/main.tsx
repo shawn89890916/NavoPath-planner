@@ -823,6 +823,7 @@ function App() {
   const quickAddPresence = useMotionPresence(quickAddOpen, MOTION.layout);
   const [mobileQuickAddKind, setMobileQuickAddKind] = useState<MobileShortSheetKind>("task");
   const [mobileQuickAddDate, setMobileQuickAddDate] = useState<string | null>(null);
+  const [mobileQuickAddFromProjectTree, setMobileQuickAddFromProjectTree] = useState(false);
   const [mobileQuickHabitMinutes, setMobileQuickHabitMinutes] = useState(20);
   const [selectedDate, setSelectedDate] = useState(todayIso());
   const [visibleTimelineDate, setVisibleTimelineDate] = useState(todayIso());
@@ -2542,11 +2543,14 @@ if (cached?.data && cached?.settings) {
     candidateTriggerRef.current?.focus();
   }
 
-  function openQuickTaskAdd() {
+  function openQuickTaskAdd(projectId?: string, fromProjectTree = false) {
     if (candidateDrawerOpen) closeCandidateDrawer();
     setQuickTitle("");
     setMobileQuickAddKind("task");
     setMobileQuickAddDate(null);
+    setMobileQuickAddFromProjectTree(fromProjectTree);
+    setQuickProjectOpen(false);
+    if (projectId !== undefined) setQuickProjectId(projectId === "__unassigned__" ? "" : projectId);
     setQuickAddOpen(true);
   }
 
@@ -4297,16 +4301,17 @@ if (cached?.data && cached?.settings) {
   }
 
   function focusQuickAddForProject(projectId: string) {
+    if (compactLayout) return openQuickTaskAdd(projectId);
     setQuickProjectId(projectId === "__unassigned__" ? "" : projectId);
     setQuickProjectOpen(false);
     window.requestAnimationFrame(() => quickCandidateInputRef.current?.focus());
   }
 
-  function quickAddTask(sample = quickCandidateInputRef.current?.dataset.taskExampleValue) {
+  function quickAddTask(sample = quickCandidateInputRef.current?.dataset.taskExampleValue, addToToday = true) {
     let title = quickTitle.trim() || sample || "";
     if (!data || !title) return;
     let targetDate = today;
-    const yearMatch = title.match(/^\/(\d{4})\s+/);
+    const yearMatch = addToToday ? title.match(/^\/(\d{4})\s+/) : null;
     if (yearMatch) {
       const year = parseInt(yearMatch[1], 10);
       if (year >= 2000 && year <= 2100) {
@@ -4324,7 +4329,7 @@ if (cached?.data && cached?.settings) {
       title,
       projectId: quickProjectId,
     });
-    const createdTask: Task = { ...task, plannedForDate: targetDate, executionLane: "candidate", order: Date.now() };
+    const createdTask: Task = addToToday ? { ...task, plannedForDate: targetDate, executionLane: "candidate", order: Date.now() } : task;
     void saveTaskOperation({ ...data, tasks: [...data.tasks, createdTask] }, "create");
     void enrichTaskInBackground(createdTask);
     if (!compactLayout) setQuickTitle("");
@@ -4350,7 +4355,7 @@ if (cached?.data && cached?.settings) {
         setQuickAddOpen(false);
         return;
       }
-      quickAddTask(title);
+      quickAddTask(title, !mobileQuickAddFromProjectTree);
       return;
     }
     setQuickAddOpen(false);
@@ -4964,6 +4969,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function createTaskInProject(projectId: string) {
+    if (compactLayout) return openQuickTaskAdd(projectId, true);
     rememberLayerTrigger("drawer");
     setAddType("task");
     setEditingId("");
@@ -10117,6 +10123,7 @@ if (cached?.data && cached?.settings) {
                         setQuickTitle("");
                         setMobileQuickAddKind("task");
                         setMobileQuickAddDate(date);
+                        setMobileQuickAddFromProjectTree(false);
                         setQuickAddOpen(true);
                       } else setMonthQuickAdd({ date, left: 0, top: 30, width: 0, dayIndex: 0 });
                     }}
@@ -10475,7 +10482,7 @@ if (cached?.data && cached?.settings) {
         <MobileQuickAddButton buttonRef={quickAddButtonRef} compactLayout={compactLayout} productPresentation={productPresentation}
         drawerOpen={compactFloatingActionsHidden} notificationCenterOpen={notificationCenterOpen}
         utilityPanelOpen={Boolean(utilityPanel)} aiOpen={aiOpen} lang={lang} style={themeVars(settings, "execute")}
-        onAdd={openQuickTaskAdd}
+        onAdd={() => openQuickTaskAdd()}
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
