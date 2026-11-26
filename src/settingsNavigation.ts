@@ -49,13 +49,10 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategoryDefinition[] = [
   { id: "account-data", labelZh: "账户与数据", labelEn: "Account & Data" },
 ];
 
-/** Keep all historical categories addressable; only these appear at the root. */
-export const SETTINGS_PRIMARY_CATEGORIES = SETTINGS_CATEGORIES.filter(({ id }) => id !== "widget" && id !== "integrations").map((category) => category.id === "plugins" ? { ...category, labelZh: "扩展与连接", labelEn: "Extensions & Connections" } : category);
-
+/** Historical destinations remain valid; only six categories occupy the main navigation. */
+export const SETTINGS_PRIMARY_CATEGORIES = SETTINGS_CATEGORIES.filter(({ id }) => id !== "widget" && id !== "integrations").map(category => category.id === "plugins" ? { ...category, labelZh: "扩展与连接", labelEn: "Extensions & Connections" } : category);
 export function settingsPrimaryCategory(category: SettingsCategory): SettingsCategory {
-  if (category === "widget") return "appearance";
-  if (category === "integrations") return "plugins";
-  return category;
+  return category === "widget" ? "appearance" : category === "integrations" ? "plugins" : category;
 }
 
 const legacyTargets: Record<LegacySettingsSection, SettingsTarget> = {
@@ -65,7 +62,7 @@ const legacyTargets: Record<LegacySettingsSection, SettingsTarget> = {
   planning: { category: "workflow", anchor: "planning-views" },
   templates: { category: "workflow", anchor: "templates" },
   habits: { category: "workflow", anchor: "habits" },
-  metrics: { category: "workflow", anchor: "metrics" },
+  metrics: { category: "plugins", anchor: "metrics" },
   widget: { category: "widget" },
   data: { category: "account-data", anchor: "data-backup" },
   shortcuts: { category: "general", anchor: "shortcuts" },
@@ -90,6 +87,7 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
   }
   if (input.anchor && ["execution-defaults", "day-start", "default-timeline", "continuous-scroll", "hide-completed"].includes(input.anchor)) return { category: "workflow", anchor: input.anchor };
   if (input.anchor === "auto-launch") return { category: "general", anchor: input.anchor };
+  if (input.anchor === "metrics" || input.anchor?.startsWith("metrics-")) return { category: "plugins", anchor: input.anchor };
   if (input.anchor === "updates" || input.anchor === "beta-updates") return { category: "general", anchor: input.anchor };
   if (input.category === "integrations" && input.anchor === "plugins") return { category: "plugins", anchor: "plugins" };
   if (!SETTINGS_CATEGORIES.some((category) => category.id === input.category)) return { category: "general" };
@@ -100,7 +98,7 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
 }
 
 export function settingsCategoryLabel(category: SettingsCategory, lang: Language): string {
-  const definition = SETTINGS_PRIMARY_CATEGORIES.find((item) => item.id === category) ?? SETTINGS_CATEGORIES.find((item) => item.id === category) ?? SETTINGS_CATEGORIES[0];
+  const definition = SETTINGS_PRIMARY_CATEGORIES.find(item => item.id === category) ?? SETTINGS_CATEGORIES.find(item => item.id === category) ?? SETTINGS_CATEGORIES[0];
   return lang === "zh" ? definition.labelZh : definition.labelEn;
 }
 
@@ -138,6 +136,7 @@ const entry = (
 export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("calendar-feed", { category: "integrations" }, "日历订阅", "Calendar subscription", "webcal ics CalDAV iPhone Notion Calendar 日历 同步 订阅 双向 苹果"),
   entry("external-calendar", { category: "integrations" }, "外部日历", "External calendars", "read only ICS busy time 只读 忙碌 冲突"),
+  entry("modified-settings", { category: "general" }, "已修改的设置", "Modified settings", "changed preferences reset default 恢复 默认 自定义"),
   entry("language", { category: "general" }, "语言", "Language", "中文 English locale"),
   entry("notification-badge", { category: "general" }, "应用内通知角标", "In-app notification badge", "unread count notifications badge 通知 未读 提醒 角标"),
   entry("day-start", { category: "workflow" }, "一天开始时间", "Day start time", "timeline boundary 跨天"),
@@ -150,16 +149,23 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("theme", { category: "appearance" }, "界面模式", "Interface mode", "light dark 浅色 深色 主题"),
   entry("themes", { category: "appearance" }, "社区主题", "Community themes", "theme market import options 主题 市场 导入 选项"),
   entry("typography", { category: "appearance" }, "字体风格", "Typography", "serif sans 衬线 无衬线"),
+  entry("corner-radius", { category: "appearance" }, "界面圆角", "Corner radius", "边框 弧度 round corners"),
   entry("timeline-font", { category: "appearance" }, "时间轴字体大小", "Timeline font size", "scale 字号"),
   entry("accent-colors", { category: "appearance" }, "自定义点缀色", "Customize accent colors", "execute planning color 强调色"),
 
   entry("planning-views", { category: "workflow" }, "规划视图", "Planning views", "kanban matrix list 看板 四象限 列表"),
   entry("schedule-start", { category: "workflow" }, "规划开始", "Planning starts", "AI schedule 排程"),
   entry("schedule-end", { category: "workflow" }, "规划结束", "Planning ends", "AI schedule 排程"),
-  entry("schedule-buffer", { category: "workflow" }, "任务缓冲", "Task buffer", "minutes AI schedule 间隔 排程"),
+  entry("schedule-buffer", { category: "workflow" }, "排程任务间隔", "Gap between scheduled tasks", "任务缓冲 Task buffer minutes AI schedule 间隔 排程"),
   entry("templates", { category: "workflow" }, "模板", "Templates", "schedule template 时间段"),
   entry("habits", { category: "workflow" }, "习惯", "Habits", "candidate metrics 每日 每周"),
-  entry("metrics", { category: "workflow" }, "指标", "Metrics", "range grouping completion 统计 范围 分组 完成"),
+  entry("metrics", { category: "plugins" }, "指标", "Metrics", "range grouping completion 统计 范围 分组 完成"),
+  entry("metrics-range", { category: "plugins" }, "指标时间范围", "Metrics time range", "statistics period 时间 统计"),
+  entry("metrics-group", { category: "plugins" }, "指标分组", "Metrics grouping", "statistics group 统计"),
+  entry("metrics-display", { category: "plugins" }, "显示指标", "Metrics display", "statistics metric duration 统计"),
+  entry("metrics-habits", { category: "plugins" }, "习惯是否计入统计", "Include habits in metrics", "statistics habits 统计"),
+  entry("metrics-completion", { category: "plugins" }, "指标完成状态筛选", "Metrics completion filter", "statistics filter 统计"),
+  entry("habit-candidates", { category: "workflow" }, "候选中的习惯区", "Habits in candidates", "习惯"),
   entry("engagement", { category: "workflow" }, "投入度评分", "Engagement rating", "engagement effort focus density weighted 80% 投入 专注 评分 颜色 密度 时长 加权"),
 
   entry("account", { category: "account-data" }, "个人资料与账户", "Profile & account", "avatar name plan subscription 头像 用户名 方案"),
@@ -212,7 +218,7 @@ export function searchSettings(query: string, lang: Language, desktopAvailable =
   if (tokens.length === 0) return [];
   return SETTINGS_SEARCH_ENTRIES
     .filter((item) => desktopAvailable || item.target.category !== "widget")
-    .filter((item) => desktopAvailable || !["beta-updates", "auto-launch"].includes(item.id))
+    .filter((item) => desktopAvailable || !["beta-updates", "auto-launch", "updates"].includes(item.id))
     .filter((item) => tokens.every((token) => searchableText(item).includes(token)))
     .sort((a, b) => {
       const aLabel = (lang === "zh" ? a.labelZh : a.labelEn).toLocaleLowerCase();

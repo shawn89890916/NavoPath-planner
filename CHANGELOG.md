@@ -5,6 +5,7 @@
 ### 改进
 
 - 设置精简为六个主要分区，低频配置按需展开；窄窗口可直接搜索设置，搜索结果自动打开对应分区。工作时段统一供智能排程与 AI 简报使用，保留现有自定义参数。
+- 指标设置归入扩展与连接；新增已修改偏好筛选和单项、分类恢复默认值。外观圆角支持 0–64px，默认 32px。
 
 ### 修复
 
@@ -975,6 +976,7 @@
 ### Improvements
 
 - Settings now has six main categories with advanced controls available on demand. Search is available in compact windows and opens the relevant section. Smart scheduling and AI briefs share one working-hours configuration while preserving existing customization.
+- Metrics preferences move to Extensions & Connections; modified preferences can be reviewed and reset individually or by category. Corner radius supports 0–64px and defaults to 32px.
 
 ### Fixed
 

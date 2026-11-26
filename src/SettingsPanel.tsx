@@ -7,6 +7,7 @@ import { formatLastSyncedAt, presetForMinutes, SYNC_INTERVAL_PRESETS } from "./s
 import { t, viewLabel } from "./i18n";
 import { SETTINGS_PRIMARY_CATEGORIES, settingsPrimaryCategory, normalizeSettingsTarget, searchSettings, settingsCategoryLabel, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { extensionService } from "./extensions/service";
+import { getModifiedPreferences, resetRegisteredPreferences } from "./settingsRegistry";
 import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon } from "./components/UiIcons";
 import { DEFAULT_WIDGET_APPEARANCE, normalizeWidgetAppearance } from "./widget/widgetPreferences";
 import { normalizeWidgetTimerPreferences } from "./widget/widgetTimer";
@@ -25,7 +26,7 @@ import { reasoningModesForModel } from "./utils/aiModels";
 import { createPortal, flushSync } from "react-dom";
 import { runMotionTransition } from "./motion";
 import { SelectionIndicator } from "./components/SelectionIndicator";
-import { getDefaultSettings } from "./defaultSettings";
+import { getDefaultSettings, normalizeCornerRadius, MAX_CORNER_RADIUS } from "./defaultSettings";
 import { uid } from "./utils/ids";
 const localStorage = getWorkspaceStorage();
 
@@ -410,6 +411,9 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   const isDesktopRuntime = Boolean(window.desktopApi);
   const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
   const [settingsTarget, setSettingsTarget] = useState<SettingsTarget>(resolveRuntimeTarget(resolvedInitial));
+  const showModifiedSettings = settingsTarget.category === "general" && settingsTarget.anchor === "modified-settings";
+  const modifiedPreferences = getModifiedPreferences(settings);
+  const metricsSettingsOpen = settingsTarget.category === "plugins" && (settingsTarget.anchor === "metrics" || Boolean(settingsTarget.anchor?.startsWith("metrics-")));
   const [settingsHome, setSettingsHome] = useState(!initialSection && compactLayout);
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const pluginPages = Array.from(new Map(extensionSnapshot.settingsPages.map((page) => [`${page.owner}:${page.name.trim().toLocaleLowerCase()}`, page])).values());
@@ -733,6 +737,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             {settingsHome ? (
               <div className="df-settings-home">
                 {profileHero}
+                <SettingRow title={lang === "zh" ? "已修改的设置" : "Modified settings"} control={<SettingActionButton onClick={() => navigateSettings({ category: "general", anchor: "modified-settings" })}>{modifiedPreferences.length}</SettingActionButton>} />
                 <SettingTextInput value={navigationQuery} placeholder={lang === "zh" ? "搜索所有设置…" : "Search all settings…"} ariaLabel={lang === "zh" ? "搜索设置" : "Search settings"} onChange={setNavigationQuery} />
                 {navigationQuery.trim() && <div className="df-settings-home-card">{navigationResults.map(result => <button type="button" key={result.id} className="df-settings-home-entry" onClick={() => navigateSettings(result.target)}>{lang === "zh" ? result.labelZh : result.labelEn}</button>)}{pluginPages.filter(page => page.name.toLocaleLowerCase().includes(navigationQuery.trim().toLocaleLowerCase())).map(page => <button type="button" key={page.id} className="df-settings-home-entry" onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}>{page.name}</button>)}</div>}
                 {!compactLayout && <section className="df-settings-home-card df-settings-home-notification-card">
@@ -806,6 +811,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             ) : <>
             <div className="df-settings-rail">
               <SettingTextInput value={navigationQuery} placeholder={lang === "zh" ? "搜索设置…" : "Search settings…"} ariaLabel={lang === "zh" ? "搜索设置" : "Search settings"} onChange={setNavigationQuery} />
+              {!navigationQuery.trim() && <SettingActionButton onClick={() => navigateSettings({ category: "general", anchor: "modified-settings" })}>{lang === "zh" ? `已修改的设置 (${modifiedPreferences.length})` : `Modified settings (${modifiedPreferences.length})`}</SettingActionButton>}
               <nav className="df-settings-nav ui-choice-list ui-choice-list--motion-selection" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
                 <SelectionIndicator activeKey={navigationQuery.trim() ? "" : `${settingsTarget.pluginPage ? `plugin:${settingsTarget.pluginPage}` : `category:${settingsPrimaryCategory(settingsTarget.category)}`}:${lang}:${pluginPages.length}`} />
                 {navigationQuery.trim() ? navigationResults.map(result => <button type="button" key={result.id} className="ui-choice-item" onClick={() => navigateSettings(result.target)}>{lang === "zh" ? result.labelZh : result.labelEn}</button>) : SETTINGS_PRIMARY_CATEGORIES.map((category) => (
@@ -816,10 +822,21 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               {!navigationQuery.trim() && pluginUpdateCount > 0 && <button type="button" className="df-plugin-update-notice" onClick={() => navigateSettings({ category: "plugins" })}><span className="df-plugin-update-notice-dot" aria-hidden="true" /><span><strong>{lang === "zh" ? `${pluginUpdateCount} 个插件可更新` : `${pluginUpdateCount} plugin updates`}</strong><small>{lang === "zh" ? "查看并安装更新" : "Review and install updates"}</small></span><span aria-hidden="true">›</span></button>}
             </div>
             <div ref={settingsContentRef} className="df-settings-content">
+            {showModifiedSettings ? <SettingSection anchor="modified-settings" title={lang === "zh" ? "已修改的设置" : "Modified settings"} description={lang === "zh" ? "仅列出已注册且与默认值不同的偏好。设备、账户凭据和运行状态不会被重置。" : "Shows registered preferences that differ from defaults. Device settings, credentials and runtime state are excluded."}>
+              {modifiedPreferences.length === 0 && <SettingDescription>{lang === "zh" ? "所有已注册偏好均为默认值" : "All registered preferences are at their defaults"}</SettingDescription>}
+              {SETTINGS_PRIMARY_CATEGORIES.map(category => {
+                const entries = modifiedPreferences.filter(pref => settingsPrimaryCategory(pref.search.target.category) === category.id);
+                if (!entries.length) return null;
+                return <SettingSection key={category.id} title={lang === "zh" ? category.labelZh : category.labelEn}>
+                  {entries.map(pref => <SettingRow key={pref.search.id} title={lang === "zh" ? pref.search.labelZh : pref.search.labelEn} control={<><SettingActionButton onClick={() => navigateSettings(pref.search.target)}>{lang === "zh" ? "查看" : "View"}</SettingActionButton><SettingActionButton onClick={() => onSave(resetRegisteredPreferences([pref]))}>{lang === "zh" ? "恢复默认" : "Reset"}</SettingActionButton></>} />)}
+                  <SettingRow title={lang === "zh" ? "恢复本类已修改偏好" : "Reset modified preferences in this category"} control={<SettingActionButton onClick={() => { if (confirm(lang === "zh" ? "确定恢复本类列出的偏好？" : "Reset the listed preferences in this category?")) onSave(resetRegisteredPreferences(entries)); }}>{lang === "zh" ? "恢复" : "Reset"}</SettingActionButton>} />
+                </SettingSection>;
+              })}
+            </SettingSection> : <>
             {settingsTarget.category === "appearance" && isDesktopRuntime && <SettingRow title={lang === "zh" ? "桌面窗口" : "Desktop Windows"} control={<SettingActionButton onClick={() => navigateSettings({ category: "widget" })}>{lang === "zh" ? "管理" : "Manage"}</SettingActionButton>} />}
             {settingsTarget.category === "widget" && <SettingRow title={lang === "zh" ? "外观" : "Appearance"} control={<SettingActionButton onClick={() => navigateSettings({ category: "appearance" })}>{lang === "zh" ? "返回" : "Back"}</SettingActionButton>} />}
-            {settingsTarget.category === "plugins" && !settingsTarget.pluginPage && <SettingRow title={lang === "zh" ? "日历与外部连接" : "Calendar & external connections"} control={<SettingActionButton onClick={() => navigateSettings({ category: "integrations", anchor: "calendar-feed" })}>{lang === "zh" ? "管理" : "Manage"}</SettingActionButton>} />}
-            {settingsTarget.category === "integrations" && <SettingRow title={lang === "zh" ? "扩展与连接" : "Extensions & Connections"} control={<SettingActionButton onClick={() => navigateSettings({ category: "plugins" })}>{lang === "zh" ? "返回" : "Back"}</SettingActionButton>} />
+            {settingsTarget.category === "plugins" && !settingsTarget.pluginPage && !metricsSettingsOpen && <><SettingRow title={lang === "zh" ? "日历与外部连接" : "Calendar & external connections"} control={<SettingActionButton onClick={() => navigateSettings({ category: "integrations", anchor: "calendar-feed" })}>{lang === "zh" ? "管理" : "Manage"}</SettingActionButton>} /><SettingRow title={lang === "zh" ? "Metrics 指标设置" : "Metrics preferences"} control={<SettingActionButton onClick={() => navigateSettings({ category: "plugins", anchor: "metrics" })}>{lang === "zh" ? "配置" : "Configure"}</SettingActionButton>} /></>}
+            {(settingsTarget.category === "integrations" || metricsSettingsOpen) && <SettingRow title={lang === "zh" ? "扩展与连接" : "Extensions & Connections"} control={<SettingActionButton onClick={() => navigateSettings({ category: "plugins" })}>{lang === "zh" ? "返回" : "Back"}</SettingActionButton>} />}
             {settingsTarget.category === "general" && <SettingSection anchor="general-basics" title={lang === "zh" ? "基础" : "Basics"} description={lang === "zh" ? "语言与通知显示。" : "Language and notification display."}>
               <SettingRow
                 anchor="language"
@@ -872,6 +889,10 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                   ]}
                 />}
               />
+              <SettingRow anchor="corner-radius" title={lang === "zh" ? "界面圆角" : "Corner radius"} control={<span className="df-settings-number-wrap">
+                <input type="range" className="df-settings-range" min={0} max={MAX_CORNER_RADIUS} step={1} value={normalizeCornerRadius(settings.workspaceCornerRadius)} aria-label={lang === "zh" ? "界面圆角" : "Corner radius"} onChange={event => onSave({ workspaceCornerRadius: normalizeCornerRadius(Number(event.target.value)) })} />
+                <span className="df-settings-number-suffix">{normalizeCornerRadius(settings.workspaceCornerRadius)}px</span>
+              </span>} />
               <details className="df-settings-progressive"><summary>{lang === "zh" ? "进阶外观" : "Advanced appearance"}</summary><div className="df-settings-progressive-body">
               <SettingRow
                 anchor="timeline-font"
@@ -971,7 +992,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             </div></details>
               </SettingSection>}
 
-            {settingsTarget.category === "workflow" && <details className="df-settings-progressive"><summary>{lang === "zh" ? "习惯、投入度与指标" : "Habits, engagement and metrics"}</summary><div className="df-settings-progressive-body">
+            {settingsTarget.category === "workflow" && <details className="df-settings-progressive"><summary>{lang === "zh" ? "习惯与投入度" : "Habits and engagement"}</summary><div className="df-settings-progressive-body">
             {settingsTarget.category === "workflow" && <SettingSection anchor="habits" title={lang === "zh" ? "习惯" : "Habits"} description={lang === "zh" ? "每日 / 每周重复行为的开关与显示。" : "Toggles and visibility for daily / weekly recurring behaviors."}>
               <SettingRow
                 title={lang === "zh" ? "启用习惯功能" : "Enable habits"}
@@ -979,6 +1000,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 control={<SettingToggle checked={settings.featureHabitsEnabled !== false} ariaLabel={lang === "zh" ? "启用习惯功能" : "Enable habits"} onChange={(next) => onSave({ featureHabitsEnabled: next })} />}
               />
               <SettingRow
+                anchor="habit-candidates"
                 title={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today's candidates"}
                 description={lang === "zh" ? "关闭后仅隐藏今日候选中的习惯区，保留习惯功能和数据。" : "When off, only hides the habits area in today's candidates; habit features and data stay available."}
                 control={<SettingToggle checked={settings.featureHabitCandidatesEnabled !== false} disabled={settings.featureHabitsEnabled === false} ariaLabel={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today's candidates"} onChange={(next) => onSave({ featureHabitCandidatesEnabled: next })} />}
@@ -993,9 +1015,11 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
             </SettingSection>}
 
-            {settingsTarget.category === "workflow" && <SettingSection anchor="metrics" title={lang === "zh" ? "指标" : "Metrics"} description={lang === "zh" ? "规划页指标视图的默认范围与分组。" : "Default range and grouping for the planning-page metrics view."}>
+            </div></details>}
+            {metricsSettingsOpen && <SettingSection anchor="metrics" title={lang === "zh" ? "指标" : "Metrics"} description={lang === "zh" ? "规划页指标视图的默认范围与分组。" : "Default range and grouping for the planning-page metrics view."}>
               <SettingRow control={<SettingActionButton onClick={() => navigateSettings({ category: "plugins" })}>{lang === "zh" ? "管理插件" : "Manage plugins"}</SettingActionButton>} title={lang === "zh" ? "指标插件状态" : "Metrics plugin status"} description={lang === "zh" ? "在设置 → 插件中管理指标插件；以下选项只调整显示方式。" : "Manage the Metrics plugin in Settings → Plugins. The options below adjust its display."} />
               <SettingRow
+                anchor="metrics-range"
                 title={lang === "zh" ? "默认时间范围" : "Default time range"}
                 control={<SettingSelect<NonNullable<Settings["metricsRangePreset"]>>
                   value={settings.metricsRangePreset || "today"}
@@ -1010,6 +1034,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 />}
               />
               <SettingRow
+                anchor="metrics-group"
                 title={lang === "zh" ? "默认分组" : "Default grouping"}
                 control={<SettingSelect<NonNullable<Settings["metricsGroupBy"]>>
                   value={settings.metricsGroupBy || "project"}
@@ -1025,6 +1050,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 />}
               />
               <SettingRow
+                anchor="metrics-display"
                 title={lang === "zh" ? "默认显示指标" : "Default display metric"}
                 control={<SettingSelect<NonNullable<Settings["metricsDisplayMetric"]>>
                   value={settings.metricsDisplayMetric || "percentage"}
@@ -1039,6 +1065,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 />}
               />
               <SettingRow
+                anchor="metrics-habits"
                 title={lang === "zh" ? "习惯是否计入统计" : "Include habits in metrics"}
                 control={<SettingSelect<NonNullable<Settings["metricsIncludeHabits"]>>
                   value={settings.metricsIncludeHabits || "include"}
@@ -1052,6 +1079,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 />}
               />
               <SettingRow
+                anchor="metrics-completion"
                 title={lang === "zh" ? "完成状态筛选" : "Completion filter"}
                 control={<SettingSelect<NonNullable<Settings["metricsCompletionFilter"]>>
                   value={settings.metricsCompletionFilter || "all"}
@@ -1066,7 +1094,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
             </SettingSection>}
 
-            </div></details>}
             {settingsTarget.category === "widget" && <SettingSection
               anchor="desktop-window-settings"
               title={lang === "zh" ? "桌面窗口" : "Desktop Windows"}
@@ -1266,7 +1293,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <section className="df-settings-group" data-settings-anchor="external-calendar" tabIndex={-1}><h3>{lang === "zh" ? "外部日历" : "External Calendars"}</h3><ExternalCalendarManager lang={lang} /></section>}
             {settingsTarget.category === "integrations" && integrationTab === "mcp" && <section className="df-settings-group" data-settings-anchor="mcp" tabIndex={-1}><h3>MCP</h3><Suspense fallback={<p className="df-mcp-status">{lang === "zh" ? "正在打开 MCP…" : "Opening MCP…"}</p>}><McpTokenManager lang={lang} /></Suspense></section>}
             {settingsTarget.category === "integrations" && integrationTab === "sync" && <section className="df-settings-group" data-settings-anchor="sync-bridge" tabIndex={-1}><h3>{lang === "zh" ? "同步" : "Sync"}</h3><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></section>}
-            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings lang={lang} kind="plugin" mcpAccess={settings.extensionMcpAccess} onMcpAccessChange={(owner, grant) => onSave({ extensionMcpAccess: { [owner]: grant } })} settingsPageId={settingsTarget.pluginPage ?? null} onSelectPage={(id) => navigateSettings({ category: "plugins", ...(id ? { pluginPage: id } : {}) })} /></Suspense>}
+            {settingsTarget.category === "plugins" && !metricsSettingsOpen && <Suspense fallback={null}><ExtensionSettings lang={lang} kind="plugin" mcpAccess={settings.extensionMcpAccess} onMcpAccessChange={(owner, grant) => onSave({ extensionMcpAccess: { [owner]: grant } })} settingsPageId={settingsTarget.pluginPage ?? null} onSelectPage={(id) => navigateSettings({ category: "plugins", ...(id ? { pluginPage: id } : {}) })} /></Suspense>}
             {!compactLayout && settingsTarget.category === "account-data" && <SettingSection anchor="account-profile" title={lang === "zh" ? "个人资料" : "Profile"}>
               {profileHero}
             </SettingSection>}
@@ -1341,6 +1368,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 control={<SettingActionButton tone="danger" onClick={onDeleteAccount}>{lang === "zh" ? "删除账户…" : "Delete account…"}</SettingActionButton>}
               />}
             </SettingSection></div></details>}
+            </>}
             </div>
             </>}
               </div>

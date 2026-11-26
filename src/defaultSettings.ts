@@ -14,6 +14,15 @@ import { normalizeExtensionPreferences } from "./extensions/packages";
  * own internal copies for now to avoid a larger refactor, but any new field
  * added to {@link Settings} should land here first.
  */
+export const DEFAULT_CORNER_RADIUS = 32;
+export const MAX_CORNER_RADIUS = 64;
+
+export function normalizeCornerRadius(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.min(MAX_CORNER_RADIUS, Math.max(0, Math.round(value)))
+    : DEFAULT_CORNER_RADIUS;
+}
+
 export const defaultSettings: Settings = {
   activeMode: "execute",
   defaultTimelineView: "daily",
@@ -44,6 +53,7 @@ export const defaultSettings: Settings = {
   weekStartsOn: 0,
   theme: "light",
   typographyStyle: "editorial",
+  workspaceCornerRadius: DEFAULT_CORNER_RADIUS,
   accentColor: "",
   executeAccentColor: "",
   planningAccentColor: "",
@@ -311,6 +321,7 @@ export function normalizeSettings(value: unknown): Settings {
   normalized.weekStartsOn = allowedValue(normalized.weekStartsOn, [0, 1], defaults.weekStartsOn);
   normalized.theme = allowedValue(normalized.theme, ["light", "dark"], defaults.theme);
   normalized.typographyStyle = allowedValue(normalized.typographyStyle, ["editorial", "balanced", "sans"], defaults.typographyStyle);
+  normalized.workspaceCornerRadius = normalizeCornerRadius(stored.workspaceCornerRadius ?? stored.cornerRadius);
   normalized.aiTone = allowedValue(normalized.aiTone, ["direct", "gentle", "strict"], defaults.aiTone);
   normalized.taskNoteDisplay = allowedValue(normalized.taskNoteDisplay, ["summary", "collapsed", "full"], defaults.taskNoteDisplay);
   normalized.uiStyle = allowedValue(normalized.uiStyle, ["gradient", "neumorphic"], defaults.uiStyle);

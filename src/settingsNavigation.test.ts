@@ -41,6 +41,8 @@ describe("settings navigation", () => {
     expect(settingsPrimaryCategory("integrations")).toBe("plugins");
     expect(normalizeSettingsTarget({ category: "general", anchor: "day-start" })).toEqual({ category: "workflow", anchor: "day-start" });
     expect(normalizeSettingsTarget({ category: "account-data", anchor: "auto-launch" })).toEqual({ category: "general", anchor: "auto-launch" });
+    expect(normalizeSettingsTarget("metrics")).toEqual({ category: "plugins", anchor: "metrics" });
+    expect(normalizeSettingsTarget({ category: "workflow", anchor: "metrics" })).toEqual({ category: "plugins", anchor: "metrics" });
   });
 
   it("maps every legacy destination to a reachable target", () => {
