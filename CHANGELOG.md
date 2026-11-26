@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 118
+
+#### 改进
+
+- Metrics 已加载的记录器在任务缓存更新前同步生成待写日志；本地确认的 AI 操作可按来源筛选，秒表状态记录保留已知排程关联及准确的丢弃时长。
+
 ### 1.7.0 Beta 117
 
 #### 修复
@@ -1235,6 +1241,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 118
+
+#### Improvements
+
+- Metrics journals accepted changes before the task cache update when the recorder is loaded; confirmed local AI actions have a dedicated source filter, and stopwatch transitions preserve known execution links and accurate discarded duration.
 
 ### 1.7.0 Beta 117
 
