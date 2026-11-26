@@ -86,19 +86,43 @@ export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,nex
 export function recordTimerTransition(scope:string,taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,projectId:string|undefined,generation:string){
   queue(scope,async()=>{const {makeTimerAnalyticsEvent}=await import("./activityEvents");await journalAndAppend(scope,generation,[makeTimerAnalyticsEvent(taskId,transition,at,elapsedSeconds,crypto.randomUUID(),projectId)]);});
 }
-export async function readAnalyticsEvents(scope:string,start:Date,end:Date,limit=501,projectIds:string[]=[],filters?:{source?:string;entity?:string}):Promise<AnalyticsEvent[]> {
-  if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start)return [];
-  const projects=new Set(projectIds);
+export type AnalyticsPageCursor={occurredAt:string;id:string};
+/** One account-scoped snapshot transaction. Consume rows without materializing the entire log. */
+export async function scanAnalyticsEvents(scope:string,start:Date,end:Date,visit:(event:AnalyticsEvent)=>boolean|void,options:{signal?:AbortSignal;before?:AnalyticsPageCursor}={}):Promise<void>{
+  if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start)return;
+  const {signal,before}=options;
+  if(signal?.aborted)return;
+  if(before&&(!Number.isFinite(Date.parse(before.occurredAt))||before.occurredAt<start.toISOString()||before.occurredAt>=end.toISOString()))return;
   const db=await open();
-  try {
-    const tx=db.transaction(STORE,"readonly"), idx=tx.objectStore(STORE).index("scopeDate");
-    const bounds=IDBKeyRange.bound([scope,start.toISOString()],[scope,end.toISOString()],false,true);
-    return await new Promise((resolve,reject)=>{
-      const out:AnalyticsEvent[]=[]; const req=idx.openCursor(bounds,"prev");
-      req.onerror=()=>reject(req.error);
-      req.onsuccess=()=>{const c=req.result;if(!c || out.length>=limit){resolve(out);return;}const {scope:_,...event}=c.value as StoredEvent;if((!projects.size||projects.has(event.projectId||"__unassigned__"))&&(!filters?.source||filters.source===event.source)&&(!filters?.entity||filters.entity===event.entityType))out.push({...event,id:event.id.startsWith(scope+":")?event.id.slice(scope.length+1):event.id});c.continue();};
+  try{
+    if(signal?.aborted)return;
+    const tx=db.transaction(STORE,"readonly"),idx=tx.objectStore(STORE).index("scopeDate");
+    const bounds=IDBKeyRange.bound([scope,start.toISOString()],[scope,before?.occurredAt||end.toISOString()],false,!before);
+    await new Promise<void>((resolve,reject)=>{
+      const stop=()=>{try{tx.abort();}catch{/* already completed */}};
+      signal?.addEventListener("abort",stop,{once:true});
+      const cleanup=()=>signal?.removeEventListener("abort",stop);
+      tx.oncomplete=()=>{cleanup();resolve();};
+      tx.onabort=()=>{cleanup();if(signal?.aborted)resolve();else reject(tx.error||Error("Analytics read aborted"));};
+      const req=idx.openCursor(bounds,"prev");
+      req.onsuccess=()=>{
+        const c=req.result;if(!c||signal?.aborted)return;
+        const {scope:_,...event}=c.value as StoredEvent;
+        if(before&&event.occurredAt===before.occurredAt&&indexedDB.cmp(c.primaryKey,scope+":"+before.id)>=0){c.continue();return;}
+        try{if(visit({...event,id:event.id.startsWith(scope+":")?event.id.slice(scope.length+1):event.id})!==false)c.continue();}
+        catch(error){cleanup();reject(error);stop();}
+      };
     });
-  } finally {db.close();}
+  }finally{db.close();}
+}
+export async function readAnalyticsEvents(scope:string,start:Date,end:Date,limit=501,projectIds:string[]=[],filters?:{source?:string;entity?:string},options:{signal?:AbortSignal;before?:AnalyticsPageCursor}={}):Promise<AnalyticsEvent[]>{
+  const projects=new Set(projectIds),out:AnalyticsEvent[]=[];
+  if(limit<=0)return out;
+  await scanAnalyticsEvents(scope,start,end,event=>{
+    if((!projects.size||projects.has(event.projectId||"__unassigned__"))&&(!filters?.source||filters.source===event.source)&&(!filters?.entity||filters.entity===event.entityType))out.push(event);
+    return out.length<limit;
+  },options);
+  return out;
 }
 type StoredPlan=PlanBaseline & {scope:string};
 const captured=new Set<string>();
