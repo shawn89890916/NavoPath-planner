@@ -37,8 +37,8 @@ export function normalizeSyncSnapshot(value: unknown): SyncSnapshot {
 
 const normalizeTitle = (value: unknown) => String(value || "").normalize("NFKC").trim().toLocaleLowerCase();
 export function createInitialPreview(state: SyncState) {
-  const navopath = state.latest.navopath || { projects: [], tasks: [] };
-  const superproductivity = state.latest.superproductivity || { projects: [], tasks: [] };
+  const navopath: SyncSnapshot = state.latest.navopath || { projects: [], tasks: [] };
+  const superproductivity: SyncSnapshot = state.latest.superproductivity || { projects: [], tasks: [] };
   const candidates = (kind: "project" | "task") => {
     const left = navopath[kind === "project" ? "projects" : "tasks"];
     const right = superproductivity[kind === "project" ? "projects" : "tasks"];
