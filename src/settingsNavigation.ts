@@ -49,10 +49,19 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategoryDefinition[] = [
   { id: "account-data", labelZh: "账户与数据", labelEn: "Account & Data" },
 ];
 
+/** Keep all historical categories addressable; only these appear at the root. */
+export const SETTINGS_PRIMARY_CATEGORIES = SETTINGS_CATEGORIES.filter(({ id }) => id !== "widget" && id !== "integrations").map((category) => category.id === "plugins" ? { ...category, labelZh: "扩展与连接", labelEn: "Extensions & Connections" } : category);
+
+export function settingsPrimaryCategory(category: SettingsCategory): SettingsCategory {
+  if (category === "widget") return "appearance";
+  if (category === "integrations") return "plugins";
+  return category;
+}
+
 const legacyTargets: Record<LegacySettingsSection, SettingsTarget> = {
   general: { category: "general" },
   appearance: { category: "appearance" },
-  execution: { category: "general", anchor: "execution-defaults" },
+  execution: { category: "workflow", anchor: "execution-defaults" },
   planning: { category: "workflow", anchor: "planning-views" },
   templates: { category: "workflow", anchor: "templates" },
   habits: { category: "workflow", anchor: "habits" },
@@ -79,6 +88,8 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
     if (input.detail === "integrations") return { category: "integrations", anchor: input.anchor };
     return { category: "account-data", anchor: input.anchor || "reset-settings" };
   }
+  if (input.anchor && ["execution-defaults", "day-start", "default-timeline", "continuous-scroll", "hide-completed"].includes(input.anchor)) return { category: "workflow", anchor: input.anchor };
+  if (input.anchor === "auto-launch") return { category: "general", anchor: input.anchor };
   if (input.anchor === "updates" || input.anchor === "beta-updates") return { category: "general", anchor: input.anchor };
   if (input.category === "integrations" && input.anchor === "plugins") return { category: "plugins", anchor: "plugins" };
   if (!SETTINGS_CATEGORIES.some((category) => category.id === input.category)) return { category: "general" };
@@ -129,10 +140,10 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("external-calendar", { category: "integrations" }, "外部日历", "External calendars", "read only ICS busy time 只读 忙碌 冲突"),
   entry("language", { category: "general" }, "语言", "Language", "中文 English locale"),
   entry("notification-badge", { category: "general" }, "应用内通知角标", "In-app notification badge", "unread count notifications badge 通知 未读 提醒 角标"),
-  entry("day-start", { category: "general" }, "一天开始时间", "Day start time", "timeline boundary 跨天"),
-  entry("default-timeline", { category: "general" }, "默认时间轴视图", "Default timeline view", "day 3-day week month 日 周 月"),
-  entry("continuous-scroll", { category: "general" }, "开启无限跨天滚动", "Continuous cross-day scroll", "timeline"),
-  entry("hide-completed", { category: "general" }, "隐藏已完成任务", "Hide completed tasks", "timeline 时间轴"),
+  entry("day-start", { category: "workflow" }, "一天开始时间", "Day start time", "timeline boundary 跨天"),
+  entry("default-timeline", { category: "workflow" }, "默认时间轴视图", "Default timeline view", "day 3-day week month 日 周 月"),
+  entry("continuous-scroll", { category: "workflow" }, "开启无限跨天滚动", "Continuous cross-day scroll", "timeline"),
+  entry("hide-completed", { category: "workflow" }, "隐藏已完成任务", "Hide completed tasks", "timeline 时间轴"),
   entry("shortcuts", { category: "general" }, "快捷键", "Shortcuts", "keyboard hotkeys help 帮助"),
   entry("restart-onboarding", { category: "general" }, "重新开始新手指南", "Restart onboarding guide", "tutorial 引导"),
 
@@ -155,12 +166,13 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("sync", { category: "account-data" }, "同步", "Sync", "cloud interval push pull 云端"),
   entry("updates", { category: "general" }, "应用更新", "App updates", "desktop version 桌面 版本"),
   entry("beta-updates", { category: "general" }, "接受 Beta 更新", "Accept Beta updates", "beta prerelease preview 测试 预览 更新"),
-  entry("auto-launch", { category: "account-data" }, "开机启动", "Launch at startup", "desktop login 开机自启"),
+  entry("auto-launch", { category: "general" }, "开机启动", "Launch at startup", "desktop login 开机自启"),
   entry("data-backup", { category: "account-data" }, "数据与备份", "Data & Backup", "import export json csv 导入 导出"),
   entry("clear-local-data", { category: "account-data" }, "清空本地数据", "Clear local data", "delete danger 删除 危险"),
   entry("delete-account", { category: "account-data" }, "删除账户", "Delete account", "danger sign out logout 危险 退出"),
 
-  entry("ai-model", { category: "ai" }, "高级模型偏好", "Advanced model preference", "model routing 模型"),
+  entry("ai-provider", { category: "ai" }, "AI 提供商与密钥", "AI provider and key", "API key provider model 服务商 密钥"),
+  entry("ai-model", { category: "ai", anchor: "ai-provider" }, "高级模型偏好", "Advanced model preference", "model routing 模型"),
   entry("ai-reasoning", { category: "ai" }, "思考模式", "Reasoning mode", "instant high xhigh"),
   entry("ai-estimate", { category: "ai" }, "自动估算任务用时", "Estimate task duration", "AI duration"),
   entry("ai-project", { category: "ai" }, "自动归入项目", "Auto-assign project", "AI confidence"),
@@ -200,7 +212,7 @@ export function searchSettings(query: string, lang: Language, desktopAvailable =
   if (tokens.length === 0) return [];
   return SETTINGS_SEARCH_ENTRIES
     .filter((item) => desktopAvailable || item.target.category !== "widget")
-    .filter((item) => desktopAvailable || item.id !== "beta-updates")
+    .filter((item) => desktopAvailable || !["beta-updates", "auto-launch"].includes(item.id))
     .filter((item) => tokens.every((token) => searchableText(item).includes(token)))
     .sort((a, b) => {
       const aLabel = (lang === "zh" ? a.labelZh : a.labelEn).toLocaleLowerCase();

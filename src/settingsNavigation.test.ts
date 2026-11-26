@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   SETTINGS_CATEGORIES,
+  SETTINGS_PRIMARY_CATEGORIES,
+  settingsPrimaryCategory,
   SETTINGS_SEARCH_ENTRIES,
   normalizeSettingsTarget,
   searchSettings,
@@ -33,8 +35,16 @@ describe("settings navigation", () => {
     ]);
   });
 
+  it("keeps six primary categories while retaining nested legacy destinations", () => {
+    expect(SETTINGS_PRIMARY_CATEGORIES.map(c => c.id)).toEqual(["general", "appearance", "workflow", "ai", "plugins", "account-data"]);
+    expect(settingsPrimaryCategory("widget")).toBe("appearance");
+    expect(settingsPrimaryCategory("integrations")).toBe("plugins");
+    expect(normalizeSettingsTarget({ category: "general", anchor: "day-start" })).toEqual({ category: "workflow", anchor: "day-start" });
+    expect(normalizeSettingsTarget({ category: "account-data", anchor: "auto-launch" })).toEqual({ category: "general", anchor: "auto-launch" });
+  });
+
   it("maps every legacy destination to a reachable target", () => {
-    expect(normalizeSettingsTarget("execution")).toEqual({ category: "general", anchor: "execution-defaults" });
+    expect(normalizeSettingsTarget("execution")).toEqual({ category: "workflow", anchor: "execution-defaults" });
     expect(normalizeSettingsTarget("templates")).toEqual({ category: "workflow", anchor: "templates" });
     expect(normalizeSettingsTarget("account")).toEqual({ category: "account-data", anchor: "account" });
     expect(normalizeSettingsTarget("plugins")).toEqual({ category: "plugins", anchor: "plugins" });

@@ -102,3 +102,9 @@
   .df-settings-toggle::before, .df-settings-toggle-knob,
   #root .df-app :is(.df-settings-select, .df-settings-input, .df-settings-number) { transition: none; }
 }
+
+/* Progressive disclosure keeps low-frequency controls available without crowding the page. */
+.df-settings-progressive { min-width: 0; margin-block: 8px; }
+.df-settings-progressive > summary { cursor: pointer; padding: 10px 4px; font: inherit; font-weight: 500; }
+.df-settings-progressive > summary:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.df-settings-progressive-body { min-width: 0; padding-block: 4px 8px; }

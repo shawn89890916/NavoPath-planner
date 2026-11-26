@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./workspaceEnvironment";
 import { formatLastSyncedAt, presetForMinutes, SYNC_INTERVAL_PRESETS } from "./sync";
 import { t, viewLabel } from "./i18n";
-import { SETTINGS_CATEGORIES, normalizeSettingsTarget, searchSettings, settingsCategoryLabel, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
+import { SETTINGS_PRIMARY_CATEGORIES, settingsPrimaryCategory, normalizeSettingsTarget, searchSettings, settingsCategoryLabel, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { extensionService } from "./extensions/service";
 import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon } from "./components/UiIcons";
 import { DEFAULT_WIDGET_APPEARANCE, normalizeWidgetAppearance } from "./widget/widgetPreferences";
@@ -378,7 +378,7 @@ function AccountMoreSection({ lang, onShowAbout }: { lang: Language; onShowAbout
 
 function settingsCategoryDescription(category: SettingsCategory, lang: Language, isDark: boolean): string {
   const descriptions: Record<SettingsCategory, [string, string]> = {
-    general: ["语言、时间边界、应用更新与快捷键。", "Language, time boundaries, app updates, and shortcuts."],
+    general: ["语言、通知、启动与更新。", "Language, notifications, startup, and updates."],
     appearance: isDark
       ? ["深色交互高亮使用柔和白色；浅色模式可继续使用已保存的强调色。", "Dark mode uses a softened white interaction accent; saved accents remain available in light mode."]
       : ["界面模式、字体与强调色。", "Interface mode, typography, and accent color."],
@@ -387,7 +387,7 @@ function settingsCategoryDescription(category: SettingsCategory, lang: Language,
     ai: ["Navo AI 的模型、记忆与主动助理。", "Navo AI models, memory, and proactive assistant."],
     widget: ["桌面窗口的外观与计时器。", "Desktop window appearance and timer."],
     integrations: ["日历订阅、外部日历、MCP 与云盘同步。", "Calendar subscriptions, external calendars, MCP, and cloud-folder sync."],
-    plugins: ["扩展市场、插件管理与来源。", "Extension market, plugin management, and sources."],
+    plugins: ["插件、日历与外部连接。", "Plugins, calendars, and external connections."],
     advanced: ["高级设置与恢复选项。", "Advanced and recovery options."],
   };
   return descriptions[category][lang === "zh" ? 0 : 1];
@@ -458,6 +458,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
     if (settingsTarget.anchor === "mcp") setIntegrationTab("mcp");
     if (settingsTarget.anchor === "sync-bridge") setIntegrationTab("sync");
 
+    if (settingsTarget.anchor === "calendar-feed") setIntegrationTab("calendar");
     if (settingsTarget.anchor === "external-calendar") setIntegrationTab("external-calendar");
   }, [settingsTarget.anchor]);
   useEffect(() => {
@@ -471,11 +472,14 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
         content.scrollTop = 0;
         return;
       }
-      content.scrollTop = Math.max(0, anchor.offsetTop - 12);
+      for (let parent = anchor.parentElement; parent && parent !== content; parent = parent.parentElement) {
+        if (parent instanceof HTMLDetailsElement) parent.open = true;
+      }
+      content.scrollTop = Math.max(0, anchor.getBoundingClientRect().top - content.getBoundingClientRect().top + content.scrollTop - 12);
       anchor.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(handle);
-  }, [settingsTarget]);
+  }, [settingsTarget, integrationTab, widgetThemeOpen, settingsHome]);
 
   function navigateSettings(target: SettingsTarget) {
     if (target.anchor === "shortcuts") setShortcutsOpen(true);
@@ -487,7 +491,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
     if (target.anchor === "calendar-feed") setIntegrationTab("calendar");
     if (target.anchor === "external-calendar") setIntegrationTab("external-calendar");
     void runMotionTransition(() => flushSync(() => {
-      setSettingsTarget(resolveRuntimeTarget(target));
+      setSettingsTarget(resolveRuntimeTarget(normalizeSettingsTarget(target)));
+      setNavigationQuery("");
       setSettingsHome(false);
     }), { scope: "settings", direction: "neutral" });
   }
@@ -728,6 +733,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             {settingsHome ? (
               <div className="df-settings-home">
                 {profileHero}
+                <SettingTextInput value={navigationQuery} placeholder={lang === "zh" ? "搜索所有设置…" : "Search all settings…"} ariaLabel={lang === "zh" ? "搜索设置" : "Search settings"} onChange={setNavigationQuery} />
+                {navigationQuery.trim() && <div className="df-settings-home-card">{navigationResults.map(result => <button type="button" key={result.id} className="df-settings-home-entry" onClick={() => navigateSettings(result.target)}>{lang === "zh" ? result.labelZh : result.labelEn}</button>)}{pluginPages.filter(page => page.name.toLocaleLowerCase().includes(navigationQuery.trim().toLocaleLowerCase())).map(page => <button type="button" key={page.id} className="df-settings-home-entry" onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}>{page.name}</button>)}</div>}
                 {!compactLayout && <section className="df-settings-home-card df-settings-home-notification-card">
                   <button type="button" className="df-settings-home-entry" onClick={openNotifications}>
                     <span className="df-settings-home-entry-icon"><UiBellIcon size={19} strokeWidth={1.8} /></span>
@@ -783,7 +790,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                     <p>{lang === "zh" ? "打开一个分区，查看全部相关选项。" : "Open a section to see all related options."}</p>
                   </header>
                   <div className="df-settings-home-card df-settings-home-detail-card">
-                    {SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => (
+                    {SETTINGS_PRIMARY_CATEGORIES.map((category) => (
                       <button type="button" className="df-settings-home-entry" key={category.id} onClick={() => navigateSettings({ category: category.id })}>
                         <span className="df-settings-home-entry-icon"><SettingsCategoryIcon category={category.id} /></span>
                         <span className="df-settings-home-entry-copy">
@@ -795,22 +802,25 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                     ))}
                   </div>
                 </section>
-                {pluginPages.length > 0 && <section className="df-settings-home-group"><header className="df-settings-home-heading"><h3>{lang === "zh" ? "插件设置" : "Plugin settings"}</h3></header><div className="df-settings-home-card df-settings-home-detail-card">{pluginPages.map(page => <button type="button" className="df-settings-home-entry" key={page.id} onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}><span className="df-settings-home-entry-icon" aria-hidden="true"><SettingsCategoryIcon category="plugins" /></span><span className="df-settings-home-entry-copy"><strong>{page.name}</strong></span><span className="df-settings-home-entry-chevron" aria-hidden="true">›</span></button>)}</div></section>}
               </div>
             ) : <>
             <div className="df-settings-rail">
               <SettingTextInput value={navigationQuery} placeholder={lang === "zh" ? "搜索设置…" : "Search settings…"} ariaLabel={lang === "zh" ? "搜索设置" : "Search settings"} onChange={setNavigationQuery} />
               <nav className="df-settings-nav ui-choice-list ui-choice-list--motion-selection" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
-                <SelectionIndicator activeKey={navigationQuery.trim() ? "" : `${settingsTarget.pluginPage ? `plugin:${settingsTarget.pluginPage}` : `category:${settingsTarget.category}`}:${lang}:${pluginPages.length}`} />
-                {navigationQuery.trim() ? navigationResults.map(result => <button type="button" key={result.id} className="ui-choice-item" onClick={() => navigateSettings(result.target)}>{lang === "zh" ? result.labelZh : result.labelEn}</button>) : SETTINGS_CATEGORIES.filter((category) => category.id !== "widget" || isDesktopRuntime).map((category) => (
-                  <button type="button" key={category.id} className={`ui-choice-item${settingsTarget.category === category.id && !settingsTarget.pluginPage ? " active" : ""}`} aria-current={settingsTarget.category === category.id && !settingsTarget.pluginPage ? "page" : undefined} onClick={() => navigateSettings({ category: category.id })}>{lang === "zh" ? category.labelZh : category.labelEn}</button>
+                <SelectionIndicator activeKey={navigationQuery.trim() ? "" : `${settingsTarget.pluginPage ? `plugin:${settingsTarget.pluginPage}` : `category:${settingsPrimaryCategory(settingsTarget.category)}`}:${lang}:${pluginPages.length}`} />
+                {navigationQuery.trim() ? navigationResults.map(result => <button type="button" key={result.id} className="ui-choice-item" onClick={() => navigateSettings(result.target)}>{lang === "zh" ? result.labelZh : result.labelEn}</button>) : SETTINGS_PRIMARY_CATEGORIES.map((category) => (
+                  <button type="button" key={category.id} className={`ui-choice-item${settingsPrimaryCategory(settingsTarget.category) === category.id && !settingsTarget.pluginPage ? " active" : ""}`} aria-current={settingsPrimaryCategory(settingsTarget.category) === category.id && !settingsTarget.pluginPage ? "page" : undefined} onClick={() => navigateSettings({ category: category.id })}>{lang === "zh" ? category.labelZh : category.labelEn}</button>
                 ))}
-                {pluginPages.length > 0 && <><h3 className="df-settings-nav-heading">{lang === "zh" ? "插件设置" : "Plugin settings"}</h3>{pluginPages.filter(page => page.name.toLocaleLowerCase().includes(navigationQuery.trim().toLocaleLowerCase())).map(page => <button type="button" key={page.id} className={`ui-choice-item${settingsTarget.pluginPage === page.id ? " active" : ""}`} aria-current={settingsTarget.pluginPage === page.id ? "page" : undefined} onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}>{page.name}</button>)}</>}
+                {pluginPages.length > 0 && (settingsPrimaryCategory(settingsTarget.category) === "plugins" || Boolean(navigationQuery.trim())) && <><h3 className="df-settings-nav-heading">{lang === "zh" ? "插件设置" : "Plugin settings"}</h3>{pluginPages.filter(page => page.name.toLocaleLowerCase().includes(navigationQuery.trim().toLocaleLowerCase())).map(page => <button type="button" key={page.id} className={`ui-choice-item${settingsTarget.pluginPage === page.id ? " active" : ""}`} aria-current={settingsTarget.pluginPage === page.id ? "page" : undefined} onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}>{page.name}</button>)}</>}
               </nav>
               {!navigationQuery.trim() && pluginUpdateCount > 0 && <button type="button" className="df-plugin-update-notice" onClick={() => navigateSettings({ category: "plugins" })}><span className="df-plugin-update-notice-dot" aria-hidden="true" /><span><strong>{lang === "zh" ? `${pluginUpdateCount} 个插件可更新` : `${pluginUpdateCount} plugin updates`}</strong><small>{lang === "zh" ? "查看并安装更新" : "Review and install updates"}</small></span><span aria-hidden="true">›</span></button>}
             </div>
             <div ref={settingsContentRef} className="df-settings-content">
-            {settingsTarget.category === "general" && <SettingSection anchor="general-basics" title={lang === "zh" ? "基础" : "Basics"} description={lang === "zh" ? "语言、时间边界与通知显示。" : "Language, time boundary, and notification display."}>
+            {settingsTarget.category === "appearance" && isDesktopRuntime && <SettingRow title={lang === "zh" ? "桌面窗口" : "Desktop Windows"} control={<SettingActionButton onClick={() => navigateSettings({ category: "widget" })}>{lang === "zh" ? "管理" : "Manage"}</SettingActionButton>} />}
+            {settingsTarget.category === "widget" && <SettingRow title={lang === "zh" ? "外观" : "Appearance"} control={<SettingActionButton onClick={() => navigateSettings({ category: "appearance" })}>{lang === "zh" ? "返回" : "Back"}</SettingActionButton>} />}
+            {settingsTarget.category === "plugins" && !settingsTarget.pluginPage && <SettingRow title={lang === "zh" ? "日历与外部连接" : "Calendar & external connections"} control={<SettingActionButton onClick={() => navigateSettings({ category: "integrations", anchor: "calendar-feed" })}>{lang === "zh" ? "管理" : "Manage"}</SettingActionButton>} />}
+            {settingsTarget.category === "integrations" && <SettingRow title={lang === "zh" ? "扩展与连接" : "Extensions & Connections"} control={<SettingActionButton onClick={() => navigateSettings({ category: "plugins" })}>{lang === "zh" ? "返回" : "Back"}</SettingActionButton>} />
+            {settingsTarget.category === "general" && <SettingSection anchor="general-basics" title={lang === "zh" ? "基础" : "Basics"} description={lang === "zh" ? "语言与通知显示。" : "Language and notification display."}>
               <SettingRow
                 anchor="language"
                 title={lang === "zh" ? "语言" : "Language"}
@@ -823,12 +833,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                     { value: "en", label: "English" },
                   ]}
                 />}
-              />
-              <SettingRow
-                anchor="day-start"
-                title={lang === "zh" ? "一天开始时间" : "Day start time"}
-                description={lang === "zh" ? "决定时间轴的起始分界，影响跨天滚动与统计范围。" : "Sets the boundary used by the timeline, cross-day scroll, and metric ranges."}
-                control={<SettingTextInput type="time" value={settings.dayStartTime || "00:00"} ariaLabel={lang === "zh" ? "一天开始时间" : "Day start time"} onChange={(value) => onSave({ dayStartTime: value })} />}
               />
               <SettingRow
                 anchor="notification-badge"
@@ -868,6 +872,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                   ]}
                 />}
               />
+              <details className="df-settings-progressive"><summary>{lang === "zh" ? "进阶外观" : "Advanced appearance"}</summary><div className="df-settings-progressive-body">
               <SettingRow
                 anchor="timeline-font"
                 title={lang === "zh" ? "时间轴字体大小" : "Timeline font size"}
@@ -888,6 +893,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                   </span>
                 }
               />
+              </div></details>
               {settings.theme !== "dark" && <div className="df-settings-accent-colors" data-settings-anchor="accent-colors" tabIndex={-1}>
                 <SettingDescription>{lang === "zh" ? "点缀色用于细线、勾选与当前时间标记，不会作为大面积填充。" : "Accent colors are used for fine rules, checks, and the current-time marker, never as dominant fills."}</SettingDescription>
                 <div className="df-settings-accent-row">
@@ -901,8 +907,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               </div>}
             </SettingSection>}
 
-            {settingsTarget.category === "appearance" && <Suspense fallback={null}><ExtensionSettings lang={lang} kind="theme" /></Suspense>}
-            {settingsTarget.category === "general" && <SettingSection anchor="execution-defaults" title={lang === "zh" ? "执行默认项" : "Execution defaults"} description={lang === "zh" ? "时间轴与完成任务的默认行为。" : "Default timeline and completed-task behavior."}>
+            {settingsTarget.category === "appearance" && <details className="df-settings-progressive"><summary>{lang === "zh" ? "社区主题" : "Community themes"}</summary><div className="df-settings-progressive-body" data-settings-anchor="themes" tabIndex={-1}><Suspense fallback={null}><ExtensionSettings lang={lang} kind="theme" /></Suspense></div></details>}
+            {settingsTarget.category === "workflow" && <SettingSection anchor="execution-defaults" title={lang === "zh" ? "执行默认项" : "Execution defaults"} description={lang === "zh" ? "时间轴与完成任务的默认行为。" : "Default timeline and completed-task behavior."}>
               <SettingRow
                 anchor="default-timeline"
                 title={lang === "zh" ? "默认时间轴视图" : "Default timeline view"}
@@ -919,21 +925,29 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 />}
               />
               <SettingRow
-                anchor="continuous-scroll"
-                title={lang === "zh" ? "开启无限跨天滚动" : "Continuous cross-day scroll"}
-                description={lang === "zh" ? "时间轴可连续滚动到前后日期。" : "The timeline scrolls continuously across days."}
-                control={<SettingToggle checked={settings.continuousCrossDayScroll !== false} ariaLabel={lang === "zh" ? "无限跨天滚动" : "Continuous cross-day scroll"} onChange={(next) => onSave({ continuousCrossDayScroll: next })} />}
-              />
-              <SettingRow
                 anchor="hide-completed"
                 title={t(lang, "settings.hideCompleted")}
                 description={lang === "zh" ? "在时间轴上隐藏已完成任务。" : "Hide completed tasks from the timeline."}
                 control={<SettingToggle checked={Boolean(settings.hideCompleted)} ariaLabel={t(lang, "settings.hideCompleted")} onChange={(next) => onSave({ hideCompleted: next })} />}
               />
+              <details className="df-settings-progressive"><summary>{lang === "zh" ? "进阶时间轴设置" : "Advanced timeline settings"}</summary><div className="df-settings-progressive-body">
+              <SettingRow
+                anchor="day-start"
+                title={lang === "zh" ? "一天开始时间" : "Day start time"}
+                description={lang === "zh" ? "决定时间轴的起始分界，影响跨天滚动与统计范围。" : "Sets the boundary used by the timeline, cross-day scroll, and metric ranges."}
+                control={<SettingTextInput type="time" value={settings.dayStartTime || "00:00"} ariaLabel={lang === "zh" ? "一天开始时间" : "Day start time"} onChange={(value) => onSave({ dayStartTime: value })} />}
+              />
+              <SettingRow
+                anchor="continuous-scroll"
+                title={lang === "zh" ? "开启无限跨天滚动" : "Continuous cross-day scroll"}
+                description={lang === "zh" ? "时间轴可连续滚动到前后日期。" : "The timeline scrolls continuously across days."}
+                control={<SettingToggle checked={settings.continuousCrossDayScroll !== false} ariaLabel={lang === "zh" ? "无限跨天滚动" : "Continuous cross-day scroll"} onChange={(next) => onSave({ continuousCrossDayScroll: next })} />}
+              />
+              </div></details>
             </SettingSection>}
 
             {settingsTarget.category === "workflow" && <SettingSection anchor="planning-views" title={lang === "zh" ? "规划视图" : "Planning views"} description={lang === "zh" ? "在插件设置中安装、启用或停用规划视图。" : "Install, enable, or disable Planning views in Plugin settings."}>
-              <SettingRow title={lang === "zh" ? "管理规划视图插件" : "Manage Planning view plugins"} description={lang === "zh" ? "树和指标是预装官方插件；看板、矩阵和列表可从插件市场安装。" : "Tree and Metrics are preinstalled official plugins. Kanban, Matrix, and List are available in the plugin market."} />
+              <SettingRow control={<SettingActionButton onClick={() => navigateSettings({ category: "plugins" })}>{lang === "zh" ? "管理" : "Manage"}</SettingActionButton>} title={lang === "zh" ? "管理规划视图插件" : "Manage Planning view plugins"} description={lang === "zh" ? "树和指标是预装官方插件；看板、矩阵和列表可从插件市场安装。" : "Tree and Metrics are preinstalled official plugins. Kanban, Matrix, and List are available in the plugin market."} />
             </SettingSection>}
 
             {settingsTarget.category === "workflow" && <SettingSection anchor="smart-scheduling" title={lang === "zh" ? "智能排程" : "Smart scheduling"} description={lang === "zh" ? "定义自动排程使用的工作时段与任务间隔。" : "Define the working window and task spacing used by automatic scheduling."}>
@@ -947,13 +961,15 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 title={lang === "zh" ? "规划结束" : "Planning ends"}
                 control={<SettingTextInput type="time" value={settings.dayEndTime || "22:00"} ariaLabel={lang === "zh" ? "规划结束" : "Planning ends"} onChange={(value) => onSave({ dayEndTime: value })} />}
               />
+              <details className="df-settings-progressive"><summary>{lang === "zh" ? "进阶排程" : "Advanced scheduling"}</summary><div className="df-settings-progressive-body">
               <SettingRow
                 anchor="schedule-buffer"
                 title={lang === "zh" ? "任务缓冲" : "Task buffer"}
                 description={lang === "zh" ? "自动排程在相邻任务间预留的时间。" : "Time reserved between adjacent automatically scheduled tasks."}
                 control={<SettingNumberInput value={settings.scheduleBufferMinutes ?? 5} min={0} max={60} step={5} suffix={lang === "zh" ? "分钟" : "min"} ariaLabel={lang === "zh" ? "任务缓冲" : "Task buffer"} onChange={(value) => onSave({ scheduleBufferMinutes: Math.max(0, Math.min(60, value)) })} />}
               />
-            </SettingSection>}
+            </div></details>
+              </SettingSection>}
 
             {settingsTarget.category === "workflow" && <SettingSection anchor="habits" title={lang === "zh" ? "习惯" : "Habits"} description={lang === "zh" ? "每日 / 每周重复行为的开关与显示。" : "Toggles and visibility for daily / weekly recurring behaviors."}>
               <SettingRow
@@ -965,20 +981,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 title={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today's candidates"}
                 description={lang === "zh" ? "关闭后仅隐藏今日候选中的习惯区，保留习惯功能和数据。" : "When off, only hides the habits area in today's candidates; habit features and data stay available."}
                 control={<SettingToggle checked={settings.featureHabitCandidatesEnabled !== false} disabled={settings.featureHabitsEnabled === false} ariaLabel={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today's candidates"} onChange={(next) => onSave({ featureHabitCandidatesEnabled: next })} />}
-              />
-              <SettingRow
-                title={lang === "zh" ? "习惯是否计入指标" : "Include habits in metrics"}
-                description={lang === "zh" ? "控制指标页是否统计习惯时间。" : "Control whether metrics include habit time."}
-                control={<SettingSelect<NonNullable<Settings["metricsIncludeHabits"]>>
-                  value={settings.metricsIncludeHabits || "include"}
-                  ariaLabel={lang === "zh" ? "习惯是否计入指标" : "Include habits in metrics"}
-                  onChange={(value) => onSave({ metricsIncludeHabits: value })}
-                  options={[
-                    { value: "include", label: lang === "zh" ? "计入" : "Include" },
-                    { value: "exclude", label: lang === "zh" ? "排除" : "Exclude" },
-                    { value: "only", label: lang === "zh" ? "仅习惯" : "Habits only" },
-                  ]}
-                />}
               />
             </SettingSection>}
 
@@ -1103,6 +1105,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 control={<SettingNumberInput value={Math.round(widgetAppearance.opacity * 100)} min={0} max={100} step={1} suffix="%" ariaLabel={lang === "zh" ? "小组件背景透明度" : "Widget background opacity"} onChange={(value) => saveWidgetAppearance({ opacity: value / 100 })} />}
               />
               <SettingDivider />
+              <details className="df-settings-progressive"><summary>{lang === "zh" ? "自定义小组件外观" : "Customize widget appearance"}</summary><div className="df-settings-progressive-body">
               <SettingRow
                 anchor="widget-font"
                 title={lang === "zh" ? "字体" : "Font family"}
@@ -1134,6 +1137,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 </div>;
               })()}
               <SettingDivider />
+              </div></details>
               <SettingRow
                 anchor="widget-timer"
                 title={lang === "zh" ? "计时模式" : "Timer mode"}
@@ -1160,8 +1164,11 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             </SettingSection>}
             {settingsTarget.category === "general" && isDesktopRuntime && <SettingSection title={lang === "zh" ? "应用更新" : "App updates"}>
               <div data-settings-anchor="updates" tabIndex={-1}><Suspense fallback={null}><DesktopUpdateControl lang={lang} /></Suspense></div>
+              <details className="df-settings-progressive"><summary>{lang === "zh" ? "测试版更新" : "Beta updates"}</summary><div className="df-settings-progressive-body">
               <div data-settings-anchor="beta-updates" tabIndex={-1}><Suspense fallback={null}><BetaUpdatePreference lang={lang} onSave={onSave} /></Suspense></div>
-            </SettingSection>}
+            </div></details>
+              </SettingSection>}
+            {settingsTarget.category === "general" && isDesktopRuntime && <div data-settings-anchor="auto-launch" tabIndex={-1}><Suspense fallback={null}><AutoLaunchToggle lang={lang} /></Suspense></div>}
             {settingsTarget.category === "general" && <SettingSection anchor="general-help" title={lang === "zh" ? "帮助" : "Help"}>
               <SettingRow
                 anchor="restart-onboarding"
@@ -1201,18 +1208,22 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             </SettingSection>}
             {settingsTarget.category === "ai" && <SettingSection title="Navo AI" description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
               <SettingRow layout="stacked" anchor="ai-provider" title={lang === "zh" ? "AI 提供商与密钥" : "AI provider and key"} description={lang === "zh" ? "支持 DeepSeek、SiliconFlow、OpenAI、Anthropic、GLM 和通义千问。" : "Supports DeepSeek, SiliconFlow, OpenAI, Anthropic, GLM, and Qwen."} control={<Suspense fallback={null}><AiProviderSettings lang={lang} onSave={onSave} /></Suspense>} />
+              <details className="df-settings-progressive"><summary>{lang === "zh" ? "进阶模型设置" : "Advanced model settings"}</summary><div className="df-settings-progressive-body">
               <SettingRow anchor="ai-reasoning" title={lang === "zh" ? "思考模式" : "Reasoning mode"} control={<SettingSelect value={settings.reasoningMode || "instant"} ariaLabel={lang === "zh" ? "思考模式" : "Reasoning mode"} onChange={(value) => onSave({ reasoningMode: value as Settings["reasoningMode"] })} options={[
                 { value: "instant", label: lang === "zh" ? "即时" : "Instant" },
                 ...reasoningModesForModel(settings.model).filter((mode) => mode === "high" || mode === "xhigh").map((mode) => ({ value: mode, label: mode === "xhigh" ? "Xhigh" : "High" })),
               ]} />} />
+              </div></details>
               <SettingRow anchor="ai-estimate" title={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} control={<SettingToggle checked={settings.autoEstimateTaskDuration !== false} ariaLabel={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} onChange={(next) => onSave({ autoEstimateTaskDuration: next })} />} />
               <SettingRow anchor="ai-project" title={lang === "zh" ? "自动归入项目" : "Auto-assign project"} description={lang === "zh" ? "仅在判断置信度较高时归入已有项目。" : "Assign to an existing project only at high confidence."} control={<SettingToggle checked={settings.autoAssignTaskProject !== false} ariaLabel={lang === "zh" ? "自动归入项目" : "Auto-assign project"} onChange={(next) => onSave({ autoAssignTaskProject: next })} />} />
+              <details className="df-settings-progressive"><summary>{lang === "zh" ? "简报与主动助理" : "Briefs and proactive assistant"}</summary><div className="df-settings-progressive-body">
               <SettingRow anchor="ai-briefs" title={lang === "zh" ? "每日开工与收工简报" : "Daily start and end briefs"} description={cloudReady ? (lang === "zh" ? "由云端按工作时间调度；应用关闭时邮件仍可送达，打开应用后收工复盘会追加到固定的每日复盘对话。简报只读。" : "Scheduled in the cloud using your work hours; morning email can arrive while the app is closed, and the end-of-day review is appended to the fixed Daily review conversation when you open the app. Briefs are read-only.") : (lang === "zh" ? "登录云端账号后可启用。" : "Sign in to a cloud account to enable briefs.")} control={<SettingToggle checked={Boolean(settings.aiBriefsEnabled)} disabled={!cloudReady} ariaLabel={lang === "zh" ? "每日 AI 简报" : "Daily AI briefs"} onChange={(next) => onSave({ aiBriefsEnabled: next })} />} />
-              <SettingRow title={lang === "zh" ? "工作日开始" : "Workday starts"} description={lang === "zh" ? "云端在此时间生成开工简报并发送邮件（邮件开关开启时）。" : "The cloud creates the start brief here and emails it when email delivery is enabled."} control={<SettingTextInput type="time" value={settings.scheduleDayStartTime || "08:00"} disabled={!settings.aiBriefsEnabled || !cloudReady} ariaLabel={lang === "zh" ? "工作日开始时间" : "Workday start time"} onChange={(value) => onSave({ scheduleDayStartTime: value })} />} />
-              <SettingRow title={lang === "zh" ? "工作日结束" : "Workday ends"} description={lang === "zh" ? "云端在此时间检查未完成任务，并生成每日复盘。" : "The cloud checks unfinished tasks and creates the daily review here."} control={<SettingTextInput type="time" value={settings.dayEndTime || "22:00"} disabled={!settings.aiBriefsEnabled || !cloudReady} ariaLabel={lang === "zh" ? "工作日结束时间" : "Workday end time"} onChange={(value) => onSave({ dayEndTime: value })} />} />
+              <SettingRow title={lang === "zh" ? "简报工作时段" : "Brief work hours"} description={lang === "zh" ? "与智能排程共用工作时段。" : "Uses the same working hours as smart scheduling."} control={<SettingActionButton onClick={() => navigateSettings({ category: "workflow", anchor: "schedule-start" })}>{lang === "zh" ? "调整" : "Edit"}</SettingActionButton>} />
               <Suspense fallback={null}><ProactiveAssistantSettings settings={settings} data={data} lang={lang} cloudReady={Boolean(cloudReady)} onSave={onSave} onSaveData={onSaveData} onRequestLocation={requestProactiveLocation} /></Suspense>
+              </div></details>
               <SettingRow anchor="ai-memory" title={t(lang, "settings.allowAiContext")} description={lang === "zh" ? "启用后，下方才显示可参与上下文的记忆。" : "When enabled, memories available to context appear below."} control={<SettingToggle checked={Boolean(settings.aiMemoryEnabled)} ariaLabel={t(lang, "settings.allowAiContext")} onChange={(next) => onSave({ aiMemoryEnabled: next })} />} />
               <SettingRow anchor="hide-ai" title={t(lang, "settings.hideAllAi")} control={<SettingToggle checked={Boolean(settings.hideAi)} ariaLabel={t(lang, "settings.hideAllAi")} onChange={(next) => onSave({ hideAi: next })} />} />
+              <details className="df-settings-progressive"><summary>{lang === "zh" ? "AI 数据与记忆管理" : "AI data and memory management"}</summary><div className="df-settings-progressive-body">
               <SettingRow
                 anchor="ai-reset"
                 title={lang === "zh" ? "AI 数据操作" : "AI data actions"}
@@ -1240,7 +1251,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                   ))}
                 </div>
               </section>}
-            </SettingSection>}
+            </div></details>
+              </SettingSection>}
             {settingsTarget.category === "integrations" && <div className="df-settings-subtabs df-settings-integration-tabs ui-choice-list ui-choice-list--inline ui-choice-list--motion-selection" role="tablist" aria-label={lang === "zh" ? "日历与集成" : "Calendar and integrations"}>
               <SelectionIndicator activeKey={`${integrationTab}:${lang}`} />
               <button type="button" role="tab" aria-selected={integrationTab === "calendar"} className={`ui-choice-item${integrationTab === "calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("calendar"); setSettingsTarget({ category: "integrations", anchor: "calendar-feed" }); }}>{lang === "zh" ? "日历订阅" : "Calendar"}</button>
@@ -1299,7 +1311,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                   onChange={(patch) => onSave(patch)}
                   onSyncNow={onSyncNow}
                 /></div>
-              <div data-settings-anchor="auto-launch" tabIndex={-1}><Suspense fallback={null}><AutoLaunchToggle lang={lang} /></Suspense></div>
               <AccountMoreSection lang={lang} onShowAbout={onShowAbout} />
               {onSignOut && <SettingRow
                 title={t(lang, "settings.logout")}
@@ -1308,7 +1319,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />}
             </section>}
 
-            {settingsTarget.category === "account-data" && <SettingSection anchor="recovery-settings" title={lang === "zh" ? "危险操作" : "Danger zone"} tone="danger">
+            {settingsTarget.category === "account-data" && <details className="df-settings-progressive"><summary>{lang === "zh" ? "恢复与重置" : "Recovery & reset"}</summary><div className="df-settings-progressive-body"><SettingSection anchor="recovery-settings" title={lang === "zh" ? "危险操作" : "Danger zone"} tone="danger">
               <SettingRow
                 anchor="reset-settings"
                 title={lang === "zh" ? "重置所有设置" : "Reset all settings"}
@@ -1327,7 +1338,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                 description={lang === "zh" ? "永久删除当前账户及其全部数据，此操作无法撤销。" : "Permanently delete your account and all its data. This cannot be undone."}
                 control={<SettingActionButton tone="danger" onClick={onDeleteAccount}>{lang === "zh" ? "删除账户…" : "Delete account…"}</SettingActionButton>}
               />}
-            </SettingSection>}
+            </SettingSection></div></details>}
             </div>
             </>}
               </div>
