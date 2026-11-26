@@ -1,3 +1,4 @@
+import { anchorPlacement, observeAnchor, viewportBounds } from "../motion/anchor";
 import React, { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useMotionPresence } from "../useMotionPresence";
@@ -52,29 +53,18 @@ export function ActionDisclosure({ label, children }: { label: string; children:
   }, []);
   useLayoutEffect(() => {
     const disclosure = disclosureRef.current;
-    if (!open || !disclosure || typeof ResizeObserver === "undefined") return;
+    if (!open || !disclosure) return;
     const boundary = disclosure.closest(".df-utility-body, .df-drawer");
     const trigger = disclosure.querySelector("summary");
     const menu = disclosure.querySelector<HTMLElement>(".ui-action-disclosure-panel");
-    if (!boundary || !trigger || !menu) return;
-    const update = () => {
-      const viewport = boundary.getBoundingClientRect();
-      const anchor = trigger.getBoundingClientRect();
-      const above = anchor.top - Math.max(viewport.top, 0) - 8;
-      const below = Math.min(viewport.bottom, window.innerHeight) - anchor.bottom - 8;
-      const openAbove = below < menu.scrollHeight + (menu.offsetHeight - menu.clientHeight) && above > below;
-      disclosure.dataset.menuPlacement = openAbove ? "above" : "below";
-      disclosure.style.setProperty("--action-menu-max-height", Math.round(Math.max(0, openAbove ? above : below)) + "px");
-    };
-    const observer = new ResizeObserver(update);
-    observer.observe(boundary);
-    observer.observe(menu);
-    boundary.addEventListener("scroll", update);
-    update();
-    return () => {
-      observer.disconnect();
-      boundary.removeEventListener("scroll", update);
-    };
+    if (!trigger || !menu) return;
+    return observeAnchor([boundary, trigger, menu], () => {
+      const bounds = viewportBounds(), clip = boundary?.getBoundingClientRect();
+      if (clip) { bounds.top = Math.max(bounds.top, clip.top); bounds.bottom = Math.min(bounds.bottom, clip.bottom); }
+      const placement = anchorPlacement(trigger.getBoundingClientRect(), bounds, menu.offsetWidth, menu.scrollHeight + menu.offsetHeight - menu.clientHeight, 8, 0);
+      disclosure.dataset.menuPlacement = placement.upward ? "above" : "below";
+      disclosure.style.setProperty("--action-menu-max-height", placement.maxHeight + "px");
+    });
   }, [open]);
   return (
     <details ref={disclosureRef} open={presence.present} className="ui-action-disclosure" onBlur={(event) => {

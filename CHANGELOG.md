@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 106
+
+#### 改进
+
+- Tree 和规划看板同组拖拽排序加入实时视觉避让，保留原命中区域与合法归属规则；详情及更多操作浮层共享定位计算，窄屏增加保存反馈，插件页面增加加载、失败与重试状态。
+
 ### 1.7.0 Beta 105
 
 #### 修复
@@ -1157,6 +1163,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 106
+
+#### Improvements
+
+- Tree and planning-board same-group reordering previews nearby task displacement without changing hit targets or hierarchy rules; detail and action popovers share positioning, compact layouts show save feedback, and plugin pages expose loading, failure and retry states.
 
 ### 1.7.0 Beta 105
 

@@ -12,3 +12,6 @@ Extend feedback to compact layouts, plugin-host status and finer-grained remote 
 ### Beta 104 size budget
 
 CI run 45758131846 measured the complete compressed app scripts at 363.15 kB, exceeding the previous 360.5 kB total cap by 2.65 kB. The initial app scripts measured 259.93 kB against the unchanged 263 kB cap. Set a narrowly scoped 365 kB total script cap for this feature release (+4.5 kB, approximately 1.25%); retain all other limits, including the separate startup, deferred, settings, frontend output and desktop package budgets. Re-run the full checks before merging.
+
+## Beta 106 spatial increment
+Same-list Tree/board projection is a bounded inert copy of intervening siblings; original hit targets and mutation logic stay in place. Cross-container and timeline drops retain the existing placement indicators. Shared anchor geometry and observer are used for detail and action disclosure. Responsive layout mode identifies Dock edges and compact save feedback. Extension mount uses isolated per-generation roots with honest loading/error/retry. No new dependencies or budget increase. Candidate list projection, full drag landing animation, complete panel host consolidation, all plugin-specific actions and actual desktop visual acceptance still need further work.

@@ -97,6 +97,7 @@ export function CompactPluginDock({ lang, chat, activePanel, activeOwner, onNoti
       aria-label={label}
       title={label}
       data-running={status?.active || undefined}
+      aria-busy={snapshot.busy || undefined}
       aria-pressed={!inMenu ? selected : undefined}
       data-compact-plugin={item.key}
       onPointerDown={(event) => beginDrag(event, item.key, inMenu)}
@@ -217,7 +218,7 @@ export function ExtensionHeader({ lang, activeOwner, onOpenPage }: { lang: Langu
           const item = snapshot.preferences.installed[owner];
           const status = snapshot.launcherStatus[owner];
           return <IconButton key={owner} className="df-extension-header-launcher" label={status?.label || page.name}
-            aria-pressed={activeOwner === owner} data-running={status?.active || undefined}
+            aria-pressed={activeOwner === owner} data-running={status?.active || undefined} aria-busy={snapshot.busy || undefined}
             data-dragging={dragOwner === owner || undefined} data-drop-target={dropOwner === owner && dragOwner !== owner || undefined}
             draggable
             onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", owner); setDragOwner(owner); }}

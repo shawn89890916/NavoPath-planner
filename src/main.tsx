@@ -1,3 +1,4 @@
+import { anchorPlacement, observeAnchor, viewportBounds } from "./motion/anchor";
 import { isCalendarBackgroundVisible } from "./extensions/calendarBackgrounds";
 import { blockingCalendarEvents } from "./utils/courseBackground";
 import { useMobileSheetGesture } from "./useMobileSheetGesture";
@@ -818,6 +819,7 @@ function App() {
   }, []);
   const [compactExecuteView, setCompactExecuteView] = useState<CompactExecuteView>("schedule");
   const [phoneLayout, setPhoneLayout] = useState(() => window.matchMedia("(max-width: 899.98px) and (orientation: portrait)").matches);
+  const workspaceLayout = productPresentation ? "wide" : desktopDockSide ? "dock-" + desktopDockSide : phoneLayout ? "portrait" : compactLayout ? portraitLayout ? "portrait" : "split" : "wide";
   const mobileExecution = phoneLayout && !productPresentation;
   const narrowSplitLayout = compactLayout && !portraitLayout && !productPresentation;
   const compactTasksActive = !mobileExecution && compactExecuteView === "tasks";
@@ -9266,7 +9268,7 @@ if (cached?.data && cached?.settings) {
   );
   const compactChat = !productPresentation && !settings.hideAi && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />;
   return (
-    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${drag ? " is-dragging" : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked && !workspaceChatPanel ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-guide-return-drag={returningGuideBlock || undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+    <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${drag ? " is-dragging" : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked && !workspaceChatPanel ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-workspace-layout={workspaceLayout} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-guide-return-drag={returningGuideBlock || undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       {(!compactLayout || productDemo) && <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
@@ -9373,6 +9375,7 @@ if (cached?.data && cached?.settings) {
         <ExecutionSplitLayout className={`${narrowSplitLayout ? "shelf-timeline-split " : ""}${candidatePanelCollapsed ? "candidate-collapsed" : ""}${fullscreen ? " fullscreen" : ""}${simpleView ? " simple-view" : ""}`} style={candidatePanelCollapsed || candidatePanelWidth ? { "--df-candidate-width": candidatePanelCollapsed ? "44px" : `${candidatePanelWidth}px` } as CSSProperties : undefined}>
           {!productAiPresentation && <div className="df-compact-execute-controls">
             {portraitLayout && !productPresentation && <div className="df-compact-brand">{brandControl}</div>}
+            {compactLayout && !productDemo && <span className="df-workspace-save-feedback df-compact-save-feedback" role="status" data-save-phase={savePhase}>{isManualSyncing ? t(lang, "sync.syncing") : saveFeedbackLabel(savePhase, lang, authState?.mode === "cloud")}</span>}
             {!mobileExecution && !narrowSplitLayout && <nav className="df-compact-execute-tabs" inert={compactLayout && compactToolbarBlocked} aria-label={lang === "zh" ? "执行视图" : "Execute view"}>
               <button
                 className={`active ${compactExecuteView === "schedule" ? "schedule-state" : "tasks-state"}`}
@@ -11793,29 +11796,9 @@ function EditDrawer(props: {
   function positionDetailPopover(trigger: HTMLButtonElement | null, width: number) {
     const panel = detailPopoverRef.current;
     if (!trigger || !panel) return;
-    const rect = trigger.getBoundingClientRect();
-    const gutter = 12;
-    const gap = 8;
-    const viewport = window.visualViewport;
-    const viewportTop = viewport?.offsetTop || 0;
-    const viewportLeft = viewport?.offsetLeft || 0;
-    const viewportBottom = viewportTop + (viewport?.height || window.innerHeight);
-    const viewportRight = viewportLeft + (viewport?.width || window.innerWidth);
-    const panelWidth = Math.min(width, Math.max(0, viewportRight - viewportLeft - gutter * 2));
-    const naturalHeight = Math.min(350, panel.scrollHeight + panel.offsetHeight - panel.clientHeight);
-    const below = Math.max(0, viewportBottom - gutter - rect.bottom - gap);
-    const above = Math.max(0, rect.top - gap - viewportTop - gutter);
-    const placeBelow = naturalHeight <= below || below >= above;
-    const maxHeight = Math.min(350, placeBelow ? below : above);
-    const height = Math.min(naturalHeight, maxHeight);
-    setDetailPopoverPosition({
-      top: Math.max(viewportTop + gutter, Math.min(placeBelow ? rect.bottom + gap : rect.top - gap - height, viewportBottom - gutter - height)),
-      left: Math.max(viewportLeft + gutter, Math.min(rect.left, viewportRight - panelWidth - gutter)),
-      width: panelWidth,
-      maxHeight,
-      transformOrigin: placeBelow ? "center top" : "center bottom",
-      "--detail-popover-shift-y": placeBelow ? "-7px" : "7px",
-    } as CSSProperties);
+    const placement = anchorPlacement(trigger.getBoundingClientRect(), viewportBounds(), width, Math.min(350, panel.scrollHeight + panel.offsetHeight - panel.clientHeight));
+    const { upward, ...geometry } = placement;
+    setDetailPopoverPosition({ ...geometry, transformOrigin: upward ? "center bottom" : "center top", "--detail-popover-shift-y": upward ? "7px" : "-7px" } as CSSProperties);
   }
   function toggleProjectPicker() {
     const next = !projectPickerOpen;
@@ -11833,20 +11816,7 @@ function EditDrawer(props: {
       projectPickerOpen ? projectTriggerRef.current : durationTriggerRef.current,
       projectPickerOpen ? 300 : 260,
     );
-    update();
-    const observer = new ResizeObserver(update);
-    if (detailPopoverRef.current) observer.observe(detailPopoverRef.current);
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    window.visualViewport?.addEventListener("resize", update);
-    window.visualViewport?.addEventListener("scroll", update);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-      window.visualViewport?.removeEventListener("resize", update);
-      window.visualViewport?.removeEventListener("scroll", update);
-    };
+    return observeAnchor([detailPopoverRef.current, projectPickerOpen ? projectTriggerRef.current : durationTriggerRef.current], update);
   }, [projectPickerOpen, durationPickerOpen]);
   function createAndSelectProject() {
     const id = props.onCreateProject(newProjectTitle);

@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [desktop-beta]
   push:
-    branches: [feat/motion-system-desktop-beta-104]
+    branches: [feat/motion-system-desktop-beta-104, feat/motion-spatial-beta-106]
 permissions:
   contents: read
 jobs:
@@ -22,3 +22,5 @@ jobs:
       - run: npm run build
       - run: npm run size:check
       - run: npm run extensions:check
+      - run: node --test mcp-worker/src/superProductivitySync.node-test.ts
+      - run: node --check integrations/super-productivity-navopath/plugin.js

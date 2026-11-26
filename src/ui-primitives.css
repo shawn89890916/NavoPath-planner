@@ -919,3 +919,6 @@
     min-height: 44px;
   }
 }
+
+.ui-action-disclosure-panel { --surface-shift-y: -6px; transform-origin: top center; }
+.ui-action-disclosure[data-menu-placement="above"] > .ui-action-disclosure-panel { --surface-shift-y: 6px; transform-origin: bottom center; }

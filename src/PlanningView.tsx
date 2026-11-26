@@ -1,3 +1,5 @@
+import { createDragProjection } from "./motion/dragProjection";
+import { deepCopyVisualStyles } from "./unifiedDrag";
 import "./PlanningView.css";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -1233,7 +1235,10 @@ export default function PlanningView(props: {
     const releaseHeldTouch = event.pointerType === "touch"
       ? bindHeldTouchScroll(dragElement, () => holdReady && !holdCancelled)
       : undefined;
+    let projection: ReturnType<typeof createDragProjection> | undefined;
     const cleanup = () => {
+      projection?.close();
+      window.removeEventListener("blur", cancel);
       if (releaseDragRef.current === cleanup) releaseDragRef.current = null;
       releaseHeldTouch?.();
       window.removeEventListener("pointermove", move);
@@ -1284,6 +1289,7 @@ export default function PlanningView(props: {
         try { dragElement.setPointerCapture(pointerId); } catch { /* ignore */ }
         document.body.classList.add("df-unified-dragging");
         dragElement.classList.add("is-dragging-source");
+        projection = createDragProjection(dragElement, deepCopyVisualStyles);
         const rect = dragElement.getBoundingClientRect();
         const offX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
         const offY = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
@@ -1297,6 +1303,7 @@ export default function PlanningView(props: {
       if (marker !== drop?.element) marker?.removeAttribute("data-planning-drop");
       marker = drop?.element;
       if (drop) drop.element.dataset.planningDrop = drop.position;
+      projection?.update(drop?.element, drop?.position);
       props.onTimelineDrag?.(task, { x: pointerEvent.clientX, y: pointerEvent.clientY });
     };
 
@@ -1336,6 +1343,7 @@ export default function PlanningView(props: {
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
+    window.addEventListener("blur", cancel);
   };
 
   const beginTreeDrag = useCallback((event: React.PointerEvent, node: TreeDragNode) => {
@@ -1378,7 +1386,10 @@ export default function PlanningView(props: {
     const releaseHeldTouch = event.pointerType === "touch"
       ? bindHeldTouchScroll(dragElement, () => holdReady && !holdCancelled)
       : undefined;
+    let projection: ReturnType<typeof createDragProjection> | undefined;
     const cleanup = () => {
+      projection?.close();
+      window.removeEventListener("blur", cancel);
       clearExpand();
       if (releaseDragRef.current === cleanup) releaseDragRef.current = null;
       releaseHeldTouch?.();
@@ -1430,6 +1441,7 @@ export default function PlanningView(props: {
       if (marker !== drop?.element) marker?.removeAttribute("data-planning-drop");
       marker = drop?.element;
       if (drop) drop.element.dataset.planningDrop = drop.position;
+      projection?.update(drop?.element, drop?.position);
       const key = drop?.position === "inside" ? drop.kind + ":" + drop.id : "";
       if (key !== expandKey) {
         clearExpand();
@@ -1476,6 +1488,7 @@ export default function PlanningView(props: {
         try { dragElement.setPointerCapture(pointerId); } catch { /* ignore */ }
         document.body.classList.add("df-unified-dragging");
         dragElement.classList.add("is-dragging-source");
+        projection = createDragProjection(dragElement, deepCopyVisualStyles);
         setDragNode(sourceNode);
         const sourceCard = sourceNodeEl.querySelector<HTMLElement>("[data-planning-drag-card]") || sourceNodeEl;
         const rect = sourceCard.getBoundingClientRect();
@@ -1539,6 +1552,7 @@ export default function PlanningView(props: {
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
+    window.addEventListener("blur", cancel);
   }, [props.compact, props.onTimelineDrag, props.onTimelineDrop, props.data, props.onTreeMove, props.setCollapsed, safeProjects, safeTasks, subtaskOwner, suppressPostDragClick, taskFromSubtask]);
 
   const hasActiveFilters = includeCompleted || filterProjects.length > 0 || filterWorkflows.length > 0 || filterImportances.length > 0 || filterUrgencies.length > 0 || !!filterDueDate || !!filterScheduled;
