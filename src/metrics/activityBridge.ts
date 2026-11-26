@@ -17,6 +17,6 @@ export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,nex
 export function recordTimerTransition(scope:string,taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,projectId?:string){
   dispatch(scope,(m,g)=>m.recordTimerTransition(scope,taskId,transition,at,elapsedSeconds,projectId,g));
 }
-export function recoverAnalytics(scope:string){dispatch(scope,m=>{void m.recoverAnalytics(scope);});}
+export function recoverAnalytics(scope:string){const p=analyticsPreference(scope);if(p.generation&&p.since)void import("./activityStore").then(m=>m.recoverAnalytics(scope)).catch(()=>window.dispatchEvent(new CustomEvent("navopath-analytics-change",{detail:scope})));}
 
 export function captureDailyPlan(scope:string,data:PlannerData,at:string,dayStartTime?:string){dispatch(scope,(m,g)=>m.captureDailyPlan(scope,data,at,dayStartTime,g));}
