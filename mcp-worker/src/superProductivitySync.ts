@@ -170,7 +170,7 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
         for (const [field, value] of Object.entries(canonical.fields)) {
           // SP's timed schedule and day-only due date are mutually exclusive.
           const projected = side === "superproductivity" && field === "dueDate" && canonical.fields.scheduledAt ? null : value;
-          const equal = JSON.stringify(item.fields[field]) === JSON.stringify(projected);
+          const equal = (side === "superproductivity" && field === "color" && value == null) || JSON.stringify(item.fields[field]) === JSON.stringify(projected);
           if (equal) { if (pending[field] === side) delete pending[field]; }
           else pending[field] = side;
         }
