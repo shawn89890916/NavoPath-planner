@@ -71,7 +71,7 @@ export async function recoverAnalytics(scope:string){
   });
 }
 /** Observe accepted renderer mutations, not remote replay. Recording never blocks planning. */
-export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,next:PlannerData,occurredAt:string,source:AnalyticsSource="client",operationId=crypto.randomUUID(),generation=analyticsPreference(scope).generation) {
+export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,next:PlannerData,occurredAt:string,source:AnalyticsSource="client",operationId:string=crypto.randomUUID(),generation=analyticsPreference(scope).generation) {
   if(!analyticsPreference(scope).enabled)return;
   queue(scope,async()=>{const {diffAnalyticsEvents}=await import("./activityEvents");await journalAndAppend(scope,generation,diffAnalyticsEvents(previous,next,occurredAt,operationId,source));});
 }
