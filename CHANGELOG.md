@@ -5,6 +5,7 @@
 ### 修复
 
 - 修复启用投入度后时间轴任务色条与卡片圆角不贴合的问题，保留评分对应的色条长度。
+- 修复时间轴任务悬停时标题和复选框错位、项目标签溢出及相邻任务之间无法连续切换悬停的问题。
 
 ## 2026-11-25
 
@@ -970,6 +971,7 @@
 ### Fixed
 
 - Fixed timeline engagement stripes so they follow task card corners while retaining the rated length.
+- Fixed misaligned titles and checkboxes, overflowing project labels, and missed hover transitions between adjacent timeline tasks.
 
 ## 2026-11-25
 
