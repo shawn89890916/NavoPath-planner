@@ -66,3 +66,5 @@ describe("review metrics",()=>{
  it("keeps missing estimates out of error denominators and reports signed bias",()=>{const r=accuracySummary([{initial:60,tracked:90,estimate:null},{initial:60,tracked:30,estimate:60}]);expect(r.schedule).toMatchObject({count:2,bias:0,mae:30,relativeError:50});expect(r.estimate).toMatchObject({count:1,bias:-30,mae:30});});
  it("counts current project task completion independently of repeated executions",()=>{const r=currentProjectProgress({...data,tasks:[{...task,estimatedHours:2,completed:true}]},[],"include");expect(r[0]).toMatchObject({total:1,completed:1,estimated:120,estimatedCompleted:120,estimateCount:1});});
 });
+
+it("restores the optional chart grain, while migrating older saved views to day",()=>{const query={range:"today",group:"project",display:"duration",habit:"include",completion:"all",projects:[],customStart:"2026-11-26",customEnd:"2026-11-26"};const saved={id:"one",name:"Review",view:"overview",chart:"trend",query};expect(normalizeSavedViews([saved])[0].grain).toBe("day");expect(normalizeSavedViews([{...saved,grain:"month"}])[0].grain).toBe("month");});

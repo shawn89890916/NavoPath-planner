@@ -81,7 +81,7 @@ export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,nex
 export function recordTimerTransition(scope:string,taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,projectId:string|undefined,generation:string){
   queue(scope,async()=>{const {makeTimerAnalyticsEvent}=await import("./activityEvents");await journalAndAppend(scope,generation,[makeTimerAnalyticsEvent(taskId,transition,at,elapsedSeconds,crypto.randomUUID(),projectId)]);});
 }
-export async function readAnalyticsEvents(scope:string,start:Date,end:Date,limit=501,projectIds:string[]=[]):Promise<AnalyticsEvent[]> {
+export async function readAnalyticsEvents(scope:string,start:Date,end:Date,limit=501,projectIds:string[]=[],filters?:{source?:string;entity?:string}):Promise<AnalyticsEvent[]> {
   if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start)return [];
   const projects=new Set(projectIds);
   const db=await open();
@@ -91,7 +91,7 @@ export async function readAnalyticsEvents(scope:string,start:Date,end:Date,limit
     return await new Promise((resolve,reject)=>{
       const out:AnalyticsEvent[]=[]; const req=idx.openCursor(bounds,"prev");
       req.onerror=()=>reject(req.error);
-      req.onsuccess=()=>{const c=req.result;if(!c || out.length>=limit){resolve(out);return;}const {scope:_,...event}=c.value as StoredEvent;if(!projects.size||projects.has(event.projectId||"__unassigned__"))out.push(event);c.continue();};
+      req.onsuccess=()=>{const c=req.result;if(!c || out.length>=limit){resolve(out);return;}const {scope:_,...event}=c.value as StoredEvent;if((!projects.size||projects.has(event.projectId||"__unassigned__"))&&(!filters?.source||filters.source===event.source)&&(!filters?.entity||filters.entity===event.entityType))out.push({...event,id:event.id.startsWith(scope+":")?event.id.slice(scope.length+1):event.id});c.continue();};
     });
   } finally {db.close();}
 }

@@ -6,7 +6,7 @@
 
 #### 改进
 
-- Metrics 新增概览、等长周期对比、估时误差及项目完成进度；保留仍存在的历史计时，区分无数据与零值。
+- Metrics 新增概览、等长周期对比、估时误差及项目完成进度；保留仍存在的历史计时，区分无数据与零值；历史支持按来源及类型筛选、分批查看，自定义视图保存趋势粒度。
 
 ### 1.7.0 Beta 112
 
@@ -1216,7 +1216,7 @@
 
 #### Improvements
 
-- Metrics adds overview, matched-period comparisons, estimation error and project completion progress; retained historical time entries remain visible and missing data is distinct from zero.
+- Metrics adds overview, matched-period comparisons, estimation error and project completion progress; retained historical time entries remain visible and missing data is distinct from zero. History supports source/entity filters and incremental browsing; saved views preserve trend grain.
 
 ### 1.7.0 Beta 112
 

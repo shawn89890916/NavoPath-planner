@@ -68,6 +68,11 @@
       "limit": "8 KB"
     },
     {
+      "name": "Optional Metrics review",
+      "path": "dist/assets/MetricsReview-*.js",
+      "limit": "6 KB"
+    },
+    {
       "name": "Optional Metrics analytics styles",
       "path": "dist/assets/MetricsInsights-*.css",
       "limit": "4 KB"

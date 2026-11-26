@@ -42,3 +42,6 @@
 .df-metric-hour-grid > div { display:grid; grid-template-columns:32px repeat(24,minmax(12px,1fr)); gap:3px; min-width:400px; padding:2px 0; align-items:center; }
 .df-metric-hour-grid [role="cell"] { height:14px; border-radius:2px; }
 .df-metric-hour-grid [role="rowheader"] { font-size:11px; }
+
+.df-metric-history-filters { padding-block:8px; font-size:12px; }
+.df-metric-history-filters select { max-width:100%; background:var(--paper-bg); color:var(--text-main); border:1px solid var(--paper-rule); padding:4px; font:inherit; }
