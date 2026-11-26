@@ -46,6 +46,7 @@ export function useTaskLayoutMotion(options: MotionOptions) {
     const unchanged = old && old.scope === options.scope && old.blocked === blocked &&
       old.revision.length === options.revision.length && old.revision.every((value, index) => Object.is(value, options.revision[index]));
     if (unchanged) return;
+    coordinator.current?.cancel();
     const points = collectTaskMotion(root, options.selector);
     previous.current = { scope: options.scope, revision: options.revision, points, blocked };
     if (blocked || !old || old.scope !== options.scope) { coordinator.current?.cancel(); return; }

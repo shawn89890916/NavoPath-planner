@@ -19,3 +19,6 @@ Same-list Tree/board projection is a bounded inert copy of intervening siblings;
 ### Beta 108 combined feature size budget
 
 CI run 45759885955 measured combined motion and synchronization history scripts at 365.79 kB Brotli against the previous 365 kB cap. The initial scripts remain within 263 kB (262.47 kB), and deferred scripts remain within 38 kB (34.31 kB). Set only the aggregate script budget to 367 kB (+2 kB, approximately 0.55%) to accommodate both features, leaving startup, per-feature, style, frontend output and desktop package limits unchanged. All checks must be rerun before merge.
+
+## Beta 110: task style invariance (user requirement)
+The user reported displaced task blocks changing typography, checkbox alignment, width, border and color during drag. Remove detached sibling clones and the simplified committed-motion card; move real DOM nodes with translation only. Temporarily detach owned WAAPI effects for synchronous logical hit testing and restore them before paint. Skip incompatible size changes. Remove decorative overlay tilt, forced width inflation, mobile restyling and fixed shadow/padding. The destination's native representation and legitimate source placeholder remain independent of animation. Visual acceptance still requires desktop testing.

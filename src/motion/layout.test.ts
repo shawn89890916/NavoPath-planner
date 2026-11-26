@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { planTaskMotion, rectChanged } from "./layout";
+import { describe, expect, it, vi } from "vitest";
+import { planTaskMotion, rectChanged, TaskMotionCoordinator } from "./layout";
 import { normalizeMotionPreference } from "../motion";
 
 const p = (key: string, entity: string, top: number) => ({ key, entity, rect: { left: 0, top, width: 100, height: 30 } });
@@ -32,4 +32,17 @@ describe("task motion", () => {
     expect(normalizeMotionPreference("off")).toBe("off");
     expect(normalizeMotionPreference("rich")).toBe("rich");
   });
+});
+
+it("animates the original task only by translation and skips size changes", () => {
+  const animate = vi.fn(() => ({ cancel: vi.fn(), finished: new Promise(() => {}) }));
+  const node = { isConnected: true, animate, ownerDocument: { defaultView: { getComputedStyle: () => ({ translate: "none" }) } } } as unknown as HTMLElement;
+  const before = { ...p("candidate:a", "a", 0), node };
+  const after = { ...p("candidate:a", "a", 30), node };
+  const coordinator = new TaskMotionCoordinator();
+  coordinator.play([{ before, after }]);
+  expect(animate).toHaveBeenCalledWith([{ translate: "0px -30px" }, { translate: "0px 0px" }], expect.any(Object));
+  coordinator.play([{ before, after: { ...after, rect: { ...after.rect, width: 150 } } }]);
+  expect(animate).toHaveBeenCalledTimes(1);
+  coordinator.cancel();
 });

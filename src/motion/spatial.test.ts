@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectedOffsets } from "./dragProjection";
+import { projectedOffsets, readLogicalLayout } from "./dragProjection";
 import { anchorPlacement } from "./anchor";
 
 describe("projected drag order", () => {
@@ -27,5 +27,17 @@ describe("anchored surfaces", () => {
     expect(a.upward).toBe(false);
     expect(a.width).toBe(176);
     expect(a.maxHeight).toBe(110);
+  });
+});
+
+describe("logical drag geometry", () => {
+  it("temporarily detaches translation effects and restores the same effect and time even on error", () => {
+    const effect = {} as AnimationEffect;
+    const animation = { effect, currentTime: 42 } as Animation;
+    expect(readLogicalLayout([animation], () => animation.effect)).toBeNull();
+    expect(animation.effect).toBe(effect);
+    expect(animation.currentTime).toBe(42);
+    expect(() => readLogicalLayout([animation], () => { throw new Error("read"); })).toThrow("read");
+    expect(animation.effect).toBe(effect);
   });
 });
