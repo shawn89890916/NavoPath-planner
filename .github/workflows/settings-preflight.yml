@@ -1,0 +1,29 @@
+name: Settings preflight
+on:
+  push:
+    branches:
+      - 'feat/settings-*'
+  pull_request:
+    paths:
+      - 'src/SettingsPanel.tsx'
+      - 'src/settings*.ts'
+      - 'src/defaultSettings*.ts'
+      - 'src/components/SettingsControls.*'
+      - 'src/types.ts'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/changelog-maintain.mjs --check
+      - run: npm test
+      - run: npm run css:check
+      - run: npm run extensions:check
+      - run: npm run build
