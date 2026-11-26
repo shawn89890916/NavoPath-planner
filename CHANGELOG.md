@@ -1,5 +1,13 @@
 # NavoPath 更新日志
 
+## 2026-11-26
+
+### 1.7.0 Beta 99
+
+#### 修复
+
+- 修复投入度色条与时间轴任务卡片圆角不贴合的问题，保留评分对应的色条长度。
+
 ## 2026-11-25
 
 ### 1.7.0 Beta 98
@@ -1104,6 +1112,14 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-26
+
+### 1.7.0 Beta 99
+
+#### Fixed
+
+- Fix timeline engagement stripes to follow the task card corners while retaining the rated length.
 
 ## 2026-11-25
 

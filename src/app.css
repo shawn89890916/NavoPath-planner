@@ -13091,6 +13091,17 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-radius: inherit;
   corner-shape: var(--corner-shape, squircle);
 }
+/* Keep the engagement tooltip on the stripe; the card itself stays interactive. */
+.df-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent:not([class*="df-task-block-accent--"]),
+.navo-demo-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent:not([class*="df-task-block-accent--"]) {
+  top: -1px;
+  bottom: auto;
+  left: calc(-1 * var(--task-project-accent-size, 4px));
+  width: var(--task-project-accent-size, 4px);
+  height: var(--task-engagement);
+  background: none;
+  pointer-events: auto;
+}
 /* Draw engagement over the same rounded border-box as the normal project stripe. */
 .df-app .df-task-block[data-task-appearance][data-engagement]::after,
 .navo-demo-app .df-task-block[data-task-appearance][data-engagement]::after {
@@ -13103,11 +13114,13 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   bottom: -1px;
   border-radius: inherit;
   corner-shape: inherit;
-  background: linear-gradient(
-    to bottom,
-    var(--task-project-color) 0 var(--task-engagement),
-    transparent var(--task-engagement) 100%
-  ) no-repeat left top / var(--task-project-accent-size, 4px) 100%;
+  /* Paint an actual border using the same rounded geometry as the card,
+     then reveal the rated length rather than clipping a narrow background. */
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-left-width: var(--task-project-accent-size, 4px);
+  border-left-color: var(--task-project-color, var(--accent-active));
+  clip-path: inset(0 0 calc(100% - var(--task-engagement)) 0);
   pointer-events: none;
 }
 .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--bottom {
