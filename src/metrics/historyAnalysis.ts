@@ -10,13 +10,32 @@ export function observedScheduleMinutes(v?:AnalyticsSnapshot):number|null{
   const n=calendarDateTimeSpanMinutes(v.scheduledDate,v.scheduledStart,end,v.scheduledEnd);return Number.isFinite(n)&&n>0?n:null;
 }
 export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerData,range:{start:Date;end:Date}){
-  const groups=new Map<string,AnalyticsEvent[]>(),moves=new Set<string>(),resizes=new Set<string>();
+  type Group={first:AnalyticsEvent;last:AnalyticsEvent;observed:boolean;uncertain:boolean};
+  const groups=new Map<string,Group>(),moves=new Set<string>(),resizes=new Set<string>();
+  const recordKey=(taskId:string|undefined,recordId:string)=>JSON.stringify([taskId||"",recordId]);
+  const isUncertain=(e:AnalyticsEvent)=>e.source==="undo"||e.source==="remote-observed"||e.source==="sync";
+  const completedRecords=new Set<string>();
+  const singleExecutionTasks=new Set<string>();
+  for(const t of data.tasks){
+    if(t.timelineRecords?.length===1)singleExecutionTasks.add(t.id);
+    for(const r of t.timelineRecords||[])if(r.executionStatus==="completed")completedRecords.add(recordKey(t.id,r.id));
+  }
+  const collect=(e:AnalyticsEvent)=>{
+    const key=recordKey(e.taskId,e.entityId),existing=groups.get(key),uncertain=isUncertain(e);
+    if(existing){
+      if(e.occurredAt<existing.first.occurredAt)existing.first=e;
+      if(e.occurredAt>=existing.last.occurredAt)existing.last=e;
+      existing.observed ||= !uncertain;
+      existing.uncertain ||= uncertain;
+    }else groups.set(key,{first:e,last:e,observed:!uncertain,uncertain});
+    return key;
+  };
   let moveCount=0,resizeCount=0,created=0,removed=0,taskCompleted=0,taskReopened=0;
   for(const e of events){
-    if(e.source==="undo"||e.source==="remote-observed"){if(e.entityType==="execution"){const key=(e.taskId||"")+":"+e.entityId;const list=groups.get(key)||[];list.push(e);groups.set(key,list);}continue;}
+    if(isUncertain(e)){if(e.entityType==="execution")collect(e);continue;}
     if(e.entityType==="task"&&e.action==="changed"){if(e.before?.completed===false&&e.after?.completed===true)taskCompleted++;if(e.before?.completed===true&&e.after?.completed===false)taskReopened++;}
     if(e.entityType!=="execution")continue;
-    const key=(e.taskId||"")+":"+e.entityId;const list=groups.get(key)||[];list.push(e);groups.set(key,list);
+    const key=collect(e);
     if(e.action==="created")created++;if(e.action==="removed")removed++;
     if(e.action!=="changed"||!e.before||!e.after)continue;
     if(e.before.scheduledDate!==e.after.scheduledDate||e.before.scheduledStart!==e.after.scheduledStart){moves.add(key);moveCount++;}
@@ -29,18 +48,14 @@ export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerDat
     if(!entry.timelineRecordId)continue;
     const a=Date.parse(entry.startAt),b=Date.parse(entry.endAt);
     if(!Number.isFinite(a)||!Number.isFinite(b)||b<=a||a<range.start.getTime()||b>range.end.getTime()||!Number.isFinite(entry.durationMinutes)||entry.durationMinutes<=0)continue;
-    const key=entry.taskId+":"+entry.timelineRecordId;trackedByRecord.set(key,(trackedByRecord.get(key)||0)+entry.durationMinutes);
+    const key=recordKey(entry.taskId,entry.timelineRecordId);trackedByRecord.set(key,(trackedByRecord.get(key)||0)+entry.durationMinutes);
   }
-  for(const [key,list] of groups){
-    const ordered=[...list].sort((a,b)=>a.occurredAt.localeCompare(b.occurredAt));
-    const first=ordered[0],last=ordered[ordered.length-1];
-    if(first.action!=="created"||first.source==="remote-observed"||first.source==="undo"||first.source==="sync"||last.after?.executionStatus!=="completed"||!first.taskId||ordered.some(e=>e.source==="remote-observed"||e.source==="undo"))continue;
-    const current=data.tasks.find(t=>t.id===first.taskId);
-    if(!current||current.timelineRecords?.find(r=>r.id===first.entityId)?.executionStatus!=="completed")continue;
+  for(const [key,{first,last,uncertain}] of groups){
+    if(first.action!=="created"||uncertain||last.after?.executionStatus!=="completed"||!first.taskId||!completedRecords.has(key))continue;
     const initial=observedScheduleMinutes(first.after),tracked=trackedByRecord.get(key);
     if(initial===null||tracked===undefined)continue;
-    const estimate=current.timelineRecords?.length===1&&typeof first.estimateMinutes==="number"&&first.estimateMinutes>0?first.estimateMinutes:null;
+    const estimate=singleExecutionTasks.has(first.taskId)&&typeof first.estimateMinutes==="number"&&first.estimateMinutes>0?first.estimateMinutes:null;
     comparisons.push({taskId:first.taskId,recordId:first.entityId,initial,tracked,estimate});
   }
-  return {observedExecutions:[...groups.values()].filter(es=>es.some(e=>e.source!=="undo"&&e.source!=="remote-observed")).length,created,removed,movedExecutions:moves.size,resizedExecutions:resizes.size,moveCount,resizeCount,taskCompleted,taskReopened,comparisons};
+  return {observedExecutions:[...groups.values()].filter(g=>g.observed).length,created,removed,movedExecutions:moves.size,resizedExecutions:resizes.size,moveCount,resizeCount,taskCompleted,taskReopened,comparisons};
 }
