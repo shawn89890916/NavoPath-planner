@@ -170,6 +170,8 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     };
     const apply = async (actions: RemoteAction[]) => {
       const projectIds = new Map(ctx.projects.list().map(item => [item.title, item.id]));
+      const deleting = new Set(actions.filter(action => action.kind === "task" && action.deleted).map(action => action.id || Object.keys(links.tasks).find(id => links.tasks[id] === action.syncId)));
+      if (ctx.tasks.list().some(task => task.parentTaskId && deleting.has(task.parentTaskId) && !deleting.has(task.id))) throw new Error(t("待删除的任务包含需要保留的子任务，请先移动该子任务。", "A retained subtask belongs to a task marked for deletion. Move it first."));
       for (const action of actions) {
         const map = action.kind === "task" ? links.tasks : links.projects;
         const currentId = action.id || Object.keys(map).find(id => map[id] === action.syncId);
