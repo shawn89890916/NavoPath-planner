@@ -953,12 +953,12 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             {settingsTarget.category === "workflow" && <SettingSection anchor="smart-scheduling" title={lang === "zh" ? "智能排程" : "Smart scheduling"} description={lang === "zh" ? "定义自动排程使用的工作时段与任务间隔。" : "Define the working window and task spacing used by automatic scheduling."}>
               <SettingRow
                 anchor="schedule-start"
-                title={lang === "zh" ? "规划开始" : "Planning starts"}
+                title={lang === "zh" ? "工作时段开始" : "Working hours start"}
                 control={<SettingTextInput type="time" value={settings.scheduleDayStartTime || "08:00"} ariaLabel={lang === "zh" ? "规划开始" : "Planning starts"} onChange={(value) => onSave({ scheduleDayStartTime: value })} />}
               />
               <SettingRow
                 anchor="schedule-end"
-                title={lang === "zh" ? "规划结束" : "Planning ends"}
+                title={lang === "zh" ? "工作时段结束" : "Working hours end"}
                 control={<SettingTextInput type="time" value={settings.dayEndTime || "22:00"} ariaLabel={lang === "zh" ? "规划结束" : "Planning ends"} onChange={(value) => onSave({ dayEndTime: value })} />}
               />
               <details className="df-settings-progressive"><summary>{lang === "zh" ? "进阶排程" : "Advanced scheduling"}</summary><div className="df-settings-progressive-body">
@@ -971,6 +971,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             </div></details>
               </SettingSection>}
 
+            {settingsTarget.category === "workflow" && <details className="df-settings-progressive"><summary>{lang === "zh" ? "习惯、投入度与指标" : "Habits, engagement and metrics"}</summary><div className="df-settings-progressive-body">
             {settingsTarget.category === "workflow" && <SettingSection anchor="habits" title={lang === "zh" ? "习惯" : "Habits"} description={lang === "zh" ? "每日 / 每周重复行为的开关与显示。" : "Toggles and visibility for daily / weekly recurring behaviors."}>
               <SettingRow
                 title={lang === "zh" ? "启用习惯功能" : "Enable habits"}
@@ -993,7 +994,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
             </SettingSection>}
 
             {settingsTarget.category === "workflow" && <SettingSection anchor="metrics" title={lang === "zh" ? "指标" : "Metrics"} description={lang === "zh" ? "规划页指标视图的默认范围与分组。" : "Default range and grouping for the planning-page metrics view."}>
-              <SettingRow title={lang === "zh" ? "指标插件状态" : "Metrics plugin status"} description={lang === "zh" ? "在设置 → 插件中管理指标插件；以下选项只调整显示方式。" : "Manage the Metrics plugin in Settings → Plugins. The options below adjust its display."} />
+              <SettingRow control={<SettingActionButton onClick={() => navigateSettings({ category: "plugins" })}>{lang === "zh" ? "管理插件" : "Manage plugins"}</SettingActionButton>} title={lang === "zh" ? "指标插件状态" : "Metrics plugin status"} description={lang === "zh" ? "在设置 → 插件中管理指标插件；以下选项只调整显示方式。" : "Manage the Metrics plugin in Settings → Plugins. The options below adjust its display."} />
               <SettingRow
                 title={lang === "zh" ? "默认时间范围" : "Default time range"}
                 control={<SettingSelect<NonNullable<Settings["metricsRangePreset"]>>
@@ -1065,6 +1066,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               />
             </SettingSection>}
 
+            </div></details>}
             {settingsTarget.category === "widget" && <SettingSection
               anchor="desktop-window-settings"
               title={lang === "zh" ? "桌面窗口" : "Desktop Windows"}

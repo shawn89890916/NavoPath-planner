@@ -100,7 +100,7 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
 }
 
 export function settingsCategoryLabel(category: SettingsCategory, lang: Language): string {
-  const definition = SETTINGS_CATEGORIES.find((item) => item.id === category) ?? SETTINGS_CATEGORIES[0];
+  const definition = SETTINGS_PRIMARY_CATEGORIES.find((item) => item.id === category) ?? SETTINGS_CATEGORIES.find((item) => item.id === category) ?? SETTINGS_CATEGORIES[0];
   return lang === "zh" ? definition.labelZh : definition.labelEn;
 }
 
