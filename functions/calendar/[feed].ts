@@ -2,7 +2,7 @@ type CalendarFeedEnv = { CALENDAR_FEED: { fetch(request: Request): Promise<Respo
 
 export async function onRequest({ request, env }: { request: Request; env: CalendarFeedEnv }) {
   const { pathname } = new URL(request.url);
-  if (!/^\/calendar\/nvc_[a-f0-9]{64}\.ics$/.test(pathname)) {
+  if (!/^\/calendar\/nvc_[a-f0-9]{64}(?:-history)?\.ics$/.test(pathname)) {
     return new Response("Calendar subscription not found", { status: 404 });
   }
   if (request.method !== "GET" && request.method !== "HEAD") {
