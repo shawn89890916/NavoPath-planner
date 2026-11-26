@@ -1,6 +1,6 @@
 import type { PlannerData } from "../types";
-import type { AnalyticsEvent, AnalyticsSource, TimerTransition } from "./activityEvents";
-import { analyticsPreference, analyticsPreferenceKey as key } from "./activityBridge";
+import { diffAnalyticsEvents, makeTimerAnalyticsEvent, type AnalyticsEvent, type AnalyticsSource, type TimerTransition } from "./activityEvents";
+import { analyticsPreference, analyticsPreferenceKey as key, registerAnalyticsRecorder } from "./activityBridge";
 export { analyticsPreference } from "./activityBridge";
 
 const DB = "navopath-local-analytics-v1";
@@ -57,26 +57,33 @@ function queue(scope:string,work:()=>Promise<void|boolean>,kind="write"){
   const pending=(queues.get(scope)||Promise.resolve()).then(work).then(changed=>{const failed=errors.get(scope)?.has(kind);setError(scope,kind,false);if(changed!==false||failed)signal(scope);},()=>{setError(scope,kind,true);signal(scope);});
   queues.set(scope,pending);void pending.finally(()=>{if(queues.get(scope)===pending)queues.delete(scope);});return pending;
 }
-async function journalAndAppend(scope:string,generation:string,events:AnalyticsEvent[]){
-  if(!events.length||analyticsPreference(scope).generation!==generation)return;
-  const journalKey=journalPrefix(scope)+events[0].operationId;
-  let journaled=false;
-  let batch=events;
-  let existing:string|null=null;
-  try{existing=window.localStorage.getItem(journalKey);}catch{/* IndexedDB can still succeed */}
-  if(existing){
-    const prior=parseJournal(existing);
-    if(prior.generation===generation){
-      const first=new Map<string,AnalyticsEvent>();
-      for(const e of [...prior.events,...events])if(!first.has(e.id))first.set(e.id,e);
-      batch=[...first.values()];
+/** Prepare a minimized journal before yielding; IndexedDB writes remain asynchronous. */
+function captureEvents(scope:string,generation:string,make:()=>AnalyticsEvent[]){
+  if(!generation||analyticsPreference(scope).generation!==generation)return;
+  try{
+    let batch=make();
+    if(!batch.length)return;
+    const journalKey=journalPrefix(scope)+batch[0].operationId;
+    let existing:string|null=null,raw:string|undefined;
+    try{existing=localStorage.getItem(journalKey);}catch{/* IndexedDB can still succeed */}
+    if(existing){
+      const prior=parseJournal(existing);
+      if(prior.generation===generation){
+        const first=new Map<string,AnalyticsEvent>();
+        for(const e of [...prior.events,...batch])if(!first.has(e.id))first.set(e.id,e);
+        batch=[...first.values()];
+      }
     }
+    try{const serialized=JSON.stringify({generation,events:batch} satisfies Journal);localStorage.setItem(journalKey,serialized);raw=serialized;}catch{/* IndexedDB can still succeed */}
+    return queue(scope,async()=>{
+      await append(scope,generation,batch);
+      if(raw!==undefined&&localStorage.getItem(journalKey)===raw)localStorage.removeItem(journalKey);
+      if(pendingKeys(scope).length)throw Error("Earlier analytics writes are pending");
+    });
+  }catch{
+    // Recording must never throw into the workspace mutation path.
+    setError(scope,"capture",true);signal(scope);
   }
-  try{window.localStorage.setItem(journalKey,JSON.stringify({generation,events:batch} satisfies Journal));journaled=true;}catch{/* IndexedDB can still succeed */}
-  await append(scope,generation,batch);
-  // Another renderer may have updated the journal while this append was pending.
-  if(journaled&&window.localStorage.getItem(journalKey)===JSON.stringify({generation,events:batch}))window.localStorage.removeItem(journalKey);
-  if(pendingKeys(scope).length)throw Error("Earlier analytics writes are pending");
 }
 function parseJournal(raw:string):Journal{
   const j=JSON.parse(raw) as Journal;
@@ -100,11 +107,10 @@ export function recoverAnalytics(scope:string){
 }
 /** Observe accepted renderer mutations, not remote replay. Recording never blocks planning. */
 export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,next:PlannerData,occurredAt:string,source:AnalyticsSource="client",operationId:string=crypto.randomUUID(),generation=analyticsPreference(scope).generation) {
-  if(analyticsPreference(scope).generation!==generation)return;
-  return queue(scope,async()=>{const {diffAnalyticsEvents}=await import("./activityEvents");await journalAndAppend(scope,generation,diffAnalyticsEvents(previous,next,occurredAt,operationId,source));});
+  return captureEvents(scope,generation,()=>diffAnalyticsEvents(previous,next,occurredAt,operationId,source));
 }
 export function recordTimerTransition(scope:string,taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,projectId:string|undefined,generation:string){
-  return queue(scope,async()=>{const {makeTimerAnalyticsEvent}=await import("./activityEvents");await journalAndAppend(scope,generation,[makeTimerAnalyticsEvent(taskId,transition,at,elapsedSeconds,crypto.randomUUID(),projectId)]);});
+  return captureEvents(scope,generation,()=>[makeTimerAnalyticsEvent(taskId,transition,at,elapsedSeconds,crypto.randomUUID(),projectId)]);
 }
 export type AnalyticsPageCursor={occurredAt:string;id:string};
 /** One account-scoped snapshot transaction. Consume rows without materializing the entire log. */
@@ -203,3 +209,5 @@ async function performPurge(scope:string){
   }catch(error){setError(scope,"purge",true);throw error;}
   finally{signal(scope);}
 }
+
+registerAnalyticsRecorder({recordLocalAnalyticsChange,recordTimerTransition,recoverAnalytics,captureDailyPlan});
