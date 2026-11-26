@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 124
+
+#### 修复
+
+- Metrics 统计宽表和长标题在窄面板内滚动与换行，支持键盘定位；切换账号隔离保存视图，增加真实 Chromium 界面交互回归。
+
 ### 1.7.0 Beta 123
 
 #### 改进
@@ -1271,6 +1277,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 124
+
+#### Fixed
+
+- Metrics contains wide tables and long labels in narrow panels, adds keyboard focus, isolates saved views on account changes, and adds native Chromium UI interaction regression.
 
 ### 1.7.0 Beta 123
 
