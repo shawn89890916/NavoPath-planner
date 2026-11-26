@@ -50,3 +50,17 @@ describe("calendar subscription proxy", () => {
     expect(fetchFeed).not.toHaveBeenCalled();
   });
 });
+
+it("accepts only the dedicated history suffix with the existing private token format", async () => {
+  const fetchFeed = vi.fn<(request: Request) => Promise<Response>>().mockResolvedValue(new Response("history"));
+  const env = { CALENDAR_FEED: { fetch: fetchFeed } };
+  const historyPath = path.replace(".ics", "-history.ics");
+  const valid = await onRequest({env,request:new Request("https://navopath.com"+historyPath)});
+  expect(valid.status).toBe(200);
+  expect(fetchFeed.mock.calls[0][0].url).toBe("https://navopath.com"+historyPath);
+  for (const suffix of ["-invalid.ics","-history.ics/extra"]) {
+    const rejected=await onRequest({env,request:new Request("https://navopath.com"+path.replace(".ics",suffix))});
+    expect(rejected.status).toBe(404);
+  }
+  expect(fetchFeed).toHaveBeenCalledTimes(1);
+});
