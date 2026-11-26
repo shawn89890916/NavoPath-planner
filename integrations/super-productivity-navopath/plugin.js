@@ -210,7 +210,17 @@
       // and refuse to remove a parent if a retained child would disappear.
       const allTasks = await tasks();
       const deleting = new Set(actions.filter(action => action.deleted && action.kind === 'task').map(action => action.id || Object.keys(local.links.tasks).find(key => local.links.tasks[key] === action.syncId)));
-      if (allTasks.some(task => task.parentId && deleting.has(task.parentId) && !deleting.has(task.id))) throw new Error('A retained subtask belongs to a task marked for deletion. Move the subtask first.');
+      const blockedParents = new Set();
+      for (const task of allTasks) if (!deleting.has(task.id)) {
+        let parent = task.parentId;
+        const visited = new Set();
+        while (parent && !visited.has(parent)) {
+          visited.add(parent);
+          if (deleting.has(parent)) blockedParents.add(parent);
+          parent = allTasks.find(item => item.id === parent)?.parentId;
+        }
+      }
+      const failures = [];
       const depth = (id) => { let n = 0, current = allTasks.find(task => task.id === id); const seen = new Set(); while (current?.parentId && !seen.has(current.id)) { seen.add(current.id); n++; current = allTasks.find(task => task.id === current.parentId); } return n; };
       const phase = action => action.deleted ? (action.kind === 'task' ? 2 : 3) : (action.kind === 'project' ? 0 : 1);
       actions = [...actions].sort((a,b) => phase(a) - phase(b) || (phase(a) === 2 ? depth(b.id) - depth(a.id) : 0));
@@ -218,6 +228,8 @@
         const map = local.links[action.kind === 'task' ? 'tasks' : 'projects'];
         let id = action.id || Object.keys(map).find(key => map[key] === action.syncId);
         if (action.kind === 'project' && id === 'INBOX_PROJECT') { delete map[id]; continue; }
+        if (action.deleted && action.kind === 'task' && blockedParents.has(id)) { failures.push('Retained subtasks prevent deleting ' + (action.fields?.title || id)); continue; }
+        try {
         if (action.deleted) {
           if (action.kind === 'task') {
             const task = (await tasks()).find(item => item.id === id);
@@ -285,8 +297,10 @@
           // addTask accepts dueDay but not dueWithTime.
           if (dueWithTime != null) await API.updateTask(created, { dueWithTime, dueDay: null }, { isIgnoreShortSyntax: true });
         }
+        } catch (error) { failures.push((action.fields?.title || id || action.syncId) + ': ' + (error?.message || String(error))); }
       }
       await persist();
+      if (failures.length) throw new Error(`${failures.length} sync changes need attention; other changes were applied. ${failures.slice(0, 3).join('; ')}`);
     }
     async function renderState(state) {
       if (state.pairId) local.pairId = state.pairId;
