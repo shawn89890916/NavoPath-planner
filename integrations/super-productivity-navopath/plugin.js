@@ -89,7 +89,7 @@
       return {
         overwriteVersion: 1,
         projects: allProjects.map(item => ({ id: item.id, syncId: syncId('projects', item.id), fields: { title: item.title, notes: '', color: item.theme?.primary || null } })),
-        tasks: await Promise.all(allTasks.map(async item => ({ id: item.id, syncId: syncId('tasks', item.id), parentId: item.parentId || undefined, fields: {
+        tasks: await Promise.all(allTasks.map(async item => ({ id: item.id, syncId: syncId('tasks', item.id), parentId: item.parentId || undefined, projectId: item.projectId || undefined, fields: {
           title: item.title, notes: item.notes || '', completed: item.isDone, dueDate: item.dueDay || null,
           estimateMinutes: Math.round((item.timeEstimate || 0) / 60000), projectTitle: allProjects.find(project => project.id === item.projectId)?.title || '',
           tags: await tagNames(item), scheduledAt: item.dueWithTime ? toLocalDate(item.dueWithTime) : null,
@@ -111,7 +111,7 @@
       if (preview && source) {
         const target = source === 'navopath' ? 'superproductivity' : 'navopath';
         const count = (group, side) => preview[group][side].length - preview[group].suggestions.length;
-        $('preview-summary').textContent = `${source === 'navopath' ? 'NavoPath' : 'SP'} stays unchanged. ${target === 'navopath' ? 'NavoPath' : 'SP'} adds ${count('projects',source)} projects / ${count('tasks',source)} tasks; removes ${count('projects',target)} projects / ${count('tasks',target)} tasks (Recently deleted).`;
+        $('preview-summary').textContent = `${source === 'navopath' ? 'NavoPath' : 'SP'} stays unchanged. ${target === 'navopath' ? 'NavoPath' : 'SP'} adds ${count('projects',source)} projects / ${count('tasks',source)} tasks; removes ${count('projects',target)} projects / ${count('tasks',target)} tasks (recoverable; SP projects are archived).`;
       } else $('preview-summary').textContent = `Link ${checked.length} of ${rows.length} matches · NavoPath wins: ${np} · SP wins: ${checked.length - np}. Unmatched items import into the other app.`;
       for (const input of rows) { input.disabled = Boolean(source); input.parentElement.querySelector('select').disabled = Boolean(source) || !input.checked; }
       $('np-wins').disabled = $('sp-wins').disabled = !preview?.overwriteSupported;
@@ -188,7 +188,12 @@
         const restore = document.createElement('button'); restore.type = 'button'; restore.textContent = 'Restore';
         restore.onclick = () => void withBusy(async () => {
           let newId;
-          if (entry.kind === 'project') { const project = { ...entry.project }; delete project.id; newId = await API.addProject(project); local.links.projects[newId] = id; const currentTasks = await tasks(); for (const taskId of entry.taskIds || []) if (currentTasks.some(task => task.id === taskId)) await API.updateTask(taskId, { projectId: newId }); }
+          if (entry.kind === 'project') {
+            if (entry.archived) { newId = entry.project.id; await API.updateProject(newId, { isArchived: false }); }
+            else { const project = { ...entry.project }; delete project.id; newId = await API.addProject(project); }
+            local.links.projects[newId] = id;
+            const currentTasks = await tasks(); for (const taskId of entry.taskIds || []) if (currentTasks.some(task => task.id === taskId && !task.parentId)) await API.updateTask(taskId, { projectId: newId });
+          }
           else { const task = { ...entry.task }; delete task.id; newId = await API.addTask({ ...task, isIgnoreShortSyntax: true }); local.links.tasks[newId] = id; }
           delete local.tombstones[id];
           await request('restore', 'POST', { pairId: local.pairId, syncId: id, localId: newId }); await persist(); await runSync();
@@ -220,10 +225,13 @@
             const project = allProjects.find(item => item.id === id);
             if (project) {
               const projectTasks = (await tasks()).filter(task => task.projectId === project.id);
-              local.tombstones[action.syncId] = { kind: 'project', project, taskIds: projectTasks.map(task => task.id), deletedAt: new Date().toISOString() };
+              if (project.id === 'INBOX_PROJECT') throw new Error('The system Inbox cannot be removed. Reconnect to create a new sync preview.');
+              local.tombstones[action.syncId] = { kind: 'project', project, archived: true, taskIds: projectTasks.map(task => task.id), deletedAt: new Date().toISOString() };
               await persist();
               for (const task of projectTasks.filter(task => !task.parentId)) await API.updateTask(task.id, { projectId: null });
-              await API.deleteProject(project.id);
+              // Archiving removes the project from the active workspace without
+              // irreversibly cascading into SP-only notes and archived history.
+              await API.updateProject(project.id, { isArchived: true });
             }
           }
           if (id) delete map[id];
@@ -232,7 +240,7 @@
         const fields = action.fields || {};
         if (action.kind === 'project') {
           const existing = allProjects.find(item => item.id === id);
-          if (existing) await API.updateProject(existing.id, { title: fields.title || existing.title, theme: { ...existing.theme, primary: fields.color || existing.theme?.primary } });
+          if (existing) { const patch = { title: fields.title || existing.title, theme: { ...existing.theme, primary: fields.color || existing.theme?.primary } }; await API.updateProject(existing.id, patch); Object.assign(existing, patch); }
           else { const title = fields.title || 'Imported project'; const created = await API.addProject({ title, theme: { primary: fields.color || undefined } }); map[created] = action.syncId; const createdProject = (await projects()).find(item => item.id === created); if (createdProject) allProjects.push(createdProject); }
           continue;
         }
@@ -256,7 +264,10 @@
           }
           updates.tagIds = tagIds;
         }
-        if (current) await API.updateTask(current.id, updates, { isIgnoreShortSyntax: true });
+        if (current) {
+          if (current.parentId) delete updates.projectId; // SP moves subtasks with their parent.
+          await API.updateTask(current.id, updates, { isIgnoreShortSyntax: true });
+        }
         else {
           const { dueWithTime, ...createFields } = updates;
           const created = await API.addTask({ ...createFields, isIgnoreShortSyntax: true });
