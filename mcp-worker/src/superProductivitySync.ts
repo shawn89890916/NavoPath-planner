@@ -1,6 +1,6 @@
 export type SyncSide = "navopath" | "superproductivity";
 export type InitialSyncMode = "merge" | "overwrite-navopath" | "overwrite-superproductivity";
-export type SyncEntity = { id: string; syncId?: string; parentId?: string; fields: Record<string, unknown> };
+export type SyncEntity = { id: string; syncId?: string; parentId?: string; projectId?: string; fields: Record<string, unknown> };
 export type SyncSnapshot = { projects: SyncEntity[]; tasks: SyncEntity[]; overwriteVersion?: 1 };
 export type SyncConflict = { id: string; syncId: string; kind: "project" | "task"; field: string; navopath: unknown; superproductivity: unknown; createdAt: string };
 type Canonical = { kind: "project" | "task"; fields: Record<string, unknown>; deleted?: boolean; overwriteTarget?: SyncSide; ids: Partial<Record<SyncSide, string>> };
@@ -12,6 +12,7 @@ export type SyncState = {
   conflicts: SyncConflict[];
   baseRevision: number;
   initialOverwrite?: { source: SyncSide; target: SyncSide };
+  ignoreSpInbox?: boolean;
 };
 export const emptySyncState = (): SyncState => ({ status: "waiting", latest: {}, canonical: {}, pending: {}, conflicts: [], baseRevision: 0 });
 
@@ -30,7 +31,7 @@ export function normalizeSyncSnapshot(value: unknown): SyncSnapshot {
         if (key.length > 80 || serialized === undefined || serialized.length > 100_000 || (typeof field === "number" && !Number.isFinite(field))) throw new Error(`Invalid ${kind} field`);
         fields[key] = field;
       }
-      return { id: item.id, ...(kind === "task" && typeof item.parentId === "string" && item.parentId.length <= 200 ? { parentId: item.parentId } : {}), ...(typeof item.syncId === "string" && item.syncId.length < 240 ? { syncId: item.syncId } : {}), fields };
+      return { id: item.id, ...(kind === "task" && typeof item.projectId === "string" && item.projectId.length <= 200 ? { projectId: item.projectId } : {}), ...(kind === "task" && typeof item.parentId === "string" && item.parentId.length <= 200 ? { parentId: item.parentId } : {}), ...(typeof item.syncId === "string" && item.syncId.length < 240 ? { syncId: item.syncId } : {}), fields };
     });
   };
   return { projects: normalize(value.projects, "project"), tasks: normalize(value.tasks, "task"), ...(value.overwriteVersion === 1 ? { overwriteVersion: 1 as const } : {}) };
@@ -115,6 +116,12 @@ export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "pro
 }
 
 export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: SyncSnapshot, timestamp: string) {
+  // Inbox is SP's reserved fallback project, not a user project. New pairs
+  // exclude it; existing active connections retain their previous mapping.
+  if (side === "superproductivity" && state.status !== "active" && snapshot.overwriteVersion === 1) state.ignoreSpInbox = true;
+  if (side === "superproductivity" && state.ignoreSpInbox) {
+    snapshot = { ...snapshot, projects: snapshot.projects.filter(item => item.id !== "INBOX_PROJECT"), tasks: snapshot.tasks.map(item => item.projectId === "INBOX_PROJECT" ? { ...item, fields: { ...item.fields, projectTitle: "" } } : item) };
+  }
   if (state.status !== "active") {
     if (JSON.stringify(state.latest[side]) !== JSON.stringify(snapshot)) { state.latest[side] = snapshot; state.baseRevision++; }
     return { state, assignments: [] as Array<{ kind: "project" | "task"; id: string; syncId: string }>, actions: [] as ReturnType<typeof buildActions> };
