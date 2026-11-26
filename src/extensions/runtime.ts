@@ -1,7 +1,7 @@
 import { registerCalendarBackground } from "./calendarBackgrounds";
 import type { Dispose, ExtensionContribution, ExtensionHost, ExtensionPackage, ExtensionPlatform, Mount, PluginContext, PluginModule, CollectionApi, NativeShelfViewMode, NativeToolPage, PluginLauncherStatus } from "./types";
 import { registerTimerMode } from "./timers";
-import type { CalendarEvent, Project, Task } from "../types";
+import type { CalendarEvent, PlannerData, Project, Task } from "../types";
 
 export interface RuntimeBridge {
   host: ExtensionHost; platform: ExtensionPlatform; key: string;
