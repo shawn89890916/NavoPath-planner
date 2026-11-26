@@ -27,7 +27,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
   {
     let links: LinkStore = { projects: {}, tasks: {}, tombstones: {} };
     let pairId = ""; let pairingCode = ""; let status = ""; let busy = false; let lastError = ""; let running = false; let lastSuccess = ""; let lastApplied = 0; let lastSnapshot = "";
-    const api = ctx.integrations.superProductivity;
+    const api = ctx.integrations?.superProductivity;
     const zh = String(ctx.app.getSettings().language || ctx.language).startsWith("zh");
     const t = (cn: string, en: string) => zh ? cn : en;
     let previewView: ReturnType<typeof createInitialPreviewView> | undefined;
@@ -59,6 +59,17 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       @media (max-width: 560px) { .nvp-sp-sync-actions > button { flex: 1 1 140px; } }
     `);
     const panel = surface.content; panel.classList.add("nvp-sp-sync");
+    const registerPage = (name: string, mount: (element: HTMLElement) => () => void) => {
+      const legacy = (ctx.ui as typeof ctx.ui & { registerPage?: typeof ctx.settings.registerPage }).registerPage;
+      return legacy ? legacy.call(ctx.ui, name, mount) : ctx.settings.registerPage(name, mount);
+    };
+    if (!api) {
+      const notice = document.createElement("p");
+      notice.textContent = t("当前版本缺少同步接口，请更新 NavoPath。", "This version lacks the sync API. Update NavoPath.");
+      panel.append(notice);
+      const off = registerPage("Super Productivity Sync", mount => { mount.append(container); return () => container.remove(); });
+      return () => { off(); surface.dispose(); container.remove(); };
+    }
     const description = document.createElement("p"); description.textContent = zh ? "连接后同步全部项目和任务。首次导入会先预览；冲突由你选择。" : "Sync all projects and tasks. Review the first import and choose how to resolve conflicts.";
     const connect = document.createElement("button"); connect.type = "button"; connect.dataset.variant = "primary"; connect.textContent = zh ? "生成配对码" : "Create pairing code";
     const code = document.createElement("code"); code.hidden = true;
@@ -76,7 +87,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     confirm.dataset.variant = "primary";
     panel.append(line, pairing, codeRow, actions, details);
     const persist = async () => ctx.storage.set(STORAGE, { links, pairId });
-    const getState = async () => api.request(`/state${pairId ? `?pairId=${encodeURIComponent(pairId)}` : ""}`);
+    const getState = async () => api!.request(`/state${pairId ? `?pairId=${encodeURIComponent(pairId)}` : ""}`);
     const discoverConnection = async () => { try { displayState(await api.request("/state")); } catch { /* No connection exists until a pairing code is redeemed. */ } };
     const displayState = (state: any) => {
       pairId = state.pairId || pairId; status = state.status || "waiting";
@@ -233,7 +244,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
         }
         const outgoing = snapshot(); lastSnapshot = JSON.stringify(outgoing);
         const result = await api.request("/snapshot", "POST", { pairId, platform: "navopath", snapshot: outgoing });
-        ensureMappings(result.assignments || []); await apply(result.actions || []); lastApplied = (result.actions || []).length; lastSuccess = new Date().toLocaleTimeString(); displayState(result);
+        ensureMappings(result.assignments || []); await apply(result.actions || []); lastSnapshot = JSON.stringify(snapshot()); lastApplied = (result.actions || []).length; lastSuccess = new Date().toLocaleTimeString(); displayState(result);
       } catch (error) { lastError = error instanceof Error ? error.message : String(error); }
       finally { busy = false; renderStatus(); }
     };
@@ -259,7 +270,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       if (debounce) clearTimeout(debounce);
       debounce = setTimeout(() => { if (!busy && JSON.stringify(snapshot()) !== lastSnapshot) void sync(); }, 500);
     });
-    const offPage = ctx.ui.registerPage("Super Productivity Sync", (mount) => {
+    const offPage = registerPage("Super Productivity Sync", (mount) => {
       mount.append(container);
       renderStatus();
       return () => { container.remove(); };
