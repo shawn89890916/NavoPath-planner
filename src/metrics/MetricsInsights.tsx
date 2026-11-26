@@ -1,0 +1,69 @@
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import type { PlannerData, Language } from "../types";
+import type { TimeAllocationMetrics, MetricHabitMode, MetricCompletionFilter } from "./timeAllocation";
+import { buildInsights } from "./insightFacts";
+import { analyticsError, analyticsPreference, clearAnalytics, readAnalyticsEvents, setAnalyticsEnabled, subscribeAnalytics } from "./activityStore";
+import type { AnalyticsEvent } from "./activityEvents";
+import "./MetricsInsights.css";
+
+type View = "allocation" | "time" | "execution" | "engagement" | "history";
+type Props = { scope?:string; data:PlannerData; allocation:TimeAllocationMetrics; dayStartMinutes:number; projectIds:string[]; habitMode:MetricHabitMode; completion:MetricCompletionFilter; lang:Language; children:ReactNode };
+function minutes(n:number) { return (Math.round(n/6)/10).toFixed(1)+" h"; }
+function percent(n:number|null) {return n===null?"—":Math.round(n)+"%";}
+function downloadJson(events:AnalyticsEvent[]) {
+  const url=URL.createObjectURL(new Blob([JSON.stringify(events,null,2)],{type:"application/json"}));
+  const a=document.createElement("a");a.href=url;a.download="navopath-activity.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+export function MetricsInsights(p:Props) {
+  const [view,setView]=useState<View>("allocation");
+  const [events,setEvents]=useState<AnalyticsEvent[]>([]);
+  const [historyState,setHistoryState]=useState<"loading"|"ready"|"error">("loading");
+  const [revision,setRevision]=useState(0);
+  const [confirmClear,setConfirmClear]=useState(false);
+  const [error,setError]=useState(false);
+  const [selectedDate,setSelectedDate]=useState<string|null>(null);
+  const t=(zh:string,en:string)=>p.lang==="zh"?zh:en;
+  const preference=p.scope?analyticsPreference(p.scope):null;
+  const result=useMemo(()=>buildInsights(p.data,p.allocation,p),[p.data,p.allocation,p.dayStartMinutes,p.projectIds,p.habitMode,p.completion]);
+  const start=p.allocation.range.start.getTime(),end=p.allocation.range.end.getTime();
+  useEffect(()=>p.scope?subscribeAnalytics(p.scope,()=>setRevision(n=>n+1)):undefined,[p.scope]);
+  useEffect(()=>{
+    if(view!=="history"||!p.scope)return;
+    let live=true;setHistoryState("loading");
+    readAnalyticsEvents(p.scope,new Date(start),new Date(end)).then(rows=>{if(live){setEvents(rows);setHistoryState("ready");}},()=>{if(live){setEvents([]);setHistoryState("error");}});
+    return()=>{live=false;};
+  },[view,p.scope,start,end,revision]);
+  useEffect(()=>setSelectedDate(null),[start,end]);
+  const tabs: [View,string][]=[["allocation",t("分布","Allocation")],["time",t("时间","Time")],["execution",t("执行","Execution")],["engagement",t("投入度","Engagement")],["history",t("历史","History")]];
+  const visibleDays=result.days.slice(-366),max=Math.max(1,...visibleDays.flatMap(d=>[d.scheduled,d.completed,d.tracked]));
+  const historyRows=events.slice(0,500).filter(e=>!p.projectIds.length || p.projectIds.includes(e.projectId||"__unassigned__"));
+  const stat=(label:string,value:string)=><div><span>{label}</span><strong>{value}</strong></div>;
+  const action=(label:string,fn:()=>void,disabled=false)=><button type="button" className="df-metrics-text-action" disabled={disabled} onClick={fn}>{label}</button>;
+  return <>
+    <nav className="df-metric-insight-tabs" aria-label={t("统计视图","Metrics views")}>{tabs.map(([id,label])=><button type="button" key={id} className="df-metrics-text-action" aria-pressed={view===id} onClick={()=>setView(id)}>{label}</button>)}</nav>
+    {view==="allocation"?p.children:<section className="df-metric-insight-content">
+      {view==="time"&&<>
+        <div className="df-metric-insight-stats">{stat(t("排程时长","Scheduled"),minutes(result.scheduled))}{stat(t("已完成排程","Completed scheduled"),minutes(result.completed))}{stat(t("实际计时","Tracked"),result.trackedSessions?minutes(result.tracked):"—")}</div>
+        <p>{t("排程时长不代表实测时长；跨日计时按记录区间比例分配。","Scheduled time is not measured time; cross-day tracked duration is apportioned by interval.")}</p>
+        <h3>{t("每日时长","Daily time")}</h3>
+        <p>{t("排程 / 完成 / 计时","Scheduled / Completed / Tracked")}</p>
+        {result.days.length>366&&<p>{t("图表显示最近 366 个有记录的日期；汇总涵盖所选范围。","Chart shows the latest 366 recorded dates; totals cover the selected range.")}</p>}
+        {visibleDays.length===0?<p>{t("暂无记录","No records")}</p>:<div className="df-metric-insight-trend">{visibleDays.map(d=><button type="button" key={d.date} aria-pressed={selectedDate===d.date} onClick={()=>setSelectedDate(selectedDate===d.date?null:d.date)} title={d.date+" · "+[d.scheduled,d.completed,d.tracked].map(minutes).join(" / ")} aria-label={d.date+" "+[d.scheduled,d.completed,d.tracked].map(minutes).join(" / ")}><span>{d.date.slice(5)}</span><span className="df-metric-insight-bars">{[d.scheduled,d.completed,d.tracked].map((v,i)=><i key={i} style={{height:(v/max*100)+"%"}}/>)}</span></button>)}</div>}
+        {selectedDate&&<div>{visibleDays.filter(d=>d.date===selectedDate).map(d=><p key={d.date}>{d.date} · {minutes(d.scheduled)} / {minutes(d.completed)} / {minutes(d.tracked)}</p>)}</div>}
+      </>}
+      {view==="execution"&&<><div className="df-metric-insight-stats">{stat(t("独立执行","Executions"),String(result.executionCount))}{stat(t("完成执行","Completed"),String(result.statuses.completed))}{stat(t("完成比例","Completed share"),result.executionCount?percent(result.statuses.completed/result.executionCount*100):"—")}</div>
+        {([["scheduled",t("已安排","Scheduled")],["completed",t("完成","Completed")],["returned_unfinished",t("返回规划","Returned")],["skipped",t("跳过","Skipped")]] as const).map(([id,label])=><div className="df-metric-insight-row" key={id}><span>{label}</span><progress max={Math.max(1,result.executionCount)} value={result.statuses[id]||0}/><strong>{result.statuses[id]||0}</strong></div>)}
+        <p>{t("以独立时间轴记录计数，不将跨日片段重复计数；取消的排程不进入现有分布统计。","Counts individual timeline records, not cross-day slices. Cancelled schedules are excluded by the existing allocation report.")}</p></>}
+      {view==="engagement"&&<><div className="df-metric-insight-stats">{stat(t("明确评分均值","Explicit weighted mean"),percent(result.explicitEngagement))}{stat(t("评分时长覆盖率","Rated time coverage"),percent(result.ratingCoverage))}{stat(t("明确评分加权时长","Explicit weighted time"),result.ratedMinutes?minutes(result.ratedWeighted):"—")}</div><p>{t("只计算已完成且明确评分的排程时长；默认 80% 不作为用户评分。","Uses completed scheduled intervals with explicit ratings only; default 80% is not a user rating.")}</p>{result.ratingCoverage!==null&&<progress max={100} value={result.ratingCoverage}/>}</>}
+      {view==="history"&&<><h3>{t("本机详细记录","Local detailed history")}</h3>
+        {!p.scope?<p>{t("演示模式不记录活动。","Demo mode does not record activity.")}</p>:<>
+          <p>{t("主动启用后记录本机提交的任务、排程、计时记录和属性变更。不上传云端，不追踪应用外活动。远端同步、撤销来源和计时过程尚未完整覆盖。","Opt in to record local task, schedule, time-entry and property changes. No new cloud upload or external activity tracking. Remote mutations, undo provenance and timer lifecycle are not fully covered.")}</p>
+          {preference?.since&&<p>{t("开始记录","Recording started")}: {new Date(preference.since).toLocaleString()}</p>}
+          <div className="df-metric-insight-actions">{action(preference?.enabled?t("暂停记录","Pause recording"):t("启用记录","Enable recording"),()=>{try{setAnalyticsEnabled(p.scope!,!preference?.enabled);setError(false);}catch{setError(true);}})}{action(t("导出显示的历史","Export visible history"),()=>downloadJson(historyRows),!historyRows.length)}{action(confirmClear?t("确认清除并暂停","Confirm clear & pause"):t("清除本机历史","Clear local history"),()=>{if(!confirmClear){setConfirmClear(true);return;}setConfirmClear(false);void clearAnalytics(p.scope!).catch(()=>setError(true));})}{confirmClear&&action(t("取消","Cancel"),()=>setConfirmClear(false))}</div>
+          {(error||analyticsError(p.scope)||historyState==="error")&&<p role="alert">{t("历史记录存储不可用；任务操作不受影响。","History storage unavailable; task operations are unaffected.")}</p>}
+          {historyState==="loading"?<p aria-live="polite">{t("读取中…","Loading…")}</p>:historyState==="ready"&&<><p>{events.length>500?t("显示最新 500 条范围内的记录，项目筛选在此基础上应用。","Showing latest 500 records in range; project filter is applied to those records."):t("此处只显示所选时间与项目范围的本机历史。","Local history for selected date and project range.")}</p>{!historyRows.length?<p>{t("暂无已记录的变化","No recorded changes")}</p>:<div className="df-metric-insight-history">{historyRows.map(e=><details key={e.id}><summary>{new Date(e.occurredAt).toLocaleString()} · {e.entityType} · {e.action}</summary><p>{p.data.tasks.find(x=>x.id===e.taskId)?.title||e.entityId}</p><pre>{JSON.stringify({before:e.before,after:e.after},null,2)}</pre></details>)}</div>}</>}
+        </>}
+      </>}
+    </section>}
+  </>;
+}

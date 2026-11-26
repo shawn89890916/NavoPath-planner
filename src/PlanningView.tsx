@@ -26,6 +26,7 @@ import { extensionService } from "./extensions/service";
 import { ExtensionMount } from "./extensions/ExtensionMount";
 import type { ExtensionContribution, NativePlanningViewMode } from "./extensions/types";
 import { CandidateSubtaskItem } from "./WorkspacePresentation";
+import { MetricsInsights } from "./metrics/MetricsInsights";
 
 type TreeNodeKind = "project" | "task" | "subtask";
 type TreeDragNode = { kind: TreeNodeKind; id: string };
@@ -913,6 +914,7 @@ function useTreeLines(
 type PlanningViewMode = NativePlanningViewMode | "plugin";
 
 export default function PlanningView(props: {
+  analyticsScope?: string;
   focusTaskId?: string | null;
   onFocusHandled?: () => void;
   presentationNote?: React.ReactNode;
@@ -2636,6 +2638,7 @@ export default function PlanningView(props: {
                 </div>
               )}
 
+              <MetricsInsights key={props.analyticsScope || "demo"} scope={props.analyticsScope} data={props.data} allocation={metricsResult} dayStartMinutes={dayStartMinutes} projectIds={metricsProjectFilter} habitMode={metricsHabitMode} completion={metricsCompletion} lang={props.lang}>
               {metricsResult.taskEntries.length === 0 ? (
                 <div className="df-metrics-empty">
                   <h3>{props.lang === "zh" ? "暂无时间安排" : "No scheduled time"}</h3>
@@ -2781,6 +2784,7 @@ export default function PlanningView(props: {
                   </div>
                 </>
               )}
+              </MetricsInsights>
             </section>
           )}
 
