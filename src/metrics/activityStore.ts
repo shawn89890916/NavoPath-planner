@@ -1,5 +1,5 @@
 import type { PlannerData } from "../types";
-import { diffAnalyticsEvents, type AnalyticsEvent } from "./activityEvents";
+import type { AnalyticsEvent } from "./activityEvents";
 
 const DB = "navopath-local-analytics-v1";
 const STORE = "events";
@@ -57,9 +57,12 @@ export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,nex
   const preference=analyticsPreference(scope);
   if(!preference.enabled) return;
   try {
-    const events=diffAnalyticsEvents(previous,next,occurredAt,crypto.randomUUID());
-    if(!events.length) return;
-    const pending=(queues.get(scope) || Promise.resolve()).then(()=>append(scope,preference.generation,events)).then(()=>{errors.delete(scope);signal(scope);},()=>{errors.set(scope,"write");signal(scope);});
+    const operationId=crypto.randomUUID();
+    const pending=(queues.get(scope) || Promise.resolve()).then(async()=>{
+      const {diffAnalyticsEvents}=await import("./activityEvents");
+      const events=diffAnalyticsEvents(previous,next,occurredAt,operationId);
+      if(events.length) await append(scope,preference.generation,events);
+    }).then(()=>{errors.delete(scope);signal(scope);},()=>{errors.set(scope,"write");signal(scope);});
     queues.set(scope,pending);
     void pending.finally(()=>{if(queues.get(scope)===pending)queues.delete(scope);});
   } catch { errors.set(scope,"write"); signal(scope); }
