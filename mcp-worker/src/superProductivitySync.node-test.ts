@@ -210,3 +210,45 @@ test("paused connection never produces import or deletion actions or accepts new
   }
   assert.deepEqual(state, before);
 });
+
+test("legacy active Inbox tombstone is retired without sending deletes and remaining schedules continue", () => {
+  const state = emptySyncState();
+  const timed = { scheduledAt: "2026-11-26T12:30", scheduledMinutes: 45 };
+  state.status = "active";
+  state.latest.navopath = { projects: [], tasks: [{ ...entity("n", "Task", timed), syncId: "task" }] };
+  state.latest.superproductivity = { projects: [{ ...entity("INBOX_PROJECT", "Inbox"), syncId: "inbox" }], tasks: [{ ...entity("s", "Task", { scheduledAt: null, scheduledMinutes: 0 }), syncId: "task", projectId: "INBOX_PROJECT" }] };
+  state.canonical.inbox = { kind: "project", fields: { title: "Inbox" }, ids: { superproductivity: "INBOX_PROJECT" }, deleted: true, overwriteTarget: "superproductivity" };
+  state.canonical.task = { kind: "task", fields: { title: "Task", ...timed }, ids: { navopath: "n", superproductivity: "s" } };
+  state.pending.inbox = { $deleted: "superproductivity" };
+  const result = applySyncSnapshot(state, "superproductivity", { projects: [entity("INBOX_PROJECT", "Inbox")], tasks: [{ ...entity("s", "Task", { scheduledAt: null, scheduledMinutes: 0 }), projectId: "INBOX_PROJECT" }] }, "2026-11-26T00:00:00Z");
+  assert.ok(!state.canonical.inbox);
+  assert.ok(!state.pending.inbox);
+  assert.ok(!result.actions.some(action => action.deleted || action.id === "INBOX_PROJECT"));
+  const slot = result.actions.find(action => action.id === "s");
+  assert.equal(slot.fields.scheduledAt, timed.scheduledAt);
+  assert.equal(slot.fields.scheduledMinutes, timed.scheduledMinutes);
+  const ack = applySyncSnapshot(state,"superproductivity",{ projects: [], tasks: [{ ...entity("s","Task",timed), projectId: "INBOX_PROJECT" }] },"2026-11-26T00:00:01Z");
+  assert.equal(ack.actions.length,0);
+});
+test("timed SP acknowledgement preserves independent NavoPath due date", () => {
+  const state = emptySyncState(), fields = { scheduledAt: "2026-11-26T09:30", scheduledMinutes: 45, dueDate:"2026-11-30" };
+  applySyncSnapshot(state,"navopath",{projects:[],tasks:[entity("n","Task",fields)]},"2026-11-26T00:00:00Z");
+  applySyncSnapshot(state,"superproductivity",{projects:[],tasks:[entity("s","Task",{scheduledAt:null,scheduledMinutes:0,dueDate:null})]},"2026-11-26T00:00:01Z");
+  confirmInitialSync(state,[{kind:"task",navopathId:"n",superproductivityId:"s"}]);
+  applySyncSnapshot(state,"superproductivity",{projects:[],tasks:[entity("s","Task",{...fields,dueDate:null})]},"2026-11-26T00:00:02Z");
+  assert.deepEqual(state.conflicts,[]);
+  const item = Object.values(state.canonical).find(x=>x.kind==="task");
+  assert.equal(item.fields.dueDate,"2026-11-30");
+  assert.deepEqual(buildActions(state,"superproductivity"),[]);
+});
+test("a real NavoPath project previously paired to Inbox is retained", () => {
+  const state=emptySyncState();state.status="active";
+  state.latest.navopath={projects:[{...entity("n-project","Real project"),syncId:"old"}],tasks:[]};
+  state.latest.superproductivity={projects:[{...entity("INBOX_PROJECT","Inbox"),syncId:"old"}],tasks:[]};
+  state.canonical.old={kind:"project",fields:{title:"Inbox"},ids:{navopath:"n-project",superproductivity:"INBOX_PROJECT"},deleted:true};
+  state.pending.old={$deleted:"navopath"};
+  applySyncSnapshot(state,"navopath",{projects:[entity("n-project","Real project")],tasks:[]},"2026-11-26T00:00:00Z");
+  assert.equal(state.canonical.old.deleted,undefined);
+  assert.deepEqual(buildActions(state,"navopath"),[]);
+  assert.ok(buildActions(state,"superproductivity").some(a=>a.fields.title==="Real project" && !a.deleted && a.id!=="INBOX_PROJECT"));
+});
