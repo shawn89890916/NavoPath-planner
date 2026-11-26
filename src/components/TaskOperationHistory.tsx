@@ -3,6 +3,7 @@ import { t } from "../i18n";
 import type { Language, Project, Subtask, Task, TimelineRecord } from "../types";
 import { isIsoDate } from "../utils/localDate";
 import type { TaskUndo } from "../utils/taskUndo";
+import type { SyncBatchUndo } from "../utils/syncBatchUndo";
 import { countDoneSubtasks, countSubtasks } from "../utils/treeOrder";
 import { UndoButton } from "./UiPrimitives";
 
@@ -16,6 +17,7 @@ const operationVerbs = {
   reschedule: ["调整了时间", "Rescheduled"],
   unschedule: ["取消了安排", "Cleared the schedule for"],
   reorder: ["调整了顺序", "Reordered"],
+  sync: ["同步了", "Synced"],
 } as const;
 
 export type TaskOperationKind = keyof typeof operationVerbs;
@@ -27,9 +29,15 @@ export type TaskOperation = {
   titles: string[];
   undo: TaskUndo;
   undone?: boolean;
+  sync?: SyncBatchUndo;
 };
 
 function describeOperation(operation: TaskOperation, lang: Language) {
+  if (operation.sync) {
+    const tasks = operation.undo.added.length + operation.undo.removed.length + operation.undo.changes.length;
+    const projects = operation.sync.projects.length;
+    return lang === "zh" ? `Super Productivity 同步 · ${tasks} 项任务、${projects} 个项目` : `Super Productivity sync · ${tasks} tasks, ${projects} projects`;
+  }
   const [chinese, english] = operationVerbs[operation.kind];
   const count = operation.titles.length;
   const title = operation.titles[0]?.trim() || (lang === "zh" ? "未命名任务" : "Untitled task");
@@ -105,6 +113,7 @@ export function describeOperationDetails(operation: TaskOperation, lang: Languag
   };
   const details = [...operation.undo.added, ...operation.undo.removed].flatMap((task) => {
     const text = snapshot(task);
+    if (operation.sync) return [`${operation.undo.added.includes(task) ? (zh ? "新增" : "Added") : (zh ? "删除" : "Removed")} ${quote(task.title)}${text ? " · " + text : ""}`];
     return text ? [withTitle(task.title, text)] : [];
   });
   for (const { title, fields, previousSlot } of operation.undo.changes) {
@@ -122,7 +131,7 @@ export function describeOperationDetails(operation: TaskOperation, lang: Languag
     else if (added.length) details.push(withTitle(title, zh ? `安排到 ${list.format(added)}` : `Scheduled for ${list.format(added)}`));
     else if (removed.length) details.push(withTitle(title, zh ? `移除了 ${list.format(removed)} 的时间块` : `Removed the time block at ${list.format(removed)}`));
 
-    if (operation.kind !== "edit") continue;
+    if (operation.kind !== "edit" && operation.kind !== "sync") continue;
     for (const key of Object.keys(fieldLabels) as (keyof typeof fieldLabels)[]) {
       const change = field.get(key);
       if (!change || (key === "plannedForDate" && (removed.length || added.length))) continue;
@@ -140,6 +149,10 @@ export function describeOperationDetails(operation: TaskOperation, lang: Languag
       details.push(withTitle(title, from === to ? (zh ? "更新了子任务" : "Updated the subtasks")
         : zh ? `子任务完成进度从 ${from} 变为 ${to}` : `Subtask progress changed from ${from} to ${to}`));
     }
+  }
+  for (const change of operation.sync?.projects || []) {
+    const action = !change.before ? (zh ? "新增项目" : "Added project") : !change.after ? (zh ? "删除项目" : "Removed project") : (zh ? "修改项目" : "Edited project");
+    details.push(`${action} ${quote(change.after?.title || change.before?.title || "")}`);
   }
   return details;
 }
