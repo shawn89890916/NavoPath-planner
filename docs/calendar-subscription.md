@@ -34,10 +34,12 @@ CalDAV syncs appointments created in the NavoPath calendar into NavoPath as ordi
 The CalDAV password is dedicated to calendar access and shown only when generated. Revoke it in NavoPath to disconnect all devices that use it.
 
 ## Super Productivity timeline history
+
+Open Settings → Connections → Apps → Super Productivity. Install or enable the official NavoPath plugin from this page, download the companion SP plugin if needed, and use the existing pairing and first-import controls. Existing pairs do not require re-pairing. The optional history section copies a read-only link and guides manual SP calendar setup. No remote subscription status is inferred.
 SP's native task timeline only selects incomplete tasks with one timed slot per task. Keep the NavoPath Sync plugin connected for two-way task and active schedule changes. To display completed execution records, returned-unfinished records and additional blocks, add a separate read-only iCalendar source in SP:
 
 1. Use your existing NavoPath calendar subscription URL (or create one only if none exists).
-2. Use **Copy SP timeline history link** in Calendar settings at any time while the subscription is active. It retrieves a stable, history-only signed capability; the original subscription remains valid and its raw token is never recovered. Legacy links formed by replacing `.ics` with `-history.ics` continue to work.
+2. Use **Copy history subscription link** in the Super Productivity connection at any time while the subscription is active. It retrieves a stable, history-only signed capability; the original subscription remains valid and its raw token is never recovered. Legacy links formed by replacing `.ics` with `-history.ics` continue to work.
 3. In Super Productivity, add an iCalendar calendar integration with that URL. Leave automatic task import disabled. Do not subscribe to the full NavoPath feed as well, which would duplicate active slots.
 
 The history feed has a stable UID per recorded block, excludes cancelled records and the primary incomplete-task timed slot already mirrored by the plugin, and does not contain task notes. Calendar events are read-only; completion and execution history stay in NavoPath. SP determines its display range and polling frequency. Revoking or replacing the existing calendar token revokes both feeds. Rotating the Worker's service credential also invalidates derived history links; copy a new one if that occurs.

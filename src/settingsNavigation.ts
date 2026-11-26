@@ -134,6 +134,10 @@ const entry = (
 ): SettingsSearchEntry => ({ id, target: { ...target, anchor: target.anchor ?? id }, labelZh, labelEn, keywords, descriptionZh, descriptionEn });
 
 export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
+  entry("connections", { category: "integrations" }, "连接应用", "Connect apps", "provider 供应商 连接 integration"),
+  entry("connection-super-productivity", { category: "integrations" }, "Super Productivity", "Super Productivity", "SP sync 配对 同步 历史 时间轴"),
+  entry("connection-apple-calendar", { category: "integrations" }, "Apple 日历", "Apple Calendar", "CalDAV iPhone 苹果 双向"),
+  entry("connection-notion-calendar", { category: "integrations" }, "Notion Calendar", "Notion Calendar", "Notion 日历 订阅"),
   entry("calendar-feed", { category: "integrations" }, "日历订阅", "Calendar subscription", "webcal ics CalDAV iPhone Notion Calendar 日历 同步 订阅 双向 苹果"),
   entry("external-calendar", { category: "integrations" }, "外部日历", "External calendars", "read only ICS busy time 只读 忙碌 冲突"),
   entry("modified-settings", { category: "general" }, "已修改的设置", "Modified settings", "changed preferences reset default 恢复 默认 自定义"),
