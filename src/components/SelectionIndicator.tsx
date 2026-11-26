@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
-import { MOTION, prefersReducedMotion } from "../motion";
+import { MOTION, MOTION_EASE, prefersReducedMotion } from "../motion";
 
 const ACTIVE_ITEM_SELECTOR = ":scope > .ui-choice-item:is(.active, [aria-current=page], [aria-selected=true], [aria-pressed=true])";
 
@@ -41,7 +41,7 @@ export function SelectionIndicator({ activeKey }: { activeKey: string }) {
           { transform: "none" },
         ], {
           duration: MOTION.layout,
-          easing: "cubic-bezier(.2,.75,.25,1)",
+          easing: MOTION_EASE,
         });
       }
     };

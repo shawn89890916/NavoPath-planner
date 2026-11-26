@@ -7,6 +7,31 @@ export const MOTION = {
   story: 520,
 } as const;
 
+export type MotionPreference = "off" | "standard" | "rich";
+export const MOTION_EASE = "cubic-bezier(.2,.75,.25,1)";
+const MOTION_PREFERENCE_KEY = "navopath.motion.preference";
+
+export function normalizeMotionPreference(value: unknown): MotionPreference {
+  return value === "off" || value === "rich" ? value : "standard";
+}
+
+export function readMotionPreference(targetWindow: Window | undefined = typeof window === "undefined" ? undefined : window): MotionPreference {
+  try { return normalizeMotionPreference(targetWindow?.localStorage.getItem(MOTION_PREFERENCE_KEY)); }
+  catch { return "standard"; }
+}
+
+/** Local device preference: does not alter workspace data or cloud settings. */
+export function applyMotionPreference(preference: MotionPreference, targetWindow: Window | undefined = typeof window === "undefined" ? undefined : window) {
+  if (!targetWindow?.document?.documentElement) return;
+  targetWindow.document.documentElement.dataset.motionPreference = preference;
+  try { targetWindow.localStorage.setItem(MOTION_PREFERENCE_KEY, preference); } catch { /* Session-only when storage is unavailable. */ }
+}
+
+export function effectiveMotionPreference(targetWindow: Window | null | undefined): MotionPreference {
+  if (targetWindow?.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return "off";
+  return normalizeMotionPreference(targetWindow?.document?.documentElement?.dataset.motionPreference);
+}
+
 export type MotionDirection = "backward" | "forward" | "neutral";
 export type MotionScope = "timeline" | "workspace" | "settings" | "planning";
 
@@ -23,7 +48,7 @@ type MotionDocument = Document & {
 const activeTransitions = new WeakMap<Document, { skip?: (nextKey: object | MotionScope) => void }>();
 
 export function prefersReducedMotion(targetWindow: Window | null | undefined = typeof window === "undefined" ? undefined : window) {
-  return Boolean(targetWindow?.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+  return effectiveMotionPreference(targetWindow) === "off";
 }
 
 function clearTransitionState(root: HTMLElement) {

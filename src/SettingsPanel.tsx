@@ -11,6 +11,7 @@ import { t, viewLabel } from "./i18n";
 import { SETTINGS_PRIMARY_CATEGORIES, settingsPrimaryCategory, normalizeSettingsTarget, searchSettings, settingsCategoryLabel, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { extensionService } from "./extensions/service";
 import { getModifiedPreferences, resetRegisteredPreferences } from "./settingsRegistry";
+import { applyMotionPreference, readMotionPreference, type MotionPreference } from "./motion";
 import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon } from "./components/UiIcons";
 import { DEFAULT_WIDGET_APPEARANCE, normalizeWidgetAppearance } from "./widget/widgetPreferences";
 import { normalizeWidgetTimerPreferences } from "./widget/widgetTimer";
@@ -552,6 +553,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
   const [confirmResetSettings, setConfirmResetSettings] = useState(false);
   const [confirmClearLocalData, setConfirmClearLocalData] = useState(false);
   const [clearLocalDataPhrase, setClearLocalDataPhrase] = useState("");
+  const [motionPreference, setMotionPreference] = useState<MotionPreference>(() => readMotionPreference());
   const widgetAppearance = normalizeWidgetAppearance(settings.widgetAppearance);
   useSyncExternalStore(subscribeTimerModes, getTimerModeRevision);
   const widgetTimerSettings = normalizeWidgetTimerPreferences(settings.widgetTimerPreferences);
@@ -926,6 +928,18 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                 />}
               />
               <SettingDisclosure title={lang === "zh" ? "进阶外观" : "Advanced appearance"} open={Boolean(expandedSettings["appearance"])} onToggle={open => setExpandedSettings(previous => previous["appearance"] === open ? previous : { ...previous, "appearance": open })}>
+              <SettingRow anchor="motion-preference" title={lang === "zh" ? "动效强度" : "Motion intensity"}
+                control={<SettingSelect<MotionPreference>
+                  value={motionPreference}
+                  ariaLabel={lang === "zh" ? "动效强度" : "Motion intensity"}
+                  onChange={(value) => { applyMotionPreference(value); setMotionPreference(value); }}
+                  options={[
+                    { value: "off", label: lang === "zh" ? "关闭" : "Off" },
+                    { value: "standard", label: lang === "zh" ? "标准" : "Standard" },
+                    { value: "rich", label: lang === "zh" ? "丰富" : "Rich" },
+                  ]}
+                />}
+              />
               <SettingRow
                 anchor="timeline-font"
                 title={lang === "zh" ? "时间轴字体大小" : "Timeline font size"}

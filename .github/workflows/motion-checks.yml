@@ -1,0 +1,24 @@
+name: Motion checks
+on:
+  pull_request:
+    branches: [desktop-beta]
+  push:
+    branches: [feat/motion-system-desktop-beta-104]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/changelog-maintain.mjs --check
+      - run: npm test
+      - run: npm run css:check
+      - run: npm run build
+      - run: npm run size:check
+      - run: npm run extensions:check

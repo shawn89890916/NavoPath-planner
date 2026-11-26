@@ -2,6 +2,13 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 104
+
+#### 改进
+
+- 任务增添、重排和跨区域排程获得连续的位置反馈；完成状态变化更清晰，外观进阶设置增加关闭、标准和丰富动效选项，并尊重系统减少动态效果偏好。
+- 保存操作显示处理中、确认及重试状态，云端同步操作保留独立进度与结果反馈。
+
 ### 1.7.0 Beta 103
 
 #### 改进
@@ -1144,6 +1151,13 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 104
+
+#### Improvements
+
+- Task additions, reordering and scheduling between regions now provide continuous positional feedback; completion changes are clearer. Advanced appearance offers Off, Standard and Rich motion while respecting the system’s reduced-motion preference.
+- Save operations show pending, confirmed and retrying states, while manual cloud sync keeps its own progress and result feedback.
 
 ### 1.7.0 Beta 103
 

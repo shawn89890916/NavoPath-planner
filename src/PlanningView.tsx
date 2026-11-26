@@ -2,6 +2,8 @@ import "./PlanningView.css";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMotionPresence } from "./useMotionPresence";
+import { useTaskLayoutMotion } from "./motion/useTaskLayoutMotion";
+import { PLANNING_MOTION_SELECTOR } from "./motion/layout";
 import type { PlannerData, Project, Settings, Subtask, Task, WorkflowStatus } from "./types";
 import { t, type Language } from "./i18n";
 import { useInAppDialog } from "./InAppDialog";
@@ -913,6 +915,13 @@ export default function PlanningView(props: {
     offset: { x: number; y: number };
     pointer: { x: number; y: number };
   } | null>(null);
+  useTaskLayoutMotion({
+    root: () => viewRef.current,
+    selector: PLANNING_MOTION_SELECTOR,
+    scope: viewMode,
+    revision: [props.data, props.collapsed, collapsedSubtasks, includeCompleted, props.showCompleted, filterProjects, filterWorkflows, filterImportances, filterUrgencies, filterDueDate, filterScheduled],
+    blocked: Boolean(dragNode || planningDragTask),
+  });
   const suppressClickUntilRef = useRef(0);
 
   const suppressPostDragClick = useCallback(() => {
