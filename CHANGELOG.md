@@ -2,6 +2,10 @@
 
 ## 2026-11-26
 
+### 新增
+
+- 日历订阅新增 Super Productivity 时间轴历史链接：已完成、返回未完成和同一任务的额外时间块可作为独立只读日历显示，不重复导入已同步的主排程。
+
 ### 改进
 
 - 设置精简为六个主要分区，低频配置按需展开；窄窗口可直接搜索设置，搜索结果自动打开对应分区。工作时段统一供智能排程与 AI 简报使用，保留现有自定义参数。
@@ -972,6 +976,10 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### Added
+
+- Calendar subscriptions now offer a Super Productivity timeline history link for completed, returned-unfinished, and additional time blocks as read-only calendar entries, without duplicating the primary synced slot.
 
 ### Improvements
 
