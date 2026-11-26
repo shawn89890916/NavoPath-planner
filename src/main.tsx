@@ -1141,7 +1141,9 @@ function App() {
 
   function logTimerTransition(transition:TimerTransition,taskId:string|undefined|null,at:number,elapsed:number) {
     if(productDemo||!dataRef.current)return;
-    recordTimerTransition(authStateRef.current?.user?.id || "preview",taskId||undefined,transition,new Date(at).toISOString(),elapsed,dataRef.current.tasks.find(t=>t.id===taskId)?.projectId);
+    const task=dataRef.current.tasks.find(t=>t.id===taskId);
+    const recordId=task?.timelineRecords?.find(r=>r.id===timerRecordRef.current)?.id;
+    recordTimerTransition(authStateRef.current?.user?.id || "preview",taskId||undefined,transition,new Date(at).toISOString(),elapsed,task?.projectId,recordId);
   }
   const startTimer = useCallback((taskId: string,recordId?:string|null) => {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerStart", taskId }); return; }
@@ -1226,7 +1228,8 @@ function App() {
 
   const discardTimer = useCallback(() => {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "discardTimer" }); return; }
-    if(timerTaskRef.current)logTimerTransition("discard",timerTaskRef.current,Date.now(),timerElapsedRef.current);
+    const now=Date.now();
+    if(timerTaskRef.current)logTimerTransition("discard",timerTaskRef.current,now,timerStartedAtRef.current===null?timerElapsedRef.current:advanceTaskElapsedSeconds(timerElapsedBaseRef.current,timerStartedAtRef.current,now));
     timerTaskRef.current = null;
     timerRecordRef.current=undefined;
     timerElapsedRef.current = 0; timerElapsedBaseRef.current = 0; timerStartedAtRef.current = null;
