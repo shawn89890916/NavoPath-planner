@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import React,{ useEffect, useMemo, useState } from "react";
 import type { PlannerData, Language } from "../types";
-import type { TimeAllocationMetrics, MetricHabitMode, MetricCompletionFilter } from "./timeAllocation";
+import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricHabitMode, type MetricCompletionFilter } from "./timeAllocation";
+const MetricsAllocation=React.lazy(()=>import("./MetricsAllocation"));
 import { buildInsights } from "./insightFacts";
 import { analyticsError, analyticsPreference, clearAnalytics, readAnalyticsEvents, recoverAnalytics, setAnalyticsEnabled, subscribeAnalytics } from "./activityStore";
 import type { AnalyticsEvent } from "./activityEvents";
@@ -13,14 +14,18 @@ function downloadCsv(rows: {date:string;scheduled:number;completed:number;tracke
   const text=["Date,Scheduled minutes,Completed scheduled minutes,Tracked minutes",...rows.map(d=>[d.date,d.scheduled.toFixed(2),d.completed.toFixed(2),d.trackedSessions?d.tracked.toFixed(2):""].join(","))].join("\r\n");
   const url=URL.createObjectURL(new Blob([text],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="navopath-metrics.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-type Props = { scope?:string; data:PlannerData; allocation:TimeAllocationMetrics; dayStartMinutes:number; projectIds:string[]; habitMode:MetricHabitMode; completion:MetricCompletionFilter; lang:Language; children:ReactNode; query:MetricsQuery; onApplyQuery:(query:MetricsQuery)=>void };
+type Props = { scope?:string; data:PlannerData; referenceDate?:string; dayStartTime?:string; weekStartsOn?:0|1; engagementEnabled?:boolean; projectIds:string[]; habitMode:MetricHabitMode; completion:MetricCompletionFilter; lang:Language; query:MetricsQuery; onApplyQuery:(query:MetricsQuery)=>void };
 function minutes(n:number) { return (Math.round(n/6)/10).toFixed(1)+" h"; }
 function percent(n:number|null) {return n===null?"—":Math.round(n)+"%";}
 function downloadJson(events:AnalyticsEvent[]) {
   const url=URL.createObjectURL(new Blob([JSON.stringify(events,null,2)],{type:"application/json"}));
   const a=document.createElement("a");a.href=url;a.download="navopath-activity.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-export function MetricsInsights(p:Props) {
+export function MetricsInsights(props:Props) {
+  const {data,query,referenceDate,weekStartsOn,engagementEnabled}=props;
+  const dayStartMinutes=parseDayStartMinutes(props.dayStartTime);
+  const allocation=useMemo(()=>buildTimeAllocationMetrics({data,range:{preset:query.range,anchorDate:referenceDate,customStart:query.customStart,customEnd:query.customEnd},dayStartMinutes,weekStartsOn,engagementEnabled,groupBy:query.group,habitMode:query.habit,completion:query.completion,projectIds:query.projects}),[data,query.range,query.customStart,query.customEnd,query.group,query.habit,query.completion,query.projects,referenceDate,dayStartMinutes,weekStartsOn,engagementEnabled]);
+  const p={...props,allocation,dayStartMinutes};
   const [view,setView]=useState<View>("allocation");
   const [timeChart,setTimeChart]=useState<TimeChart>("trend");
   const [savedViews,setSavedViews]=useState(()=>p.scope?readSavedViews(p.scope):[]);
@@ -71,7 +76,7 @@ export function MetricsInsights(p:Props) {
       {action(t("本月投入度","Monthly engagement"),()=>{setView("engagement");p.onApplyQuery({...p.query,range:"thisMonth",completion:"all"});})}
       {saveViewError&&<span role="alert">{t("无法保存视图","Could not save view")}</span>}
     </div></details>}
-    {view==="allocation"?p.children:<section className="df-metric-insight-content">
+    {view==="allocation"?<React.Suspense fallback={<p role="status">{t("正在加载分布…","Loading allocation…")}</p>}><MetricsAllocation lang={p.lang} engagementEnabled={p.engagementEnabled} metricsResult={allocation} display={p.query.display} onAdjustRange={()=>p.onApplyQuery({...p.query,range:"today"})}/></React.Suspense>:<section className="df-metric-insight-content">
       {view==="time"&&<>
         <div className="df-metric-insight-stats">{stat(t("排程时长","Scheduled"),minutes(result.scheduled))}{stat(t("已完成排程","Completed scheduled"),minutes(result.completed))}{stat(t("实际计时","Tracked"),result.trackedSessions?minutes(result.tracked):"—")}</div>
         <p>{t("排程时长不代表实测时长；跨日计时按记录区间比例分配。","Scheduled time is not measured time; cross-day tracked duration is apportioned by interval.")}</p>

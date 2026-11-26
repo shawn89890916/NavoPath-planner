@@ -34,3 +34,6 @@
 .df-metric-saved-views .df-metric-insight-actions { padding-top:8px; }
 .df-metric-saved-views :is(input,select) { min-width:0; max-width:100%; padding:5px 8px; background:var(--paper-bg); color:var(--text-main); border:1px solid var(--paper-rule); font:inherit; }
 .df-metric-insight-scatter { display:block; max-width:100%; width:min(100%,420px); margin:12px auto; color:var(--text-muted); }
+
+.df-metric-group-row { display:grid; grid-template-columns:minmax(90px,1fr) minmax(40px,2fr) auto; gap:8px; align-items:center; width:100%; border:0; border-bottom:1px solid var(--paper-rule); padding:10px 0; background:none; color:var(--text-main); text-align:left; }
+.df-metric-group-row[aria-pressed='true'] { color:var(--accent-active); }

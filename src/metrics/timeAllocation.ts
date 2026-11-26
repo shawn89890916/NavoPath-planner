@@ -74,19 +74,6 @@ export type TimeAllocationMetrics = {
   };
 };
 
-type MetricDebugRow = {
-  id: string;
-  title: string;
-  projectId?: string | null;
-  scheduledStart: string;
-  scheduledEnd: string;
-  durationMinutes: number;
-  completed: boolean;
-  isHabit: boolean;
-  included: boolean;
-  excludeReason: string;
-};
-
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RECURRENCE_RECORD_PREFIX = "metric-recurring";
 export const UNASSIGNED_GROUP_ID = "__unassigned__";
@@ -454,7 +441,6 @@ export function buildTimeAllocationMetrics(options: {
   const projects = options.data.projects || [];
   const projectFilter = new Set(options.projectIds || []);
   const splitEntries: MetricTaskEntry[] = [];
-  const debugRows: MetricDebugRow[] = [];
 
   for (const task of options.data.tasks || []) {
     const project = projectForTask(projects, task);
@@ -475,18 +461,6 @@ export function buildTimeAllocationMetrics(options: {
       else if (completion === "incomplete" && completed) excludeReason = "completed";
       const durationMinutes = clamped ? minutesBetween(clamped.start, clamped.end) : 0;
       if (!excludeReason && durationMinutes <= 0) excludeReason = "invalid-duration";
-      debugRows.push({
-        id: record.id,
-        title: task.title,
-        projectId: task.projectId || null,
-        scheduledStart: clamped ? clamped.start.toISOString() : start.toISOString(),
-        scheduledEnd: clamped ? clamped.end.toISOString() : end.toISOString(),
-        durationMinutes,
-        completed,
-        isHabit: habit,
-        included: !excludeReason,
-        excludeReason,
-      });
       if (excludeReason || !clamped) continue;
       const entry: MetricTaskEntry = {
         taskId: task.id,
@@ -504,10 +478,6 @@ export function buildTimeAllocationMetrics(options: {
       if (options.engagementEnabled && completed) entry.engagement = engagementFor(task, record);
       splitEntries.push(...splitByMetricDay(entry, dayStartMinutes));
     }
-  }
-
-  if (import.meta.env.DEV && debugRows.length > 0) {
-    console.table(debugRows);
   }
 
   const plannedMinutes = splitEntries.reduce((sum, entry) => sum + entry.durationMinutes, 0);

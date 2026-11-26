@@ -63,6 +63,11 @@
       "limit": "12 KB"
     },
     {
+      "name": "Optional Metrics allocation",
+      "path": "dist/assets/MetricsAllocation-*.js",
+      "limit": "8 KB"
+    },
+    {
       "name": "Optional Metrics analytics styles",
       "path": "dist/assets/MetricsInsights-*.css",
       "limit": "4 KB"
