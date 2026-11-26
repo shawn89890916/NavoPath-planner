@@ -1,0 +1,25 @@
+name: Desktop Beta preflight
+on:
+  push:
+    branches: [desktop-beta]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/changelog-maintain.mjs --check
+      - run: node scripts/prepare-desktop-release.mjs --check-policy
+      - run: npm test
+      - run: npm run css:check
+      - run: npm run extensions:check
+      - run: node --test mcp-worker/src/superProductivitySync.node-test.ts
+      - run: node --check integrations/super-productivity-navopath/plugin.js
+      - run: npm run build:navopath -- --base=./
