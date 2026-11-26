@@ -1092,7 +1092,7 @@ function App() {
   const [pomodoroTaskChoice, setPomodoroTaskChoice] = useState<string>();
   const timerIntervalRef = useRef<number | null>(null);
   const timerTaskRef = useRef<string | null>(null);
-  const timerRecordRef = useRef<string>();
+  const timerRecordRef = useRef<string|undefined>(undefined);
   const timerElapsedRef = useRef(0);
   const timerElapsedBaseRef = useRef(0);
   const timerStartedAtRef = useRef<number | null>(null);
