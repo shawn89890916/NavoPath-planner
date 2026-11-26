@@ -3270,7 +3270,7 @@ if (cached?.data && cached?.settings) {
     if (!settings) return;
     const property = "--navopath-corner-radius";
     document.body.style.setProperty(property, `${normalizeCornerRadius(settings.workspaceCornerRadius)}px`);
-    return () => document.body.style.removeProperty(property);
+    return () => { document.body.style.removeProperty(property); };
   }, [settings?.workspaceCornerRadius, Boolean(settings)]);
 
   const today = todayIso();
