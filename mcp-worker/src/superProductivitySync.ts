@@ -43,21 +43,24 @@ export function createInitialPreview(state: SyncState) {
     const right = superproductivity[kind === "project" ? "projects" : "tasks"];
     const rightByTitle = new Map<string, SyncEntity[]>();
     for (const item of right) { const title = normalizeTitle(item.fields.title); if (title) rightByTitle.set(title, [...(rightByTitle.get(title) || []), item]); }
+    const leftCounts = new Map<string, number>();
+    for (const item of left) { const title = normalizeTitle(item.fields.title); if (title) leftCounts.set(title, (leftCounts.get(title) || 0) + 1); }
     return { navopath: left, superproductivity: right, suggestions: left.flatMap(a => {
       const matches = rightByTitle.get(normalizeTitle(a.fields.title)) || [];
-      return matches.length === 1 ? [{ navopathId: a.id, superproductivityId: matches[0].id }] : [];
+      return matches.length === 1 && leftCounts.get(normalizeTitle(a.fields.title)) === 1 ? [{ navopathId: a.id, superproductivityId: matches[0].id }] : [];
     }) };
   };
   return { status: state.status, projects: candidates("project"), tasks: candidates("task"), conflicts: state.conflicts };
 }
 
-export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "project" | "task"; navopathId: string; superproductivityId: string }>) {
+export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "project" | "task"; navopathId: string; superproductivityId: string; preferredSide?: SyncSide }>) {
   if (!state.latest.navopath || !state.latest.superproductivity) throw new Error("Both apps must send a snapshot before the first sync");
   const seen = new Set<string>();
   const matchedLeft = new Set<string>(); const matchedRight = new Set<string>();
   const leftByKind = { project: new Map(state.latest.navopath.projects.map(item => [item.id, item])), task: new Map(state.latest.navopath.tasks.map(item => [item.id, item])) };
   const rightByKind = { project: new Map(state.latest.superproductivity.projects.map(item => [item.id, item])), task: new Map(state.latest.superproductivity.tasks.map(item => [item.id, item])) };
   for (const match of matches) {
+    if (!match || !["project", "task"].includes(match.kind) || (match.preferredSide !== undefined && !["navopath", "superproductivity"].includes(match.preferredSide))) throw new Error("Invalid initial match");
     const key = `${match.kind}:${match.navopathId}:${match.superproductivityId}`;
     if (seen.has(key) || matchedLeft.has(`${match.kind}:${match.navopathId}`) || matchedRight.has(`${match.kind}:${match.superproductivityId}`)) throw new Error("Duplicate initial match");
     seen.add(key); matchedLeft.add(`${match.kind}:${match.navopathId}`); matchedRight.add(`${match.kind}:${match.superproductivityId}`);
@@ -66,8 +69,12 @@ export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "pro
     if (!a || !b) throw new Error("Initial match references an unknown item");
     const syncId = crypto.randomUUID();
     a.syncId = b.syncId = syncId;
-    state.canonical[syncId] = { kind: match.kind, fields: { ...a.fields }, ids: { navopath: a.id, superproductivity: b.id } };
-    state.pending[syncId] = Object.fromEntries(Object.keys(a.fields).filter(key => key !== "scheduleBlocks" && JSON.stringify(a.fields[key]) !== JSON.stringify(b.fields[key])).map(key => [key, "superproductivity"]));
+    const source: SyncSide = match.preferredSide || "navopath";
+    const target: SyncSide = source === "navopath" ? "superproductivity" : "navopath";
+    const preferred = source === "navopath" ? a : b;
+    const other = source === "navopath" ? b : a;
+    state.canonical[syncId] = { kind: match.kind, fields: { ...other.fields, ...preferred.fields }, ids: { navopath: a.id, superproductivity: b.id } };
+    state.pending[syncId] = Object.fromEntries(Object.keys(preferred.fields).filter(key => key !== "scheduleBlocks" && JSON.stringify(preferred.fields[key]) !== JSON.stringify(other.fields[key])).map(key => [key, target]));
   }
   for (const side of ["navopath", "superproductivity"] as const) for (const kind of ["projects", "tasks"] as const) {
     for (const entity of state.latest[side]![kind]) {
@@ -148,10 +155,18 @@ export function buildActions(state: SyncState, side: SyncSide) {
     const current = (state.latest[side]?.[canonical.kind === "project" ? "projects" : "tasks"] || []).find(item => item.syncId === syncId);
     const targetId = current?.id || canonical.ids[side];
     const create = (pending.$create === side || (pending.$deleted === side && !canonical.deleted && !current)) && !current;
-    const fields = create ? { ...canonical.fields } : Object.fromEntries(Object.entries(canonical.fields).filter(([key, value]) => pending[key] === side && JSON.stringify(state.latest[side]?.[canonical.kind === "project" ? "projects" : "tasks"].find(item => item.syncId === syncId)?.fields[key]) !== JSON.stringify(value)));
+    const conflicting = new Set(state.conflicts.filter(conflict => conflict.syncId === syncId).map(conflict => conflict.field));
+    const scheduleConflicted = conflicting.has("scheduledAt") || conflicting.has("scheduledMinutes");
+    const isBlocked = (field: string) => conflicting.has(field) || (scheduleConflicted && (field === "scheduledAt" || field === "scheduledMinutes"));
+    const fields = create ? { ...canonical.fields } : Object.fromEntries(Object.entries(canonical.fields).filter(([key, value]) => !isBlocked(key) && pending[key] === side && JSON.stringify(state.latest[side]?.[canonical.kind === "project" ? "projects" : "tasks"].find(item => item.syncId === syncId)?.fields[key]) !== JSON.stringify(value)));
+    // A scheduled block is start + duration. Send both when either changes,
+    // even if one field is already acknowledged, so clients never invent a default.
+    if (canonical.kind === "task" && (Object.hasOwn(fields, "scheduledAt") || Object.hasOwn(fields, "scheduledMinutes"))) {
+      for (const field of ["scheduledAt", "scheduledMinutes"]) if (Object.hasOwn(canonical.fields, field) && !isBlocked(field)) fields[field] = canonical.fields[field];
+    }
     if (create || Object.keys(fields).length || (pending.$deleted === side && canonical.deleted)) actions.push({ syncId, kind: canonical.kind, id: targetId, fields, ...(canonical.deleted ? { deleted: true } : {}) });
   }
-  return actions;
+  return actions.sort((a, b) => Number(a.kind === "task") - Number(b.kind === "task"));
 }
 
 export function restoreSyncEntity(state: SyncState, side: SyncSide, syncId: string, localId: string) {

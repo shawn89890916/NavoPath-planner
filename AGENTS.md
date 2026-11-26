@@ -127,3 +127,7 @@ After every conversation that changes files in this repository, finish the turn 
 5. Push the current branch with `git push` (or `git push -u origin <branch>` when it has no upstream).
 
 Do not create empty commits when the worktree is clean. Never hide build, commit, or push failures; report them before delivery. Do not stage unrelated user changes silently.
+
+## Desktop Beta handoff (owner decision, 2026-11-26)
+
+For every NavoPath change, prepare the next desktop Beta so the owner only needs to open the Desktop Release workflow, select `desktop-beta`, and click Run workflow. Do not stop at an isolated PR. Check the latest published Beta and current desktop-beta SHA before integrating; preserve existing functionality when main and desktop-beta diverge. Integrate authorized changes, resolve conflicts, bump the unused Beta version in package.json and package-lock.json, update mirrored changelog, and push the tested candidate to desktop-beta. If local verification is unavailable, disclose this and require the release workflow to pass the relevant gates before publishing. Never bypass a failed check or claim an unverified release is published. Coordinate compatible backend deployments when required; stable releases remain separately approved.

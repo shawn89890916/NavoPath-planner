@@ -8,6 +8,18 @@ const planningCss = readFileSync(resolve(__dirname, "PlanningView.css"), "utf8")
 const defaults = readFileSync(resolve(__dirname, "defaultSettings.ts"), "utf8");
 const planning = readFileSync(resolve(__dirname, "PlanningView.tsx"), "utf8");
 
+describe("timeline mouse hover contracts", () => {
+  it("clears only the departing task and keeps resize targets inside their blocks", () => {
+    const block = readFileSync(resolve(__dirname, "components/TaskBlock.tsx"), "utf8");
+    expect(block).toContain("onPointerLeave={props.onPointerLeave}");
+    expect(main).toContain('onHover(current => current === task.id ? "" : current)');
+    expect(main).toContain('"mouse-hovered": hovered && !preview ? "true" : undefined');
+    expect(appCss).toMatch(/\[data-mouse-hovered="true"\] \.df-resize-dot\.top\s*\{[^}]*top:\s*0;/);
+    expect(appCss).toMatch(/\[data-mouse-hovered="true"\] \.df-resize-dot\.bottom\s*\{[^}]*bottom:\s*0;/);
+    expect(appCss).not.toContain(':has(> .df-block-project-wrap) .df-time-card-row');
+  });
+});
+
 describe("portrait interaction contracts", () => {
   it("opens the shared add short sheet with the clicked project in compact layouts", () => {
     const sheet = readFileSync(resolve(__dirname, "MobileTaskSummary.tsx"), "utf8");

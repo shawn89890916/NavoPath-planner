@@ -78,9 +78,16 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
     update: async (id, patch) => { const data = bridge.host.getData(); await bridge.host.saveData({ ...data, [name]: data[name].map(item => item.id === id ? { ...item, ...patch, id, updatedAt: new Date().toISOString() } : item) }); },
     remove: async id => { const data = bridge.host.getData(); await bridge.host.saveData({ ...data, [name]: data[name].filter(item => item.id !== id) }); },
   });
+  const syncAccount = bridge.host.getAccountId();
+  const syncHost = bridge.key === "official:super-productivity-sync" && pkg.manifest.id === "super-productivity-sync" ? bridge.host.superProductivity : undefined;
+  const requireSyncHost = () => {
+    if (disposed || !syncHost || !syncAccount || bridge.host.getAccountId() !== syncAccount) throw new Error("Sign in to NavoPath Cloud to sync");
+    return syncHost;
+  };
+  const scopedSync = { createPairingCode: async () => requireSyncHost().createPairingCode(), request: async (path: string, method?: "GET" | "POST" | "DELETE", body?: unknown) => requireSyncHost().request(path, method, body) };
   const context: PluginContext = {
     apiVersion: 1, id: bridge.key, manifest: pkg.manifest, platform: bridge.platform, window: typeof location !== "undefined" && new URLSearchParams(location.search).get("compactWindow") === "1" ? "compact" : "main", language: bridge.host.getSettings().language,
-    app: { ...bridge.host, internal: { ...bridge.host.internal,
+    app: { ...bridge.host, superProductivity: syncHost ? scopedSync : undefined, internal: { ...bridge.host.internal,
       registerNativePlanningView: (mode: NativeShelfViewMode, name: string) => bridge.registerNativePlanningView(mode, name, pkg.manifest.icon ? resources.get(pkg.manifest.icon) : undefined),
       registerNativeToolPage: (tool: NativeToolPage, name: string) => {
         if ((tool !== "pomodoro" && tool !== "schedule-templates") || pkg.manifest.id !== tool ||
@@ -88,7 +95,7 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
         return registerPage(name, () => {}, tool);
       },
     } },
-    integrations: { superProductivity: bridge.host.superProductivity || { createPairingCode: async () => { throw new Error("Cloud account required"); }, request: async () => { throw new Error("Cloud account required"); } } },
+    integrations: { superProductivity: scopedSync },
     tasks: collection<Task>("tasks"), projects: collection<Project>("projects"), calendar: { ...collection<CalendarEvent>("events"), registerBackground: predicate => { const off=registerCalendarBackground(predicate); emitPluginEvent("calendar:backgrounds-changed"); return register(()=>{ off(); emitPluginEvent("calendar:backgrounds-changed"); }); } }, register,
     on(target, event, listener) { target.addEventListener(event, listener); return register(() => target.removeEventListener(event, listener)); },
     interval(callback, ms) { const timer = window.setInterval(callback, ms); return register(() => window.clearInterval(timer)); },

@@ -42,6 +42,18 @@ jobs:
             throw "Manual untagged releases must use desktop-beta and a new Beta version"
           }
 
+      - name: Verify product tests and CSS
+        run: |
+          npm test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run css:check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run extensions:check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --test mcp-worker/src/superProductivitySync.node-test.ts
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check integrations/super-productivity-navopath/plugin.js
+
       - name: Build desktop release
         run: npm run dist
 

@@ -731,7 +731,8 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     },
     requestSuperProductivitySync: async (path, method = "GET", body) => {
       await requireUser();
-      if (!/^\/(state|snapshot|confirm|resolve|restore|revoke)(\?.*)?$/.test(path)) throw new Error("Invalid integration request");
+      if (!(/^\/state(?:\?pairId=[0-9a-f-]{36})?$/i.test(path) && method === "GET") &&
+          !(/^\/(snapshot|confirm|resolve|restore|revoke)$/.test(path) && method === "POST")) throw new Error("Invalid synchronization endpoint");
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !sessionData.session?.access_token) throw new Error("Sign in to NavoPath Cloud to manage this connection");
       const response = await fetch(`${SUPER_PRODUCTIVITY_SYNC_ENDPOINT}/api/super-productivity${path}`, {

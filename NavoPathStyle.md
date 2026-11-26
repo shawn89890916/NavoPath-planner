@@ -540,7 +540,7 @@ visual values.
 
 ### Settings and motion ownership
 
-- Workspace cards, controls, and overlays read the same radius from Appearance. The default matches the recurring timeline card at 18 px. Small details such as checkbox corners use one quarter of that value. Circular indicators and edge-to-edge joins retain their geometry.
+- Workspace cards, controls, and overlays read the same radius from Appearance. The radius is adjustable from 0–64 px, with a default of 32 px. Small details such as checkbox corners use one quarter of that value. Circular indicators and edge-to-edge joins retain their geometry.
 
 - Settings primitives own `src/components/SettingsControls.css`; pages compose them without redefining row typography or geometry. Settings navigation, section titles and controls use the sans-serif operational font; monospace is reserved for time and numeric metadata.
 - Setting rows use 14px labels, 12px supporting text, 64px minimum height and shared spacing tokens. Narrow rows respond to the content container, placing wide controls below their description.

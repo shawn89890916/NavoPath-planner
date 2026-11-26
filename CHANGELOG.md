@@ -2,6 +2,17 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 101
+
+#### 改进
+
+- 外观圆角可设置为 0–64px，默认 32px，保留已有自定义值。
+
+#### 修复
+
+- 修复时间轴任务悬停错位、项目标签溢出及相邻任务悬停切换问题。
+- Super Productivity Sync 1.0.3 改进排程和时长同步、来源选择及同步反馈；两端插件关闭界面后仍可同步（需要配套服务与 Super Productivity 插件 1.0.4）。
+
 ### 1.7.0 Beta 100
 
 #### 改进
@@ -1120,6 +1131,17 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 101
+
+#### Improved
+
+- Appearance corner radius supports 0–64px and defaults to 32px, preserving existing custom values.
+
+#### Fixed
+
+- Fix misaligned timeline hover content, overflowing project labels and missed hover transitions between adjacent tasks.
+- Super Productivity Sync 1.0.3 improves schedule and duration sync, source selection and sync feedback; both integrations keep syncing with their pages closed (requires compatible service and Super Productivity companion 1.0.4).
 
 ### 1.7.0 Beta 100
 

@@ -67,3 +67,51 @@ test("new linked records created after the first sync are created on the other s
   assert.deepEqual(result.actions, []);
   assert.deepEqual(buildActions(state, "superproductivity").map(item => [item.kind, item.fields.title]), [["project", "Project"], ["task", "Task"]]);
 });
+
+test("first import allows either source for matched fields without deleting unmatched records", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", { notes: "NavoPath", completed: true }), entity("n2", "Local only")] }, "2026-11-25T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task", { notes: "SP", completed: false }), entity("s2", "SP only")] }, "2026-11-25T00:00:01Z");
+  confirmInitialSync(state, [{ kind: "task", navopathId: "n1", superproductivityId: "s1", preferredSide: "superproductivity" }]);
+  const id = state.latest.navopath.tasks[0].syncId;
+  assert.equal(state.canonical[id].fields.notes, "SP");
+  assert.equal(state.canonical[id].fields.completed, false);
+  assert.equal(state.pending[id].notes, "navopath");
+  assert.ok(buildActions(state, "navopath").some(action => action.fields.title === "SP only"));
+  assert.ok(buildActions(state, "superproductivity").some(action => action.fields.title === "Local only"));
+  assert.ok(Object.values(state.canonical).every(item => !item.deleted));
+});
+test("duplicate titles on either side are not proposed as one-to-one matches", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task"), entity("n2", "Task")] }, "2026-11-25T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task")] }, "2026-11-25T00:00:01Z");
+  assert.deepEqual(createInitialPreview(state).tasks.suggestions, []);
+});
+
+test("duration-only timeline changes carry the start and rescheduling carries the duration", () => {
+  const state = emptySyncState();
+  const fields = { scheduledAt: "2026-11-26T09:00", scheduledMinutes: 60 };
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", fields)] }, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task", fields)] }, "2026-11-26T00:00:01Z");
+  confirmInitialSync(state, [{ kind: "task", navopathId: "n1", superproductivityId: "s1" }]);
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task", { ...fields, scheduledMinutes: 90 })] }, "2026-11-26T00:00:02Z");
+  assert.deepEqual(buildActions(state, "navopath")[0].fields, { scheduledMinutes: 90, scheduledAt: fields.scheduledAt });
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", { ...fields, scheduledMinutes: 90 })] }, "2026-11-26T00:00:03Z");
+  assert.equal(buildActions(state, "navopath").length, 0);
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", { scheduledAt: "2026-11-26T10:00", scheduledMinutes: 90 })] }, "2026-11-26T00:00:04Z");
+  assert.deepEqual(buildActions(state, "superproductivity")[0].fields, { scheduledAt: "2026-11-26T10:00", scheduledMinutes: 90 });
+});
+
+test("a schedule conflict blocks propagation until a source is chosen", () => {
+  const state = emptySyncState();
+  const fields = { scheduledAt: "2026-11-26T09:00", scheduledMinutes: 60 };
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", fields)] }, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task", fields)] }, "2026-11-26T00:00:01Z");
+  confirmInitialSync(state, [{ kind: "task", navopathId: "n1", superproductivityId: "s1" }]);
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", { ...fields, scheduledAt: "2026-11-26T10:00" })] }, "2026-11-26T00:00:02Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task", { ...fields, scheduledAt: "2026-11-26T11:00" })] }, "2026-11-26T00:00:03Z");
+  assert.equal(state.conflicts.length, 1);
+  assert.equal(buildActions(state, "superproductivity").length, 0);
+  resolveSyncConflict(state, state.conflicts[0].id, "superproductivity");
+  assert.deepEqual(buildActions(state, "navopath")[0].fields, { scheduledAt: "2026-11-26T11:00", scheduledMinutes: 60 });
+});

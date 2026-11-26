@@ -125,9 +125,18 @@ async function superProductivitySyncApi(request: Request, env: Env, ctx: Executi
   if (url.pathname.endsWith("/exchange")) {
     if (request.method !== "POST" || typeof body.code !== "string" || body.code.length < 30 || body.code.length > 100) return syncResponse({ error: "Invalid pairing code" }, 400);
     const token = `nvs_${Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, "0")).join("")}`;
-    const response = await db(env, "rpc/exchange_navopath_sp_pairing_code", { method: "POST", body: JSON.stringify({ pairing_code_hash: await sha256(body.code), new_token_hash: await sha256(token), new_token_prefix: token.slice(0, 12) }) });
-    const rows = await response.json().catch(() => []);
-    if (!response.ok || !Array.isArray(rows) || !rows[0]?.pair_id) return syncResponse({ error: "Pairing code is invalid, expired, or already used" }, 401);
+    let response: Response;
+    try {
+      response = await db(env, "rpc/exchange_navopath_sp_pairing_code", { method: "POST", body: JSON.stringify({ pairing_code_hash: await sha256(body.code), new_token_hash: await sha256(token), new_token_prefix: token.slice(0, 12) }) });
+    } catch {
+      return syncResponse({ error: "Pairing service temporarily unavailable; retry with a new pairing code if needed" }, 503);
+    }
+    const rows = await response.json().catch(() => null);
+    if (!response.ok) {
+      if (typeof rows === "object" && rows !== null && "code" in rows && "message" in rows && rows.code === "P0001" && rows.message === "Pairing code is invalid or expired") return syncResponse({ error: "Pairing code is invalid, expired, or already used" }, 401);
+      return syncResponse({ error: "Pairing service temporarily unavailable; retry with a new pairing code if needed" }, 503);
+    }
+    if (!Array.isArray(rows) || !rows[0]?.pair_id) return syncResponse({ error: "Pairing service returned an invalid response; retry with a new pairing code" }, 503);
     return syncResponse({ token, pairId: rows[0].pair_id });
   }
   const bearer = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] || "";
@@ -163,6 +172,7 @@ async function superProductivitySyncApi(request: Request, env: Env, ctx: Executi
     }
     if (url.pathname.endsWith("/confirm") && request.method === "POST") {
       if (state.status !== "preview" || !Array.isArray(body.matches) || body.matches.length > 10_000) return syncResponse({ error: "Initial import is not ready" }, 409);
+      if (body.expectedRevision !== undefined && body.expectedRevision !== state.baseRevision) return syncResponse({ error: "Initial preview changed; review before confirming" }, 409);
       confirmInitialSync(state, body.matches);
       await save(state);
       return syncResponse({ status: state.status, conflicts: state.conflicts, revision: state.baseRevision });

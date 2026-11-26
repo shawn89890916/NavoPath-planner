@@ -1,20 +1,40 @@
 {
   "id": "navopath-sync",
   "name": "NavoPath Sync",
-  "version": "1.0.0",
-  "description": "Sync projects and tasks with NavoPath Cloud.",
+  "version": "1.0.4",
+  "description": "Background sync of projects, tasks and scheduled blocks with NavoPath Cloud.",
   "manifestVersion": 1,
-  "minSupVersion": "20.0.0",
+  "minSupVersion": "20.1.0",
   "author": "NavoPath",
-  "iFrame": true,
-  "sidePanel": true,
-  "hooks": [],
-  "permissions": ["http"],
-  "allowedHosts": ["navopath-mcp.shawn89890916.workers.dev"],
-  "dataSharing": [{
-    "recipient": "NavoPath Cloud",
-    "hosts": ["navopath-mcp.shawn89890916.workers.dev"],
-    "data": ["credentials", "taskTitles", "taskNotes", "taskSchedule", "taskStatus", "projectAndTagNames", "ids"],
-    "privacyPolicyUrl": "https://navopath.com/privacy"
-  }]
+  "hooks": [
+    "taskCreated",
+    "taskUpdate",
+    "taskDelete",
+    "taskComplete",
+    "projectListUpdate"
+  ],
+  "permissions": [
+    "http"
+  ],
+  "allowedHosts": [
+    "navopath-mcp.shawn89890916.workers.dev"
+  ],
+  "dataSharing": [
+    {
+      "recipient": "NavoPath Cloud",
+      "hosts": [
+        "navopath-mcp.shawn89890916.workers.dev"
+      ],
+      "data": [
+        "credentials",
+        "taskTitles",
+        "taskNotes",
+        "taskSchedule",
+        "taskStatus",
+        "projectAndTagNames",
+        "ids"
+      ],
+      "privacyPolicyUrl": "https://navopath.com/privacy"
+    }
+  ]
 }
