@@ -8,7 +8,7 @@ import { MobileQuickAddButton } from "./components/MobileQuickAddButton";
 import { NotificationBadge } from "./components/NotificationBadge";
 import { getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./workspaceEnvironment";
 import { normalizeEngagement } from "./utils/engagement";
-import { recordLocalAnalyticsChange, recordTimerTransition, recoverAnalytics } from "./metrics/activityBridge";
+import { recordLocalAnalyticsChange, recordTimerTransition, recoverAnalytics, captureDailyPlan } from "./metrics/activityBridge";
 import type { AnalyticsSource, TimerTransition } from "./metrics/activityEvents";
 import { WorkspaceModeTabs } from "./components/WorkspaceModeTabs";
 import { undoAiImportData } from "./utils/aiImportUndo";
@@ -3245,6 +3245,13 @@ if (cached?.data && cached?.settings) {
     if (!scheduler) return;
     scheduler.setIntervalMinutes(readSyncInterval(settings));
   }, [settings?.syncIntervalMinutes, authState?.user?.id]);
+
+  useEffect(() => {
+    if(productDemo||!data||!settings)return;
+    const scope=authState?.user?.id||"preview";
+    const capture=()=>{if(loadedWorkspaceKeyRef.current.startsWith("cloud:")&&!cloudBaselineReadyRef.current)return;if(dataRef.current&&settingsRef.current&&(authStateRef.current?.user?.id||"preview")===scope)captureDailyPlan(scope,dataRef.current,workspaceNow().toISOString(),settingsRef.current.dayStartTime);};
+    capture();const interval=window.setInterval(capture,60_000);return()=>window.clearInterval(interval);
+  },[Boolean(data),Boolean(settings),authState?.user?.id,settings?.dayStartTime]);
 
   // The same live services power the application and trusted community plugins.
   useEffect(() => {

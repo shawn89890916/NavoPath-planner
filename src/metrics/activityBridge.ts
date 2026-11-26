@@ -1,6 +1,6 @@
 import type { PlannerData } from "../types";
 import type { AnalyticsSource, TimerTransition } from "./activityEvents";
-export type AnalyticsPreference = { enabled: boolean; since?: string; generation: string };
+export type AnalyticsPreference = { enabled: boolean; since?: string; generation: string; lastEnabledAt?:string; pausedAt?:string; hasGaps?:boolean };
 export const analyticsPreferenceKey=(scope:string)=>"navopath.analytics.v1."+encodeURIComponent(scope);
 export function analyticsPreference(scope:string):AnalyticsPreference {
   try {const p=JSON.parse(window.localStorage.getItem(analyticsPreferenceKey(scope))||"null") as AnalyticsPreference|null;if(p&&typeof p.enabled==="boolean"&&typeof p.generation==="string")return p;}catch{/* unavailable storage */}
@@ -18,3 +18,5 @@ export function recordTimerTransition(scope:string,taskId:string|undefined,trans
   dispatch(scope,(m,g)=>m.recordTimerTransition(scope,taskId,transition,at,elapsedSeconds,projectId,g));
 }
 export function recoverAnalytics(scope:string){dispatch(scope,m=>{void m.recoverAnalytics(scope);});}
+
+export function captureDailyPlan(scope:string,data:PlannerData,at:string,dayStartTime?:string){dispatch(scope,(m,g)=>m.captureDailyPlan(scope,data,at,dayStartTime,g));}

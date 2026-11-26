@@ -3,9 +3,10 @@ import type { PlannerData, Language } from "../types";
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricHabitMode, type MetricCompletionFilter } from "./timeAllocation";
 const MetricsAllocation=React.lazy(()=>import("./MetricsAllocation"));
 import { buildInsights } from "./insightFacts";
-import { analyticsError, analyticsPreference, clearAnalytics, readAnalyticsEvents, recoverAnalytics, setAnalyticsEnabled, subscribeAnalytics } from "./activityStore";
+import { analyticsError, analyticsPreference, clearAnalytics, readAnalyticsEvents, recoverAnalytics, captureDailyPlan, readDailyPlans, setAnalyticsEnabled, subscribeAnalytics } from "./activityStore";
 import type { AnalyticsEvent } from "./activityEvents";
 import { buildObservedPlanHistory } from "./historyAnalysis";
+import { comparePlanBaseline, type PlanBaseline } from "./planBaseline";
 import { readSavedViews, writeSavedViews, type SavedMetricsView, type MetricsQuery, type InsightView, type TimeChart } from "./savedViews";
 import "./MetricsInsights.css";
 
@@ -33,6 +34,7 @@ export function MetricsInsights(props:Props) {
   const [selectedSaved,setSelectedSaved]=useState("");
   const [saveViewError,setSaveViewError]=useState(false);
   const [events,setEvents]=useState<AnalyticsEvent[]>([]);
+  const [plans,setPlans]=useState<PlanBaseline[]>([]);
   const [historyState,setHistoryState]=useState<"loading"|"ready"|"error">("loading");
   const [revision,setRevision]=useState(0);
   const [confirmClear,setConfirmClear]=useState(false);
@@ -46,7 +48,7 @@ export function MetricsInsights(props:Props) {
   useEffect(()=>{
     if((view!=="history"&&view!=="execution")||!p.scope)return;
     let live=true;setHistoryState("loading");
-    readAnalyticsEvents(p.scope,new Date(start),new Date(end),501,p.projectIds).then(rows=>{if(live){setEvents(rows);setHistoryState("ready");}},()=>{if(live){setEvents([]);setHistoryState("error");}});
+    Promise.all([readAnalyticsEvents(p.scope,new Date(start),new Date(end),501,p.projectIds),readDailyPlans(p.scope,new Date(start),new Date(end))]).then(([rows,baselines])=>{if(live){setEvents(rows);setPlans(baselines);setHistoryState("ready");}},()=>{if(live){setEvents([]);setPlans([]);setHistoryState("error");}});
     return()=>{live=false;};
   },[view,p.scope,start,end,revision,p.projectIds]);
   useEffect(()=>setSelectedDate(null),[start,end]);
@@ -90,6 +92,9 @@ export function MetricsInsights(props:Props) {
       {view==="execution"&&<><div className="df-metric-insight-stats">{stat(t("独立执行","Executions"),String(result.executionCount))}{stat(t("完成执行","Completed"),String(result.statuses.completed))}{stat(t("完成比例","Completed share"),result.executionCount?percent(result.statuses.completed/result.executionCount*100):"—")}</div>
         {([["scheduled",t("已安排","Scheduled")],["completed",t("完成","Completed")],["returned_unfinished",t("返回规划","Returned")],["skipped",t("跳过","Skipped")]] as const).map(([id,label])=><div className="df-metric-insight-row" key={id}><span>{label}</span><progress max={Math.max(1,result.executionCount)} value={result.statuses[id]||0}/><strong>{result.statuses[id]||0}</strong></div>)}
         <p>{t("以独立时间轴记录计数，不将跨日片段重复计数；取消的排程不进入现有分布统计。","Counts individual timeline records, not cross-day slices. Cancelled schedules are excluded by the existing allocation report.")}</p>
+      <h3>{t("每日首次观察计划","First observed daily plan")}</h3>
+      <p>{t("只保存启用记录后每日第一次观察到的计划；捕获时间晚于日界线时不代表原始计划。未捕获日期不补造。","Only the first observed plan each day after opt-in is saved. A late capture is not an original day-start plan; missing days are not reconstructed.")}</p>
+      {plans.length?<div className="df-metric-insight-table"><table><thead><tr><th>{t("日期 / 捕获时间","Date / captured")}</th><th>{t("首次观察","First observed")}</th><th>{t("当前计划","Current plan")}</th><th>{t("后来新增","Added later")}</th></tr></thead><tbody>{plans.map(plan=>{const d=comparePlanBaseline(plan,p.allocation.taskEntries,p.query);return <tr key={plan.id}><td title={plan.timezone}>{plan.date} · {new Date(plan.capturedAt).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</td><td>{minutes(d.baselineMinutes)}</td><td>{minutes(d.currentMinutes)}</td><td>{minutes(d.addedMinutes)}</td></tr>;})}</tbody></table></div>:<p>{t("暂无已捕获快照","No captured snapshots")}</p>}
       <h3>{t("已观察到的计划变更","Observed plan changes")}</h3>
       {(!p.scope||historyState!=="ready"||!historyRows.length)?<p>{historyState==="loading"&&p.scope?t("读取历史中…","Loading history…"):t("暂无可验证的本机历史，请在历史视图启用详细记录。","No verified local history; enable detailed recording in History.")}</p>:<>
         <div className="df-metric-insight-stats">{stat(t("改期次数","Observed moves"),String(observed.moveCount))}{stat(t("时长调整次数","Observed resizes"),String(observed.resizeCount))}{stat(t("被移除的执行","Removed executions"),String(observed.removed))}</div>
@@ -103,8 +108,8 @@ export function MetricsInsights(props:Props) {
       {view==="history"&&<><h3>{t("本机详细记录","Local detailed history")}</h3>
         {!p.scope?<p>{t("演示模式不记录活动。","Demo mode does not record activity.")}</p>:<>
           <p>{t("主动启用后记录本机任务、排程、计时及属性变化，包括部分撤销、插件、系统操作和秒表状态。远端变化只记录观察时间，不推断操作者。不上传云端，不追踪应用外活动。","Opt in to local task, schedule, time-entry and property changes, including supported undo, plugin, system and stopwatch transitions. Remote changes are observations, not attributed to an actor. No new cloud upload or external activity tracking.")}</p>
-          {preference?.since&&<p>{t("开始记录","Recording started")}: {new Date(preference.since).toLocaleString()}</p>}
-          <div className="df-metric-insight-actions">{action(preference?.enabled?t("暂停记录","Pause recording"):t("启用记录","Enable recording"),()=>{try{setAnalyticsEnabled(p.scope!,!preference?.enabled);if(!preference?.enabled)void recoverAnalytics(p.scope!);setError(false);}catch{setError(true);}})}{action(t("导出显示的历史","Export visible history"),()=>downloadJson(historyRows),!historyRows.length)}{action(confirmClear?t("确认清除并暂停","Confirm clear & pause"):t("清除本机历史","Clear local history"),()=>{if(!confirmClear){setConfirmClear(true);return;}setConfirmClear(false);void clearAnalytics(p.scope!).catch(()=>setError(true));})}{confirmClear&&action(t("取消","Cancel"),()=>setConfirmClear(false))}</div>
+          {preference?.since&&<p>{t("开始记录","Recording started")}: {new Date(preference.since).toLocaleString()}{preference.hasGaps&&" · "+t("曾暂停，历史存在覆盖缺口","Recording has been paused; coverage has gaps")}</p>}
+          <div className="df-metric-insight-actions">{action(preference?.enabled?t("暂停记录","Pause recording"):t("启用记录","Enable recording"),()=>{try{setAnalyticsEnabled(p.scope!,!preference?.enabled);if(!preference?.enabled){void recoverAnalytics(p.scope!);captureDailyPlan(p.scope!,p.data,new Date().toISOString(),p.dayStartTime,analyticsPreference(p.scope!).generation);}setError(false);}catch{setError(true);}})}{action(t("导出显示的历史","Export visible history"),()=>downloadJson(historyRows),!historyRows.length)}{action(confirmClear?t("确认清除并暂停","Confirm clear & pause"):t("清除本机历史","Clear local history"),()=>{if(!confirmClear){setConfirmClear(true);return;}setConfirmClear(false);void clearAnalytics(p.scope!).catch(()=>setError(true));})}{confirmClear&&action(t("取消","Cancel"),()=>setConfirmClear(false))}</div>
           {(error||analyticsError(p.scope)||historyState==="error")&&<p role="alert">{t("历史记录存储不可用；任务操作不受影响。","History storage unavailable; task operations are unaffected.")}</p>}
           {historyState==="loading"?<p aria-live="polite">{t("读取中…","Loading…")}</p>:historyState==="ready"&&<><p>{events.length>500?t("显示所选日期及项目范围内最新 500 条记录。","Showing latest 500 records in the selected date and project range."):t("此处只显示所选时间与项目范围的本机历史。","Local history for selected date and project range.")}</p>{!historyRows.length?<p>{t("暂无已记录的变化","No recorded changes")}</p>:<div className="df-metric-insight-history">{historyRows.map(e=><details key={e.id}><summary>{new Date(e.occurredAt).toLocaleString()} · {e.entityType} · {e.action} · {e.source}</summary><p>{p.data.tasks.find(x=>x.id===e.taskId)?.title||e.entityId}</p><pre>{JSON.stringify({before:e.before,after:e.after},null,2)}</pre></details>)}</div>}</>}
         </>}

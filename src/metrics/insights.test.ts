@@ -48,3 +48,8 @@ describe("event provenance",()=>{
   const e=makeTimerAnalyticsEvent("t","idle-pause","2026-11-26T00:00:00Z",12,"op");expect(e).toMatchObject({source:"system",entityType:"timer",after:{transition:"idle-pause",elapsedSeconds:12}});
  });
 });
+
+import { buildPlanBaseline, comparePlanBaseline } from "./planBaseline";
+describe("daily first-observed plans",()=>{
+ it("captures a configured day without task titles or retroactive claims",()=>{const at=new Date(2026,10,26,10,0);const p=buildPlanBaseline(data,at,"04:00");expect(p.date).toBe("2026-11-26");expect(p.capturedAt).toBe(at.toISOString());expect(p.rows).toHaveLength(1);expect(JSON.stringify(p)).not.toContain("secret");const a=buildTimeAllocationMetrics({data,range:{preset:"today",anchorDate:"2026-11-26"},dayStartMinutes:240});expect(comparePlanBaseline(p,a.taskEntries,{projects:[],habit:"include",completion:"all"})).toMatchObject({baselineMinutes:60,currentMinutes:60,addedMinutes:0});});
+});
