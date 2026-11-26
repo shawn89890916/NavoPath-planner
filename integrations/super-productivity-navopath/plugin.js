@@ -240,7 +240,7 @@
         const fields = action.fields || {};
         if (action.kind === 'project') {
           const existing = allProjects.find(item => item.id === id);
-          if (existing) { const patch = { title: fields.title || existing.title, theme: { ...existing.theme, primary: fields.color || existing.theme?.primary } }; await API.updateProject(existing.id, patch); Object.assign(existing, patch); }
+          if (existing) { const patch = { title: fields.title || existing.title, theme: { ...existing.theme, primary: fields.color || existing.theme?.primary } }; await API.updateProject(existing.id, patch); allProjects[allProjects.indexOf(existing)] = { ...existing, ...patch }; }
           else { const title = fields.title || 'Imported project'; const created = await API.addProject({ title, theme: { primary: fields.color || undefined } }); map[created] = action.syncId; const createdProject = (await projects()).find(item => item.id === created); if (createdProject) allProjects.push(createdProject); }
           continue;
         }
@@ -252,7 +252,7 @@
         if (Object.hasOwn(fields, 'estimateMinutes')) updates.timeEstimate = Math.max(0, Number(fields.estimateMinutes || 0) * 60000);
         if (Object.hasOwn(fields, 'projectTitle')) updates.projectId = allProjects.find(project => project.title === fields.projectTitle)?.id || null;
         if (Object.hasOwn(fields, 'dueDate')) updates.dueDay = fields.dueDate || null;
-        if (Object.hasOwn(fields, 'scheduledAt')) updates.dueWithTime = fields.scheduledAt ? new Date(fields.scheduledAt).getTime() : null;
+        if (Object.hasOwn(fields, 'scheduledAt')) { updates.dueWithTime = fields.scheduledAt ? new Date(fields.scheduledAt).getTime() : null; if (updates.dueWithTime != null) updates.dueDay = null; }
         if (Object.hasOwn(fields, 'scheduledMinutes') && Number(fields.scheduledMinutes) > 0) updates.timeEstimate = Math.round(Number(fields.scheduledMinutes) * 60000);
         if (Object.hasOwn(fields, 'tags')) {
           const tagList = await API.getAllTags();
