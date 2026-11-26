@@ -97,6 +97,7 @@ export function createInitialPreviewView(preview: InitialPreview, zh: boolean, p
   } else {
     const warning = document.createElement("p"); warning.textContent = t("覆盖模式需要两端插件及云端更新。", "Update both plugins and the cloud service to enable overwrite."); toolbar.append(warning);
   }
+  if (authority()) for (const r of records) { r.selected = true; r.match.preferredSide = authority()!; }
   search.oninput = () => render();
   root.append(title, note, summary, toolbar, search, list); render();
   return { root, mode: () => mode, confirmationText: () => summary.textContent || "", matches: () => records.filter(r => r.selected).map(r => ({ ...r.match })), selections: () => new Map(records.map(r => [r.key, { selected: r.selected, preferredSide: r.match.preferredSide }])) };
