@@ -85,7 +85,7 @@ function copyVisualStyles(source: HTMLElement, clone: HTMLElement) {
  * Recursively copy visual styles onto the clone's descendants so nested
  * elements (checkbox, title, duration, actions) keep their appearance.
  */
-function deepCopyVisualStyles(source: HTMLElement, clone: HTMLElement) {
+export function deepCopyVisualStyles(source: HTMLElement, clone: HTMLElement) {
   copyVisualStyles(source, clone);
   const sourceChildren = Array.from(source.children) as HTMLElement[];
   const cloneChildren = Array.from(clone.children) as HTMLElement[];
@@ -111,7 +111,7 @@ export function UnifiedDragOverlay({ snapshot, pointer }: {
     const source = snapshot.sourceElement;
     // Build the clone once per source element.
     const clone = source.cloneNode(true) as HTMLElement;
-    clone.removeAttribute("id");
+    for (const el of [clone, ...clone.querySelectorAll("[id]")]) el.removeAttribute("id");
     // Strip drag-state classes so the clone renders as a clean full card,
     // not as the muted source placeholder.
     clone.classList.remove("is-dragging-source", "is-dragging", "is-drag-armed", "is-drop-container-active", "is-insertion-before", "is-insertion-after", "is-drop-placeholder");
@@ -153,6 +153,8 @@ export function UnifiedDragOverlay({ snapshot, pointer }: {
   return createPortal(
     <div
       ref={containerRef}
+      inert
+      aria-hidden="true"
       className="df-unified-drag-overlay"
       style={{
         position: "fixed",
@@ -190,6 +192,8 @@ export function TaskDragLayer({ children, pointer, sourceRect, offset }: {
   if (!target) return null;
   return createPortal(
     <div
+      inert
+      aria-hidden="true"
       className="df-task-drag-layer"
       style={{
         position: "fixed",

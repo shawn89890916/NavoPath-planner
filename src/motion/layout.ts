@@ -41,6 +41,21 @@ export const EXECUTION_MOTION_SELECTOR = ".df-candidate-task-row[data-candidate-
 export const PLANNING_MOTION_SELECTOR = "[data-planning-task-id]:not([data-kind='event']), [data-node-type='task'][data-node-id], [data-node-type='subtask'][data-node-id]";
 
 type Point = TaskMotionPoint & { node: HTMLElement };
+let landing: { entity: string; scope: string; rect: MotionRect; expires: number } | undefined;
+export function rememberDragLanding(entity: string, scope: "candidate" | "schedule" | "planning") {
+  const overlay = document.querySelector<HTMLElement>(".df-task-drag-layer, .df-unified-drag-overlay");
+  if (!overlay) return;
+  const { left, top, width, height } = overlay.getBoundingClientRect();
+  if (width && height) landing = { entity, scope, rect: { left, top, width, height }, expires: performance.now() + 400 };
+}
+export function takeDragLanding(points: Point[]): TaskMotionChange<Point> | undefined {
+  if (!landing || performance.now() > landing.expires) { landing = undefined; return; }
+  const match = points.filter(p => p.entity === landing!.entity && (landing!.scope === "planning" ? /^(planning|task|subtask):/.test(p.key) : p.key.startsWith(landing!.scope + ":")));
+  if (match.length !== 1) return;
+  const after = match[0], before = { ...after, rect: landing.rect };
+  landing = undefined;
+  return { before, after };
+}
 
 function identity(node: HTMLElement): { key: string; entity: string } | null {
   const d = node.dataset;

@@ -101,12 +101,16 @@ describe("extension settings surfaces", () => {
   it("cleans up a mounted settings contribution exactly once", async () => {
     const dispose = vi.fn();
     const mount = vi.fn(() => dispose);
+    const root = { remove: vi.fn() };
+    Object.assign(document, { createElement: vi.fn(() => root) });
     const element = { replaceChildren: vi.fn() };
     const contribution: ExtensionContribution = { id: "page", owner: "plugin", name: "Options", mount };
     await act(async () => { renderer = create(<ExtensionMount contribution={contribution} />, { createNodeMock: () => element }); });
-    expect(mount).toHaveBeenCalledWith(element);
+    expect(mount).toHaveBeenCalledWith(root);
+    expect(element.replaceChildren).toHaveBeenCalledWith(root);
     await act(async () => renderer!.unmount()); renderer = undefined;
     expect(dispose).toHaveBeenCalledOnce();
     expect(element.replaceChildren).toHaveBeenCalledOnce();
+    expect(root.remove).toHaveBeenCalledOnce();
   });
 });

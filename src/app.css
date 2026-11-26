@@ -20358,3 +20358,11 @@ body[data-navopath-base-theme="light"],
 }
 .df-workspace-save-feedback:empty { display: none; }
 .df-workspace-save-feedback[data-save-phase="retrying"] { color: var(--danger-ink, var(--text-main)); }
+
+/* Responsive surfaces share the same edge and feedback vocabulary. */
+.df-app[data-workspace-layout="dock-left"] { --workspace-panel-origin: left center; }
+.df-app[data-workspace-layout="dock-right"] { --workspace-panel-origin: right center; }
+.df-app[data-workspace-layout^="dock-"] :is(.df-utility-panel, .df-ai-panel, .df-drawer) { transform-origin: var(--workspace-panel-origin); }
+.df-compact-save-feedback { position: absolute; inset-inline-end: 12px; inset-block-start: 100%; z-index: 4; max-width: calc(100% - 24px); background: var(--surface-main); border-radius: var(--radius-control); padding: 3px 6px; pointer-events: none; }
+.df-extension-mount[data-mount-state="ready"] { animation: ui-fade-in var(--motion-fade, 140ms) var(--motion-ease) both; }
+.df-extension-mount[data-mount-state="pending"] { opacity: .7; }
