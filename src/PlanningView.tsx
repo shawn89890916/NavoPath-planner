@@ -25,6 +25,7 @@ import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricCompletion
 import { extensionService } from "./extensions/service";
 import { ExtensionMount } from "./extensions/ExtensionMount";
 import type { ExtensionContribution, NativePlanningViewMode } from "./extensions/types";
+import type { MetricsQuery } from "./metrics/savedViews";
 import { CandidateSubtaskItem } from "./WorkspacePresentation";
 const MetricsInsights = React.lazy(() => import("./metrics/MetricsInsights").then(module => ({ default: module.MetricsInsights })));
 
@@ -2641,7 +2642,9 @@ export default function PlanningView(props: {
               )}
 
               <React.Suspense fallback={<div className="df-metrics-empty" role="status">{props.lang === "zh" ? "正在加载指标…" : "Loading metrics…"}</div>}>
-              <MetricsInsights key={props.analyticsScope || "demo"} scope={props.analyticsScope} data={props.data} allocation={metricsResult} dayStartMinutes={dayStartMinutes} projectIds={metricsProjectFilter} habitMode={metricsHabitMode} completion={metricsCompletion} lang={props.lang}>
+              <MetricsInsights key={props.analyticsScope || "demo"} scope={props.analyticsScope} data={props.data} allocation={metricsResult} dayStartMinutes={dayStartMinutes} projectIds={metricsProjectFilter} habitMode={metricsHabitMode} completion={metricsCompletion} lang={props.lang}
+                query={{range:metricsRangePreset,customStart:metricsCustomStart,customEnd:metricsCustomEnd,group:metricsGroupBy,display:metricsDisplayMetric,habit:metricsHabitMode,completion:metricsCompletion,projects:metricsProjectFilter}}
+                onApplyQuery={(q:MetricsQuery)=>{setMetricsRangePreset(q.range);setMetricsCustomStart(q.customStart);setMetricsCustomEnd(q.customEnd);setMetricsGroupBy(q.group);setMetricsDisplayMetric(q.display);setMetricsHabitMode(q.habit);setMetricsCompletion(q.completion);setMetricsProjectFilter(q.projects);setSelectedMetricGroupId(null);setHoveredMetricGroupId(null);updateMetricsSetting({metricsRangePreset:q.range,metricsCustomStart:q.customStart,metricsCustomEnd:q.customEnd,metricsGroupBy:q.group,metricsDisplayMetric:q.display,metricsIncludeHabits:q.habit,metricsCompletionFilter:q.completion});}}>
               {metricsResult.taskEntries.length === 0 ? (
                 <div className="df-metrics-empty">
                   <h3>{props.lang === "zh" ? "暂无时间安排" : "No scheduled time"}</h3>

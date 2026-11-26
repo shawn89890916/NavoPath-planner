@@ -28,3 +28,9 @@
 .df-metric-insight-table table { width:100%; border-collapse:collapse; font-size:12px; font-variant-numeric:tabular-nums; }
 .df-metric-insight-table :is(th,td) { text-align:right; border-bottom:1px solid var(--paper-rule); padding:8px 6px; white-space:nowrap; }
 .df-metric-insight-table :is(th,td):first-child { text-align:left; }
+
+.df-metric-saved-views { border-bottom:1px solid var(--paper-rule); padding:8px 0; font-size:12px; }
+.df-metric-saved-views summary { color:var(--text-muted); cursor:pointer; }
+.df-metric-saved-views .df-metric-insight-actions { padding-top:8px; }
+.df-metric-saved-views :is(input,select) { min-width:0; max-width:100%; padding:5px 8px; background:var(--paper-bg); color:var(--text-main); border:1px solid var(--paper-rule); font:inherit; }
+.df-metric-insight-scatter { display:block; max-width:100%; width:min(100%,420px); margin:12px auto; color:var(--text-muted); }

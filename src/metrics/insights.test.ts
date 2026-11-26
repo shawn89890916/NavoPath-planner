@@ -3,6 +3,8 @@ import type { PlannerData, Task } from "../types";
 import { diffAnalyticsEvents } from "./activityEvents";
 import { buildTimeAllocationMetrics } from "./timeAllocation";
 import { buildInsights, metricDay } from "./insightFacts";
+import { buildObservedPlanHistory } from "./historyAnalysis";
+import { normalizeSavedViews } from "./savedViews";
 const task:Task={id:"t",title:"secret",notes:"private",dueDate:"",category:"personal",priority:null,goalId:"",completed:false,createdAt:"2026-11-26T00:00:00Z",updatedAt:"2026-11-26T00:00:00Z",timelineRecords:[{id:"r",taskId:"t",scheduledDate:"2026-11-26",scheduledStart:"09:00",scheduledEnd:"10:00",executionStatus:"scheduled",createdAt:"2026-11-26T00:00:00Z"}]};
 const data:PlannerData={version:1,importedSeedVersion:"",generatedAt:"",goals:[],projects:[],tasks:[task],longTasks:[],events:[],notes:[],drafts:[],chat:[],aiMemories:[]};
 describe("local analytics events",()=>{
@@ -22,4 +24,15 @@ describe("metrics insights",()=>{
   expect(r.scheduled).toBe(120);expect(r.completed).toBe(60);expect(r.executionCount).toBe(2);expect(r.explicitEngagement).toBe(50);expect(r.ratingCoverage).toBe(100);expect(r.trackedSessions).toBe(0);
  });
  it("uses configured day boundary before midnight",()=>{expect(metricDay(new Date(2026,10,27,2,0),240)).toBe("2026-11-26");});
+});
+
+
+describe("observed schedule history",()=>{
+ it("does not invent an initial plan for an existing record and counts moves independently from resizes",()=>{
+  const next={...data,tasks:[{...task,timelineRecords:[{...task.timelineRecords![0],scheduledStart:"10:00",scheduledEnd:"11:00"}]}]};
+  const events=diffAnalyticsEvents(data,next,"2026-11-26T00:10:00Z","change");
+  const r=buildObservedPlanHistory(events,next,{start:new Date("2026-11-26"),end:new Date("2026-11-27")});
+  expect(r.moveCount).toBe(1);expect(r.resizeCount).toBe(0);expect(r.comparisons).toEqual([]);
+ });
+ it("validates persisted view configuration",()=>{expect(normalizeSavedViews([{id:"bad",name:"broken"}])).toEqual([]);});
 });
