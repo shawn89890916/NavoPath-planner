@@ -5,7 +5,7 @@ export type SyncSnapshot = { projects: SyncEntity[]; tasks: SyncEntity[]; overwr
 export type SyncConflict = { id: string; syncId: string; kind: "project" | "task"; field: string; navopath: unknown; superproductivity: unknown; createdAt: string };
 type Canonical = { kind: "project" | "task"; fields: Record<string, unknown>; deleted?: boolean; overwriteTarget?: SyncSide; ids: Partial<Record<SyncSide, string>> };
 export type SyncState = {
-  status: "waiting" | "preview" | "active";
+  status: "waiting" | "preview" | "active" | "paused";
   latest: Partial<Record<SyncSide, SyncSnapshot>>;
   canonical: Record<string, Canonical>;
   pending: Record<string, Record<string, SyncSide>>;
@@ -116,6 +116,7 @@ export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "pro
 }
 
 export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: SyncSnapshot, timestamp: string) {
+  if (state.status === "paused") return { state, assignments: [], actions: [] };
   // Inbox is SP's reserved fallback project, not a user project. New pairs
   // exclude it; existing active connections retain their previous mapping.
   if (side === "superproductivity" && state.status !== "active" && snapshot.overwriteVersion === 1) state.ignoreSpInbox = true;
@@ -221,6 +222,7 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
 }
 
 export function buildActions(state: SyncState, side: SyncSide) {
+  if (state.status === "paused") return [];
   const actions: Array<{ syncId: string; kind: "project" | "task"; id?: string; fields: Record<string, unknown>; deleted?: boolean }> = [];
   for (const [syncId, canonical] of Object.entries(state.canonical)) {
     const pending = state.pending[syncId] || {};
