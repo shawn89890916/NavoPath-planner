@@ -156,6 +156,11 @@ export function buildActions(state: SyncState, side: SyncSide) {
     const targetId = current?.id || canonical.ids[side];
     const create = (pending.$create === side || (pending.$deleted === side && !canonical.deleted && !current)) && !current;
     const fields = create ? { ...canonical.fields } : Object.fromEntries(Object.entries(canonical.fields).filter(([key, value]) => pending[key] === side && JSON.stringify(state.latest[side]?.[canonical.kind === "project" ? "projects" : "tasks"].find(item => item.syncId === syncId)?.fields[key]) !== JSON.stringify(value)));
+    // A scheduled block is start + duration. Send both when either changes,
+    // even if one field is already acknowledged, so clients never invent a default.
+    if (canonical.kind === "task" && (Object.hasOwn(fields, "scheduledAt") || Object.hasOwn(fields, "scheduledMinutes"))) {
+      for (const field of ["scheduledAt", "scheduledMinutes"]) if (Object.hasOwn(canonical.fields, field) && !state.conflicts.some(conflict => conflict.syncId === syncId && conflict.field === field)) fields[field] = canonical.fields[field];
+    }
     if (create || Object.keys(fields).length || (pending.$deleted === side && canonical.deleted)) actions.push({ syncId, kind: canonical.kind, id: targetId, fields, ...(canonical.deleted ? { deleted: true } : {}) });
   }
   return actions.sort((a, b) => Number(a.kind === "task") - Number(b.kind === "task"));
