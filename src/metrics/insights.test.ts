@@ -74,3 +74,41 @@ it("preserves missing calendar days and keeps absent measurements distinct",()=>
 
 it("excludes estimated all-day work from timed occupancy and hourly distribution",()=>{const t={...task,estimatedHours:1,completed:true,timelineRecords:[{...task.timelineRecords![0],scheduledStart:"",scheduledEnd:"",executionStatus:"completed" as const}]};const d={...data,tasks:[t]};const a=buildTimeAllocationMetrics({data:d,range:{preset:"today",anchorDate:"2026-11-26"}});const r=buildInsights(d,a,{dayStartMinutes:0,projectIds:[],habitMode:"include",completion:"all"});expect(a.taskEntries[0].isEstimatedAllDay).toBe(true);expect(r.scheduled).toBe(60);expect(r.allDayEstimated).toBe(60);expect(r.occupied).toBe(0);expect(r.completedHours.flat().reduce((n,v)=>n+v,0)).toBe(0);});
 it("includes projected recurrence on both calendar sides of a shifted day boundary",()=>{const t={...task,timelineRecords:[],recurrence:{mode:"scheduled" as const,frequency:"daily" as const,startDate:"2026-11-24",startTime:"02:00",durationMinutes:60}};const d={...data,tasks:[t]};const a=buildTimeAllocationMetrics({data:d,range:{preset:"today",anchorDate:"2026-11-26"},dayStartMinutes:240});expect(a.taskEntries).toHaveLength(1);expect(a.taskEntries[0].scheduledStart).toEqual(new Date(2026,10,27,2));expect(a.taskEntries[0].isProjectedRecurrence).toBe(true);const r=buildInsights(d,a,{dayStartMinutes:240,projectIds:[],habitMode:"include",completion:"all"});expect(r.projectedScheduled).toBe(60);expect(r.measurementCoverage).toBeNull();});
+
+
+describe("large observed history and conservative provenance",()=>{
+ const range={start:new Date("2026-11-26T00:00:00Z"),end:new Date("2026-11-27T00:00:00Z")};
+ const before={scheduledDate:"2026-11-26",scheduledStart:"09:00",scheduledEnd:"10:00",executionStatus:"scheduled"};
+ const moved={...before,scheduledStart:"10:00",scheduledEnd:"11:00"};
+ const done={...moved,executionStatus:"completed"};
+ function event(taskId:string,entityId:string,n:number,source:import("./activityEvents").AnalyticsSource="client"):import("./activityEvents").AnalyticsEvent {
+  const at="2026-11-26T0"+n+":00:00Z";
+  return {id:JSON.stringify([taskId,entityId,n,source]),schemaVersion:1,operationId:"op-"+n,entityType:"execution",entityId,taskId,occurredAt:at,source,action:n===0?"created":"changed",before:n===0?undefined:n===1?before:moved,after:n===0?before:n===1?moved:done,estimateMinutes:n===0?45:undefined};
+ }
+ function completedTask(id:string,recordId:string):Task{return {...task,id,timelineRecords:[{...task.timelineRecords![0],id:recordId,taskId:id,executionStatus:"completed"}]};}
+ function timeEntry(taskId:string,recordId:string){return {id:JSON.stringify([taskId,recordId]),taskId,timelineRecordId:recordId,startAt:"2026-11-26T10:00:00Z",endAt:"2026-11-26T11:00:00Z",durationMinutes:50,source:"manual" as const,createdAt:"",updatedAt:""};}
+ it("handles out-of-order history and record identifiers containing separators",()=>{
+  const a=completedTask("a:b","c"),b=completedTask("a","b:c");
+  const d={...data,tasks:[a,b],timeEntries:[timeEntry(a.id,"c"),timeEntry(b.id,"b:c")]};
+  const es=[event(a.id,"c",2),event(b.id,"b:c",2),event(a.id,"c",0),event(b.id,"b:c",0),event(a.id,"c",1),event(b.id,"b:c",1)];
+  const r=buildObservedPlanHistory(es,d,range);
+  expect(r.movedExecutions).toBe(2);expect(r.comparisons).toHaveLength(2);expect(r.comparisons.every(x=>x.initial===60&&x.tracked===50&&x.estimate===45)).toBe(true);
+ });
+ it("does not count sync replay as local moves or complete a comparison across unknown provenance",()=>{
+  const d={...data,tasks:[completedTask("t","r")],timeEntries:[timeEntry("t","r")]};
+  const r=buildObservedPlanHistory([event("t","r",0),event("t","r",1,"sync"),event("t","r",2)],d,range);
+  expect(r.moveCount).toBe(0);expect(r.observedExecutions).toBe(1);expect(r.comparisons).toEqual([]);
+  expect(buildObservedPlanHistory([event("t","r",0,"sync")],d,range).observedExecutions).toBe(0);
+ });
+ it("aggregates 100,000 events against 25,000 independent completed records",()=>{
+  const tasks:Task[]=[],events:import("./activityEvents").AnalyticsEvent[]=[],timeEntries:ReturnType<typeof timeEntry>[]=[];
+  for(let i=0;i<25000;i++){
+    const id="synthetic-"+i,recordId="execution-"+i;tasks.push(completedTask(id,recordId));timeEntries.push(timeEntry(id,recordId));
+    for(let n=3;n>=0;n--)events.push(event(id,recordId,n));
+  }
+  const start=performance.now();
+  const r=buildObservedPlanHistory(events,{...data,tasks,timeEntries},range);
+  console.info("Metrics history 100k synthetic events:",Math.round(performance.now()-start),"ms");
+  expect(r.observedExecutions).toBe(25000);expect(r.created).toBe(25000);expect(r.moveCount).toBe(25000);expect(r.comparisons).toHaveLength(25000);
+ },20000);
+});
