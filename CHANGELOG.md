@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 105
+
+#### 修复
+
+- 修复时间轴任务悬停时投入度色条消失的问题，并保持窄列任务的评分色条与圆角贴合。
+
 ### 1.7.0 Beta 104
 
 #### 改进
@@ -1151,6 +1157,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 105
+
+#### Fixes
+
+- Keep timeline engagement stripes visible on hover and aligned with task corners in narrow columns.
 
 ### 1.7.0 Beta 104
 

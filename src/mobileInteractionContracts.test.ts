@@ -18,6 +18,14 @@ describe("timeline mouse hover contracts", () => {
     expect(appCss).toMatch(/\[data-mouse-hovered="true"\] \.df-resize-dot\.bottom\s*\{[^}]*bottom:\s*0;/);
     expect(appCss).not.toContain(':has(> .df-block-project-wrap) .df-time-card-row');
   });
+
+  it("keeps the engagement border visible on hover and in narrow timeline columns", () => {
+    expect(appCss).toMatch(/#root \.df-app \.df-task-block\[data-task-appearance\]\[data-task-variant="scheduled"\]\s*\{\s*overflow:\s*visible;/);
+    expect(appCss).not.toMatch(/\[data-mouse-hovered="true"\]\s*\{[^}]*overflow\s*:\s*(?:hidden|clip)/);
+    expect(appCss).toMatch(/\.df-time-block \.df-time-card-shell\s*\{[^}]*overflow:\s*hidden;/);
+    expect(appCss).toContain('clip-path: inset(0 0 calc(100% - var(--task-engagement)) 0);');
+    expect(main).not.toContain('if (cs.isNarrow) overflow = "hidden"');
+  });
 });
 
 describe("portrait interaction contracts", () => {

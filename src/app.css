@@ -14447,8 +14447,9 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
  * Scheduled block extras — project chip and preview.
  * Kept here so the scheduled variant shares the same tokens.
  * ============================================================ */
-/* Mouse resize targets stay inside their owning task. */
-#root .df-app .df-task-block[data-task-variant="scheduled"][data-mouse-hovered="true"] { overflow: hidden; }
+/* Mouse resize targets stay inside their owning task. Keep the outer
+   border-box visible so the engagement stripe and its tooltip are not clipped.
+   The inner time-card shell already clips content. */
 #root .df-app .df-time-block[data-mouse-hovered="true"] .df-resize-dot {
   --resize-outset: 0px;
   left: 50%;

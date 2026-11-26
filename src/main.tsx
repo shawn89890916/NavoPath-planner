@@ -10052,11 +10052,9 @@ if (cached?.data && cached?.settings) {
                                   const cs = computeConflictStyle(task.id, conflictLayout, innerW, baseLeft, gap, timelineView);
                                   let left = baseLeft;
                                   let width = innerW;
-                                  let overflow: CSSProperties["overflow"] = undefined;
                                   if (cs) {
                                     left = cs.left;
                                     width = cs.width;
-                                    if (cs.isNarrow) overflow = "hidden";
                                   }
                                   const isPreview = previewIdByClonedId.has(task.id);
                                   return (
@@ -10065,7 +10063,7 @@ if (cached?.data && cached?.settings) {
                                     }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
                                       createProjectForTask(task.id, title);
                                     }} onDragStart={(event) => beginBlockDrag(event, task)} onResizeStart={(event, edge) => beginBlockResize(event, task, edge)} resizeEdges={explicitVisibleTimeline.resizeEdges.get(task.id) || eventVisibleTimeline.resizeEdges.get(task.id)}
-                                      extraStyle={{ position: "absolute", left, width, top: continuousTimelineEnabled ? continuousTimedTop(task.scheduledDate || timelineDate, task.scheduledStart || "09:00") : undefined, pointerEvents: "auto", overflow, ...(isPreview ? { ["--df-preview" as any]: "1" } as CSSProperties : {}) }}
+                                      extraStyle={{ position: "absolute", left, width, top: continuousTimelineEnabled ? continuousTimedTop(task.scheduledDate || timelineDate, task.scheduledStart || "09:00") : undefined, pointerEvents: "auto", ...(isPreview ? { ["--df-preview" as any]: "1" } as CSSProperties : {}) }}
                                       onAcceptPreview={isPreview ? () => acceptOnePreview(previewIdByClonedId.get(task.id)!) : undefined}
                                       onCancelPreview={isPreview ? () => cancelOnePreview(previewIdByClonedId.get(task.id)!) : undefined}
                                       viewMode={timelineView}
