@@ -13,7 +13,7 @@ const project = (id: string): Project => ({ id, title: id, notes: "", category: 
 const data = (): PlannerData => ({
   version: 1, importedSeedVersion: "", generatedAt: stamp, goals: [], projects: [project("p"), project("q")],
   tasks: [task("a", [sub("x", [sub("leaf")]), sub("y")]), task("b", [sub("z")], "q")],
-  longTasks: [], events: [], notes: [], drafts: [], chat: [],
+  longTasks: [], events: [], notes: [], drafts: [], chat: [], aiMemories: [],
 });
 describe("Tree hierarchy drag", () => {
   it("distinguishes edge sorting and center nesting", () => {
