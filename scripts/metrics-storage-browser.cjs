@@ -17,7 +17,10 @@ async function runServer() {
     plugins: [{ name: "isolated-metrics-test", configureServer(server) {
       server.middlewares.use("/__metrics_test", (_req, res) => {
         res.setHeader("Content-Type", "text/html");
-        res.end("<!doctype html><html><body>Isolated Metrics storage test</body></html>");
+        res.end(`<!doctype html><html><body>Isolated Metrics storage test<script type="module">
+          import * as tests from "/scripts/metrics-storage-browser.mjs";
+          window.metricsResult=tests[new URL(location.href).searchParams.get("phase")]().then(value=>({value}),error=>({error:String(error?.stack||error)}));
+        </script></body></html>`);
       });
     } }]
   });
@@ -48,11 +51,11 @@ async function runRenderer() {
   await app.whenReady();
   const win = new BrowserWindow({ show: false, webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false } });
   try {
-    const moduleUrl = new URL("/scripts/metrics-storage-browser.mjs", url).href;
     for (const phase of ["seedInterrupted", "recoverAndExercise", "recoverPurge"]) {
       await win.loadURL(url+"?phase="+phase);
-      const result = await win.webContents.executeJavaScript("import("+JSON.stringify(moduleUrl)+").then(m=>m["+JSON.stringify(phase)+"]())");
-      console.log("Metrics Chromium: "+JSON.stringify(result));
+      const result = await win.webContents.executeJavaScript("window.metricsResult");
+      if (!result || result.error) throw Error(result?.error || "Metrics test module failed to initialize");
+      console.log("Metrics Chromium: "+JSON.stringify(result.value));
     }
   } finally { win.destroy(); }
   app.exit(0);
