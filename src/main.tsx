@@ -119,6 +119,7 @@ import { useMotionSelection } from "./useMotionSelection";
 import { applyMotionPreference, readMotionPreference } from "./motion";
 import { useTaskLayoutMotion } from "./motion/useTaskLayoutMotion";
 import { EXECUTION_MOTION_SELECTOR } from "./motion/layout";
+import { aggregateSavePhase, IDLE_SAVE_FEEDBACK, saveFeedbackLabel, type SaveFeedback, type SavePhase } from "./motion/feedback";
 import "./app.css";
 import "./mobile-execution.css";
 import "./ui-primitives.css";
@@ -768,6 +769,19 @@ function App() {
   const isWorkspaceRoute = Boolean(productDemo) || isOAuthConsentRoute || window.location.pathname === "/app" || window.location.pathname.startsWith("/app/") || Boolean(window.desktopApi);
   const [data, setData] = useState<PlannerData | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [saveFeedback, setSaveFeedback] = useState<SaveFeedback>(IDLE_SAVE_FEEDBACK);
+  const savePhase = aggregateSavePhase(saveFeedback);
+  function markSaveFeedback(kind: keyof SaveFeedback, phase: SavePhase) {
+    setSaveFeedback(current => current[kind] === phase ? current : { ...current, [kind]: phase });
+  }
+  useEffect(() => {
+    if (savePhase !== "confirmed") return;
+    const timer = window.setTimeout(() => setSaveFeedback(current => ({
+      data: current.data === "confirmed" ? "idle" : current.data,
+      settings: current.settings === "confirmed" ? "idle" : current.settings,
+    })), 1800);
+    return () => window.clearTimeout(timer);
+  }, [savePhase]);
   const workspaceLoaded = Boolean(data && settings);
   const [trayIdle, setTrayIdle] = useState(false);
   const [workspaceParked, setWorkspaceParked] = useState(false);
@@ -1865,6 +1879,7 @@ function App() {
     pendingSettingsSaveRef.current = null;
     dataSaveVersionRef.current += 1;
     settingsSaveVersionRef.current += 1;
+    setSaveFeedback(IDLE_SAVE_FEEDBACK);
     dataSaveRetryCountRef.current = 0;
     settingsSaveRetryCountRef.current = 0;
     dataSaveNoticeShownRef.current = false;
@@ -2731,6 +2746,7 @@ if (cached?.data && cached?.settings) {
           dataSaveRetryCountRef.current = 0;
           dataSaveNoticeShownRef.current = false;
           if (job.version === dataSaveVersionRef.current && !pendingDataSaveRef.current) {
+            markSaveFeedback("data", "confirmed");
             dataRef.current = saved;
             setData(saved);
             const userId = authStateRef.current?.user?.id;
@@ -2750,6 +2766,7 @@ if (cached?.data && cached?.settings) {
           if (shouldRetry) {
             pendingDataSaveRef.current = job;
             dataSaveRetryCountRef.current += 1;
+            markSaveFeedback("data", "retrying");
             maybeShowSyncFailureNotice("data");
             scheduleDataRetry();
           }
@@ -2787,6 +2804,7 @@ if (cached?.data && cached?.settings) {
           settingsSaveRetryCountRef.current = 0;
           settingsSaveNoticeShownRef.current = false;
           if (job.version === settingsSaveVersionRef.current && !pendingSettingsSaveRef.current) {
+            markSaveFeedback("settings", "confirmed");
             settingsRef.current = saved;
             setSettings(saved);
             if (saved.language) setLang(saved.language);
@@ -2816,6 +2834,7 @@ if (cached?.data && cached?.settings) {
           if (shouldRetry) {
             pendingSettingsSaveRef.current = job;
             settingsSaveRetryCountRef.current += 1;
+            markSaveFeedback("settings", "retrying");
             maybeShowSyncFailureNotice("settings");
             scheduleSettingsRetry();
           }
@@ -2910,6 +2929,7 @@ if (cached?.data && cached?.settings) {
     const optimistic = { ...tracked, aiProfile: buildAiProfile(tracked), savedAt };
     const version = dataSaveVersionRef.current + 1;
     dataSaveVersionRef.current = version;
+    markSaveFeedback("data", "pending");
     pendingDataSaveRef.current = { payload: optimistic, version, pendingSavedAt: savedAt };
     dataRef.current = optimistic;
     setData(optimistic);
@@ -3110,6 +3130,7 @@ if (cached?.data && cached?.settings) {
     const pendingSavedAt = workspaceNow().toISOString();
     const version = settingsSaveVersionRef.current + 1;
     settingsSaveVersionRef.current = version;
+    markSaveFeedback("settings", "pending");
     const pending = pendingSettingsSaveRef.current?.payload;
     pendingSettingsSaveRef.current = { payload: {
       ...pending, ...patch,
@@ -9254,6 +9275,9 @@ if (cached?.data && cached?.settings) {
             {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} activeOwner={workspacePanel?.owner} onOpenPage={openExtensionPage} /></Suspense>}
           </div>
           {!productDemo && <div className="df-header-right">
+          <span className="df-workspace-save-feedback" role="status" aria-live="polite" data-save-phase={savePhase}>
+            {isManualSyncing ? t(lang, "sync.syncing") : saveFeedbackLabel(savePhase, lang, authState?.mode === "cloud")}
+          </span>
           <button
             className="df-user-avatar"
             type="button"

@@ -22,7 +22,7 @@ export function readMotionPreference(targetWindow: Window | undefined = typeof w
 
 /** Local device preference: does not alter workspace data or cloud settings. */
 export function applyMotionPreference(preference: MotionPreference, targetWindow: Window | undefined = typeof window === "undefined" ? undefined : window) {
-  if (!targetWindow) return;
+  if (!targetWindow?.document?.documentElement) return;
   targetWindow.document.documentElement.dataset.motionPreference = preference;
   try { targetWindow.localStorage.setItem(MOTION_PREFERENCE_KEY, preference); } catch { /* Session-only when storage is unavailable. */ }
 }

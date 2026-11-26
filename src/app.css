@@ -20346,3 +20346,14 @@ body[data-navopath-base-theme="light"],
   animation-iteration-count: 1;
   transition-duration: .001ms;
 }
+
+.df-workspace-save-feedback {
+  color: var(--text-muted);
+  font: 11px/1.3 var(--paper-sans);
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.df-workspace-save-feedback:empty { display: none; }
+.df-workspace-save-feedback[data-save-phase="retrying"] { color: var(--danger-ink, var(--text-main)); }

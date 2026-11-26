@@ -16,27 +16,29 @@ export function useTaskLayoutMotion(options: MotionOptions) {
   if (!coordinator.current) coordinator.current = new TaskMotionCoordinator();
 
   useLayoutEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
     const runtime = coordinator.current!;
     const cancel = () => runtime.cancel();
     const invalidate = () => { runtime.cancel(); previous.current = null; };
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const media = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     document.addEventListener("pointerdown", cancel, true);
     document.addEventListener("keydown", cancel, true);
     document.addEventListener("scroll", invalidate, true);
     window.addEventListener("resize", invalidate);
-    media.addEventListener?.("change", invalidate);
+    media?.addEventListener?.("change", invalidate);
     return () => {
       document.removeEventListener("pointerdown", cancel, true);
       document.removeEventListener("keydown", cancel, true);
       document.removeEventListener("scroll", invalidate, true);
       window.removeEventListener("resize", invalidate);
-      media.removeEventListener?.("change", invalidate);
+      media?.removeEventListener?.("change", invalidate);
       runtime.cancel();
       previous.current = null;
     };
   }, []);
 
   useLayoutEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
     const root = options.root();
     const old = previous.current;
     const blocked = Boolean(options.blocked || document.documentElement.dataset.motionScope || effectiveMotionPreference(window) === "off");
@@ -48,6 +50,7 @@ export function useTaskLayoutMotion(options: MotionOptions) {
     previous.current = { scope: options.scope, revision: options.revision, points, blocked };
     if (blocked || !old || old.blocked || old.scope !== options.scope) { coordinator.current?.cancel(); return; }
     const limit = effectiveMotionPreference(window) === "rich" ? 24 : 12;
-    coordinator.current?.play(planTaskMotion(old.points, points, limit));
+    const changes = planTaskMotion(old.points, points, limit);
+    if (changes.length) coordinator.current?.play(changes);
   });
 }
