@@ -4,6 +4,10 @@
 
 ### 1.7.0 Beta 112
 
+#### 改进
+
+- Metrics 原位升级：新增时间趋势、热力图、项目明细、独立执行状态、投入度及计时覆盖率、自定义视图和 CSV 导出；可主动开启本机详细历史、每日首次观察计划快照和计划变更分析。计划与实际计时分开统计，保留原任务块样式。
+
 #### 修复
 
 - Super Productivity Sync 1.0.6 自动解除旧连接的系统收件箱删除指令；修复遗漏旧格式、跨午夜定时任务以及新任务创建后的排程重试，单项操作失败时继续同步其他任务。
@@ -1203,6 +1207,10 @@
 ## 2026-11-26
 
 ### 1.7.0 Beta 112
+
+#### Improvements
+
+- Metrics adds trends, heatmaps, project details, independent execution states, engagement and measurement coverage, saved views and CSV export. Opt in to local detailed history, first-observed daily plan snapshots and plan-change analysis. Scheduled and tracked time remain distinct; task block appearance is unchanged.
 
 #### Fixes
 
