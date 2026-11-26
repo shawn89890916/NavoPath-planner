@@ -155,11 +155,14 @@ export function buildActions(state: SyncState, side: SyncSide) {
     const current = (state.latest[side]?.[canonical.kind === "project" ? "projects" : "tasks"] || []).find(item => item.syncId === syncId);
     const targetId = current?.id || canonical.ids[side];
     const create = (pending.$create === side || (pending.$deleted === side && !canonical.deleted && !current)) && !current;
-    const fields = create ? { ...canonical.fields } : Object.fromEntries(Object.entries(canonical.fields).filter(([key, value]) => pending[key] === side && JSON.stringify(state.latest[side]?.[canonical.kind === "project" ? "projects" : "tasks"].find(item => item.syncId === syncId)?.fields[key]) !== JSON.stringify(value)));
+    const conflicting = new Set(state.conflicts.filter(conflict => conflict.syncId === syncId).map(conflict => conflict.field));
+    const scheduleConflicted = conflicting.has("scheduledAt") || conflicting.has("scheduledMinutes");
+    const isBlocked = (field: string) => conflicting.has(field) || (scheduleConflicted && (field === "scheduledAt" || field === "scheduledMinutes"));
+    const fields = create ? { ...canonical.fields } : Object.fromEntries(Object.entries(canonical.fields).filter(([key, value]) => !isBlocked(key) && pending[key] === side && JSON.stringify(state.latest[side]?.[canonical.kind === "project" ? "projects" : "tasks"].find(item => item.syncId === syncId)?.fields[key]) !== JSON.stringify(value)));
     // A scheduled block is start + duration. Send both when either changes,
     // even if one field is already acknowledged, so clients never invent a default.
     if (canonical.kind === "task" && (Object.hasOwn(fields, "scheduledAt") || Object.hasOwn(fields, "scheduledMinutes"))) {
-      for (const field of ["scheduledAt", "scheduledMinutes"]) if (Object.hasOwn(canonical.fields, field) && !state.conflicts.some(conflict => conflict.syncId === syncId && conflict.field === field)) fields[field] = canonical.fields[field];
+      for (const field of ["scheduledAt", "scheduledMinutes"]) if (Object.hasOwn(canonical.fields, field) && !isBlocked(field)) fields[field] = canonical.fields[field];
     }
     if (create || Object.keys(fields).length || (pending.$deleted === side && canonical.deleted)) actions.push({ syncId, kind: canonical.kind, id: targetId, fields, ...(canonical.deleted ? { deleted: true } : {}) });
   }
