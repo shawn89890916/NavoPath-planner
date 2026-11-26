@@ -9,7 +9,7 @@ import "./MetricsInsights.css";
 type View = "allocation" | "time" | "execution" | "engagement" | "projects" | "history";
 type TimeChart = "trend" | "heatmap" | "table";
 function downloadCsv(rows: {date:string;scheduled:number;completed:number;tracked:number;trackedSessions:number}[]) {
-  const text=["Date,Scheduled minutes,Completed scheduled minutes,Tracked minutes",...rows.map(d=>[d.date,d.scheduled.toFixed(2),d.completed.toFixed(2),d.trackedSessions?d.tracked.toFixed(2):""].join(","))].join("\\r\\n");
+  const text=["Date,Scheduled minutes,Completed scheduled minutes,Tracked minutes",...rows.map(d=>[d.date,d.scheduled.toFixed(2),d.completed.toFixed(2),d.trackedSessions?d.tracked.toFixed(2):""].join(","))].join("\r\n");
   const url=URL.createObjectURL(new Blob([text],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="navopath-metrics.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 type Props = { scope?:string; data:PlannerData; allocation:TimeAllocationMetrics; dayStartMinutes:number; projectIds:string[]; habitMode:MetricHabitMode; completion:MetricCompletionFilter; lang:Language; children:ReactNode };
