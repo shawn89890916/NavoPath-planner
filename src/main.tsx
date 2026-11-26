@@ -2,6 +2,7 @@ import { anchorPlacement, observeAnchor, viewportBounds } from "./motion/anchor"
 import { isCalendarBackgroundVisible } from "./extensions/calendarBackgrounds";
 import { blockingCalendarEvents } from "./utils/courseBackground";
 import { useMobileSheetGesture } from "./useMobileSheetGesture";
+import { installWorkspaceWheelRouting } from "./utils/workspaceWheel";
 import { uid } from "./utils/ids";
 import { toggleTaskCompletion, setTaskCompletion, habitScheduleForTask } from "./utils/taskCompletion";
 import { captureTaskUndo, refreshTaskCreationUndo, undoTaskChanges } from "./utils/taskUndo";
@@ -1381,6 +1382,7 @@ function App() {
   }, [settings?.featureHabitsEnabled]);
 
   const dialog = useInAppDialog(lang);
+  useEffect(() => productPresentation ? undefined : installWorkspaceWheelRouting(document), []);
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const timelineCanvasRef = useRef<HTMLDivElement | null>(null);
   const timelineMutationScrollRef = useRef<{ top: number; left: number } | null>(null);

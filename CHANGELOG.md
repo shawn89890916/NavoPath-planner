@@ -2,11 +2,17 @@
 
 ## 2026-11-26
 
-### 1.7.0 Beta 106
+### 1.7.0 Beta 107
 
 #### 改进
 
 - Tree、候选任务和规划看板同组拖拽排序加入实时视觉避让，保留原命中区域与合法归属规则；详情及更多操作浮层共享定位计算，窄屏增加保存反馈，插件页面增加加载、失败与重试状态。
+
+### 1.7.0 Beta 106
+
+#### 修复
+
+- 设置、插件、AI 对话及其他工作区浮层打开时，鼠标位于露出的 Tasks 栏或时间轴上可继续滚动；保留浮层自身滚动和点击外部关闭行为。
 
 ### 1.7.0 Beta 105
 
@@ -1164,11 +1170,17 @@
 
 ## 2026-11-26
 
-### 1.7.0 Beta 106
+### 1.7.0 Beta 107
 
 #### Improvements
 
 - Tree, candidate-list and planning-board same-group reordering previews nearby task displacement without changing hit targets or hierarchy rules; detail and action popovers share positioning, compact layouts show save feedback, and plugin pages expose loading, failure and retry states.
+
+### 1.7.0 Beta 106
+
+#### Fixes
+
+- Scroll exposed Tasks and timeline areas while Settings, plugins, AI chat or other workspace panels remain open, without changing panel scrolling or outside-click dismissal.
 
 ### 1.7.0 Beta 105
 
