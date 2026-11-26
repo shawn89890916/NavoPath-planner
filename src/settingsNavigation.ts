@@ -136,6 +136,7 @@ const entry = (
 export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("calendar-feed", { category: "integrations" }, "日历订阅", "Calendar subscription", "webcal ics CalDAV iPhone Notion Calendar 日历 同步 订阅 双向 苹果"),
   entry("external-calendar", { category: "integrations" }, "外部日历", "External calendars", "read only ICS busy time 只读 忙碌 冲突"),
+  entry("modified-settings", { category: "general" }, "已修改的设置", "Modified settings", "changed preferences reset default 恢复 默认 自定义"),
   entry("language", { category: "general" }, "语言", "Language", "中文 English locale"),
   entry("notification-badge", { category: "general" }, "应用内通知角标", "In-app notification badge", "unread count notifications badge 通知 未读 提醒 角标"),
   entry("day-start", { category: "workflow" }, "一天开始时间", "Day start time", "timeline boundary 跨天"),

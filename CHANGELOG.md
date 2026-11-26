@@ -13,6 +13,7 @@
 #### 改进
 
 - 设置精简为六个主要分区，进阶配置按需展开；竖屏布局可直接搜索设置，结果自动打开对应分区。指标配置归入扩展与连接，排程与 AI 简报共用工作时段，保留现有自定义参数和圆角。
+- 新增已修改设置列表，可跳转到对应设置，并按单项或分类恢复已注册偏好的默认值；账户凭据及设备控制不受影响。
 
 ### 1.7.0 Beta 102
 
@@ -1154,13 +1155,14 @@
 
 #### Improvements
 
-- Task additions, reordering and scheduling between regions now provide continuous positional feedback; completion changes are clearer. Advanced appearance offers Off, Standard and Rich motion while respecting the system's reduced-motion preference.
+- Task additions, reordering and scheduling between regions now provide continuous positional feedback; completion changes are clearer. Advanced appearance offers Off, Standard and Rich motion while respecting the system’s reduced-motion preference.
 
 ### 1.7.0 Beta 103
 
 #### Improvements
 
 - Settings has six main categories with advanced controls available on demand. Compact windows support direct settings search and open the relevant section. Metrics preferences live under Extensions & Connections; scheduling and AI briefs share work hours while existing customization and corner radius are preserved.
+- Modified settings can be reviewed, opened and reset individually or by category. Credentials and device controls are excluded.
 
 ### 1.7.0 Beta 102
 
