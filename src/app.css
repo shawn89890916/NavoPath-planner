@@ -12604,7 +12604,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-right: 1px solid var(--paper-rule);
   overflow-y: auto;
 }
-.df-settings-nav-heading { margin: 20px 0 6px; color: var(--text-muted); font: 600 12px/1.5 var(--paper-sans); }
 .df-app .df-settings-nav {
   gap: 2px;
   padding: 0;
@@ -19457,11 +19456,11 @@ body.df-unified-dragging .df-unified-drag-overlay {
 #root .df-app .df-settings-home-card {
   min-width: 0;
   overflow: hidden;
-  padding: 4px 16px;
-  border: 1px solid var(--paper-rule);
-  border-radius: var(--radius-card);
-  background: var(--surface-card);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--text-main) 6%, transparent);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   corner-shape: var(--corner-shape, squircle);
 }
 #root .df-app .df-settings-home-detail-card {
@@ -19581,10 +19580,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
     grid-row: 1;
     gap: 22px;
     padding: 2px 0 calc(28px + env(safe-area-inset-bottom));
-  }
-  #root .df-app .df-settings-home-card {
-    padding-right: 14px;
-    padding-left: 14px;
   }
   #root .df-app .df-settings-home-quick-row {
     gap: 10px;

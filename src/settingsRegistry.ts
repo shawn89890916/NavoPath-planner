@@ -108,7 +108,7 @@ const registeredKeys = new Set(SETTINGS_REGISTRY.flatMap(pref => Object.keys(pre
 export function recordPreferenceUndo(history: readonly PreferenceUndo[], settings: Settings, patch: Partial<Settings>, at: number): PreferenceUndo[] {
   const keys = Object.keys(patch) as (keyof Settings)[];
   if (!keys.length || keys.some(key => !registeredKeys.has(key))) return [...history];
-  const before = Object.fromEntries(keys.map(key => [key, settings[key] ?? SETTINGS_REGISTRY.find(pref => key in pref.defaultPatch)?.defaultPatch[key]])) as Partial<Settings>;
+  const before = Object.fromEntries(keys.map(key => [key, key === "baseMode" ? settings.baseMode || settings.theme : settings[key] ?? SETTINGS_REGISTRY.find(pref => key in pref.defaultPatch)?.defaultPatch[key]])) as Partial<Settings>;
   if (keys.every(key => Object.is(before[key], patch[key]))) return [...history];
   const last = history.at(-1);
   if (last && at - last.at < 600 && keys.length === Object.keys(last.after).length && keys.every(key => key in last.after)) {

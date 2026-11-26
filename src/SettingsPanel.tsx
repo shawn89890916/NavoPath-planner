@@ -30,6 +30,7 @@ import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumber
 import { reasoningModesForModel } from "./utils/aiModels";
 import { createPortal, flushSync } from "react-dom";
 import { runMotionTransition } from "./motion";
+import { saveFeedbackLabel, type SavePhase } from "./motion/feedback";
 import { SelectionIndicator } from "./components/SelectionIndicator";
 import { getDefaultSettings, WORKSPACE_CORNER_RADIUS } from "./defaultSettings";
 import { uid } from "./utils/ids";
@@ -394,16 +395,16 @@ function AccountMoreSection({ lang, onShowAbout }: { lang: Language; onShowAbout
 
 function settingsCategoryDescription(category: SettingsCategory, lang: Language, isDark: boolean): string {
   const descriptions: Record<SettingsCategory, [string, string]> = {
-    general: ["语言、时间边界、应用更新与快捷键。", "Language, time boundaries, app updates, and shortcuts."],
+    general: ["语言、通知、启动与应用更新。", "Language, notifications, startup and updates."],
     appearance: isDark
       ? ["深色交互高亮使用柔和白色；浅色模式可继续使用已保存的强调色。", "Dark mode uses a softened white interaction accent; saved accents remain available in light mode."]
-      : ["界面模式、字体与强调色。", "Interface mode, typography, and accent color."],
+      : ["界面模式、字体、圆角与强调色。", "Interface mode, typography, corners and accent color."],
     workflow: ["规划视图、智能排程与工作习惯。", "Planning views, smart scheduling, and work habits."],
     "account-data": ["账户、同步、导入导出与数据控制。", "Account, sync, imports, exports, and data controls."],
     ai: ["Navo AI 的模型、记忆与主动助理。", "Navo AI models, memory, and proactive assistant."],
     widget: ["桌面窗口的外观与计时器。", "Desktop window appearance and timer."],
     integrations: ["日历订阅、外部日历、MCP 与云盘同步。", "Calendar subscriptions, external calendars, MCP, and cloud-folder sync."],
-    plugins: ["扩展市场、插件管理与来源。", "Extension market, plugin management, and sources."],
+    plugins: ["已安装插件、插件市场与配置。", "Installed plugins, marketplace and options."],
     advanced: ["高级设置与恢复选项。", "Advanced and recovery options."],
   };
   return descriptions[category][lang === "zh" ? 0 : 1];
@@ -421,7 +422,7 @@ function SettingsCategoryIcon({ category }: { category: SettingsCategory }) {
   }
 }
 
-export function UtilityPanel({ kind, settings, initialSection, onboardingSettings, compactLayout, data, authEmail, onClose, onRestartOnboarding, onSave: saveSettingsPatch, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; onboardingSettings?: OnboardingSettingsTopic; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onRestartOnboarding: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language }) {
+export function UtilityPanel({ kind, settings, initialSection, onboardingSettings, compactLayout, data, authEmail, onClose, onRestartOnboarding, onSave: saveSettingsPatch, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, settingsSavePhase = "idle", lang }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; onboardingSettings?: OnboardingSettingsTopic; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onRestartOnboarding: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; settingsSavePhase?: SavePhase; lang: Language }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
   const isDesktopRuntime = Boolean(window.desktopApi);
   const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
@@ -794,6 +795,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
             {kind === "settings" && compactLayout && !settingsHome && <button type="button" className="df-settings-back-button" onClick={backToSettingsHome} aria-label={lang === "zh" ? "返回设置" : "Back to settings"}><span aria-hidden="true">‹</span><span>{lang === "zh" ? "设置" : "Settings"}</span></button>}
             <h2 id="df-utility-title" ref={settingsHeadingRef} tabIndex={-1}>{kind === "settings" && !settingsHome ? searchActive ? (lang === "zh" ? "搜索设置" : "Search settings") : selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang) : kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
           </div>
+          {kind === "settings" && settingsSavePhase !== "idle" && <span className="df-settings-save-status" role="status" data-save-phase={settingsSavePhase}>{saveFeedbackLabel(settingsSavePhase, lang, Boolean(cloudReady))}</span>}
           {kind === "settings" && latestUndo && <IconButton icon={<UiRefreshIcon size={16} />} label={lang === "zh" ? "撤销设置修改" : "Undo settings change"} disabled={!canUndoPreference(latestUndo, settings)} onClick={undoPreference} />}
           <CloseButton ref={closeButtonRef} label={t(lang, "settings.close")} onClick={onClose} />
         </div>
@@ -942,7 +944,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                   ariaLabel={lang === "zh" ? "调整界面圆角" : "Adjust corner radius"}
                   onChange={workspaceCornerRadius => onSave({ workspaceCornerRadius })} />
                   <SettingNumberInput value={settings.workspaceCornerRadius ?? WORKSPACE_CORNER_RADIUS.defaultValue} min={WORKSPACE_CORNER_RADIUS.min} max={WORKSPACE_CORNER_RADIUS.max} step={1} suffix="px" commitOnBlur
-                    ariaLabel={lang === "zh" ? "界面圆角（像素）" : "Corner radius (pixels)"} onChange={workspaceCornerRadius => onSave({ workspaceCornerRadius })} />
+                    ariaLabel={lang === "zh" ? "界面圆角（像素）" : "Corner radius (pixels)"} onChange={workspaceCornerRadius => onSave({ workspaceCornerRadius: Math.min(WORKSPACE_CORNER_RADIUS.max, Math.max(WORKSPACE_CORNER_RADIUS.min, Math.round(workspaceCornerRadius))) })} />
                 </>}
               />
               <SettingRow anchor="motion-preference" title={lang === "zh" ? "动效强度" : "Motion intensity"}

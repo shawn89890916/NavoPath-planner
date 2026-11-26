@@ -7,7 +7,7 @@ const service = vi.hoisted(() => ({
   subscribe: () => () => {}, getSnapshot: () => state.snapshot,
   refreshCatalog: vi.fn(async () => {}), importFile: vi.fn(async () => {}), install: vi.fn(async () => {}),
   setSafeMode: vi.fn(async () => {}), setPreference: vi.fn(async () => {}), checkUpdates: vi.fn(async () => {}),
-  selectTheme: vi.fn(async () => {}), getConfig: () => ({}),
+  selectTheme: vi.fn(async () => {}), getConfig: () => ({}), saveConfig: vi.fn(async () => {}),
 }));
 vi.mock("./service", () => ({ extensionService: service }));
 vi.mock("../components/UiPrimitives", async () => {
@@ -83,6 +83,13 @@ describe("extension settings surfaces", () => {
     expect(onSelectPage).toHaveBeenCalledWith(null);
   });
 
+  it("renders declared plugin options using the host controls and saves only their config keys", async () => {
+    state.snapshot.preferences.installed["official:plugin"].manifest.settingsOptions = [{ key: "compact", label: "Compact display", type: "boolean", default: false }];
+    await act(async () => { renderer = create(<ExtensionSettings lang="en" kind="plugin" />); });
+    await act(async () => renderer!.root.findByProps({ "aria-label": "plugin example settings" }).props.onClick());
+    await act(async () => renderer!.root.findByProps({ "aria-label": "Compact display", role: "switch" }).props.onClick());
+    expect(service.saveConfig).toHaveBeenCalledWith("official:plugin", { compact: true });
+  });
   it("shows native plugin preferences directly below the installed plugin row", async () => {
     await act(async () => { renderer = create(<ExtensionSettings lang="en" kind="plugin" inlineSettings={{ "official:plugin": <p>Native options</p> }} />); });
     expect(JSON.stringify(renderer!.toJSON())).not.toContain("Native options");

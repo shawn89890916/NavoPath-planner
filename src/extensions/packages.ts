@@ -1,4 +1,4 @@
-import { isPluginMcpDeclaration } from "../../shared/pluginMcp.ts";
+import { isPluginMcpDeclaration, isSafePluginConfigKey } from "../../shared/pluginMcp.ts";
 import type { ExtensionManifest, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSource, InstalledExtension } from "./types";
 import type { Settings } from "../types";
 
@@ -35,6 +35,34 @@ export async function readExtensionResponse(response: Response): Promise<Uint8Ar
 export const isRecord = (value: unknown): value is Record<string, any> => !!value && typeof value === "object" && !Array.isArray(value);
 const safeId = (value: unknown) => typeof value === "string" && /^[a-z0-9][a-z0-9._-]{0,79}$/.test(value) && !["constructor", "prototype", "__proto__"].includes(value);
 export function safePath(path: string): boolean { return !!path && path.length < 240 && !path.startsWith("/") && !path.includes("\\") && !path.includes(":") && path.split("/").every(part => part && part !== "." && part !== ".." && !["__proto__", "constructor", "prototype"].includes(part)); }
+function validPluginSettingOptions(input: unknown): boolean {
+  if (!Array.isArray(input) || input.length > 100) return false;
+  const keys = new Set<string>();
+  const text = (value: unknown, max = 1000): value is string => typeof value === "string" && value.length <= max;
+  for (const option of input) {
+    if (!isRecord(option) || typeof option.key !== "string" || !isSafePluginConfigKey(option.key) || keys.has(option.key)
+      || !text(option.label, 200) || !option.label.trim() || (option.description !== undefined && !text(option.description))) return false;
+    keys.add(option.key);
+    if (option.type === "boolean") { if (typeof option.default !== "boolean") return false; }
+    else if (option.type === "number") {
+      if (typeof option.default !== "number" || !Number.isFinite(option.default)) return false;
+      for (const bound of [option.min, option.max, option.step]) if (bound !== undefined && (typeof bound !== "number" || !Number.isFinite(bound))) return false;
+      if ((option.min !== undefined && option.default < option.min) || (option.max !== undefined && option.default > option.max)
+        || (option.min !== undefined && option.max !== undefined && option.min > option.max) || (option.step !== undefined && option.step <= 0)) return false;
+    } else if (option.type === "string") { if (!text(option.default, 10000)) return false; }
+    else if (option.type === "color") { if (typeof option.default !== "string" || !/^#[0-9a-f]{6}$/i.test(option.default)) return false; }
+    else if (option.type === "select") {
+      if (!text(option.default, 1000) || !Array.isArray(option.choices) || !option.choices.length || option.choices.length > 100) return false;
+      const values = new Set<string>();
+      for (const choice of option.choices) {
+        if (!isRecord(choice) || !text(choice.value, 1000) || !text(choice.label, 200) || !choice.label.trim() || values.has(choice.value)) return false;
+        values.add(choice.value);
+      }
+      if (!values.has(option.default)) return false;
+    } else return false;
+  }
+  return true;
+}
 export function validateManifest(input: unknown): ExtensionManifest {
   if (!isRecord(input) || !safeId(input.id) || !["plugin", "theme"].includes(input.kind) || input.apiVersion !== 1) throw new Error("Invalid extension manifest / 插件声明无效");
   for (const key of ["name", "description", "author", "version", "minAppVersion"]) if (typeof input[key] !== "string" || !input[key].trim() || input[key].length > 2000) throw new Error(`Invalid manifest ${key}`);
@@ -48,6 +76,7 @@ export function validateManifest(input: unknown): ExtensionManifest {
   if (input.kind === "plugin" && !input.main) throw new Error("Plugin main.js is required");
   if (input.kind === "theme" && (input.main || input.desktop)) throw new Error("Themes contain CSS and resources only");
   if (input.options !== undefined && (!Array.isArray(input.options) || input.options.length > 100 || input.options.some((o: any) => !isRecord(o) || !safeId(o.key) || typeof o.label !== "string" || !/^--[a-z][a-z0-9-]*$/.test(o.variable) || !["color", "number", "string", "boolean"].includes(o.type) || !["string", "number", "boolean"].includes(typeof o.default)))) throw new Error("Invalid theme options");
+  if (input.settingsOptions !== undefined && (input.kind !== "plugin" || !validPluginSettingOptions(input.settingsOptions))) throw new Error("Invalid plugin settings options");
   return structuredClone(input) as ExtensionManifest;
 }
 export function compareVersions(a: string, b: string): number {

@@ -73,3 +73,5 @@
   .df-extension-market-toolbar .df-extension-search { flex-basis: 100%; }
   .df-extension-market-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+.df-extension-list > .df-extension-installed-item + .df-extension-installed-item { border-top: 1px solid var(--paper-rule); }

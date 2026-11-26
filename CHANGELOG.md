@@ -7,7 +7,7 @@
 #### 改进
 
 - 设置改用连续列表和轻量分组，桌面窗口、插件、连接各自拥有清晰入口；搜索支持仅显示已修改项、当前值、单项恢复及设置会话撤销。
-- 外观直接在工作区反馈，圆角支持实时滑动及精确输入；排程间隔提供行内示例。插件与主题使用相同设置控件，已安装项优先展示，Metrics 在对应插件行内配置。
+- 外观直接在工作区反馈，圆角支持实时滑动及精确输入；排程间隔提供行内示例。插件与主题使用相同设置控件，已安装项优先展示，Metrics 在对应插件行内配置；插件可声明简单选项，由宿主统一渲染。
 
 ### 1.7.0 Beta 108
 
@@ -1188,7 +1188,7 @@
 #### Improvements
 
 - Settings uses continuous rows and lightweight groups, with clear Desktop Windows, Plugins and Connections destinations. Search can filter modified preferences, display current values, reset individual values and undo settings changes within the session.
-- Appearance changes use the real workspace for feedback, including live corner-radius adjustment and precise input. Scheduling gaps have an inline example. Plugins and themes share settings controls, prioritize installed items and show Metrics options directly under its plugin row.
+- Appearance changes use the real workspace for feedback, including live corner-radius adjustment and precise input. Scheduling gaps have an inline example. Plugins and themes share settings controls, prioritize installed items and show Metrics options directly under its plugin row; plugins can declare simple preferences rendered by the host.
 
 ### 1.7.0 Beta 108
 

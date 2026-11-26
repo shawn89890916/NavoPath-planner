@@ -40,9 +40,19 @@ this value against the catalog and offers an update when it increases.
   `viewBox="0 0 24 24"`, one-color strokes/fills with `currentColor`, no text,
   scripts, remote references or background. When no icon is provided, NavoPath
   uses the plugin name's first letter.
-- Use `settings.registerPage` for configurable options. Every installed plugin
-  still gets a Settings action with its version, author and platform details if
-  it has no custom settings page.
+- Prefer manifest `settingsOptions` for simple, non-secret preferences on NavoPath
+  1.7.0-beta.109 or newer (set `minAppVersion` accordingly). The host renders them
+  below the installed plugin using native settings controls, theme, spacing and
+  reset behavior. Supported kinds are boolean, number, string, color and select;
+  keys are saved through the existing plugin configuration store. Read them with
+  `settings.get()`, using the declared default if the key has not been saved.
+  For example: `"settingsOptions": [{ "key": "compact", "label": "Compact display", "type": "boolean", "default": false }]`.
+  Number options can specify min, max and step; select options specify choices
+  as value/label pairs. Do not declare API keys, passwords or access tokens here.
+- Use `settings.registerPage` for complex workflows or older clients. The
+  contribution still uses the host's scrollable settings surface and theme
+  tokens; do not build nested card containers for ordinary controls. Every
+  installed plugin without configurable options still has its details action.
 - Register a workspace tool once with `ui.registerPage(name, mount)`. NavoPath
   renders its launcher in the header or dock and gives the content one scrollable
   page. The same mount works in both orientations. The portrait More menu is a
