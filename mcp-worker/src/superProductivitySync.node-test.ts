@@ -115,3 +115,98 @@ test("a schedule conflict blocks propagation until a source is chosen", () => {
   resolveSyncConflict(state, state.conflicts[0].id, "superproductivity");
   assert.deepEqual(buildActions(state, "navopath")[0].fields, { scheduledAt: "2026-11-26T11:00", scheduledMinutes: 60 });
 });
+
+for (const authority of ["navopath", "superproductivity"] as const) {
+  test("first sync overwrite " + authority + " protects source and removes only unmatched target records", () => {
+    const target = authority === "navopath" ? "superproductivity" : "navopath";
+    const state = emptySyncState();
+    const sourceSnapshot = { overwriteVersion: 1 as const, projects: [entity("p-source", "Source project")], tasks: [entity("source-match", "Shared", { notes: "source", scheduledAt: "2026-11-26T09:00", scheduledMinutes: 60 }), entity("source-only", "Source only")] };
+    const targetSnapshot = { overwriteVersion: 1 as const, projects: [entity("p-target", "Target project")], tasks: [entity("target-match", "Shared", { notes: "target", scheduledAt: "2026-11-26T10:00", scheduledMinutes: 30 }), entity("target-only", "Target only")] };
+    applySyncSnapshot(state, authority, sourceSnapshot, "2026-11-26T00:00:00Z");
+    applySyncSnapshot(state, target, targetSnapshot, "2026-11-26T00:00:01Z");
+    assert.equal(createInitialPreview(state).overwriteSupported, true);
+    confirmInitialSync(state, [], authority === "navopath" ? "overwrite-navopath" : "overwrite-superproductivity");
+    assert.deepEqual(buildActions(state, authority), []);
+    const actions = buildActions(state, target);
+    assert.ok(actions.some(a => a.fields.title === "Source only" && !a.deleted));
+    assert.ok(actions.some(a => a.id === "target-match" && a.fields.notes === "source" && a.fields.scheduledAt === "2026-11-26T09:00"));
+    assert.ok(actions.some(a => a.id === "target-only" && a.deleted));
+    assert.ok(actions.some(a => a.id === "p-target" && a.deleted));
+    assert.equal(actions.at(-1)?.id, "p-target");
+    // A stale target snapshot must not turn discarded records into source creates.
+    applySyncSnapshot(state, target, { overwriteVersion: 1, projects: [entity("p-target", "Target project")], tasks: [entity("target-match", "Shared", { notes: "target", scheduledAt: "2026-11-26T10:00", scheduledMinutes: 30 }), entity("target-only", "Target edited before deletion")] }, "2026-11-26T00:00:02Z");
+    assert.deepEqual(buildActions(state, authority), []);
+    assert.ok(buildActions(state, target).some(a => a.id === "target-only" && a.deleted));
+    const sourceProject = actions.find(a => a.fields.title === "Source project" && !a.deleted)!;
+    const sourceTask = actions.find(a => a.fields.title === "Source only" && !a.deleted)!;
+    applySyncSnapshot(state, target, { overwriteVersion: 1, projects: [{ ...entity("created-project", "Source project"), syncId: sourceProject.syncId }], tasks: [{ ...entity("target-match", "Shared", { notes: "source", scheduledAt: "2026-11-26T09:00", scheduledMinutes: 60 }) }, { ...entity("created-task", "Source only"), syncId: sourceTask.syncId }] }, "2026-11-26T00:00:03Z");
+    assert.ok(!buildActions(state, target).some(a => a.deleted));
+    // New target tasks created after the initial overwrite still sync both ways.
+    const next = structuredClone(state.latest[target]!);
+    next.tasks.push(entity("new-target", "New after overwrite"));
+    applySyncSnapshot(state, target, next, "2026-11-26T00:00:04Z");
+    assert.ok(buildActions(state, authority).some(a => a.fields.title === "New after overwrite" && !a.deleted));
+    next.tasks.push(entity("target-only", "Old target resurrected"));
+    applySyncSnapshot(state, target, next, "2026-11-26T00:00:05Z");
+    assert.ok(buildActions(state, target).some(a => a.id === "target-only" && a.deleted));
+    assert.ok(!buildActions(state, authority).some(a => a.fields.title === "Old target resurrected"));
+  });
+}
+test("overwrite requires upgraded clients and refuses deletion of a retained child's parent", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n-child", "Shared child")] }, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { overwriteVersion: 1, projects: [], tasks: [entity("s-parent", "Target parent"), { ...entity("s-child", "Shared child"), parentId: "s-parent" }] }, "2026-11-26T00:00:01Z");
+  assert.throws(() => confirmInitialSync(state, [], "overwrite-navopath"), /Update both/);
+  state.latest.navopath!.overwriteVersion = 1;
+  assert.throws(() => confirmInitialSync(state, [], "overwrite-navopath"), /parent of a matched task/);
+  assert.deepEqual(state.canonical, {});
+});
+test("unmatched records carrying stale mappings still participate in a fresh pair", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [{ ...entity("n1", "Local only"), syncId: "old-pair" }] }, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [] }, "2026-11-26T00:00:01Z");
+  confirmInitialSync(state, []);
+  assert.ok(buildActions(state, "superproductivity").some(a => a.fields.title === "Local only"));
+});
+
+test("target edits, deletion and unreviewed additions cannot flow back to the source during initial overwrite", () => {
+  const state = emptySyncState();
+  const source = { overwriteVersion: 1 as const, projects: [], tasks: [entity("n1", "Shared", { notes: "keep source" }), entity("n2", "Also shared")] };
+  const target = { overwriteVersion: 1 as const, projects: [], tasks: [entity("s1", "Shared", { notes: "keep source" }), entity("s2", "Also shared")] };
+  applySyncSnapshot(state, "navopath", source, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", target, "2026-11-26T00:00:01Z");
+  confirmInitialSync(state, [], "overwrite-navopath");
+  assert.throws(() => applySyncSnapshot(state, "superproductivity", { overwriteVersion: 1, projects: [], tasks: [...target.tasks, entity("late", "Not in preview")] }, "2026-11-26T00:00:02Z"), /Target changed since overwrite preview/);
+  applySyncSnapshot(state, "superproductivity", { overwriteVersion: 1, projects: [], tasks: [entity("s1", "Shared", { notes: "changed target" })] }, "2026-11-26T00:00:03Z");
+  assert.deepEqual(buildActions(state, "navopath"), []);
+  assert.ok(buildActions(state, "superproductivity").some(a => a.id === "s1" && a.fields.notes === "keep source"));
+  assert.ok(buildActions(state, "superproductivity").some(a => a.fields.title === "Also shared" && !a.deleted));
+  assert.ok(state.initialOverwrite);
+});
+
+test("fresh pairs exclude the protected SP Inbox while preserving its tasks", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", { overwriteVersion: 1, projects: [], tasks: [entity("n1", "Source")] }, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { overwriteVersion: 1, projects: [entity("INBOX_PROJECT", "Inbox"), entity("extra", "Extra")], tasks: [{ ...entity("s1", "Target task", { projectTitle: "Inbox" }), projectId: "INBOX_PROJECT" }] }, "2026-11-26T00:00:01Z");
+  assert.deepEqual(createInitialPreview(state).projects.superproductivity.map(p => p.id), ["extra"]);
+  assert.equal(createInitialPreview(state).tasks.superproductivity[0].fields.projectTitle, "");
+  confirmInitialSync(state, [], "overwrite-navopath");
+  assert.ok(buildActions(state, "superproductivity").some(a => a.id === "s1" && a.deleted));
+  assert.ok(!buildActions(state, "superproductivity").some(a => a.id === "INBOX_PROJECT"));
+  assert.deepEqual(buildActions(state, "navopath"), []);
+});
+
+test("paused connection never produces import or deletion actions or accepts new snapshots", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n", "Original")] }, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s", "Imported")] }, "2026-11-26T00:00:01Z");
+  confirmInitialSync(state, []);
+  assert.ok(buildActions(state, "navopath").length);
+  state.status = "paused";
+  const before = structuredClone(state);
+  for (const side of ["navopath", "superproductivity"] as const) {
+    assert.deepEqual(buildActions(state, side), []);
+    assert.deepEqual(applySyncSnapshot(state, side, { projects: [], tasks: [] }, "2026-11-26T00:00:02Z").actions, []);
+  }
+  assert.deepEqual(state, before);
+});

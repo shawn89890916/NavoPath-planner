@@ -1,6 +1,6 @@
 {
   "name": "navopath",
-  "version": "1.7.0-beta.107",
+  "version": "1.7.0-beta.108",
   "description": "NavoPath — Navigate your next step.",
   "author": "NavoPath",
   "main": "electron/main.cjs",
@@ -85,7 +85,7 @@
         "dist/assets/mobilePlacement-*.js",
         "dist/assets/SelectionIndicator-*.js"
       ],
-      "limit": "365 KB"
+      "limit": "367 KB"
     },
     {
       "name": "Document parsing scripts",
