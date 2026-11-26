@@ -4,7 +4,7 @@ import { McpAgent } from "agents/mcp";
 import { fromSupabaseUrl, withOAuthProtectedResource, withSupabase } from "@supabase/server";
 import { z } from "zod";
 import { combineSyncSnapshot } from "./syncSnapshot";
-import { buildCalendarFeed } from "./calendarFeed";
+import { buildCalendarFeed, buildSuperProductivityHistoryFeed } from "./calendarFeed";
 import { handleCalDav } from "./caldav";
 import { listEngagement } from "./engagement";
 import { PLUGIN_OWNER_PATTERN } from "../../shared/pluginMcp";
@@ -626,23 +626,24 @@ export default {
         },
       });
     }
-    const calendarMatch = url.pathname.match(/^\/calendar\/(nvc_[a-f0-9]{64})\.ics$/);
+    const calendarMatch = url.pathname.match(/^\/calendar\/(nvc_[a-f0-9]{64})(-history)?\.ics$/);
     if (calendarMatch) {
       if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });
       const userId = await authenticateCalendarToken(calendarMatch[1], env, ctx);
       if (!userId) return new Response("Calendar subscription not found", { status: 404, headers: { "cache-control": "no-store" } });
       const profile = await getProfile(env, userId);
-      const etag = `W/\"navopath-calendar-${profile.revision}\"`;
+      const history = Boolean(calendarMatch[2]);
+      const etag = `W/"navopath-calendar-${history ? "history-" : ""}${profile.revision}"`;
       const headers = {
         "content-type": "text/calendar; charset=utf-8",
-        "content-disposition": "inline; filename=navopath.ics",
+        "content-disposition": history ? "inline; filename=navopath-history.ics" : "inline; filename=navopath.ics",
         "cache-control": "private, max-age=300, no-transform",
         "referrer-policy": "no-referrer",
         "x-content-type-options": "nosniff",
         etag,
       };
       if (request.headers.get("if-none-match") === etag) return new Response(null, { status: 304, headers });
-      return new Response(request.method === "HEAD" ? null : buildCalendarFeed(profile.data), { headers });
+      return new Response(request.method === "HEAD" ? null : history ? buildSuperProductivityHistoryFeed(profile.data) : buildCalendarFeed(profile.data), { headers });
     }
     if (url.pathname === "/api/workspace-events") {
       if (request.method !== "POST") return new Response("Method not allowed", { status: 405, headers: { allow: "POST" } });

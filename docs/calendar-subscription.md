@@ -32,3 +32,12 @@ Calendar subscriptions are read-only. Changes made in Apple Calendar or Notion C
 CalDAV syncs appointments created in the NavoPath calendar into NavoPath as ordinary tasks, so they can be checked off and managed with the rest of the task list. Task deadlines, scheduled task blocks and legacy course blocks remain available through the separate read-only subscription. The writable calendar supports timed and all-day appointments and the recurring patterns represented in NavoPath. Invitations and edits to individual occurrences of a recurring series are outside this sync.
 
 The CalDAV password is dedicated to calendar access and shown only when generated. Revoke it in NavoPath to disconnect all devices that use it.
+
+## Super Productivity timeline history
+SP's native task timeline only selects incomplete tasks with one timed slot per task. Keep the NavoPath Sync plugin connected for two-way task and active schedule changes. To display completed execution records, returned-unfinished records and additional blocks, add a separate read-only iCalendar source in SP:
+
+1. Use your existing NavoPath calendar subscription URL (or create one only if none exists).
+2. Replace its final `.ics` with `-history.ics`, or use **Copy SP timeline history link** in Calendar settings when generating a subscription.
+3. In Super Productivity, add an iCalendar calendar integration with that URL. Leave automatic task import disabled. Do not subscribe to the full NavoPath feed as well, which would duplicate active slots.
+
+The history feed has a stable UID per recorded block, excludes cancelled records and the primary incomplete-task timed slot already mirrored by the plugin, and does not contain task notes. Calendar events are read-only; completion and execution history stay in NavoPath. SP determines its display range and polling frequency. Revoking the existing calendar token revokes both feeds.
