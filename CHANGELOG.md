@@ -2,6 +2,10 @@
 
 ## 2026-11-26
 
+### 改进
+
+- 外观设置支持 0–64px 圆角，默认 32px，应用于任务块、卡片和共享控件。
+
 ### 修复
 
 - 修复启用投入度后时间轴任务色条与卡片圆角不贴合的问题，保留评分对应的色条长度。
@@ -966,6 +970,10 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### Improvements
+
+- Appearance settings offer a 0–64px corner radius, defaulting to 32px for task blocks, cards and shared controls.
 
 ### Fixed
 

@@ -25,7 +25,7 @@ import { reasoningModesForModel } from "./utils/aiModels";
 import { createPortal, flushSync } from "react-dom";
 import { runMotionTransition } from "./motion";
 import { SelectionIndicator } from "./components/SelectionIndicator";
-import { getDefaultSettings } from "./defaultSettings";
+import { getDefaultSettings, normalizeCornerRadius, MAX_CORNER_RADIUS } from "./defaultSettings";
 import { uid } from "./utils/ids";
 const localStorage = getWorkspaceStorage();
 
@@ -867,6 +867,18 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
                     { value: "sans", label: lang === "zh" ? "现代无衬线" : "Modern Sans" },
                   ]}
                 />}
+              />
+              <SettingRow
+                anchor="corner-radius"
+                title={lang === "zh" ? "圆角大小" : "Corner radius"}
+                description={lang === "zh" ? "调整任务块、卡片与共享控件的圆角。默认 32px。" : "Adjust corners on task blocks, cards and shared controls. Default: 32px."}
+                control={<span className="df-settings-number-wrap">
+                  <input type="range" className="df-settings-range" min={0} max={MAX_CORNER_RADIUS} step={1}
+                    value={normalizeCornerRadius(settings.cornerRadius)}
+                    aria-label={lang === "zh" ? "圆角大小" : "Corner radius"}
+                    onChange={(event) => onSave({ cornerRadius: normalizeCornerRadius(Number(event.target.value)) })} />
+                  <span className="df-settings-number-suffix">{normalizeCornerRadius(settings.cornerRadius)}px</span>
+                </span>}
               />
               <SettingRow
                 anchor="timeline-font"

@@ -539,6 +539,8 @@ export interface Settings {
   extensionMcpAccess?: PluginMcpAccess;
   extensionConfigs?: Record<string, Record<string, unknown>>;
   extensionConfigUpdatedAt?: Record<string, string>;
+  /** Preferred workspace corner radius in CSS pixels (0–64). */
+  cornerRadius?: number;
   typographyStyle: "editorial" | "balanced" | "sans";
   accentColor: string;
   executeAccentColor: string;

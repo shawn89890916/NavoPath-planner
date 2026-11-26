@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 import { normalizeSettings } from "./defaultSettings";
 
 describe("plugin settings normalization", () => {
+  it("defaults workspace corners to 32px and preserves bounded custom radii", () => {
+    for (const value of [undefined, null, "48", NaN, Infinity]) {
+      expect(normalizeSettings({ cornerRadius: value }).cornerRadius).toBe(32);
+    }
+    for (const [value, expected] of [[0, 0], [32, 32], [48, 48], [64, 64], [90, 64], [-1, 0], [31.6, 32]]) {
+      expect(normalizeSettings({ cornerRadius: value }).cornerRadius).toBe(expected);
+    }
+  });
   it("defaults Beta updates off and only preserves boolean opt-in values", () => {
     for (const value of [undefined, null, "true", 1, {}]) {
       expect(normalizeSettings({ acceptBetaUpdates: value }).acceptBetaUpdates).toBe(false);

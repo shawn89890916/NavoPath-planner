@@ -140,6 +140,7 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("themes", { category: "appearance" }, "社区主题", "Community themes", "theme market import options 主题 市场 导入 选项"),
   entry("typography", { category: "appearance" }, "字体风格", "Typography", "serif sans 衬线 无衬线"),
   entry("timeline-font", { category: "appearance" }, "时间轴字体大小", "Timeline font size", "scale 字号"),
+  entry("corner-radius", { category: "appearance" }, "圆角大小", "Corner radius", "roundness rounded radius 圆角 弧度"),
   entry("accent-colors", { category: "appearance" }, "自定义点缀色", "Customize accent colors", "execute planning color 强调色"),
 
   entry("planning-views", { category: "workflow" }, "规划视图", "Planning views", "kanban matrix list 看板 四象限 列表"),
