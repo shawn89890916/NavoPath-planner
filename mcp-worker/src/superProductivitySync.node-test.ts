@@ -195,3 +195,18 @@ test("fresh pairs exclude the protected SP Inbox while preserving its tasks", ()
   assert.ok(!buildActions(state, "superproductivity").some(a => a.id === "INBOX_PROJECT"));
   assert.deepEqual(buildActions(state, "navopath"), []);
 });
+
+test("paused connection never produces import or deletion actions or accepts new snapshots", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n", "Original")] }, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s", "Imported")] }, "2026-11-26T00:00:01Z");
+  confirmInitialSync(state, []);
+  assert.ok(buildActions(state, "navopath").length);
+  state.status = "paused";
+  const before = structuredClone(state);
+  for (const side of ["navopath", "superproductivity"] as const) {
+    assert.deepEqual(buildActions(state, side), []);
+    assert.deepEqual(applySyncSnapshot(state, side, { projects: [], tasks: [] }, "2026-11-26T00:00:02Z").actions, []);
+  }
+  assert.deepEqual(state, before);
+});
