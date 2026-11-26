@@ -2,7 +2,9 @@ import type { PlannerData, Task, Subtask, TimelineRecord, TimeEntry, HabitDailyS
 
 export type AnalyticsValue = string | number | boolean | null;
 export type AnalyticsSnapshot = Record<string, AnalyticsValue>;
-export type AnalyticsEntity = "task" | "subtask" | "execution" | "timeEntry" | "habit" | "project";
+export type AnalyticsEntity = "task" | "subtask" | "execution" | "timeEntry" | "habit" | "project" | "timer";
+export type AnalyticsSource = "client" | "plugin" | "system" | "undo" | "remote-observed";
+export type TimerTransition = "start" | "pause" | "idle-pause" | "resume" | "stop" | "discard";
 export interface AnalyticsEvent {
   id: string;
   schemaVersion: 1;
@@ -12,7 +14,7 @@ export interface AnalyticsEvent {
   taskId?: string;
   projectId?: string;
   occurredAt: string;
-  source: "client";
+  source: AnalyticsSource;
   recordedAt?: string;
   timezone?: string;
   estimateMinutes?: number;
@@ -49,10 +51,11 @@ function collection(data: PlannerData, entity: AnalyticsEntity): Item[] {
     case "timeEntry": return (data.timeEntries || []).map(timeItem);
     case "habit": return (data.habitDailyStates || []).map(habitItem);
     case "project": return data.projects.map(projectItem);
+    case "timer": return [];
   }
 }
 /** Derive only allowlisted business changes. Never store task titles, notes or conversations. */
-export function diffAnalyticsEvents(previous: PlannerData, next: PlannerData, occurredAt: string, operationId: string): AnalyticsEvent[] {
+export function diffAnalyticsEvents(previous: PlannerData, next: PlannerData, occurredAt: string, operationId: string, source: AnalyticsSource = "client"): AnalyticsEvent[] {
   const result: AnalyticsEvent[] = [];
   const entities: AnalyticsEntity[] = ["task","subtask","execution","timeEntry","habit","project"];
   const timezone=Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -65,8 +68,12 @@ export function diffAnalyticsEvents(previous: PlannerData, next: PlannerData, oc
       const a=before.get(entityId), b=after.get(entityId);
       if (a && b && JSON.stringify(a.snapshot) === JSON.stringify(b.snapshot)) continue;
       const item=b || a!;
-      result.push({ id: operationId+":"+entityType+":"+entityId, schemaVersion:1, operationId, entityType, entityId, taskId:item.taskId, projectId:item.projectId, occurredAt, recordedAt:occurredAt, timezone, estimateMinutes:!a?item.estimateMinutes:undefined, source:"client", action:!a?"created":!b?"removed":"changed", before:a?.snapshot, after:b?.snapshot });
+      result.push({ id: operationId+":"+entityType+":"+entityId, schemaVersion:1, operationId, entityType, entityId, taskId:item.taskId, projectId:item.projectId, occurredAt, recordedAt:occurredAt, timezone, estimateMinutes:!a&&source!=="remote-observed"&&source!=="undo"?item.estimateMinutes:undefined, source, action:!a?"created":!b?"removed":"changed", before:a?.snapshot, after:b?.snapshot });
     }
   }
   return result;
+}
+
+export function makeTimerAnalyticsEvent(taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,operationId:string,projectId?:string):AnalyticsEvent {
+  return {id:operationId+":timer",schemaVersion:1,operationId,entityType:"timer",entityId:taskId||"unlinked",taskId,projectId,occurredAt:at,recordedAt:at,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,source:transition==="idle-pause"?"system":"client",action:"changed",after:{transition,elapsedSeconds:Math.max(0,Math.round(elapsedSeconds))}};
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PlannerData, Task } from "../types";
-import { diffAnalyticsEvents } from "./activityEvents";
+import { diffAnalyticsEvents, makeTimerAnalyticsEvent } from "./activityEvents";
 import { buildTimeAllocationMetrics } from "./timeAllocation";
 import { buildInsights, metricDay } from "./insightFacts";
 import { buildObservedPlanHistory } from "./historyAnalysis";
@@ -35,4 +35,16 @@ describe("observed schedule history",()=>{
   expect(r.moveCount).toBe(1);expect(r.resizeCount).toBe(0);expect(r.comparisons).toEqual([]);
  });
  it("validates persisted view configuration",()=>{expect(normalizeSavedViews([{id:"bad",name:"broken"}])).toEqual([]);});
+});
+
+
+describe("event provenance",()=>{
+ it("preserves explicit sources without fabricating remote initial estimates",()=>{
+  const events=diffAnalyticsEvents({...data,tasks:[]},data,"2026-11-26T00:00:00Z","remote:9","remote-observed");
+  expect(events.every(e=>e.source==="remote-observed")).toBe(true);expect(events.find(e=>e.entityType==="execution")?.estimateMinutes).toBeUndefined();
+  expect(buildObservedPlanHistory(events,data,{start:new Date("2026-11-26"),end:new Date("2026-11-27")}).observedExecutions).toBe(0);
+ });
+ it("represents idle pause as a system transition and never includes task text",()=>{
+  const e=makeTimerAnalyticsEvent("t","idle-pause","2026-11-26T00:00:00Z",12,"op");expect(e).toMatchObject({source:"system",entityType:"timer",after:{transition:"idle-pause",elapsedSeconds:12}});
+ });
 });

@@ -13,6 +13,7 @@ export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerDat
   const groups=new Map<string,AnalyticsEvent[]>(),moves=new Set<string>(),resizes=new Set<string>();
   let moveCount=0,resizeCount=0,created=0,removed=0,taskCompleted=0,taskReopened=0;
   for(const e of events){
+    if(e.source==="undo"||e.source==="remote-observed")continue;
     if(e.entityType==="task"&&e.action==="changed"){if(e.before?.completed===false&&e.after?.completed===true)taskCompleted++;if(e.before?.completed===true&&e.after?.completed===false)taskReopened++;}
     if(e.entityType!=="execution")continue;
     const key=(e.taskId||"")+":"+e.entityId;const list=groups.get(key)||[];list.push(e);groups.set(key,list);

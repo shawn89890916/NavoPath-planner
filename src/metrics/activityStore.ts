@@ -1,20 +1,12 @@
 import type { PlannerData } from "../types";
-import type { AnalyticsEvent } from "./activityEvents";
+import type { AnalyticsEvent, AnalyticsSource, TimerTransition } from "./activityEvents";
+import { analyticsPreference, analyticsPreferenceKey as key } from "./activityBridge";
+export { analyticsPreference } from "./activityBridge";
 
 const DB = "navopath-local-analytics-v1";
 const STORE = "events";
-const PREFIX = "navopath.analytics.v1.";
 const CHANGE = "navopath-analytics-change";
 type StoredEvent = AnalyticsEvent & { scope: string };
-export type AnalyticsPreference = { enabled: boolean; since?: string; generation: string };
-function key(scope: string) { return PREFIX + encodeURIComponent(scope); }
-export function analyticsPreference(scope: string): AnalyticsPreference {
-  try {
-    const p = JSON.parse(window.localStorage.getItem(key(scope)) || "null") as AnalyticsPreference | null;
-    if (p && typeof p.enabled === "boolean" && typeof p.generation === "string") return p;
-  } catch { /* unavailable storage: default off */ }
-  return { enabled: false, generation: "" };
-}
 const errors = new Map<string,string>();
 function signal(scope:string) { window.dispatchEvent(new CustomEvent(CHANGE,{detail:scope})); }
 export function subscribeAnalytics(scope:string, listener:()=>void) {
@@ -52,20 +44,39 @@ async function append(scope:string, generation:string, events:AnalyticsEvent[]) 
   } finally { db.close(); }
 }
 const queues=new Map<string,Promise<void>>();
+const journalPrefix=(scope:string)=>"navopath.analytics.pending."+encodeURIComponent(scope)+".";
+type Journal={generation:string;events:AnalyticsEvent[]};
+function queue(scope:string,work:()=>Promise<void>){
+  const pending=(queues.get(scope)||Promise.resolve()).then(work).then(()=>{errors.delete(scope);signal(scope);},()=>{errors.set(scope,"write");signal(scope);});
+  queues.set(scope,pending);void pending.finally(()=>{if(queues.get(scope)===pending)queues.delete(scope);});
+}
+async function journalAndAppend(scope:string,generation:string,events:AnalyticsEvent[]){
+  if(!events.length||!analyticsPreference(scope).enabled||analyticsPreference(scope).generation!==generation)return;
+  const journalKey=journalPrefix(scope)+events[0].operationId;
+  let journaled=false;
+  try{window.localStorage.setItem(journalKey,JSON.stringify({generation,events} satisfies Journal));journaled=true;}catch{/* IndexedDB can still succeed */}
+  await append(scope,generation,events);
+  if(journaled)window.localStorage.removeItem(journalKey);
+}
+export async function recoverAnalytics(scope:string){
+  queue(scope,async()=>{
+    const p=analyticsPreference(scope);if(!p.enabled)return;
+    const keys=Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).filter((k):k is string=>Boolean(k?.startsWith(journalPrefix(scope))));
+    for(const k of keys){
+      const raw=localStorage.getItem(k);if(!raw)continue;
+      const j=JSON.parse(raw) as Journal;
+      if(j.generation===p.generation&&Array.isArray(j.events))await append(scope,j.generation,j.events);
+      localStorage.removeItem(k);
+    }
+  });
+}
 /** Observe accepted renderer mutations, not remote replay. Recording never blocks planning. */
-export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,next:PlannerData,occurredAt:string) {
-  const preference=analyticsPreference(scope);
-  if(!preference.enabled) return;
-  try {
-    const operationId=crypto.randomUUID();
-    const pending=(queues.get(scope) || Promise.resolve()).then(async()=>{
-      const {diffAnalyticsEvents}=await import("./activityEvents");
-      const events=diffAnalyticsEvents(previous,next,occurredAt,operationId);
-      if(events.length) await append(scope,preference.generation,events);
-    }).then(()=>{errors.delete(scope);signal(scope);},()=>{errors.set(scope,"write");signal(scope);});
-    queues.set(scope,pending);
-    void pending.finally(()=>{if(queues.get(scope)===pending)queues.delete(scope);});
-  } catch { errors.set(scope,"write"); signal(scope); }
+export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,next:PlannerData,occurredAt:string,source:AnalyticsSource="client",operationId=crypto.randomUUID(),generation=analyticsPreference(scope).generation) {
+  if(!analyticsPreference(scope).enabled)return;
+  queue(scope,async()=>{const {diffAnalyticsEvents}=await import("./activityEvents");await journalAndAppend(scope,generation,diffAnalyticsEvents(previous,next,occurredAt,operationId,source));});
+}
+export function recordTimerTransition(scope:string,taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,projectId:string|undefined,generation:string){
+  queue(scope,async()=>{const {makeTimerAnalyticsEvent}=await import("./activityEvents");await journalAndAppend(scope,generation,[makeTimerAnalyticsEvent(taskId,transition,at,elapsedSeconds,crypto.randomUUID(),projectId)]);});
 }
 export async function readAnalyticsEvents(scope:string,start:Date,end:Date,limit=501,projectIds:string[]=[]):Promise<AnalyticsEvent[]> {
   if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start)return [];
@@ -84,6 +95,7 @@ export async function readAnalyticsEvents(scope:string,start:Date,end:Date,limit
 export async function clearAnalytics(scope:string) {
   window.localStorage.setItem(key(scope),JSON.stringify({enabled:false,generation:crypto.randomUUID()}));
   await queues.get(scope);
+  const pending=Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).filter((k):k is string=>Boolean(k?.startsWith(journalPrefix(scope))));for(const k of pending)localStorage.removeItem(k);
   const db=await open();
   try {
     const tx=db.transaction(STORE,"readwrite"),done=finished(tx),idx=tx.objectStore(STORE).index("scopeDate");
