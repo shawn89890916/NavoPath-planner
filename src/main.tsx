@@ -61,7 +61,7 @@ import { expandTaskAllDayRecords, expandTaskTimelineSlices } from "./utils/taskT
 import { addDays, addMonths, buildRecurrenceOccurrenceId, enumerateRecurrenceDates, hasRecurrenceOccurrenceOnDate, hasRecurringRule, isRecurringScheduledTask, matchesOccurrence, parseRecurrenceOccurrenceId, startOfWeekIso } from "./utils/recurrence";
 import { appendAiSubtasks, getAiSubtaskSuggestions } from "./utils/aiSubtasks";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
-import { addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree } from "./utils/treeOrder";
+import { addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree, moveTreeNode, captureTreeMoveUndo, undoTreeMove, type TreeDragNode, type TreeDropTarget } from "./utils/treeOrder";
 import { reorderTodayCandidates, returnScheduledTaskToToday } from "./utils/todayCandidates";
 import { reconcileOverdueTasks } from "./utils/overdueTasks";
 import { useInAppDialog } from "./InAppDialog";
@@ -2840,6 +2840,23 @@ if (cached?.data && cached?.settings) {
       void updateSavedTaskOperations(workspaceKey, update, now)
         .catch((error) => console.warn("Activity history could not be saved:", error));
     }
+  }
+
+  function movePlanningTreeNode(source: TreeDragNode, target: TreeDropTarget) {
+    const current = dataRef.current;
+    if (!current) return;
+    const next = moveTreeNode(current, source, target, workspaceNow().toISOString());
+    if (next === current) return;
+    const undo = captureTreeMoveUndo(current, next);
+    void saveData(next);
+    showUndoToast(lang === "zh" ? "任务层级与顺序已更新" : "Task hierarchy and order updated", t(lang, "toast.undo"), () => {
+      const latest = dataRef.current;
+      const restored = latest && undoTreeMove(latest, undo, workspaceNow().toISOString());
+      if (restored) {
+        void saveData(restored);
+        showToast(t(lang, "toast.undone"));
+      } else showToast(lang === "zh" ? "相关任务后来有改动，暂时无法撤销。" : "The affected tasks have since changed. This action can’t be undone yet.");
+    });
   }
 
   function saveTaskOperation(next: PlannerData, kind: TaskOperationKind, options?: { title?: string; titles?: string[]; toast?: string }) {
@@ -9038,6 +9055,7 @@ if (cached?.data && cached?.settings) {
     onProjectCreate: () => openAdd("project"), onOpenTimeline: () => closeUtilityPanel(showTimelineWorkspace),
     onTaskUpdate: updateTask, onTaskCreate: createTaskInProject, onTaskDelete: deleteTaskById, onDeleteSubtask: deleteSubtaskById,
     onDataChange: (next: PlannerData) => void saveData(next),
+    onTreeMove: movePlanningTreeNode,
     engagementEnabled: settings.featureEngagementEnabled === true,
   };
   const scheduleViewProps = {

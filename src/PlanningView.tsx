@@ -13,7 +13,7 @@ import { buildTaskMetaBadges } from "./utils/taskMetaBadges";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
 import { kanbanGroups, WORKFLOW_LABELS } from "./utils/productivity";
 import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch, type UiWorkflowStatus, type StateFilterValue } from "./utils/productivityModel";
-import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
+import { findSubtaskInTree, addSubtaskToTree, countSubtasks, countDoneSubtasks, canMoveTreeNode, treeDropPosition } from "./utils/treeOrder";
 import { TaskActions, TaskBlockContent, TaskBlockDuration, TaskCheckbox, TaskSubtaskShelf } from "./components/TaskBlock";
 import { EmptyState } from "./components/EmptyState";
 import { Button, IconButton } from "./components/UiPrimitives";
@@ -831,6 +831,7 @@ export default function PlanningView(props: {
   onTaskDelete: (taskId: string) => void;
   onDeleteSubtask: (subtaskId: string) => void;
   onDataChange: (data: PlannerData) => void;
+  onTreeMove: (source: TreeDragNode, target: Omit<TreeDropTarget, "element">) => void;
   engagementEnabled?: boolean;
   dayStartTime?: string;
   metricsRangePreset?: MetricRangePreset;
@@ -1045,10 +1046,6 @@ export default function PlanningView(props: {
     }
   }, [dialog, safeTasks, safeProjects, props]);
 
-  const persistTree = useCallback((projects: Project[], tasks: Task[]) => {
-    props.onDataChange(normalizeTreeOrder({ ...props.data, projects, tasks }));
-  }, [props]);
-
   const subtaskOwner = useCallback((subtaskId: string) =>
     safeTasks.find((task) => findSubtaskInTree(task.subtasks || [], subtaskId)), [safeTasks]);
 
@@ -1068,58 +1065,6 @@ export default function PlanningView(props: {
     createdAt: subtask.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }), [today]);
-
-  const handleTreeDrop = useCallback(async (source: TreeDragNode, target: TreeDropTarget) => {
-    if (source.kind === target.kind && source.id === target.id) return;
-    let projects = [...safeProjects];
-    let tasks = [...safeTasks];
-    const targetTask = target.kind === "task" ? tasks.find((task) => task.id === target.id) : undefined;
-    const targetProjectId = target.kind === "project"
-      ? (target.id === "__unassigned__" ? undefined : target.id)
-      : targetTask?.projectId ?? (target.kind === "subtask" ? subtaskOwner(target.id)?.projectId : undefined);
-
-    if (source.kind === "project") {
-      const project = projects.find((item) => item.id === source.id);
-      if (!project) return;
-      if (target.kind === "project" && target.position !== "inside") {
-        persistTree(reorderProjects(projects, source.id, target.id, target.position === "after"), tasks);
-      }
-      return;
-    }
-
-    if (source.kind === "task") {
-      const task = tasks.find((item) => item.id === source.id);
-      if (!task) return;
-      if (target.kind === "subtask" || (target.kind === "task" && target.position === "inside")) return;
-      persistTree(projects, reorderTasks(tasks, task.id, targetProjectId, targetTask?.id, target.position === "after"));
-      return;
-    }
-
-    const owner = subtaskOwner(source.id);
-    const subtask = owner ? findSubtaskInTree(owner.subtasks || [], source.id) : undefined;
-    if (!owner || !subtask) return;
-    if (target.kind === "subtask" && subtaskOwner(target.id)?.id === owner.id) {
-      const sourceTree = owner.subtasks || [];
-      const moved = target.position === "inside"
-        ? moveSubtaskInsideTree(sourceTree, source.id, target.id, Date.now())
-        : moveSubtaskRelativeInTree(sourceTree, source.id, target.id, target.position === "after");
-      if (moved === sourceTree) return;
-      persistTree(projects, tasks.map((task) => task.id === owner.id ? { ...task, subtasks: moved } : task));
-      return;
-    }
-    tasks = tasks.map((task) => task.id === owner.id ? { ...task, subtasks: removeSubtaskFromTree(task.subtasks || [], source.id) } : task);
-    if (target.kind === "project" || (target.kind === "task" && target.position !== "inside")) return;
-    const nextOwner = target.kind === "task" ? targetTask : subtaskOwner(target.id);
-    if (!nextOwner) return;
-    const targetTree = tasks.find((task) => task.id === nextOwner.id)?.subtasks || [];
-    const nextSubtasks = target.kind === "subtask" && target.position !== "inside"
-      ? insertSubtaskRelativeInTree(targetTree, subtask, target.id, target.position === "after")
-      : addSubtaskToTree(targetTree, { ...subtask, order: Date.now() }, target.kind === "subtask" ? target.id : undefined);
-    if (target.kind === "subtask" && nextSubtasks === targetTree) return;
-    tasks = tasks.map((task) => task.id === nextOwner.id ? { ...task, subtasks: nextSubtasks } : task);
-    persistTree(projects, tasks);
-  }, [persistTree, safeProjects, safeTasks, subtaskOwner]);
-
 
   const viewFilteredTasks = useMemo(() => {
     return safeTasks.filter((task) => {
@@ -1398,10 +1343,17 @@ export default function PlanningView(props: {
     const subtaskId = sourceNode.kind === "subtask" ? sourceNode.id : undefined;
     const subtask = subtaskId && task ? findSubtaskInTree(task.subtasks || [], subtaskId) : undefined;
     let marker: HTMLElement | undefined;
+    let expandTimer: number | undefined;
+    let expandKey = "";
+    const clearExpand = () => {
+      if (expandTimer !== undefined) window.clearTimeout(expandTimer);
+      expandTimer = undefined;
+      expandKey = "";
+    };
     let scrollFrame = 0;
     let x = event.clientX;
     let y = event.clientY;
-    const dragElement = event.currentTarget as HTMLElement;
+    const dragElement = sourceNodeEl;
     const pointerId = event.pointerId;
     const startX = event.clientX;
     const startY = event.clientY;
@@ -1418,6 +1370,7 @@ export default function PlanningView(props: {
       ? bindHeldTouchScroll(dragElement, () => holdReady && !holdCancelled)
       : undefined;
     const cleanup = () => {
+      clearExpand();
       if (releaseDragRef.current === cleanup) releaseDragRef.current = null;
       releaseHeldTouch?.();
       window.removeEventListener("pointermove", move);
@@ -1443,30 +1396,24 @@ export default function PlanningView(props: {
       const node = hit.closest<HTMLElement>("[data-node-type][data-node-id]");
       const empty = hit.closest<HTMLElement>("[data-empty-project-drop]");
       if (!node) {
-        if (sourceNode.kind === "task" && empty) {
-          return { kind: "project", id: empty.dataset.emptyProjectDrop!, position: "inside", element: empty };
+        if (sourceNode.kind !== "project" && empty) {
+          const target: TreeDropTarget = { kind: "project", id: empty.dataset.emptyProjectDrop!, position: "inside", element: empty };
+          return canMoveTreeNode(props.data, sourceNode, target) ? target : undefined;
         }
         return;
       }
       const kind = node.dataset.nodeType as TreeNodeKind;
       const id = node.dataset.nodeId!;
-      if (kind === sourceNode.kind && id === sourceNode.id) return;
-      const rect = node.getBoundingClientRect();
-      const ratio = (y - rect.top) / Math.max(rect.height, 1);
-      const relative = ratio < 0.5 ? "before" : "after";
-      if (sourceNode.kind === "project") {
-        const branch = node.closest<HTMLElement>("[data-project-id]");
-        if (kind === "project" && id !== "__unassigned__" && branch) {
-          return { kind, id, position: relative, element: branch };
-        }
-      } else if (sourceNode.kind === "task") {
-        if (kind !== "subtask") return { kind, id, position: kind === "project" ? "inside" : relative, element: node };
-      } else if (kind !== "project" && !findSubtaskInTree(subtask?.subtasks || [], id)) {
-        const position = kind === "task" ? "inside" : ratio < 0.28 ? "before" : ratio > 0.72 ? "after" : "inside";
-        const element = position === "inside" ? node
-          : node.closest<HTMLElement>(".df-candidate-subtask-item") || node;
-        return { kind, id, position, element };
-      }
+      const row = kind === "task" ? node.querySelector<HTMLElement>(".df-task-node-inner > .df-task-block-row") || node : node;
+      const rect = row.getBoundingClientRect();
+      const position = sourceNode.kind !== "project" && kind === "task" && y > rect.bottom + 4
+        ? "inside" : treeDropPosition(sourceNode.kind, kind, y - rect.top, rect.height);
+      if (!position) return;
+      const element = sourceNode.kind === "project" ? node.closest<HTMLElement>("[data-project-id]") || node
+        : position !== "inside" && kind === "subtask" ? node.closest<HTMLElement>(".df-candidate-subtask-item") || node
+        : position !== "inside" && kind === "task" ? node : row;
+      const target: TreeDropTarget = { kind, id, position, element };
+      return canMoveTreeNode(props.data, sourceNode, target) ? target : undefined;
     };
 
     const updateDropTarget = () => {
@@ -1474,6 +1421,23 @@ export default function PlanningView(props: {
       if (marker !== drop?.element) marker?.removeAttribute("data-planning-drop");
       marker = drop?.element;
       if (drop) drop.element.dataset.planningDrop = drop.position;
+      const key = drop?.position === "inside" ? drop.kind + ":" + drop.id : "";
+      if (key !== expandKey) {
+        clearExpand();
+        if (drop && key) {
+          expandKey = key;
+          expandTimer = window.setTimeout(() => {
+            if (drop.kind === "project") {
+              const id = drop.id === "__unassigned__" ? "unassigned" : drop.id;
+              props.setCollapsed(current => current[id] ? { ...current, [id]: false } : current);
+            } else if (drop.kind === "task") {
+              setCollapsedSubtasks(current => current[drop.id] ? { ...current, [drop.id]: false } : current);
+            } else {
+              drop.element.querySelector<HTMLButtonElement>(".df-candidate-subtask-toggle[aria-expanded='false']")?.click();
+            }
+          }, 550);
+        }
+      }
       if (task) props.onTimelineDrag?.(task, { x, y }, subtaskId);
     };
     const scrollAtEdge = () => {
@@ -1551,13 +1515,13 @@ export default function PlanningView(props: {
         y = pointerEvent.clientY;
         if (!task || !props.onTimelineDrop?.(task, { x, y }, subtaskId)) {
           const drop = getDropTarget();
-          if (drop) void handleTreeDrop(sourceNode, drop);
+          if (drop) props.onTreeMove(sourceNode, { kind: drop.kind, id: drop.id, position: drop.position });
         }
       }
       cleanup();
     };
 
-    const cancel = () => cleanup();
+    const cancel = () => { if (active) suppressPostDragClick(); cleanup(); };
     const keydown = (kb: KeyboardEvent) => { if (kb.key === "Escape") cancel(); };
 
     releaseDragRef.current?.();
@@ -1566,7 +1530,7 @@ export default function PlanningView(props: {
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
-  }, [props.compact, props.onTimelineDrag, props.onTimelineDrop, handleTreeDrop, safeProjects, safeTasks, subtaskOwner, suppressPostDragClick, taskFromSubtask]);
+  }, [props.compact, props.onTimelineDrag, props.onTimelineDrop, props.data, props.onTreeMove, props.setCollapsed, safeProjects, safeTasks, subtaskOwner, suppressPostDragClick, taskFromSubtask]);
 
   const hasActiveFilters = includeCompleted || filterProjects.length > 0 || filterWorkflows.length > 0 || filterImportances.length > 0 || filterUrgencies.length > 0 || !!filterDueDate || !!filterScheduled;
 

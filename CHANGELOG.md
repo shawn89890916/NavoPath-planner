@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 102
+
+#### 改进
+
+- Tree 视图支持拖拽调整任务层级与顺序、跨父任务移动、解除子任务归属和撤销；使用稳定的插入指示与悬停展开，并保护关联排程数据。
+
 ### 1.7.0 Beta 101
 
 #### 改进
@@ -1131,6 +1137,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 102
+
+#### Improved
+
+- Tree supports dragging to reorder, nest, move between parents, detach and undo; stable drop indicators and hover expansion protect layout, and linked execution data is safeguarded.
 
 ### 1.7.0 Beta 101
 

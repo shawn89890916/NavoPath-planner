@@ -32,6 +32,8 @@ export interface Project {
 }
 
 export interface Subtask {
+  /** Original independent task fields retained when nested through Tree. */
+  treeTaskSnapshot?: Omit<Task, "subtasks">;
   id: string;
   title: string;
   completed: boolean;

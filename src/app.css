@@ -15790,7 +15790,8 @@ body.df-unified-dragging .df-unified-drag-overlay {
 }
 [data-planning-drop="before"]::after { top: -3px; z-index: 2; }
 [data-planning-drop="after"]::after { top: auto; bottom: -3px; z-index: 2; }
-[data-planning-drop="inside"] { outline: 1px solid var(--accent-active); outline-offset: -1px; }
+[data-planning-drop="inside"] { outline: 1px solid var(--accent-active); outline-offset: -1px; box-shadow: inset 3px 0 var(--accent-active); }
+.df-tree [data-planning-drop="inside"]::after { content: ""; position: absolute; inset-inline: 22px 0; bottom: 0; height: 2px; background: var(--accent-active); pointer-events: none; }
 .df-project-tasks[data-empty-project-drop] { min-height: 24px; }
 
 /* A source never competes with the dragged overlay. Keep timeline geometry
