@@ -9,7 +9,9 @@ export function observedScheduleMinutes(v?:AnalyticsSnapshot):number|null{
   if(!validDate(v.scheduledEndDate)&&v.scheduledEnd<=v.scheduledStart){const d=new Date(v.scheduledDate+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+1);end=d.toISOString().slice(0,10);}
   const n=calendarDateTimeSpanMinutes(v.scheduledDate,v.scheduledStart,end,v.scheduledEnd);return Number.isFinite(n)&&n>0?n:null;
 }
-export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerData,range:{start:Date;end:Date}){
+export function createObservedPlanAccumulator(data:PlannerData,range:{start:Date;end:Date},projectIds:string[]=[]){
+  const projects=new Set(projectIds);
+  let eventCount=0;
   type Group={first:AnalyticsEvent;last:AnalyticsEvent;observed:boolean;uncertain:boolean};
   const groups=new Map<string,Group>(),moves=new Set<string>(),resizes=new Set<string>();
   const recordKey=(taskId:string|undefined,recordId:string)=>JSON.stringify([taskId||"",recordId]);
@@ -31,8 +33,8 @@ export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerDat
     if(t.timelineRecords?.length===1)singleExecutionTasks.add(t.id);
     for(const r of t.timelineRecords||[])if(r.executionStatus==="completed")completedRecords.add(recordKey(t.id,r.id));
   }
-  const collect=(e:AnalyticsEvent)=>{
-    const key=recordKey(e.taskId,e.entityId),existing=groups.get(key),uncertain=isUncertain(e);
+  const collect=(e:AnalyticsEvent,selected=true)=>{
+    const key=recordKey(e.taskId,e.entityId),existing=groups.get(key),uncertain=isUncertain(e)||!selected;
     if(existing){
       if(e.occurredAt<existing.first.occurredAt)existing.first=e;
       if(e.occurredAt>=existing.last.occurredAt)existing.last=e;
@@ -42,19 +44,22 @@ export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerDat
     return key;
   };
   let moveCount=0,resizeCount=0,created=0,removed=0,taskCompleted=0,taskReopened=0;
-  for(const e of events){
-    if(isUncertain(e)){if(e.entityType==="execution")collect(e);continue;}
+  function add(e:AnalyticsEvent){
+    const selected=!projects.size||projects.has(e.projectId||"__unassigned__");
+    if(selected)eventCount++;
+    if(!selected||isUncertain(e)){if(e.entityType==="execution"){collect(e,selected);}return;}
     if(e.entityType==="task"&&e.action==="changed"){if(e.before?.completed===false&&e.after?.completed===true)taskCompleted++;if(e.before?.completed===true&&e.after?.completed===false)taskReopened++;}
-    if(e.entityType!=="execution")continue;
+    if(e.entityType!=="execution")return;
     const key=collect(e);
     if(e.action==="created")created++;if(e.action==="removed")removed++;
-    if(e.action!=="changed"||!e.before||!e.after)continue;
+    if(e.action!=="changed"||!e.before||!e.after)return;
     if(e.before.scheduledDate!==e.after.scheduledDate||e.before.scheduledStart!==e.after.scheduledStart){moves.add(key);moveCount++;}
     if(e.before.scheduledDate!==e.after.scheduledDate||e.before.scheduledStart!==e.after.scheduledStart||e.before.scheduledEndDate!==e.after.scheduledEndDate||e.before.scheduledEnd!==e.after.scheduledEnd){
       const before=duration(e.before),after=duration(e.after);
       if(before!==null&&after!==null&&before!==after){resizes.add(key);resizeCount++;}
     }
   }
+  function finish(){
   const comparisons:{taskId:string;recordId:string;initial:number;tracked:number;estimate:number|null}[]=[];
   const trackedByRecord=new Map<string,number>();
   for(const entry of data.timeEntries||[]){
@@ -70,5 +75,13 @@ export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerDat
     const estimate=singleExecutionTasks.has(first.taskId)&&typeof first.estimateMinutes==="number"&&first.estimateMinutes>0?first.estimateMinutes:null;
     comparisons.push({taskId:first.taskId,recordId:first.entityId,initial,tracked,estimate});
   }
-  return {observedExecutions:[...groups.values()].filter(g=>g.observed).length,created,removed,movedExecutions:moves.size,resizedExecutions:resizes.size,moveCount,resizeCount,taskCompleted,taskReopened,comparisons};
+  return {eventCount,observedExecutions:[...groups.values()].filter(g=>g.observed).length,created,removed,movedExecutions:moves.size,resizedExecutions:resizes.size,moveCount,resizeCount,taskCompleted,taskReopened,comparisons};
+  }
+  return {add,finish};
+}
+export type ObservedPlanHistory=ReturnType<ReturnType<typeof createObservedPlanAccumulator>["finish"]>;
+export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerData,range:{start:Date;end:Date}){
+  const accumulator=createObservedPlanAccumulator(data,range);
+  for(const e of events)accumulator.add(e);
+  return accumulator.finish();
 }
