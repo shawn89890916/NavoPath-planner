@@ -46,7 +46,7 @@ function withoutInbox(snapshot: SyncSnapshot): SyncSnapshot {
   const inbox = snapshot.projects.find(item => item.id === SP_INBOX);
   const uniqueInboxTitle = inbox && !snapshot.projects.some(item => item.id !== SP_INBOX && item.fields.title === inbox.fields.title);
   return { ...snapshot, projects: snapshot.projects.filter(item => item.id !== SP_INBOX), tasks: snapshot.tasks.map(item =>
-    item.projectId === SP_INBOX || (!item.projectId && uniqueInboxTitle && item.fields.projectTitle === inbox.fields.title)
+    item.projectId === SP_INBOX || (!item.projectId && inbox && uniqueInboxTitle && item.fields.projectTitle === inbox.fields.title)
       ? { ...item, fields: { ...item.fields, projectTitle: "" } } : item) };
 }
 function repairReservedInbox(state: SyncState) {
@@ -211,6 +211,11 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
       }
       for (const field of new Set([...Object.keys(old?.fields || {}), ...Object.keys(item.fields)])) {
         if (side === "superproductivity" && field === "scheduleBlocks") continue;
+        // A timed SP task cannot express an independent NavoPath due date.
+        if (side === "superproductivity" && field === "dueDate" && item.fields.scheduledAt) {
+          if (state.pending[syncId]?.dueDate === side) delete state.pending[syncId].dueDate;
+          continue;
+        }
         const changed = JSON.stringify(old?.fields[field]) !== JSON.stringify(item.fields[field]);
         const pendingTo = state.pending[syncId]?.[field];
         if (pendingTo === side && projectedEqual(side, canonical.fields, field, item.fields[field])) { delete state.pending[syncId][field]; continue; }
