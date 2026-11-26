@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 119
+
+#### 改进
+
+- Metrics 投入度新增按日、钟表时段、执行时长与项目的评分和覆盖分析；项目页支持切换比较指标、分页、选择项目查看每日活动并下钻日期。缺失评分或计时仍显示为未知，所有汇总使用原始时长。
+
 ### 1.7.0 Beta 118
 
 #### 改进
@@ -1241,6 +1247,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 119
+
+#### Improvements
+
+- Metrics engagement adds daily, clock-period, execution-duration and project rating/coverage breakdowns; project comparisons support metric selection, pagination, daily activity and date drilldown. Missing ratings or tracking remain unknown; summaries use raw duration.
 
 ### 1.7.0 Beta 118
 
