@@ -18,8 +18,8 @@ export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,nex
   if(previous===next)return;
   dispatch(scope,(m,g)=>m.recordLocalAnalyticsChange(scope,previous,next,at,source,operationId,g));
 }
-export function recordTimerTransition(scope:string,taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,projectId?:string){
-  dispatch(scope,(m,g)=>m.recordTimerTransition(scope,taskId,transition,at,elapsedSeconds,projectId,g));
+export function recordTimerTransition(scope:string,taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,projectId?:string,timelineRecordId?:string){
+  dispatch(scope,(m,g)=>m.recordTimerTransition(scope,taskId,transition,at,elapsedSeconds,projectId,g,timelineRecordId));
 }
 export function recoverAnalytics(scope:string){dispatch(scope,m=>m.recoverAnalytics(scope),true);}
 
