@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 120
+
+#### 改进
+
+- Metrics 执行页增加每日首次观察计划的同日保留、离开当前范围及明确原待办完成情况，补充首次与末次观察排程变化、改期和时长调整覆盖及关联计时偏差；未观察到的历史不补造。
+
 ### 1.7.0 Beta 119
 
 #### 改进
@@ -1247,6 +1253,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 120
+
+#### Improvements
+
+- Metrics execution adds same-day retention, absence from current scope and explicitly observed initial-pending completion for daily plan snapshots, first/last observed duration changes, observed move/resize coverage and linked tracking error. Unobserved history is never reconstructed.
 
 ### 1.7.0 Beta 119
 

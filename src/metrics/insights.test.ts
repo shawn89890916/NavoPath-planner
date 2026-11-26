@@ -115,6 +115,25 @@ describe("large observed history and conservative provenance",()=>{
   for(const e of [{...event("t","r",0),projectId:"p"},{...event("t","r",1),projectId:"other"},{...event("t","r",2),projectId:"p"}])acc.add(e);
   expect(acc.finish()).toMatchObject({eventCount:2,created:1,moveCount:0,observedExecutions:1,comparisons:[]});
  });
+ it("compares first and last observed schedule lengths without requiring tracked time",()=>{
+  const d={...data,tasks:[completedTask("t","r")]};
+  const final={...done,scheduledEnd:"11:30"};
+  const events=[event("t","r",0),{...event("t","r",1),after:final},{...event("t","r",2),after:final}];
+  const r=buildObservedPlanHistory(events,d,range);
+  expect(r).toMatchObject({completedPlanSamples:1,planLengthened:1,planChangeMinutes:30,eligibleObserved:1,eligibleMoved:1,eligibleResized:1,comparisons:[]});
+  const tracked=buildObservedPlanHistory(events,{...d,timeEntries:[timeEntry("t","r")]},range);
+  expect(tracked.comparisons).toMatchObject([{initial:60,final:90,tracked:50,estimate:45}]);
+  const accuracy=accuracySummary(tracked.comparisons);
+  expect(accuracy.schedule.bias).toBe(-10);expect(accuracy.final.bias).toBe(-40);
+ });
+ it("leaves ambiguous equal-time creation or completion endpoints out of comparisons",()=>{
+  const d={...data,tasks:[completedTask("t","r")],timeEntries:[timeEntry("t","r")]};
+  const es=[event("t","r",0),event("t","r",2),{...event("t","r",2),id:"ambiguous",after:{...done,scheduledEnd:"12:00"}}];
+  for(const rows of [es,[...es].reverse()]){
+    const r=buildObservedPlanHistory(rows,d,range);
+    expect(r.completedPlanSamples).toBe(0);expect(r.comparisons).toEqual([]);
+  }
+ });
  it("aggregates 100,000 events against 25,000 independent completed records",()=>{
   const tasks:Task[]=[],events:import("./activityEvents").AnalyticsEvent[]=[],timeEntries:ReturnType<typeof timeEntry>[]=[];
   for(let i=0;i<25000;i++){
@@ -169,5 +188,30 @@ describe("engagement and project breakdowns",()=>{
    const rows=projectActivityTrend(a,r.trackedEntries,"p",240);
    expect(rows.map(x=>[x.date,x.scheduled,x.completed,x.tracked])).toEqual([["2026-11-25",60,60,45],["2026-11-26",60,60,45]]);
    expect(projectActivityTrend(a,r.trackedEntries,"other",240)).toEqual([]);
+ });
+});
+
+
+describe("daily snapshot retention and current pending completion",()=>{
+ const opts={projects:["p"],habit:"include" as const,completion:"all" as const};
+ const at=new Date(2026,10,26,8);
+ const d={...data,tasks:[{...task,projectId:"p",timelineRecords:[
+   {...task.timelineRecords![0],id:"r"},
+   {...task.timelineRecords![0],id:"gone",scheduledStart:"11:00",scheduledEnd:"12:00"},
+ ]},{...task,id:"other",projectId:"q",timelineRecords:[{...task.timelineRecords![0],id:"q",taskId:"other",scheduledStart:"13:00",scheduledEnd:"14:00"}]}]};
+ it("reconciles retained, added and newly in-scope raw time without treating absent as cancelled",()=>{
+  const plan=buildPlanBaseline(d,at,"00:00");
+  const next={...d,tasks:[{...d.tasks[0],timelineRecords:[{...d.tasks[0].timelineRecords![0],scheduledEnd:"10:30",executionStatus:"completed" as const,engagement:50},{...task.timelineRecords![0],id:"new",scheduledStart:"15:00",scheduledEnd:"15:30"}]},{...d.tasks[1],projectId:"p"}]};
+  const a=buildTimeAllocationMetrics({data:next,range:{preset:"today",anchorDate:"2026-11-26"},engagementEnabled:true});
+  const r=comparePlanBaseline(plan,a.taskEntries,opts);
+  expect(r).toMatchObject({baselineMinutes:120,currentMinutes:180,retainedMinutes:90,addedMinutes:30,enteredScopeMinutes:60,baselineExecutions:2,absentExecutions:1,pendingExecutions:2,completedPending:1});
+  expect(r.currentMinutes).toBe(r.retainedMinutes+r.addedMinutes+r.enteredScopeMinutes);
+  expect(comparePlanBaseline({...plan,rows:plan.rows.map(({projected,...r})=>r)},a.taskEntries,opts).pendingExecutions).toBeNull();
+  expect(comparePlanBaseline(plan,a.taskEntries,{...opts,completion:"completed"}).pendingExecutions).toBeNull();
+ });
+ it("does not count a projected recurring instance as an explicitly existing pending execution",()=>{
+  const plan=buildPlanBaseline(d,at,"00:00");
+  const r=comparePlanBaseline({...plan,rows:plan.rows.map(x=>({...x,projected:true}))},[],opts);
+  expect(r.pendingExecutions).toBe(0);expect(r.completedPending).toBe(0);
  });
 });
