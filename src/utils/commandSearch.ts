@@ -1,5 +1,5 @@
 import type { PlannerData, Settings } from "../types";
-import { SETTINGS_SEARCH_ENTRIES, settingsSearchPath } from "../settingsNavigation";
+import { SETTINGS_SEARCH_ENTRIES, settingsSearchPath, type SettingsTarget } from "../settingsNavigation";
 import { focusTargetForRecord, type TimelineFocusTarget } from "./timelineRecords";
 
 export type CommandKind = "task" | "project" | "note" | "habit" | "setting";
@@ -13,6 +13,7 @@ export type CommandSearchResult = {
   text: string;
   actions: CommandAction[];
   focusTarget?: TimelineFocusTarget;
+  settingsTarget?: SettingsTarget;
 };
 
 export function buildCommandSearchIndex(data: PlannerData, settings: Settings): CommandSearchResult[] {
@@ -51,6 +52,7 @@ export function buildCommandSearchIndex(data: PlannerData, settings: Settings): 
     kind: "setting",
     title: language === "zh" ? item.labelZh : item.labelEn,
     subtitle: settingsSearchPath(item, language),
+    settingsTarget: item.target,
     text: [item.labelZh, item.labelEn, item.descriptionZh, item.descriptionEn, item.keywords].filter(Boolean).join(" ").toLowerCase(),
     actions: ["open"],
   }));
