@@ -26,7 +26,7 @@ import { extensionService } from "./extensions/service";
 import { ExtensionMount } from "./extensions/ExtensionMount";
 import type { ExtensionContribution, NativePlanningViewMode } from "./extensions/types";
 import { CandidateSubtaskItem } from "./WorkspacePresentation";
-import { MetricsInsights } from "./metrics/MetricsInsights";
+const MetricsInsights = React.lazy(() => import("./metrics/MetricsInsights").then(module => ({ default: module.MetricsInsights })));
 
 type TreeNodeKind = "project" | "task" | "subtask";
 type TreeDragNode = { kind: TreeNodeKind; id: string };
@@ -2640,6 +2640,7 @@ export default function PlanningView(props: {
                 </div>
               )}
 
+              <React.Suspense fallback={<div className="df-metrics-empty" role="status">{props.lang === "zh" ? "正在加载指标…" : "Loading metrics…"}</div>}>
               <MetricsInsights key={props.analyticsScope || "demo"} scope={props.analyticsScope} data={props.data} allocation={metricsResult} dayStartMinutes={dayStartMinutes} projectIds={metricsProjectFilter} habitMode={metricsHabitMode} completion={metricsCompletion} lang={props.lang}>
               {metricsResult.taskEntries.length === 0 ? (
                 <div className="df-metrics-empty">
@@ -2787,6 +2788,7 @@ export default function PlanningView(props: {
                 </>
               )}
               </MetricsInsights>
+              </React.Suspense>
             </section>
           )}
 
