@@ -89,11 +89,13 @@ describe("official plugin update recovery", () => {
 });
 
 describe("batch extension updates", () => {
+  afterEach(async () => { await current.configure(null); for (const [key] of await cacheEntries("account:batch-update-test:")) await cacheDelete(key); });
   it("serializes updates, continues after a failed package and retries only failures", async () => {
     const ids = ["weather", "metrics", "kanban"];
     const entries = ids.map(id => getBundledExtension(id)!);
-    const f = fixture("preview", { ...defaultExtensionPreferences(), installed: Object.fromEntries(entries.map(entry => [`official:${entry.manifest.id}`, { ...entry, key: `official:${entry.manifest.id}`, manifest: { ...entry.manifest, version: "0.0.1" }, enabled: false, installedAt: "2026-11-24T00:00:00Z" }])) });
+    const f = fixture("batch-update-test", { ...defaultExtensionPreferences(), installed: Object.fromEntries(entries.map(entry => [`official:${entry.manifest.id}`, { ...entry, key: `official:${entry.manifest.id}`, manifest: { ...entry.manifest, version: "0.0.1" }, enabled: false, installedAt: "2026-11-24T00:00:00Z" }])) });
     await current.configure(f.host);
+    const before = Object.fromEntries(ids.map(id => [id, current.getSnapshot().preferences.installed[`official:${id}`].enabled]));
     const updatedEntries = await Promise.all(entries.map(async entry => {
       const pkg = JSON.parse(readFileSync(new URL(entry.manifest.id + ".navopackage.json", bundledDirectory), "utf8"));
       pkg.manifest.version = "9.0.0";
@@ -117,7 +119,7 @@ describe("batch extension updates", () => {
     await current.updateAll("plugin", true);
     expect(current.getSnapshot().updateBatch).toMatchObject({ total: 1, updated: 1, failures: [], running: false });
     expect(current.getSnapshot().updates).toEqual({});
-    expect(Object.values(current.getSnapshot().preferences.installed).every(item => item.enabled === false)).toBe(true);
+    expect(Object.fromEntries(ids.map(id => [id, current.getSnapshot().preferences.installed[`official:${id}`].enabled]))).toEqual(before);
   });
 });
 
