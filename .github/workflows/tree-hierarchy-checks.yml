@@ -1,0 +1,30 @@
+name: Tree hierarchy checks
+
+on:
+  pull_request:
+    paths:
+      - 'src/PlanningView.tsx'
+      - 'src/utils/treeOrder.ts'
+      - 'src/utils/treeHierarchy.test.ts'
+      - 'src/main.tsx'
+      - 'src/types.ts'
+      - 'src/app.css'
+      - '.github/workflows/tree-hierarchy-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run src/utils/treeHierarchy.test.ts src/utils/treeOrder.test.ts src/utils/taskUndo.test.ts
+      - run: npm run css:check
+      - run: npm run build
