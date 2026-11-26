@@ -3,9 +3,9 @@ import type { PlannerData, Language } from "../types";
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricHabitMode, type MetricCompletionFilter } from "./timeAllocation";
 const MetricsAllocation=React.lazy(()=>import("./MetricsAllocation"));
 import { buildInsights } from "./insightFacts";
-import { analyticsError, analyticsPreference, clearAnalytics, readAnalyticsEvents, recoverAnalytics, captureDailyPlan, readDailyPlans, setAnalyticsEnabled, subscribeAnalytics } from "./activityStore";
+import { analyticsError, analyticsPreference, clearAnalytics, readAnalyticsEvents, scanAnalyticsEvents, type AnalyticsPageCursor, recoverAnalytics, captureDailyPlan, readDailyPlans, setAnalyticsEnabled, subscribeAnalytics } from "./activityStore";
 import type { AnalyticsEvent } from "./activityEvents";
-import { buildObservedPlanHistory } from "./historyAnalysis";
+import { createObservedPlanAccumulator, type ObservedPlanHistory } from "./historyAnalysis";
 import { accuracySummary } from "./reviewMetrics";
 const MetricsReview=React.lazy(()=>import("./MetricsReview"));
 const MetricsTimeSeries=React.lazy(()=>import("./MetricsTimeSeries"));
@@ -35,31 +35,54 @@ export function MetricsInsights(props:Props) {
   const [saveViewError,setSaveViewError]=useState(false);
   const [events,setEvents]=useState<AnalyticsEvent[]>([]);
   const [plans,setPlans]=useState<PlanBaseline[]>([]);
-  const [historyState,setHistoryState]=useState<"loading"|"ready"|"error">("loading");
+  const [loaded,setLoaded]=useState<{key:string;state:"ready"|"error"}|null>(null);
+  const [observed,setObserved]=useState<ObservedPlanHistory|null>(null);
   const [revision,setRevision]=useState(0);
   const [confirmClear,setConfirmClear]=useState(false);
   const [historySource,setHistorySource]=useState("");
   const [historyEntity,setHistoryEntity]=useState("");
-  const [historyLimit,setHistoryLimit]=useState(50);
+  const historyLimit=50;
+  const [historyPage,setHistoryPage]=useState<{key:string;trail:(AnalyticsPageCursor|null)[]}>({key:"",trail:[null]});
+  const [detailPage,setDetailPage]=useState(0);
   const [error,setError]=useState(false);
   const t=(zh:string,en:string)=>p.lang==="zh"?zh:en;
   const preference=p.scope?analyticsPreference(p.scope):null;
   const result=useMemo(()=>buildInsights(p.data,p.allocation,p),[p.data,p.allocation,p.dayStartMinutes,p.projectIds,p.habitMode,p.completion]);
   const start=p.allocation.range.start.getTime(),end=p.allocation.range.end.getTime();
   const historyStart=p.query.range==="all"?Date.parse("2000-01-01T00:00:00Z"):start,historyEnd=p.query.range==="all"?Date.parse("2100-01-01T00:00:00Z"):end;
+  const pageKey=JSON.stringify([p.scope,historyStart,historyEnd,p.projectIds,historySource,historyEntity]);
+  const trail=historyPage.key===pageKey?historyPage.trail:[null];
+  const before=trail[trail.length-1]||undefined;
+  const requestKey=JSON.stringify([view,pageKey,view==="history"?before:null,revision]);
+  const historyState=loaded?.key===requestKey?loaded.state:"loading";
   useEffect(()=>p.scope?subscribeAnalytics(p.scope,()=>setRevision(n=>n+1)):undefined,[p.scope]);
   useEffect(()=>{
     if((view!=="history"&&view!=="execution")||!p.scope)return;
-    let live=true;setHistoryState("loading");
-    Promise.all([readAnalyticsEvents(p.scope,new Date(historyStart),new Date(historyEnd),view==="history"?historyLimit+1:501,p.projectIds,view==="history"?{source:historySource,entity:historyEntity}:undefined),readDailyPlans(p.scope,new Date(historyStart),new Date(historyEnd))]).then(([rows,baselines])=>{if(live){setEvents(rows);setPlans(baselines);setHistoryState("ready");}},()=>{if(live){setEvents([]);setPlans([]);setHistoryState("error");}});
-    return()=>{live=false;};
-  },[view,p.scope,historyStart,historyEnd,revision,p.projectIds,historySource,historyEntity,historyLimit]);
-  useEffect(()=>setHistoryLimit(50),[historySource,historyEntity,start,end,p.projectIds]);
+    setLoaded(null);
+    const controller=new AbortController(),scope=p.scope;
+    const range={start:new Date(historyStart),end:new Date(historyEnd)};
+    async function load(){
+      if(view==="history"){
+        const rows=await readAnalyticsEvents(scope,range.start,range.end,historyLimit+1,p.projectIds,{source:historySource,entity:historyEntity},{before,signal:controller.signal});
+        if(!controller.signal.aborted)setEvents(rows);
+      }else{
+        const accumulator=createObservedPlanAccumulator(p.data,p.allocation.range,p.projectIds);
+        const [,baselines]=await Promise.all([scanAnalyticsEvents(scope,range.start,range.end,accumulator.add,{signal:controller.signal}),readDailyPlans(scope,range.start,range.end)]);
+        if(!controller.signal.aborted){setObserved(accumulator.finish());setPlans(baselines);setDetailPage(0);}
+      }
+      if(!controller.signal.aborted)setLoaded({key:requestKey,state:"ready"});
+    }
+    void load().catch(()=>{if(!controller.signal.aborted){setEvents([]);setPlans([]);setObserved(null);setLoaded({key:requestKey,state:"error"});}});
+    return()=>controller.abort();
+  },[requestKey,p.data,p.allocation.range]);
   const tabs: [View,string][]=[["overview",t("概览","Overview")],["allocation",t("分布","Allocation")],["time",t("时间","Time")],["execution",t("执行","Execution")],["engagement",t("投入度","Engagement")],["projects",t("项目","Projects")],["history",t("历史","History")]];
-  const historyRows=events.slice(0,view==="history"?historyLimit:500);
-  const observed=useMemo(()=>buildObservedPlanHistory(historyRows,p.data,p.allocation.range),[events,p.data,p.allocation.range]);
-  const comparisonScale=Math.max(1,...observed.comparisons.flatMap(x=>[x.initial,x.tracked]));
-  const accuracy=accuracySummary(observed.comparisons);
+  const historyRows=historyState==="ready"&&view==="history"?events.slice(0,historyLimit):[];
+  const comparisons=historyState==="ready"&&view==="execution"?observed?.comparisons||[]:[];
+  const accuracy=useMemo(()=>accuracySummary(comparisons),[comparisons]);
+  const comparisonScale=useMemo(()=>comparisons.reduce((max,x)=>Math.max(max,x.initial,x.tracked),1),[comparisons]);
+  const scatter=useMemo(()=>comparisons.length<=500?comparisons:Array.from({length:500},(_,i)=>comparisons[Math.floor(i*comparisons.length/500)]),[comparisons]);
+  const taskTitles=useMemo(()=>new Map(p.data.tasks.map(x=>[x.id,x.title])),[p.data.tasks]);
+  const detailRows=comparisons.slice(detailPage*50,detailPage*50+50);
   function persistViews(next:SavedMetricsView[]){if(!p.scope)return;try{writeSavedViews(p.scope,next);setSavedViews(next);setSaveViewError(false);}catch{setSaveViewError(true);}}
   function applySaved(saved:SavedMetricsView){setSelectedSaved(saved.id);setView(saved.view);setTimeChart(saved.chart);setGrain(saved.grain||"day");setViewName(saved.name);p.onApplyQuery(saved.query);}
   function saveCurrent(){if(!p.scope||!viewName.trim()||savedViews.length>=50)return;const saved={id:crypto.randomUUID(),name:viewName.trim().slice(0,80),view,chart:timeChart,grain,query:p.query};persistViews([...savedViews,saved]);setSelectedSaved(saved.id);}
@@ -89,15 +112,16 @@ export function MetricsInsights(props:Props) {
         <p>{t("取消执行（单独计数）","Cancelled executions (separate count)")}: {result.statuses.cancelled}. {t("取消不进入完成比例分母。","Cancelled records are excluded from the completion-share denominator.")}</p>
       <h3>{t("每日首次观察计划","First observed daily plan")}</h3>
       <p>{t("只保存启用记录后每日第一次观察到的计划；捕获时间晚于日界线时不代表原始计划。未捕获日期不补造。","Only the first observed plan each day after opt-in is saved. A late capture is not an original day-start plan; missing days are not reconstructed.")}</p>
-      {plans.length?<div className="df-metric-insight-table"><table><thead><tr><th>{t("日期 / 捕获时间","Date / captured")}</th><th>{t("首次观察","First observed")}</th><th>{t("当前计划","Current plan")}</th><th>{t("后来新增","Added later")}</th></tr></thead><tbody>{plans.map(plan=>{const d=comparePlanBaseline(plan,p.allocation.taskEntries,p.query);return <tr key={plan.id}><td title={plan.timezone}>{plan.date} · {new Date(plan.capturedAt).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</td><td>{minutes(d.baselineMinutes)}</td><td>{minutes(d.currentMinutes)}</td><td>{minutes(d.addedMinutes)}</td></tr>;})}</tbody></table></div>:<p>{t("暂无已捕获快照","No captured snapshots")}</p>}
+      {historyState==="ready"&&plans.length?<div className="df-metric-insight-table"><table><thead><tr><th>{t("日期 / 捕获时间","Date / captured")}</th><th>{t("首次观察","First observed")}</th><th>{t("当前计划","Current plan")}</th><th>{t("后来新增","Added later")}</th></tr></thead><tbody>{plans.map(plan=>{const d=comparePlanBaseline(plan,p.allocation.taskEntries,p.query);return <tr key={plan.id}><td title={plan.timezone}>{plan.date} · {new Date(plan.capturedAt).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</td><td>{minutes(d.baselineMinutes)}</td><td>{minutes(d.currentMinutes)}</td><td>{minutes(d.addedMinutes)}</td></tr>;})}</tbody></table></div>:<p>{t("暂无已捕获快照","No captured snapshots")}</p>}
+      {historyState==="ready"&&plans.length===366&&<p>{t("最多显示最近 366 个每日快照。","Showing up to the latest 366 daily snapshots.")}</p>}
       <h3>{t("已观察到的计划变更","Observed plan changes")}</h3>
-      {(!p.scope||historyState!=="ready"||!historyRows.length)?<p>{historyState==="loading"&&p.scope?t("读取历史中…","Loading history…"):t("暂无可验证的本机历史，请在历史视图启用详细记录。","No verified local history; enable detailed recording in History.")}</p>:<>
-        <div className="df-metric-insight-stats">{stat(t("改期次数","Observed moves"),String(observed.moveCount))}{stat(t("时长调整次数","Observed resizes"),String(observed.resizeCount))}{stat(t("被移除的执行","Removed executions"),String(observed.removed))}</div>
-        <p>{t("按本机操作日期统计，排除撤销及远端观察，最多 500 条；不能代表完整改期率。","By local change date, excluding undo and remote observations (up to 500); not a complete reschedule rate.")}</p>
+      {(!p.scope||historyState!=="ready"||!observed?.eventCount)?<p>{historyState==="loading"&&p.scope?t("读取历史中…","Loading history…"):historyState==="error"?t("历史读取失败，请重试。","History could not be read; retry."):t("暂无可验证的本机历史，请在历史视图启用详细记录。","No verified local history; enable detailed recording in History.")}</p>:<>
+        <div className="df-metric-insight-stats">{stat(t("改期次数","Observed moves"),String(observed!.moveCount))}{stat(t("时长调整次数","Observed resizes"),String(observed!.resizeCount))}{stat(t("被移除的执行","Removed executions"),String(observed!.removed))}</div>
+        <p>{t("按所选范围内全部已记录事件统计，排除撤销和远端或同步观察；未记录时段不补造。","All recorded events in the selected range, excluding undo and remote or sync observations; unrecorded periods are not reconstructed.")}</p>
         <h3>{t("首次观察排程与实际计时","First observed schedule vs tracked time")}</h3>
         {accuracy.schedule.count>0&&<div className="df-metric-insight-table"><table><thead><tr><th>{t("对比基准","Reference")}</th><th>{t("样本","Samples")}</th><th>{t("平均偏差","Mean bias")}</th><th>{t("平均绝对误差","Mean absolute error")}</th></tr></thead><tbody>{([[t("首次排程","First schedule"),accuracy.schedule],[t("任务估时","Task estimate"),accuracy.estimate]] as const).map(([label,a])=><tr key={label}><td>{label}</td><td>{a.count}</td><td>{a.bias===null?"—":(a.bias>0?"+":"")+Math.round(a.bias)+" min"}</td><td>{a.mae===null?"—":Math.round(a.mae)+" min"}</td></tr>)}</tbody></table><p>{t("偏差 = 实际 − 基准。任务估时只对当前仅有一条独立排程且有完整观察证据的任务计算；排除撤销和远端不确定变化。","Bias = tracked − reference. Task estimates require one current execution and observed evidence; undo and uncertain remote changes are excluded.")}</p></div>}
-        {observed.comparisons.length?<><p>{t("横轴：首次观察排程分钟；纵轴：已记录计时分钟。只包含记录到创建、完成且具有关联计时的执行。","X: first observed scheduled minutes; Y: tracked minutes. Requires observed creation, completion and linked time entries.")}</p><svg className="df-metric-insight-scatter" viewBox="0 0 300 220" role="img" aria-label={t("排程和计时时长散点图","Scheduled vs tracked time scatterplot")}><path d="M30 15V195H285" fill="none" stroke="currentColor" opacity=".45"/><path d="M30 195L285 15" fill="none" stroke="currentColor" strokeDasharray="4 4" opacity=".4"/>{observed.comparisons.map(x=><circle key={x.taskId+":"+x.recordId} cx={30+255*x.initial/comparisonScale} cy={195-180*x.tracked/comparisonScale} r="4" fill="var(--accent-active)"><title>{x.initial+" / "+x.tracked}</title></circle>)}</svg>
-        <div className="df-metric-insight-table"><table><thead><tr><th>{t("任务","Task")}</th><th>{t("首次排程","First plan")}</th><th>{t("原估时","Estimate")}</th><th>{t("计时","Tracked")}</th></tr></thead><tbody>{observed.comparisons.map(x=><tr key={x.taskId+":"+x.recordId}><td>{p.data.tasks.find(q=>q.id===x.taskId)?.title||x.taskId}</td><td>{minutes(x.initial)}</td><td>{x.estimate===null?"—":minutes(x.estimate)}</td><td>{minutes(x.tracked)}</td></tr>)}</tbody></table></div></>:<p>{t("尚无同时具备首次排程、完成与关联计时的记录。","No comparable observed records yet.")}</p>}
+        {comparisons.length?<><p>{t("横轴：首次观察排程分钟；纵轴：已记录计时分钟。只包含记录到创建、完成且具有关联计时的执行。","X: first observed scheduled minutes; Y: tracked minutes. Requires observed creation, completion and linked time entries.")}</p><svg className="df-metric-insight-scatter" viewBox="0 0 300 220" role="img" aria-label={t("排程和计时时长散点图","Scheduled vs tracked time scatterplot")}><path d="M30 15V195H285" fill="none" stroke="currentColor" opacity=".45"/><path d="M30 195L285 15" fill="none" stroke="currentColor" strokeDasharray="4 4" opacity=".4"/>{scatter.map(x=><circle key={JSON.stringify([x.taskId,x.recordId])} cx={30+255*x.initial/comparisonScale} cy={195-180*x.tracked/comparisonScale} r="4" fill="var(--accent-active)"><title>{x.initial+" / "+x.tracked}</title></circle>)}</svg>
+        <div className="df-metric-insight-table"><table><thead><tr><th>{t("任务","Task")}</th><th>{t("首次排程","First plan")}</th><th>{t("原估时","Estimate")}</th><th>{t("计时","Tracked")}</th></tr></thead><tbody>{detailRows.map(x=><tr key={JSON.stringify([x.taskId,x.recordId])}><td>{taskTitles.get(x.taskId)||x.taskId}</td><td>{minutes(x.initial)}</td><td>{x.estimate===null?"—":minutes(x.estimate)}</td><td>{minutes(x.tracked)}</td></tr>)}</tbody></table></div><p>{t("完整统计样本","Total comparison samples")}: {comparisons.length}{comparisons.length>500&&" · "+t("散点图抽样显示 500 个点","Scatter displays 500 sampled points")}</p><div className="df-metric-insight-actions">{action(t("上一页","Previous"),()=>setDetailPage(n=>Math.max(0,n-1)),detailPage===0)}<span>{detailPage+1} / {Math.max(1,Math.ceil(comparisons.length/50))}</span>{action(t("下一页","Next"),()=>setDetailPage(n=>n+1),(detailPage+1)*50>=comparisons.length)}</div></>:<p>{t("尚无同时具备首次排程、完成与关联计时的记录。","No comparable observed records yet.")}</p>}
       </>}</>}
       {view==="engagement"&&<><div className="df-metric-insight-stats">{stat(t("明确评分均值","Explicit weighted mean"),percent(result.explicitEngagement))}{stat(t("评分时长覆盖率","Rated time coverage"),percent(result.ratingCoverage))}{stat(t("明确评分加权时长","Explicit weighted time"),result.ratedMinutes?minutes(result.ratedWeighted):"—")}</div><p>{t("只计算已完成且明确评分的排程时长；默认 80% 不作为用户评分。","Uses completed scheduled intervals with explicit ratings only; default 80% is not a user rating.")}</p>{result.ratingCoverage!==null&&<progress max={100} value={result.ratingCoverage}/>}<h3>{t("明确评分分布","Explicit rating distribution")}</h3>{result.engagementBuckets.map(b=><div key={b.score} className="df-metric-insight-row"><span>{b.score}%</span><progress max={Math.max(1,...result.engagementBuckets.map(x=>x.minutes))} value={b.minutes}/><strong>{b.count}</strong></div>)}</>}
       {view==="projects"&&<><h3>{t("项目时间与执行","Project time and executions")}</h3><p>{t("按任务当前归属统计，已删除任务的存留计时使用记录中的归属；缺失计时显示 —。","Grouped by current project; surviving entries of deleted tasks use recorded attribution. Missing tracked time is shown as —.")}</p><div className="df-metric-insight-table"><table><thead><tr><th>{t("项目","Project")}</th><th>{t("排程","Scheduled")}</th><th>{t("完成","Completed")}</th><th>{t("计时","Tracked")}</th><th>{t("执行","Executions")}</th></tr></thead><tbody>{result.projects.map(pj=><tr key={pj.id}><td>{pj.id==="__unassigned__"?t("未归属","Unassigned"):pj.label}</td><td>{minutes(pj.scheduled)}</td><td>{minutes(pj.completed)}</td><td>{pj.trackedSessions?minutes(pj.tracked):"—"}</td><td>{pj.executions}</td></tr>)}</tbody></table></div></>}
@@ -105,10 +129,10 @@ export function MetricsInsights(props:Props) {
         {!p.scope?<p>{t("演示模式不记录活动。","Demo mode does not record activity.")}</p>:<>
           <p>{t("主动启用后记录本机任务、排程、计时及属性变化，包括部分撤销、插件、系统操作和秒表状态。远端变化只记录观察时间，不推断操作者。不上传云端，不追踪应用外活动。","Opt in to local task, schedule, time-entry and property changes, including supported undo, plugin, system and stopwatch transitions. Remote changes are observations, not attributed to an actor. No new cloud upload or external activity tracking.")}</p>
           {preference?.since&&<p>{t("开始记录","Recording started")}: {new Date(preference.since).toLocaleString()}{preference.hasGaps&&" · "+t("曾暂停，历史存在覆盖缺口","Recording has been paused; coverage has gaps")}</p>}
-          <div className="df-metric-insight-actions">{action(preference?.enabled?t("暂停记录","Pause recording"):t("启用记录","Enable recording"),()=>{try{setAnalyticsEnabled(p.scope!,!preference?.enabled);if(!preference?.enabled){void recoverAnalytics(p.scope!);captureDailyPlan(p.scope!,p.data,new Date().toISOString(),p.dayStartTime,analyticsPreference(p.scope!).generation);}setError(false);}catch{setError(true);}})}{action(t("导出显示的历史","Export visible history"),()=>downloadJson({schemaVersion:1,exportedAt:new Date().toISOString(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,range:{start:new Date(historyStart).toISOString(),end:new Date(historyEnd).toISOString()},filters:{projectIds:p.projectIds,source:historySource||null,entity:historyEntity||null},limited:events.length>historyLimit,events:historyRows}),!historyRows.length)}{action(confirmClear?t("确认清除并暂停","Confirm clear & pause"):t("清除本机历史","Clear local history"),()=>{if(!confirmClear){setConfirmClear(true);return;}setConfirmClear(false);void clearAnalytics(p.scope!).catch(()=>setError(true));})}{confirmClear&&action(t("取消","Cancel"),()=>setConfirmClear(false))}</div>
+          <div className="df-metric-insight-actions">{action(preference?.enabled?t("暂停记录","Pause recording"):t("启用记录","Enable recording"),()=>{try{setAnalyticsEnabled(p.scope!,!preference?.enabled);if(!preference?.enabled){void recoverAnalytics(p.scope!);captureDailyPlan(p.scope!,p.data,new Date().toISOString(),p.dayStartTime,analyticsPreference(p.scope!).generation);}setError(false);}catch{setError(true);}})}{action(t("导出显示的历史","Export visible history"),()=>downloadJson({schemaVersion:1,exportedAt:new Date().toISOString(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,range:{start:new Date(historyStart).toISOString(),end:new Date(historyEnd).toISOString()},filters:{projectIds:p.projectIds,source:historySource||null,entity:historyEntity||null},page:trail.length,limited:trail.length>1||events.length>historyLimit,events:historyRows}),!historyRows.length)}{action(confirmClear?t("确认清除并暂停","Confirm clear & pause"):t("清除本机历史","Clear local history"),()=>{if(!confirmClear){setConfirmClear(true);return;}setConfirmClear(false);void clearAnalytics(p.scope!).catch(()=>setError(true));})}{confirmClear&&action(t("取消","Cancel"),()=>setConfirmClear(false))}</div>
           {(error||analyticsError(p.scope)||historyState==="error")&&<p role="alert">{t("历史记录写入或读取未完成；任务操作不受影响。","History storage or recovery is incomplete; task operations are unaffected.")} {action(t("重试恢复","Retry recovery"),()=>{setError(false);void recoverAnalytics(p.scope!);setRevision(n=>n+1);})}</p>}
           <div className="df-metric-insight-actions df-metric-history-filters"><label>{t("来源","Source")} <select value={historySource} onChange={e=>setHistorySource(e.target.value)}>{[["",t("全部","All")],["client",t("本机","Local")],["plugin",t("插件","Plugin")],["sync",t("同步","Sync")],["system",t("系统","System")],["undo",t("撤销","Undo")],["remote-observed",t("远端观察","Remote observation")]].map(([v,label])=><option key={v} value={v}>{label}</option>)}</select></label><label>{t("记录类型","Entity")} <select value={historyEntity} onChange={e=>setHistoryEntity(e.target.value)}>{[["",t("全部","All")],["task",t("任务","Task")],["subtask",t("子任务","Subtask")],["execution",t("排程","Execution")],["timeEntry",t("计时","Time entry")],["timer",t("计时状态","Timer")],["habit",t("习惯","Habit")],["project",t("项目","Project")]].map(([v,label])=><option key={v} value={v}>{label}</option>)}</select></label></div>
-          {historyState==="loading"?<p aria-live="polite">{t("读取中…","Loading…")}</p>:historyState==="ready"&&<><p>{events.length>historyLimit?t("显示筛选后的最近记录，可加载更多。","Showing recent matching records; load more below."):t("显示所选范围及筛选条件的本机历史。","Local history for the selected range and filters.")}</p>{!historyRows.length?<p>{t("暂无已记录的变化","No recorded changes")}</p>:<div className="df-metric-insight-history">{historyRows.map(e=><details key={e.id}><summary>{new Date(e.occurredAt).toLocaleString()} · {e.entityType} · {e.action} · {e.source}</summary><p>{p.data.tasks.find(x=>x.id===e.taskId)?.title||e.entityId}</p><pre>{JSON.stringify({before:e.before,after:e.after},null,2)}</pre></details>)}</div>}{events.length>historyLimit&&historyLimit<500&&action(t("加载更多","Load more"),()=>setHistoryLimit(n=>Math.min(500,n+50)))}{events.length>historyLimit&&historyLimit>=500&&<p>{t("已达到 500 条显示上限；请缩小筛选范围。","500-record display limit; narrow the filters.")}</p>}</>}
+          {historyState==="loading"?<p aria-live="polite">{t("读取中…","Loading…")}</p>:historyState==="ready"&&<><p>{t("显示所选范围及筛选条件的本机历史，每页 50 条。","Local history for the selected range and filters, 50 per page.")}</p>{!historyRows.length?<p>{t("暂无已记录的变化","No recorded changes")}</p>:<div className="df-metric-insight-history">{historyRows.map(e=><details key={e.id}><summary>{new Date(e.occurredAt).toLocaleString()} · {e.entityType} · {e.action} · {e.source}</summary><p>{taskTitles.get(e.taskId||"")||e.entityId}</p><pre>{JSON.stringify({before:e.before,after:e.after},null,2)}</pre></details>)}</div>}<div className="df-metric-insight-actions">{action(t("上一页","Previous"),()=>setHistoryPage({key:pageKey,trail:trail.slice(0,-1)}),trail.length<=1)}<span>{t("第","Page ")}{trail.length}{t("页","")}</span>{action(t("下一页","Next"),()=>{const last=historyRows[historyRows.length-1];if(last)setHistoryPage({key:pageKey,trail:[...trail,{occurredAt:last.occurredAt,id:last.id}]});},events.length<=historyLimit)}</div></>}
         </>}
       </>}
     </section>}
