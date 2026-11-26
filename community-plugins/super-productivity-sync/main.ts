@@ -11,7 +11,7 @@ const STORAGE = "connection-state";
 function projectFields(item: Project) { return { title: item.title, notes: item.notes || "", color: item.color || null, category: item.category || "" }; }
 function taskFields(item: Task, projects: Project[]) {
   const block = [...(item.timelineRecords || [])].filter(record => record.executionStatus === "scheduled").sort((a, b) => `${a.scheduledDate}T${a.scheduledStart}`.localeCompare(`${b.scheduledDate}T${b.scheduledStart}`))[0];
-  const scheduledMinutes = block ? Math.max(15, Math.round((minutes(block.scheduledEnd) - minutes(block.scheduledStart)) / 15) * 15) : 0;
+  const scheduledMinutes = block ? Math.max(1, Math.round((Date.parse(`${block.scheduledEndDate || block.scheduledDate}T${block.scheduledEnd}:00Z`) - Date.parse(`${block.scheduledDate}T${block.scheduledStart}:00Z`)) / 60_000)) : 0;
   return {
     title: item.title, notes: item.notes || "", completed: item.completed, dueDate: item.dueDate || null,
     estimateMinutes: block ? scheduledMinutes : Math.round((item.estimatedHours || 0) * 60), projectTitle: projects.find(project => project.id === item.projectId)?.title || "",
@@ -22,10 +22,12 @@ function taskFields(item: Task, projects: Project[]) {
 function minutes(value: string) { const [hours, mins] = value.split(":").map(Number); return hours * 60 + mins; }
 
 const plugin: PluginModule = { onload(ctx: PluginContext) {
-  ctx.ui.registerPage("Super Productivity Sync", (container) => {
+  // One sync runtime per loaded plugin, independent of the settings page.
+  const container = document.createElement("div");
+  {
     let links: LinkStore = { projects: {}, tasks: {}, tombstones: {} };
-    let pairId = ""; let pairingCode = ""; let status = ""; let busy = false; let lastError = ""; let running = false;
-    const api = ctx.integrations.superProductivity;
+    let pairId = ""; let pairingCode = ""; let status = ""; let busy = false; let lastError = ""; let running = false; let lastSuccess = ""; let lastApplied = 0; let lastSnapshot = "";
+    const api = ctx.integrations?.superProductivity;
     const zh = String(ctx.app.getSettings().language || ctx.language).startsWith("zh");
     const t = (cn: string, en: string) => zh ? cn : en;
     let previewView: ReturnType<typeof createInitialPreviewView> | undefined;
@@ -39,6 +41,9 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       .nvp-sp-sync-code-row, .nvp-sp-sync-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
       code { flex: 1 1 260px; overflow-wrap: anywhere; padding: 8px 10px; border: 1px solid var(--p-rule); }
       .nvp-sp-sync-status { padding: 7px 10px; border-left: 2px solid var(--p-border); overflow-wrap: anywhere; }
+      button[aria-pressed="true"] { color: var(--p-on-accent); background: var(--p-accent); border-color: var(--p-accent); }
+      button:active:not(:disabled) { transform: translateY(1px); }
+      .nvp-sp-sync-status[aria-busy="true"] { border-left-color: var(--p-accent); }
       .nvp-sp-sync-status.is-error { border-left-color: currentColor; color: var(--text-danger, #a13d32); }
       .nvp-sp-sync-details, .import-preview, .nvp-sp-sync-conflict { display: grid; gap: 12px; overflow-wrap: anywhere; }
       .import-summary { padding: 10px 0; border-block: 1px solid var(--p-rule); color: var(--p-text); font-variant-numeric: tabular-nums; }
@@ -54,6 +59,17 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       @media (max-width: 560px) { .nvp-sp-sync-actions > button { flex: 1 1 140px; } }
     `);
     const panel = surface.content; panel.classList.add("nvp-sp-sync");
+    const registerPage = (name: string, mount: (element: HTMLElement) => () => void) => {
+      const legacy = (ctx.ui as typeof ctx.ui & { registerPage?: typeof ctx.settings.registerPage }).registerPage;
+      return legacy ? legacy.call(ctx.ui, name, mount) : ctx.settings.registerPage(name, mount);
+    };
+    if (!api) {
+      const notice = document.createElement("p");
+      notice.textContent = t("当前版本缺少同步接口，请更新 NavoPath。", "This version lacks the sync API. Update NavoPath.");
+      panel.append(notice);
+      const off = registerPage("Super Productivity Sync", mount => { mount.append(container); return () => container.remove(); });
+      return () => { off(); surface.dispose(); container.remove(); };
+    }
     const description = document.createElement("p"); description.textContent = zh ? "连接后同步全部项目和任务。首次导入会先预览；冲突由你选择。" : "Sync all projects and tasks. Review the first import and choose how to resolve conflicts.";
     const connect = document.createElement("button"); connect.type = "button"; connect.dataset.variant = "primary"; connect.textContent = zh ? "生成配对码" : "Create pairing code";
     const code = document.createElement("code"); code.hidden = true;
@@ -71,7 +87,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     confirm.dataset.variant = "primary";
     panel.append(line, pairing, codeRow, actions, details);
     const persist = async () => ctx.storage.set(STORAGE, { links, pairId });
-    const getState = async () => api.request(`/state${pairId ? `?pairId=${encodeURIComponent(pairId)}` : ""}`);
+    const getState = async () => api!.request(`/state${pairId ? `?pairId=${encodeURIComponent(pairId)}` : ""}`);
     const discoverConnection = async () => { try { displayState(await api.request("/state")); } catch { /* No connection exists until a pairing code is redeemed. */ } };
     const displayState = (state: any) => {
       pairId = state.pairId || pairId; status = state.status || "waiting";
@@ -116,7 +132,15 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
         row.append(text, navopathValue, spValue);
         for (const [side, label] of [["navopath", "Use NavoPath"], ["superproductivity", "Use Super Productivity"]] as const) {
           const button = document.createElement("button"); button.type = "button"; button.textContent = label;
-          button.onclick = () => void api.request("/resolve", "POST", { pairId, conflictId: conflict.id, chosen: side }).then(displayState).catch(error => { lastError = String(error); renderStatus(); });
+          button.onclick = () => {
+            if (busy) return;
+            button.setAttribute("aria-pressed", "true");
+            for (const control of row.querySelectorAll("button")) control.disabled = true;
+            busy = true; lastError = ""; renderStatus();
+            void api.request("/resolve", "POST", { pairId, conflictId: conflict.id, chosen: side })
+              .then(displayState).catch(error => { lastError = String(error); renderStatus(); })
+              .finally(() => { busy = false; renderStatus(); if (!lastError) void sync(); else { for (const control of row.querySelectorAll("button")) control.disabled = false; button.setAttribute("aria-pressed", "false"); } });
+          };
           row.append(button);
         }
         details.append(row);
@@ -126,7 +150,11 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     const renderStatus = () => {
       const labels: Record<string, string> = { waiting: t("等待另一端上传数据", "Waiting for the other app"), preview: t("已连接 · 等待确认首次导入", "Connected · review first import"), active: t("已连接 · 自动同步", "Connected · automatic sync") };
       line.textContent = lastError || (pairId ? (labels[status] || t("已连接", "Connected")) + (busy ? t(" · 同步中", " · syncing") : "") : t("尚未配对", "Not paired"));
+      if (pairId && !busy && !lastError && lastSuccess && status === "active") line.textContent += t(` · 上次同步 ${lastSuccess} · 应用 ${lastApplied} 项更改`, ` · Last sync ${lastSuccess} · ${lastApplied} changes applied`);
+      line.setAttribute("aria-busy", String(busy));
       line.classList.toggle("is-error", Boolean(lastError));
+      refresh.textContent = busy ? t("同步中…", "Syncing…") : t("立即同步", "Sync now");
+      confirm.textContent = busy ? t("处理中…", "Working…") : t("确认首次导入", "Confirm initial import");
       confirm.disabled = busy; refresh.disabled = busy; disconnect.disabled = busy;
     };
     const ensureMappings = (assignments: Array<{ kind: "project" | "task"; id: string; syncId: string }>) => {
@@ -172,28 +200,34 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
         if (Object.hasOwn(fields, "dueDate")) patch.dueDate = fields.dueDate || "";
         if (Object.hasOwn(fields, "estimateMinutes")) patch.estimatedHours = Math.max(0, Number(fields.estimateMinutes || 0) / 60);
         if (Object.hasOwn(fields, "projectTitle")) patch.projectId = projectId;
-        if (current && Object.hasOwn(fields, "scheduledAt")) {
-          const records = [...(current.timelineRecords || [])];
+        const scheduleChanged = Object.hasOwn(fields, "scheduledAt") || Object.hasOwn(fields, "scheduledMinutes");
+        if (scheduleChanged) {
+          const records = [...(current?.timelineRecords || [])];
           const nearest = records.map((record, index) => ({ record, index })).filter(item => item.record.executionStatus === "scheduled").sort((a, b) => `${a.record.scheduledDate}T${a.record.scheduledStart}`.localeCompare(`${b.record.scheduledDate}T${b.record.scheduledStart}`))[0];
           const nearestIndex = nearest?.index ?? -1;
-          if (!fields.scheduledAt) {
+          const previousBlock = nearest?.record;
+          const scheduledAt = Object.hasOwn(fields, "scheduledAt") ? fields.scheduledAt : previousBlock ? `${previousBlock.scheduledDate}T${previousBlock.scheduledStart}` : null;
+          if (!scheduledAt) {
             if (nearestIndex >= 0) records.splice(nearestIndex, 1);
           } else {
-            const date = String(fields.scheduledAt).slice(0, 10); const start = String(fields.scheduledAt).slice(11, 16);
-            const duration = Math.max(15, Number(fields.scheduledMinutes || fields.estimateMinutes || 60));
+            const date = String(scheduledAt).slice(0, 10); const start = String(scheduledAt).slice(11, 16);
+            const previousDuration = current ? taskFields(current, []).scheduledMinutes : 0;
+            const duration = Math.max(1, Math.round(Number(fields.scheduledMinutes || previousDuration || fields.estimateMinutes || 60)));
             const endMinutes = minutes(start) + duration;
             const end = `${String(Math.floor(endMinutes / 60) % 24).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
             const old = nearestIndex >= 0 ? records[nearestIndex] : undefined;
-            const endDate = endMinutes >= 1440 ? new Date(new Date(`${date}T00:00:00`).getTime() + 86400000).toISOString().slice(0, 10) : date;
-            const next: TimelineRecord = { id: old?.id || crypto.randomUUID(), taskId: current.id, scheduledDate: date, scheduledStart: start, scheduledEndDate: endDate, scheduledEnd: end, executionStatus: "scheduled", createdAt: old?.createdAt || new Date().toISOString() };
+            const endDate = new Date(Date.parse(`${date}T00:00:00Z`) + Math.floor(endMinutes / 1440) * 86400000).toISOString().slice(0, 10);
+            const next: TimelineRecord = { id: old?.id || crypto.randomUUID(), taskId: current?.id || "", scheduledDate: date, scheduledStart: start, scheduledEndDate: endDate, scheduledEnd: end, executionStatus: "scheduled", createdAt: old?.createdAt || new Date().toISOString() };
             if (nearestIndex >= 0) records[nearestIndex] = next; else records.push(next);
           }
           patch.timelineRecords = records;
         }
         if (current) await ctx.tasks.update(current.id, patch);
         else {
-          const created = await ctx.tasks.create({ ...patch, category: "task", goalId: "", createdAt: new Date().toISOString(), order: ctx.tasks.list().length } as Omit<Task, "id">);
+          const { timelineRecords, ...initialPatch } = patch;
+          const created = await ctx.tasks.create({ ...initialPatch, category: "task", goalId: "", createdAt: new Date().toISOString(), order: ctx.tasks.list().length } as Omit<Task, "id">);
           map[created.id] = action.syncId;
+          if (timelineRecords?.length) await ctx.tasks.update(created.id, { timelineRecords: timelineRecords.map(record => ({ ...record, taskId: created.id })) });
         }
       }
       await persist();
@@ -208,8 +242,9 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
           const initial = await api.request("/snapshot", "POST", { pairId, platform: "navopath", snapshot: snapshot() });
           ensureMappings(initial.assignments || []); displayState(initial); return;
         }
-        const result = await api.request("/snapshot", "POST", { pairId, platform: "navopath", snapshot: snapshot() });
-        ensureMappings(result.assignments || []); await apply(result.actions || []); displayState(result);
+        const outgoing = snapshot(); lastSnapshot = JSON.stringify(outgoing);
+        const result = await api.request("/snapshot", "POST", { pairId, platform: "navopath", snapshot: outgoing });
+        ensureMappings(result.assignments || []); await apply(result.actions || []); lastSnapshot = JSON.stringify(snapshot()); lastApplied = (result.actions || []).length; lastSuccess = new Date().toLocaleTimeString(); displayState(result);
       } catch (error) { lastError = error instanceof Error ? error.message : String(error); }
       finally { busy = false; renderStatus(); }
     };
@@ -228,9 +263,20 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     };
     disconnect.onclick = () => void api.request("/revoke", "POST", { pairId }).then(() => { pairId = ""; pairingCode = ""; status = "waiting"; pairing.hidden = false; codeRow.hidden = true; connect.textContent = t("生成配对码", "Create pairing code"); code.hidden = copy.hidden = true; refresh.hidden = confirm.hidden = disconnect.hidden = true; previewView = undefined; previewKey = ""; details.replaceChildren(); links = { projects: {}, tasks: {}, tombstones: {} }; void persist(); renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });
     void ctx.storage.get<{ links?: LinkStore; pairId?: string } & Partial<LinkStore>>(STORAGE).then(saved => { if (saved) { const stored = saved.links || saved; if (stored.projects && stored.tasks && stored.tombstones) links = { projects: stored.projects, tasks: stored.tasks, tombstones: stored.tombstones }; pairId = saved.pairId || ""; } running = true; void sync(); }).catch(error => { lastError = String(error); renderStatus(); });
-    const timer = window.setInterval(() => { void sync(); }, 30_000);
-    return () => { running = false; clearInterval(timer); surface.dispose(); };
-  });
+    const timer = window.setInterval(() => { void sync(); }, 15_000);
+    let debounce: ReturnType<typeof setTimeout> | undefined;
+    const offData = ctx.events.on("data:changed", () => {
+      if (!running || !pairId || status !== "active") return;
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => { if (!busy && JSON.stringify(snapshot()) !== lastSnapshot) void sync(); }, 500);
+    });
+    const offPage = registerPage("Super Productivity Sync", (mount) => {
+      mount.append(container);
+      renderStatus();
+      return () => { container.remove(); };
+    });
+    return () => { running = false; clearInterval(timer); if (debounce) clearTimeout(debounce); offData(); offPage(); surface.dispose(); container.remove(); };
+  }
 } };
 
 export default plugin;

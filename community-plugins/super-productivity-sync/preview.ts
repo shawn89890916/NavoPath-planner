@@ -29,13 +29,20 @@ export function createInitialPreviewView(preview: InitialPreview, zh: boolean, p
   const toolbar = document.createElement("div"); toolbar.className = "nvp-sp-sync-actions";
   const search = document.createElement("input"); search.type = "search"; search.placeholder = t("搜索项目、任务或所属项目", "Search projects, tasks or project names"); search.setAttribute("aria-label", search.placeholder);
   const list = document.createElement("div");
-  const button = (label: string, callback: () => void) => { const el = document.createElement("button"); el.type = "button"; el.textContent = label; el.onclick = callback; toolbar.append(el); };
+  const controls: { el: HTMLButtonElement; selected: () => boolean }[] = [];
+  const button = (label: string, callback: () => void, selected: () => boolean) => {
+    const el = document.createElement("button"); el.type = "button"; el.textContent = label; el.onclick = callback;
+    el.setAttribute("aria-pressed", "false"); controls.push({ el, selected }); toolbar.append(el);
+  };
   function updateSummary() {
     const selectedProjects = records.filter(r => r.selected && r.match.kind === "project").length;
     const selectedTasks = records.filter(r => r.selected && r.match.kind === "task").length;
     const np = preview.projects.superproductivity.length - selectedProjects, sp = preview.projects.navopath.length - selectedProjects;
     const nt = preview.tasks.superproductivity.length - selectedTasks, st = preview.tasks.navopath.length - selectedTasks;
-    summary.textContent = t(`合并 ${selectedProjects} 个项目、${selectedTasks} 条任务；NavoPath 新增 ${np} 个项目、${nt} 条任务；SP 新增 ${sp} 个项目、${st} 条任务。`, `Link ${selectedProjects} projects and ${selectedTasks} tasks; add ${np} projects / ${nt} tasks to NavoPath and ${sp} projects / ${st} tasks to SP.`);
+    const left = records.filter(r => r.selected && r.match.preferredSide === "navopath").length;
+    const right = records.filter(r => r.selected && r.match.preferredSide === "superproductivity").length;
+    summary.textContent = t(`合并 ${selectedProjects} 个项目、${selectedTasks} 条任务；NavoPath 新增 ${np} 个项目、${nt} 条任务；SP 新增 ${sp} 个项目、${st} 条任务。以 NavoPath 为准 ${left} 条，以 SP 为准 ${right} 条。`, `Link ${selectedProjects} projects and ${selectedTasks} tasks; add ${np} projects / ${nt} tasks to NavoPath and ${sp} projects / ${st} tasks to SP. NavoPath wins: ${left}; SP wins: ${right}.`);
+    for (const {el, selected} of controls) el.setAttribute("aria-pressed", String(selected()));
   }
   const disclosure = new Map<string, boolean>();
   function render(focusKey?: string) {
@@ -57,7 +64,7 @@ export function createInitialPreviewView(preview: InitialPreview, zh: boolean, p
         for (const [value, label] of [["navopath", "NavoPath"], ["superproductivity", "Super Productivity"]]) { const option = document.createElement("option"); option.value = value; option.textContent = label; side.append(option); }
         side.value = r.match.preferredSide; side.disabled = !r.selected;
         checkbox.onchange = () => { r.selected = checkbox.checked; render(r.key); };
-        side.onchange = () => { r.match.preferredSide = side.value as Side; };
+        side.onchange = () => { r.match.preferredSide = side.value as Side; updateSummary(); };
         label.append(checkbox, name); row.append(label, side); section.append(row);
       }
       for (const [side, items] of [["navopath", group.navopath], ["superproductivity", group.superproductivity]] as const) {
@@ -74,10 +81,10 @@ export function createInitialPreviewView(preview: InitialPreview, zh: boolean, p
     if (focusKey) Array.from(list.querySelectorAll<HTMLInputElement>("input[data-match-key]")).find(el => el.dataset.matchKey === focusKey)?.focus();
   }
   function setAll(selected: boolean, preferredSide?: Side) { for (const r of records) { r.selected = selected; if (preferredSide) r.match.preferredSide = preferredSide; } render(); }
-  button(t("全选匹配", "Select all matches"), () => setAll(true));
-  button(t("取消全选", "Clear all matches"), () => setAll(false));
-  button(t("全部以 NavoPath 为准", "All matches: NavoPath wins"), () => setAll(true, "navopath"));
-  button(t("全部以 SP 为准", "All matches: SP wins"), () => setAll(true, "superproductivity"));
+  button(t("全选匹配", "Select all matches"), () => setAll(true), () => records.length > 0 && records.every(r => r.selected));
+  button(t("取消全选", "Clear all matches"), () => setAll(false), () => records.length > 0 && records.every(r => !r.selected));
+  button(t("全部以 NavoPath 为准", "All matches: NavoPath wins"), () => setAll(true, "navopath"), () => records.length > 0 && records.every(r => r.selected && r.match.preferredSide === "navopath"));
+  button(t("全部以 SP 为准", "All matches: SP wins"), () => setAll(true, "superproductivity"), () => records.length > 0 && records.every(r => r.selected && r.match.preferredSide === "superproductivity"));
   search.oninput = () => render();
   root.append(title, note, summary, toolbar, search, list); render();
   return { root, matches: () => records.filter(r => r.selected).map(r => ({ ...r.match })), selections: () => new Map(records.map(r => [r.key, { selected: r.selected, preferredSide: r.match.preferredSide }])) };

@@ -717,6 +717,8 @@ export interface PlannerApi {
   resetSeed: () => Promise<PlannerData>;
   getSettings: () => Promise<Settings>;
   saveSettings: (settings: Partial<Settings>) => Promise<Settings>;
+  createSuperProductivityPairingCode?: (accountId: string) => Promise<{ code: string; expiresAt: string }>;
+  requestSuperProductivitySync?: (accountId: string, path: string, method?: "GET" | "POST", body?: unknown) => Promise<any>;
   listMcpTokens?: () => Promise<McpTokenMetadata[]>;
   createMcpToken?: (name: string) => Promise<{ token: string; metadata: McpTokenMetadata }>;
   revokeMcpToken?: (id: string) => Promise<void>;

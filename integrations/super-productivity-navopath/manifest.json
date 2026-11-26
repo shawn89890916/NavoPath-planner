@@ -1,14 +1,18 @@
 {
   "id": "navopath-sync",
   "name": "NavoPath Sync",
-  "version": "1.0.3",
-  "description": "Sync projects and tasks with NavoPath Cloud.",
+  "version": "1.0.4",
+  "description": "Background sync of projects, tasks and scheduled blocks with NavoPath Cloud.",
   "manifestVersion": 1,
-  "minSupVersion": "20.0.0",
+  "minSupVersion": "20.1.0",
   "author": "NavoPath",
-  "iFrame": true,
-  "sidePanel": true,
-  "hooks": [],
+  "hooks": [
+    "taskCreated",
+    "taskUpdate",
+    "taskDelete",
+    "taskComplete",
+    "projectListUpdate"
+  ],
   "permissions": [
     "http"
   ],

@@ -87,3 +87,31 @@ test("duplicate titles on either side are not proposed as one-to-one matches", (
   applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task")] }, "2026-11-25T00:00:01Z");
   assert.deepEqual(createInitialPreview(state).tasks.suggestions, []);
 });
+
+test("duration-only timeline changes carry the start and rescheduling carries the duration", () => {
+  const state = emptySyncState();
+  const fields = { scheduledAt: "2026-11-26T09:00", scheduledMinutes: 60 };
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", fields)] }, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task", fields)] }, "2026-11-26T00:00:01Z");
+  confirmInitialSync(state, [{ kind: "task", navopathId: "n1", superproductivityId: "s1" }]);
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task", { ...fields, scheduledMinutes: 90 })] }, "2026-11-26T00:00:02Z");
+  assert.deepEqual(buildActions(state, "navopath")[0].fields, { scheduledMinutes: 90, scheduledAt: fields.scheduledAt });
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", { ...fields, scheduledMinutes: 90 })] }, "2026-11-26T00:00:03Z");
+  assert.equal(buildActions(state, "navopath").length, 0);
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", { scheduledAt: "2026-11-26T10:00", scheduledMinutes: 90 })] }, "2026-11-26T00:00:04Z");
+  assert.deepEqual(buildActions(state, "superproductivity")[0].fields, { scheduledAt: "2026-11-26T10:00", scheduledMinutes: 90 });
+});
+
+test("a schedule conflict blocks propagation until a source is chosen", () => {
+  const state = emptySyncState();
+  const fields = { scheduledAt: "2026-11-26T09:00", scheduledMinutes: 60 };
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", fields)] }, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task", fields)] }, "2026-11-26T00:00:01Z");
+  confirmInitialSync(state, [{ kind: "task", navopathId: "n1", superproductivityId: "s1" }]);
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n1", "Task", { ...fields, scheduledAt: "2026-11-26T10:00" })] }, "2026-11-26T00:00:02Z");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s1", "Task", { ...fields, scheduledAt: "2026-11-26T11:00" })] }, "2026-11-26T00:00:03Z");
+  assert.equal(state.conflicts.length, 1);
+  assert.equal(buildActions(state, "superproductivity").length, 0);
+  resolveSyncConflict(state, state.conflicts[0].id, "superproductivity");
+  assert.deepEqual(buildActions(state, "navopath")[0].fields, { scheduledAt: "2026-11-26T11:00", scheduledMinutes: 60 });
+});

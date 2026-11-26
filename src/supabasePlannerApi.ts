@@ -689,6 +689,34 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
         if (channel) void supabase.removeChannel(channel);
       };
     },
+    createSuperProductivityPairingCode: async (accountId) => {
+      const user = await requireUser();
+      if (user.id !== accountId) throw new Error("Extension account changed");
+      const code = "nvp_sp_" + Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, "0")).join("");
+      const expiresAt = new Date(Date.now() + 5 * 60_000).toISOString();
+      const codeHash = await sha256(code);
+      const { error } = await retryTransientRequest(() => supabase.from("navopath_sp_pairing_codes").insert({ code_hash: codeHash, user_id: user.id, expires_at: expiresAt }));
+      if (error) throw new Error(error.message || "Could not create pairing code");
+      return { code, expiresAt };
+    },
+    requestSuperProductivitySync: async (accountId, path, method = "GET", body) => {
+      // Only the fixed, account-authenticated sync API is exposed. No bearer is returned to plugins.
+      if (!(/^\/state(?:\?pairId=[0-9a-f-]{36})?$/i.test(path) && method === "GET") &&
+          !(/^\/(snapshot|confirm|resolve|restore|revoke)$/.test(path) && method === "POST")) throw new Error("Invalid synchronization endpoint");
+      const user = await requireUser();
+      if (user.id !== accountId) throw new Error("Extension account changed");
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session || data.session.user.id !== accountId) throw new Error("Sign in to NavoPath to sync");
+      const base = new URL(import.meta.env.VITE_MCP_ENDPOINT || "https://navopath-mcp.shawn89890916.workers.dev/mcp");
+      const response = await fetch(new URL("/api/super-productivity" + path, base.origin), {
+        method, headers: { Authorization: "Bearer " + data.session.access_token, ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || ("Synchronization request failed (" + response.status + ")"));
+      return result;
+    },
     listMcpTokens: async () => {
       await requireUser();
       const { data, error } = await retryTransientRequest(() => supabase.rpc("list_mcp_tokens"), { retryAuthRejection: true });

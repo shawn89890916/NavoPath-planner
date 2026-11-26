@@ -73,6 +73,22 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
       registerPlanningView: (name, mount) => register(bridge.contribute("views", name, mount, { iconUrl: pkg.manifest.icon ? resources.get(pkg.manifest.icon) : undefined, planningView: true })),
       toast: bridge.host.toast,
     },
+    ...(bridge.key === "official:super-productivity-sync" && pkg.manifest.id === "super-productivity-sync" ? {
+      integrations: { superProductivity: {
+        createPairingCode: async () => {
+          const accountId = bridge.host.getAccountId();
+          const api = window.plannerApi;
+          if (disposed || !accountId || !api?.createSuperProductivityPairingCode) throw new Error("Sign in to NavoPath Cloud to sync");
+          return api.createSuperProductivityPairingCode(accountId);
+        },
+        request: async (path: string, method?: "GET" | "POST", body?: unknown) => {
+          const accountId = bridge.host.getAccountId();
+          const api = window.plannerApi;
+          if (disposed || !accountId || !api?.requestSuperProductivitySync) throw new Error("Sign in to NavoPath Cloud to sync");
+          return api.requestSuperProductivitySync(accountId, path, method, body);
+        },
+      } },
+    } : {}),
     commands: { register: (id, name, run, shortcut) => register(bridge.addCommand(`${bridge.key}:${id}`, name, run, shortcut)), execute: id => bridge.executeCommand(id.includes(":") ? id : `${bridge.key}:${id}`) },
     timers: { registerMode: provider => register(registerTimerMode(provider)), open: mode => { if (disposed) throw new Error("Plugin is unloaded"); openTimerMode(mode); } },
     patch: (target, key, wrapper) => register(patchMethod(target, key, wrapper)),
