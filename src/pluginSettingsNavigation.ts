@@ -18,7 +18,7 @@ export function pluginSettingsPages(snapshot: ExtensionSnapshot, item: Installed
 export function pluginSettingsDestinations(snapshot: ExtensionSnapshot, previous: readonly PluginSettingsDestination[] = []): PluginSettingsDestination[] {
   return Object.values(snapshot.preferences.installed).filter(item => item.manifest.kind === "plugin" && item.enabled)
     .sort((a,b) => a.key.localeCompare(b.key, "en"))
-    .flatMap(item => {
+    .flatMap<PluginSettingsDestination>(item => {
       const native = item.key === METRICS_SETTINGS_OWNER;
       const options = item.manifest.settingsOptions ?? [];
       const pages = pluginSettingsPages(snapshot, item);
