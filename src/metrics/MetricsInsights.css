@@ -49,3 +49,16 @@
 .df-metric-calendar-grid { grid-template-columns:repeat(7,minmax(0,1fr)); }
 .df-metric-calendar-grid > span { text-align:center; font-size:10px; color:var(--text-muted); }
 .df-metric-calendar-grid button { min-width:0; padding:3px 0; font-size:10px; }
+
+/* Contain long labels and wide tables inside the actual metrics panel, including Dock. */
+.df-metric-insight-content, .df-metric-insight-tabs, .df-metric-saved-views,
+.df-metric-insight-table, .df-metric-insight-trend, .df-metric-hour-grid { max-width:100%; min-width:0; box-sizing:border-box; }
+.df-metric-group-row > span, .df-metric-insight-stats span, .df-metric-insight-stats strong, .df-metric-insight-content h3 { min-width:0; overflow-wrap:anywhere; }
+.df-metric-insight-actions > *, .df-metric-insight-tabs > button { min-width:0; max-width:100%; overflow-wrap:anywhere; white-space:normal; }
+.df-metric-insight-table :is(th,td):first-child { max-width:16rem; white-space:normal; overflow-wrap:anywhere; }
+.df-metric-insight-table td:first-child button { text-align:left; white-space:normal; overflow-wrap:anywhere; }
+.df-metric-insight-content :is(button,summary,select,input):focus-visible,
+.df-metric-insight-tabs button:focus-visible,
+.df-metric-saved-views :is(button,summary,select,input):focus-visible,
+.df-metric-insight-table:focus-visible { outline:2px solid var(--accent-active); outline-offset:2px; }
+.df-metric-insight-table:focus-visible { outline-offset:-2px; }
