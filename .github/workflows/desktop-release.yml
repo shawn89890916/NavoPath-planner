@@ -54,6 +54,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check integrations/super-productivity-navopath/plugin.js
 
+      - name: Verify native Chromium Metrics storage
+        run: node scripts/metrics-storage-browser.cjs
+
       - name: Build desktop release
         run: npm run dist
 

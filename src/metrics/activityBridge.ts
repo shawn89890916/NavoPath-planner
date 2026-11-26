@@ -1,13 +1,13 @@
 import type { PlannerData } from "../types";
 import type { AnalyticsSource, TimerTransition } from "./activityEvents";
-export type AnalyticsPreference = { enabled: boolean; since?: string; generation: string; lastEnabledAt?:string; pausedAt?:string; hasGaps?:boolean };
+export type AnalyticsPreference = { enabled: boolean; since?: string; generation: string; lastEnabledAt?:string; pausedAt?:string; hasGaps?:boolean; purgePending?:boolean };
 export const analyticsPreferenceKey=(scope:string)=>"navopath.analytics.v1."+encodeURIComponent(scope);
 export function analyticsPreference(scope:string):AnalyticsPreference {
   try {const p=JSON.parse(window.localStorage.getItem(analyticsPreferenceKey(scope))||"null") as AnalyticsPreference|null;if(p&&typeof p.enabled==="boolean"&&typeof p.generation==="string")return p;}catch{/* unavailable storage */}
   return {enabled:false,generation:""};
 }
 function dispatch(scope:string,run:(m:typeof import("./activityStore"),generation:string)=>void,allowPaused=false) {
-  const p=analyticsPreference(scope);if(!p.enabled&&!(allowPaused&&p.since))return;
+  const p=analyticsPreference(scope);if(!p.enabled&&!(allowPaused&&(p.since||p.purgePending)))return;
   void import("./activityStore").then(m=>{if(analyticsPreference(scope).generation===p.generation)run(m,p.generation);}).catch(()=>window.dispatchEvent(new CustomEvent("navopath-analytics-change",{detail:scope})));
 }
 export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,next:PlannerData,at:string,source:AnalyticsSource="client",operationId?:string){

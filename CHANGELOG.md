@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 117
+
+#### 修复
+
+- Metrics 修复重复历史事件导致写入失败、清除中断后无法可靠恢复的问题；清除未完成时暂停记录并隐藏旧历史，重启后可继续清除；优化相同时间戳历史分页。
+
 ### 1.7.0 Beta 116
 
 #### 改进
@@ -1229,6 +1235,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 117
+
+#### Fixes
+
+- Metrics handles duplicate history events and recovers interrupted history clearing; recording stays paused and old history stays hidden until clearing succeeds, including after restart. Improve pagination for events with identical timestamps.
 
 ### 1.7.0 Beta 116
 
