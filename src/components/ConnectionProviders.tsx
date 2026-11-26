@@ -3,6 +3,7 @@ import type { Language } from "../types";
 import { CONNECTION_PROVIDERS, connectionProvider, spPluginConnection, SP_PLUGIN_KEY, SP_COMPANION_URL } from "../connectionProviders";
 import { extensionService } from "../extensions/service";
 import { ExtensionMount } from "../extensions/ExtensionMount";
+import CalendarFeedManager from "./CalendarFeedManager";
 import { SettingRow, SettingSection, SettingActionButton } from "./SettingsControls";
 
 function SuperProductivitySetup({ lang, history }: { lang: Language; history: ReactNode }) {
@@ -49,7 +50,7 @@ function SuperProductivitySetup({ lang, history }: { lang: Language; history: Re
     </SettingSection>
   </>;
 }
-export default function ConnectionProviders({ lang, anchor, onSelect, calendar, history, caldav }: { lang: Language; anchor?: string; onSelect: (anchor: string) => void; calendar: ReactNode; history: ReactNode; caldav: ReactNode }) {
+export default function ConnectionProviders({ lang, anchor, onSelect, errorMessage, caldav }: { lang: Language; anchor?: string; onSelect: (anchor: string) => void; errorMessage: (error: unknown, lang: Language) => string; caldav: ReactNode }) {
   const zh = lang === "zh";
   const selected = connectionProvider(anchor);
   return <div data-settings-anchor="connections" tabIndex={-1}>
@@ -61,9 +62,9 @@ export default function ConnectionProviders({ lang, anchor, onSelect, calendar, 
       <SettingSection title={zh ? selected.nameZh : selected.nameEn} description={zh ? selected.descriptionZh : selected.descriptionEn}>
         {selected.id === "notion-calendar" && <p>{zh ? "先在支持 URL 订阅的日历账户中添加链接，再将该账户连接到 Notion Calendar。直接支持取决于日历服务。" : "Add the URL to a calendar account that supports subscriptions, then connect that account to Notion Calendar. Availability depends on the calendar service."}</p>}
       </SettingSection>
-      {selected.id === "super-productivity" ? <SuperProductivitySetup lang={lang} history={history} /> : <>
+      {selected.id === "super-productivity" ? <SuperProductivitySetup lang={lang} history={<CalendarFeedManager key="history" lang={lang} historyOnly errorMessage={errorMessage} />} /> : <>
         {selected.id === "apple-calendar" && caldav}
-        {calendar}
+        <CalendarFeedManager key="calendar" lang={lang} errorMessage={errorMessage} />
       </>}
     </div>}
   </div>;
