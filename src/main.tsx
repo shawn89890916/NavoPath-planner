@@ -1092,6 +1092,7 @@ function App() {
   const [pomodoroTaskChoice, setPomodoroTaskChoice] = useState<string>();
   const timerIntervalRef = useRef<number | null>(null);
   const timerTaskRef = useRef<string | null>(null);
+  const timerRecordRef = useRef<string|undefined>(undefined);
   const timerElapsedRef = useRef(0);
   const timerElapsedBaseRef = useRef(0);
   const timerStartedAtRef = useRef<number | null>(null);
@@ -1133,6 +1134,7 @@ function App() {
       try { localStorage.setItem("navopath-active-timer", JSON.stringify({ taskId: timerTaskId, elapsed: timerElapsed, running: timerRunning })); } catch { /* ignore */ }
     } else {
       timerTaskRef.current = null;
+      timerRecordRef.current=undefined;
       try { localStorage.removeItem("navopath-active-timer"); } catch { /* ignore */ }
     }
   }, [timerTaskId, timerElapsed, timerRunning]);
@@ -1141,9 +1143,12 @@ function App() {
     if(productDemo||!dataRef.current)return;
     recordTimerTransition(authStateRef.current?.user?.id || "preview",taskId||undefined,transition,new Date(at).toISOString(),elapsed,dataRef.current.tasks.find(t=>t.id===taskId)?.projectId);
   }
-  const startTimer = useCallback((taskId: string) => {
+  const startTimer = useCallback((taskId: string,recordId?:string|null) => {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerStart", taskId }); return; }
-    const baseElapsed = timerTaskRef.current === taskId ? timerElapsedRef.current : 0;
+    const same=timerTaskRef.current===taskId;
+    const baseElapsed = same ? timerElapsedRef.current : 0;
+    if(!same||baseElapsed===0)timerRecordRef.current=recordId||undefined;
+    else if(recordId&&timerRecordRef.current!==recordId)timerRecordRef.current=undefined;
     const now = Date.now();
     if(timerTaskRef.current!==taskId || timerStartedAtRef.current===null)logTimerTransition(baseElapsed>0?"resume":"start",taskId,now,baseElapsed);
     timerElapsedRef.current = baseElapsed;
@@ -1223,6 +1228,7 @@ function App() {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "discardTimer" }); return; }
     if(timerTaskRef.current)logTimerTransition("discard",timerTaskRef.current,Date.now(),timerElapsedRef.current);
     timerTaskRef.current = null;
+    timerRecordRef.current=undefined;
     timerElapsedRef.current = 0; timerElapsedBaseRef.current = 0; timerStartedAtRef.current = null;
     setTimerTaskId(null); setTimerRunning(false); setTimerElapsed(0); setTimerStartedAt(null);
   }, []);
@@ -1894,6 +1900,7 @@ function App() {
   }, [candidatePanelCollapsed, fullscreen, timelineView]);
 
   function resetWorkspaceUi() {
+    timerRecordRef.current=undefined;
     workspaceLoadVersionRef.current += 1;
     pendingDataSaveRef.current = null;
     pendingSettingsSaveRef.current = null;
@@ -3430,10 +3437,12 @@ if (cached?.data && cached?.settings) {
     if(taskId)logTimerTransition("stop",taskId,Date.now(),elapsed);
     if (taskId && currentData && elapsed >= 1) {
       const now = workspaceNow().toISOString();
+      const task=currentData.tasks.find(t=>t.id===taskId),link=timerRecordRef.current;
       const entry = {
         id: `te-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         taskId,
-        projectId: currentData.tasks.find(task => task.id === taskId)?.projectId,
+        projectId: task?.projectId,
+        timelineRecordId: task?.timelineRecords?.some(r=>r.id===link)?link:undefined,
         startAt: new Date(Date.now() - elapsed * 1000).toISOString(),
         endAt: now,
         durationMinutes: Math.max(1, Math.round(elapsed / 60)),
@@ -4691,7 +4700,7 @@ if (cached?.data && cached?.settings) {
         else if (action.taskId) startTimer(action.taskId);
         else {
           const selection = resolveWidgetTimelineSelection(dataRef.current?.tasks || [], Date.now());
-          if (selection?.state === "active") startTimer(selection.task.id);
+          if (selection?.state === "active") startTimer(selection.task.id,selection.recordId);
         }
         break;
       case "timerPause":
@@ -4888,6 +4897,7 @@ if (cached?.data && cached?.settings) {
             if (!runtime.plan && runtime.phaseEndsAt !== undefined) runtime.phaseEndsAt += shift;
             delete runtime.pausedAt;
           } else runtime.pausedAt = now;
+          timerRecordRef.current=undefined;
           timerTaskRef.current = null; timerElapsedRef.current = 0; timerElapsedBaseRef.current = 0; timerStartedAtRef.current = null;
           setTimerTaskId(null); setTimerElapsed(0); setTimerRunning(false); setTimerStartedAt(null);
           widgetManagesTaskTimerRef.current = false;
@@ -4906,7 +4916,7 @@ if (cached?.data && cached?.settings) {
           );
           if (taskAction.type === "pause") { syncActiveTaskScheduleFromTimer(now); pauseTimerAt(now); }
           else if (taskAction.type === "resume") resumeTimer();
-          else startTimer(selection.task.id);
+          else startTimer(selection.task.id,selection.recordId);
           const running = taskAction.type !== "pause";
           const runtime = { ...current, running, ...(running ? {} : { pausedAt: now }) };
           if (running) delete runtime.pausedAt;
@@ -4949,7 +4959,7 @@ if (cached?.data && cached?.settings) {
           widgetTimerRuntimeRef.current = runtime;
           setWidgetTimerRuntime(runtime);
           widgetManagesTaskTimerRef.current = true;
-          if (timerTaskRef.current !== selection.task.id) startTimer(selection.task.id);
+          if (timerTaskRef.current !== selection.task.id) startTimer(selection.task.id,selection.recordId);
           const countsAsWork = advanceWidgetTimer(runtime, widgetTimerPreferences, now).countsAsWork;
           timerElapsedBaseRef.current = timerElapsedRef.current;
           timerStartedAtRef.current = countsAsWork ? now : null;
@@ -5000,6 +5010,7 @@ if (cached?.data && cached?.settings) {
         const taskId = next.timerRuntime.mode === "pomodoro"
           ? next.timerRuntime.pomodoroTaskId ?? null
           : next.timerRuntime.unlinked ? null : next.taskId || null;
+        timerRecordRef.current=undefined; // a mirrored clock does not carry verified execution identity
         timerTaskRef.current = taskId; timerElapsedRef.current = next.elapsedSeconds; timerElapsedBaseRef.current = next.elapsedSeconds;
         timerStartedAtRef.current = null; setTimerStartedAt(null);
         setTimerTaskId(taskId); setTimerElapsed(next.elapsedSeconds); setTimerRunning(next.timerRunning);

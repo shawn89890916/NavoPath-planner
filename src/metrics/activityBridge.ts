@@ -6,8 +6,8 @@ export function analyticsPreference(scope:string):AnalyticsPreference {
   try {const p=JSON.parse(window.localStorage.getItem(analyticsPreferenceKey(scope))||"null") as AnalyticsPreference|null;if(p&&typeof p.enabled==="boolean"&&typeof p.generation==="string")return p;}catch{/* unavailable storage */}
   return {enabled:false,generation:""};
 }
-function dispatch(scope:string,run:(m:typeof import("./activityStore"),generation:string)=>void) {
-  const p=analyticsPreference(scope);if(!p.enabled)return;
+function dispatch(scope:string,run:(m:typeof import("./activityStore"),generation:string)=>void,allowPaused=false) {
+  const p=analyticsPreference(scope);if(!p.enabled&&!(allowPaused&&p.since))return;
   void import("./activityStore").then(m=>{if(analyticsPreference(scope).generation===p.generation)run(m,p.generation);}).catch(()=>window.dispatchEvent(new CustomEvent("navopath-analytics-change",{detail:scope})));
 }
 export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,next:PlannerData,at:string,source:AnalyticsSource="client",operationId?:string){
@@ -17,6 +17,6 @@ export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,nex
 export function recordTimerTransition(scope:string,taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,projectId?:string){
   dispatch(scope,(m,g)=>m.recordTimerTransition(scope,taskId,transition,at,elapsedSeconds,projectId,g));
 }
-export function recoverAnalytics(scope:string){dispatch(scope,m=>{void m.recoverAnalytics(scope);});}
+export function recoverAnalytics(scope:string){dispatch(scope,m=>m.recoverAnalytics(scope),true);}
 
 export function captureDailyPlan(scope:string,data:PlannerData,at:string,dayStartTime?:string){dispatch(scope,(m,g)=>m.captureDailyPlan(scope,data,at,dayStartTime,g));}

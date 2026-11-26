@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 113
+
+#### 改进
+
+- Metrics 新增概览、等长周期对比、估时误差及项目完成进度；保留仍存在的历史计时，区分无数据与零值；历史支持按来源及类型筛选、分批查看，自定义视图保存趋势粒度。明确选中的独立排程可关联新计时，暂停记录不会丢弃已接受的待写入事件；历史写入可重试。趋势保留连续日期，增加日历热力图、区间明细和带时区的图表导出；全天估时与重复预测单独标注，修正跨日重复安排及时间轴占用口径。
+
 ### 1.7.0 Beta 112
 
 #### 改进
@@ -1205,6 +1211,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 113
+
+#### Improvements
+
+- Metrics adds overview, matched-period comparisons, estimation error and project completion progress; retained historical time entries remain visible and missing data is distinct from zero. History supports source/entity filters and incremental browsing; saved views preserve trend grain. Explicitly selected executions can link new timer entries; pausing recording preserves accepted pending events, and history recovery can be retried. Trends preserve calendar gaps and include a calendar heatmap, interval drilldown and time-zone-aware chart export. All-day estimates and recurrence projections are labeled separately; cross-day recurring schedules and timed occupancy are corrected.
 
 ### 1.7.0 Beta 112
 

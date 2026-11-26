@@ -13,7 +13,7 @@ export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerDat
   const groups=new Map<string,AnalyticsEvent[]>(),moves=new Set<string>(),resizes=new Set<string>();
   let moveCount=0,resizeCount=0,created=0,removed=0,taskCompleted=0,taskReopened=0;
   for(const e of events){
-    if(e.source==="undo"||e.source==="remote-observed")continue;
+    if(e.source==="undo"||e.source==="remote-observed"){if(e.entityType==="execution"){const key=(e.taskId||"")+":"+e.entityId;const list=groups.get(key)||[];list.push(e);groups.set(key,list);}continue;}
     if(e.entityType==="task"&&e.action==="changed"){if(e.before?.completed===false&&e.after?.completed===true)taskCompleted++;if(e.before?.completed===true&&e.after?.completed===false)taskReopened++;}
     if(e.entityType!=="execution")continue;
     const key=(e.taskId||"")+":"+e.entityId;const list=groups.get(key)||[];list.push(e);groups.set(key,list);
@@ -34,11 +34,13 @@ export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerDat
   for(const [key,list] of groups){
     const ordered=[...list].sort((a,b)=>a.occurredAt.localeCompare(b.occurredAt));
     const first=ordered[0],last=ordered[ordered.length-1];
-    if(first.action!=="created"||last.after?.executionStatus!=="completed"||!first.taskId)continue;
+    if(first.action!=="created"||first.source==="remote-observed"||first.source==="undo"||first.source==="sync"||last.after?.executionStatus!=="completed"||!first.taskId||ordered.some(e=>e.source==="remote-observed"||e.source==="undo"))continue;
+    const current=data.tasks.find(t=>t.id===first.taskId);
+    if(!current||current.timelineRecords?.find(r=>r.id===first.entityId)?.executionStatus!=="completed")continue;
     const initial=observedScheduleMinutes(first.after),tracked=trackedByRecord.get(key);
     if(initial===null||tracked===undefined)continue;
-    const estimate=typeof first.estimateMinutes==="number"&&first.estimateMinutes>0?first.estimateMinutes:null;
+    const estimate=current.timelineRecords?.length===1&&typeof first.estimateMinutes==="number"&&first.estimateMinutes>0?first.estimateMinutes:null;
     comparisons.push({taskId:first.taskId,recordId:first.entityId,initial,tracked,estimate});
   }
-  return {observedExecutions:groups.size,created,removed,movedExecutions:moves.size,resizedExecutions:resizes.size,moveCount,resizeCount,taskCompleted,taskReopened,comparisons};
+  return {observedExecutions:[...groups.values()].filter(es=>es.some(e=>e.source!=="undo"&&e.source!=="remote-observed")).length,created,removed,movedExecutions:moves.size,resizedExecutions:resizes.size,moveCount,resizeCount,taskCompleted,taskReopened,comparisons};
 }

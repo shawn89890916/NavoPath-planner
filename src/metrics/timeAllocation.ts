@@ -36,6 +36,8 @@ export type MetricTaskEntry = {
   completed: boolean;
   isHabit?: boolean;
   engagement?: number;
+  isEstimatedAllDay?:boolean;
+  isProjectedRecurrence?:boolean;
 };
 
 export type TimeAllocationGroup = {
@@ -256,10 +258,12 @@ function minutesBetween(start: Date, end: Date) {
   return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
 }
 
-function metricDatesInRange(range: MetricDateRange) {
+function metricDatesInRange(range: MetricDateRange,lookbackDays=0) {
   const dates = new Set<string>();
-  let cursor = new Date(range.start);
-  while (cursor < range.end) {
+  if(!Number.isFinite(range.start.getTime())||!Number.isFinite(range.end.getTime())||range.end<=range.start)return dates;
+  let cursor = addDays(localDateTime(isoDate(range.start),0),-lookbackDays);
+  const last=isoDate(new Date(range.end.getTime()-1));
+  while (isoDate(cursor)<=last) {
     dates.add(isoDate(cursor));
     cursor = addDays(cursor, 1);
   }
@@ -310,19 +314,21 @@ function allDayDurationMinutes(task: Task) {
   return Math.max(1, Math.round((task.estimatedHours || 0.5) * 60));
 }
 
-function timedMetricRecord(task: Task, record: TimelineRecord, dayStartMinutes: number): TimelineRecord {
+type MetricRecord=TimelineRecord & {metricEstimatedAllDay?:boolean;metricProjectedRecurrence?:boolean};
+function timedMetricRecord(task: Task, record: TimelineRecord, dayStartMinutes: number): MetricRecord {
   if (record.scheduledStart) return record;
   const startTime = minutesToTime(dayStartMinutes);
   const { endDate, endTime } = endForStartAndDuration(record.scheduledDate, startTime, allDayDurationMinutes(task));
   return {
     ...record,
+    metricEstimatedAllDay:true,
     scheduledStart: startTime,
     scheduledEndDate: endDate,
     scheduledEnd: endTime,
   };
 }
 
-function taskRecords(task: Task, range: MetricDateRange, dayStartMinutes: number): TimelineRecord[] {
+function taskRecords(task: Task, range: MetricDateRange, dayStartMinutes: number): MetricRecord[] {
   const records = (task.timelineRecords || [])
     .filter((record) => record.executionStatus !== "cancelled")
     .map((record) => timedMetricRecord(task, record, dayStartMinutes));
@@ -343,6 +349,7 @@ function taskRecords(task: Task, range: MetricDateRange, dayStartMinutes: number
     const { endDate, endTime } = endForStartAndDuration(task.scheduledDate, startTime, allDayDurationMinutes(task));
     allRecords.push({
       id: `metric-all-day-${task.id}-${task.scheduledDate}`,
+      metricEstimatedAllDay:true,
       engagement: task.engagement,
       taskId: task.id,
       scheduledDate: task.scheduledDate,
@@ -354,7 +361,7 @@ function taskRecords(task: Task, range: MetricDateRange, dayStartMinutes: number
     });
   }
   if (range.preset !== "all" && isRecurringScheduledTask(task) && task.recurrence?.startTime && task.recurrence.durationMinutes) {
-    const metricDates = metricDatesInRange(range);
+    const metricDates = metricDatesInRange(range,Math.max(0,Math.ceil(task.recurrence.durationMinutes/1440)));
     const blockedDates = new Set(
       (task.timelineRecords || [])
         .filter((record) => metricDates.has(record.scheduledDate))
@@ -366,6 +373,7 @@ function taskRecords(task: Task, range: MetricDateRange, dayStartMinutes: number
       const { endDate, endTime } = endForStartAndDuration(date, task.recurrence.startTime, task.recurrence.durationMinutes);
       allRecords.push({
         id: `${RECURRENCE_RECORD_PREFIX}-${task.id}-${date}-${task.recurrence.startTime.replace(":", "")}`,
+        metricProjectedRecurrence:true,
         taskId: task.id,
         scheduledDate: date,
         scheduledStart: task.recurrence.startTime,
@@ -435,6 +443,7 @@ function groupColor(key: string, project: Project | null) {
 export function buildTimeAllocationMetrics(options: {
   data: PlannerData;
   range: MetricRangeInput;
+  rangeOverride?: MetricDateRange;
   dayStartMinutes?: number;
   weekStartsOn?: 0 | 1;
   groupBy?: MetricGroupBy;
@@ -447,7 +456,7 @@ export function buildTimeAllocationMetrics(options: {
   const groupBy = options.groupBy || "project";
   const habitMode = options.habitMode || "include";
   const completion = options.completion || "all";
-  const range = options.range.preset==="all"?recordedMetricRange(options.data,dayStartMinutes,options.range.anchorDate):getMetricRange({ ...options.range, dayStartMinutes, weekStartsOn: options.weekStartsOn });
+  const range = options.rangeOverride || (options.range.preset==="all"?recordedMetricRange(options.data,dayStartMinutes,options.range.anchorDate):getMetricRange({ ...options.range, dayStartMinutes, weekStartsOn: options.weekStartsOn }));
   const projects = options.data.projects || [];
   const tasksById=new Map((options.data.tasks||[]).map(t=>[t.id,t]));
   const projectFilter = new Set(options.projectIds || []);
@@ -485,6 +494,8 @@ export function buildTimeAllocationMetrics(options: {
         scheduledEnd: clamped.end,
         completed,
         isHabit: habit,
+        isEstimatedAllDay:rawRecord.metricEstimatedAllDay,
+        isProjectedRecurrence:rawRecord.metricProjectedRecurrence,
       };
       if (options.engagementEnabled && completed) entry.engagement = engagementFor(task, record);
       splitEntries.push(...splitByMetricDay(entry, dayStartMinutes));
@@ -550,7 +561,7 @@ export function buildTimeAllocationMetrics(options: {
   const uniqueTaskIds = new Set(splitEntries.map((entry) => entry.taskId));
   const completedTaskIds = new Set(splitEntries.filter((entry) => entry.completed).map((entry) => entry.taskId));
   const rangeMinutes = range.preset === "all" ? 0 : minutesBetween(range.start, range.end);
-  const occupiedMinutes = mergeScheduledIntervals(splitEntries);
+  const occupiedMinutes = mergeScheduledIntervals(splitEntries.filter(e=>!e.isEstimatedAllDay));
 
   return {
     range,
