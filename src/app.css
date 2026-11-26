@@ -9888,10 +9888,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   .df-app .df-detail-subtask-tools .df-detail-ai-subtasks.loading svg { animation:none; opacity:.64; }
   .df-app .df-subtask-tree-item.ai-generated { animation:none; }
 }
-@keyframes treeDropIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-.df-tree-drop-preview.before { margin-bottom:3px; border-bottom:0; border-radius:8px 8px 0 0; corner-shape: var(--corner-shape, squircle); }
-.df-tree-drop-preview.after { margin-top:3px; border-top:0; border-radius:0 0 8px 8px; corner-shape: var(--corner-shape, squircle); }
-.df-tree-drop-preview.inside { margin-inline-start:28px; border-inline-start:2px solid var(--accent-active); border-radius:4px 8px 8px 4px; corner-shape: var(--corner-shape, squircle); }
 /* Drag targets use ink and rules only; no lift or scale. */
 .df-app.mode-planning .df-subtask-list {
   gap: 6px;
@@ -9913,19 +9909,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   transform: none;
   border-color: color-mix(in srgb, var(--accent-active) 42%, var(--paper-rule));
   background: color-mix(in srgb, var(--accent-active) 5%, transparent);
-}
-.df-tree-drop-preview { position:relative; z-index:8;
-  padding: 0 8px; color:var(--accent-active);
-  background: transparent;
-  border-radius: 0; font:600 11px/1.3 var(--paper-mono); letter-spacing:.03em; pointer-events:none; animation:treeDropIn var(--motion-base) var(--motion-ease) both; display:flex; align-items:center; gap:8px;
-  height: 20px;
-  box-shadow: none;
-  backdrop-filter: none;
-}
-.df-tree-drop-preview::before { content:"";
-  width: 5px;
-  height: 5px; border-radius:50%; background:var(--accent-active); flex-shrink:0;
-  animation: none;
 }
 .df-app .df-quick-add-project-menu { animation: paper-sheet-in var(--motion-base) var(--motion-ease) both; transform-origin: center top; }
 .df-app .df-detail-floating-popover { animation: detail-popover-in var(--motion-base) var(--motion-ease) both; }
@@ -19234,7 +19217,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   animation: df-reorder-preview-in 120ms var(--paper-ease, ease) both;
   corner-shape: var(--corner-shape, squircle);
 }
-.df-reorder-preview-slot::after, .df-kanban-drop-placeholder::after, .df-tree-drop-preview::after, .is-drop-placeholder::after {
+.df-reorder-preview-slot::after, .df-kanban-drop-placeholder::after, .is-drop-placeholder::after {
   content: "";
   position: absolute;
   left: 0;
@@ -19480,7 +19463,7 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   flex-shrink: 0;
 }
 /* Reorder destinations reserve space and show one shared insertion rule. */
-#root .df-app :is(.df-reorder-preview-slot, .df-kanban-drop-placeholder, .df-tree-drop-preview) {
+#root .df-app :is(.df-reorder-preview-slot, .df-kanban-drop-placeholder) {
   box-sizing: border-box;
   border: 0;
   background: transparent;
@@ -19548,27 +19531,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
 }
 /* Tree dragging shows a real empty destination slot, never an instruction
    label such as “Place before/after”. */
-#root .df-app.mode-planning .df-planning .df-tree-drop-preview {
-  position: relative;
-  z-index: 0;
-  display: block;
-  width: min(100%, 620px);
-  height: var(--tree-drop-slot-height, 54px);
-  min-height: var(--tree-drop-slot-height, 54px);
-  margin: 8px 0;
-  flex: 0 0 var(--tree-drop-slot-height, 54px);
-  box-sizing: border-box;
-  padding: 0;
-  border: 0;
-  border-radius: var(--task-radius);
-  background: transparent;
-  box-shadow: none;
-  corner-shape: var(--corner-shape, squircle);
-}
-#root .df-app.mode-planning .df-planning .df-tree-drop-preview::before {
-  content: none;
-  display: none;
-}
 @media (max-width: 760px) {
   .df-ai-provider-grid { grid-template-columns: 1fr; }
   .df-app .df-onboarding-guide {
