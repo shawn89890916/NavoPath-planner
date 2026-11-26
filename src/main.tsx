@@ -61,7 +61,8 @@ import { expandTaskAllDayRecords, expandTaskTimelineSlices } from "./utils/taskT
 import { addDays, addMonths, buildRecurrenceOccurrenceId, enumerateRecurrenceDates, hasRecurrenceOccurrenceOnDate, hasRecurringRule, isRecurringScheduledTask, matchesOccurrence, parseRecurrenceOccurrenceId, startOfWeekIso } from "./utils/recurrence";
 import { appendAiSubtasks, getAiSubtaskSuggestions } from "./utils/aiSubtasks";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
-import { addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree, moveTreeNode, captureTreeMoveUndo, undoTreeMove, type TreeDragNode, type TreeDropTarget } from "./utils/treeOrder";
+import { addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree, moveTreeNode, type TreeDragNode, type TreeDropTarget } from "./utils/treeOrder";
+import { captureTreeMoveUndo, undoTreeMove } from "./utils/treeMoveUndo";
 import { reorderTodayCandidates, returnScheduledTaskToToday } from "./utils/todayCandidates";
 import { reconcileOverdueTasks } from "./utils/overdueTasks";
 import { useInAppDialog } from "./InAppDialog";

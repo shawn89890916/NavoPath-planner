@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PlannerData, Project, Subtask, Task } from "../types";
-import { canMoveTreeNode, moveTreeNode, captureTreeMoveUndo, undoTreeMove, treeDropPosition } from "./treeOrder";
+import { canMoveTreeNode, moveTreeNode, treeDropPosition } from "./treeOrder";
+import { captureTreeMoveUndo, undoTreeMove } from "./treeMoveUndo";
 
 const stamp = "2026-11-26T00:00:00.000Z";
 const later = "2026-11-26T00:01:00.000Z";
