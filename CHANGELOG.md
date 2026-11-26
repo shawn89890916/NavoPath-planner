@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 121
+
+#### 改进
+
+- 设置导航下方按已启用且可配置的插件动态生成独立设置入口，Metrics、声明式选项和自定义页面共用配置空间；支持插件搜索、紧凑布局及末尾添加插件入口，复用现有市场与批量更新。
+
 ### 1.7.0 Beta 120
 
 #### 改进
@@ -1253,6 +1259,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 121
+
+#### Improvements
+
+- Add direct settings destinations below core settings for enabled configurable plugins, combining Metrics, declared options and custom pages in one owner-based surface. Support search, compact layouts and an Add plugins entry using the existing market and batch updates.
 
 ### 1.7.0 Beta 120
 
