@@ -1,10 +1,10 @@
 name: Community extensions
 on:
   pull_request:
-    paths: ['community-plugins/**', 'public/extensions/**', 'scripts/build-extensions.mjs', 'src/extensions/**', 'integrations/navopath-*-template/**']
+    paths: ['community-plugins/**', 'public/extensions/**', 'scripts/build-extensions.mjs', 'src/extensions/**', 'integrations/navopath-*-template/**', 'integrations/super-productivity-navopath/**', 'mcp-worker/src/superProductivitySync*', 'src/supabasePlannerApi.ts']
   push:
     branches: [main]
-    paths: ['community-plugins/**', 'public/extensions/**', 'scripts/build-extensions.mjs', 'src/extensions/**']
+    paths: ['community-plugins/**', 'public/extensions/**', 'scripts/build-extensions.mjs', 'src/extensions/**', 'integrations/super-productivity-navopath/**', 'mcp-worker/src/superProductivitySync*', 'src/supabasePlannerApi.ts']
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -17,3 +17,9 @@ jobs:
       - run: npm ci
       - run: node scripts/build-extensions.mjs --check
       - run: npx vitest run src/extensions src/widget/widgetTimer.test.ts
+      - run: node --test mcp-worker/src/superProductivitySync.node-test.ts
+      - run: node --check integrations/super-productivity-navopath/plugin.js
+      - run: node scripts/changelog-maintain.mjs --check
+      - run: npm run css:check
+      - run: npm run build
+      - run: npm test
