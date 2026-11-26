@@ -21,7 +21,7 @@ export interface ExtensionHost {
   getData(): PlannerData; saveData(data: PlannerData): void | Promise<void>;
   getSettings(): Settings; saveSettings(patch: Partial<Settings>): void | Promise<void>;
   toast(message: string): void; getAccountId(): string | null;
-  superProductivity?: { createPairingCode(): Promise<{ code: string; expiresAt: string }>; request(path: string, method?: "GET" | "POST" | "DELETE", body?: unknown): Promise<any> };
+  superProductivity?: { createPairingCode(): Promise<{ code: string; expiresAt: string }>; request(path: string, method?: "GET" | "POST" | "DELETE", body?: unknown): Promise<any>; commitBatch?(pairId: string, before: Pick<PlannerData, "tasks" | "projects">, after: Pick<PlannerData, "tasks" | "projects">): Promise<void> };
   internal: Record<string, any>;
 }
 export interface PluginContext {

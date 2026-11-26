@@ -4,6 +4,7 @@ import { useMobileSheetGesture } from "./useMobileSheetGesture";
 import { uid } from "./utils/ids";
 import { toggleTaskCompletion, setTaskCompletion, habitScheduleForTask } from "./utils/taskCompletion";
 import { captureTaskUndo, refreshTaskCreationUndo, undoTaskChanges } from "./utils/taskUndo";
+import { captureSyncBatch, undoSyncBatch } from "./utils/syncBatchUndo";
 import { recentTaskOperations, TASK_OPERATION_RETENTION_MS, updateSavedTaskOperations } from "./utils/taskOperationHistory";
 import type { TaskOperation, TaskOperationKind } from "./components/TaskOperationHistory";
 import { MobileQuickAddButton } from "./components/MobileQuickAddButton";
@@ -795,6 +796,8 @@ function App() {
   const [shelfViewId, setShelfViewId] = useState(productDemo?.feature === "planning" ? demoTreeView.id : "");
   const [taskOperations, setTaskOperations] = useState<TaskOperation[]>([]);
   const taskOperationsRef = useRef(taskOperations);
+  const syncUndoLockRef = useRef(false);
+  const pausedSyncPairsRef = useRef(new Set<string>());
   taskOperationsRef.current = taskOperations;
   const [shelfMenuOpen, setShelfMenuOpen] = useState(false);
   const [onboardingSettings, setOnboardingSettings] = useState<OnboardingSettingsTopic>();
@@ -2902,11 +2905,59 @@ if (cached?.data && cached?.settings) {
     return saving;
   }
 
+  async function commitSyncBatch(pairId: string, before: Pick<PlannerData, "tasks" | "projects">, after: Pick<PlannerData, "tasks" | "projects">) {
+    const current = dataRef.current;
+    if (!current || syncUndoLockRef.current || pausedSyncPairsRef.current.has(pairId) || current.tasks !== before.tasks || current.projects !== before.projects) throw new Error("Sync paused or workspace changed. Retry.");
+    const next = { ...current, ...after };
+    const { undo, sync } = captureSyncBatch(current, next, pairId);
+    if (!(undo.added.length || undo.removed.length || undo.changes.length || sync.projects.length)) return;
+    const operation: TaskOperation = { id: uid("operation"), workspaceKey: loadedWorkspaceKeyRef.current, at: workspaceNow().toISOString(), kind: "sync", titles: [...undo.added, ...undo.removed, ...undo.changes].map(({title}) => title), undo, sync };
+    const workspaceKey = operation.workspaceKey;
+    // Persist the inverse before the mutation; failed history storage prevents untracked imports.
+    if (!productDemo) await updateSavedTaskOperations(workspaceKey, entries => [operation, ...entries.filter(entry => entry.id !== operation.id)], workspaceNow().getTime());
+    try {
+      const latest = dataRef.current;
+      if (!latest || workspaceKey !== loadedWorkspaceKeyRef.current || syncUndoLockRef.current || pausedSyncPairsRef.current.has(pairId) || latest.tasks !== before.tasks || latest.projects !== before.projects) throw new Error("Sync paused or workspace changed. Retry.");
+      await saveData({ ...latest, ...after });
+    } catch (error) {
+      if (!productDemo) await updateSavedTaskOperations(workspaceKey, entries => entries.filter(entry => entry.id !== operation.id), workspaceNow().getTime());
+      throw error;
+    }
+    if (workspaceKey === loadedWorkspaceKeyRef.current) setTaskOperations(entries => recentTaskOperations([operation,...entries.filter(entry => entry.id !== operation.id)], workspaceNow().getTime()));
+    showUndoToast(lang === "zh" ? "已同步 Super Productivity，可在活动历史撤销" : "Super Productivity synced · undo in Activity history", t(lang,"toast.undo"), () => undoTaskOperation(operation));
+  }
+
+  async function undoSyncOperation(operation: TaskOperation) {
+    if (!operation.sync || syncUndoLockRef.current) return;
+    const sync = operation.sync, workspaceKey = operation.workspaceKey;
+    const current = dataRef.current;
+    if (!current || !undoSyncBatch(current, operation.undo, sync, workspaceNow().toISOString())) { showToast(lang === "zh" ? "同步涉及的数据后来有改动，无法安全撤销。" : "Synced records have changed since this batch; undo is unsafe."); return; }
+    if (!window.confirm(lang === "zh" ? "撤销本次同步对 NavoPath 的更改？将先暂停双向同步，保留 SP 原始数据。之后需重新配对。" : "Undo this batch in NavoPath? Sync will pause first, preserving SP data. Pair again to resume.")) return;
+    syncUndoLockRef.current = true;
+    try {
+      const api = window.plannerApi?.requestSuperProductivitySync;
+      if (!api) throw new Error("Cloud sync API unavailable");
+      const result = await api("/pause", "POST", { pairId: sync.pairId });
+      if (result.status !== "paused" || result.pairId !== sync.pairId) throw new Error("Sync pause was not confirmed");
+      pausedSyncPairsRef.current.add(sync.pairId);
+      const latest = dataRef.current;
+      if (!latest || workspaceKey !== loadedWorkspaceKeyRef.current) throw new Error("Workspace changed");
+      const restored = undoSyncBatch(latest, operation.undo, sync, workspaceNow().toISOString());
+      if (!restored) throw new Error(lang === "zh" ? "同步已暂停，但相关数据有后续修改，未撤销。" : "Sync paused, but later edits prevent undo.");
+      preserveTimelineViewportOnNextDataChange();
+      await saveData(restored);
+      changeTaskOperations(workspaceKey, entries => entries.map(entry => entry.id === operation.id ? { ...entry, undone: true } : entry));
+      showToast(lang === "zh" ? "已撤销本次同步；连接已暂停" : "Sync batch undone; connection paused");
+    } catch (error) { showToast(error instanceof Error ? error.message : String(error)); }
+    finally { syncUndoLockRef.current = false; }
+  }
+
   function undoTaskOperation(operation: TaskOperation) {
     operation = taskOperationsRef.current.find((entry) => entry.id === operation.id) || operation;
     const current = dataRef.current;
     if (!current || operation.undone || operation.workspaceKey !== loadedWorkspaceKeyRef.current
       || Date.parse(operation.at) <= workspaceNow().getTime() - TASK_OPERATION_RETENTION_MS) return;
+    if (operation.sync) { void undoSyncOperation(operation); return; }
     const next = undoTaskChanges(current, operation.undo, workspaceNow().toISOString());
     if (next === current) {
       showToast(lang === "zh" ? "相关任务后来有改动，暂时无法撤销。" : "The affected tasks have since changed. This action can’t be undone yet.");
@@ -3271,6 +3322,7 @@ if (cached?.data && cached?.settings) {
       getAccountId: () => authStateRef.current?.user?.id || null,
       toast: message => showToast(message),
       superProductivity: {
+        commitBatch: (pairId, before, after) => commitSyncBatch(pairId, before, after),
         createPairingCode: () => window.plannerApi?.createSuperProductivityPairingCode?.() ?? Promise.reject(new Error("Cloud account required")),
         request: (path, method, body) => window.plannerApi?.requestSuperProductivitySync?.(path, method, body) ?? Promise.reject(new Error("Cloud account required")),
       },

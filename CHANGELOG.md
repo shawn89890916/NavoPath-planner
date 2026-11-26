@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 106
+
+#### 改进
+
+- Super Productivity 同步产生的任务、项目及时间轴变更按批次记录在活动历史，支持三天内撤销；撤销前暂停连接，保留另一端原始数据。首次同步区分双向合并与单端覆盖。
+
 ### 1.7.0 Beta 105
 
 #### 修复
@@ -1157,6 +1163,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 106
+
+#### Improvements
+
+- Activity history records Super Productivity task, project and timeline changes in batches, with undo for three days. Undo pauses the connection and preserves the original data on the other side. First sync distinguishes merge from authoritative overwrite.
 
 ### 1.7.0 Beta 105
 

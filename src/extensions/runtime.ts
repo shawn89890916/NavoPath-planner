@@ -1,7 +1,7 @@
 import { registerCalendarBackground } from "./calendarBackgrounds";
 import type { Dispose, ExtensionContribution, ExtensionHost, ExtensionPackage, ExtensionPlatform, Mount, PluginContext, PluginModule, CollectionApi, NativeShelfViewMode, NativeToolPage, PluginLauncherStatus } from "./types";
 import { registerTimerMode } from "./timers";
-import type { CalendarEvent, Project, Task } from "../types";
+import type { CalendarEvent, PlannerData, Project, Task } from "../types";
 
 export interface RuntimeBridge {
   host: ExtensionHost; platform: ExtensionPlatform; key: string;
@@ -84,7 +84,7 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
     if (disposed || !syncHost || !syncAccount || bridge.host.getAccountId() !== syncAccount) throw new Error("Sign in to NavoPath Cloud to sync");
     return syncHost;
   };
-  const scopedSync = { createPairingCode: async () => requireSyncHost().createPairingCode(), request: async (path: string, method?: "GET" | "POST" | "DELETE", body?: unknown) => requireSyncHost().request(path, method, body) };
+  const scopedSync = { createPairingCode: async () => requireSyncHost().createPairingCode(), request: async (path: string, method?: "GET" | "POST" | "DELETE", body?: unknown) => requireSyncHost().request(path, method, body), commitBatch: syncHost?.commitBatch ? async (pairId: string, before: Pick<PlannerData, "tasks" | "projects">, after: Pick<PlannerData, "tasks" | "projects">) => requireSyncHost().commitBatch!(pairId, before, after) : undefined };
   const context: PluginContext = {
     apiVersion: 1, id: bridge.key, manifest: pkg.manifest, platform: bridge.platform, window: typeof location !== "undefined" && new URLSearchParams(location.search).get("compactWindow") === "1" ? "compact" : "main", language: bridge.host.getSettings().language,
     app: { ...bridge.host, superProductivity: syncHost ? scopedSync : undefined, internal: { ...bridge.host.internal,
