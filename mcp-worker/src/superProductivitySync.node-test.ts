@@ -183,3 +183,15 @@ test("target edits, deletion and unreviewed additions cannot flow back to the so
   assert.ok(buildActions(state, "superproductivity").some(a => a.fields.title === "Also shared" && !a.deleted));
   assert.ok(state.initialOverwrite);
 });
+
+test("fresh pairs exclude the protected SP Inbox while preserving its tasks", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", { overwriteVersion: 1, projects: [], tasks: [entity("n1", "Source")] }, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", { overwriteVersion: 1, projects: [entity("INBOX_PROJECT", "Inbox"), entity("extra", "Extra")], tasks: [{ ...entity("s1", "Target task", { projectTitle: "Inbox" }), projectId: "INBOX_PROJECT" }] }, "2026-11-26T00:00:01Z");
+  assert.deepEqual(createInitialPreview(state).projects.superproductivity.map(p => p.id), ["extra"]);
+  assert.equal(createInitialPreview(state).tasks.superproductivity[0].fields.projectTitle, "");
+  confirmInitialSync(state, [], "overwrite-navopath");
+  assert.ok(buildActions(state, "superproductivity").some(a => a.id === "s1" && a.deleted));
+  assert.ok(!buildActions(state, "superproductivity").some(a => a.id === "INBOX_PROJECT"));
+  assert.deepEqual(buildActions(state, "navopath"), []);
+});
