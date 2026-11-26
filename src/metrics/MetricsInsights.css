@@ -1,0 +1,44 @@
+.df-metric-insight-tabs { display:flex; flex-wrap:wrap; gap: 4px 12px; align-items:center; border-bottom:1px solid var(--paper-rule); padding-block:6px; }
+.df-metric-insight-tabs button[aria-pressed="true"] { color:var(--text-main); text-decoration:underline; text-underline-offset:5px; }
+.df-metric-insight-content { min-width:0; padding:12px 0; color:var(--text-main); }
+.df-metric-insight-content h3 { margin:12px 0 6px; font-size:14px; }
+.df-metric-insight-content p { color:var(--text-muted); font-size:12px; overflow-wrap:anywhere; }
+.df-metric-insight-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:12px; border-bottom:1px solid var(--paper-rule); padding-block:10px; }
+.df-metric-insight-stats div { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.df-metric-insight-stats span { color:var(--text-muted); font-size:11px; }
+.df-metric-insight-stats strong { font-size:20px; font-variant-numeric:tabular-nums; }
+.df-metric-insight-trend { display:flex; overflow-x:auto; gap:5px; padding-block:8px; }
+.df-metric-insight-trend button { display:flex; flex-direction:column-reverse; justify-content:flex-start; align-items:center; border:0; background:none; color:var(--text-muted); flex:0 0 42px; padding:4px; font-size:10px; }
+.df-metric-insight-trend button[aria-pressed="true"] { color:var(--text-main); outline:1px solid var(--accent-active); }
+.df-metric-insight-bars { display:flex; align-items:flex-end; justify-content:center; width:100%; height:108px; gap:2px; border-bottom:1px solid var(--paper-rule); }
+.df-metric-insight-bars i { width:8px; background:var(--paper-rule-strong); }
+.df-metric-insight-bars i:nth-child(2) { background:var(--accent-active); }
+.df-metric-insight-bars i:nth-child(3) { background:var(--text-muted); }
+.df-metric-insight-row { display:grid; grid-template-columns:minmax(76px,1fr) minmax(40px,2fr) 38px; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid var(--paper-rule); font-size:12px; }
+.df-metric-insight-content progress { width:100%; accent-color:var(--accent-active); }
+.df-metric-insight-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.df-metric-insight-history details { border-bottom:1px solid var(--paper-rule); padding:8px 0; font-size:12px; }
+.df-metric-insight-history summary { cursor:pointer; overflow-wrap:anywhere; }
+.df-metric-insight-history pre { white-space:pre-wrap; overflow-wrap:anywhere; color:var(--text-muted); font-size:11px; }
+
+.df-metric-insight-heatmap { display:grid; grid-template-columns:repeat(auto-fill,minmax(42px,1fr)); gap:4px; padding-block:12px; }
+.df-metric-insight-heatmap button { min-height:27px; border:0; border-radius:4px; color:var(--text-main); font-size:10px; }
+.df-metric-insight-heatmap button[aria-pressed="true"] { outline:2px solid var(--accent-active); outline-offset:2px; }
+.df-metric-insight-table { overflow:auto; }
+.df-metric-insight-table table { width:100%; border-collapse:collapse; font-size:12px; font-variant-numeric:tabular-nums; }
+.df-metric-insight-table :is(th,td) { text-align:right; border-bottom:1px solid var(--paper-rule); padding:8px 6px; white-space:nowrap; }
+.df-metric-insight-table :is(th,td):first-child { text-align:left; }
+
+.df-metric-saved-views { border-bottom:1px solid var(--paper-rule); padding:8px 0; font-size:12px; }
+.df-metric-saved-views summary { color:var(--text-muted); cursor:pointer; }
+.df-metric-saved-views .df-metric-insight-actions { padding-top:8px; }
+.df-metric-saved-views :is(input,select) { min-width:0; max-width:100%; padding:5px 8px; background:var(--paper-bg); color:var(--text-main); border:1px solid var(--paper-rule); font:inherit; }
+.df-metric-insight-scatter { display:block; max-width:100%; width:min(100%,420px); margin:12px auto; color:var(--text-muted); }
+
+.df-metric-group-row { display:grid; grid-template-columns:minmax(90px,1fr) minmax(40px,2fr) auto; gap:8px; align-items:center; width:100%; border:0; border-bottom:1px solid var(--paper-rule); padding:10px 0; background:none; color:var(--text-main); text-align:left; }
+.df-metric-group-row[aria-pressed='true'] { color:var(--accent-active); }
+
+.df-metric-hour-grid { overflow:auto; padding:8px 0; }
+.df-metric-hour-grid > div { display:grid; grid-template-columns:32px repeat(24,minmax(12px,1fr)); gap:3px; min-width:400px; padding:2px 0; align-items:center; }
+.df-metric-hour-grid [role="cell"] { height:14px; border-radius:2px; }
+.df-metric-hour-grid [role="rowheader"] { font-size:11px; }

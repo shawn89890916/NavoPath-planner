@@ -4,6 +4,7 @@
 
 ### 改进
 
+- 指标插件新增时间趋势、热力图、项目数据表、独立执行状态、明确投入度评分覆盖率和可选的本机变更历史；计划时长与实际计时分别展示，支持自定义视图保存、已观察计划变更分析及 CSV 导出，修正跨日和重复排程统计；历史可区分部分撤销、插件、系统、计时状态与远端观察，支持待写入事件恢复及每日首次观察计划快照；新增按日、周、月趋势、计时覆盖率、时段热力图与独立取消执行统计。
 - 设置精简为六个主要分区，低频配置按需展开；窄窗口可直接搜索设置，搜索结果自动打开对应分区。工作时段统一供智能排程与 AI 简报使用，保留现有自定义参数。
 - 指标设置归入扩展与连接；新增已修改偏好筛选和单项、分类恢复默认值。外观圆角支持 0–64px，默认 32px。
 
@@ -975,6 +976,7 @@
 
 ### Improvements
 
+- Metrics adds time trends, a heatmap, project tables, independent execution states, explicit engagement-rating coverage and opt-in local change history; scheduled and tracked time are separate, saved custom views, observed plan changes and CSV export are supported, and cross-day and duplicate schedule counting are corrected. History distinguishes supported undo, plugin, system and timer transitions from remote observations and recovers pending event writes, with first-observed daily plan snapshots. Adds day/week/month trends, linked measurement coverage, weekday-hour heatmaps and separate cancellation counts.
 - Settings now has six main categories with advanced controls available on demand. Search is available in compact windows and opens the relevant section. Smart scheduling and AI briefs share one working-hours configuration while preserving existing customization.
 - Metrics preferences move to Extensions & Connections; modified preferences can be reviewed and reset individually or by category. Corner radius supports 0–64px and defaults to 32px.
 

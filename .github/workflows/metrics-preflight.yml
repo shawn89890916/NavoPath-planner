@@ -1,0 +1,30 @@
+name: Metrics preflight
+
+on:
+  pull_request:
+    paths:
+      - 'src/metrics/**'
+      - 'src/PlanningView.tsx'
+      - 'src/main.tsx'
+      - '.github/workflows/metrics-preflight.yml'
+  push:
+    branches: ['feature/metrics-2-data-and-views']
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/changelog-maintain.mjs --check
+      - run: npm test
+      - run: npm run css:check
+      - run: npm run build
+      - run: npm run size:check

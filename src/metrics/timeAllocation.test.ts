@@ -156,7 +156,7 @@ describe("time allocation metrics", () => {
       ["project-1", "Applications", 90, 60],
       ["__unassigned__", "未归属", 60, 40],
     ]);
-    expect(result.summary.completedTaskCount).toBe(1);
+    expect(result.summary.completedTaskCount).toBe(0);
   });
 
   it("counts explicit timeline records across dates when range is all", () => {
@@ -309,5 +309,25 @@ describe("time allocation metrics", () => {
       durationMinutes: 60,
     });
     expect(cancelledResult.summary.plannedMinutes).toBe(0);
+  });
+});
+
+
+describe("independent metrics records", () => {
+  it("does not duplicate legacy schedule fields or complete pending executions from parent status", () => {
+    const task: Task = {...baseTask,completed:true,scheduledDate:"2026-07-06",scheduledStart:"09:00",scheduledEnd:"10:00",timelineRecords:[
+      {id:"done",taskId:baseTask.id,scheduledDate:"2026-07-06",scheduledStart:"09:00",scheduledEnd:"10:00",executionStatus:"completed",createdAt:"now"},
+      {id:"pending",taskId:baseTask.id,scheduledDate:"2026-07-06",scheduledStart:"11:00",scheduledEnd:"12:00",executionStatus:"scheduled",createdAt:"now"}
+    ]};
+    const options={data:{...baseData,tasks:[task]},range:{preset:"today" as const,anchorDate:"2026-07-06"}};
+    expect(buildTimeAllocationMetrics(options).summary.plannedMinutes).toBe(120);
+    expect(buildTimeAllocationMetrics({...options,completion:"completed"}).summary.plannedMinutes).toBe(60);
+    expect(buildTimeAllocationMetrics({...options,completion:"incomplete"}).summary.plannedMinutes).toBe(60);
+  });
+  it("assigns pre-boundary minutes to the preceding metric date",()=>{
+    const task:Task={...baseTask,timelineRecords:[{id:"overnight",taskId:baseTask.id,scheduledDate:"2026-07-06",scheduledStart:"23:00",scheduledEndDate:"2026-07-07",scheduledEnd:"05:00",executionStatus:"scheduled",createdAt:"now"}]};
+    const result=buildTimeAllocationMetrics({data:{...baseData,tasks:[task]},range:{preset:"thisWeek",anchorDate:"2026-07-06"},dayStartMinutes:240});
+    expect(result.heatmapBuckets.map(b=>[b.date,b.minutes])).toEqual([["2026-07-06",300],["2026-07-07",60]]);
+    expect(localStamp(getMetricRange({preset:"thisWeek",anchorDate:"2026-07-08",weekStartsOn:0}).start)).toBe("2026-07-05 00:00");
   });
 });
