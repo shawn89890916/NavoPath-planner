@@ -14,6 +14,9 @@
     main > p:first-of-type { max-width: 42ch; line-height: 1.65; }
     button, input { font: inherit; color: inherit; }
     button { min-width: 0; min-height: 42px; padding: 9px 14px; border: 1px solid var(--divider-color, #d9d1c5); border-radius: 8px; background: transparent; cursor: pointer; transition: border-color .15s ease, background-color .15s ease; }
+    button[aria-pressed="true"] { color: var(--button-text, #fff); background: var(--c-primary, #584d3d); border-color: var(--c-primary, #584d3d); }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    #status[aria-busy="true"] { border-left-color: var(--c-primary, #584d3d); }
     button:hover { border-color: var(--c-primary, #584d3d); }
     button:disabled { opacity: .55; cursor: wait; }
     button:focus-visible, input:focus-visible { outline: 2px solid var(--c-primary, #584d3d); outline-offset: 2px; }
@@ -46,7 +49,9 @@
     <section class="card" id="deleted" hidden><strong>Recently deleted (30 days)</strong><div id="deleted-list" class="list"></div></section>
     <section class="card" id="preview" hidden>
       <strong>First import preview</strong>
-      <p>Suggested exact-title matches start with NavoPath values. Unchecked items stay as separate tasks.</p>
+      <p>Choose the source of shared fields. Unchecked items stay separate.</p>
+      <p id="preview-summary" aria-live="polite"></p>
+      <div id="preview-options" class="row"><button type="button" id="all">Select all</button><button type="button" id="none">Clear all</button><button type="button" id="np-wins">Use NavoPath for all</button><button type="button" id="sp-wins">Use SP for all</button></div>
       <div id="project-matches" class="list"></div>
       <div id="task-matches" class="list"></div>
       <button id="confirm" type="button">Confirm and start syncing</button>
@@ -60,7 +65,7 @@
     const TOKEN_KEY = 'navopath-sync:token:v1';
     const $ = id => document.getElementById(id);
     let local = { pairId: '', links: { tasks: {}, projects: {} }, tombstones: {} };
-    let token = null, busy = false, preview = null, stopped = false;
+    let token = null, busy = false, preview = null, stopped = false, previewKey = "", previewRevision = null, lastSuccess = "", lastApplied = 0;
     const setStatus = (text, error = false) => { $('status').textContent = text; $('status').className = error ? 'error' : ''; };
     const requiredMethods = ['request', 'persistDataSynced', 'loadSyncedData', 'getAllProjects', 'getAllTags', 'getTasks', 'addTask', 'updateTask', 'deleteTask', 'addProject', 'updateProject', 'deleteProject', 'addTag'];
     const missingMethods = !API ? ['PluginAPI'] : requiredMethods.filter(method => typeof API[method] !== 'function');
@@ -101,26 +106,56 @@
         } }))),
       };
     }
-    function matchRow(kind, item, suggested, counterpart) {
+    function updatePreviewSummary() {
+      const rows = [...document.querySelectorAll('#preview input[data-kind]')];
+      const checked = rows.filter(input => input.checked);
+      const np = checked.filter(input => input.parentElement.querySelector('select').value === 'navopath').length;
+      $('preview-summary').textContent = `Link ${checked.length} of ${rows.length} matches · NavoPath wins: ${np} · SP wins: ${checked.length - np}`;
+      for (const [id, active] of [['all', rows.length > 0 && checked.length === rows.length], ['none', rows.length > 0 && checked.length === 0], ['np-wins', rows.length > 0 && checked.length === rows.length && np === rows.length], ['sp-wins', rows.length > 0 && checked.length === rows.length && np === 0]]) $(id).setAttribute('aria-pressed', String(active));
+    }
+    function setAll(selected, side) {
+      for (const input of document.querySelectorAll('#preview input[data-kind]')) {
+        input.checked = selected;
+        const select = input.parentElement.querySelector('select'); select.disabled = !selected;
+        if (side) select.value = side;
+      }
+      updatePreviewSummary();
+    }
+    $('all').onclick = () => setAll(true);
+    $('none').onclick = () => setAll(false);
+    $('np-wins').onclick = () => setAll(true, 'navopath');
+    $('sp-wins').onclick = () => setAll(true, 'superproductivity');
+    function matchRow(kind, item, counterpart, prior) {
       const label = document.createElement('label');
-      const input = document.createElement('input'); input.type = 'checkbox'; input.checked = suggested.includes(item.id); input.dataset.kind = kind; input.dataset.left = item.id; input.dataset.right = counterpart;
-      const text = document.createElement('span'); text.textContent = `${item.fields.title || '(untitled)'} ↔ ${suggested.includes(item.id) ? counterpart : 'import as separate item'}`;
-      label.append(input, text); return label;
+      const input = document.createElement('input'); input.type = 'checkbox'; input.checked = prior?.selected ?? true; input.dataset.kind = kind; input.dataset.left = item.id; input.dataset.right = counterpart.id;
+      const text = document.createElement('span'); text.textContent = `${item.fields.title || '(untitled)'} ↔ ${counterpart.fields.title || '(untitled)'}`;
+      const select = document.createElement('select'); select.setAttribute('aria-label', 'Preferred source');
+      for (const [value, name] of [['navopath','NavoPath'], ['superproductivity','Super Productivity']]) { const option = document.createElement('option'); option.value = value; option.textContent = name; select.append(option); }
+      select.value = prior?.side || 'navopath'; select.disabled = !input.checked;
+      input.onchange = () => { select.disabled = !input.checked; updatePreviewSummary(); };
+      select.onchange = updatePreviewSummary;
+      label.append(input, text, select); return label;
     }
     function showPreview(data) {
-      preview = data.preview; $('preview').hidden = !preview;
+      preview = data.preview; previewRevision = data.revision; $('preview').hidden = !preview;
       if (!preview) return;
+      const key = JSON.stringify(preview);
+      if (key === previewKey) return;
+      const prior = new Map([...document.querySelectorAll('#preview input[data-kind]')].map(input => [JSON.stringify([input.dataset.kind,input.dataset.left,input.dataset.right]), {selected: input.checked, side: input.parentElement.querySelector('select').value}]));
+      previewKey = key;
       for (const [kind, source, target] of [['project', preview.projects, 'project-matches'], ['task', preview.tasks, 'task-matches']]) {
         const root = $(target); root.replaceChildren();
         const suggestedById = new Map(source.suggestions.map(item => [item.navopathId, item.superproductivityId]));
         for (const item of source.navopath) {
-          if (suggestedById.has(item.id)) root.append(matchRow(kind, item, [...suggestedById.keys()], suggestedById.get(item.id)));
+          const counterpart = source.superproductivity.find(entry => entry.id === suggestedById.get(item.id));
+          if (counterpart) root.append(matchRow(kind, item, counterpart, prior.get(JSON.stringify([kind,item.id,counterpart.id]))));
           else { const note = document.createElement('p'); note.textContent = `${item.fields.title || '(untitled)'} · import separately`; root.append(note); }
         }
         for (const item of source.superproductivity) if (!source.suggestions.some(match => match.superproductivityId === item.id)) {
           const note = document.createElement('p'); note.textContent = `${item.fields.title || '(untitled)'} · Super Productivity only`; root.append(note);
         }
       }
+      updatePreviewSummary();
     }
     function showConflicts(conflicts = []) {
       $('conflicts').hidden = !conflicts.length; const root = $('conflict-list'); root.replaceChildren();
@@ -132,7 +167,7 @@
         const buttons = document.createElement('div'); buttons.className = 'row';
         for (const [side, label] of [['navopath', 'Use NavoPath'], ['superproductivity', 'Use Super Productivity']]) {
           const button = document.createElement('button'); button.type = 'button'; button.textContent = label;
-          button.onclick = () => void withBusy(() => request('resolve', 'POST', { pairId: local.pairId, conflictId: item.id, chosen: side }).then(renderState)); buttons.append(button);
+          button.onclick = () => { if (busy) return; button.setAttribute('aria-pressed','true'); for (const control of buttons.querySelectorAll('button')) control.disabled = true; void withBusy(async () => { try { await request('resolve', 'POST', { pairId: local.pairId, conflictId: item.id, chosen: side }); await runSync(); } finally { for (const control of buttons.querySelectorAll('button')) control.disabled = false; button.setAttribute('aria-pressed','false'); } }); }; buttons.append(button);
         }
         row.append(title, a, b, buttons); root.append(row);
       }
@@ -194,6 +229,7 @@
         if (Object.hasOwn(fields, 'projectTitle')) updates.projectId = allProjects.find(project => project.title === fields.projectTitle)?.id || null;
         if (Object.hasOwn(fields, 'dueDate')) updates.dueDay = fields.dueDate || null;
         if (Object.hasOwn(fields, 'scheduledAt')) updates.dueWithTime = fields.scheduledAt ? new Date(fields.scheduledAt).getTime() : null;
+        if (Object.hasOwn(fields, 'scheduledMinutes') && Number(fields.scheduledMinutes) > 0) updates.timeEstimate = Math.round(Number(fields.scheduledMinutes) * 60000);
         if (Object.hasOwn(fields, 'tags')) {
           const tagList = await API.getAllTags();
           const tagIds = [];
@@ -208,6 +244,7 @@
         else {
           const created = await API.addTask({ ...updates, isIgnoreShortSyntax: true });
           id = created; map[created] = action.syncId;
+          if (Object.hasOwn(updates, 'dueWithTime') && updates.dueWithTime) await API.updateTask(created, { dueWithTime: updates.dueWithTime, timeEstimate: updates.timeEstimate });
         }
       }
       await persist();
@@ -215,22 +252,24 @@
     async function renderState(state) {
       if (state.pairId) local.pairId = state.pairId;
       $('pairing').hidden = Boolean(local.pairId); $('sync').hidden = !local.pairId; $('disconnect').hidden = !local.pairId;
-      if (state.status === 'preview') showPreview(state); else { preview = null; $('preview').hidden = true; }
+      if (state.status === 'preview') showPreview(state); else { preview = null; previewKey = ''; $('preview').hidden = true; }
       showConflicts(state.conflicts || []);
       showDeleted();
-      setStatus(state.status || 'Connected');
+      const labels = {waiting:'Waiting for the other app',preview:'Connected · review first import',active:'Connected · automatic sync'};
+      setStatus(busy ? 'Syncing…' : (labels[state.status] || 'Connected'));
     }
     async function withBusy(work) {
-      if (busy || stopped) return; busy = true; $('connect').disabled = $('sync').disabled = $('confirm').disabled = true;
-      try { await work(); } catch (error) { setStatus(error?.message || String(error), true); }
-      finally { busy = false; $('connect').disabled = $('sync').disabled = $('confirm').disabled = false; }
+      if (busy || stopped) return; busy = true; $('connect').disabled = $('sync').disabled = $('confirm').disabled = $('disconnect').disabled = true;
+      $('status').setAttribute('aria-busy','true'); $('sync').textContent = 'Syncing…'; $('confirm').textContent = 'Working…'; setStatus('Syncing…');
+      try { await work(); if (token && local.pairId) setStatus(preview ? 'Connected · review first import' : lastSuccess ? `Last sync ${lastSuccess} · ${lastApplied} changes applied` : 'Waiting for the other app'); } catch (error) { setStatus(error?.message || String(error), true); }
+      finally { busy = false; $('status').setAttribute('aria-busy','false'); $('sync').textContent = 'Sync now'; $('confirm').textContent = 'Confirm and start syncing'; $('connect').disabled = $('sync').disabled = $('confirm').disabled = $('disconnect').disabled = false; }
     }
     async function runSync() {
       if (!token || !local.pairId) return;
       const state = await request(`state?pairId=${encodeURIComponent(local.pairId)}`); await renderState(state);
       if (state.status === 'preview') return;
       const result = await request('snapshot', 'POST', { pairId: local.pairId, platform: 'superproductivity', snapshot: await snapshot() });
-      setAssignments(result.assignments); await applyActions(result.actions); await persist(); await renderState(result);
+      setAssignments(result.assignments); await applyActions(result.actions); await persist(); if (result.status === 'active') { lastApplied = (result.actions || []).length; lastSuccess = new Date().toLocaleTimeString(); } await renderState(result);
     }
     $('connect').onclick = () => void withBusy(async () => {
       const code = $('code').value.trim(); if (!code) throw new Error('Paste a pairing code first');
@@ -240,8 +279,10 @@
     });
     $('sync').onclick = () => void withBusy(runSync);
     $('confirm').onclick = () => void withBusy(async () => {
-      const matches = [...document.querySelectorAll('#preview input[type=checkbox]:checked')].map(input => ({ kind: input.dataset.kind, navopathId: input.dataset.left, superproductivityId: input.dataset.right }));
-      await renderState(await request('confirm', 'POST', { pairId: local.pairId, matches })); await runSync();
+      const matches = [...document.querySelectorAll('#preview input[type=checkbox]:checked')].map(input => ({ kind: input.dataset.kind, navopathId: input.dataset.left, superproductivityId: input.dataset.right, preferredSide: input.parentElement.querySelector('select').value }));
+      const state = await request(`state?pairId=${encodeURIComponent(local.pairId)}`);
+      if (state.status !== 'preview' || JSON.stringify(state.preview) !== previewKey) { await renderState(state); throw new Error('Preview changed. Review it before confirming.'); }
+      await renderState(await request('confirm', 'POST', { pairId: local.pairId, matches, expectedRevision: state.revision })); await runSync();
     });
     $('disconnect').onclick = () => void withBusy(async () => {
       clearToken(); token = null; local = { pairId: '', links: { tasks: {}, projects: {} }, tombstones: {} }; await persist();
@@ -253,7 +294,7 @@
         token = readToken(); $('pairing').hidden = Boolean(token && local.pairId); $('sync').hidden = !(token && local.pairId); $('disconnect').hidden = !(token && local.pairId);
         if (token && local.pairId) await withBusy(runSync); else if (local.pairId) setStatus('This device needs its own pairing code');
       } catch (error) { setStatus(error?.message || String(error), true); }
-      window.setInterval(() => { if (!busy && token && local.pairId) void withBusy(runSync); }, 30_000);
+      window.setInterval(() => { if (!busy && token && local.pairId) void withBusy(runSync); }, 15_000);
     })();
     }
   </script>
