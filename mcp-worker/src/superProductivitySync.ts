@@ -37,6 +37,42 @@ export function normalizeSyncSnapshot(value: unknown): SyncSnapshot {
   return { projects: normalize(value.projects, "project"), tasks: normalize(value.tasks, "task"), ...(value.overwriteVersion === 1 ? { overwriteVersion: 1 as const } : {}) };
 }
 
+const SP_INBOX = "INBOX_PROJECT";
+const sameField = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
+// Existing connections can contain a tombstone for SP's non-deletable Inbox.
+// Retire that mapping without emitting a deletion on either side.
+function withoutInbox(snapshot: SyncSnapshot): SyncSnapshot {
+  const inbox = snapshot.projects.find(item => item.id === SP_INBOX);
+  const uniqueInboxTitle = inbox && !snapshot.projects.some(item => item.id !== SP_INBOX && item.fields.title === inbox.fields.title);
+  return { ...snapshot, projects: snapshot.projects.filter(item => item.id !== SP_INBOX), tasks: snapshot.tasks.map(item =>
+    item.projectId === SP_INBOX || (!item.projectId && inbox && uniqueInboxTitle && item.fields.projectTitle === inbox.fields.title)
+      ? { ...item, fields: { ...item.fields, projectTitle: "" } } : item) };
+}
+function repairReservedInbox(state: SyncState) {
+  const previous = state.latest.superproductivity;
+  if (previous) state.latest.superproductivity = withoutInbox(previous);
+  state.ignoreSpInbox = true;
+  for (const [id, entry] of Object.entries(state.canonical)) {
+    if (entry.kind !== "project" || entry.ids.superproductivity !== SP_INBOX) continue;
+    const local = state.latest.navopath?.projects.find(item => item.id === entry.ids.navopath);
+    delete state.pending[id];
+    state.conflicts = state.conflicts.filter(conflict => conflict.syncId !== id);
+    if (!local) { delete state.canonical[id]; continue; }
+    // If a real NavoPath project was linked to Inbox, preserve it. Only create
+    // its regular counterpart where doing so cannot change an overwrite source.
+    entry.ids = { navopath: local.id };
+    entry.fields = { ...local.fields };
+    delete entry.deleted; delete entry.overwriteTarget;
+    if (state.initialOverwrite?.source !== "superproductivity") state.pending[id] = { $create: "superproductivity" };
+  }
+}
+
+function projectedEqual(side: SyncSide, fields: Record<string, unknown>, field: string, value: unknown) {
+  if (side === "superproductivity" && field === "color" && fields[field] == null) return true;
+  return sameField(value, side === "superproductivity" && field === "dueDate" && fields.scheduledAt ? null : fields[field]);
+}
+
 const normalizeTitle = (value: unknown) => String(value || "").normalize("NFKC").trim().toLocaleLowerCase();
 export function createInitialPreview(state: SyncState) {
   const navopath: SyncSnapshot = state.latest.navopath || { projects: [], tasks: [] };
@@ -117,12 +153,9 @@ export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "pro
 
 export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: SyncSnapshot, timestamp: string) {
   if (state.status === "paused") return { state, assignments: [], actions: [] };
-  // Inbox is SP's reserved fallback project, not a user project. New pairs
-  // exclude it; existing active connections retain their previous mapping.
-  if (side === "superproductivity" && state.status !== "active" && snapshot.overwriteVersion === 1) state.ignoreSpInbox = true;
-  if (side === "superproductivity" && state.ignoreSpInbox) {
-    snapshot = { ...snapshot, projects: snapshot.projects.filter(item => item.id !== "INBOX_PROJECT"), tasks: snapshot.tasks.map(item => item.projectId === "INBOX_PROJECT" ? { ...item, fields: { ...item.fields, projectTitle: "" } } : item) };
-  }
+  // Migrate legacy active connections as well as first-pair previews.
+  repairReservedInbox(state);
+  if (side === "superproductivity") snapshot = withoutInbox(snapshot);
   if (state.status !== "active") {
     if (JSON.stringify(state.latest[side]) !== JSON.stringify(snapshot)) { state.latest[side] = snapshot; state.baseRevision++; }
     return { state, assignments: [] as Array<{ kind: "project" | "task"; id: string; syncId: string }>, actions: [] as ReturnType<typeof buildActions> };
@@ -162,16 +195,17 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
       if (canonical.deleted && canonical.overwriteTarget === side) {
         state.pending[syncId] = { $deleted: side }; continue;
       }
-      if (state.pending[syncId]?.$create === side) delete state.pending[syncId].$create;
-      if (overwritingTarget) {
+      const acknowledgingCreate = state.pending[syncId]?.$create === side;
+      if (acknowledgingCreate) delete state.pending[syncId].$create;
+      if (overwritingTarget || acknowledgingCreate) {
         const pending = state.pending[syncId] ||= {};
         if (canonical.deleted) { pending.$deleted = side; continue; }
-        // Never let the first target snapshot overwrite source values, even
-        // when a matched target was edited after the confirmation.
-        for (const [field, value] of Object.entries(canonical.fields)) {
+        // A created host record can exist before its second scheduling update
+        // succeeds. Treat its first snapshot as acknowledgement, not a new
+        // user edit. Retry all unapplied source fields without erasing them.
+        for (const field of Object.keys(canonical.fields)) {
           // SP's timed schedule and day-only due date are mutually exclusive.
-          const projected = side === "superproductivity" && field === "dueDate" && canonical.fields.scheduledAt ? null : value;
-          const equal = (side === "superproductivity" && field === "color" && value == null) || JSON.stringify(item.fields[field]) === JSON.stringify(projected);
+          const equal = projectedEqual(side, canonical.fields, field, item.fields[field]);
           if (equal) { if (pending[field] === side) delete pending[field]; }
           else pending[field] = side;
         }
@@ -179,13 +213,18 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
       }
       for (const field of new Set([...Object.keys(old?.fields || {}), ...Object.keys(item.fields)])) {
         if (side === "superproductivity" && field === "scheduleBlocks") continue;
+        // A timed SP task cannot express an independent NavoPath due date.
+        if (side === "superproductivity" && field === "dueDate" && item.fields.scheduledAt) {
+          if (state.pending[syncId]?.dueDate === side) delete state.pending[syncId].dueDate;
+          continue;
+        }
         const changed = JSON.stringify(old?.fields[field]) !== JSON.stringify(item.fields[field]);
         const pendingTo = state.pending[syncId]?.[field];
-        if (pendingTo === side && JSON.stringify(item.fields[field]) === JSON.stringify(canonical.fields[field])) { delete state.pending[syncId][field]; continue; }
+        if (pendingTo === side && projectedEqual(side, canonical.fields, field, item.fields[field])) { delete state.pending[syncId][field]; continue; }
         if (!changed || state.conflicts.some(c => c.syncId === syncId && c.field === field)) continue;
-        if (pendingTo === side && JSON.stringify(item.fields[field]) !== JSON.stringify(canonical.fields[field])) {
+        if (pendingTo === side && !projectedEqual(side, canonical.fields, field, item.fields[field])) {
           state.conflicts.push({ id: crypto.randomUUID(), syncId, kind, field, navopath: side === "navopath" ? item.fields[field] : canonical.fields[field], superproductivity: side === "superproductivity" ? item.fields[field] : canonical.fields[field], createdAt: timestamp });
-        } else if (JSON.stringify(item.fields[field]) !== JSON.stringify(canonical.fields[field])) {
+        } else if (!projectedEqual(side, canonical.fields, field, item.fields[field])) {
           canonical.fields[field] = item.fields[field];
           state.pending[syncId] = { ...(state.pending[syncId] || {}), [field]: side === "navopath" ? "superproductivity" : "navopath" };
         }
@@ -217,6 +256,26 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
     }
   }
   state.latest[side] = snapshot; state.baseRevision++;
+  // Recover schedules that were previously acknowledged incorrectly or never
+  // queued. Only retry a missing target slot when the canonical scheduled slot
+  // still exists on its source; never overwrite a different explicit slot.
+  const localByLink = new Map((state.latest.navopath?.tasks || []).map(item => [item.syncId,item]));
+  const remoteByLink = new Map((state.latest.superproductivity?.tasks || []).map(item => [item.syncId,item]));
+  for (const [syncId, entry] of Object.entries(state.canonical)) {
+    if (entry.kind !== "task" || entry.deleted || !entry.fields.scheduledAt ||
+        state.conflicts.some(c => c.syncId === syncId && ["scheduledAt", "scheduledMinutes", "$deleted"].includes(c.field))) continue;
+    const pending = state.pending[syncId] ||= {};
+    if (pending.$deleted || pending.$create) continue;
+    const a = localByLink.get(syncId);
+    const b = remoteByLink.get(syncId);
+    if (!a || !b) continue;
+    for (const [source,target,origin,destination] of [["navopath","superproductivity",a,b],["superproductivity","navopath",b,a]] as const) {
+      if (state.initialOverwrite && state.initialOverwrite.source !== source) continue;
+      if (sameField(origin.fields.scheduledAt, entry.fields.scheduledAt) && sameField(origin.fields.scheduledMinutes, entry.fields.scheduledMinutes) && !destination.fields.scheduledAt && !pending.scheduledAt && !pending.scheduledMinutes) {
+        pending.scheduledAt = target; pending.scheduledMinutes = target;
+      }
+    }
+  }
   if (overwritingTarget && !Object.values(state.pending).some(pending => Object.values(pending).includes(side))) delete state.initialOverwrite;
   return { state, assignments, actions: buildActions(state, side) };
 }
@@ -225,6 +284,7 @@ export function buildActions(state: SyncState, side: SyncSide) {
   if (state.status === "paused") return [];
   const actions: Array<{ syncId: string; kind: "project" | "task"; id?: string; fields: Record<string, unknown>; deleted?: boolean }> = [];
   for (const [syncId, canonical] of Object.entries(state.canonical)) {
+    if (canonical.kind === "project" && canonical.ids.superproductivity === SP_INBOX) continue;
     const pending = state.pending[syncId] || {};
     const current = (state.latest[side]?.[canonical.kind === "project" ? "projects" : "tasks"] || []).find(item => item.syncId === syncId);
     const targetId = current?.id || canonical.ids[side];
@@ -232,11 +292,13 @@ export function buildActions(state: SyncState, side: SyncSide) {
     const conflicting = new Set(state.conflicts.filter(conflict => conflict.syncId === syncId).map(conflict => conflict.field));
     const scheduleConflicted = conflicting.has("scheduledAt") || conflicting.has("scheduledMinutes");
     const isBlocked = (field: string) => conflicting.has(field) || (scheduleConflicted && (field === "scheduledAt" || field === "scheduledMinutes"));
-    const fields = create ? { ...canonical.fields } : Object.fromEntries(Object.entries(canonical.fields).filter(([key, value]) => !isBlocked(key) && pending[key] === side && JSON.stringify(state.latest[side]?.[canonical.kind === "project" ? "projects" : "tasks"].find(item => item.syncId === syncId)?.fields[key]) !== JSON.stringify(value)));
+    const fields = create ? { ...canonical.fields } : Object.fromEntries(Object.entries(canonical.fields).filter(([key]) => !isBlocked(key) && pending[key] === side && !projectedEqual(side, canonical.fields, key, current?.fields[key])));
     // A scheduled block is start + duration. Send both when either changes,
     // even if one field is already acknowledged, so clients never invent a default.
     if (canonical.kind === "task" && (Object.hasOwn(fields, "scheduledAt") || Object.hasOwn(fields, "scheduledMinutes"))) {
       for (const field of ["scheduledAt", "scheduledMinutes"]) if (Object.hasOwn(canonical.fields, field) && !isBlocked(field)) fields[field] = canonical.fields[field];
+      // Clearing a timed SP slot must restore its independent canonical due day.
+      if (side === "superproductivity" && !canonical.fields.scheduledAt && Object.hasOwn(canonical.fields, "dueDate") && !isBlocked("dueDate")) fields.dueDate = canonical.fields.dueDate;
     }
     if (create || Object.keys(fields).length || (pending.$deleted === side && canonical.deleted)) actions.push({ syncId, kind: canonical.kind, id: targetId, fields, ...(canonical.deleted ? { deleted: true } : {}) });
   }

@@ -88,12 +88,12 @@
       const allProjects = await projects(), allTasks = await tasks();
       return {
         overwriteVersion: 1,
-        projects: allProjects.map(item => ({ id: item.id, syncId: syncId('projects', item.id), fields: { title: item.title, notes: '', color: item.theme?.primary || null } })),
+        projects: allProjects.filter(item => item.id !== 'INBOX_PROJECT').map(item => ({ id: item.id, syncId: syncId('projects', item.id), fields: { title: item.title, notes: '', color: item.theme?.primary || null } })),
         tasks: await Promise.all(allTasks.map(async item => ({ id: item.id, syncId: syncId('tasks', item.id), parentId: item.parentId || undefined, projectId: item.projectId || undefined, fields: {
           title: item.title, notes: item.notes || '', completed: item.isDone, dueDate: item.dueDay || null,
-          estimateMinutes: Math.round((item.timeEstimate || 0) / 60000), projectTitle: allProjects.find(project => project.id === item.projectId)?.title || '',
+          estimateMinutes: item.dueWithTime ? Math.max(1, Math.round((item.timeEstimate || 0) / 60000)) : Math.round((item.timeEstimate || 0) / 60000), projectTitle: item.projectId === 'INBOX_PROJECT' ? '' : allProjects.find(project => project.id === item.projectId)?.title || '',
           tags: await tagNames(item), scheduledAt: item.dueWithTime ? toLocalDate(item.dueWithTime) : null,
-          scheduledMinutes: item.dueWithTime ? Math.round((item.timeEstimate || 0) / 60000) : 0,
+          scheduledMinutes: item.dueWithTime ? Math.max(1, Math.round((item.timeEstimate || 0) / 60000)) : 0,
           scheduleBlocks: [], recurrence: null,
         } }))),
       };
@@ -210,13 +210,26 @@
       // and refuse to remove a parent if a retained child would disappear.
       const allTasks = await tasks();
       const deleting = new Set(actions.filter(action => action.deleted && action.kind === 'task').map(action => action.id || Object.keys(local.links.tasks).find(key => local.links.tasks[key] === action.syncId)));
-      if (allTasks.some(task => task.parentId && deleting.has(task.parentId) && !deleting.has(task.id))) throw new Error('A retained subtask belongs to a task marked for deletion. Move the subtask first.');
+      const blockedParents = new Set();
+      for (const task of allTasks) if (!deleting.has(task.id)) {
+        let parent = task.parentId;
+        const visited = new Set();
+        while (parent && !visited.has(parent)) {
+          visited.add(parent);
+          if (deleting.has(parent)) blockedParents.add(parent);
+          parent = allTasks.find(item => item.id === parent)?.parentId;
+        }
+      }
+      const failures = [];
       const depth = (id) => { let n = 0, current = allTasks.find(task => task.id === id); const seen = new Set(); while (current?.parentId && !seen.has(current.id)) { seen.add(current.id); n++; current = allTasks.find(task => task.id === current.parentId); } return n; };
       const phase = action => action.deleted ? (action.kind === 'task' ? 2 : 3) : (action.kind === 'project' ? 0 : 1);
       actions = [...actions].sort((a,b) => phase(a) - phase(b) || (phase(a) === 2 ? depth(b.id) - depth(a.id) : 0));
       for (const action of actions) {
         const map = local.links[action.kind === 'task' ? 'tasks' : 'projects'];
         let id = action.id || Object.keys(map).find(key => map[key] === action.syncId);
+        if (action.kind === 'project' && id === 'INBOX_PROJECT') { delete map[id]; continue; }
+        if (action.deleted && action.kind === 'task' && blockedParents.has(id)) { failures.push('Retained subtasks prevent deleting ' + (action.fields?.title || id)); continue; }
+        try {
         if (action.deleted) {
           if (action.kind === 'task') {
             const task = (await tasks()).find(item => item.id === id);
@@ -225,10 +238,9 @@
             const project = allProjects.find(item => item.id === id);
             if (project) {
               const projectTasks = (await tasks()).filter(task => task.projectId === project.id);
-              if (project.id === 'INBOX_PROJECT') throw new Error('The system Inbox cannot be removed. Reconnect to create a new sync preview.');
               local.tombstones[action.syncId] = { kind: 'project', project, archived: true, taskIds: projectTasks.map(task => task.id), deletedAt: new Date().toISOString() };
               await persist();
-              for (const task of projectTasks.filter(task => !task.parentId)) await API.updateTask(task.id, { projectId: null });
+              for (const task of projectTasks.filter(task => !task.parentId)) await API.updateTask(task.id, { projectId: 'INBOX_PROJECT' });
               // Archiving removes the project from the active workspace without
               // irreversibly cascading into SP-only notes and archived history.
               await API.updateProject(project.id, { isArchived: true });
@@ -250,9 +262,18 @@
         if (Object.hasOwn(fields, 'notes')) updates.notes = fields.notes || '';
         if (Object.hasOwn(fields, 'completed')) updates.isDone = fields.completed === true;
         if (Object.hasOwn(fields, 'estimateMinutes')) updates.timeEstimate = Math.max(0, Number(fields.estimateMinutes || 0) * 60000);
-        if (Object.hasOwn(fields, 'projectTitle')) updates.projectId = allProjects.find(project => project.title === fields.projectTitle)?.id || null;
+        if (Object.hasOwn(fields, 'projectTitle')) {
+          const target = fields.projectTitle ? allProjects.find(project => project.id !== 'INBOX_PROJECT' && project.title === fields.projectTitle)?.id : 'INBOX_PROJECT';
+          if (target && current?.projectId !== target) updates.projectId = target;
+        }
         if (Object.hasOwn(fields, 'dueDate')) updates.dueDay = fields.dueDate || null;
-        if (Object.hasOwn(fields, 'scheduledAt')) { updates.dueWithTime = fields.scheduledAt ? new Date(fields.scheduledAt).getTime() : null; if (updates.dueWithTime != null) updates.dueDay = null; }
+        if (Object.hasOwn(fields, 'scheduledAt')) {
+          const value = fields.scheduledAt;
+          const timestamp = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) ? new Date(value).getTime() : NaN;
+          if (!value || Number.isFinite(timestamp)) { updates.dueWithTime = value ? timestamp : null; if (updates.dueWithTime != null) updates.dueDay = null; }
+        }
+        if ((updates.dueWithTime ?? (Object.hasOwn(updates,'dueWithTime') ? null : current?.dueWithTime)) != null) delete updates.dueDay;
+        if (updates.dueWithTime != null) updates.dueDay = null;
         if (Object.hasOwn(fields, 'scheduledMinutes') && Number(fields.scheduledMinutes) > 0) updates.timeEstimate = Math.round(Number(fields.scheduledMinutes) * 60000);
         if (Object.hasOwn(fields, 'tags')) {
           const tagList = await API.getAllTags();
@@ -274,10 +295,12 @@
           id = created; map[created] = action.syncId;
           await persist();
           // addTask accepts dueDay but not dueWithTime.
-          if (dueWithTime != null) await API.updateTask(created, { dueWithTime });
+          if (dueWithTime != null) await API.updateTask(created, { dueWithTime, dueDay: null }, { isIgnoreShortSyntax: true });
         }
+        } catch (error) { failures.push((action.fields?.title || id || action.syncId) + ': ' + (error?.message || String(error))); }
       }
       await persist();
+      if (failures.length) throw new Error(`${failures.length} sync changes need attention; other changes were applied. ${failures.slice(0, 3).join('; ')}`);
     }
     async function renderState(state) {
       if (state.pairId) local.pairId = state.pairId;
@@ -285,7 +308,7 @@
       if (state.status === 'preview') showPreview(state); else { preview = null; previewKey = ''; $('preview').hidden = true; }
       showConflicts(state.conflicts || []);
       showDeleted();
-      const labels = {waiting:'Waiting for the other app',preview:'Connected · review first import',active:'Connected · automatic sync'};
+      const labels = {waiting:'Waiting for the other app',preview:'Connected · review first import',active:'Connected · automatic sync',paused:'Paused after undo · reconnect from NavoPath'};
       setStatus(busy ? 'Syncing…' : (labels[state.status] || 'Connected'));
     }
     async function withBusy(work) {
@@ -297,6 +320,7 @@
     async function runSync() {
       if (!token || !local.pairId || stopped) return;
       const state = await request(`state?pairId=${encodeURIComponent(local.pairId)}`); await renderState(state);
+      if (state.status === 'paused') return;
       if (state.status === 'preview') {
         const outgoing = await snapshot();
         if (JSON.stringify(outgoing) !== lastSnapshot) {
