@@ -1,6 +1,6 @@
 {
   "name": "navopath",
-  "version": "1.7.0-beta.122",
+  "version": "1.7.0-beta.123",
   "description": "NavoPath — Navigate your next step.",
   "author": "NavoPath",
   "main": "electron/main.cjs",
@@ -81,6 +81,16 @@
       "name": "Optional Metrics breakdown",
       "path": "dist/assets/MetricsBreakdown-*.js",
       "limit": "7 KB"
+    },
+    {
+      "name": "Optional Metrics execution",
+      "path": "dist/assets/MetricsExecution-*.js",
+      "limit": "7 KB"
+    },
+    {
+      "name": "Optional Metrics project details",
+      "path": "dist/assets/MetricsProjectDetails-*.js",
+      "limit": "6 KB"
     },
     {
       "name": "Optional Metrics analytics styles",

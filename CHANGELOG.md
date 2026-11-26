@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 123
+
+#### 改进
+
+- Metrics 执行分析按需加载；项目页新增任务与独立执行分级明细、未关联计时和完整项目执行 CSV 导出，并保留原始时长口径。
+
 ### 1.7.0 Beta 122
 
 #### 修复
@@ -1265,6 +1271,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 123
+
+#### Improvements
+
+- Metrics execution analysis loads on demand; project details now drill into tasks and independent executions, retain unlinked tracking and export all project execution rows to CSV using raw duration.
 
 ### 1.7.0 Beta 122
 

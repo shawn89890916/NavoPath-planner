@@ -215,3 +215,46 @@ describe("daily snapshot retention and current pending completion",()=>{
   expect(r.pendingExecutions).toBe(0);expect(r.completedPending).toBe(0);
  });
 });
+
+
+import {projectTaskDetails,projectDetailRange,safeCsvCell} from "./projectDetails";
+describe("project task and execution drilldown",()=>{
+ const opts={dayStartMinutes:240,projectIds:[],habitMode:"include" as const,completion:"all" as const};
+ const range={preset:"custom" as const,customStart:"2026-11-25",customEnd:"2026-11-26"};
+ it("reconciles raw cross-day schedule, linked and unlinked tracked minutes to project totals",()=>{
+  const t={...task,projectId:"p",timelineRecords:[{...task.timelineRecords![0],scheduledStart:"03:00",scheduledEnd:"05:00",executionStatus:"completed" as const,engagement:50}]};
+  const te={id:"te",taskId:"t",timelineRecordId:"r",startAt:new Date(2026,10,26,3).toISOString(),endAt:new Date(2026,10,26,5).toISOString(),durationMinutes:90,source:"manual" as const,createdAt:"",updatedAt:""};
+  const d={...data,tasks:[t],timeEntries:[te,{...te,id:"unlinked",timelineRecordId:undefined,durationMinutes:20},{...te,id:"orphan",taskId:"deleted",projectId:"p",timelineRecordId:"old",durationMinutes:30}]};
+  const a=buildTimeAllocationMetrics({data:d,range,dayStartMinutes:240,engagementEnabled:true}),r=buildInsights(d,a,opts);
+  const rows=projectTaskDetails(a,r.trackedEntries,"p");
+  expect(rows[0]).toMatchObject({taskId:"t",scheduled:120,completed:120,tracked:110,trackedSessions:2,executions:1});
+  expect(rows[0].rows).toMatchObject([{recordId:"r",scheduled:120,tracked:90},{scheduled:0,tracked:20}]);
+  expect(rows[1]).toMatchObject({taskId:"deleted",scheduled:0,tracked:30,executions:0});
+  const total=r.projects.find(x=>x.id==="p")!;
+  expect(rows.reduce((n,x)=>n+x.scheduled,0)).toBe(total.scheduled);
+  expect(rows.reduce((n,x)=>n+x.tracked,0)).toBe(total.tracked);
+  const day=projectDetailRange(a.range,"2026-11-25",240);
+  expect(projectTaskDetails(a,r.trackedEntries,"p",day)[0]).toMatchObject({scheduled:60,completed:60,tracked:55,executions:1});
+  expect(projectTaskDetails(a,r.trackedEntries,"other")).toEqual([]);
+ });
+ it("does not count projected recurrence as an independent existing execution",()=>{
+  const t={...task,projectId:"p",timelineRecords:[],recurrence:{mode:"scheduled" as const,frequency:"daily" as const,startDate:"2026-11-24",startTime:"09:00",durationMinutes:60}};
+  const d={...data,tasks:[t]},a=buildTimeAllocationMetrics({data:d,range,dayStartMinutes:240}),r=buildInsights(d,a,opts);
+  const rows=projectTaskDetails(a,r.trackedEntries,"p");
+  expect(rows[0]).toMatchObject({scheduled:120,executions:0});
+  expect(rows[0].rows.every(x=>x.projected)).toBe(true);
+ });
+ it("keeps execution identity collision-safe across tasks",()=>{
+  const aTask={...task,id:"a:b",projectId:"p",timelineRecords:[{...task.timelineRecords![0],id:"c",taskId:"a:b"}]};
+  const bTask={...task,id:"a",projectId:"p",timelineRecords:[{...task.timelineRecords![0],id:"b:c",taskId:"a"}]};
+  const d={...data,tasks:[aTask,bTask]},a=buildTimeAllocationMetrics({data:d,range,dayStartMinutes:240}),r=buildInsights(d,a,opts);
+  expect(r.executionCount).toBe(2);
+  expect(projectTaskDetails(a,r.trackedEntries,"p").flatMap(x=>x.rows).map(x=>x.id)).toHaveLength(2);
+ });
+ it("escapes formula-like strings and CSV quotes, preserves missing measurements",()=>{
+  expect(safeCsvCell("=1+1")).toBe('"\'=1+1"');
+  expect(safeCsvCell("  +SUM(A1)")).toBe('"\'  +SUM(A1)"');
+  expect(safeCsvCell('x,"y"')).toBe('"x,""y"""');
+  expect(safeCsvCell(null)).toBe("");expect(safeCsvCell(0)).toBe("0");
+ });
+});

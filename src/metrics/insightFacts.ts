@@ -47,7 +47,7 @@ export function buildInsights(data:PlannerData,allocation:TimeAllocationMetrics,
     if(options.completion==="completed"&&status!=="completed" || options.completion==="incomplete"&&status==="completed")continue;
     const score=record?record.engagement:entry.recordId===`legacy-${t.id}`||entry.recordId.startsWith("metric-all-day-")?t.engagement:undefined;
     const raw=intervalMinutes(entry.scheduledStart.getTime(),entry.scheduledEnd.getTime());
-    const key=entry.taskId+":"+entry.recordId;
+    const key=JSON.stringify([entry.taskId,entry.recordId]);
     const projectId=t.projectId||"__unassigned__";
     const item=executions.get(key)||{status,minutes:0,score:typeof score==="number"&&Number.isFinite(score)?normalizeEngagement(score):undefined,projectId,projected:Boolean(entry.isProjectedRecurrence)};
     item.minutes+=raw;executions.set(key,item);
@@ -75,7 +75,7 @@ export function buildInsights(data:PlannerData,allocation:TimeAllocationMetrics,
     const lo=Math.max(a,start),hi=Math.min(b,end);if(hi<=lo)continue;
     trackedSessions++;
     trackedEntries.push({id:entry.id,taskId:entry.taskId,recordId:entry.timelineRecordId,projectId,start:new Date(lo),end:new Date(hi),minutes:entry.durationMinutes*(hi-lo)/(b-a),source:entry.source});
-    if(entry.timelineRecordId&&executions.get(entry.taskId+":"+entry.timelineRecordId)?.projected===false)measuredRecords.add(entry.taskId+":"+entry.timelineRecordId);
+    if(entry.timelineRecordId&&executions.get(JSON.stringify([entry.taskId,entry.timelineRecordId]))?.projected===false)measuredRecords.add(JSON.stringify([entry.taskId,entry.timelineRecordId]));
     const p=project(projectId);p.trackedSessions++;
     eachDay(lo,hi,options.dayStartMinutes,(date,ms)=>{const minutes=entry.durationMinutes*ms/(b-a);const d=day(date);d.tracked+=minutes;d.trackedSessions++;tracked+=minutes;p.tracked+=minutes;if(entry.source in trackedBySource)trackedBySource[entry.source]+=minutes;});
   }
