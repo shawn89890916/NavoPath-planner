@@ -129,7 +129,7 @@ export async function scanAnalyticsEvents(scope:string,start:Date,end:Date,visit
         const c=req.result;if(!c||signal?.aborted)return;
         const {scope:_,...event}=c.value as StoredEvent;
         if(before&&event.occurredAt===before.occurredAt){const cmp=indexedDB.cmp(c.primaryKey,scope+":"+before.id);if(cmp>0){c.continuePrimaryKey([scope,before.occurredAt],scope+":"+before.id);return;}if(cmp===0){c.continue();return;}}
-        try{if(visit({...event,id:event.id.startsWith(scope+":")?event.id.slice(scope.length+1):event.id})!==false)c.continue();}
+        try{if(visit({...event,id:event.id.startsWith(scope+":")?event.id.slice(scope.length+1):event.id})!==false&&!signal?.aborted)c.continue();}
         catch(error){cleanup();reject(error);stop();}
       };
     });
