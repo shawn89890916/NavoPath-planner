@@ -62,7 +62,8 @@ async function journalAndAppend(scope:string,generation:string,events:AnalyticsE
   const journalKey=journalPrefix(scope)+events[0].operationId;
   let journaled=false;
   let batch=events;
-  const existing=window.localStorage.getItem(journalKey);
+  let existing:string|null=null;
+  try{existing=window.localStorage.getItem(journalKey);}catch{/* IndexedDB can still succeed */}
   if(existing){
     const prior=parseJournal(existing);
     if(prior.generation===generation){
@@ -110,7 +111,7 @@ export type AnalyticsPageCursor={occurredAt:string;id:string};
 export async function scanAnalyticsEvents(scope:string,start:Date,end:Date,visit:(event:AnalyticsEvent)=>boolean|void,options:{signal?:AbortSignal;before?:AnalyticsPageCursor}={}):Promise<void>{
   if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start)return;
   const {signal,before}=options;
-  if(signal?.aborted)return;
+  if(signal?.aborted||analyticsPreference(scope).purgePending)return;
   if(before&&(!Number.isFinite(Date.parse(before.occurredAt))||before.occurredAt<start.toISOString()||before.occurredAt>=end.toISOString()))return;
   const db=await open();
   try{
@@ -127,7 +128,7 @@ export async function scanAnalyticsEvents(scope:string,start:Date,end:Date,visit
       req.onsuccess=()=>{
         const c=req.result;if(!c||signal?.aborted)return;
         const {scope:_,...event}=c.value as StoredEvent;
-        if(before&&event.occurredAt===before.occurredAt&&indexedDB.cmp(c.primaryKey,scope+":"+before.id)>=0){c.continue();return;}
+        if(before&&event.occurredAt===before.occurredAt){const cmp=indexedDB.cmp(c.primaryKey,scope+":"+before.id);if(cmp>0){c.continuePrimaryKey([scope,before.occurredAt],scope+":"+before.id);return;}if(cmp===0){c.continue();return;}}
         try{if(visit({...event,id:event.id.startsWith(scope+":")?event.id.slice(scope.length+1):event.id})!==false)c.continue();}
         catch(error){cleanup();reject(error);stop();}
       };
@@ -160,6 +161,7 @@ export function captureDailyPlan(scope:string,data:PlannerData,at:string,dayStar
   },"snapshot");
 }
 export async function readDailyPlans(scope:string,start:Date,end:Date):Promise<PlanBaseline[]>{
+  if(analyticsPreference(scope).purgePending)return [];
   if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start)return [];
   const db=await open();try{
     const tx=db.transaction(PLANS,"readonly"),idx=tx.objectStore(PLANS).index("scopeDate"),bounds=IDBKeyRange.bound([scope,start.toISOString()],[scope,end.toISOString()],false,true);
@@ -187,7 +189,7 @@ async function performPurge(scope:string){
       if(!current.purgePending||current.generation!==generation)return;
       const tx=db.transaction([STORE,PLANS],"readwrite"),done=finished(tx);
       for(const name of [STORE,PLANS]){
-        const req=tx.objectStore(name).index("scopeDate").openCursor(IDBKeyRange.bound([scope,""],[scope,"\\uffff"]));
+        const req=tx.objectStore(name).index("scopeDate").openCursor(IDBKeyRange.bound([scope,""],[scope,"\uffff"]));
         req.onsuccess=()=>{const c=req.result;if(c){c.delete();c.continue();}};
       }
       await done;
