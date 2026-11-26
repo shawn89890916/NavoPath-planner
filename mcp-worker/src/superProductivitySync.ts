@@ -62,6 +62,10 @@ export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "pro
     const preview = createInitialPreview(state);
     if (!preview.overwriteSupported) throw new Error("Update both sync plugins before using overwrite");
     matches = [...preview.projects.suggestions.map(match => ({ ...match, kind: "project" as const, preferredSide: authority })), ...preview.tasks.suggestions.map(match => ({ ...match, kind: "task" as const, preferredSide: authority }))];
+    for (const side of ["navopath", "superproductivity"] as const) {
+      const titles = state.latest[side]!.projects.map(item => normalizeTitle(item.fields.title)).filter(Boolean);
+      if (new Set(titles).size !== titles.length) throw new Error("Overwrite cannot safely map duplicate project titles. Rename duplicates or use merge.");
+    }
     const target: SyncSide = authority === "navopath" ? "superproductivity" : "navopath";
     const kept = new Set(matches.filter(match => match.kind === "task").map(match => target === "navopath" ? match.navopathId : match.superproductivityId));
     // Never cascade-delete a matched child via an unmatched parent.
@@ -120,7 +124,7 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
       const old = previous[key].find(entry => entry.id === item.id);
       const suppliedSyncId = item.syncId;
       const discarded = Object.entries(state.canonical).find(([, entry]) => entry.overwriteTarget === side && entry.deleted && entry.kind === kind && entry.ids[side] === item.id)?.[0];
-      const syncId = discarded || old?.syncId || (item.syncId && state.canonical[item.syncId] ? item.syncId : undefined) || crypto.randomUUID(); item.syncId = syncId;
+      const syncId = discarded || old?.syncId || (item.syncId && state.canonical[item.syncId] && !state.canonical[item.syncId].deleted && (!state.canonical[item.syncId].ids[side] || state.canonical[item.syncId].ids[side] === item.id) ? item.syncId : undefined) || crypto.randomUUID(); item.syncId = syncId;
       let canonical = state.canonical[syncId];
       if (!canonical) {
         canonical = state.canonical[syncId] = { kind, fields: { ...item.fields }, ids: {} };
