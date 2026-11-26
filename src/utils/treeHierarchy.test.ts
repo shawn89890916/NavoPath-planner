@@ -56,6 +56,19 @@ describe("Tree hierarchy drag", () => {
     expect(moved.tasks.filter(t => t.projectId === "q").map(t => t.id)).toEqual(["b", "x"]);
     expect(moved.tasks.find(t => t.id === "x")?.subtasks?.[0].id).toBe("leaf");
   });
+  it("restores visible project and task order on undo", () => {
+    const initial = data();
+    initial.tasks = [task("a"), { ...task("b"), order: 1 }];
+    initial.tasks[0].order = 0;
+    initial.projects[0].order = 0;
+    initial.projects[1].order = 1;
+    const moved = moveTreeNode(initial, { kind: "task", id: "b" }, { kind: "task", id: "a", position: "before" }, stamp);
+    expect(moved.tasks.map(t => t.id)).toEqual(["b", "a"]);
+    expect(undoTreeMove(moved, captureTreeMoveUndo(initial, moved), later)?.tasks.map(t => t.id)).toEqual(["a", "b"]);
+    const reordered = moveTreeNode(initial, { kind: "project", id: "q" }, { kind: "project", id: "p", position: "before" }, stamp);
+    expect(reordered.projects.map(p => p.id)).toEqual(["q", "p"]);
+    expect(undoTreeMove(reordered, captureTreeMoveUndo(initial, reordered), later)?.projects.map(p => p.id)).toEqual(["p", "q"]);
+  });
   it("undoes removal and insertion atomically and preserves unrelated tasks", () => {
     const initial = data();
     const moved = moveTreeNode(initial, { kind: "task", id: "a" }, { kind: "task", id: "b", position: "inside" }, stamp);

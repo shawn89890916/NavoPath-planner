@@ -19527,6 +19527,10 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   outline-offset: -1px;
   box-shadow: inset 3px 0 var(--accent-active);
   border-radius: var(--task-radius);
+  background-image: linear-gradient(var(--accent-active), var(--accent-active));
+  background-size: calc(100% - 22px) 2px;
+  background-position: right bottom;
+  background-repeat: no-repeat;
 }
 /* Planning's alternate views use the same paper TaskBlock as the tree. */
 #root .df-app.mode-planning .df-planning :is(.df-kanban-card, .df-eisenhower-task, .df-planning-list-row)[data-task-appearance] {

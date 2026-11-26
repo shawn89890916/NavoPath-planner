@@ -1476,7 +1476,7 @@ export default function PlanningView(props: {
     if (event.button !== 0) return;
     const target = event.target as HTMLElement;
     if (target.closest("button,input,textarea,select,a,[contenteditable='true']")) return;
-    const dragElement = sourceNodeEl;
+    const dragElement = event.currentTarget as HTMLElement;
     const pointerId = event.pointerId;
     const startX = event.clientX;
     const startY = event.clientY;
@@ -1701,7 +1701,8 @@ export default function PlanningView(props: {
       kind: sourceNodeEl.dataset.nodeType as TreeNodeKind,
       id: sourceNodeEl.dataset.nodeId || node.id,
     };
-    const dragElement = event.currentTarget as HTMLElement;
+    if (sourceNode.kind === "project" && sourceNode.id === "__unassigned__") return;
+    const dragElement = sourceNodeEl;
     const pointerId = event.pointerId;
     const startX = event.clientX;
     const startY = event.clientY;
@@ -1745,7 +1746,11 @@ export default function PlanningView(props: {
     const detectTreeDropTarget = (clientX: number, clientY: number) => {
       const tree = treeRef.current;
       const pointed = document.elementFromPoint(clientX, clientY);
-      const node = pointed?.closest<HTMLElement>("[data-node-type][data-node-id]");
+      let node = pointed?.closest<HTMLElement>("[data-node-type][data-node-id]");
+      // Empty expanded projects still accept drops in their body.
+      if (!node && tree && pointed && tree.contains(pointed) && sourceNode.kind !== "project") {
+        node = pointed.closest(".df-category-branch")?.querySelector<HTMLElement>('[data-node-type="project"][data-empty-project-drop="true"]') || null;
+      }
       if (!tree || !node || !tree.contains(node)) {
         clearExpand();
         setTreeDropTarget(null);
@@ -1757,7 +1762,8 @@ export default function PlanningView(props: {
       // actual row so expanding children never shifts the parent's drop zones.
       const row = kind === "task" ? node.querySelector<HTMLElement>(".df-task-node-inner > .df-task-block-row") || node : node;
       const rect = row.getBoundingClientRect();
-      const position = treeDropPosition(sourceNode.kind, kind, clientY - rect.top, rect.height);
+      const position = sourceNode.kind !== "project" && kind === "task" && clientY > rect.bottom + 4
+        ? "inside" : treeDropPosition(sourceNode.kind, kind, clientY - rect.top, rect.height);
       const target = position ? { kind, id, position } : null;
       if (!target || !canMoveTreeNode(props.data, sourceNode, target)) {
         clearExpand();
@@ -1770,6 +1776,7 @@ export default function PlanningView(props: {
       clearExpand();
       if (!key) return;
       expandKey = key;
+      const expandNode = node;
       expandTimer = window.setTimeout(() => {
         if (kind === "project") {
           const projectId = id === "__unassigned__" ? "unassigned" : id;
@@ -1777,7 +1784,7 @@ export default function PlanningView(props: {
         } else if (kind === "task") {
           setCollapsedSubtasks(current => current[id] ? { ...current, [id]: false } : current);
         } else {
-          node.querySelector<HTMLButtonElement>(".df-candidate-subtask-toggle[aria-expanded='false']")?.click();
+          expandNode.querySelector<HTMLButtonElement>(".df-candidate-subtask-toggle[aria-expanded='false']")?.click();
         }
       }, 550);
     };
