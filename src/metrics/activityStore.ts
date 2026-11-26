@@ -109,8 +109,8 @@ export function recoverAnalytics(scope:string){
 export function recordLocalAnalyticsChange(scope:string,previous:PlannerData,next:PlannerData,occurredAt:string,source:AnalyticsSource="client",operationId:string=crypto.randomUUID(),generation=analyticsPreference(scope).generation) {
   return captureEvents(scope,generation,()=>diffAnalyticsEvents(previous,next,occurredAt,operationId,source));
 }
-export function recordTimerTransition(scope:string,taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,projectId:string|undefined,generation:string){
-  return captureEvents(scope,generation,()=>[makeTimerAnalyticsEvent(taskId,transition,at,elapsedSeconds,crypto.randomUUID(),projectId)]);
+export function recordTimerTransition(scope:string,taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,projectId:string|undefined,generation:string,timelineRecordId?:string){
+  return captureEvents(scope,generation,()=>[makeTimerAnalyticsEvent(taskId,transition,at,elapsedSeconds,crypto.randomUUID(),projectId,timelineRecordId)]);
 }
 export type AnalyticsPageCursor={occurredAt:string;id:string};
 /** One account-scoped snapshot transaction. Consume rows without materializing the entire log. */
