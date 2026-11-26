@@ -19512,13 +19512,21 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   box-shadow: 0 10px 24px rgb(39 35 30 / 18%);
   padding-block: 4px;
 }
-/* Project branches leave the tree completely while their card is in the
-   pointer layer, avoiding an empty source frame and the resulting jump. */
+/* Keep source geometry in place while the pointer layer is active. */
 #root .df-app.mode-planning .df-tree.is-tree-dragging [aria-grabbed="true"] {
-  display: none;
+  opacity: .35;
 }
-#root .df-app.mode-planning .df-tree.is-tree-dragging .df-category-branch:has(> .df-plan-project-node[aria-grabbed="true"]) {
-  display: none;
+#root .df-app.mode-planning .df-tree [data-tree-drop-position="before"] {
+  box-shadow: 0 -2px 0 var(--accent-active);
+}
+#root .df-app.mode-planning .df-tree [data-tree-drop-position="after"] {
+  box-shadow: 0 2px 0 var(--accent-active);
+}
+#root .df-app.mode-planning .df-tree [data-tree-drop-position="inside"] {
+  outline: 1px solid var(--accent-active);
+  outline-offset: -1px;
+  box-shadow: inset 3px 0 var(--accent-active);
+  border-radius: var(--task-radius);
 }
 /* Planning's alternate views use the same paper TaskBlock as the tree. */
 #root .df-app.mode-planning .df-planning :is(.df-kanban-card, .df-eisenhower-task, .df-planning-list-row)[data-task-appearance] {

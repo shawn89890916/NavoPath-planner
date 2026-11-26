@@ -15,7 +15,7 @@ import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
 import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
 import { kanbanGroups, WORKFLOW_LABELS } from "./utils/productivity";
 import { normalizeTaskCheckTone, normalizeWorkflowStatus, workflowStatusForPatch, type UiWorkflowStatus, type StateFilterValue } from "./utils/productivityModel";
-import { normalizeTreeOrder, reorderProjects, reorderTasks, findSubtaskInTree, removeSubtaskFromTree, addSubtaskToTree, insertSubtaskRelativeInTree, moveSubtaskInsideTree, moveSubtaskRelativeInTree, countSubtasks, countDoneSubtasks } from "./utils/treeOrder";
+import { findSubtaskInTree, addSubtaskToTree, countSubtasks, countDoneSubtasks, canMoveTreeNode, treeDropPosition, type TreeDragNode, type TreeDropTarget } from "./utils/treeOrder";
 import { TaskActions, TaskBlock, TaskBlockContent, TaskBlockDuration, TaskBlockRow, TaskCheckbox, TaskSubtaskShelf, type TaskBlockVariant } from "./components/TaskBlock";
 import { CloseButton, IconButton } from "./components/UiPrimitives";
 import { UiPanelLeftCloseIcon, UiPanelLeftOpenIcon } from "./components/UiIcons";
@@ -27,9 +27,7 @@ import { ExtensionMount } from "./extensions/ExtensionMount";
 import type { ExtensionContribution, NativePlanningViewMode } from "./extensions/types";
 import { CandidateSubtaskItem } from "./WorkspacePresentation";
 
-type TreeNodeKind = "project" | "task" | "subtask";
-type TreeDragNode = { kind: TreeNodeKind; id: string };
-type TreeDropTarget = TreeDragNode & { position: "before" | "inside" | "after"; height: number };
+type TreeNodeKind = TreeDragNode["kind"];
 type PlanningDropContainer = string;
 
 const DEFAULT_PROJECT_COLOR = "var(--accent-active)";
@@ -936,6 +934,7 @@ export default function PlanningView(props: {
   onTaskDelete: (taskId: string) => void;
   onDeleteSubtask: (subtaskId: string) => void;
   onDataChange: (data: PlannerData) => void;
+  onTreeMove: (source: TreeDragNode, target: TreeDropTarget) => void;
   featureKanban?: boolean;
   featureQuadrant?: boolean;
   featureList?: boolean;
@@ -960,7 +959,6 @@ export default function PlanningView(props: {
   const safeTasks = Array.isArray(props.tasks) ? props.tasks : [];
   const [collapsedSubtasks, setCollapsedSubtasks] = useState<Record<string, boolean>>({});
   const [dragNode, setDragNode] = useState<TreeDragNode | null>(null);
-  const [dropTarget, setDropTarget] = useState<TreeDropTarget | null>(null);
   const [portraitSidebarOpen, setPortraitSidebarOpen] = useState(false);
   const [portraitLayout, setPortraitLayout] = useState(() => window.matchMedia("(orientation: portrait)").matches);
   const portraitViewport = window.matchMedia("(orientation: portrait)").matches;
@@ -1109,6 +1107,7 @@ export default function PlanningView(props: {
   } | null>(null);
   const dragNodeRef = useRef<TreeDragNode | null>(null);
   const dropTargetRef = useRef<TreeDropTarget | null>(null);
+  const dropIndicatorRef = useRef<HTMLElement | null>(null);
   const planningDropTargetRef = useRef<{ taskId: string; position: "before" | "after"; container: PlanningDropContainer } | null>(null);
   const suppressClickUntilRef = useRef(0);
 
@@ -1128,16 +1127,12 @@ export default function PlanningView(props: {
     setDragNode(node);
   }, []);
 
-  const setTreeDropTarget = useCallback((target: TreeDropTarget | null) => {
-    const current = dropTargetRef.current;
-    if (
-      current?.kind === target?.kind
-      && current?.id === target?.id
-      && current?.position === target?.position
-      && current?.height === target?.height
-    ) return;
+  const setTreeDropTarget = useCallback((target: TreeDropTarget | null, indicator?: HTMLElement) => {
+    const old = dropIndicatorRef.current;
+    if (old && (old !== indicator || !target)) old.removeAttribute("data-tree-drop-position");
     dropTargetRef.current = target;
-    setDropTarget(target);
+    dropIndicatorRef.current = target && indicator ? indicator : null;
+    if (target && indicator) indicator.dataset.treeDropPosition = target.position;
   }, []);
 
   function clearPlanningDragState() {
@@ -1278,10 +1273,6 @@ export default function PlanningView(props: {
     }
   }, [dialog, safeTasks, safeProjects, props]);
 
-  const persistTree = useCallback((projects: Project[], tasks: Task[]) => {
-    props.onDataChange(normalizeTreeOrder({ ...props.data, projects, tasks }));
-  }, [props]);
-
   const subtaskOwner = useCallback((subtaskId: string) =>
     safeTasks.find((task) => findSubtaskInTree(task.subtasks || [], subtaskId)), [safeTasks]);
 
@@ -1301,58 +1292,6 @@ export default function PlanningView(props: {
     createdAt: subtask.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }), [today]);
-
-  const handleTreeDrop = useCallback(async (source: TreeDragNode, target: TreeDropTarget) => {
-    if (source.kind === target.kind && source.id === target.id) return;
-    let projects = [...safeProjects];
-    let tasks = [...safeTasks];
-    const targetTask = target.kind === "task" ? tasks.find((task) => task.id === target.id) : undefined;
-    const targetProjectId = target.kind === "project"
-      ? (target.id === "__unassigned__" ? undefined : target.id)
-      : targetTask?.projectId ?? (target.kind === "subtask" ? subtaskOwner(target.id)?.projectId : undefined);
-
-    if (source.kind === "project") {
-      const project = projects.find((item) => item.id === source.id);
-      if (!project) return;
-      if (target.kind === "project" && target.position !== "inside") {
-        persistTree(reorderProjects(projects, source.id, target.id, target.position === "after"), tasks);
-      }
-      return;
-    }
-
-    if (source.kind === "task") {
-      const task = tasks.find((item) => item.id === source.id);
-      if (!task) return;
-      if (target.kind === "subtask" || (target.kind === "task" && target.position === "inside")) return;
-      persistTree(projects, reorderTasks(tasks, task.id, targetProjectId, targetTask?.id, target.position === "after"));
-      return;
-    }
-
-    const owner = subtaskOwner(source.id);
-    const subtask = owner ? findSubtaskInTree(owner.subtasks || [], source.id) : undefined;
-    if (!owner || !subtask) return;
-    if (target.kind === "subtask" && subtaskOwner(target.id)?.id === owner.id) {
-      const sourceTree = owner.subtasks || [];
-      const moved = target.position === "inside"
-        ? moveSubtaskInsideTree(sourceTree, source.id, target.id, Date.now())
-        : moveSubtaskRelativeInTree(sourceTree, source.id, target.id, target.position === "after");
-      if (moved === sourceTree) return;
-      persistTree(projects, tasks.map((task) => task.id === owner.id ? { ...task, subtasks: moved } : task));
-      return;
-    }
-    tasks = tasks.map((task) => task.id === owner.id ? { ...task, subtasks: removeSubtaskFromTree(task.subtasks || [], source.id) } : task);
-    if (target.kind === "project" || (target.kind === "task" && target.position !== "inside")) return;
-    const nextOwner = target.kind === "task" ? targetTask : subtaskOwner(target.id);
-    if (!nextOwner) return;
-    const targetTree = tasks.find((task) => task.id === nextOwner.id)?.subtasks || [];
-    const nextSubtasks = target.kind === "subtask" && target.position !== "inside"
-      ? insertSubtaskRelativeInTree(targetTree, subtask, target.id, target.position === "after")
-      : addSubtaskToTree(targetTree, { ...subtask, order: Date.now() }, target.kind === "subtask" ? target.id : undefined);
-    if (target.kind === "subtask" && nextSubtasks === targetTree) return;
-    tasks = tasks.map((task) => task.id === nextOwner.id ? { ...task, subtasks: nextSubtasks } : task);
-    persistTree(projects, tasks);
-  }, [persistTree, safeProjects, safeTasks, subtaskOwner]);
-
 
   const viewFilteredTasks = useMemo(() => {
     return safeTasks.filter((task) => {
@@ -1419,24 +1358,12 @@ export default function PlanningView(props: {
   // This entry note stays dismissed after the user closes it.
   const showLongRangeGuide = !props.demo && !guideDismissed;
 
-  const treeDropSlot = (kind: TreeNodeKind, id: string, position: TreeDropTarget["position"], suppress = false) => {
-    if (suppress || !dropTarget || dropTarget.kind !== kind || dropTarget.id !== id || dropTarget.position !== position) return null;
-    return (
-      <div
-        className={`df-tree-drop-preview ${position}`}
-        style={{ "--tree-drop-slot-height": `${dropTarget.height}px` } as React.CSSProperties}
-        aria-hidden="true"
-      />
-    );
-  };
-
   const renderTaskSubtasks = (task: Task) => {
     if (collapsedSubtasks[task.id] || !(task.subtasks || []).some(isIncompletePlanningSubtask)) return null;
     return (
       <div className="df-candidate-subtasks df-plan-subtask-list" data-parent-id={task.id}>
         {(task.subtasks || []).filter(isIncompletePlanningSubtask).map((subtask) => (
           <React.Fragment key={subtask.id}>
-            {treeDropSlot("subtask", subtask.id, "before")}
             <PlanningSubtaskNode
               demo={props.demo}
               lang={props.lang}
@@ -1451,8 +1378,6 @@ export default function PlanningView(props: {
               draggingSubtaskId={dragNode?.kind === "subtask" ? dragNode.id : undefined}
               onDragStart={(event, subtaskId) => beginTreeDrag(event, { kind: "subtask", id: subtaskId })}
             />
-            {treeDropSlot("subtask", subtask.id, "inside")}
-            {treeDropSlot("subtask", subtask.id, "after")}
           </React.Fragment>
         ))}
       </div>
@@ -1551,7 +1476,7 @@ export default function PlanningView(props: {
     if (event.button !== 0) return;
     const target = event.target as HTMLElement;
     if (target.closest("button,input,textarea,select,a,[contenteditable='true']")) return;
-    const dragElement = event.currentTarget as HTMLElement;
+    const dragElement = sourceNodeEl;
     const pointerId = event.pointerId;
     const startX = event.clientX;
     const startY = event.clientY;
@@ -1792,7 +1717,15 @@ export default function PlanningView(props: {
     const releaseHeldTouch = event.pointerType === "touch"
       ? bindHeldTouchScroll(dragElement, () => holdReady && !holdCancelled)
       : undefined;
+    let expandTimer: number | undefined;
+    let expandKey = "";
+    const clearExpand = () => {
+      if (expandTimer !== undefined) window.clearTimeout(expandTimer);
+      expandTimer = undefined;
+      expandKey = "";
+    };
     const cleanup = () => {
+      clearExpand();
       releaseHeldTouch?.();
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
@@ -1809,75 +1742,44 @@ export default function PlanningView(props: {
       }
     };
 
-    let dragPreviewHeight = 54;
-
     const detectTreeDropTarget = (clientX: number, clientY: number) => {
       const tree = treeRef.current;
-      if (!tree) return;
-      const pointedElement = document.elementFromPoint(clientX, clientY);
-      const node = pointedElement?.closest<HTMLElement>("[data-node-type][data-node-id]");
-      if (!node) {
-        // An empty project's expanded body has no child node to hit-test. Treat the
-        // vertical space below its header as an explicit `inside` target so the
-        // target remains stable while the preview slot changes the layout.
-        const treeRect = tree.getBoundingClientRect();
-        const projectIds = [...safeProjects.map((project) => project.id), "__unassigned__"];
-        const headers = projectIds
-          .map((id) => tree.querySelector<HTMLElement>(`[data-node-type="project"][data-node-id="${CSS.escape(id)}"]`))
-          .filter((header): header is HTMLElement => Boolean(header));
-        for (let index = 0; index < headers.length; index += 1) {
-          const header = headers[index];
-          const id = header.dataset.nodeId || "";
-          const hasTasks = id === "__unassigned__"
-            ? safeTasks.some((task) => !task.projectId)
-            : safeTasks.some((task) => String(task.projectId || "") === id);
-          if (hasTasks || sourceNode.kind !== "task") continue;
-          const rect = header.getBoundingClientRect();
-          const nextTop = headers[index + 1]?.getBoundingClientRect().top ?? treeRect.bottom;
-          const targetBottom = Math.max(rect.bottom + 44, nextTop - 4);
-          if (clientX >= rect.left && clientX <= treeRect.right && clientY >= rect.bottom - 8 && clientY <= targetBottom) {
-            setTreeDropTarget({ kind: "project", id, position: "inside", height: dragPreviewHeight });
-            return;
-          }
-        }
+      const pointed = document.elementFromPoint(clientX, clientY);
+      const node = pointed?.closest<HTMLElement>("[data-node-type][data-node-id]");
+      if (!tree || !node || !tree.contains(node)) {
+        clearExpand();
         setTreeDropTarget(null);
         return;
       }
-      const nodeKind = node.dataset.nodeType as TreeNodeKind;
-      const rect = node.getBoundingClientRect();
-      const ratio = (clientY - rect.top) / Math.max(rect.height, 1);
-      let position: TreeDropTarget["position"];
-
-      // Dragging never changes an item's type. Tasks can only be assigned to a
-      // project or reordered beside another task; projects can only reorder with
-      // projects. This also makes a project header an unambiguous assignment
-      // target, including a project whose task list is empty.
-      if (sourceNode.kind === "project") {
-        if (nodeKind !== "project") {
-          setTreeDropTarget(null);
-          return;
-        }
-        position = ratio < 0.5 ? "before" : "after";
-      } else if (sourceNode.kind === "task") {
-        if (nodeKind === "project") position = "inside";
-        else if (nodeKind === "task") position = ratio < 0.5 ? "before" : "after";
-        else {
-          setTreeDropTarget(null);
-          return;
-        }
-      } else {
-        if (nodeKind === "project") {
-          setTreeDropTarget(null);
-          return;
-        }
-        position = nodeKind === "task" ? "inside" : ratio < 0.28 ? "before" : ratio > 0.72 ? "after" : "inside";
+      const kind = node.dataset.nodeType as TreeNodeKind;
+      const id = node.dataset.nodeId || "";
+      // A task's wrapper includes its entire descendant list. Hit-test the
+      // actual row so expanding children never shifts the parent's drop zones.
+      const row = kind === "task" ? node.querySelector<HTMLElement>(".df-task-node-inner > .df-task-block-row") || node : node;
+      const rect = row.getBoundingClientRect();
+      const position = treeDropPosition(sourceNode.kind, kind, clientY - rect.top, rect.height);
+      const target = position ? { kind, id, position } : null;
+      if (!target || !canMoveTreeNode(props.data, sourceNode, target)) {
+        clearExpand();
+        setTreeDropTarget(null);
+        return;
       }
-      setTreeDropTarget({
-        kind: nodeKind,
-        id: node.dataset.nodeId || "",
-        position,
-        height: dragPreviewHeight,
-      });
+      setTreeDropTarget(target, row);
+      const key = position === "inside" ? kind + ":" + id : "";
+      if (key === expandKey) return;
+      clearExpand();
+      if (!key) return;
+      expandKey = key;
+      expandTimer = window.setTimeout(() => {
+        if (kind === "project") {
+          const projectId = id === "__unassigned__" ? "unassigned" : id;
+          props.setCollapsed(current => current[projectId] ? { ...current, [projectId]: false } : current);
+        } else if (kind === "task") {
+          setCollapsedSubtasks(current => current[id] ? { ...current, [id]: false } : current);
+        } else {
+          node.querySelector<HTMLButtonElement>(".df-candidate-subtask-toggle[aria-expanded='false']")?.click();
+        }
+      }, 550);
     };
 
     const move = (pointerEvent: PointerEvent) => {
@@ -1902,7 +1804,6 @@ export default function PlanningView(props: {
         setTreeDragNode(sourceNode);
         const sourceCard = sourceNodeEl.querySelector<HTMLElement>("[data-planning-drag-card]") || sourceNodeEl;
         const rect = sourceCard.getBoundingClientRect();
-        dragPreviewHeight = Math.max(52, Math.round(rect.height));
         const offX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
         const offY = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
         let overlayTask: Task | undefined;
@@ -1949,21 +1850,22 @@ export default function PlanningView(props: {
       if (pointerEvent.pointerId !== pointerId) return;
       if (active) {
         suppressPostDragClick();
+        detectTreeDropTarget(pointerEvent.clientX, pointerEvent.clientY);
         const source = dragNodeRef.current;
         const target = dropTargetRef.current;
-        if (source && target) void handleTreeDrop(source, target);
+        if (source && target) props.onTreeMove(source, target);
       }
       cleanup();
     };
 
-    const cancel = () => cleanup();
+    const cancel = () => { if (active) suppressPostDragClick(); cleanup(); };
     const keydown = (kb: KeyboardEvent) => { if (kb.key === "Escape") cancel(); };
 
     window.addEventListener("pointermove", move, { passive: false });
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
-  }, [props.compact, props.lang, handleTreeDrop, safeProjects, safeTasks, setTreeDragNode, setTreeDropTarget, subtaskOwner, suppressPostDragClick, taskFromSubtask]);
+  }, [props.compact, props.lang, props.data, props.onTreeMove, props.setCollapsed, safeProjects, safeTasks, setTreeDragNode, setTreeDropTarget, subtaskOwner, suppressPostDragClick, taskFromSubtask]);
 
   const hasActiveFilters = filterProjects.length > 0 || filterWorkflows.length > 0 || filterImportances.length > 0 || filterUrgencies.length > 0 || !!filterDueDate || !!filterScheduled;
 
@@ -3000,7 +2902,6 @@ export default function PlanningView(props: {
             {svgLines}
             {visibleProjects.map(({ project, tasks }) => (
               <React.Fragment key={project.id}>
-                {treeDropSlot("project", project.id, "before")}
                 <div className="df-category-branch" data-project-id={project.id}>
                   <PlanningProjectNode
                 demo={props.demo}
@@ -3014,12 +2915,10 @@ export default function PlanningView(props: {
                     onComplete={props.demo ? undefined : () => props.onProjectComplete?.(project.id)}
                     dragging={dragNode?.kind === "project" && dragNode.id === project.id}
                   />
-                  {treeDropSlot("project", project.id, "inside")}
-                  {(!props.collapsed[project.id] || Boolean(dragNode)) && (
+                  {!props.collapsed[project.id] && (
                     <div className="df-project-tasks">
                       {tasks.map((task) => (
                         <div className="df-task-branch" key={task.id}>
-                          {treeDropSlot("task", task.id, "before")}
                         <PlanningTaskNode
                 demo={props.demo}
                           lang={props.lang}
@@ -3040,20 +2939,16 @@ export default function PlanningView(props: {
                           subtaskContent={renderTaskSubtasks(task)}
                           dragging={dragNode?.kind === "task" && dragNode.id === task.id}
                         />
-                        {treeDropSlot("task", task.id, "inside")}
-                        {treeDropSlot("task", task.id, "after")}
                       </div>
                     ))}
                   </div>
                 )}
                 </div>
-                {treeDropSlot("project", project.id, "after")}
               </React.Fragment>
             ))}
 
             {(!props.demo || unassigned.length > 0) && (
               <React.Fragment>
-                {treeDropSlot("project", "__unassigned__", "before")}
                 <div className="df-category-branch" data-project-id="__unassigned__">
                 <PlanningProjectNode
                 demo={props.demo}
@@ -3066,12 +2961,10 @@ export default function PlanningView(props: {
                   onAddTask={() => props.onTaskCreate("")}
                   dragging={dragNode?.kind === "project" && dragNode.id === "__unassigned__"}
                 />
-                {treeDropSlot("project", "__unassigned__", "inside")}
-                {(!props.collapsed.unassigned || Boolean(dragNode)) && (
+                {!props.collapsed.unassigned && (
                   <div className="df-project-tasks">
                     {unassigned.map((task) => (
                       <div className="df-task-branch" key={task.id}>
-                        {treeDropSlot("task", task.id, "before")}
                         <PlanningTaskNode
                 demo={props.demo}
                           lang={props.lang}
@@ -3092,14 +2985,11 @@ export default function PlanningView(props: {
                           subtaskContent={renderTaskSubtasks(task)}
                           dragging={dragNode?.kind === "task" && dragNode.id === task.id}
                         />
-                        {treeDropSlot("task", task.id, "inside")}
-                        {treeDropSlot("task", task.id, "after")}
                       </div>
                     ))}
                   </div>
                 )}
                 </div>
-                {treeDropSlot("project", "__unassigned__", "after")}
               </React.Fragment>
             )}
           </div>
