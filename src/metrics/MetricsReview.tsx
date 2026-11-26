@@ -34,6 +34,7 @@ export default function MetricsReview(p:Props){
     <h3>{t("所选范围概览","Selected range")}</h3>
     <div className="df-metric-insight-stats">{rows.slice(0,6).map(row=><div key={row.label}><span>{row.label}</span><strong>{row.format(row.read(r))}</strong></div>)}</div>
     <p>{t("汇总包含所选范围的当前排程；实际计时无记录时显示 —。","Totals include current schedules in the selected range; missing tracked time is shown as —.")}</p>
+    {(r.allDayEstimated>0||r.projectedScheduled>0)&&<p>{t("其中全天估时","All-day estimates")}: {duration(r.allDayEstimated)} · {t("重复预测","Recurring projections")}: {duration(r.projectedScheduled)}。{t("全天估时不计入定时占用。","All-day estimates are excluded from timed occupancy.")}</p>}
     <h3>{t("等长周期对比","Matched-period comparison")}</h3>
     {!comparison?<p>{t("请选取有限且已开始的日期范围进行对比。","Choose a finite date range that has started.")}</p>:<>
       <p>{stamp(comparison.windows.current.start)} – {stamp(comparison.windows.current.end)} / {stamp(comparison.windows.previous.start)} – {stamp(comparison.windows.previous.end)}</p>

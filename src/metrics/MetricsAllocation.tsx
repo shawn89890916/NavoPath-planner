@@ -383,13 +383,13 @@ export default function MetricsAllocation(props:{lang:Language;engagementEnabled
                     </section>
                     <aside className="df-metrics-summary" aria-label={props.lang === "zh" ? "指标摘要" : "Metrics summary"}>
                       <div><span>{props.engagementEnabled ? (props.lang === "zh" ? "加权时长" : "Weighted time") : (props.lang === "zh" ? "已安排时间" : "Planned")}</span><strong>{formatMinutesZh(metricsResult.summary.plannedMinutes)}</strong></div>
-                      <div><span>{props.lang === "zh" ? "未安排时间" : "Unplanned"}</span><strong>{formatMinutesZh(metricsResult.summary.unplannedMinutes)}</strong></div>
+                      <div><span>{props.lang === "zh" ? "未安排时间" : "Unplanned"}</span><strong>{metricsResult.range.preset==="all"?"—":formatMinutesZh(metricsResult.summary.unplannedMinutes)}</strong></div>
                       <div><span>{props.lang === "zh" ? "任务数量" : "Tasks"}</span><strong>{metricsResult.summary.taskCount}</strong></div>
-                      <div><span>{props.lang === "zh" ? "完成率" : "Done"}</span><strong>{Math.round(metricsResult.summary.completionRate * 100)}%</strong></div>
+                      <div><span>{props.lang === "zh" ? "至少一次执行完成" : "Tasks with a completed execution"}</span><strong>{Math.round(metricsResult.summary.completionRate * 100)}%</strong></div>
                     </aside>
                   </div>:<div className="df-metric-insight-content">{groups.map(g=><button key={g.id} type="button" className="df-metric-group-row" aria-pressed={selectedMetricGroupId===g.id} onClick={()=>setSelectedMetricGroupId(id=>id===g.id?null:g.id)}><span>{g.label}</span><progress max={max} value={metricValue(g)}/><strong>{props.display==="duration"?formatMinutesZh(g.durationMinutes):props.display==="completionRate"?Math.round(metricValue(g))+"%":g.taskCount}</strong></button>)}</div>}
                 </>
               )}
-    {selected&&<div className="df-metric-insight-table"><h3>{selected.label}</h3><table><thead><tr><th>{props.lang==="zh"?"任务":"Task"}</th><th>{props.lang==="zh"?"日期":"Date"}</th><th>{props.lang==="zh"?"时长":"Duration"}</th></tr></thead><tbody>{selected.tasks.slice(0,200).map((e,i)=><tr key={e.recordId+":"+i}><td>{e.title}</td><td>{e.scheduledStart.toLocaleDateString()}</td><td>{formatMinutesZh(e.durationMinutes)}</td></tr>)}</tbody></table>{selected.tasks.length>200&&<p>{props.lang==="zh"?"仅显示前 200 条时间片段。":"Showing first 200 interval slices."}</p>}</div>}
+    {selected&&<div className="df-metric-insight-table"><h3>{selected.label}</h3><table><thead><tr><th>{props.lang==="zh"?"任务":"Task"}</th><th>{props.lang==="zh"?"日期":"Date"}</th><th>{props.lang==="zh"?"时长":"Duration"}</th></tr></thead><tbody>{selected.tasks.slice(0,200).map((e,i)=><tr key={e.recordId+":"+i}><td>{e.title}{e.isEstimatedAllDay?" · "+(props.lang==="zh"?"全天估时":"All-day estimate"):e.isProjectedRecurrence?" · "+(props.lang==="zh"?"重复预测":"Recurring projection"):""}</td><td>{e.scheduledStart.toLocaleDateString()}</td><td>{formatMinutesZh(e.durationMinutes)}</td></tr>)}</tbody></table>{selected.tasks.length>200&&<p>{props.lang==="zh"?"仅显示前 200 条时间片段。":"Showing first 200 interval slices."}</p>}</div>}
   </>;
 }
