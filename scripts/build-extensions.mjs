@@ -11,6 +11,7 @@ const { validateManifest, publicHttps } = await tsImport('../src/extensions/pack
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const base = 'https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions';
 const check = process.argv.includes('--check');
+const staleGenerated = [];
 const catalog = { version: 1, name: 'NavoPath Community', packages: [] };
 const output = resolve(root, 'public/extensions/packages');
 await mkdir(output, { recursive: true });
@@ -21,7 +22,14 @@ await mkdir(icons, { recursive: true });
 async function emit(path, data) {
   if (check) {
     const existing = await readFile(path, 'utf8').catch(() => '');
-    if (existing !== data) throw new Error(`Generated extension file is stale: ${relative(root, path)}`);
+    if (existing !== data) {
+      const name = relative(root, path);
+      if (name === 'public/extensions/packages/super-productivity-sync.navopackage.json' || name === 'public/extensions/catalog.json') {
+        const encoded = Buffer.from(data).toString('base64');
+        for (let i = 0; i < encoded.length; i += 3000) console.log('NAVOPATH_GENERATED ' + name + ' ' + encoded.slice(i, i + 3000));
+        staleGenerated.push(name);
+      } else throw new Error(`Generated extension file is stale: ${name}`);
+    }
   } else await writeFile(path, data);
 }
 async function emitBinary(path, data) {
@@ -92,6 +100,7 @@ await emit(resolve(root, 'public/extensions/catalog.json'), `${JSON.stringify(ca
 // JSON imports are lazy behind the service's offline official package fallback.
 const imports = bundledEntries.map(({ manifest }, index) => `import text${index} from "../../public/extensions/packages/${manifest.id}.navopackage.json?raw";`).join('\n');
 await emit(resolve(root, 'src/extensions/officialPackages.ts'), `${imports}\nimport catalog from "../../public/extensions/catalog.json";\nimport type { ExtensionPackage } from "./types";\nexport const officialCatalog = catalog;\nexport const officialPackageTexts: Record<string, string> = { ${bundledEntries.map(({ manifest }, index) => `${JSON.stringify(manifest.id)}: text${index}`).join(', ')} };\nexport const officialPackages: Record<string, ExtensionPackage> = Object.fromEntries(Object.entries(officialPackageTexts).map(([id,text])=>[id,JSON.parse(text) as ExtensionPackage]));\n`);
+if (staleGenerated.length) throw new Error('Generated extension files are stale: ' + staleGenerated.join(', '));
 console.log(`${check ? 'Validated' : 'Built'} ${catalog.packages.length} extension packages and catalog SHA-256 values.`);
 // Ship a standalone type-only SDK and self-contained references with each
 // copyable template. They are generated from the actual host contracts.
