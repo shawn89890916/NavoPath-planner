@@ -730,6 +730,7 @@ export interface PlannerApi {
   revokeCalDavCredential?: () => Promise<void>;
   listCalendarFeedTokens?: () => Promise<CalendarFeedTokenMetadata[]>;
   createCalendarFeedToken?: () => Promise<{ token: string; metadata: CalendarFeedTokenMetadata }>;
+  getCalendarHistoryToken?: () => Promise<string>;
   revokeCalendarFeedToken?: (id: string) => Promise<void>;
   invokeEdgeFunction?: (name: string, body: unknown, signal?: AbortSignal) => Promise<unknown>;
   listExternalCalendars?: (range?: { from?: string; to?: string }) => Promise<{ sources: ExternalCalendarSource[]; occurrences: ExternalCalendarOccurrence[] }>;

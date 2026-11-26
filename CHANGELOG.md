@@ -4,7 +4,7 @@
 
 ### 新增
 
-- 日历订阅新增 Super Productivity 时间轴历史链接：已完成、返回未完成和同一任务的额外时间块可作为独立只读日历显示，不重复导入已同步的主排程。
+- 日历订阅新增 Super Productivity 时间轴历史链接：已完成、返回未完成和同一任务的额外时间块可作为独立只读日历显示，不重复导入已同步的主排程；已有订阅可直接复制历史链接，无需更换原链接。
 
 ### 改进
 
@@ -979,7 +979,7 @@
 
 ### Added
 
-- Calendar subscriptions now offer a Super Productivity timeline history link for completed, returned-unfinished, and additional time blocks as read-only calendar entries, without duplicating the primary synced slot.
+- Calendar subscriptions now offer a Super Productivity timeline history link for completed, returned-unfinished, and additional time blocks as read-only calendar entries, without duplicating the primary synced slot. Existing subscribers can copy it at any time without replacing their original link.
 
 ### Improvements
 
