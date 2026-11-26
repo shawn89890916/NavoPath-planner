@@ -53,7 +53,7 @@ import { addDays, addMonths, buildRecurrenceOccurrenceId, enumerateRecurrenceDat
 import { appendAiSubtasks, getAiSubtaskSuggestions } from "./utils/aiSubtasks";
 import { autoScrollAtDragEdge } from "./utils/dragAutoScroll";
 import { dismissGuide, isGuideDismissed } from "./utils/guideDismissal";
-import { addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree } from "./utils/treeOrder";
+import { addSubtaskToTree, findSubtaskInTree, removeSubtaskFromTree, toggleSubtaskInTree, moveTreeNode, captureTreeMoveUndo, undoTreeMove, type TreeDragNode, type TreeDropTarget } from "./utils/treeOrder";
 import { promoteSubtaskToToday, reorderTodayCandidates, returnScheduledTaskToToday, toggleTodayCandidate } from "./utils/todayCandidates";
 import { reconcileOverdueTasks } from "./utils/overdueTasks";
 import { useInAppDialog } from "./InAppDialog";
@@ -4287,6 +4287,21 @@ if (cached?.data && cached?.settings) {
       ? (lang === "zh" ? "已加入今日候选" : "Added to today's candidates")
       : (lang === "zh" ? "已移回 Planning" : "Returned to Planning");
     window.setTimeout(() => showUndoToast(notice, lang === "zh" ? "撤销" : "Undo", () => undoLastCommit(undo)), 0);
+  }
+
+  function movePlanningTreeNode(source: TreeDragNode, target: TreeDropTarget) {
+    const current = dataRef.current;
+    if (!current) return;
+    const next = moveTreeNode(current, source, target, workspaceNow().toISOString());
+    if (next === current) return;
+    const undo = captureTreeMoveUndo(current, next);
+    void saveData(next);
+    showUndoToast(lang === "zh" ? "任务层级与顺序已更新" : "Task hierarchy and order updated", lang === "zh" ? "撤销" : "Undo", () => {
+      const latest = dataRef.current;
+      const restored = latest && undoTreeMove(latest, undo, workspaceNow().toISOString());
+      if (restored) void saveData(restored);
+      else window.setTimeout(() => showToast(lang === "zh" ? "任务已被修改，无法安全撤销" : "The tree changed; this move can no longer be safely undone"), 0);
+    });
   }
 
   function promotePlanningSubtask(parentTaskId: string, subtaskId: string) {
@@ -10321,7 +10336,7 @@ if (cached?.data && cached?.settings) {
           <div className="df-planning-loading-toolbar" aria-hidden="true"><span className="df-skeleton-title" /><span className="df-skeleton-tab" /></div>
           <section aria-hidden="true"><span className="df-skeleton-title" />{Array.from({ length: 5 }, (_, index) => <div className="df-skeleton-task" key={index}><i /><span /><small /></div>)}</section>
         </main>}>
-          <PlanningViewLazy focusTaskId={planningFocusTaskId} onFocusHandled={() => setPlanningFocusTaskId(null)} presentationNote={productDemo?.story} demo={Boolean(productDemo)} referenceDate={productDemo?.date} lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled === true} featureQuadrant={settings.featureQuadrantViewEnabled === true} featureList={settings.featureListViewEnabled === true} featureMetrics={settings.featureMetricsEnabled !== false} planningSidebarCollapsed={settings.planningSidebarCollapsed === true} onPlanningSidebarCollapsedChange={(collapsed) => void saveSettings({ planningSidebarCollapsed: collapsed })} planningSidebarWidth={settings.planningSidebarWidth} onPlanningSidebarWidthChange={(width) => void saveSettings({ planningSidebarWidth: width })} engagementEnabled={settings.featureEngagementEnabled === true} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
+          <PlanningViewLazy focusTaskId={planningFocusTaskId} onFocusHandled={() => setPlanningFocusTaskId(null)} presentationNote={productDemo?.story} demo={Boolean(productDemo)} referenceDate={productDemo?.date} lang={lang} data={data} projects={projects} tasks={tasks} compact={compactLayout} collapsed={collapsedBranches} setCollapsed={setCollapsedBranches} onToggleTodayCandidate={togglePlanningTodayCandidate} onPromoteSubtaskToToday={promotePlanningSubtask} onProjectEdit={openProjectEdit} onProjectComplete={completeProject} onTaskEdit={openTaskEdit} onTaskUpdate={updateTask} onTaskCreate={createTaskInProject} onDataChange={(nextData) => void saveData(nextData)} onTreeMove={movePlanningTreeNode} onDeleteSubtask={deleteSubtaskById} onTaskDelete={(taskId) => deleteTaskById(taskId)} featureKanban={settings.featureKanbanViewEnabled === true} featureQuadrant={settings.featureQuadrantViewEnabled === true} featureList={settings.featureListViewEnabled === true} featureMetrics={settings.featureMetricsEnabled !== false} planningSidebarCollapsed={settings.planningSidebarCollapsed === true} onPlanningSidebarCollapsedChange={(collapsed) => void saveSettings({ planningSidebarCollapsed: collapsed })} planningSidebarWidth={settings.planningSidebarWidth} onPlanningSidebarWidthChange={(width) => void saveSettings({ planningSidebarWidth: width })} engagementEnabled={settings.featureEngagementEnabled === true} dayStartTime={settings.dayStartTime} metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy} metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits} metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart} metricsCustomEnd={settings.metricsCustomEnd} onMetricsSettingsChange={(patch) => void saveSettings(patch)} />
         </Suspense>
       </Activity>
 

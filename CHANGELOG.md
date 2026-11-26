@@ -2,6 +2,10 @@
 
 ## 2026-11-26
 
+### 改进
+
+- Tree 视图支持拖拽调整任务层级与顺序、跨父任务移动、解除子任务归属和撤销；使用稳定的插入指示与悬停展开，并保护关联排程数据。
+
 ### 修复
 
 - 修复启用投入度后时间轴任务色条与卡片圆角不贴合的问题，保留评分对应的色条长度。
@@ -967,6 +971,10 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### Improved
+
+- Tree supports dragging to reorder, nest, move between parents, detach and undo; stable drop indicators and hover expansion protect layout, and linked execution data is safeguarded.
 
 ### Fixed
 

@@ -1,4 +1,5 @@
 import type { PlannerData, Project, Subtask, Task } from "../types";
+import { captureTaskUndo, undoTaskChanges } from "./taskUndo";
 
 const byOrder = <T extends { order?: number; createdAt?: string }>(a: T, b: T) =>
   (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) ||
@@ -209,4 +210,205 @@ export function toggleSubtaskInTree(subtasks: Subtask[], id: string): Subtask[] 
       ? { ...item, subtasks: toggleSubtaskInTree(item.subtasks, id) }
       : item;
   });
+}
+
+
+export type TreeDragNode = { kind: "project" | "task" | "subtask"; id: string };
+export type TreeDropTarget = TreeDragNode & { position: "before" | "inside" | "after" };
+
+const UNASSIGNED_PROJECT = "__unassigned__";
+const MAX_TREE_DEPTH = 64;
+
+function locateSubtask(tasks: Task[], id: string) {
+  for (const owner of tasks) {
+    const walk = (items: Subtask[], depth: number): { item: Subtask; depth: number } | undefined => {
+      for (const item of items) {
+        if (item.id === id) return { item, depth };
+        const nested = walk(item.subtasks || [], depth + 1);
+        if (nested) return nested;
+      }
+      return undefined;
+    };
+    const found = walk(owner.subtasks || [], 1);
+    if (found) return { ...found, owner };
+  }
+  return undefined;
+}
+
+function subtreeDepth(items: Subtask[]): number {
+  return items.reduce((depth, item) => Math.max(depth, 1 + subtreeDepth(item.subtasks || [])), 0);
+}
+
+function hasLinkedSubtask(items: Subtask[], taskId?: string): boolean {
+  return items.some(item => (taskId ? item.plannedTaskId === taskId : Boolean(item.plannedTaskId))
+    || hasLinkedSubtask(item.subtasks || [], taskId));
+}
+
+function taskCanBecomeSubtask(data: PlannerData, task: Task): boolean {
+  // Embedded subtasks do not own execution records. Never silently remove an
+  // active, recurring, externally backed or independently referenced task.
+  return !task.fixedCourse && !task.caldav && !task.recurrence && !task.parentTaskId
+    && !task.plannedForDate && !task.executionLane && !task.scheduledDate
+    && !task.scheduledStart && !task.scheduledEnd && !task.executionStatus
+    && !task.timelineRecords?.length
+    && !data.timeEntries?.some(entry => entry.taskId === task.id)
+    && !data.tasks.some(other => other.parentTaskId === task.id || hasLinkedSubtask(other.subtasks || [], task.id))
+    && !hasLinkedSubtask(task.subtasks || []);
+}
+
+function targetIsRoot(target: TreeDropTarget): boolean {
+  return target.kind === "project" || (target.kind === "task" && target.position !== "inside");
+}
+
+export function treeDropPosition(source: TreeDragNode["kind"], target: TreeDragNode["kind"], offset: number, height: number): TreeDropTarget["position"] | null {
+  if (source === "project") return target === "project" ? (offset < height / 2 ? "before" : "after") : null;
+  if (target === "project") return "inside";
+  const edge = Math.min(Math.max(height, 1) * 0.25, 12);
+  return offset < edge ? "before" : offset > height - edge ? "after" : "inside";
+}
+
+export function canMoveTreeNode(data: PlannerData, source: TreeDragNode, target: TreeDropTarget): boolean {
+  if (!source.id || !target.id || source.id === target.id) return false;
+  if (source.kind === "project") {
+    return target.kind === "project" && target.position !== "inside"
+      && data.projects.some(p => p.id === source.id) && data.projects.some(p => p.id === target.id);
+  }
+  const task = source.kind === "task" ? data.tasks.find(item => item.id === source.id) : undefined;
+  const sub = source.kind === "subtask" ? locateSubtask(data.tasks, source.id) : undefined;
+  if (!task && !sub) return false;
+  const targetTask = target.kind === "task" ? data.tasks.find(item => item.id === target.id) : undefined;
+  const targetSub = target.kind === "subtask" ? locateSubtask(data.tasks, target.id) : undefined;
+  if (target.kind === "task" && !targetTask || target.kind === "subtask" && !targetSub) return false;
+  if (target.kind === "project" && (target.position !== "inside"
+    || (target.id !== UNASSIGNED_PROJECT && !data.projects.some(p => p.id === target.id)))) return false;
+  const root = targetIsRoot(target);
+  const targetOwner = targetTask || targetSub?.owner;
+  const children = task?.subtasks || sub?.item.subtasks || [];
+  if (findSubtaskInTree(children, target.id)) return false;
+  if (task && !root && (targetOwner?.id === task.id || !taskCanBecomeSubtask(data, task))) return false;
+  if (sub && (root || targetOwner?.id !== sub.owner.id)
+    && (sub.item.plannedTaskId || hasLinkedSubtask(children))) return false;
+  if (root && sub && data.tasks.some(item => item.id === sub.item.id)) return false;
+  if (!root) {
+    const depth = targetSub ? targetSub.depth + (target.position === "inside" ? 1 : 0) : 1;
+    if (depth + subtreeDepth(children) > MAX_TREE_DEPTH) return false;
+  }
+  return true;
+}
+
+function restoreStamp(data: PlannerData, id: string, now: string): string {
+  const deleted = Date.parse(data.sync?.deleted?.["tasks:" + id] || "");
+  const stamp = Date.parse(now);
+  return Number.isFinite(deleted) && deleted >= stamp ? new Date(deleted + 1).toISOString() : now;
+}
+
+function toIndependentTask(sub: Subtask, owner: Task, projectId: string | undefined, data: PlannerData, now: string): Task {
+  const saved = sub.treeTaskSnapshot;
+  const completed = Boolean(sub.completed || sub.done);
+  return {
+    dueDate: "", category: owner.category, priority: null, notes: "", goalId: "",
+    ...saved,
+    id: sub.id, title: sub.title, completed,
+    workflowStatus: completed ? "done" : saved?.workflowStatus === "done" ? "backlog" : saved?.workflowStatus,
+    completedAt: completed ? saved?.completedAt : undefined,
+    projectId, order: Number.MAX_SAFE_INTEGER, subtasks: sub.subtasks || [],
+    timelineRecords: [], createdAt: sub.createdAt, updatedAt: restoreStamp(data, sub.id, now),
+  };
+}
+
+function finishTreeMove(data: PlannerData, projects: Project[], tasks: Task[], now: string): PlannerData {
+  const next = normalizeTreeOrder({ ...data, projects, tasks });
+  const oldTasks = new Map(data.tasks.map(task => [task.id, task]));
+  const oldProjects = new Map(data.projects.map(project => [project.id, project]));
+  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  next.tasks = next.tasks.map(task => same(task, oldTasks.get(task.id)) ? oldTasks.get(task.id)! : {
+    ...task, updatedAt: restoreStamp(data, task.id, now),
+  });
+  next.projects = next.projects.map(project => same(project, oldProjects.get(project.id)) ? oldProjects.get(project.id)! : { ...project, updatedAt: now });
+  if (next.tasks.length === data.tasks.length && next.projects.length === data.projects.length
+    && next.tasks.every((task, i) => task === data.tasks[i])
+    && next.projects.every((project, i) => project === data.projects[i])) return data;
+  return next;
+}
+
+/** Atomic move: validate before detaching, retain identities and whole subtrees. */
+export function moveTreeNode(data: PlannerData, source: TreeDragNode, target: TreeDropTarget, now = new Date().toISOString()): PlannerData {
+  if (!canMoveTreeNode(data, source, target)) return data;
+  if (source.kind === "project") {
+    return finishTreeMove(data, reorderProjects(data.projects, source.id, target.id, target.position === "after"), data.tasks, now);
+  }
+  const root = targetIsRoot(target);
+  const targetTask = target.kind === "task" ? data.tasks.find(task => task.id === target.id) : undefined;
+  const targetSub = target.kind === "subtask" ? locateSubtask(data.tasks, target.id) : undefined;
+  const projectId = target.kind === "project" ? (target.id === UNASSIGNED_PROJECT ? undefined : target.id) : targetTask?.projectId;
+  if (source.kind === "task" && root) {
+    return finishTreeMove(data, data.projects, reorderTasks(data.tasks, source.id, projectId, targetTask?.id, target.position === "after"), now);
+  }
+  const sourceTask = source.kind === "task" ? data.tasks.find(task => task.id === source.id) : undefined;
+  const sourceSub = source.kind === "subtask" ? locateSubtask(data.tasks, source.id) : undefined;
+  let moving: Subtask;
+  let tasks: Task[];
+  if (sourceTask) {
+    const { subtasks, ...treeTaskSnapshot } = sourceTask;
+    moving = { id: sourceTask.id, title: sourceTask.title, completed: sourceTask.completed,
+      done: sourceTask.completed, createdAt: sourceTask.createdAt, subtasks, treeTaskSnapshot };
+    tasks = data.tasks.filter(task => task.id !== sourceTask.id);
+  } else if (sourceSub) {
+    moving = sourceSub.item;
+    tasks = data.tasks.map(task => task.id === sourceSub.owner.id
+      ? { ...task, subtasks: removeSubtaskFromTree(task.subtasks || [], moving.id) } : task);
+    if (root) {
+      const restored = toIndependentTask(moving, sourceSub.owner, projectId, data, now);
+      return finishTreeMove(data, data.projects, reorderTasks([...tasks, restored], restored.id, projectId, targetTask?.id, target.position === "after"), now);
+    }
+  } else return data;
+  const ownerId = targetTask?.id || targetSub?.owner.id;
+  if (!ownerId) return data;
+  const owner = tasks.find(task => task.id === ownerId);
+  if (!owner) return data;
+  const children = owner.subtasks || [];
+  const nextChildren = target.kind === "subtask" && target.position !== "inside"
+    ? insertSubtaskRelativeInTree(children, moving, target.id, target.position === "after")
+    : addSubtaskToTree(children, { ...moving, order: Number.MAX_SAFE_INTEGER }, target.kind === "subtask" ? target.id : undefined);
+  if (!findSubtaskInTree(nextChildren, moving.id)) return data;
+  return finishTreeMove(data, data.projects, tasks.map(task => task.id === ownerId ? { ...task, subtasks: nextChildren } : task), now);
+}
+
+export function captureTreeMoveUndo(before: PlannerData, after: PlannerData) {
+  const undo = captureTaskUndo(before, after);
+  const removed = before.tasks.filter(task => !after.tasks.some(item => item.id === task.id));
+  const added = after.tasks.filter(task => undo.addedTaskIds.includes(task.id));
+  const projects = before.projects.flatMap(project => {
+    const next = after.projects.find(item => item.id === project.id);
+    return next && next.order !== project.order ? [{ id: project.id, before: project.order, after: next.order }] : [];
+  });
+  return { undo, removed, added, projects };
+}
+
+/** Undo the move as one operation; don't restore half a tree if it has changed. */
+export function undoTreeMove(data: PlannerData, move: ReturnType<typeof captureTreeMoveUndo>, now = new Date().toISOString()): PlannerData | null {
+  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  if (move.removed.some(task => data.tasks.some(item => item.id === task.id))) return null;
+  if (move.added.some(task => {
+    const current = data.tasks.find(item => item.id === task.id);
+    if (!current) return true;
+    const { updatedAt: _currentTime, ...currentFields } = current;
+    const { updatedAt: _oldTime, ...oldFields } = task;
+    return !same(currentFields, oldFields);
+  })) return null;
+  if (move.undo.changes.some(change => {
+    const current = data.tasks.find(task => task.id === change.id);
+    return !current || change.fields.some(field => !same(current[field.key], field.after));
+  })) return null;
+  if (move.projects.some(change => !data.projects.some(project => project.id === change.id && project.order === change.after))) return null;
+  const restored = undoTaskChanges(data, move.undo, now);
+  const projects = restored.projects.map(project => {
+    const change = move.projects.find(item => item.id === project.id);
+    return change ? { ...project, order: change.before, updatedAt: now } : project;
+  }).sort(byOrder);
+  const projectOrder = new Map(projects.map((project, index) => [project.id, index]));
+  const tasks = [...restored.tasks, ...move.removed.map(task => ({ ...task, updatedAt: restoreStamp(data, task.id, now) }))].sort((a, b) =>
+    (projectOrder.get(a.projectId || "") ?? Number.MAX_SAFE_INTEGER)
+    - (projectOrder.get(b.projectId || "") ?? Number.MAX_SAFE_INTEGER) || byOrder(a, b));
+  return { ...restored, tasks, projects };
 }
