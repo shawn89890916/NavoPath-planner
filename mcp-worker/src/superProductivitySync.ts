@@ -195,13 +195,15 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
       if (canonical.deleted && canonical.overwriteTarget === side) {
         state.pending[syncId] = { $deleted: side }; continue;
       }
-      if (state.pending[syncId]?.$create === side) delete state.pending[syncId].$create;
-      if (overwritingTarget) {
+      const acknowledgingCreate = state.pending[syncId]?.$create === side;
+      if (acknowledgingCreate) delete state.pending[syncId].$create;
+      if (overwritingTarget || acknowledgingCreate) {
         const pending = state.pending[syncId] ||= {};
         if (canonical.deleted) { pending.$deleted = side; continue; }
-        // Never let the first target snapshot overwrite source values, even
-        // when a matched target was edited after the confirmation.
-        for (const [field, value] of Object.entries(canonical.fields)) {
+        // A created host record can exist before its second scheduling update
+        // succeeds. Treat its first snapshot as acknowledgement, not a new
+        // user edit. Retry all unapplied source fields without erasing them.
+        for (const field of Object.keys(canonical.fields)) {
           // SP's timed schedule and day-only due date are mutually exclusive.
           const equal = projectedEqual(side, canonical.fields, field, item.fields[field]);
           if (equal) { if (pending[field] === side) delete pending[field]; }
@@ -257,13 +259,15 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
   // Recover schedules that were previously acknowledged incorrectly or never
   // queued. Only retry a missing target slot when the canonical scheduled slot
   // still exists on its source; never overwrite a different explicit slot.
+  const localByLink = new Map((state.latest.navopath?.tasks || []).map(item => [item.syncId,item]));
+  const remoteByLink = new Map((state.latest.superproductivity?.tasks || []).map(item => [item.syncId,item]));
   for (const [syncId, entry] of Object.entries(state.canonical)) {
     if (entry.kind !== "task" || entry.deleted || !entry.fields.scheduledAt ||
         state.conflicts.some(c => c.syncId === syncId && ["scheduledAt", "scheduledMinutes", "$deleted"].includes(c.field))) continue;
     const pending = state.pending[syncId] ||= {};
     if (pending.$deleted || pending.$create) continue;
-    const a = state.latest.navopath?.tasks.find(item => item.syncId === syncId);
-    const b = state.latest.superproductivity?.tasks.find(item => item.syncId === syncId);
+    const a = localByLink.get(syncId);
+    const b = remoteByLink.get(syncId);
     if (!a || !b) continue;
     for (const [source,target,origin,destination] of [["navopath","superproductivity",a,b],["superproductivity","navopath",b,a]] as const) {
       if (state.initialOverwrite && state.initialOverwrite.source !== source) continue;
