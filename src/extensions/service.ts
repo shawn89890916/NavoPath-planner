@@ -43,6 +43,7 @@ export const extensionService = {
   uninstall: async (key: string) => (await engine()).uninstall(key),
   rollback: async (key: string) => (await engine()).rollback(key),
   update: async (key: string) => (await engine()).update(key),
+  updateAll: async (kind: ExtensionKind = "plugin", retryFailed = false) => (await engine()).updateAll(kind, retryFailed),
   selectTheme: async (key: string | null) => (await engine()).selectTheme(key),
   addSource: async (url: string, name?: string) => (await engine()).addSource(url, name),
   removeSource: async (id: string) => (await engine()).removeSource(id),

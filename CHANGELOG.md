@@ -2,6 +2,13 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 111
+
+#### 改进
+
+- 调整设置内容区视觉重心、标题及控件对齐，保持保存反馈和关闭按钮位置稳定；窄屏按内容宽度适配，不改变任务块样式。
+- 插件市场与已安装列表支持检测到更新后全部更新，宿主按顺序处理并显示真实进度，单项失败可重试，保留原配置和启停状态。
+
 ### 1.7.0 Beta 110
 
 #### 修复
@@ -1188,6 +1195,13 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 111
+
+#### Improvements
+
+- Center and align settings content, headings and controls with stable save feedback and close actions; adapt to narrow content widths without changing task block appearance.
+- Plugin market and installed list offer Update all when updates are available. The host processes updates sequentially with real progress and retryable failures, preserving configuration and enabled states.
 
 ### 1.7.0 Beta 110
 

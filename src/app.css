@@ -12592,7 +12592,7 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-app .df-settings-shell {
   grid-template-columns: 164px minmax(0, 1fr);
   position: relative;
-  gap: 24px;
+  gap: 0;
 }
 .df-settings-rail {
   position: relative;
@@ -12600,8 +12600,8 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   min-width: 0;
   flex-direction: column;
   gap: 12px;
-  padding-right: 18px;
-  border-right: 1px solid var(--paper-rule);
+  padding-inline-end: 16px;
+  border-inline-end: 1px solid var(--paper-rule);
   overflow-y: auto;
 }
 .df-app .df-settings-nav {
@@ -19095,8 +19095,8 @@ body.df-unified-dragging .df-unified-drag-overlay {
 #root .df-app .df-settings-shell > .df-settings-rail { grid-column: 1; grid-row: 2; }
 #root .df-app .df-settings-shell > .df-settings-content { grid-column: 2; grid-row: 2; }
 #root .df-app .df-settings-content {
-  padding: 2px 4px 18px 0;
-  background: color-mix(in srgb, var(--bg-app) 72%, var(--surface-main));
+  padding: 0 20px 20px;
+  background: transparent;
 }
 #root .df-app .df-theme-accent-setting {
   display: grid;
@@ -20333,3 +20333,23 @@ body[data-navopath-base-theme="light"],
 .df-compact-save-feedback { position: absolute; inset-inline-end: 12px; inset-block-start: 100%; z-index: 4; max-width: calc(100% - 24px); background: var(--surface-main); border-radius: var(--radius-control); padding: 3px 6px; pointer-events: none; }
 .df-extension-mount[data-mount-state="ready"] { animation: ui-fade-in var(--motion-fade, 140ms) var(--motion-ease) both; }
 .df-extension-mount[data-mount-state="pending"] { opacity: .7; }
+
+/* The settings column is centered in its own available space, not the app.
+   Keep the scroll container independent of the content's optical alignment. */
+#root .df-app .df-settings-detail-shell > .df-settings-content { scrollbar-gutter: stable both-edges; container-type: inline-size; }
+#root .df-app .df-settings-content-column { width: min(100%, 620px); min-width: 0; margin-inline: auto; }
+#root .df-app .df-settings-content-title { margin: 0 0 20px; font: 600 22px/1.25 var(--paper-sans); color: var(--text-main); overflow-wrap: anywhere; }
+#root .df-app .df-settings-header { justify-content: space-between; min-width: 0; }
+#root .df-app .df-settings-header > .df-utility-head-leading { flex: 1 1 0; min-width: 0; }
+#root .df-app .df-settings-header-actions { display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto; }
+#root .df-app .df-settings-header-actions > .df-settings-save-status { width: clamp(0px, 12vw, 116px); text-align: end; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#root .df-app .df-settings-undo-slot { display: inline-flex; }
+#root .df-app .df-settings-undo-slot[data-visible="false"] { visibility: hidden; }
+@media (orientation: portrait), (max-width: 980px) and (orientation: landscape) {
+  #root .df-app .df-settings-detail-shell > .df-settings-content { scrollbar-gutter: auto; padding-inline: 20px; }
+  #root .df-app .df-settings-header-actions > .df-settings-save-status { width: 68px; }
+}
+@media (max-width: 380px) {
+  #root .df-app .df-settings-header-actions { gap: 2px; }
+  #root .df-app .df-settings-header-actions > .df-settings-save-status { width: 54px; }
+}

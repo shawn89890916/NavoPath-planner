@@ -88,6 +88,39 @@ describe("official plugin update recovery", () => {
   });
 });
 
+describe("batch extension updates", () => {
+  it("serializes updates, continues after a failed package and retries only failures", async () => {
+    const ids = ["weather", "metrics", "kanban"];
+    const entries = ids.map(id => getBundledExtension(id)!);
+    const f = fixture("preview", { ...defaultExtensionPreferences(), installed: Object.fromEntries(entries.map(entry => [`official:${entry.manifest.id}`, { ...entry, key: `official:${entry.manifest.id}`, manifest: { ...entry.manifest, version: "0.0.1" }, enabled: false, installedAt: "2026-11-24T00:00:00Z" }])) });
+    await current.configure(f.host);
+    const updatedEntries = await Promise.all(entries.map(async entry => {
+      const pkg = JSON.parse(readFileSync(new URL(entry.manifest.id + ".navopackage.json", bundledDirectory), "utf8"));
+      pkg.manifest.version = "9.0.0";
+      const bytes = new TextEncoder().encode(JSON.stringify(pkg));
+      return { entry: { ...entry, manifest: pkg.manifest, sha256: await sha256(bytes) }, bytes };
+    }));
+    let fail = true;
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.includes("catalog.json")) return new Response(JSON.stringify({ version: 1, packages: updatedEntries.map(x => x.entry) }));
+      const target = updatedEntries.find(x => url.includes(x.entry.manifest.id + ".navopackage.json"));
+      if (!target || (fail && target.entry.manifest.id === "metrics")) throw new Error("unavailable");
+      return new Response(target.bytes);
+    }));
+    await current.checkUpdates();
+    const batch = current.updateAll("plugin");
+    expect(current.updateAll("plugin")).toBe(batch);
+    await batch;
+    expect(current.getSnapshot().updateBatch).toMatchObject({ total: 3, processed: 3, updated: 2, running: false, failures: [{ key: "official:metrics" }] });
+    expect(Object.keys(current.getSnapshot().updates)).toEqual(["official:metrics"]);
+    fail = false;
+    await current.updateAll("plugin", true);
+    expect(current.getSnapshot().updateBatch).toMatchObject({ total: 1, updated: 1, failures: [], running: false });
+    expect(current.getSnapshot().updates).toEqual({});
+    expect(Object.values(current.getSnapshot().preferences.installed).every(item => item.enabled === false)).toBe(true);
+  });
+});
+
 describe("extension installation and account reconciliation", () => {
   it("preinstalls Activity history, Matrix, Kanban and Metrics on a clean installation", async () => {
     const f = fixture("preview", { ...defaultExtensionPreferences(), migratedPlanningViews: false, migratedShelfViews: false });

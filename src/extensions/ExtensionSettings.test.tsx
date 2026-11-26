@@ -6,7 +6,7 @@ const state = vi.hoisted(() => ({ snapshot: null as unknown as ExtensionSnapshot
 const service = vi.hoisted(() => ({
   subscribe: () => () => {}, getSnapshot: () => state.snapshot,
   refreshCatalog: vi.fn(async () => {}), importFile: vi.fn(async () => {}), install: vi.fn(async () => {}),
-  setSafeMode: vi.fn(async () => {}), setPreference: vi.fn(async () => {}), checkUpdates: vi.fn(async () => {}),
+  setSafeMode: vi.fn(async () => {}), setPreference: vi.fn(async () => {}), checkUpdates: vi.fn(async () => {}), updateAll: vi.fn(async () => {}),
   selectTheme: vi.fn(async () => {}), getConfig: () => ({}), saveConfig: vi.fn(async () => {}),
 }));
 vi.mock("./service", () => ({ extensionService: service }));
@@ -63,6 +63,21 @@ describe("extension settings surfaces", () => {
     await act(async () => renderer!.update(<ExtensionSettings lang="en" kind="theme" />));
     expect(JSON.stringify(renderer!.toJSON())).toContain("theme example");
     expect(JSON.stringify(renderer!.toJSON())).not.toContain("Restricted mode");
+  });
+  it("shows update all only for available updates and delegates the batch to the host", async () => {
+    await act(async () => { renderer = create(<ExtensionSettings lang="en" kind="plugin" />); });
+    const findButtons = (label: string) => renderer!.root.findAllByType("button").filter(button => button.children.includes(label));
+    expect(findButtons("Update all")).toHaveLength(0);
+    state.snapshot = { ...state.snapshot, updates: { "official:plugin": { ...state.snapshot.catalog[0], manifest: { ...manifest("plugin"), version: "1.1.0" } }, "official:theme": state.snapshot.catalog[1] } };
+    await act(async () => renderer!.update(<ExtensionSettings lang="en" kind="plugin" />));
+    await act(async () => findButtons("Browse market")[0].props.onClick());
+    expect(findButtons("Update all")).toHaveLength(2);
+    await act(async () => findButtons("Update all").at(-1)!.props.onClick());
+    expect(service.updateAll).toHaveBeenCalledWith("plugin");
+    state.snapshot = { ...state.snapshot, updateBatch: { kind: "plugin", total: 1, processed: 0, updated: 0, skipped: 0, failures: [], current: "official:plugin", running: true } };
+    await act(async () => renderer!.update(<ExtensionSettings lang="en" kind="plugin" />));
+    expect(findButtons("Update all")).toHaveLength(0);
+    expect(renderer!.root.findAllByType("progress").length).toBeGreaterThan(0);
   });
   it("filters the market to installed packages and opens a plugin's details", async () => {
     state.snapshot.catalog.push({ ...state.snapshot.catalog[0], manifest: { ...manifest("plugin"), id: "extra", name: "Extra plugin" } });

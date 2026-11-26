@@ -1,4 +1,4 @@
-import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativeShelfViewMode, PluginLauncherStatus } from "./types";
+import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionUpdateBatch, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativeShelfViewMode, PluginLauncherStatus } from "./types";
 import { compatibility, compareVersions, defaultExtensionPreferences, isRecord, MAX_PACKAGE_BYTES, normalizeExtensionPreferences, readExtensionResponse, readPackage, publicHttps, sha256 } from "./packages";
 import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
 import { emitPluginEvent, loadPlugin, type LoadedPlugin } from "./runtime";
@@ -42,6 +42,7 @@ export class ExtensionService {
   private lastCheck = 0;
   private catalogRequest?: { signature: string; promise: Promise<void> };
   private updateRequest?: Promise<void>;
+  private batchRequest?: Promise<void>;
   private snapshot: ExtensionSnapshot = { preferences: defaultExtensionPreferences(), catalog: [], updates: {}, status: {}, busy: false, error: "", safeMode: false, settingsPages: [], views: [], launcherStatus: {} };
   constructor() {
     if (typeof window !== "undefined") {
@@ -72,7 +73,7 @@ export class ExtensionService {
     if (account !== this.account) {
       const generation = ++this.generation;
       this.ready = false; this.account = account;
-      this.catalogRequest = undefined; this.updateRequest = undefined; this.lastCheck = 0;
+      this.catalogRequest = undefined; this.updateRequest = undefined; this.batchRequest = undefined; this.lastCheck = 0;
       for (const { plugin } of this.loaded.values()) await plugin.dispose(); this.loaded.clear();
       await this.themeCleanup(); this.themeSignature = "";
       await this.unbindStorage();
@@ -80,7 +81,7 @@ export class ExtensionService {
       this.host = host;
       let safeMode = false;
       try { safeMode = new URLSearchParams(location.search).has("safe-mode") || localStorage.getItem(this.scope() + "safe-mode") === "true" || localStorage.getItem(this.scope() + "booting") === "true"; } catch { /* ephemeral sessions */ }
-      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, error: "" });
+      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, updateBatch: undefined, error: "" });
       if (generation !== this.generation) return;
       if (account && account !== "preview") this.unbindStorage = subscribeExtensionValues((owner, key, value) => {
         const pendingKey = this.scope() + `pending:${owner}:${key}`;
@@ -313,6 +314,7 @@ export class ExtensionService {
   });
   checkUpdates = (): Promise<void> => {
     if (this.updateRequest) return this.updateRequest;
+    if (this.batchRequest) return this.batchRequest;
     const generation = this.generation;
     this.setSnapshot({ checkingUpdates: true });
     const request = Promise.resolve().then(async () => {
@@ -335,16 +337,62 @@ export class ExtensionService {
     this.updateRequest = request;
     return request;
   };
-  update = (key: string) => this.operation(async () => {
-    const entry = this.snapshot.updates[key], item = this.snapshot.preferences.installed[key];
-    if (!entry || !item || !canUseOfficialUpdate(item, entry) || entry.manifest.id !== item.manifest.id || entry.manifest.kind !== item.manifest.kind) return;
+  // All installs/updates share the existing operation queue. Keep a single
+  // batch alive in the service, independent of the market component's lifetime.
+  updateAll = (kind: ExtensionKind = "plugin", retryFailed = false): Promise<void> => {
+    if (this.batchRequest) return this.batchRequest;
+    const generation = this.generation;
+    const previous = this.snapshot.updateBatch;
+    const retryKeys = retryFailed && previous?.kind === kind ? new Set(previous.failures.map(f => f.key)) : undefined;
+    const entries = Object.entries(this.snapshot.updates).filter(([key, entry]) =>
+      this.snapshot.preferences.installed[key]?.manifest.kind === kind && entry.manifest.kind === kind && (!retryKeys || retryKeys.has(key)));
+    if (!entries.length) return Promise.resolve();
+    let batch: ExtensionUpdateBatch = { kind, total: entries.length, processed: 0, updated: 0, skipped: 0, running: true, failures: [] };
+    const publish = (patch: Partial<ExtensionUpdateBatch>) => {
+      batch = { ...batch, ...patch };
+      if (generation === this.generation) this.setSnapshot({ updateBatch: batch });
+    };
+    const request = this.operation(async () => {
+      try {
+        for (const [key, entry] of entries) {
+          if (generation !== this.generation) return;
+          publish({ current: key });
+          try {
+            const applied = await this.applyUpdate(key, entry, generation);
+            if (generation !== this.generation) return;
+            publish({ processed: batch.processed + 1, updated: batch.updated + Number(applied), skipped: batch.skipped + Number(!applied) });
+          } catch (error) {
+            if (generation !== this.generation) return;
+            publish({ processed: batch.processed + 1, failures: [...batch.failures, { key, name: entry.manifest.name, error: errorText(error) }] });
+          }
+        }
+      } finally { publish({ current: undefined, running: false }); }
+    }).finally(() => { if (this.batchRequest === request) this.batchRequest = undefined; });
+    this.batchRequest = request;
+    publish({});
+    return request;
+  };
+  update = (key: string) => {
+    const generation = this.generation;
+    return this.operation(async () => { await this.applyUpdate(key, this.snapshot.updates[key], generation); });
+  };
+  private async applyUpdate(key: string, entry: CatalogEntry | undefined, generation: number): Promise<boolean> {
+    if (generation !== this.generation) return false;
+    const item = this.snapshot.preferences.installed[key];
+    if (!entry || !item || !canUseOfficialUpdate(item, entry) || entry.manifest.id !== item.manifest.id || entry.manifest.kind !== item.manifest.kind || compatibility(entry.manifest, platform()) || compareVersions(entry.manifest.version, item.manifest.version) <= 0) return false;
     const bytes = await this.packageBytes(entry);
+    if (generation !== this.generation) return false;
     const pkg = await readPackage(bytes);
+    if (generation !== this.generation) return false;
     if (pkg.manifest.id !== item.manifest.id || pkg.manifest.kind !== item.manifest.kind || pkg.manifest.version !== entry.manifest.version) throw new Error("Catalog manifest does not match package");
     // Keep the original key and therefore its settings, storage and enabled state.
     await this.installBytes(bytes, item.sourceId, entry.downloadUrl, entry.sha256);
-    const updates = { ...this.snapshot.updates }; delete updates[key]; this.setSnapshot({ updates });
-  });
+    if (generation !== this.generation) return false;
+    const updates = { ...this.snapshot.updates };
+    if (updates[key] && compareVersions(updates[key].manifest.version, entry.manifest.version) <= 0) delete updates[key];
+    this.setSnapshot({ updates });
+    return true;
+  }
   private bridge(key: string) {
     const host = this.ensureHost(), generation = this.generation, account = this.account;
     const guard = () => { if (generation !== this.generation || account !== this.account) throw new Error("Extension account changed"); };

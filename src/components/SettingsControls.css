@@ -15,8 +15,8 @@
 }
 .df-settings-group--danger .df-settings-group-title { color: var(--danger-ink); }
 .df-settings-row, #root .df-app .df-settings-row {
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 40%);
-  align-items: center; column-gap: var(--space-5); row-gap: var(--space-2);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, min(48%, 240px));
+  align-items: center; column-gap: var(--space-4); row-gap: var(--space-2);
   min-height: 52px; padding: var(--space-2) 0;
 }
 .df-settings-row + .df-settings-row,
@@ -73,7 +73,7 @@
 .df-settings-toggle[data-state="on"] .df-settings-toggle-knob { transform: translate(calc(var(--switch-width) - var(--switch-thumb) - 4px), -50%); border-color: transparent; }
 #root .df-app :is(.df-settings-select, .df-settings-input, .df-settings-number, .df-settings-color-field) {
   min-width: 0; width: 100%; max-width: 220px; height: 38px;
-  padding: 0 var(--space-3); border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-control);
+  padding: 0 var(--space-3); border: 1px solid var(--paper-rule); border-radius: var(--radius-control);
   background-color: var(--surface-card); color: var(--text-main); font: 500 13px/1.4 var(--paper-sans);
   box-shadow: none; color-scheme: light;
   transition: border-color var(--paper-motion), background-color var(--paper-motion);
@@ -122,8 +122,7 @@
 /* Respond to the panel's usable width rather than the window width. */
 @container settings-content (max-width: 420px) {
   #root .df-app .df-settings-row { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-4); }
-  #root .df-app .df-settings-row:has(.df-settings-select, .df-settings-input, .df-settings-number, .df-settings-color-field, .df-settings-action) { grid-template-columns: minmax(0, 1fr); }
-  #root .df-app .df-settings-row:has(.df-settings-select, .df-settings-input, .df-settings-number, .df-settings-color-field, .df-settings-action) > .df-settings-row-control { justify-content: flex-start; }
+
 }
 @media (prefers-reduced-motion: reduce) {
   .df-settings-toggle::before, .df-settings-toggle-knob,
@@ -147,3 +146,13 @@
 .df-settings-search-bar button[aria-pressed="true"] { background: var(--paper-note); color: var(--accent-active); outline: 1px solid var(--paper-rule-strong); }
 .df-settings-save-status { color: var(--text-muted); font: 400 11px/1.4 var(--paper-sans); max-width: 120px; overflow-wrap: anywhere; }
 .df-settings-save-status[data-save-phase="retrying"] { color: var(--danger-ink); }
+
+/* Only switch complex rows to stacked layout when their actual content area is narrow. */
+.df-settings-row-control:has(.df-settings-range-control):has(.df-settings-number-wrap) { flex-wrap: nowrap; }
+.df-settings-row-control:has(.df-settings-range-control) > .df-settings-range-control { flex: 1 1 80px; }
+.df-settings-row-control:has(.df-settings-range-control) > .df-settings-number-wrap { flex: 0 1 92px; }
+.df-settings-range-control > input[type="range"] { min-width: 0; width: 100%; }
+@container (max-width: 340px) {
+  #root .df-app .df-settings-row:has(.df-settings-range-control, .df-settings-input:not([type="time"]), .df-settings-color-field) { grid-template-columns: minmax(0, 1fr); }
+  #root .df-app .df-settings-row:has(.df-settings-range-control, .df-settings-input:not([type="time"]), .df-settings-color-field) > .df-settings-row-control { justify-content: flex-start; }
+}

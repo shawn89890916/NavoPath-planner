@@ -109,6 +109,11 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
   const page = snapshot.settingsPages.find((item) => item.id === pageId);
   const active = installed.find((item) => item.key === preferences.activeTheme);
   const updateCount = installed.filter((item) => snapshot.updates[item.key]).length;
+  const batch = snapshot.updateBatch?.kind === kind ? snapshot.updateBatch : undefined;
+  const batchRunning = Boolean(snapshot.updateBatch?.running);
+  const retryCount = batch?.failures.filter(failure => snapshot.updates[failure.key]).length ?? 0;
+  const updateLabel = text("全部更新", "Update all");
+  const checkLabel = text("检查更新", "Check updates");
   async function run(action: () => Promise<unknown>, label = "") {
     setError(""); setNotice(""); if (label) setPending(label);
     try { await action(); } catch (caught) { setError(caught instanceof Error ? caught.message : String(caught)); }
@@ -116,6 +121,19 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
   }
   function navigate(next: typeof view) { setView(next); setQuery(""); setSelectedCatalogKey(null); setConfirmation(null); setError(""); setNotice(""); }
   function browseMarket() { navigate("market"); void run(() => extensionService.refreshCatalog()); }
+  const updateControls = (inMarket: boolean) => <div className="df-extension-update-strip">
+    <div className="df-extension-update-copy" role="status" aria-live="polite">
+      {batch?.running ? <><strong>{text("正在更新", "Updating")} {batch.processed}/{batch.total}</strong><span>{installed.find(item => item.key === batch.current)?.manifest.name ?? text("准备中…", "Preparing…")}</span><progress aria-label={text("批量更新进度", "Batch update progress")} value={batch.processed} max={batch.total} /></>
+        : batch && batch.failures.length > 0 ? <><strong>{text(`已更新 ${batch.updated} 项 · ${batch.failures.length} 项失败`, `${batch.updated} updated · ${batch.failures.length} failed`)}</strong>{batch.failures.map(failure => <span className="df-extension-update-failure" key={failure.key}>{failure.name}: {failure.error}</span>)}</>
+        : updateCount ? <strong>{text(`${updateCount} 个可用更新`, `${updateCount} updates available`)}</strong>
+        : batch ? <span>{text(`更新完成 · ${batch.updated} 项已更新`, `Finished · ${batch.updated} updated`)}</span> : null}
+    </div>
+    <div className="df-extension-update-actions">
+      {inMarket && <SettingActionButton pending={Boolean(checkingUpdates)} disabled={batchRunning} onClick={() => void run(() => extensionService.checkUpdates())}>{checkLabel}</SettingActionButton>}
+      {retryCount > 0 && !batch?.running && <SettingActionButton disabled={busy || batchRunning || Boolean(checkingUpdates)} onClick={() => void run(() => extensionService.updateAll(kind, true))}>{text("重试失败项", "Retry failed")}</SettingActionButton>}
+      {updateCount > 0 && !batch?.running && <SettingActionButton tone="primary" disabled={busy || batchRunning || Boolean(checkingUpdates)} onClick={() => void run(() => extensionService.updateAll(kind))}>{updateLabel}</SettingActionButton>}
+    </div>
+  </div>;
   function statusLabel(value: string) { const parts = value.split(" / "); return parts.length === 2 ? parts[zh ? 0 : 1] : value; }
   useEffect(() => { if (pageId && !page) setPageId(null); }, [pageId, page]);
   const search = <label className="df-extension-search"><UiSearchIcon size={16} /><SettingTextInput value={query} placeholder={view === "market" ? text("搜索名称、作者或描述…", "Search name, author or description…") : text(plugin ? "搜索已安装的插件…" : "搜索已安装的主题…", plugin ? "Search installed plugins…" : "Search installed themes…")} ariaLabel={text("搜索扩展", "Search extensions")} onChange={setQuery} /></label>;
@@ -147,12 +165,12 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
       <div data-settings-anchor={plugin ? "plugins" : "themes"} tabIndex={-1} className="df-settings-extension-tools">
         <span data-settings-anchor={plugin ? "plugin-market" : undefined} tabIndex={plugin ? -1 : undefined}><SettingActionButton tone="primary" onClick={browseMarket}>{text("浏览市场", "Browse market")}</SettingActionButton></span>
         <SettingActionButton onClick={() => fileInput.current?.click()}>{text("导入", "Import")}</SettingActionButton>
-        <SettingActionButton pending={Boolean(checkingUpdates)} onClick={() => void run(async () => { await extensionService.checkUpdates(); setNotice(text("更新检查完成。", "Update check complete.")); })}>{text("检查更新", "Check updates")}</SettingActionButton>
+        <SettingActionButton pending={Boolean(checkingUpdates)} disabled={batchRunning} onClick={() => void run(async () => { await extensionService.checkUpdates(); setNotice(text("更新检查完成。", "Update check complete.")); })}>{text("检查更新", "Check updates")}</SettingActionButton>
         <ActionDisclosure label={text("更多安装方式", "More installation options")}><SettingActionButton onClick={() => navigate("url")}>{text("从网址安装", "Install from URL")}</SettingActionButton></ActionDisclosure>
       </div>
       {plugin && safeMode && <SettingRow title={text("受限模式已开启", "Restricted mode is on")} description={text("所有插件已暂停，安装与配置仍保留。", "Plugins are paused; installations and settings are preserved.")} control={<SettingActionButton onClick={() => void run(() => extensionService.setSafeMode(false))}>{text("退出受限模式", "Resume plugins")}</SettingActionButton>} />}
       {!plugin && <SettingRow title={text("当前主题", "Current theme")} control={<SettingSelect value={preferences.activeTheme ?? ""} disabled={busy} ariaLabel={text("当前主题", "Current theme")} options={[{ value: "", label: text("NavoPath 默认", "NavoPath default") }, ...installed.map((item) => ({ value: item.key, label: item.manifest.name }))]} onChange={(key) => void run(() => extensionService.selectTheme(key || null), text("正在切换主题…", "Applying theme…"))} />} />}
-      {updateCount > 0 && <p className="df-extension-note" role="status">{text(`${updateCount} 个可更新`, `${updateCount} updates available`)}</p>}
+      {(updateCount > 0 || batch) && updateControls(false)}
       <SettingSection title={text(plugin ? "已安装插件" : "已安装主题", plugin ? "Installed plugins" : "Installed themes")}>
         {installed.length > 0 && search}
         <div className="df-extension-list">
@@ -178,7 +196,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
               {inline && <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => setExpandedInline(current => current === item.key ? undefined : item.key)}>{expandedInline === item.key ? text("收起", "Collapse") : text("设置", "Settings")}</SettingActionButton>}
               {pages.length > 0 ? pages.map((contribution) => <SettingActionButton key={contribution.id} ariaLabel={text(`${item.manifest.name} ${inline ? "高级设置" : "设置"}`, `${item.manifest.name} ${inline ? "advanced settings" : "settings"}`)} onClick={() => setPageId(contribution.id)}>{pages.length === 1 ? text(inline ? "高级设置" : "设置", inline ? "Advanced settings" : "Settings") : contribution.name}</SettingActionButton>) : plugin && !inline && <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => setFallbackSettingsKey(item.key)}>{text("设置", "Settings")}</SettingActionButton>}
               {!plugin && !selected && <SettingActionButton disabled={busy} onClick={() => void run(() => extensionService.selectTheme(item.key), text("正在切换主题…", "Applying theme…"))}>{text("使用", "Use theme")}</SettingActionButton>}
-              {snapshot.updates[item.key] && <SettingActionButton pending={pending === (zh ? "正在更新…" : "Updating…")} disabled={busy && pending !== (zh ? "正在更新…" : "Updating…")} onClick={() => void run(() => extensionService.update(item.key), text("正在更新…", "Updating…"))}>{pending === (zh ? "正在更新…" : "Updating…") ? text("正在更新…", "Updating…") : text("更新", "Update")}</SettingActionButton>}
+              {snapshot.updates[item.key] && <SettingActionButton pending={pending === (zh ? "正在更新…" : "Updating…")} disabled={busy || batchRunning} onClick={() => void run(() => extensionService.update(item.key), text("正在更新…", "Updating…"))}>{pending === (zh ? "正在更新…" : "Updating…") ? text("正在更新…", "Updating…") : text("更新", "Update")}</SettingActionButton>}
               <ActionDisclosure label={text(`${item.manifest.name} 更多操作`, `More actions for ${item.manifest.name}`)}>
                 {item.previous && <SettingActionButton disabled={busy} onClick={() => void run(() => extensionService.rollback(item.key), text("正在回退…", "Rolling back…"))}>{text("回退", "Roll back")} {item.previous.manifest.version}</SettingActionButton>}
                 <SettingActionButton disabled={busy} tone="danger" onClick={() => setConfirmation(item.key)}>{text("卸载", "Uninstall")}</SettingActionButton>
@@ -233,6 +251,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
       <header className="df-extension-market-head"><div><h2>{text(plugin ? "社区插件市场" : "社区主题", plugin ? "Community plugin market" : "Community themes")}</h2></div><CloseButton label={text("关闭市场", "Close market")} onClick={() => navigate("installed")} /></header>
       {!plugin && <label className="df-extension-preview-control"><span>{text("预览外观", "Preview appearance")}</span><SettingSelect value={previewMode} ariaLabel={text("预览外观", "Preview appearance")} options={[{ value: "split", label: text("浅色与深色", "Light and dark") }, { value: "light", label: text("浅色", "Light") }, { value: "dark", label: text("深色", "Dark") }]} onChange={value => setPreviewMode(value as PreviewMode)} /></label>}
       {!selectedCatalog && <div className="df-extension-market-toolbar">{search}<label className="df-extension-market-filter"><span>{text("仅显示已安装", "Installed only")}</span><SettingToggle checked={onlyInstalled} ariaLabel={text("仅显示已安装", "Installed only")} onChange={setOnlyInstalled} /></label><SettingSelect value={marketSort} ariaLabel={text("市场排序", "Sort market")} options={[{ value: "name", label: text("按名称", "Name") }, { value: "author", label: text("按作者", "Author") }, ...(plugin ? [{ value: "downloads", label: text("下载量", "Downloads") }, { value: "updated", label: text("最近上传", "Recently updated") }] : [])]} onChange={setMarketSort} /><span className="df-extension-market-count">{text(`${catalog.length} 个${plugin ? "插件" : "主题"}`, `${catalog.length} ${plugin ? "plugins" : "themes"}`)}</span></div>}
+      {updateControls(true)}
       <div className="df-extension-market-body">
         {(pending || notice || catalogLoading) && <p className="df-extension-note" role="status">{pending || notice || text("正在刷新市场…你可以继续浏览或返回。", "Refreshing catalog… You can keep browsing or go back.")}</p>}
         {(error || snapshot.error) && <p className="df-extension-error" role="alert">{error || snapshot.error}</p>}
@@ -262,7 +281,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
                 <p>{entry.manifest.description}</p>
                 {plugin && <span className="df-extension-market-stats">{(() => { const stats = catalogStats(entry, lang); return <>{text("下载", "Downloads")} {stats.downloads}<span aria-hidden="true">·</span>{text("上传", "Updated")} {stats.published}</>; })()}</span>}
               </button>
-              <footer><span className="df-extension-state">{existing ? text("已安装", "Installed") : preferences.sources.find(source => source.id === entry.sourceId)?.name ?? entry.sourceId}</span>{existing ? <Button onClick={() => navigate("installed")}>{text("管理", "Manage")}</Button> : <Button variant="primary" disabled={busy} onClick={() => void run(() => extensionService.install(entry), text(`正在安装 ${entry.manifest.name}…`, `Installing ${entry.manifest.name}…`))}>{text("安装", "Install")}</Button>}</footer>
+              <footer><span className="df-extension-state">{existing ? text("已安装", "Installed") : preferences.sources.find(source => source.id === entry.sourceId)?.name ?? entry.sourceId}</span>{existing && snapshot.updates[existing.key] ? <Button disabled={busy || batchRunning} onClick={() => void run(() => extensionService.update(existing.key), text("正在更新…", "Updating…"))}>{batch?.running ? (batch.current === existing.key ? text("更新中…", "Updating…") : text("等待中", "Queued")) : text("更新", "Update")}</Button> : existing ? <Button onClick={() => navigate("installed")}>{text("管理", "Manage")}</Button> : <Button variant="primary" disabled={busy} onClick={() => void run(() => extensionService.install(entry), text(`正在安装 ${entry.manifest.name}…`, `Installing ${entry.manifest.name}…`))}>{text("安装", "Install")}</Button>}</footer>
             </article>;
           })}</div>
         </>}

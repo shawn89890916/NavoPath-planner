@@ -540,6 +540,8 @@ visual values.
 
 ### Settings and motion ownership
 
+- Center the content column in the available settings pane (maximum 620px), not the entire workspace. Keep category titles and rows aligned, with stable header actions and close affordance. Use container width for complex control wrapping. Batch extension updates expose actual processed counts, preserve individual controls and report failures for retry.
+
 - Workspace cards, controls, and overlays read the same radius from Appearance. The radius is adjustable from 0–64 px, with a default of 32 px. Small details such as checkbox corners use one quarter of that value. Circular indicators and edge-to-edge joins retain their geometry.
 
 - Settings primitives own `src/components/SettingsControls.css`; pages compose them without redefining row typography or geometry. Settings navigation, section titles and controls use the sans-serif operational font; monospace is reserved for time and numeric metadata.

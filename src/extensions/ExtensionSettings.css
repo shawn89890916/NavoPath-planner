@@ -75,3 +75,13 @@
 }
 
 .df-extension-list > .df-extension-installed-item + .df-extension-installed-item { border-top: 1px solid var(--paper-rule); }
+
+/* Market and installed list share the service-owned update progress. */
+.df-extension-update-strip { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; padding: var(--space-2) 0; border-bottom: 1px solid var(--paper-rule); }
+.df-extension-market > .df-extension-update-strip { padding: var(--space-3) 24px; flex: 0 0 auto; }
+.df-extension-update-copy { display: grid; gap: var(--space-1); min-width: 0; flex: 1 1 140px; font: 400 12px/1.5 var(--paper-sans); color: var(--text-muted); overflow-wrap: anywhere; }
+.df-extension-update-copy:empty { display: none; }
+.df-extension-update-copy strong { font: 600 14px/1.4 var(--paper-sans); color: var(--text-main); }
+.df-extension-update-copy progress { width: min(100%, 320px); height: 6px; accent-color: var(--accent-active); }
+.df-extension-update-failure { color: var(--danger-ink); max-height: 4.5em; overflow-y: auto; }
+.df-extension-update-actions { display: flex; gap: var(--space-2); align-items: center; margin-inline-start: auto; flex-wrap: wrap; }

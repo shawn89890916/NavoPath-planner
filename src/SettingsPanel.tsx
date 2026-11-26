@@ -790,14 +790,16 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
       <div className="df-utility-backdrop" data-workspace-backdrop="transparent" onMouseDown={onClose} />
       <aside className="df-utility-panel" data-workspace-panel role="dialog" aria-labelledby="df-utility-title">
         <MobileSheetDismissHandle onDismiss={onClose} lang={lang} />
-        <div className="df-utility-head">
+        <div className={`df-utility-head${kind === "settings" ? " df-settings-header" : ""}`}>
           <div className="df-utility-head-leading">
             {kind === "settings" && compactLayout && !settingsHome && <button type="button" className="df-settings-back-button" onClick={backToSettingsHome} aria-label={lang === "zh" ? "返回设置" : "Back to settings"}><span aria-hidden="true">‹</span><span>{lang === "zh" ? "设置" : "Settings"}</span></button>}
-            <h2 id="df-utility-title" ref={settingsHeadingRef} tabIndex={-1}>{kind === "settings" && !settingsHome ? searchActive ? (lang === "zh" ? "搜索设置" : "Search settings") : selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang) : kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
+            <h2 id="df-utility-title" ref={kind === "settings" && !compactLayout && !settingsHome ? undefined : settingsHeadingRef} tabIndex={-1}>{kind === "settings" && !compactLayout ? t(lang, "settings.settings") : kind === "settings" && !settingsHome ? searchActive ? (lang === "zh" ? "搜索设置" : "Search settings") : selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang) : kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
           </div>
-          {kind === "settings" && settingsSavePhase !== "idle" && <span className="df-settings-save-status" role="status" data-save-phase={settingsSavePhase}>{saveFeedbackLabel(settingsSavePhase, lang, Boolean(cloudReady))}</span>}
-          {kind === "settings" && latestUndo && <IconButton icon={<UiRefreshIcon size={16} />} label={lang === "zh" ? "撤销设置修改" : "Undo settings change"} disabled={!canUndoPreference(latestUndo, settings)} onClick={undoPreference} />}
-          <CloseButton ref={closeButtonRef} label={t(lang, "settings.close")} onClick={onClose} />
+          {kind === "settings" ? <div className="df-settings-header-actions">
+            <span className="df-settings-save-status" role="status" data-save-phase={settingsSavePhase} title={saveFeedbackLabel(settingsSavePhase, lang, Boolean(cloudReady))}>{saveFeedbackLabel(settingsSavePhase, lang, Boolean(cloudReady))}</span>
+            <span className="df-settings-undo-slot" data-visible={Boolean(latestUndo)}><IconButton icon={<UiRefreshIcon size={16} />} label={lang === "zh" ? "撤销设置修改" : "Undo settings change"} disabled={!canUndoPreference(latestUndo, settings)} onClick={undoPreference} /></span>
+            <CloseButton ref={closeButtonRef} label={t(lang, "settings.close")} onClick={onClose} />
+          </div> : <CloseButton ref={closeButtonRef} label={t(lang, "settings.close")} onClick={onClose} />}
         </div>
         {kind === "settings" ? (
           <div className={`df-utility-body df-settings-shell${settingsHome ? "" : " df-settings-detail-shell"}`}>
@@ -884,7 +886,8 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               </nav>
               {!searchActive && pluginUpdateCount > 0 && <button type="button" className="df-plugin-update-notice" onClick={() => navigateSettings({ category: "plugins" })}><span className="df-plugin-update-notice-dot" aria-hidden="true" /><span><strong>{lang === "zh" ? `${pluginUpdateCount} 个插件可更新` : `${pluginUpdateCount} plugin updates`}</strong></span><span aria-hidden="true">›</span></button>}
             </div>
-            <div ref={settingsContentRef} className="df-settings-content">
+            <div ref={settingsContentRef} className="df-settings-content"><div className="df-settings-content-column">
+            {!compactLayout && <h2 className="df-settings-content-title" ref={settingsHeadingRef} tabIndex={-1}>{searchActive ? (lang === "zh" ? "搜索设置" : "Search settings") : selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang)}</h2>}
             {searchActive ? searchResults : <>
             {settingsTarget.category === "general" && <SettingSection anchor="general-basics">
               <SettingRow
@@ -1400,7 +1403,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               />}
             </SettingSection></SettingDisclosure>}
             </>}
-            </div>
+            </div></div>
             </>}
               </div>
         ) : (
