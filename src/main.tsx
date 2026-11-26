@@ -57,7 +57,7 @@ import { normalizeAiReply } from "./utils/aiReply";
 import { candidateScheduleSummary, type CandidateScheduleSummary } from "./utils/candidateSchedule";
 import { localIsoDate } from "./utils/localDate";
 import { buildWeekWindow } from "./utils/monthWindow";
-import { buildCommandSearchIndex, searchCommands, type CommandSearchResult } from "./utils/commandSearch";
+import type { CommandSearchResult } from "./utils/commandSearch";
 import { buildDailyContinuousDates, dailyContinuousBlockTop, dailyContinuousCanvasHeight, dailyContinuousSlotCount, dailyContinuousTargetFromContentY, getContinuousTimelineDateForOffset } from "./utils/continuousTimeline";
 import { normalizeTaskCheckTone, normalizeTaskState, taskMetaPatch, validateProjectCompletion, workflowStatusForPatch } from "./utils/productivityModel";
 import { matchShortcut } from "./utils/shortcuts";
@@ -3421,8 +3421,6 @@ if (cached?.data && cached?.settings) {
   // The timeline only renders fixed timetable backgrounds from the event store.
   // Ordinary appointments are tasks now and must not reappear as Event blocks.
   const events = useMemo(()=>(data?.events || []).filter(event => event.fixedCourse && event.calendarKind !== "appointment" && isCalendarBackgroundVisible(event)),[data?.events,backgroundRevision]);
-  const commandIndex = useMemo(() => data && settings ? buildCommandSearchIndex(data, settings) : [], [data, settings]);
-  const commandResults = useMemo(() => searchCommands(commandIndex, commandQuery), [commandIndex, commandQuery]);
 
   const timerTask = useMemo(() => tasks.find((task) => task.id === timerTaskId) || null, [tasks, timerTaskId]);
   const timerProject = useMemo(() => timerTask?.projectId ? projects.find((p) => p.id === timerTask.projectId) || null : null, [timerTask, projects]);
@@ -10645,7 +10643,7 @@ if (cached?.data && cached?.settings) {
       {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) { const initial = defaultForm(type); drawerInitialFormRef.current = initial; setForm(initial); } }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onEditSchedule={editTaskSchedule} weekStartsOn={settings.weekStartsOn} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel && workspaceChatPanel && <div className="df-utility-backdrop" data-workspace-backdrop data-motion-closing={aiPresence.closing || undefined} onMouseDown={closeWorkspaceChat} />}
       {!productAiPresentation && aiPanel}
-      {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}
+      {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} data={data} settings={settings} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}
       {utilityPanel === "metrics" && metricsAvailable && <RightUtilityPanel workspace label={metricsLabel} closeLabel={t(lang, "settings.close")} className="df-metrics-utility" onClose={() => closeUtilityPanel()}>
         <Suspense fallback={<div className="df-shelf-loading" role="status">{lang === "zh" ? "正在打开…" : "Opening…"}</div>}>
           <PlanningViewLazy {...planningViewProps} viewMode="metrics" tasks={tasks} analyticsScope={productDemo?undefined:authState?.user?.id||"preview"} dayStartTime={settings.dayStartTime} weekStartsOn={settings.weekStartsOn}

@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 114
+
+#### 改进
+
+- 优化 Metrics 大量历史记录的聚合；同步观察不再计作本地计划变更，来源不明确的执行不参与估时对比；工作区搜索按需建立索引，减少启动和日常任务修改时的额外计算。
+
 ### 1.7.0 Beta 113
 
 #### 改进
@@ -1211,6 +1217,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 114
+
+#### Improvements
+
+- Improve Metrics aggregation for large histories; exclude observed sync changes from local planning changes and executions with uncertain provenance from estimation comparisons; build the workspace search index on demand to reduce startup and routine task-edit work.
 
 ### 1.7.0 Beta 113
 
