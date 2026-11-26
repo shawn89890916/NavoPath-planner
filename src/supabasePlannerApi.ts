@@ -702,7 +702,7 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
     requestSuperProductivitySync: async (accountId, path, method = "GET", body) => {
       // Only the fixed, account-authenticated sync API is exposed. No bearer is returned to plugins.
       if (!(/^\/state(?:\?pairId=[0-9a-f-]{36})?$/i.test(path) && method === "GET") &&
-          !(/^\/(snapshot|confirm|resolve|restore|revoke)$/.test(path) && method === "POST")) throw new Error("Invalid synchronization endpoint");
+          !(/^\/(snapshot|confirm|resolve|restore|revoke|pause)$/.test(path) && method === "POST")) throw new Error("Invalid synchronization endpoint");
       const user = await requireUser();
       if (user.id !== accountId) throw new Error("Extension account changed");
       const { data, error } = await supabase.auth.getSession();
