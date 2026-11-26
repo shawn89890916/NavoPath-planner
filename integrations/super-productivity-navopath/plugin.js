@@ -231,9 +231,12 @@
         }
         if (current) await API.updateTask(current.id, updates, { isIgnoreShortSyntax: true });
         else {
-          const created = await API.addTask({ ...updates, isIgnoreShortSyntax: true });
+          const { dueWithTime, ...createFields } = updates;
+          const created = await API.addTask({ ...createFields, isIgnoreShortSyntax: true });
           id = created; map[created] = action.syncId;
-          if (Object.hasOwn(updates, 'dueWithTime') && updates.dueWithTime) await API.updateTask(created, { dueWithTime: updates.dueWithTime, timeEstimate: updates.timeEstimate });
+          await persist();
+          // addTask accepts dueDay but not dueWithTime.
+          if (dueWithTime != null) await API.updateTask(created, { dueWithTime });
         }
       }
       await persist();
@@ -259,7 +262,7 @@
       if (state.status === 'preview') return;
       const outgoing = await snapshot(); lastSnapshot = JSON.stringify(outgoing);
       const result = await request('snapshot', 'POST', { pairId: local.pairId, platform: 'superproductivity', snapshot: outgoing });
-      setAssignments(result.assignments); await applyActions(result.actions); await persist(); if (result.status === 'active') { lastApplied = (result.actions || []).length; lastSuccess = new Date().toLocaleTimeString(); } await renderState(result);
+      setAssignments(result.assignments || []); await applyActions(result.actions || []); await persist(); lastSnapshot = JSON.stringify(await snapshot()); if (result.status === 'active') { lastApplied = (result.actions || []).length; lastSuccess = new Date().toLocaleTimeString(); } await renderState(result);
     }
     $('connect').onclick = () => void withBusy(async () => {
       const code = $('code').value.trim(); if (!code) throw new Error('Paste a pairing code first');
@@ -276,8 +279,10 @@
       await renderState(await request('confirm', 'POST', { pairId: local.pairId, matches, expectedRevision: state.revision })); await runSync();
     });
     $('disconnect').onclick = () => void withBusy(async () => {
-      await clearToken(); token = null; local = { pairId: '', links: { tasks: {}, projects: {} }, tombstones: {} }; await persist();
-      $('pairing').hidden = false; $('sync').hidden = $('disconnect').hidden = true; setStatus('Disconnected');
+      await clearToken(); token = null; lastSuccess = ''; lastSnapshot = ''; preview = null; previewKey = '';
+      // Forget this device only; other devices may use the same synced task links.
+      $('preview').hidden = $('conflicts').hidden = $('deleted').hidden = true;
+      $('pairing').hidden = false; $('sync').hidden = $('disconnect').hidden = true; setStatus('Disconnected on this device');
     });
     async function init() {
       if (ready || stopped) return; ready = true;
@@ -291,13 +296,14 @@
     // Local task/project events accelerate the next snapshot; the periodic poll
     // also picks up remote changes and works with the UI closed.
     const queueSync = () => {
-      if (!ready || stopped || !token || !local.pairId) return;
+      if (!ready || stopped || busy || !token || !local.pairId) return;
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(async () => {
         if (busy || stopped) return;
-        await withBusy(async () => {
-          if (JSON.stringify(await snapshot()) !== lastSnapshot) await runSync();
-        });
+        try {
+          const changed = JSON.stringify(await snapshot()) !== lastSnapshot;
+          if (changed && !busy && !stopped) await withBusy(runSync);
+        } catch (error) { setStatus(error?.message || String(error), true); }
       }, 600);
     };
     for (const hook of ['TASK_CREATED','TASK_UPDATE','TASK_DELETE','TASK_COMPLETE','PROJECT_LIST_UPDATE']) {
