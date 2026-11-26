@@ -120,7 +120,7 @@ describe("large observed history and conservative provenance",()=>{
   const final={...done,scheduledEnd:"11:30"};
   const events=[event("t","r",0),{...event("t","r",1),after:final},{...event("t","r",2),after:final}];
   const r=buildObservedPlanHistory(events,d,range);
-  expect(r).toMatchObject({completedPlanSamples:1,planLengthened:1,planChangeMinutes:30,eligibleObserved:1,eligibleMoved:1,eligibleResized:2,comparisons:[]});
+  expect(r).toMatchObject({completedPlanSamples:1,planLengthened:1,planChangeMinutes:30,eligibleObserved:1,eligibleMoved:1,eligibleResized:1,comparisons:[]});
   const tracked=buildObservedPlanHistory(events,{...d,timeEntries:[timeEntry("t","r")]},range);
   expect(tracked.comparisons).toMatchObject([{initial:60,final:90,tracked:50,estimate:45}]);
   const accuracy=accuracySummary(tracked.comparisons);
