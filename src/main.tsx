@@ -13,6 +13,8 @@ import { MobileQuickAddButton } from "./components/MobileQuickAddButton";
 import { NotificationBadge } from "./components/NotificationBadge";
 import { getWorkspaceDemoRuntime, getWorkspaceStorage, workspaceNow } from "./workspaceEnvironment";
 import { normalizeEngagement } from "./utils/engagement";
+import { recordLocalAnalyticsChange, recordTimerTransition, recoverAnalytics, captureDailyPlan } from "./metrics/activityBridge";
+import type { AnalyticsSource, TimerTransition } from "./metrics/activityEvents";
 import { AnchoredNarrowMenu } from "./components/AnchoredNarrowMenu";
 import { ExtensionMount } from "./extensions/ExtensionMount";
 import { RightUtilityPanel } from "./components/RightUtilityPanel";
@@ -130,6 +132,7 @@ import "./ui-primitives.css";
 import type { MobileShortSheetKind } from "./MobileTaskSummary";
 
 const productDemo = getWorkspaceDemoRuntime();
+const analyticsMutationSources = new WeakMap<PlannerData,AnalyticsSource>();
 const demoTreeView: ExtensionContribution = { id: "demo:tree", owner: "demo", name: "Tree", planningView: true, nativeMode: "tree", mount: () => {} };
 const productPresentation = Boolean(productDemo?.navigation);
 const productAiPresentation = productPresentation && productDemo?.feature === "ai";
@@ -1134,10 +1137,15 @@ function App() {
     }
   }, [timerTaskId, timerElapsed, timerRunning]);
 
+  function logTimerTransition(transition:TimerTransition,taskId:string|undefined|null,at:number,elapsed:number) {
+    if(productDemo||!dataRef.current)return;
+    recordTimerTransition(authStateRef.current?.user?.id || "preview",taskId||undefined,transition,new Date(at).toISOString(),elapsed,dataRef.current.tasks.find(t=>t.id===taskId)?.projectId);
+  }
   const startTimer = useCallback((taskId: string) => {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerStart", taskId }); return; }
     const baseElapsed = timerTaskRef.current === taskId ? timerElapsedRef.current : 0;
     const now = Date.now();
+    if(timerTaskRef.current!==taskId || timerStartedAtRef.current===null)logTimerTransition(baseElapsed>0?"resume":"start",taskId,now,baseElapsed);
     timerElapsedRef.current = baseElapsed;
     timerElapsedBaseRef.current = baseElapsed;
     timerStartedAtRef.current = now;
@@ -1149,12 +1157,13 @@ function App() {
     setTimerStartedAt(now);
   }, []);
 
-  const pauseTimerAt = useCallback((now: number) => {
+  const pauseTimerAt = useCallback((now: number, reason: "pause" | "idle-pause" = "pause") => {
     if (timerStartedAtRef.current !== null) {
       const elapsed = advanceTaskElapsedSeconds(timerElapsedBaseRef.current, timerStartedAtRef.current, now);
       timerElapsedRef.current = elapsed;
       timerElapsedBaseRef.current = elapsed;
       setTimerElapsed(elapsed);
+      logTimerTransition(reason,timerTaskRef.current,now,elapsed);
     }
     timerStartedAtRef.current = null;
     timerLastActivityAtRef.current = null;
@@ -1184,7 +1193,7 @@ function App() {
       const thresholdMinutes = Math.max(0, Number(settings?.idleThresholdMinutes ?? 5));
       const lastActivityAt = timerLastActivityAtRef.current ?? now;
       if (thresholdMinutes > 0 && now - lastActivityAt >= thresholdMinutes * 60_000) {
-        pauseTimerAt(now);
+        pauseTimerAt(now,"idle-pause");
         showToast(lang === "zh" ? `已因 ${thresholdMinutes} 分钟无操作自动暂停计时` : `Timer paused after ${thresholdMinutes} minutes of inactivity`);
         return;
       }
@@ -1202,6 +1211,7 @@ function App() {
   const resumeTimer = useCallback(() => {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerResume" }); return; }
     const now = Date.now();
+    if(timerStartedAtRef.current===null&&timerTaskRef.current)logTimerTransition("resume",timerTaskRef.current,now,timerElapsedRef.current);
     timerElapsedBaseRef.current = timerElapsedRef.current;
     timerStartedAtRef.current = now;
     timerLastActivityAtRef.current = now;
@@ -1211,6 +1221,7 @@ function App() {
 
   const discardTimer = useCallback(() => {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "discardTimer" }); return; }
+    if(timerTaskRef.current)logTimerTransition("discard",timerTaskRef.current,Date.now(),timerElapsedRef.current);
     timerTaskRef.current = null;
     timerElapsedRef.current = 0; timerElapsedBaseRef.current = 0; timerStartedAtRef.current = null;
     setTimerTaskId(null); setTimerRunning(false); setTimerElapsed(0); setTimerStartedAt(null);
@@ -1786,6 +1797,7 @@ function App() {
       if (!resolved.data || !resolved.settings) return;
       const migratedData = migrateLegacyHabitTracker(resolved.data, resolved.settings.pluginConfigs);
       remoteRevisionRef.current = Math.max(remoteRevisionRef.current, incomingRevision);
+      if (cloudBaselineReadyRef.current && !hasDirtyLocal && !resolved.replayData && dataRef.current && !productDemo) recordLocalAnalyticsChange(userId,dataRef.current,migratedData,workspaceNow().toISOString(),"remote-observed",incomingRevision>0?`remote:${incomingRevision}`:undefined);
       cloudBaselineReadyRef.current = true;
       dataRef.current = migratedData;
       settingsRef.current = resolved.settings;
@@ -1981,6 +1993,7 @@ function App() {
     loadedWorkspaceKeyRef.current = workspaceKey;
     cloudBaselineReadyRef.current = auth.mode !== "cloud";
     setAuthState(auth);
+    if (!productDemo && (auth.mode !== "cloud" || auth.user)) recoverAnalytics(auth.user?.id || "preview");
     if (auth.mode === "cloud" && !auth.user) {
       setData(null);
       setSettings(null);
@@ -2859,7 +2872,8 @@ if (cached?.data && cached?.settings) {
     }
   }
 
-  function saveData(next: PlannerData): Promise<void> {
+  function saveData(next: PlannerData, source:AnalyticsSource="client"): Promise<void> {
+    if(source!=="client")analyticsMutationSources.set(next,source);
     return extensionHostRef.current?.internal.services.saveData(next) ?? persistData(next);
   }
 
@@ -2884,7 +2898,7 @@ if (cached?.data && cached?.settings) {
       const latest = dataRef.current;
       const restored = latest && undoTreeMove(latest, undo, workspaceNow().toISOString());
       if (restored) {
-        void saveData(restored);
+        void saveData(restored,"undo");
         showToast(t(lang, "toast.undone"));
       } else showToast(lang === "zh" ? "相关任务后来有改动，暂时无法撤销。" : "The affected tasks have since changed. This action can’t be undone yet.");
     });
@@ -2923,7 +2937,7 @@ if (cached?.data && cached?.settings) {
     try {
       const latest = dataRef.current;
       if (!latest || workspaceKey !== loadedWorkspaceKeyRef.current || syncUndoLockRef.current || pausedSyncPairsRef.current.has(pairId) || latest.tasks !== before.tasks || latest.projects !== before.projects) throw new Error("Sync paused or workspace changed. Retry.");
-      await saveData({ ...latest, ...after });
+      await saveData({ ...latest, ...after },"sync");
     } catch (error) {
       if (!productDemo) await updateSavedTaskOperations(workspaceKey, entries => entries.filter(entry => entry.id !== operation.id), workspaceNow().getTime());
       throw error;
@@ -2950,7 +2964,7 @@ if (cached?.data && cached?.settings) {
       const restored = undoSyncBatch(latest, operation.undo, sync, workspaceNow().toISOString());
       if (!restored) throw new Error(lang === "zh" ? "同步已暂停，但相关数据有后续修改，未撤销。" : "Sync paused, but later edits prevent undo.");
       preserveTimelineViewportOnNextDataChange();
-      await saveData(restored);
+      await saveData(restored,"undo");
       changeTaskOperations(workspaceKey, entries => entries.map(entry => entry.id === operation.id ? { ...entry, undone: true } : entry));
       showToast(lang === "zh" ? "已撤销本次同步；连接已暂停" : "Sync batch undone; connection paused");
     } catch (error) { showToast(error instanceof Error ? error.message : String(error)); }
@@ -2969,12 +2983,13 @@ if (cached?.data && cached?.settings) {
       return;
     }
     preserveTimelineViewportOnNextDataChange();
-    void saveData(next);
+    void saveData(next,"undo");
     changeTaskOperations(operation.workspaceKey, (entries) => entries.map((entry) =>
       entry.id === operation.id ? { ...entry, undone: true } : entry));
     showToast(t(lang, "toast.undone"));
   }
   async function persistData(next: PlannerData) {
+    const source=analyticsMutationSources.get(next)||"client";analyticsMutationSources.delete(next);
     const savedAt = workspaceNow().toISOString();
     const previous = dataRef.current;
     const previousEvents = new Map(previous?.events.map(event => [event.id, event]));
@@ -2994,6 +3009,7 @@ if (cached?.data && cached?.settings) {
       dataPendingSavedAt: savedAt,
       remoteRevision: remoteRevisionRef.current,
     });
+    if(previous&&!productDemo)recordLocalAnalyticsChange(authStateRef.current?.user?.id||"preview",previous,optimistic,savedAt,source);
     scheduleDataFlush();
     advanceOnboarding(previous, optimistic);
   }
@@ -3039,7 +3055,7 @@ if (cached?.data && cached?.settings) {
     if (loadedWorkspaceKeyRef.current.startsWith("cloud:") && !cloudBaselineReadyRef.current) return;
     const result = reconcileOverdueTasks(data, todayIso());
     if (!result.changed) return;
-    void saveData(result.data);
+    void saveData(result.data,"system");
     if (result.overdueReturnedCount > 0) {
       showToast(lang === "zh" ? `${result.overdueReturnedCount} 个逾期任务已回到任务` : `${result.overdueReturnedCount} overdue task${result.overdueReturnedCount === 1 ? "" : "s"} returned to Tasks`);
     }
@@ -3316,13 +3332,20 @@ if (cached?.data && cached?.settings) {
     scheduler.setIntervalMinutes(readSyncInterval(settings));
   }, [settings?.syncIntervalMinutes, authState?.user?.id]);
 
+  useEffect(() => {
+    if(productDemo||!data||!settings)return;
+    const scope=authState?.user?.id||"preview";
+    const capture=()=>{if(loadedWorkspaceKeyRef.current.startsWith("cloud:")&&!cloudBaselineReadyRef.current)return;if(dataRef.current&&settingsRef.current&&(authStateRef.current?.user?.id||"preview")===scope)captureDailyPlan(scope,dataRef.current,workspaceNow().toISOString(),settingsRef.current.dayStartTime);};
+    capture();const interval=window.setInterval(capture,60_000);return()=>window.clearInterval(interval);
+  },[Boolean(data),Boolean(settings),authState?.user?.id,settings?.dayStartTime]);
+
   // The same live services power the application and trusted community plugins.
   useEffect(() => {
     if (productDemo || !dataRef.current || !settingsRef.current) {
       void extensionService.configure(null); return;
     }
     if (!extensionHostRef.current) extensionHostRef.current = {
-      getData: () => dataRef.current!, saveData: next => saveData(next),
+      getData: () => dataRef.current!, saveData: next => saveData(next,"plugin"),
       getSettings: () => settingsRef.current!, saveSettings: patch => saveSettings(patch),
       getAccountId: () => authStateRef.current?.user?.id || null,
       toast: message => showToast(message),
@@ -3404,6 +3427,7 @@ if (cached?.data && cached?.settings) {
     const elapsed = timerStartedAtRef.current !== null
       ? advanceTaskElapsedSeconds(timerElapsedBaseRef.current, timerStartedAtRef.current, Date.now())
       : timerElapsedRef.current;
+    if(taskId)logTimerTransition("stop",taskId,Date.now(),elapsed);
     if (taskId && currentData && elapsed >= 1) {
       const now = workspaceNow().toISOString();
       const entry = {
@@ -3419,6 +3443,7 @@ if (cached?.data && cached?.settings) {
       };
       void saveData({ ...currentData, timeEntries: [...(currentData.timeEntries || []), entry] });
     }
+    timerTaskRef.current = null;
     discardTimer();
   }, [discardTimer, saveData]);
 
@@ -8145,7 +8170,8 @@ if (cached?.data && cached?.settings) {
     const resolved = resolveBootstrap(latestCache, bootstrap.data, bootstrap.settings);
     if (!resolved.data || !resolved.settings) return;
     remoteRevisionRef.current = Math.max(remoteRevisionRef.current, incomingRevision);
-      cloudBaselineReadyRef.current = true;
+    if (cloudBaselineReadyRef.current && !hasDirtyLocal && !resolved.replayData && dataRef.current && !productDemo) recordLocalAnalyticsChange(authStateRef.current?.user?.id || "preview",dataRef.current,resolved.data,workspaceNow().toISOString(),"remote-observed",incomingRevision>0?`remote:${incomingRevision}`:undefined);
+    cloudBaselineReadyRef.current = true;
     dataRef.current = resolved.data;
     settingsRef.current = resolved.settings;
     setData(resolved.data);
@@ -8220,7 +8246,7 @@ if (cached?.data && cached?.settings) {
     const commit = aiMessages.find((message) => message.id === messageId)?.importCommit;
     const currentData = dataRef.current;
     if (!commit || !currentData) return;
-    await saveData(undoAiImportData(currentData, commit));
+    await saveData(undoAiImportData(currentData, commit),"undo");
     setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, actionState: "undone", importCommit: undefined } : message));
     persistAiMessage(messageId, { actionState: "undone" });
   }
@@ -10611,7 +10637,7 @@ if (cached?.data && cached?.settings) {
       {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} results={commandResults} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}
       {utilityPanel === "metrics" && metricsAvailable && <RightUtilityPanel workspace label={metricsLabel} closeLabel={t(lang, "settings.close")} className="df-metrics-utility" onClose={() => closeUtilityPanel()}>
         <Suspense fallback={<div className="df-shelf-loading" role="status">{lang === "zh" ? "正在打开…" : "Opening…"}</div>}>
-          <PlanningViewLazy {...planningViewProps} viewMode="metrics" tasks={tasks} dayStartTime={settings.dayStartTime}
+          <PlanningViewLazy {...planningViewProps} viewMode="metrics" tasks={tasks} analyticsScope={productDemo?undefined:authState?.user?.id||"preview"} dayStartTime={settings.dayStartTime} weekStartsOn={settings.weekStartsOn}
             metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy}
             metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits}
             metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart}
