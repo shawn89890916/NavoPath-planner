@@ -1092,7 +1092,7 @@ function App() {
   const [pomodoroTaskChoice, setPomodoroTaskChoice] = useState<string>();
   const timerIntervalRef = useRef<number | null>(null);
   const timerTaskRef = useRef<string | null>(null);
-  const timerRecordRef = useRef<{taskId:string;recordId:string;scope:string}|null>(null);
+  const timerRecordRef = useRef<{recordId:string;scope:string}|null>(null);
   const timerElapsedRef = useRef(0);
   const timerElapsedBaseRef = useRef(0);
   const timerStartedAtRef = useRef<number | null>(null);
@@ -1123,7 +1123,7 @@ function App() {
           timerElapsedBaseRef.current = restored.elapsedSeconds;
           setTimerRunning(false);
           timerTaskRef.current = restored.taskId;
-          if(typeof stored.recordId==="string"&&typeof stored.scope==="string")timerRecordRef.current={taskId:restored.taskId,recordId:stored.recordId,scope:stored.scope};
+          if(typeof stored.recordId==="string"&&typeof stored.scope==="string")timerRecordRef.current={recordId:stored.recordId,scope:stored.scope};
         }
       }
     } catch { /* ignore */ }
@@ -1133,7 +1133,7 @@ function App() {
     if (!timerOwnerRef.current?.isOwner()) return;
     if (timerTaskId) {
       timerTaskRef.current = timerTaskId;
-      try { localStorage.setItem("navopath-active-timer", JSON.stringify({ taskId: timerTaskId, elapsed: timerElapsed, running: timerRunning, ...(timerRecordRef.current?.taskId===timerTaskId?{recordId:timerRecordRef.current.recordId,scope:timerRecordRef.current.scope}:{}) })); } catch { /* ignore */ }
+      try { localStorage.setItem("navopath-active-timer", JSON.stringify({ taskId: timerTaskId, elapsed: timerElapsed, running: timerRunning, ...timerRecordRef.current })); } catch { /* ignore */ }
     } else {
       timerTaskRef.current = null;
       timerRecordRef.current=null;
@@ -1149,8 +1149,7 @@ function App() {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerStart", taskId }); return; }
     const same=timerTaskRef.current===taskId;
     const baseElapsed = same ? timerElapsedRef.current : 0;
-    const scope=loadedWorkspaceKeyRef.current;
-    if(!same||baseElapsed===0){timerRecordRef.current=recordId&&scope&&dataRef.current?.tasks.find(t=>t.id===taskId)?.timelineRecords?.some(r=>r.id===recordId)?{taskId,recordId,scope}:null;}
+    if(!same||baseElapsed===0)timerRecordRef.current=recordId?{recordId,scope:loadedWorkspaceKeyRef.current}:null;
     else if(recordId&&timerRecordRef.current?.recordId!==recordId)timerRecordRef.current=null;
     const now = Date.now();
     if(timerTaskRef.current!==taskId || timerStartedAtRef.current===null)logTimerTransition(baseElapsed>0?"resume":"start",taskId,now,baseElapsed);
@@ -3439,11 +3438,12 @@ if (cached?.data && cached?.settings) {
     if(taskId)logTimerTransition("stop",taskId,Date.now(),elapsed);
     if (taskId && currentData && elapsed >= 1) {
       const now = workspaceNow().toISOString();
+      const task=currentData.tasks.find(t=>t.id===taskId),link=timerRecordRef.current;
       const entry = {
         id: `te-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         taskId,
-        projectId: currentData.tasks.find(task => task.id === taskId)?.projectId,
-        timelineRecordId: timerRecordRef.current?.taskId===taskId&&timerRecordRef.current.scope===loadedWorkspaceKeyRef.current&&currentData.tasks.find(t=>t.id===taskId)?.timelineRecords?.some(r=>r.id===timerRecordRef.current?.recordId)?timerRecordRef.current.recordId:undefined,
+        projectId: task?.projectId,
+        timelineRecordId: link?.scope===loadedWorkspaceKeyRef.current&&task?.timelineRecords?.some(r=>r.id===link.recordId)?link.recordId:undefined,
         startAt: new Date(Date.now() - elapsed * 1000).toISOString(),
         endAt: now,
         durationMinutes: Math.max(1, Math.round(elapsed / 60)),

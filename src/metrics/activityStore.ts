@@ -64,7 +64,7 @@ async function journalAndAppend(scope:string,generation:string,events:AnalyticsE
   if(pendingKeys(scope).length)throw Error("Earlier analytics writes are pending");
 }
 function pendingKeys(scope:string){return Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).filter((k):k is string=>Boolean(k?.startsWith(journalPrefix(scope))));}
-export async function recoverAnalytics(scope:string){
+export function recoverAnalytics(scope:string){
   queue(scope,async()=>{
     const p=analyticsPreference(scope);if(!p.generation)return false;
     const keys=pendingKeys(scope);let failed=false;
