@@ -38,8 +38,8 @@ export async function exerciseUi(){
     return React.createElement("main",{id:"fixture",className:theme==="dark"?"theme-dark":""},React.createElement(MetricsInsights,{scope:account,data,referenceDate:"2026-11-26",dayStartTime:"00:00",weekStartsOn:1,engagementEnabled:true,projectIds:q.projects,habitMode:q.habit,completion:q.completion,lang:"en",query:q,onApplyQuery:setQ}));
   }
   const root=createRoot(document.getElementById("root"));root.render(React.createElement(Fixture));
-  const nav=await wait(()=>document.querySelector("nav.df-metric-insight-tabs"),"Metrics tabs not mounted");
-  const selectView=async(name,title)=>{await click(name,nav);await wait(()=>heading(title),"View did not load: "+title);};
+  await wait(()=>document.querySelector("nav.df-metric-insight-tabs"),"Metrics tabs not mounted");
+  const selectView=async(name,title)=>{await click(name,document.querySelector("nav.df-metric-insight-tabs"));await wait(()=>heading(title),"View did not load: "+title);};
   const checkGeometry=()=>{
     const shell=document.getElementById("fixture"),outer=shell.getBoundingClientRect();
     assert(shell.scrollWidth<=shell.clientWidth+2,"Metrics panel escaped horizontal bounds "+shell.scrollWidth+"/"+shell.clientWidth);
