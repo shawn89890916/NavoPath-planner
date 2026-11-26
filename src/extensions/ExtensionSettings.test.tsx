@@ -105,6 +105,23 @@ describe("extension settings surfaces", () => {
     await act(async () => renderer!.root.findByProps({ "aria-label": "Compact display", role: "switch" }).props.onClick());
     expect(service.saveConfig).toHaveBeenCalledWith("official:plugin", { compact: true });
   });
+  it("routes management settings directly to the plugin owner when a host supplies navigation", async () => {
+    const onSelectOwner = vi.fn();
+    state.snapshot.preferences.installed["official:plugin"].manifest.settingsOptions = [{ key: "compact", label: "Compact display", type: "boolean", default: false }];
+    await act(async () => { renderer = create(<ExtensionSettings lang="en" kind="plugin" onSelectOwner={onSelectOwner} />); });
+    await act(async () => renderer!.root.findByProps({ "aria-label": "plugin example settings" }).props.onClick());
+    expect(onSelectOwner).toHaveBeenCalledWith("official:plugin");
+    expect(JSON.stringify(renderer!.toJSON())).not.toContain("Compact display");
+    await act(async () => renderer!.update(<ExtensionSettings lang="en" kind="plugin" settingsOwner="official:plugin" />));
+    expect(JSON.stringify(renderer!.toJSON())).toContain("Compact display");
+    expect(renderer!.root.findByProps({ "data-settings-anchor": "plugin-option-compact" })).toBeTruthy();
+    expect(JSON.stringify(renderer!.toJSON())).not.toContain("Installed plugins");
+  });
+  it("opens the existing market from a direct navigation target", async () => {
+    await act(async () => { renderer = create(<ExtensionSettings lang="en" kind="plugin" openMarket />); });
+    expect(service.refreshCatalog).toHaveBeenCalledOnce();
+    expect(JSON.stringify(renderer!.toJSON())).toContain("Community plugin market");
+  });
   it("shows native plugin preferences directly below the installed plugin row", async () => {
     await act(async () => { renderer = create(<ExtensionSettings lang="en" kind="plugin" inlineSettings={{ "official:plugin": <p>Native options</p> }} />); });
     expect(JSON.stringify(renderer!.toJSON())).not.toContain("Native options");

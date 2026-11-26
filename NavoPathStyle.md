@@ -540,6 +540,8 @@ visual values.
 
 ### Settings and motion ownership
 
+- Keep core settings and dynamically contributed plugin settings in one navigation surface. Show one entry per enabled configurable plugin, keyed by owner. The plugin management page owns install, enable, update and permissions; direct settings links open the same native/declarative/custom content. Add plugins follows the plugin settings list and uses the existing market. Compact layouts use the same entries on the settings home.
+
 - Center the content column in the available settings pane (maximum 620px), not the entire workspace. Keep category titles and rows aligned, with stable header actions and close affordance. Use container width for complex control wrapping. Batch extension updates expose actual processed counts, preserve individual controls and report failures for retry.
 
 - Workspace cards, controls, and overlays read the same radius from Appearance. The radius is adjustable from 0–64 px, with a default of 32 px. Small details such as checkbox corners use one quarter of that value. Circular indicators and edge-to-edge joins retain their geometry.

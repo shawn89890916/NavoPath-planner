@@ -20353,3 +20353,10 @@ body[data-navopath-base-theme="light"],
   #root .df-app .df-settings-header-actions { gap: 2px; }
   #root .df-app .df-settings-header-actions > .df-settings-save-status { width: 54px; }
 }
+
+/* Plugin destinations share the core list's selection indicator and scroll area. */
+#root .df-app .df-settings-plugin-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; padding: 16px 12px 6px; margin-top: 10px; border: 0; border-top: 1px solid var(--paper-rule); background: transparent; color: var(--text-muted); font: 600 12px/1.4 var(--paper-sans); text-align: start; cursor: pointer; }
+#root .df-app .df-settings-plugin-link { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+#root .df-app .df-settings-plugin-add { display: flex; align-items: center; gap: 8px; color: var(--accent-active); }
+#root .df-app .df-settings-home-plugin-nav { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#root .df-app .df-settings-plugin-heading:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
