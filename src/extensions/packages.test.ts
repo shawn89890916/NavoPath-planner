@@ -67,6 +67,15 @@ describe("community extension packages", () => {
     pkg.files["icon.svg"].data = '<svg viewBox="0 0 24 24"><script>alert(1)</script></svg>';
     expect(() => parsePackage(strToU8(JSON.stringify(pkg)))).toThrow("monochrome SVG");
   });
+  it("validates host-rendered plugin options and rejects unsafe or ambiguous declarations", () => {
+    const pkg = JSON.parse(weatherPackageText);
+    pkg.manifest.settingsOptions = [{ key: "refreshMinutes", label: "Refresh", type: "number", default: 15, min: 1, max: 60 }, { key: "units", label: "Units", type: "select", default: "c", choices: [{ value: "c", label: "Celsius" }] }];
+    expect(parsePackage(strToU8(JSON.stringify(pkg))).manifest.settingsOptions).toEqual(pkg.manifest.settingsOptions);
+    for (const invalid of [{ key: "__proto__", label: "Bad", type: "boolean", default: false }, { key: "refreshMinutes", label: "Duplicate", type: "boolean", default: false }, { key: "bad", label: "Bad", type: "number", default: 100, max: 10 }]) {
+      const candidate = { ...pkg, manifest: { ...pkg.manifest, settingsOptions: [...pkg.manifest.settingsOptions, invalid] } };
+      expect(() => parsePackage(strToU8(JSON.stringify(candidate)))).toThrow("Invalid plugin settings options");
+    }
+  });
   it("retains incompatible installations without pretending they can run", () => {
     const manifest = JSON.parse(weatherPackageText).manifest;
     expect(compatibility({ ...manifest, platforms: ["desktop"] }, "web")).toContain("Unsupported");

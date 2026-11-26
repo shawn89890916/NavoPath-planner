@@ -30,6 +30,7 @@ import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumber
 import { reasoningModesForModel } from "./utils/aiModels";
 import { createPortal, flushSync } from "react-dom";
 import { runMotionTransition } from "./motion";
+import { saveFeedbackLabel, type SavePhase } from "./motion/feedback";
 import { SelectionIndicator } from "./components/SelectionIndicator";
 import { getDefaultSettings, WORKSPACE_CORNER_RADIUS } from "./defaultSettings";
 import { uid } from "./utils/ids";
@@ -394,16 +395,16 @@ function AccountMoreSection({ lang, onShowAbout }: { lang: Language; onShowAbout
 
 function settingsCategoryDescription(category: SettingsCategory, lang: Language, isDark: boolean): string {
   const descriptions: Record<SettingsCategory, [string, string]> = {
-    general: ["语言、时间边界、应用更新与快捷键。", "Language, time boundaries, app updates, and shortcuts."],
+    general: ["语言、通知、启动与应用更新。", "Language, notifications, startup and updates."],
     appearance: isDark
       ? ["深色交互高亮使用柔和白色；浅色模式可继续使用已保存的强调色。", "Dark mode uses a softened white interaction accent; saved accents remain available in light mode."]
-      : ["界面模式、字体与强调色。", "Interface mode, typography, and accent color."],
+      : ["界面模式、字体、圆角与强调色。", "Interface mode, typography, corners and accent color."],
     workflow: ["规划视图、智能排程与工作习惯。", "Planning views, smart scheduling, and work habits."],
     "account-data": ["账户、同步、导入导出与数据控制。", "Account, sync, imports, exports, and data controls."],
     ai: ["Navo AI 的模型、记忆与主动助理。", "Navo AI models, memory, and proactive assistant."],
     widget: ["桌面窗口的外观与计时器。", "Desktop window appearance and timer."],
     integrations: ["日历订阅、外部日历、MCP 与云盘同步。", "Calendar subscriptions, external calendars, MCP, and cloud-folder sync."],
-    plugins: ["扩展市场、插件管理与来源。", "Extension market, plugin management, and sources."],
+    plugins: ["已安装插件、插件市场与配置。", "Installed plugins, marketplace and options."],
     advanced: ["高级设置与恢复选项。", "Advanced and recovery options."],
   };
   return descriptions[category][lang === "zh" ? 0 : 1];
@@ -421,7 +422,7 @@ function SettingsCategoryIcon({ category }: { category: SettingsCategory }) {
   }
 }
 
-export function UtilityPanel({ kind, settings, initialSection, onboardingSettings, compactLayout, data, authEmail, onClose, onRestartOnboarding, onSave: saveSettingsPatch, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; onboardingSettings?: OnboardingSettingsTopic; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onRestartOnboarding: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language }) {
+export function UtilityPanel({ kind, settings, initialSection, onboardingSettings, compactLayout, data, authEmail, onClose, onRestartOnboarding, onSave: saveSettingsPatch, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, settingsSavePhase = "idle", lang }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; onboardingSettings?: OnboardingSettingsTopic; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onRestartOnboarding: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; settingsSavePhase?: SavePhase; lang: Language }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
   const isDesktopRuntime = Boolean(window.desktopApi);
   const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
@@ -794,6 +795,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
             {kind === "settings" && compactLayout && !settingsHome && <button type="button" className="df-settings-back-button" onClick={backToSettingsHome} aria-label={lang === "zh" ? "返回设置" : "Back to settings"}><span aria-hidden="true">‹</span><span>{lang === "zh" ? "设置" : "Settings"}</span></button>}
             <h2 id="df-utility-title" ref={settingsHeadingRef} tabIndex={-1}>{kind === "settings" && !settingsHome ? searchActive ? (lang === "zh" ? "搜索设置" : "Search settings") : selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang) : kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
           </div>
+          {kind === "settings" && settingsSavePhase !== "idle" && <span className="df-settings-save-status" role="status" data-save-phase={settingsSavePhase}>{saveFeedbackLabel(settingsSavePhase, lang, Boolean(cloudReady))}</span>}
           {kind === "settings" && latestUndo && <IconButton icon={<UiRefreshIcon size={16} />} label={lang === "zh" ? "撤销设置修改" : "Undo settings change"} disabled={!canUndoPreference(latestUndo, settings)} onClick={undoPreference} />}
           <CloseButton ref={closeButtonRef} label={t(lang, "settings.close")} onClick={onClose} />
         </div>
@@ -942,7 +944,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                   ariaLabel={lang === "zh" ? "调整界面圆角" : "Adjust corner radius"}
                   onChange={workspaceCornerRadius => onSave({ workspaceCornerRadius })} />
                   <SettingNumberInput value={settings.workspaceCornerRadius ?? WORKSPACE_CORNER_RADIUS.defaultValue} min={WORKSPACE_CORNER_RADIUS.min} max={WORKSPACE_CORNER_RADIUS.max} step={1} suffix="px" commitOnBlur
-                    ariaLabel={lang === "zh" ? "界面圆角（像素）" : "Corner radius (pixels)"} onChange={workspaceCornerRadius => onSave({ workspaceCornerRadius })} />
+                    ariaLabel={lang === "zh" ? "界面圆角（像素）" : "Corner radius (pixels)"} onChange={workspaceCornerRadius => onSave({ workspaceCornerRadius: Math.min(WORKSPACE_CORNER_RADIUS.max, Math.max(WORKSPACE_CORNER_RADIUS.min, Math.round(workspaceCornerRadius))) })} />
                 </>}
               />
               <SettingRow anchor="motion-preference" title={lang === "zh" ? "动效强度" : "Motion intensity"}
@@ -982,6 +984,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               <SettingRow
                 anchor="default-timeline"
                 title={lang === "zh" ? "默认时间轴视图" : "Default timeline view"}
+                description={lang === "zh" ? "下次打开工作区时采用此视图。" : "Used when the workspace next opens."}
                 control={<SettingSelect<NonNullable<Settings["defaultTimelineView"]>>
                   value={settings.defaultTimelineView || "daily"}
                   ariaLabel={lang === "zh" ? "默认时间轴视图" : "Default timeline view"}
@@ -1051,7 +1054,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               />}
               <SettingRow anchor="engagement"
                 title={lang === "zh" ? "启用投入度评分" : "Enable engagement rating"}
-                description={lang === "zh" ? "完成后评 10–100%，默认 80%。点击百分比快速选择；左侧色条长度表示投入度，统计时长按评分计算。" : "Rate completed work 10–100%, default 80%. Click the percentage to choose. Left stripe length shows engagement; time is weighted by rating."}
+                description={lang === "zh" ? "完成后评 10–100%，默认 80%。点击百分比快速选择；左侧色条长度表示投入度，例如 60 分钟 × 80% = 48 分钟有效投入。" : "Rate completed work 10–100%, default 80%. Click the percentage to choose. Left stripe length shows engagement; for example, 60 minutes × 80% = 48 minutes of weighted effort."}
                 control={<SettingToggle checked={settings.featureEngagementEnabled === true} ariaLabel={lang === "zh" ? "启用投入度评分" : "Enable engagement rating"} onChange={(next) => onSave({ featureEngagementEnabled: next })} />}
               />
             </SettingSection>}
@@ -1199,8 +1202,8 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                 { value: "instant", label: lang === "zh" ? "即时" : "Instant" },
                 ...reasoningModesForModel(settings.model).filter((mode) => mode === "high" || mode === "xhigh").map((mode) => ({ value: mode, label: mode === "xhigh" ? "Xhigh" : "High" })),
               ]} />} />
-              <SettingRow anchor="ai-estimate" title={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} control={<SettingToggle checked={settings.autoEstimateTaskDuration !== false} ariaLabel={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} onChange={(next) => onSave({ autoEstimateTaskDuration: next })} />} />
-              <SettingRow anchor="ai-project" title={lang === "zh" ? "自动归入项目" : "Auto-assign project"} description={lang === "zh" ? "仅在判断置信度较高时归入已有项目。" : "Assign to an existing project only at high confidence."} control={<SettingToggle checked={settings.autoAssignTaskProject !== false} ariaLabel={lang === "zh" ? "自动归入项目" : "Auto-assign project"} onChange={(next) => onSave({ autoAssignTaskProject: next })} />} />
+              <SettingRow anchor="ai-estimate" title={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} description={lang === "zh" ? "影响之后新增的任务；已有任务不变。" : "Applies to new tasks; existing tasks stay unchanged."} control={<SettingToggle checked={settings.autoEstimateTaskDuration !== false} ariaLabel={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} onChange={(next) => onSave({ autoEstimateTaskDuration: next })} />} />
+              <SettingRow anchor="ai-project" title={lang === "zh" ? "自动归入项目" : "Auto-assign project"} description={lang === "zh" ? "新增任务时，仅在判断置信度较高时归入已有项目。" : "Assign new tasks to an existing project only at high confidence."} control={<SettingToggle checked={settings.autoAssignTaskProject !== false} ariaLabel={lang === "zh" ? "自动归入项目" : "Auto-assign project"} onChange={(next) => onSave({ autoAssignTaskProject: next })} />} />
               <SettingDisclosure title={lang === "zh" ? "简报与主动助理" : "Briefs and proactive assistant"} open={Boolean(expandedSettings["ai-briefs"])} onToggle={open => setExpandedSettings(previous => previous["ai-briefs"] === open ? previous : { ...previous, "ai-briefs": open })}>
               <SettingRow anchor="ai-briefs" title={lang === "zh" ? "每日开工与收工简报" : "Daily start and end briefs"} description={cloudReady ? (lang === "zh" ? "由云端按工作时间调度；应用关闭时邮件仍可送达，打开应用后收工复盘会追加到固定的每日复盘对话。简报只读。" : "Scheduled in the cloud using your work hours; morning email can arrive while the app is closed, and the end-of-day review is appended to the fixed Daily review conversation when you open the app. Briefs are read-only.") : (lang === "zh" ? "登录云端账号后可启用。" : "Sign in to a cloud account to enable briefs.")} control={<SettingToggle checked={Boolean(settings.aiBriefsEnabled)} disabled={!cloudReady} ariaLabel={lang === "zh" ? "每日 AI 简报" : "Daily AI briefs"} onChange={(next) => onSave({ aiBriefsEnabled: next })} />} />
               <SettingRow title={lang === "zh" ? "简报工作时段" : "Brief work hours"} description={lang === "zh" ? "与智能排程共用工作时段。" : "Uses the same working hours as smart scheduling."} control={<SettingActionButton onClick={() => navigateSettings({ category: "workflow", anchor: "schedule-start" })}>{lang === "zh" ? "调整" : "Edit"}</SettingActionButton>} />

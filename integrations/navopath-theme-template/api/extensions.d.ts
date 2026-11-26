@@ -3,10 +3,19 @@ import type { PluginMcpDeclaration } from "./pluginMcp";
 export type ExtensionKind = "plugin" | "theme";
 export type ExtensionPlatform = "desktop" | "web" | "mobile";
 export interface ThemeOption { key: string; label: string; type: "color" | "number" | "string" | "boolean"; variable: string; default: string | number | boolean; min?: number; max?: number }
+/** Optional host-rendered plugin preferences. Secret values must not be declared here. */
+export type PluginSettingOption = { key: string; label: string; description?: string } & (
+  | { type: "boolean"; default: boolean }
+  | { type: "number"; default: number; min?: number; max?: number; step?: number }
+  | { type: "string" | "color"; default: string }
+  | { type: "select"; default: string; choices: { value: string; label: string }[] }
+);
 export interface ExtensionManifest {
   id: string; name: string; description: string; author: string; version: string;
   kind: ExtensionKind; apiVersion: number; minAppVersion: string; platforms: ExtensionPlatform[];
   main?: string; desktop?: string; styles?: string; preview?: string; previews?: { light: string; dark: string }; options?: ThemeOption[];
+  /** Simple plugin options use the same native controls as core settings. */
+  settingsOptions?: PluginSettingOption[];
   /** Optional square, single-color SVG used by the market and host launcher. */
   icon?: string;
   repository?: string; license?: string;
