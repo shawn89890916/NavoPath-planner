@@ -3,7 +3,7 @@ import type { PlannerData, Task, Subtask, TimelineRecord, TimeEntry, HabitDailyS
 export type AnalyticsValue = string | number | boolean | null;
 export type AnalyticsSnapshot = Record<string, AnalyticsValue>;
 export type AnalyticsEntity = "task" | "subtask" | "execution" | "timeEntry" | "habit" | "project" | "timer";
-export type AnalyticsSource = "client" | "sync" | "plugin" | "system" | "undo" | "remote-observed";
+export type AnalyticsSource = "client" | "ai" | "sync" | "plugin" | "system" | "undo" | "remote-observed";
 export type TimerTransition = "start" | "pause" | "idle-pause" | "resume" | "stop" | "discard";
 export interface AnalyticsEvent {
   id: string;
