@@ -3,6 +3,7 @@ import {
   SETTINGS_CATEGORIES,
   SETTINGS_PRIMARY_CATEGORIES,
   settingsPrimaryCategory,
+  visibleSettingsCategories,
   SETTINGS_SEARCH_ENTRIES,
   normalizeSettingsTarget,
   searchSettings,
@@ -29,16 +30,17 @@ describe("settings navigation", () => {
       "workflow",
       "ai",
       "widget",
-      "integrations",
       "plugins",
+      "integrations",
       "account-data",
     ]);
   });
 
-  it("keeps six primary categories while retaining nested legacy destinations", () => {
-    expect(SETTINGS_PRIMARY_CATEGORIES.map(c => c.id)).toEqual(["general", "appearance", "workflow", "ai", "plugins", "account-data"]);
-    expect(settingsPrimaryCategory("widget")).toBe("appearance");
-    expect(settingsPrimaryCategory("integrations")).toBe("plugins");
+  it("restores clear primary categories while retaining legacy destinations", () => {
+    expect(SETTINGS_PRIMARY_CATEGORIES.map(c => c.id)).toEqual(["general", "appearance", "workflow", "ai", "widget", "plugins", "integrations", "account-data"]);
+    expect(settingsPrimaryCategory("widget")).toBe("widget");
+    expect(visibleSettingsCategories(false).some(c => c.id === "widget")).toBe(false);
+    expect(settingsPrimaryCategory("integrations")).toBe("integrations");
     expect(normalizeSettingsTarget({ category: "general", anchor: "day-start" })).toEqual({ category: "workflow", anchor: "day-start" });
     expect(normalizeSettingsTarget({ category: "account-data", anchor: "auto-launch" })).toEqual({ category: "general", anchor: "auto-launch" });
     expect(normalizeSettingsTarget("metrics")).toEqual({ category: "plugins", anchor: "metrics" });
@@ -75,6 +77,13 @@ describe("settings navigation", () => {
 
   it("keeps desktop settings out of web search results", () => {
     expect(searchSettings("desktop opacity", "en", false)).toEqual([]);
+  });
+
+  it("filters registered modifications before applying search limits", () => {
+    const ids = new Set(["corner-radius", "schedule-buffer"]);
+    expect(searchSettings("", "en", true, ids).map(x => x.id).sort()).toEqual(["corner-radius", "schedule-buffer"]);
+    expect(searchSettings("radius", "en", true, ids).map(x => x.id)).toEqual(["corner-radius"]);
+    expect(searchSettings("language", "en", true, ids)).toEqual([]);
   });
 
   it("keeps search ids unique", () => {

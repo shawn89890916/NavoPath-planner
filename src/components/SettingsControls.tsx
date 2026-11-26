@@ -32,7 +32,7 @@ export function SettingSection({
   tone = "normal",
   anchor,
 }: {
-  title: ReactNode;
+  title?: ReactNode;
   description?: ReactNode;
   children: ReactNode;
   tone?: "normal" | "danger";
@@ -44,10 +44,10 @@ export function SettingSection({
       data-settings-anchor={anchor}
       tabIndex={anchor ? -1 : undefined}
     >
-      <header className="df-settings-group-head">
-        <h3 className="df-settings-group-title">{title}</h3>
+      {(title || description) && <header className="df-settings-group-head">
+        {title && <h3 className="df-settings-group-title">{title}</h3>}
         {description ? <p className="df-settings-group-desc">{description}</p> : null}
-      </header>
+      </header>}
       <div className="df-settings-group-body">{children}</div>
     </section>
   );
@@ -165,6 +165,18 @@ export function SettingSelect<T extends string>({
       ))}
     </select>
   );
+}
+
+/** The workspace is the live preview; the normal settings save pipeline batches writes. */
+export function SettingSlider({ value, min, max, step = 1, onChange, ariaLabel, displayValue }: {
+  value: number; min: number; max: number; step?: number;
+  onChange: (value: number) => void; ariaLabel: string; displayValue?: ReactNode;
+}) {
+  return <span className="df-settings-range-control">
+    <input type="range" className="df-settings-range" min={min} max={max} step={step} value={value} aria-label={ariaLabel}
+      onChange={event => onChange(Number(event.currentTarget.value))} />
+    {displayValue !== undefined && <span className="df-settings-number-suffix">{displayValue}</span>}
+  </span>;
 }
 
 export function SettingNumberInput({

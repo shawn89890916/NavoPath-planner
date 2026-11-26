@@ -44,15 +44,16 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategoryDefinition[] = [
   { id: "workflow", labelZh: "工作流", labelEn: "Workflow" },
   { id: "ai", labelZh: "Navo AI", labelEn: "Navo AI" },
   { id: "widget", labelZh: "桌面窗口", labelEn: "Desktop Windows" },
-  { id: "integrations", labelZh: "日历与集成", labelEn: "Calendar & Integrations" },
   { id: "plugins", labelZh: "插件", labelEn: "Plugins" },
+  { id: "integrations", labelZh: "连接", labelEn: "Connections" },
   { id: "account-data", labelZh: "账户与数据", labelEn: "Account & Data" },
 ];
 
-/** Historical destinations remain valid; only six categories occupy the main navigation. */
-export const SETTINGS_PRIMARY_CATEGORIES = SETTINGS_CATEGORIES.filter(({ id }) => id !== "widget" && id !== "integrations").map(category => category.id === "plugins" ? { ...category, labelZh: "扩展与连接", labelEn: "Extensions & Connections" } : category);
-export function settingsPrimaryCategory(category: SettingsCategory): SettingsCategory {
-  return category === "widget" ? "appearance" : category === "integrations" ? "plugins" : category;
+/** Retain stable category IDs; desktop-only destinations are filtered by capability. */
+export const SETTINGS_PRIMARY_CATEGORIES = SETTINGS_CATEGORIES;
+export function settingsPrimaryCategory(category: SettingsCategory): SettingsCategory { return category; }
+export function visibleSettingsCategories(desktopAvailable: boolean): readonly SettingsCategoryDefinition[] {
+  return SETTINGS_PRIMARY_CATEGORIES.filter(category => desktopAvailable || category.id !== "widget");
 }
 
 const legacyTargets: Record<LegacySettingsSection, SettingsTarget> = {
@@ -214,10 +215,11 @@ function searchableText(item: SettingsSearchEntry): string {
   return [item.labelZh, item.labelEn, item.descriptionZh, item.descriptionEn, item.keywords].filter(Boolean).join(" ").toLocaleLowerCase();
 }
 
-export function searchSettings(query: string, lang: Language, desktopAvailable = true): SettingsSearchEntry[] {
+export function searchSettings(query: string, lang: Language, desktopAvailable = true, modifiedIds?: ReadonlySet<string>): SettingsSearchEntry[] {
   const tokens = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return [];
+  if (tokens.length === 0 && !modifiedIds) return [];
   return SETTINGS_SEARCH_ENTRIES
+    .filter((item) => item.id !== "modified-settings" && (!modifiedIds || modifiedIds.has(item.id)))
     .filter((item) => desktopAvailable || item.target.category !== "widget")
     .filter((item) => desktopAvailable || !["beta-updates", "auto-launch", "updates"].includes(item.id))
     .filter((item) => tokens.every((token) => searchableText(item).includes(token)))
@@ -227,7 +229,7 @@ export function searchSettings(query: string, lang: Language, desktopAvailable =
       const normalizedQuery = tokens.join(" ");
       return Number(bLabel.startsWith(normalizedQuery)) - Number(aLabel.startsWith(normalizedQuery));
     })
-    .slice(0, 8);
+    .slice(0, modifiedIds ? SETTINGS_SEARCH_ENTRIES.length : 24);
 }
 
 export function settingsSearchPath(item: SettingsSearchEntry, lang: Language): string {

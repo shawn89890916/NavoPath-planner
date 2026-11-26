@@ -83,6 +83,15 @@ describe("extension settings surfaces", () => {
     expect(onSelectPage).toHaveBeenCalledWith(null);
   });
 
+  it("shows native plugin preferences directly below the installed plugin row", async () => {
+    await act(async () => { renderer = create(<ExtensionSettings lang="en" kind="plugin" inlineSettings={{ "official:plugin": <p>Native options</p> }} />); });
+    expect(JSON.stringify(renderer!.toJSON())).not.toContain("Native options");
+    await act(async () => renderer!.root.findByProps({ "aria-label": "plugin example settings" }).props.onClick());
+    expect(JSON.stringify(renderer!.toJSON())).toContain("Native options");
+    await act(async () => renderer!.root.findByProps({ "aria-label": "plugin example settings" }).props.onClick());
+    expect(JSON.stringify(renderer!.toJSON())).not.toContain("Native options");
+  });
+
   it("passes the current package kind to file imports", async () => {
     await act(async () => { renderer = create(<ExtensionSettings lang="en" kind="theme" />); });
     const file = { name: "paper.navopackage.json" };
