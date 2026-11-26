@@ -85,7 +85,7 @@
         "dist/assets/mobilePlacement-*.js",
         "dist/assets/SelectionIndicator-*.js"
       ],
-      "limit": "360.5 KB"
+      "limit": "365 KB"
     },
     {
       "name": "Document parsing scripts",

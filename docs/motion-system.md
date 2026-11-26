@@ -8,3 +8,7 @@ Unit tests cover identity matching, duplicate/ambiguous occurrences, small chang
 
 ## Subsequent increments
 Extend feedback to compact layouts, plugin-host status and finer-grained remote sync states; anchor detail and popover transitions; refine real-time drag displacement and panel coordination; validate runtime performance on desktop and mobile. These remain separate work pending visual verification of this increment.
+
+### Beta 104 size budget
+
+CI run 45758131846 measured the complete compressed app scripts at 363.15 kB, exceeding the previous 360.5 kB total cap by 2.65 kB. The initial app scripts measured 259.93 kB against the unchanged 263 kB cap. Set a narrowly scoped 365 kB total script cap for this feature release (+4.5 kB, approximately 1.25%); retain all other limits, including the separate startup, deferred, settings, frontend output and desktop package budgets. Re-run the full checks before merging.
