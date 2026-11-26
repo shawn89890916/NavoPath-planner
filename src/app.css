@@ -20327,3 +20327,22 @@ body[data-navopath-base-theme="light"],
   outline: none;
   box-shadow: none;
 }
+
+/* Device motion preference shares the same timing policy as reduced motion. */
+:root[data-motion-preference="off"] {
+  --motion-instant: 1ms;
+  --motion-fast: 1ms;
+  --motion-base: 1ms;
+  --motion-layout: 1ms;
+  --motion-complete: 1ms;
+  --motion-fade: 1ms;
+  --motion-story: 1ms;
+}
+:root[data-motion-preference="off"] .df-app *,
+:root[data-motion-preference="off"] .df-app *::before,
+:root[data-motion-preference="off"] .df-app *::after {
+  scroll-behavior: auto;
+  animation-duration: .001ms;
+  animation-iteration-count: 1;
+  transition-duration: .001ms;
+}

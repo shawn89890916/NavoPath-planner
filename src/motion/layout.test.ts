@@ -1,0 +1,35 @@
+import { describe, expect, it } from "vitest";
+import { planTaskMotion, rectChanged } from "./layout";
+import { normalizeMotionPreference } from "../motion";
+
+const p = (key: string, entity: string, top: number) => ({ key, entity, rect: { left: 0, top, width: 100, height: 30 } });
+
+describe("task motion", () => {
+  it("keeps existing presentation identity during reordering", () => {
+    const a = p("candidate:a", "a", 0);
+    const b = p("candidate:b", "b", 30);
+    expect(planTaskMotion([a, b], [p(a.key, "a", 30), p(b.key, "b", 0)], 12).map(x => x.before?.key)).toEqual([a.key, b.key]);
+  });
+  it("matches a unique candidate to its scheduled representation", () => {
+    const old = p("candidate:a", "a", 0);
+    const next = p("schedule:record1", "a", 60);
+    expect(planTaskMotion([old], [next], 12)).toEqual([{ before: old, after: next }]);
+  });
+  it("does not merge multiple scheduled instances into one candidate", () => {
+    const next = p("candidate:a", "a", 0);
+    expect(planTaskMotion([p("schedule:1", "a", 30), p("schedule:2", "a", 60)], [next], 12)).toEqual([{ before: undefined, after: next }]);
+  });
+  it("ignores duplicate presentation keys", () => {
+    expect(planTaskMotion([], [p("x", "a", 0), p("x", "a", 30)], 12)).toEqual([]);
+  });
+  it("does not move stationary items or animate a large batch", () => {
+    expect(rectChanged(p("a", "a", 0).rect, p("a", "a", 1).rect)).toBe(false);
+    expect(planTaskMotion([p("a", "a", 0)], [p("a", "a", 0)], 12)).toEqual([]);
+    expect(planTaskMotion([], [p("a", "a", 0), p("b", "b", 30)], 1)).toEqual([]);
+  });
+  it("normalizes unknown and legacy motion preferences", () => {
+    expect(normalizeMotionPreference(undefined)).toBe("standard");
+    expect(normalizeMotionPreference("off")).toBe("off");
+    expect(normalizeMotionPreference("rich")).toBe("rich");
+  });
+});

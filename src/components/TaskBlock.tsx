@@ -1,5 +1,6 @@
 import React, { type CSSProperties, type ReactNode } from "react";
 import type { Language } from "../types";
+import { MOTION, MOTION_EASE, prefersReducedMotion } from "../motion";
 import { projectColorInk } from "../utils/presentationColor";
 
 export type TaskBlockVariant = "course" | "candidate" | "planning" | "scheduled" | "allDay" | "compact" | "habit-child";
@@ -330,6 +331,16 @@ export function TaskCheckbox({
   onMouseDown?: React.MouseEventHandler<HTMLButtonElement>;
   onPointerDown?: React.PointerEventHandler<HTMLButtonElement>;
 }) {
+  const checkboxRef = React.useRef<HTMLButtonElement>(null);
+  const previousChecked = React.useRef(Boolean(checked));
+  React.useLayoutEffect(() => {
+    const changed = previousChecked.current !== Boolean(checked);
+    previousChecked.current = Boolean(checked);
+    const node = checkboxRef.current;
+    if (!changed || !node || prefersReducedMotion(node.ownerDocument.defaultView) || typeof node.animate !== "function") return;
+    const animation = node.animate([{ opacity: .5 }, { opacity: 1 }], { duration: MOTION.base, easing: MOTION_EASE });
+    return () => animation.cancel();
+  }, [checked]);
   const priorityColor = `var(--task-priority-${priority || "normal"})`;
   const priorityFill = priority
     ? `color-mix(in srgb, ${priorityColor} ${priority === "medium" ? 10 : priority === "high" ? 9 : 6}%, transparent)`
@@ -341,6 +352,7 @@ export function TaskCheckbox({
   return (
     <span className="df-task-checkbox-wrap" data-priority={priority || "normal"}>
       <button
+        ref={checkboxRef}
         type="button"
         className={[
           "df-block-check",

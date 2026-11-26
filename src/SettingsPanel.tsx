@@ -25,6 +25,7 @@ import { ProjectColorPicker, MobileSheetDismissHandle } from "./WorkspacePresent
 import { EmptyState } from "./components/EmptyState";
 import { Button, CloseButton } from "./components/UiPrimitives";
 import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingNumberInput, SettingTextInput, SettingColorInput, SettingActionButton, SettingDisclosure, SettingDescription } from "./components/SettingsControls";
+import { applyMotionPreference, readMotionPreference, type MotionPreference } from "./motion";
 import { reasoningModesForModel } from "./utils/aiModels";
 import { createPortal, flushSync } from "react-dom";
 import { runMotionTransition } from "./motion";
@@ -548,6 +549,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
   const [confirmResetSettings, setConfirmResetSettings] = useState(false);
   const [confirmClearLocalData, setConfirmClearLocalData] = useState(false);
   const [clearLocalDataPhrase, setClearLocalDataPhrase] = useState("");
+  const [motionPreference, setMotionPreference] = useState<MotionPreference>(() => readMotionPreference());
   const widgetAppearance = normalizeWidgetAppearance(settings.widgetAppearance);
   useSyncExternalStore(subscribeTimerModes, getTimerModeRevision);
   const widgetTimerSettings = normalizeWidgetTimerPreferences(settings.widgetTimerPreferences);
@@ -909,6 +911,18 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                 />}
               />
               <details className="df-settings-progressive"><summary>{lang === "zh" ? "进阶外观" : "Advanced appearance"}</summary><div className="df-settings-progressive-body">
+              <SettingRow anchor="motion-preference" title={lang === "zh" ? "动效强度" : "Motion intensity"}
+                control={<SettingSelect<MotionPreference>
+                  value={motionPreference}
+                  ariaLabel={lang === "zh" ? "动效强度" : "Motion intensity"}
+                  onChange={(value) => { applyMotionPreference(value); setMotionPreference(value); }}
+                  options={[
+                    { value: "off", label: lang === "zh" ? "关闭" : "Off" },
+                    { value: "standard", label: lang === "zh" ? "标准" : "Standard" },
+                    { value: "rich", label: lang === "zh" ? "丰富" : "Rich" },
+                  ]}
+                />}
+              />
               <SettingRow
                 anchor="timeline-font"
                 title={lang === "zh" ? "时间轴字体大小" : "Timeline font size"}

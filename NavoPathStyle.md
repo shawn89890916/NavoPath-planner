@@ -548,3 +548,11 @@ visual values.
 - Keep pending button labels stable and expose `aria-busy` through `Button.pending`; status details belong in the existing live status region.
 - Candidate completion keeps the checked state visible before the row folds away over 320ms. Reduced motion commits immediately.
 - Use `/dev/ui-review.html` during development to inspect the actual shared controls in light/dark themes and both languages. This page is excluded from the production entrypoints.
+
+## Motion system
+
+- Keep the established 90/140/180/240/320/520ms tokens and shared paper easing. Device-local Off, Standard and Rich preferences never override system reduced motion.
+- Animate committed task layout changes only: exact presentation keys first, unique shared task identity second. Different scheduled occurrences retain distinct keys.
+- Keep interaction geometry stable: use inert, nonfocusable visual snapshots without duplicate identity or event handlers. Cancel visual effects on new input, scroll, resize and unmount. Do not animate drag hit targets or block persistence.
+- Standard uses 240ms layout motion and at most 12 simultaneous changes; Rich uses 320ms and at most 24. Larger batches settle without movement. Avoid decoration, hover lift and bouncing. A size change during a genuine task relocation is a spatial transition, not hover scaling.
+- Existing navigation, popovers, task drag preview, selection indicator and task operation undo remain canonical. New motion should compose with them rather than introduce parallel systems.

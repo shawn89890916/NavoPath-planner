@@ -116,6 +116,9 @@ import { expandTimedCalendarEvent } from "./utils/calendarEventSlices";
 import { MOTION, runMotionTransition, scheduleMotionCommit } from "./motion";
 import { useMotionPresence } from "./useMotionPresence";
 import { useMotionSelection } from "./useMotionSelection";
+import { applyMotionPreference, readMotionPreference } from "./motion";
+import { useTaskLayoutMotion } from "./motion/useTaskLayoutMotion";
+import { EXECUTION_MOTION_SELECTOR } from "./motion/layout";
 import "./app.css";
 import "./mobile-execution.css";
 import "./ui-primitives.css";
@@ -3277,6 +3280,14 @@ if (cached?.data && cached?.settings) {
     return () => media.removeEventListener("change", apply);
   }, [settings?.theme, settings?.baseMode, settings?.language]);
 
+  useLayoutEffect(() => { applyMotionPreference(readMotionPreference()); }, []);
+  useTaskLayoutMotion({
+    root: () => document.querySelector<HTMLElement>(".df-app.mode-execute"),
+    selector: EXECUTION_MOTION_SELECTOR,
+    scope: timelineView + ":" + selectedDate + ":" + compactExecuteView + ":" + shelfViewId,
+    revision: [data, settings?.hideCompleted, showScheduledCandidates, candidateDrawerOpen],
+    blocked: !workspaceLoaded || workspaceSuspended || Boolean(drag || resizePreview || mobilePlacement),
+  });
   const workspaceCornerRadius = settings?.workspaceCornerRadius ?? WORKSPACE_CORNER_RADIUS.defaultValue;
   useLayoutEffect(() => {
     const root = document.documentElement;
