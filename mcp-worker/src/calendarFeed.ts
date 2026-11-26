@@ -1,3 +1,6 @@
+import { selectTimedSlot, durationMinutes, validSlot } from "../../community-plugins/super-productivity-sync/schedule";
+import type { Task } from "../../src/types";
+
 type Json = Record<string, any>;
 
 export type CalendarFeedData = {
@@ -159,6 +162,53 @@ export function buildCalendarFeed(data: CalendarFeedData, generatedAt = new Date
     }, generatedAt));
   }
 
+  lines.push("END:VCALENDAR");
+  return `${lines.map(foldLine).join("\r\n")}\r\n`;
+}
+
+/** A read-only calendar layer for NavoPath timeline blocks that the SP task
+ * model cannot represent: completed tasks (hidden by selectTimelineTasks),
+ * historical executions, all-day records, and additional live slots. */
+export function buildSuperProductivityHistoryFeed(data: CalendarFeedData, generatedAt = new Date()) {
+  const lines = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//NavoPath//SP Timeline History//EN",
+    "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:NavoPath Timeline History",
+    "REFRESH-INTERVAL;VALUE=DURATION:PT5M", "X-PUBLISHED-TTL:PT5M",
+  ];
+  for (const task of data.tasks || []) {
+    if (!task.id) continue;
+    const records = Array.isArray(task.timelineRecords) ? task.timelineRecords : [];
+    const primary = task.completed ? undefined : selectTimedSlot(task as Task);
+    for (const [index, record] of records.entries()) {
+      if (record.executionStatus === "cancelled" || !record.id || !compactDate(record.scheduledDate)) continue;
+      if (primary?.index === index) continue;
+      const allDay = !record.scheduledStart && !record.scheduledEnd;
+      if (!allDay && (!validSlot(record.scheduledDate, record.scheduledStart) || !compactTime(record.scheduledEnd) || durationMinutes(record) <= 0)) continue;
+      const status = record.executionStatus === "completed" ? "Completed" :
+        record.executionStatus === "returned_unfinished" ? "Returned unfinished" :
+        record.executionStatus === "skipped" ? "Skipped" : task.completed ? "Completed task" : "Additional scheduled block";
+      lines.push(...eventLines({
+        uid: `sp-history-${task.id}-${record.id}@navopath.app`,
+        title: `${record.executionStatus === "completed" || task.completed ? "✓ " : ""}${task.title || "Untitled"}`,
+        description: `NavoPath · ${status} · Read-only timeline record`,
+        startDate: record.scheduledDate, startTime: record.scheduledStart,
+        endDate: record.scheduledEndDate, endTime: record.scheduledEnd,
+        createdAt: record.createdAt || task.createdAt, updatedAt: task.updatedAt,
+        transparent: true,
+      }, generatedAt));
+    }
+    // Completed legacy tasks may have no modern timeline record. Never invent
+    // a time or duration; use only the dates/times actually present.
+    if (!records.length && task.completed && task.executionStatus !== "cancelled" &&
+        validSlot(task.scheduledDate, task.scheduledStart) && compactTime(task.scheduledEnd)) {
+      lines.push(...eventLines({
+        uid: `sp-history-${task.id}-legacy@navopath.app`, title: `✓ ${task.title || "Untitled"}`,
+        description: "NavoPath · Completed task · Read-only timeline record",
+        startDate: task.scheduledDate, startTime: task.scheduledStart, endTime: task.scheduledEnd,
+        createdAt: task.createdAt, updatedAt: task.updatedAt, transparent: true,
+      }, generatedAt));
+    }
+  }
   lines.push("END:VCALENDAR");
   return `${lines.map(foldLine).join("\r\n")}\r\n`;
 }
