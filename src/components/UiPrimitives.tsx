@@ -53,7 +53,7 @@ export function ActionDisclosure({ label, children }: { label: string; children:
   }, []);
   useLayoutEffect(() => {
     const disclosure = disclosureRef.current;
-    if (!open || !disclosure) return;
+    if (!open || !disclosure?.closest) return;
     const boundary = disclosure.closest(".df-utility-body, .df-drawer");
     const trigger = disclosure.querySelector("summary");
     const menu = disclosure.querySelector<HTMLElement>(".ui-action-disclosure-panel");

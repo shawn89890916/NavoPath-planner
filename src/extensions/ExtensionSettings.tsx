@@ -120,7 +120,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
           onChange={(value) => void run(() => extensionService.saveConfig(page.owner, { clockFont: normalizePomodoroClockFont(value) }), fontLabel)} />
       </>} />}
       {error && <p className="df-extension-error" role="alert">{error}</p>}
-      <ExtensionMount contribution={page} />
+      <ExtensionMount contribution={page} lang={lang} />
     </SettingSection></div>;
   }
 

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { ExtensionContribution } from "./types";
+import type { Language } from "../types";
 
-export function ExtensionMount({ contribution }: { contribution: ExtensionContribution }) {
+export function ExtensionMount({ contribution, lang = "en" }: { contribution: ExtensionContribution; lang?: Language }) {
   const container = useRef<HTMLDivElement>(null);
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState<"pending" | "ready" | "error">("pending");
@@ -24,7 +25,7 @@ export function ExtensionMount({ contribution }: { contribution: ExtensionContri
     }).catch((caught) => { if (!closed) { setError(String(caught)); setStatus("error"); } });
     return () => { closed = true; root.remove(); if (dispose) void Promise.resolve().then(dispose).catch(console.error); };
   }, [contribution, attempt]);
-  const zh = typeof document !== "undefined" && document.documentElement.lang.startsWith("zh");
+  const zh = lang === "zh";
   return <div className="df-extension-mount" data-mount-state={status} aria-busy={status === "pending"}>
     <div ref={container} />
     {status === "pending" && <span role="status">{zh ? "正在打开插件…" : "Opening plugin…"}</span>}

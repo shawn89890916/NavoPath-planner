@@ -40,7 +40,8 @@ import { AI_PROVIDER_MODELS, readLocalAiProviderConfig } from "./aiProviderConfi
 import { removeEmptyAiConversations } from "./aiConversationHistory";
 import { autoScheduleTasks, type UnscheduledTask } from "./autoSchedule";
 import { AI_INFERENCE_MODEL_VERSION, buildAiProfile, learnedTaskDurationMinutes, predictTaskIntelligence } from "./aiPersonalization";
-import { TaskDragLayer, UnifiedDragOverlay, type UnifiedDragSnapshot } from "./unifiedDrag";
+import { TaskDragLayer, UnifiedDragOverlay, deepCopyVisualStyles, type UnifiedDragSnapshot } from "./unifiedDrag";
+import { createDragProjection } from "./motion/dragProjection";
 import { installBrowserFallback, forceLocalPreviewMode } from "./browserFallback";
 import { isPasswordRecoveryCallback } from "./passwordRecovery";
 import { getVisibleDays, pointerToDateTime, timeBlockTop, timeBlockHeight, HOUR_HEIGHT, timelineHourSlots } from "./timelineGeometry";
@@ -119,7 +120,7 @@ import { useMotionPresence } from "./useMotionPresence";
 import { useMotionSelection } from "./useMotionSelection";
 import { applyMotionPreference, readMotionPreference } from "./motion";
 import { useTaskLayoutMotion } from "./motion/useTaskLayoutMotion";
-import { EXECUTION_MOTION_SELECTOR } from "./motion/layout";
+import { EXECUTION_MOTION_SELECTOR, rememberDragLanding } from "./motion/layout";
 import { aggregateSavePhase, IDLE_SAVE_FEEDBACK, saveFeedbackLabel, type SaveFeedback, type SavePhase } from "./motion/feedback";
 import "./app.css";
 import "./mobile-execution.css";
@@ -7800,6 +7801,7 @@ if (cached?.data && cached?.settings) {
     };
     let dropTime = "";
     let candidateTarget: CandidateDropTarget = null;
+    let projection: ReturnType<typeof createDragProjection> | undefined;
     const setCandidateReorderTarget = (nextTarget: CandidateDropTarget) => {
       const previousTarget = candidateTarget;
       const sameTaskTarget = previousTarget?.kind === "task" && nextTarget?.kind === "task"
@@ -7812,6 +7814,7 @@ if (cached?.data && cached?.settings) {
         : false;
       const unchanged = (previousTarget === null && nextTarget === null) || sameTaskTarget || sameProjectTarget;
       candidateTarget = nextTarget;
+      if (nextTarget?.kind !== "task") projection?.update();
       if (!unchanged) setCandidateDropTarget(nextTarget);
     };
     const jumpDate = (tap: PointerEvent) => {
@@ -7823,6 +7826,8 @@ if (cached?.data && cached?.settings) {
     };
     let mobileDropCommitted = false;
     const cleanup = () => {
+      projection?.close();
+      window.removeEventListener("blur", cleanup);
       if (active && mobileExecution && source === "candidate" && !mobileDropCommitted) setCandidateDrawerOpen(true);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
@@ -7857,10 +7862,10 @@ if (cached?.data && cached?.settings) {
         const targetTask = dataRef.current?.tasks.find((item) => item.id === targetTaskId);
         if (targetTask && targetTaskId !== task.id && targetTask.completed === task.completed
           && (!groupByProject || targetTask.projectId === task.projectId)) {
-          // Keep candidate groups stationary during drag; the pointer's half
-          // of the target card determines the insertion position on release.
+          // Stable logical rectangles determine the drop; visual copies make space.
           const rect = (candidateRow.querySelector<HTMLElement>(".df-task-card") || candidateRow).getBoundingClientRect();
           const position = (pointerEvent.clientY - rect.top) < rect.height / 2 ? "before" : "after";
+          projection?.update(candidateRow, position);
           setCandidateReorderTarget({
             kind: "task",
             taskId: targetTaskId,
@@ -7963,6 +7968,7 @@ if (cached?.data && cached?.settings) {
         dragElement.setPointerCapture(pointerId);
         document.body.classList.add("df-timeline-pointer-drag");
         dragElement.classList.add("is-dragging-source");
+        if (source === "candidate" && options.allowCandidateReorder !== false) projection = createDragProjection(dragElement, deepCopyVisualStyles);
         suppressBlockClickRef.current = true;
         setDragCreate(null);
         const rect = dragElement.getBoundingClientRect();
@@ -8020,11 +8026,13 @@ if (cached?.data && cached?.settings) {
         updateTarget(pointerEvent);
         const pointedElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
         if (candidateTarget?.kind === "task") {
+          rememberDragLanding(task.id, "candidate");
           reorderTodayCandidate(task.id, candidateTarget.taskId, candidateTarget.position);
           cleanup();
           return;
         }
         if (candidateTarget?.kind === "project") {
+          rememberDragLanding(task.id, "candidate");
           moveTodayCandidateToProjectGroup(task.id, candidateTarget.projectId || undefined);
           cleanup();
           return;
@@ -8044,6 +8052,7 @@ if (cached?.data && cached?.settings) {
         } else if (candidatePanel) {
           returnTimelineTaskToCandidates(task.id, today);
         } else if (dropTime && dragTargetDateRef.current) {
+          rememberDragLanding(task.id, "schedule");
           mobileDropCommitted = true;
           if (options.onSchedule) options.onSchedule(dragTargetDateRef.current, dropTime);
           else scheduleTask(task.id, dropTime, source === "allDay");
@@ -8058,6 +8067,7 @@ if (cached?.data && cached?.settings) {
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
     window.addEventListener("pointerdown", jumpDate);
+    window.addEventListener("blur", cleanup);
   }
 
   async function refreshQueuedRemote() {
@@ -9614,7 +9624,6 @@ if (cached?.data && cached?.settings) {
                   });
                 })()
               ) : visibleCandidates.map((task) => {
-                const isReorderSource = drag?.source === "candidate" && drag.taskId === task.id;
                 return <div key={task.id}
                   className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}`}
                   ref={onboardingTask?.id === task.id ? onboardingTaskRowRef : undefined}
@@ -9625,7 +9634,7 @@ if (cached?.data && cached?.settings) {
                     toggleCandidateTaskDone(task);
                   }}
                 >
-                  {!isReorderSource && <TaskCard demo={Boolean(productDemo)} task={task} scheduleButtonRef={guidePlanButtonVisible && onboardingTask?.id === task.id ? onboardingPlanButtonRef : undefined} onGuidedSchedule={onboardingTask?.id === task.id ? scheduleGuidedTask : undefined} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
+                  {<TaskCard demo={Boolean(productDemo)} task={task} scheduleButtonRef={guidePlanButtonVisible && onboardingTask?.id === task.id ? onboardingPlanButtonRef : undefined} onGuidedSchedule={onboardingTask?.id === task.id ? scheduleGuidedTask : undefined} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
                 </div>
               })}
               {shouldShowHabitCandidates(settings) && (
@@ -9677,7 +9686,7 @@ if (cached?.data && cached?.settings) {
                     ? <TaskOperationHistory operations={taskOperations} projects={projects} lang={lang} now={workspaceNow()} label={candidateViewName(shelfView, lang)} onUndo={undoTaskOperation} />
                     : shelfView.nativeMode
                       ? <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode={shelfView.nativeMode} tasks={visibleCandidates} showCompleted={showCompletedCandidates} />
-                      : <ExtensionMount contribution={shelfView} />}
+                      : <ExtensionMount contribution={shelfView} lang={lang} />}
                 </Suspense>
               </div>
             )}
@@ -10564,7 +10573,7 @@ if (cached?.data && cached?.settings) {
           setCompactExecuteView(mobileExecution ? "schedule" : "tasks");
         });
       }} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} lang={lang} /></Suspense>}
-      {utilityPanel === "extension" && activeExtensionPanel && <RightUtilityPanel workspace label={activeExtensionPanel.name} closeLabel={t(lang, "settings.close")} className="df-extension-utility" onClose={() => closeUtilityPanel()}><div className="df-extension-page-content"><ExtensionMount contribution={activeExtensionPanel} /></div></RightUtilityPanel>}
+      {utilityPanel === "extension" && activeExtensionPanel && <RightUtilityPanel workspace label={activeExtensionPanel.name} closeLabel={t(lang, "settings.close")} className="df-extension-utility" onClose={() => closeUtilityPanel()}><div className="df-extension-page-content"><ExtensionMount contribution={activeExtensionPanel} lang={lang} /></div></RightUtilityPanel>}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
       {focusOverlayMode && (
         <RightUtilityPanel workspace label={focusProvider?.label[lang] || (lang === "zh" ? "专注" : "Focus")} closeLabel={t(lang, "settings.close")} className="df-focus-utility" onClose={() => setFocusOverlayMode(null)}>

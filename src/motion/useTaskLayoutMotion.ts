@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
 import { effectiveMotionPreference } from "../motion";
-import { collectTaskMotion, planTaskMotion, TaskMotionCoordinator } from "./layout";
+import { collectTaskMotion, planTaskMotion, TaskMotionCoordinator, takeDragLanding } from "./layout";
 
 type MotionOptions = {
   root: () => HTMLElement | null;
@@ -48,7 +48,10 @@ export function useTaskLayoutMotion(options: MotionOptions) {
     if (unchanged) return;
     const points = collectTaskMotion(root, options.selector);
     previous.current = { scope: options.scope, revision: options.revision, points, blocked };
-    if (blocked || !old || old.blocked || old.scope !== options.scope) { coordinator.current?.cancel(); return; }
+    if (blocked || !old || old.scope !== options.scope) { coordinator.current?.cancel(); return; }
+    const landed = takeDragLanding(points);
+    if (landed) { coordinator.current?.play([landed]); return; }
+    if (old.blocked) { coordinator.current?.cancel(); return; }
     const limit = effectiveMotionPreference(window) === "rich" ? 24 : 12;
     const changes = planTaskMotion(old.points, points, limit);
     if (changes.length) coordinator.current?.play(changes);

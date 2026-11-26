@@ -28,10 +28,11 @@ export function createDragProjection(source: HTMLElement, copy: (source: HTMLEle
     const preference = effectiveMotionPreference(window);
     if (!target || position !== "before" && position !== "after" || preference === "off") return;
     const from = row(source), to = row(target), parent = from.parentElement;
-    if (!parent || to.parentElement !== parent || !from.isConnected || from === to) return;
+    if (!parent || to.parentElement !== parent || !from.isConnected || from === to || !from.getClientRects().length) return;
     const siblings = Array.from(parent.children).filter((node): node is HTMLElement => node instanceof HTMLElement && node.matches(rowSelector));
     const sourceIndex = siblings.indexOf(from), targetIndex = siblings.indexOf(to);
     const rect = from.getBoundingClientRect();
+    if (!rect.height) return;
     const gap = parseFloat(getComputedStyle(parent).rowGap) || 0;
     const offsets = projectedOffsets(siblings.length, sourceIndex, targetIndex, position, rect.height + gap);
     if (offsets.size > (preference === "rich" ? 24 : 12)) return;

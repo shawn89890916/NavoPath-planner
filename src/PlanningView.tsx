@@ -1,5 +1,6 @@
 import { createDragProjection } from "./motion/dragProjection";
 import { deepCopyVisualStyles } from "./unifiedDrag";
+import { rememberDragLanding } from "./motion/layout";
 import "./PlanningView.css";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -1312,6 +1313,7 @@ export default function PlanningView(props: {
       if (active) {
         suppressPostDragClick();
         if (props.onTimelineDrop?.(task, { x: pointerEvent.clientX, y: pointerEvent.clientY })) {
+          rememberDragLanding(task.id, "schedule");
           cleanup();
           return;
         }
@@ -1319,8 +1321,9 @@ export default function PlanningView(props: {
         if (drop?.container === sourceContainer) {
           const sequence = viewFilteredTasks.filter((item) => !isEventDisplayTask(item) && planningContainer(item) === sourceContainer);
           const targetId = drop.taskId || orderPlanningTasks(sequence).filter((item) => item.id !== task.id).at(-1)?.id;
-          if (targetId) reorderPlanningTasks(task.id, targetId, drop.position === "before" ? "before" : "after", sequence);
+          if (targetId) { rememberDragLanding(task.id, "planning"); reorderPlanningTasks(task.id, targetId, drop.position === "before" ? "before" : "after", sequence); }
         } else if (drop) {
+          rememberDragLanding(task.id, "planning");
           if (viewMode === "kanban") {
             props.onTaskUpdate(task.id, workflowStatusForPatch(drop.container === "done" ? "done" : "backlog"));
           } else {
@@ -1537,8 +1540,8 @@ export default function PlanningView(props: {
         y = pointerEvent.clientY;
         if (!task || !props.onTimelineDrop?.(task, { x, y }, subtaskId)) {
           const drop = getDropTarget();
-          if (drop) props.onTreeMove(sourceNode, { kind: drop.kind, id: drop.id, position: drop.position });
-        }
+          if (drop) { rememberDragLanding(sourceNode.id, "planning"); props.onTreeMove(sourceNode, { kind: drop.kind, id: drop.id, position: drop.position }); }
+        } else rememberDragLanding(subtaskId || task!.id, "schedule");
       }
       cleanup();
     };
