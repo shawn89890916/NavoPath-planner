@@ -11,6 +11,7 @@ export type SyncState = {
   pending: Record<string, Record<string, SyncSide>>;
   conflicts: SyncConflict[];
   baseRevision: number;
+  initialOverwrite?: { source: SyncSide; target: SyncSide };
 };
 export const emptySyncState = (): SyncState => ({ status: "waiting", latest: {}, canonical: {}, pending: {}, conflicts: [], baseRevision: 0 });
 
@@ -75,6 +76,8 @@ export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "pro
   // A fresh pair must never trust mappings from an earlier connection.
   for (const snapshot of Object.values(state.latest)) for (const item of [...snapshot.projects, ...snapshot.tasks]) delete item.syncId;
   state.canonical = {}; state.pending = {}; state.conflicts = [];
+  if (authority) state.initialOverwrite = { source: authority, target: authority === "navopath" ? "superproductivity" : "navopath" };
+  else delete state.initialOverwrite;
   const seen = new Set<string>();
   const matchedLeft = new Set<string>(); const matchedRight = new Set<string>();
   const leftByKind = { project: new Map(state.latest.navopath.projects.map(item => [item.id, item])), task: new Map(state.latest.navopath.tasks.map(item => [item.id, item])) };
@@ -117,6 +120,21 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
     return { state, assignments: [] as Array<{ kind: "project" | "task"; id: string; syncId: string }>, actions: [] as ReturnType<typeof buildActions> };
   }
   const previous = state.latest[side] || { projects: [], tasks: [] };
+  const overwritingTarget = state.initialOverwrite?.target === side;
+  if (overwritingTarget) {
+    // A record created after the reviewed preview is not authorized for deletion,
+    // and must not be silently imported into the authoritative workspace either.
+    for (const kind of ["project", "task"] as const) {
+      const key = kind === "project" ? "projects" : "tasks";
+      const knownIds = new Set(Object.values(state.canonical).filter(entry => entry.kind === kind).map(entry => entry.ids[side]));
+      for (const item of snapshot[key]) {
+        const linked = item.syncId ? state.canonical[item.syncId] : undefined;
+        if (!knownIds.has(item.id) && !(linked?.kind === kind && !linked.deleted && state.pending[item.syncId!]?.$create === side)) {
+          throw new Error("Target changed since overwrite preview. Disconnect and review a new preview before importing or deleting the new records.");
+        }
+      }
+    }
+  }
   const assignments: Array<{ kind: "project" | "task"; id: string; syncId: string }> = [];
   for (const kind of ["project", "task"] as const) {
     const key = kind === "project" ? "projects" : "tasks";
@@ -124,7 +142,7 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
       const old = previous[key].find(entry => entry.id === item.id);
       const suppliedSyncId = item.syncId;
       const discarded = Object.entries(state.canonical).find(([, entry]) => entry.overwriteTarget === side && entry.deleted && entry.kind === kind && entry.ids[side] === item.id)?.[0];
-      const syncId = discarded || old?.syncId || (item.syncId && state.canonical[item.syncId] && !state.canonical[item.syncId].deleted && (!state.canonical[item.syncId].ids[side] || state.canonical[item.syncId].ids[side] === item.id) ? item.syncId : undefined) || crypto.randomUUID(); item.syncId = syncId;
+      const syncId = discarded || old?.syncId || (item.syncId && state.canonical[item.syncId] && !state.canonical[item.syncId].deleted && (!state.canonical[item.syncId].ids[side] || state.canonical[item.syncId].ids[side] === item.id || state.pending[item.syncId]?.$create === side) ? item.syncId : undefined) || crypto.randomUUID(); item.syncId = syncId;
       let canonical = state.canonical[syncId];
       if (!canonical) {
         canonical = state.canonical[syncId] = { kind, fields: { ...item.fields }, ids: {} };
@@ -136,6 +154,20 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
         state.pending[syncId] = { $deleted: side }; continue;
       }
       if (state.pending[syncId]?.$create === side) delete state.pending[syncId].$create;
+      if (overwritingTarget) {
+        const pending = state.pending[syncId] ||= {};
+        if (canonical.deleted) { pending.$deleted = side; continue; }
+        // Never let the first target snapshot overwrite source values, even
+        // when a matched target was edited after the confirmation.
+        for (const [field, value] of Object.entries(canonical.fields)) {
+          // SP's timed schedule and day-only due date are mutually exclusive.
+          const projected = side === "superproductivity" && field === "dueDate" && canonical.fields.scheduledAt ? null : value;
+          const equal = JSON.stringify(item.fields[field]) === JSON.stringify(projected);
+          if (equal) { if (pending[field] === side) delete pending[field]; }
+          else pending[field] = side;
+        }
+        continue;
+      }
       for (const field of new Set([...Object.keys(old?.fields || {}), ...Object.keys(item.fields)])) {
         if (side === "superproductivity" && field === "scheduleBlocks") continue;
         const changed = JSON.stringify(old?.fields[field]) !== JSON.stringify(item.fields[field]);
@@ -160,6 +192,11 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
       const changedBeforeDelete = Object.entries(old.fields).some(([field, value]) => JSON.stringify(value) !== JSON.stringify(canonical.fields[field]));
       if (canonical.overwriteTarget === side && canonical.deleted) {
         if (state.pending[syncId]) delete state.pending[syncId].$deleted;
+      } else if (overwritingTarget) {
+        const pending = state.pending[syncId] ||= {};
+        const replacement = snapshot[key].find(item => item.syncId === syncId);
+        if (canonical.deleted) delete pending.$deleted;
+        else if (!replacement) pending.$create = side;
       } else if (pendingTo === side && changedBeforeDelete) {
         state.conflicts.push({ id: crypto.randomUUID(), syncId, kind, field: "$deleted", navopath: side === "navopath" ? true : false, superproductivity: side === "superproductivity" ? true : false, createdAt: timestamp });
       } else if (pendingTo === side) {
@@ -171,6 +208,7 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
     }
   }
   state.latest[side] = snapshot; state.baseRevision++;
+  if (overwritingTarget && !Object.values(state.pending).some(pending => Object.values(pending).includes(side))) delete state.initialOverwrite;
   return { state, assignments, actions: buildActions(state, side) };
 }
 
