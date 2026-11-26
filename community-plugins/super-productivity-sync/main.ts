@@ -2,16 +2,17 @@ import type { PluginContext, PluginModule } from "../../src/extensions/types";
 import type { PlannerData, Project, Task, TimelineRecord } from "../../src/types";
 import { mountIsolatedPluginSurface } from "../../src/extensions/pluginSurface";
 import { createInitialPreviewView } from "./preview";
+import { selectTimedSlot, durationMinutes, validSlot } from "./schedule";
 
 type LinkStore = { projects: Record<string, string>; tasks: Record<string, string>; tombstones: Record<string, { kind: "task" | "project"; item: Task | Project; deletedAt: string; taskIds?: string[] }> };
-type Entity = { id: string; syncId?: string; parentId?: string; fields: Record<string, any> };
+type Entity = { id: string; syncId?: string; parentId?: string; projectId?: string; fields: Record<string, any> };
 type RemoteAction = { syncId: string; kind: "project" | "task"; id?: string; fields: Record<string, any>; deleted?: boolean };
 const STORAGE = "connection-state";
 
 function projectFields(item: Project) { return { title: item.title, notes: item.notes || "", color: item.color || null, category: item.category || "" }; }
 function taskFields(item: Task, projects: Project[]) {
-  const block = [...(item.timelineRecords || [])].filter(record => record.executionStatus === "scheduled").sort((a, b) => `${a.scheduledDate}T${a.scheduledStart}`.localeCompare(`${b.scheduledDate}T${b.scheduledStart}`))[0];
-  const scheduledMinutes = block ? Math.max(1, Math.round((Date.parse(`${block.scheduledEndDate || block.scheduledDate}T${block.scheduledEnd}:00Z`) - Date.parse(`${block.scheduledDate}T${block.scheduledStart}:00Z`)) / 60_000)) : 0;
+  const block = selectTimedSlot(item)?.record;
+  const scheduledMinutes = block ? durationMinutes(block) : 0;
   return {
     title: item.title, notes: item.notes || "", completed: item.completed, dueDate: item.dueDate || null,
     estimateMinutes: block ? scheduledMinutes : Math.round((item.estimatedHours || 0) * 60), projectTitle: projects.find(project => project.id === item.projectId)?.title || "",
@@ -165,7 +166,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       return {
         overwriteVersion: 1,
         projects: projects.map(item => ({ id: item.id, syncId: links.projects[item.id], fields: projectFields(item) })),
-        tasks: ctx.tasks.list().map(item => ({ id: item.id, syncId: links.tasks[item.id], parentId: item.parentTaskId, fields: taskFields(item, projects) })),
+        tasks: ctx.tasks.list().map(item => ({ id: item.id, syncId: links.tasks[item.id], parentId: item.parentTaskId, projectId: item.projectId, fields: taskFields(item, projects) })),
       };
     };
     const apply = async (actions: RemoteAction[]) => {
@@ -221,14 +222,14 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
         const scheduleChanged = Object.hasOwn(fields, "scheduledAt") || Object.hasOwn(fields, "scheduledMinutes");
         if (scheduleChanged) {
           const records = [...(current?.timelineRecords || [])];
-          const nearest = records.map((record, index) => ({ record, index })).filter(item => item.record.executionStatus === "scheduled").sort((a, b) => `${a.record.scheduledDate}T${a.record.scheduledStart}`.localeCompare(`${b.record.scheduledDate}T${b.record.scheduledStart}`))[0];
+          const nearest = current ? selectTimedSlot(current) : undefined;
           const nearestIndex = nearest?.index ?? -1;
           const previousBlock = nearest?.record;
           const scheduledAt = Object.hasOwn(fields, "scheduledAt") ? fields.scheduledAt : previousBlock ? `${previousBlock.scheduledDate}T${previousBlock.scheduledStart}` : null;
           if (!scheduledAt) {
             if (nearestIndex >= 0) records.splice(nearestIndex, 1);
-          } else {
-            const date = String(scheduledAt).slice(0, 10); const start = String(scheduledAt).slice(11, 16);
+          } else if (typeof scheduledAt === "string" && scheduledAt.length === 16 && validSlot(scheduledAt.slice(0, 10), scheduledAt.slice(11, 16))) {
+            const date = scheduledAt.slice(0, 10); const start = scheduledAt.slice(11, 16);
             const previousDuration = current ? taskFields(current, []).scheduledMinutes : 0;
             const duration = Math.max(1, Math.round(Number(fields.scheduledMinutes || previousDuration || fields.estimateMinutes || 60)));
             const endMinutes = minutes(start) + duration;
@@ -237,8 +238,15 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
             const endDate = new Date(Date.parse(`${date}T00:00:00Z`) + Math.floor(endMinutes / 1440) * 86400000).toISOString().slice(0, 10);
             const next: TimelineRecord = { id: old?.id || crypto.randomUUID(), taskId: current?.id || "", scheduledDate: date, scheduledStart: start, scheduledEndDate: endDate, scheduledEnd: end, executionStatus: "scheduled", createdAt: old?.createdAt || new Date().toISOString() };
             if (nearestIndex >= 0) records[nearestIndex] = next; else records.push(next);
+          } else {
+            // Malformed legacy remote schedules must not abort unrelated tasks.
+            // Leave the local schedule intact until the source sends a valid slot.
+            if (current) await taskStore.update(current.id, patch);
+            else { const created = await taskStore.create({ ...patch, category: "task", goalId: "", createdAt: new Date().toISOString(), order: taskStore.list().length } as Omit<Task, "id">); map[created.id] = action.syncId; }
+            continue;
           }
           patch.timelineRecords = records;
+          if (nearest?.index === -1) { patch.scheduledDate = undefined; patch.scheduledStart = undefined; patch.scheduledEnd = undefined; patch.executionStatus = undefined; }
         }
         if (current) await taskStore.update(current.id, patch);
         else {
