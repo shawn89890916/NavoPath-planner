@@ -104,10 +104,10 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
     }
   }, [api]);
   useEffect(() => { if (supported) void refresh(); else setLoading(false); }, [refresh, supported]);
-  const copyFeedUrl = async () => {
+  const copyFeedUrl = async (history = false) => {
     try {
-      await navigator.clipboard.writeText(feedUrl);
-      setNotice(lang === "zh" ? "订阅链接已复制" : "Subscription link copied");
+      await navigator.clipboard.writeText(history ? feedUrl.replace(/\.ics$/, "-history.ics") : feedUrl);
+      setNotice(history ? (lang === "zh" ? "SP 时间轴历史链接已复制" : "SP timeline history link copied") : (lang === "zh" ? "订阅链接已复制" : "Subscription link copied"));
       window.setTimeout(() => setNotice(""), 1800);
     } catch {
       setError(lang === "zh" ? "复制失败，请手动选择链接。" : "Copy failed. Select the link manually.");
@@ -144,9 +144,11 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
         <code>{feedUrl}</code>
         <div className="df-calendar-actions">
           <button type="button" onClick={() => void copyFeedUrl()}>{lang === "zh" ? "复制链接" : "Copy link"}</button>
+          <button type="button" onClick={() => void copyFeedUrl(true)}>{lang === "zh" ? "复制 SP 时间轴历史链接" : "Copy SP timeline history link"}</button>
           <button type="button" onClick={() => { window.location.href = feedUrl.replace(/^https?:/, "webcal:"); }}>{lang === "zh" ? "在日历中订阅" : "Subscribe in Calendar"}</button>
         </div>
       </div>}
+      <p>{lang === "zh" ? "Super Productivity：已完成任务和额外时间块可通过独立历史日历显示。将已有订阅链接末尾的 .ics 改成 -history.ics，在 SP 添加为 iCalendar 来源，关闭自动导入任务。无需更换现有链接。" : "Super Productivity: show completed and additional time blocks through a separate history calendar. Replace the .ics suffix of your existing link with -history.ics, add it as an iCalendar source in SP, and leave automatic task import off. No need to replace your existing link."}</p>
       {error && <p className="df-mcp-status error" role="alert">{error}</p>}
       {notice && <p className="df-mcp-status" role="status">{notice}</p>}
       {loading && <p className="df-mcp-status">{lang === "zh" ? "正在读取订阅状态…" : "Loading subscription status…"}</p>}
