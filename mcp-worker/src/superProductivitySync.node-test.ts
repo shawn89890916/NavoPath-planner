@@ -168,3 +168,18 @@ test("unmatched records carrying stale mappings still participate in a fresh pai
   confirmInitialSync(state, []);
   assert.ok(buildActions(state, "superproductivity").some(a => a.fields.title === "Local only"));
 });
+
+test("target edits, deletion and unreviewed additions cannot flow back to the source during initial overwrite", () => {
+  const state = emptySyncState();
+  const source = { overwriteVersion: 1 as const, projects: [], tasks: [entity("n1", "Shared", { notes: "keep source" }), entity("n2", "Also shared")] };
+  const target = { overwriteVersion: 1 as const, projects: [], tasks: [entity("s1", "Shared", { notes: "keep source" }), entity("s2", "Also shared")] };
+  applySyncSnapshot(state, "navopath", source, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", target, "2026-11-26T00:00:01Z");
+  confirmInitialSync(state, [], "overwrite-navopath");
+  assert.throws(() => applySyncSnapshot(state, "superproductivity", { overwriteVersion: 1, projects: [], tasks: [...target.tasks, entity("late", "Not in preview")] }, "2026-11-26T00:00:02Z"), /Target changed since overwrite preview/);
+  applySyncSnapshot(state, "superproductivity", { overwriteVersion: 1, projects: [], tasks: [entity("s1", "Shared", { notes: "changed target" })] }, "2026-11-26T00:00:03Z");
+  assert.deepEqual(buildActions(state, "navopath"), []);
+  assert.ok(buildActions(state, "superproductivity").some(a => a.id === "s1" && a.fields.notes === "keep source"));
+  assert.ok(buildActions(state, "superproductivity").some(a => a.fields.title === "Also shared" && !a.deleted));
+  assert.ok(state.initialOverwrite);
+});
