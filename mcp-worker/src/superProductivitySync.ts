@@ -118,7 +118,7 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
     const key = kind === "project" ? "projects" : "tasks";
     for (const item of snapshot[key]) {
       const old = previous[key].find(entry => entry.id === item.id);
-      const hadSyncId = Boolean(item.syncId);
+      const suppliedSyncId = item.syncId;
       const discarded = Object.entries(state.canonical).find(([, entry]) => entry.overwriteTarget === side && entry.deleted && entry.kind === kind && entry.ids[side] === item.id)?.[0];
       const syncId = discarded || old?.syncId || (item.syncId && state.canonical[item.syncId] ? item.syncId : undefined) || crypto.randomUUID(); item.syncId = syncId;
       let canonical = state.canonical[syncId];
@@ -127,7 +127,7 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
         state.pending[syncId] = { $create: side === "navopath" ? "superproductivity" : "navopath" };
       }
       canonical.ids[side] = item.id;
-      if (!hadSyncId || discarded) assignments.push({ kind, id: item.id, syncId });
+      if (suppliedSyncId !== syncId) assignments.push({ kind, id: item.id, syncId });
       if (canonical.deleted && canonical.overwriteTarget === side) {
         state.pending[syncId] = { $deleted: side }; continue;
       }
