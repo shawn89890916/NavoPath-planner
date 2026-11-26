@@ -127,3 +127,47 @@ describe("large observed history and conservative provenance",()=>{
   expect(r.observedExecutions).toBe(25000);expect(r.created).toBe(25000);expect(r.moveCount).toBe(25000);expect(r.comparisons).toHaveLength(25000);
  },20000);
 });
+
+
+import {buildEngagementBreakdown,ratingMean,ratingCoverage,projectActivityTrend} from "./engagementBreakdown";
+describe("engagement and project breakdowns",()=>{
+ const opts={dayStartMinutes:240,projectIds:[],habitMode:"include" as const,completion:"all" as const};
+ const range={preset:"custom" as const,customStart:"2026-11-25",customEnd:"2026-11-26"};
+ it("uses raw intervals instead of weighted entry duration and counts cross-day executions once",()=>{
+   const t={...task,projectId:"p",timelineRecords:[
+     {...task.timelineRecords![0],scheduledDate:"2026-11-26",scheduledStart:"03:00",scheduledEnd:"05:00",executionStatus:"completed" as const,engagement:50},
+     {...task.timelineRecords![0],id:"r2",scheduledStart:"11:00",scheduledEnd:"12:00",executionStatus:"completed" as const}
+   ]};
+   const d={...data,tasks:[t]},a=buildTimeAllocationMetrics({data:d,range,dayStartMinutes:240,engagementEnabled:true});
+   const r=buildEngagementBreakdown(d,a,240),baseline=buildInsights(d,a,opts);
+   expect(r.overall).toMatchObject({completedMinutes:180,ratedMinutes:120,weightedMinutes:60,completedExecutions:2,ratedExecutions:1});
+   expect(ratingMean(r.overall)).toBe(baseline.explicitEngagement);
+   expect(ratingCoverage(r.overall)).toBeCloseTo(baseline.ratingCoverage!);
+   expect(r.days.map(x=>[x.id,x.completedMinutes])).toEqual([["2026-11-25",60],["2026-11-26",120]]);
+   expect(r.bands[3]).toMatchObject({completedExecutions:1,ratedMinutes:120});
+   expect(r.hours[0]).toMatchObject({ratedMinutes:120,ratedExecutions:1});
+   expect(ratingMean(r.hours[1])).toBeNull();
+ });
+ it("keeps estimated all-day work out of clock periods and leaves missing ratings unknown",()=>{
+   const t={...task,completed:true,estimatedHours:1,timelineRecords:[{...task.timelineRecords![0],scheduledStart:"",scheduledEnd:"",executionStatus:"completed" as const}]};
+   const d={...data,tasks:[t]},a=buildTimeAllocationMetrics({data:d,range,dayStartMinutes:240,engagementEnabled:true});
+   const r=buildEngagementBreakdown(d,a,240);
+   expect(r.overall.completedMinutes).toBe(60);expect(ratingMean(r.overall)).toBeNull();expect(ratingCoverage(r.overall)).toBe(0);
+   expect(r.hours.every(x=>x.completedMinutes===0&&ratingCoverage(x)===null)).toBe(true);
+ });
+ it("splits clock periods and preserves independent counts within each period",()=>{
+   const t={...task,timelineRecords:[{...task.timelineRecords![0],scheduledStart:"05:30",scheduledEnd:"06:30",executionStatus:"completed" as const,engagement:90}]};
+   const d={...data,tasks:[t]},a=buildTimeAllocationMetrics({data:d,range,dayStartMinutes:240});
+   const r=buildEngagementBreakdown(d,a,240);
+   expect(r.hours.slice(0,2).map(x=>[x.ratedMinutes,x.ratedExecutions])).toEqual([[30,1],[30,1]]);
+   expect(r.overall.ratedExecutions).toBe(1);
+ });
+ it("keeps project trend raw scheduled minutes separate from apportioned tracked time",()=>{
+   const t={...task,projectId:"p",timelineRecords:[{...task.timelineRecords![0],scheduledStart:"03:00",scheduledEnd:"05:00",executionStatus:"completed" as const,engagement:50}]};
+   const d={...data,tasks:[t],timeEntries:[{id:"te",taskId:"t",timelineRecordId:"r",startAt:new Date(2026,10,26,3).toISOString(),endAt:new Date(2026,10,26,5).toISOString(),durationMinutes:90,source:"manual" as const,createdAt:"",updatedAt:""}]};
+   const a=buildTimeAllocationMetrics({data:d,range,dayStartMinutes:240,engagementEnabled:true}),r=buildInsights(d,a,opts);
+   const rows=projectActivityTrend(a,r.trackedEntries,"p",240);
+   expect(rows.map(x=>[x.date,x.scheduled,x.completed,x.tracked])).toEqual([["2026-11-25",60,60,45],["2026-11-26",60,60,45]]);
+   expect(projectActivityTrend(a,r.trackedEntries,"other",240)).toEqual([]);
+ });
+});
