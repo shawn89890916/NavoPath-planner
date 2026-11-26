@@ -18,3 +18,12 @@ The raw subscription token is generated in the browser. Supabase stores only its
 4. On iPhone, select **Subscribe in Calendar**. For another client, copy the HTTPS link and add it as an iCalendar or Webcal subscription.
 
 Calendar subscriptions are read-only. Changes made in Apple Calendar or Notion Calendar do not update NavoPath, and calendar clients decide when to refresh remote feeds.
+
+## Super Productivity timeline history
+SP's native task timeline only selects incomplete tasks with one timed slot per task. Keep the NavoPath Sync plugin connected for two-way task and active schedule changes. To display completed execution records, returned-unfinished records and additional blocks, add a separate read-only iCalendar source in SP:
+
+1. Use your existing NavoPath calendar subscription URL (or create one only if none exists).
+2. Replace its final `.ics` with `-history.ics`, or use **Copy SP timeline history link** in Calendar settings when generating a subscription.
+3. In Super Productivity, add an iCalendar calendar integration with that URL. Leave automatic task import disabled. Do not subscribe to the full NavoPath feed as well, which would duplicate active slots.
+
+The history feed has a stable UID per recorded block, excludes cancelled records and the primary incomplete-task timed slot already mirrored by the plugin, and does not contain task notes. Calendar events are read-only; completion and execution history stay in NavoPath. SP determines its display range and polling frequency. Revoking the existing calendar token revokes both feeds.
