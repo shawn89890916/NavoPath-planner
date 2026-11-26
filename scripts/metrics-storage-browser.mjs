@@ -1,5 +1,5 @@
 import { analyticsPreference, analyticsError, setAnalyticsEnabled, recoverAnalytics, readAnalyticsEvents, scanAnalyticsEvents, recordLocalAnalyticsChange, captureDailyPlan, readDailyPlans, clearAnalytics } from "../src/metrics/activityStore.ts";
-import { analyticsPreferenceKey } from "../src/metrics/activityBridge.ts";
+import { analyticsPreferenceKey, recordLocalAnalyticsChange as captureChange, recordTimerTransition as captureTimer } from "../src/metrics/activityBridge.ts";
 import { makeTimerAnalyticsEvent } from "../src/metrics/activityEvents.ts";
 
 const A="metrics-test-account-a", B="metrics-test-account-b";
@@ -96,7 +96,22 @@ export async function recoverPurge(){
   await recordLocalAnalyticsChange(A,empty,data,at,"client","fresh",analyticsPreference(A).generation);
   await captureDailyPlan(A,data,at,"00:00",analyticsPreference(A).generation);
   assert((await readAnalyticsEvents(A,start,end,1000)).length===2,"fresh opt-in records again");
+  const edited={...data,tasks:[{...task,estimatedHours:2}]};
+  captureChange(A,data,edited,at,"ai","ai-edit");
+  const immediate=localStorage.getItem(journal(A,"ai-edit"));
+  assert(immediate&&JSON.parse(immediate).events[0].source==="ai","warmed bridge must journal before returning");
+  assert(!immediate.includes("private"),"synchronous journal must remain allowlisted");
+  captureTimer(A,"t","discard",at,35,"p","r");
+  const timerPending=Object.keys(localStorage).filter(k=>k.startsWith("navopath.analytics.pending."+encodeURIComponent(A)+".")).map(k=>JSON.parse(localStorage.getItem(k))).flatMap(j=>j.events).find(e=>e.entityType==="timer");
+  assert(timerPending?.after?.mode==="stopwatch"&&timerPending.after.timelineRecordId==="r"&&timerPending.after.elapsedSeconds===35,"timer metadata must be journaled before return");
+  setAnalyticsEnabled(A,false);
+  captureChange(A,edited,data,at,"client","while-paused");
+  assert(!localStorage.getItem(journal(A,"while-paused")),"paused recorder must not accept new operations");
+  await recoverAnalytics(A);
+  assert((await readAnalyticsEvents(A,start,end,50,[],{source:"ai"})).length===1,"accepted AI event survives pause and is filterable");
+  const persistedTimer=(await readAnalyticsEvents(A,start,end,50,[],{entity:"timer"}))[0];
+  assert(persistedTimer?.after?.timelineRecordId==="r","known timer execution persisted");
   await clearAnalytics(A);
   assert((await readAnalyticsEvents(A,start,end,1000)).length===0&&(await readDailyPlans(A,start,end)).length===0,"normal clear deletes events and snapshots");
-  return {phase:"purge recovery and fresh opt-in",otherScopePreserved:true};
+  return {phase:"purge recovery and fresh opt-in",otherScopePreserved:true,synchronousCapture:true,aiAttribution:true,stopwatchLink:true};
 }

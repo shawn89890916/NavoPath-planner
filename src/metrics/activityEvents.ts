@@ -3,7 +3,7 @@ import type { PlannerData, Task, Subtask, TimelineRecord, TimeEntry, HabitDailyS
 export type AnalyticsValue = string | number | boolean | null;
 export type AnalyticsSnapshot = Record<string, AnalyticsValue>;
 export type AnalyticsEntity = "task" | "subtask" | "execution" | "timeEntry" | "habit" | "project" | "timer";
-export type AnalyticsSource = "client" | "sync" | "plugin" | "system" | "undo" | "remote-observed";
+export type AnalyticsSource = "client" | "ai" | "sync" | "plugin" | "system" | "undo" | "remote-observed";
 export type TimerTransition = "start" | "pause" | "idle-pause" | "resume" | "stop" | "discard";
 export interface AnalyticsEvent {
   id: string;
@@ -74,6 +74,6 @@ export function diffAnalyticsEvents(previous: PlannerData, next: PlannerData, oc
   return result;
 }
 
-export function makeTimerAnalyticsEvent(taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,operationId:string,projectId?:string):AnalyticsEvent {
-  return {id:operationId+":timer",schemaVersion:1,operationId,entityType:"timer",entityId:taskId||"unlinked",taskId,projectId,occurredAt:at,recordedAt:at,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,source:transition==="idle-pause"?"system":"client",action:"changed",after:{transition,elapsedSeconds:Math.max(0,Math.round(elapsedSeconds))}};
+export function makeTimerAnalyticsEvent(taskId:string|undefined,transition:TimerTransition,at:string,elapsedSeconds:number,operationId:string,projectId?:string,timelineRecordId?:string):AnalyticsEvent {
+  return {id:operationId+":timer",schemaVersion:1,operationId,entityType:"timer",entityId:taskId||"unlinked",taskId,projectId,occurredAt:at,recordedAt:at,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,source:transition==="idle-pause"?"system":"client",action:"changed",after:{transition,mode:"stopwatch",timelineRecordId:timelineRecordId||null,elapsedSeconds:Math.max(0,Math.round(elapsedSeconds))}};
 }

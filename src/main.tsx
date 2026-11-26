@@ -1141,7 +1141,9 @@ function App() {
 
   function logTimerTransition(transition:TimerTransition,taskId:string|undefined|null,at:number,elapsed:number) {
     if(productDemo||!dataRef.current)return;
-    recordTimerTransition(authStateRef.current?.user?.id || "preview",taskId||undefined,transition,new Date(at).toISOString(),elapsed,dataRef.current.tasks.find(t=>t.id===taskId)?.projectId);
+    const task=dataRef.current.tasks.find(t=>t.id===taskId);
+    const recordId=task?.timelineRecords?.find(r=>r.id===timerRecordRef.current)?.id;
+    recordTimerTransition(authStateRef.current?.user?.id || "preview",taskId||undefined,transition,new Date(at).toISOString(),elapsed,task?.projectId,recordId);
   }
   const startTimer = useCallback((taskId: string,recordId?:string|null) => {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "timerStart", taskId }); return; }
@@ -1226,7 +1228,8 @@ function App() {
 
   const discardTimer = useCallback(() => {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction({ type: "discardTimer" }); return; }
-    if(timerTaskRef.current)logTimerTransition("discard",timerTaskRef.current,Date.now(),timerElapsedRef.current);
+    const now=Date.now();
+    if(timerTaskRef.current)logTimerTransition("discard",timerTaskRef.current,now,timerStartedAtRef.current===null?timerElapsedRef.current:advanceTaskElapsedSeconds(timerElapsedBaseRef.current,timerStartedAtRef.current,now));
     timerTaskRef.current = null;
     timerRecordRef.current=undefined;
     timerElapsedRef.current = 0; timerElapsedBaseRef.current = 0; timerStartedAtRef.current = null;
@@ -2911,11 +2914,11 @@ if (cached?.data && cached?.settings) {
     });
   }
 
-  function saveTaskOperation(next: PlannerData, kind: TaskOperationKind, options?: { title?: string; titles?: string[]; toast?: string }) {
-    if (!taskHistoryEnabled && !options?.toast && kind !== "delete") return saveData(next);
+  function saveTaskOperation(next: PlannerData, kind: TaskOperationKind, options?: { title?: string; titles?: string[]; toast?: string; source?:AnalyticsSource }) {
+    if (!taskHistoryEnabled && !options?.toast && kind !== "delete") return saveData(next,options?.source);
     const previous = dataRef.current;
     const undo = previous && captureTaskUndo(previous, next);
-    const saving = saveData(next);
+    const saving = saveData(next,options?.source);
     if (!undo || !(undo.added.length || undo.removed.length || undo.changes.length)) return saving;
     const operation: TaskOperation = {
       id: uid("operation"),
@@ -3011,12 +3014,12 @@ if (cached?.data && cached?.settings) {
     pendingDataSaveRef.current = { payload: optimistic, version, pendingSavedAt: savedAt };
     dataRef.current = optimistic;
     setData(optimistic);
+    if(previous&&!productDemo)recordLocalAnalyticsChange(authStateRef.current?.user?.id||"preview",previous,optimistic,savedAt,source);
     if (settingsRef.current) writeBootstrapCache(optimistic, settingsRef.current, authStateRef.current?.user?.id, {
       dataDirty: true,
       dataPendingSavedAt: savedAt,
       remoteRevision: remoteRevisionRef.current,
     });
-    if(previous&&!productDemo)recordLocalAnalyticsChange(authStateRef.current?.user?.id||"preview",previous,optimistic,savedAt,source);
     scheduleDataFlush();
     advanceOnboarding(previous, optimistic);
   }
@@ -7816,7 +7819,7 @@ if (cached?.data && cached?.settings) {
         }
       }
     }
-    await saveData({ ...currentData, tasks: nextTasks });
+    await saveData({ ...currentData, tasks: nextTasks },"ai");
     setAiMessages((current) => current.map((item) => item.id === messageId ? { ...item, actionState: "adopted", actions: [], importCommit: { focus, addedCount: selected.length, addedTaskIds, previousTasks } } : item));
     persistAiMessage(messageId, { actionState: "adopted", actions: [] });
     setAiActionPatches((current) => {
@@ -8341,14 +8344,14 @@ if (cached?.data && cached?.settings) {
       await saveData({
         ...currentData,
         tasks: currentData.tasks.map((task) => task.id === target.id ? { ...task, subtasks, updatedAt: now } : task),
-      });
+      },"ai");
       if (messageId) removeAiMessageAction(messageId, action, actionIndex);
       showToast(lang === "zh" ? `已添加 ${subtasks.length - (target.subtasks || []).length} 个子任务` : `Added ${subtasks.length - (target.subtasks || []).length} subtasks`);
       return;
     }
     if (action.type === "import_schedule_item" && action.title && action.date) {
       const task = buildImportedTask(action, currentData.tasks);
-      await saveData({ ...currentData, tasks: [...currentData.tasks, task] });
+      await saveData({ ...currentData, tasks: [...currentData.tasks, task] },"ai");
       if (messageId) removeAiMessageAction(messageId, action, actionIndex);
       return;
     }
@@ -8382,7 +8385,7 @@ if (cached?.data && cached?.settings) {
       } as Task;
       const updatedTasks = [...currentData.tasks, newTask];
       await saveTaskOperation({ ...currentData, version: currentData.version || 1, tasks: updatedTasks }, "create", {
-        toast: t(lang, "toast.created").replace("%TITLE%", action.title),
+        source:"ai", toast: t(lang, "toast.created").replace("%TITLE%", action.title),
       });
       // Mark action as accepted
       if (messageId) removeAiMessageAction(messageId, action, actionIndex);
@@ -8406,7 +8409,7 @@ if (cached?.data && cached?.settings) {
           : t
       );
       await saveTaskOperation({ ...currentData, version: currentData.version || 1, tasks: updatedTasks }, "schedule", {
-        toast: t(lang, "toast.scheduledToDate").replace("%DATE%", action.date),
+        source:"ai", toast: t(lang, "toast.scheduledToDate").replace("%DATE%", action.date),
       });
     }
     // Dismiss the action card
@@ -8685,7 +8688,7 @@ if (cached?.data && cached?.settings) {
     });
     tasksAfter.push(newTask);
 
-    void saveTaskOperation({ ...data, tasks: tasksAfter, aiProfile: profileWithFeedback(data, "scheduleAccepts") }, "schedule", {
+    void saveTaskOperation({ ...data, tasks: tasksAfter, aiProfile: profileWithFeedback(data, "scheduleAccepts") }, "schedule", {source:"ai",
       title: newTask.title,
       toast: t(lang, "toast.adoptedOne"),
     });
@@ -8751,7 +8754,7 @@ if (cached?.data && cached?.settings) {
       });
     }
 
-    void saveTaskOperation({ ...data, tasks: tasksAfter, aiProfile: profileWithFeedback(data, "scheduleAccepts", toAdd.length) }, "schedule", {
+    void saveTaskOperation({ ...data, tasks: tasksAfter, aiProfile: profileWithFeedback(data, "scheduleAccepts", toAdd.length) }, "schedule", {source:"ai",
       titles: toAdd.map(({ title }) => title),
       toast: t(lang, "toast.adoptedMany").replace("%COUNT%", String(toAdd.length)),
     });
