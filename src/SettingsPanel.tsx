@@ -41,6 +41,8 @@ const AiProviderSettings = lazy(() => import("./components/AiProviderSettings"))
 
 const ProactiveAssistantSettings = lazy(() => import("./components/ProactiveAssistantSettings").then((module) => ({ default: module.ProactiveAssistantSettings })));
 
+import { isConnectionAnchor } from "./connectionProviders";
+const ConnectionProviders = lazy(() => import("./components/ConnectionProviders"));
 const CalDavManager = lazy(() => import("./components/CalDavManager"));
 
 const McpTokenManager = lazy(() => import("./components/McpTokenManager"));
@@ -90,7 +92,7 @@ function calendarFeedErrorMessage(caught: unknown, lang: Language) {
   return message;
 }
 
-function CalendarFeedManager({ lang }: { lang: Language }) {
+function CalendarFeedManager({ lang, historyOnly = false }: { lang: Language; historyOnly?: boolean }) {
   const [tokens, setTokens] = useState<CalendarFeedTokenMetadata[]>([]);
   const [feedUrl, setFeedUrl] = useState("");
   const [historyUrl, setHistoryUrl] = useState("");
@@ -120,6 +122,13 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
       let url = feedUrl;
       if (history) {
         if (!api.getCalendarHistoryToken) throw new Error(lang === "zh" ? "当前环境不支持获取历史链接。" : "History link retrieval is unavailable.");
+        if (!api.listCalendarFeedTokens || !api.createCalendarFeedToken) throw new Error(lang === "zh" ? "日历服务不可用。" : "Calendar service unavailable.");
+        const existing = await api.listCalendarFeedTokens();
+        if (!existing.length) {
+          const created = await api.createCalendarFeedToken();
+          setFeedUrl(calendarFeedUrl(created.token));
+          await refresh();
+        }
         const token = await api.getCalendarHistoryToken();
         url = calendarFeedUrl(token + "-history");
         setHistoryUrl(url);
@@ -155,6 +164,15 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
       setBusy(false);
     }
   };
+  if (historyOnly) return <section className="df-mcp-settings df-calendar-settings">
+    {supported && api.getCalendarHistoryToken ? <div className="df-calendar-actions">
+      <button type="button" disabled={busy || loading} onClick={() => void copyFeedUrl(true)}>{busy ? (lang === "zh" ? "处理中…" : "Working…") : (lang === "zh" ? "复制历史订阅链接" : "Copy history subscription link")}</button>
+    </div> : <p>{lang === "zh" ? "登录云端账户后可获取历史订阅链接。" : "Sign in to obtain a history subscription link."}</p>}
+    {historyUrl && <div className="df-mcp-token"><small>{lang === "zh" ? "私密链接，请勿公开分享。" : "Private link; do not share publicly."}</small><code>{historyUrl}</code></div>}
+    {feedUrl && <details className="df-mcp-manual"><summary>{lang === "zh" ? "同时保存完整日历订阅链接（仅首次生成时显示）" : "Also save full calendar link (shown only on first creation)"}</summary><div className="df-mcp-token"><code>{feedUrl}</code><button type="button" disabled={busy} onClick={() => void copyFeedUrl()}>{lang === "zh" ? "复制完整日历链接" : "Copy full calendar link"}</button></div></details>}
+    {error && <p className="df-mcp-status error" role="alert">{error}</p>}
+    {notice && <p className="df-mcp-status" role="status">{notice}</p>}
+  </section>;
   return (
     <section className="df-mcp-settings df-calendar-settings">
       <strong>{lang === "zh" ? "只读日历订阅" : "Read-only calendar subscription"}</strong>
@@ -177,12 +195,6 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
           <button type="button" onClick={() => { window.location.href = feedUrl.replace(/^https?:/, "webcal:"); }}>{lang === "zh" ? "在日历中订阅" : "Subscribe in Calendar"}</button>
         </div>
       </div>}
-      <p>{lang === "zh" ? "Super Productivity：将历史链接添加为 iCalendar 来源，关闭自动导入任务。已完成任务和额外时间块将只读显示，不影响已有日历订阅。" : "Super Productivity: add the history link as an iCalendar source and disable automatic task import. Completed and additional time blocks are read-only; existing subscriptions are unaffected."}</p>
-      {supported && api.getCalendarHistoryToken && tokens.length > 0 && <div className="df-calendar-actions">
-        <button type="button" disabled={busy || loading} onClick={() => void copyFeedUrl(true)}>{lang === "zh" ? "复制 SP 时间轴历史链接" : "Copy SP timeline history link"}</button>
-      </div>}
-      {supported && !loading && tokens.length === 0 && <small>{lang === "zh" ? "先生成日历订阅链接，即可复制 SP 历史链接。" : "Create a calendar subscription first to copy its SP history link."}</small>}
-      {historyUrl && <div className="df-mcp-token"><small>{lang === "zh" ? "历史链接（请勿公开分享；撤销订阅后失效）" : "History link (private; invalidated when the subscription is revoked)"}</small><code>{historyUrl}</code></div>}
       {error && <p className="df-mcp-status error" role="alert">{error}</p>}
       {notice && <p className="df-mcp-status" role="status">{notice}</p>}
       {loading && <p className="df-mcp-status">{lang === "zh" ? "正在读取订阅状态…" : "Loading subscription status…"}</p>}
@@ -537,7 +549,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
     if (settingsTarget.anchor === "mcp") setIntegrationTab("mcp");
     if (settingsTarget.anchor === "sync-bridge") setIntegrationTab("sync");
 
-    if (settingsTarget.anchor === "calendar-feed") setIntegrationTab("calendar");
+    if (isConnectionAnchor(settingsTarget.anchor) || (settingsTarget.category === "integrations" && !settingsTarget.anchor)) setIntegrationTab("calendar");
     if (settingsTarget.anchor === "external-calendar") setIntegrationTab("external-calendar");
   }, [settingsTarget.anchor]);
   useEffect(() => {
@@ -570,7 +582,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
     if (target.anchor === "mcp") setIntegrationTab("mcp");
     if (target.anchor === "sync-bridge") setIntegrationTab("sync");
 
-    if (target.anchor === "calendar-feed") setIntegrationTab("calendar");
+    if (isConnectionAnchor(target.anchor) || (target.category === "integrations" && !target.anchor)) setIntegrationTab("calendar");
     if (target.anchor === "external-calendar") setIntegrationTab("external-calendar");
     void runMotionTransition(() => flushSync(() => {
       setSettingsTarget(resolveRuntimeTarget(normalizeSettingsTarget(target)));
@@ -1301,12 +1313,12 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               </SettingSection>}
             {settingsTarget.category === "integrations" && <div className="df-settings-subtabs df-settings-integration-tabs ui-choice-list ui-choice-list--inline ui-choice-list--motion-selection" role="tablist" aria-label={lang === "zh" ? "日历与集成" : "Calendar and integrations"}>
               <SelectionIndicator activeKey={`${integrationTab}:${lang}`} />
-              <button type="button" role="tab" aria-selected={integrationTab === "calendar"} className={`ui-choice-item${integrationTab === "calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("calendar"); setSettingsTarget({ category: "integrations", anchor: "calendar-feed" }); }}>{lang === "zh" ? "日历订阅" : "Calendar"}</button>
+              <button type="button" role="tab" aria-selected={integrationTab === "calendar"} className={`ui-choice-item${integrationTab === "calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("calendar"); setSettingsTarget({ category: "integrations", anchor: "connections" }); }}>{lang === "zh" ? "应用" : "Apps"}</button>
               <button type="button" role="tab" aria-selected={integrationTab === "external-calendar"} className={`ui-choice-item${integrationTab === "external-calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("external-calendar"); setSettingsTarget({ category: "integrations", anchor: "external-calendar" }); }}>{lang === "zh" ? "外部日历" : "External"}</button>
               <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={`ui-choice-item${integrationTab === "mcp" ? " active" : ""}`} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "integrations", anchor: "mcp" }); }}>MCP</button>
               <button type="button" role="tab" aria-selected={integrationTab === "sync"} className={`ui-choice-item${integrationTab === "sync" ? " active" : ""}`} onClick={() => { setIntegrationTab("sync"); setSettingsTarget({ category: "integrations", anchor: "sync-bridge" }); }}>{lang === "zh" ? "同步" : "Sync"}</button>
             </div>}
-            {settingsTarget.category === "integrations" && integrationTab === "calendar" && <SettingSection anchor="calendar-feed" title={lang === "zh" ? "日历订阅" : "Calendar Subscription"}><CalendarFeedManager lang={lang} /><Suspense fallback={null}><CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} /></Suspense></SettingSection>}
+            {settingsTarget.category === "integrations" && integrationTab === "calendar" && <Suspense fallback={null}><ConnectionProviders lang={lang} anchor={settingsTarget.anchor} onSelect={anchor => navigateSettings({ category: "integrations", anchor })} calendar={<CalendarFeedManager key="calendar" lang={lang} />} history={<CalendarFeedManager key="history" lang={lang} historyOnly />} caldav={<CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} />} /></Suspense>}
             {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <SettingSection anchor="external-calendar" title={lang === "zh" ? "外部日历" : "External Calendars"}><ExternalCalendarManager lang={lang} /></SettingSection>}
             {settingsTarget.category === "integrations" && integrationTab === "mcp" && <SettingSection anchor="mcp" title="MCP"><Suspense fallback={<p className="df-mcp-status">{lang === "zh" ? "正在打开 MCP…" : "Opening MCP…"}</p>}><McpTokenManager lang={lang} /></Suspense></SettingSection>}
             {settingsTarget.category === "integrations" && integrationTab === "sync" && <SettingSection anchor="sync-bridge" title={lang === "zh" ? "同步" : "Sync"}><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></SettingSection>}

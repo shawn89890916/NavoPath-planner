@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 125
+
+#### 改进
+
+- 连接页按应用供应商组织，Super Productivity 的插件配对、历史订阅与设置指引集中在同一入口；保留现有连接和订阅。
+
 ### 1.7.0 Beta 124
 
 #### 修复
@@ -1277,6 +1283,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 125
+
+#### Improvements
+
+- Connections are organized by app provider; Super Productivity pairing, history subscription and setup guidance share one destination, preserving existing connections and subscriptions.
 
 ### 1.7.0 Beta 124
 
