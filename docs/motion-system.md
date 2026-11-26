@@ -15,3 +15,7 @@ CI run 45758131846 measured the complete compressed app scripts at 363.15 kB, ex
 
 ## Beta 107 spatial increment
 Same-list Tree/board projection is a bounded inert copy of intervening siblings; original hit targets and mutation logic stay in place. Cross-container and timeline drops retain the existing placement indicators. Shared anchor geometry and observer are used for detail and action disclosure. Responsive layout mode identifies Dock edges and compact save feedback. Extension mount uses isolated per-generation roots with honest loading/error/retry. No new dependencies or budget increase. Candidate list reordering also projects sibling offsets; successful unique task drops hand the visible overlay rectangle to committed layout motion. Ambiguous/hidden destinations fall back to existing feedback. Complete panel host consolidation, cross-list displacement, all plugin-specific actions and actual desktop visual acceptance still need further work.
+
+### Beta 108 combined feature size budget
+
+CI run 45759885955 measured combined motion and synchronization history scripts at 365.79 kB Brotli against the previous 365 kB cap. The initial scripts remain within 263 kB (262.47 kB), and deferred scripts remain within 38 kB (34.31 kB). Set only the aggregate script budget to 367 kB (+2 kB, approximately 0.55%) to accommodate both features, leaving startup, per-feature, style, frontend output and desktop package limits unchanged. All checks must be rerun before merge.
