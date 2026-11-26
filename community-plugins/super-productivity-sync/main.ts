@@ -1,5 +1,5 @@
 import type { PluginContext, PluginModule } from "../../src/extensions/types";
-import type { Project, Task, TimelineRecord } from "../../src/types";
+import type { PlannerData, Project, Task, TimelineRecord } from "../../src/types";
 import { mountIsolatedPluginSurface } from "../../src/extensions/pluginSurface";
 import { createInitialPreviewView } from "./preview";
 
@@ -27,7 +27,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
   {
     let links: LinkStore = { projects: {}, tasks: {}, tombstones: {} };
     let pairId = ""; let pairingCode = ""; let status = ""; let busy = false; let lastError = ""; let running = false; let lastSuccess = ""; let lastApplied = 0; let lastSnapshot = "";
-    const api = ctx.integrations?.superProductivity;
+    const api = ctx.integrations?.superProductivity as (NonNullable<NonNullable<PluginContext["integrations"]>["superProductivity"]> & { commitBatch?: (pairId: string, before: Pick<PlannerData, "tasks" | "projects">, after: Pick<PlannerData, "tasks" | "projects">) => Promise<void> }) | undefined;
     const zh = String(ctx.app.getSettings().language || ctx.language).startsWith("zh");
     const t = (cn: string, en: string) => zh ? cn : en;
     let previewView: ReturnType<typeof createInitialPreviewView> | undefined;
@@ -93,7 +93,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       pairId = state.pairId || pairId; status = state.status || "waiting";
       pairing.hidden = status === "preview"; codeRow.hidden = status === "preview" || !pairingCode;
       connect.textContent = pairId ? t("为另一设备生成配对码", "Pair another device") : t("生成配对码", "Create pairing code");
-      disconnect.hidden = !pairId; refresh.hidden = !pairId || status === "preview";
+      disconnect.hidden = !pairId; refresh.hidden = !pairId || status === "preview" || status === "paused";
       confirm.hidden = status !== "preview";
       if (status === "preview" && state.preview) {
         const key = JSON.stringify(state.preview);
@@ -148,7 +148,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       renderStatus();
     };
     const renderStatus = () => {
-      const labels: Record<string, string> = { waiting: t("等待另一端上传数据", "Waiting for the other app"), preview: t("已连接 · 等待确认首次导入", "Connected · review first import"), active: t("已连接 · 自动同步", "Connected · automatic sync") };
+      const labels: Record<string, string> = { waiting: t("等待另一端上传数据", "Waiting for the other app"), preview: t("已连接 · 等待确认首次导入", "Connected · review first import"), active: t("已连接 · 自动同步", "Connected · automatic sync"), paused: t("已暂停 · 撤销后请断开并重新配对", "Paused after undo · disconnect and pair again") };
       line.textContent = lastError || (pairId ? (labels[status] || t("已连接", "Connected")) + (busy ? t(" · 同步中", " · syncing") : "") : t("尚未配对", "Not paired"));
       if (pairId && !busy && !lastError && lastSuccess && status === "active") line.textContent += t(` · 上次同步 ${lastSuccess} · 应用 ${lastApplied} 项更改`, ` · Last sync ${lastSuccess} · ${lastApplied} changes applied`);
       line.setAttribute("aria-busy", String(busy));
@@ -169,33 +169,48 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       };
     };
     const apply = async (actions: RemoteAction[]) => {
-      const projectIds = new Map(ctx.projects.list().map(item => [item.title, item.id]));
+      if (!actions.length) { await persist(); return; }
+      const currentData = ctx.app.getData();
+      const before = { tasks: currentData.tasks, projects: currentData.projects };
+      const draft = { tasks: [...before.tasks], projects: [...before.projects] };
+      const previousLinks = structuredClone(links);
+      // Stage the whole incoming batch without mutating live task state.
+      const collection = <T extends Task | Project>(key: "tasks" | "projects") => ({
+        list: () => draft[key] as T[],
+        get: (id: string) => (draft[key] as T[]).find(item => item.id === id),
+        create: async (value: Partial<T>) => { const item = { ...value, id: crypto.randomUUID(), updatedAt: new Date().toISOString() } as T; (draft[key] as T[]).push(item); return item; },
+        update: async (id: string, patch: Partial<T>) => { const values = draft[key] as T[]; const index = values.findIndex(item => item.id === id); if (index >= 0) values[index] = { ...values[index], ...patch, id, updatedAt: new Date().toISOString() }; },
+        remove: async (id: string) => { const values = draft[key] as T[]; const index = values.findIndex(item => item.id === id); if (index >= 0) values.splice(index, 1); },
+      });
+      const taskStore = collection<Task>("tasks"), projectStore = collection<Project>("projects");
+      try {
+      const projectIds = new Map(projectStore.list().map(item => [item.title, item.id]));
       const deleting = new Set(actions.filter(action => action.kind === "task" && action.deleted).map(action => action.id || Object.keys(links.tasks).find(id => links.tasks[id] === action.syncId)));
-      if (ctx.tasks.list().some(task => task.parentTaskId && deleting.has(task.parentTaskId) && !deleting.has(task.id))) throw new Error(t("待删除的任务包含需要保留的子任务，请先移动该子任务。", "A retained subtask belongs to a task marked for deletion. Move it first."));
+      if (taskStore.list().some(task => task.parentTaskId && deleting.has(task.parentTaskId) && !deleting.has(task.id))) throw new Error(t("待删除的任务包含需要保留的子任务，请先移动该子任务。", "A retained subtask belongs to a task marked for deletion. Move it first."));
       for (const action of actions) {
         const map = action.kind === "task" ? links.tasks : links.projects;
         const currentId = action.id || Object.keys(map).find(id => map[id] === action.syncId);
         if (action.deleted) {
-          if (action.kind === "task") { const current = ctx.tasks.get(currentId || ""); if (current) { links.tombstones[action.syncId] = { kind: "task", item: current, deletedAt: new Date().toISOString() }; await persist(); await ctx.tasks.remove(current.id); } }
-          else { const current = ctx.projects.get(currentId || ""); if (current) { const taskIds = ctx.tasks.list().filter(task => task.projectId === current.id).map(task => task.id); links.tombstones[action.syncId] = { kind: "project", item: current, deletedAt: new Date().toISOString(), taskIds }; await persist(); for (const taskId of taskIds) await ctx.tasks.update(taskId, { projectId: undefined }); await ctx.projects.remove(current.id); } }
+          if (action.kind === "task") { const current = taskStore.get(currentId || ""); if (current) { links.tombstones[action.syncId] = { kind: "task", item: current, deletedAt: new Date().toISOString() }; await taskStore.remove(current.id); } }
+          else { const current = projectStore.get(currentId || ""); if (current) { const taskIds = taskStore.list().filter(task => task.projectId === current.id).map(task => task.id); links.tombstones[action.syncId] = { kind: "project", item: current, deletedAt: new Date().toISOString(), taskIds }; for (const taskId of taskIds) await taskStore.update(taskId, { projectId: undefined }); await projectStore.remove(current.id); } }
           delete map[currentId || ""]; continue;
         }
         if (action.kind === "project") {
           const value = { id: currentId || "", title: action.fields.title || "Imported project", category: action.fields.category || "project", notes: action.fields.notes || "", color: action.fields.color || undefined, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as Project;
-          if (currentId && ctx.projects.get(currentId)) {
-            const current = ctx.projects.get(currentId)!;
+          if (currentId && projectStore.get(currentId)) {
+            const current = projectStore.get(currentId)!;
             const patch: Partial<Project> = {};
             if (Object.hasOwn(action.fields, "title")) patch.title = action.fields.title || current.title;
             if (Object.hasOwn(action.fields, "color")) patch.color = action.fields.color || undefined;
-            await ctx.projects.update(currentId, patch);
+            await projectStore.update(currentId, patch);
             if (patch.title) { projectIds.delete(current.title); projectIds.set(patch.title, currentId); }
           }
-          else { const created = await ctx.projects.create(value); map[created.id] = action.syncId; projectIds.set(created.title, created.id); }
+          else { const created = await projectStore.create(value); map[created.id] = action.syncId; projectIds.set(created.title, created.id); }
           continue;
         }
         const fields = action.fields;
         const projectId = projectIds.get(fields.projectTitle || "");
-        const current = currentId ? ctx.tasks.get(currentId) : undefined;
+        const current = currentId ? taskStore.get(currentId) : undefined;
         const patch: Partial<Task> = current ? {} : { title: "Imported task", notes: "", completed: false, dueDate: "", estimatedHours: 0 };
         if (Object.hasOwn(fields, "title")) patch.title = fields.title || "Imported task";
         if (Object.hasOwn(fields, "notes")) patch.notes = fields.notes || "";
@@ -225,14 +240,24 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
           }
           patch.timelineRecords = records;
         }
-        if (current) await ctx.tasks.update(current.id, patch);
+        if (current) await taskStore.update(current.id, patch);
         else {
           const { timelineRecords, ...initialPatch } = patch;
-          const created = await ctx.tasks.create({ ...initialPatch, category: "task", goalId: "", createdAt: new Date().toISOString(), order: ctx.tasks.list().length } as Omit<Task, "id">);
+          const created = await taskStore.create({ ...initialPatch, category: "task", goalId: "", createdAt: new Date().toISOString(), order: taskStore.list().length } as Omit<Task, "id">);
           map[created.id] = action.syncId;
-          if (timelineRecords?.length) await ctx.tasks.update(created.id, { timelineRecords: timelineRecords.map(record => ({ ...record, taskId: created.id })) });
+          if (timelineRecords?.length) await taskStore.update(created.id, { timelineRecords: timelineRecords.map(record => ({ ...record, taskId: created.id })) });
         }
       }
+      // Recheck cloud pause and local base before committing (including old host fallback).
+      const connection = await getState();
+      if (connection.status !== "active" || connection.pairId !== pairId) throw new Error(t("连接已暂停或改变，本轮未应用。", "Connection paused or changed; batch not applied."));
+      if (api.commitBatch) await api.commitBatch(pairId, before, draft);
+      else {
+        const latest = ctx.app.getData();
+        if (latest.tasks !== before.tasks || latest.projects !== before.projects) throw new Error(t("任务在同步期间有修改，请重试。", "Tasks changed during sync; retry."));
+        await ctx.app.saveData({ ...latest, ...draft });
+      }
+      } catch (error) { links = previousLinks; throw error; }
       await persist();
     };
     const sync = async () => {
@@ -240,6 +265,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       try {
         if (!pairId) { await discoverConnection(); if (!pairId) return; }
         const state = await getState(); displayState(state);
+        if (state.status === "paused") return;
         if (state.status === "preview") {
           const outgoing = snapshot();
           if (JSON.stringify(outgoing) !== lastSnapshot) { const result = await api.request("/snapshot", "POST", { pairId, platform: "navopath", snapshot: outgoing }); lastSnapshot = JSON.stringify(outgoing); displayState(result); }
