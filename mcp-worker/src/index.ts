@@ -5,6 +5,7 @@ import { fromSupabaseUrl, withOAuthProtectedResource, withSupabase } from "@supa
 import { z } from "zod";
 import { combineSyncSnapshot } from "./syncSnapshot";
 import { buildCalendarFeed, buildSuperProductivityHistoryFeed } from "./calendarFeed";
+import { createHistoryToken, parseHistoryToken, verifyHistoryToken } from "./calendarHistoryToken";
 import { handleCalDav } from "./caldav";
 import { listEngagement } from "./engagement";
 import { PLUGIN_OWNER_PATTERN } from "../../shared/pluginMcp";
@@ -92,6 +93,32 @@ async function authenticateCalendarToken(token: string, env: Env, ctx: Execution
   if (!match) return null;
   ctx.waitUntil(db(env, `navopath_calendar_tokens?id=eq.${match.id}`, { method: "PATCH", body: JSON.stringify({ last_used_at: now() }) }));
   return match.user_id;
+}
+
+type CalendarHistoryRow = { id: string; user_id: string; token_hash: string };
+
+async function authenticateCalendarHistoryToken(token: string, env: Env, ctx: ExecutionContext) {
+  const parsed = parseHistoryToken(token);
+  if (!parsed) return null;
+  const query = await db(env, `navopath_calendar_tokens?select=id,user_id,token_hash&id=eq.${parsed.id}&revoked_at=is.null&limit=1`);
+  if (!query.ok) return null;
+  const [row] = await query.json() as CalendarHistoryRow[];
+  if (!row || !await verifyHistoryToken(token, row.token_hash, env.SUPABASE_SERVICE_ROLE_KEY)) return null;
+  ctx.waitUntil(db(env, `navopath_calendar_tokens?id=eq.${row.id}`, { method: "PATCH", body: JSON.stringify({ last_used_at: now() }) }));
+  return row.user_id;
+}
+
+async function calendarHistoryLinkApi(request: Request, env: Env) {
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: syncCors });
+  if (request.method !== "POST") return syncResponse({ error: "Method not allowed" }, 405);
+  const account = await authenticateAccountBearer(request, env);
+  if (!account) return syncResponse({ error: "Sign in to NavoPath" }, 401);
+  const query = await db(env, `navopath_calendar_tokens?select=id,user_id,token_hash&user_id=eq.${encodeURIComponent(account.userId)}&revoked_at=is.null&limit=1`);
+  if (!query.ok) return syncResponse({ error: "Calendar service temporarily unavailable" }, 503);
+  const [row] = await query.json() as CalendarHistoryRow[];
+  if (!row || row.user_id !== account.userId) return syncResponse({ error: "Create a calendar subscription first" }, 404);
+  const token = await createHistoryToken(row.id, row.token_hash, env.SUPABASE_SERVICE_ROLE_KEY);
+  return syncResponse({ token });
 }
 
 async function authenticateSuperProductivityToken(token: string, env: Env, ctx: ExecutionContext) {
@@ -626,13 +653,15 @@ export default {
         },
       });
     }
+    if (url.pathname === "/calendar/history-link") return calendarHistoryLinkApi(request, env);
     const calendarMatch = url.pathname.match(/^\/calendar\/(nvc_[a-f0-9]{64})(-history)?\.ics$/);
-    if (calendarMatch) {
+    const historyMatch = url.pathname.match(/^\/calendar\/(nvh_[0-9a-f-]{36}_[0-9a-f]{64})-history\.ics$/);
+    if (calendarMatch || historyMatch) {
       if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });
-      const userId = await authenticateCalendarToken(calendarMatch[1], env, ctx);
+      const userId = historyMatch ? await authenticateCalendarHistoryToken(historyMatch[1], env, ctx) : await authenticateCalendarToken(calendarMatch![1], env, ctx);
       if (!userId) return new Response("Calendar subscription not found", { status: 404, headers: { "cache-control": "no-store" } });
       const profile = await getProfile(env, userId);
-      const history = Boolean(calendarMatch[2]);
+      const history = Boolean(historyMatch || calendarMatch?.[2]);
       const etag = `W/"navopath-calendar-${history ? "history-" : ""}${profile.revision}"`;
       const headers = {
         "content-type": "text/calendar; charset=utf-8",

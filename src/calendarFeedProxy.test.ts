@@ -64,3 +64,18 @@ it("accepts only the dedicated history suffix with the existing private token fo
   }
   expect(fetchFeed).toHaveBeenCalledTimes(1);
 });
+
+it("forwards history capability issuance with authorization only, and restricts the capability to history feeds", async () => {
+  const fetchFeed = vi.fn<(request: Request) => Promise<Response>>().mockImplementation(async () => new Response("ok"));
+  const env = { CALENDAR_FEED: { fetch: fetchFeed } };
+  const endpoint = "https://navopath.com/calendar/history-link";
+  const token = "nvh_12345678-1234-1234-1234-123456789abc_" + "1".repeat(64);
+  expect((await onRequest({ env, request: new Request(endpoint, { method: "POST", headers: { authorization: "Bearer test", cookie: "private" } }) })).status).toBe(200);
+  expect(fetchFeed.mock.calls[0][0].headers.get("authorization")).toBe("Bearer test");
+  expect(fetchFeed.mock.calls[0][0].headers.get("cookie")).toBeNull();
+  expect((await onRequest({ env, request: new Request(endpoint) })).status).toBe(405);
+  expect((await onRequest({ env, request: new Request("https://navopath.com/calendar/" + token + ".ics") })).status).toBe(404);
+  expect((await onRequest({ env, request: new Request("https://navopath.com/calendar/" + token + "-history.ics", { headers: { authorization: "Bearer test" } }) })).status).toBe(200);
+  expect(fetchFeed.mock.calls[1][0].headers.get("authorization")).toBeNull();
+  expect(fetchFeed).toHaveBeenCalledTimes(2);
+});
