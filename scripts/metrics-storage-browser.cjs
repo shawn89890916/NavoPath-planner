@@ -18,8 +18,8 @@ async function runServer() {
       server.middlewares.use("/__metrics_test", (_req, res) => {
         res.setHeader("Content-Type", "text/html");
         res.end(`<!doctype html><html><body>Isolated Metrics storage test<script type="module">
-          import * as tests from "/scripts/metrics-storage-browser.mjs";
-          window.metricsResult=tests[new URL(location.href).searchParams.get("phase")]().then(value=>({value}),error=>({error:String(error?.stack||error)}));
+          const phase=new URL(location.href).searchParams.get("phase");
+          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
         </script></body></html>`);
       });
     } }]
@@ -53,9 +53,24 @@ async function runRenderer() {
   try {
     for (const phase of ["seedInterrupted", "recoverAndExercise", "recoverPurge"]) {
       await win.loadURL(url+"?phase="+phase);
-      const result = await win.webContents.executeJavaScript("window.metricsResult");
+      const result = await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await window.metricsResult;await new Promise(r=>setTimeout(r,20));}throw Error('Metrics test bootstrap missing');})()");
       if (!result || result.error) throw Error(result?.error || "Metrics test module failed to initialize");
       console.log("Metrics Chromium: "+JSON.stringify(result.value));
+    }
+    for (const [width,height] of [[1280,900],[420,840],[300,640]]) {
+      win.setContentSize(width,height);
+      await win.loadURL(url+"?phase=exerciseUi");
+      const result=await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await window.metricsResult;await new Promise(r=>setTimeout(r,20));}throw Error('Metrics test bootstrap missing');})()");
+      if(!result||result.error)throw Error(result?.error||"Metrics UI fixture did not initialize");
+      // CDP keyboard events use Chromium's native activation path even with a hidden window.
+      win.webContents.debugger.attach("1.3");
+      try{
+        await win.webContents.debugger.sendCommand("Input.dispatchKeyEvent",{type:"rawKeyDown",key:" ",code:"Space",windowsVirtualKeyCode:32});
+        await win.webContents.debugger.sendCommand("Input.dispatchKeyEvent",{type:"keyUp",key:" ",code:"Space",windowsVirtualKeyCode:32});
+      }finally{win.webContents.debugger.detach();}
+      const keyboard=await win.webContents.executeJavaScript("window.verifyMetricsKeyboard()");
+      if(!keyboard)throw Error("Native keyboard activation did not change the selected metric view");
+      console.log("Metrics Chromium UI: "+JSON.stringify({...result.value,keyboard}));
     }
   } finally { win.destroy(); }
   app.exit(0);

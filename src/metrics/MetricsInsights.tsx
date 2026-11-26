@@ -21,6 +21,9 @@ function downloadJson(events:unknown) {
   const a=document.createElement("a");a.href=url;a.download="navopath-activity.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 export function MetricsInsights(props:Props) {
+  return <ScopedMetricsInsights key={props.scope??null} {...props}/>;
+}
+function ScopedMetricsInsights(props:Props) {
   const {data,query,referenceDate,weekStartsOn,engagementEnabled}=props;
   const dayStartMinutes=parseDayStartMinutes(props.dayStartTime);
   const allocation=useMemo(()=>buildTimeAllocationMetrics({data,range:{preset:query.range,anchorDate:referenceDate,customStart:query.customStart,customEnd:query.customEnd},dayStartMinutes,weekStartsOn,engagementEnabled,groupBy:query.group,habitMode:query.habit,completion:query.completion,projectIds:query.projects}),[data,query.range,query.customStart,query.customEnd,query.group,query.habit,query.completion,query.projects,referenceDate,dayStartMinutes,weekStartsOn,engagementEnabled]);
