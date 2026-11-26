@@ -10,6 +10,7 @@ import { formatLastSyncedAt, presetForMinutes, SYNC_INTERVAL_PRESETS } from "./s
 import { t, viewLabel } from "./i18n";
 import { visibleSettingsCategories, settingsPrimaryCategory, normalizeSettingsTarget, searchSettings, settingsCategoryLabel, type SettingsCategory, type SettingsTarget, type SettingsTargetInput } from "./settingsNavigation";
 import { extensionService } from "./extensions/service";
+import { pluginSettingsDestinations, pluginSettingsOwner, searchPluginSettings, type PluginSettingsDestination } from "./pluginSettingsNavigation";
 import { getModifiedPreferences, resetRegisteredPreferences, SETTINGS_REGISTRY, registeredPreferenceValue, recordPreferenceUndo, canUndoPreference, type PreferenceUndo } from "./settingsRegistry";
 import { applyMotionPreference, readMotionPreference, type MotionPreference } from "./motion";
 import { UiBellIcon, UiCopyIcon, UiPencilIcon, UiPlusIcon, UiSearchIcon, UiTrashIcon, UiFilterIcon, UiRefreshIcon } from "./components/UiIcons";
@@ -444,16 +445,23 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
     setPreferenceUndo(previous => previous.slice(0, -1));
   }
   const modifiedPreferences = getModifiedPreferences(settings);
-  const metricsSettingsOpen = settingsTarget.category === "plugins" && (settingsTarget.anchor === "metrics" || Boolean(settingsTarget.anchor?.startsWith("metrics-")));
+
   const [settingsHome, setSettingsHome] = useState(!initialSection && compactLayout);
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const pluginPages = Array.from(new Map(extensionSnapshot.settingsPages.map((page) => [`${page.owner}:${page.name.trim().toLocaleLowerCase()}`, page])).values());
+  const previousPluginDestinations = useRef<PluginSettingsDestination[]>([]);
+  const pluginDestinations = pluginSettingsDestinations(extensionSnapshot, previousPluginDestinations.current);
+  useEffect(() => { previousPluginDestinations.current = pluginDestinations; }, [pluginDestinations]);
+  const activePluginOwner = pluginSettingsOwner(settingsTarget, extensionSnapshot);
+  const selectedPluginDestination = pluginDestinations.find(destination => destination.owner === activePluginOwner);
+  const marketOpen = settingsTarget.category === "plugins" && settingsTarget.anchor === "plugin-market";
+  const [pluginNavExpanded, setPluginNavExpanded] = useState(true);
+  const pluginTitle = selectedPluginDestination?.title ?? (marketOpen ? (lang === "zh" ? "插件市场" : "Plugin market") : undefined);
   const pluginUpdateCount = Object.keys(extensionSnapshot.updates).filter((key) => extensionSnapshot.preferences.installed[key]?.manifest.kind === "plugin").length;
-  const selectedPluginPage = pluginPages.find(page => page.id === settingsTarget.pluginPage);
+  const selectedPluginPage = extensionSnapshot.settingsPages.find(page => page.id === settingsTarget.pluginPage);
   const [navigationQuery, setNavigationQuery] = useState("");
   const searchActive = Boolean(navigationQuery.trim()) || modifiedOnly;
   const navigationResults = searchSettings(navigationQuery, lang, isDesktopRuntime, modifiedOnly ? new Set(modifiedPreferences.map(pref => pref.search.id)) : undefined);
-  const matchingPluginPages = !modifiedOnly && navigationQuery.trim() ? pluginPages.filter(page => page.name.toLocaleLowerCase().includes(navigationQuery.trim().toLocaleLowerCase())) : [];
+  const matchingPluginPages = !modifiedOnly ? searchPluginSettings(pluginDestinations, navigationQuery) : [];
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [expandedSettings, setExpandedSettings] = useState<Record<string, boolean>>({});
   const [widgetColorScheme, setWidgetColorScheme] = useState<"light" | "dark">("light");
@@ -480,8 +488,10 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
     closeButtonRef.current?.focus();
   }, [kind]);
   useEffect(() => {
-    if (settingsTarget.pluginPage && !selectedPluginPage) setSettingsTarget({ category: "plugins" });
-  }, [settingsTarget.pluginPage, selectedPluginPage]);
+    if (!extensionService.isReady() || extensionSnapshot.busy || extensionSnapshot.updateBatch?.running) return;
+    if ((activePluginOwner && !selectedPluginDestination) || (settingsTarget.pluginPage && !selectedPluginPage && !activePluginOwner)) setSettingsTarget({ category: "plugins" });
+  }, [activePluginOwner, selectedPluginDestination, settingsTarget.pluginPage, selectedPluginPage, extensionSnapshot.busy, extensionSnapshot.updateBatch?.running]);
+  useEffect(() => { if (activePluginOwner) setPluginNavExpanded(true); }, [activePluginOwner]);
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
@@ -506,7 +516,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
     if (!content) return;
     const handle = window.requestAnimationFrame(() => {
       const anchor = settingsTarget.anchor
-        ? content.querySelector<HTMLElement>(`[data-settings-anchor="${settingsTarget.anchor}"]`)
+        ? Array.from(content.querySelectorAll<HTMLElement>("[data-settings-anchor]")).find(element => element.dataset.settingsAnchor === settingsTarget.anchor)
         : null;
       if (!anchor) {
         content.scrollTop = 0;
@@ -547,6 +557,16 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
       if (settingsContentRef.current) settingsContentRef.current.scrollTop = 0;
     }), { scope: "settings", direction: "neutral" });
   }
+  const pluginNavRows = (home: boolean) => <>
+    <button type="button" className="df-settings-plugin-heading" aria-expanded={pluginNavExpanded} onClick={() => setPluginNavExpanded(value => !value)}>
+      <span>{lang === "zh" ? "插件设置" : "Plugin settings"}</span><span aria-hidden="true">{pluginNavExpanded ? "⌄" : "›"}</span>
+    </button>
+    {pluginNavExpanded && pluginDestinations.map(destination => {
+      const active = !searchActive && activePluginOwner === destination.owner;
+      return <button type="button" title={destination.title} className={`ui-choice-item df-settings-plugin-link${active ? " active" : ""}`} key={destination.owner} aria-current={active ? "page" : undefined} onClick={() => navigateSettings({ category: "plugins", pluginOwner: destination.owner })}>{destination.title}</button>;
+    })}
+    <button type="button" className={`ui-choice-item df-settings-plugin-add${marketOpen && !searchActive && !home ? " active" : ""}`} aria-current={marketOpen && !searchActive && !home ? "page" : undefined} onClick={() => navigateSettings({ category: "plugins", anchor: "plugin-market" })}><UiPlusIcon size={15} /><span>{lang === "zh" ? "添加插件" : "Add plugins"}</span></button>
+  </>;
   const searchBar = <div className="df-settings-search-bar">
     <SettingTextInput value={navigationQuery} placeholder={lang === "zh" ? "搜索设置…" : "Search settings…"} ariaLabel={lang === "zh" ? "搜索设置" : "Search settings"} onChange={setNavigationQuery} />
     <IconButton icon={<UiFilterIcon size={16} />} label={lang === "zh" ? "仅显示已修改项" : "Modified settings only"} aria-pressed={modifiedOnly} onClick={() => setModifiedOnly(value => !value)} />
@@ -561,7 +581,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
         description={settingsCategoryLabel(result.target.category, lang)}
         control={<>{pref && <span className="df-settings-search-value">{registeredPreferenceValue(pref, settings, lang)}</span>}{pref && changed && <IconButton icon={<UiRefreshIcon size={15} />} label={lang === "zh" ? "恢复 " + label : "Reset " + label} onClick={() => onSave(resetRegisteredPreferences([pref]))} />}</>} />;
     })}
-    {matchingPluginPages.map(page => <SettingRow key={page.id} title={<button type="button" className="df-settings-result-link" onClick={() => navigateSettings({ category: "plugins", pluginPage: page.id })}>{page.name}</button>} description={lang === "zh" ? "插件" : "Plugins"} />)}
+    {matchingPluginPages.map(page => <SettingRow key={page.id} title={<button type="button" className="df-settings-result-link" onClick={() => navigateSettings(page.target)}>{page.title}</button>} description={page.ownerTitle} />)}
     {!navigationResults.length && !matchingPluginPages.length && <EmptyState compact title={lang === "zh" ? "没有匹配的设置" : "No matching settings"} />}
     {modifiedOnly && navigationResults.length > 0 && <SettingDisclosure title={lang === "zh" ? "批量恢复" : "Reset multiple preferences"}>
       {categories.map(category => {
@@ -795,7 +815,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
         <div className={`df-utility-head${kind === "settings" ? " df-settings-header" : ""}`}>
           <div className="df-utility-head-leading">
             {kind === "settings" && compactLayout && !settingsHome && <button type="button" className="df-settings-back-button" onClick={backToSettingsHome} aria-label={lang === "zh" ? "返回设置" : "Back to settings"}><span aria-hidden="true">‹</span><span>{lang === "zh" ? "设置" : "Settings"}</span></button>}
-            <h2 id="df-utility-title" ref={kind === "settings" && !compactLayout && !settingsHome ? undefined : settingsHeadingRef} tabIndex={-1}>{kind === "settings" && !compactLayout ? t(lang, "settings.settings") : kind === "settings" && !settingsHome ? searchActive ? (lang === "zh" ? "搜索设置" : "Search settings") : selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang) : kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
+            <h2 id="df-utility-title" ref={kind === "settings" && !compactLayout && !settingsHome ? undefined : settingsHeadingRef} tabIndex={-1}>{kind === "settings" && !compactLayout ? t(lang, "settings.settings") : kind === "settings" && !settingsHome ? searchActive ? (lang === "zh" ? "搜索设置" : "Search settings") : pluginTitle || selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang) : kind === "settings" ? t(lang, "settings.settings") : t(lang, "settings.aboutNavo")}</h2>
           </div>
           {kind === "settings" ? <div className="df-settings-header-actions">
             <span className="df-settings-save-status" role="status" data-save-phase={settingsSavePhase} title={saveFeedbackLabel(settingsSavePhase, lang, Boolean(cloudReady))}>{saveFeedbackLabel(settingsSavePhase, lang, Boolean(cloudReady))}</span>
@@ -877,19 +897,21 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                     ))}
                   </div>
                 </section>
+                <nav className="df-settings-home-plugin-nav ui-choice-list" aria-label={lang === "zh" ? "插件设置" : "Plugin settings"}>{pluginNavRows(true)}</nav>
                 </>}
               </div>
             ) : <>
             <div className="df-settings-rail">
               {searchBar}
               <nav className="df-settings-nav ui-choice-list ui-choice-list--motion-selection" aria-label={lang === "zh" ? "设置分区" : "Settings sections"}>
-                <SelectionIndicator activeKey={searchActive ? "" : `category:${settingsPrimaryCategory(settingsTarget.category)}:${lang}`} />
-                {categories.map(category => <button type="button" key={category.id} className={`ui-choice-item${!searchActive && settingsTarget.category === category.id ? " active" : ""}`} aria-current={!searchActive && settingsTarget.category === category.id ? "page" : undefined} onClick={() => navigateSettings({ category: category.id })}>{lang === "zh" ? category.labelZh : category.labelEn}</button>)}
+                <SelectionIndicator activeKey={searchActive ? "" : `${activePluginOwner || (marketOpen ? "market" : settingsPrimaryCategory(settingsTarget.category))}:${lang}:${pluginNavExpanded}:${pluginDestinations.map(destination => destination.owner).join(",")}`} />
+                {categories.map(category => <button type="button" key={category.id} className={`ui-choice-item${!searchActive && !activePluginOwner && !marketOpen && settingsTarget.category === category.id ? " active" : ""}`} aria-current={!searchActive && !activePluginOwner && !marketOpen && settingsTarget.category === category.id ? "page" : undefined} onClick={() => navigateSettings({ category: category.id })}>{lang === "zh" ? category.labelZh : category.labelEn}</button>)}
+                {pluginNavRows(false)}
               </nav>
               {!searchActive && pluginUpdateCount > 0 && <button type="button" className="df-plugin-update-notice" onClick={() => navigateSettings({ category: "plugins" })}><span className="df-plugin-update-notice-dot" aria-hidden="true" /><span><strong>{lang === "zh" ? `${pluginUpdateCount} 个插件可更新` : `${pluginUpdateCount} plugin updates`}</strong></span><span aria-hidden="true">›</span></button>}
             </div>
             <div ref={settingsContentRef} className="df-settings-content"><div className="df-settings-content-column">
-            {!compactLayout && <h2 className="df-settings-content-title" ref={settingsHeadingRef} tabIndex={-1}>{searchActive ? (lang === "zh" ? "搜索设置" : "Search settings") : selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang)}</h2>}
+            {!compactLayout && <h2 className="df-settings-content-title" ref={settingsHeadingRef} tabIndex={-1}>{searchActive ? (lang === "zh" ? "搜索设置" : "Search settings") : pluginTitle || selectedPluginPage?.name || settingsCategoryLabel(settingsTarget.category, lang)}</h2>}
             {searchActive ? searchResults : <>
             {settingsTarget.category === "general" && <SettingSection anchor="general-basics">
               <SettingRow
@@ -1332,7 +1354,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                     { value: "incomplete", label: lang === "zh" ? "仅未完成" : "Incomplete only" },
                   ]}
                 />}
-              /></div> }} inlineTarget={metricsSettingsOpen ? "official:metrics" : undefined} inlineAnchor={metricsSettingsOpen ? settingsTarget.anchor : undefined} lang={lang} kind="plugin" mcpAccess={settings.extensionMcpAccess} onMcpAccessChange={(owner, grant) => onSave({ extensionMcpAccess: { [owner]: grant } })} settingsPageId={settingsTarget.pluginPage ?? null} onSelectPage={(id) => navigateSettings({ category: "plugins", ...(id ? { pluginPage: id } : {}) })} /></Suspense>}
+              /></div> }} settingsOwner={selectedPluginDestination?.owner} settingsAnchor={settingsTarget.anchor} openMarket={marketOpen} onCloseMarket={() => navigateSettings({ category: "plugins" })} onSelectOwner={owner => navigateSettings({ category: "plugins", pluginOwner: owner })} lang={lang} kind="plugin" mcpAccess={settings.extensionMcpAccess} onMcpAccessChange={(owner, grant) => onSave({ extensionMcpAccess: { [owner]: grant } })} settingsPageId={settingsTarget.pluginPage ?? null} onSelectPage={(id) => navigateSettings({ category: "plugins", ...(id ? { pluginPage: id } : {}) })} /></Suspense>}
             {!compactLayout && settingsTarget.category === "account-data" && <SettingSection anchor="account-profile" title={lang === "zh" ? "个人资料" : "Profile"}>
               {profileHero}
             </SettingSection>}
@@ -1420,7 +1442,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
           </div>
         )}
       </aside>
-      {!settingsHome && onboardingSettings && (onboardingSettings === "plugins" ? settingsTarget.category === "plugins" && !selectedPluginPage
+      {!settingsHome && onboardingSettings && (onboardingSettings === "plugins" ? settingsTarget.category === "plugins" && !selectedPluginPage && !activePluginOwner && !marketOpen
         : onboardingSettings === "ai" ? settingsTarget.category === "ai"
         : settingsTarget.category === "integrations" && integrationTab === "mcp") &&
         <OnboardingSettingsHint topic={onboardingSettings} contentRef={settingsContentRef} lang={lang} onContinue={onClose} />}

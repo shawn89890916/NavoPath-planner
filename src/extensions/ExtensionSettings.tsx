@@ -11,6 +11,7 @@ import type { CatalogEntry, CompactPluginPlacement, ExtensionKind, ThemeOption, 
 import { getAppHeaderPlugins } from "./compactDock";
 import { COMPACT_DOCK_LIMITS, DEFAULT_COMPACT_DOCK_LIMIT } from "./packages";
 import { ExtensionMount } from "./ExtensionMount";
+import { pluginSettingsPages, pluginOptionAnchor } from "../pluginSettingsNavigation";
 import { normalizePomodoroClockFont, pomodoroClockFonts, POMODORO_EXTENSION_KEY } from "../widget/pomodoroAppearance";
 import "./ExtensionSettings.css";
 
@@ -51,11 +52,16 @@ function ThemePreview({ entry, lang, mode }: { entry: CatalogEntry; lang: Langua
   </div>;
 }
 
-export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mcpAccess, onMcpAccessChange, inlineSettings, inlineTarget, inlineAnchor }: {
+export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mcpAccess, onMcpAccessChange, inlineSettings, inlineTarget, inlineAnchor, settingsOwner, settingsAnchor, openMarket, onCloseMarket, onSelectOwner }: {
   lang: Language;
   kind: ExtensionKind;
   settingsPageId?: string | null;
   onSelectPage?: (id: string | null) => void;
+  settingsOwner?: string;
+  settingsAnchor?: string;
+  openMarket?: boolean;
+  onCloseMarket?: () => void;
+  onSelectOwner?: (owner: string) => void;
   inlineSettings?: Readonly<Record<string, ReactNode>>;
   inlineTarget?: string;
   inlineAnchor?: string;
@@ -67,7 +73,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
   const zh = lang === "zh", plugin = kind === "plugin";
   const text = (cn: string, en: string) => zh ? cn : en;
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<"installed" | "market" | "sources" | "url">("installed");
+  const [view, setView] = useState<"installed" | "market" | "sources" | "url">(openMarket ? "market" : "installed");
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceName, setSourceName] = useState("");
   const [packageUrl, setPackageUrl] = useState("");
@@ -119,8 +125,9 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
     try { await action(); } catch (caught) { setError(caught instanceof Error ? caught.message : String(caught)); }
     finally { if (label) setPending(current => current === label ? "" : current); }
   }
-  function navigate(next: typeof view) { setView(next); setQuery(""); setSelectedCatalogKey(null); setConfirmation(null); setError(""); setNotice(""); }
+  function navigate(next: typeof view) { if (view === "market" && next !== "market" && openMarket) onCloseMarket?.(); setView(next); setQuery(""); setSelectedCatalogKey(null); setConfirmation(null); setError(""); setNotice(""); }
   function browseMarket() { navigate("market"); void run(() => extensionService.refreshCatalog()); }
+  useEffect(() => { if (openMarket) { setView("market"); setSelectedCatalogKey(null); void extensionService.refreshCatalog().catch(caught => setError(String(caught))); } }, [openMarket]);
   const updateControls = (inMarket: boolean) => <div className="df-extension-update-strip">
     <div className="df-extension-update-copy" role="status" aria-live="polite">
       {batch?.running ? <><strong>{text("正在更新", "Updating")} {batch.processed}/{batch.total}</strong><span>{installed.find(item => item.key === batch.current)?.manifest.name ?? text("准备中…", "Preparing…")}</span><progress aria-label={text("批量更新进度", "Batch update progress")} value={batch.processed} max={batch.total} /></>
@@ -139,6 +146,41 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
   const search = <label className="df-extension-search"><UiSearchIcon size={16} /><SettingTextInput value={query} placeholder={view === "market" ? text("搜索名称、作者或描述…", "Search name, author or description…") : text(plugin ? "搜索已安装的插件…" : "搜索已安装的主题…", plugin ? "Search installed plugins…" : "Search installed themes…")} ariaLabel={text("搜索扩展", "Search extensions")} onChange={setQuery} /></label>;
   const back = <div className="df-extension-back"><SettingActionButton onClick={() => navigate("installed")}>{text(plugin ? "返回插件" : "返回主题", plugin ? "Back to plugins" : "Back to themes")}</SettingActionButton></div>;
 
+  const ownerItem = settingsOwner ? installed.find(item => item.key === settingsOwner) : undefined;
+  const ownerRoot = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!settingsOwner || !settingsAnchor) return;
+    const frame = window.requestAnimationFrame(() => {
+      const anchor = Array.from(ownerRoot.current?.querySelectorAll<HTMLElement>("[data-settings-anchor]") ?? []).find(node => node.dataset.settingsAnchor === settingsAnchor);
+      if (anchor) { anchor.scrollIntoView({ block: "nearest" }); anchor.focus({ preventScroll: true }); }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [settingsOwner, settingsAnchor, busy]);
+  function declaredSettings(item: typeof installed[number]) {
+    const declared = plugin ? item.manifest.settingsOptions : undefined;
+    if (!declared?.length) return null;
+    const config = extensionService.getConfig(item.key);
+    return <>
+      {declared.map(option => <SettingRow key={option.key} anchor={pluginOptionAnchor(option.key)} title={option.label} description={option.description} control={<ExtensionOptionControl option={option} value={config[option.key] ?? option.default} disabled={busy} onChange={value => void run(() => extensionService.saveConfig(item.key, { [option.key]: value }), text("正在保存…", "Saving…"))} />} />)}
+      <SettingRow title={text("恢复插件默认选项", "Restore plugin defaults")} control={<SettingActionButton disabled={busy} onClick={() => void run(() => extensionService.saveConfig(item.key, Object.fromEntries(declared.map(option => [option.key, option.default]))), text("正在保存…", "Saving…"))}>{text("恢复默认", "Reset")}</SettingActionButton>} />
+    </>;
+  }
+  if (ownerItem) {
+    const pages = pluginSettingsPages(snapshot, ownerItem);
+    const native = inlineSettings?.[ownerItem.key];
+    const focusClockFont = ownerItem.key === POMODORO_EXTENSION_KEY ? normalizePomodoroClockFont(extensionService.getConfig(ownerItem.key).clockFont) : undefined;
+    const fontLabel = text("计时数字字体", "Clock font");
+    return <div className="df-extensions" ref={ownerRoot} aria-label={ownerItem.manifest.name}>
+      {(error || snapshot.error) && <p className="df-extension-error" role="alert">{error || snapshot.error}</p>}
+      {(pending || notice) && <p className="df-extension-note" role="status">{pending || notice}</p>}
+      {safeMode ? <p className="df-extension-note">{text("受限模式已开启，插件运行时暂停。", "Restricted mode is on; plugin runtime is paused.")}</p> : null}
+      {native}
+      {declaredSettings(ownerItem)}
+      {focusClockFont && <SettingRow title={fontLabel} control={<><span className="df-focus-font-preview" data-focus-clock-font={focusClockFont} aria-hidden="true">23:00</span><SettingSelect ariaLabel={fontLabel} value={focusClockFont} disabled={busy} options={pomodoroClockFonts.map(option => ({ value: option.value, label: option[lang] }))} onChange={value => void run(() => extensionService.saveConfig(ownerItem.key, { clockFont: normalizePomodoroClockFont(value) }), fontLabel)} /></>} />}
+      {pages.map(contribution => <SettingSection key={contribution.id} title={pages.length > 1 || native || ownerItem.manifest.settingsOptions?.length ? contribution.name : undefined}><ExtensionMount contribution={contribution} lang={lang} /></SettingSection>)}
+      {!native && !ownerItem.manifest.settingsOptions?.length && !pages.length && <p className="df-extension-note" role="status">{busy ? text("正在重新加载插件设置…", "Reloading plugin settings…") : text("插件设置暂不可用。", "Plugin settings are unavailable.")}</p>}
+    </div>;
+  }
   if (page) {
     const focusClockFont = page.owner === POMODORO_EXTENSION_KEY
       ? normalizePomodoroClockFont(extensionService.getConfig(page.owner).clockFont)
@@ -183,18 +225,13 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
             </EmptyState>
           )}
           {filtered.map((item) => {
-            const ownedPages = snapshot.settingsPages.filter((contribution) => contribution.owner === item.key);
-            const pages = Array.from(new Map((ownedPages.length ? ownedPages : snapshot.settingsPages.filter((contribution) => contribution.owner === item.manifest.id)).map((contribution) => [contribution.name.trim().toLocaleLowerCase(), contribution])).values());
+            const pages = pluginSettingsPages(snapshot, item);
             const selected = preferences.activeTheme === item.key;
-            const declared = plugin ? item.manifest.settingsOptions : undefined;
-            const config: Record<string, unknown> = declared?.length ? extensionService.getConfig(item.key) : {};
-            const inline = inlineSettings?.[item.key] ?? (declared?.length ? <>
-              {declared.map(option => <SettingRow key={option.key} title={option.label} description={option.description} control={<ExtensionOptionControl option={option} value={config[option.key] ?? option.default} disabled={busy} onChange={value => void run(() => extensionService.saveConfig(item.key, { [option.key]: value }), text("正在保存…", "Saving…"))} />} />)}
-              <SettingRow title={text("恢复插件默认选项", "Restore plugin defaults")} control={<SettingActionButton disabled={busy} onClick={() => void run(() => extensionService.saveConfig(item.key, Object.fromEntries(declared.map(option => [option.key, option.default]))), text("正在保存…", "Saving…"))}>{text("恢复默认", "Reset")}</SettingActionButton>} />
-            </> : undefined);
+            const inline = inlineSettings?.[item.key] ?? declaredSettings(item);
+            const directSettings = Boolean(plugin && onSelectOwner && item.enabled && (inline || pages.length));
             return <div className="df-extension-installed-item" key={item.key}><SettingRow title={item.manifest.name} description={<>{item.manifest.description}<span className="df-extension-meta">v{item.manifest.version} · {item.manifest.author} · {preferences.sources.find(source => source.id === item.sourceId)?.name ?? item.sourceId}</span><span className="df-extension-state">{plugin ? statusLabel(snapshot.status[item.key] || (item.enabled ? text("已启用", "Enabled") : text("已停用", "Disabled"))) : selected ? text("使用中", "Active") : text("已安装", "Installed")}</span></>} control={confirmation === item.key ? <><SettingActionButton disabled={busy} tone="danger" onClick={() => void run(async () => { await extensionService.uninstall(item.key); setConfirmation(null); }, text("正在卸载…", "Uninstalling…"))}>{text("确认卸载", "Confirm uninstall")}</SettingActionButton><SettingActionButton onClick={() => setConfirmation(null)}>{text("取消", "Cancel")}</SettingActionButton></> : <>
-              {inline && <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => setExpandedInline(current => current === item.key ? undefined : item.key)}>{expandedInline === item.key ? text("收起", "Collapse") : text("设置", "Settings")}</SettingActionButton>}
-              {pages.length > 0 ? pages.map((contribution) => <SettingActionButton key={contribution.id} ariaLabel={text(`${item.manifest.name} ${inline ? "高级设置" : "设置"}`, `${item.manifest.name} ${inline ? "advanced settings" : "settings"}`)} onClick={() => setPageId(contribution.id)}>{pages.length === 1 ? text(inline ? "高级设置" : "设置", inline ? "Advanced settings" : "Settings") : contribution.name}</SettingActionButton>) : plugin && !inline && <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => setFallbackSettingsKey(item.key)}>{text("设置", "Settings")}</SettingActionButton>}
+              {directSettings ? <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => onSelectOwner?.(item.key)}>{text("设置", "Settings")}</SettingActionButton> : <>{inline && <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => setExpandedInline(current => current === item.key ? undefined : item.key)}>{expandedInline === item.key ? text("收起", "Collapse") : text("设置", "Settings")}</SettingActionButton>}
+              {pages.length > 0 ? pages.map((contribution) => <SettingActionButton key={contribution.id} ariaLabel={text(`${item.manifest.name} ${inline ? "高级设置" : "设置"}`, `${item.manifest.name} ${inline ? "advanced settings" : "settings"}`)} onClick={() => setPageId(contribution.id)}>{pages.length === 1 ? text(inline ? "高级设置" : "设置", inline ? "Advanced settings" : "Settings") : contribution.name}</SettingActionButton>) : plugin && !inline && <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => setFallbackSettingsKey(item.key)}>{text("设置", "Settings")}</SettingActionButton>}</>}
               {!plugin && !selected && <SettingActionButton disabled={busy} onClick={() => void run(() => extensionService.selectTheme(item.key), text("正在切换主题…", "Applying theme…"))}>{text("使用", "Use theme")}</SettingActionButton>}
               {snapshot.updates[item.key] && <SettingActionButton pending={pending === (zh ? "正在更新…" : "Updating…")} disabled={busy || batchRunning} onClick={() => void run(() => extensionService.update(item.key), text("正在更新…", "Updating…"))}>{pending === (zh ? "正在更新…" : "Updating…") ? text("正在更新…", "Updating…") : text("更新", "Update")}</SettingActionButton>}
               <ActionDisclosure label={text(`${item.manifest.name} 更多操作`, `More actions for ${item.manifest.name}`)}>
@@ -202,9 +239,10 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
                 <SettingActionButton disabled={busy} tone="danger" onClick={() => setConfirmation(item.key)}>{text("卸载", "Uninstall")}</SettingActionButton>
               </ActionDisclosure>
               {plugin && <SettingToggle checked={item.enabled} disabled={busy || safeMode} ariaLabel={`${text("启用", "Enable")} ${item.manifest.name}`} onChange={(enabled) => void run(() => extensionService.toggle(item.key, enabled), text("正在应用…", "Applying…"))} />}
-            </>} />{inline && expandedInline === item.key && <div className="df-settings-inline-plugin" ref={inlineRoot}>{inline}</div>}</div>;
+            </>} />{!directSettings && inline && expandedInline === item.key && <div className="df-settings-inline-plugin" ref={inlineRoot}>{inline}</div>}</div>;
           })}
         </div>
+        {plugin && <SettingActionButton onClick={browseMarket}>{text("添加插件", "Add plugins")}</SettingActionButton>}
       </SettingSection>
       {inlineTarget && !installed.some(item => item.key === inlineTarget) && <p className="df-extension-note">{text("请先安装对应插件。", "Install the corresponding plugin to configure it.")}</p>}
       <SettingDisclosure title={text(plugin ? "插件管理偏好" : "主题管理偏好", plugin ? "Plugin management preferences" : "Theme management preferences")}>

@@ -28,6 +28,7 @@ export interface SettingsTarget {
   detail?: SettingsDetail;
   anchor?: string;
   pluginPage?: string;
+  pluginOwner?: string;
 }
 
 export type SettingsTargetInput = SettingsTarget | LegacySettingsSection | undefined;
@@ -95,7 +96,7 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
   if (input.detail && !["ai", "widget", "integrations", "recovery"].includes(input.detail)) {
     return { category: input.category, anchor: input.anchor };
   }
-  return { category: input.category, detail: input.detail, anchor: input.anchor, ...(input.category === "plugins" && input.pluginPage ? { pluginPage: input.pluginPage } : {}) };
+  return { category: input.category, detail: input.detail, anchor: input.anchor, ...(input.category === "plugins" && input.pluginPage ? { pluginPage: input.pluginPage } : {}), ...(input.category === "plugins" && input.pluginOwner ? { pluginOwner: input.pluginOwner } : {}) };
 }
 
 export function settingsCategoryLabel(category: SettingsCategory, lang: Language): string {
