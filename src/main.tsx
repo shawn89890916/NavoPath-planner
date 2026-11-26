@@ -21,7 +21,6 @@ import { RightUtilityPanel } from "./components/RightUtilityPanel";
 import { FocusTimerPanel } from "./components/FocusTimerPanel";
 import { normalizePomodoroClockFont, POMODORO_EXTENSION_KEY } from "./widget/pomodoroAppearance";
 import type { ExtensionContribution } from "./extensions/types";
-import { undoAiImportData } from "./utils/aiImportUndo";
 import { highlightTaskLocation } from "./utils/highlightTaskLocation";
 import { DailyTimelineGrid, TimelineDayBoundaries } from "./components/ExecutionSharedLayout";
 import { themeVars } from "./WorkspacePresentation";
@@ -8256,8 +8255,11 @@ if (cached?.data && cached?.settings) {
 
   async function undoAiImport(messageId: string) {
     const commit = aiMessages.find((message) => message.id === messageId)?.importCommit;
-    const currentData = dataRef.current;
-    if (!commit || !currentData) return;
+    if (!commit || !dataRef.current) return;
+    const workspaceKey=loadedWorkspaceKeyRef.current;
+    const {undoAiImportData}=await import("./utils/aiImportUndo");
+    const currentData=dataRef.current;
+    if(!currentData||workspaceKey!==loadedWorkspaceKeyRef.current)return;
     await saveData(undoAiImportData(currentData, commit),"undo");
     setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, actionState: "undone", importCommit: undefined } : message));
     persistAiMessage(messageId, { actionState: "undone" });

@@ -1,4 +1,5 @@
-import { useEffect,useMemo,useState } from "react";
+import { lazy,Suspense,useEffect,useMemo,useState } from "react";
+const MetricsProjectDetails=lazy(()=>import("./MetricsProjectDetails"));
 import type { Language,PlannerData } from "../types";
 import type { TimeAllocationMetrics } from "./timeAllocation";
 import type { buildInsights } from "./insightFacts";
@@ -61,6 +62,7 @@ export default function MetricsBreakdown(p:Props){
       <p>{t("显示有活动的最近 60 个日期；按设置的日界线统计。计时缺失显示 —。","Latest 60 dates with activity, using the configured day boundary. Missing tracked time is —.")}</p>
       <div className="df-metric-insight-trend">{visibleTrend.map(d=>{const m=visibleTrend.reduce((n,v)=>Math.max(n,v.scheduled,v.completed,v.tracked),1);return <button type="button" key={d.date} onClick={()=>p.onApplyQuery({...p.query,projects:[active.id],range:"custom",customStart:d.date,customEnd:d.date})} title={d.date+" · "+duration(d.scheduled)+" / "+duration(d.completed)+" / "+(d.trackedSessions?duration(d.tracked):"—")}><span>{d.date.slice(5)}</span><span className="df-metric-insight-bars">{[d.scheduled,d.completed,d.tracked].map((v,i)=><i key={i} style={{height:v/m*100+"%"}}/>)}</span></button>;})}</div>
       <p>{t("依次为排程、完成排程、计时。点击日期下钻。","Scheduled / completed schedule / tracked. Select a date to drill down.")}</p><div className="df-metric-insight-table"><table><thead><tr><th>{t("日期","Date")}</th><th>{t("排程","Scheduled")}</th><th>{t("完成","Completed")}</th><th>{t("计时","Tracked")}</th></tr></thead><tbody>{visibleTrend.map(d=><tr key={d.date}><td>{d.date}</td><td>{duration(d.scheduled)}</td><td>{duration(d.completed)}</td><td>{d.trackedSessions?duration(d.tracked):"—"}</td></tr>)}</tbody></table></div>
+      <Suspense fallback={<p role="status">{t("正在加载项目明细…","Loading project details…")}</p>}><MetricsProjectDetails key={active.id} data={p.data} allocation={p.allocation} result={r} projectId={active.id} dayStartMinutes={p.dayStartMinutes} lang={p.lang} query={p.query}/></Suspense>
     </>}
   </>;
 }
