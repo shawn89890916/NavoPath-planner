@@ -3,7 +3,7 @@ import type { PlannerData, Task } from "../types";
 import { diffAnalyticsEvents, makeTimerAnalyticsEvent } from "./activityEvents";
 import { buildTimeAllocationMetrics } from "./timeAllocation";
 import { buildInsights, metricDay } from "./insightFacts";
-import { buildObservedPlanHistory } from "./historyAnalysis";
+import { buildObservedPlanHistory, createObservedPlanAccumulator } from "./historyAnalysis";
 import { normalizeSavedViews } from "./savedViews";
 const task:Task={id:"t",title:"secret",notes:"private",dueDate:"",category:"personal",priority:null,goalId:"",completed:false,createdAt:"2026-11-26T00:00:00Z",updatedAt:"2026-11-26T00:00:00Z",timelineRecords:[{id:"r",taskId:"t",scheduledDate:"2026-11-26",scheduledStart:"09:00",scheduledEnd:"10:00",executionStatus:"scheduled",createdAt:"2026-11-26T00:00:00Z"}]};
 const data:PlannerData={version:1,importedSeedVersion:"",generatedAt:"",goals:[],projects:[],tasks:[task],longTasks:[],events:[],notes:[],drafts:[],chat:[],aiMemories:[]};
@@ -99,6 +99,21 @@ describe("large observed history and conservative provenance",()=>{
   const r=buildObservedPlanHistory([event("t","r",0),event("t","r",1,"sync"),event("t","r",2)],d,range);
   expect(r.moveCount).toBe(0);expect(r.observedExecutions).toBe(1);expect(r.comparisons).toEqual([]);
   expect(buildObservedPlanHistory([event("t","r",0,"sync")],d,range).observedExecutions).toBe(0);
+ });
+ it("streams the entire range beyond 500 events without dropping the original creation",()=>{
+  const d={...data,tasks:[completedTask("t","r")],timeEntries:[timeEntry("t","r")]};
+  const first=event("t","r",0),last=event("t","r",2);
+  const events=[last,...Array.from({length:750},(_,i)=>({...event("t","r",1),id:"edit-"+i,after:moved,before:moved})),first];
+  const acc=createObservedPlanAccumulator(d,range);
+  for(const e of events)acc.add(e);
+  expect(acc.finish()).toEqual(buildObservedPlanHistory(events,d,range));
+  expect(acc.finish()).toMatchObject({eventCount:752,created:1,comparisons:[{initial:60,tracked:50,estimate:45}]});
+ });
+ it("counts event-time project attribution but rejects comparisons across a filtered-out project",()=>{
+  const d={...data,tasks:[completedTask("t","r")],timeEntries:[timeEntry("t","r")]};
+  const acc=createObservedPlanAccumulator(d,range,["p"]);
+  for(const e of [{...event("t","r",0),projectId:"p"},{...event("t","r",1),projectId:"other"},{...event("t","r",2),projectId:"p"}])acc.add(e);
+  expect(acc.finish()).toMatchObject({eventCount:2,created:1,moveCount:0,observedExecutions:1,comparisons:[]});
  });
  it("aggregates 100,000 events against 25,000 independent completed records",()=>{
   const tasks:Task[]=[],events:import("./activityEvents").AnalyticsEvent[]=[],timeEntries:ReturnType<typeof timeEntry>[]=[];
