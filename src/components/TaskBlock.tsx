@@ -92,6 +92,7 @@ type TaskBlockProps = TaskBlockClassOptions & TaskBlockStyleOptions & {
   onMouseLeave?: React.MouseEventHandler<HTMLElement>;
   onPointerDown?: React.PointerEventHandler<HTMLElement>;
   onPointerEnter?: React.PointerEventHandler<HTMLElement>;
+  onPointerLeave?: React.PointerEventHandler<HTMLElement>;
   onPointerMove?: React.PointerEventHandler<HTMLElement>;
   onPointerUp?: React.PointerEventHandler<HTMLElement>;
   onPointerCancel?: React.PointerEventHandler<HTMLElement>;
@@ -139,6 +140,7 @@ export const TaskBlock = React.forwardRef<HTMLElement, TaskBlockProps>(function 
       onMouseLeave={props.onMouseLeave}
       onPointerDown={props.onPointerDown}
       onPointerEnter={props.onPointerEnter}
+      onPointerLeave={props.onPointerLeave}
       onPointerMove={props.onPointerMove}
       onPointerUp={props.onPointerUp}
       onPointerCancel={props.onPointerCancel}
