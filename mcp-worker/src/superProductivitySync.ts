@@ -1,8 +1,9 @@
 export type SyncSide = "navopath" | "superproductivity";
-export type SyncEntity = { id: string; syncId?: string; fields: Record<string, unknown> };
-export type SyncSnapshot = { projects: SyncEntity[]; tasks: SyncEntity[] };
+export type InitialSyncMode = "merge" | "overwrite-navopath" | "overwrite-superproductivity";
+export type SyncEntity = { id: string; syncId?: string; parentId?: string; fields: Record<string, unknown> };
+export type SyncSnapshot = { projects: SyncEntity[]; tasks: SyncEntity[]; overwriteVersion?: 1 };
 export type SyncConflict = { id: string; syncId: string; kind: "project" | "task"; field: string; navopath: unknown; superproductivity: unknown; createdAt: string };
-type Canonical = { kind: "project" | "task"; fields: Record<string, unknown>; deleted?: boolean; ids: Partial<Record<SyncSide, string>> };
+type Canonical = { kind: "project" | "task"; fields: Record<string, unknown>; deleted?: boolean; overwriteTarget?: SyncSide; ids: Partial<Record<SyncSide, string>> };
 export type SyncState = {
   status: "waiting" | "preview" | "active";
   latest: Partial<Record<SyncSide, SyncSnapshot>>;
@@ -28,10 +29,10 @@ export function normalizeSyncSnapshot(value: unknown): SyncSnapshot {
         if (key.length > 80 || serialized === undefined || serialized.length > 100_000 || (typeof field === "number" && !Number.isFinite(field))) throw new Error(`Invalid ${kind} field`);
         fields[key] = field;
       }
-      return { id: item.id, ...(typeof item.syncId === "string" && item.syncId.length < 240 ? { syncId: item.syncId } : {}), fields };
+      return { id: item.id, ...(kind === "task" && typeof item.parentId === "string" && item.parentId.length <= 200 ? { parentId: item.parentId } : {}), ...(typeof item.syncId === "string" && item.syncId.length < 240 ? { syncId: item.syncId } : {}), fields };
     });
   };
-  return { projects: normalize(value.projects, "project"), tasks: normalize(value.tasks, "task") };
+  return { projects: normalize(value.projects, "project"), tasks: normalize(value.tasks, "task"), ...(value.overwriteVersion === 1 ? { overwriteVersion: 1 as const } : {}) };
 }
 
 const normalizeTitle = (value: unknown) => String(value || "").normalize("NFKC").trim().toLocaleLowerCase();
@@ -50,11 +51,26 @@ export function createInitialPreview(state: SyncState) {
       return matches.length === 1 && leftCounts.get(normalizeTitle(a.fields.title)) === 1 ? [{ navopathId: a.id, superproductivityId: matches[0].id }] : [];
     }) };
   };
-  return { status: state.status, projects: candidates("project"), tasks: candidates("task"), conflicts: state.conflicts };
+  return { status: state.status, projects: candidates("project"), tasks: candidates("task"), conflicts: state.conflicts, overwriteSupported: navopath.overwriteVersion === 1 && superproductivity.overwriteVersion === 1 };
 }
 
-export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "project" | "task"; navopathId: string; superproductivityId: string; preferredSide?: SyncSide }>) {
+export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "project" | "task"; navopathId: string; superproductivityId: string; preferredSide?: SyncSide }>, mode: InitialSyncMode = "merge") {
   if (!state.latest.navopath || !state.latest.superproductivity) throw new Error("Both apps must send a snapshot before the first sync");
+  if (!["merge", "overwrite-navopath", "overwrite-superproductivity"].includes(mode)) throw new Error("Invalid initial sync mode");
+  const authority: SyncSide | undefined = mode === "overwrite-navopath" ? "navopath" : mode === "overwrite-superproductivity" ? "superproductivity" : undefined;
+  if (authority) {
+    const preview = createInitialPreview(state);
+    if (!preview.overwriteSupported) throw new Error("Update both sync plugins before using overwrite");
+    matches = [...preview.projects.suggestions.map(match => ({ ...match, kind: "project" as const, preferredSide: authority })), ...preview.tasks.suggestions.map(match => ({ ...match, kind: "task" as const, preferredSide: authority }))];
+    const target: SyncSide = authority === "navopath" ? "superproductivity" : "navopath";
+    const kept = new Set(matches.filter(match => match.kind === "task").map(match => target === "navopath" ? match.navopathId : match.superproductivityId));
+    // Never cascade-delete a matched child via an unmatched parent.
+    const targetTasks = state.latest[target]!.tasks;
+    if (targetTasks.some(task => kept.has(task.id) && task.parentId && !kept.has(task.parentId))) throw new Error("Overwrite would remove a parent of a matched task. Move that task first or use merge.");
+  }
+  // A fresh pair must never trust mappings from an earlier connection.
+  for (const snapshot of Object.values(state.latest)) for (const item of [...snapshot.projects, ...snapshot.tasks]) delete item.syncId;
+  state.canonical = {}; state.pending = {}; state.conflicts = [];
   const seen = new Set<string>();
   const matchedLeft = new Set<string>(); const matchedRight = new Set<string>();
   const leftByKind = { project: new Map(state.latest.navopath.projects.map(item => [item.id, item])), task: new Map(state.latest.navopath.tasks.map(item => [item.id, item])) };
@@ -73,7 +89,7 @@ export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "pro
     const target: SyncSide = source === "navopath" ? "superproductivity" : "navopath";
     const preferred = source === "navopath" ? a : b;
     const other = source === "navopath" ? b : a;
-    state.canonical[syncId] = { kind: match.kind, fields: { ...other.fields, ...preferred.fields }, ids: { navopath: a.id, superproductivity: b.id } };
+    state.canonical[syncId] = { kind: match.kind, fields: { ...(authority ? {} : other.fields), ...preferred.fields }, ids: { navopath: a.id, superproductivity: b.id } };
     state.pending[syncId] = Object.fromEntries(Object.keys(preferred.fields).filter(key => key !== "scheduleBlocks" && JSON.stringify(preferred.fields[key]) !== JSON.stringify(other.fields[key])).map(key => [key, target]));
   }
   for (const side of ["navopath", "superproductivity"] as const) for (const kind of ["projects", "tasks"] as const) {
@@ -81,8 +97,9 @@ export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "pro
       if (!entity.syncId) {
         entity.syncId = crypto.randomUUID();
         const kindName = kind === "projects" ? "project" : "task";
-        state.canonical[entity.syncId] = { kind: kindName, fields: { ...entity.fields }, ids: { [side]: entity.id } };
-        state.pending[entity.syncId] = { $create: side === "navopath" ? "superproductivity" : "navopath" };
+        const discard = Boolean(authority && side !== authority);
+        state.canonical[entity.syncId] = { kind: kindName, fields: { ...entity.fields }, ids: { [side]: entity.id }, ...(discard ? { deleted: true, overwriteTarget: side } : {}) };
+        state.pending[entity.syncId] = discard ? { $deleted: side } : { $create: side === "navopath" ? "superproductivity" : "navopath" };
       }
     }
   }
@@ -92,8 +109,7 @@ export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "pro
 
 export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: SyncSnapshot, timestamp: string) {
   if (state.status !== "active") {
-    state.latest[side] = snapshot;
-    state.baseRevision++;
+    if (JSON.stringify(state.latest[side]) !== JSON.stringify(snapshot)) { state.latest[side] = snapshot; state.baseRevision++; }
     return { state, assignments: [] as Array<{ kind: "project" | "task"; id: string; syncId: string }>, actions: [] as ReturnType<typeof buildActions> };
   }
   const previous = state.latest[side] || { projects: [], tasks: [] };
@@ -103,14 +119,18 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
     for (const item of snapshot[key]) {
       const old = previous[key].find(entry => entry.id === item.id);
       const hadSyncId = Boolean(item.syncId);
-      const syncId = item.syncId || old?.syncId || crypto.randomUUID(); item.syncId = syncId;
+      const discarded = Object.entries(state.canonical).find(([, entry]) => entry.overwriteTarget === side && entry.deleted && entry.kind === kind && entry.ids[side] === item.id)?.[0];
+      const syncId = discarded || old?.syncId || (item.syncId && state.canonical[item.syncId] ? item.syncId : undefined) || crypto.randomUUID(); item.syncId = syncId;
       let canonical = state.canonical[syncId];
       if (!canonical) {
         canonical = state.canonical[syncId] = { kind, fields: { ...item.fields }, ids: {} };
         state.pending[syncId] = { $create: side === "navopath" ? "superproductivity" : "navopath" };
       }
       canonical.ids[side] = item.id;
-      if (!hadSyncId) assignments.push({ kind, id: item.id, syncId });
+      if (!hadSyncId || discarded) assignments.push({ kind, id: item.id, syncId });
+      if (canonical.deleted && canonical.overwriteTarget === side) {
+        state.pending[syncId] = { $deleted: side }; continue;
+      }
       if (state.pending[syncId]?.$create === side) delete state.pending[syncId].$create;
       for (const field of new Set([...Object.keys(old?.fields || {}), ...Object.keys(item.fields)])) {
         if (side === "superproductivity" && field === "scheduleBlocks") continue;
@@ -134,7 +154,9 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
       const canonical = state.canonical[syncId]; if (!canonical) continue;
       const pendingTo = state.pending[syncId]?.$deleted;
       const changedBeforeDelete = Object.entries(old.fields).some(([field, value]) => JSON.stringify(value) !== JSON.stringify(canonical.fields[field]));
-      if (pendingTo === side && changedBeforeDelete) {
+      if (canonical.overwriteTarget === side && canonical.deleted) {
+        if (state.pending[syncId]) delete state.pending[syncId].$deleted;
+      } else if (pendingTo === side && changedBeforeDelete) {
         state.conflicts.push({ id: crypto.randomUUID(), syncId, kind, field: "$deleted", navopath: side === "navopath" ? true : false, superproductivity: side === "superproductivity" ? true : false, createdAt: timestamp });
       } else if (pendingTo === side) {
         delete state.pending[syncId].$deleted;
@@ -166,13 +188,15 @@ export function buildActions(state: SyncState, side: SyncSide) {
     }
     if (create || Object.keys(fields).length || (pending.$deleted === side && canonical.deleted)) actions.push({ syncId, kind: canonical.kind, id: targetId, fields, ...(canonical.deleted ? { deleted: true } : {}) });
   }
-  return actions.sort((a, b) => Number(a.kind === "task") - Number(b.kind === "task"));
+  const order = (action: typeof actions[number]) => action.deleted ? (action.kind === "task" ? 2 : 3) : (action.kind === "project" ? 0 : 1);
+  return actions.sort((a, b) => order(a) - order(b));
 }
 
 export function restoreSyncEntity(state: SyncState, side: SyncSide, syncId: string, localId: string) {
   const canonical = state.canonical[syncId];
   if (!canonical || !canonical.deleted || !localId || localId.length > 200) throw new Error("Deleted item cannot be restored");
   canonical.deleted = false;
+  delete canonical.overwriteTarget;
   canonical.ids[side] = localId;
   state.pending[syncId] = { ...(state.pending[syncId] || {}), $deleted: side === "navopath" ? "superproductivity" : "navopath" };
   state.baseRevision++;
