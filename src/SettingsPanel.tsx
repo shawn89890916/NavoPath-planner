@@ -93,6 +93,7 @@ function calendarFeedErrorMessage(caught: unknown, lang: Language) {
 function CalendarFeedManager({ lang }: { lang: Language }) {
   const [tokens, setTokens] = useState<CalendarFeedTokenMetadata[]>([]);
   const [feedUrl, setFeedUrl] = useState("");
+  const [historyUrl, setHistoryUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -112,12 +113,30 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
   }, [api]);
   useEffect(() => { if (supported) void refresh(); else setLoading(false); }, [refresh, supported]);
   const copyFeedUrl = async (history = false) => {
+    setError("");
+    setNotice("");
+    setBusy(true);
     try {
-      await navigator.clipboard.writeText(history ? feedUrl.replace(/\.ics$/, "-history.ics") : feedUrl);
+      let url = feedUrl;
+      if (history) {
+        if (!api.getCalendarHistoryToken) throw new Error(lang === "zh" ? "当前环境不支持获取历史链接。" : "History link retrieval is unavailable.");
+        const token = await api.getCalendarHistoryToken();
+        url = calendarFeedUrl(token + "-history");
+        setHistoryUrl(url);
+      }
+      if (!url) return;
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        setError(lang === "zh" ? "复制失败，请手动选择链接。" : "Copy failed. Select the link manually.");
+        return;
+      }
       setNotice(history ? (lang === "zh" ? "SP 时间轴历史链接已复制" : "SP timeline history link copied") : (lang === "zh" ? "订阅链接已复制" : "Subscription link copied"));
       window.setTimeout(() => setNotice(""), 1800);
-    } catch {
-      setError(lang === "zh" ? "复制失败，请手动选择链接。" : "Copy failed. Select the link manually.");
+    } catch (caught) {
+      setError(calendarFeedErrorMessage(caught, lang));
+    } finally {
+      setBusy(false);
     }
   };
   const createFeed = async () => {
@@ -128,6 +147,7 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
     try {
       const created = await api.createCalendarFeedToken();
       setFeedUrl(calendarFeedUrl(created.token));
+      setHistoryUrl("");
       await refresh();
     } catch (caught) {
       setError(calendarFeedErrorMessage(caught, lang));
@@ -141,7 +161,10 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
       <p>{supported
         ? (lang === "zh" ? "将时间轴排程、日历事件和未排程任务的截止日订阅到 iPhone、Notion Calendar 或其他日历。链接包含私密令牌，请勿公开分享。" : "Subscribe to timeline blocks, calendar events, and unscheduled task deadlines from iPhone, Notion Calendar, or another calendar. The link contains a private token; do not share it publicly.")
         : (lang === "zh" ? "登录云端账户后可生成日历订阅链接。" : "Sign in to a cloud account to create a calendar subscription link.")}</p>
-      {supported && <button className="df-calendar-generate" type="button" disabled={busy} onClick={() => void createFeed()}>{busy
+      {supported && <button className="df-calendar-generate" type="button" disabled={busy || loading} onClick={() => {
+        if (tokens.length && !window.confirm(lang === "zh" ? "更换将使现有普通和历史订阅链接失效。确定继续？" : "Replacing invalidates existing regular and history subscriptions. Continue?")) return;
+        void createFeed();
+      }}>{busy
         ? (lang === "zh" ? "正在生成…" : "Generating…")
         : tokens.length > 0
           ? (lang === "zh" ? "更换订阅链接" : "Replace subscription link")
@@ -151,11 +174,15 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
         <code>{feedUrl}</code>
         <div className="df-calendar-actions">
           <button type="button" onClick={() => void copyFeedUrl()}>{lang === "zh" ? "复制链接" : "Copy link"}</button>
-          <button type="button" onClick={() => void copyFeedUrl(true)}>{lang === "zh" ? "复制 SP 时间轴历史链接" : "Copy SP timeline history link"}</button>
           <button type="button" onClick={() => { window.location.href = feedUrl.replace(/^https?:/, "webcal:"); }}>{lang === "zh" ? "在日历中订阅" : "Subscribe in Calendar"}</button>
         </div>
       </div>}
-      <p>{lang === "zh" ? "Super Productivity：将已有订阅链接末尾的 .ics 改为 -history.ics，在 SP 添加 iCalendar 来源并关闭自动导入任务，即可显示已完成任务及额外时间块。无需更换链接。" : "Super Productivity: replace .ics with -history.ics in your existing link, add an iCalendar source in SP and leave automatic task import off to see completed and additional blocks. No need to replace the link."}</p>
+      <p>{lang === "zh" ? "Super Productivity：将历史链接添加为 iCalendar 来源，关闭自动导入任务。已完成任务和额外时间块将只读显示，不影响已有日历订阅。" : "Super Productivity: add the history link as an iCalendar source and disable automatic task import. Completed and additional time blocks are read-only; existing subscriptions are unaffected."}</p>
+      {supported && api.getCalendarHistoryToken && tokens.length > 0 && <div className="df-calendar-actions">
+        <button type="button" disabled={busy || loading} onClick={() => void copyFeedUrl(true)}>{lang === "zh" ? "复制 SP 时间轴历史链接" : "Copy SP timeline history link"}</button>
+      </div>}
+      {supported && !loading && tokens.length === 0 && <small>{lang === "zh" ? "先生成日历订阅链接，即可复制 SP 历史链接。" : "Create a calendar subscription first to copy its SP history link."}</small>}
+      {historyUrl && <div className="df-mcp-token"><small>{lang === "zh" ? "历史链接（请勿公开分享；撤销订阅后失效）" : "History link (private; invalidated when the subscription is revoked)"}</small><code>{historyUrl}</code></div>}
       {error && <p className="df-mcp-status error" role="alert">{error}</p>}
       {notice && <p className="df-mcp-status" role="status">{notice}</p>}
       {loading && <p className="df-mcp-status">{lang === "zh" ? "正在读取订阅状态…" : "Loading subscription status…"}</p>}
@@ -167,6 +194,7 @@ function CalendarFeedManager({ lang }: { lang: Language }) {
         try {
           await api.revokeCalendarFeedToken(token.id);
           setFeedUrl("");
+          setHistoryUrl("");
           await refresh();
         } catch (caught) {
           setError(calendarFeedErrorMessage(caught, lang));

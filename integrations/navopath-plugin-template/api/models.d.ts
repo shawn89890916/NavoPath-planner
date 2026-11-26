@@ -733,6 +733,7 @@ export interface PlannerApi {
   revokeCalDavCredential?: () => Promise<void>;
   listCalendarFeedTokens?: () => Promise<CalendarFeedTokenMetadata[]>;
   createCalendarFeedToken?: () => Promise<{ token: string; metadata: CalendarFeedTokenMetadata }>;
+  getCalendarHistoryToken?: () => Promise<string>;
   revokeCalendarFeedToken?: (id: string) => Promise<void>;
   createSuperProductivityPairingCode?: () => Promise<{ code: string; expiresAt: string }>;
   requestSuperProductivitySync?: (path: string, method?: "GET" | "POST" | "DELETE", body?: unknown) => Promise<any>;

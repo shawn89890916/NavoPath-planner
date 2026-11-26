@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 122
+
+#### 修复
+
+- 已有日历订阅可直接复制 SP 时间轴历史链接，无需更换原链接；链接仅可读取历史时间块，原日历订阅保持有效。
+
 ### 1.7.0 Beta 121
 
 #### 改进
@@ -1259,6 +1265,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 122
+
+#### Fixed
+
+- Existing calendar subscribers can copy the SP timeline history link directly without replacing their original link; the new link is limited to history blocks and leaves the existing calendar subscription valid.
 
 ### 1.7.0 Beta 121
 

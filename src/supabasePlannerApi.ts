@@ -775,6 +775,22 @@ export function createSupabasePlannerApi(supabaseUrl: string, supabaseAnonKey: s
       if (error) throw new Error(error.message);
       return (data || []).map(calendarTokenMetadata);
     },
+    getCalendarHistoryToken: async () => {
+      const user = await requireUser();
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session || data.session.user.id !== user.id) throw new Error("Sign in to NavoPath");
+      const endpoint = new URL(import.meta.env.VITE_MCP_ENDPOINT || "https://navopath.com");
+      endpoint.pathname = endpoint.pathname.replace(/\/mcp\/?$/, "").replace(/\/$/, "") + "/calendar/history-link";
+      endpoint.search = ""; endpoint.hash = "";
+      const response = await fetch(endpoint, {
+        method: "POST", headers: { Authorization: "Bearer " + data.session.access_token },
+        signal: AbortSignal.timeout(20_000), cache: "no-store",
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || ("Calendar request failed (" + response.status + ")"));
+      if (typeof result?.token !== "string" || !/^nvh_[0-9a-f-]{36}_[0-9a-f]{64}$/.test(result.token)) throw new Error("Invalid calendar history response");
+      return result.token;
+    },
     createCalendarFeedToken: async () => {
       await requireUser();
       const bytes = crypto.getRandomValues(new Uint8Array(32));
