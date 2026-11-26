@@ -14,6 +14,17 @@ export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerDat
   const groups=new Map<string,Group>(),moves=new Set<string>(),resizes=new Set<string>();
   const recordKey=(taskId:string|undefined,recordId:string)=>JSON.stringify([taskId||"",recordId]);
   const isUncertain=(e:AnalyticsEvent)=>e.source==="undo"||e.source==="remote-observed"||e.source==="sync";
+  // Most lifecycle changes leave the schedule untouched. Memoize durations of
+  // repeated schedules within this query, with bounded memory for long histories.
+  const durations=new Map<string,number|null>();
+  const duration=(v:AnalyticsSnapshot|undefined)=>{
+    if(!v)return null;
+    const key=JSON.stringify([v.scheduledDate,v.scheduledStart,v.scheduledEndDate,v.scheduledEnd]);
+    if(durations.has(key))return durations.get(key)!;
+    const result=observedScheduleMinutes(v);
+    if(durations.size<2048)durations.set(key,result);
+    return result;
+  };
   const completedRecords=new Set<string>();
   const singleExecutionTasks=new Set<string>();
   for(const t of data.tasks){
@@ -39,8 +50,10 @@ export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerDat
     if(e.action==="created")created++;if(e.action==="removed")removed++;
     if(e.action!=="changed"||!e.before||!e.after)continue;
     if(e.before.scheduledDate!==e.after.scheduledDate||e.before.scheduledStart!==e.after.scheduledStart){moves.add(key);moveCount++;}
-    const before=observedScheduleMinutes(e.before),after=observedScheduleMinutes(e.after);
-    if(before!==null&&after!==null&&before!==after){resizes.add(key);resizeCount++;}
+    if(e.before.scheduledDate!==e.after.scheduledDate||e.before.scheduledStart!==e.after.scheduledStart||e.before.scheduledEndDate!==e.after.scheduledEndDate||e.before.scheduledEnd!==e.after.scheduledEnd){
+      const before=duration(e.before),after=duration(e.after);
+      if(before!==null&&after!==null&&before!==after){resizes.add(key);resizeCount++;}
+    }
   }
   const comparisons:{taskId:string;recordId:string;initial:number;tracked:number;estimate:number|null}[]=[];
   const trackedByRecord=new Map<string,number>();
@@ -52,7 +65,7 @@ export function buildObservedPlanHistory(events:AnalyticsEvent[],data:PlannerDat
   }
   for(const [key,{first,last,uncertain}] of groups){
     if(first.action!=="created"||uncertain||last.after?.executionStatus!=="completed"||!first.taskId||!completedRecords.has(key))continue;
-    const initial=observedScheduleMinutes(first.after),tracked=trackedByRecord.get(key);
+    const initial=duration(first.after),tracked=trackedByRecord.get(key);
     if(initial===null||tracked===undefined)continue;
     const estimate=singleExecutionTasks.has(first.taskId)&&typeof first.estimateMinutes==="number"&&first.estimateMinutes>0?first.estimateMinutes:null;
     comparisons.push({taskId:first.taskId,recordId:first.entityId,initial,tracked,estimate});
