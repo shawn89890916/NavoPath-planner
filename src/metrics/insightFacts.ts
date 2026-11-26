@@ -42,9 +42,9 @@ export function buildInsights(data:PlannerData,allocation:TimeAllocationMetrics,
   for(const entry of allocation.taskEntries){
     const t=tasks.get(entry.taskId);if(!t)continue;
     const record=t.timelineRecords?.find(r=>r.id===entry.recordId);
-    const status=entry.isHabit&&entry.completed?"completed":record?.executionStatus || (entry.completed?"completed":"scheduled");
+    const status=entry.isHabit?(entry.completed?"completed":record?.executionStatus==="completed"?"scheduled":record?.executionStatus||"scheduled"):record?.executionStatus || (entry.completed?"completed":"scheduled");
     if(options.completion==="completed"&&status!=="completed" || options.completion==="incomplete"&&status==="completed")continue;
-    const score=record?record.engagement:t.engagement;
+    const score=record?record.engagement:entry.recordId===`legacy-${t.id}`||entry.recordId.startsWith("metric-all-day-")?t.engagement:undefined;
     const raw=intervalMinutes(entry.scheduledStart.getTime(),entry.scheduledEnd.getTime());
     const key=entry.taskId+":"+entry.recordId;
     const projectId=t.projectId||"__unassigned__";
@@ -59,19 +59,20 @@ export function buildInsights(data:PlannerData,allocation:TimeAllocationMetrics,
   const start=allocation.range.start.getTime(),end=allocation.range.end.getTime();
   if(options.completion!=="completed")for(const task of data.tasks){if(projectFilter.size&&!projectFilter.has(task.projectId||"__unassigned__"))continue;for(const r of task.timelineRecords||[]){if(r.executionStatus!=="cancelled")continue;const habit=task.id.startsWith("habit-task-")||r.id.startsWith("habit-record-")||Boolean(data.habitDailyStates?.some(h=>h.timelineRecordId===r.id));if(options.habitMode==="exclude"&&habit||options.habitMode==="only"&&!habit)continue;const a=recordStartDateTime(r).getTime(),b=recordEndDateTime(r).getTime();if((b>a&&Math.min(end,b)>Math.max(start,a))||(!r.scheduledStart&&a>=start&&a<end))statuses.cancelled++;}}
   for(const entry of data.timeEntries||[]){
-    const task=tasks.get(entry.taskId);if(!task)continue;
-    if(projectFilter.size&&!projectFilter.has(task.projectId||"__unassigned__"))continue;
-    const habit=task.id.startsWith("habit-task-")||Boolean((data.habitDailyStates||[]).find(h=>h.timelineRecordId===entry.timelineRecordId&&entry.timelineRecordId));
+    const task=tasks.get(entry.taskId);
+    const projectId=task?task.projectId||"__unassigned__":entry.projectId||"__unassigned__";
+    if(projectFilter.size&&!projectFilter.has(projectId))continue;
+    const habit=entry.taskId.startsWith("habit-task-")||Boolean((data.habitDailyStates||[]).find(h=>h.timelineRecordId===entry.timelineRecordId&&entry.timelineRecordId));
     if(options.habitMode==="exclude"&&habit || options.habitMode==="only"&&!habit)continue;
-    const record=task.timelineRecords?.find(r=>r.id===entry.timelineRecordId);
-    const isCompleted=record?record.executionStatus==="completed":task.completed;
-    if(options.completion==="completed"&&!isCompleted || options.completion==="incomplete"&&isCompleted)continue;
+    const record=task?.timelineRecords?.find(r=>r.id===entry.timelineRecordId);
+    const isCompleted=record?record.executionStatus==="completed":task?.completed;
+    if(options.completion!=="all"&&(isCompleted===undefined||(options.completion==="completed")!==isCompleted))continue;
     const a=Date.parse(entry.startAt),b=Date.parse(entry.endAt);
     if(!Number.isFinite(a)||!Number.isFinite(b)||b<=a||!Number.isFinite(entry.durationMinutes)||entry.durationMinutes<=0)continue;
     const lo=Math.max(a,start),hi=Math.min(b,end);if(hi<=lo)continue;
     trackedSessions++;
-    if(entry.timelineRecordId&&executions.has(task.id+":"+entry.timelineRecordId))measuredRecords.add(task.id+":"+entry.timelineRecordId);
-    const p=project(task.projectId||"__unassigned__");p.trackedSessions++;
+    if(entry.timelineRecordId&&executions.has(entry.taskId+":"+entry.timelineRecordId))measuredRecords.add(entry.taskId+":"+entry.timelineRecordId);
+    const p=project(projectId);p.trackedSessions++;
     eachDay(lo,hi,options.dayStartMinutes,(date,ms)=>{const minutes=entry.durationMinutes*ms/(b-a);const d=day(date);d.tracked+=minutes;d.trackedSessions++;tracked+=minutes;p.tracked+=minutes;if(entry.source in trackedBySource)trackedBySource[entry.source]+=minutes;});
   }
   let occupied=0,lo=0,hi=0;for(const interval of intervals.sort((a,b)=>a.start-b.start)){if(interval.start>hi){occupied+=hi-lo;lo=interval.start;hi=interval.end;}else hi=Math.max(hi,interval.end);}occupied=(occupied+hi-lo)/60000;

@@ -435,6 +435,7 @@ function groupColor(key: string, project: Project | null) {
 export function buildTimeAllocationMetrics(options: {
   data: PlannerData;
   range: MetricRangeInput;
+  rangeOverride?: MetricDateRange;
   dayStartMinutes?: number;
   weekStartsOn?: 0 | 1;
   groupBy?: MetricGroupBy;
@@ -447,7 +448,7 @@ export function buildTimeAllocationMetrics(options: {
   const groupBy = options.groupBy || "project";
   const habitMode = options.habitMode || "include";
   const completion = options.completion || "all";
-  const range = options.range.preset==="all"?recordedMetricRange(options.data,dayStartMinutes,options.range.anchorDate):getMetricRange({ ...options.range, dayStartMinutes, weekStartsOn: options.weekStartsOn });
+  const range = options.rangeOverride || (options.range.preset==="all"?recordedMetricRange(options.data,dayStartMinutes,options.range.anchorDate):getMetricRange({ ...options.range, dayStartMinutes, weekStartsOn: options.weekStartsOn }));
   const projects = options.data.projects || [];
   const tasksById=new Map((options.data.tasks||[]).map(t=>[t.id,t]));
   const projectFilter = new Set(options.projectIds || []);

@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 113
+
+#### 改进
+
+- Metrics 新增概览、等长周期对比、估时误差及项目完成进度；保留仍存在的历史计时，区分无数据与零值。
+
 ### 1.7.0 Beta 112
 
 #### 改进
@@ -1205,6 +1211,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 113
+
+#### Improvements
+
+- Metrics adds overview, matched-period comparisons, estimation error and project completion progress; retained historical time entries remain visible and missing data is distinct from zero.
 
 ### 1.7.0 Beta 112
 
