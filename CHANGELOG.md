@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 110
+
+#### 修复
+
+- 拖拽避让和任务落位直接移动原始任务块，避免字体、复选框、边框、宽度及色条因动画而变形；移除拖拽装饰性旋转和样式覆盖。
+
 ### 1.7.0 Beta 109
 
 #### 改进
@@ -1182,6 +1188,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 110
+
+#### Fixes
+
+- Drag displacement and task landing move the original task blocks rather than restyled copies, preserving typography, checkbox alignment, borders, width and accents. Remove decorative drag rotation and appearance overrides.
 
 ### 1.7.0 Beta 109
 

@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [desktop-beta]
   push:
-    branches: [feat/motion-system-desktop-beta-104, feat/motion-spatial-beta-106]
+    branches: [feat/motion-system-desktop-beta-104, feat/motion-spatial-beta-106, fix/task-motion-style-invariant-beta-110]
 permissions:
   contents: read
 jobs:

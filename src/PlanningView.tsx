@@ -1,5 +1,4 @@
 import { createDragProjection } from "./motion/dragProjection";
-import { deepCopyVisualStyles } from "./unifiedDrag";
 import { rememberDragLanding } from "./motion/layout";
 import "./PlanningView.css";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -1257,7 +1256,7 @@ export default function PlanningView(props: {
       }
     };
 
-    const getDropTarget = (x: number, y: number) => {
+    const readDropTarget = (x: number, y: number) => {
       const hit = document.elementFromPoint(x, y);
       if (!hit || !surface?.contains(hit)) return;
       const group = hit.closest<HTMLElement>("[data-planning-group]");
@@ -1270,6 +1269,7 @@ export default function PlanningView(props: {
       return { container, element: card, taskId: card.dataset.planningTaskId,
         position: y < rect.top + rect.height / 2 ? "before" as const : "after" as const };
     };
+    const getDropTarget = (x: number, y: number) => projection ? projection.logical(() => readDropTarget(x, y)) : readDropTarget(x, y);
 
     const move = (pointerEvent: PointerEvent) => {
       if (pointerEvent.pointerId !== pointerId) return;
@@ -1290,7 +1290,7 @@ export default function PlanningView(props: {
         try { dragElement.setPointerCapture(pointerId); } catch { /* ignore */ }
         document.body.classList.add("df-unified-dragging");
         dragElement.classList.add("is-dragging-source");
-        projection = createDragProjection(dragElement, deepCopyVisualStyles);
+        projection = createDragProjection(dragElement);
         const rect = dragElement.getBoundingClientRect();
         const offX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
         const offY = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
@@ -1413,7 +1413,7 @@ export default function PlanningView(props: {
       }
     };
 
-    const getDropTarget = (): TreeDropTarget | undefined => {
+    const readDropTarget = (): TreeDropTarget | undefined => {
       const hit = document.elementFromPoint(x, y);
       if (!hit || !tree?.contains(hit)) return;
       const node = hit.closest<HTMLElement>("[data-node-type][data-node-id]");
@@ -1438,6 +1438,7 @@ export default function PlanningView(props: {
       const target: TreeDropTarget = { kind, id, position, element };
       return canMoveTreeNode(props.data, sourceNode, target) ? target : undefined;
     };
+    const getDropTarget = () => projection ? projection.logical(readDropTarget) : readDropTarget();
 
     const updateDropTarget = () => {
       const drop = getDropTarget();
@@ -1491,7 +1492,7 @@ export default function PlanningView(props: {
         try { dragElement.setPointerCapture(pointerId); } catch { /* ignore */ }
         document.body.classList.add("df-unified-dragging");
         dragElement.classList.add("is-dragging-source");
-        projection = createDragProjection(dragElement, deepCopyVisualStyles);
+        projection = createDragProjection(dragElement);
         setDragNode(sourceNode);
         const sourceCard = sourceNodeEl.querySelector<HTMLElement>("[data-planning-drag-card]") || sourceNodeEl;
         const rect = sourceCard.getBoundingClientRect();

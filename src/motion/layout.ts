@@ -86,7 +86,8 @@ export function collectTaskMotion(root: HTMLElement, selector: string): Point[] 
   return points;
 }
 
-/** All moving pixels live in inert visual copies. Real task geometry and hit targets stay fixed. */
+/** Only move existing cards. Different sizes/representations settle in their
+ * native layout immediately; no surrogate card, scaling, opacity or restyling. */
 export class TaskMotionCoordinator {
   private active = new Set<() => void>();
 
@@ -99,55 +100,16 @@ export class TaskMotionCoordinator {
     this.cancel();
     for (const { before, after } of changes) {
       const node = after.node;
-      const doc = node.ownerDocument;
-      const win = doc.defaultView;
+      const win = node.ownerDocument.defaultView;
       const preference = effectiveMotionPreference(win);
-      if (!win || preference === "off" || !node.isConnected || typeof node.animate !== "function") continue;
-      const duration = preference === "rich" ? MOTION.complete : MOTION.layout;
-      if (!before) {
-        const animation = node.animate([{ opacity: .45 }, { opacity: 1 }], { duration: MOTION.base, easing: MOTION_EASE });
-        const cleanup = () => { animation.cancel(); this.active.delete(cleanup); };
-        this.active.add(cleanup);
-        void animation.finished.then(cleanup, cleanup);
-        continue;
-      }
-      const target = after.rect;
-      const source = before.rect;
-      // A lightweight text-only snapshot avoids duplicate DOM identity, event handlers,
-      // focusable children, and layout selectors used by drag/resize code.
-      const title = node.querySelector(".df-task-block-title, .df-task-title, .df-block-title, .df-shelf-task-title, .df-candidate-title")?.textContent?.trim();
-      if (!title) {
-        const animation = node.animate([{ opacity: .55 }, { opacity: 1 }], { duration: MOTION.base, easing: MOTION_EASE });
-        const cleanup = () => { animation.cancel(); this.active.delete(cleanup); };
-        this.active.add(cleanup);
-        void animation.finished.then(cleanup, cleanup);
-        continue;
-      }
-      const css = win.getComputedStyle(node);
-      const ghost = doc.createElement("div");
-      ghost.inert = true;
-      ghost.setAttribute("aria-hidden", "true");
-      ghost.textContent = title;
-      Object.assign(ghost.style, {
-        position: "fixed", pointerEvents: "none", zIndex: "110", boxSizing: "border-box",
-        left: target.left + "px", top: target.top + "px", width: target.width + "px", height: target.height + "px",
-        border: css.border, borderRadius: css.borderRadius,
-        backgroundColor: css.backgroundColor === "rgba(0, 0, 0, 0)" ? win.getComputedStyle(node.closest(".df-app") ?? node).backgroundColor : css.backgroundColor,
-        color: css.color, font: css.font, padding: "4px 8px", overflow: "hidden",
-        whiteSpace: "nowrap", textOverflow: "ellipsis", transformOrigin: "top left",
-        display: "flex", alignItems: "center",
-      });
-      doc.body.append(ghost);
-      const start = "translate(" + (source.left - target.left) + "px," + (source.top - target.top) + "px) scale(" + (source.width / target.width) + "," + (source.height / target.height) + ")";
-      const animation = ghost.animate([
-        { transform: start, opacity: 1 },
-        { transform: "none", opacity: 1, offset: .8 },
-        { transform: "none", opacity: 0 },
-      ], { duration, easing: MOTION_EASE });
-      const reveal = node.animate([{ opacity: 0 }, { opacity: 0, offset: .65 }, { opacity: 1 }], { duration, easing: MOTION_EASE });
-      const cleanup = () => { animation.cancel(); reveal.cancel(); ghost.remove(); this.active.delete(cleanup); };
+      if (!before || !win || preference === "off" || !node.isConnected || !node.animate) continue;
+      const source = before.rect, target = after.rect;
+      if (Math.abs(source.width - target.width) > 2 || Math.abs(source.height - target.height) > 2 || win.getComputedStyle(node).translate !== "none") continue;
+      const dx = source.left - target.left, dy = source.top - target.top;
+      if (Math.abs(dx) <= 2 && Math.abs(dy) <= 2) continue;
+      const animation = node.animate([{ translate: dx + "px " + dy + "px" }, { translate: "0px 0px" }], { duration: preference === "rich" ? MOTION.complete : MOTION.layout, easing: MOTION_EASE });
+      const cleanup = () => { animation.cancel(); this.active.delete(cleanup); };
       this.active.add(cleanup);
-      void reveal.finished.catch(() => undefined);
       void animation.finished.then(cleanup, cleanup);
     }
   }

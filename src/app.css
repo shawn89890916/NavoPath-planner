@@ -15087,12 +15087,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
    border allowed, subtle neutral shadow allowed. No opacity fade, no
    glow, no scale. */
 .df-task-block[data-drag-state="overlay"] {
-  background: var(--task-bg);
-  border-color: var(--task-border);
-  border-left-color: var(--task-project-color, var(--accent-active));
-  box-shadow: none;
-  opacity: 1;
-  transform: none;
   pointer-events: none;
 }
 .df-task-block[data-drag-state="overlay"] > * {
@@ -15813,12 +15807,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
 }
 /* The card under the pointer is the original TaskBlock, given only the small
    physical cue requested for a direct-manipulation drag. */
-#root .df-app .df-task-drag-layer > .df-task-block[data-drag-state="overlay"] {
-  transform: rotate(-1.1deg);
-  transform-origin: center;
-  box-shadow: 0 10px 24px rgb(39 35 30 / 18%);
-  padding-block: 4px;
-}
 @media (max-width: 760px) {
   .df-ai-provider-grid { grid-template-columns: 1fr; }
 }
@@ -16872,19 +16860,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
     font-size: 8px;
     padding: 6px 0 0;
     text-align: left;
-  }
-  #root .df-app .df-task-drag-layer {
-    opacity: .94;
-  }
-  #root .df-app .df-task-drag-layer .df-task-card {
-    min-height: 52px;
-    padding: 6px 10px;
-    background: var(--surface-raised);
-    border-color: var(--paper-rule-strong);
-    box-shadow: 0 8px 18px color-mix(in srgb, var(--text-main) 12%, transparent);
-  }
-  #root .df-app .df-task-drag-layer .df-task-actions {
-    display: none;
   }
   #root .df-app .df-task-node-actions {
     width: auto;
@@ -18581,9 +18556,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
 }
 /* The pointer overlay is the actual candidate row, retained as white paper
    even after it leaves the candidate-list selector above. */
-#root .df-app.mode-execute:not(.theme-dark) .df-task-drag-layer .df-task-card[data-task-appearance][data-drag-state="overlay"] {
-  background: #fff;
-}
 /* Keep dragged candidate action controls as quiet and unboxed as the row. */
 #root .df-app .df-task-drag-layer > .df-task-block[data-drag-state="overlay"] .df-task-actions .df-icon-button,
 #root .df-app .df-task-drag-layer > .df-task-block[data-drag-state="overlay"] .df-task-block-actions .df-icon-button {

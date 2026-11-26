@@ -42,7 +42,7 @@ import { AI_PROVIDER_MODELS, readLocalAiProviderConfig } from "./aiProviderConfi
 import { removeEmptyAiConversations } from "./aiConversationHistory";
 import { autoScheduleTasks, type UnscheduledTask } from "./autoSchedule";
 import { AI_INFERENCE_MODEL_VERSION, buildAiProfile, learnedTaskDurationMinutes, predictTaskIntelligence } from "./aiPersonalization";
-import { TaskDragLayer, UnifiedDragOverlay, deepCopyVisualStyles, type UnifiedDragSnapshot } from "./unifiedDrag";
+import { TaskDragLayer, UnifiedDragOverlay, type UnifiedDragSnapshot } from "./unifiedDrag";
 import { createDragProjection } from "./motion/dragProjection";
 import { installBrowserFallback, forceLocalPreviewMode } from "./browserFallback";
 import { isPasswordRecoveryCallback } from "./passwordRecovery";
@@ -7906,7 +7906,7 @@ if (cached?.data && cached?.settings) {
       if (dragElement.hasPointerCapture(pointerId)) dragElement.releasePointerCapture(pointerId);
       if (active) suppressClickAfterDrag();
     };
-    const updateTarget = (pointerEvent: PointerEvent) => {
+    const readTarget = (pointerEvent: PointerEvent) => {
       const pointedElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
       const monthDate = monthDateAtPointer({ x: pointerEvent.clientX, y: pointerEvent.clientY });
       setMonthDropDate(monthDate);
@@ -8005,6 +8005,7 @@ if (cached?.data && cached?.settings) {
       dropTime = target.startTime;
       setHoverSlot(target.startTime);
     };
+    const updateTarget = (pointerEvent: PointerEvent) => projection ? projection.logical(() => readTarget(pointerEvent)) : readTarget(pointerEvent);
     const move = (pointerEvent: PointerEvent) => {
       if (pointerEvent.pointerId !== pointerId) return;
       const distance = Math.hypot(pointerEvent.clientX - startX, pointerEvent.clientY - startY);
@@ -8022,7 +8023,7 @@ if (cached?.data && cached?.settings) {
         dragElement.setPointerCapture(pointerId);
         document.body.classList.add("df-timeline-pointer-drag");
         dragElement.classList.add("is-dragging-source");
-        if (source === "candidate" && options.allowCandidateReorder !== false) projection = createDragProjection(dragElement, deepCopyVisualStyles);
+        if (source === "candidate" && options.allowCandidateReorder !== false) projection = createDragProjection(dragElement);
         suppressBlockClickRef.current = true;
         setDragCreate(null);
         const rect = dragElement.getBoundingClientRect();
@@ -10723,7 +10724,7 @@ if (cached?.data && cached?.settings) {
       {drag?.kind === "block" && drag.pointer && draggedTask && !timelineSnapActive && (
         <TaskDragLayer
           pointer={drag.pointer}
-          sourceRect={{ width: Math.max(drag.sourceRect?.width || 220, drag.outsideTimeline ? 220 : 0), height: drag.sourceRect?.height || Math.max(timeBlockHeight(draggedTask.scheduledStart || "09:00", draggedTask.scheduledEnd || addMinutes(draggedTask.scheduledStart || "09:00", drag.duration)), SLOT_HEIGHT) }}
+          sourceRect={{ width: drag.sourceRect?.width || 220, height: drag.sourceRect?.height || Math.max(timeBlockHeight(draggedTask.scheduledStart || "09:00", draggedTask.scheduledEnd || addMinutes(draggedTask.scheduledStart || "09:00", drag.duration)), SLOT_HEIGHT) }}
           offset={drag.offset || { x: 24, y: Math.min((drag.sourceRect?.height || SLOT_HEIGHT) / 2, 32) }}
         >
           <TimeBlock
