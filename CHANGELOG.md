@@ -6,7 +6,7 @@
 
 #### 改进
 
-- 连接页按应用供应商组织，Super Productivity 的插件配对、历史订阅与设置指引集中在同一入口；保留现有连接和订阅。
+- 连接页按应用供应商组织，Super Productivity 的插件配对、历史订阅与设置指引集中在同一入口；保留现有连接和订阅，按需加载连接配置和搜索索引。
 
 ### 1.7.0 Beta 124
 
@@ -1288,7 +1288,7 @@
 
 #### Improvements
 
-- Connections are organized by app provider; Super Productivity pairing, history subscription and setup guidance share one destination, preserving existing connections and subscriptions.
+- Connections are organized by app provider; Super Productivity pairing, history subscription and setup guidance share one destination, preserving existing connections and subscriptions, and loading connection configuration and search metadata on demand.
 
 ### 1.7.0 Beta 124
 

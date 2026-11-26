@@ -91,7 +91,7 @@ const INCOMPLETE_LABELS = {
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
 import { UiCheckIcon, UiChatIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiHistoryIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTimerIcon, UiTrashIcon } from "./components/UiIcons";
-import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
+import { normalizeSettingsTarget, type SettingsTargetInput } from "./settingsNavigationCore";
 import { normalizeSettings, WORKSPACE_CORNER_RADIUS } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
 import { templateApplication, type TemplatePeriod } from "./utils/scheduleTemplates";
@@ -8925,7 +8925,7 @@ if (cached?.data && cached?.settings) {
       return;
     }
     if (result.kind === "setting") {
-      openSettingsSection(settingsTargetForSearchId(result.id.replace(/^setting:/, "")) || "general");
+      openSettingsSection(result.settingsTarget || "general");
       return;
     }
     if (result.kind === "task") {

@@ -35,7 +35,8 @@ describe("command search", () => {
   it("finds the scheduling gap by its previous label and preserves the settings target", () => {
     const index = buildCommandSearchIndex(data, { language: "en" } as Settings);
     const result = searchCommands(index, "Task buffer")[0];
-    expect(result).toMatchObject({ id: "setting:schedule-buffer", title: "Gap between scheduled tasks" });
+    expect(result).toMatchObject({ id: "setting:schedule-buffer", title: "Gap between scheduled tasks", settingsTarget: { category: "workflow", anchor: "schedule-buffer" } });
+    expect(searchCommands(index, "Super Productivity")[0].settingsTarget).toEqual({ category: "integrations", anchor: "connection-super-productivity" });
   });
 
   it("keeps saved accent settings searchable in light mode but hides the entry in dark mode", () => {
