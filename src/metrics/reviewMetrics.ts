@@ -17,13 +17,13 @@ export function matchedPeriods(range:MetricDateRange,now:Date){
   if(duration<=0)return null;
   return {current:{...range,end:new Date(start+duration)},previous:{...range,preset:"custom" as const,start:previousStart,end:new Date(previousStart.getTime()+duration)},partial:start+duration<end};
 }
-export function accuracySummary(rows:{initial:number;tracked:number;estimate:number|null}[]){
+export function accuracySummary(rows:{initial:number;final?:number;tracked:number;estimate:number|null}[]){
   function summary(pairs:{base:number;actual:number}[]){
     const valid=pairs.filter(x=>Number.isFinite(x.base)&&x.base>0&&Number.isFinite(x.actual)&&x.actual>=0);
     if(!valid.length)return {count:0,bias:null,mae:null,relativeError:null};
     return {count:valid.length,bias:valid.reduce((n,x)=>n+x.actual-x.base,0)/valid.length,mae:valid.reduce((n,x)=>n+Math.abs(x.actual-x.base),0)/valid.length,relativeError:valid.reduce((n,x)=>n+Math.abs(x.actual-x.base)/x.base,0)/valid.length*100};
   }
-  return {schedule:summary(rows.map(x=>({base:x.initial,actual:x.tracked}))),estimate:summary(rows.flatMap(x=>x.estimate===null?[]:[{base:x.estimate,actual:x.tracked}]))};
+  return {schedule:summary(rows.map(x=>({base:x.initial,actual:x.tracked}))),final:summary(rows.flatMap(x=>x.final===undefined?[]:[{base:x.final,actual:x.tracked}])),estimate:summary(rows.flatMap(x=>x.estimate===null?[]:[{base:x.estimate,actual:x.tracked}]))};
 }
 export function currentProjectProgress(data:PlannerData,projects:string[],habitMode:MetricHabitMode){
   const filter=new Set(projects),groups=new Map<string,{id:string;title:string;total:number;completed:number;estimated:number;estimatedCompleted:number;estimateCount:number}>();

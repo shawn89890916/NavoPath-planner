@@ -12,7 +12,7 @@ export function observedScheduleMinutes(v?:AnalyticsSnapshot):number|null{
 export function createObservedPlanAccumulator(data:PlannerData,range:{start:Date;end:Date},projectIds:string[]=[]){
   const projects=new Set(projectIds);
   let eventCount=0;
-  type Group={first:AnalyticsEvent;last:AnalyticsEvent;observed:boolean;uncertain:boolean};
+  type Group={first:AnalyticsEvent;last:AnalyticsEvent;observed:boolean;uncertain:boolean;firstAmbiguous:boolean;lastAmbiguous:boolean};
   const groups=new Map<string,Group>(),moves=new Set<string>(),resizes=new Set<string>();
   const recordKey=(taskId:string|undefined,recordId:string)=>JSON.stringify([taskId||"",recordId]);
   const isUncertain=(e:AnalyticsEvent)=>e.source==="undo"||e.source==="remote-observed"||e.source==="sync";
@@ -36,11 +36,13 @@ export function createObservedPlanAccumulator(data:PlannerData,range:{start:Date
   const collect=(e:AnalyticsEvent,selected=true)=>{
     const key=recordKey(e.taskId,e.entityId),existing=groups.get(key),uncertain=isUncertain(e)||!selected;
     if(existing){
-      if(e.occurredAt<existing.first.occurredAt)existing.first=e;
-      if(e.occurredAt>=existing.last.occurredAt)existing.last=e;
+      if(e.occurredAt<existing.first.occurredAt){existing.first=e;existing.firstAmbiguous=false;}
+      else if(e.occurredAt===existing.first.occurredAt&&e.id!==existing.first.id)existing.firstAmbiguous=true;
+      if(e.occurredAt>existing.last.occurredAt){existing.last=e;existing.lastAmbiguous=false;}
+      else if(e.occurredAt===existing.last.occurredAt&&e.id!==existing.last.id)existing.lastAmbiguous=true;
       existing.observed ||= !uncertain;
       existing.uncertain ||= uncertain;
-    }else groups.set(key,{first:e,last:e,observed:!uncertain,uncertain});
+    }else groups.set(key,{first:e,last:e,observed:!uncertain,uncertain,firstAmbiguous:false,lastAmbiguous:false});
     return key;
   };
   let moveCount=0,resizeCount=0,created=0,removed=0,taskCompleted=0,taskReopened=0;
@@ -60,7 +62,8 @@ export function createObservedPlanAccumulator(data:PlannerData,range:{start:Date
     }
   }
   function finish(){
-  const comparisons:{taskId:string;recordId:string;initial:number;tracked:number;estimate:number|null}[]=[];
+  const comparisons:{taskId:string;recordId:string;initial:number;final:number;tracked:number;estimate:number|null}[]=[];
+  let completedPlanSamples=0,planLengthened=0,planShortened=0,planUnchanged=0,planChangeMinutes=0,eligibleObserved=0,eligibleMoved=0,eligibleResized=0;
   const trackedByRecord=new Map<string,number>();
   for(const entry of data.timeEntries||[]){
     if(!entry.timelineRecordId)continue;
@@ -68,14 +71,19 @@ export function createObservedPlanAccumulator(data:PlannerData,range:{start:Date
     if(!Number.isFinite(a)||!Number.isFinite(b)||b<=a||a<range.start.getTime()||b>range.end.getTime()||!Number.isFinite(entry.durationMinutes)||entry.durationMinutes<=0)continue;
     const key=recordKey(entry.taskId,entry.timelineRecordId);trackedByRecord.set(key,(trackedByRecord.get(key)||0)+entry.durationMinutes);
   }
-  for(const [key,{first,last,uncertain}] of groups){
+  for(const [key,{first,last,uncertain,observed,firstAmbiguous,lastAmbiguous}] of groups){
+    if(observed&&!uncertain){eligibleObserved++;if(moves.has(key))eligibleMoved++;if(resizes.has(key))eligibleResized++;}
+    if(firstAmbiguous||lastAmbiguous)continue;
     if(first.action!=="created"||uncertain||last.after?.executionStatus!=="completed"||!first.taskId||!completedRecords.has(key))continue;
-    const initial=duration(first.after),tracked=trackedByRecord.get(key);
-    if(initial===null||tracked===undefined)continue;
+    const initial=duration(first.after),final=duration(last.after),tracked=trackedByRecord.get(key);
+    if(initial===null||final===null)continue;
+    completedPlanSamples++;planChangeMinutes+=final-initial;
+    if(final>initial)planLengthened++;else if(final<initial)planShortened++;else planUnchanged++;
+    if(tracked===undefined)continue;
     const estimate=singleExecutionTasks.has(first.taskId)&&typeof first.estimateMinutes==="number"&&first.estimateMinutes>0?first.estimateMinutes:null;
-    comparisons.push({taskId:first.taskId,recordId:first.entityId,initial,tracked,estimate});
+    comparisons.push({taskId:first.taskId,recordId:first.entityId,initial,final,tracked,estimate});
   }
-  return {eventCount,observedExecutions:[...groups.values()].filter(g=>g.observed).length,created,removed,movedExecutions:moves.size,resizedExecutions:resizes.size,moveCount,resizeCount,taskCompleted,taskReopened,comparisons};
+  return {eventCount,observedExecutions:[...groups.values()].filter(g=>g.observed).length,created,removed,movedExecutions:moves.size,resizedExecutions:resizes.size,moveCount,resizeCount,taskCompleted,taskReopened,eligibleObserved,eligibleMoved,eligibleResized,completedPlanSamples,planLengthened,planShortened,planUnchanged,planChangeMinutes,comparisons};
   }
   return {add,finish};
 }
