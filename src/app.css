@@ -15460,13 +15460,36 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
   border-left-width: var(--task-project-accent-size, 2px);
 }
 .df-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent {
-  top: -1px;
-  bottom: -1px;
-  left: calc(-1 * var(--task-project-accent-size, 2px));
-  width: var(--task-project-accent-size, 2px);
-  border-radius: var(--task-radius) 0 0 var(--task-radius);
-  background: linear-gradient(to bottom, var(--task-project-color) 0 var(--task-engagement), transparent var(--task-engagement) 100%);
+  /* Match the full card's contour before revealing the rated portion. A narrow
+     rounded rectangle cannot reproduce the card's squircle border. */
+  inset: -1px -1px -1px calc(-1 * var(--task-project-accent-size, 2px));
+  width: auto;
+  height: auto;
+  border-radius: inherit;
+  corner-shape: inherit;
+  background: none;
   opacity: 1;
+  pointer-events: none;
+}
+.df-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-left-width: var(--task-project-accent-size, 2px);
+  border-left-color: var(--task-project-color, var(--accent-active));
+  border-radius: inherit;
+  corner-shape: inherit;
+  clip-path: inset(0 0 calc(100% - var(--task-engagement)) 0);
+  pointer-events: none;
+}
+.df-app .df-task-block[data-task-appearance][data-engagement] > .df-task-block-accent::after {
+  /* Keep the score tooltip on the left edge without intercepting card controls. */
+  content: "";
+  position: absolute;
+  inset: 0 auto calc(100% - var(--task-engagement)) 0;
+  width: var(--task-project-accent-size, 2px);
   pointer-events: auto;
 }
 .df-app .df-task-block[data-task-appearance] > .df-task-block-accent.df-task-block-accent--bottom {
