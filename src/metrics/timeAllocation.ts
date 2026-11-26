@@ -241,6 +241,17 @@ export function getMetricRange(input: MetricRangeInput & { dayStartMinutes?: num
   return { preset: input.preset, start: todayStart, end: addDays(todayStart, 1), label: "今天" };
 }
 
+function recordedMetricRange(data:PlannerData,dayStartMinutes:number,anchorDate?:string):MetricDateRange{
+  let lo=Infinity,hi=-Infinity;
+  const include=(d:Date)=>{const n=d.getTime();if(Number.isFinite(n)){lo=Math.min(lo,n);hi=Math.max(hi,n);}};
+  for(const t of data.tasks||[]){
+    if(t.timelineRecords?.length){for(const r of t.timelineRecords){const timed=timedMetricRecord(t,r,dayStartMinutes);include(recordStartDateTime(timed));include(recordEndDateTime(timed));}}
+    else if(t.scheduledDate){include(localDateTime(t.scheduledDate,t.scheduledStart?timeToMinutes(t.scheduledStart):dayStartMinutes));const start=localDateTime(t.scheduledDate,t.scheduledStart?timeToMinutes(t.scheduledStart):dayStartMinutes);include(new Date(start.getTime()+allDayDurationMinutes(t)*60000));if(t.scheduledEnd)include(localDateTime(t.scheduledDate,timeToMinutes(t.scheduledEnd)+(t.scheduledStart&&t.scheduledEnd<=t.scheduledStart?1440:0)));}
+  }
+  for(const e of data.timeEntries||[]){include(new Date(e.startAt));include(new Date(e.endAt));}
+  if(!Number.isFinite(lo)){const today=getMetricRange({preset:"today",anchorDate,dayStartMinutes});return {...today,preset:"all",label:"全部"};}
+  return {preset:"all",start:metricDayStart(new Date(lo),dayStartMinutes),end:addDays(metricDayStart(new Date(hi),dayStartMinutes),1),label:"全部"};
+}
 function minutesBetween(start: Date, end: Date) {
   return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
 }
@@ -342,8 +353,7 @@ function taskRecords(task: Task, range: MetricDateRange, dayStartMinutes: number
       createdAt: task.createdAt,
     });
   }
-  if (isRecurringScheduledTask(task) && task.recurrence?.startTime && task.recurrence.durationMinutes) {
-    if (range.preset === "all" && !task.recurrence.endDate && !task.recurrence.count) return allRecords;
+  if (range.preset !== "all" && isRecurringScheduledTask(task) && task.recurrence?.startTime && task.recurrence.durationMinutes) {
     const metricDates = metricDatesInRange(range);
     const blockedDates = new Set(
       (task.timelineRecords || [])
@@ -437,8 +447,9 @@ export function buildTimeAllocationMetrics(options: {
   const groupBy = options.groupBy || "project";
   const habitMode = options.habitMode || "include";
   const completion = options.completion || "all";
-  const range = getMetricRange({ ...options.range, dayStartMinutes, weekStartsOn: options.weekStartsOn });
+  const range = options.range.preset==="all"?recordedMetricRange(options.data,dayStartMinutes,options.range.anchorDate):getMetricRange({ ...options.range, dayStartMinutes, weekStartsOn: options.weekStartsOn });
   const projects = options.data.projects || [];
+  const tasksById=new Map((options.data.tasks||[]).map(t=>[t.id,t]));
   const projectFilter = new Set(options.projectIds || []);
   const splitEntries: MetricTaskEntry[] = [];
 
@@ -483,7 +494,7 @@ export function buildTimeAllocationMetrics(options: {
   const plannedMinutes = splitEntries.reduce((sum, entry) => sum + entry.durationMinutes, 0);
   const buckets = new Map<string, Omit<TimeAllocationGroup, "percentage" | "completionRate"> & { project: Project | null }>();
   for (const entry of splitEntries) {
-    const task = options.data.tasks.find((item) => item.id === entry.taskId);
+    const task = tasksById.get(entry.taskId);
     if (!task) continue;
     const project = projectForTask(projects, task);
     const key = groupKey(task, project, groupBy, entry);

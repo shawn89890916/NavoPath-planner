@@ -37,3 +37,8 @@
 
 .df-metric-group-row { display:grid; grid-template-columns:minmax(90px,1fr) minmax(40px,2fr) auto; gap:8px; align-items:center; width:100%; border:0; border-bottom:1px solid var(--paper-rule); padding:10px 0; background:none; color:var(--text-main); text-align:left; }
 .df-metric-group-row[aria-pressed='true'] { color:var(--accent-active); }
+
+.df-metric-hour-grid { overflow:auto; padding:8px 0; }
+.df-metric-hour-grid > div { display:grid; grid-template-columns:32px repeat(24,minmax(12px,1fr)); gap:3px; min-width:400px; padding:2px 0; align-items:center; }
+.df-metric-hour-grid [role="cell"] { height:14px; border-radius:2px; }
+.df-metric-hour-grid [role="rowheader"] { font-size:11px; }
