@@ -7,6 +7,23 @@ const appCss = readFileSync(resolve(__dirname, "app.css"), "utf8");
 const defaults = readFileSync(resolve(__dirname, "defaultSettings.ts"), "utf8");
 const planning = readFileSync(resolve(__dirname, "PlanningView.tsx"), "utf8");
 
+describe("timeline mouse hover contracts", () => {
+  it("clears only the departing task and uses matching pointer events", () => {
+    const block = readFileSync(resolve(__dirname, "components/TaskBlock.tsx"), "utf8");
+    expect(block).toContain("onPointerLeave={props.onPointerLeave}");
+    expect(main).toContain('onPointerLeave={(event) => {');
+    expect(main).toContain('onHover(current => current === task.id ? "" : current)');
+    expect(main).toContain('"mouse-hovered": hovered && !preview ? "true" : undefined');
+  });
+
+  it("keeps mouse resize controls within their task and preserves stable title geometry", () => {
+    expect(appCss).toMatch(/\[data-mouse-hovered="true"\] \.df-resize-dot\.top\s*\{[^}]*top:\s*0;/);
+    expect(appCss).toMatch(/\[data-mouse-hovered="true"\] \.df-resize-dot\.bottom\s*\{[^}]*bottom:\s*0;/);
+    expect(appCss).not.toContain(':has(> .df-block-project-wrap) .df-time-card-row');
+    expect(appCss).toMatch(/\[data-task-variant="scheduled"\] \.df-block-project\s*\{[^}]*white-space:\s*nowrap;[^}]*text-overflow:\s*ellipsis;/);
+  });
+});
+
 describe("portrait interaction contracts", () => {
   it("opens the task short sheet on the second tap after selection", () => {
     expect(main).toContain("function selectTimelineTask(task: Task, event: React.MouseEvent)");
