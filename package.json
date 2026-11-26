@@ -73,6 +73,11 @@
       "limit": "6 KB"
     },
     {
+      "name": "Optional Metrics time series",
+      "path": "dist/assets/MetricsTimeSeries-*.js",
+      "limit": "7 KB"
+    },
+    {
       "name": "Optional Metrics analytics styles",
       "path": "dist/assets/MetricsInsights-*.css",
       "limit": "4 KB"

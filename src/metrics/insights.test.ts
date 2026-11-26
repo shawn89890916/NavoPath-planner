@@ -68,3 +68,6 @@ describe("review metrics",()=>{
 });
 
 it("restores the optional chart grain, while migrating older saved views to day",()=>{const query={range:"today",group:"project",display:"duration",habit:"include",completion:"all",projects:[],customStart:"2026-11-26",customEnd:"2026-11-26"};const saved={id:"one",name:"Review",view:"overview",chart:"trend",query};expect(normalizeSavedViews([saved])[0].grain).toBe("day");expect(normalizeSavedViews([{...saved,grain:"month"}])[0].grain).toBe("month");});
+
+import {timeBuckets,overlapMinutes} from "./timeSeries";
+it("preserves missing calendar days and keeps absent measurements distinct",()=>{const range={preset:"custom" as const,start:new Date(2026,10,23,4),end:new Date(2026,10,27,4),label:""};const r=timeBuckets([{date:"2026-11-24",scheduled:60,completed:30,tracked:0,trackedSessions:0}],range,"day",240,1);expect(r.rows.map(x=>x.date)).toEqual(["2026-11-23","2026-11-24","2026-11-25","2026-11-26"]);expect(r.rows[0].hasRecords).toBe(false);expect(r.rows[1]).toMatchObject({hasRecords:true,trackedSessions:0,scheduled:60});expect(timeBuckets([],range,"day",240,1,2).truncated).toBe(true);expect(overlapMinutes(new Date(2026,10,23,3),new Date(2026,10,23,5),range.start,range.end)).toBe(60);});

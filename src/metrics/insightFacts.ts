@@ -35,6 +35,7 @@ export function buildInsights(data:PlannerData,allocation:TimeAllocationMetrics,
   const engagementBuckets=Array.from({length:10},(_,i)=>({score:(i+1)*10,minutes:0,count:0}));
   let scheduled=0,completed=0,ratedMinutes=0,ratedWeighted=0,tracked=0,trackedSessions=0;
   const trackedBySource={timer:0,manual:0,idle_adjusted:0};
+  const trackedEntries:{id:string;taskId:string;recordId?:string;projectId:string;start:Date;end:Date;minutes:number;source:string}[]=[];
   const measuredRecords=new Set<string>();
   const completedHours=Array.from({length:7},()=>Array.from({length:24},()=>0));
   const intervals:{start:number;end:number}[]=[];
@@ -71,10 +72,11 @@ export function buildInsights(data:PlannerData,allocation:TimeAllocationMetrics,
     if(!Number.isFinite(a)||!Number.isFinite(b)||b<=a||!Number.isFinite(entry.durationMinutes)||entry.durationMinutes<=0)continue;
     const lo=Math.max(a,start),hi=Math.min(b,end);if(hi<=lo)continue;
     trackedSessions++;
+    trackedEntries.push({id:entry.id,taskId:entry.taskId,recordId:entry.timelineRecordId,projectId,start:new Date(lo),end:new Date(hi),minutes:entry.durationMinutes*(hi-lo)/(b-a),source:entry.source});
     if(entry.timelineRecordId&&executions.has(entry.taskId+":"+entry.timelineRecordId))measuredRecords.add(entry.taskId+":"+entry.timelineRecordId);
     const p=project(projectId);p.trackedSessions++;
     eachDay(lo,hi,options.dayStartMinutes,(date,ms)=>{const minutes=entry.durationMinutes*ms/(b-a);const d=day(date);d.tracked+=minutes;d.trackedSessions++;tracked+=minutes;p.tracked+=minutes;if(entry.source in trackedBySource)trackedBySource[entry.source]+=minutes;});
   }
   let occupied=0,lo=0,hi=0;for(const interval of intervals.sort((a,b)=>a.start-b.start)){if(interval.start>hi){occupied+=hi-lo;lo=interval.start;hi=interval.end;}else hi=Math.max(hi,interval.end);}occupied=(occupied+hi-lo)/60000;
-  return {scheduled,completed,tracked,trackedSessions,trackedBySource,occupied,completedHours,measuredExecutionCount:measuredRecords.size,measurementCoverage:executions.size?measuredRecords.size/executions.size*100:null,executionCount:executions.size,statuses,ratedMinutes,ratedWeighted,engagementBuckets,projects:[...projects.values()].sort((a,b)=>b.scheduled-a.scheduled||b.tracked-a.tracked),explicitEngagement:ratedMinutes>0?ratedWeighted/ratedMinutes*100:null,ratingCoverage:completed>0?ratedMinutes/completed*100:null,days:[...days.values()].sort((a,b)=>a.date.localeCompare(b.date))};
+  return {scheduled,completed,tracked,trackedSessions,trackedBySource,trackedEntries,occupied,completedHours,measuredExecutionCount:measuredRecords.size,measurementCoverage:executions.size?measuredRecords.size/executions.size*100:null,executionCount:executions.size,statuses,ratedMinutes,ratedWeighted,engagementBuckets,projects:[...projects.values()].sort((a,b)=>b.scheduled-a.scheduled||b.tracked-a.tracked),explicitEngagement:ratedMinutes>0?ratedWeighted/ratedMinutes*100:null,ratingCoverage:completed>0?ratedMinutes/completed*100:null,days:[...days.values()].sort((a,b)=>a.date.localeCompare(b.date))};
 }
