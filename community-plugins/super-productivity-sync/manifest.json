@@ -3,11 +3,15 @@
   "name": "Super Productivity Sync",
   "description": "Sync projects and tasks between NavoPath and Super Productivity through your NavoPath account.",
   "author": "NavoPath",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "kind": "plugin",
   "apiVersion": 1,
   "minAppVersion": "1.7.0-beta.91",
-  "platforms": ["desktop", "web", "mobile"],
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
   "main": "main.js",
   "repository": "https://github.com/shawn89890916/NavoPath-planner",
   "license": "MIT"
