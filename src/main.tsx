@@ -73,7 +73,7 @@ const INCOMPLETE_LABELS = {
 };
 import { UiCheckIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiListChecksIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, settingsTargetForSearchId, type SettingsTargetInput } from "./settingsNavigation";
-import { normalizeSettings } from "./defaultSettings";
+import { normalizeSettings, normalizeCornerRadius } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
 import { usePointerReorder } from "./usePointerReorder";
 
@@ -3265,6 +3265,13 @@ if (cached?.data && cached?.settings) {
     apply(); media.addEventListener("change", apply);
     return () => media.removeEventListener("change", apply);
   }, [settings?.theme, settings?.baseMode, settings?.language]);
+
+  useEffect(() => {
+    if (!settings) return;
+    const property = "--navopath-corner-radius";
+    document.body.style.setProperty(property, `${normalizeCornerRadius(settings.workspaceCornerRadius)}px`);
+    return () => { document.body.style.removeProperty(property); };
+  }, [settings?.workspaceCornerRadius, Boolean(settings)]);
 
   const today = todayIso();
   const timelineDate = selectedDate;

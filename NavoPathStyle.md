@@ -464,7 +464,7 @@ visual values.
 | Token group | Canonical values |
 | --- | --- |
 | Spacing | `4 / 8 / 12 / 16 / 24 / 32px` (`--space-1` to `--space-6`) |
-| Radius | control `4px`, card `8px`, overlay `12px`, round `999px` |
+| Radius | configurable shared workspace radius `0–64px` (default `32px`), round `999px` |
 | Icon and touch size | icon `16px`; desktop hit area `34px`; touch target `44px` |
 | Motion | instant `90ms`, fast `140ms`, base `180ms`, layout `240ms` |
 | Borders | `subtle` for inputs and separators, `default` for overlays, `strong` for emphasis, `focus` for keyboard focus, `danger` for destructive actions |

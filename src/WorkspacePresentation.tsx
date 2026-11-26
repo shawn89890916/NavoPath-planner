@@ -1,4 +1,5 @@
 import { courseBackgroundColor } from "./utils/courseBackground";
+import { normalizeCornerRadius } from "./defaultSettings";
 import { useMobileSheetGesture } from "./useMobileSheetGesture";
 import { normalizeEngagement } from "./utils/engagement";
 import React, { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -1046,7 +1047,7 @@ export function AttachmentCard({ attachment, referenced = false, onRemove }: { a
 }
 
 export function themeVars(settings: Settings, mode: "planning" | "execute") {
-  const overrides: Record<string, string> = {};
+  const overrides: Record<string, string> = { "--navopath-corner-radius": `${normalizeCornerRadius(settings.workspaceCornerRadius)}px` };
   const execute = settings.executeAccentColor;
   const planning = settings.planningAccentColor;
   for (const [name, color] of [["execute", execute], ["planning", planning]] as const) {

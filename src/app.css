@@ -17556,10 +17556,10 @@ body.df-planning-native-dragging [contenteditable] * {
   --text-faint: #9CA3AF;
   --border-soft: #E5E7EB;
   --border-subtle: #EEF0F4;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-sm: var(--navopath-corner-radius, 32px);
+  --radius-md: var(--navopath-corner-radius, 32px);
+  --radius-lg: var(--navopath-corner-radius, 32px);
+  --radius-xl: var(--navopath-corner-radius, 32px);
   --corner-shape: squircle;
   --shadow-soft: 0 10px 30px rgba(17, 24, 39, 0.06);
   --shadow-hl: 0 0 24px color-mix(in srgb, var(--accent-active, #584D3D) 14%, transparent);
@@ -17584,9 +17584,9 @@ body.df-planning-native-dragging [contenteditable] * {
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
-  --radius-control: 4px;
-  --radius-card: 8px;
-  --radius-overlay: 12px;
+  --radius-control: var(--navopath-corner-radius, 32px);
+  --radius-card: var(--navopath-corner-radius, 32px);
+  --radius-overlay: var(--navopath-corner-radius, 32px);
   --radius-round: 999px;
   --shadow-none: none;
   --shadow-floating: 0 20px 48px rgba(20, 18, 15, .18);
@@ -17658,8 +17658,8 @@ body.df-planning-native-dragging [contenteditable] * {
   --paper-display: var(--paper-serif);
   --paper-task: var(--paper-serif);
   --paper-complete: var(--navo-sage);
-  --paper-radius: 4px;
-  --paper-radius-soft: 8px;
+  --paper-radius: var(--navopath-corner-radius, 32px);
+  --paper-radius-soft: var(--navopath-corner-radius, 32px);
   --paper-ease: var(--motion-ease);
   --paper-motion: var(--motion-base) var(--motion-ease);
   --paper-rule: var(--border-subtle);
@@ -17697,7 +17697,7 @@ body.df-planning-native-dragging [contenteditable] * {
   --task-bg: var(--surface-card, var(--surface-main, #F8F7F3));
   --task-border: color-mix(in srgb, var(--paper-rule, var(--border-subtle, #E7E2D8)) 90%, transparent);
   --task-border-hover: color-mix(in srgb, var(--text-faint, #807A70) 38%, var(--paper-rule, #E7E2D8));
-  --task-radius: 6px;
+  --task-radius: var(--navopath-corner-radius, 32px);
   --task-padding-x: 12px;
   --task-padding-y: 9px;
   --task-min-height: 42px;

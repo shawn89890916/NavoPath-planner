@@ -539,6 +539,8 @@ export interface Settings {
   extensionMcpAccess?: PluginMcpAccess;
   extensionConfigs?: Record<string, Record<string, unknown>>;
   extensionConfigUpdatedAt?: Record<string, string>;
+  /** Shared workspace corner radius (0–64 CSS pixels). */
+  workspaceCornerRadius?: number;
   typographyStyle: "editorial" | "balanced" | "sans";
   accentColor: string;
   executeAccentColor: string;
