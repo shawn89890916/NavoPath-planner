@@ -252,3 +252,21 @@ test("a real NavoPath project previously paired to Inbox is retained", () => {
   assert.deepEqual(buildActions(state,"navopath"),[]);
   assert.ok(buildActions(state,"superproductivity").some(a=>a.fields.title==="Real project" && !a.deleted && a.id!=="INBOX_PROJECT"));
 });
+
+test("a created SP task whose timed update failed does not erase the source schedule", () => {
+  const state = emptySyncState();
+  const schedule = { scheduledAt: "2026-11-26T14:00", scheduledMinutes: 90, estimateMinutes: 90 };
+  applySyncSnapshot(state, "navopath", { projects:[],tasks:[entity("n","Timed",schedule)] }, "2026-11-26T00:00:00Z");
+  applySyncSnapshot(state, "superproductivity", {projects:[],tasks:[]}, "2026-11-26T00:00:01Z");
+  confirmInitialSync(state,[]);
+  const action = buildActions(state,"superproductivity")[0];
+  const incoming = { ...entity("s","Timed",{scheduledAt:null,scheduledMinutes:0,estimateMinutes:90}),syncId:action.syncId };
+  const partial = applySyncSnapshot(state,"superproductivity",{projects:[],tasks:[incoming]},"2026-11-26T00:00:02Z");
+  assert.equal(state.canonical[action.syncId].fields.scheduledAt,schedule.scheduledAt);
+  assert.deepEqual(buildActions(state,"navopath"),[]);
+  assert.equal(partial.actions[0].fields.scheduledAt,schedule.scheduledAt);
+  assert.equal(partial.actions[0].fields.scheduledMinutes,90);
+  applySyncSnapshot(state,"superproductivity",{projects:[],tasks:[{...incoming,fields:{title:"Timed",...schedule}}]},"2026-11-26T00:00:03Z");
+  assert.deepEqual(buildActions(state,"superproductivity"),[]);
+  assert.deepEqual(state.conflicts,[]);
+});
