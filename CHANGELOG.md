@@ -2,6 +2,12 @@
 
 ## 2026-11-26
 
+### 1.7.0 Beta 116
+
+#### 改进
+
+- Metrics 执行统计覆盖所选范围内全部已记录事件，历史和估时对比明细每页显示 50 条；大量对比样本使用有限散点绘制，汇总仍使用全部可比样本。项目过滤保留事件发生时的归属，跨项目证据不完整的执行不纳入估时对比。
+
 ### 1.7.0 Beta 115
 
 #### 新增
@@ -1223,6 +1229,12 @@
 # NavoPath Changelog
 
 ## 2026-11-26
+
+### 1.7.0 Beta 116
+
+#### Improvements
+
+- Metrics execution analysis covers all recorded events in the selected range; history and estimate comparison details use 50-row pages. Large comparison sets use bounded scatter rendering while summaries use every comparable sample. Project filters use attribution at event time and exclude executions with incomplete cross-project evidence from estimation comparisons.
 
 ### 1.7.0 Beta 115
 

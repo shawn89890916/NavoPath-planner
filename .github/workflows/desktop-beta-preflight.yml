@@ -1,7 +1,7 @@
 name: Desktop Beta preflight
 on:
   push:
-    branches: [desktop-beta, feat/metrics-2-desktop-beta, feat/metrics-review-beta-113, feat/metrics-history-beta-114]
+    branches: [desktop-beta, feat/metrics-2-desktop-beta, feat/metrics-review-beta-113, feat/metrics-history-beta-114, feat/metrics-full-history-beta-116]
   workflow_dispatch:
 permissions:
   contents: read
