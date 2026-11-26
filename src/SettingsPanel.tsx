@@ -436,6 +436,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
   const [navigationQuery, setNavigationQuery] = useState("");
   const navigationResults = searchSettings(navigationQuery, lang, isDesktopRuntime);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [expandedSettings, setExpandedSettings] = useState<Record<string, boolean>>({});
   const [widgetColorScheme, setWidgetColorScheme] = useState<"light" | "dark">("light");
   const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "mcp" | "sync">(resolvedInitial.anchor === "mcp" ? "mcp" : "calendar");
   const settingsContentRef = useRef<HTMLDivElement | null>(null);
@@ -859,7 +860,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
             {settingsTarget.category === "appearance" && isDesktopRuntime && <SettingRow title={lang === "zh" ? "桌面窗口" : "Desktop Windows"} control={<SettingActionButton onClick={() => navigateSettings({ category: "widget" })}>{lang === "zh" ? "管理" : "Manage"}</SettingActionButton>} />}
             {settingsTarget.category === "widget" && <SettingRow title={lang === "zh" ? "外观" : "Appearance"} control={<SettingActionButton onClick={() => navigateSettings({ category: "appearance" })}>{lang === "zh" ? "返回" : "Back"}</SettingActionButton>} />}
             {settingsTarget.category === "plugins" && !settingsTarget.pluginPage && !metricsSettingsOpen && <><SettingRow title={lang === "zh" ? "日历与外部连接" : "Calendar & external connections"} control={<SettingActionButton onClick={() => navigateSettings({ category: "integrations", anchor: "calendar-feed" })}>{lang === "zh" ? "管理" : "Manage"}</SettingActionButton>} /><SettingRow title={lang === "zh" ? "Metrics 指标设置" : "Metrics preferences"} control={<SettingActionButton onClick={() => navigateSettings({ category: "plugins", anchor: "metrics" })}>{lang === "zh" ? "配置" : "Configure"}</SettingActionButton>} /></>}
-            {(settingsTarget.category === "integrations" || metricsSettingsOpen) && <SettingRow title={lang === "zh" ? "扩展与连接" : "Extensions & Connections"} control={<SettingActionButton onClick={() => navigateSettings({ category: "plugins" })}>{lang === "zh" ? "返回" : "Back"}</SettingActionButton>} />
+            {(settingsTarget.category === "integrations" || metricsSettingsOpen) && <SettingRow title={lang === "zh" ? "扩展与连接" : "Extensions & Connections"} control={<SettingActionButton onClick={() => navigateSettings({ category: "plugins" })}>{lang === "zh" ? "返回" : "Back"}</SettingActionButton>} />}
             {settingsTarget.category === "general" && <SettingSection anchor="general-basics" title={lang === "zh" ? "基础" : "Basics"}>
               <SettingRow
                 anchor="language"
@@ -924,7 +925,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                   onChange={(workspaceCornerRadius) => onSave({ workspaceCornerRadius })}
                 />}
               />
-              <SettingDisclosure title={lang === "zh" ? "进阶外观" : "Advanced appearance"}>
+              <SettingDisclosure title={lang === "zh" ? "进阶外观" : "Advanced appearance"} open={Boolean(expandedSettings["appearance"])} onToggle={open => setExpandedSettings(previous => previous["appearance"] === open ? previous : { ...previous, "appearance": open })}>
               <SettingRow
                 anchor="timeline-font"
                 title={lang === "zh" ? "时间轴字体大小" : "Timeline font size"}
@@ -958,7 +959,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               </div>}
             </SettingSection>}
 
-            {settingsTarget.category === "appearance" && <SettingDisclosure title={lang === "zh" ? "社区主题" : "Community themes"}><div data-settings-anchor="themes" tabIndex={-1}><Suspense fallback={null}><ExtensionSettings lang={lang} kind="theme" /></Suspense></div></SettingDisclosure>}
+            {settingsTarget.category === "appearance" && <SettingDisclosure title={lang === "zh" ? "社区主题" : "Community themes"} open={Boolean(expandedSettings["themes"])} onToggle={open => setExpandedSettings(previous => previous["themes"] === open ? previous : { ...previous, "themes": open })}><div data-settings-anchor="themes" tabIndex={-1}><Suspense fallback={null}><ExtensionSettings lang={lang} kind="theme" /></Suspense></div></SettingDisclosure>}
             {settingsTarget.category === "workflow" && <SettingSection anchor="execution-defaults" title={lang === "zh" ? "执行默认项" : "Execution defaults"}>
               <SettingRow
                 anchor="default-timeline"
@@ -980,7 +981,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                 title={t(lang, "settings.hideCompleted")}
                 control={<SettingToggle checked={Boolean(settings.hideCompleted)} ariaLabel={t(lang, "settings.hideCompleted")} onChange={(next) => onSave({ hideCompleted: next })} />}
               />
-              <SettingDisclosure title={lang === "zh" ? "进阶时间轴设置" : "Advanced timeline settings"}>
+              <SettingDisclosure title={lang === "zh" ? "进阶时间轴设置" : "Advanced timeline settings"} open={Boolean(expandedSettings["timeline"])} onToggle={open => setExpandedSettings(previous => previous["timeline"] === open ? previous : { ...previous, "timeline": open })}>
               <SettingRow
                 anchor="day-start"
                 title={lang === "zh" ? "一天开始时间" : "Day start time"}
@@ -1012,7 +1013,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                 title={lang === "zh" ? "规划结束" : "Planning ends"}
                 control={<SettingTextInput type="time" value={settings.dayEndTime || "22:00"} ariaLabel={lang === "zh" ? "规划结束" : "Planning ends"} onChange={(value) => onSave({ dayEndTime: value })} />}
               />
-              <SettingDisclosure title={lang === "zh" ? "进阶排程" : "Advanced scheduling"}>
+              <SettingDisclosure title={lang === "zh" ? "进阶排程" : "Advanced scheduling"} open={Boolean(expandedSettings["schedule"])} onToggle={open => setExpandedSettings(previous => previous["schedule"] === open ? previous : { ...previous, "schedule": open })}>
               <SettingRow
                 anchor="schedule-buffer"
                 title={lang === "zh" ? "排程任务间隔" : "Gap between scheduled tasks"}
@@ -1021,7 +1022,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
             </SettingDisclosure>
               </SettingSection>}
 
-            {settingsTarget.category === "workflow" && <SettingDisclosure title={lang === "zh" ? "习惯与投入度" : "Habits and engagement"}>
+            {settingsTarget.category === "workflow" && <SettingDisclosure title={lang === "zh" ? "习惯与投入度" : "Habits and engagement"} open={Boolean(expandedSettings["habits"])} onToggle={open => setExpandedSettings(previous => previous["habits"] === open ? previous : { ...previous, "habits": open })}>
             {settingsTarget.category === "workflow" && <SettingSection anchor="habits" title={lang === "zh" ? "习惯" : "Habits"}>
               <SettingRow
                 title={lang === "zh" ? "启用习惯功能" : "Enable habits"}
@@ -1152,7 +1153,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                 control={<SettingToggle checked={settings.widgetAlwaysOnTop !== false} disabled={!Boolean(window.desktopApi?.widget)} ariaLabel={lang === "zh" ? "始终置顶" : "Always on top"} onChange={(next) => { onSave({ widgetAlwaysOnTop: next }); void window.desktopApi?.widget?.setAlwaysOnTop(next); }} />}
               />
             </SettingSection>
-            <SettingDisclosure title={lang === "zh" ? "自定义小组件外观" : "Customize widget appearance"}>
+            <SettingDisclosure title={lang === "zh" ? "自定义小组件外观" : "Customize widget appearance"} open={Boolean(expandedSettings["widget-appearance"])} onToggle={open => setExpandedSettings(previous => previous["widget-appearance"] === open ? previous : { ...previous, "widget-appearance": open })}>
 <SettingSection title={lang === "zh" ? "小组件外观" : "Widget appearance"}>
               <SettingRow
                 title={lang === "zh" ? "背景透明度" : "Background opacity"}
@@ -1231,7 +1232,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
             </>}
             {settingsTarget.category === "general" && isDesktopRuntime && <SettingSection title={lang === "zh" ? "应用更新" : "App updates"}>
               <div data-settings-anchor="updates" tabIndex={-1}><Suspense fallback={null}><DesktopUpdateControl lang={lang} /></Suspense></div>
-              <SettingDisclosure title={lang === "zh" ? "测试版更新" : "Beta updates"}>
+              <SettingDisclosure title={lang === "zh" ? "测试版更新" : "Beta updates"} open={Boolean(expandedSettings["beta-updates"])} onToggle={open => setExpandedSettings(previous => previous["beta-updates"] === open ? previous : { ...previous, "beta-updates": open })}>
               <div data-settings-anchor="beta-updates" tabIndex={-1}><Suspense fallback={null}><BetaUpdatePreference lang={lang} onSave={onSave} /></Suspense></div>
             </SettingDisclosure>
               </SettingSection>}
@@ -1263,7 +1264,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
             </SettingSection>}
             {settingsTarget.category === "ai" && <SettingSection title="Navo AI" description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
               <SettingRow layout="stacked" anchor="ai-provider" title={lang === "zh" ? "AI 提供商与密钥" : "AI provider and key"} description={lang === "zh" ? "支持 DeepSeek、SiliconFlow、OpenAI、Anthropic、GLM 和通义千问。" : "Supports DeepSeek, SiliconFlow, OpenAI, Anthropic, GLM, and Qwen."} control={<Suspense fallback={null}><AiProviderSettings lang={lang} onSave={onSave} /></Suspense>} />
-              <SettingDisclosure title={lang === "zh" ? "进阶模型设置" : "Advanced model settings"}>
+              <SettingDisclosure title={lang === "zh" ? "进阶模型设置" : "Advanced model settings"} open={Boolean(expandedSettings["ai-model"])} onToggle={open => setExpandedSettings(previous => previous["ai-model"] === open ? previous : { ...previous, "ai-model": open })}>
               <SettingRow anchor="ai-reasoning" title={lang === "zh" ? "思考模式" : "Reasoning mode"} control={<SettingSelect value={settings.reasoningMode || "instant"} ariaLabel={lang === "zh" ? "思考模式" : "Reasoning mode"} onChange={(value) => onSave({ reasoningMode: value as Settings["reasoningMode"] })} options={[
                 { value: "instant", label: lang === "zh" ? "即时" : "Instant" },
                 ...reasoningModesForModel(settings.model).filter((mode) => mode === "high" || mode === "xhigh").map((mode) => ({ value: mode, label: mode === "xhigh" ? "Xhigh" : "High" })),
@@ -1271,14 +1272,14 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               </SettingDisclosure>
               <SettingRow anchor="ai-estimate" title={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} control={<SettingToggle checked={settings.autoEstimateTaskDuration !== false} ariaLabel={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} onChange={(next) => onSave({ autoEstimateTaskDuration: next })} />} />
               <SettingRow anchor="ai-project" title={lang === "zh" ? "自动归入项目" : "Auto-assign project"} description={lang === "zh" ? "仅在判断置信度较高时归入已有项目。" : "Assign to an existing project only at high confidence."} control={<SettingToggle checked={settings.autoAssignTaskProject !== false} ariaLabel={lang === "zh" ? "自动归入项目" : "Auto-assign project"} onChange={(next) => onSave({ autoAssignTaskProject: next })} />} />
-              <SettingDisclosure title={lang === "zh" ? "简报与主动助理" : "Briefs and proactive assistant"}>
+              <SettingDisclosure title={lang === "zh" ? "简报与主动助理" : "Briefs and proactive assistant"} open={Boolean(expandedSettings["ai-briefs"])} onToggle={open => setExpandedSettings(previous => previous["ai-briefs"] === open ? previous : { ...previous, "ai-briefs": open })}>
               <SettingRow anchor="ai-briefs" title={lang === "zh" ? "每日开工与收工简报" : "Daily start and end briefs"} description={cloudReady ? (lang === "zh" ? "由云端按工作时间调度；应用关闭时邮件仍可送达，打开应用后收工复盘会追加到固定的每日复盘对话。简报只读。" : "Scheduled in the cloud using your work hours; morning email can arrive while the app is closed, and the end-of-day review is appended to the fixed Daily review conversation when you open the app. Briefs are read-only.") : (lang === "zh" ? "登录云端账号后可启用。" : "Sign in to a cloud account to enable briefs.")} control={<SettingToggle checked={Boolean(settings.aiBriefsEnabled)} disabled={!cloudReady} ariaLabel={lang === "zh" ? "每日 AI 简报" : "Daily AI briefs"} onChange={(next) => onSave({ aiBriefsEnabled: next })} />} />
               <SettingRow title={lang === "zh" ? "简报工作时段" : "Brief work hours"} description={lang === "zh" ? "与智能排程共用工作时段。" : "Uses the same working hours as smart scheduling."} control={<SettingActionButton onClick={() => navigateSettings({ category: "workflow", anchor: "schedule-start" })}>{lang === "zh" ? "调整" : "Edit"}</SettingActionButton>} />
               <Suspense fallback={null}><ProactiveAssistantSettings settings={settings} data={data} lang={lang} cloudReady={Boolean(cloudReady)} onSave={onSave} onSaveData={onSaveData} onRequestLocation={requestProactiveLocation} /></Suspense>
               </SettingDisclosure>
               <SettingRow anchor="ai-memory" title={t(lang, "settings.allowAiContext")} description={lang === "zh" ? "启用后，下方才显示可参与上下文的记忆。" : "When enabled, memories available to context appear below."} control={<SettingToggle checked={Boolean(settings.aiMemoryEnabled)} ariaLabel={t(lang, "settings.allowAiContext")} onChange={(next) => onSave({ aiMemoryEnabled: next })} />} />
               <SettingRow anchor="hide-ai" title={t(lang, "settings.hideAllAi")} control={<SettingToggle checked={Boolean(settings.hideAi)} ariaLabel={t(lang, "settings.hideAllAi")} onChange={(next) => onSave({ hideAi: next })} />} />
-              <SettingDisclosure title={lang === "zh" ? "AI 数据与记忆管理" : "AI data and memory management"}>
+              <SettingDisclosure title={lang === "zh" ? "AI 数据与记忆管理" : "AI data and memory management"} open={Boolean(expandedSettings["ai-data"])} onToggle={open => setExpandedSettings(previous => previous["ai-data"] === open ? previous : { ...previous, "ai-data": open })}>
               <SettingRow
                 anchor="ai-reset"
                 title={lang === "zh" ? "AI 数据操作" : "AI data actions"}
@@ -1373,7 +1374,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               />}
             </SettingSection>}
 
-            {settingsTarget.category === "account-data" && <SettingDisclosure title={lang === "zh" ? "恢复与重置" : "Recovery & reset"}><SettingSection anchor="recovery-settings" title={lang === "zh" ? "危险操作" : "Danger zone"} tone="danger">
+            {settingsTarget.category === "account-data" && <SettingDisclosure title={lang === "zh" ? "恢复与重置" : "Recovery & reset"} open={Boolean(expandedSettings["recovery"])} onToggle={open => setExpandedSettings(previous => previous["recovery"] === open ? previous : { ...previous, "recovery": open })}><SettingSection anchor="recovery-settings" title={lang === "zh" ? "危险操作" : "Danger zone"} tone="danger">
               <SettingRow
                 anchor="reset-settings"
                 title={lang === "zh" ? "重置所有设置" : "Reset all settings"}
