@@ -49,14 +49,20 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategoryDefinition[] = [
   { id: "account-data", labelZh: "账户与数据", labelEn: "Account & Data" },
 ];
 
+/** Historical destinations remain valid; only six categories occupy the main navigation. */
+export const SETTINGS_PRIMARY_CATEGORIES = SETTINGS_CATEGORIES.filter(({ id }) => id !== "widget" && id !== "integrations").map(category => category.id === "plugins" ? { ...category, labelZh: "扩展与连接", labelEn: "Extensions & Connections" } : category);
+export function settingsPrimaryCategory(category: SettingsCategory): SettingsCategory {
+  return category === "widget" ? "appearance" : category === "integrations" ? "plugins" : category;
+}
+
 const legacyTargets: Record<LegacySettingsSection, SettingsTarget> = {
   general: { category: "general" },
   appearance: { category: "appearance" },
-  execution: { category: "general", anchor: "execution-defaults" },
+  execution: { category: "workflow", anchor: "execution-defaults" },
   planning: { category: "workflow", anchor: "planning-views" },
   templates: { category: "workflow", anchor: "templates" },
   habits: { category: "workflow", anchor: "habits" },
-  metrics: { category: "workflow", anchor: "metrics" },
+  metrics: { category: "plugins", anchor: "metrics" },
   widget: { category: "widget" },
   data: { category: "account-data", anchor: "data-backup" },
   shortcuts: { category: "general", anchor: "shortcuts" },
@@ -79,6 +85,9 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
     if (input.detail === "integrations") return { category: "integrations", anchor: input.anchor };
     return { category: "account-data", anchor: input.anchor || "reset-settings" };
   }
+  if (input.anchor && ["execution-defaults", "day-start", "default-timeline", "continuous-scroll", "hide-completed"].includes(input.anchor)) return { category: "workflow", anchor: input.anchor };
+  if (input.anchor === "auto-launch") return { category: "general", anchor: input.anchor };
+  if (input.anchor === "metrics" || input.anchor?.startsWith("metrics-")) return { category: "plugins", anchor: input.anchor };
   if (input.anchor === "updates" || input.anchor === "beta-updates") return { category: "general", anchor: input.anchor };
   if (input.category === "integrations" && input.anchor === "plugins") return { category: "plugins", anchor: "plugins" };
   if (!SETTINGS_CATEGORIES.some((category) => category.id === input.category)) return { category: "general" };
@@ -89,7 +98,7 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
 }
 
 export function settingsCategoryLabel(category: SettingsCategory, lang: Language): string {
-  const definition = SETTINGS_CATEGORIES.find((item) => item.id === category) ?? SETTINGS_CATEGORIES[0];
+  const definition = SETTINGS_PRIMARY_CATEGORIES.find(item => item.id === category) ?? SETTINGS_CATEGORIES.find(item => item.id === category) ?? SETTINGS_CATEGORIES[0];
   return lang === "zh" ? definition.labelZh : definition.labelEn;
 }
 
@@ -129,10 +138,10 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("external-calendar", { category: "integrations" }, "外部日历", "External calendars", "read only ICS busy time 只读 忙碌 冲突"),
   entry("language", { category: "general" }, "语言", "Language", "中文 English locale"),
   entry("notification-badge", { category: "general" }, "应用内通知角标", "In-app notification badge", "unread count notifications badge 通知 未读 提醒 角标"),
-  entry("day-start", { category: "general" }, "一天开始时间", "Day start time", "timeline boundary 跨天"),
-  entry("default-timeline", { category: "general" }, "默认时间轴视图", "Default timeline view", "day 3-day week month 日 周 月"),
-  entry("continuous-scroll", { category: "general" }, "开启无限跨天滚动", "Continuous cross-day scroll", "timeline"),
-  entry("hide-completed", { category: "general" }, "隐藏已完成任务", "Hide completed tasks", "timeline 时间轴"),
+  entry("day-start", { category: "workflow" }, "一天开始时间", "Day start time", "timeline boundary 跨天"),
+  entry("default-timeline", { category: "workflow" }, "默认时间轴视图", "Default timeline view", "day 3-day week month 日 周 月"),
+  entry("continuous-scroll", { category: "workflow" }, "开启无限跨天滚动", "Continuous cross-day scroll", "timeline"),
+  entry("hide-completed", { category: "workflow" }, "隐藏已完成任务", "Hide completed tasks", "timeline 时间轴"),
   entry("shortcuts", { category: "general" }, "快捷键", "Shortcuts", "keyboard hotkeys help 帮助"),
   entry("restart-onboarding", { category: "general" }, "重新开始新手指南", "Restart onboarding guide", "tutorial 引导"),
 
@@ -149,19 +158,26 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("schedule-buffer", { category: "workflow" }, "排程任务间隔", "Gap between scheduled tasks", "任务缓冲 Task buffer minutes AI schedule 间隔 排程"),
   entry("templates", { category: "workflow" }, "模板", "Templates", "schedule template 时间段"),
   entry("habits", { category: "workflow" }, "习惯", "Habits", "candidate metrics 每日 每周"),
-  entry("metrics", { category: "workflow" }, "指标", "Metrics", "range grouping completion 统计 范围 分组 完成"),
+  entry("metrics", { category: "plugins" }, "指标", "Metrics", "range grouping completion 统计 范围 分组 完成"),
+  entry("metrics-range", { category: "plugins" }, "指标时间范围", "Metrics time range", "statistics period 时间 统计"),
+  entry("metrics-group", { category: "plugins" }, "指标分组", "Metrics grouping", "statistics group 统计"),
+  entry("metrics-display", { category: "plugins" }, "显示指标", "Metrics display", "statistics metric duration 统计"),
+  entry("metrics-habits", { category: "plugins" }, "习惯是否计入统计", "Include habits in metrics", "statistics habits 统计"),
+  entry("metrics-completion", { category: "plugins" }, "指标完成状态筛选", "Metrics completion filter", "statistics filter 统计"),
+  entry("habit-candidates", { category: "workflow" }, "候选中的习惯区", "Habits in candidates", "习惯"),
   entry("engagement", { category: "workflow" }, "投入度评分", "Engagement rating", "engagement effort focus density weighted 80% 投入 专注 评分 颜色 密度 时长 加权"),
 
   entry("account", { category: "account-data" }, "个人资料与账户", "Profile & account", "avatar name plan subscription 头像 用户名 方案"),
   entry("sync", { category: "account-data" }, "同步", "Sync", "cloud interval push pull 云端"),
   entry("updates", { category: "general" }, "应用更新", "App updates", "desktop version 桌面 版本"),
   entry("beta-updates", { category: "general" }, "接受 Beta 更新", "Accept Beta updates", "beta prerelease preview 测试 预览 更新"),
-  entry("auto-launch", { category: "account-data" }, "开机启动", "Launch at startup", "desktop login 开机自启"),
+  entry("auto-launch", { category: "general" }, "开机启动", "Launch at startup", "desktop login 开机自启"),
   entry("data-backup", { category: "account-data" }, "数据与备份", "Data & Backup", "import export json csv 导入 导出"),
   entry("clear-local-data", { category: "account-data" }, "清空本地数据", "Clear local data", "delete danger 删除 危险"),
   entry("delete-account", { category: "account-data" }, "删除账户", "Delete account", "danger sign out logout 危险 退出"),
 
-  entry("ai-model", { category: "ai" }, "高级模型偏好", "Advanced model preference", "model routing 模型"),
+  entry("ai-provider", { category: "ai" }, "AI 提供商与密钥", "AI provider and key", "API key provider model 服务商 密钥"),
+  entry("ai-model", { category: "ai", anchor: "ai-provider" }, "高级模型偏好", "Advanced model preference", "model routing 模型"),
   entry("ai-reasoning", { category: "ai" }, "思考模式", "Reasoning mode", "instant high xhigh"),
   entry("ai-estimate", { category: "ai" }, "自动估算任务用时", "Estimate task duration", "AI duration"),
   entry("ai-project", { category: "ai" }, "自动归入项目", "Auto-assign project", "AI confidence"),
@@ -201,7 +217,7 @@ export function searchSettings(query: string, lang: Language, desktopAvailable =
   if (tokens.length === 0) return [];
   return SETTINGS_SEARCH_ENTRIES
     .filter((item) => desktopAvailable || item.target.category !== "widget")
-    .filter((item) => desktopAvailable || item.id !== "beta-updates")
+    .filter((item) => desktopAvailable || !["beta-updates", "auto-launch", "updates"].includes(item.id))
     .filter((item) => tokens.every((token) => searchableText(item).includes(token)))
     .sort((a, b) => {
       const aLabel = (lang === "zh" ? a.labelZh : a.labelEn).toLocaleLowerCase();
