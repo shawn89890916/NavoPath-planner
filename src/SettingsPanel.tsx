@@ -984,6 +984,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               <SettingRow
                 anchor="default-timeline"
                 title={lang === "zh" ? "默认时间轴视图" : "Default timeline view"}
+                description={lang === "zh" ? "下次打开工作区时采用此视图。" : "Used when the workspace next opens."}
                 control={<SettingSelect<NonNullable<Settings["defaultTimelineView"]>>
                   value={settings.defaultTimelineView || "daily"}
                   ariaLabel={lang === "zh" ? "默认时间轴视图" : "Default timeline view"}
@@ -1053,7 +1054,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               />}
               <SettingRow anchor="engagement"
                 title={lang === "zh" ? "启用投入度评分" : "Enable engagement rating"}
-                description={lang === "zh" ? "完成后评 10–100%，默认 80%。点击百分比快速选择；左侧色条长度表示投入度，统计时长按评分计算。" : "Rate completed work 10–100%, default 80%. Click the percentage to choose. Left stripe length shows engagement; time is weighted by rating."}
+                description={lang === "zh" ? "完成后评 10–100%，默认 80%。点击百分比快速选择；左侧色条长度表示投入度，例如 60 分钟 × 80% = 48 分钟有效投入。" : "Rate completed work 10–100%, default 80%. Click the percentage to choose. Left stripe length shows engagement; for example, 60 minutes × 80% = 48 minutes of weighted effort."}
                 control={<SettingToggle checked={settings.featureEngagementEnabled === true} ariaLabel={lang === "zh" ? "启用投入度评分" : "Enable engagement rating"} onChange={(next) => onSave({ featureEngagementEnabled: next })} />}
               />
             </SettingSection>}
@@ -1201,8 +1202,8 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                 { value: "instant", label: lang === "zh" ? "即时" : "Instant" },
                 ...reasoningModesForModel(settings.model).filter((mode) => mode === "high" || mode === "xhigh").map((mode) => ({ value: mode, label: mode === "xhigh" ? "Xhigh" : "High" })),
               ]} />} />
-              <SettingRow anchor="ai-estimate" title={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} control={<SettingToggle checked={settings.autoEstimateTaskDuration !== false} ariaLabel={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} onChange={(next) => onSave({ autoEstimateTaskDuration: next })} />} />
-              <SettingRow anchor="ai-project" title={lang === "zh" ? "自动归入项目" : "Auto-assign project"} description={lang === "zh" ? "仅在判断置信度较高时归入已有项目。" : "Assign to an existing project only at high confidence."} control={<SettingToggle checked={settings.autoAssignTaskProject !== false} ariaLabel={lang === "zh" ? "自动归入项目" : "Auto-assign project"} onChange={(next) => onSave({ autoAssignTaskProject: next })} />} />
+              <SettingRow anchor="ai-estimate" title={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} description={lang === "zh" ? "影响之后新增的任务；已有任务不变。" : "Applies to new tasks; existing tasks stay unchanged."} control={<SettingToggle checked={settings.autoEstimateTaskDuration !== false} ariaLabel={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} onChange={(next) => onSave({ autoEstimateTaskDuration: next })} />} />
+              <SettingRow anchor="ai-project" title={lang === "zh" ? "自动归入项目" : "Auto-assign project"} description={lang === "zh" ? "新增任务时，仅在判断置信度较高时归入已有项目。" : "Assign new tasks to an existing project only at high confidence."} control={<SettingToggle checked={settings.autoAssignTaskProject !== false} ariaLabel={lang === "zh" ? "自动归入项目" : "Auto-assign project"} onChange={(next) => onSave({ autoAssignTaskProject: next })} />} />
               <SettingDisclosure title={lang === "zh" ? "简报与主动助理" : "Briefs and proactive assistant"} open={Boolean(expandedSettings["ai-briefs"])} onToggle={open => setExpandedSettings(previous => previous["ai-briefs"] === open ? previous : { ...previous, "ai-briefs": open })}>
               <SettingRow anchor="ai-briefs" title={lang === "zh" ? "每日开工与收工简报" : "Daily start and end briefs"} description={cloudReady ? (lang === "zh" ? "由云端按工作时间调度；应用关闭时邮件仍可送达，打开应用后收工复盘会追加到固定的每日复盘对话。简报只读。" : "Scheduled in the cloud using your work hours; morning email can arrive while the app is closed, and the end-of-day review is appended to the fixed Daily review conversation when you open the app. Briefs are read-only.") : (lang === "zh" ? "登录云端账号后可启用。" : "Sign in to a cloud account to enable briefs.")} control={<SettingToggle checked={Boolean(settings.aiBriefsEnabled)} disabled={!cloudReady} ariaLabel={lang === "zh" ? "每日 AI 简报" : "Daily AI briefs"} onChange={(next) => onSave({ aiBriefsEnabled: next })} />} />
               <SettingRow title={lang === "zh" ? "简报工作时段" : "Brief work hours"} description={lang === "zh" ? "与智能排程共用工作时段。" : "Uses the same working hours as smart scheduling."} control={<SettingActionButton onClick={() => navigateSettings({ category: "workflow", anchor: "schedule-start" })}>{lang === "zh" ? "调整" : "Edit"}</SettingActionButton>} />

@@ -126,7 +126,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
       ? normalizePomodoroClockFont(extensionService.getConfig(page.owner).clockFont)
       : undefined;
     const fontLabel = text("计时数字字体", "Clock font");
-    return <div className="df-extensions"><SettingSection title={settingsPageId === undefined ? page.name : undefined}>
+    return <div className="df-extensions" aria-label={page.name}><SettingSection title={settingsPageId === undefined ? page.name : undefined}>
       <div className="df-extension-back"><SettingActionButton onClick={() => setPageId(null)}>{text("返回插件", "Back to plugins")}</SettingActionButton></div>
       {focusClockFont && <SettingRow title={fontLabel} control={<>
         <span className="df-focus-font-preview" data-focus-clock-font={focusClockFont} aria-hidden="true">23:00</span>
@@ -169,10 +169,10 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
             const pages = Array.from(new Map((ownedPages.length ? ownedPages : snapshot.settingsPages.filter((contribution) => contribution.owner === item.manifest.id)).map((contribution) => [contribution.name.trim().toLocaleLowerCase(), contribution])).values());
             const selected = preferences.activeTheme === item.key;
             const declared = plugin ? item.manifest.settingsOptions : undefined;
-            const config = declared?.length ? extensionService.getConfig(item.key) : {};
+            const config: Record<string, unknown> = declared?.length ? extensionService.getConfig(item.key) : {};
             const inline = inlineSettings?.[item.key] ?? (declared?.length ? <>
               {declared.map(option => <SettingRow key={option.key} title={option.label} description={option.description} control={<ExtensionOptionControl option={option} value={config[option.key] ?? option.default} disabled={busy} onChange={value => void run(() => extensionService.saveConfig(item.key, { [option.key]: value }), text("正在保存…", "Saving…"))} />} />)}
-              <SettingRow title={text("恢复插件默认选项", "Restore plugin defaults")} control={<SettingActionButton disabled={busy} onClick={() => void run(() => extensionService.saveConfig(item.key, Object.fromEntries(declared.map(option => [option.key, option.default]))), text("正在保存…", "Saving…")))}>{text("恢复默认", "Reset")}</SettingActionButton>} />
+              <SettingRow title={text("恢复插件默认选项", "Restore plugin defaults")} control={<SettingActionButton disabled={busy} onClick={() => void run(() => extensionService.saveConfig(item.key, Object.fromEntries(declared.map(option => [option.key, option.default]))), text("正在保存…", "Saving…"))}>{text("恢复默认", "Reset")}</SettingActionButton>} />
             </> : undefined);
             return <div className="df-extension-installed-item" key={item.key}><SettingRow title={item.manifest.name} description={<>{item.manifest.description}<span className="df-extension-meta">v{item.manifest.version} · {item.manifest.author} · {preferences.sources.find(source => source.id === item.sourceId)?.name ?? item.sourceId}</span><span className="df-extension-state">{plugin ? statusLabel(snapshot.status[item.key] || (item.enabled ? text("已启用", "Enabled") : text("已停用", "Disabled"))) : selected ? text("使用中", "Active") : text("已安装", "Installed")}</span></>} control={confirmation === item.key ? <><SettingActionButton disabled={busy} tone="danger" onClick={() => void run(async () => { await extensionService.uninstall(item.key); setConfirmation(null); }, text("正在卸载…", "Uninstalling…"))}>{text("确认卸载", "Confirm uninstall")}</SettingActionButton><SettingActionButton onClick={() => setConfirmation(null)}>{text("取消", "Cancel")}</SettingActionButton></> : <>
               {inline && <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => setExpandedInline(current => current === item.key ? undefined : item.key)}>{expandedInline === item.key ? text("收起", "Collapse") : text("设置", "Settings")}</SettingActionButton>}

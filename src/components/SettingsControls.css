@@ -133,6 +133,7 @@
 /* Search is a flat view of the existing registered controls, not another settings hierarchy. */
 .df-settings-search-bar { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
 .df-settings-search-bar > .df-settings-input { flex: 1; min-width: 0; }
+.df-settings-search-bar > button { flex: 0 0 auto; }
 .df-settings-search-results { min-width: 0; }
 .df-settings-search-results .df-settings-row-title { overflow-wrap: anywhere; }
 .df-settings-search-value { color: var(--text-muted); font: 400 12px/1.4 var(--paper-sans); overflow-wrap: anywhere; }
