@@ -945,6 +945,7 @@ export default function PlanningView(props: {
   featureMetrics?: boolean;
   engagementEnabled?: boolean;
   dayStartTime?: string;
+  weekStartsOn?: 0 | 1;
   metricsRangePreset?: MetricRangePreset;
   metricsGroupBy?: MetricGroupBy;
   metricsDisplayMetric?: MetricDisplayMetric;
@@ -2246,12 +2247,13 @@ export default function PlanningView(props: {
       customEnd: metricsCustomEnd,
     },
     dayStartMinutes,
+    weekStartsOn: props.weekStartsOn,
     engagementEnabled: props.engagementEnabled,
     groupBy: metricsGroupBy,
     habitMode: metricsHabitMode,
     completion: metricsCompletion,
     projectIds: metricsProjectFilter,
-  }), [props.data, metricsRangePreset, today, metricsCustomStart, metricsCustomEnd, dayStartMinutes, metricsGroupBy, metricsHabitMode, metricsCompletion, metricsProjectFilter, props.engagementEnabled]);
+  }), [props.data, metricsRangePreset, today, metricsCustomStart, metricsCustomEnd, dayStartMinutes, props.weekStartsOn, metricsGroupBy, metricsHabitMode, metricsCompletion, metricsProjectFilter, props.engagementEnabled]);
   useEffect(() => {
     setSelectedMetricGroupId((id) => id && metricsResult.groups.some((group) => group.id === id) ? id : null);
   }, [metricsResult.groups]);

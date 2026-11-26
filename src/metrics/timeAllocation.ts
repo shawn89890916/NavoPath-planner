@@ -149,11 +149,14 @@ function startOfMonth(anchor: Date, dayStartMinutes: number) {
   return localDateTime(`${anchor.getFullYear()}-${String(anchor.getMonth() + 1).padStart(2, "0")}-01`, dayStartMinutes);
 }
 
-function startOfMetricWeek(anchor: Date, dayStartMinutes: number) {
+function startOfMetricWeek(anchor: Date, dayStartMinutes: number, weekStartsOn: 0 | 1 = 1) {
   const date = localDateTime(isoDate(anchor), dayStartMinutes);
-  const day = date.getDay();
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  return addDays(date, mondayOffset);
+  return addDays(date, -((date.getDay() - weekStartsOn + 7) % 7));
+}
+
+function metricDayStart(date: Date, dayStartMinutes: number) {
+  const start = localDateTime(isoDate(date), dayStartMinutes);
+  return date < start ? addDays(start, -1) : start;
 }
 
 function enumerateRecurrenceDates(recurrence: TaskRecurrence, visibleDates: Set<string>) {
@@ -210,7 +213,7 @@ export function parseDayStartMinutes(value: string | undefined): number {
   return Math.max(0, Math.min(1439, hours * 60 + minutes));
 }
 
-export function getMetricRange(input: MetricRangeInput & { dayStartMinutes?: number }): MetricDateRange {
+export function getMetricRange(input: MetricRangeInput & { dayStartMinutes?: number; weekStartsOn?: 0 | 1 }): MetricDateRange {
   const dayStartMinutes = input.dayStartMinutes || 0;
   const anchor = input.anchorDate ? localDateTime(input.anchorDate, dayStartMinutes) : new Date();
   const todayStart = localDateTime(isoDate(anchor), dayStartMinutes);
@@ -229,16 +232,16 @@ export function getMetricRange(input: MetricRangeInput & { dayStartMinutes?: num
     return { preset: input.preset, start, end: todayStart, label: "昨天" };
   }
   if (input.preset === "thisWeek") {
-    const start = startOfMetricWeek(anchor, dayStartMinutes);
+    const start = startOfMetricWeek(todayStart, dayStartMinutes, input.weekStartsOn);
     return { preset: input.preset, start, end: addDays(start, 7), label: "本周" };
   }
   if (input.preset === "lastWeek") {
-    const thisWeekStart = startOfMetricWeek(anchor, dayStartMinutes);
+    const thisWeekStart = startOfMetricWeek(todayStart, dayStartMinutes, input.weekStartsOn);
     const start = addDays(thisWeekStart, -7);
     return { preset: input.preset, start, end: thisWeekStart, label: "上周" };
   }
   if (input.preset === "thisMonth") {
-    const start = startOfMonth(anchor, dayStartMinutes);
+    const start = startOfMonth(todayStart, dayStartMinutes);
     const end = new Date(start);
     end.setMonth(end.getMonth() + 1);
     return { preset: input.preset, start, end, label: "本月" };
@@ -285,7 +288,7 @@ function isCompletedEntry(data: PlannerData, task: Task, record: TimelineRecord,
     const state = (data.habitDailyStates || []).find((item) => item.timelineRecordId === record.id);
     if (state) return Boolean(state.completed);
   }
-  return Boolean(record.executionStatus === "completed" || task.completed || normalizeWorkflowStatus(task) === "done");
+  return record.executionStatus === "completed";
 }
 
 function isRecurringScheduledTask(task: Task) {
@@ -326,19 +329,18 @@ function taskRecords(task: Task, range: MetricDateRange, dayStartMinutes: number
     .filter((record) => record.executionStatus !== "cancelled")
     .map((record) => timedMetricRecord(task, record, dayStartMinutes));
   const allRecords = [...records];
-  if (task.scheduledDate && task.scheduledStart && task.scheduledEnd) {
+  if (!task.timelineRecords?.length && task.scheduledDate && task.scheduledStart && task.scheduledEnd) {
     allRecords.push({
       id: `legacy-${task.id}`,
       engagement: task.engagement,
       taskId: task.id,
       scheduledDate: task.scheduledDate,
       scheduledStart: task.scheduledStart,
-      scheduledEndDate: task.scheduledDate,
       scheduledEnd: task.scheduledEnd,
-      executionStatus: "scheduled",
+      executionStatus: task.executionStatus || (task.completed || normalizeWorkflowStatus(task) === "done" ? "completed" : "scheduled"),
       createdAt: task.createdAt,
     });
-  } else if (task.scheduledDate && !task.scheduledStart) {
+  } else if (!task.timelineRecords?.length && task.scheduledDate && !task.scheduledStart) {
     const startTime = minutesToTime(dayStartMinutes);
     const { endDate, endTime } = endForStartAndDuration(task.scheduledDate, startTime, allDayDurationMinutes(task));
     allRecords.push({
@@ -377,14 +379,14 @@ function taskRecords(task: Task, range: MetricDateRange, dayStartMinutes: number
       });
     }
   }
-  return allRecords;
+  return allRecords.filter(record => record.executionStatus !== "cancelled");
 }
 
 function splitByMetricDay(entry: MetricTaskEntry, dayStartMinutes: number): MetricTaskEntry[] {
   const pieces: MetricTaskEntry[] = [];
   let cursor = new Date(entry.scheduledStart);
   while (cursor < entry.scheduledEnd) {
-    const bucketStart = getMetricRange({ preset: "today", anchorDate: isoDate(cursor), dayStartMinutes }).start;
+    const bucketStart = metricDayStart(cursor, dayStartMinutes);
     const bucketEnd = addDays(bucketStart, 1);
     const end = new Date(Math.min(bucketEnd.getTime(), entry.scheduledEnd.getTime()));
     const rawMinutes = minutesBetween(cursor, end);
@@ -409,12 +411,12 @@ function mergeScheduledIntervals(entries: MetricTaskEntry[]) {
   return merged.reduce((sum, item) => sum + Math.round((item.end - item.start) / 60000), 0);
 }
 
-function groupKey(task: Task, project: Project | null, groupBy: MetricGroupBy) {
+function groupKey(task: Task, project: Project | null, groupBy: MetricGroupBy, entry: MetricTaskEntry) {
   if (groupBy === "project") return project?.id || UNASSIGNED_GROUP_ID;
   if (groupBy === "importance") return task.importance || "unset";
   if (groupBy === "urgency") return task.urgency || "unset";
-  if (groupBy === "completion") return task.completed || normalizeWorkflowStatus(task) === "done" ? "completed" : "incomplete";
-  if (groupBy === "taskType") return task.id.startsWith("habit-task-") ? "habit" : "task";
+  if (groupBy === "completion") return entry.completed ? "completed" : "incomplete";
+  if (groupBy === "taskType") return entry.isHabit ? "habit" : "task";
   return UNASSIGNED_GROUP_ID;
 }
 
@@ -437,6 +439,7 @@ export function buildTimeAllocationMetrics(options: {
   data: PlannerData;
   range: MetricRangeInput;
   dayStartMinutes?: number;
+  weekStartsOn?: 0 | 1;
   groupBy?: MetricGroupBy;
   habitMode?: MetricHabitMode;
   completion?: MetricCompletionFilter;
@@ -447,7 +450,7 @@ export function buildTimeAllocationMetrics(options: {
   const groupBy = options.groupBy || "project";
   const habitMode = options.habitMode || "include";
   const completion = options.completion || "all";
-  const range = getMetricRange({ ...options.range, dayStartMinutes });
+  const range = getMetricRange({ ...options.range, dayStartMinutes, weekStartsOn: options.weekStartsOn });
   const projects = options.data.projects || [];
   const projectFilter = new Set(options.projectIds || []);
   const splitEntries: MetricTaskEntry[] = [];
@@ -513,7 +516,7 @@ export function buildTimeAllocationMetrics(options: {
     const task = options.data.tasks.find((item) => item.id === entry.taskId);
     if (!task) continue;
     const project = projectForTask(projects, task);
-    const key = groupKey(task, project, groupBy);
+    const key = groupKey(task, project, groupBy, entry);
     const current = buckets.get(key) || {
       id: key,
       label: groupLabel(key, project, groupBy),
@@ -549,7 +552,7 @@ export function buildTimeAllocationMetrics(options: {
 
   const heatmap = new Map<string, TimeAllocationHeatmapBucket & { projectMinutes: Map<string, number> }>();
   for (const entry of splitEntries) {
-    const date = isoDate(getMetricRange({ preset: "today", anchorDate: isoDate(entry.scheduledStart), dayStartMinutes }).start);
+    const date = isoDate(metricDayStart(entry.scheduledStart, dayStartMinutes));
     const bucket = heatmap.get(date) || { key: date, date, label: date.slice(5), minutes: 0, taskCount: 0, projectMinutes: new Map<string, number>() };
     bucket.minutes += entry.durationMinutes;
     bucket.taskCount += 1;

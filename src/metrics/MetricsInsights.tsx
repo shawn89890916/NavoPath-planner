@@ -6,7 +6,12 @@ import { analyticsError, analyticsPreference, clearAnalytics, readAnalyticsEvent
 import type { AnalyticsEvent } from "./activityEvents";
 import "./MetricsInsights.css";
 
-type View = "allocation" | "time" | "execution" | "engagement" | "history";
+type View = "allocation" | "time" | "execution" | "engagement" | "projects" | "history";
+type TimeChart = "trend" | "heatmap" | "table";
+function downloadCsv(rows: {date:string;scheduled:number;completed:number;tracked:number;trackedSessions:number}[]) {
+  const text=["Date,Scheduled minutes,Completed scheduled minutes,Tracked minutes",...rows.map(d=>[d.date,d.scheduled.toFixed(2),d.completed.toFixed(2),d.trackedSessions?d.tracked.toFixed(2):""].join(","))].join("\\r\\n");
+  const url=URL.createObjectURL(new Blob([text],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="navopath-metrics.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 type Props = { scope?:string; data:PlannerData; allocation:TimeAllocationMetrics; dayStartMinutes:number; projectIds:string[]; habitMode:MetricHabitMode; completion:MetricCompletionFilter; lang:Language; children:ReactNode };
 function minutes(n:number) { return (Math.round(n/6)/10).toFixed(1)+" h"; }
 function percent(n:number|null) {return n===null?"—":Math.round(n)+"%";}
@@ -16,6 +21,7 @@ function downloadJson(events:AnalyticsEvent[]) {
 }
 export function MetricsInsights(p:Props) {
   const [view,setView]=useState<View>("allocation");
+  const [timeChart,setTimeChart]=useState<TimeChart>("trend");
   const [events,setEvents]=useState<AnalyticsEvent[]>([]);
   const [historyState,setHistoryState]=useState<"loading"|"ready"|"error">("loading");
   const [revision,setRevision]=useState(0);
@@ -34,7 +40,7 @@ export function MetricsInsights(p:Props) {
     return()=>{live=false;};
   },[view,p.scope,start,end,revision]);
   useEffect(()=>setSelectedDate(null),[start,end]);
-  const tabs: [View,string][]=[["allocation",t("分布","Allocation")],["time",t("时间","Time")],["execution",t("执行","Execution")],["engagement",t("投入度","Engagement")],["history",t("历史","History")]];
+  const tabs: [View,string][]=[["allocation",t("分布","Allocation")],["time",t("时间","Time")],["execution",t("执行","Execution")],["engagement",t("投入度","Engagement")],["projects",t("项目","Projects")],["history",t("历史","History")]];
   const visibleDays=result.days.slice(-366),max=Math.max(1,...visibleDays.flatMap(d=>[d.scheduled,d.completed,d.tracked]));
   const historyRows=events.slice(0,500).filter(e=>!p.projectIds.length || p.projectIds.includes(e.projectId||"__unassigned__"));
   const stat=(label:string,value:string)=><div><span>{label}</span><strong>{value}</strong></div>;
@@ -46,15 +52,17 @@ export function MetricsInsights(p:Props) {
         <div className="df-metric-insight-stats">{stat(t("排程时长","Scheduled"),minutes(result.scheduled))}{stat(t("已完成排程","Completed scheduled"),minutes(result.completed))}{stat(t("实际计时","Tracked"),result.trackedSessions?minutes(result.tracked):"—")}</div>
         <p>{t("排程时长不代表实测时长；跨日计时按记录区间比例分配。","Scheduled time is not measured time; cross-day tracked duration is apportioned by interval.")}</p>
         <h3>{t("每日时长","Daily time")}</h3>
+        <div className="df-metric-insight-tabs">{(["trend","heatmap","table"] as const).map(v=><button key={v} type="button" className="df-metrics-text-action" aria-pressed={timeChart===v} onClick={()=>setTimeChart(v)}>{v==="trend"?t("趋势","Trend"):v==="heatmap"?t("热力图","Heatmap"):t("数据表","Table")}</button>)}{action(t("导出 CSV","Export CSV"),()=>downloadCsv(result.days),!result.days.length)}</div>
         <p>{t("排程 / 完成 / 计时","Scheduled / Completed / Tracked")}</p>
         {result.days.length>366&&<p>{t("图表显示最近 366 个有记录的日期；汇总涵盖所选范围。","Chart shows the latest 366 recorded dates; totals cover the selected range.")}</p>}
-        {visibleDays.length===0?<p>{t("暂无记录","No records")}</p>:<div className="df-metric-insight-trend">{visibleDays.map(d=><button type="button" key={d.date} aria-pressed={selectedDate===d.date} onClick={()=>setSelectedDate(selectedDate===d.date?null:d.date)} title={d.date+" · "+[d.scheduled,d.completed,d.tracked].map(minutes).join(" / ")} aria-label={d.date+" "+[d.scheduled,d.completed,d.tracked].map(minutes).join(" / ")}><span>{d.date.slice(5)}</span><span className="df-metric-insight-bars">{[d.scheduled,d.completed,d.tracked].map((v,i)=><i key={i} style={{height:(v/max*100)+"%"}}/>)}</span></button>)}</div>}
+        {visibleDays.length===0?<p>{t("暂无记录","No records")}</p>:timeChart==="trend"?<div className="df-metric-insight-trend">{visibleDays.map(d=><button type="button" key={d.date} aria-pressed={selectedDate===d.date} onClick={()=>setSelectedDate(selectedDate===d.date?null:d.date)} title={d.date+" · "+[d.scheduled,d.completed,d.tracked].map(minutes).join(" / ")} aria-label={d.date+" "+[d.scheduled,d.completed,d.tracked].map(minutes).join(" / ")}><span>{d.date.slice(5)}</span><span className="df-metric-insight-bars">{[d.scheduled,d.completed,d.tracked].map((v,i)=><i key={i} style={{height:(v/max*100)+"%"}}/>)}</span></button>)}</div>:timeChart==="heatmap"?<div className="df-metric-insight-heatmap" aria-label={t("已完成排程热力图","Completed scheduled time heatmap")}>{visibleDays.map(d=><button type="button" key={d.date} aria-pressed={selectedDate===d.date} onClick={()=>setSelectedDate(selectedDate===d.date?null:d.date)} style={{backgroundColor:"color-mix(in srgb, var(--accent-active) "+Math.round(10+d.completed/max*85)+"%, var(--paper-rule))"}} title={d.date+" · "+minutes(d.completed)} aria-label={d.date+" "+minutes(d.completed)}>{d.date.slice(5)}</button>)}</div>:<div className="df-metric-insight-table"><table><thead><tr><th>{t("日期","Date")}</th><th>{t("排程","Scheduled")}</th><th>{t("完成","Completed")}</th><th>{t("计时","Tracked")}</th></tr></thead><tbody>{visibleDays.map(d=><tr key={d.date}><td>{d.date}</td><td>{minutes(d.scheduled)}</td><td>{minutes(d.completed)}</td><td>{d.trackedSessions?minutes(d.tracked):"—"}</td></tr>)}</tbody></table></div>}
         {selectedDate&&<div>{visibleDays.filter(d=>d.date===selectedDate).map(d=><p key={d.date}>{d.date} · {minutes(d.scheduled)} / {minutes(d.completed)} / {minutes(d.tracked)}</p>)}</div>}
       </>}
       {view==="execution"&&<><div className="df-metric-insight-stats">{stat(t("独立执行","Executions"),String(result.executionCount))}{stat(t("完成执行","Completed"),String(result.statuses.completed))}{stat(t("完成比例","Completed share"),result.executionCount?percent(result.statuses.completed/result.executionCount*100):"—")}</div>
         {([["scheduled",t("已安排","Scheduled")],["completed",t("完成","Completed")],["returned_unfinished",t("返回规划","Returned")],["skipped",t("跳过","Skipped")]] as const).map(([id,label])=><div className="df-metric-insight-row" key={id}><span>{label}</span><progress max={Math.max(1,result.executionCount)} value={result.statuses[id]||0}/><strong>{result.statuses[id]||0}</strong></div>)}
         <p>{t("以独立时间轴记录计数，不将跨日片段重复计数；取消的排程不进入现有分布统计。","Counts individual timeline records, not cross-day slices. Cancelled schedules are excluded by the existing allocation report.")}</p></>}
-      {view==="engagement"&&<><div className="df-metric-insight-stats">{stat(t("明确评分均值","Explicit weighted mean"),percent(result.explicitEngagement))}{stat(t("评分时长覆盖率","Rated time coverage"),percent(result.ratingCoverage))}{stat(t("明确评分加权时长","Explicit weighted time"),result.ratedMinutes?minutes(result.ratedWeighted):"—")}</div><p>{t("只计算已完成且明确评分的排程时长；默认 80% 不作为用户评分。","Uses completed scheduled intervals with explicit ratings only; default 80% is not a user rating.")}</p>{result.ratingCoverage!==null&&<progress max={100} value={result.ratingCoverage}/>}</>}
+      {view==="engagement"&&<><div className="df-metric-insight-stats">{stat(t("明确评分均值","Explicit weighted mean"),percent(result.explicitEngagement))}{stat(t("评分时长覆盖率","Rated time coverage"),percent(result.ratingCoverage))}{stat(t("明确评分加权时长","Explicit weighted time"),result.ratedMinutes?minutes(result.ratedWeighted):"—")}</div><p>{t("只计算已完成且明确评分的排程时长；默认 80% 不作为用户评分。","Uses completed scheduled intervals with explicit ratings only; default 80% is not a user rating.")}</p>{result.ratingCoverage!==null&&<progress max={100} value={result.ratingCoverage}/>}<h3>{t("明确评分分布","Explicit rating distribution")}</h3>{result.engagementBuckets.map(b=><div key={b.score} className="df-metric-insight-row"><span>{b.score}%</span><progress max={Math.max(1,...result.engagementBuckets.map(x=>x.minutes))} value={b.minutes}/><strong>{b.count}</strong></div>)}</>}
+      {view==="projects"&&<><h3>{t("项目时间与执行","Project time and executions")}</h3><p>{t("按任务当前归属统计；实际计时缺失显示 —。","Grouped by current project; missing tracked time is shown as —.")}</p><div className="df-metric-insight-table"><table><thead><tr><th>{t("项目","Project")}</th><th>{t("排程","Scheduled")}</th><th>{t("完成","Completed")}</th><th>{t("计时","Tracked")}</th><th>{t("执行","Executions")}</th></tr></thead><tbody>{result.projects.map(pj=><tr key={pj.id}><td>{pj.id==="__unassigned__"?t("未归属","Unassigned"):pj.label}</td><td>{minutes(pj.scheduled)}</td><td>{minutes(pj.completed)}</td><td>{pj.trackedSessions?minutes(pj.tracked):"—"}</td><td>{pj.executions}</td></tr>)}</tbody></table></div></>}
       {view==="history"&&<><h3>{t("本机详细记录","Local detailed history")}</h3>
         {!p.scope?<p>{t("演示模式不记录活动。","Demo mode does not record activity.")}</p>:<>
           <p>{t("主动启用后记录本机提交的任务、排程、计时记录和属性变更。不上传云端，不追踪应用外活动。远端同步、撤销来源和计时过程尚未完整覆盖。","Opt in to record local task, schedule, time-entry and property changes. No new cloud upload or external activity tracking. Remote mutations, undo provenance and timer lifecycle are not fully covered.")}</p>

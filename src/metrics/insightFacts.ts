@@ -3,7 +3,8 @@ import { normalizeEngagement } from "../utils/engagement";
 import type { TimeAllocationMetrics, MetricHabitMode, MetricCompletionFilter } from "./timeAllocation";
 
 export type InsightOptions = { dayStartMinutes:number; projectIds:string[]; habitMode:MetricHabitMode; completion:MetricCompletionFilter };
-export type DailyInsight = { date:string; scheduled:number; completed:number; tracked:number };
+export type DailyInsight = { date:string; scheduled:number; completed:number; tracked:number; trackedSessions:number };
+export type ProjectInsight = { id:string; label:string; scheduled:number; completed:number; tracked:number; trackedSessions:number; executions:number };
 export function metricDay(date:Date,dayStartMinutes:number) {
   const d=new Date(date);
   if(d.getHours()*60+d.getMinutes()<dayStartMinutes)d.setDate(d.getDate()-1);
@@ -26,8 +27,11 @@ export function buildInsights(data:PlannerData,allocation:TimeAllocationMetrics,
   const tasks=new Map(data.tasks.map(t=>[t.id,t]));
   const projectFilter=new Set(options.projectIds);
   const days=new Map<string,DailyInsight>();
-  const day=(date:string)=>{let x=days.get(date);if(!x){x={date,scheduled:0,completed:0,tracked:0};days.set(date,x);}return x;};
-  const executions=new Map<string,{status:string;minutes:number;score?:number}>();
+  const day=(date:string)=>{let x=days.get(date);if(!x){x={date,scheduled:0,completed:0,tracked:0,trackedSessions:0};days.set(date,x);}return x;};
+  const executions=new Map<string,{status:string;minutes:number;score?:number;projectId:string}>();
+  const projects=new Map<string,ProjectInsight>();
+  const project=(id:string)=>{let p=projects.get(id);if(!p){p={id,label:data.projects.find(x=>x.id===id)?.title||id,scheduled:0,completed:0,tracked:0,trackedSessions:0,executions:0};projects.set(id,p);}return p;};
+  const engagementBuckets=Array.from({length:10},(_,i)=>({score:(i+1)*10,minutes:0,count:0}));
   let scheduled=0,completed=0,ratedMinutes=0,ratedWeighted=0,tracked=0,trackedSessions=0;
   const statuses:Record<string,number>={scheduled:0,completed:0,returned_unfinished:0,skipped:0,cancelled:0};
   for(const entry of allocation.taskEntries){
@@ -38,13 +42,14 @@ export function buildInsights(data:PlannerData,allocation:TimeAllocationMetrics,
     const score=record?record.engagement:t.engagement;
     const raw=intervalMinutes(entry.scheduledStart.getTime(),entry.scheduledEnd.getTime());
     const key=entry.taskId+":"+entry.recordId;
-    const item=executions.get(key)||{status,minutes:0,score:typeof score==="number"&&Number.isFinite(score)?normalizeEngagement(score):undefined};
+    const projectId=t.projectId||"__unassigned__";
+    const item=executions.get(key)||{status,minutes:0,score:typeof score==="number"&&Number.isFinite(score)?normalizeEngagement(score):undefined,projectId};
     item.minutes+=raw;executions.set(key,item);
-    scheduled+=raw;
-    if(status==="completed"){completed+=raw;if(item.score!==undefined){ratedMinutes+=raw;ratedWeighted+=raw*item.score/100;}}
+    scheduled+=raw;project(projectId).scheduled+=raw;
+    if(status==="completed"){completed+=raw;project(projectId).completed+=raw;if(item.score!==undefined){ratedMinutes+=raw;ratedWeighted+=raw*item.score/100;}}
     eachDay(entry.scheduledStart.getTime(),entry.scheduledEnd.getTime(),options.dayStartMinutes,(date,ms)=>{const d=day(date);d.scheduled+=ms/60000;if(status==="completed")d.completed+=ms/60000;});
   }
-  for(const e of executions.values())statuses[e.status]=(statuses[e.status]||0)+1;
+  for(const e of executions.values()) { statuses[e.status]=(statuses[e.status]||0)+1; project(e.projectId).executions++; if(e.status==="completed"&&e.score!==undefined){const bucket=engagementBuckets[e.score/10-1];bucket.count++;bucket.minutes+=e.minutes;} }
   const start=allocation.range.start.getTime(),end=allocation.range.end.getTime();
   for(const entry of data.timeEntries||[]){
     const task=tasks.get(entry.taskId);if(!task)continue;
@@ -58,7 +63,8 @@ export function buildInsights(data:PlannerData,allocation:TimeAllocationMetrics,
     if(!Number.isFinite(a)||!Number.isFinite(b)||b<=a||!Number.isFinite(entry.durationMinutes)||entry.durationMinutes<=0)continue;
     const lo=Math.max(a,start),hi=Math.min(b,end);if(hi<=lo)continue;
     trackedSessions++;
-    eachDay(lo,hi,options.dayStartMinutes,(date,ms)=>{const minutes=entry.durationMinutes*ms/(b-a);day(date).tracked+=minutes;tracked+=minutes;});
+    const p=project(task.projectId||"__unassigned__");p.trackedSessions++;
+    eachDay(lo,hi,options.dayStartMinutes,(date,ms)=>{const minutes=entry.durationMinutes*ms/(b-a);const d=day(date);d.tracked+=minutes;d.trackedSessions++;tracked+=minutes;p.tracked+=minutes;});
   }
-  return {scheduled,completed,tracked,trackedSessions,executionCount:executions.size,statuses,ratedMinutes,ratedWeighted,explicitEngagement:ratedMinutes>0?ratedWeighted/ratedMinutes*100:null,ratingCoverage:completed>0?ratedMinutes/completed*100:null,days:[...days.values()].sort((a,b)=>a.date.localeCompare(b.date))};
+  return {scheduled,completed,tracked,trackedSessions,executionCount:executions.size,statuses,ratedMinutes,ratedWeighted,engagementBuckets,projects:[...projects.values()].sort((a,b)=>b.scheduled-a.scheduled||b.tracked-a.tracked),explicitEngagement:ratedMinutes>0?ratedWeighted/ratedMinutes*100:null,ratingCoverage:completed>0?ratedMinutes/completed*100:null,days:[...days.values()].sort((a,b)=>a.date.localeCompare(b.date))};
 }

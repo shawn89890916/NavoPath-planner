@@ -20,3 +20,11 @@
 .df-metric-insight-history details { border-bottom:1px solid var(--paper-rule); padding:8px 0; font-size:12px; }
 .df-metric-insight-history summary { cursor:pointer; overflow-wrap:anywhere; }
 .df-metric-insight-history pre { white-space:pre-wrap; overflow-wrap:anywhere; color:var(--text-muted); font-size:11px; }
+
+.df-metric-insight-heatmap { display:grid; grid-template-columns:repeat(auto-fill,minmax(42px,1fr)); gap:4px; padding-block:12px; }
+.df-metric-insight-heatmap button { min-height:27px; border:0; border-radius:4px; color:var(--text-main); font-size:10px; }
+.df-metric-insight-heatmap button[aria-pressed="true"] { outline:2px solid var(--accent-active); outline-offset:2px; }
+.df-metric-insight-table { overflow:auto; }
+.df-metric-insight-table table { width:100%; border-collapse:collapse; font-size:12px; font-variant-numeric:tabular-nums; }
+.df-metric-insight-table :is(th,td) { text-align:right; border-bottom:1px solid var(--paper-rule); padding:8px 6px; white-space:nowrap; }
+.df-metric-insight-table :is(th,td):first-child { text-align:left; }
