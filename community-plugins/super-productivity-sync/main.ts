@@ -4,7 +4,7 @@ import { mountIsolatedPluginSurface } from "../../src/extensions/pluginSurface";
 import { createInitialPreviewView } from "./preview";
 
 type LinkStore = { projects: Record<string, string>; tasks: Record<string, string>; tombstones: Record<string, { kind: "task" | "project"; item: Task | Project; deletedAt: string; taskIds?: string[] }> };
-type Entity = { id: string; syncId?: string; fields: Record<string, any> };
+type Entity = { id: string; syncId?: string; parentId?: string; fields: Record<string, any> };
 type RemoteAction = { syncId: string; kind: "project" | "task"; id?: string; fields: Record<string, any>; deleted?: boolean };
 const STORAGE = "connection-state";
 
@@ -98,8 +98,8 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       if (status === "preview" && state.preview) {
         const key = JSON.stringify(state.preview);
         if (previewView && key === previewKey) { renderStatus(); return; }
-        const previous = previewView?.selections();
-        previewView = createInitialPreviewView(state.preview, zh, previous);
+        const previous = previewView?.selections(), previousMode = previewView?.mode();
+        previewView = createInitialPreviewView(state.preview, zh, previous, previousMode);
         previewKey = key;
         details.replaceChildren(previewView.root);
       } else { previewView = undefined; previewKey = ""; details.replaceChildren(); }
@@ -160,21 +160,24 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     const ensureMappings = (assignments: Array<{ kind: "project" | "task"; id: string; syncId: string }>) => {
       for (const item of assignments) (item.kind === "task" ? links.tasks : links.projects)[item.id] = item.syncId;
     };
-    const snapshot = (): { projects: Entity[]; tasks: Entity[] } => {
+    const snapshot = (): { projects: Entity[]; tasks: Entity[]; overwriteVersion: 1 } => {
       const projects = ctx.projects.list();
       return {
+        overwriteVersion: 1,
         projects: projects.map(item => ({ id: item.id, syncId: links.projects[item.id], fields: projectFields(item) })),
-        tasks: ctx.tasks.list().map(item => ({ id: item.id, syncId: links.tasks[item.id], fields: taskFields(item, projects) })),
+        tasks: ctx.tasks.list().map(item => ({ id: item.id, syncId: links.tasks[item.id], parentId: item.parentTaskId, fields: taskFields(item, projects) })),
       };
     };
     const apply = async (actions: RemoteAction[]) => {
       const projectIds = new Map(ctx.projects.list().map(item => [item.title, item.id]));
+      const deleting = new Set(actions.filter(action => action.kind === "task" && action.deleted).map(action => action.id || Object.keys(links.tasks).find(id => links.tasks[id] === action.syncId)));
+      if (ctx.tasks.list().some(task => task.parentTaskId && deleting.has(task.parentTaskId) && !deleting.has(task.id))) throw new Error(t("待删除的任务包含需要保留的子任务，请先移动该子任务。", "A retained subtask belongs to a task marked for deletion. Move it first."));
       for (const action of actions) {
         const map = action.kind === "task" ? links.tasks : links.projects;
         const currentId = action.id || Object.keys(map).find(id => map[id] === action.syncId);
         if (action.deleted) {
-          if (action.kind === "task") { const current = ctx.tasks.get(currentId || ""); if (current) { links.tombstones[action.syncId] = { kind: "task", item: current, deletedAt: new Date().toISOString() }; await ctx.tasks.remove(current.id); } }
-          else { const current = ctx.projects.get(currentId || ""); if (current) { const taskIds = ctx.tasks.list().filter(task => task.projectId === current.id).map(task => task.id); links.tombstones[action.syncId] = { kind: "project", item: current, deletedAt: new Date().toISOString(), taskIds }; for (const taskId of taskIds) await ctx.tasks.update(taskId, { projectId: undefined }); await ctx.projects.remove(current.id); } }
+          if (action.kind === "task") { const current = ctx.tasks.get(currentId || ""); if (current) { links.tombstones[action.syncId] = { kind: "task", item: current, deletedAt: new Date().toISOString() }; await persist(); await ctx.tasks.remove(current.id); } }
+          else { const current = ctx.projects.get(currentId || ""); if (current) { const taskIds = ctx.tasks.list().filter(task => task.projectId === current.id).map(task => task.id); links.tombstones[action.syncId] = { kind: "project", item: current, deletedAt: new Date().toISOString(), taskIds }; await persist(); for (const taskId of taskIds) await ctx.tasks.update(taskId, { projectId: undefined }); await ctx.projects.remove(current.id); } }
           delete map[currentId || ""]; continue;
         }
         if (action.kind === "project") {
@@ -237,7 +240,11 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       try {
         if (!pairId) { await discoverConnection(); if (!pairId) return; }
         const state = await getState(); displayState(state);
-        if (state.status === "preview") return;
+        if (state.status === "preview") {
+          const outgoing = snapshot();
+          if (JSON.stringify(outgoing) !== lastSnapshot) { const result = await api.request("/snapshot", "POST", { pairId, platform: "navopath", snapshot: outgoing }); lastSnapshot = JSON.stringify(outgoing); displayState(result); }
+          return;
+        }
         if (state.status !== "active") {
           const initial = await api.request("/snapshot", "POST", { pairId, platform: "navopath", snapshot: snapshot() });
           ensureMappings(initial.assignments || []); displayState(initial); return;
@@ -254,11 +261,12 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     confirm.onclick = () => {
       if (busy || !previewView) return;
       const matches = previewView.matches();
-      if (!window.confirm(t("确认关联选中的记录，并将独有项目和任务导入另一端？共有字段将以所选来源为准；不会删除独有记录。", "Link selected records and import unique projects and tasks? Shared fields use the selected source; unique records are not deleted."))) return;
+      const mode = previewView.mode(), overwrite = mode !== "merge";
+      if (!window.confirm(overwrite ? t("确认覆盖？目标端未匹配任务和项目将被删除（可在最近删除中恢复）。\n", "Confirm overwrite? Unmatched target records will be deleted (recoverable in Recently deleted).\n") + previewView.confirmationText() : t("确认双向合并？独有记录会复制到另一端。", "Confirm merge? Unique records will be copied to the other app."))) return;
       busy = true; lastError = ""; renderStatus();
       void getState().then(state => {
         if (state.status !== "preview" || JSON.stringify(state.preview) !== previewKey) { displayState(state); throw new Error(t("预览已改变，请重新检查后确认。", "Preview changed. Review it before confirming.")); }
-        return api.request("/confirm", "POST", { pairId: state.pairId, matches, expectedRevision: state.revision });
+        return api.request("/confirm", "POST", { pairId: state.pairId, matches, mode, confirmOverwrite: overwrite, expectedRevision: state.revision });
       }).then(displayState).catch(error => { lastError = String(error); renderStatus(); }).finally(() => { busy = false; renderStatus(); if (status === "active") void sync(); });
     };
     disconnect.onclick = () => void api.request("/revoke", "POST", { pairId }).then(() => { pairId = ""; pairingCode = ""; status = "waiting"; pairing.hidden = false; codeRow.hidden = true; connect.textContent = t("生成配对码", "Create pairing code"); code.hidden = copy.hidden = true; refresh.hidden = confirm.hidden = disconnect.hidden = true; previewView = undefined; previewKey = ""; details.replaceChildren(); links = { projects: {}, tasks: {}, tombstones: {} }; void persist(); renderStatus(); }).catch(error => { lastError = String(error); renderStatus(); });

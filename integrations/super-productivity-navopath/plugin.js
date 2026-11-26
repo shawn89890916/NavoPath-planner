@@ -35,6 +35,7 @@
     const TOKEN_KEY = 'navopath-sync:token:v1';
     const $ = id => root.getElementById(id);
     let local = { pairId: '', links: { tasks: {}, projects: {} }, tombstones: {} };
+    let previewMode = 'merge';
     let token = null, busy = false, preview = null, stopped = false, previewKey = "", previewRevision = null, lastSuccess = "", lastApplied = 0;
     const setStatus = (text, error = false) => { $('status').textContent = text; $('status').className = error ? 'error' : ''; };
     const requiredMethods = ['request', 'persistDataSynced', 'loadSyncedData', 'getAllProjects', 'getAllTags', 'getTasks', 'addTask', 'updateTask', 'deleteTask', 'addProject', 'updateProject', 'deleteProject', 'addTag', 'getSecret', 'setSecret', 'deleteSecret'];
@@ -86,8 +87,9 @@
     async function snapshot() {
       const allProjects = await projects(), allTasks = await tasks();
       return {
+        overwriteVersion: 1,
         projects: allProjects.map(item => ({ id: item.id, syncId: syncId('projects', item.id), fields: { title: item.title, notes: '', color: item.theme?.primary || null } })),
-        tasks: await Promise.all(allTasks.map(async item => ({ id: item.id, syncId: syncId('tasks', item.id), fields: {
+        tasks: await Promise.all(allTasks.map(async item => ({ id: item.id, syncId: syncId('tasks', item.id), parentId: item.parentId || undefined, projectId: item.projectId || undefined, fields: {
           title: item.title, notes: item.notes || '', completed: item.isDone, dueDate: item.dueDay || null,
           estimateMinutes: Math.round((item.timeEstimate || 0) / 60000), projectTitle: allProjects.find(project => project.id === item.projectId)?.title || '',
           tags: await tagNames(item), scheduledAt: item.dueWithTime ? toLocalDate(item.dueWithTime) : null,
@@ -96,14 +98,28 @@
         } }))),
       };
     }
+    const mergeButton = document.createElement('button'); mergeButton.type = 'button'; mergeButton.textContent = 'Merge both';
+    $('preview-options').append(mergeButton);
+    $('np-wins').textContent = 'Overwrite SP from NavoPath';
+    $('sp-wins').textContent = 'Overwrite NavoPath from SP';
+    const authority = () => previewMode === 'overwrite-navopath' ? 'navopath' : previewMode === 'overwrite-superproductivity' ? 'superproductivity' : null;
     function updatePreviewSummary() {
       const rows = [...root.querySelectorAll('#preview input[data-kind]')];
       const checked = rows.filter(input => input.checked);
       const np = checked.filter(input => input.parentElement.querySelector('select').value === 'navopath').length;
-      $('preview-summary').textContent = `Link ${checked.length} of ${rows.length} matches · NavoPath wins: ${np} · SP wins: ${checked.length - np}`;
-      for (const [id, active] of [['all', rows.length > 0 && checked.length === rows.length], ['none', rows.length > 0 && checked.length === 0], ['np-wins', rows.length > 0 && checked.length === rows.length && np === rows.length], ['sp-wins', rows.length > 0 && checked.length === rows.length && np === 0]]) $(id).setAttribute('aria-pressed', String(active));
+      const source = authority();
+      if (preview && source) {
+        const target = source === 'navopath' ? 'superproductivity' : 'navopath';
+        const count = (group, side) => preview[group][side].length - preview[group].suggestions.length;
+        $('preview-summary').textContent = `${source === 'navopath' ? 'NavoPath' : 'SP'} stays unchanged. ${target === 'navopath' ? 'NavoPath' : 'SP'} adds ${count('projects',source)} projects / ${count('tasks',source)} tasks; removes ${count('projects',target)} projects / ${count('tasks',target)} tasks (recoverable; SP projects are archived).`;
+      } else $('preview-summary').textContent = `Link ${checked.length} of ${rows.length} matches · NavoPath wins: ${np} · SP wins: ${checked.length - np}. Unmatched items import into the other app.`;
+      for (const input of rows) { input.disabled = Boolean(source); input.parentElement.querySelector('select').disabled = Boolean(source) || !input.checked; }
+      $('np-wins').disabled = $('sp-wins').disabled = !preview?.overwriteSupported;
+      mergeButton.setAttribute('aria-pressed', String(previewMode === 'merge'));
+      for (const [id, active] of [['all', rows.length > 0 && checked.length === rows.length], ['none', rows.length > 0 && checked.length === 0], ['np-wins', previewMode === 'overwrite-navopath'], ['sp-wins', previewMode === 'overwrite-superproductivity']]) $(id).setAttribute('aria-pressed', String(active));
     }
-    function setAll(selected, side) {
+    function setAll(selected, side, mode = 'merge') {
+      previewMode = mode;
       for (const input of root.querySelectorAll('#preview input[data-kind]')) {
         input.checked = selected;
         const select = input.parentElement.querySelector('select'); select.disabled = !selected;
@@ -113,8 +129,9 @@
     }
     $('all').onclick = () => setAll(true);
     $('none').onclick = () => setAll(false);
-    $('np-wins').onclick = () => setAll(true, 'navopath');
-    $('sp-wins').onclick = () => setAll(true, 'superproductivity');
+    mergeButton.onclick = () => setAll(true);
+    $('np-wins').onclick = () => { if (preview?.overwriteSupported) setAll(true, 'navopath', 'overwrite-navopath'); };
+    $('sp-wins').onclick = () => { if (preview?.overwriteSupported) setAll(true, 'superproductivity', 'overwrite-superproductivity'); };
     function matchRow(kind, item, counterpart, prior) {
       const label = document.createElement('label');
       const input = document.createElement('input'); input.type = 'checkbox'; input.checked = prior?.selected ?? true; input.dataset.kind = kind; input.dataset.left = item.id; input.dataset.right = counterpart.id;
@@ -129,6 +146,7 @@
     function showPreview(data) {
       preview = data.preview; previewRevision = data.revision; $('preview').hidden = !preview;
       if (!preview) return;
+      if (!preview.overwriteSupported) previewMode = 'merge';
       const key = JSON.stringify(preview);
       if (key === previewKey) return;
       const prior = new Map([...root.querySelectorAll('#preview input[data-kind]')].map(input => [JSON.stringify([input.dataset.kind,input.dataset.left,input.dataset.right]), {selected: input.checked, side: input.parentElement.querySelector('select').value}]));
@@ -145,7 +163,7 @@
           const note = document.createElement('p'); note.textContent = `${item.fields.title || '(untitled)'} · Super Productivity only`; root.append(note);
         }
       }
-      updatePreviewSummary();
+      if (authority()) setAll(true, authority(), previewMode); else updatePreviewSummary();
     }
     function showConflicts(conflicts = []) {
       $('conflicts').hidden = !conflicts.length; const root = $('conflict-list'); root.replaceChildren();
@@ -170,7 +188,12 @@
         const restore = document.createElement('button'); restore.type = 'button'; restore.textContent = 'Restore';
         restore.onclick = () => void withBusy(async () => {
           let newId;
-          if (entry.kind === 'project') { const project = { ...entry.project }; delete project.id; newId = await API.addProject(project); local.links.projects[newId] = id; const currentTasks = await tasks(); for (const taskId of entry.taskIds || []) if (currentTasks.some(task => task.id === taskId)) await API.updateTask(taskId, { projectId: newId }); }
+          if (entry.kind === 'project') {
+            if (entry.archived) { newId = entry.project.id; await API.updateProject(newId, { isArchived: false }); }
+            else { const project = { ...entry.project }; delete project.id; newId = await API.addProject(project); }
+            local.links.projects[newId] = id;
+            const currentTasks = await tasks(); for (const taskId of entry.taskIds || []) if (currentTasks.some(task => task.id === taskId && !task.parentId)) await API.updateTask(taskId, { projectId: newId });
+          }
           else { const task = { ...entry.task }; delete task.id; newId = await API.addTask({ ...task, isIgnoreShortSyntax: true }); local.links.tasks[newId] = id; }
           delete local.tombstones[id];
           await request('restore', 'POST', { pairId: local.pairId, syncId: id, localId: newId }); await persist(); await runSync();
@@ -183,20 +206,32 @@
     }
     async function applyActions(actions = []) {
       const allProjects = await projects();
+      // A parent delete can cascade. Preserve every task before its removal,
+      // and refuse to remove a parent if a retained child would disappear.
+      const allTasks = await tasks();
+      const deleting = new Set(actions.filter(action => action.deleted && action.kind === 'task').map(action => action.id || Object.keys(local.links.tasks).find(key => local.links.tasks[key] === action.syncId)));
+      if (allTasks.some(task => task.parentId && deleting.has(task.parentId) && !deleting.has(task.id))) throw new Error('A retained subtask belongs to a task marked for deletion. Move the subtask first.');
+      const depth = (id) => { let n = 0, current = allTasks.find(task => task.id === id); const seen = new Set(); while (current?.parentId && !seen.has(current.id)) { seen.add(current.id); n++; current = allTasks.find(task => task.id === current.parentId); } return n; };
+      const phase = action => action.deleted ? (action.kind === 'task' ? 2 : 3) : (action.kind === 'project' ? 0 : 1);
+      actions = [...actions].sort((a,b) => phase(a) - phase(b) || (phase(a) === 2 ? depth(b.id) - depth(a.id) : 0));
       for (const action of actions) {
         const map = local.links[action.kind === 'task' ? 'tasks' : 'projects'];
         let id = action.id || Object.keys(map).find(key => map[key] === action.syncId);
         if (action.deleted) {
           if (action.kind === 'task') {
             const task = (await tasks()).find(item => item.id === id);
-            if (task) { local.tombstones[action.syncId] = { kind: 'task', task, deletedAt: new Date().toISOString() }; await API.deleteTask(task.id); }
+            if (task) { local.tombstones[action.syncId] = { kind: 'task', task, deletedAt: new Date().toISOString() }; await persist(); await API.deleteTask(task.id); }
           } else {
             const project = allProjects.find(item => item.id === id);
             if (project) {
               const projectTasks = (await tasks()).filter(task => task.projectId === project.id);
-              local.tombstones[action.syncId] = { kind: 'project', project, taskIds: projectTasks.map(task => task.id), deletedAt: new Date().toISOString() };
-              for (const task of projectTasks) await API.updateTask(task.id, { projectId: null });
-              await API.deleteProject(project.id);
+              if (project.id === 'INBOX_PROJECT') throw new Error('The system Inbox cannot be removed. Reconnect to create a new sync preview.');
+              local.tombstones[action.syncId] = { kind: 'project', project, archived: true, taskIds: projectTasks.map(task => task.id), deletedAt: new Date().toISOString() };
+              await persist();
+              for (const task of projectTasks.filter(task => !task.parentId)) await API.updateTask(task.id, { projectId: null });
+              // Archiving removes the project from the active workspace without
+              // irreversibly cascading into SP-only notes and archived history.
+              await API.updateProject(project.id, { isArchived: true });
             }
           }
           if (id) delete map[id];
@@ -205,7 +240,7 @@
         const fields = action.fields || {};
         if (action.kind === 'project') {
           const existing = allProjects.find(item => item.id === id);
-          if (existing) await API.updateProject(existing.id, { title: fields.title || existing.title, theme: { ...existing.theme, primary: fields.color || existing.theme?.primary } });
+          if (existing) { const patch = { title: fields.title || existing.title, theme: { ...existing.theme, primary: fields.color || existing.theme?.primary } }; await API.updateProject(existing.id, patch); allProjects[allProjects.indexOf(existing)] = { ...existing, ...patch }; }
           else { const title = fields.title || 'Imported project'; const created = await API.addProject({ title, theme: { primary: fields.color || undefined } }); map[created] = action.syncId; const createdProject = (await projects()).find(item => item.id === created); if (createdProject) allProjects.push(createdProject); }
           continue;
         }
@@ -217,7 +252,7 @@
         if (Object.hasOwn(fields, 'estimateMinutes')) updates.timeEstimate = Math.max(0, Number(fields.estimateMinutes || 0) * 60000);
         if (Object.hasOwn(fields, 'projectTitle')) updates.projectId = allProjects.find(project => project.title === fields.projectTitle)?.id || null;
         if (Object.hasOwn(fields, 'dueDate')) updates.dueDay = fields.dueDate || null;
-        if (Object.hasOwn(fields, 'scheduledAt')) updates.dueWithTime = fields.scheduledAt ? new Date(fields.scheduledAt).getTime() : null;
+        if (Object.hasOwn(fields, 'scheduledAt')) { updates.dueWithTime = fields.scheduledAt ? new Date(fields.scheduledAt).getTime() : null; if (updates.dueWithTime != null) updates.dueDay = null; }
         if (Object.hasOwn(fields, 'scheduledMinutes') && Number(fields.scheduledMinutes) > 0) updates.timeEstimate = Math.round(Number(fields.scheduledMinutes) * 60000);
         if (Object.hasOwn(fields, 'tags')) {
           const tagList = await API.getAllTags();
@@ -229,7 +264,10 @@
           }
           updates.tagIds = tagIds;
         }
-        if (current) await API.updateTask(current.id, updates, { isIgnoreShortSyntax: true });
+        if (current) {
+          if (current.parentId) delete updates.projectId; // SP moves subtasks with their parent.
+          await API.updateTask(current.id, updates, { isIgnoreShortSyntax: true });
+        }
         else {
           const { dueWithTime, ...createFields } = updates;
           const created = await API.addTask({ ...createFields, isIgnoreShortSyntax: true });
@@ -259,7 +297,14 @@
     async function runSync() {
       if (!token || !local.pairId || stopped) return;
       const state = await request(`state?pairId=${encodeURIComponent(local.pairId)}`); await renderState(state);
-      if (state.status === 'preview') return;
+      if (state.status === 'preview') {
+        const outgoing = await snapshot();
+        if (JSON.stringify(outgoing) !== lastSnapshot) {
+          const result = await request('snapshot','POST',{pairId:local.pairId,platform:'superproductivity',snapshot:outgoing});
+          lastSnapshot = JSON.stringify(outgoing); await renderState(result);
+        }
+        return;
+      }
       const outgoing = await snapshot(); lastSnapshot = JSON.stringify(outgoing);
       const result = await request('snapshot', 'POST', { pairId: local.pairId, platform: 'superproductivity', snapshot: outgoing });
       setAssignments(result.assignments || []); await applyActions(result.actions || []); await persist(); lastSnapshot = JSON.stringify(await snapshot()); if (result.status === 'active') { lastApplied = (result.actions || []).length; lastSuccess = new Date().toLocaleTimeString(); } await renderState(result);
@@ -276,7 +321,13 @@
       const matches = [...root.querySelectorAll('#preview input[type=checkbox]:checked')].map(input => ({ kind: input.dataset.kind, navopathId: input.dataset.left, superproductivityId: input.dataset.right, preferredSide: input.parentElement.querySelector('select').value }));
       const state = await request(`state?pairId=${encodeURIComponent(local.pairId)}`);
       if (state.status !== 'preview' || JSON.stringify(state.preview) !== previewKey) { await renderState(state); throw new Error('Preview changed. Review it before confirming.'); }
-      await renderState(await request('confirm', 'POST', { pairId: local.pairId, matches, expectedRevision: state.revision })); await runSync();
+      const mode = previewMode, overwrite = mode !== 'merge';
+      if (overwrite) {
+        if (!preview?.overwriteSupported) throw new Error('Update both plugins and the cloud service first');
+        const result = await API.openDialog({title:'Confirm overwrite',content:$('preview-summary').textContent,buttons:[{label:'Cancel'},{label:'Overwrite',color:'warn',raised:true}]});
+        if (result !== 'Overwrite') return;
+      }
+      await renderState(await request('confirm', 'POST', { pairId: local.pairId, matches, mode, confirmOverwrite: overwrite, expectedRevision: state.revision })); await runSync();
     });
     $('disconnect').onclick = () => void withBusy(async () => {
       await clearToken(); token = null; lastSuccess = ''; lastSnapshot = ''; preview = null; previewKey = '';

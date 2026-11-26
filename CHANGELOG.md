@@ -10,7 +10,7 @@
 ### 修复
 
 - 修复启用投入度后时间轴任务色条与卡片圆角不贴合的问题，保留评分对应的色条长度。
-- 修复 Super Productivity 同步新任务时丢失排程、单独调整时长不生效和跨午夜时长计算错误的问题；首次导入显示选定来源、同步进度及上次同步结果。两端在插件界面关闭时仍可同步，设备令牌保存在本机。
+- 修复 Super Productivity 同步新任务时丢失排程、单独调整时长不生效和跨午夜时长计算错误的问题；首次导入显示选定来源、同步进度及上次同步结果。两端在插件界面关闭时仍可同步，设备令牌保存在本机。首次同步区分双向合并和单端覆盖；覆盖前显示删除数量并二次确认。
 
 ## 2026-11-25
 
@@ -981,7 +981,7 @@
 ### Fixed
 
 - Fixed timeline engagement stripes so they follow task card corners while retaining the rated length.
-- Fixed Super Productivity sync losing the schedule of newly imported tasks, ignoring duration-only edits, and miscalculating overnight blocks; first import shows the selected source, sync progress, and the last sync result. Sync continues with both plugin interfaces closed, and device credentials stay local.
+- Fixed Super Productivity sync losing the schedule of newly imported tasks, ignoring duration-only edits, and miscalculating overnight blocks; first import shows the selected source, sync progress, and the last sync result. Sync continues with both plugin interfaces closed, and device credentials stay local. First sync distinguishes bidirectional merge from authoritative overwrite, with deletion counts and a second confirmation before overwrite.
 
 ## 2026-11-25
 

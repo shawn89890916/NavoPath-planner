@@ -174,7 +174,10 @@ async function superProductivitySyncApi(request: Request, env: Env, ctx: Executi
     if (url.pathname.endsWith("/confirm") && request.method === "POST") {
       if (state.status !== "preview" || !Array.isArray(body.matches) || body.matches.length > 10_000) return syncResponse({ error: "Initial import is not ready" }, 409);
       if (body.expectedRevision !== undefined && body.expectedRevision !== state.baseRevision) return syncResponse({ error: "Initial preview changed; review before confirming" }, 409);
-      confirmInitialSync(state, body.matches);
+      const mode = body.mode ?? "merge";
+      if (!["merge", "overwrite-navopath", "overwrite-superproductivity"].includes(mode)) return syncResponse({ error: "Invalid initial sync mode" }, 400);
+      if (mode !== "merge" && (body.confirmOverwrite !== true || body.expectedRevision !== state.baseRevision)) return syncResponse({ error: "Review and confirm the overwrite preview first" }, 409);
+      confirmInitialSync(state, body.matches, mode);
       await save(state);
       return syncResponse({ status: state.status, conflicts: state.conflicts, revision: state.baseRevision });
     }
