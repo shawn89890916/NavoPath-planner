@@ -1,10 +1,17 @@
-import type { TimeAllocationMetrics } from "./timeAllocation";
+import type { MetricDateRange, TimeAllocationMetrics } from "./timeAllocation";
 import type { buildInsights } from "./insightFacts";
 type Tracked=ReturnType<typeof buildInsights>["trackedEntries"];
 export type ProjectExecutionRow={id:string;taskId:string;recordId?:string;scheduled:number;completed:number;tracked:number;trackedSessions:number;projected:boolean;estimatedAllDay:boolean};
 export type ProjectTaskRow={taskId:string;scheduled:number;completed:number;tracked:number;trackedSessions:number;executions:number;rows:ProjectExecutionRow[]};
 const blank={scheduled:0,completed:0,tracked:0,trackedSessions:0};
 const overlap=(a:Date,b:Date,range:{start:Date;end:Date})=>Math.max(0,Math.min(b.getTime(),range.end.getTime())-Math.max(a.getTime(),range.start.getTime()))/60000;
+/** Intersect a local metric day with the existing query; calendar-day steps handle DST. */
+export function projectDetailRange(range:MetricDateRange,date:string|null,dayStartMinutes:number):MetricDateRange{
+  if(!date)return range;
+  const [y,m,d]=date.split("-").map(Number),start=new Date(y,m-1,d,Math.floor(dayStartMinutes/60),dayStartMinutes%60),end=new Date(start);
+  end.setDate(end.getDate()+1);
+  return {...range,start:new Date(Math.max(start.getTime(),range.start.getTime())),end:new Date(Math.min(end.getTime(),range.end.getTime()))};
+}
 /** Project -> task -> independent schedule, plus explicit linked and unlinked tracking.
  * Tracking-only records are retained; projections are never counted as actual executions.
  */
