@@ -49,7 +49,7 @@ test("host runtime polls without mounting the UI and schedules a newly imported 
       assert.equal(options.headers.Authorization, "Bearer local-test-token");
       if (url.includes("/state?")) return state;
       assert.ok(url.endsWith("/snapshot"));
-      assert.ok(!options.body.snapshot.projects.some(project => project.id === "INBOX_PROJECT"));
+      assert.ok(!JSON.parse(options.body).snapshot.projects.some(project => project.id === "INBOX_PROJECT"));
       polls++;
       return { ...state, assignments: [], actions: polls === 1 ? [{ kind: "project", syncId: "stale-inbox", id: "INBOX_PROJECT", fields: {}, deleted: true }, { kind: "task", syncId: "sync-task", fields: { title: "Scheduled task", scheduledAt, scheduledMinutes: 90, estimateMinutes: 90 } }] : [] };
     },
