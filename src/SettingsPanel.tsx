@@ -871,17 +871,13 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                     ariaLabel={lang === "zh" ? "界面圆角（像素）" : "Corner radius (pixels)"} onChange={workspaceCornerRadius => onSave({ workspaceCornerRadius: Math.min(WORKSPACE_CORNER_RADIUS.max, Math.max(WORKSPACE_CORNER_RADIUS.min, Math.round(workspaceCornerRadius))) })} />
                 </>}
               />
-              {settings.theme !== "dark" && <div className="df-settings-accent-colors" data-settings-anchor="accent-colors" tabIndex={-1}>
-                <SettingDescription>{lang === "zh" ? "点缀色用于细线、勾选与当前时间标记，不会作为大面积填充。" : "Accent colors are used for fine rules, checks, and the current-time marker, never as dominant fills."}</SettingDescription>
-                <div className="df-settings-accent-row">
-                  <ThemeAccentSetting
-                    label={lang === "zh" ? "强调色" : "Accent color"}
-                    presets={EXECUTE_THEME_PRESETS_LIGHT}
-                    value={selectedAccent}
-                    onChange={(color) => onSave({ executeAccentColor: color, planningAccentColor: color })}
-                  />
-                </div>
-              </div>}
+              {settings.theme !== "dark" && <SettingRow anchor="accent-colors" layout="stacked"
+                title={lang === "zh" ? "强调色" : "Accent color"}
+                description={lang === "zh" ? "点缀色用于细线、勾选与当前时间标记，不会作为大面积填充。" : "Accent colors are used for fine rules, checks, and the current-time marker, never as dominant fills."}
+                control={<ThemeAccentSetting presets={EXECUTE_THEME_PRESETS_LIGHT}
+                  value={selectedAccent}
+                  onChange={(color) => onSave({ executeAccentColor: color, planningAccentColor: color })} />}
+              />}
             </SettingSection>}
             {settingsTarget.category === "appearance" && <SettingSection variant="grouped" title={lang === "zh" ? "显示与动效" : "Display & motion"}>
               <SettingRow anchor="motion-preference" title={lang === "zh" ? "动效强度" : "Motion intensity"}
@@ -1374,11 +1370,11 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
   );
 }
 
-function ThemeAccentSetting({ label, presets, value, onChange }: { label: string; presets: string[]; value: string; onChange: (color: string) => void }) {
+function ThemeAccentSetting({ presets, value, onChange }: { presets: string[]; value: string; onChange: (color: string) => void }) {
   return (
     <section className="df-theme-setting df-theme-accent-setting">
       <div className="df-theme-accent-heading">
-        <strong>{label}</strong>
+        <strong>{value.toUpperCase()}</strong>
         <span className="df-theme-accent-current" style={{ "--project-color": value } as CSSProperties} aria-hidden="true" />
       </div>
       <ProjectColorPicker presets={presets} value={value} onChange={onChange} />

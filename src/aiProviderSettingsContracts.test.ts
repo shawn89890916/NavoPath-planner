@@ -9,9 +9,16 @@ const settingsCss = fs.readFileSync(new URL("./components/SettingsControls.css",
 describe("AI provider settings layout", () => {
   it("uses the shared stacked row and a landscape field grid", () => {
     expect(main).toContain('<SettingRow layout="stacked" anchor="ai-provider"');
-    expect(controls).toContain('layout?: "default" | "stacked";');
+    expect(controls).toContain('layout?: "default" | "stacked" | "actions";');
     expect(settingsCss).toContain(".df-settings-row.df-settings-row--stacked");
     expect(settingsCss).toMatch(/\.df-settings-row--stacked \.df-ai-provider-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
+  });
+
+  it("reserves a trailing plugin control independently of wrapping actions", () => {
+    expect(controls).toContain("trailing?: ReactNode;");
+    expect(controls).toContain('className="df-settings-row-trailing"');
+    expect(settingsCss).toContain(".df-settings-row--actions");
+    expect(settingsCss).toMatch(/\.df-settings-row-trailing\s*\{[^}]*grid-column:\s*3/);
   });
 
   it("shows GLM without the old Zhipu label", () => {

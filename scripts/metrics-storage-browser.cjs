@@ -19,7 +19,7 @@ async function runServer() {
         res.setHeader("Content-Type", "text/html");
         res.end(`<!doctype html><html><body>Isolated Metrics storage test<script type="module">
           const phase=new URL(location.href).searchParams.get("phase");
-          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
+          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):phase==="exerciseSettings"?import("/scripts/settings-ui-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
         </script></body></html>`);
       });
     } }]
@@ -79,6 +79,13 @@ async function runRenderer() {
       if(!result||result.error)throw Error(result?.error||"Connections UI fixture did not initialize");
       console.log("Connections Chromium UI: "+JSON.stringify(result.value));
     }
+    for (const [width,height] of [[1440,900],[620,840],[420,840],[300,640]]) {
+      win.setContentSize(width,height);
+      await win.loadURL(url+"?phase=exerciseSettings");
+      const settings=await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await window.metricsResult;await new Promise(r=>setTimeout(r,20));}throw Error('Settings fixture missing');})()");
+      if(!settings||settings.error)throw Error(settings?.error||"Settings UI fixture failed");
+      console.log("Settings Chromium UI: "+JSON.stringify(settings.value));
+    }
     win.webContents.debugger.attach("1.3");
     try {
       for (const value of ["no-preference", "reduce"]) {
@@ -114,9 +121,9 @@ async function runRenderer() {
             nativeSet.call(input,String(r));input.dispatchEvent(new Event("input",{bubbles:true}));input.dispatchEvent(new Event("change",{bubbles:true}));
             await wait(()=>document.documentElement.style.getPropertyValue("--workspace-corner-radius")===r+"px");
             await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-            assert(Math.abs(round(group)-Math.min(20,r*.375))<.1,"Group radius "+round(group)+" at "+r);
-            assert(Math.abs(round(select)-Math.min(12,r*.1875))<.1,"Control radius "+round(select)+" at "+r);
-            assert(Math.abs(round(nav)-Math.min(12,r*.25))<.1,"Navigation radius "+round(nav)+" at "+r);
+            assert(Math.abs(round(group)-r)<.1,"Group radius "+round(group)+" at "+r);
+            assert(Math.abs(round(select)-r)<.1,"Control radius "+round(select)+" at "+r);
+            assert(Math.abs(round(nav)-r)<.1,"Navigation radius "+round(nav)+" at "+r);
             assert(getComputedStyle(knob).borderTopLeftRadius==="50%","Switch geometry changed");
             const box=group.getBoundingClientRect();
             assert(Math.abs(box.width-baseline.width)<1 && Math.abs(box.height-baseline.height)<1,"Radius changed layout");

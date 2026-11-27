@@ -2,6 +2,12 @@
 
 ## 2026-11-27
 
+### 1.7.0 Beta 135
+
+#### 修复
+
+- 设置页统一继承工作区圆角，修正标题、分组、字段和插件开关的对齐，保持窄屏表单与现有任务块样式。
+
 ### 1.7.0 Beta 134
 
 #### 改进
@@ -1334,6 +1340,12 @@
 # NavoPath Changelog
 
 ## 2026-11-27
+
+### 1.7.0 Beta 135
+
+#### Fixes
+
+- Unify settings with the workspace corner radius; align headings, groups, fields and plugin switches, preserving compact forms and existing task-block styling.
 
 ### 1.7.0 Beta 134
 
