@@ -1,7 +1,7 @@
 export type SyncSide = "navopath" | "superproductivity";
 export type InitialSyncMode = "merge" | "overwrite-navopath" | "overwrite-superproductivity";
 export type SyncEntity = { id: string; syncId?: string; parentId?: string; projectId?: string; fields: Record<string, unknown> };
-export type SyncSnapshot = { projects: SyncEntity[]; tasks: SyncEntity[]; overwriteVersion?: 1 };
+export type SyncSnapshot = { projects: SyncEntity[]; tasks: SyncEntity[]; overwriteVersion?: 1; hierarchyVersion?: 1 };
 export type SyncConflict = { id: string; syncId: string; kind: "project" | "task"; field: string; navopath: unknown; superproductivity: unknown; createdAt: string };
 type Canonical = { kind: "project" | "task"; fields: Record<string, unknown>; deleted?: boolean; overwriteTarget?: SyncSide; ids: Partial<Record<SyncSide, string>> };
 export type SyncState = {
@@ -34,7 +34,7 @@ export function normalizeSyncSnapshot(value: unknown): SyncSnapshot {
       return { id: item.id, ...(kind === "task" && typeof item.projectId === "string" && item.projectId.length <= 200 ? { projectId: item.projectId } : {}), ...(kind === "task" && typeof item.parentId === "string" && item.parentId.length <= 200 ? { parentId: item.parentId } : {}), ...(typeof item.syncId === "string" && item.syncId.length < 240 ? { syncId: item.syncId } : {}), fields };
     });
   };
-  return { projects: normalize(value.projects, "project"), tasks: normalize(value.tasks, "task"), ...(value.overwriteVersion === 1 ? { overwriteVersion: 1 as const } : {}) };
+  return { projects: normalize(value.projects, "project"), tasks: normalize(value.tasks, "task"), ...(value.overwriteVersion === 1 ? { overwriteVersion: 1 as const } : {}), ...(value.hierarchyVersion === 1 ? { hierarchyVersion: 1 as const } : {}) };
 }
 
 const SP_INBOX = "INBOX_PROJECT";
@@ -71,6 +71,61 @@ function repairReservedInbox(state: SyncState) {
 function projectedEqual(side: SyncSide, fields: Record<string, unknown>, field: string, value: unknown) {
   if (side === "superproductivity" && field === "color" && fields[field] == null) return true;
   return sameField(value, side === "superproductivity" && field === "dueDate" && fields.scheduledAt ? null : fields[field]);
+}
+
+// Parent relationships use canonical sync IDs, never another host's local IDs.
+// Keep legacy snapshots readable; only two upgraded clients participate in this field.
+function hierarchyReady(state: SyncState) {
+  return state.latest.navopath?.hierarchyVersion === 1 && state.latest.superproductivity?.hierarchyVersion === 1;
+}
+function parentLink(snapshot: SyncSnapshot | undefined, task: SyncEntity | undefined): string | null | undefined {
+  if (!snapshot || snapshot.hierarchyVersion !== 1 || !task) return undefined;
+  if (!task.parentId) return null;
+  return snapshot.tasks.find(item => item.id === task.parentId)?.syncId;
+}
+function relationConflict(state: SyncState, id: string, navopath: unknown, superproductivity: unknown, timestamp: string) {
+  if (!state.conflicts.some(c => c.syncId === id && c.field === "parentSyncId"))
+    state.conflicts.push({ id: crypto.randomUUID(), syncId: id, kind: "task", field: "parentSyncId", navopath, superproductivity, createdAt: timestamp });
+}
+function observeHierarchy(state: SyncState, side: SyncSide, previous: SyncSnapshot, timestamp: string) {
+  if (!hierarchyReady(state)) return;
+  const current = state.latest[side]!;
+  const other: SyncSide = side === "navopath" ? "superproductivity" : "navopath";
+  const otherSnapshot = state.latest[other]!;
+  for (const task of current.tasks) {
+    const id = task.syncId;
+    if (!id) continue;
+    const canonical = state.canonical[id];
+    if (!canonical || canonical.deleted || canonical.kind !== "task") continue;
+    const value = parentLink(current, task);
+    if (value === undefined || value === id) continue;
+    const previousValue = parentLink(previous, previous.tasks.find(item => item.id === task.id));
+    const otherValue = parentLink(otherSnapshot, otherSnapshot.tasks.find(item => item.syncId === id));
+    const pending = state.pending[id] ||= {};
+    if (!Object.hasOwn(canonical.fields, "parentSyncId")) {
+      // Migration: existing mismatched trees require explicit review, not a silent move.
+      canonical.fields.parentSyncId = value;
+      if (otherValue === undefined) pending.parentSyncId = other;
+      else if (value !== otherValue) relationConflict(state, id, side === "navopath" ? value : otherValue, side === "superproductivity" ? value : otherValue, timestamp);
+      continue;
+    }
+    const expected = canonical.fields.parentSyncId;
+    if (pending.parentSyncId === side && value === expected) { delete pending.parentSyncId; continue; }
+    if (state.conflicts.some(c => c.syncId === id && c.field === "parentSyncId")) continue;
+    if (state.initialOverwrite?.target === side || pending.parentSyncId === side && previousValue === undefined) {
+      if (value !== expected) pending.parentSyncId = side;
+      continue;
+    }
+    if (previousValue === undefined || previousValue === value || value === expected) continue;
+    const seen = new Set([id]); let ancestor: unknown = value;
+    while (typeof ancestor === "string") {
+      if (seen.has(ancestor)) { relationConflict(state, id, side === "navopath" ? value : expected, side === "superproductivity" ? value : expected, timestamp); break; }
+      seen.add(ancestor); ancestor = state.canonical[ancestor]?.fields.parentSyncId;
+    }
+    if (state.conflicts.some(c => c.syncId === id && c.field === "parentSyncId")) continue;
+    if (pending.parentSyncId === side) relationConflict(state, id, side === "navopath" ? value : expected, side === "superproductivity" ? value : expected, timestamp);
+    else { canonical.fields.parentSyncId = value; pending.parentSyncId = other; }
+  }
 }
 
 const normalizeTitle = (value: unknown) => String(value || "").normalize("NFKC").trim().toLocaleLowerCase();
@@ -147,6 +202,19 @@ export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "pro
       }
     }
   }
+  if (hierarchyReady(state)) {
+    for (const [id, entry] of Object.entries(state.canonical)) {
+      if (entry.kind !== "task" || entry.deleted) continue;
+      const match = matches.find(m => m.kind === "task" && m.navopathId === entry.ids.navopath && m.superproductivityId === entry.ids.superproductivity);
+      const source = authority || match?.preferredSide || (entry.ids.navopath ? "navopath" : "superproductivity");
+      const target: SyncSide = source === "navopath" ? "superproductivity" : "navopath";
+      const parent = parentLink(state.latest[source], state.latest[source]?.tasks.find(task => task.syncId === id));
+      if (parent === undefined || parent === id) continue;
+      entry.fields.parentSyncId = parent;
+      const targetParent = parentLink(state.latest[target], state.latest[target]?.tasks.find(task => task.syncId === id));
+      if (parent !== targetParent) (state.pending[id] ||= {}).parentSyncId = target;
+    }
+  }
   state.status = "active"; state.baseRevision++;
   return state;
 }
@@ -160,6 +228,7 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
     if (JSON.stringify(state.latest[side]) !== JSON.stringify(snapshot)) { state.latest[side] = snapshot; state.baseRevision++; }
     return { state, assignments: [] as Array<{ kind: "project" | "task"; id: string; syncId: string }>, actions: [] as ReturnType<typeof buildActions> };
   }
+  const hierarchyWasReady = hierarchyReady(state);
   const previous = state.latest[side] || { projects: [], tasks: [] };
   const overwritingTarget = state.initialOverwrite?.target === side;
   if (overwritingTarget) {
@@ -204,6 +273,7 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
         // succeeds. Treat its first snapshot as acknowledgement, not a new
         // user edit. Retry all unapplied source fields without erasing them.
         for (const field of Object.keys(canonical.fields)) {
+          if (field === "parentSyncId") continue;
           // SP's timed schedule and day-only due date are mutually exclusive.
           const equal = projectedEqual(side, canonical.fields, field, item.fields[field]);
           if (equal) { if (pending[field] === side) delete pending[field]; }
@@ -256,6 +326,11 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
     }
   }
   state.latest[side] = snapshot; state.baseRevision++;
+  observeHierarchy(state, side, previous, timestamp);
+  if (!hierarchyWasReady && hierarchyReady(state)) {
+    const other: SyncSide = side === "navopath" ? "superproductivity" : "navopath";
+    observeHierarchy(state, other, state.latest[other]!, timestamp);
+  }
   // Recover schedules that were previously acknowledged incorrectly or never
   // queued. Only retry a missing target slot when the canonical scheduled slot
   // still exists on its source; never overwrite a different explicit slot.
@@ -292,7 +367,18 @@ export function buildActions(state: SyncState, side: SyncSide) {
     const conflicting = new Set(state.conflicts.filter(conflict => conflict.syncId === syncId).map(conflict => conflict.field));
     const scheduleConflicted = conflicting.has("scheduledAt") || conflicting.has("scheduledMinutes");
     const isBlocked = (field: string) => conflicting.has(field) || (scheduleConflicted && (field === "scheduledAt" || field === "scheduledMinutes"));
-    const fields = create ? { ...canonical.fields } : Object.fromEntries(Object.entries(canonical.fields).filter(([key]) => !isBlocked(key) && pending[key] === side && !projectedEqual(side, canonical.fields, key, current?.fields[key])));
+    const fields = create ? { ...canonical.fields } : Object.fromEntries(Object.entries(canonical.fields).filter(([key]) => key !== "parentSyncId" && !isBlocked(key) && pending[key] === side && !projectedEqual(side, canonical.fields, key, current?.fields[key])));
+    delete fields.parentSyncId;
+    const relation = canonical.fields.parentSyncId;
+    const source: SyncSide = side === "navopath" ? "superproductivity" : "navopath";
+    const sourceTask = state.latest[source]?.tasks.find(item => item.syncId === syncId);
+    // Never create a known child as a flat task while the peer is on the old protocol.
+    if (create && canonical.kind === "task" && sourceTask?.parentId && state.latest[source]?.hierarchyVersion === 1 && (!hierarchyReady(state) || !Object.hasOwn(canonical.fields, "parentSyncId"))) continue;
+    if (hierarchyReady(state) && canonical.kind === "task" && !canonical.deleted && !isBlocked("parentSyncId") &&
+        (create || pending.parentSyncId === side) && Object.hasOwn(canonical.fields, "parentSyncId")) {
+      if (create || parentLink(state.latest[side], current) !== relation) fields.parentSyncId = relation;
+    }
+    if (create && conflicting.has("parentSyncId")) continue;
     // A scheduled block is start + duration. Send both when either changes,
     // even if one field is already acknowledged, so clients never invent a default.
     if (canonical.kind === "task" && (Object.hasOwn(fields, "scheduledAt") || Object.hasOwn(fields, "scheduledMinutes"))) {
@@ -303,11 +389,19 @@ export function buildActions(state: SyncState, side: SyncSide) {
     if (create || Object.keys(fields).length || (pending.$deleted === side && canonical.deleted)) actions.push({ syncId, kind: canonical.kind, id: targetId, fields, ...(canonical.deleted ? { deleted: true } : {}) });
   }
   const order = (action: typeof actions[number]) => action.deleted ? (action.kind === "task" ? 2 : 3) : (action.kind === "project" ? 0 : 1);
-  return actions.sort((a, b) => order(a) - order(b));
+  const depth = (id: string) => {
+    let n = 0, parent = state.canonical[id]?.fields.parentSyncId;
+    const seen = new Set([id]);
+    while (typeof parent === "string" && !seen.has(parent)) { seen.add(parent); n++; parent = state.canonical[parent]?.fields.parentSyncId; }
+    return n;
+  };
+  return actions.sort((a, b) => order(a) - order(b) ||
+    (a.kind === "task" && b.kind === "task" ? (a.deleted ? depth(b.syncId) - depth(a.syncId) : depth(a.syncId) - depth(b.syncId)) : 0));
 }
 
 export function restoreSyncEntity(state: SyncState, side: SyncSide, syncId: string, localId: string) {
   const canonical = state.canonical[syncId];
+  if (canonical && !canonical.deleted && canonical.ids[side] === localId && localId) return state;
   if (!canonical || !canonical.deleted || !localId || localId.length > 200) throw new Error("Deleted item cannot be restored");
   canonical.deleted = false;
   delete canonical.overwriteTarget;
@@ -321,6 +415,16 @@ export function resolveSyncConflict(state: SyncState, conflictId: string, chosen
   const index = state.conflicts.findIndex(item => item.id === conflictId); if (index < 0) throw new Error("Conflict not found");
   const conflict = state.conflicts[index]; const canonical = state.canonical[conflict.syncId]; if (!canonical) throw new Error("Conflict item not found");
   const value = chosen === "navopath" ? conflict.navopath : conflict.superproductivity;
+  if (conflict.field === "parentSyncId" && value !== null) {
+    if (typeof value !== "string") throw new Error("Invalid parent relationship");
+    const seen = new Set([conflict.syncId]); let ancestor: unknown = value;
+    while (typeof ancestor === "string") {
+      if (seen.has(ancestor)) throw new Error("Parent relationship would form a cycle");
+      const parent = state.canonical[ancestor];
+      if (!parent || parent.deleted || parent.kind !== "task") throw new Error("Parent task is not available");
+      seen.add(ancestor); ancestor = parent.fields.parentSyncId;
+    }
+  }
   if (conflict.field === "$deleted") canonical.deleted = Boolean(value); else canonical.fields[conflict.field] = value;
   if (conflict.field === "$deleted") {
     const restoreSide = chosen;
