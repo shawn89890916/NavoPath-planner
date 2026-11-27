@@ -6,7 +6,7 @@
 
 #### 修复
 
-- Super Productivity Sync 1.1.1：隔离只读历史日历任务，重复接收已结束排程时保留原记录，已有异常映射时暂停同步以防止进一步污染。
+- Super Productivity Sync 1.1.1：隔离只读历史日历任务，重复接收已结束排程时保留原记录，已有异常映射时暂停同步以防止进一步污染；服务端识别历史回流后阻止双端写入。
 
 ### 1.7.0 Beta 127
 
@@ -1308,7 +1308,7 @@
 
 #### Fixes
 
-- Super Productivity Sync 1.1.1: exclude read-only calendar history tasks, preserve completed execution records on repeated schedule imports, and pause sync when existing history links are detected.
+- Super Productivity Sync 1.1.1: exclude read-only calendar history tasks, preserve completed execution records on repeated schedule imports, and pause sync when existing history links are detected; the server blocks writes on both sides when it detects calendar feedback.
 
 ### 1.7.0 Beta 127
 
