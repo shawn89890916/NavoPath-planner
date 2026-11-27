@@ -552,6 +552,8 @@ export class ExtensionService {
         { id: "habits", install: true, enabled: settings.featureHabitsEnabled !== false },
         { id: "navo-ai", install: true, enabled: settings.hideAi !== true },
         { id: "engagement", install: settings.featureEngagementEnabled === true, enabled: true },
+        { id: "flowtime", install: settings.focusModeDefault === "flowtime", enabled: true },
+        { id: "countdown", install: settings.widgetTimerPreferences?.mode === "countdown", enabled: true },
       ];
       for (const { id, install, enabled } of seeds) {
         const key = `official:${id}`;
@@ -572,6 +574,21 @@ export class ExtensionService {
       }
       next.migratedDesktopWidget = true;
       changed = true;
+    }
+    if (host.getAccountId() && !preferences.migratedCloudDriveSync && window.plannerApi?.listSyncBridgeStatuses) {
+      // Only migrate a verified existing bridge. If offline, retain legacy access and retry on later reconciliation.
+      const statuses = await window.plannerApi.listSyncBridgeStatuses().catch(() => undefined);
+      if (generation !== this.generation) return;
+      if (statuses) {
+        const key = "official:cloud-drive-sync";
+        if (statuses.some(status => status.status !== "stopped") && !next.installed[key] && !next.removed[key]) {
+          const entry = getBundledExtension("cloud-drive-sync");
+          if (!entry || !await this.publishBundledMigration(entry, generation)) return;
+          addDefault(entry, true, entry.downloadUrl);
+        }
+        next.migratedCloudDriveSync = true;
+        changed = true;
+      }
     }
     if (settings.featureTemplatesEnabled === true && !next.installed["official:schedule-templates"] && !next.removed["official:schedule-templates"]) {
       const entry = getBundledExtension("schedule-templates")!;

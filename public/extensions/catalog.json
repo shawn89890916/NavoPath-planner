@@ -25,6 +25,50 @@
     },
     {
       "manifest": {
+        "id": "cloud-drive-sync",
+        "name": "Cloud Drive Sync",
+        "description": "Connect a user-owned cloud folder mirror to NavoPath.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.7.0-beta.132",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/cloud-drive-sync.navopackage.json",
+      "sha256": "98fd3e414fa4cb90565e3968f3112e6c98cebebb3959eecf4b0ea1a5108014f9"
+    },
+    {
+      "manifest": {
+        "id": "countdown",
+        "name": "Countdown",
+        "description": "Count down to a scheduled deadline and record overtime.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.7.0-beta.132",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/countdown.navopackage.json",
+      "sha256": "90b9238853fc52ed04c17787f94884a8ddf461a1f71d8cc1fe84253f6568211a"
+    },
+    {
+      "manifest": {
         "author": "NavoPath",
         "version": "1.0.2",
         "apiVersion": 1,
@@ -87,6 +131,28 @@
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/engagement.navopackage.json",
       "sha256": "af190f611e1709ab239a7ec7a81b6f58ca61321e1a8c28d3c06fcb3ddb661cb1"
+    },
+    {
+      "manifest": {
+        "id": "flowtime",
+        "name": "Flowtime",
+        "description": "Use the core stopwatch and suggested breaks for flexible focus.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.7.0-beta.132",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/flowtime.navopackage.json",
+      "sha256": "2120632d80738dc32ae994fe3917c36fccebaf9fc5dc9272fa839ad07cdf3023"
     },
     {
       "manifest": {
@@ -388,7 +454,7 @@
         "repository": "https://github.com/shawn89890916/NavoPath-planner"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/navo-ai.navopackage.json",
-      "sha256": "376ae1ef20e390b796d0c75a669d7c07d3849b2693e558d5edca7fe7d7ba59a5"
+      "sha256": "4dbfe7e7daf44d7b618602b3aac8a08f623996f4939ac2caa1f4bfef16744e1c"
     },
     {
       "manifest": {

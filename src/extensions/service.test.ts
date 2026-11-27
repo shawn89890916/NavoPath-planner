@@ -20,7 +20,7 @@ async function fetchBundled(url: string) {
 }
 
 function fixture(account = "preview", extensions = defaultExtensionPreferences()) {
-  let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true, migratedPlanningViews: extensions.migratedPlanningViews ?? true, migratedShelfViews: extensions.migratedShelfViews ?? true, migratedNativeFeatures: extensions.migratedNativeFeatures ?? true, migratedDesktopWidget: extensions.migratedDesktopWidget ?? true }, extensionConfigs: {} };
+  let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true, migratedPlanningViews: extensions.migratedPlanningViews ?? true, migratedShelfViews: extensions.migratedShelfViews ?? true, migratedNativeFeatures: extensions.migratedNativeFeatures ?? true, migratedDesktopWidget: extensions.migratedDesktopWidget ?? true, migratedCloudDriveSync: extensions.migratedCloudDriveSync ?? true }, extensionConfigs: {} };
   let data: any = { tasks: [], projects: [], events: [] };
   const host: ExtensionHost = { getData: () => data, saveData: async next => { data = next; }, getSettings: () => settings, saveSettings: async patch => { settings = { ...settings, ...patch }; }, getAccountId: () => account === "preview" ? null : account, toast: vi.fn(), internal: {} };
   return { host, settings: () => settings };
@@ -147,6 +147,17 @@ describe("extension installation and account reconciliation", () => {
     await current.configure(f.host);
     expect(current.getSnapshot().preferences.installed["official:habits"]).toBeUndefined();
     expect(f.settings().extensions.migratedNativeFeatures).toBe(true);
+  });
+
+  it("preserves selected legacy timer modes and discovers an existing cloud bridge once", async () => {
+    const f = fixture("existing-bridge", { ...defaultExtensionPreferences(), migratedNativeFeatures: false, migratedCloudDriveSync: false });
+    await f.host.saveSettings({ focusModeDefault: "flowtime", widgetTimerPreferences: { mode: "countdown", countdownSeconds: 1500 } });
+    Object.assign(window, { plannerApi: { listSyncBridgeStatuses: async () => [{ status: "running" }] } });
+    await current.configure(f.host);
+    for (const id of ["flowtime", "countdown", "cloud-drive-sync"]) expect(current.getSnapshot().preferences.installed[`official:${id}`]?.enabled).toBe(true);
+    await current.uninstall("official:cloud-drive-sync");
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:cloud-drive-sync"]).toBeUndefined();
   });
 
   it("seeds the desktop-only widget on desktop without enabling a disabled preference", async () => {

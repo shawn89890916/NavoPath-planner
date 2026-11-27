@@ -20,7 +20,7 @@
   "files": {
     "main.js": {
       "encoding": "utf8",
-      "data": "var t={onload(e){return e.app.internal.registerNativeFeature(\"navo-ai\")}};export{t as default};\n"
+      "data": "var a={onload(e){return e.app.internal.registerNativeFeature(\"navo-ai\")}};export{a as default};\n"
     },
     "LICENSE": {
       "encoding": "utf8",
