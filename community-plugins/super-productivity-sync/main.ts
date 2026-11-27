@@ -2,7 +2,7 @@ import type { PluginContext, PluginModule } from "../../src/extensions/types";
 import type { PlannerData, Project, Task, TimelineRecord } from "../../src/types";
 import { mountIsolatedPluginSurface } from "../../src/extensions/pluginSurface";
 import { createInitialPreviewView } from "./preview";
-import { selectTimedSlot, durationMinutes, validSlot, hasRecordedTimedSlot } from "./schedule";
+import { selectTimedSlot, durationMinutes, validSlot, hasRecordedTimedSlot, isReadOnlyHistoryNote } from "./schedule";
 
 type LinkStore = { projects: Record<string, string>; tasks: Record<string, string>; tombstones: Record<string, { kind: "task" | "project"; item: Task | Project; deletedAt: string; taskIds?: string[]; parentSyncId?: string; restoring?: boolean; restoreId?: string }> };
 type Entity = { id: string; syncId?: string; parentId?: string; projectId?: string; fields: Record<string, any> };
@@ -204,6 +204,10 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     };
     const apply = async (actions: RemoteAction[]) => {
       if (!actions.length) { await persist(); return; }
+      if (actions.some(action => action.kind === "task" && isReadOnlyHistoryNote(action.fields.notes))) {
+        await api.request("/pause", "POST", { pairId });
+        throw new Error(t("检测到只读历史日历回流，已暂停连接。", "Read-only calendar feedback detected; connection paused."));
+      }
       const currentData = ctx.app.getData();
       const before = { tasks: currentData.tasks, projects: currentData.projects };
       const draft = { tasks: [...before.tasks], projects: [...before.projects] };
@@ -343,6 +347,10 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
         if (!pairId) { await discoverConnection(); if (!pairId) return; }
         const state = await getState(); displayState(state);
         if (state.status === "paused") return;
+        if (ctx.tasks.list().some(task => isReadOnlyHistoryNote(task.notes))) {
+          await api.request("/pause", "POST", { pairId });
+          throw new Error(t("检测到历史日历回流任务，已暂停连接，请先修复异常数据。", "Read-only calendar history detected; connection paused for repair."));
+        }
         for (const [id,saved] of Object.entries(links.tombstones)) {
           if (saved.restoreId) await finishRestore(id,saved);
           else if (saved.restoring) throw new Error(t("恢复中断，需要手动检查。", "Interrupted restore needs manual review."));
