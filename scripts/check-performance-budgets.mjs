@@ -53,8 +53,9 @@ async function checkFrontend() {
   await check("Complete Vite output", await treeSize(dist), 10_100_000);
   // Whole-output category totals expose chunks omitted from named size-limit groups.
   const assets = await readdir(path.join(dist, "assets"), { withFileTypes: true });
-  for (const [label, suffix] of [["All built JavaScript", /\\.m?js$/], ["All built CSS", /\\.css$/]]) {
+  for (const [label, suffix] of [["All built JavaScript", /[.]m?js$/], ["All built CSS", /[.]css$/]]) {
     const bytes = await Promise.all(assets.filter(item => item.isFile() && suffix.test(item.name)).map(item => stat(path.join(dist, "assets", item.name)).then(item => item.size)));
+    if (!bytes.length) throw new Error("Missing output category: " + label);
     console.log(label + ": " + bytes.reduce((sum, value) => sum + value, 0) + " bytes");
   }
 }
