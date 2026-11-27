@@ -25,24 +25,34 @@
 .df-mobile-placement-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .df-mobile-placement-actions .ui-button { min-height: 44px; }
 
-@media (max-width: 899.98px) and (orientation: portrait) {
+@media (orientation: portrait), (max-width: 980px) and (orientation: landscape) {
   #root .df-app[data-phone-execution] .df-compact-execute-controls {
     grid-template-columns: minmax(0, 1fr) auto;
   }
   #root .df-app[data-phone-execution] .df-compact-date-display { justify-self: start; }
-  #root .df-app[data-phone-execution] .df-timeline-panel[data-candidates-open],
-  #root .df-app[data-phone-execution] .df-timeline-panel[data-candidates-open] * {
+  /* The timeline retains its actual width and scroll container while its surface moves. */
+  :is(.df-app[data-phone-execution], .df-mobile-floating-actions, .df-mobile-dock--viewport) {
+    --side-workspace-width: min(68vw, calc(100vw - 112px));
+    --side-workspace-offset: var(--side-workspace-drag-x, 0px);
+  }
+  :is(.df-app[data-phone-execution], .df-mobile-floating-actions, .df-mobile-dock--viewport)[data-side-workspace-open] {
+    --side-workspace-offset: var(--side-workspace-drag-x, var(--side-workspace-width));
+  }
+  #root .df-app[data-phone-execution] > .df-execute {
+    position: relative; overflow: hidden;
+  }
+  #root .df-app[data-phone-execution] .df-execute > :is(.df-timeline-panel, .df-compact-execute-controls, .df-mobile-date-picker),
+  .df-mobile-dock--viewport {
+    translate: var(--side-workspace-offset) 0;
+    transition: translate var(--motion-layout) var(--motion-ease-settle);
+  }
+  #root .df-app[data-phone-execution] .df-execute > .df-timeline-panel {
     touch-action: pan-y;
+    background: var(--surface-main);
   }
-  #root .df-app[data-phone-execution] .df-mobile-candidate-backdrop {
-    position: fixed; inset: 0; z-index: 140;
-    background: rgb(0 0 0 / 10%);
-    pointer-events: none;
-    opacity: 0; visibility: hidden;
-    transition: opacity var(--motion-layout) var(--motion-ease), visibility 0s var(--motion-layout);
-  }
-  #root .df-app[data-phone-execution] .df-mobile-candidate-backdrop.is-open {
-    opacity: 1; visibility: visible; transition-delay: 0s;
+  #root .df-app[data-phone-execution][data-side-workspace-open] .df-execute > .df-timeline-panel {
+    border-radius: var(--radius-card) 0 0 var(--radius-card);
+    box-shadow: inset 1px 0 var(--paper-rule);
   }
   #root .df-app[data-phone-execution] .df-timeline-panel:has(.df-timeline-daily) {
     width: 100%;
@@ -61,38 +71,40 @@
     background: inherit; pointer-events: none;
   }
   #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates {
-    display: flex; position: fixed; inset: auto 0 0; z-index: 141;
-    height: 60dvh; max-height: calc(100dvh - env(safe-area-inset-top) - 8px);
-    --action-menu-max-height: calc(60dvh - 64px - env(safe-area-inset-bottom));
-    width: 100%; min-width: 0; margin: 0; box-sizing: border-box;
+    display: flex; position: absolute; inset: 0 auto 0 0; z-index: 13;
+    height: auto; max-height: none;
+    --action-menu-max-height: calc(100dvh - 130px - env(safe-area-inset-bottom));
+    width: var(--side-workspace-width); min-width: 0; margin: 0; box-sizing: border-box;
     flex-direction: column; padding: 0 8px calc(8px + env(safe-area-inset-bottom));
-    border: 1px solid var(--paper-rule); border-bottom: 0; border-radius: var(--radius-card) var(--radius-card) 0 0;
-    background: var(--surface-main); color: var(--text-main); overflow: hidden;
+    border: 0; border-radius: 0;
+    background: var(--bg-app); color: var(--text-main); overflow: hidden;
     animation: none;
-    transform: translateY(100%); visibility: hidden; pointer-events: none;
-    transition: transform var(--motion-layout) var(--motion-ease-settle), height var(--motion-layout) var(--motion-ease-settle), visibility 0s var(--motion-layout);
+    translate: calc(var(--side-workspace-offset) - var(--side-workspace-width)) 0;
+    visibility: hidden; pointer-events: none;
+    transition: translate var(--motion-layout) var(--motion-ease-settle), visibility 0s var(--motion-layout);
   }
   #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates.compact-active {
-    transform: translateY(var(--mobile-sheet-drag-y, 0px)); visibility: visible; pointer-events: auto; transition-delay: 0s;
+    visibility: visible; pointer-events: auto; transition-delay: 0s;
   }
-  #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates.is-expanded {
-    height: 94dvh;
-    --action-menu-max-height: calc(94dvh - 64px - env(safe-area-inset-bottom));
+  html[data-side-workspace-gesture] #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates {
+    visibility: visible;
   }
-  #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates.is-sheet-dragging {
+  html[data-side-workspace-gesture] #root .df-app[data-phone-execution] .df-execute > :is(.df-candidate-panel, .df-timeline-panel, .df-compact-execute-controls, .df-mobile-date-picker),
+  html[data-side-workspace-gesture] .df-mobile-dock--viewport,
+  html[data-side-workspace-gesture] .df-mobile-candidates-trigger {
     transition: none;
   }
   #root .df-app.mode-execute[data-phone-execution] .df-candidate-panel.is-mobile-candidates > .df-panel-title {
-    position: relative; inset: auto; height: 48px;
-    padding: 0 4px; width: auto; display: flex; align-items: center;
-    touch-action: none;
+    position: relative; inset: auto; height: auto; min-height: 88px;
+    padding: 4px; width: auto; display: flex; flex-direction: column;
+    align-items: stretch; justify-content: center; flex-shrink: 0;
   }
   #root .df-app.mode-execute[data-phone-execution] .df-candidate-panel.is-mobile-candidates > .df-panel-title h2 {
-    display: block; min-width: 0; margin: 0; font: 650 16px/1.25 var(--paper-serif);
+    display: block; min-width: 0; margin: 0; font: 650 19px/1.25 var(--paper-serif);
     white-space: normal; overflow-wrap: anywhere;
   }
   #root .df-app.mode-execute[data-phone-execution] .df-candidate-panel.is-mobile-candidates > .df-panel-title > div {
-    position: static; inset: auto; height: auto; display: flex; align-items: center; gap: 0; flex-shrink: 0;
+    position: static; inset: auto; height: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0; flex-shrink: 0;
   }
   #root .df-app[data-phone-execution] .is-mobile-candidates .df-ai-plan-title-tools { order: -1; position: static; }
   #root .df-app[data-phone-execution] .is-mobile-candidates .df-ai-plan-title-icon {
@@ -100,14 +112,12 @@
     display: inline-flex; align-items: center; justify-content: center; padding: 0;
   }
   #root .df-app[data-phone-execution] .is-mobile-candidates .df-ai-plan-title-icon svg { width: 16px; height: 16px; }
-  #root .df-app[data-phone-execution] .is-mobile-candidates .df-mobile-candidate-close {
-    position: static; width: 44px; height: 44px; flex-shrink: 0;
-  }
   #root .df-app.mode-execute[data-phone-execution] .df-candidate-panel.is-mobile-candidates .df-candidate-list {
     flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y;
   }
   .df-mobile-execution-controls .df-mobile-candidates-trigger {
-    left: 16px; right: auto;
+    left: min(calc(16px + var(--side-workspace-offset)), calc(100vw - 64px)); right: auto;
+    transition: left var(--motion-layout) var(--motion-ease-settle), background-color 150ms ease, border-color 150ms ease;
   }
   .df-mobile-execution-controls[data-placing] {
     position: fixed;
@@ -126,8 +136,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  #root .df-app[data-phone-execution] .df-mobile-candidate-backdrop,
-  #root .df-app[data-phone-execution] .df-execute > .df-candidate-panel.is-mobile-candidates {
+  #root .df-app[data-phone-execution] .df-execute > :is(.df-candidate-panel.is-mobile-candidates, .df-timeline-panel, .df-compact-execute-controls, .df-mobile-date-picker),
+  .df-mobile-dock--viewport,
+  .df-mobile-execution-controls .df-mobile-candidates-trigger {
     transition: none;
   }
 }
