@@ -68,7 +68,8 @@ export async function exerciseIntent() {
     const selected=await reset("C",true);await approach(selected);assert(!state.promise,"selected target predicted");
     const blur=await reset("C");move(blur,-100);move(blur,-80);window.dispatchEvent(new Event("blur"));move(blur,-60);assert(!state.promise,"blur retained trajectory");
     focused=false;await approach(blur);assert(!state.promise,"unfocused renderer predicted");focused=true;
-    const key=await reset("C");key.target.focus();assert(Boolean(state.promise)&&!state.click,"focus fallback failed");await state.promise;
+    // React onFocus uses bubbling focusin; the offscreen Electron window cannot reliably acquire native focus.
+    const key=await reset("C");key.target.dispatchEvent(new FocusEvent("focusin",{bubbles:true,relatedTarget:null}));assert(Boolean(state.promise)&&!state.click,"focus fallback failed");await state.promise;
     flushSync(()=>root.render(React.createElement(Fixture,{mode:"C",open:false})));
     assert(!document.querySelector(".ui-narrow-menu-layer"),"menu retained after close");
     const latency=Object.fromEntries(Object.entries(results).map(([mode,rows])=>[mode,{p50:quantile(rows.map(r=>r.latency),.5),p95:quantile(rows.map(r=>r.latency),.95),...(mode==="C"?{medianLead:quantile(rows.map(r=>r.lead),.5)}:{})}]));
