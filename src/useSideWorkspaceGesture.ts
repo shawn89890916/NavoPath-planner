@@ -18,7 +18,16 @@ export function useSideWorkspaceGesture({ enabled, open, getWidth, onOpen, onClo
     document.documentElement.removeAttribute("data-side-workspace-gesture");
     document.documentElement.style.removeProperty("--side-workspace-drag-x");
   }
-  useEffect(() => reset, [enabled, open]);
+  useEffect(() => {
+    if (!enabled) return;
+    window.addEventListener("blur", reset);
+    window.addEventListener("resize", reset);
+    return () => {
+      window.removeEventListener("blur", reset);
+      window.removeEventListener("resize", reset);
+      reset();
+    };
+  }, [enabled, open]);
   return {
     onPointerDownCapture(event) {
       suppressClick.current = false;

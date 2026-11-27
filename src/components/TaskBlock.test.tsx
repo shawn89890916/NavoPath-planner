@@ -340,10 +340,12 @@ describe("TaskBlock shared component contract", () => {
     expect(css).toContain("cursor: grabbing;");
   });
 
-  it("keeps the portrait switcher and close action inside the candidate sheet", () => {
+  it("keeps the view switcher in the side workspace and uses one moving arrow", () => {
     const main = readFileSync(resolve(__dirname, "../main.tsx"), "utf8");
+    const controls = readFileSync(resolve(__dirname, "MobileExecutionControls.tsx"), "utf8");
     expect(main).toContain('ref={shelfTitleRef}');
-    expect(main).toContain('className="df-mobile-candidate-close"');
+    expect(main).not.toContain('className="df-mobile-candidate-close"');
+    expect(controls).toContain('onClick={drawerOpen ? onClose : onOpen}');
     expect(main).not.toContain("<WorkspaceModeTabs");
   });
 

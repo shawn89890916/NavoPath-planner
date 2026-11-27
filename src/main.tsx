@@ -10671,7 +10671,7 @@ if (cached?.data && cached?.settings) {
       )}
 
       {!productAiPresentation && compactLayout && !compactOverlayOpen && (
-        createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}`} style={themeVars(settings, "execute")} data-side-workspace-open={mobileExecution && candidateDrawerOpen || undefined} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
+        createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}`} style={themeVars(settings, "execute")} data-side-workspace={mobileExecution || undefined} data-side-workspace-open={mobileExecution && candidateDrawerOpen || undefined} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {productDemo ? <div className="df-mobile-dock-slots">{compactChat}</div> : <Suspense fallback={<div className="df-mobile-dock-slots">{compactChat}<IconButton className="df-mobile-dock-action df-mobile-more-wrap" label={lang === "zh" ? "更多" : "More"} icon={<UiMoreIcon />} /></div>}>
             <CompactPluginDock lang={lang} chat={compactChat} activePanel={workspacePanel?.kind} activeOwner={workspacePanel?.owner} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => setNotificationCenterOpen(true)} onSearch={() => { setCommandQuery(""); setCommandOpen(true); }} onSettings={() => openSettingsHome()} onHistory={openTaskHistory} onOpenPage={openExtensionPage} />
           </Suspense>}
@@ -10680,7 +10680,7 @@ if (cached?.data && cached?.settings) {
 
       {!productPresentation && !compactLayout && !workspacePanel && <button ref={quickAddButtonRef} className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={showGuide && onboardingStep === "add" ? openTaskDraft : () => openAdd("task")} />}
       {!productPresentation && !compactLayout && aiEnabled && (!workspacePanel || aiOpen) && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />}
-      {createPortal(<div className="df-mobile-floating-actions" data-side-workspace-open={mobileExecution && candidateDrawerOpen || undefined} data-guide-return-drag={returningGuideBlock || undefined} style={themeVars(settings, "execute")}>
+      {createPortal(<div className="df-mobile-floating-actions" data-side-workspace={mobileExecution || undefined} data-side-workspace-open={mobileExecution && candidateDrawerOpen || undefined} data-guide-return-drag={returningGuideBlock || undefined} style={themeVars(settings, "execute")}>
         {(mobileExecution || mobilePlacement?.guided) && <Suspense fallback={null}><MobileExecutionControls
           desktop={!mobileExecution}
           hidden={compactFloatingActionsHidden && !mobilePlacement}
