@@ -222,6 +222,7 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
     if (JSON.stringify(state.latest[side]) !== JSON.stringify(snapshot)) { state.latest[side] = snapshot; state.baseRevision++; }
     return { state, assignments: [] as Array<{ kind: "project" | "task"; id: string; syncId: string }>, actions: [] as ReturnType<typeof buildActions> };
   }
+  const hierarchyWasReady = hierarchyReady(state);
   const previous = state.latest[side] || { projects: [], tasks: [] };
   const overwritingTarget = state.initialOverwrite?.target === side;
   if (overwritingTarget) {
@@ -320,6 +321,10 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
   }
   state.latest[side] = snapshot; state.baseRevision++;
   observeHierarchy(state, side, previous, timestamp);
+  if (!hierarchyWasReady && hierarchyReady(state)) {
+    const other: SyncSide = side === "navopath" ? "superproductivity" : "navopath";
+    observeHierarchy(state, other, state.latest[other]!, timestamp);
+  }
   // Recover schedules that were previously acknowledged incorrectly or never
   // queued. Only retry a missing target slot when the canonical scheduled slot
   // still exists on its source; never overwrite a different explicit slot.
@@ -362,7 +367,7 @@ export function buildActions(state: SyncState, side: SyncSide) {
     const source: SyncSide = side === "navopath" ? "superproductivity" : "navopath";
     const sourceTask = state.latest[source]?.tasks.find(item => item.syncId === syncId);
     // Never create a known child as a flat task while the peer is on the old protocol.
-    if (create && canonical.kind === "task" && !hierarchyReady(state) && sourceTask?.parentId && state.latest[source]?.hierarchyVersion === 1) continue;
+    if (create && canonical.kind === "task" && sourceTask?.parentId && state.latest[source]?.hierarchyVersion === 1 && (!hierarchyReady(state) || !Object.hasOwn(canonical.fields, "parentSyncId"))) continue;
     if (hierarchyReady(state) && canonical.kind === "task" && !canonical.deleted && !isBlocked("parentSyncId") &&
         (create || pending.parentSyncId === side) && Object.hasOwn(canonical.fields, "parentSyncId")) {
       if (create || parentLink(state.latest[side], current) !== relation) fields.parentSyncId = relation;
