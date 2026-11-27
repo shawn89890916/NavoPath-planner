@@ -19,7 +19,10 @@ export async function exerciseSettings(){
   let cases=0;
   for(const dark of [false,true])for(const lang of ["en","zh"])for(const r of [0,16,32,48,64]){
     const tr=(en,zh)=>lang==="en"?en:zh;
-    flushSync(()=>root.render(h("div",{id:"settings-fixture",className:"df-app df-settings-surface mode-execute"+(dark?" theme-dark":""),style:{"--workspace-corner-radius":r+"px"}},
+    // Match the production useLayoutEffect: root-owned derived radius tokens
+    // resolve at documentElement, including overlays mounted through portals.
+    document.documentElement.style.setProperty("--workspace-corner-radius",r+"px");
+    flushSync(()=>root.render(h("div",{id:"settings-fixture",className:"df-app df-settings-surface mode-execute"+(dark?" theme-dark":"")},
       h("main",{className:"fixture-pane df-settings-content"},
       h("div",{className:"df-settings-content-column"},
         h("h2",{className:"df-settings-content-title"},tr("Appearance","外观")),
@@ -44,5 +47,5 @@ export async function exerciseSettings(){
     for(const el of f.querySelectorAll(".df-settings-row,.df-settings-row-control,.df-settings-group-body"))assert(el.scrollWidth<=el.clientWidth+1,"Overflow "+el.className+" "+el.scrollWidth+"/"+el.clientWidth+" viewport="+innerWidth+" radius="+r);
     cases++;
   }
-  root.unmount();style.remove();return {width:innerWidth,cases,sharedRadius:true,fieldAlignment:true,pluginSwitchAlignment:true};
+  root.unmount();style.remove();document.documentElement.style.removeProperty("--workspace-corner-radius");return {width:innerWidth,cases,sharedRadius:true,fieldAlignment:true,pluginSwitchAlignment:true};
 }
