@@ -177,6 +177,7 @@ async function superProductivitySyncApi(request: Request, env: Env, ctx: Executi
     return result.ok ? syncResponse({ disconnected: true }) : syncResponse({ error: "Could not revoke the connection" }, 400);
   }
   const stateResponse = await db(env, `navopath_sp_sync_state?select=pair_id,state,revision&user_id=eq.${auth.userId}&limit=1`);
+  if (!stateResponse.ok) return syncResponse({ error: "Synchronization service temporarily unavailable" }, 503);
   const rows = await stateResponse.json() as Array<{ pair_id: string; state: SyncState; revision: number }>;
   const row = rows[0];
   if (!stateResponse.ok || !row || (pairId && row.pair_id !== pairId) || (isSyncToken && row.pair_id !== pairId)) return syncResponse({ error: "Connection not found" }, 404);

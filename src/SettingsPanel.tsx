@@ -41,7 +41,7 @@ const AiProviderSettings = lazy(() => import("./components/AiProviderSettings"))
 
 const ProactiveAssistantSettings = lazy(() => import("./components/ProactiveAssistantSettings").then((module) => ({ default: module.ProactiveAssistantSettings })));
 
-import { isConnectionAnchor } from "./connectionProviders";
+import { spPluginConnection, SP_PLUGIN_KEY } from "./connectionProviders";
 const ConnectionProviders = lazy(() => import("./components/ConnectionProviders"));
 const CalDavManager = lazy(() => import("./components/CalDavManager"));
 
@@ -332,7 +332,7 @@ function SettingsCategoryIcon({ category }: { category: SettingsCategory }) {
 export function UtilityPanel({ kind, settings, initialSection, onboardingSettings, compactLayout, data, authEmail, onClose, onRestartOnboarding, onSave: saveSettingsPatch, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, settingsSavePhase = "idle", lang }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; onboardingSettings?: OnboardingSettingsTopic; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onRestartOnboarding: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; settingsSavePhase?: SavePhase; lang: Language }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
   const isDesktopRuntime = Boolean(window.desktopApi);
-  const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
+  const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "plugins" && (target.pluginOwner === SP_PLUGIN_KEY || Boolean(target.pluginPage && target.pluginPage === spPluginConnection(extensionService.getSnapshot()).page?.id)) ? { category: "integrations", anchor: "connection-super-productivity" } : target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
   const [settingsTarget, setSettingsTarget] = useState<SettingsTarget>(resolveRuntimeTarget(resolvedInitial));
   const [modifiedOnly, setModifiedOnly] = useState(resolvedInitial.anchor === "modified-settings");
   const categories = visibleSettingsCategories(isDesktopRuntime);
@@ -369,7 +369,6 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [expandedSettings, setExpandedSettings] = useState<Record<string, boolean>>({});
   const [widgetColorScheme, setWidgetColorScheme] = useState<"light" | "dark">("light");
-  const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "mcp" | "sync">(resolvedInitial.anchor === "mcp" ? "mcp" : "calendar");
   const settingsContentRef = useRef<HTMLDivElement | null>(null);
   const settingsHeadingRef = useRef<HTMLHeadingElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -410,11 +409,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
     if (settingsTarget.anchor === "shortcuts") setShortcutsOpen(true);
     if (settingsTarget.anchor?.startsWith("widget-light")) setWidgetColorScheme("light");
     if (settingsTarget.anchor?.startsWith("widget-dark")) setWidgetColorScheme("dark");
-    if (settingsTarget.anchor === "mcp") setIntegrationTab("mcp");
-    if (settingsTarget.anchor === "sync-bridge") setIntegrationTab("sync");
 
-    if (isConnectionAnchor(settingsTarget.anchor) || (settingsTarget.category === "integrations" && !settingsTarget.anchor)) setIntegrationTab("calendar");
-    if (settingsTarget.anchor === "external-calendar") setIntegrationTab("external-calendar");
   }, [settingsTarget.anchor]);
   useEffect(() => {
     const content = settingsContentRef.current;
@@ -435,7 +430,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
       anchor.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(handle);
-  }, [settingsTarget, integrationTab, widgetColorScheme, settingsHome]);
+  }, [settingsTarget, widgetColorScheme, settingsHome]);
 
   function navigateSettings(target: SettingsTarget) {
     if (target.anchor === "modified-settings") { setModifiedOnly(true); setNavigationQuery(""); return; }
@@ -443,11 +438,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
     if (target.anchor === "shortcuts") setShortcutsOpen(true);
     if (target.anchor?.startsWith("widget-light")) setWidgetColorScheme("light");
     if (target.anchor?.startsWith("widget-dark")) setWidgetColorScheme("dark");
-    if (target.anchor === "mcp") setIntegrationTab("mcp");
-    if (target.anchor === "sync-bridge") setIntegrationTab("sync");
 
-    if (isConnectionAnchor(target.anchor) || (target.category === "integrations" && !target.anchor)) setIntegrationTab("calendar");
-    if (target.anchor === "external-calendar") setIntegrationTab("external-calendar");
     void runMotionTransition(() => flushSync(() => {
       setSettingsTarget(resolveRuntimeTarget(normalizeSettingsTarget(target)));
       setNavigationQuery("");
@@ -1175,17 +1166,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               </section>}
             </SettingDisclosure>
               </SettingSection>}
-            {settingsTarget.category === "integrations" && <div className="df-settings-subtabs df-settings-integration-tabs ui-choice-list ui-choice-list--inline ui-choice-list--motion-selection" role="tablist" aria-label={lang === "zh" ? "日历与集成" : "Calendar and integrations"}>
-              <SelectionIndicator activeKey={`${integrationTab}:${lang}`} />
-              <button type="button" role="tab" aria-selected={integrationTab === "calendar"} className={`ui-choice-item${integrationTab === "calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("calendar"); setSettingsTarget({ category: "integrations", anchor: "connections" }); }}>{lang === "zh" ? "应用" : "Apps"}</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "external-calendar"} className={`ui-choice-item${integrationTab === "external-calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("external-calendar"); setSettingsTarget({ category: "integrations", anchor: "external-calendar" }); }}>{lang === "zh" ? "外部日历" : "External"}</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={`ui-choice-item${integrationTab === "mcp" ? " active" : ""}`} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "integrations", anchor: "mcp" }); }}>MCP</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "sync"} className={`ui-choice-item${integrationTab === "sync" ? " active" : ""}`} onClick={() => { setIntegrationTab("sync"); setSettingsTarget({ category: "integrations", anchor: "sync-bridge" }); }}>{lang === "zh" ? "同步" : "Sync"}</button>
-            </div>}
-            {settingsTarget.category === "integrations" && integrationTab === "calendar" && <Suspense fallback={null}><ConnectionProviders lang={lang} anchor={settingsTarget.anchor} onSelect={anchor => navigateSettings({ category: "integrations", anchor })} errorMessage={calendarFeedErrorMessage} caldav={<CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} />} /></Suspense>}
-            {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <SettingSection anchor="external-calendar" title={lang === "zh" ? "外部日历" : "External Calendars"}><ExternalCalendarManager lang={lang} /></SettingSection>}
-            {settingsTarget.category === "integrations" && integrationTab === "mcp" && <SettingSection anchor="mcp" title="MCP"><Suspense fallback={<p className="df-mcp-status">{lang === "zh" ? "正在打开 MCP…" : "Opening MCP…"}</p>}><McpTokenManager lang={lang} /></Suspense></SettingSection>}
-            {settingsTarget.category === "integrations" && integrationTab === "sync" && <SettingSection anchor="sync-bridge" title={lang === "zh" ? "同步" : "Sync"}><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></SettingSection>}
+            {settingsTarget.category === "integrations" && <Suspense fallback={null}><ConnectionProviders key={authEmail} lang={lang} anchor={settingsTarget.anchor} onSelect={anchor => navigateSettings({ category: "integrations", anchor })} errorMessage={calendarFeedErrorMessage} caldav={<CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} />} externalCalendar={<ExternalCalendarManager lang={lang} />} mcp={<McpTokenManager lang={lang} />} bridge={<SyncBridgeManager lang={lang} />} /></Suspense>}
             {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings inlineSettings={{ "official:metrics": <div data-settings-anchor="metrics" tabIndex={-1}><SettingRow
                 anchor="metrics-range"
                 title={lang === "zh" ? "默认时间范围" : "Default time range"}
@@ -1259,7 +1240,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                     { value: "incomplete", label: lang === "zh" ? "仅未完成" : "Incomplete only" },
                   ]}
                 />}
-              /></div> }} settingsOwner={selectedPluginDestination?.owner} settingsAnchor={settingsTarget.anchor ?? (settingsTarget.pluginPage ? pluginPageAnchor(settingsTarget.pluginPage) : undefined)} openMarket={marketOpen} onCloseMarket={() => navigateSettings({ category: "plugins" })} onSelectOwner={owner => navigateSettings({ category: "plugins", pluginOwner: owner })} lang={lang} kind="plugin" mcpAccess={settings.extensionMcpAccess} onMcpAccessChange={(owner, grant) => onSave({ extensionMcpAccess: { [owner]: grant } })} settingsPageId={settingsTarget.pluginPage ?? null} onSelectPage={(id) => navigateSettings({ category: "plugins", ...(id ? { pluginPage: id } : {}) })} /></Suspense>}
+              /></div> }} settingsOwner={selectedPluginDestination?.owner} settingsAnchor={settingsTarget.anchor ?? (settingsTarget.pluginPage ? pluginPageAnchor(settingsTarget.pluginPage) : undefined)} openMarket={marketOpen} onCloseMarket={() => navigateSettings({ category: "plugins" })} onSelectOwner={owner => navigateSettings({ category: "plugins", pluginOwner: owner })} onManageConnection={() => navigateSettings({ category: "integrations", anchor: "connection-super-productivity" })} lang={lang} kind="plugin" mcpAccess={settings.extensionMcpAccess} onMcpAccessChange={(owner, grant) => onSave({ extensionMcpAccess: { [owner]: grant } })} settingsPageId={settingsTarget.pluginPage ?? null} onSelectPage={(id) => navigateSettings({ category: "plugins", ...(id ? { pluginPage: id } : {}) })} /></Suspense>}
             {!compactLayout && settingsTarget.category === "account-data" && <SettingSection anchor="account-profile" title={lang === "zh" ? "个人资料" : "Profile"}>
               {profileHero}
             </SettingSection>}
@@ -1349,7 +1330,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
       </aside>
       {!settingsHome && onboardingSettings && (onboardingSettings === "plugins" ? settingsTarget.category === "plugins" && !selectedPluginPage && !activePluginOwner && !marketOpen
         : onboardingSettings === "ai" ? settingsTarget.category === "ai"
-        : settingsTarget.category === "integrations" && integrationTab === "mcp") &&
+        : settingsTarget.category === "integrations" && settingsTarget.anchor === "mcp") &&
         <OnboardingSettingsHint topic={onboardingSettings} contentRef={settingsContentRef} lang={lang} onContinue={onClose} />}
       {confirmResetSettings && createPortal(
         <div className="df-dialog-overlay" role="presentation" onMouseDown={() => setConfirmResetSettings(false)}>

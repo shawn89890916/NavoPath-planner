@@ -15,17 +15,33 @@ The raw subscription token is generated in the browser. Supabase stores only its
 1. Sign in to NavoPath.
 2. Open **Settings → Advanced → Calendar & Integrations → Calendar**.
 3. Select **Create subscription link**.
-4. On iPhone, select **Subscribe in Calendar**. For another client, copy the HTTPS link and add it as an iCalendar or Webcal subscription.
+4. Copy the HTTPS link and paste it into **Add Subscription Calendar** on iPhone or the equivalent URL subscription option in another calendar client.
+
+New NavoPath links use `https://navopath.com/calendar/…`. To switch an existing link from the default Worker hostname, change only the hostname to `navopath.com` and keep the complete `/calendar/` path, including the token and `.ics` suffix.
 
 Calendar subscriptions are read-only. Changes made in Apple Calendar or Notion Calendar do not update NavoPath, and calendar clients decide when to refresh remote feeds.
 
+
+## Apple Calendar two-way sync
+
+1. Sign in to NavoPath on the web. Go to **Settings → Calendar & Integrations → Calendar** and generate a CalDAV password.
+2. On iPhone, open **Settings → Apps → Calendar → Calendar Accounts → Add Account → Add Other Account → CalDAV Account**.
+3. Enter the server **navopath.com**, the generated username and password, and a description such as **NavoPath**.
+4. When creating or editing an event in Apple Calendar, select the **NavoPath** calendar. NavoPath uses the time zone shown when the account password is generated.
+
+CalDAV syncs appointments created in the NavoPath calendar into NavoPath as ordinary tasks, so they can be checked off and managed with the rest of the task list. Task deadlines, scheduled task blocks and legacy course blocks remain available through the separate read-only subscription. The writable calendar supports timed and all-day appointments and the recurring patterns represented in NavoPath. Invitations and edits to individual occurrences of a recurring series are outside this sync.
+
+The CalDAV password is dedicated to calendar access and shown only when generated. Revoke it in NavoPath to disconnect all devices that use it.
+
 ## Super Productivity timeline history
 
-Open Settings → Connections → Apps → Super Productivity. Install or enable the official NavoPath plugin from this page, download the companion SP plugin if needed, and use the existing pairing and first-import controls. Existing pairs do not require re-pairing. The optional history section copies a read-only link and guides manual SP calendar setup. No remote subscription status is inferred.
+Open Settings → Connections → Super Productivity (or Add connection). Install or enable the official NavoPath plugin from this page, download the companion SP plugin if needed, and use the existing pairing and first-import controls. Existing pairs do not require re-pairing. The optional history section copies a read-only link and guides manual SP calendar setup. No remote subscription status is inferred.
 SP's native task timeline only selects incomplete tasks with one timed slot per task. Keep the NavoPath Sync plugin connected for two-way task and active schedule changes. To display completed execution records, returned-unfinished records and additional blocks, add a separate read-only iCalendar source in SP:
 
 1. Use your existing NavoPath calendar subscription URL (or create one only if none exists).
-2. Use **Copy history subscription link** in the Super Productivity connection at any time while the subscription is active. It retrieves a stable history-only link without replacing the original. Legacy history links still work.
+2. Use **Copy history subscription link** in the Super Productivity connection at any time while the subscription is active. It retrieves a stable, history-only signed capability; the original subscription remains valid and its raw token is never recovered. Legacy links formed by replacing `.ics` with `-history.ics` continue to work.
 3. In Super Productivity, add an iCalendar calendar integration with that URL. Leave automatic task import disabled. Do not subscribe to the full NavoPath feed as well, which would duplicate active slots.
 
-The history feed has a stable UID per recorded block, excludes cancelled records and the primary incomplete-task timed slot already mirrored by the plugin, and does not contain task notes. Calendar events are read-only; completion and execution history stay in NavoPath. SP determines its display range and polling frequency. Revoking or replacing the existing calendar token revokes both feeds. Rotating the Worker's service credential invalidates derived history links; copy a new one if that happens.
+The history feed has a stable UID per recorded block, excludes cancelled records and the primary incomplete-task timed slot already mirrored by the plugin, and does not contain task notes. Calendar events are read-only; completion and execution history stay in NavoPath. SP determines its display range and polling frequency. Revoking or replacing the existing calendar token revokes both feeds. Rotating the Worker's service credential also invalidates derived history links; copy a new one if that occurs.
+
+The Connections overview lists verified app credentials or installed sync plugins, without claiming remote calendar subscriptions are active. Use Advanced connections → Shared calendar subscription to manage regular links; replacing or revoking a shared subscription also invalidates its history links. SP pairing and conflict management are available in the SP connection; history setup is optional.

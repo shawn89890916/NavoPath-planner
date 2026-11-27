@@ -120,7 +120,7 @@ export default function CalendarFeedManager({ lang, historyOnly = false, errorMe
       {loading && <p className="df-mcp-status">{lang === "zh" ? "正在读取订阅状态…" : "Loading subscription status…"}</p>}
       {!loading && supported && tokens.length === 0 && !error && <EmptyState compact announce title={lang === "zh" ? "还没有日历订阅" : "No calendar subscription yet"} />}
       {tokens.map((token) => <div className="df-mcp-token-row" key={token.id}><span><strong>{lang === "zh" ? "NavoPath 日历" : "NavoPath Calendar"}</strong><small>{token.tokenPrefix}… · {new Date(token.createdAt).toLocaleDateString()}</small></span><button type="button" disabled={busy} onClick={async () => {
-        if (!api.revokeCalendarFeedToken) return;
+        if (!api.revokeCalendarFeedToken || !window.confirm(lang === "zh" ? "撤销将使所有普通和历史订阅链接失效，确定继续？" : "Revoking invalidates all regular and history subscriptions. Continue?")) return;
         setBusy(true);
         setError("");
         try {

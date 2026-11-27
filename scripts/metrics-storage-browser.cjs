@@ -19,7 +19,7 @@ async function runServer() {
         res.setHeader("Content-Type", "text/html");
         res.end(`<!doctype html><html><body>Isolated Metrics storage test<script type="module">
           const phase=new URL(location.href).searchParams.get("phase");
-          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
+          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
         </script></body></html>`);
       });
     } }]
@@ -71,6 +71,13 @@ async function runRenderer() {
       const keyboard=await win.webContents.executeJavaScript("window.verifyMetricsKeyboard()");
       if(!keyboard)throw Error("Native keyboard activation did not change the selected metric view");
       console.log("Metrics Chromium UI: "+JSON.stringify({...result.value,keyboard}));
+    }
+    for (const [width,height] of [[1280,900],[420,840],[300,640]]) {
+      win.setContentSize(width,height);
+      await win.loadURL(url+"?phase=exerciseConnections");
+      const result=await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await window.metricsResult;await new Promise(r=>setTimeout(r,20));}throw Error('Connections test bootstrap missing');})()");
+      if(!result||result.error)throw Error(result?.error||"Connections UI fixture did not initialize");
+      console.log("Connections Chromium UI: "+JSON.stringify(result.value));
     }
   } finally { win.destroy(); }
   app.exit(0);
