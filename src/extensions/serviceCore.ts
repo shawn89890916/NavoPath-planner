@@ -550,6 +550,7 @@ export class ExtensionService {
     if (!preferences.migratedNativeFeatures) {
       const seeds = [
         { id: "habits", install: true, enabled: settings.featureHabitsEnabled !== false },
+        { id: "navo-ai", install: true, enabled: settings.hideAi !== true },
         { id: "engagement", install: settings.featureEngagementEnabled === true, enabled: true },
       ];
       for (const { id, install, enabled } of seeds) {
@@ -560,6 +561,16 @@ export class ExtensionService {
         addDefault(entry, enabled, entry.downloadUrl);
       }
       next.migratedNativeFeatures = true;
+      changed = true;
+    }
+    if (platform() === "desktop" && !preferences.migratedDesktopWidget) {
+      const key = "official:desktop-widget";
+      if (!next.installed[key] && !next.removed[key]) {
+        const entry = getBundledExtension("desktop-widget");
+        if (!entry || !await this.publishBundledMigration(entry, generation)) return;
+        addDefault(entry, settings.featureWidgetEnabled !== false, entry.downloadUrl);
+      }
+      next.migratedDesktopWidget = true;
       changed = true;
     }
     if (settings.featureTemplatesEnabled === true && !next.installed["official:schedule-templates"] && !next.removed["official:schedule-templates"]) {

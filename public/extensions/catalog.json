@@ -48,6 +48,26 @@
     },
     {
       "manifest": {
+        "id": "desktop-widget",
+        "name": "Desktop Widget",
+        "description": "Show the current task and timer in a desktop mini window.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.7.0-beta.132",
+        "platforms": [
+          "desktop"
+        ],
+        "main": "main.js",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/desktop-widget.navopackage.json",
+      "sha256": "e89a12091a0d64d78cc437c09b837b6d2c59c86bf6c71c0d7fb20f3b6ad65b1f"
+    },
+    {
+      "manifest": {
         "id": "engagement",
         "name": "Engagement",
         "description": "Rate completed work and visualize weighted effort.",
@@ -55,7 +75,7 @@
         "version": "1.0.0",
         "kind": "plugin",
         "apiVersion": 1,
-        "minAppVersion": "1.7.0-beta.131",
+        "minAppVersion": "1.7.0-beta.132",
         "platforms": [
           "desktop",
           "web",
@@ -66,7 +86,7 @@
         "repository": "https://github.com/shawn89890916/NavoPath-planner"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/engagement.navopackage.json",
-      "sha256": "7e2469091608a66dd3feadea85157ad2df215bc7f604f4f12387506a01426a2e"
+      "sha256": "af190f611e1709ab239a7ec7a81b6f58ca61321e1a8c28d3c06fcb3ddb661cb1"
     },
     {
       "manifest": {
@@ -139,7 +159,7 @@
         "version": "1.0.0",
         "kind": "plugin",
         "apiVersion": 1,
-        "minAppVersion": "1.7.0-beta.131",
+        "minAppVersion": "1.7.0-beta.132",
         "platforms": [
           "desktop",
           "web",
@@ -150,7 +170,7 @@
         "repository": "https://github.com/shawn89890916/NavoPath-planner"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/habits.navopackage.json",
-      "sha256": "4cafd9d44807b895832648dff9ae9a5e78dd50fe3daa50918f3f0723aa9c1829"
+      "sha256": "d0941fb478cf1a9c80f7c88f93e9def9b989c713df0fcce22300e95633be94af"
     },
     {
       "manifest": {
@@ -347,6 +367,28 @@
         "light": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/minimal-light.png",
         "dark": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/minimal-dark.png"
       }
+    },
+    {
+      "manifest": {
+        "id": "navo-ai",
+        "name": "Navo AI",
+        "description": "AI planning, task suggestions and proactive assistant.",
+        "author": "NavoPath",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.7.0-beta.132",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/navo-ai.navopackage.json",
+      "sha256": "376ae1ef20e390b796d0c75a669d7c07d3849b2693e558d5edca7fe7d7ba59a5"
     },
     {
       "manifest": {

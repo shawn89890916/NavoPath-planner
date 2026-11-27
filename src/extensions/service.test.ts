@@ -20,7 +20,7 @@ async function fetchBundled(url: string) {
 }
 
 function fixture(account = "preview", extensions = defaultExtensionPreferences()) {
-  let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true, migratedPlanningViews: extensions.migratedPlanningViews ?? true, migratedShelfViews: extensions.migratedShelfViews ?? true, migratedNativeFeatures: extensions.migratedNativeFeatures ?? true }, extensionConfigs: {} };
+  let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true, migratedPlanningViews: extensions.migratedPlanningViews ?? true, migratedShelfViews: extensions.migratedShelfViews ?? true, migratedNativeFeatures: extensions.migratedNativeFeatures ?? true, migratedDesktopWidget: extensions.migratedDesktopWidget ?? true }, extensionConfigs: {} };
   let data: any = { tasks: [], projects: [], events: [] };
   const host: ExtensionHost = { getData: () => data, saveData: async next => { data = next; }, getSettings: () => settings, saveSettings: async patch => { settings = { ...settings, ...patch }; }, getAccountId: () => account === "preview" ? null : account, toast: vi.fn(), internal: {} };
   return { host, settings: () => settings };
@@ -141,10 +141,23 @@ describe("extension installation and account reconciliation", () => {
     await current.configure(f.host);
     expect(current.getSnapshot().preferences.installed["official:habits"]?.enabled).toBe(true);
     expect(current.getSnapshot().preferences.installed["official:engagement"]?.enabled).toBe(true);
+    expect(current.getSnapshot().preferences.installed["official:navo-ai"]?.enabled).toBe(true);
+    expect(current.getSnapshot().preferences.installed["official:desktop-widget"]).toBeUndefined();
     await current.uninstall("official:habits");
     await current.configure(f.host);
     expect(current.getSnapshot().preferences.installed["official:habits"]).toBeUndefined();
     expect(f.settings().extensions.migratedNativeFeatures).toBe(true);
+  });
+
+  it("seeds the desktop-only widget on desktop without enabling a disabled preference", async () => {
+    const f = fixture("desktop-seed", { ...defaultExtensionPreferences(), migratedDesktopWidget: false });
+    await f.host.saveSettings({ featureWidgetEnabled: false });
+    Object.assign(window, { desktopApi: { isDesktop: () => true, extensions: { readOfficialPackage: async (id: string) => new Uint8Array(readFileSync(new URL(`${id}.navopackage.json`, bundledDirectory))) } } });
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:desktop-widget"]?.enabled).toBe(false);
+    await current.uninstall("official:desktop-widget");
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:desktop-widget"]).toBeUndefined();
   });
 
   it("migrates existing profiles while respecting explicit disabled and removed views", async () => {
