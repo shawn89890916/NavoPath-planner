@@ -34,3 +34,16 @@ export function selectTimedSlot(task: Task) {
   }
   return undefined;
 }
+
+// A remote timed slot may outlive the local active execution. Replaying that
+// same slot must not manufacture a second execution or reopen its history.
+export function hasRecordedTimedSlot(task: Task, date: string, start: string, duration: number): boolean {
+  return (task.timelineRecords || []).some(record =>
+    record.executionStatus !== "scheduled" && record.executionStatus !== "cancelled"
+    && record.scheduledDate === date && record.scheduledStart === start
+    && durationMinutes(record) === duration);
+}
+
+export function isReadOnlyHistoryNote(notes: unknown): boolean {
+  return typeof notes === "string" && /^NavoPath · (?:Completed|Returned unfinished|Skipped|Additional scheduled block|Completed task) · Read-only timeline record\s*$/i.test(notes.trim());
+}

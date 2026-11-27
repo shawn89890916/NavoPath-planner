@@ -4,6 +4,7 @@
 
 ### 修复
 
+- Super Productivity Sync 1.1.1：隔离只读历史日历回流，防止重复写入已结束排程；异常连接暂停同步，兼容的桌面端支持预览与清理派生任务。
 - Super Productivity Sync 1.1.0：远端删除确认与恢复重试、父子任务稳定映射、旧连接兼容及去重持久化。
 
 ### 改进
@@ -990,6 +991,7 @@
 
 ### Fixes
 
+- Super Productivity Sync 1.1.1: isolate read-only history feedback, suppress replayed finished slots, pause contaminated connections, and provide reviewed derived-task cleanup on compatible desktop builds.
 - Super Productivity Sync 1.1.0: confirmed remote deletion and restore retries, stable task hierarchy mapping, legacy connection compatibility and deduplicated persistence.
 
 ### Improvements
