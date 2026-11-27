@@ -2,6 +2,12 @@
 
 ## 2026-11-27
 
+### 1.7.0 Beta 135
+
+#### 改进
+
+- 任务菜单的预测预热覆盖共享原生规划模块的已安装视图，忽略已选、禁用和裁切目标，失焦时清空轨迹；保留悬停和键盘操作。
+
 ### 1.7.0 Beta 134
 
 #### 改进
@@ -1334,6 +1340,12 @@
 # NavoPath Changelog
 
 ## 2026-11-27
+
+### 1.7.0 Beta 135
+
+#### Improvements
+
+- Extend intent warming to installed views sharing the native planning module, skip selected, disabled and clipped targets, and reset trajectories on blur while preserving hover and keyboard behavior.
 
 ### 1.7.0 Beta 134
 

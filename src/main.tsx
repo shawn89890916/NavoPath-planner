@@ -9672,7 +9672,7 @@ if (cached?.data && cached?.settings) {
               {tourStep === "views" && <p className="df-shelf-view-guide" role="status">{lang === "zh" ? "选一个视图试试看。" : "Pick a view to try."}</p>}
               <Button variant="ghost" aria-pressed={!shelfView} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
               {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id}
-                data-intent-preload={view === treeView ? "" : undefined} onPointerEnter={view === treeView ? preloadPlanningView : undefined} onFocus={view === treeView ? preloadPlanningView : undefined}
+                data-intent-preload={view.nativeMode ? "" : undefined} onPointerEnter={view.nativeMode ? preloadPlanningView : undefined} onFocus={view.nativeMode ? preloadPlanningView : undefined}
                 onClick={() => selectShelfView(view.id)}><CandidateViewIcon view={view} />{candidateViewName(view, lang)}</Button>)}
             </AnchoredNarrowMenu>
             {candidateDropActive && (

@@ -19,7 +19,7 @@ async function runServer() {
         res.setHeader("Content-Type", "text/html");
         res.end(`<!doctype html><html><body>Isolated Metrics storage test<script type="module">
           const phase=new URL(location.href).searchParams.get("phase");
-          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
+          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):phase==="exerciseIntent"?import("/scripts/intent-ui-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
         </script></body></html>`);
       });
     } }]
@@ -51,6 +51,14 @@ async function runRenderer() {
   await app.whenReady();
   const win = new BrowserWindow({ show: false, webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false } });
   try {
+    for (const [width,height] of [[1280,900],[420,840]]) {
+      win.setContentSize(width,height);
+      await win.loadURL(url+"?phase=exerciseIntent");
+      const intent = await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await window.metricsResult;await new Promise(r=>setTimeout(r,20));}throw Error('Intent fixture missing');})()");
+      if (!intent || intent.error) throw Error(intent?.error || "Intent fixture failed");
+      console.log("Intent Chromium: "+JSON.stringify(intent.value));
+    }
+    if (!process.env.NAVOPATH_INTENT_ONLY) {
     for (const phase of ["seedInterrupted", "recoverAndExercise", "recoverPurge"]) {
       await win.loadURL(url+"?phase="+phase);
       const result = await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await window.metricsResult;await new Promise(r=>setTimeout(r,20));}throw Error('Metrics test bootstrap missing');})()");
@@ -127,6 +135,7 @@ async function runRenderer() {
         return {width:innerWidth,results};
       })()`);
       console.log("Settings Chromium UI: "+JSON.stringify(result));
+    }
     }
   } finally { win.destroy(); }
   app.exit(0);

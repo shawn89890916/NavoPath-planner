@@ -1,0 +1,26 @@
+name: Intent Chromium checks
+on:
+  pull_request:
+    branches: [desktop-beta]
+    paths:
+      - 'src/motion/intent*'
+      - 'src/components/AnchoredNarrowMenu.tsx'
+      - 'src/main.tsx'
+      - 'scripts/intent-ui-browser.mjs'
+      - 'scripts/metrics-storage-browser.cjs'
+      - '.github/workflows/intent-browser-checks.yml'
+permissions:
+  contents: read
+jobs:
+  intent:
+    runs-on: windows-latest
+    env:
+      NAVOPATH_INTENT_ONLY: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/metrics-storage-browser.cjs
