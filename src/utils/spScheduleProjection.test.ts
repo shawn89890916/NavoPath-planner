@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { selectTimedSlot, durationMinutes, hasRecordedTimedSlot, isReadOnlyHistoryNote } from "../../community-plugins/super-productivity-sync/schedule";
+import { planHistoryRepair } from "../../community-plugins/super-productivity-sync/repair";
 import type { Task, TimelineRecord } from "../types";
 const rec = (patch: Partial<TimelineRecord> = {}): TimelineRecord => ({
  id:"slot",taskId:"task",scheduledDate:"2026-11-26",scheduledStart:"09:00",scheduledEnd:"10:00",executionStatus:"scheduled",createdAt:"2026-11-26T00:00:00Z",...patch
@@ -47,5 +48,27 @@ describe("read-only calendar marker", () => {
   expect(isReadOnlyHistoryNote("NavoPath · Returned unfinished · Read-only timeline record")).toBe(true);
   expect(isReadOnlyHistoryNote("✓ My task")).toBe(false);
   expect(isReadOnlyHistoryNote("NavoPath · Completed · Read-only timeline record with my extra note")).toBe(false);
+ });
+});
+
+describe("history replay repair", () => {
+ const source = task({id:"original",title:"Task",timelineRecords:[rec({taskId:"original",executionStatus:"completed"})]});
+ const derived = task({id:"derived",title:"✓ Task",notes:"NavoPath · Completed · Read-only timeline record",timelineRecords:Array.from({length:99},(_,i)=>rec({id:"r"+i,taskId:"derived",executionStatus:"returned_unfinished"}))});
+ it("proposes only the verified artifacts and keeps the original history",()=>{
+  const result=planHistoryRepair({tasks:[source,derived],timeEntries:[]});
+  expect(result.candidates.map(t=>t.id)).toEqual(["derived"]);
+  expect(result.recordCount).toBe(99);
+  expect(result.blocked).toHaveLength(0);
+ });
+ it("protects independent work, unmatched or ambiguous slots, and children",()=>{
+  for(const tasks of [
+   [source,{...derived,timelineRecords:[...derived.timelineRecords!,rec({id:"other",taskId:"derived",scheduledDate:"2026-11-27",executionStatus:"returned_unfinished"})]}],
+   [source,{...derived,goalId:"goal"}],
+   [source,{...derived,engagement:90}],
+   [source,derived,task({id:"child",parentTaskId:"derived"})],
+   [source,derived,{...source,id:"another"}],
+   [derived],
+  ]) expect(planHistoryRepair({tasks,timeEntries:[]}).candidates).toHaveLength(0);
+  expect(planHistoryRepair({tasks:[source,derived],timeEntries:[{taskId:"derived"} as import("../types").TimeEntry]}).candidates).toHaveLength(0);
  });
 });
