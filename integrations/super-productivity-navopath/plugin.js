@@ -321,7 +321,7 @@
     function showDeleted() {
       const root = $('deleted-list'); root.replaceChildren(); const cutoff = Date.now() - 30 * 86400_000;
       for (const [id, entry] of Object.entries(local.tombstones)) {
-        if (Date.parse(entry.deletedAt) < cutoff) { delete local.tombstones[id]; continue; }
+        if (!entry.restoring && Date.parse(entry.deletedAt) < cutoff) { delete local.tombstones[id]; continue; }
         const row = document.createElement('div'); row.className = 'row'; const label = document.createElement('span'); label.textContent = entry.kind === 'project' ? entry.project.title : entry.task.title || '(untitled task)';
         const restore = document.createElement('button'); restore.type = 'button'; restore.textContent = 'Restore';
         restore.onclick = () => void withBusy(async () => {
@@ -369,6 +369,7 @@
             if (!parent || parent.parentId || parentId === id) throw new Error('SP supports only two task levels; move needs review');
           }
           if (current && (current.parentId || null) !== parentId) {
+            if (parentId && (await tasks()).some(item => item.parentId === current.id)) throw new Error('SP supports only two task levels; move needs review');
             // Journal before a multi-step cross-project reparent. A partially
             // applied relationship is never uploaded as an intentional edit.
             local.pendingHierarchy[action.syncId] = {taskId:current.id,parentId}; await persist();

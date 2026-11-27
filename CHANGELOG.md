@@ -2,6 +2,12 @@
 
 ## 2026-11-27
 
+### 修复
+
+- Super Productivity Sync 1.1.0：远端删除确认与恢复重试、父子任务稳定映射、旧连接兼容及去重持久化。
+
+## 2026-11-27
+
 ### 改进
 
 - 连接首页仅展示已有应用和添加入口，外部日历与高级连接分离；SP 按真实配对状态呈现必要操作，历史订阅按需展开，普通与历史链接集中管理，保留已有配对和订阅。
@@ -981,6 +987,12 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-27
+
+### Fixes
+
+- Super Productivity Sync 1.1.0: confirmed remote deletion and restore retries, stable task hierarchy mapping, legacy connection compatibility and deduplicated persistence.
 
 ## 2026-11-27
 

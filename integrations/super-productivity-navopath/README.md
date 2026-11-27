@@ -21,3 +21,7 @@ The host-side `plugin.js` runtime uses the guarded `PluginAPI.request` host perm
 Use **Forget this device** to remove the local token. To revoke all paired devices and clear the cloud state, disconnect in NavoPath. Sync-deleted tasks and projects can be restored from the plugin for 30 days.
 
 For v1.0.4+, zip `manifest.json`, `plugin.js` and `LICENSE` at the archive root, then import the zip from Super Productivity → Settings → Plugins. The previous `index.html` is kept as the legacy iframe implementation and is not included in the host-runtime ZIP.
+
+## 1.1.0 review changes
+
+Both plugins must be updated for hierarchy synchronization. The host runtime uses addTask(parentId) and batchUpdateForProject, verifies host state after changes, and journals deletion before exposing Restore. Project removal archives rather than hard-deletes; no deleteProject permission is requested. Unchanged link state is not written again. The ZIP contains only the manifest, host runtime, and license.

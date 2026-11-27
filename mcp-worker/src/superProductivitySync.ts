@@ -117,6 +117,12 @@ function observeHierarchy(state: SyncState, side: SyncSide, previous: SyncSnapsh
       continue;
     }
     if (previousValue === undefined || previousValue === value || value === expected) continue;
+    const seen = new Set([id]); let ancestor: unknown = value;
+    while (typeof ancestor === "string") {
+      if (seen.has(ancestor)) { relationConflict(state, id, side === "navopath" ? value : expected, side === "superproductivity" ? value : expected, timestamp); break; }
+      seen.add(ancestor); ancestor = state.canonical[ancestor]?.fields.parentSyncId;
+    }
+    if (state.conflicts.some(c => c.syncId === id && c.field === "parentSyncId")) continue;
     if (pending.parentSyncId === side) relationConflict(state, id, side === "navopath" ? value : expected, side === "superproductivity" ? value : expected, timestamp);
     else { canonical.fields.parentSyncId = value; pending.parentSyncId = other; }
   }
@@ -409,6 +415,16 @@ export function resolveSyncConflict(state: SyncState, conflictId: string, chosen
   const index = state.conflicts.findIndex(item => item.id === conflictId); if (index < 0) throw new Error("Conflict not found");
   const conflict = state.conflicts[index]; const canonical = state.canonical[conflict.syncId]; if (!canonical) throw new Error("Conflict item not found");
   const value = chosen === "navopath" ? conflict.navopath : conflict.superproductivity;
+  if (conflict.field === "parentSyncId" && value !== null) {
+    if (typeof value !== "string") throw new Error("Invalid parent relationship");
+    const seen = new Set([conflict.syncId]); let ancestor: unknown = value;
+    while (typeof ancestor === "string") {
+      if (seen.has(ancestor)) throw new Error("Parent relationship would form a cycle");
+      const parent = state.canonical[ancestor];
+      if (!parent || parent.deleted || parent.kind !== "task") throw new Error("Parent task is not available");
+      seen.add(ancestor); ancestor = parent.fields.parentSyncId;
+    }
+  }
   if (conflict.field === "$deleted") canonical.deleted = Boolean(value); else canonical.fields[conflict.field] = value;
   if (conflict.field === "$deleted") {
     const restoreSide = chosen;

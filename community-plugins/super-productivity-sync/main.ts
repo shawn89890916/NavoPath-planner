@@ -310,11 +310,17 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
           if (timelineRecords?.length) await taskStore.update(created.id, { timelineRecords: timelineRecords.map(record => ({ ...record, taskId: created.id })) });
         }
       }
-      // Keep a moved parent and its descendants in the same project.
+      // Normalize only descendants of relationships/projects touched by this batch.
+      const beforeById = new Map(before.tasks.map(task => [task.id,task]));
+      const changed = new Set(taskStore.list().filter(task => {
+        const old = beforeById.get(task.id);
+        return !old || old.parentTaskId !== task.parentTaskId || old.projectId !== task.projectId;
+      }).map(task => task.id));
       for (const task of taskStore.list()) if (task.parentTaskId) {
         const seen = new Set([task.id]); let parent = taskStore.get(task.parentTaskId);
-        while (parent?.parentTaskId && !seen.has(parent.id)) { seen.add(parent.id); parent = taskStore.get(parent.parentTaskId); }
-        if (parent && !seen.has(parent.id) && task.projectId !== parent.projectId) await taskStore.update(task.id, { projectId: parent.projectId });
+        let affected = changed.has(task.id);
+        while (parent?.parentTaskId && !seen.has(parent.id)) { seen.add(parent.id); affected ||= changed.has(parent.id); parent = taskStore.get(parent.parentTaskId); }
+        if (parent && !seen.has(parent.id) && (affected || changed.has(parent.id)) && task.projectId !== parent.projectId) await taskStore.update(task.id, { projectId: parent.projectId });
       }
       // Recheck cloud pause and local base before committing (including old host fallback).
       const connection = await getState();
