@@ -21,7 +21,10 @@ jobs:
       - run: node scripts/metrics-storage-browser.cjs
       - run: npm run css:check
       - run: npm run extensions:check
-      - run: node --test mcp-worker/src/superProductivitySync.node-test.ts
+      - run: npm ci --prefix mcp-worker
+      - run: npm run typecheck --prefix mcp-worker
+      - run: npm test --prefix mcp-worker
+      - run: node --test sync-bridge/bridge.test.mjs
       - run: node --check integrations/super-productivity-navopath/plugin.js
       - run: npm run build:navopath -- --base=./
       - run: npm run size:check

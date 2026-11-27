@@ -198,6 +198,8 @@ describe("extension installation and account reconciliation", () => {
     expect(f.host.getData()).toBe(data);
     expect(officialCatalog.packages.some(entry => entry.manifest.id === "list")).toBe(true);
     await current.install(getBundledExtension("list")!);
+    expect(current.getSnapshot().preferences.installed[key]?.enabled).toBe(false);
+    await current.toggle(key, true);
     expect(current.getSnapshot().preferences.installed[key]?.enabled).toBe(true);
   });
 
