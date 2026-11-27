@@ -6,7 +6,7 @@
 
 #### 新增
 
-- 社区市场新增可选阅读插件，支持书架、阅读状态、进度、独立阅读任务及计划与实际时长统计；复用时间轴、计时和任务历史。
+- 社区市场新增可选阅读插件，支持书架、阅读状态、进度、独立阅读任务及计划与实际时长统计；复用时间轴、计时和任务历史，并在统计概览按书籍汇总。
 
 ### 1.7.0 Beta 134
 
@@ -1345,7 +1345,7 @@
 
 #### Added
 
-- Add the optional Reading community plugin with a bookshelf, reading status, progress, dedicated reading tasks, and planned and actual time totals using the existing timeline, timer, and task history.
+- Add the optional Reading community plugin with a bookshelf, reading status, progress, dedicated reading tasks, and planned and actual time totals using the existing timeline, timer, and task history, with a per-book breakdown in Metrics Overview.
 
 ### 1.7.0 Beta 134
 

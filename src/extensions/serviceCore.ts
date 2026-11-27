@@ -463,7 +463,7 @@ export class ExtensionService {
   async readReadingLibrary(account: string): Promise<unknown | null> {
     this.requireReadingAccount(account);
     const generation = this.generation;
-    const result = await this.getValue("official:reading", "library-v1");
+    const result = await this.getValue("official:reading", "library-v1", true);
     this.requireReadingAccount(account);
     if (generation !== this.generation) throw new Error("Reading account changed");
     return result;
@@ -475,13 +475,31 @@ export class ExtensionService {
     this.requireReadingAccount(account);
     if (generation !== this.generation) throw new Error("Reading account changed");
   }
-  private async getValue(owner: string, key: string): Promise<unknown | null> {
+  private async getValue(owner: string, key: string, requireKnown = false): Promise<unknown | null> {
     const scope = this.scope(), account = this.account;
-    const pending = await cacheGet<PendingValue>(scope + `pending:${owner}:${key}`);
+    const pendingKey = scope + `pending:${owner}:${key}`, valueKey = scope + `value:${owner}:${key}`;
+    const knownKey = scope + `known:${owner}:${key}`;
+    const pending = await cacheGet<PendingValue>(pendingKey);
     if (scope !== this.scope()) throw new Error("Extension account changed");
     if (pending) return pending.remove ? null : pending.value;
-    if (account !== "preview") { try { const value = await getExtensionValue(owner, key, account); if (scope !== this.scope()) throw new Error("Extension account changed"); await cachePut(scope + `value:${owner}:${key}`, value); return value; } catch { /* Cached values work offline. */ } }
-    return cacheGet(scope + `value:${owner}:${key}`);
+    if (account !== "preview") {
+      try {
+        const value = await getExtensionValue(owner, key, account);
+        if (scope !== this.scope()) throw new Error("Extension account changed");
+        const queued = await cacheGet<PendingValue>(pendingKey);
+        if (queued) return queued.remove ? null : queued.value;
+        await cachePut(valueKey, value);
+        if (requireKnown) await cachePut(knownKey, true);
+        return value;
+      } catch {
+        if (scope !== this.scope()) throw new Error("Extension account changed");
+        // A failed first read must not be mistaken for an empty cloud library.
+        const cached = await cacheGet(valueKey);
+        if (requireKnown && cached === null && !await cacheGet<boolean>(knownKey)) throw new Error("Connect once to load the existing library");
+        return cached;
+      }
+    }
+    return cacheGet(valueKey);
   }
   private async writeValue(owner: string, key: string, value: unknown, remove: boolean) {
     if (!key || key.length > 200 || /[\x00-\x1f]/.test(key)) throw new Error("Invalid storage key");

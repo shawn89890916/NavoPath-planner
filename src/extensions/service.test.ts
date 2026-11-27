@@ -431,3 +431,38 @@ describe("extension installation and account reconciliation", () => {
     expect(current.getSnapshot().status["imported:weather"]).toContain("Restricted");
   });
 });
+
+describe("Reading library lifecycle", () => {
+  it("does not overwrite an unknown remote library and retains account-scoped data on uninstall", async () => {
+    const account = "reading-storage-fixture";
+    const item = getBundledExtension("reading")!;
+    mocks.load.mockImplementation(async (_pkg, bridge) => {
+      const dispose = bridge.registerNativeFeature("reading");
+      return { dispose, configChanged: vi.fn(), context: {} };
+    });
+    const a = fixture(account);
+    await current.configure(a.host);
+    await current.install(item);
+    await current.toggle("official:reading", true);
+    expect(current.getSnapshot().views.filter(view => view.owner === "official:reading")).toHaveLength(1);
+    mocks.getValue.mockRejectedValue(new Error("offline"));
+    await expect(current.readReadingLibrary(account)).rejects.toThrow("Connect once");
+    mocks.getValue.mockResolvedValue(null);
+    expect(await current.readReadingLibrary(account)).toBeNull();
+    mocks.getValue.mockRejectedValue(new Error("offline"));
+    expect(await current.readReadingLibrary(account)).toBeNull();
+    const library = { version: 1, books: [], taskLinks: [] };
+    await current.writeReadingLibrary(account, library);
+    expect(await current.readReadingLibrary(account)).toEqual(library);
+    await expect(current.readReadingLibrary("other-account")).rejects.toThrow("account changed");
+    await current.toggle("official:reading", false);
+    expect(current.getSnapshot().views.filter(view => view.owner === "official:reading")).toHaveLength(0);
+    await expect(current.readReadingLibrary(account)).rejects.toThrow("inactive");
+    await current.uninstall("official:reading");
+    await current.install(item);
+    await current.toggle("official:reading", true);
+    expect(await current.readReadingLibrary(account)).toEqual(library);
+    await current.configure(null);
+    for (const [key] of await cacheEntries("account:" + account + ":")) await cacheDelete(key);
+  });
+});
