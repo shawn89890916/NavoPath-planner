@@ -2,6 +2,13 @@
 
 ## 2026-11-27
 
+### 1.7.0 Beta 129
+
+#### 改进
+
+- 设置恢复适度的语义分组，标题外置、连续设置行与统一边距；核心、插件和连接设置使用共享分组规范。
+- 设置分组、导航和控件圆角按工作区圆角实时派生，默认分别为 12、8、6px，保留现有任务块样式和圆形控件几何。
+
 ### 1.7.0 Beta 127
 
 #### 修复
@@ -1297,6 +1304,13 @@
 # NavoPath Changelog
 
 ## 2026-11-27
+
+### 1.7.0 Beta 129
+
+#### Improvements
+
+- Restore semantic settings groups with external headings, continuous rows and consistent insets across core, plugin and connection settings.
+- Settings group, navigation and control radii derive live from the workspace radius (12, 8 and 6px by default), preserving task block styling and circular controls.
 
 ### 1.7.0 Beta 127
 
