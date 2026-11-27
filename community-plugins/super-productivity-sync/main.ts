@@ -205,7 +205,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     const apply = async (actions: RemoteAction[]) => {
       if (!actions.length) { await persist(); return; }
       if (actions.some(action => action.kind === "task" && isReadOnlyHistoryNote(action.fields.notes))) {
-        await api.request("/pause", "POST", { pairId });
+        await api.request("/pause", "POST", { pairId, reason: "history-feedback" });
         throw new Error(t("检测到只读历史日历回流，已暂停连接。", "Read-only calendar feedback detected; connection paused."));
       }
       const currentData = ctx.app.getData();
@@ -348,7 +348,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
         const state = await getState(); displayState(state);
         if (state.status === "paused") return;
         if (ctx.tasks.list().some(task => isReadOnlyHistoryNote(task.notes))) {
-          await api.request("/pause", "POST", { pairId });
+          await api.request("/pause", "POST", { pairId, reason: "history-feedback" });
           throw new Error(t("检测到历史日历回流任务，已暂停连接，请先修复异常数据。", "Read-only calendar history detected; connection paused for repair."));
         }
         for (const [id,saved] of Object.entries(links.tombstones)) {
