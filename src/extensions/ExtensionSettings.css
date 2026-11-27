@@ -6,7 +6,7 @@
 .df-extension-feedback:not(:empty) { margin-bottom: 12px; }
 .df-extension-back { margin-bottom: 16px; }
 .df-extension-meta, .df-extension-state { display: block; color: var(--text-muted); font: 400 12px/1.5 var(--paper-sans); }
-.df-extension-meta { margin-top: 6px; overflow-wrap: anywhere; }
+.df-extension-meta { margin-top: 2px; overflow-wrap: anywhere; }
 .df-extension-note { margin: 12px 0; color: var(--text-muted); font: 400 12px/1.5 var(--paper-sans); }
 .df-extension-form { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; }
 .df-extension-search { display: flex; align-items: center; gap: 10px; position: relative; margin: 8px 0 14px; color: var(--text-muted); }
@@ -14,12 +14,12 @@
 .df-extension-guide { margin: 18px 0; font: 400 12px/1.5 var(--paper-sans); }
 .df-extension-guide a { color: var(--text-muted); text-underline-offset: 3px; }
 .ui-modal.df-extension-market { display: flex; flex-direction: column; width: min(1120px, calc(100vw - 48px)); min-height: min(640px, calc(100dvh - 48px)); max-height: calc(100dvh - 48px); padding: 0; border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-card); background: var(--surface-main, #faf9f5); color: var(--text-main, #25292e); font: 400 14px/1.55 var(--paper-sans, sans-serif); overflow: hidden; }
-.df-extension-market-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 24px 24px 18px; border-bottom: 1px solid var(--paper-rule); }
+.df-extension-market-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 24px 24px 18px; border-bottom: 1px solid var(--paper-rule); }
 .df-extension-market-head h2 { margin: 0; font: 600 21px/1.35 var(--paper-sans, sans-serif); }
 .df-extension-market-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--paper-rule); }
 .df-extension-market-toolbar .df-extension-search { flex: 1 1 280px; margin: 0; }
 .df-extension-market-toolbar > .df-settings-select { width: auto; flex: 0 1 150px; appearance: auto; }
-.df-extension-market .df-settings-input { width: 100%; min-width: 0; min-height: 40px; padding-left: 38px; }
+.df-extension-market .df-settings-input { width: 100%; min-width: 0; max-width: none; min-height: 40px; padding-left: 38px; }
 .df-extension-market .df-settings-select { max-width: 100%; min-height: 40px; padding: 0 10px; color: var(--text-main); background: var(--surface-card); border: 1px solid var(--paper-rule-strong); border-radius: var(--radius-control); font: inherit; }
 .df-extension-market-filter { display: flex; align-items: center; gap: 10px; font-size: 13px; white-space: nowrap; }
 .df-extension-market-count { flex-basis: 100%; color: var(--text-muted); font-size: 12px; }
@@ -63,7 +63,7 @@
 .df-extension-info dl > div { display:flex; justify-content:space-between; gap:16px; padding:10px 0; border-bottom:1px solid var(--paper-rule); }
 .df-extension-info dt, .df-extension-info .df-extension-meta { color:var(--text-muted); }
 .df-extension-info dd { margin:0; text-align:right; }
-#root .df-app .df-extensions .df-extension-form .df-settings-input { flex: 1 1 260px; width: 100%; min-width: 0; }
+#root .df-app .df-extensions .df-extension-form .df-settings-input { flex: 1 1 260px; width: 100%; min-width: 0; max-width: none; }
 #root .df-app .df-extensions .df-extension-search .df-settings-input { width: 100%; min-width: 0; min-height: 40px; padding-left: 38px; }
 @media (max-width: 680px) {
   .ui-modal.df-extension-market { width: calc(100vw - 24px); min-height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); }

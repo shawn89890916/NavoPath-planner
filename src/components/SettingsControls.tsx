@@ -63,6 +63,7 @@ export function SettingRow({
   children,
   anchor,
   layout = "default",
+  trailing,
 }: {
   title: ReactNode;
   description?: ReactNode;
@@ -70,11 +71,12 @@ export function SettingRow({
   disabled?: boolean;
   children?: ReactNode;
   anchor?: string;
-  layout?: "default" | "stacked";
+  layout?: "default" | "stacked" | "actions";
+  trailing?: ReactNode;
 }) {
   return (
     <div
-      className={`df-settings-row${layout === "stacked" ? " df-settings-row--stacked" : ""}`}
+      className={`df-settings-row${layout !== "default" ? ` df-settings-row--${layout}` : ""}`}
       data-disabled={disabled ? "true" : undefined}
       data-settings-anchor={anchor}
       tabIndex={anchor ? -1 : undefined}
@@ -84,6 +86,7 @@ export function SettingRow({
         {description ? <span className="df-settings-row-desc">{description}</span> : null}
       </div>
       <div className="df-settings-row-control">{control ?? children}</div>
+      {trailing != null && <div className="df-settings-row-trailing">{trailing}</div>}
     </div>
   );
 }
