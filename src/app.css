@@ -20338,8 +20338,7 @@ body[data-navopath-base-theme="light"],
 #root .df-app .df-settings-plugin-heading:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
 
 /* Keep settings controls and navigation aligned while the outer workspace keeps its radius. */
-#root .df-app .df-settings-surface .df-settings-nav > .ui-choice-item { min-height: 36px; }
-#root .df-app .df-settings-surface .df-settings-nav > .ui-choice-item,
+#root .df-app .df-settings-surface .df-settings-nav > .ui-choice-item { min-height: 36px; border-radius: var(--settings-radius-navigation); }
 #root .df-app .df-settings-surface .df-settings-home-plugin-nav > .ui-choice-item { border-radius: var(--settings-radius-navigation); }
 #root .df-app .df-settings-surface .df-settings-home-card { border-radius: var(--settings-radius-group); }
 #root .df-app .df-settings-surface .df-settings-profile-name-input { border-radius: var(--settings-radius-control); }
