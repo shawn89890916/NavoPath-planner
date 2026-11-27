@@ -53,6 +53,7 @@ import { term } from "./terminology";
 import { migrateLegacyHabitTracker, scheduleHabitRecord, toggleHabitCompletion, unscheduleHabitRecord, updateHabit, archiveHabit, buildHabitMetrics, isHabitDueOnDate, isHabitWithinDateRange, weekdayLabels, type HabitMetrics } from "./utils/habits";
 import { shouldShowHabitCandidates } from "./utils/habitCandidateVisibility";
 import { nativeFeatureActive, metricsPluginActive } from "./extensions/nativeFeatures";
+import { useReadingLibrary } from "./reading/useReadingLibrary";
 import { normalizeAiReply } from "./utils/aiReply";
 import { candidateScheduleSummary, type CandidateScheduleSummary } from "./utils/candidateSchedule";
 import { localIsoDate } from "./utils/localDate";
@@ -91,7 +92,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiCheckIcon, UiChatIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTimerIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiCheckIcon, UiChatIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTimerIcon, UiTrashIcon , UiChevronRightIcon} from "./components/UiIcons";
 import { normalizeSettingsTarget, type SettingsTargetInput } from "./settingsNavigationCore";
 import { normalizeSettings, WORKSPACE_CORNER_RADIUS } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -193,6 +194,7 @@ const candidateViewNames = {
 } as const;
 
 function CandidateViewIcon({ view }: { view: ExtensionContribution }) {
+  if (view.owner === "official:reading") return <UiListChecksIcon size={16} />;
   const mode = view.nativeMode;
   if (mode && mode !== "tree" && mode !== "metrics" && mode !== "activity-history") {
     const Icon = candidateViewNames[mode][2];
@@ -202,6 +204,7 @@ function CandidateViewIcon({ view }: { view: ExtensionContribution }) {
 }
 
 function candidateViewName(view: ExtensionContribution, lang: Language) {
+  if (view.owner === "official:reading") return lang === "zh" ? "阅读" : "Reading";
   const mode = view.nativeMode;
   if (mode && mode !== "tree" && mode !== "metrics" && mode !== "activity-history") return candidateViewNames[mode][lang === "zh" ? 0 : 1];
   return view.name;
@@ -381,6 +384,8 @@ function loadPlanningView() {
 }
 function preloadPlanningView() { void loadPlanningView().catch(() => undefined); }
 const PlanningViewLazy = lazy(loadPlanningView);
+const ReadingShelfLazy = lazy(() => import("./reading/ReadingShelf"));
+const ReadingTaskComposerLazy = lazy(() => import("./reading/ReadingShelf").then(module => ({ default: module.ReadingTaskComposer })));
 const LandingPageLazy = lazy(() => import("./LandingPage"));
 const OAuthConsentPageLazy = lazy(() => import("./OAuthConsentPage"));
 
@@ -1402,6 +1407,9 @@ function App() {
 
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const habitsEnabled = productDemo ? settings?.featureHabitsEnabled !== false : nativeFeatureActive(extensionSnapshot, "habits");
+  const readingEnabled = !productDemo && nativeFeatureActive(extensionSnapshot, "reading");
+  const reading = useReadingLibrary(readingEnabled, authState?.user?.id || "preview");
+  const [readingExpanded, setReadingExpanded] = useState(true);
   const engagementEnabled = productDemo ? settings?.featureEngagementEnabled === true : nativeFeatureActive(extensionSnapshot, "engagement");
   const aiEnabled = productDemo ? !settings?.hideAi : nativeFeatureActive(extensionSnapshot, "navo-ai");
   const widgetEnabled = nativeFeatureActive(extensionSnapshot, "desktop-widget");
@@ -9251,8 +9259,50 @@ if (cached?.data && cached?.settings) {
     onTimelineDrag: previewShelfTimelineDrop,
     onTimelineDrop: commitShelfTimelineDrop,
   };
+  const renderCandidateTask = (task: Task) => { return <div key={task.id}
+                  className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}`}
+                  ref={onboardingTask?.id === task.id ? onboardingTaskRowRef : undefined}
+                  data-candidate-task-id={isEventDisplayTask(task) ? undefined : task.id}
+                  onClickCapture={(event) => {
+                    if (!(event.target as HTMLElement).closest(".df-candidate-row .df-block-check")) return;
+                    event.stopPropagation();
+                    toggleCandidateTaskDone(task);
+                  }}
+                >
+                  {<TaskCard demo={Boolean(productDemo)} task={task} scheduleButtonRef={guidePlanButtonVisible && onboardingTask?.id === task.id ? onboardingPlanButtonRef : undefined} onGuidedSchedule={onboardingTask?.id === task.id ? scheduleGuidedTask : undefined} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
+                </div>; };
   const shelfTitle = term(lang, "todayCandidates");
-  const candidatesEmpty = visibleCandidates.length === 0 && !hasActiveHabits;
+  const readingTaskIds = new Set(reading.library?.taskLinks.map(link => link.taskId) ?? []);
+  const readingCandidates = readingEnabled ? visibleCandidates.filter(task => readingTaskIds.has(task.id)) : [];
+  const ordinaryCandidates = readingEnabled ? visibleCandidates.filter(task => !readingTaskIds.has(task.id)) : visibleCandidates;
+  const readingView = shelfViews.find(view => view.owner === "official:reading");
+  const openReading = () => { if (readingView) selectShelfView(readingView.id); };
+  async function createReadingTask(bookId: string) {
+    const scope = loadedWorkspaceKeyRef.current;
+    const current = dataRef.current;
+    const book = reading.library?.books.find(item => item.id === bookId);
+    if (!current || !book || book.status === "finished" || !readingEnabled) throw new Error("Reading unavailable");
+    const now = workspaceNow().toISOString();
+    const task: Task = {
+      id: uid("task"), title: lang === "zh" ? "阅读 " + book.title : "Read " + book.title,
+      category: "personal", priority: null, notes: "", dueDate: "", goalId: "",
+      completed: false, estimatedHours: 0.5, createdAt: now, updatedAt: now,
+      plannedForDate: today, executionLane: "candidate", order: Date.now(),
+    };
+    const { linkReadingTask, updateBook } = await import("./reading/model");
+    await reading.mutate(library => {
+      const selected = library.books.find(item => item.id === bookId);
+      if (!selected || selected.status === "finished") throw new Error("Book no longer available");
+      const linked = linkReadingTask(library, bookId, task.id);
+      return selected.status === "to-read" ? updateBook(linked, bookId, { status: "reading" }, now) : linked;
+    });
+    const latest = dataRef.current;
+    if (!latest || scope !== loadedWorkspaceKeyRef.current || !nativeFeatureActive(extensionService.getSnapshot(), "reading")) throw new Error("Workspace changed");
+    await saveTaskOperation({ ...latest, tasks: [...latest.tasks, task] }, "create", {
+      title: task.title, toast: lang === "zh" ? "已添加阅读任务" : "Reading task added",
+    });
+  }
+  const candidatesEmpty = ordinaryCandidates.length === 0 && !hasActiveHabits && !readingEnabled;
   const teachingSchedule = onboardingStep === "schedule" || onboardingStep === "plan";
   const trackedTask = teachingSchedule || onboardingStep === "return" ? onboardingTarget(settings, tasks) : undefined;
   const onboardingTask = trackedTask && isOnboardingTask(trackedTask) ? trackedTask : undefined;
@@ -9709,7 +9759,7 @@ if (cached?.data && cached?.settings) {
                   const candidatesByProject = new Map<string, Task[]>();
                   projects.forEach((project) => candidatesByProject.set(String(project.id), []));
                   candidatesByProject.set("__unassigned__", []);
-                  visibleCandidates.forEach((task) => {
+                  ordinaryCandidates.forEach((task) => {
                     const gid = task.projectId || "__unassigned__";
                     if (!candidatesByProject.has(gid)) candidatesByProject.set(gid, []);
                     candidatesByProject.get(gid)!.push(task);
@@ -9744,40 +9794,22 @@ if (cached?.data && cached?.settings) {
                             />
                           </span>}
                         </div>
-                        {tasks.map((task) => {
-                          return (
-                            <div key={task.id}
-                              className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}`}
-                              ref={onboardingTask?.id === task.id ? onboardingTaskRowRef : undefined}
-                              data-candidate-task-id={isEventDisplayTask(task) ? undefined : task.id}
-                              onClickCapture={(event) => {
-                                if (!(event.target as HTMLElement).closest(".df-candidate-row .df-block-check")) return;
-                                event.stopPropagation();
-                                toggleCandidateTaskDone(task);
-                              }}
-                            >
-                              <TaskCard demo={Boolean(productDemo)} task={task} scheduleButtonRef={guidePlanButtonVisible && onboardingTask?.id === task.id ? onboardingPlanButtonRef : undefined} onGuidedSchedule={onboardingTask?.id === task.id ? scheduleGuidedTask : undefined} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />
-                            </div>
-                          );
-                        })}
+                        {tasks.map(renderCandidateTask)}
                       </div>
                     );
                   });
                 })()
-              ) : visibleCandidates.map((task) => {
-                return <div key={task.id}
-                  className={`df-candidate-task-row${completingTaskIds.has(task.id) ? " is-completing" : ""}`}
-                  ref={onboardingTask?.id === task.id ? onboardingTaskRowRef : undefined}
-                  data-candidate-task-id={isEventDisplayTask(task) ? undefined : task.id}
-                  onClickCapture={(event) => {
-                    if (!(event.target as HTMLElement).closest(".df-candidate-row .df-block-check")) return;
-                    event.stopPropagation();
-                    toggleCandidateTaskDone(task);
-                  }}
-                >
-                  {<TaskCard demo={Boolean(productDemo)} task={task} scheduleButtonRef={guidePlanButtonVisible && onboardingTask?.id === task.id ? onboardingPlanButtonRef : undefined} onGuidedSchedule={onboardingTask?.id === task.id ? scheduleGuidedTask : undefined} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
-                </div>
-              })}
+              ) : ordinaryCandidates.map(renderCandidateTask)}
+              {readingEnabled && (
+                <TaskGroup title={<Button variant="ghost" aria-expanded={readingExpanded} onClick={() => setReadingExpanded(value => !value)}>
+                  {readingExpanded ? <UiChevronDownIcon size={16} /> : <UiChevronRightIcon size={16} />}{lang === "zh" ? "阅读" : "Reading"}
+                </Button>} count={<Button variant="ghost" disabled={!readingView} onClick={openReading}>{lang === "zh" ? "书架" : "Library"} · {readingCandidates.length}</Button>}>
+                  {readingExpanded && <>
+                    {readingCandidates.map(renderCandidateTask)}
+                    <Suspense fallback={null}><ReadingTaskComposerLazy library={reading.library} busy={reading.busy} error={reading.error} lang={lang} onCreateTask={createReadingTask} /></Suspense>
+                  </>}
+                </TaskGroup>
+              )}
               {habitsEnabled && shouldShowHabitCandidates({ ...settings, featureHabitsEnabled: true }) && (
                 <HabitCandidateCard
                   habits={habits}
@@ -9823,7 +9855,9 @@ if (cached?.data && cached?.settings) {
             {shelfView && !shelfTreeOpen && (
               <div className="df-shelf-scroll" data-shelf-scroll="views">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
-                  {shelfView.nativeMode && shelfView.nativeMode !== "activity-history"
+                  {shelfView.owner === "official:reading" && readingEnabled
+                      ? <ReadingShelfLazy library={reading.library} busy={reading.busy} error={reading.error} lang={lang} onCreateTask={createReadingTask} mutate={reading.mutate} tasks={tasks} entries={data.timeEntries || []} engagementEnabled={engagementEnabled} onSaved={() => showToast(lang === "zh" ? "已保存书籍" : "Book saved")} />
+                      : shelfView.nativeMode && shelfView.nativeMode !== "activity-history"
                       ? <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode={shelfView.nativeMode} tasks={visibleCandidates} showCompleted={showCompletedCandidates} />
                       : <ExtensionMount contribution={shelfView} lang={lang} />}
                 </Suspense>
