@@ -7537,13 +7537,13 @@ if (cached?.data && cached?.settings) {
         listProactiveNotifications().catch(() => [] as ProactiveNotification[]),
         listDailyReviewNotifications().catch(() => [] as ProactiveNotification[]),
       ]);
-      if (!active) return;
+      if (!active || !isAiActive()) return;
       items.forEach((item) => seenProactiveNotificationIdsRef.current.add(item.id));
       setProactiveNotifications(items);
       for (const review of reviews) await hydrateReview(review, false);
     };
     const receive = (notification: ProactiveNotification) => {
-      if (!active || seenProactiveNotificationIdsRef.current.has(notification.id)) return;
+      if (!active || !isAiActive() || seenProactiveNotificationIdsRef.current.has(notification.id)) return;
       seenProactiveNotificationIdsRef.current.add(notification.id);
       setProactiveNotifications((items) => [notification, ...items.filter((item) => item.id !== notification.id)].slice(0, 50));
       showToast(lang === "zh" ? `Navo AI：${notification.title}` : `Navo AI: ${notification.title}`);
