@@ -1,14 +1,13 @@
 import { useState } from "react";
 import {
-  UiCalendarCheckIcon, UiCalendarDaysIcon, UiCloudSunIcon, UiHistoryIcon,
-  UiKanbanIcon, UiLayoutTemplateIcon, UiListIcon, UiListTreeIcon, UiMatrixIcon,
+  UiCalendarCheckIcon, UiCalendarDaysIcon, UiCloudSunIcon,
+  UiKanbanIcon, UiLayoutTemplateIcon, UiListIcon, UiMatrixIcon,
   UiMetricsIcon, UiPuzzleIcon, UiTimerIcon, UiZapIcon,
 } from "../components/UiIcons";
 import { OFFICIAL_SOURCE } from "./packages";
 import type { CatalogEntry } from "./types";
 
 const officialIcons = new Map<string, typeof UiListIcon>([
-  ["activity-history", UiHistoryIcon],
   ["class-timetable", UiCalendarDaysIcon],
   ["daily-overview", UiCalendarCheckIcon],
   ["kanban", UiKanbanIcon],
@@ -18,7 +17,6 @@ const officialIcons = new Map<string, typeof UiListIcon>([
   ["pomodoro", UiTimerIcon],
   ["quick-capture", UiZapIcon],
   ["schedule-templates", UiLayoutTemplateIcon],
-  ["tree", UiListTreeIcon],
   ["weather", UiCloudSunIcon],
 ]);
 

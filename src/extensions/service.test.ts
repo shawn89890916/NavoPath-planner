@@ -124,14 +124,14 @@ describe("batch extension updates", () => {
 });
 
 describe("extension installation and account reconciliation", () => {
-  it("preinstalls Activity history, Matrix, Kanban and Metrics on a clean installation", async () => {
+  it("preinstalls the existing planning plugins on a clean installation", async () => {
     const f = fixture("preview", { ...defaultExtensionPreferences(), migratedPlanningViews: false, migratedShelfViews: false });
     await current.configure(f.host);
     const installed = current.getSnapshot().preferences.installed;
-    expect(Object.keys(installed).sort()).toEqual(["official:activity-history", "official:kanban", "official:matrix", "official:metrics"]);
+    expect(Object.keys(installed).sort()).toEqual(["official:kanban", "official:matrix", "official:metrics"]);
     expect(Object.values(installed).every((item) => item.enabled)).toBe(true);
     expect(vi.mocked(fetch).mock.calls.map(([url]) => url).sort()).toEqual(
-      ["activity-history", "kanban", "matrix", "metrics"].map(id => `/extensions/packages/${id}.navopackage.json`),
+      ["kanban", "matrix", "metrics"].map(id => `/extensions/packages/${id}.navopackage.json`),
     );
   });
 
@@ -146,7 +146,7 @@ describe("extension installation and account reconciliation", () => {
     await f.host.saveSettings({ featureMetricsEnabled: false });
     await current.configure(f.host);
     const installed = current.getSnapshot().preferences.installed;
-    expect(Object.keys(installed).sort()).toEqual(["official:activity-history", "official:matrix", "official:metrics"]);
+    expect(Object.keys(installed).sort()).toEqual(["official:matrix", "official:metrics"]);
     expect(installed["official:metrics"].enabled).toBe(false);
     expect(installed["official:matrix"].enabled).toBe(false);
     expect(f.settings().extensions.migratedShelfViews).toBe(true);
@@ -176,16 +176,20 @@ describe("extension installation and account reconciliation", () => {
     expect(officialCatalog.packages.some((entry) => entry.manifest.id === "list")).toBe(false);
   });
 
-  it("adds Activity history to an already migrated profile and remembers uninstall after restarting", async () => {
-    const key = "official:activity-history";
-    const f = fixture();
+  it("retires the old Tree and Activity history packages without modifying planner data", async () => {
+    const matrix = getBundledExtension("matrix")!;
+    const ids = ["activity-history", "tree"];
+    const f = fixture("retired-core", { ...defaultExtensionPreferences(), installed: Object.fromEntries(ids.map(id => [`official:${id}`, { ...matrix, key: `official:${id}`, manifest: { ...matrix.manifest, id }, enabled: true, installedAt: "2026-11-01T00:00:00Z" }])) });
+    const data = f.host.getData();
     await current.configure(f.host);
-    expect(current.getSnapshot().preferences.installed[key]?.enabled).toBe(true);
-    await current.uninstall(key);
+    for (const id of ids) {
+      expect(current.getSnapshot().preferences.installed[`official:${id}`]).toBeUndefined();
+      expect(f.settings().extensions.removed[`official:${id}`]).toBeTruthy();
+    }
+    expect(f.host.getData()).toBe(data);
     await current.configure(null);
     await current.configure(f.host);
-    expect(current.getSnapshot().preferences.installed[key]).toBeUndefined();
-    expect(f.settings().extensions.removed[key]).toBeTruthy();
+    for (const id of ids) expect(current.getSnapshot().preferences.installed[`official:${id}`]).toBeUndefined();
   });
   it("keeps local controls available during a slow update check and shares catalog requests", async () => {
     const f = fixture(); await current.configure(f.host);
@@ -268,7 +272,7 @@ describe("extension installation and account reconciliation", () => {
     Object.assign(window, { desktopApi: { isDesktop: () => true, extensions: { readOfficialPackage } } });
     await current.configure(fixture("desktop-offline").host);
     await current.install(entry);
-    expect(readOfficialPackage.mock.calls).toEqual([["activity-history"], ["weather"]]);
+    expect(readOfficialPackage.mock.calls).toEqual([["weather"]]);
     expect(fetch).not.toHaveBeenCalled();
     expect(mocks.get).not.toHaveBeenCalled();
   });
@@ -296,12 +300,12 @@ describe("extension installation and account reconciliation", () => {
     expect(current.getSnapshot().preferences.installed["official:weather"].sha256).toBe(entry.sha256);
   });
   it("rolls back through private storage when the previous hash is not bundled", async () => {
-    const entry = getBundledExtension("tree")!;
-    const oldPackage = JSON.parse(readFileSync(new URL("tree.navopackage.json", bundledDirectory), "utf8"));
+    const entry = getBundledExtension("kanban")!;
+    const oldPackage = JSON.parse(readFileSync(new URL("kanban.navopackage.json", bundledDirectory), "utf8"));
     oldPackage.manifest.version = "0.0.1";
     const previousBytes = new TextEncoder().encode(JSON.stringify(oldPackage));
     const previous = { manifest: oldPackage.manifest, sha256: await sha256(previousBytes), downloadUrl: entry.downloadUrl };
-    const key = "official:tree", account = "rollback";
+    const key = "official:kanban", account = "rollback";
     const f = fixture(account, {
       ...defaultExtensionPreferences(),
       installed: { [key]: { ...entry, key, enabled: false, installedAt: "2026-11-10T00:00:00Z", previous } },

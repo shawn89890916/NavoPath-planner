@@ -7,7 +7,7 @@
 #### 改进
 
 - 插件管理和市场区分官方与社区插件，支持按分类筛选；功能插件采用简洁列表，外观主题保留预览卡片。
-- 活动历史移至工作区顶栏；窄屏通过插件导航打开，保留当前任务视图和撤销操作。
+- Tree 与活动历史直接内置，活动历史保留工作区顶栏和窄屏更多入口；卸载其他插件或受限模式不会影响任务树、记录与撤销。
 
 ### 1.7.0 Beta 130
 
@@ -1323,7 +1323,7 @@
 #### Improvements
 
 - Distinguish official and community plugins in management and the market, add a category filter, and use compact rows for functional plugins while retaining theme previews.
-- Move Activity history to the workspace header and compact plugin navigation, preserving the current Tasks view and undo actions.
+- Build Tree and Activity history into the core. Activity history remains accessible from the workspace header and compact More menu; removing other plugins or enabling restricted mode does not disable the task tree, records or undo.
 
 ### 1.7.0 Beta 130
 

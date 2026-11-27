@@ -8,6 +8,7 @@ import { getAppHeaderPlugins, moveCompactPlugin } from "./compactDock";
 import type { CompactPluginPlacement } from "./model";
 
 type PendingValue = { owner: string; key: string; value: unknown; remove: boolean; id: string };
+const retiredCoreIds = new Set(["tree", "activity-history"]);
 const toolPageMigrations = new Set(["weather", "pomodoro", "schedule-templates", "daily-overview", "quick-capture", "class-timetable"]);
 const OFFICIAL_RAW = "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/";
 const OFFICIAL_MIRROR = "https://navopath.com/extensions/";
@@ -183,8 +184,7 @@ export class ExtensionService {
       return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId, ...(entry.previewUrl ? { previewUrl: publicHttps(entry.previewUrl) } : {}), ...(previewUrls ? { previewUrls } : {}), ...(entry.iconUrl ? { iconUrl: publicHttps(entry.iconUrl) } : {}), ...(entry.downloads !== undefined ? { downloads: entry.downloads } : {}), ...(entry.publishedAt ? { publishedAt: entry.publishedAt } : {}) };
     });
     if (sourceId === "official") {
-      const retiredIndex = entries.findIndex((entry) => entry.manifest.id === "list");
-      if (retiredIndex !== -1) entries.splice(retiredIndex, 1);
+      for (let i = entries.length - 1; i >= 0; i--) if (entries[i].manifest.id === "list" || retiredCoreIds.has(entries[i].manifest.id)) entries.splice(i, 1);
       const { officialCatalog } = await import("./officialCatalog");
       for (const bundled of officialCatalog.packages) {
         if (!toolPageMigrations.has(bundled.manifest.id)) continue;
@@ -253,6 +253,7 @@ export class ExtensionService {
     const account = this.account, pkg = await readPackage(bytes), hash = await sha256(bytes);
     if (expectedHash && hash !== expectedHash) throw new Error("Package integrity check failed");
     if (expectedKind && pkg.manifest.kind !== expectedKind) throw new Error(expectedKind === "theme" ? "请在插件页导入插件 / Import plugins from Plugins" : "请在外观页导入主题 / Import themes from Appearance");
+    if (sourceId === "official" && retiredCoreIds.has(pkg.manifest.id)) throw new Error("This feature is built in / 此功能已内置");
     const key = `${sourceId}:${pkg.manifest.id}`, previous = this.snapshot.preferences.installed[key];
     const incompatibility = compatibility(pkg.manifest, platform());
     if (incompatibility) throw new Error(incompatibility);
@@ -426,7 +427,7 @@ export class ExtensionService {
       },
       registerNativePlanningView: (mode: NativeShelfViewMode, name: string, iconUrl?: string): Dispose => {
         guard();
-        const nativeModes: Record<string, NativeShelfViewMode> = { tree: "tree", kanban: "kanban", matrix: "eisenhower", metrics: "metrics", "activity-history": "activity-history" };
+        const nativeModes: Record<string, NativeShelfViewMode> = { kanban: "kanban", matrix: "eisenhower", metrics: "metrics" };
         if (!key.startsWith("official:") || nativeModes[key.slice("official:".length)] !== mode) throw new Error("Native planning views are reserved for matching official packages");
         return this.bridge(key).contribute("views", name, () => {}, { iconUrl, planningView: true, nativeMode: mode });
       },
@@ -502,10 +503,11 @@ export class ExtensionService {
       next.installed[key] = { key, sourceId: "official", manifest: entry.manifest, sha256: entry.sha256, downloadUrl, enabled, installedAt: now, updatedAt: now };
       changed = true;
     };
-    const retiredKey = "official:list";
-    if (next.installed[retiredKey]) {
-      delete next.installed[retiredKey];
-      next.removed = { ...next.removed, [retiredKey]: next.removed[retiredKey] || new Date().toISOString() };
+    for (const id of ["list", ...retiredCoreIds]) {
+      const key = `official:${id}`;
+      if (!next.installed[key]) continue;
+      delete next.installed[key];
+      next.removed = { ...next.removed, [key]: new Date().toISOString() };
       changed = true;
     }
     if (!preferences.migratedLegacy) {
@@ -541,11 +543,6 @@ export class ExtensionService {
       const entry = getBundledExtension("schedule-templates")!;
       if (!await this.publishBundledMigration(entry, generation)) return;
       addDefault(entry, true);
-    }
-    const historyKey = "official:activity-history";
-    if (!next.installed[historyKey] && !next.removed[historyKey]) {
-      const entry = getBundledExtension("activity-history")!;
-      addDefault(entry, true, entry.downloadUrl);
     }
     const legacyTools = Object.values(next.installed).filter((item) =>
       toolPageMigrations.has(item.manifest.id) && (item.sourceId === "official" ||

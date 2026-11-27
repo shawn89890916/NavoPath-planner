@@ -1,5 +1,4 @@
 [
-  "activity-history",
   "class-timetable",
   "daily-overview",
   "graphite",
@@ -14,7 +13,6 @@
   "sage",
   "schedule-templates",
   "super-productivity-sync",
-  "tree",
   "typewriter",
   "weather"
 ]

@@ -4,30 +4,6 @@
   "packages": [
     {
       "manifest": {
-        "id": "activity-history",
-        "name": "Activity history",
-        "description": "Review recent task changes and undo individual actions from the task view menu.",
-        "author": "NavoPath",
-        "version": "1.0.0",
-        "kind": "plugin",
-        "apiVersion": 1,
-        "minAppVersion": "1.7.0-beta.24",
-        "platforms": [
-          "desktop",
-          "web",
-          "mobile"
-        ],
-        "main": "main.js",
-        "icon": "icon.svg",
-        "license": "MIT",
-        "repository": "https://github.com/shawn89890916/NavoPath-planner"
-      },
-      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/activity-history.navopackage.json",
-      "sha256": "d04b8fbac07ab7cf0155419176823365806850f0b3faa288ea09812f1be4dd3f",
-      "iconUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/icons/activity-history.svg"
-    },
-    {
-      "manifest": {
         "kind": "plugin",
         "apiVersion": 1,
         "id": "class-timetable",
@@ -541,30 +517,6 @@
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/super-productivity-sync.navopackage.json",
       "sha256": "161c01ac157426c2a64c3d990d2fab62845877c77ad8cc8a2882ec16ec679371"
-    },
-    {
-      "manifest": {
-        "id": "tree",
-        "name": "Tree",
-        "description": "Organize projects and tasks as an editable hierarchy.",
-        "author": "NavoPath",
-        "version": "1.0.0",
-        "kind": "plugin",
-        "apiVersion": 1,
-        "minAppVersion": "1.6.3-beta.5",
-        "platforms": [
-          "desktop",
-          "web",
-          "mobile"
-        ],
-        "main": "main.js",
-        "icon": "icon.svg",
-        "license": "MIT",
-        "repository": "https://github.com/shawn89890916/NavoPath-planner"
-      },
-      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/tree.navopackage.json",
-      "sha256": "0e0c1868063622ebf629a1479c0ec1cd98129a9d0f0b6991eb6410c34813f589",
-      "iconUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/icons/tree.svg"
     },
     {
       "manifest": {

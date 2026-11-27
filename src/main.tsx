@@ -133,6 +133,8 @@ import type { MobileShortSheetKind } from "./MobileTaskSummary";
 const productDemo = getWorkspaceDemoRuntime();
 const analyticsMutationSources = new WeakMap<PlannerData,AnalyticsSource>();
 const demoTreeView: ExtensionContribution = { id: "demo:tree", owner: "demo", name: "Tree", planningView: true, nativeMode: "tree", mount: () => {} };
+const coreTreeView: ExtensionContribution = { ...demoTreeView, id: "core:tree", owner: "core" };
+const coreHistoryView: ExtensionContribution = { id: "core:activity-history", owner: "core", name: "Activity history", nativeMode: "activity-history", mount: () => {} };
 const productPresentation = Boolean(productDemo?.navigation);
 const productAiPresentation = productPresentation && productDemo?.feature === "ai";
 const TimelineDateTag = productPresentation ? "div" : "button";
@@ -1539,7 +1541,11 @@ function App() {
   const [isManualSyncing, setIsManualSyncing] = useState(false);
   const extensionHostRef = useRef<ExtensionHost | null>(null);
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const activeExtensionPanel = extensionSnapshot.views.find((view) => view.id === activeExtensionPanelId && (!view.planningView || view.nativeMode === "activity-history"));
+  const activeExtensionPanel = activeExtensionPanelId === coreHistoryView.id ? coreHistoryView : extensionSnapshot.views.find((view) => view.id === activeExtensionPanelId && !view.planningView);
+  function openTaskHistory() {
+    rememberLayerTrigger("utility");
+    showWorkspacePanel({ kind: "extension", id: coreHistoryView.id }, true);
+  }
   function openExtensionPage(page: ExtensionContribution) {
     if (page.nativeMode === "metrics") { openMetrics(); return; }
     if (page.nativeTool === "pomodoro") { openTimerMode("pomodoro", page.owner); return; }
@@ -1550,23 +1556,19 @@ function App() {
     rememberLayerTrigger("utility");
     showWorkspacePanel({ kind: "extension", id: page.id, owner: page.owner }, true);
   }
-  const shelfViews = useMemo(() => productDemo?.feature === "planning" ? [demoTreeView] : extensionSnapshot.views.filter((view) =>
-    view.planningView && view.nativeMode !== "metrics" && view.nativeMode !== "activity-history"
-  ).sort((first, second) => {
+  const shelfViews = useMemo(() => productDemo?.feature === "planning" ? [demoTreeView] : [coreTreeView, ...extensionSnapshot.views.filter((view) =>
+    view.planningView && view.nativeMode !== "tree" && view.nativeMode !== "metrics" && view.nativeMode !== "activity-history"
+  )].sort((first, second) => {
     const order = ["tree", ...Object.keys(candidateViewNames)];
     const rank = (view: ExtensionContribution) => view.nativeMode ? order.indexOf(view.nativeMode) : order.length;
     return rank(first) - rank(second);
   }), [extensionSnapshot.views]);
   const shelfView = shelfViews.find((view) => view.id === shelfViewId);
   const shelfTreeOpen = shelfView?.nativeMode === "tree";
-  const taskHistoryKey = "official:activity-history";
-  const taskHistoryEnabled = !extensionSnapshot.safeMode
-    && !settings?.extensions?.removed[taskHistoryKey]
-    && settings?.extensions?.installed[taskHistoryKey]?.enabled !== false;
   const treeView = shelfViews.find((view) => view.nativeMode === "tree");
   const metricsAvailable = extensionSnapshot.views.some((view) => view.nativeMode === "metrics");
   useEffect(() => {
-    if (shelfViewId && !shelfView) setShelfViewId("");
+    if (shelfViewId && !shelfView) setShelfViewId(productDemo?.feature === "planning" ? demoTreeView.id : coreTreeView.id);
   }, [shelfViewId, shelfView]);
   const oldestTaskOperationAt = taskOperations.at(-1)?.at;
   useEffect(() => {
@@ -2912,7 +2914,6 @@ if (cached?.data && cached?.settings) {
   }
 
   function saveTaskOperation(next: PlannerData, kind: TaskOperationKind, options?: { title?: string; titles?: string[]; toast?: string; source?:AnalyticsSource }) {
-    if (!taskHistoryEnabled && !options?.toast && kind !== "delete") return saveData(next,options?.source);
     const previous = dataRef.current;
     const undo = previous && captureTaskUndo(previous, next);
     const saving = saveData(next,options?.source);
@@ -2925,7 +2926,7 @@ if (cached?.data && cached?.settings) {
       titles: options?.titles || (options?.title ? [options.title] : [...undo.added, ...undo.removed, ...undo.changes].map(({ title }) => title)),
       undo,
     };
-    if (taskHistoryEnabled) changeTaskOperations(operation.workspaceKey, (current) => [operation, ...current]);
+    changeTaskOperations(operation.workspaceKey, (current) => [operation, ...current]);
     if (kind === "delete" && undo.removed.length) showToast(t(lang, "candidate.deletedTask"), "delete");
     else if (options?.toast) showUndoToast(options.toast, t(lang, "toast.undo"), () => undoTaskOperation(operation));
     return saving;
@@ -9377,7 +9378,7 @@ if (cached?.data && cached?.settings) {
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
           <div className="df-brand">
             {brandControl}
-            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} activeOwner={workspacePanel?.owner} onOpenPage={openExtensionPage} /></Suspense>}
+            {!productDemo && <Suspense fallback={null}><ExtensionHeader lang={lang} activeOwner={workspacePanel?.owner} historyActive={activeExtensionPanelId === coreHistoryView.id} onHistory={openTaskHistory} onOpenPage={openExtensionPage} /></Suspense>}
           </div>
           {!productDemo && <div className="df-header-right">
           <span className="df-workspace-save-feedback" role="status" aria-live="polite" data-save-phase={savePhase}>
@@ -10611,7 +10612,7 @@ if (cached?.data && cached?.settings) {
       {!productAiPresentation && compactLayout && !compactOverlayOpen && (
         createPortal(<nav className={`df-mobile-dock df-mobile-dock--viewport${settings.theme === "dark" ? " theme-dark" : ""}`} style={themeVars(settings, "execute")} aria-label={lang === "zh" ? "工作区导航" : "Workspace navigation"}>
           {productDemo ? <div className="df-mobile-dock-slots">{compactChat}</div> : <Suspense fallback={<div className="df-mobile-dock-slots">{compactChat}<IconButton className="df-mobile-dock-action df-mobile-more-wrap" label={lang === "zh" ? "更多" : "More"} icon={<UiMoreIcon />} /></div>}>
-            <CompactPluginDock lang={lang} chat={compactChat} activePanel={workspacePanel?.kind} activeOwner={workspacePanel?.owner} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => setNotificationCenterOpen(true)} onSearch={() => { setCommandQuery(""); setCommandOpen(true); }} onSettings={() => openSettingsHome()} onOpenPage={openExtensionPage} />
+            <CompactPluginDock lang={lang} chat={compactChat} activePanel={workspacePanel?.kind} activeOwner={workspacePanel?.owner} notificationCount={showNotificationBadge ? proactiveNotifications.length : 0} onNotifications={() => setNotificationCenterOpen(true)} onSearch={() => { setCommandQuery(""); setCommandOpen(true); }} onSettings={() => openSettingsHome()} onHistory={openTaskHistory} onOpenPage={openExtensionPage} />
           </Suspense>}
         </nav>, document.body)
       )}

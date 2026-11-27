@@ -7,7 +7,7 @@ export function getAppHeaderPlugins(snapshot: ExtensionSnapshot) {
   const pages = new Map<string, ExtensionSnapshot["views"][number]>();
   if (!snapshot.safeMode) {
     for (const view of snapshot.views) {
-      if ((!view.planningView || view.nativeMode === "metrics" || view.nativeMode === "activity-history") && snapshot.preferences.installed[view.owner]?.enabled) pages.set(view.owner, view);
+      if ((view.nativeMode !== "tree" && view.nativeMode !== "activity-history" && (!view.planningView || view.nativeMode === "metrics")) && snapshot.preferences.installed[view.owner]?.enabled) pages.set(view.owner, view);
     }
   }
   return { pages, owners: new Set(pages.keys()) };
