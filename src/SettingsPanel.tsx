@@ -34,7 +34,7 @@ const AiProviderSettings = lazy(() => import("./components/AiProviderSettings"))
 
 const ProactiveAssistantSettings = lazy(() => import("./components/ProactiveAssistantSettings").then((module) => ({ default: module.ProactiveAssistantSettings })));
 
-import { isConnectionAnchor } from "./connectionProviders";
+import { spPluginConnection } from "./connectionProviders";
 const ConnectionProviders = lazy(() => import("./components/ConnectionProviders"));
 const CalDavManager = lazy(() => import("./components/CalDavManager"));
 
@@ -315,7 +315,7 @@ function SettingsCategoryIcon({ category }: { category: SettingsCategory }) {
 export function UtilityPanel({ kind, settings, initialSection, compactLayout, data, authEmail, onClose, onSave, onSaveProfile, onWidgetAction, onSaveData, onClearChatHistory, onShowAbout, onOpenNotifications, onSignOut, onDeleteAccount, onSyncNow, isManualSyncing, cloudReady, lang }: { kind: "settings" | "about"; settings: Settings; initialSection?: SettingsTargetInput; compactLayout: boolean; data: PlannerData; authEmail: string; onClose: () => void; onSave: (patch: Partial<Settings>) => void; onSaveProfile: (patch: Partial<Pick<Settings, "displayName" | "avatarDataUrl">>) => Promise<void>; onWidgetAction: (action: WidgetAction) => void; onSaveData: (next: PlannerData) => void; onClearChatHistory: () => void; onShowAbout: () => void; onOpenNotifications?: () => void; onSignOut?: () => void; onDeleteAccount?: () => void; onSyncNow?: (direction?: "push" | "pull" | "both") => Promise<boolean> | void; isManualSyncing?: boolean; cloudReady?: boolean; lang: Language }) {
   const resolvedInitial = normalizeSettingsTarget(initialSection);
   const isDesktopRuntime = Boolean(window.desktopApi);
-  const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
+  const resolveRuntimeTarget = (target: SettingsTarget): SettingsTarget => target.category === "plugins" && target.pluginPage && target.pluginPage === spPluginConnection(extensionService.getSnapshot()).page?.id ? { category: "integrations", anchor: "connection-super-productivity" } : target.category === "widget" && !isDesktopRuntime ? { category: "general" } : target;
   const [settingsTarget, setSettingsTarget] = useState<SettingsTarget>(resolveRuntimeTarget(resolvedInitial));
   const showModifiedSettings = settingsTarget.category === "general" && settingsTarget.anchor === "modified-settings";
   const modifiedPreferences = getModifiedPreferences(settings);
@@ -329,7 +329,6 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
   const navigationResults = searchSettings(navigationQuery, lang, isDesktopRuntime);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [widgetThemeOpen, setWidgetThemeOpen] = useState<"light" | "dark">("light");
-  const [integrationTab, setIntegrationTab] = useState<"calendar" | "external-calendar" | "mcp" | "sync">("calendar");
   const settingsContentRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [profileNameEditing, setProfileNameEditing] = useState(false);
@@ -365,11 +364,7 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
     if (settingsTarget.anchor === "shortcuts") setShortcutsOpen(true);
     if (settingsTarget.anchor?.startsWith("widget-light")) setWidgetThemeOpen("light");
     if (settingsTarget.anchor?.startsWith("widget-dark")) setWidgetThemeOpen("dark");
-    if (settingsTarget.anchor === "mcp") setIntegrationTab("mcp");
-    if (settingsTarget.anchor === "sync-bridge") setIntegrationTab("sync");
 
-    if (isConnectionAnchor(settingsTarget.anchor) || (settingsTarget.category === "integrations" && !settingsTarget.anchor)) setIntegrationTab("calendar");
-    if (settingsTarget.anchor === "external-calendar") setIntegrationTab("external-calendar");
   }, [settingsTarget.anchor]);
   useEffect(() => {
     const content = settingsContentRef.current;
@@ -389,17 +384,13 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
       anchor.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(handle);
-  }, [settingsTarget, integrationTab, widgetThemeOpen, settingsHome]);
+  }, [settingsTarget, widgetThemeOpen, settingsHome]);
 
   function navigateSettings(target: SettingsTarget) {
     if (target.anchor === "shortcuts") setShortcutsOpen(true);
     if (target.anchor?.startsWith("widget-light")) setWidgetThemeOpen("light");
     if (target.anchor?.startsWith("widget-dark")) setWidgetThemeOpen("dark");
-    if (target.anchor === "mcp") setIntegrationTab("mcp");
-    if (target.anchor === "sync-bridge") setIntegrationTab("sync");
 
-    if (isConnectionAnchor(target.anchor) || (target.category === "integrations" && !target.anchor)) setIntegrationTab("calendar");
-    if (target.anchor === "external-calendar") setIntegrationTab("external-calendar");
     void runMotionTransition(() => flushSync(() => {
       setSettingsTarget(resolveRuntimeTarget(normalizeSettingsTarget(target)));
       setNavigationQuery("");
@@ -1188,18 +1179,8 @@ export function UtilityPanel({ kind, settings, initialSection, compactLayout, da
               </section>}
             </div></details>
               </SettingSection>}
-            {settingsTarget.category === "integrations" && <div className="df-settings-subtabs df-settings-integration-tabs ui-choice-list ui-choice-list--inline ui-choice-list--motion-selection" role="tablist" aria-label={lang === "zh" ? "日历与集成" : "Calendar and integrations"}>
-              <SelectionIndicator activeKey={`${integrationTab}:${lang}`} />
-              <button type="button" role="tab" aria-selected={integrationTab === "calendar"} className={`ui-choice-item${integrationTab === "calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("calendar"); setSettingsTarget({ category: "integrations", anchor: "connections" }); }}>{lang === "zh" ? "应用" : "Apps"}</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "external-calendar"} className={`ui-choice-item${integrationTab === "external-calendar" ? " active" : ""}`} onClick={() => { setIntegrationTab("external-calendar"); setSettingsTarget({ category: "integrations", anchor: "external-calendar" }); }}>{lang === "zh" ? "外部日历" : "External"}</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "mcp"} className={`ui-choice-item${integrationTab === "mcp" ? " active" : ""}`} onClick={() => { setIntegrationTab("mcp"); setSettingsTarget({ category: "integrations", anchor: "mcp" }); }}>MCP</button>
-              <button type="button" role="tab" aria-selected={integrationTab === "sync"} className={`ui-choice-item${integrationTab === "sync" ? " active" : ""}`} onClick={() => { setIntegrationTab("sync"); setSettingsTarget({ category: "integrations", anchor: "sync-bridge" }); }}>{lang === "zh" ? "同步" : "Sync"}</button>
-            </div>}
-            {settingsTarget.category === "integrations" && integrationTab === "calendar" && <Suspense fallback={null}><ConnectionProviders lang={lang} anchor={settingsTarget.anchor} onSelect={anchor => navigateSettings({ category: "integrations", anchor })} errorMessage={calendarFeedErrorMessage} caldav={<CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} />} /></Suspense>}
-            {settingsTarget.category === "integrations" && integrationTab === "external-calendar" && <section className="df-settings-group" data-settings-anchor="external-calendar" tabIndex={-1}><h3>{lang === "zh" ? "外部日历" : "External Calendars"}</h3><ExternalCalendarManager lang={lang} /></section>}
-            {settingsTarget.category === "integrations" && integrationTab === "mcp" && <section className="df-settings-group" data-settings-anchor="mcp" tabIndex={-1}><h3>MCP</h3><Suspense fallback={<p className="df-mcp-status">{lang === "zh" ? "正在打开 MCP…" : "Opening MCP…"}</p>}><McpTokenManager lang={lang} /></Suspense></section>}
-            {settingsTarget.category === "integrations" && integrationTab === "sync" && <section className="df-settings-group" data-settings-anchor="sync-bridge" tabIndex={-1}><h3>{lang === "zh" ? "同步" : "Sync"}</h3><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></section>}
-            {settingsTarget.category === "plugins" && !metricsSettingsOpen && <Suspense fallback={null}><ExtensionSettings lang={lang} kind="plugin" mcpAccess={settings.extensionMcpAccess} onMcpAccessChange={(owner, grant) => onSave({ extensionMcpAccess: { [owner]: grant } })} settingsPageId={settingsTarget.pluginPage ?? null} onSelectPage={(id) => navigateSettings({ category: "plugins", ...(id ? { pluginPage: id } : {}) })} /></Suspense>}
+            {settingsTarget.category === "integrations" && <Suspense fallback={null}><ConnectionProviders key={authEmail} lang={lang} anchor={settingsTarget.anchor} onSelect={anchor => navigateSettings({ category: "integrations", anchor })} errorMessage={calendarFeedErrorMessage} caldav={<CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} />} externalCalendar={<ExternalCalendarManager lang={lang} />} mcp={<McpTokenManager lang={lang} />} bridge={<SyncBridgeManager lang={lang} />} /></Suspense>}
+            {settingsTarget.category === "plugins" && !metricsSettingsOpen && <Suspense fallback={null}><ExtensionSettings lang={lang} kind="plugin" onManageConnection={() => navigateSettings({ category: "integrations", anchor: "connection-super-productivity" })} mcpAccess={settings.extensionMcpAccess} onMcpAccessChange={(owner, grant) => onSave({ extensionMcpAccess: { [owner]: grant } })} settingsPageId={settingsTarget.pluginPage ?? null} onSelectPage={(id) => navigateSettings({ category: "plugins", ...(id ? { pluginPage: id } : {}) })} /></Suspense>}
             {!compactLayout && settingsTarget.category === "account-data" && <SettingSection anchor="account-profile" title={lang === "zh" ? "个人资料" : "Profile"}>
               {profileHero}
             </SettingSection>}
