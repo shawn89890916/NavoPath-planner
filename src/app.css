@@ -14968,7 +14968,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-settings-subtabs button.active { color: var(--text-main); border-color: var(--accent-active); }
 .df-settings-subtabs button:active { transform: translateY(1px); }
 .df-settings-subtabs button:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
-.df-settings-integration-tabs { margin-top: 12px; }
 .df-settings-theme-fields { display: flex; flex-direction: column; }
 [data-settings-anchor]:focus { outline: none; }
 [data-settings-anchor]:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 3px; }
@@ -21567,7 +21566,6 @@ body.df-planning-native-dragging .df-unified-drag-overlay {
   #root .df-app .df-settings-detail-link[data-settings-detail="recovery"]{display:none}
   #root .df-app [data-settings-anchor="general-help"]{display:none}
   #root .df-app [data-settings-anchor="shortcuts"]{display:none}
-  #root .df-app .df-settings-integration-tabs button:nth-child(2){display:none}
   #root .df-app.mode-planning .df-planning .df-metrics-view{
     min-width: 0;
     max-width: 100%;

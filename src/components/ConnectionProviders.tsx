@@ -123,13 +123,11 @@ export default function ConnectionProviders({ lang, anchor, onSelect, errorMessa
       <SettingSection title={t("应用", "Apps")}>
         {spListed && <SettingRow title="Super Productivity" description={spConnectionLabel(status.pair, Boolean(installed?.enabled && page && !snapshot.safeMode), zh)} control={action("connection-super-productivity")} />}
         {status.apple === true && <SettingRow title={t("Apple 日历", "Apple Calendar")} description={t("已生成凭据 · 远端状态未知", "Credential issued · remote status unknown")} control={action("connection-apple-calendar")} />}
-        {!spListed && status.apple !== true && <p className="df-mcp-status muted">{status.pair.kind === "loading" ? t("正在检查连接…", "Checking connections…") : t("尚无可确认的应用连接", "No verified app connections")}</p>}
+        {!spListed && status.apple !== true && <p className="df-mcp-status muted">{status.pair.kind === "loading" ? t("正在检查连接…", "Checking connections…") : status.pair.kind === "unknown" ? t("暂时无法验证应用连接", "Unable to verify app connections") : t("尚无可确认的应用连接", "No verified app connections")}</p>}
         <SettingRow title={t("添加连接", "Add connection")} control={action("connection-add", t("添加", "Add"))} />
       </SettingSection>
-      <SettingSection title={t("外部日历", "External calendars")}>
-        <SettingRow title={t("订阅来源", "Calendar sources")} description={status.external === null ? t("只读忙碌时间", "Read-only busy time") : t(`${status.external} 个来源`, `${status.external} sources`)} control={action("external-calendar")} />
-      </SettingSection>
-      <SettingSection title={t("高级", "Advanced")}>
+      <SettingSection title={t("其他连接", "Other connections")}>
+        <SettingRow title={t("外部日历", "External calendars")} description={status.external === null ? t("只读忙碌时间", "Read-only busy time") : t(`${status.external} 个来源`, `${status.external} sources`)} control={action("external-calendar")} />
         <SettingRow title={t("高级连接", "Advanced connections")} control={action("connection-advanced")} />
       </SettingSection>
     </> : <>
