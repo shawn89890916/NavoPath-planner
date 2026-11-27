@@ -443,7 +443,7 @@
       if (state.status === 'preview') showPreview(state); else { preview = null; previewKey = ''; $('preview').hidden = true; }
       showConflicts(state.conflicts || []);
       showDeleted();
-      const labels = {waiting:'Waiting for the other app',preview:'Connected · review first import',active:'Connected · automatic sync',paused:'Paused after undo · reconnect from NavoPath'};
+      const labels = {waiting:'Waiting for the other app',preview:'Connected · review first import',active:'Connected · automatic sync',paused:state.pauseReason === 'history-feedback' ? 'Paused · read-only calendar feedback detected; repair affected records first' : 'Paused after undo · reconnect from NavoPath'};
       setStatus(busy ? 'Syncing…' : (labels[state.status] || 'Connected'));
     }
     async function withBusy(work) {
@@ -455,7 +455,7 @@
     async function runSync() {
       if (!token || !local.pairId || stopped) return;
       const state = await request(`state?pairId=${encodeURIComponent(local.pairId)}`); await renderState(state);
-      if (state.status === 'paused') return;
+      if (state.status === 'paused') throw new Error(state.pauseReason === 'history-feedback' ? 'Sync paused: read-only calendar feedback detected. Repair affected records first.' : 'Sync paused. Reconnect from NavoPath after review.');
       await reconcileDeletes();
       await reconcileHierarchy();
       for (const [id,entry] of Object.entries(local.tombstones)) if (entry.restoreId) await finishRestore(id,entry); else if (entry.restoring) throw new Error('Interrupted restore needs manual review');
