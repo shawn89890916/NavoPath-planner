@@ -57,9 +57,9 @@ export async function exerciseIntent() {
       assert(!state.click,"prediction activated a view");
       await wait(40);
       const hover=performance.now();
-      f.target.dispatchEvent(new PointerEvent("pointerover",{bubbles:true,pointerType:"mouse",relatedTarget:f.menu}));
+      f.target.dispatchEvent(new PointerEvent("pointerover",{bubbles:true,pointerType:"mouse",relatedTarget:null}));
       assert(Boolean(state.promise)===(mode!=="A"),"hover fallback failed in "+mode);
-      await wait(20);f.target.click();await state.ready;
+      await wait(20);f.target.click();assert(state.ready,"click did not activate the fixture");await state.ready;
       results[mode].push({latency:state.usable-state.click,lead:hover-state.start});
     }
     const f=await reset("C");move(f,-100);move(f,-80);move(f,-100);assert(!state.promise,"reversal predicted");
