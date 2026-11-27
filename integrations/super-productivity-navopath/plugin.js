@@ -84,8 +84,20 @@
       const date = new Date(timestamp);
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     };
+    // Calendar history is a read-only projection, never a syncable task.
+    // Match stable provider metadata, not the display title.
+    const isNavoPathHistory = item => item.issueType === 'ICAL' && (
+      /sp-history-[^\s]+@navopath\.app/i.test(String(item.issueId || '')) ||
+      /^NavoPath · (?:Completed|Returned unfinished|Skipped|Additional scheduled block|Completed task) · Read-only timeline record\s*$/i.test(String(item.notes || '').trim())
+    );
     async function snapshot() {
-      const allProjects = await projects(), allTasks = await tasks();
+      const allProjects = await projects(), rawTasks = await tasks();
+      // Omitting an already-linked task could be interpreted as remote deletion.
+      // Fail closed until the user reviews and repairs those existing links.
+      if (rawTasks.some(item => isNavoPathHistory(item) && syncId('tasks', item.id))) {
+        throw new Error('NavoPath read-only calendar history is already linked. Sync paused: repair the existing links before resuming.');
+      }
+      const allTasks = rawTasks.filter(item => !isNavoPathHistory(item));
       return {
         overwriteVersion: 1,
         hierarchyVersion: 1,
