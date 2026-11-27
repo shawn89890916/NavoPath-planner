@@ -2,6 +2,12 @@
 
 ## 2026-11-27
 
+### 1.7.0 Beta 138
+
+#### 改进
+
+- 拖拽时保留落点不变的邻项位移动画，限制布局计算范围；时间轴复用排程列表和画布宽度，减少拖动时冲突布局重算；月视图滚动使用二分定位。任务块样式与真实拖放规则保持不变。
+
 ### 1.7.0 Beta 137
 
 #### 改进
@@ -1352,6 +1358,12 @@
 # NavoPath Changelog
 
 ## 2026-11-27
+
+### 1.7.0 Beta 138
+
+#### Improvements
+
+- Retain unchanged sibling translations during dragging and bound projection work; reuse scheduled lists and canvas width, avoid unnecessary conflict layout recomputation, and use binary lookup for month scrolling. Preserve task styling and actual drop rules.
 
 ### 1.7.0 Beta 137
 
