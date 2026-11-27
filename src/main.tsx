@@ -53,7 +53,7 @@ import { term } from "./terminology";
 import { migrateLegacyHabitTracker, scheduleHabitRecord, toggleHabitCompletion, unscheduleHabitRecord, updateHabit, archiveHabit, buildHabitMetrics, isHabitDueOnDate, isHabitWithinDateRange, weekdayLabels, type HabitMetrics } from "./utils/habits";
 import { shouldShowHabitCandidates } from "./utils/habitCandidateVisibility";
 import { nativeFeatureActive, metricsPluginActive } from "./extensions/nativeFeatures";
-import { useReadingLibrary } from "./reading/useReadingLibrary";
+import type { ReadingRuntimeSnapshot } from "./reading/ReadingRuntime";
 import { normalizeAiReply } from "./utils/aiReply";
 import { candidateScheduleSummary, type CandidateScheduleSummary } from "./utils/candidateSchedule";
 import { localIsoDate } from "./utils/localDate";
@@ -384,6 +384,7 @@ function loadPlanningView() {
 }
 function preloadPlanningView() { void loadPlanningView().catch(() => undefined); }
 const PlanningViewLazy = lazy(loadPlanningView);
+const ReadingRuntimeLazy = lazy(() => import("./reading/ReadingRuntime"));
 const ReadingShelfLazy = lazy(() => import("./reading/ReadingShelf"));
 const ReadingTaskComposerLazy = lazy(() => import("./reading/ReadingShelf").then(module => ({ default: module.ReadingTaskComposer })));
 const LandingPageLazy = lazy(() => import("./LandingPage"));
@@ -1408,7 +1409,9 @@ function App() {
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const habitsEnabled = productDemo ? settings?.featureHabitsEnabled !== false : nativeFeatureActive(extensionSnapshot, "habits");
   const readingEnabled = !productDemo && nativeFeatureActive(extensionSnapshot, "reading");
-  const reading = useReadingLibrary(readingEnabled, authState?.user?.id || "preview");
+  const readingAccount = authState?.user?.id || "preview";
+  const [readingSnapshot, setReadingSnapshot] = useState<ReadingRuntimeSnapshot | null>(null);
+  const reading = readingEnabled && readingSnapshot?.account === readingAccount ? readingSnapshot : { library: null, error: "", busy: true, mutate: async () => { throw new Error("Reading unavailable"); } };
   const [readingExpanded, setReadingExpanded] = useState(true);
   const engagementEnabled = productDemo ? settings?.featureEngagementEnabled === true : nativeFeatureActive(extensionSnapshot, "engagement");
   const aiEnabled = productDemo ? !settings?.hideAi : nativeFeatureActive(extensionSnapshot, "navo-ai");
@@ -9469,6 +9472,7 @@ if (cached?.data && cached?.settings) {
   const compactChat = !productPresentation && aiEnabled && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />;
   return (
     <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${drag ? " is-dragging" : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked && !workspaceChatPanel ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-workspace-layout={workspaceLayout} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-guide-return-drag={returningGuideBlock || undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
+      {readingEnabled && <Suspense fallback={null}><ReadingRuntimeLazy key={readingAccount} account={readingAccount} onChange={setReadingSnapshot} /></Suspense>}
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
       {(!compactLayout || productDemo) && <header className="df-header">
         {productDemo?.navigation?.(<ProductIcon compact />) ?? <div className="df-header-inner">
