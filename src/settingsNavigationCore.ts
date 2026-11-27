@@ -51,7 +51,7 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategoryDefinition[] = [
 ];
 
 /** Retain stable category IDs; desktop-only destinations are filtered by capability. */
-export const SETTINGS_PRIMARY_CATEGORIES = SETTINGS_CATEGORIES;
+export const SETTINGS_PRIMARY_CATEGORIES = SETTINGS_CATEGORIES.filter(category => category.id !== "ai" && category.id !== "widget");
 export function settingsPrimaryCategory(category: SettingsCategory): SettingsCategory { return category; }
 export function visibleSettingsCategories(desktopAvailable: boolean): readonly SettingsCategoryDefinition[] {
   return SETTINGS_PRIMARY_CATEGORIES.filter(category => desktopAvailable || category.id !== "widget");
@@ -65,10 +65,10 @@ const legacyTargets: Record<LegacySettingsSection, SettingsTarget> = {
   templates: { category: "workflow", anchor: "templates" },
   habits: { category: "plugins", anchor: "habits", pluginOwner: "official:habits" },
   metrics: { category: "plugins", anchor: "metrics" },
-  widget: { category: "widget" },
+  widget: { category: "general", anchor: "portrait-window" },
   data: { category: "account-data", anchor: "data-backup" },
   shortcuts: { category: "general", anchor: "shortcuts" },
-  ai: { category: "ai" },
+  ai: { category: "plugins", pluginOwner: "official:navo-ai" },
   mcp: { category: "integrations", anchor: "mcp" },
   calendar: { category: "integrations", anchor: "calendar-feed" },
   plugins: { category: "plugins", anchor: "plugins" },
@@ -82,13 +82,16 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
   if (!input) return { category: "general" };
   if (typeof input === "string") return legacyTargets[input] ?? { category: "general" };
   if ((input.category as string) === "advanced") {
-    if (input.detail === "ai") return { category: "ai", anchor: input.anchor };
-    if (input.detail === "widget") return { category: "widget", anchor: input.anchor };
+    if (input.detail === "ai") return normalizeSettingsTarget({ category: "ai", anchor: input.anchor });
+    if (input.detail === "widget") return normalizeSettingsTarget({ category: "widget", anchor: input.anchor });
     if (input.detail === "integrations") return { category: "integrations", anchor: input.anchor };
     return { category: "account-data", anchor: input.anchor || "reset-settings" };
   }
   if (input.anchor && ["execution-defaults", "day-start", "default-timeline", "continuous-scroll", "hide-completed"].includes(input.anchor)) return { category: "workflow", anchor: input.anchor };
   if (input.anchor === "auto-launch") return { category: "general", anchor: input.anchor };
+  if (input.category === "ai" || input.anchor?.startsWith("ai-") || input.anchor === "hide-ai") return { category: "plugins", pluginOwner: "official:navo-ai", ...(input.anchor && input.anchor !== "hide-ai" ? { anchor: input.anchor } : {}) };
+  if (input.anchor === "desktop-widget" || input.anchor?.startsWith("widget-")) return { category: "plugins", pluginOwner: "official:desktop-widget", anchor: input.anchor };
+  if (input.category === "widget" || input.anchor === "portrait-window" || input.anchor === "desktop-window-settings") return { category: "general", anchor: input.anchor || "portrait-window" };
   if (input.anchor === "habits" || input.anchor === "habits-enabled" || input.anchor === "habit-candidates") return { category: "plugins", anchor: input.anchor === "habit-candidates" ? "habit-candidates" : "habits", pluginOwner: "official:habits" };
   if (input.anchor === "engagement") return { category: "plugins", anchor: "plugin-market" };
   if (input.anchor === "metrics" || input.anchor?.startsWith("metrics-")) return { category: "plugins", anchor: input.anchor };

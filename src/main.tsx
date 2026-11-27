@@ -1401,6 +1401,17 @@ function App() {
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const habitsEnabled = productDemo ? settings?.featureHabitsEnabled !== false : nativeFeatureActive(extensionSnapshot, "habits");
   const engagementEnabled = productDemo ? settings?.featureEngagementEnabled === true : nativeFeatureActive(extensionSnapshot, "engagement");
+  const aiEnabled = productDemo ? !settings?.hideAi : nativeFeatureActive(extensionSnapshot, "navo-ai");
+  const widgetEnabled = nativeFeatureActive(extensionSnapshot, "desktop-widget");
+  const isAiActive = () => Boolean(productDemo) || nativeFeatureActive(extensionService.getSnapshot(), "navo-ai");
+  useEffect(() => {
+    if (!aiEnabled && !productDemo) {
+      aiAbortRef.current?.abort();
+      if (aiOpen) setAiOpen(false);
+      setProactiveNotifications([]);
+      setUnfinishedNotification(null);
+    }
+  }, [aiEnabled, aiOpen]);
   useEffect(() => {
     if (!habitsEnabled && habitPanel) {
       setHabitPanel(null);
@@ -3075,11 +3086,11 @@ if (cached?.data && cached?.settings) {
   function makeSmartTask(nextForm: FormState) {
     const current = dataRef.current;
     const currentSettings = settingsRef.current;
-    return makeTask(nextForm, current && currentSettings ? { data: current, projects: current.projects, settings: currentSettings } : undefined);
+    return makeTask(nextForm, current && currentSettings ? { data: current, projects: current.projects, settings: isAiActive() ? currentSettings : { ...currentSettings, autoEstimateTaskDuration: false, autoAssignTaskProject: false } } : undefined);
   }
 
   function enrichTaskInBackground(task: Task): Promise<Task | undefined> {
-    if (productDemo) return Promise.resolve(task);
+    if (productDemo || !isAiActive()) return Promise.resolve(task);
     const currentSettings = settingsRef.current;
     const hasJevDurationPrediction = task.aiInference?.duration?.source === "ai"
       && isJevModelVersion(task.aiInference.duration.modelVersion);
@@ -3117,7 +3128,7 @@ if (cached?.data && cached?.settings) {
           requestProject,
         },
       });
-      if (!result.ok || !result.enrichment) return undefined;
+      if (!isAiActive() || !result.ok || !result.enrichment) return undefined;
       const latest = dataRef.current;
       const currentTask = latest?.tasks.find((item) => item.id === task.id);
       if (!latest || !currentTask || currentTask.title !== task.title) return undefined;
@@ -5029,12 +5040,12 @@ if (cached?.data && cached?.settings) {
 
   // Register the widget action listener once. Desktop-only.
   useEffect(() => {
-    if (!window.desktopApi?.widget) return;
+    if (!widgetEnabled || !window.desktopApi?.widget) return;
     const unsubscribe = window.desktopApi.widget.onAction((action) => {
       widgetActionHandlerRef.current(action);
     });
     return unsubscribe;
-  }, []);
+  }, [widgetEnabled]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -5064,10 +5075,16 @@ if (cached?.data && cached?.settings) {
     if (widgetAutoOpenedRef.current) return;
     if (!window.desktopApi?.widget) return;
     if (settings?.widgetOpenOnLaunch !== true) return;
-    if (settings?.featureWidgetEnabled === false) return;
+    if (!widgetEnabled) return;
     widgetAutoOpenedRef.current = true;
     void window.desktopApi.widget.open();
-  }, [settings?.widgetOpenOnLaunch, settings?.featureWidgetEnabled]);
+  }, [settings?.widgetOpenOnLaunch, widgetEnabled]);
+  useEffect(() => {
+    if (!isCompactWindowRoute && !widgetEnabled && extensionService.isReady()) {
+      widgetAutoOpenedRef.current = false;
+      void window.desktopApi?.widget?.close();
+    }
+  }, [widgetEnabled, extensionSnapshot.busy, settings?.extensions]);
 
   // Apply always-on-top setting to an existing widget window when it changes.
   useEffect(() => {
@@ -6781,6 +6798,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function openAdd(type: AddType = "task") {
+    if (type === "habit" && !habitsEnabled) return;
     setMobileQuickAddDate(null);
     rememberLayerTrigger("drawer");
     setAddType(type);
@@ -6888,7 +6906,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function saveForm() {
-    if (!data || !form.title.trim()) return;
+    if (!data || !form.title.trim() || (addType === "habit" && !habitsEnabled)) return;
     const now = workspaceNow().toISOString();
     const buildUpdatedTask = (task: Task): Task => {
       const title = form.title.trim();
@@ -7240,6 +7258,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function askAi(taskId: string) {
+    if (!isAiActive()) return;
     const task = tasks.find((item) => item.id === taskId);
     if (!task) return;
     setReferencedTaskId(task.id);
@@ -7248,6 +7267,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function applyAgentClientActions(agent?: AgentRunState) {
+    if (!isAiActive()) return;
     for (const command of agent?.clientActions || []) {
       if (command.entity === "timer") {
         if (command.operation === "pause") handleWidgetAction({ type: "timerPause" });
@@ -7288,7 +7308,7 @@ if (cached?.data && cached?.settings) {
 
   async function sendAi(messageOverride?: string, trigger: "manual" | "start_brief" | "end_review" = "manual") {
     if (productDemo) { if (dataRef.current) setAiMessages((items) => [...items, productDemo.suggest(dataRef.current!)]); return; }
-    if (aiBusy) return false;
+    if (!isAiActive() || aiBusy) return false;
     if (!(messageOverride ?? aiInput).trim() && !aiAttachment) return false;
     if (!data) return false;
     if (!authStateRef.current?.user || authStateRef.current.mode !== "cloud") {
@@ -7487,7 +7507,7 @@ if (cached?.data && cached?.settings) {
   }, [authState?.mode, authState?.user?.id, authState?.user?.email]);
 
   useEffect(() => {
-    if (authState?.mode !== "cloud" || !authState.user) {
+    if (!aiEnabled || authState?.mode !== "cloud" || !authState.user) {
       setProactiveNotifications([]);
       seenProactiveNotificationIdsRef.current.clear();
       return;
@@ -7495,7 +7515,7 @@ if (cached?.data && cached?.settings) {
     let active = true;
     const hydrateReview = async (notification: ProactiveNotification, autoOpen: boolean) => {
       const current = dataRef.current;
-      if (!current || notification.kind !== "daily_review") return;
+      if (!active || !isAiActive() || !current || notification.kind !== "daily_review") return;
       const shouldOpen = autoOpen && document.visibilityState !== "hidden" && !aiBusyRef.current && !aiInputRef.current.trim();
       const result = ensureDailyReviewConversation(current, notification, lang === "zh" ? "zh" : "en");
       if (result.added) {
@@ -7539,7 +7559,7 @@ if (cached?.data && cached?.settings) {
       unsubscribe();
       window.clearInterval(interval);
     };
-  }, [authState?.mode, authState?.user?.id, lang]);
+  }, [authState?.mode, authState?.user?.id, lang, aiEnabled]);
 
   useEffect(() => {
     if (proactiveIntroShownRef.current || authState?.mode !== "cloud" || !authState.user || !settings || settings.proactiveAssistantIntroSeen) return;
@@ -7551,6 +7571,7 @@ if (cached?.data && cached?.settings) {
   }, [authState?.mode, authState?.user?.id, lang, settings?.proactiveAssistantIntroSeen]);
 
   function openDailyAiPrompt(kind: "start" | "review") {
+    if (!isAiActive()) return;
     setAiInput(kind === "start"
       ? (lang === "zh" ? "请结合今日容量、截止日期和我的常用执行时段，给我一份简短的开工简报：三项重点、首个行动和一项风险。" : "Give me a short start-of-day brief using today's capacity, deadlines, and my preferred work hours: three priorities, the first action, and one risk.")
       : (lang === "zh" ? "请结合今天的计划、完成情况和计时记录做收工复盘：总结进展、识别偏差，并给出明天的一个调整建议。" : "Review my day using the plan, completions, and timer history: summarize progress, identify variance, and suggest one adjustment for tomorrow."));
@@ -7596,6 +7617,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function openUnfinishedAi(taskIds: string[]) {
+    if (!isAiActive()) return;
     selectDailyReviewConversation();
     const current = dataRef.current || data;
     const titles = current ? taskIds.map((id) => current.tasks.find((task) => task.id === id)?.title).filter(Boolean) : [];
@@ -7749,6 +7771,7 @@ if (cached?.data && cached?.settings) {
   }
 
   async function adoptSelectedAiActions(messageId: string, demoMessage?: AiSessionMessage) {
+    if (!isAiActive()) return;
     const currentData = dataRef.current;
     if (!currentData) return;
     const message = demoMessage || aiMessages.find((item) => item.id === messageId);
@@ -8280,7 +8303,7 @@ if (cached?.data && cached?.settings) {
 
   async function handleAgentDecision(messageId: string, decision: "approve" | "reject" | "undo"): Promise<boolean> {
     const existing = aiMessages.find((message) => message.id === messageId)?.agent;
-    if (!existing?.runId || aiBusy) return false;
+    if ((!isAiActive() && decision === "approve") || !existing?.runId || aiBusy) return false;
     setAiBusy(true);
     try {
       const mode = decision === "approve" ? "agent_confirm" : decision === "reject" ? "agent_reject" : "agent_undo";
@@ -8335,6 +8358,7 @@ if (cached?.data && cached?.settings) {
   }
 
   async function confirmAiAction(action: AiAction, messageId?: string, actionIndex?: number) {
+    if (!isAiActive()) return;
     const currentData = dataRef.current;
     if (!currentData) return;
     if (action.type === "create_subtasks" && action.taskId && action.subtasks?.length) {
@@ -8440,7 +8464,7 @@ if (cached?.data && cached?.settings) {
   }
 
   async function generateNextAction() {
-    if (productDemo) return;
+    if (productDemo || !isAiActive()) return;
     const task = editingId ? tasks.find((item) => item.id === editingId) : null;
     setClarifyLoading(true);
     try {
@@ -8450,6 +8474,7 @@ if (cached?.data && cached?.settings) {
         message: t(lang, "toast.clarifyPrompt"),
         context: { title: form.title, project: projects.find((project) => project.id === form.projectId)?.title, date: form.dueDate, estimatedHours: form.estimatedHours, notes: form.details, subtasks: task?.subtasks || [] },
       });
+      if (!isAiActive()) return;
       if (!result.ok) throw new Error(result.error.message);
       const nextAction = result.reply || t(lang, "toast.clarifyHintGeneric");
       setForm((current) => ({ ...current, details: replaceNextAction(current.details, nextAction) }));
@@ -8538,7 +8563,7 @@ if (cached?.data && cached?.settings) {
   }
 
   async function generateTaskSubtasks(taskId: string) {
-    if (productDemo) return;
+    if (productDemo || !isAiActive()) return;
     const snapshot = dataRef.current;
     const task = snapshot?.tasks.find((item) => item.id === taskId);
     if (!snapshot || !task || subtaskAiBusyId) return;
@@ -8559,6 +8584,7 @@ if (cached?.data && cached?.settings) {
           },
         },
       });
+      if (!isAiActive()) return;
       if (!result.ok) throw new Error(result.error.message);
       const suggestions = getAiSubtaskSuggestions(result.actions, taskId);
       if (!suggestions.length) throw new Error(lang === "zh" ? "AI 没有返回当前任务的有效子任务，请重试" : "AI returned no valid subtasks for this task. Please try again.");
@@ -9189,7 +9215,7 @@ if (cached?.data && cached?.settings) {
   </div> : undefined;
   const workspaceChatPanel = !productPresentation;
   const closeWorkspaceChat = () => { cancelAi(); setAiOpen(false); clearAiAttachment(); };
-  const aiPanel = aiPresence.present && (aiOpen || !workspacePanel) && <AiPanel workspace={workspaceChatPanel} closing={aiPresence.closing} demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onClose={closeWorkspaceChat} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
+  const aiPanel = aiEnabled && aiPresence.present && (aiOpen || !workspacePanel) && <AiPanel workspace={workspaceChatPanel} closing={aiPresence.closing} demoControls={demoAiControls} docked={aiDocked} onDock={setAiDocked} model={settings.model} models={aiPanelModels} onModelChange={(model) => void saveSettings({ model, reasoningMode: "instant" })} safetyLevel={settings.aiSafetyLevel || "approve"} onSafetyLevelChange={(aiSafetyLevel) => void saveSettings({ aiSafetyLevel })} input={aiInput} setInput={setAiInput} busy={aiBusy || demoPresetBusy} onSend={(message?: string) => sendAi(message)} onCancel={cancelAi} onClose={closeWorkspaceChat} messages={aiMessages} conversations={data.aiConversations || []} activeConversationId={activeAiConversationId || data.activeAiConversationId || ""} conversationListOpen={aiConversationListOpen} onToggleConversationList={() => { setAiAuditOpen(false); setAiConversationListOpen((open) => !open); }} auditOpen={aiAuditOpen} auditRuns={aiAuditRuns} auditLoading={aiAuditLoading} auditError={aiAuditError} onToggleAudit={() => void toggleAiAuditHistory()} onNewConversation={() => void startNewAiConversation()} onSelectConversation={selectAiConversation} onRenameConversation={(conversationId, title) => void renameAiConversation(conversationId, title)} onToggleConversationPinned={(conversationId) => void toggleAiConversationPinned(conversationId)} onDeleteConversation={(conversationId) => void deleteAiConversation(conversationId)} memoryNotice={aiMemoryNotice} onOpenMemorySettings={() => openSettingsSection({ category: "advanced", detail: "ai", anchor: "ai-memory" })} actionPatches={aiActionPatches} onPatchAction={(messageId, index, patch) => setAiActionPatches((current) => ({ ...current, [messageId]: { ...(current[messageId] || {}), [index]: { ...(current[messageId]?.[index] || {}), ...patch } } }))} onConfirmAction={(messageId, action, index) => void confirmAiAction(action, messageId, index)} onDismissAction={(messageId, action, index) => dismissAiAction(action, messageId, index)} onToggleAction={(messageId, index) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: { ...message.selectedActions, [index]: message.selectedActions?.[index] === false } } : message))} onSetAllActions={(messageId, checked) => setAiMessages((current) => current.map((message) => message.id === messageId ? { ...message, selectedActions: Object.fromEntries((message.actions || []).map((_, index) => [index, checked])) } : message))} onAdoptSelected={(messageId) => void adoptSelectedAiActions(messageId)} onRejectSelected={rejectSelectedAiActions} onViewImport={viewAiImport} onUndoImport={(messageId) => void undoAiImport(messageId)} onApproveAgent={(messageId) => void handleAgentDecision(messageId, "approve")} onRejectAgent={(messageId) => void handleAgentDecision(messageId, "reject")} onUndoAgent={(messageId) => void handleAgentDecision(messageId, "undo")} globalAgentAvailable={authState?.mode === "cloud" && Boolean(authState.user)} projectList={projects.map((p) => ({ id: p.id, title: p.title, color: p.color }))} taskList={tasks.map((task) => ({ id: task.id, title: task.title }))} lang={lang} attachment={aiAttachment} attachmentStatus={aiAttachmentStatus} onAttachment={(file) => void handleAiAttachment(file)} onClearAttachment={clearAiAttachment} />;
 
   const planningViewProps = {
     lang, data, projects, compact: compactLayout, collapsed: collapsedBranches, setCollapsed: setCollapsedBranches,
@@ -9351,7 +9377,7 @@ if (cached?.data && cached?.settings) {
         onError={showToast}
       />
     </Suspense>
-    : <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && !settings.hideAi) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || settings.hideAi}>
+    : <button className="df-brand-ai-button" type="button" onClick={() => { if (compactLayout && aiEnabled) setAiOpen(true); }} aria-label={compactLayout ? (lang === "zh" ? "打开 Navo AI" : "Open Navo AI") : "NavoPath"} disabled={!compactLayout || !aiEnabled}>
       <ProductIcon compact />
     </button>;
   function toggleTimelineDatePicker() {
@@ -9373,7 +9399,7 @@ if (cached?.data && cached?.settings) {
       }}
     />
   );
-  const compactChat = !productPresentation && !settings.hideAi && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />;
+  const compactChat = !productPresentation && aiEnabled && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />;
   return (
     <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${drag ? " is-dragging" : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked && !workspaceChatPanel ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-workspace-layout={workspaceLayout} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-guide-return-drag={returningGuideBlock || undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
       {productAiPresentation && !demoGuideDismissed && !demoHasSchedule && !demoPresetBusy && <span className="df-product-click-guide" aria-hidden="true"><span className="df-product-click-guide-motion"><UiCursorIcon className="df-product-click-guide-cursor" size={32} /><UiPointingHandIcon className="df-product-click-guide-hand" size={32} /></span></span>}
@@ -9587,7 +9613,7 @@ if (cached?.data && cached?.settings) {
                 </> : <>
                 {!shelfView && <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />}
                 <IconButton className={`df-icon-action df-candidate-header-icon${showCompletedCandidates ? " active" : ""}`} icon={<UiListChecksIcon size={17} />} label={t(lang, "candidate.showCompleted")} aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)} />
-                {!settings.hideAi && (
+                {aiEnabled && (
                   <span className="df-ai-plan-title-tools">
                     <IconButton
                       className={`df-ai-plan-title-icon${productAiPresentation && !demoHasSchedule && !demoPresetBusy ? " needs-demo-plan" : ""} ${autoScheduleState === "generating" || autoScheduleState === "committing" || (productAiPresentation && demoPresetBusy) ? "thinking" : ""}`}
@@ -10621,7 +10647,7 @@ if (cached?.data && cached?.settings) {
       )}
 
       {!productPresentation && !compactLayout && !workspacePanel && <button ref={quickAddButtonRef} className="df-add-fab df-icon-action i-plus" data-tip={t(lang, "fab.add")} aria-label={t(lang, "fab.add")} onClick={showGuide && onboardingStep === "add" ? openTaskDraft : () => openAdd("task")} />}
-      {!productPresentation && !compactLayout && !settings.hideAi && (!workspacePanel || aiOpen) && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />}
+      {!productPresentation && !compactLayout && aiEnabled && (!workspacePanel || aiOpen) && <button className="df-ai-fab df-icon-action i-ai" data-tip={t(lang, "fab.askNavo")} aria-label={t(lang, "fab.askNavo")} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />}
       {createPortal(<div className="df-mobile-floating-actions" data-guide-return-drag={returningGuideBlock || undefined} style={themeVars(settings, "execute")}>
         {(mobileExecution || mobilePlacement?.guided) && <Suspense fallback={null}><MobileExecutionControls
           desktop={!mobileExecution}
@@ -10645,7 +10671,7 @@ if (cached?.data && cached?.settings) {
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer engagementEnabled={engagementEnabled} type={addType} setType={(type) => { if (type === "habit" && !habitsEnabled) return; setAddType(type); if (!editingId) { const initial = defaultForm(type); drawerInitialFormRef.current = initial; setForm(initial); } }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onEditSchedule={editTaskSchedule} weekStartsOn={settings.weekStartsOn} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
+      {drawerOpen && <EditDrawer engagementEnabled={engagementEnabled} type={addType} setType={(type) => { if (type === "habit" && !habitsEnabled) return; setAddType(type); if (!editingId) { const initial = defaultForm(type); drawerInitialFormRef.current = initial; setForm(initial); } }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onEditSchedule={editTaskSchedule} weekStartsOn={settings.weekStartsOn} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && aiEnabled} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel && workspaceChatPanel && <div className="df-utility-backdrop" data-workspace-backdrop data-motion-closing={aiPresence.closing || undefined} onMouseDown={closeWorkspaceChat} />}
       {!productAiPresentation && aiPanel}
       {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} data={data} settings={settings} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}

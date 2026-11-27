@@ -37,7 +37,7 @@ describe("settings navigation", () => {
   });
 
   it("restores clear primary categories while retaining legacy destinations", () => {
-    expect(SETTINGS_PRIMARY_CATEGORIES.map(c => c.id)).toEqual(["general", "appearance", "workflow", "ai", "widget", "plugins", "integrations", "account-data"]);
+    expect(SETTINGS_PRIMARY_CATEGORIES.map(c => c.id)).toEqual(["general", "appearance", "workflow", "plugins", "integrations", "account-data"]);
     expect(settingsPrimaryCategory("widget")).toBe("widget");
     expect(visibleSettingsCategories(false).some(c => c.id === "widget")).toBe(false);
     expect(settingsPrimaryCategory("integrations")).toBe("integrations");
@@ -48,6 +48,8 @@ describe("settings navigation", () => {
   });
 
   it("maps every legacy destination to a reachable target", () => {
+    expect(normalizeSettingsTarget("ai")).toEqual({ category: "plugins", pluginOwner: "official:navo-ai" });
+    expect(normalizeSettingsTarget({ category: "widget", anchor: "widget-dark" })).toEqual({ category: "plugins", pluginOwner: "official:desktop-widget", anchor: "widget-dark" });
     expect(normalizeSettingsTarget("execution")).toEqual({ category: "workflow", anchor: "execution-defaults" });
     expect(normalizeSettingsTarget("templates")).toEqual({ category: "workflow", anchor: "templates" });
     expect(normalizeSettingsTarget("account")).toEqual({ category: "account-data", anchor: "account" });
@@ -71,8 +73,8 @@ describe("settings navigation", () => {
 
   it("returns advanced details with a complete breadcrumb", () => {
     const result = searchSettings("dark appearance", "en")[0];
-    expect(result.target).toEqual({ category: "widget", anchor: "widget-dark" });
-    expect(settingsSearchPath(result, "en")).toBe("Desktop Windows › Widget dark appearance");
+    expect(result.target).toEqual({ category: "plugins", pluginOwner: "official:desktop-widget", anchor: "widget-dark" });
+    expect(settingsSearchPath(result, "en")).toBe("Plugins › Widget dark appearance");
   });
 
   it("keeps desktop settings out of web search results", () => {

@@ -19,7 +19,7 @@ export function pluginSettingsDestinations(snapshot: ExtensionSnapshot, previous
   return Object.values(snapshot.preferences.installed).filter(item => item.manifest.kind === "plugin" && item.enabled)
     .sort((a,b) => a.key.localeCompare(b.key, "en"))
     .flatMap<PluginSettingsDestination>(item => {
-      const native = item.key === METRICS_SETTINGS_OWNER || item.key === "official:habits";
+      const native = item.key === METRICS_SETTINGS_OWNER || ["official:habits", "official:navo-ai", "official:desktop-widget"].includes(item.key);
       const options = item.manifest.settingsOptions ?? [];
       const pages = pluginSettingsPages(snapshot, item);
       if (!native && !options.length && !pages.length) {

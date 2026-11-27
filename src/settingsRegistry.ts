@@ -35,7 +35,6 @@ const definitions = [
   ["ai-estimate", "autoEstimateTaskDuration", "basic"],
   ["ai-project", "autoAssignTaskProject", "basic"],
   ["ai-memory", "aiMemoryEnabled", "basic"],
-  ["hide-ai", "hideAi", "basic"],
   ["ai-reasoning", "reasoningMode", "advanced"],
 ] as const satisfies readonly (readonly [string, keyof Settings, PreferenceLevel])[];
 

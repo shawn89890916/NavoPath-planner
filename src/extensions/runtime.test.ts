@@ -82,6 +82,20 @@ describe("trusted plugin runtime", () => {
     await expect(loadPlugin(pkg, f.value, async () => ({ default: { onload(ctx) { ctx.ui.registerPage("Partial", () => {}); throw new Error("broken"); } } }))).rejects.toThrow("broken");
     expect(f.clean).toHaveBeenCalledTimes(1);
   });
+  it("registers native features only for matching official packages and disposes them once", async () => {
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
+    const f = bridge(), pkg = parsePackage(new Uint8Array(readFileSync(new URL("../../public/extensions/packages/navo-ai.navopackage.json", import.meta.url))));
+    f.value.key = "official:navo-ai";
+    const register = vi.fn(() => f.clean);
+    f.value.registerNativeFeature = register;
+    const importer = async () => ({ default: { onload(context: PluginContext) { return context.app.internal.registerNativeFeature("navo-ai"); } } });
+    const loaded = await loadPlugin(pkg, f.value, importer);
+    expect(register).toHaveBeenCalledWith("navo-ai");
+    await loaded.dispose();
+    expect(f.clean).toHaveBeenCalledTimes(1);
+    f.value.key = "imported:navo-ai";
+    await expect(loadPlugin(pkg, f.value, importer)).rejects.toThrow("reserved");
+  });
   it("registers a timer provider and unloads it while keeping the page launcher host-owned", async () => {
     vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test"); vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
     const f = bridge(), pkg = parsePackage(weatherPackageBytes); delete pkg.manifest.styles;

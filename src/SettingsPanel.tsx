@@ -964,7 +964,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               </div>
               </SettingSection>}
 
-            {settingsTarget.category === "widget" && <>
+            {settingsTarget.category === "general" && isDesktopRuntime && <>
             {window.desktopApi?.dockWindow && <SettingSection anchor="desktop-window-settings" title={lang === "zh" ? "贴边栏" : "Dock"}>
               <Suspense fallback={null}><DesktopDockSettings lang={lang} /></Suspense>
             </SettingSection>}
@@ -979,12 +979,94 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                 control={<SettingToggle checked={settings.compactWindowAlwaysOnTop !== false} disabled={!Boolean(window.desktopApi?.compactWindow)} ariaLabel={lang === "zh" ? "竖屏小窗置顶" : "Portrait window always on top"} onChange={(next) => { onSave({ compactWindowAlwaysOnTop: next }); void window.desktopApi?.compactWindow?.setAlwaysOnTop(next); }} />}
               />
             </SettingSection>
-            <SettingSection variant="grouped" anchor="desktop-widget" title={lang === "zh" ? "桌面小组件" : "Desktop widget"}>
+            </>}
+            {settingsTarget.category === "general" && isDesktopRuntime && <SettingSection variant="grouped" title={lang === "zh" ? "应用更新" : "App updates"}>
+              <div data-settings-anchor="updates" tabIndex={-1}><Suspense fallback={null}><DesktopUpdateControl lang={lang} /></Suspense></div>
+              <div data-settings-anchor="beta-updates" tabIndex={-1}><Suspense fallback={null}><BetaUpdatePreference lang={lang} onSave={onSave} /></Suspense></div>
+              </SettingSection>}
+            {settingsTarget.category === "general" && isDesktopRuntime && <div data-settings-anchor="auto-launch" tabIndex={-1}><Suspense fallback={null}><AutoLaunchToggle lang={lang} /></Suspense></div>}
+            {settingsTarget.category === "general" && <SettingSection variant="grouped" anchor="general-help" title={lang === "zh" ? "帮助" : "Help"}>
               <SettingRow
-                title={lang === "zh" ? "启用桌面小组件" : "Enable desktop widget"}
-                description={lang === "zh" ? "置顶小窗快速查看正在做与计时。" : "Always-on-top mini panel for the current task and timer."}
-                control={<SettingToggle checked={settings.featureWidgetEnabled !== false} disabled={!Boolean(window.desktopApi?.widget)} ariaLabel={lang === "zh" ? "启用桌面小组件" : "Enable desktop widget"} onChange={(next) => onSave({ featureWidgetEnabled: next })} />}
+                anchor="restart-onboarding"
+                title={lang === "zh" ? "重新开始新手指南" : "Restart onboarding guide"}
+                control={<SettingActionButton onClick={onRestartOnboarding}>{lang === "zh" ? "重新开始" : "Restart"}</SettingActionButton>}
               />
+              <SettingDisclosure anchor="shortcuts" title={lang === "zh" ? "快捷键参考" : "Shortcut reference"} open={shortcutsOpen} onToggle={setShortcutsOpen}>
+                  <p className="df-settings-desc">{lang === "zh" ? "本版本暂不支持自定义快捷键。" : "Custom shortcuts are not enabled in this version."}</p>
+                  <div className="df-shortcut-reference">
+                    {shortcutGroups.map((group) => (
+                      <section key={group.scope} className="df-shortcut-group">
+                        <h4>{shortcutScopeLabel(group.scope)}</h4>
+                        <div className="df-shortcut-list">
+                          {group.shortcuts.map((shortcut) => (
+                            <div key={shortcut.id} className="df-shortcut-row">
+                              <span>{lang === "zh" ? shortcut.labelZh : shortcut.labelEn}</span>
+                              <kbd>{shortcut.keys.join(" / ")}</kbd>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+              </SettingDisclosure>
+            </SettingSection>}
+            {settingsTarget.category === "integrations" && <Suspense fallback={null}><ConnectionProviders key={authEmail} lang={lang} anchor={settingsTarget.anchor} onSelect={anchor => navigateSettings({ category: "integrations", anchor })} errorMessage={calendarFeedErrorMessage} caldav={<CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} />} externalCalendar={<ExternalCalendarManager lang={lang} />} mcp={<McpTokenManager lang={lang} />} bridge={<SyncBridgeManager lang={lang} />} /></Suspense>}
+            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings inlineSettings={{ "official:navo-ai": <>{/* AI settings follow the plugin owner. */}            <SettingSection title={lang === "zh" ? "模型服务" : "Model service"} description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
+              <SettingRow layout="stacked" anchor="ai-provider" title={lang === "zh" ? "AI 提供商与密钥" : "AI provider and key"} description={lang === "zh" ? "支持 DeepSeek、SiliconFlow、OpenAI、Anthropic、GLM 和通义千问。" : "Supports DeepSeek, SiliconFlow, OpenAI, Anthropic, GLM, and Qwen."} control={<Suspense fallback={null}><AiProviderSettings lang={lang} onSave={onSave} /></Suspense>} />
+              <SettingRow anchor="ai-reasoning" title={lang === "zh" ? "思考模式" : "Reasoning mode"} control={<SettingSelect value={settings.reasoningMode || "instant"} ariaLabel={lang === "zh" ? "思考模式" : "Reasoning mode"} onChange={(value) => onSave({ reasoningMode: value as Settings["reasoningMode"] })} options={[
+                { value: "instant", label: lang === "zh" ? "即时" : "Instant" },
+                ...reasoningModesForModel(settings.model).filter((mode) => mode === "high" || mode === "xhigh").map((mode) => ({ value: mode, label: mode === "xhigh" ? "Xhigh" : "High" })),
+              ]} />} />
+              </SettingSection>
+            <SettingSection variant="grouped" title={lang === "zh" ? "智能辅助" : "Smart assistance"}>
+              <SettingRow anchor="ai-estimate" title={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} description={lang === "zh" ? "影响之后新增的任务；已有任务不变。" : "Applies to new tasks; existing tasks stay unchanged."} control={<SettingToggle checked={settings.autoEstimateTaskDuration !== false} ariaLabel={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} onChange={(next) => onSave({ autoEstimateTaskDuration: next })} />} />
+              <SettingRow anchor="ai-project" title={lang === "zh" ? "自动归入项目" : "Auto-assign project"} description={lang === "zh" ? "新增任务时，仅在判断置信度较高时归入已有项目。" : "Assign new tasks to an existing project only at high confidence."} control={<SettingToggle checked={settings.autoAssignTaskProject !== false} ariaLabel={lang === "zh" ? "自动归入项目" : "Auto-assign project"} onChange={(next) => onSave({ autoAssignTaskProject: next })} />} />
+              </SettingSection>
+            <SettingSection>
+              <SettingDisclosure title={lang === "zh" ? "简报与主动助理" : "Briefs and proactive assistant"} open={Boolean(expandedSettings["ai-briefs"])} onToggle={open => setExpandedSettings(previous => previous["ai-briefs"] === open ? previous : { ...previous, "ai-briefs": open })}>
+              <SettingRow anchor="ai-briefs" title={lang === "zh" ? "每日开工与收工简报" : "Daily start and end briefs"} description={cloudReady ? (lang === "zh" ? "由云端按工作时间调度；应用关闭时邮件仍可送达，打开应用后收工复盘会追加到固定的每日复盘对话。简报只读。" : "Scheduled in the cloud using your work hours; morning email can arrive while the app is closed, and the end-of-day review is appended to the fixed Daily review conversation when you open the app. Briefs are read-only.") : (lang === "zh" ? "登录云端账号后可启用。" : "Sign in to a cloud account to enable briefs.")} control={<SettingToggle checked={Boolean(settings.aiBriefsEnabled)} disabled={!cloudReady} ariaLabel={lang === "zh" ? "每日 AI 简报" : "Daily AI briefs"} onChange={(next) => onSave({ aiBriefsEnabled: next })} />} />
+              <SettingRow title={lang === "zh" ? "简报工作时段" : "Brief work hours"} description={lang === "zh" ? "与智能排程共用工作时段。" : "Uses the same working hours as smart scheduling."} control={<SettingActionButton onClick={() => navigateSettings({ category: "workflow", anchor: "schedule-start" })}>{lang === "zh" ? "调整" : "Edit"}</SettingActionButton>} />
+              <Suspense fallback={null}><ProactiveAssistantSettings settings={settings} data={data} lang={lang} cloudReady={Boolean(cloudReady)} onSave={onSave} onSaveData={onSaveData} onRequestLocation={requestProactiveLocation} /></Suspense>
+              </SettingDisclosure>
+              </SettingSection>
+            <SettingSection variant="grouped" title={lang === "zh" ? "记忆与显示" : "Memory & visibility"}>
+              <SettingRow anchor="ai-memory" title={t(lang, "settings.allowAiContext")} description={lang === "zh" ? "启用后，下方才显示可参与上下文的记忆。" : "When enabled, memories available to context appear below."} control={<SettingToggle checked={Boolean(settings.aiMemoryEnabled)} ariaLabel={t(lang, "settings.allowAiContext")} onChange={(next) => onSave({ aiMemoryEnabled: next })} />} />
+              </SettingSection>
+            <SettingSection>
+              <SettingDisclosure title={lang === "zh" ? "AI 数据与记忆管理" : "AI data and memory management"} open={Boolean(expandedSettings["ai-data"])} onToggle={open => setExpandedSettings(previous => previous["ai-data"] === open ? previous : { ...previous, "ai-data": open })}>
+              <SettingRow
+                anchor="ai-reset"
+                title={lang === "zh" ? "AI 数据操作" : "AI data actions"}
+                description={lang === "zh" ? "重置个性化不会删除任务；清空对话只移除对话历史。" : "Resetting personalization keeps tasks; clearing conversations removes chat history only."}
+                control={<><SettingActionButton onClick={() => { const now = workspaceNow().toISOString(); onSaveData({ ...data, aiProfile: { version: 1, updatedAt: now, historySince: now, durationByProject: {}, projectTokenWeights: {}, preferredStartHourByProject: {}, feedback: { durationCorrections: 0, projectCorrections: 0, assignmentUndos: 0, scheduleAccepts: 0, scheduleRejects: 0 } } }); }}>{lang === "zh" ? "重置个性化" : "Reset personalization"}</SettingActionButton><SettingActionButton disabled={(data.chat || []).length === 0} onClick={onClearChatHistory}>{lang === "zh" ? "清空对话" : "Clear conversations"}</SettingActionButton></>}
+              />
+              {Boolean(settings.aiMemoryEnabled) && <section className="df-ai-memory-settings" data-settings-anchor="ai-memory-list" tabIndex={-1}>
+                <div className="df-ai-memory-settings-head">
+                  <div><strong>{lang === "zh" ? "AI 记忆" : "AI memory"}</strong><small>{lang === "zh" ? `${visibleMemories.length} 条会参与上下文` : `${visibleMemories.length} available to context`}</small></div>
+                  <button onClick={addManualMemory}>{lang === "zh" ? "新增" : "Add"}</button>
+                </div>
+                <div className="df-ai-memory-list">
+                  {visibleMemories.length === 0 && <EmptyState compact title={lang === "zh" ? "还没有保存的记忆" : "No saved memories yet"}>
+                    <Button onClick={addManualMemory}>{lang === "zh" ? "新增记忆" : "Add memory"}</Button>
+                  </EmptyState>}
+                  {visibleMemories.map((memory) => (
+                    <article key={memory.id} className={`df-ai-memory-item ${memory.pinned ? "pinned" : ""}`}>
+                      <textarea value={memory.content} onChange={(event) => saveMemory(memory.id, { content: event.target.value })} />
+                      <input value={(memory.tags || []).join(", ")} onChange={(event) => saveMemory(memory.id, { tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })} placeholder="tags" />
+                      {memory.sourceMessages && memory.sourceMessages.length > 0 && <small>{lang === "zh" ? `保存自 ${memory.sourceMessages.length} 条对话原文` : `Saved from ${memory.sourceMessages.length} messages`}</small>}
+                      <div className="df-ai-memory-actions">
+                        <span>{memory.source || "auto"}</span>
+                        <button onClick={() => saveMemory(memory.id, { pinned: !memory.pinned })}>{memory.pinned ? (lang === "zh" ? "取消置顶" : "Unpin") : (lang === "zh" ? "置顶" : "Pin")}</button>
+                        <button className="danger-lite" onClick={() => saveMemory(memory.id, { archived: true })}>{lang === "zh" ? "删除" : "Delete"}</button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>}
+            </SettingDisclosure>
+              </SettingSection>
+</>, "official:desktop-widget": <>            <SettingSection variant="grouped" anchor="desktop-widget" title={lang === "zh" ? "桌面小组件" : "Desktop widget"}>
+              <SettingRow title={lang === "zh" ? "窗口操作" : "Window controls"} control={<><SettingActionButton onClick={() => { void window.desktopApi?.widget?.open(); }}>{lang === "zh" ? "打开" : "Open"}</SettingActionButton><SettingActionButton onClick={() => { void window.desktopApi?.widget?.close(); }}>{lang === "zh" ? "关闭" : "Close"}</SettingActionButton></>} />
               <SettingRow
                 title={lang === "zh" ? "启动时自动打开" : "Open widget on launch"}
                 control={<SettingToggle checked={settings.widgetOpenOnLaunch === true} disabled={!Boolean(window.desktopApi?.widget)} ariaLabel={lang === "zh" ? "启动时自动打开" : "Open widget on launch"} onChange={(next) => onSave({ widgetOpenOnLaunch: next })} />}
@@ -1070,94 +1152,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                 control={<SettingActionButton disabled={!Boolean(window.desktopApi?.widget)} onClick={() => { void window.desktopApi?.widget?.setBounds({ x: 80, y: 80, width: 400, height: 80 }); }}>{lang === "zh" ? "重置" : "Reset"}</SettingActionButton>}
               />
             </SettingSection>
-            </>}
-            {settingsTarget.category === "general" && isDesktopRuntime && <SettingSection variant="grouped" title={lang === "zh" ? "应用更新" : "App updates"}>
-              <div data-settings-anchor="updates" tabIndex={-1}><Suspense fallback={null}><DesktopUpdateControl lang={lang} /></Suspense></div>
-              <div data-settings-anchor="beta-updates" tabIndex={-1}><Suspense fallback={null}><BetaUpdatePreference lang={lang} onSave={onSave} /></Suspense></div>
-              </SettingSection>}
-            {settingsTarget.category === "general" && isDesktopRuntime && <div data-settings-anchor="auto-launch" tabIndex={-1}><Suspense fallback={null}><AutoLaunchToggle lang={lang} /></Suspense></div>}
-            {settingsTarget.category === "general" && <SettingSection variant="grouped" anchor="general-help" title={lang === "zh" ? "帮助" : "Help"}>
-              <SettingRow
-                anchor="restart-onboarding"
-                title={lang === "zh" ? "重新开始新手指南" : "Restart onboarding guide"}
-                control={<SettingActionButton onClick={onRestartOnboarding}>{lang === "zh" ? "重新开始" : "Restart"}</SettingActionButton>}
-              />
-              <SettingDisclosure anchor="shortcuts" title={lang === "zh" ? "快捷键参考" : "Shortcut reference"} open={shortcutsOpen} onToggle={setShortcutsOpen}>
-                  <p className="df-settings-desc">{lang === "zh" ? "本版本暂不支持自定义快捷键。" : "Custom shortcuts are not enabled in this version."}</p>
-                  <div className="df-shortcut-reference">
-                    {shortcutGroups.map((group) => (
-                      <section key={group.scope} className="df-shortcut-group">
-                        <h4>{shortcutScopeLabel(group.scope)}</h4>
-                        <div className="df-shortcut-list">
-                          {group.shortcuts.map((shortcut) => (
-                            <div key={shortcut.id} className="df-shortcut-row">
-                              <span>{lang === "zh" ? shortcut.labelZh : shortcut.labelEn}</span>
-                              <kbd>{shortcut.keys.join(" / ")}</kbd>
-                            </div>
-                          ))}
-                        </div>
-                      </section>
-                    ))}
-                  </div>
-              </SettingDisclosure>
-            </SettingSection>}
-            {settingsTarget.category === "ai" && <SettingSection title={lang === "zh" ? "模型服务" : "Model service"} description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
-              <SettingRow layout="stacked" anchor="ai-provider" title={lang === "zh" ? "AI 提供商与密钥" : "AI provider and key"} description={lang === "zh" ? "支持 DeepSeek、SiliconFlow、OpenAI、Anthropic、GLM 和通义千问。" : "Supports DeepSeek, SiliconFlow, OpenAI, Anthropic, GLM, and Qwen."} control={<Suspense fallback={null}><AiProviderSettings lang={lang} onSave={onSave} /></Suspense>} />
-              <SettingRow anchor="ai-reasoning" title={lang === "zh" ? "思考模式" : "Reasoning mode"} control={<SettingSelect value={settings.reasoningMode || "instant"} ariaLabel={lang === "zh" ? "思考模式" : "Reasoning mode"} onChange={(value) => onSave({ reasoningMode: value as Settings["reasoningMode"] })} options={[
-                { value: "instant", label: lang === "zh" ? "即时" : "Instant" },
-                ...reasoningModesForModel(settings.model).filter((mode) => mode === "high" || mode === "xhigh").map((mode) => ({ value: mode, label: mode === "xhigh" ? "Xhigh" : "High" })),
-              ]} />} />
-              </SettingSection>}
-            {settingsTarget.category === "ai" && <SettingSection variant="grouped" title={lang === "zh" ? "智能辅助" : "Smart assistance"}>
-              <SettingRow anchor="ai-estimate" title={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} description={lang === "zh" ? "影响之后新增的任务；已有任务不变。" : "Applies to new tasks; existing tasks stay unchanged."} control={<SettingToggle checked={settings.autoEstimateTaskDuration !== false} ariaLabel={lang === "zh" ? "自动估算任务用时" : "Estimate task duration"} onChange={(next) => onSave({ autoEstimateTaskDuration: next })} />} />
-              <SettingRow anchor="ai-project" title={lang === "zh" ? "自动归入项目" : "Auto-assign project"} description={lang === "zh" ? "新增任务时，仅在判断置信度较高时归入已有项目。" : "Assign new tasks to an existing project only at high confidence."} control={<SettingToggle checked={settings.autoAssignTaskProject !== false} ariaLabel={lang === "zh" ? "自动归入项目" : "Auto-assign project"} onChange={(next) => onSave({ autoAssignTaskProject: next })} />} />
-              </SettingSection>}
-            {settingsTarget.category === "ai" && <SettingSection>
-              <SettingDisclosure title={lang === "zh" ? "简报与主动助理" : "Briefs and proactive assistant"} open={Boolean(expandedSettings["ai-briefs"])} onToggle={open => setExpandedSettings(previous => previous["ai-briefs"] === open ? previous : { ...previous, "ai-briefs": open })}>
-              <SettingRow anchor="ai-briefs" title={lang === "zh" ? "每日开工与收工简报" : "Daily start and end briefs"} description={cloudReady ? (lang === "zh" ? "由云端按工作时间调度；应用关闭时邮件仍可送达，打开应用后收工复盘会追加到固定的每日复盘对话。简报只读。" : "Scheduled in the cloud using your work hours; morning email can arrive while the app is closed, and the end-of-day review is appended to the fixed Daily review conversation when you open the app. Briefs are read-only.") : (lang === "zh" ? "登录云端账号后可启用。" : "Sign in to a cloud account to enable briefs.")} control={<SettingToggle checked={Boolean(settings.aiBriefsEnabled)} disabled={!cloudReady} ariaLabel={lang === "zh" ? "每日 AI 简报" : "Daily AI briefs"} onChange={(next) => onSave({ aiBriefsEnabled: next })} />} />
-              <SettingRow title={lang === "zh" ? "简报工作时段" : "Brief work hours"} description={lang === "zh" ? "与智能排程共用工作时段。" : "Uses the same working hours as smart scheduling."} control={<SettingActionButton onClick={() => navigateSettings({ category: "workflow", anchor: "schedule-start" })}>{lang === "zh" ? "调整" : "Edit"}</SettingActionButton>} />
-              <Suspense fallback={null}><ProactiveAssistantSettings settings={settings} data={data} lang={lang} cloudReady={Boolean(cloudReady)} onSave={onSave} onSaveData={onSaveData} onRequestLocation={requestProactiveLocation} /></Suspense>
-              </SettingDisclosure>
-              </SettingSection>}
-            {settingsTarget.category === "ai" && <SettingSection variant="grouped" title={lang === "zh" ? "记忆与显示" : "Memory & visibility"}>
-              <SettingRow anchor="ai-memory" title={t(lang, "settings.allowAiContext")} description={lang === "zh" ? "启用后，下方才显示可参与上下文的记忆。" : "When enabled, memories available to context appear below."} control={<SettingToggle checked={Boolean(settings.aiMemoryEnabled)} ariaLabel={t(lang, "settings.allowAiContext")} onChange={(next) => onSave({ aiMemoryEnabled: next })} />} />
-              <SettingRow anchor="hide-ai" title={t(lang, "settings.hideAllAi")} control={<SettingToggle checked={Boolean(settings.hideAi)} ariaLabel={t(lang, "settings.hideAllAi")} onChange={(next) => onSave({ hideAi: next })} />} />
-              </SettingSection>}
-            {settingsTarget.category === "ai" && <SettingSection>
-              <SettingDisclosure title={lang === "zh" ? "AI 数据与记忆管理" : "AI data and memory management"} open={Boolean(expandedSettings["ai-data"])} onToggle={open => setExpandedSettings(previous => previous["ai-data"] === open ? previous : { ...previous, "ai-data": open })}>
-              <SettingRow
-                anchor="ai-reset"
-                title={lang === "zh" ? "AI 数据操作" : "AI data actions"}
-                description={lang === "zh" ? "重置个性化不会删除任务；清空对话只移除对话历史。" : "Resetting personalization keeps tasks; clearing conversations removes chat history only."}
-                control={<><SettingActionButton onClick={() => { const now = workspaceNow().toISOString(); onSaveData({ ...data, aiProfile: { version: 1, updatedAt: now, historySince: now, durationByProject: {}, projectTokenWeights: {}, preferredStartHourByProject: {}, feedback: { durationCorrections: 0, projectCorrections: 0, assignmentUndos: 0, scheduleAccepts: 0, scheduleRejects: 0 } } }); }}>{lang === "zh" ? "重置个性化" : "Reset personalization"}</SettingActionButton><SettingActionButton disabled={(data.chat || []).length === 0} onClick={onClearChatHistory}>{lang === "zh" ? "清空对话" : "Clear conversations"}</SettingActionButton></>}
-              />
-              {Boolean(settings.aiMemoryEnabled) && <section className="df-ai-memory-settings" data-settings-anchor="ai-memory-list" tabIndex={-1}>
-                <div className="df-ai-memory-settings-head">
-                  <div><strong>{lang === "zh" ? "AI 记忆" : "AI memory"}</strong><small>{lang === "zh" ? `${visibleMemories.length} 条会参与上下文` : `${visibleMemories.length} available to context`}</small></div>
-                  <button onClick={addManualMemory}>{lang === "zh" ? "新增" : "Add"}</button>
-                </div>
-                <div className="df-ai-memory-list">
-                  {visibleMemories.length === 0 && <EmptyState compact title={lang === "zh" ? "还没有保存的记忆" : "No saved memories yet"}>
-                    <Button onClick={addManualMemory}>{lang === "zh" ? "新增记忆" : "Add memory"}</Button>
-                  </EmptyState>}
-                  {visibleMemories.map((memory) => (
-                    <article key={memory.id} className={`df-ai-memory-item ${memory.pinned ? "pinned" : ""}`}>
-                      <textarea value={memory.content} onChange={(event) => saveMemory(memory.id, { content: event.target.value })} />
-                      <input value={(memory.tags || []).join(", ")} onChange={(event) => saveMemory(memory.id, { tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })} placeholder="tags" />
-                      {memory.sourceMessages && memory.sourceMessages.length > 0 && <small>{lang === "zh" ? `保存自 ${memory.sourceMessages.length} 条对话原文` : `Saved from ${memory.sourceMessages.length} messages`}</small>}
-                      <div className="df-ai-memory-actions">
-                        <span>{memory.source || "auto"}</span>
-                        <button onClick={() => saveMemory(memory.id, { pinned: !memory.pinned })}>{memory.pinned ? (lang === "zh" ? "取消置顶" : "Unpin") : (lang === "zh" ? "置顶" : "Pin")}</button>
-                        <button className="danger-lite" onClick={() => saveMemory(memory.id, { archived: true })}>{lang === "zh" ? "删除" : "Delete"}</button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </section>}
-            </SettingDisclosure>
-              </SettingSection>}
-            {settingsTarget.category === "integrations" && <Suspense fallback={null}><ConnectionProviders key={authEmail} lang={lang} anchor={settingsTarget.anchor} onSelect={anchor => navigateSettings({ category: "integrations", anchor })} errorMessage={calendarFeedErrorMessage} caldav={<CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} />} externalCalendar={<ExternalCalendarManager lang={lang} />} mcp={<McpTokenManager lang={lang} />} bridge={<SyncBridgeManager lang={lang} />} /></Suspense>}
-            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings inlineSettings={{ "official:habits": <SettingSection variant="grouped" anchor="habits" title={lang === "zh" ? "习惯" : "Habits"}><SettingRow anchor="habit-candidates" title={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today’s candidates"} description={lang === "zh" ? "隐藏此区不会删除习惯或历史记录。" : "Hiding this area does not remove habits or their history."} control={<SettingToggle checked={settings.featureHabitCandidatesEnabled !== false} ariaLabel={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today’s candidates"} onChange={(next) => onSave({ featureHabitCandidatesEnabled: next })} />} /></SettingSection>, "official:metrics": <div data-settings-anchor="metrics" tabIndex={-1}><SettingSection variant="grouped" title={lang === "zh" ? "统计偏好" : "Statistics preferences"}><SettingRow
+</>, "official:habits": <SettingSection variant="grouped" anchor="habits" title={lang === "zh" ? "习惯" : "Habits"}><SettingRow anchor="habit-candidates" title={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today’s candidates"} description={lang === "zh" ? "隐藏此区不会删除习惯或历史记录。" : "Hiding this area does not remove habits or their history."} control={<SettingToggle checked={settings.featureHabitCandidatesEnabled !== false} ariaLabel={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today’s candidates"} onChange={(next) => onSave({ featureHabitCandidatesEnabled: next })} />} /></SettingSection>, "official:metrics": <div data-settings-anchor="metrics" tabIndex={-1}><SettingSection variant="grouped" title={lang === "zh" ? "统计偏好" : "Statistics preferences"}><SettingRow
                 anchor="metrics-range"
                 title={lang === "zh" ? "默认时间范围" : "Default time range"}
                 control={<SettingSelect<NonNullable<Settings["metricsRangePreset"]>>
@@ -1320,7 +1315,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
         )}
       </aside>
       {!settingsHome && onboardingSettings && (onboardingSettings === "plugins" ? settingsTarget.category === "plugins" && !selectedPluginPage && !activePluginOwner && !marketOpen
-        : onboardingSettings === "ai" ? settingsTarget.category === "ai"
+        : onboardingSettings === "ai" ? activePluginOwner === "official:navo-ai"
         : settingsTarget.category === "integrations" && settingsTarget.anchor === "mcp") &&
         <OnboardingSettingsHint topic={onboardingSettings} contentRef={settingsContentRef} lang={lang} onContinue={onClose} />}
       {confirmResetSettings && createPortal(
