@@ -34,6 +34,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     const t = (cn: string, en: string) => zh ? cn : en;
     let previewView: ReturnType<typeof createInitialPreviewView> | undefined;
     let previewKey = "";
+    let pauseReason = "";
     const surface = mountIsolatedPluginSurface(container, `
       .nvp-sp-sync { width: 100%; max-width: 920px; margin-inline: auto; padding: 16px clamp(12px, 3vw, 24px) 24px; display: grid; gap: 16px; }
       p, h2 { margin: 0; }
@@ -130,7 +131,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       delete links.tombstones[syncId]; await persist();
     };
     const displayState = (state: any) => {
-      pairId = state.pairId || pairId; status = state.status || "waiting";
+      pairId = state.pairId || pairId; status = state.status || "waiting"; pauseReason = state.pauseReason || "";
       pairing.hidden = status === "preview"; codeRow.hidden = status === "preview" || !pairingCode;
       connect.textContent = pairId ? t("为另一设备生成配对码", "Pair another device") : t("生成配对码", "Create pairing code");
       disconnect.hidden = !pairId; refresh.hidden = !pairId || status === "preview" || status === "paused";
@@ -180,7 +181,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       renderStatus();
     };
     const renderStatus = () => {
-      const labels: Record<string, string> = { waiting: t("等待另一端上传数据", "Waiting for the other app"), preview: t("已连接 · 等待确认首次导入", "Connected · review first import"), active: t("已连接 · 自动同步", "Connected · automatic sync"), paused: t("已暂停 · 撤销后请断开并重新配对", "Paused after undo · disconnect and pair again") };
+      const labels: Record<string, string> = { waiting: t("等待另一端上传数据", "Waiting for the other app"), preview: t("已连接 · 等待确认首次导入", "Connected · review first import"), active: t("已连接 · 自动同步", "Connected · automatic sync"), paused: pauseReason === "history-feedback" ? t("已暂停 · 检测到历史日历回流，请先修复异常数据", "Paused · read-only calendar feedback detected; repair affected records first") : t("已暂停 · 撤销后请断开并重新配对", "Paused after undo · disconnect and pair again") };
       line.textContent = lastError || (pairId ? (labels[status] || t("已连接", "Connected")) + (busy ? t(" · 同步中", " · syncing") : "") : t("尚未配对", "Not paired"));
       if (pairId && !busy && !lastError && lastSuccess && status === "active") line.textContent += t(` · 上次同步 ${lastSuccess} · 应用 ${lastApplied} 项更改`, ` · Last sync ${lastSuccess} · ${lastApplied} changes applied`);
       line.setAttribute("aria-busy", String(busy));
