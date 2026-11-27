@@ -2,6 +2,7 @@ import type { PluginContext, PluginModule } from "../../src/extensions/types";
 import type { PlannerData, Project, Task, TimelineRecord } from "../../src/types";
 import { mountIsolatedPluginSurface } from "../../src/extensions/pluginSurface";
 import { createInitialPreviewView } from "./preview";
+import { planHistoryRepair } from "./repair";
 import { selectTimedSlot, durationMinutes, validSlot, hasRecordedTimedSlot, isReadOnlyHistoryNote } from "./schedule";
 
 type LinkStore = { projects: Record<string, string>; tasks: Record<string, string>; tombstones: Record<string, { kind: "task" | "project"; item: Task | Project; deletedAt: string; taskIds?: string[]; parentSyncId?: string; restoring?: boolean; restoreId?: string }> };
@@ -88,7 +89,46 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     const disconnect = document.createElement("button"); disconnect.type = "button"; disconnect.textContent = zh ? "断开连接" : "Disconnect"; disconnect.hidden = true;
     actions.append(refresh, confirm, disconnect);
     confirm.dataset.variant = "primary";
-    panel.append(line, pairing, codeRow, actions, details);
+    const repairPanel = document.createElement("div"); repairPanel.className = "nvp-sp-sync-details"; repairPanel.hidden = true;
+    panel.append(line, pairing, codeRow, actions, repairPanel, details);
+    const renderRepair = () => {
+      const preview = planHistoryRepair(ctx.app.getData());
+      repairPanel.hidden = !preview.candidates.length && !preview.blocked.length;
+      repairPanel.replaceChildren();
+      if (repairPanel.hidden) return;
+      const title=document.createElement("h2"); title.textContent=t("历史日历异常修复","Calendar history repair");
+      const summary=document.createElement("p"); summary.textContent=t(
+        `确认存在 ${preview.candidates.length} 个派生任务、${preview.recordCount} 条重复排程；${preview.blocked.length} 个不明确任务保持原样。`,
+        `${preview.candidates.length} verified derived tasks, ${preview.recordCount} replayed slots; ${preview.blocked.length} ambiguous tasks will be left unchanged.`);
+      const list=document.createElement("ul");
+      for(const task of preview.candidates) {
+        const row=document.createElement("li");
+        const slot=task.timelineRecords?.[0];
+        row.textContent=`${task.title} · ${slot?.scheduledDate || ""} ${slot?.scheduledStart || ""} · ${task.timelineRecords?.length || 0}`;
+        list.append(row);
+      }
+      const guidance=document.createElement("p"); guidance.textContent=t(
+        "只移除与原始历史排程完全匹配且无独立计时、评分或子任务的重复派生任务。先暂停连接；清理后须关闭 SP 历史日历自动任务导入、检查 SP 派生任务，再重新配对。活动历史中可以撤销本次清理。",
+        "Only duplicate derived tasks with matching original history and no independent time, ratings or subtasks are removed. Pause the connection first; disable SP history auto-import, review SP derived tasks, then pair again. Undo is available in Activity history.");
+      const button=document.createElement("button"); button.type="button"; button.textContent=t("确认清理上述派生任务","Confirm cleanup of listed derived tasks");
+      button.disabled=busy || status!=="paused" || !pairId || !api.commitBatch || !preview.candidates.length;
+      button.onclick=()=>{
+        if(button.disabled || busy) return;
+        if(!window.confirm(t(`移除上方 ${preview.candidates.length} 个派生任务及 ${preview.recordCount} 条异常排程？原始任务不变，操作可在活动历史撤销。`,`Remove the listed ${preview.candidates.length} derived tasks and ${preview.recordCount} replayed slots? Original tasks remain unchanged; undo is available in Activity history.`))) return;
+        busy=true; lastError=""; renderStatus();
+        void (async()=>{
+          const state=await getState();
+          if(state.status!=="paused" || state.pairId!==pairId || !api.commitBatch) throw new Error(t("连接必须保持暂停且支持安全批量操作。","The connection must be paused and support audited batches."));
+          const data=ctx.app.getData();
+          const latest=planHistoryRepair(data);
+          if(JSON.stringify(latest.candidates)!==JSON.stringify(preview.candidates)) throw new Error(t("数据已改变，请重新预览。","Data changed; review the new preview."));
+          const ids=new Set(latest.candidates.map(task=>task.id));
+          await api.commitBatch(pairId,{tasks:data.tasks,projects:data.projects},{tasks:data.tasks.filter(task=>!ids.has(task.id)),projects:data.projects});
+          ctx.app.toast(t("异常派生任务已清理；连接仍暂停。","Derived tasks cleaned up; connection remains paused."));
+        })().catch(error=>{lastError=String(error);}).finally(()=>{busy=false;renderStatus();});
+      };
+      repairPanel.append(title,summary,list,guidance,button);
+    };
     const persist = async () => {
       const value = { links, pairId };
       const serialized = JSON.stringify(value);
@@ -189,6 +229,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       refresh.textContent = busy ? t("同步中…", "Syncing…") : t("立即同步", "Sync now");
       confirm.textContent = busy ? t("处理中…", "Working…") : t("确认首次导入", "Confirm initial import");
       confirm.disabled = busy; refresh.disabled = busy; disconnect.disabled = busy;
+      renderRepair();
     };
     const ensureMappings = (assignments: Array<{ kind: "project" | "task"; id: string; syncId: string }>) => {
       for (const item of assignments) (item.kind === "task" ? links.tasks : links.projects)[item.id] = item.syncId;
