@@ -72,6 +72,8 @@ export function AnchoredNarrowMenu({
     if (menuRef.current) observer.observe(menuRef.current);
     panel?.addEventListener("transitionend", update);
     update();
+    const resetIntent = () => intent.current?.reset();
+    if (intentPreload) window.addEventListener("blur", resetIntent);
     window.addEventListener("resize", update);
     document.addEventListener("scroll", update, true);
     document.addEventListener("pointerdown", dismiss);
@@ -79,12 +81,13 @@ export function AnchoredNarrowMenu({
     return () => {
       observer.disconnect();
       panel?.removeEventListener("transitionend", update);
+      window.removeEventListener("blur", resetIntent);
       window.removeEventListener("resize", update);
       document.removeEventListener("scroll", update, true);
       document.removeEventListener("pointerdown", dismiss);
       document.removeEventListener("keydown", escape);
     };
-  }, [anchorRef, onClose, open, placement]);
+  }, [anchorRef, onClose, open, placement, intentPreload]);
 
   useLayoutEffect(() => {
     if (!open || !focusOnOpen) return;
@@ -104,12 +107,17 @@ export function AnchoredNarrowMenu({
         const point = { x: event.clientX, y: event.clientY, t: event.timeStamp };
         const prediction = (intent.current ??= createIntentSampler()).sample(point);
         if (!prediction) return;
-        const target = event.currentTarget.querySelector<HTMLButtonElement>("button[data-intent-preload]");
-        if (!target || target.disabled || target.getAttribute("aria-pressed") === "true") return;
-        if (approachesBounds(point, prediction, target.getBoundingClientRect())) {
+        const bounds = event.currentTarget.getBoundingClientRect();
+        for (const target of event.currentTarget.querySelectorAll<HTMLButtonElement>("button[data-intent-preload]")) {
+          if (target.disabled || target.getAttribute("aria-pressed") === "true") continue;
+          const rect = target.getBoundingClientRect();
+          const visible = { left: Math.max(rect.left, bounds.left), right: Math.min(rect.right, bounds.right),
+            top: Math.max(rect.top, bounds.top), bottom: Math.min(rect.bottom, bounds.bottom) };
+          if (!approachesBounds(point, prediction, visible)) continue;
           warmed.current = true;
           intent.current = null;
           intentPreload();
+          break;
         }
       } : undefined}
       onPointerLeave={intentPreload ? () => intent.current?.reset() : undefined}

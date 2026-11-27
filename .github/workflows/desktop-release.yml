@@ -57,6 +57,11 @@ jobs:
       - name: Verify native Chromium Metrics storage
         run: node scripts/metrics-storage-browser.cjs
 
+      - name: Verify native Chromium intent
+        run: node scripts/metrics-storage-browser.cjs
+        env:
+          NAVOPATH_INTENT_ONLY: "1"
+
       - name: Build desktop release
         run: npm run dist
 

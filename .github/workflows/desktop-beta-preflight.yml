@@ -28,6 +28,9 @@ jobs:
       - run: node scripts/prepare-desktop-release.mjs --check-policy
       - run: npm test
       - run: node scripts/metrics-storage-browser.cjs
+      - run: node scripts/metrics-storage-browser.cjs
+        env:
+          NAVOPATH_INTENT_ONLY: "1"
       - run: npm run css:check
       - run: npm run extensions:check
       - run: npm ci --prefix mcp-worker
