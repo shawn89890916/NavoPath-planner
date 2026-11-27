@@ -991,9 +991,9 @@ export default function PlanningView(props: {
   }, [safeProjects]);
 
   const projectName = useCallback((projectId?: string) => {
-    if (!projectId) return (props.lang === "zh" ? "Unassigned" : "Unassigned");
+    if (!projectId) return (props.lang === "zh" ? "未归属" : "Unassigned");
     const project = safeProjects.find((p) => String(p.id) === String(projectId));
-    return project?.title || (props.lang === "zh" ? "Unassigned" : "Unassigned");
+    return project?.title || (props.lang === "zh" ? "未归属" : "Unassigned");
   }, [safeProjects, props.lang]);
 
   const reorderPlanningTasks = useCallback((dragId: string, targetTaskId: string, position: "before" | "after", sequence: Task[]) => {
@@ -1911,7 +1911,7 @@ export default function PlanningView(props: {
               )}
             <div className="df-tree-wrap">
           {(viewMode === "tree" || viewMode === "list") && activeFilterChips.length > 0 && (
-            <div className="df-active-filter-bar" role="region" aria-label={props.lang === "zh" ? "Active filters" : "Active filters"}>
+            <div className="df-active-filter-bar" role="region" aria-label={props.lang === "zh" ? "已启用筛选" : "Active filters"}>
               {activeFilterChips.map((chip) => (
                 <button
                   key={chip.key}

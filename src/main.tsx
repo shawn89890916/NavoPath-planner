@@ -1410,7 +1410,7 @@ function App() {
   const metricsEnabled = metricsPluginActive(extensionSnapshot);
   const availableTimerModes = () => getTimerModes().filter(mode => mode.mode !== "countdown" || nativeFeatureActive(extensionService.getSnapshot(), "countdown") || productDemo);
   useEffect(() => {
-    if (!flowtimeEnabled && focusOverlayMode === "flowtime") setFocusOverlayMode("stopwatch");
+    if (extensionService.isReady() && !flowtimeEnabled && focusOverlayMode === "flowtime") setFocusOverlayMode("stopwatch");
     if (countdownEnabled || !timerExtensionsReady || !ownsTimerClock || !extensionService.isReady()) return;
     if (widgetTimerRuntimeRef.current.mode === "countdown" || settingsRef.current?.widgetTimerPreferences?.mode === "countdown") {
       // Switch to the core clock after settling accepted elapsed time; keep the task and history.
@@ -1419,19 +1419,19 @@ function App() {
   }, [countdownEnabled, flowtimeEnabled, focusOverlayMode, timerExtensionsReady, ownsTimerClock, settings?.extensions]);
   const isAiActive = () => Boolean(productDemo) || nativeFeatureActive(extensionService.getSnapshot(), "navo-ai");
   useEffect(() => {
-    if (!aiEnabled && !productDemo) {
+    if (!aiEnabled && !productDemo && extensionService.isReady()) {
       aiAbortRef.current?.abort();
       if (aiOpen) setAiOpen(false);
       setProactiveNotifications([]);
       setUnfinishedNotification(null);
     }
-  }, [aiEnabled, aiOpen]);
+  }, [aiEnabled, aiOpen, timerExtensionsReady]);
   useEffect(() => {
-    if (!habitsEnabled && habitPanel) {
+    if (!habitsEnabled && habitPanel && extensionService.isReady()) {
       setHabitPanel(null);
       setEditingHabitId(null);
     }
-  }, [habitsEnabled, habitPanel]);
+  }, [habitsEnabled, habitPanel, timerExtensionsReady]);
 
   const dialog = useInAppDialog(lang);
   useEffect(() => productPresentation ? undefined : installWorkspaceWheelRouting(document), []);
@@ -4717,7 +4717,7 @@ if (cached?.data && cached?.settings) {
     if (!timerOwnerRef.current?.isOwner()) { timerOwnerRef.current?.sendAction(action); return; }
     switch (action.type) {
       case "requestSnapshot":
-        window.desktopApi?.widget?.pushSnapshot(buildWidgetSnapshot());
+        if (nativeFeatureActive(extensionService.getSnapshot(), "desktop-widget")) window.desktopApi?.widget?.pushSnapshot(buildWidgetSnapshot());
         break;
       case "quickAdd":
         widgetQuickAdd(action.title);
@@ -4767,7 +4767,7 @@ if (cached?.data && cached?.settings) {
         }
         break;
       case "setAlwaysOnTop":
-        void window.desktopApi?.widget?.setAlwaysOnTop(action.enabled);
+        if (nativeFeatureActive(extensionService.getSnapshot(), "desktop-widget")) void window.desktopApi?.widget?.setAlwaysOnTop(action.enabled);
         void saveSettings({ widgetAlwaysOnTop: action.enabled });
         break;
       case "updateAppearance":
@@ -5000,7 +5000,7 @@ if (cached?.data && cached?.settings) {
         break;
       }
       case "resetPosition":
-        void window.desktopApi?.widget?.setBounds({ x: 80, y: 80, width: 400, height: 80 });
+        if (nativeFeatureActive(extensionService.getSnapshot(), "desktop-widget")) void window.desktopApi?.widget?.setBounds({ x: 80, y: 80, width: 400, height: 80 });
         break;
     }
   }
@@ -5068,7 +5068,7 @@ if (cached?.data && cached?.settings) {
   useEffect(() => {
     const interval = window.setInterval(() => {
       if (!timerOwnerRef.current?.isOwner()) return;
-      const snapshot = widgetSnapshotBuilderRef.current(); timerOwnerRef.current.publish(snapshot); window.desktopApi?.widget?.pushSnapshot(snapshot);
+      const snapshot = widgetSnapshotBuilderRef.current(); timerOwnerRef.current.publish(snapshot); if (nativeFeatureActive(extensionService.getSnapshot(), "desktop-widget")) window.desktopApi?.widget?.pushSnapshot(snapshot);
     }, 1_000);
     return () => window.clearInterval(interval);
   }, []);
@@ -5079,7 +5079,7 @@ if (cached?.data && cached?.settings) {
   // timer ticks (every second).
   useEffect(() => {
     if (!timerOwnerRef.current?.isOwner()) return;
-    const snapshot = buildWidgetSnapshot(); timerOwnerRef.current.publish(snapshot); window.desktopApi?.widget?.pushSnapshot(snapshot);
+    const snapshot = buildWidgetSnapshot(); timerOwnerRef.current.publish(snapshot); if (widgetEnabled) window.desktopApi?.widget?.pushSnapshot(snapshot);
   }, [timerElapsed, timerRunning, timerTaskId, data, settings?.widgetAlwaysOnTop, settings?.widgetAppearance, settings?.widgetAppearanceMigrated, settings?.theme, widgetTimerPreferences, widgetTimerRuntime, widgetPopoverOpen, lang, extensionSnapshot, ownsTimerClock]);
 
   useEffect(() => {
@@ -5106,10 +5106,10 @@ if (cached?.data && cached?.settings) {
 
   // Apply always-on-top setting to an existing widget window when it changes.
   useEffect(() => {
-    if (!window.desktopApi?.widget) return;
+    if (!widgetEnabled || !window.desktopApi?.widget) return;
     if (settings?.widgetAlwaysOnTop === undefined) return;
     void window.desktopApi.widget.setAlwaysOnTop(settings.widgetAlwaysOnTop !== false);
-  }, [settings?.widgetAlwaysOnTop]);
+  }, [settings?.widgetAlwaysOnTop, widgetEnabled]);
 
   useEffect(() => {
     if (!window.desktopApi?.compactWindow) return;

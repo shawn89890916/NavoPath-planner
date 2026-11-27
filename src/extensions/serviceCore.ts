@@ -41,6 +41,7 @@ export class ExtensionService {
   private operationTail: Promise<unknown> = Promise.resolve();
   private unbindStorage: Dispose = () => {};
   private ready = false;
+  private bridgeDiscoveryChecked = false;
   private lastCheck = 0;
   private catalogRequest?: { signature: string; promise: Promise<void> };
   private updateRequest?: Promise<void>;
@@ -74,7 +75,7 @@ export class ExtensionService {
     const account = host ? host.getAccountId() || "preview" : "";
     if (account !== this.account) {
       const generation = ++this.generation;
-      this.ready = false; this.account = account;
+      this.ready = false; this.bridgeDiscoveryChecked = false; this.account = account;
       this.catalogRequest = undefined; this.updateRequest = undefined; this.batchRequest = undefined; this.lastCheck = 0;
       for (const { plugin } of this.loaded.values()) await plugin.dispose(); this.loaded.clear();
       await this.themeCleanup(); this.themeSignature = "";
@@ -548,6 +549,7 @@ export class ExtensionService {
       changed = true;
     }
     if (!preferences.migratedNativeFeatures) {
+      let complete = true;
       const seeds = [
         { id: "habits", install: true, enabled: settings.featureHabitsEnabled !== false },
         { id: "navo-ai", install: true, enabled: settings.hideAi !== true },
@@ -559,41 +561,44 @@ export class ExtensionService {
         const key = `official:${id}`;
         if (!install || next.installed[key] || next.removed[key]) continue;
         const entry = getBundledExtension(id);
-        if (!entry || !await this.publishBundledMigration(entry, generation)) return;
+        if (!entry || !await this.publishBundledMigration(entry, generation)) {
+          if (generation !== this.generation) return;
+          complete = false; continue;
+        }
         addDefault(entry, enabled, entry.downloadUrl);
       }
-      next.migratedNativeFeatures = true;
-      changed = true;
+      if (complete) { next.migratedNativeFeatures = true; changed = true; }
     }
     if (platform() === "desktop" && !preferences.migratedDesktopWidget) {
       const key = "official:desktop-widget";
       if (!next.installed[key] && !next.removed[key]) {
         const entry = getBundledExtension("desktop-widget");
-        if (!entry || !await this.publishBundledMigration(entry, generation)) return;
-        addDefault(entry, settings.featureWidgetEnabled !== false, entry.downloadUrl);
+        if (entry && await this.publishBundledMigration(entry, generation)) addDefault(entry, settings.featureWidgetEnabled !== false, entry.downloadUrl);
+        else if (generation !== this.generation) return;
       }
-      next.migratedDesktopWidget = true;
-      changed = true;
+      if (next.installed[key] || next.removed[key]) { next.migratedDesktopWidget = true; changed = true; }
     }
-    if (host.getAccountId() && !preferences.migratedCloudDriveSync && window.plannerApi?.listSyncBridgeStatuses) {
-      // Only migrate a verified existing bridge. If offline, retain legacy access and retry on later reconciliation.
+    const bridgeKey = "official:cloud-drive-sync";
+    if (host.getAccountId() && !this.bridgeDiscoveryChecked && !next.installed[bridgeKey] && !next.removed[bridgeKey] && window.plannerApi?.listSyncBridgeStatuses) {
+      // Status is account-wide. Stopped means a registered bridge, not an uninstall.
+      // Revisit Beta 132's empty migration marker once per account/session.
       const statuses = await window.plannerApi.listSyncBridgeStatuses().catch(() => undefined);
       if (generation !== this.generation) return;
       if (statuses) {
-        const key = "official:cloud-drive-sync";
-        if (statuses.some(status => status.status !== "stopped") && !next.installed[key] && !next.removed[key]) {
+        if (statuses.length) {
           const entry = getBundledExtension("cloud-drive-sync");
-          if (!entry || !await this.publishBundledMigration(entry, generation)) return;
-          addDefault(entry, true, entry.downloadUrl);
-        }
-        next.migratedCloudDriveSync = true;
-        changed = true;
+          if (entry && await this.publishBundledMigration(entry, generation)) {
+            addDefault(entry, true, entry.downloadUrl);
+            next.migratedCloudDriveSync = true;
+            this.bridgeDiscoveryChecked = true;
+          } else if (generation !== this.generation) return;
+        } else this.bridgeDiscoveryChecked = true;
       }
     }
     if (settings.featureTemplatesEnabled === true && !next.installed["official:schedule-templates"] && !next.removed["official:schedule-templates"]) {
       const entry = getBundledExtension("schedule-templates")!;
-      if (!await this.publishBundledMigration(entry, generation)) return;
-      addDefault(entry, true);
+      if (await this.publishBundledMigration(entry, generation)) addDefault(entry, true);
+      else if (generation !== this.generation) return;
     }
     const legacyTools = Object.values(next.installed).filter((item) =>
       toolPageMigrations.has(item.manifest.id) && (item.sourceId === "official" ||
@@ -601,7 +606,7 @@ export class ExtensionService {
     for (const item of legacyTools) {
       const entry = getBundledExtension(item.manifest.id);
       if (!entry || compareVersions(entry.manifest.version, item.manifest.version) <= 0) continue;
-      if (!await this.publishBundledMigration(entry, generation)) return;
+      if (!await this.publishBundledMigration(entry, generation)) { if (generation !== this.generation) return; continue; }
       next.installed[item.key] = { ...item, manifest: entry.manifest, sha256: entry.sha256, downloadUrl: entry.downloadUrl, updatedAt: new Date().toISOString(), previous: undefined };
       this.failed.delete(item.key);
       changed = true;

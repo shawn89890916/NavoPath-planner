@@ -98,6 +98,7 @@ export class TaskMotionCoordinator {
 
   play(changes: TaskMotionChange<Point>[]) {
     this.cancel();
+    const offsets = new Map<HTMLElement, { x: number; y: number }>();
     for (const { before, after } of changes) {
       const node = after.node;
       const win = node.ownerDocument.defaultView;
@@ -105,8 +106,19 @@ export class TaskMotionCoordinator {
       if (!before || !win || preference === "off" || !node.isConnected || !node.animate) continue;
       const source = before.rect, target = after.rect;
       if (Math.abs(source.width - target.width) > 2 || Math.abs(source.height - target.height) > 2 || win.getComputedStyle(node).translate !== "none") continue;
-      const dx = source.left - target.left, dy = source.top - target.top;
+      const x = source.left - target.left, y = source.top - target.top;
+      if (Math.abs(x) > 2 || Math.abs(y) > 2) offsets.set(node, { x, y });
+    }
+    // Nested cards inherit their nearest moving ancestor's absolute displacement.
+    // Animate only the remaining relative displacement, keeping the original DOM.
+    for (const [node, offset] of offsets) {
+      let dx = offset.x, dy = offset.y;
+      for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+        const inherited = offsets.get(parent);
+        if (inherited) { dx -= inherited.x; dy -= inherited.y; break; }
+      }
       if (Math.abs(dx) <= 2 && Math.abs(dy) <= 2) continue;
+      const preference = effectiveMotionPreference(node.ownerDocument.defaultView);
       const animation = node.animate([{ translate: dx + "px " + dy + "px" }, { translate: "0px 0px" }], { duration: preference === "rich" ? MOTION.complete : MOTION.layout, easing: MOTION_EASE });
       const cleanup = () => { animation.cancel(); this.active.delete(cleanup); };
       this.active.add(cleanup);

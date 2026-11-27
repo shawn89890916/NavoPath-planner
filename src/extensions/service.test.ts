@@ -160,6 +160,34 @@ describe("extension installation and account reconciliation", () => {
     expect(current.getSnapshot().preferences.installed["official:cloud-drive-sync"]).toBeUndefined();
   });
 
+  it("recovers a stopped account bridge after Beta 132 migration and respects removal", async () => {
+    const f = fixture("stopped-bridge", { ...defaultExtensionPreferences(), migratedCloudDriveSync: true });
+    const list = vi.fn(async () => [{ status: "stopped" }]);
+    Object.assign(window, { plannerApi: { listSyncBridgeStatuses: list } });
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:cloud-drive-sync"]?.enabled).toBe(true);
+    await current.uninstall("official:cloud-drive-sync");
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:cloud-drive-sync"]).toBeUndefined();
+    expect(list).toHaveBeenCalledTimes(1);
+  });
+  it("does not mark an empty bridge account migrated", async () => {
+    const f = fixture("empty-bridge", { ...defaultExtensionPreferences(), migratedCloudDriveSync: false });
+    Object.assign(window, { plannerApi: { listSyncBridgeStatuses: async () => [] } });
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.migratedCloudDriveSync).toBe(false);
+  });
+  it("migrates independent native packages despite one unavailable bundle", async () => {
+    const f = fixture("partial-native", { ...defaultExtensionPreferences(), migratedNativeFeatures: false });
+    vi.stubGlobal("fetch", vi.fn((url: string) => url.includes("habits.navopackage") ? Promise.reject(new Error("offline")) : fetchBundled(url)));
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:navo-ai"]?.enabled).toBe(true);
+    expect(current.getSnapshot().preferences.migratedNativeFeatures).toBe(false);
+    vi.stubGlobal("fetch", vi.fn(fetchBundled));
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:habits"]?.enabled).toBe(true);
+    expect(current.getSnapshot().preferences.migratedNativeFeatures).toBe(true);
+  });
   it("seeds the desktop-only widget on desktop without enabling a disabled preference", async () => {
     const f = fixture("desktop-seed", { ...defaultExtensionPreferences(), migratedDesktopWidget: false });
     await f.host.saveSettings({ featureWidgetEnabled: false });
