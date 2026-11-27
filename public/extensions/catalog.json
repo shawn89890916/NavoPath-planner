@@ -597,7 +597,7 @@
         "version": "1.0.0",
         "kind": "plugin",
         "apiVersion": 1,
-        "minAppVersion": "1.7.0-beta.134",
+        "minAppVersion": "1.7.0-beta.135",
         "platforms": [
           "desktop",
           "web",
@@ -608,7 +608,7 @@
         "repository": "https://github.com/shawn89890916/NavoPath-planner"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/reading.navopackage.json",
-      "sha256": "61e1a0d2ddfad9ab64717d636b57901b45ec32c55ad5d8a8d1809b5f45ac9452"
+      "sha256": "aa710f09b552e663ecac5c34b55bf154f0a74430a81ba363fbe0b28acdbdfc9a"
     },
     {
       "manifest": {

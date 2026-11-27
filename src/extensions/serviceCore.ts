@@ -476,9 +476,10 @@ export class ExtensionService {
     if (generation !== this.generation) throw new Error("Reading account changed");
   }
   private async getValue(owner: string, key: string): Promise<unknown | null> {
-    const scope = this.scope(), pending = await cacheGet<PendingValue>(scope + `pending:${owner}:${key}`);
+    const scope = this.scope(), account = this.account;
+    const pending = await cacheGet<PendingValue>(scope + `pending:${owner}:${key}`);
+    if (scope !== this.scope()) throw new Error("Extension account changed");
     if (pending) return pending.remove ? null : pending.value;
-    const account = this.account;
     if (account !== "preview") { try { const value = await getExtensionValue(owner, key, account); if (scope !== this.scope()) throw new Error("Extension account changed"); await cachePut(scope + `value:${owner}:${key}`, value); return value; } catch { /* Cached values work offline. */ } }
     return cacheGet(scope + `value:${owner}:${key}`);
   }

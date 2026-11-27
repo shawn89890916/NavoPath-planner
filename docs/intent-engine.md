@@ -1,0 +1,11 @@
+# Intent Engine pilot
+
+Scope: a bounded Tree view loader experiment; real navigation, drop geometry, task styling and plugin lifecycles stay unchanged. Existing pointer-enter/focus warming remains the fallback. Only the already existing idempotent PlanningView module loader is eligible. No new dependencies, network APIs, settings, telemetry, global pointer listeners or timers.
+
+The menu samples mouse motion only while open, not during dragging. Three time-ordered points estimate direction and velocity; reversals, braking, jitter, pauses and degenerate targets are rejected. The existing target rectangle is read only after a valid prediction, at most once per 16ms. The projected segment is limited to 100ms/120px. One predictive loader attempt per menu opening. Opening/canceling/leaving or repositioning resets the pointer history. The existing loader deduplicates imports; loaded JS modules cannot be unloaded independently. No speculative plugin activation or data mutation.
+
+## Validation and further integration
+
+Compare existing click-only (A), hover/focus preload (B), and predictive preload plus fallback (C) in a fresh renderer per trial, with cold and warm module caches. Replay deliberate, diagonal, overshoot, reversal, click-away and keyboard routes; record hover and click timestamps, import start/end and next usable render locally. Report p50/p95 click-to-usable, prediction precision, wasted preloads, additional main-thread work and renderer memory. Unit tests cover only geometric and lifecycle primitives, not actual latency. Do not keep a predictor in any hot path without measurable benefit over B. Keep existing bundle budgets, no relaxing limits.
+
+Drag projection: current logical hit-test and projection already use actual coordinates. Speculative geometry would require extra layout reads or validated snapshots; defer until profiling shows a bottleneck. Do not change actual hit/drop or task styles. Likewise defer task details, plugins, month, Dock and submenu prediction until actual cold-path costs or unintended menu exits are measured. Use existing module loaders and motion infrastructure; never mount third-party code before explicit activation. This pilot does not complete the broader Intent Engine roadmap.

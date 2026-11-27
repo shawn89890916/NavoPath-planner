@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "kind": "plugin",
   "apiVersion": 1,
-  "minAppVersion": "1.7.0-beta.134",
+  "minAppVersion": "1.7.0-beta.135",
   "platforms": [
     "desktop",
     "web",

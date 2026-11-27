@@ -46,7 +46,7 @@ function BookEditor({ book, zh, busy, onSave, onCancel }: {
   const [status, setStatus] = useState<ReadingStatus>(book?.status ?? "to-read");
   const [unit, setUnit] = useState<ReadingProgress["unit"]>(book?.progress.unit ?? "percent");
   const [current, setCurrent] = useState(String(book?.progress.current ?? 0));
-  const [total, setTotal] = useState(book?.progress.unit !== "percent" ? String(book?.progress.total ?? "") : "");
+  const [total, setTotal] = useState(book && book.progress.unit !== "percent" ? String(book.progress.total ?? "") : "");
   const [error, setError] = useState(false);
   return <form className="reading-editor" onSubmit={event => {
     event.preventDefault(); setError(false);

@@ -9289,12 +9289,11 @@ if (cached?.data && cached?.settings) {
       completed: false, estimatedHours: 0.5, createdAt: now, updatedAt: now,
       plannedForDate: today, executionLane: "candidate", order: Date.now(),
     };
-    const { linkReadingTask, updateBook } = await import("./reading/model");
+    const { linkReadingTask } = await import("./reading/model");
     await reading.mutate(library => {
       const selected = library.books.find(item => item.id === bookId);
       if (!selected || selected.status === "finished") throw new Error("Book no longer available");
-      const linked = linkReadingTask(library, bookId, task.id);
-      return selected.status === "to-read" ? updateBook(linked, bookId, { status: "reading" }, now) : linked;
+      return linkReadingTask(library, bookId, task.id);
     });
     const latest = dataRef.current;
     if (!latest || scope !== loadedWorkspaceKeyRef.current || !nativeFeatureActive(extensionService.getSnapshot(), "reading")) throw new Error("Workspace changed");
@@ -9718,11 +9717,11 @@ if (cached?.data && cached?.settings) {
               </>
             }
             />
-            <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu">
+            <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu" intentPreload={planningViewPromise ? undefined : preloadPlanningView}>
               {tourStep === "views" && <p className="df-shelf-view-guide" role="status">{lang === "zh" ? "选一个视图试试看。" : "Pick a view to try."}</p>}
               <Button variant="ghost" aria-pressed={!shelfView} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
               {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id}
-                onPointerEnter={view === treeView ? preloadPlanningView : undefined} onFocus={view === treeView ? preloadPlanningView : undefined}
+                data-intent-preload={view === treeView ? "" : undefined} onPointerEnter={view === treeView ? preloadPlanningView : undefined} onFocus={view === treeView ? preloadPlanningView : undefined}
                 onClick={() => selectShelfView(view.id)}><CandidateViewIcon view={view} />{candidateViewName(view, lang)}</Button>)}
             </AnchoredNarrowMenu>
             {candidateDropActive && (

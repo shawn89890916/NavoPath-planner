@@ -2,6 +2,18 @@
 
 ## 2026-11-27
 
+### 1.7.0 Beta 135
+
+#### 新增
+
+- 社区市场新增可选阅读插件，支持书架、阅读状态、进度、独立阅读任务及计划与实际时长统计；复用时间轴、计时和任务历史。
+
+### 1.7.0 Beta 134
+
+#### 改进
+
+- 任务视图菜单试行轻量鼠标轨迹预测，提前准备 Tree 模块，保留原有悬停、键盘与点击交互。
+
 ### 1.7.0 Beta 133
 
 #### 修复
@@ -1328,6 +1340,18 @@
 # NavoPath Changelog
 
 ## 2026-11-27
+
+### 1.7.0 Beta 135
+
+#### Added
+
+- Add the optional Reading community plugin with a bookshelf, reading status, progress, dedicated reading tasks, and planned and actual time totals using the existing timeline, timer, and task history.
+
+### 1.7.0 Beta 134
+
+#### Improvements
+
+- Pilot lightweight pointer prediction in the Tasks view menu to warm the Tree module ahead of hover, preserving existing focus and click behavior.
 
 ### 1.7.0 Beta 133
 
