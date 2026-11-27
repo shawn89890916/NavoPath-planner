@@ -12,6 +12,7 @@ export function useReadingLibrary(enabled: boolean, account: string) {
   const scope = useRef({ enabled, account });
   scope.current = { enabled, account };
   useEffect(() => {
+    scope.current = { enabled, account };
     const currentEpoch = ++epoch.current;
     let revision = 0;
     setSnapshot({ account, library: null, error: "" });
@@ -35,7 +36,7 @@ export function useReadingLibrary(enabled: boolean, account: string) {
     const onFocus = () => { void read(); };
     window.addEventListener("focus", onFocus);
     void read();
-    return () => { ++epoch.current; window.removeEventListener("focus", onFocus); void off(); };
+    return () => { scope.current = { enabled: false, account }; ++epoch.current; window.removeEventListener("focus", onFocus); void off(); };
   }, [enabled, account]);
 
   const mutate = async (update: (library: ReadingLibrary) => ReadingLibrary) => {

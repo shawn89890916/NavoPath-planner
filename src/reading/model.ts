@@ -1,4 +1,4 @@
-import type { Task, TimeEntry } from "../types";
+import type { Language, Task, TimeEntry } from "../types";
 import { engagementMinutes } from "../utils/engagement";
 
 export type ReadingStatus = "to-read" | "reading" | "finished";
@@ -155,4 +155,20 @@ export function undoReadingBookChange(library: ReadingLibrary, before: ReadingBo
   return { ...library, books: before
     ? library.books.map(book => book.id === after.id ? before : book)
     : library.books.filter(book => book.id !== after.id) };
+}
+
+/** Build and link the core task inside the guarded library mutation. */
+export async function prepareReadingTask(mutate: (update: (library: ReadingLibrary) => ReadingLibrary) => Promise<ReadingLibrary>, bookId: string, id: string, today: string, now: string, lang: Language): Promise<Task> {
+  let task: Task | undefined;
+  await mutate(library => {
+    const book = library.books.find(item => item.id === bookId);
+    if (!book || book.status === "finished") throw new Error("Book no longer available");
+    task = { id, title: (lang === "zh" ? "阅读 " : "Read ") + book.title,
+      category: "personal", priority: null, notes: "", dueDate: "", goalId: "",
+      completed: false, estimatedHours: 0.5, createdAt: now, updatedAt: now,
+      plannedForDate: today, executionLane: "candidate", order: Date.now() };
+    return linkReadingTask(library, bookId, id);
+  });
+  if (!task) throw new Error("Reading task unavailable");
+  return task;
 }

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { UiChevronDownIcon, UiChevronRightIcon } from "../components/UiIcons";
 import type { Language, Task, TimeEntry } from "../types";
 import { Button, Input } from "../components/UiPrimitives";
 import { TaskGroup } from "../components/TaskBlock";
@@ -10,7 +11,7 @@ type Props = {
   library: ReadingLibrary | null; busy: boolean; error: string; lang: Language;
   onCreateTask: (bookId: string) => Promise<void>;
 };
-export function ReadingTaskComposer({ library, busy, error, lang, onCreateTask }: Props) {
+function ReadingTaskComposer({ library, busy, error, lang, onCreateTask }: Props) {
   const zh = lang === "zh";
   const [selected, setSelected] = useState("");
   const [failed, setFailed] = useState(false);
@@ -28,6 +29,16 @@ export function ReadingTaskComposer({ library, busy, error, lang, onCreateTask }
     <Button type="submit" variant="secondary" disabled={busy || !selectedId}>{zh ? "添加阅读任务" : "Add reading task"}</Button>
     {failed && <p role="alert" className="reading-muted">{zh ? "未能创建任务，请重试。" : "Task could not be created. Try again."}</p>}
   </form>;
+}
+
+export function ReadingTaskGroup(props: Props & { count: number; onOpenLibrary?: () => void; children: ReactNode }) {
+  const [expanded, setExpanded] = useState(true);
+  const zh = props.lang === "zh";
+  return <TaskGroup title={<Button variant="ghost" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>
+    {expanded ? <UiChevronDownIcon size={16} /> : <UiChevronRightIcon size={16} />}{zh ? "阅读" : "Reading"}
+  </Button>} count={<Button variant="ghost" disabled={!props.onOpenLibrary} onClick={props.onOpenLibrary}>{zh ? "书架" : "Library"} · {props.count}</Button>}>
+    {expanded && <>{props.children}<ReadingTaskComposer {...props} /></>}
+  </TaskGroup>;
 }
 
 const statusNames = {

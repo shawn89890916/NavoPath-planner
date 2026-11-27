@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Task, TimeEntry } from "../types";
-import { createBook, decodeReadingLibrary, emptyReadingLibrary, groupReadingBooks, linkReadingTask, readingTotals, undoReadingBookChange, updateBook, validateProgress } from "./model";
+import { createBook, decodeReadingLibrary, emptyReadingLibrary, groupReadingBooks, linkReadingTask, prepareReadingTask, readingTotals, undoReadingBookChange, updateBook, validateProgress } from "./model";
 const now = "2026-11-27T12:00:00Z";
 const library = () => createBook(createBook(emptyReadingLibrary(), { id: "a", title: " First ", now }), { id: "b", title: "Second", now });
 const task = (id: string, records: Task["timelineRecords"] = []): Task => ({
@@ -90,4 +90,16 @@ describe("reading persistence and undo", () => {
     expect(() => undoReadingBookChange(linkReadingTask(original, "a", "t1"), undefined, original.books[0])).toThrow();
     expect(undoReadingBookChange(original, undefined, original.books[0]).books.map(book => book.id)).toEqual(["b"]);
   });
+});
+
+it("prepares a normal linked candidate task without completing or changing the book", async () => {
+  let current = library();
+  const mutate = async (update: (value: typeof current) => typeof current) => current = update(current);
+  const draft = await prepareReadingTask(mutate, "a", "reading-task", "2026-11-27", now, "en");
+  expect(draft).toMatchObject({ id: "reading-task", title: "Read First", completed: false, estimatedHours: 0.5, executionLane: "candidate", plannedForDate: "2026-11-27" });
+  expect(current.taskLinks).toEqual([{ bookId: "a", taskId: "reading-task" }]);
+  expect(current.books[0].status).toBe("to-read");
+  current = updateBook(current, "a", { status: "finished" }, now);
+  await expect(prepareReadingTask(mutate, "a", "another", "2026-11-27", now, "en")).rejects.toThrow("Book no longer available");
+  expect(current.taskLinks).toHaveLength(1);
 });

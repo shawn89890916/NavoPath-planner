@@ -92,7 +92,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiCheckIcon, UiChatIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTimerIcon, UiTrashIcon , UiChevronRightIcon} from "./components/UiIcons";
+import { UiCheckIcon, UiChatIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTimerIcon, UiTrashIcon} from "./components/UiIcons";
 import { normalizeSettingsTarget, type SettingsTargetInput } from "./settingsNavigationCore";
 import { normalizeSettings, WORKSPACE_CORNER_RADIUS } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -386,7 +386,7 @@ function preloadPlanningView() { void loadPlanningView().catch(() => undefined);
 const PlanningViewLazy = lazy(loadPlanningView);
 const ReadingRuntimeLazy = lazy(() => import("./reading/ReadingRuntime"));
 const ReadingShelfLazy = lazy(() => import("./reading/ReadingShelf"));
-const ReadingTaskComposerLazy = lazy(() => import("./reading/ReadingShelf").then(module => ({ default: module.ReadingTaskComposer })));
+const ReadingTaskGroupLazy = lazy(() => import("./reading/ReadingShelf").then(module => ({ default: module.ReadingTaskGroup })));
 const LandingPageLazy = lazy(() => import("./LandingPage"));
 const OAuthConsentPageLazy = lazy(() => import("./OAuthConsentPage"));
 
@@ -1412,7 +1412,6 @@ function App() {
   const readingAccount = authState?.user?.id || "preview";
   const [readingSnapshot, setReadingSnapshot] = useState<ReadingRuntimeSnapshot | null>(null);
   const reading = readingEnabled && readingSnapshot?.account === readingAccount ? readingSnapshot : { library: null, error: "", busy: true, mutate: async () => { throw new Error("Reading unavailable"); } };
-  const [readingExpanded, setReadingExpanded] = useState(true);
   const engagementEnabled = productDemo ? settings?.featureEngagementEnabled === true : nativeFeatureActive(extensionSnapshot, "engagement");
   const aiEnabled = productDemo ? !settings?.hideAi : nativeFeatureActive(extensionSnapshot, "navo-ai");
   const widgetEnabled = nativeFeatureActive(extensionSnapshot, "desktop-widget");
@@ -9283,21 +9282,9 @@ if (cached?.data && cached?.settings) {
   async function createReadingTask(bookId: string) {
     const scope = loadedWorkspaceKeyRef.current;
     const current = dataRef.current;
-    const book = reading.library?.books.find(item => item.id === bookId);
-    if (!current || !book || book.status === "finished" || !readingEnabled) throw new Error("Reading unavailable");
-    const now = workspaceNow().toISOString();
-    const task: Task = {
-      id: uid("task"), title: lang === "zh" ? "阅读 " + book.title : "Read " + book.title,
-      category: "personal", priority: null, notes: "", dueDate: "", goalId: "",
-      completed: false, estimatedHours: 0.5, createdAt: now, updatedAt: now,
-      plannedForDate: today, executionLane: "candidate", order: Date.now(),
-    };
-    const { linkReadingTask } = await import("./reading/model");
-    await reading.mutate(library => {
-      const selected = library.books.find(item => item.id === bookId);
-      if (!selected || selected.status === "finished") throw new Error("Book no longer available");
-      return linkReadingTask(library, bookId, task.id);
-    });
+    if (!current || !readingEnabled) throw new Error("Reading unavailable");
+    const { prepareReadingTask } = await import("./reading/model");
+    const task = await prepareReadingTask(reading.mutate, bookId, uid("task"), today, workspaceNow().toISOString(), lang);
     const latest = dataRef.current;
     if (!latest || scope !== loadedWorkspaceKeyRef.current || !nativeFeatureActive(extensionService.getSnapshot(), "reading")) throw new Error("Workspace changed");
     await saveTaskOperation({ ...latest, tasks: [...latest.tasks, task] }, "create", {
@@ -9804,14 +9791,9 @@ if (cached?.data && cached?.settings) {
                 })()
               ) : ordinaryCandidates.map(renderCandidateTask)}
               {readingEnabled && (
-                <TaskGroup title={<Button variant="ghost" aria-expanded={readingExpanded} onClick={() => setReadingExpanded(value => !value)}>
-                  {readingExpanded ? <UiChevronDownIcon size={16} /> : <UiChevronRightIcon size={16} />}{lang === "zh" ? "阅读" : "Reading"}
-                </Button>} count={<Button variant="ghost" disabled={!readingView} onClick={openReading}>{lang === "zh" ? "书架" : "Library"} · {readingCandidates.length}</Button>}>
-                  {readingExpanded && <>
-                    {readingCandidates.map(renderCandidateTask)}
-                    <Suspense fallback={null}><ReadingTaskComposerLazy library={reading.library} busy={reading.busy} error={reading.error} lang={lang} onCreateTask={createReadingTask} /></Suspense>
-                  </>}
-                </TaskGroup>
+                <Suspense fallback={null}><ReadingTaskGroupLazy library={reading.library} busy={reading.busy} error={reading.error} lang={lang} count={readingCandidates.length} onOpenLibrary={readingView ? openReading : undefined} onCreateTask={createReadingTask}>
+                  {readingCandidates.map(renderCandidateTask)}
+                </ReadingTaskGroupLazy></Suspense>
               )}
               {habitsEnabled && shouldShowHabitCandidates({ ...settings, featureHabitsEnabled: true }) && (
                 <HabitCandidateCard
