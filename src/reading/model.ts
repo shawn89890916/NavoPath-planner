@@ -121,3 +121,25 @@ export function readingTotals(
   }
   return { plannedMinutes, actualMinutes, weightedMinutes: engagementEnabled ? weightedMinutes : null, sessions };
 }
+
+/** Reject corrupted or unsupported persisted data, rather than overwriting it. */
+export function decodeReadingLibrary(value: unknown): ReadingLibrary {
+  if (value === null) return emptyReadingLibrary();
+  if (typeof value !== "object" || !value || Array.isArray(value)) throw new Error("Invalid reading library");
+  const library = value as ReadingLibrary;
+  if (library.version !== 1 || !Array.isArray(library.books) || !Array.isArray(library.taskLinks)) throw new Error("Unsupported reading library");
+  const ids = new Set<string>(), tasks = new Set<string>();
+  for (const book of library.books) {
+    if (!book || typeof book.id !== "string" || !book.id.trim() || ids.has(book.id) ||
+      typeof book.title !== "string" || !book.title.trim() || typeof book.author !== "string" ||
+      !["to-read", "reading", "finished"].includes(book.status) ||
+      !book.progress || typeof book.createdAt !== "string" || typeof book.updatedAt !== "string") throw new Error("Invalid reading book");
+    validateProgress(book.progress);
+    ids.add(book.id);
+  }
+  for (const link of library.taskLinks) {
+    if (!link || typeof link.taskId !== "string" || !link.taskId.trim() || tasks.has(link.taskId) || !ids.has(link.bookId)) throw new Error("Invalid reading task link");
+    tasks.add(link.taskId);
+  }
+  return library;
+}
