@@ -117,10 +117,19 @@ describe("extension settings surfaces", () => {
     expect(renderer!.root.findByProps({ "data-settings-anchor": "plugin-option-compact" })).toBeTruthy();
     expect(JSON.stringify(renderer!.toJSON())).not.toContain("Installed plugins");
   });
+  it("shows curated official and community sections without trusting author metadata", async () => {
+    const metrics = { ...manifest("plugin"), id: "metrics", name: "Metrics" };
+    state.snapshot.catalog.push({ ...state.snapshot.catalog[0], manifest: metrics }, { ...state.snapshot.catalog[0], sourceId: "imported", manifest: { ...metrics, name: "Untrusted Metrics" } });
+    await act(async () => { renderer = create(<ExtensionSettings lang="en" kind="plugin" openMarket />); });
+    const official = renderer!.root.findByProps({ "aria-label": "Official plugins", className: "df-extension-tier" });
+    expect(official.findAllByProps({ "aria-label": "View Metrics" })).toHaveLength(1);
+    expect(official.findAllByProps({ "aria-label": "View Untrusted Metrics" })).toHaveLength(0);
+    expect(renderer!.root.findAllByProps({ "aria-label": "View Untrusted Metrics" })).toHaveLength(1);
+  });
   it("opens the existing market from a direct navigation target", async () => {
     await act(async () => { renderer = create(<ExtensionSettings lang="en" kind="plugin" openMarket />); });
     expect(service.refreshCatalog).toHaveBeenCalledOnce();
-    expect(JSON.stringify(renderer!.toJSON())).toContain("Community plugin market");
+    expect(JSON.stringify(renderer!.toJSON())).toContain("Plugin market");
   });
   it("shows native plugin preferences directly below the installed plugin row", async () => {
     await act(async () => { renderer = create(<ExtensionSettings lang="en" kind="plugin" inlineSettings={{ "official:plugin": <p>Native options</p> }} />); });

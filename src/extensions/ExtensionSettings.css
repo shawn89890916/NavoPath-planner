@@ -85,3 +85,17 @@
 .df-extension-update-copy progress { width: min(100%, 320px); height: 6px; accent-color: var(--accent-active); }
 .df-extension-update-failure { color: var(--danger-ink); max-height: 4.5em; overflow-y: auto; }
 .df-extension-update-actions { display: flex; gap: var(--space-2); align-items: center; margin-inline-start: auto; flex-wrap: wrap; }
+
+/* Functional plugins are a compact sheet; visual themes retain preview cards. */
+.df-extension-tier + .df-extension-tier { margin-top: var(--space-4); }
+.df-extension-tier-title { margin: var(--space-2) 0; color: var(--text-muted); font: 600 12px/1.5 var(--paper-sans); }
+.df-extension-market-list { min-width: 0; }
+.df-extension-market-row { display: flex; align-items: center; gap: var(--space-3); min-width: 0; border-bottom: 1px solid var(--paper-rule); }
+.df-extension-market-row .df-extension-market-open { flex: 1 1 240px; width: auto; min-width: 0; padding: 12px 0; border-radius: var(--radius-control); }
+.df-extension-market-row .df-extension-market-open p { min-height: 0; margin: 6px 0 0 56px; }
+.df-extension-market-row .df-extension-plugin-icon { border-radius: var(--radius-control); }
+.df-extension-market-row footer { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+@media (max-width: 680px) {
+  .df-extension-market-row { flex-wrap: wrap; gap: 0; padding-bottom: var(--space-2); }
+  .df-extension-market-row footer { margin-inline-start: auto; }
+}
