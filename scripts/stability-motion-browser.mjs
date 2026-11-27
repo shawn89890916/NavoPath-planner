@@ -2,7 +2,8 @@ import { TaskMotionCoordinator } from "../src/motion/layout.ts";
 export async function exerciseMotion() {
   const assert = (value, message) => { if (!value) throw Error(message); };
   document.documentElement.dataset.motionPreference = "standard";
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return { skipped: "system reduced motion" };
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  assert(reduced === (new URLSearchParams(location.search).get("motion") === "reduce"), "Motion media emulation missing");
   const baseline = document.querySelectorAll("*").length;
   const controller = new TaskMotionCoordinator();
   const root = document.createElement("div"), parent = document.createElement("div"), child = document.createElement("div");
@@ -11,6 +12,11 @@ export async function exerciseMotion() {
   const pair = (node, key, a, b) => ({ before: point(node,key,a), after: point(node,key,b) });
   const start = performance.now();
   try {
+    if (reduced) {
+      controller.play([pair(parent,"p",0,40),pair(child,"c",30,80)]);
+      assert(!parent.getAnimations().length && !child.getAnimations().length, "System reduced motion ignored");
+      return { systemReducedMotion: true, retainedAnimations: 0 };
+    }
     for (let i=0; i<100; i++) {
       controller.play([pair(parent,"p",0,40),pair(child,"c",30,70)]);
       assert(parent.getAnimations().length === 1 && child.getAnimations().length === 0, "Nested translation compounded");
