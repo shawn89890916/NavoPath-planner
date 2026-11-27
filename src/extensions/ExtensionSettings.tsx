@@ -176,7 +176,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
       {(pending || notice) && <p className="df-extension-note" role="status">{pending || notice}</p>}
       {safeMode ? <p className="df-extension-note">{text("受限模式已开启，插件运行时暂停。", "Restricted mode is on; plugin runtime is paused.")}</p> : null}
       {native}
-      {declaredSettings(ownerItem)}
+      {Boolean(ownerItem.manifest.settingsOptions?.length) && <SettingSection variant="grouped">{declaredSettings(ownerItem)}</SettingSection>}
       {focusClockFont && <SettingRow title={fontLabel} control={<><span className="df-focus-font-preview" data-focus-clock-font={focusClockFont} aria-hidden="true">23:00</span><SettingSelect ariaLabel={fontLabel} value={focusClockFont} disabled={busy} options={pomodoroClockFonts.map(option => ({ value: option.value, label: option[lang] }))} onChange={value => void run(() => extensionService.saveConfig(ownerItem.key, { clockFont: normalizePomodoroClockFont(value) }), fontLabel)} /></>} />}
       {pages.map(contribution => <SettingSection key={contribution.id} anchor={pluginPageAnchor(contribution.id)} title={pages.length > 1 || native || ownerItem.manifest.settingsOptions?.length ? contribution.name : undefined}><ExtensionMount contribution={contribution} lang={lang} /></SettingSection>)}
       {!native && !ownerItem.manifest.settingsOptions?.length && !pages.length && <p className="df-extension-note" role="status">{busy ? text("正在重新加载插件设置…", "Reloading plugin settings…") : text("插件设置暂不可用。", "Plugin settings are unavailable.")}</p>}
@@ -214,7 +214,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
       {plugin && safeMode && <SettingRow title={text("受限模式已开启", "Restricted mode is on")} description={text("所有插件已暂停，安装与配置仍保留。", "Plugins are paused; installations and settings are preserved.")} control={<SettingActionButton onClick={() => void run(() => extensionService.setSafeMode(false))}>{text("退出受限模式", "Resume plugins")}</SettingActionButton>} />}
       {!plugin && <SettingRow title={text("当前主题", "Current theme")} control={<SettingSelect value={preferences.activeTheme ?? ""} disabled={busy} ariaLabel={text("当前主题", "Current theme")} options={[{ value: "", label: text("NavoPath 默认", "NavoPath default") }, ...installed.map((item) => ({ value: item.key, label: item.manifest.name }))]} onChange={(key) => void run(() => extensionService.selectTheme(key || null), text("正在切换主题…", "Applying theme…"))} />} />}
       {(updateCount > 0 || batch) && updateControls(false)}
-      <SettingSection title={text(plugin ? "已安装插件" : "已安装主题", plugin ? "Installed plugins" : "Installed themes")}>
+      <SettingSection variant="grouped" title={text(plugin ? "已安装插件" : "已安装主题", plugin ? "Installed plugins" : "Installed themes")}>
         {installed.length > 0 && search}
         <div className="df-extension-list">
           {filtered.length === 0 && !error && !snapshot.error && (
@@ -264,7 +264,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
       </SettingSection>}
 
       </SettingDisclosure>
-      {plugin && onMcpAccessChange && mcpPlugins.length > 0 && <SettingSection title={text("MCP 权限", "MCP access")}>
+      {plugin && onMcpAccessChange && mcpPlugins.length > 0 && <SettingSection variant="grouped" title={text("MCP 权限", "MCP access")}>
         {mcpPlugins.map(({ item, grant }) => {
           const official = item.key === SCHEDULE_TEMPLATE_PLUGIN;
           const fields = item.manifest.mcp?.settings;
@@ -280,7 +280,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
               onChange={(enabled) => onMcpAccessChange(item.key, enabled ? grant : false)} />} />;
         })}
       </SettingSection>}
-      {!plugin && active && Boolean(active.manifest.options?.length) && <SettingSection title={text("主题选项", "Theme options")}>
+      {!plugin && active && Boolean(active.manifest.options?.length) && <SettingSection variant="grouped" title={text("主题选项", "Theme options")}>
         {active.manifest.options!.map((option) => <SettingRow key={option.key} title={option.label} control={<ExtensionOptionControl option={option} value={extensionService.getConfig(active.key)[option.key] ?? option.default} onChange={(value) => void run(() => extensionService.saveConfig(active.key, { [option.key]: value }))} />} />)}
         <SettingRow title={text("恢复主题选项", "Restore theme options")} control={<SettingActionButton onClick={() => void run(() => extensionService.saveConfig(active.key, Object.fromEntries(active.manifest.options!.map((option) => [option.key, option.default]))))}>{text("恢复默认", "Restore defaults")}</SettingActionButton>} />
       </SettingSection>}

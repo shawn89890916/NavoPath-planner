@@ -9,6 +9,8 @@ import "./ui-review.css";
 
 function Review() {
   const [dark, setDark] = useState(false);
+  const [radius, setRadius] = useState(32);
+  useEffect(() => { document.documentElement.style.setProperty("--workspace-corner-radius", radius + "px"); }, [radius]);
   useEffect(() => { document.body.dataset.navopathBaseTheme = dark ? "dark" : "light"; }, [dark]);
   const [english, setEnglish] = useState(false);
   const [enabled, setEnabled] = useState(true);
@@ -36,8 +38,10 @@ function Review() {
       <div className="ui-review-actions"><Input aria-label={t("任务名称", "Task name")} placeholder={t("输入任务名称", "Enter a task name")} /><Input disabled aria-label={t("禁用输入", "Disabled input")} value={t("不可用", "Unavailable")} readOnly /></div>
       <div className="ui-choice-list ui-choice-list--inline"><Button className="ui-choice-item active" aria-pressed>{t("天", "Day")}</Button><Button className="ui-choice-item">{t("周", "Week")}</Button><Button className="ui-choice-item">{t("月", "Month")}</Button></div>
     </section>
-    <div className="df-settings-content">
-      <SettingSection title={t("设置行", "Settings rows")} description={t("文字、开关、选择与动作共享同一套比例。", "Text, switches, selections and actions share one scale.")}>
+    <div className="df-settings-content df-settings-surface">
+      <label className="ui-review-radius">Radius <input aria-label="Review radius" type="range" min="0" max="64" value={radius} onChange={event => setRadius(Number(event.currentTarget.value))} /><output>{radius}px</output></label>
+      <nav className="df-settings-nav ui-choice-list" aria-label="Review navigation"><button className="ui-choice-item active">Appearance</button></nav>
+      <SettingSection variant="grouped" title={t("设置行", "Settings rows")} description={t("文字、开关、选择与动作共享同一套比例。", "Text, switches, selections and actions share one scale.")}>
         <SettingRow title={t("通知", "Notifications")} description={t("显示未读数量，关闭后仍可在通知中心查看。", "Show unread counts. Notifications remain available in the notification center when hidden.")} control={<SettingToggle checked={enabled} ariaLabel={t("通知", "Notifications")} onChange={setEnabled} />} />
         <SettingRow title={t("时间视图", "Timeline view")} description={t("窄面板将选择框放到说明下方，保留足够的阅读宽度。", "Narrow panels place the selection below its description to preserve reading space.")} control={<SettingSelect value="day" onChange={() => {}} ariaLabel={t("时间视图", "Timeline view")} options={[{value:"day",label:t("天", "Day")},{value:"week",label:t("周", "Week")}]} />} />
         <SettingRow title={t("名称", "Name")} control={<SettingTextInput value={value} onChange={setValue} ariaLabel={t("名称", "Name")} />} />
