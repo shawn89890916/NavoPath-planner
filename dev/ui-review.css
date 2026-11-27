@@ -9,3 +9,7 @@ html, body, #root { margin: 0; height: auto; overflow: auto; }
 .ui-review h2 { font: 600 18px/1.4 var(--paper-sans); }
 .ui-review .df-settings-content { max-width: 760px; }
 .ui-modal { width: min(440px, 100%); padding: 24px; }
+
+.ui-review-radius { display: flex; gap: 12px; align-items: center; margin-block: 12px; }
+.ui-review-radius input { min-width: 0; flex: 1; }
+.ui-review .df-settings-content .df-settings-nav { display: flex; flex-direction: column; border: 0; padding: 0; margin-block: 12px; }
