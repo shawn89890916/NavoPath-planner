@@ -2,6 +2,12 @@
 
 ## 2026-11-27
 
+### 1.7.0 Beta 127
+
+#### 修复
+
+- Super Productivity Sync 1.1.0：远端删除确认与恢复重试、父子任务稳定映射、旧连接兼容及去重持久化。
+
 ### 1.7.0 Beta 126
 
 #### 改进
@@ -1291,6 +1297,12 @@
 # NavoPath Changelog
 
 ## 2026-11-27
+
+### 1.7.0 Beta 127
+
+#### Fixes
+
+- Super Productivity Sync 1.1.0: confirmed remote deletion and restore retries, stable task hierarchy mapping, legacy connection compatibility and deduplicated persistence.
 
 ### 1.7.0 Beta 126
 

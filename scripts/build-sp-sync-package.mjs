@@ -1,0 +1,10 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {zipSync} from 'fflate';
+import {createHash} from 'node:crypto';
+const root=new URL('../integrations/super-productivity-navopath/',import.meta.url);
+const files=Object.fromEntries(await Promise.all(['LICENSE','manifest.json','plugin.js'].map(async name=>[name,new Uint8Array(await readFile(new URL(name,root)))])));
+const manifest=JSON.parse(new TextDecoder().decode(files['manifest.json']));
+const bytes=zipSync(files,{level:9,mtime:new Date('2020-01-01T00:00:00Z')});
+const name='navopath-sync-'+manifest.version+'.zip';
+await writeFile(new URL(name,root),bytes);
+console.log(name+' SHA-256 '+createHash('sha256').update(bytes).digest('hex'));
