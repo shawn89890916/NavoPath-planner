@@ -14283,7 +14283,8 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-app .df-task-block[data-task-appearance] .df-task-subtask-shelf {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 6px;
   width: 100%;
   min-height: 38px;
   margin-top: 8px;

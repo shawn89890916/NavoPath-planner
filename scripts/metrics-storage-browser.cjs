@@ -19,7 +19,7 @@ async function runServer() {
         res.setHeader("Content-Type", "text/html");
         res.end(`<!doctype html><html><body>Isolated Metrics storage test<script type="module">
           const phase=new URL(location.href).searchParams.get("phase");
-          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
+          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
         </script></body></html>`);
       });
     } }]
@@ -78,6 +78,20 @@ async function runRenderer() {
       const result=await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await window.metricsResult;await new Promise(r=>setTimeout(r,20));}throw Error('Connections test bootstrap missing');})()");
       if(!result||result.error)throw Error(result?.error||"Connections UI fixture did not initialize");
       console.log("Connections Chromium UI: "+JSON.stringify(result.value));
+    }
+    win.webContents.debugger.attach("1.3");
+    try {
+      for (const value of ["no-preference", "reduce"]) {
+        await win.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value }] });
+        await win.loadURL(url+"?phase=exerciseMotion&motion="+value);
+        const motion = await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await window.metricsResult;await new Promise(r=>setTimeout(r,20));}throw Error('Motion fixture missing');})()");
+        if (!motion || motion.error) throw Error(motion?.error || "Motion fixture failed");
+        if (value === "no-preference" ? motion.value?.cycles !== 100 : motion.value?.systemReducedMotion !== true) throw Error("Motion fixture did not exercise "+value);
+        console.log("Stability Chromium motion: "+JSON.stringify(motion.value));
+      }
+    } finally {
+      await win.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [] });
+      win.webContents.debugger.detach();
     }
     // Exercise the actual shared controls in Chromium at all five radius points.
     for (const [width,height] of [[1280,900],[420,840],[300,640]]) {

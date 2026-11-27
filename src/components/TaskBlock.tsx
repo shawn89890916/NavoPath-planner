@@ -2,6 +2,7 @@ import React, { type CSSProperties, type ReactNode } from "react";
 import type { Language } from "../types";
 import { MOTION, MOTION_EASE, prefersReducedMotion } from "../motion";
 import { projectColorInk } from "../utils/presentationColor";
+import { UiChevronDownIcon } from "./UiIcons";
 
 export type TaskBlockVariant = "course" | "candidate" | "planning" | "scheduled" | "allDay" | "compact" | "habit-child";
 export type TaskBlockDensity = "normal" | "compact" | "dense";
@@ -256,8 +257,8 @@ export function TaskSubtaskShelf({
         onToggle();
       }}
     >
-      <span className="df-task-subtask-shelf-label">{label}</span>
       <span className="df-task-subtask-shelf-progress">{progress}</span>
+      <UiChevronDownIcon size={14} style={{ transform: expanded ? "rotate(180deg)" : undefined }} />
     </button>
   );
 }

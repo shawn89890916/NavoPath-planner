@@ -46,6 +46,7 @@ export function useTaskLayoutMotion(options: MotionOptions) {
     const unchanged = old && old.scope === options.scope && old.blocked === blocked &&
       old.revision.length === options.revision.length && old.revision.every((value, index) => Object.is(value, options.revision[index]));
     if (unchanged) return;
+    const from = old && coordinator.current?.visiblePoints(old.points);
     coordinator.current?.cancel();
     const points = collectTaskMotion(root, options.selector);
     previous.current = { scope: options.scope, revision: options.revision, points, blocked };
@@ -54,7 +55,7 @@ export function useTaskLayoutMotion(options: MotionOptions) {
     if (landed) { coordinator.current?.play([landed]); return; }
     if (old.blocked) { coordinator.current?.cancel(); return; }
     const limit = effectiveMotionPreference(window) === "rich" ? 24 : 12;
-    const changes = planTaskMotion(old.points, points, limit);
+    const changes = planTaskMotion(from || old.points, points, limit);
     if (changes.length) coordinator.current?.play(changes);
   });
 }

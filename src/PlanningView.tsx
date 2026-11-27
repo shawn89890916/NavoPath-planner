@@ -732,6 +732,19 @@ export default function PlanningView(props: {
     scroll.addEventListener("scroll", saveScroll, { passive: true });
     return () => scroll.removeEventListener("scroll", saveScroll);
   }, [session]);
+  const dragLayer = useRef<HTMLDivElement | null>(null);
+  const dragPosition = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
+  const moveDragLayer = useCallback((x: number, y: number) => {
+    dragPosition.current.x = x; dragPosition.current.y = y;
+    if (dragLayer.current) {
+      dragLayer.current.style.left = (x - dragPosition.current.offsetX) + "px";
+      dragLayer.current.style.top = (y - dragPosition.current.offsetY) + "px";
+    }
+  }, []);
+  const bindDragLayer = useCallback((node: HTMLDivElement | null) => {
+    dragLayer.current = node;
+    if (node) moveDragLayer(dragPosition.current.x, dragPosition.current.y);
+  }, [moveDragLayer]);
   const [planningDragTask, setPlanningDragTask] = useState<{
     task: Task;
     sourceRect: { width: number; height: number };
@@ -991,9 +1004,9 @@ export default function PlanningView(props: {
   }, [safeProjects]);
 
   const projectName = useCallback((projectId?: string) => {
-    if (!projectId) return (props.lang === "zh" ? "Unassigned" : "Unassigned");
+    if (!projectId) return (props.lang === "zh" ? "未归属" : "Unassigned");
     const project = safeProjects.find((p) => String(p.id) === String(projectId));
-    return project?.title || (props.lang === "zh" ? "Unassigned" : "Unassigned");
+    return project?.title || (props.lang === "zh" ? "未归属" : "Unassigned");
   }, [safeProjects, props.lang]);
 
   const reorderPlanningTasks = useCallback((dragId: string, targetTaskId: string, position: "before" | "after", sequence: Task[]) => {
@@ -1115,10 +1128,11 @@ export default function PlanningView(props: {
         const rect = dragElement.getBoundingClientRect();
         const offX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
         const offY = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
+        dragPosition.current = { x: pointerEvent.clientX, y: pointerEvent.clientY, offsetX: offX, offsetY: offY };
         setPlanningDragTask({ task, sourceRect: { width: rect.width, height: rect.height }, offset: { x: offX, y: offY }, pointer: { x: pointerEvent.clientX, y: pointerEvent.clientY } });
       }
       pointerEvent.preventDefault();
-      setPlanningDragTask((current) => current ? { ...current, pointer: { x: pointerEvent.clientX, y: pointerEvent.clientY } } : current);
+      moveDragLayer(pointerEvent.clientX, pointerEvent.clientY);
       const { clientX, clientY } = pointerEvent;
       autoScrollAtDragEdge(clientX, clientY, [scroll]);
       const drop = getDropTarget(clientX, clientY);
@@ -1338,6 +1352,7 @@ export default function PlanningView(props: {
           } : undefined;
         }
         if (overlayTask) {
+          dragPosition.current = { x: pointerEvent.clientX, y: pointerEvent.clientY, offsetX: offX, offsetY: offY };
           setPlanningDragTask({
             task: overlayTask,
             sourceRect: { width: rect.width, height: rect.height },
@@ -1347,7 +1362,7 @@ export default function PlanningView(props: {
         }
       }
       pointerEvent.preventDefault();
-      setPlanningDragTask((current) => current ? { ...current, pointer: { x: pointerEvent.clientX, y: pointerEvent.clientY } } : current);
+      moveDragLayer(pointerEvent.clientX, pointerEvent.clientY);
       x = pointerEvent.clientX;
       y = pointerEvent.clientY;
       updateDropTarget();
@@ -1378,7 +1393,7 @@ export default function PlanningView(props: {
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
     window.addEventListener("blur", cancel);
-  }, [props.compact, props.onTimelineDrag, props.onTimelineDrop, props.data, props.onTreeMove, props.setCollapsed, safeProjects, safeTasks, subtaskOwner, suppressPostDragClick, taskFromSubtask]);
+  }, [props.compact, props.onTimelineDrag, props.onTimelineDrop, props.data, props.onTreeMove, props.setCollapsed, safeProjects, safeTasks, subtaskOwner, suppressPostDragClick, taskFromSubtask, moveDragLayer]);
 
   const hasActiveFilters = includeCompleted || filterProjects.length > 0 || filterWorkflows.length > 0 || filterImportances.length > 0 || filterUrgencies.length > 0 || !!filterDueDate || !!filterScheduled;
 
@@ -1394,7 +1409,7 @@ export default function PlanningView(props: {
   }> = [
     {
       key: "project",
-      label: props.lang === "zh" ? "Project" : "Project",
+      label: props.lang === "zh" ? "项目" : "Project",
       selected: filterProjects.map((id) => safeProjects.find((p) => String(p.id) === id)?.title || id).filter(Boolean),
       options: safeProjects.map((p) => ({
         value: String(p.id),
@@ -1405,33 +1420,33 @@ export default function PlanningView(props: {
     },
     {
       key: "status",
-      label: props.lang === "zh" ? "Status" : "Status",
-      selected: filterWorkflows.map((s) => s === "backlog" ? (props.lang === "zh" ? "To do" : "To do") : s === "doing" ? (props.lang === "zh" ? "Doing" : "Doing") : (props.lang === "zh" ? "已完成" : "Done")),
+      label: props.lang === "zh" ? "状态" : "Status",
+      selected: filterWorkflows.map((s) => s === "backlog" ? (props.lang === "zh" ? "待办" : "To do") : s === "doing" ? (props.lang === "zh" ? "进行中" : "Doing") : (props.lang === "zh" ? "已完成" : "Done")),
       options: (["backlog"] as UiWorkflowStatus[]).map((s) => ({
         value: s,
-        label: s === "backlog" ? (props.lang === "zh" ? "To do" : "To do") : s === "doing" ? (props.lang === "zh" ? "Doing" : "Doing") : (props.lang === "zh" ? "Done" : "Done"),
+        label: s === "backlog" ? (props.lang === "zh" ? "待办" : "To do") : s === "doing" ? (props.lang === "zh" ? "进行中" : "Doing") : (props.lang === "zh" ? "已完成" : "Done"),
         checked: filterWorkflows.includes(s),
         onToggle: () => toggleArray(setFilterWorkflows, s),
       })),
     },
     {
       key: "importance",
-      label: props.lang === "zh" ? "Importance" : "Importance",
-      selected: filterImportances.map((i) => i === "high" ? (props.lang === "zh" ? "High" : "High") : i === "medium" ? (props.lang === "zh" ? "Medium" : "Medium") : i === "low" ? (props.lang === "zh" ? "Low" : "Low") : (props.lang === "zh" ? "Unset" : "Unset")),
+      label: props.lang === "zh" ? "重要性" : "Importance",
+      selected: filterImportances.map((i) => i === "high" ? (props.lang === "zh" ? "高" : "High") : i === "medium" ? (props.lang === "zh" ? "中" : "Medium") : i === "low" ? (props.lang === "zh" ? "低" : "Low") : (props.lang === "zh" ? "未设置" : "Unset")),
       options: (["high", "medium", "low", "empty"] as StateFilterValue[]).map((i) => ({
         value: i,
-        label: i === "high" ? (props.lang === "zh" ? "High" : "High") : i === "medium" ? (props.lang === "zh" ? "Medium" : "Medium") : i === "low" ? (props.lang === "zh" ? "Low" : "Low") : (props.lang === "zh" ? "Unset" : "Unset"),
+        label: i === "high" ? (props.lang === "zh" ? "高" : "High") : i === "medium" ? (props.lang === "zh" ? "中" : "Medium") : i === "low" ? (props.lang === "zh" ? "低" : "Low") : (props.lang === "zh" ? "未设置" : "Unset"),
         checked: filterImportances.includes(i),
         onToggle: () => toggleArray(setFilterImportances, i),
       })),
     },
     {
       key: "urgency",
-      label: props.lang === "zh" ? "Urgency" : "Urgency",
-      selected: filterUrgencies.map((u) => u === "high" ? (props.lang === "zh" ? "High" : "High") : u === "medium" ? (props.lang === "zh" ? "Medium" : "Medium") : u === "low" ? (props.lang === "zh" ? "Low" : "Low") : (props.lang === "zh" ? "Unset" : "Unset")),
+      label: props.lang === "zh" ? "紧迫性" : "Urgency",
+      selected: filterUrgencies.map((u) => u === "high" ? (props.lang === "zh" ? "高" : "High") : u === "medium" ? (props.lang === "zh" ? "中" : "Medium") : u === "low" ? (props.lang === "zh" ? "低" : "Low") : (props.lang === "zh" ? "未设置" : "Unset")),
       options: (["high", "medium", "low", "empty"] as StateFilterValue[]).map((u) => ({
         value: u,
-        label: u === "high" ? (props.lang === "zh" ? "High" : "High") : u === "medium" ? (props.lang === "zh" ? "Medium" : "Medium") : u === "low" ? (props.lang === "zh" ? "Low" : "Low") : (props.lang === "zh" ? "Unset" : "Unset"),
+        label: u === "high" ? (props.lang === "zh" ? "高" : "High") : u === "medium" ? (props.lang === "zh" ? "中" : "Medium") : u === "low" ? (props.lang === "zh" ? "低" : "Low") : (props.lang === "zh" ? "未设置" : "Unset"),
         checked: filterUrgencies.includes(u),
         onToggle: () => toggleArray(setFilterUrgencies, u),
       })),
@@ -1441,39 +1456,39 @@ export default function PlanningView(props: {
   // Linear-style active filter chips: each active filter becomes a removable chip.
   type ActiveChip = { key: string; label: string; onClear: () => void };
   const stateLabel = (v: StateFilterValue) =>
-    v === "high" ? (props.lang === "zh" ? "High" : "High")
-    : v === "medium" ? (props.lang === "zh" ? "Medium" : "Medium")
-    : v === "low" ? (props.lang === "zh" ? "Low" : "Low")
-    : (props.lang === "zh" ? "Unset" : "Unset");
+    v === "high" ? (props.lang === "zh" ? "高" : "High")
+    : v === "medium" ? (props.lang === "zh" ? "中" : "Medium")
+    : v === "low" ? (props.lang === "zh" ? "低" : "Low")
+    : (props.lang === "zh" ? "未设置" : "Unset");
   const workflowLabel = (s: UiWorkflowStatus) =>
-    s === "backlog" ? (props.lang === "zh" ? "To do" : "To do")
-    : s === "doing" ? (props.lang === "zh" ? "Doing" : "Doing")
-    : (props.lang === "zh" ? "Done" : "Done");
+    s === "backlog" ? (props.lang === "zh" ? "待办" : "To do")
+    : s === "doing" ? (props.lang === "zh" ? "进行中" : "Doing")
+    : (props.lang === "zh" ? "已完成" : "Done");
 
   const activeFilterChips: ActiveChip[] = [
     ...filterProjects.map((id) => ({
       key: `project-${id}`,
-      label: `${props.lang === "zh" ? "Project" : "Project"}: ${safeProjects.find((p) => String(p.id) === id)?.title || id}`,
+      label: `${props.lang === "zh" ? "项目" : "Project"}: ${safeProjects.find((p) => String(p.id) === id)?.title || id}`,
       onClear: () => toggleArray(setFilterProjects, id),
     })),
     ...filterWorkflows.map((s) => ({
       key: `status-${s}`,
-      label: `${props.lang === "zh" ? "Status" : "Status"}: ${workflowLabel(s)}`,
+      label: `${props.lang === "zh" ? "状态" : "Status"}: ${workflowLabel(s)}`,
       onClear: () => toggleArray(setFilterWorkflows, s),
     })),
     ...filterImportances.map((v) => ({
       key: `importance-${v}`,
-      label: `${props.lang === "zh" ? "Priority" : "Priority"}: ${stateLabel(v)}`,
+      label: `${props.lang === "zh" ? "优先级" : "Priority"}: ${stateLabel(v)}`,
       onClear: () => toggleArray(setFilterImportances, v),
     })),
     ...filterUrgencies.map((v) => ({
       key: `urgency-${v}`,
-      label: `${props.lang === "zh" ? "Urgency" : "Urgency"}: ${stateLabel(v)}`,
+      label: `${props.lang === "zh" ? "紧迫性" : "Urgency"}: ${stateLabel(v)}`,
       onClear: () => toggleArray(setFilterUrgencies, v),
     })),
     ...(filterDueDate ? [{
       key: `due-${filterDueDate}`,
-      label: `${props.lang === "zh" ? "Due" : "Due"}: ${filterDueDate === "overdue" ? (props.lang === "zh" ? "Overdue" : "Overdue") : filterDueDate === "this-week" ? (props.lang === "zh" ? "This week" : "This week") : (props.lang === "zh" ? "No date" : "No date")}`,
+      label: `${props.lang === "zh" ? "截止日期" : "Due"}: ${filterDueDate === "overdue" ? (props.lang === "zh" ? "已逾期" : "Overdue") : filterDueDate === "this-week" ? (props.lang === "zh" ? "本周" : "This week") : (props.lang === "zh" ? "无日期" : "No date")}`,
       onClear: () => setFilterDueDate(null),
     }] : []),
     ...(filterScheduled ? [{
@@ -1520,9 +1535,9 @@ export default function PlanningView(props: {
 
   // Linear-style nested filter categories. Level 1 = category list, Level 2 = options.
   const dueDateLabel = (d: "overdue" | "this-week" | "no-date") =>
-    d === "overdue" ? (props.lang === "zh" ? "Overdue" : "Overdue")
-    : d === "this-week" ? (props.lang === "zh" ? "This week" : "This week")
-    : (props.lang === "zh" ? "No date" : "No date");
+    d === "overdue" ? (props.lang === "zh" ? "已逾期" : "Overdue")
+    : d === "this-week" ? (props.lang === "zh" ? "本周" : "This week")
+    : (props.lang === "zh" ? "无日期" : "No date");
 
   type FilterCategory = {
     key: string;
@@ -1603,10 +1618,10 @@ export default function PlanningView(props: {
       })),
   };
   const filterCategories: FilterCategory[] = [
-    { key: "status", label: props.lang === "zh" ? "Status" : "Status", icon: "circle", activeCount: filterWorkflows.length, summary: filterWorkflows.length > 0 ? filterWorkflows.map(workflowLabel).join(", ") : "" },
-    { key: "importance", label: props.lang === "zh" ? "Priority" : "Priority", icon: "flag", activeCount: filterImportances.length, summary: filterImportances.length > 0 ? filterImportances.map(stateLabel).join(", ") : "" },
-    { key: "urgency", label: props.lang === "zh" ? "Urgency" : "Urgency", icon: "clock", activeCount: filterUrgencies.length, summary: filterUrgencies.length > 0 ? filterUrgencies.map(stateLabel).join(", ") : "" },
-    { key: "project", label: props.lang === "zh" ? "Project" : "Project", icon: "folder", activeCount: filterProjects.length, summary: filterProjects.length > 0 ? filterProjects.map((id) => safeProjects.find((p) => String(p.id) === id)?.title || id).join(", ") : "" },
+    { key: "status", label: props.lang === "zh" ? "状态" : "Status", icon: "circle", activeCount: filterWorkflows.length, summary: filterWorkflows.length > 0 ? filterWorkflows.map(workflowLabel).join(", ") : "" },
+    { key: "importance", label: props.lang === "zh" ? "优先级" : "Priority", icon: "flag", activeCount: filterImportances.length, summary: filterImportances.length > 0 ? filterImportances.map(stateLabel).join(", ") : "" },
+    { key: "urgency", label: props.lang === "zh" ? "紧迫性" : "Urgency", icon: "clock", activeCount: filterUrgencies.length, summary: filterUrgencies.length > 0 ? filterUrgencies.map(stateLabel).join(", ") : "" },
+    { key: "project", label: props.lang === "zh" ? "项目" : "Project", icon: "folder", activeCount: filterProjects.length, summary: filterProjects.length > 0 ? filterProjects.map((id) => safeProjects.find((p) => String(p.id) === id)?.title || id).join(", ") : "" },
     { key: "due", label: props.lang === "zh" ? "Due date" : "Due date", icon: "calendar", activeCount: filterDueDate ? 1 : 0, summary: filterDueDate ? dueDateLabel(filterDueDate) : "" },
     { key: "scheduled", label: props.lang === "zh" ? "已安排" : "Scheduled", icon: "layers", activeCount: filterScheduled ? 1 : 0, summary: filterScheduled ? (filterScheduled === "scheduled" ? (props.lang === "zh" ? "已安排" : "Scheduled") : (props.lang === "zh" ? "未安排" : "Unscheduled")) : "" },
   ];
@@ -1911,7 +1926,7 @@ export default function PlanningView(props: {
               )}
             <div className="df-tree-wrap">
           {(viewMode === "tree" || viewMode === "list") && activeFilterChips.length > 0 && (
-            <div className="df-active-filter-bar" role="region" aria-label={props.lang === "zh" ? "Active filters" : "Active filters"}>
+            <div className="df-active-filter-bar" role="region" aria-label={props.lang === "zh" ? "已启用筛选" : "Active filters"}>
               {activeFilterChips.map((chip) => (
                 <button
                   key={chip.key}
@@ -2127,6 +2142,7 @@ export default function PlanningView(props: {
 
       {planningDragTask && (
         <TaskDragLayer
+          layerRef={bindDragLayer}
           pointer={planningDragTask.pointer}
           sourceRect={planningDragTask.sourceRect}
           offset={planningDragTask.offset}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { UnifiedDragOverlay, type UnifiedDragConfig, type UnifiedDragController, type UnifiedDragSnapshot } from "./unifiedDrag";
 
 const SOURCE_CLASS = "is-dragging-source";
@@ -14,10 +14,12 @@ export function bindHeldTouchScroll(source: HTMLElement, isHeld: () => boolean) 
 
 export function useUnifiedDrag(): UnifiedDragController {
   const [snapshot, setSnapshot] = useState<UnifiedDragSnapshot | null>(null);
-  const [pointer, setPointer] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const cancelRef = useRef<(() => void) | null>(null);
+  useEffect(() => () => cancelRef.current?.(), []);
 
   const beginDrag = (event: React.PointerEvent<HTMLElement>, config: UnifiedDragConfig) => {
     if (event.button !== 0) return;
+    cancelRef.current?.();
     const sourceElement = event.currentTarget as HTMLElement;
     const rect = sourceElement.getBoundingClientRect();
     const offset = {
@@ -74,13 +76,11 @@ export function useUnifiedDrag(): UnifiedDragController {
         document.body.classList.add(BODY_CLASS);
         const snap: UnifiedDragSnapshot = { ...baseSnapshot, pointer: { x: moveEvent.clientX, y: moveEvent.clientY } };
         setSnapshot(snap);
-        setPointer({ x: moveEvent.clientX, y: moveEvent.clientY });
-        config.onActivate?.(snap);
+         config.onActivate?.(snap);
       }
       moveEvent.preventDefault();
       const next = { x: moveEvent.clientX, y: moveEvent.clientY };
-      setPointer(next);
-      setSnapshot((current) => current ? { ...current, pointer: next } : current);
+       setSnapshot((current) => current ? { ...current, pointer: next } : current);
       config.onMove?.(next, { ...baseSnapshot, pointer: next });
     };
 
@@ -90,6 +90,8 @@ export function useUnifiedDrag(): UnifiedDragController {
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", cancel);
       window.removeEventListener("keydown", keydown);
+      window.removeEventListener("blur", abort);
+      if (cancelRef.current === abort) cancelRef.current = null;
       releaseHeldTouch?.();
       sourceElement.classList.remove(SOURCE_CLASS, "is-drag-armed");
       document.body.classList.remove(BODY_CLASS);
@@ -107,22 +109,24 @@ export function useUnifiedDrag(): UnifiedDragController {
         config.onDrop?.({ x: upEvent.clientX, y: upEvent.clientY }, { ...baseSnapshot, pointer: { x: upEvent.clientX, y: upEvent.clientY } });
       }
     };
-    const cancel = (cancelEvent: PointerEvent) => {
-      if (cancelEvent.pointerId !== pointerId) return;
+    const abort = () => {
       const wasActive = active;
       cleanup();
       if (wasActive) config.onCancel?.();
     };
-    const keydown = (kb: KeyboardEvent) => { if (kb.key === "Escape") cancel(new PointerEvent("pointercancel", { pointerId })); };
+    const cancel = (cancelEvent: PointerEvent) => { if (cancelEvent.pointerId === pointerId) abort(); };
+    const keydown = (kb: KeyboardEvent) => { if (kb.key === "Escape") abort(); };
+    cancelRef.current = abort;
 
     window.addEventListener("pointermove", move, { passive: false });
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", keydown);
+    window.addEventListener("blur", abort);
   };
 
   const overlay = snapshot ? (
-    <UnifiedDragOverlay snapshot={snapshot} pointer={pointer} />
+    <UnifiedDragOverlay snapshot={snapshot} pointer={snapshot.pointer} />
   ) : null;
 
   return { beginDrag, overlay, isDragging: snapshot !== null, snapshot };

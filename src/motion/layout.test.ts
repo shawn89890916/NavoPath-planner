@@ -46,3 +46,30 @@ it("animates the original task only by translation and skips size changes", () =
   expect(animate).toHaveBeenCalledTimes(1);
   coordinator.cancel();
 });
+
+it("does not double-translate a nested card when its parent moves", () => {
+  const makeNode = (parentElement?: HTMLElement) => ({ parentElement, isConnected: true, animate: vi.fn(() => ({ cancel: vi.fn(), finished: new Promise(() => {}) })), ownerDocument: { defaultView: { getComputedStyle: () => ({ translate: "none" }) } } }) as unknown as HTMLElement;
+  const parent = makeNode(), child = makeNode(parent);
+  const pair = (node: HTMLElement, key: string, from: number, to: number) => ({ before: { ...p(key, key, from), node }, after: { ...p(key, key, to), node } });
+  const coordinator = new TaskMotionCoordinator();
+  coordinator.play([pair(parent, "task", 0, 40), pair(child, "sub", 30, 70)]);
+  expect(parent.animate).toHaveBeenCalledTimes(1);
+  expect(child.animate).not.toHaveBeenCalled();
+  coordinator.play([pair(parent, "task", 0, 40), pair(child, "sub", 30, 80)]);
+  expect(child.animate).toHaveBeenCalledWith([{ translate: "0px -10px" }, { translate: "0px 0px" }], expect.any(Object));
+  coordinator.cancel();
+});
+
+it("uses the current visible position and ignores stale animation completion", () => {
+  let translate = "none";
+  const animate = vi.fn(() => ({ cancel: vi.fn(), finished: new Promise(() => {}) }));
+  const node = { isConnected: true, animate, parentElement: null, ownerDocument: { defaultView: { getComputedStyle: () => ({ translate }) } } } as unknown as HTMLElement;
+  const before = { ...p("task", "task", 0), node };
+  const after = { ...p("task", "task", 40), node };
+  const coordinator = new TaskMotionCoordinator();
+  coordinator.play([{ before, after }]);
+  translate = "0px -15px";
+  expect(coordinator.visiblePoints([after])[0].rect.top).toBe(25);
+  coordinator.cancel();
+  expect(coordinator.visiblePoints([after])).toEqual([after]);
+});

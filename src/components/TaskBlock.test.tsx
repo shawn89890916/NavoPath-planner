@@ -8,6 +8,7 @@ import {
   TaskBlockAccent,
   TaskBlockAppearance,
   TaskBlockPriority,
+  TaskSubtaskShelf,
   TaskCheckbox,
   taskBlockClassNames,
   taskBlockDataAttrs,
@@ -376,4 +377,12 @@ describe("TaskBlock shared component contract", () => {
     expect(css).not.toMatch(/rgba\(\s*198\s*,\s*156\s*,\s*249\s*,/i);
     expect(css).not.toMatch(/rgba\(\s*202\s*,\s*255\s*,\s*114\s*,/i);
   });
+});
+
+it("keeps subtask disclosure accessible without redundant visible label", () => {
+  const html = renderToStaticMarkup(<TaskSubtaskShelf label="子任务" progress="1/3" expanded expandLabel="展开" collapseLabel="收起" onToggle={() => {}} />);
+  expect(html).toContain('aria-label="子任务: 1/3"');
+  expect(html).toContain('aria-expanded="true"');
+  expect(html).toContain(">1/3<");
+  expect(html).not.toContain(">子任务<");
 });
