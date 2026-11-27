@@ -43,3 +43,7 @@ export function hasRecordedTimedSlot(task: Task, date: string, start: string, du
     && record.scheduledDate === date && record.scheduledStart === start
     && durationMinutes(record) === duration);
 }
+
+export function isReadOnlyHistoryNote(notes: unknown): boolean {
+  return typeof notes === "string" && /^NavoPath · (?:Completed|Returned unfinished|Skipped|Additional scheduled block|Completed task) · Read-only timeline record\s*$/i.test(notes.trim());
+}
