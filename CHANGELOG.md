@@ -2,6 +2,12 @@
 
 ## 2026-11-27
 
+### 1.7.0 Beta 128
+
+#### 修复
+
+- Super Productivity Sync 1.1.1：隔离只读历史日历任务，重复接收已结束排程时保留原记录，已有异常映射时暂停同步以防止进一步污染。
+
 ### 1.7.0 Beta 127
 
 #### 修复
@@ -1297,6 +1303,12 @@
 # NavoPath Changelog
 
 ## 2026-11-27
+
+### 1.7.0 Beta 128
+
+#### Fixes
+
+- Super Productivity Sync 1.1.1: exclude read-only calendar history tasks, preserve completed execution records on repeated schedule imports, and pause sync when existing history links are detected.
 
 ### 1.7.0 Beta 127
 
