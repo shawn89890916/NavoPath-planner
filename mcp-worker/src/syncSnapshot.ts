@@ -3,6 +3,15 @@ import { mergeWorkspaceData, SYNC_COLLECTIONS } from "../../shared/workspaceMerg
 type Json = Record<string, any>;
 export type SyncProfile = { data: Json; settings: Json; revision: number; updated_at?: string };
 
+/** Legacy bridges remain compatible until the account explicitly migrates. */
+export function cloudDriveSyncAllowed(settings: Json): boolean {
+  const extensions = settings?.extensions;
+  const key = "official:cloud-drive-sync";
+  if (extensions?.installed?.[key]) return extensions.installed[key].enabled === true;
+  if (extensions?.removed?.[key] || extensions?.migratedCloudDriveSync) return false;
+  return true;
+}
+
 export function combineSyncSnapshot(profile: SyncProfile, input: Json, accountId: string, mergedAt: string) {
   if (input.version !== 1 || input.accountId !== accountId || !input.data || !Array.isArray(input.data.tasks)
     || !Array.isArray(input.data.projects) || !input.settings || typeof input.settings !== "object"
@@ -20,6 +29,9 @@ export function combineSyncSnapshot(profile: SyncProfile, input: Json, accountId
   const settings = Date.parse(input.updatedAt) > cloudUpdatedAt ? { ...input.settings } : profile.settings;
   // Folder sync is available to MCP clients. Grants come only from app settings.
   if (settings !== profile.settings) {
+    // A stale mirror cannot re-enable an uninstalled connector or other plugin.
+    delete settings.extensions;
+    if (profile.settings.extensions !== undefined) settings.extensions = profile.settings.extensions;
     delete settings.extensionMcpAccess;
     if (profile.settings.extensionMcpAccess !== undefined) {
       settings.extensionMcpAccess = profile.settings.extensionMcpAccess;

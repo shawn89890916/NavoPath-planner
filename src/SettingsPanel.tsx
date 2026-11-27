@@ -21,6 +21,7 @@ const DesktopUpdateControl = lazy(() => import("./components/DesktopUpdateSettin
 const BetaUpdatePreference = lazy(() => import("./components/DesktopUpdateSettings").then(module => ({ default: module.BetaUpdatePreference })));
 const ExtensionSettings = lazy(() => import("./extensions/ExtensionSettings").then(module => ({ default: module.ExtensionSettings })));
 import { getTimerModes, subscribeTimerModes, getTimerModeRevision } from "./extensions/timers";
+import { nativeFeatureActive } from "./extensions/nativeFeatures";
 import { SHORTCUTS, groupShortcutsByScope, type ShortcutScope } from "./utils/shortcuts";
 import { exportDataAsJson, exportTasksAsCsv, isImportFileSizeAllowed, parsePlannerBackupJson, parseTasksCsv } from "./dataExport";
 import { preparePlannerDataRestore } from "./syncMerge";
@@ -1011,7 +1012,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               </SettingDisclosure>
             </SettingSection>}
             {settingsTarget.category === "integrations" && <Suspense fallback={null}><ConnectionProviders key={authEmail} lang={lang} anchor={settingsTarget.anchor} onSelect={anchor => navigateSettings({ category: "integrations", anchor })} errorMessage={calendarFeedErrorMessage} caldav={<CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} />} externalCalendar={<ExternalCalendarManager lang={lang} />} mcp={<McpTokenManager lang={lang} />} bridge={<SyncBridgeManager lang={lang} />} /></Suspense>}
-            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings inlineSettings={{ "official:navo-ai": <>{/* AI settings follow the plugin owner. */}            <SettingSection title={lang === "zh" ? "模型服务" : "Model service"} description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
+            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings inlineSettings={{ "official:cloud-drive-sync": <SettingSection anchor="sync-bridge" title={lang === "zh" ? "云盘桥接" : "Cloud folder bridge"}><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></SettingSection>, "official:navo-ai": <>{/* AI settings follow the plugin owner. */}            <SettingSection title={lang === "zh" ? "模型服务" : "Model service"} description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
               <SettingRow layout="stacked" anchor="ai-provider" title={lang === "zh" ? "AI 提供商与密钥" : "AI provider and key"} description={lang === "zh" ? "支持 DeepSeek、SiliconFlow、OpenAI、Anthropic、GLM 和通义千问。" : "Supports DeepSeek, SiliconFlow, OpenAI, Anthropic, GLM, and Qwen."} control={<Suspense fallback={null}><AiProviderSettings lang={lang} onSave={onSave} /></Suspense>} />
               <SettingRow anchor="ai-reasoning" title={lang === "zh" ? "思考模式" : "Reasoning mode"} control={<SettingSelect value={settings.reasoningMode || "instant"} ariaLabel={lang === "zh" ? "思考模式" : "Reasoning mode"} onChange={(value) => onSave({ reasoningMode: value as Settings["reasoningMode"] })} options={[
                 { value: "instant", label: lang === "zh" ? "即时" : "Instant" },
@@ -1125,7 +1126,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
                 anchor="widget-timer"
                 title={lang === "zh" ? "计时模式" : "Timer mode"}
                 description={!["stopwatch", "countdown"].includes(widgetTimerDraft.mode) ? (lang === "zh" ? "请在插件设置中配置此计时模式。" : "Configure this timer mode in Plugin settings.") : undefined}
-                control={<SettingSelect value={widgetTimerDraft.mode} ariaLabel={lang === "zh" ? "小组件计时模式" : "Widget timer mode"} onChange={(mode) => updateWidgetTimerDraft({ mode })} options={getTimerModes().map((provider) => ({ value: provider.mode, label: provider[lang] }))} />}
+                control={<SettingSelect value={widgetTimerDraft.mode} ariaLabel={lang === "zh" ? "小组件计时模式" : "Widget timer mode"} onChange={(mode) => updateWidgetTimerDraft({ mode })} options={getTimerModes().filter(provider => provider.mode !== "countdown" || nativeFeatureActive(extensionSnapshot, "countdown")).map((provider) => ({ value: provider.mode, label: provider[lang] }))} />}
               />
               {widgetTimerDraft.mode === "countdown" && <SettingRow title={lang === "zh" ? "倒计时时长" : "Countdown duration"} control={<SettingNumberInput value={Math.round(widgetTimerDraft.countdownSeconds / 60)} min={1} max={1440} step={1} suffix={lang === "zh" ? "分钟" : "min"} ariaLabel={lang === "zh" ? "倒计时时长" : "Countdown duration"} onChange={(minutes) => updateWidgetTimerDraft({ countdownSeconds: minutes * 60 })} />} />}
               <SettingRow

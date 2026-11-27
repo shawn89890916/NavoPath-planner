@@ -101,7 +101,7 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
 
   entry("plugins", { category: "plugins" }, "插件", "Plugins", "extension market import sources update restricted 扩展 市场 导入 来源 更新 受限"),
   entry("mcp", { category: "integrations" }, "MCP", "MCP", "token server integration 令牌 服务"),
-  entry("sync-bridge", { category: "integrations" }, "同步", "Sync", "iCloud Drive OneDrive Dropbox 云盘 文件夹 桥接 备份"),
+  entry("sync-bridge", { category: "plugins", pluginOwner: "official:cloud-drive-sync" }, "同步", "Sync", "iCloud Drive OneDrive Dropbox 云盘 文件夹 桥接 备份"),
   entry("reset-settings", { category: "account-data" }, "重置所有设置", "Reset all settings", "restore defaults danger 恢复默认 危险"),
 ];
 

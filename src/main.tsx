@@ -52,7 +52,7 @@ import { t, detectSystemLanguage, viewLabel, weekdayName } from "./i18n";
 import { term } from "./terminology";
 import { migrateLegacyHabitTracker, scheduleHabitRecord, toggleHabitCompletion, unscheduleHabitRecord, updateHabit, archiveHabit, buildHabitMetrics, isHabitDueOnDate, isHabitWithinDateRange, weekdayLabels, type HabitMetrics } from "./utils/habits";
 import { shouldShowHabitCandidates } from "./utils/habitCandidateVisibility";
-import { nativeFeatureActive } from "./extensions/nativeFeatures";
+import { nativeFeatureActive, metricsPluginActive } from "./extensions/nativeFeatures";
 import { normalizeAiReply } from "./utils/aiReply";
 import { candidateScheduleSummary, type CandidateScheduleSummary } from "./utils/candidateSchedule";
 import { localIsoDate } from "./utils/localDate";
@@ -1144,6 +1144,7 @@ function App() {
     if(productDemo||!dataRef.current)return;
     const task=dataRef.current.tasks.find(t=>t.id===taskId);
     const recordId=task?.timelineRecords?.find(r=>r.id===timerRecordRef.current)?.id;
+    if (!metricsPluginActive(extensionService.getSnapshot())) return;
     recordTimerTransition(authStateRef.current?.user?.id || "preview",taskId||undefined,transition,new Date(at).toISOString(),elapsed,task?.projectId,recordId);
   }
   const startTimer = useCallback((taskId: string,recordId?:string|null) => {
@@ -1403,6 +1404,18 @@ function App() {
   const engagementEnabled = productDemo ? settings?.featureEngagementEnabled === true : nativeFeatureActive(extensionSnapshot, "engagement");
   const aiEnabled = productDemo ? !settings?.hideAi : nativeFeatureActive(extensionSnapshot, "navo-ai");
   const widgetEnabled = nativeFeatureActive(extensionSnapshot, "desktop-widget");
+  const countdownEnabled = Boolean(productDemo) || nativeFeatureActive(extensionSnapshot, "countdown");
+  const flowtimeEnabled = Boolean(productDemo) || nativeFeatureActive(extensionSnapshot, "flowtime");
+  const metricsEnabled = metricsPluginActive(extensionSnapshot);
+  const availableTimerModes = () => getTimerModes().filter(mode => mode.mode !== "countdown" || nativeFeatureActive(extensionService.getSnapshot(), "countdown") || productDemo);
+  useEffect(() => {
+    if (!flowtimeEnabled && focusOverlayMode === "flowtime") setFocusOverlayMode("stopwatch");
+    if (countdownEnabled || !timerExtensionsReady || !ownsTimerClock || !extensionService.isReady()) return;
+    if (widgetTimerRuntimeRef.current.mode === "countdown" || settingsRef.current?.widgetTimerPreferences?.mode === "countdown") {
+      // Switch to the core clock after settling accepted elapsed time; keep the task and history.
+      widgetActionHandlerRef.current({ type: "setTimerMode", mode: "stopwatch" });
+    }
+  }, [countdownEnabled, flowtimeEnabled, focusOverlayMode, timerExtensionsReady, ownsTimerClock, settings?.extensions]);
   const isAiActive = () => Boolean(productDemo) || nativeFeatureActive(extensionService.getSnapshot(), "navo-ai");
   useEffect(() => {
     if (!aiEnabled && !productDemo) {
@@ -1819,7 +1832,7 @@ function App() {
       if (!resolved.data || !resolved.settings) return;
       const migratedData = migrateLegacyHabitTracker(resolved.data, resolved.settings.pluginConfigs);
       remoteRevisionRef.current = Math.max(remoteRevisionRef.current, incomingRevision);
-      if (cloudBaselineReadyRef.current && !hasDirtyLocal && !resolved.replayData && dataRef.current && !productDemo) recordLocalAnalyticsChange(userId,dataRef.current,migratedData,workspaceNow().toISOString(),"remote-observed",incomingRevision>0?`remote:${incomingRevision}`:undefined);
+      if (cloudBaselineReadyRef.current && !hasDirtyLocal && !resolved.replayData && dataRef.current && !productDemo && metricsPluginActive(extensionService.getSnapshot())) recordLocalAnalyticsChange(userId,dataRef.current,migratedData,workspaceNow().toISOString(),"remote-observed",incomingRevision>0?`remote:${incomingRevision}`:undefined);
       cloudBaselineReadyRef.current = true;
       dataRef.current = migratedData;
       settingsRef.current = resolved.settings;
@@ -3026,7 +3039,7 @@ if (cached?.data && cached?.settings) {
     pendingDataSaveRef.current = { payload: optimistic, version, pendingSavedAt: savedAt };
     dataRef.current = optimistic;
     setData(optimistic);
-    if(previous&&!productDemo)recordLocalAnalyticsChange(authStateRef.current?.user?.id||"preview",previous,optimistic,savedAt,source);
+    if(previous&&!productDemo&&metricsPluginActive(extensionService.getSnapshot()))recordLocalAnalyticsChange(authStateRef.current?.user?.id||"preview",previous,optimistic,savedAt,source);
     if (settingsRef.current) writeBootstrapCache(optimistic, settingsRef.current, authStateRef.current?.user?.id, {
       dataDirty: true,
       dataPendingSavedAt: savedAt,
@@ -3355,11 +3368,11 @@ if (cached?.data && cached?.settings) {
   }, [settings?.syncIntervalMinutes, authState?.user?.id]);
 
   useEffect(() => {
-    if(productDemo||!data||!settings)return;
+    if(productDemo||!data||!settings||!metricsEnabled)return;
     const scope=authState?.user?.id||"preview";
-    const capture=()=>{if(loadedWorkspaceKeyRef.current.startsWith("cloud:")&&!cloudBaselineReadyRef.current)return;if(dataRef.current&&settingsRef.current&&(authStateRef.current?.user?.id||"preview")===scope)captureDailyPlan(scope,dataRef.current,workspaceNow().toISOString(),settingsRef.current.dayStartTime);};
+    const capture=()=>{if(!metricsPluginActive(extensionService.getSnapshot()))return;if(loadedWorkspaceKeyRef.current.startsWith("cloud:")&&!cloudBaselineReadyRef.current)return;if(dataRef.current&&settingsRef.current&&(authStateRef.current?.user?.id||"preview")===scope)captureDailyPlan(scope,dataRef.current,workspaceNow().toISOString(),settingsRef.current.dayStartTime);};
     capture();const interval=window.setInterval(capture,60_000);return()=>window.clearInterval(interval);
-  },[Boolean(data),Boolean(settings),authState?.user?.id,settings?.dayStartTime]);
+  },[Boolean(data),Boolean(settings),authState?.user?.id,settings?.dayStartTime,metricsEnabled]);
 
   // The same live services power the application and trusted community plugins.
   useEffect(() => {
@@ -4607,7 +4620,7 @@ if (cached?.data && cached?.settings) {
       appearance: normalizeWidgetAppearance(settings?.widgetAppearance),
       appearanceConfigured: settings?.widgetAppearanceMigrated === true,
       theme: settings?.theme === "dark" ? "dark" : "light",
-      timerModes: getTimerModes(),
+      timerModes: availableTimerModes(),
       extensionTheme: extensionService.getActiveThemeDescriptor(),
       timerCountsAsWork: widgetTimerTick.countsAsWork,
       timerSnapshotAt: snapshotNow,
@@ -4764,6 +4777,7 @@ if (cached?.data && cached?.settings) {
         });
         break;
       case "setTimerMode": {
+        if (action.mode === "countdown" && !nativeFeatureActive(extensionService.getSnapshot(), "countdown") && !productDemo) break;
         if (widgetTimerRuntimeRef.current.mode === "pomodoro") {
           if (action.mode === "pomodoro") break;
           finishPomodoro(true);
@@ -4804,11 +4818,13 @@ if (cached?.data && cached?.settings) {
         break;
       }
       case "updateTimerPreferences": {
+        if (action.patch.mode === "countdown" && !nativeFeatureActive(extensionService.getSnapshot(), "countdown") && !productDemo) break;
         const preferences = normalizeWidgetTimerPreferences({ ...widgetTimerPreferences, ...action.patch });
         void saveSettings({ widgetTimerPreferences: preferences });
         break;
       }
       case "saveTimerSettings": {
+        if (action.draft.mode === "countdown" && !nativeFeatureActive(extensionService.getSnapshot(), "countdown") && !productDemo) break;
         const now = Date.now();
         const preferences = normalizeWidgetTimerPreferences(action.draft);
         if (widgetTimerRuntimeRef.current.mode === "pomodoro") {
@@ -4872,6 +4888,7 @@ if (cached?.data && cached?.settings) {
         break;
       }
       case "scheduleWidgetCountdown": {
+        if (!nativeFeatureActive(extensionService.getSnapshot(), "countdown") && !productDemo) break;
         const duration = Math.round(action.durationMinutes);
         const selection = resolveWidgetTimelineSelection(dataRef.current?.tasks || [], Date.now());
         const activeTask = selection?.task;
@@ -8206,7 +8223,7 @@ if (cached?.data && cached?.settings) {
     const resolved = resolveBootstrap(latestCache, bootstrap.data, bootstrap.settings);
     if (!resolved.data || !resolved.settings) return;
     remoteRevisionRef.current = Math.max(remoteRevisionRef.current, incomingRevision);
-    if (cloudBaselineReadyRef.current && !hasDirtyLocal && !resolved.replayData && dataRef.current && !productDemo) recordLocalAnalyticsChange(authStateRef.current?.user?.id || "preview",dataRef.current,resolved.data,workspaceNow().toISOString(),"remote-observed",incomingRevision>0?`remote:${incomingRevision}`:undefined);
+    if (cloudBaselineReadyRef.current && !hasDirtyLocal && !resolved.replayData && dataRef.current && !productDemo && metricsPluginActive(extensionService.getSnapshot())) recordLocalAnalyticsChange(authStateRef.current?.user?.id || "preview",dataRef.current,resolved.data,workspaceNow().toISOString(),"remote-observed",incomingRevision>0?`remote:${incomingRevision}`:undefined);
     cloudBaselineReadyRef.current = true;
     dataRef.current = resolved.data;
     settingsRef.current = resolved.settings;
@@ -9168,7 +9185,7 @@ if (cached?.data && cached?.settings) {
     ? (lang === "zh" ? `已专注 ${Math.floor(focusElapsed / 60)} 分钟，建议休息 ${flowBreakMinutes} 分钟` : `Focused ${Math.floor(focusElapsed / 60)}m, suggested break ${flowBreakMinutes}m`)
     : focusProvider?.label[lang];
   const chooseFocusMode = (mode: string) => {
-    const chosen = mode === "flowtime" || mode === "stopwatch" || getTimerMode(mode) ? mode : "stopwatch";
+    const chosen = (mode === "flowtime" && flowtimeEnabled) || mode === "stopwatch" || getTimerMode(mode) ? mode : "stopwatch";
     setFocusOverlayMode(chosen);
     const timerMode = chosen === "flowtime" ? "stopwatch" : chosen;
     if (widgetTimerRuntimeRef.current.mode !== timerMode) {
@@ -10705,7 +10722,7 @@ if (cached?.data && cached?.settings) {
           <FocusTimerPanel
             lang={lang}
             mode={focusOverlayMode}
-            modes={[...getTimerModes().filter(item => item.mode !== "countdown"), { mode: "flowtime", zh: "Flowtime", en: "Flowtime" }]}
+            modes={[...getTimerModes().filter(item => item.mode !== "countdown"), ...(flowtimeEnabled ? [{ mode: "flowtime", zh: "Flowtime", en: "Flowtime" }] : [])]}
             onModeChange={chooseFocusMode}
             clock={focusClockDisplay}
             clockFont={normalizePomodoroClockFont(settings.extensionConfigs?.[POMODORO_EXTENSION_KEY]?.clockFont)}

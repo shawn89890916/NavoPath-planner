@@ -89,6 +89,7 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
   }
   if (input.anchor && ["execution-defaults", "day-start", "default-timeline", "continuous-scroll", "hide-completed"].includes(input.anchor)) return { category: "workflow", anchor: input.anchor };
   if (input.anchor === "auto-launch") return { category: "general", anchor: input.anchor };
+  if (input.anchor === "sync-bridge") return { category: "plugins", pluginOwner: "official:cloud-drive-sync", anchor: "sync-bridge" };
   if (input.category === "ai" || input.anchor?.startsWith("ai-") || input.anchor === "hide-ai") return { category: "plugins", pluginOwner: "official:navo-ai", ...(input.anchor && input.anchor !== "hide-ai" ? { anchor: input.anchor } : {}) };
   if (input.anchor === "desktop-widget" || input.anchor?.startsWith("widget-")) return { category: "plugins", pluginOwner: "official:desktop-widget", anchor: input.anchor };
   if (input.category === "widget" || input.anchor === "portrait-window" || input.anchor === "desktop-window-settings") return { category: "general", anchor: input.anchor || "portrait-window" };

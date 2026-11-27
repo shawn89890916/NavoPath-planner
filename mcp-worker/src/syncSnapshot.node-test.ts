@@ -1,7 +1,7 @@
 // @ts-nocheck
 import assert from "node:assert/strict";
 import test from "node:test";
-import { combineSyncSnapshot } from "./syncSnapshot.ts";
+import { cloudDriveSyncAllowed, combineSyncSnapshot } from "./syncSnapshot.ts";
 import { SYNC_COLLECTIONS } from "../../shared/workspaceMerge.ts";
 
 const at = "2026-09-29T12:00:00.000Z";
@@ -42,4 +42,14 @@ test("settings use snapshot time, repeated snapshots are idempotent, and account
   assert.equal(combineSyncSnapshot(cloud, newer, "user-1", at).settings.theme, "newer");
   assert.equal(combineSyncSnapshot(cloud, file([]), "user-1", at).changed, false);
   assert.throws(() => combineSyncSnapshot(cloud, { ...older, accountId: "user-2" }, "user-1", at));
+});
+
+
+test("folder synchronization respects explicit plugin lifecycle", () => {
+  const key = "official:cloud-drive-sync";
+  assert.equal(cloudDriveSyncAllowed({}), true);
+  assert.equal(cloudDriveSyncAllowed({ extensions: { migratedCloudDriveSync: true } }), false);
+  assert.equal(cloudDriveSyncAllowed({ extensions: { installed: { [key]: { enabled: true } } } }), true);
+  assert.equal(cloudDriveSyncAllowed({ extensions: { installed: { [key]: { enabled: false } } } }), false);
+  assert.equal(cloudDriveSyncAllowed({ extensions: { removed: { [key]: "2026-11-27" } } }), false);
 });

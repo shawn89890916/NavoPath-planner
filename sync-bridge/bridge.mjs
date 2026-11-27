@@ -251,7 +251,7 @@ async function run() {
       failures += 1;
       const message = error instanceof Error ? error.message : String(error);
       process.stderr.write(`${new Date().toISOString()} ${message}\n`);
-      await report(config, token, "error", lastSuccessAt, message);
+      await report(config, token, message === "SYNC_BRIDGE_DISABLED" ? "stopped" : "error", lastSuccessAt, message);
     }
     const delay = Math.min(600_000, config.intervalSeconds * 1000 * 2 ** Math.min(failures, 5));
     await new Promise((resolveDelay) => setTimeout(resolveDelay, delay));

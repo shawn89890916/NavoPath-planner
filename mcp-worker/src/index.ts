@@ -3,7 +3,7 @@ import { ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { McpAgent } from "agents/mcp";
 import { fromSupabaseUrl, withOAuthProtectedResource, withSupabase } from "@supabase/server";
 import { z } from "zod";
-import { combineSyncSnapshot } from "./syncSnapshot";
+import { cloudDriveSyncAllowed, combineSyncSnapshot } from "./syncSnapshot";
 import { buildCalendarFeed, buildSuperProductivityHistoryFeed } from "./calendarFeed";
 import { createHistoryToken, parseHistoryToken, verifyHistoryToken } from "./calendarHistoryToken";
 import { listEngagement } from "./engagement";
@@ -267,6 +267,7 @@ const snapshot = (profile: Profile, userId: string) => ({
 async function mergeSyncSnapshot(env: Env, userId: string, input: Json) {
   if (new TextEncoder().encode(JSON.stringify(input)).byteLength > 20 * 1024 * 1024) throw new Error("Sync snapshot exceeds 20 MB");
   const profile = await getProfile(env, userId);
+  if (!cloudDriveSyncAllowed(profile.settings)) throw new Error("SYNC_BRIDGE_DISABLED");
   const merged = combineSyncSnapshot(profile, input, userId, now());
   if (!merged.changed) {
     return { ...snapshot(profile, userId), changed: false };
@@ -334,7 +335,9 @@ export class NavoPathMCP extends McpAgent<Env, unknown, AgentProps> {
     });
 
     this.server.registerTool("sync_get_snapshot", { description: "Read the complete workspace for a user-owned folder sync bridge. The result contains private planner data; keep it in the user's chosen sync folder only.", annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }, inputSchema: {} }, async () => {
-      return result(snapshot(await getProfile(this.env, this.userId()), this.userId()));
+      const profile = await getProfile(this.env, this.userId());
+      if (!cloudDriveSyncAllowed(profile.settings)) throw new Error("SYNC_BRIDGE_DISABLED");
+      return result(snapshot(profile, this.userId()));
     });
 
     this.server.registerTool("sync_merge_snapshot", { description: "Merge a versioned folder snapshot into this workspace by record modification time and deletion tombstones.", annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false }, inputSchema: {
@@ -682,7 +685,11 @@ export default {
       if (auth === tokenLookupUnavailable) return tokenLookupUnavailableResponse();
       if (!auth) return new Response(JSON.stringify({ error: "Invalid or revoked bearer token" }), { status: 401, headers: { "content-type": "application/json", "cache-control": "no-store" } });
       try {
-        if (request.method === "GET") return new Response(JSON.stringify(snapshot(await getProfile(env, auth.userId), auth.userId)), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+        if (request.method === "GET") {
+          const profile = await getProfile(env, auth.userId);
+          if (!cloudDriveSyncAllowed(profile.settings)) throw new Error("SYNC_BRIDGE_DISABLED");
+          return new Response(JSON.stringify(snapshot(profile, auth.userId)), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+        }
         const maxBytes = syncSnapshot ? 20 * 1024 * 1024 : 4_096;
         if (Number(request.headers.get("content-length") || 0) > maxBytes) return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: { "content-type": "application/json" } });
         const raw = await request.text();
@@ -694,7 +701,7 @@ export default {
         return new Response(JSON.stringify(output), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Sync failed";
-        const status = /revision|concurrent|changed/i.test(message) ? 409 : 400;
+        const status = message === "SYNC_BRIDGE_DISABLED" ? 403 : /revision|concurrent|changed/i.test(message) ? 409 : 400;
         return new Response(JSON.stringify({ error: message }), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
       }
     }
