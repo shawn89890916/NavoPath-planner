@@ -1,0 +1,35 @@
+name: SP sync hotfix candidate preflight
+on:
+  push:
+    branches: [fix/sp-sync-data-integrity-111]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run extensions:build
+      - run: node scripts/build-sp-sync-package.mjs
+      - run: node scripts/changelog-maintain.mjs --check
+      - run: npx vitest run src/utils/spScheduleProjection.test.ts src/calendarFeed.test.ts
+      - run: node --test mcp-worker/src/superProductivitySync.node-test.ts
+      - run: node --check integrations/super-productivity-navopath/plugin.js
+      - run: npm test
+      - run: npm run extensions:check
+      - run: npm run css:check
+      - run: npm run build
+      - name: Commit generated hotfix assets to candidate only
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/extensions/packages/super-productivity-sync.navopackage.json public/extensions/catalog.json integrations/super-productivity-navopath/navopath-sync-1.1.1.zip
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'build: regenerate sync 1.1.1 packages'
+          git push origin HEAD:refs/heads/fix/sp-sync-data-integrity-111
