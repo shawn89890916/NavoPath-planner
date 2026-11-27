@@ -191,8 +191,8 @@ async function superProductivitySyncApi(request: Request, env: Env, ctx: Executi
   try {
     if (url.pathname.endsWith("/pause") && request.method === "POST") {
       if (isSyncToken || !pairId || row.pair_id !== pairId) return syncResponse({ error: "Only the NavoPath account can pause this connection" }, 403);
-      if (state.status !== "paused") { state.status = "paused"; state.baseRevision++; await save(state); }
-      return syncResponse({ pairId: row.pair_id, status: state.status, revision: state.baseRevision });
+      if (state.status !== "paused") { state.status = "paused"; if (body.reason === "history-feedback") state.pauseReason = "history-feedback"; state.baseRevision++; await save(state); }
+      return syncResponse({ pairId: row.pair_id, status: state.status, pauseReason: state.pauseReason, revision: state.baseRevision });
     }
     if (state.status === "paused" && request.method === "POST") return syncResponse({ error: state.pauseReason === "history-feedback" ? "Read-only calendar history detected. Sync paused for data repair." : "Sync paused after undo. Disconnect and pair again to resume." }, 409);
     if (url.pathname.endsWith("/snapshot") && request.method === "POST") {
