@@ -2,11 +2,23 @@
 
 ## 2026-11-27
 
-### 1.7.0 Beta 135
+### 1.7.0 Beta 137
 
 #### 改进
 
 - 任务菜单的预测预热覆盖共享原生规划模块的已安装视图，忽略已选、禁用和裁切目标，失焦时清空轨迹；保留悬停和键盘操作。
+
+### 1.7.0 Beta 136
+
+#### 新增
+
+- 社区市场新增可选阅读插件，支持书架、阅读状态、进度、独立阅读任务及计划与实际时长统计；复用时间轴、计时和任务历史，并在统计概览按书籍汇总。
+
+### 1.7.0 Beta 135
+
+#### 修复
+
+- 设置页统一继承工作区圆角，修正标题、分组、字段和插件开关的对齐，保持窄屏表单与现有任务块样式。
 
 ### 1.7.0 Beta 134
 
@@ -1341,11 +1353,23 @@
 
 ## 2026-11-27
 
-### 1.7.0 Beta 135
+### 1.7.0 Beta 137
 
 #### Improvements
 
 - Extend intent warming to installed views sharing the native planning module, skip selected, disabled and clipped targets, and reset trajectories on blur while preserving hover and keyboard behavior.
+
+### 1.7.0 Beta 136
+
+#### Added
+
+- Add the optional Reading community plugin with a bookshelf, reading status, progress, dedicated reading tasks, and planned and actual time totals using the existing timeline, timer, and task history, with a per-book breakdown in Metrics Overview.
+
+### 1.7.0 Beta 135
+
+#### Fixes
+
+- Unify settings with the workspace corner radius; align headings, groups, fields and plugin switches, preserving compact forms and existing task-block styling.
 
 ### 1.7.0 Beta 134
 
