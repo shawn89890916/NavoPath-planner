@@ -17,7 +17,8 @@ describe("shared option-list visual contract", () => {
 
   it("uses shared selection and popover controls for Settings and the shelf", () => {
     expect(main).toContain('className="df-settings-nav ui-choice-list ui-choice-list--motion-selection"');
-    expect(main).toMatch(/className="df-settings-subtabs (?:[\w-]+ )*ui-choice-list ui-choice-list--inline ui-choice-list--motion-selection"/);
+    expect(main).not.toContain('className="df-settings-subtabs');
+    expect(main).toContain("<ConnectionProviders");
     expect(main).toContain('className="df-shelf-view-menu"');
     expect(main).toContain('aria-pressed={shelfViewId === view.id}');
   });

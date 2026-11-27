@@ -12616,26 +12616,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
 .df-plugin-update-notice > span:nth-child(2) { display:grid; min-width:0; gap:3px; flex:1; }
 .df-plugin-update-notice strong { font-weight:600; }
 .df-plugin-update-notice-dot { width:8px; height:8px; flex:0 0 8px; border-radius:50%; background:var(--accent-active); }
-.df-settings-subtabs {
-  display: flex;
-  gap: 18px;
-  min-height: 42px;
-  align-items: flex-end;
-  border-bottom: 1px solid var(--paper-rule);
-}
-.df-settings-subtabs button {
-  min-height: 40px;
-  padding: 0;
-  border: 1px solid var(--paper-rule-strong);
-  color: var(--text-muted);
-  background: transparent;
-  font: 600 11px/1 var(--paper-sans);
-  cursor: pointer;
-}
-.df-settings-subtabs button:hover { color: var(--text-main); border-color: var(--accent-active); }
-.df-settings-subtabs button.active { color: var(--text-main); border-color: var(--accent-active); }
-.df-settings-subtabs button:active { transform: translateY(1px); }
-.df-settings-subtabs button:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 2px; }
 [data-settings-anchor]:focus { outline: none; }
 [data-settings-anchor]:focus-visible { outline: 1px solid var(--accent-active); outline-offset: 3px; }
 .df-visually-hidden {
@@ -12657,7 +12637,6 @@ body:not(.df-timeline-pointer-drag) .df-candidate-list .df-list-insertion-line {
     border-bottom: 1px solid var(--paper-rule);
   }
   .df-settings-content { padding-right: 1px; }
-  .df-settings-subtabs button { min-height: 44px; }
   .df-app .df-settings-shell {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
@@ -18143,7 +18122,6 @@ body.df-unified-dragging .df-unified-drag-overlay {
   ::view-transition-new(navo-motion-surface) { animation-duration: .001ms; }
   .df-execute-skeleton * { animation: none; }
   .df-list-insertion-line { animation: none; }
-  .df-settings-subtabs button { transition: none; }
   .df-app .df-task-block[data-task-appearance] {
     transition: none;
   }
