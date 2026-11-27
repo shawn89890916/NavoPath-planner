@@ -9,6 +9,8 @@ on:
       - 'src/SettingsPanel.tsx'
       - 'src/extensions/ExtensionSettings.*'
       - 'scripts/settings-ui-browser.mjs'
+      - 'src/reading/**'
+      - 'community-plugins/reading/**'
   workflow_dispatch:
 permissions:
   contents: read

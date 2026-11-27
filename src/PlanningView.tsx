@@ -1,3 +1,4 @@
+import type { ReadingLibrary } from "./reading/model";
 import { createDragProjection } from "./motion/dragProjection";
 import { rememberDragLanding } from "./motion/layout";
 import "./PlanningView.css";
@@ -627,6 +628,7 @@ export type PlanningViewSession = {
 
 export default function PlanningView(props: {
   analyticsScope?: string;
+  readingLibrary?: ReadingLibrary;
   weekStartsOn?: 0|1;
   session?: React.RefObject<PlanningViewSession | null>;
   focusTaskId?: string | null;
@@ -1962,7 +1964,7 @@ export default function PlanningView(props: {
               )}
 
               <React.Suspense fallback={<div className="df-metrics-empty" role="status">{props.lang === "zh" ? "正在加载指标…" : "Loading metrics…"}</div>}>
-              <MetricsInsights key={props.analyticsScope || "demo"} scope={props.analyticsScope} data={props.data} referenceDate={props.referenceDate} dayStartTime={props.dayStartTime} weekStartsOn={props.weekStartsOn} engagementEnabled={props.engagementEnabled} projectIds={metricsProjectFilter} habitMode={metricsHabitMode} completion={metricsCompletion} lang={props.lang}
+              <MetricsInsights key={props.analyticsScope || "demo"} scope={props.analyticsScope} readingLibrary={props.readingLibrary} data={props.data} referenceDate={props.referenceDate} dayStartTime={props.dayStartTime} weekStartsOn={props.weekStartsOn} engagementEnabled={props.engagementEnabled} projectIds={metricsProjectFilter} habitMode={metricsHabitMode} completion={metricsCompletion} lang={props.lang}
                 query={{range:metricsRangePreset,customStart:metricsCustomStart,customEnd:metricsCustomEnd,group:metricsGroupBy,display:metricsDisplayMetric,habit:metricsHabitMode,completion:metricsCompletion,projects:metricsProjectFilter}}
                 onApplyQuery={(q:MetricsQuery)=>{setMetricsRangePreset(q.range);setMetricsCustomStart(q.customStart);setMetricsCustomEnd(q.customEnd);setMetricsGroupBy(q.group);setMetricsDisplayMetric(q.display);setMetricsHabitMode(q.habit);setMetricsCompletion(q.completion);setMetricsProjectFilter(q.projects);updateMetricsSetting({metricsRangePreset:q.range,metricsCustomStart:q.customStart,metricsCustomEnd:q.customEnd,metricsGroupBy:q.group,metricsDisplayMetric:q.display,metricsIncludeHabits:q.habit,metricsCompletionFilter:q.completion});}}/>
 

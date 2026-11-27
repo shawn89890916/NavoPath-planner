@@ -29,6 +29,8 @@ export const extensionService = {
     if (revision === configureRevision) await current.configure(host);
   },
   getConfig: (key: string) => implementation?.getConfig(key) ?? {},
+  readReadingLibrary: async (account: string) => (await engine()).readReadingLibrary(account),
+  writeReadingLibrary: async (account: string, value: unknown) => (await engine()).writeReadingLibrary(account, value),
   getActiveThemeDescriptor: () => implementation?.getActiveThemeDescriptor(),
   saveConfig: async (key: string, patch: Record<string, unknown>) => (await engine()).saveConfig(key, patch),
   setSafeMode: async (enabled: boolean) => (await engine()).setSafeMode(enabled),

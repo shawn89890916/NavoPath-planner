@@ -432,7 +432,13 @@ export class ExtensionService {
         if (!nativeFeatureIds.includes(id) || key !== `official:${id}`) throw new Error("Unknown native feature");
         if (this.snapshot.nativeFeatures?.includes(id)) throw new Error("Native feature already registered");
         this.setSnapshot({ nativeFeatures: [...(this.snapshot.nativeFeatures ?? []), id] });
-        return () => { if (generation === this.generation) this.setSnapshot({ nativeFeatures: (this.snapshot.nativeFeatures ?? []).filter(feature => feature !== id) }); };
+        // The Reading shelf is host-rendered to reuse native task controls.
+        const closeView = id === "reading" ? this.bridge(key).contribute("views", "Reading", () => {}, { planningView: true }) : undefined;
+        return () => {
+          if (generation !== this.generation) return;
+          void closeView?.();
+          this.setSnapshot({ nativeFeatures: (this.snapshot.nativeFeatures ?? []).filter(feature => feature !== id) });
+        };
       },
       registerNativePlanningView: (mode: NativeShelfViewMode, name: string, iconUrl?: string): Dispose => {
         guard();
@@ -449,19 +455,61 @@ export class ExtensionService {
     const item = key && this.snapshot.preferences.installed[key];
     return item && this.themeSignature && !this.snapshot.safeMode ? { accountId: this.account, sha256: item.sha256, config: this.getConfig(item.key) } : undefined;
   };
-  private async getValue(owner: string, key: string): Promise<unknown | null> {
-    const scope = this.scope(), pending = await cacheGet<PendingValue>(scope + `pending:${owner}:${key}`);
+  private requireReadingAccount(account: string) {
+    if (!this.host || this.account !== account || this.snapshot.safeMode ||
+      !this.snapshot.preferences.installed["official:reading"]?.enabled ||
+      !this.snapshot.nativeFeatures?.includes("reading")) throw new Error("Reading is inactive or the account changed");
+  }
+  async readReadingLibrary(account: string): Promise<unknown | null> {
+    this.requireReadingAccount(account);
+    const generation = this.generation;
+    const result = await this.getValue("official:reading", "library-v1", true);
+    this.requireReadingAccount(account);
+    if (generation !== this.generation) throw new Error("Reading account changed");
+    return result;
+  }
+  async writeReadingLibrary(account: string, value: unknown): Promise<void> {
+    this.requireReadingAccount(account);
+    const generation = this.generation;
+    await this.writeValue("official:reading", "library-v1", value, false);
+    this.requireReadingAccount(account);
+    if (generation !== this.generation) throw new Error("Reading account changed");
+  }
+  private async getValue(owner: string, key: string, requireKnown = false): Promise<unknown | null> {
+    const scope = this.scope(), account = this.account;
+    const pendingKey = scope + `pending:${owner}:${key}`, valueKey = scope + `value:${owner}:${key}`;
+    const knownKey = scope + `known:${owner}:${key}`;
+    const pending = await cacheGet<PendingValue>(pendingKey);
+    if (scope !== this.scope()) throw new Error("Extension account changed");
     if (pending) return pending.remove ? null : pending.value;
-    const account = this.account;
-    if (account !== "preview") { try { const value = await getExtensionValue(owner, key, account); if (scope !== this.scope()) throw new Error("Extension account changed"); await cachePut(scope + `value:${owner}:${key}`, value); return value; } catch { /* Cached values work offline. */ } }
-    return cacheGet(scope + `value:${owner}:${key}`);
+    if (account !== "preview") {
+      try {
+        const value = await getExtensionValue(owner, key, account);
+        if (scope !== this.scope()) throw new Error("Extension account changed");
+        const queued = await cacheGet<PendingValue>(pendingKey);
+        if (queued) return queued.remove ? null : queued.value;
+        await cachePut(valueKey, value);
+        if (requireKnown) await cachePut(knownKey, true);
+        return value;
+      } catch {
+        if (scope !== this.scope()) throw new Error("Extension account changed");
+        // A failed first read must not be mistaken for an empty cloud library.
+        const cached = await cacheGet(valueKey);
+        if (requireKnown && cached === null && !await cacheGet<boolean>(knownKey)) throw new Error("Connect once to load the existing library");
+        return cached;
+      }
+    }
+    return cacheGet(valueKey);
   }
   private async writeValue(owner: string, key: string, value: unknown, remove: boolean) {
     if (!key || key.length > 200 || /[\x00-\x1f]/.test(key)) throw new Error("Invalid storage key");
     const serialized = JSON.stringify(value); if (serialized === undefined || serialized.length > 1024 * 1024) throw new Error("Store JSON values smaller than 1 MiB per key");
-    const scope = this.scope(); const pending: PendingValue = { owner, key, value: JSON.parse(serialized), remove, id: crypto.randomUUID() };
+    const scope = this.scope(), account = this.account;
+    const pending: PendingValue = { owner, key, value: JSON.parse(serialized), remove, id: crypto.randomUUID() };
     await cachePut(scope + `value:${owner}:${key}`, remove ? null : pending.value);
-    if (this.account !== "preview") { await cachePut(scope + `pending:${owner}:${key}`, pending); void this.flushQueue(); }
+    if (account !== "preview") await cachePut(scope + `pending:${owner}:${key}`, pending);
+    if (scope !== this.scope() || account !== this.account) return;
+    if (account !== "preview") void this.flushQueue();
     emitPluginEvent(`storage:${owner}`, { key, value: remove ? null : pending.value });
   }
   private flushing = false;

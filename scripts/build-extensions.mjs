@@ -19,7 +19,12 @@ await mkdir(icons, { recursive: true });
 async function emit(path, data) {
   if (check) {
     const existing = await readFile(path, 'utf8').catch(() => '');
-    if (existing !== data) throw new Error(`Generated extension file is stale: ${relative(root, path)}`);
+    if (existing !== data) {
+      const expectedLines = data.split("\n"), actualLines = existing.split("\n");
+      const mismatch = expectedLines.findIndex((line, index) => line !== actualLines[index]);
+      if (mismatch >= 0) console.error(`First mismatch at line ${mismatch + 1}: expected ${expectedLines[mismatch].slice(0, 320)}`);
+      throw new Error(`Generated extension file is stale: ${relative(root, path)}`);
+    }
   } else await writeFile(path, data);
 }
 async function emitBinary(path, data) {
