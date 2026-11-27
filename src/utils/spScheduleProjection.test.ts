@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { selectTimedSlot, durationMinutes, hasRecordedTimedSlot } from "../../community-plugins/super-productivity-sync/schedule";
+import { selectTimedSlot, durationMinutes, hasRecordedTimedSlot, isReadOnlyHistoryNote } from "../../community-plugins/super-productivity-sync/schedule";
 import type { Task, TimelineRecord } from "../types";
 const rec = (patch: Partial<TimelineRecord> = {}): TimelineRecord => ({
  id:"slot",taskId:"task",scheduledDate:"2026-11-26",scheduledStart:"09:00",scheduledEnd:"10:00",executionStatus:"scheduled",createdAt:"2026-11-26T00:00:00Z",...patch
@@ -38,5 +38,14 @@ describe("SP schedule replay after execution", () => {
   expect(hasRecordedTimedSlot(item,"2026-11-27","09:00",60)).toBe(false);
   expect(hasRecordedTimedSlot(item,"2026-11-26","09:00",30)).toBe(false);
   expect(hasRecordedTimedSlot(task({timelineRecords:[rec({executionStatus:"cancelled"})]}),"2026-11-26","09:00",60)).toBe(false);
+ });
+});
+
+describe("read-only calendar marker", () => {
+ it("recognizes feed notes without matching a task title or arbitrary text", () => {
+  expect(isReadOnlyHistoryNote("NavoPath · Completed · Read-only timeline record")).toBe(true);
+  expect(isReadOnlyHistoryNote("NavoPath · Returned unfinished · Read-only timeline record")).toBe(true);
+  expect(isReadOnlyHistoryNote("✓ My task")).toBe(false);
+  expect(isReadOnlyHistoryNote("NavoPath · Completed · Read-only timeline record with my extra note")).toBe(false);
  });
 });
