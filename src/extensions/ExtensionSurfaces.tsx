@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, 
 import type { Language } from "../types";
 import { ActionDisclosure, Button, IconButton } from "../components/UiPrimitives";
 import { extensionService } from "./service";
-import { UiZapIcon, UiPencilIcon, UiMetricsIcon, UiListChecksIcon, UiCalendarCheckIcon, UiBellIcon, UiSearchIcon, UiSettingsIcon, UiMoreIcon, UiTimerIcon } from "../components/UiIcons";
+import { UiZapIcon, UiPencilIcon, UiMetricsIcon, UiHistoryIcon, UiListChecksIcon, UiCalendarCheckIcon, UiBellIcon, UiSearchIcon, UiSettingsIcon, UiMoreIcon, UiTimerIcon } from "../components/UiIcons";
 import type { CatalogEntry, ExtensionContribution, InstalledExtension, PluginLauncherStatus } from "./types";
 import { getAppHeaderPlugins, getCompactPluginGroups } from "./compactDock";
 import { useUnifiedDrag } from "../useUnifiedDrag";
@@ -14,6 +14,7 @@ function PluginLauncherIcon({ item, catalog, size, status }: { item: InstalledEx
   const iconUrl = extensionService.getPluginIcon(item.key) || catalog.find((entry) => entry.sourceId === item.sourceId && entry.manifest.id === item.manifest.id)?.iconUrl;
   const weather = status?.weather ?? (item.manifest.id === "weather" ? "unknown" : undefined);
   if (weather && Object.hasOwn(weatherGlyphs, weather)) return <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={weatherGlyphs[weather]} /></svg>;
+  if (item.manifest.id === "activity-history") return <UiHistoryIcon size={size} />;
   if (iconUrl && iconUrl !== failedUrl) return <img src={iconUrl} alt="" draggable={false} onError={() => setFailedUrl(iconUrl)} />;
   const Icon = item.manifest.id === "metrics" ? UiMetricsIcon : item.manifest.id === "pomodoro" ? UiTimerIcon : item.manifest.id === "quick-capture" ? UiPencilIcon : item.manifest.id === "daily-overview" ? UiListChecksIcon : ["class-timetable", "schedule-templates"].includes(item.manifest.id) ? UiCalendarCheckIcon : UiZapIcon;
   return <Icon size={size} />;
@@ -87,7 +88,7 @@ export function CompactPluginDock({ lang, chat, activePanel, activeOwner, onNoti
     const className = inMenu ? "df-mobile-menu-item" : "df-mobile-dock-action df-mobile-plugin-action";
     const selected = activeOwner === item.key;
     const status = snapshot.launcherStatus[item.key];
-    const pageName = toolbar.pages.get(item.key)?.name || item.manifest.name;
+    const pageName = item.manifest.id === "activity-history" ? (zh ? "活动历史" : "Activity history") : toolbar.pages.get(item.key)?.name || item.manifest.name;
     const label = status?.label || pageName;
     return <button
       key={item.key}
@@ -217,7 +218,7 @@ export function ExtensionHeader({ lang, activeOwner, onOpenPage }: { lang: Langu
           const page = pages.get(owner)!;
           const item = snapshot.preferences.installed[owner];
           const status = snapshot.launcherStatus[owner];
-          return <IconButton key={owner} className="df-extension-header-launcher" label={status?.label || page.name}
+          return <IconButton key={owner} className="df-extension-header-launcher" label={item.manifest.id === "activity-history" ? (lang === "zh" ? "活动历史" : "Activity history") : status?.label || page.name}
             aria-pressed={activeOwner === owner} data-running={status?.active || undefined} aria-busy={snapshot.busy || undefined}
             data-dragging={dragOwner === owner || undefined} data-drop-target={dropOwner === owner && dragOwner !== owner || undefined}
             draggable
@@ -238,7 +239,7 @@ export function ExtensionHeader({ lang, activeOwner, onOpenPage }: { lang: Langu
     {hasOverflow && <ActionDisclosure label={lang === "zh" ? "插件工具" : "Plugin tools"}>
       {headerOrder.map((owner) => {
         const page = pages.get(owner)!;
-        return <Button key={owner} className="df-extension-overflow-action" variant="ghost" onClick={() => onOpenPage(page)}>{page.name}</Button>;
+        return <Button key={owner} className="df-extension-overflow-action" variant="ghost" onClick={() => onOpenPage(page)}>{page.nativeMode === "activity-history" ? (lang === "zh" ? "活动历史" : "Activity history") : page.name}</Button>;
       })}
     </ActionDisclosure>}
     {error && <p className="df-extension-view-error" role="alert">{error}</p>}

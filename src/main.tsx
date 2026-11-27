@@ -90,7 +90,7 @@ const INCOMPLETE_LABELS = {
   en: ["Unfinished · continue", "Unfinished · stop", "Skipped · do later", "Skipped · no return"],
   zh: ["没完成 · 继续", "没完成 · 不继续", "没做 · 之后再做", "没做 · 之后不做"],
 };
-import { UiCheckIcon, UiChatIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiHistoryIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTimerIcon, UiTrashIcon } from "./components/UiIcons";
+import { UiCheckIcon, UiChatIcon, UiChevronDownIcon, UiBellIcon, UiCalendarCheckIcon, UiCopyIcon, UiCursorIcon, UiFolderInputIcon, UiKanbanIcon, UiListChecksIcon, UiMatrixIcon, UiMoreIcon, UiPencilIcon, UiPlusIcon, UiPointingHandIcon, UiSearchIcon, UiSettingsIcon, UiSparklesIcon, UiTimerIcon, UiTrashIcon } from "./components/UiIcons";
 import { normalizeSettingsTarget, type SettingsTargetInput } from "./settingsNavigationCore";
 import { normalizeSettings, WORKSPACE_CORNER_RADIUS } from "./defaultSettings";
 import { ensureDailyReviewConversation, DAILY_REVIEW_CONVERSATION_ID, listDailyReviewNotifications, listProactiveNotifications, markProactiveNotificationRead, showProactiveSystemNotification, subscribeToProactiveNotifications, type ProactiveNotification } from "./proactiveAssistant";
@@ -186,12 +186,11 @@ const categoryOrder: Category[] = ["exam", "project", "essay", "materials", "uk"
 const candidateViewNames = {
   eisenhower: ["矩阵", "Matrix", UiMatrixIcon],
   kanban: ["看板", "Kanban", UiKanbanIcon],
-  "activity-history": ["操作历史", "Activity history", UiHistoryIcon],
 } as const;
 
 function CandidateViewIcon({ view }: { view: ExtensionContribution }) {
   const mode = view.nativeMode;
-  if (mode && mode !== "tree" && mode !== "metrics") {
+  if (mode && mode !== "tree" && mode !== "metrics" && mode !== "activity-history") {
     const Icon = candidateViewNames[mode][2];
     return <Icon size={16} />;
   }
@@ -200,7 +199,7 @@ function CandidateViewIcon({ view }: { view: ExtensionContribution }) {
 
 function candidateViewName(view: ExtensionContribution, lang: Language) {
   const mode = view.nativeMode;
-  if (mode && mode !== "tree" && mode !== "metrics") return candidateViewNames[mode][lang === "zh" ? 0 : 1];
+  if (mode && mode !== "tree" && mode !== "metrics" && mode !== "activity-history") return candidateViewNames[mode][lang === "zh" ? 0 : 1];
   return view.name;
 }
 const WIDGET_TIMER_RUNTIME_KEY = "navopath-widget-timer-runtime";
@@ -1540,7 +1539,7 @@ function App() {
   const [isManualSyncing, setIsManualSyncing] = useState(false);
   const extensionHostRef = useRef<ExtensionHost | null>(null);
   const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
-  const activeExtensionPanel = extensionSnapshot.views.find((view) => view.id === activeExtensionPanelId && !view.planningView);
+  const activeExtensionPanel = extensionSnapshot.views.find((view) => view.id === activeExtensionPanelId && (!view.planningView || view.nativeMode === "activity-history"));
   function openExtensionPage(page: ExtensionContribution) {
     if (page.nativeMode === "metrics") { openMetrics(); return; }
     if (page.nativeTool === "pomodoro") { openTimerMode("pomodoro", page.owner); return; }
@@ -1552,7 +1551,7 @@ function App() {
     showWorkspacePanel({ kind: "extension", id: page.id, owner: page.owner }, true);
   }
   const shelfViews = useMemo(() => productDemo?.feature === "planning" ? [demoTreeView] : extensionSnapshot.views.filter((view) =>
-    view.planningView && view.nativeMode !== "metrics"
+    view.planningView && view.nativeMode !== "metrics" && view.nativeMode !== "activity-history"
   ).sort((first, second) => {
     const order = ["tree", ...Object.keys(candidateViewNames)];
     const rank = (view: ExtensionContribution) => view.nativeMode ? order.indexOf(view.nativeMode) : order.length;
@@ -1560,7 +1559,6 @@ function App() {
   }), [extensionSnapshot.views]);
   const shelfView = shelfViews.find((view) => view.id === shelfViewId);
   const shelfTreeOpen = shelfView?.nativeMode === "tree";
-  const taskHistoryOpen = shelfView?.nativeMode === "activity-history";
   const taskHistoryKey = "official:activity-history";
   const taskHistoryEnabled = !extensionSnapshot.safeMode
     && !settings?.extensions?.removed[taskHistoryKey]
@@ -9213,7 +9211,7 @@ if (cached?.data && cached?.settings) {
   const savedGuideBlock = onboardingStep === "plan" ? onboardingBlock(onboardingTask, false) : undefined;
   const shelfPaneVisible = !fullscreen
     && (mobileExecution ? candidateDrawerOpen : !candidatePanelCollapsed && (!compactLayout || narrowSplitLayout || compactExecuteView === "tasks"));
-  const taskPaneVisible = shelfPaneVisible && !shelfView && !taskHistoryOpen;
+  const taskPaneVisible = shelfPaneVisible && !shelfView;
   const canCollapseCandidatePanel = !compactLayout && !mobileExecution;
   const guideRowVisible = taskPaneVisible && Boolean(onboardingTask && visibleCandidates.some((task) => task.id === onboardingTask.id));
   const tasksGuideAnchor = mobileExecution && !candidateDrawerOpen ? candidateTriggerRef
@@ -9582,7 +9580,7 @@ if (cached?.data && cached?.settings) {
                 {shelfTreeOpen ? <>
                   <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />
                   {!productDemo && <IconButton icon={<UiPlusIcon size={17} />} label={lang === "zh" ? "新建项目" : "New project"} onClick={() => openAdd("project")} />}
-                </> : !taskHistoryOpen && <>
+                </> : <>
                 {!shelfView && <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />}
                 <IconButton className={`df-icon-action df-candidate-header-icon${showCompletedCandidates ? " active" : ""}`} icon={<UiListChecksIcon size={17} />} label={t(lang, "candidate.showCompleted")} aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)} />
                 {!settings.hideAi && (
@@ -9634,7 +9632,7 @@ if (cached?.data && cached?.settings) {
                 {lang === "zh" ? "松手后移回任务" : "Release to return to Tasks"}
               </div>
             )}
-            {!taskHistoryOpen && (schedulePreviews.length > 0 || scheduleUnscheduled.length > 0) && (
+            {(schedulePreviews.length > 0 || scheduleUnscheduled.length > 0) && (
               <div className="df-ai-plan-feedback" role="status">
                 {schedulePreviews.length > 0 && <><span className="df-ai-plan-summary">{t(lang, "timeline.previewPlan").replace("X", String(schedulePreviews.length))}</span>{compactLayout && <div className="df-ai-plan-mobile-preview">{schedulePreviews.slice(0, 4).map((preview) => <button key={preview.id} type="button" onClick={() => { setCompactExecuteView("schedule"); setPendingTimelineFocus({ date: preview.scheduledDate, startTime: preview.scheduledStart, source: "autoschedule" }); }}><strong>{preview.title}</strong><small>{preview.scheduledDate} · {preview.scheduledStart}–{preview.scheduledEnd}</small></button>)}</div>}</>}
                 {scheduleUnscheduled.length > 0 && <details className="df-ai-plan-unscheduled">
@@ -9777,9 +9775,7 @@ if (cached?.data && cached?.settings) {
             {shelfView && !shelfTreeOpen && (
               <div className="df-shelf-scroll" data-shelf-scroll="views">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
-                  {shelfView.nativeMode === "activity-history"
-                    ? <TaskOperationHistory operations={taskOperations} projects={projects} lang={lang} now={workspaceNow()} label={candidateViewName(shelfView, lang)} onUndo={undoTaskOperation} />
-                    : shelfView.nativeMode
+                  {shelfView.nativeMode && shelfView.nativeMode !== "activity-history"
                       ? <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode={shelfView.nativeMode} tasks={visibleCandidates} showCompleted={showCompletedCandidates} />
                       : <ExtensionMount contribution={shelfView} lang={lang} />}
                 </Suspense>
@@ -10668,7 +10664,11 @@ if (cached?.data && cached?.settings) {
           setCompactExecuteView(mobileExecution ? "schedule" : "tasks");
         });
       }} onSave={(patch) => void saveSettings(patch)} onSaveProfile={async (patch) => { await saveSettings(patch); await flushPendingSettings({ urgent: true }); }} onWidgetAction={handleWidgetAction} onSaveData={(next) => void saveData(next)} onClearChatHistory={() => { void saveData({ ...data, chat: [], aiConversations: [], activeAiConversationId: undefined }); setAiMessages([]); setActiveAiConversationId(""); setAiConversationListOpen(false); setAiMemoryNotice(""); }} onShowAbout={() => window.open(`https://navopath.com/changelog?lang=${lang}`, "_blank", "noopener,noreferrer")} onOpenNotifications={() => setNotificationCenterOpen(true)} onSignOut={authState?.mode === "cloud" && authState.user ? (() => void handleSignOut()) : undefined} onDeleteAccount={authState?.mode === "cloud" && authState.user ? (() => void handleDeleteAccount()) : undefined} onSyncNow={(direction) => handleSyncNow({ direction })} isManualSyncing={isManualSyncing} cloudReady={authState?.mode === "cloud" && Boolean(authState?.user)} settingsSavePhase={saveFeedback.settings} lang={lang} /></Suspense>}
-      {utilityPanel === "extension" && activeExtensionPanel && <RightUtilityPanel workspace label={activeExtensionPanel.name} closeLabel={t(lang, "settings.close")} className="df-extension-utility" onClose={() => closeUtilityPanel()}><div className="df-extension-page-content"><ExtensionMount contribution={activeExtensionPanel} lang={lang} /></div></RightUtilityPanel>}
+      {utilityPanel === "extension" && activeExtensionPanel && <RightUtilityPanel workspace label={activeExtensionPanel.nativeMode === "activity-history" ? (lang === "zh" ? "活动历史" : "Activity history") : activeExtensionPanel.name} closeLabel={t(lang, "settings.close")} className="df-extension-utility" onClose={() => closeUtilityPanel()}>
+        {activeExtensionPanel.nativeMode === "activity-history" ? <Suspense fallback={<div className="df-shelf-loading" role="status">{lang === "zh" ? "正在打开…" : "Opening…"}</div>}>
+          <TaskOperationHistory operations={taskOperations} projects={projects} lang={lang} now={workspaceNow()} label={lang === "zh" ? "活动历史" : "Activity history"} onUndo={undoTaskOperation} />
+        </Suspense> : <div className="df-extension-page-content"><ExtensionMount contribution={activeExtensionPanel} lang={lang} /></div>}
+      </RightUtilityPanel>}
       {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
       {focusOverlayMode && (
         <RightUtilityPanel workspace label={focusProvider?.label[lang] || (lang === "zh" ? "专注" : "Focus")} closeLabel={t(lang, "settings.close")} className="df-focus-utility" onClose={() => setFocusOverlayMode(null)}>

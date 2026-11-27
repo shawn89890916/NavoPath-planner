@@ -2,6 +2,12 @@
 
 ## 2026-11-27
 
+### 1.7.0 Beta 131
+
+#### 改进
+
+- 活动历史移至工作区顶栏；窄屏通过插件导航打开，保留当前任务视图和撤销操作。
+
 ### 1.7.0 Beta 130
 
 #### 修复
@@ -1310,6 +1316,12 @@
 # NavoPath Changelog
 
 ## 2026-11-27
+
+### 1.7.0 Beta 131
+
+#### Improvements
+
+- Move Activity history to the workspace header and compact plugin navigation, preserving the current Tasks view and undo actions.
 
 ### 1.7.0 Beta 130
 
