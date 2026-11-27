@@ -2,7 +2,7 @@ import type { PluginContext, PluginModule } from "../../src/extensions/types";
 import type { PlannerData, Project, Task, TimelineRecord } from "../../src/types";
 import { mountIsolatedPluginSurface } from "../../src/extensions/pluginSurface";
 import { createInitialPreviewView } from "./preview";
-import { selectTimedSlot, durationMinutes, validSlot } from "./schedule";
+import { selectTimedSlot, durationMinutes, validSlot, hasRecordedTimedSlot } from "./schedule";
 
 type LinkStore = { projects: Record<string, string>; tasks: Record<string, string>; tombstones: Record<string, { kind: "task" | "project"; item: Task | Project; deletedAt: string; taskIds?: string[]; parentSyncId?: string; restoring?: boolean; restoreId?: string }> };
 type Entity = { id: string; syncId?: string; parentId?: string; projectId?: string; fields: Record<string, any> };
@@ -291,7 +291,8 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
             const old = nearestIndex >= 0 ? records[nearestIndex] : undefined;
             const endDate = new Date(Date.parse(`${date}T00:00:00Z`) + Math.floor(endMinutes / 1440) * 86400000).toISOString().slice(0, 10);
             const next: TimelineRecord = { id: old?.id || crypto.randomUUID(), taskId: current?.id || "", scheduledDate: date, scheduledStart: start, scheduledEndDate: endDate, scheduledEnd: end, executionStatus: "scheduled", createdAt: old?.createdAt || new Date().toISOString() };
-            if (nearestIndex >= 0) records[nearestIndex] = next; else records.push(next);
+            if (nearestIndex >= 0) records[nearestIndex] = next;
+            else if (!current || !hasRecordedTimedSlot(current, date, start, duration)) records.push(next);
           } else {
             // Malformed legacy remote schedules must not abort unrelated tasks.
             // Leave the local schedule intact until the source sends a valid slot.
