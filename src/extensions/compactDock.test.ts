@@ -43,7 +43,7 @@ describe("compact plugin dock", () => {
     expect(names(getCompactPluginGroups(unpinned, toolbarOwners).more)).toEqual(["plugin-2", "plugin-7"]);
   });
 
-  it("excludes Tasks views even when an older preference pinned them, while keeping Metrics and registered workspace pages", () => {
+  it("excludes Tasks views even when an older preference pinned them, while keeping Metrics, Activity history and registered workspace pages", () => {
     const prefs = { ...preferences(), compactPlacements: { "local:plugin-1": "bottom", "local:plugin-2": "more" } } as const;
     const contribution = (id: number) => ({ id: String(id), name: `plugin-${id}`, owner: `local:plugin-${id}`, mount() {} });
     const snapshot: ExtensionSnapshot = {
@@ -54,12 +54,15 @@ describe("compact plugin dock", () => {
         { ...contribution(3), planningView: true, nativeMode: "metrics" },
         { ...contribution(4), planningView: true },
         contribution(4),
+        { ...contribution(5), planningView: true, nativeMode: "activity-history" },
       ],
     };
     const { owners } = getAppHeaderPlugins(snapshot);
-    expect(names(getCompactPluginGroups(prefs, owners).dock)).toEqual(["plugin-3", "plugin-4"]);
+    expect(names(getCompactPluginGroups(prefs, owners).dock)).toEqual(["plugin-3", "plugin-4", "plugin-5"]);
     expect(getCompactPluginGroups(prefs, owners).more).toEqual([]);
     expect(moveCompactPlugin(prefs, owners, "local:plugin-1", "bottom")).toBeUndefined();
+    expect(getAppHeaderPlugins({ ...snapshot, safeMode: true }).owners.size).toBe(0);
+    expect(getAppHeaderPlugins({ ...snapshot, preferences: { ...prefs, installed: { ...prefs.installed, "local:plugin-5": { ...prefs.installed["local:plugin-5"], enabled: false } } } }).owners.has("local:plugin-5")).toBe(false);
   });
 
   it("keeps a configured limit through sync with a legacy client and rejects invalid limits", () => {
