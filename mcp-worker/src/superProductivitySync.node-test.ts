@@ -270,3 +270,39 @@ test("a created SP task whose timed update failed does not erase the source sche
   assert.deepEqual(buildActions(state,"superproductivity"),[]);
   assert.deepEqual(state.conflicts,[]);
 });
+
+const hierarchySnapshot = (tasks) => ({ projects: [], tasks, hierarchyVersion: 1 });
+test("hierarchy-aware initial pairing creates parents before children using canonical IDs", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", hierarchySnapshot([{ ...entity("child", "Child"), parentId: "parent" }, entity("parent", "Parent")]), "2026-11-27");
+  applySyncSnapshot(state, "superproductivity", hierarchySnapshot([]), "2026-11-27");
+  confirmInitialSync(state, []);
+  const actions = buildActions(state, "superproductivity");
+  assert.equal(actions.length, 2);
+  assert.equal(actions[0].fields.title, "Parent");
+  assert.equal(actions[1].fields.parentSyncId, actions[0].syncId);
+});
+test("hierarchy migration presents mismatched existing parents as a conflict", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state, "navopath", { projects: [], tasks: [entity("n-parent","Parent"), { ...entity("n-child","Child"), parentId:"n-parent" }] }, "2026-11-27");
+  applySyncSnapshot(state, "superproductivity", { projects: [], tasks: [entity("s-parent","Parent"), entity("s-child","Child")] }, "2026-11-27");
+  confirmInitialSync(state, [{kind:"task",navopathId:"n-parent",superproductivityId:"s-parent"}, {kind:"task",navopathId:"n-child",superproductivityId:"s-child"}]);
+  applySyncSnapshot(state,"navopath",hierarchySnapshot([entity("n-parent","Parent"),{...entity("n-child","Child"),parentId:"n-parent"}]),"2026-11-27");
+  applySyncSnapshot(state,"superproductivity",hierarchySnapshot([entity("s-parent","Parent"),entity("s-child","Child")]),"2026-11-27");
+  assert.equal(state.conflicts.filter(c=>c.field==="parentSyncId").length,1);
+  assert.equal(buildActions(state,"navopath").some(a=>Object.hasOwn(a.fields,"parentSyncId")),false);
+});
+test("legacy peer does not receive a flattened create for a new upgraded child", () => {
+  const state = emptySyncState();
+  applySyncSnapshot(state,"navopath",hierarchySnapshot([entity("parent","Parent"),{...entity("child","Child"),parentId:"parent"}]),"2026-11-27");
+  applySyncSnapshot(state,"superproductivity",{projects:[],tasks:[]},"2026-11-27");
+  confirmInitialSync(state,[]);
+  assert.equal(buildActions(state,"superproductivity").some(a=>a.fields.title==="Child"),false);
+});
+test("restore acknowledgement is idempotent for the same local ID",()=>{
+  const state=emptySyncState();
+  state.canonical.x={kind:"task",fields:{title:"Task"},ids:{navopath:"old"},deleted:true};
+  restoreSyncEntity(state,"navopath","x","new");
+  assert.doesNotThrow(()=>restoreSyncEntity(state,"navopath","x","new"));
+  assert.throws(()=>restoreSyncEntity(state,"navopath","x","different"));
+});
