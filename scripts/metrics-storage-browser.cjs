@@ -121,9 +121,9 @@ async function runRenderer() {
             nativeSet.call(input,String(r));input.dispatchEvent(new Event("input",{bubbles:true}));input.dispatchEvent(new Event("change",{bubbles:true}));
             await wait(()=>document.documentElement.style.getPropertyValue("--workspace-corner-radius")===r+"px");
             await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-            assert(Math.abs(round(group)-Math.min(20,r*.375))<.1,"Group radius "+round(group)+" at "+r);
-            assert(Math.abs(round(select)-Math.min(12,r*.1875))<.1,"Control radius "+round(select)+" at "+r);
-            assert(Math.abs(round(nav)-Math.min(12,r*.25))<.1,"Navigation radius "+round(nav)+" at "+r);
+            assert(Math.abs(round(group)-r)<.1,"Group radius "+round(group)+" at "+r);
+            assert(Math.abs(round(select)-r)<.1,"Control radius "+round(select)+" at "+r);
+            assert(Math.abs(round(nav)-r)<.1,"Navigation radius "+round(nav)+" at "+r);
             assert(getComputedStyle(knob).borderTopLeftRadius==="50%","Switch geometry changed");
             const box=group.getBoundingClientRect();
             assert(Math.abs(box.width-baseline.width)<1 && Math.abs(box.height-baseline.height)<1,"Radius changed layout");
