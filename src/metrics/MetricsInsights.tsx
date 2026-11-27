@@ -1,5 +1,7 @@
 import React,{ useEffect, useMemo, useState } from "react";
 import type { PlannerData, Language } from "../types";
+import type { ReadingLibrary } from "../reading/model";
+const ReadingMetrics = React.lazy(() => import("../reading/ReadingMetrics"));
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricHabitMode, type MetricCompletionFilter } from "./timeAllocation";
 const MetricsAllocation=React.lazy(()=>import("./MetricsAllocation"));
 import { buildInsights } from "./insightFacts";
@@ -15,7 +17,7 @@ import { readSavedViews, writeSavedViews, type SavedMetricsView, type MetricsQue
 import "./MetricsInsights.css";
 
 type View = InsightView;
-type Props = { scope?:string; data:PlannerData; referenceDate?:string; dayStartTime?:string; weekStartsOn?:0|1; engagementEnabled?:boolean; projectIds:string[]; habitMode:MetricHabitMode; completion:MetricCompletionFilter; lang:Language; query:MetricsQuery; onApplyQuery:(query:MetricsQuery)=>void };
+type Props = { scope?:string; readingLibrary?: ReadingLibrary; data:PlannerData; referenceDate?:string; dayStartTime?:string; weekStartsOn?:0|1; engagementEnabled?:boolean; projectIds:string[]; habitMode:MetricHabitMode; completion:MetricCompletionFilter; lang:Language; query:MetricsQuery; onApplyQuery:(query:MetricsQuery)=>void };
 function downloadJson(events:unknown) {
   const url=URL.createObjectURL(new Blob([JSON.stringify(events,null,2)],{type:"application/json"}));
   const a=document.createElement("a");a.href=url;a.download="navopath-activity.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -100,7 +102,7 @@ function ScopedMetricsInsights(props:Props) {
       {saveViewError&&<span role="alert">{t("无法保存视图","Could not save view")}</span>}
     </div></details>}
     {view==="allocation"?<React.Suspense fallback={<p role="status">{t("正在加载分布…","Loading allocation…")}</p>}><MetricsAllocation lang={p.lang} engagementEnabled={p.engagementEnabled} metricsResult={allocation} display={p.query.display} onAdjustRange={()=>p.onApplyQuery({...p.query,range:"today"})}/></React.Suspense>:<section className="df-metric-insight-content">
-      {view==="overview"&&<React.Suspense fallback={<p role="status">{t("正在加载概览…","Loading overview…")}</p>}><MetricsReview data={p.data} allocation={allocation} result={result} query={p.query} dayStartMinutes={dayStartMinutes} weekStartsOn={weekStartsOn} lang={p.lang} onApplyQuery={p.onApplyQuery}/></React.Suspense>}
+      {view==="overview"&&<React.Suspense fallback={<p role="status">{t("正在加载概览…","Loading overview…")}</p>}><MetricsReview data={p.data} allocation={allocation} result={result} query={p.query} dayStartMinutes={dayStartMinutes} weekStartsOn={weekStartsOn} lang={p.lang} onApplyQuery={p.onApplyQuery}/>{p.readingLibrary && <React.Suspense fallback={null}><ReadingMetrics library={p.readingLibrary} allocation={allocation} trackedEntries={result.trackedEntries} lang={p.lang} /></React.Suspense>}</React.Suspense>}
       {view==="time"&&<React.Suspense fallback={<p role="status">{t("正在加载时间统计…","Loading time statistics…")}</p>}><MetricsTimeSeries data={p.data} allocation={allocation} result={result} dayStartMinutes={dayStartMinutes} weekStartsOn={weekStartsOn} lang={p.lang} chart={timeChart} grain={grain} setChart={setTimeChart} setGrain={setGrain}/></React.Suspense>}
       {view==="execution"&&<React.Suspense fallback={<p role="status">{t("正在加载执行统计…","Loading execution statistics…")}</p>}><MetricsExecution key={requestKey} scope={p.scope} data={p.data} allocation={allocation} result={result} dayStartMinutes={dayStartMinutes} lang={p.lang} query={p.query} historyState={historyState} plans={plans} observed={observed} onRetry={()=>setRevision(n=>n+1)}/></React.Suspense>}
       {(view==="engagement"||view==="projects")&&<React.Suspense fallback={<p role="status">{t("正在加载统计…","Loading breakdown…")}</p>}><MetricsBreakdown key={view} view={view} data={p.data} allocation={allocation} result={result} dayStartMinutes={dayStartMinutes} lang={p.lang} query={p.query} onApplyQuery={p.onApplyQuery}/></React.Suspense>}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Task, TimeEntry } from "../types";
-import { createBook, emptyReadingLibrary, groupReadingBooks, linkReadingTask, readingTotals, updateBook, validateProgress } from "./model";
+import { createBook, decodeReadingLibrary, emptyReadingLibrary, groupReadingBooks, linkReadingTask, readingTotals, undoReadingBookChange, updateBook, validateProgress } from "./model";
 const now = "2026-11-27T12:00:00Z";
 const library = () => createBook(createBook(emptyReadingLibrary(), { id: "a", title: " First ", now }), { id: "b", title: "Second", now });
 const task = (id: string, records: Task["timelineRecords"] = []): Task => ({
@@ -67,5 +67,27 @@ describe("reading library", () => {
     ]);
     expect(readingTotals(linked, "a", [t], [entry("bad", "t1", -1)]))
       .toEqual({ plannedMinutes: 30, actualMinutes: 0, weightedMinutes: null, sessions: 0 });
+  });
+});
+
+describe("reading persistence and undo", () => {
+  it("round-trips valid data and rejects orphan or duplicate links and unsupported schema", () => {
+    const linked = linkReadingTask(library(), "a", "t1");
+    expect(decodeReadingLibrary(JSON.parse(JSON.stringify(linked)))).toEqual(linked);
+    expect(decodeReadingLibrary(null)).toEqual(emptyReadingLibrary());
+    expect(() => decodeReadingLibrary({ ...linked, version: 2 })).toThrow();
+    expect(() => decodeReadingLibrary({ ...linked, taskLinks: [{ bookId: "missing", taskId: "t1" }] })).toThrow();
+    expect(() => decodeReadingLibrary({ ...linked, taskLinks: [...linked.taskLinks, ...linked.taskLinks] })).toThrow();
+  });
+  it("undoes a book change without reverting another book", () => {
+    const original = library();
+    const changed = updateBook(original, "a", { status: "finished" }, now);
+    const latest = updateBook(changed, "b", { title: "Edited second" }, now);
+    const undone = undoReadingBookChange(latest, original.books[0], changed.books[0]);
+    expect(undone.books[0]).toEqual(original.books[0]);
+    expect(undone.books[1].title).toBe("Edited second");
+    expect(() => undoReadingBookChange(original, original.books[0], changed.books[0])).toThrow();
+    expect(() => undoReadingBookChange(linkReadingTask(original, "a", "t1"), undefined, original.books[0])).toThrow();
+    expect(undoReadingBookChange(original, undefined, original.books[0]).books.map(book => book.id)).toEqual(["b"]);
   });
 });

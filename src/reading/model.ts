@@ -1,4 +1,5 @@
 import type { Task, TimeEntry } from "../types";
+import { engagementMinutes } from "../utils/engagement";
 
 export type ReadingStatus = "to-read" | "reading" | "finished";
 export type ReadingProgress =
@@ -115,8 +116,7 @@ export function readingTotals(
       const task = taskById.get(entry.taskId);
       const record = task?.timelineRecords?.find(item => item.id === entry.timelineRecordId && item.taskId === entry.taskId);
       const value = record ? record.engagement : task?.engagement;
-      const score = typeof value === "number" && Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 80;
-      weightedMinutes += entry.durationMinutes * score / 100;
+      weightedMinutes += engagementMinutes(entry.durationMinutes, value);
     }
   }
   return { plannedMinutes, actualMinutes, weightedMinutes: engagementEnabled ? weightedMinutes : null, sessions };
@@ -142,4 +142,17 @@ export function decodeReadingLibrary(value: unknown): ReadingLibrary {
     tasks.add(link.taskId);
   }
   return library;
+}
+
+/** Undo a book edit only if that exact saved state still exists.
+ * Never remove a book with linked tasks or revert an unrelated book.
+ */
+export function undoReadingBookChange(library: ReadingLibrary, before: ReadingBook | undefined, after: ReadingBook): ReadingLibrary {
+  const existing = library.books.find(book => book.id === after.id);
+  if (!existing || JSON.stringify(existing) !== JSON.stringify(after)) throw new Error("Book has changed");
+  if (before && before.id !== after.id) throw new Error("Book identity changed");
+  if (!before && library.taskLinks.some(link => link.bookId === after.id)) throw new Error("Book has linked tasks");
+  return { ...library, books: before
+    ? library.books.map(book => book.id === after.id ? before : book)
+    : library.books.filter(book => book.id !== after.id) };
 }

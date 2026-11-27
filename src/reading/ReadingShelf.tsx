@@ -65,7 +65,7 @@ function BookEditor({ book, zh, busy, onSave, onCancel }: {
 }
 export default function ReadingShelf({ library, busy, error, lang, onCreateTask, mutate, tasks, entries, engagementEnabled, onSaved }: Props & {
   mutate: ReadingMutate; tasks: readonly Task[]; entries: readonly TimeEntry[]; engagementEnabled: boolean;
-  onSaved: () => void;
+  onSaved: (before: ReadingBook | undefined, after: ReadingBook) => void;
 }) {
   const zh = lang === "zh";
   const [editor, setEditor] = useState<string | null>(null);
@@ -79,8 +79,13 @@ export default function ReadingShelf({ library, busy, error, lang, onCreateTask,
     {editor && (editor === "new" || book) && <BookEditor key={editor} book={book} zh={zh} busy={busy} onCancel={() => setEditor(null)} onSave={async patch => {
       const now = new Date().toISOString();
       const id = book?.id ?? crypto.randomUUID();
-      await mutate(current => updateBook(book ? current : createBook(current, { id, title: patch.title, author: patch.author, now }), id, patch, now));
-      setEditor(null); onSaved();
+      let before: ReadingBook | undefined;
+      const saved = await mutate(current => {
+        before = current.books.find(item => item.id === id);
+        if (book && (!before || JSON.stringify(before) !== JSON.stringify(book))) throw new Error("Book changed on another device");
+        return updateBook(book ? current : createBook(current, { id, title: patch.title, author: patch.author, now }), id, patch, now);
+      });
+      setEditor(null); onSaved(before, saved.books.find(item => item.id === id)!);
     }} />}
     {failed && <p role="alert" className="reading-muted">{zh ? "操作失败，请重试。" : "Action failed. Try again."}</p>}
     {statuses.map(status => <TaskGroup key={status} title={statusNames[status][zh ? 0 : 1]} count={groups[status].length}>

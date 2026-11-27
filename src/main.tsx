@@ -9855,7 +9855,10 @@ if (cached?.data && cached?.settings) {
               <div className="df-shelf-scroll" data-shelf-scroll="views">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
                   {shelfView.owner === "official:reading" && readingEnabled
-                      ? <ReadingShelfLazy library={reading.library} busy={reading.busy} error={reading.error} lang={lang} onCreateTask={createReadingTask} mutate={reading.mutate} tasks={tasks} entries={data.timeEntries || []} engagementEnabled={engagementEnabled} onSaved={() => showToast(lang === "zh" ? "已保存书籍" : "Book saved")} />
+                      ? <ReadingShelfLazy library={reading.library} busy={reading.busy} error={reading.error} lang={lang} onCreateTask={createReadingTask} mutate={reading.mutate} tasks={tasks} entries={data.timeEntries || []} engagementEnabled={engagementEnabled} onSaved={(before, after) => showUndoToast(lang === "zh" ? "已保存书籍" : "Book saved", t(lang, "toast.undo"), () => {
+                        void import("./reading/model").then(({ undoReadingBookChange }) => reading.mutate(library => undoReadingBookChange(library, before, after)))
+                          .then(() => showToast(t(lang, "toast.undone"))).catch(() => showToast(lang === "zh" ? "书籍已发生变化，无法安全撤销。" : "The book changed and cannot be safely undone."));
+                      })} />
                       : shelfView.nativeMode && shelfView.nativeMode !== "activity-history"
                       ? <PlanningViewLazy {...planningViewProps} {...scheduleViewProps} viewMode={shelfView.nativeMode} tasks={visibleCandidates} showCompleted={showCompletedCandidates} />
                       : <ExtensionMount contribution={shelfView} lang={lang} />}
@@ -10728,7 +10731,7 @@ if (cached?.data && cached?.settings) {
       {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} data={data} settings={settings} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}
       {utilityPanel === "metrics" && metricsAvailable && <RightUtilityPanel workspace label={metricsLabel} closeLabel={t(lang, "settings.close")} className="df-metrics-utility" onClose={() => closeUtilityPanel()}>
         <Suspense fallback={<div className="df-shelf-loading" role="status">{lang === "zh" ? "正在打开…" : "Opening…"}</div>}>
-          <PlanningViewLazy {...planningViewProps} viewMode="metrics" tasks={tasks} analyticsScope={productDemo?undefined:authState?.user?.id||"preview"} dayStartTime={settings.dayStartTime} weekStartsOn={settings.weekStartsOn}
+          <PlanningViewLazy {...planningViewProps} viewMode="metrics" readingLibrary={readingEnabled ? reading.library ?? undefined : undefined} tasks={tasks} analyticsScope={productDemo?undefined:authState?.user?.id||"preview"} dayStartTime={settings.dayStartTime} weekStartsOn={settings.weekStartsOn}
             metricsRangePreset={settings.metricsRangePreset} metricsGroupBy={settings.metricsGroupBy}
             metricsDisplayMetric={settings.metricsDisplayMetric} metricsIncludeHabits={settings.metricsIncludeHabits}
             metricsCompletionFilter={settings.metricsCompletionFilter} metricsCustomStart={settings.metricsCustomStart}
