@@ -76,7 +76,7 @@ export function SettingRow({
 }) {
   return (
     <div
-      className={`df-settings-row${layout !== "default" ? ` df-settings-row--${layout}` : ""}`}
+      className={`df-settings-row${layout === "stacked" ? " df-settings-row--stacked" : layout === "actions" ? " df-settings-row--actions" : ""}`}
       data-disabled={disabled ? "true" : undefined}
       data-settings-anchor={anchor}
       tabIndex={anchor ? -1 : undefined}
