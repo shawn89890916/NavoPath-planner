@@ -13,6 +13,7 @@ export type SyncState = {
   baseRevision: number;
   initialOverwrite?: { source: SyncSide; target: SyncSide };
   ignoreSpInbox?: boolean;
+  pauseReason?: "history-feedback";
 };
 export const emptySyncState = (): SyncState => ({ status: "waiting", latest: {}, canonical: {}, pending: {}, conflicts: [], baseRevision: 0 });
 
@@ -35,6 +36,18 @@ export function normalizeSyncSnapshot(value: unknown): SyncSnapshot {
     });
   };
   return { projects: normalize(value.projects, "project"), tasks: normalize(value.tasks, "task"), ...(value.overwriteVersion === 1 ? { overwriteVersion: 1 as const } : {}), ...(value.hierarchyVersion === 1 ? { hierarchyVersion: 1 as const } : {}) };
+}
+
+
+// Fail closed on the exact marker emitted by NavoPath's read-only feed.
+// Older clients send notes but not provider metadata. Never delete on a match.
+function isReadOnlyHistory(fields: Record<string, unknown>): boolean {
+  return typeof fields.notes === "string" &&
+    /^NavoPath · (?:Completed|Returned unfinished|Skipped|Additional scheduled block|Completed task) · Read-only timeline record\s*$/i.test(fields.notes.trim());
+}
+function containsHistory(state: SyncState): boolean {
+  return Object.values(state.canonical).some(entry => entry.kind === "task" && !entry.deleted && isReadOnlyHistory(entry.fields)) ||
+    Object.values(state.latest).some(snapshot => snapshot.tasks.some(task => isReadOnlyHistory(task.fields)));
 }
 
 const SP_INBOX = "INBOX_PROJECT";
@@ -221,6 +234,12 @@ export function confirmInitialSync(state: SyncState, matches: Array<{ kind: "pro
 
 export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: SyncSnapshot, timestamp: string) {
   if (state.status === "paused") return { state, assignments: [], actions: [] };
+  if (containsHistory(state) || snapshot.tasks.some(task => isReadOnlyHistory(task.fields))) {
+    state.status = "paused";
+    state.pauseReason = "history-feedback";
+    state.baseRevision++;
+    return { state, assignments: [], actions: [] };
+  }
   // Migrate legacy active connections as well as first-pair previews.
   repairReservedInbox(state);
   if (side === "superproductivity") snapshot = withoutInbox(snapshot);
@@ -356,7 +375,7 @@ export function applySyncSnapshot(state: SyncState, side: SyncSide, snapshot: Sy
 }
 
 export function buildActions(state: SyncState, side: SyncSide) {
-  if (state.status === "paused") return [];
+  if (state.status === "paused" || containsHistory(state)) return [];
   const actions: Array<{ syncId: string; kind: "project" | "task"; id?: string; fields: Record<string, unknown>; deleted?: boolean }> = [];
   for (const [syncId, canonical] of Object.entries(state.canonical)) {
     if (canonical.kind === "project" && canonical.ids.superproductivity === SP_INBOX) continue;

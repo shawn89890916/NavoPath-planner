@@ -2,6 +2,12 @@
 
 ## 2026-11-27
 
+### 1.7.0 Beta 130
+
+#### 修复
+
+- Super Productivity Sync 1.1.1：隔离只读历史日历回流，防止已结束排程重复写入，检测异常连接时暂停同步；新增可预览、确认及通过活动历史撤销的重复派生任务清理。
+
 ### 1.7.0 Beta 129
 
 #### 改进
@@ -1304,6 +1310,12 @@
 # NavoPath Changelog
 
 ## 2026-11-27
+
+### 1.7.0 Beta 130
+
+#### Fixes
+
+- Super Productivity Sync 1.1.1: isolate read-only calendar feedback, prevent replay of finished schedules, and pause contaminated sync connections; preview and confirm cleanup of duplicate derived tasks with Activity history undo.
 
 ### 1.7.0 Beta 129
 

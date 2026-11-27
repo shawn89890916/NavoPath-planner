@@ -2,7 +2,8 @@ import type { PluginContext, PluginModule } from "../../src/extensions/types";
 import type { PlannerData, Project, Task, TimelineRecord } from "../../src/types";
 import { mountIsolatedPluginSurface } from "../../src/extensions/pluginSurface";
 import { createInitialPreviewView } from "./preview";
-import { selectTimedSlot, durationMinutes, validSlot } from "./schedule";
+import { planHistoryRepair } from "./repair";
+import { selectTimedSlot, durationMinutes, validSlot, hasRecordedTimedSlot, isReadOnlyHistoryNote } from "./schedule";
 
 type LinkStore = { projects: Record<string, string>; tasks: Record<string, string>; tombstones: Record<string, { kind: "task" | "project"; item: Task | Project; deletedAt: string; taskIds?: string[]; parentSyncId?: string; restoring?: boolean; restoreId?: string }> };
 type Entity = { id: string; syncId?: string; parentId?: string; projectId?: string; fields: Record<string, any> };
@@ -34,6 +35,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     const t = (cn: string, en: string) => zh ? cn : en;
     let previewView: ReturnType<typeof createInitialPreviewView> | undefined;
     let previewKey = "";
+    let pauseReason = "";
     const surface = mountIsolatedPluginSurface(container, `
       .nvp-sp-sync { width: 100%; max-width: 920px; margin-inline: auto; padding: 16px clamp(12px, 3vw, 24px) 24px; display: grid; gap: 16px; }
       p, h2 { margin: 0; }
@@ -87,7 +89,46 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     const disconnect = document.createElement("button"); disconnect.type = "button"; disconnect.textContent = zh ? "断开连接" : "Disconnect"; disconnect.hidden = true;
     actions.append(refresh, confirm, disconnect);
     confirm.dataset.variant = "primary";
-    panel.append(line, pairing, codeRow, actions, details);
+    const repairPanel = document.createElement("div"); repairPanel.className = "nvp-sp-sync-details"; repairPanel.hidden = true;
+    panel.append(line, pairing, codeRow, actions, repairPanel, details);
+    const renderRepair = () => {
+      const preview = planHistoryRepair(ctx.app.getData());
+      repairPanel.hidden = !preview.candidates.length && !preview.blocked.length;
+      repairPanel.replaceChildren();
+      if (repairPanel.hidden) return;
+      const title=document.createElement("h2"); title.textContent=t("历史日历异常修复","Calendar history repair");
+      const summary=document.createElement("p"); summary.textContent=t(
+        `确认存在 ${preview.candidates.length} 个派生任务、${preview.recordCount} 条重复排程；${preview.blocked.length} 个不明确任务保持原样。`,
+        `${preview.candidates.length} verified derived tasks, ${preview.recordCount} replayed slots; ${preview.blocked.length} ambiguous tasks will be left unchanged.`);
+      const list=document.createElement("ul");
+      for(const task of preview.candidates) {
+        const row=document.createElement("li");
+        const slot=task.timelineRecords?.[0];
+        row.textContent=`${task.title} · ${slot?.scheduledDate || ""} ${slot?.scheduledStart || ""} · ${task.timelineRecords?.length || 0}`;
+        list.append(row);
+      }
+      const guidance=document.createElement("p"); guidance.textContent=t(
+        "只移除与原始历史排程完全匹配且无独立计时、评分或子任务的重复派生任务。先暂停连接；清理后须关闭 SP 历史日历自动任务导入、检查 SP 派生任务，再重新配对。活动历史中可以撤销本次清理。",
+        "Only duplicate derived tasks with matching original history and no independent time, ratings or subtasks are removed. Pause the connection first; disable SP history auto-import, review SP derived tasks, then pair again. Undo is available in Activity history.");
+      const button=document.createElement("button"); button.type="button"; button.textContent=t("确认清理上述派生任务","Confirm cleanup of listed derived tasks");
+      button.disabled=busy || status!=="paused" || !pairId || !api.commitBatch || !preview.candidates.length;
+      button.onclick=()=>{
+        if(button.disabled || busy) return;
+        if(!window.confirm(t(`移除上方 ${preview.candidates.length} 个派生任务及 ${preview.recordCount} 条异常排程？原始任务不变，操作可在活动历史撤销。`,`Remove the listed ${preview.candidates.length} derived tasks and ${preview.recordCount} replayed slots? Original tasks remain unchanged; undo is available in Activity history.`))) return;
+        busy=true; lastError=""; renderStatus();
+        void (async()=>{
+          const state=await getState();
+          if(state.status!=="paused" || state.pairId!==pairId || !api.commitBatch) throw new Error(t("连接必须保持暂停且支持安全批量操作。","The connection must be paused and support audited batches."));
+          const data=ctx.app.getData();
+          const latest=planHistoryRepair(data);
+          if(JSON.stringify(latest.candidates)!==JSON.stringify(preview.candidates)) throw new Error(t("数据已改变，请重新预览。","Data changed; review the new preview."));
+          const ids=new Set(latest.candidates.map(task=>task.id));
+          await api.commitBatch(pairId,{tasks:data.tasks,projects:data.projects},{tasks:data.tasks.filter(task=>!ids.has(task.id)),projects:data.projects});
+          ctx.app.toast(t("异常派生任务已清理；连接仍暂停。","Derived tasks cleaned up; connection remains paused."));
+        })().catch(error=>{lastError=String(error);}).finally(()=>{busy=false;renderStatus();});
+      };
+      repairPanel.append(title,summary,list,guidance,button);
+    };
     const persist = async () => {
       const value = { links, pairId };
       const serialized = JSON.stringify(value);
@@ -130,7 +171,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       delete links.tombstones[syncId]; await persist();
     };
     const displayState = (state: any) => {
-      pairId = state.pairId || pairId; status = state.status || "waiting";
+      pairId = state.pairId || pairId; status = state.status || "waiting"; pauseReason = state.pauseReason || "";
       pairing.hidden = status === "preview"; codeRow.hidden = status === "preview" || !pairingCode;
       connect.textContent = pairId ? t("为另一设备生成配对码", "Pair another device") : t("生成配对码", "Create pairing code");
       disconnect.hidden = !pairId; refresh.hidden = !pairId || status === "preview" || status === "paused";
@@ -180,7 +221,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       renderStatus();
     };
     const renderStatus = () => {
-      const labels: Record<string, string> = { waiting: t("等待另一端上传数据", "Waiting for the other app"), preview: t("已连接 · 等待确认首次导入", "Connected · review first import"), active: t("已连接 · 自动同步", "Connected · automatic sync"), paused: t("已暂停 · 撤销后请断开并重新配对", "Paused after undo · disconnect and pair again") };
+      const labels: Record<string, string> = { waiting: t("等待另一端上传数据", "Waiting for the other app"), preview: t("已连接 · 等待确认首次导入", "Connected · review first import"), active: t("已连接 · 自动同步", "Connected · automatic sync"), paused: pauseReason === "history-feedback" ? t("已暂停 · 检测到历史日历回流，请先修复异常数据", "Paused · read-only calendar feedback detected; repair affected records first") : t("已暂停 · 撤销后请断开并重新配对", "Paused after undo · disconnect and pair again") };
       line.textContent = lastError || (pairId ? (labels[status] || t("已连接", "Connected")) + (busy ? t(" · 同步中", " · syncing") : "") : t("尚未配对", "Not paired"));
       if (pairId && !busy && !lastError && lastSuccess && status === "active") line.textContent += t(` · 上次同步 ${lastSuccess} · 应用 ${lastApplied} 项更改`, ` · Last sync ${lastSuccess} · ${lastApplied} changes applied`);
       line.setAttribute("aria-busy", String(busy));
@@ -188,6 +229,7 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
       refresh.textContent = busy ? t("同步中…", "Syncing…") : t("立即同步", "Sync now");
       confirm.textContent = busy ? t("处理中…", "Working…") : t("确认首次导入", "Confirm initial import");
       confirm.disabled = busy; refresh.disabled = busy; disconnect.disabled = busy;
+      renderRepair();
     };
     const ensureMappings = (assignments: Array<{ kind: "project" | "task"; id: string; syncId: string }>) => {
       for (const item of assignments) (item.kind === "task" ? links.tasks : links.projects)[item.id] = item.syncId;
@@ -203,6 +245,10 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
     };
     const apply = async (actions: RemoteAction[]) => {
       if (!actions.length) { await persist(); return; }
+      if (actions.some(action => action.kind === "task" && isReadOnlyHistoryNote(action.fields.notes))) {
+        await api.request("/pause", "POST", { pairId, reason: "history-feedback" });
+        throw new Error(t("检测到只读历史日历回流，已暂停连接。", "Read-only calendar feedback detected; connection paused."));
+      }
       const currentData = ctx.app.getData();
       const before = { tasks: currentData.tasks, projects: currentData.projects };
       const draft = { tasks: [...before.tasks], projects: [...before.projects] };
@@ -291,7 +337,8 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
             const old = nearestIndex >= 0 ? records[nearestIndex] : undefined;
             const endDate = new Date(Date.parse(`${date}T00:00:00Z`) + Math.floor(endMinutes / 1440) * 86400000).toISOString().slice(0, 10);
             const next: TimelineRecord = { id: old?.id || crypto.randomUUID(), taskId: current?.id || "", scheduledDate: date, scheduledStart: start, scheduledEndDate: endDate, scheduledEnd: end, executionStatus: "scheduled", createdAt: old?.createdAt || new Date().toISOString() };
-            if (nearestIndex >= 0) records[nearestIndex] = next; else records.push(next);
+            if (nearestIndex >= 0) records[nearestIndex] = next;
+            else if (!current || !hasRecordedTimedSlot(current, date, start, duration)) records.push(next);
           } else {
             // Malformed legacy remote schedules must not abort unrelated tasks.
             // Leave the local schedule intact until the source sends a valid slot.
@@ -341,6 +388,10 @@ const plugin: PluginModule = { onload(ctx: PluginContext) {
         if (!pairId) { await discoverConnection(); if (!pairId) return; }
         const state = await getState(); displayState(state);
         if (state.status === "paused") return;
+        if (ctx.tasks.list().some(task => isReadOnlyHistoryNote(task.notes))) {
+          await api.request("/pause", "POST", { pairId, reason: "history-feedback" });
+          throw new Error(t("检测到历史日历回流任务，已暂停连接，请先修复异常数据。", "Read-only calendar history detected; connection paused for repair."));
+        }
         for (const [id,saved] of Object.entries(links.tombstones)) {
           if (saved.restoreId) await finishRestore(id,saved);
           else if (saved.restoring) throw new Error(t("恢复中断，需要手动检查。", "Interrupted restore needs manual review."));

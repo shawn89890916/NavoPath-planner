@@ -191,10 +191,10 @@ async function superProductivitySyncApi(request: Request, env: Env, ctx: Executi
   try {
     if (url.pathname.endsWith("/pause") && request.method === "POST") {
       if (isSyncToken || !pairId || row.pair_id !== pairId) return syncResponse({ error: "Only the NavoPath account can pause this connection" }, 403);
-      if (state.status !== "paused") { state.status = "paused"; state.baseRevision++; await save(state); }
-      return syncResponse({ pairId: row.pair_id, status: state.status, revision: state.baseRevision });
+      if (state.status !== "paused") { state.status = "paused"; if (body.reason === "history-feedback") state.pauseReason = "history-feedback"; state.baseRevision++; await save(state); }
+      return syncResponse({ pairId: row.pair_id, status: state.status, pauseReason: state.pauseReason, revision: state.baseRevision });
     }
-    if (state.status === "paused" && request.method === "POST") return syncResponse({ error: "Sync paused after undo. Disconnect and pair again to resume." }, 409);
+    if (state.status === "paused" && request.method === "POST") return syncResponse({ error: state.pauseReason === "history-feedback" ? "Read-only calendar history detected. Sync paused for data repair." : "Sync paused after undo. Disconnect and pair again to resume." }, 409);
     if (url.pathname.endsWith("/snapshot") && request.method === "POST") {
       const side = body.platform as SyncSide;
       if ((side !== "navopath" && side !== "superproductivity") || (isSyncToken ? side !== "superproductivity" : side !== "navopath")) return syncResponse({ error: "Invalid sync side" }, 403);
@@ -202,7 +202,7 @@ async function superProductivitySyncApi(request: Request, env: Env, ctx: Executi
       state = result.state;
       if (state.status === "waiting" && state.latest.navopath && state.latest.superproductivity) state.status = "preview";
       await save(state);
-      return syncResponse({ pairId: row.pair_id, status: state.status, assignments: result.assignments, actions: state.status === "active" ? result.actions : [], preview: state.status === "preview" ? createInitialPreview(state) : undefined, conflicts: state.conflicts, revision: state.baseRevision });
+      return syncResponse({ pairId: row.pair_id, status: state.status, pauseReason: state.pauseReason, assignments: result.assignments, actions: state.status === "active" ? result.actions : [], preview: state.status === "preview" ? createInitialPreview(state) : undefined, conflicts: state.conflicts, revision: state.baseRevision });
     }
     if (url.pathname.endsWith("/confirm") && request.method === "POST") {
       if (state.status !== "preview" || !Array.isArray(body.matches) || body.matches.length > 10_000) return syncResponse({ error: "Initial import is not ready" }, 409);
@@ -229,7 +229,7 @@ async function superProductivitySyncApi(request: Request, env: Env, ctx: Executi
     if (url.pathname.endsWith("/state") && request.method === "GET") {
       const side = (url.searchParams.get("platform") || (isSyncToken ? "superproductivity" : "navopath")) as SyncSide;
       if ((isSyncToken ? side !== "superproductivity" : side !== "navopath")) return syncResponse({ error: "Invalid sync side" }, 403);
-      return syncResponse({ pairId: row.pair_id, status: state.status, actions: state.status === "active" ? buildActions(state, side) : [], preview: state.status === "preview" ? createInitialPreview(state) : undefined, conflicts: state.conflicts, revision: state.baseRevision });
+      return syncResponse({ pairId: row.pair_id, status: state.status, pauseReason: state.pauseReason, actions: state.status === "active" ? buildActions(state, side) : [], preview: state.status === "preview" ? createInitialPreview(state) : undefined, conflicts: state.conflicts, revision: state.baseRevision });
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Synchronization failed";

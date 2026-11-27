@@ -25,3 +25,7 @@ For v1.0.4+, zip `manifest.json`, `plugin.js` and `LICENSE` at the archive root,
 ## 1.1.0 review changes
 
 Both plugins must be updated for hierarchy synchronization. The host runtime uses addTask(parentId) and batchUpdateForProject, verifies host state after changes, and journals deletion before exposing Restore. Project removal archives rather than hard-deletes; no deleteProject permission is requested. Unchanged link state is not written again. The ZIP contains only the manifest, host runtime, and license.
+
+## 1.1.1 data integrity
+
+Read-only history imported from the NavoPath calendar is excluded from new task snapshots using calendar provider metadata. Already-linked history is blocked instead of being silently omitted (which could propagate deletion). Disable automatic task import for the NavoPath history feed, back up both workspaces, and follow the repair preview in the NavoPath plugin. Do not resume an old contaminated pair. After reviewing both workspaces, pair again and inspect the merge preview.

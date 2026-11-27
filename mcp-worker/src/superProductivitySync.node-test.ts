@@ -331,3 +331,28 @@ test("upgrade negotiation releases withheld children after both clients support 
   assert.equal(result.actions.length,2);
   assert.equal(result.actions[1].fields.parentSyncId,result.actions[0].syncId);
 });
+
+test("legacy history feedback pauses both sides without creating or deleting tasks", () => {
+  const state = emptySyncState();
+  state.status = "active";
+  state.latest.navopath = {projects:[],tasks:[]};
+  state.latest.superproductivity = {projects:[],tasks:[]};
+  const result = applySyncSnapshot(state, "superproductivity", {projects:[],tasks:[entity("calendar-derived", "✓ Example", {notes:"NavoPath · Completed · Read-only timeline record", scheduledAt:"2026-11-26T09:00", scheduledMinutes:30})]}, "2026-11-27T01:00:00Z");
+  assert.equal(state.status,"paused");
+  assert.equal(state.pauseReason,"history-feedback");
+  assert.deepEqual(result.actions,[]);
+  assert.deepEqual(result.assignments,[]);
+  assert.deepEqual(state.canonical,{});
+  assert.deepEqual(buildActions(state,"navopath"),[]);
+  assert.deepEqual(buildActions(state,"superproductivity"),[]);
+});
+test("contaminated mapping blocks pending actions before the next snapshot", () => {
+  const state=emptySyncState(); state.status="active";
+  state.canonical.bad={kind:"task",fields:{title:"History",notes:"NavoPath · Returned unfinished · Read-only timeline record"},ids:{superproductivity:"derived"}};
+  state.pending.bad={$create:"navopath"};
+  assert.deepEqual(buildActions(state,"navopath"),[]);
+  const result=applySyncSnapshot(state,"navopath",{projects:[],tasks:[]},"2026-11-27T01:00:00Z");
+  assert.equal(state.status,"paused");
+  assert.deepEqual(result.actions,[]);
+  assert.equal(state.canonical.bad.deleted,undefined);
+});
