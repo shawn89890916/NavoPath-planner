@@ -1,0 +1,17 @@
+/* Reading is an optional, lazily loaded shelf; core TaskBlock geometry is untouched. */
+.reading-shelf { display: grid; gap: 16px; padding: 12px; min-width: 0; }
+.reading-heading, .reading-book-header, .reading-actions, .reading-composer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.reading-heading, .reading-book-header { justify-content: space-between; }
+.reading-heading h2, .reading-muted { margin: 0; }
+.reading-muted { font-size: .82em; color: var(--ink-muted, inherit); overflow-wrap: anywhere; }
+.reading-book { display: grid; gap: 6px; padding: 10px 4px; min-width: 0; }
+.reading-book + .reading-book { border-top: 1px solid var(--rule, currentColor); }
+.reading-book-title { appearance: none; background: none; border: 0; padding: 0; color: inherit; font: inherit; font-weight: 600; text-align: start; cursor: pointer; overflow-wrap: anywhere; min-width: 0; }
+.reading-book progress { width: 100%; height: 5px; accent-color: var(--accent-active); }
+.reading-actions { justify-content: flex-end; }
+.reading-editor { display: grid; gap: 10px; }
+.reading-editor label { display: grid; gap: 4px; font-size: .85em; }
+.reading-editor .ui-input, .reading-composer .ui-input { min-width: 0; width: 100%; }
+.reading-composer { padding: 4px; }
+.reading-composer .ui-input { flex: 1 1 120px; width: auto; }
+.reading-composer .reading-muted { flex-basis: 100%; }
