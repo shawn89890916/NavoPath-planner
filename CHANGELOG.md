@@ -7,7 +7,7 @@
 #### 修复
 
 - 原生插件迁移隔离失败，恢复已登记但停止的云盘桥接；停用桌面小组件后停止专属快照通信，保留核心计时。
-- 修复父子任务共同移动时的位移叠加，子任务入口简化为完成计数与展开箭头，补齐规划视图中文文本。
+- 修复父子任务共同移动时的位移叠加，连续布局动画从当前视觉位置衔接，降低拖动时重复渲染；子任务入口简化为完成计数与展开箭头，补齐规划视图中文文本。
 
 ### 1.7.0 Beta 132
 
@@ -1334,7 +1334,7 @@
 #### Fixes
 
 - Isolate native plugin migration failures, recover registered stopped cloud bridges, and stop desktop-widget snapshot traffic when disabled while retaining the core timer.
-- Avoid compounded movement of nested tasks, simplify subtask disclosure to a completion count and chevron, and localize planning view labels.
+- Avoid compounded movement of nested tasks, continue layout motion from the visible position and reduce repeated rendering during drag; simplify subtask disclosure to a completion count and chevron, and localize planning view labels.
 
 ### 1.7.0 Beta 132
 

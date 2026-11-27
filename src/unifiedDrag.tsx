@@ -179,11 +179,12 @@ export function UnifiedDragOverlay({ snapshot, pointer }: {
  * Portals to .df-app (falling back to document.body) so CSS variables and
  * theme tokens resolve correctly.
  */
-export function TaskDragLayer({ children, pointer, sourceRect, offset }: {
+export function TaskDragLayer({ children, pointer, sourceRect, offset, layerRef }: {
   children: React.ReactNode;
   pointer: { x: number; y: number };
   sourceRect: { width: number; height: number };
   offset: { x: number; y: number };
+  layerRef?: React.Ref<HTMLDivElement>;
 }) {
   const [target, setTarget] = useState<HTMLElement | null>(null);
   useEffect(() => {
@@ -194,6 +195,7 @@ export function TaskDragLayer({ children, pointer, sourceRect, offset }: {
     <div
       inert
       aria-hidden="true"
+      ref={layerRef}
       className="df-task-drag-layer"
       style={{
         position: "fixed",

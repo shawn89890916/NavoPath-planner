@@ -89,11 +89,31 @@ export function collectTaskMotion(root: HTMLElement, selector: string): Point[] 
 /** Only move existing cards. Different sizes/representations settle in their
  * native layout immediately; no surrogate card, scaling, opacity or restyling. */
 export class TaskMotionCoordinator {
-  private active = new Set<() => void>();
+  private active = new Map<HTMLElement, () => void>();
 
   cancel() {
-    for (const cancel of [...this.active]) cancel();
+    for (const cancel of [...this.active.values()]) cancel();
     this.active.clear();
+  }
+
+  /** Capture only translations owned by this coordinator before cancelling.
+   * The previous logical rectangles remain valid after React commits a new layout. */
+  visiblePoints(points: Point[]): Point[] {
+    if (!this.active.size) return points;
+    const offsets = new Map<HTMLElement, number[]>();
+    for (const node of this.active.keys()) {
+      const value = node.ownerDocument.defaultView?.getComputedStyle(node).translate || "";
+      const parts = value.split(" ").map(parseFloat);
+      if (Number.isFinite(parts[0])) offsets.set(node, parts);
+    }
+    return points.map(point => {
+      let x = 0, y = 0;
+      for (let node: HTMLElement | null = point.node; node; node = node.parentElement) {
+        const offset = offsets.get(node);
+        if (offset) { x += offset[0]; y += offset[1] || 0; }
+      }
+      return x || y ? { ...point, rect: { ...point.rect, left: point.rect.left + x, top: point.rect.top + y } } : point;
+    });
   }
 
   play(changes: TaskMotionChange<Point>[]) {
@@ -120,8 +140,8 @@ export class TaskMotionCoordinator {
       if (Math.abs(dx) <= 2 && Math.abs(dy) <= 2) continue;
       const preference = effectiveMotionPreference(node.ownerDocument.defaultView);
       const animation = node.animate([{ translate: dx + "px " + dy + "px" }, { translate: "0px 0px" }], { duration: preference === "rich" ? MOTION.complete : MOTION.layout, easing: MOTION_EASE });
-      const cleanup = () => { animation.cancel(); this.active.delete(cleanup); };
-      this.active.add(cleanup);
+      const cleanup = () => { animation.cancel(); if (this.active.get(node) === cleanup) this.active.delete(node); };
+      this.active.set(node, cleanup);
       void animation.finished.then(cleanup, cleanup);
     }
   }

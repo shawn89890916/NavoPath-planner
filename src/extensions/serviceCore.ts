@@ -488,25 +488,33 @@ export class ExtensionService {
     if (generation !== this.generation) { await plugin.dispose(); return; }
     this.loaded.set(item.key, { hash: item.sha256, plugin, config: JSON.stringify(this.getConfig(item.key)) });
   }
-  private async restorePackages() { if (this.host) { this.failed.clear(); await this.reconcile(this.generation); } }
+  private async restorePackages() {
+    const generation = this.generation;
+    if (!this.host) return;
+    this.reconcileTail = this.reconcileTail.catch(() => {}).then(async () => {
+      if (generation !== this.generation || !this.host) return;
+      this.failed.clear(); await this.reconcile(generation);
+    });
+    await this.reconcileTail;
+  }
   private async publishBundledMigration(entry: CatalogEntry, generation: number) {
-    let bytes: Uint8Array;
-    try { bytes = await this.packageBytes(entry); }
-    catch (error) {
+    try {
+      const bytes = await this.packageBytes(entry);
+      if (generation !== this.generation) return false;
+      await this.publishPackage(entry.sha256, bytes);
+      return generation === this.generation;
+    } catch (error) {
       if (generation === this.generation) this.setSnapshot({ error: errorText(error) });
       return false;
     }
-    if (generation !== this.generation) return false;
-    await this.publishPackage(entry.sha256, bytes);
-    return generation === this.generation;
   }
   private async migrateLegacy() {
     const host = this.ensureHost(), preferences = this.snapshot.preferences, settings = host.getSettings();
     const generation = this.generation;
     const { getBundledExtension } = await import("./officialCatalog");
     if (generation !== this.generation) return;
-    const next = { ...preferences, migratedLegacy: true, installed: { ...preferences.installed } };
-    let changed = !preferences.migratedLegacy;
+    const next = { ...preferences, installed: { ...preferences.installed } };
+    let changed = false;
     const addDefault = (entry: CatalogEntry, enabled: boolean, downloadUrl?: string) => {
       const key = `official:${entry.manifest.id}`, now = new Date().toISOString();
       next.installed[key] = { key, sourceId: "official", manifest: entry.manifest, sha256: entry.sha256, downloadUrl, enabled, installedAt: now, updatedAt: now };
@@ -523,13 +531,16 @@ export class ExtensionService {
       const needed = settings.enabledPlugins?.includes("pomodoro") || settings.focusModeDefault === "pomodoro" || settings.widgetTimerPreferences?.mode === "pomodoro";
       if (needed && !next.installed["official:pomodoro"] && !next.removed["official:pomodoro"]) {
         const entry = getBundledExtension("pomodoro")!;
-        if (!await this.publishBundledMigration(entry, generation)) return;
-        addDefault(entry, true);
-        const config = { ...settings.pluginConfigs?.pomodoro, ...settings.widgetTimerPreferences };
-        await host.saveSettings({ extensionConfigs: { ...settings.extensionConfigs, "official:pomodoro": config } });
+        if (await this.publishBundledMigration(entry, generation)) {
+          addDefault(entry, true);
+          const config = { ...settings.pluginConfigs?.pomodoro, ...settings.widgetTimerPreferences };
+          await host.saveSettings({ extensionConfigs: { ...settings.extensionConfigs, "official:pomodoro": config } });
+        } else if (generation !== this.generation) return;
       }
+      if (!needed || next.installed["official:pomodoro"] || next.removed["official:pomodoro"]) { next.migratedLegacy = true; changed = true; }
     }
     if (!preferences.migratedPlanningViews || !preferences.migratedShelfViews) {
+      let complete = true;
       const builtins: Array<{ id: string; enabled: boolean }> = [
         { id: "kanban", enabled: settings.featureKanbanViewEnabled === true },
         { id: "matrix", enabled: settings.featureQuadrantViewEnabled === true },
@@ -540,13 +551,13 @@ export class ExtensionService {
         const key = `official:${id}`;
         if (next.installed[key] || next.removed[key]) continue;
         const entry = getBundledExtension(id);
-        if (!entry) continue;
-        if (!await this.publishBundledMigration(entry, generation)) return;
+        if (!entry || !await this.publishBundledMigration(entry, generation)) {
+          if (generation !== this.generation) return;
+          complete = false; continue;
+        }
         addDefault(entry, enabled);
       }
-      next.migratedPlanningViews = true;
-      next.migratedShelfViews = true;
-      changed = true;
+      if (complete) { next.migratedPlanningViews = true; next.migratedShelfViews = true; changed = true; }
     }
     if (!preferences.migratedNativeFeatures) {
       let complete = true;
@@ -611,8 +622,10 @@ export class ExtensionService {
       this.failed.delete(item.key);
       changed = true;
     }
-    if (generation !== this.generation) return;
-    if (!changed) return;
+    if (generation !== this.generation || !changed) return;
+    // An explicit install/uninstall or fresher account settings arriving during
+    // migration win; the already queued reconciliation retries the migration.
+    if (this.snapshot.preferences !== preferences) { this.bridgeDiscoveryChecked = false; return; }
     next.updatedAt = new Date().toISOString(); this.setSnapshot({ preferences: next }); await host.saveSettings({ extensions: next });
   }
   private async reconcile(generation: number) {

@@ -59,3 +59,17 @@ it("does not double-translate a nested card when its parent moves", () => {
   expect(child.animate).toHaveBeenCalledWith([{ translate: "0px -10px" }, { translate: "0px 0px" }], expect.any(Object));
   coordinator.cancel();
 });
+
+it("uses the current visible position and ignores stale animation completion", () => {
+  let translate = "none";
+  const animate = vi.fn(() => ({ cancel: vi.fn(), finished: new Promise(() => {}) }));
+  const node = { isConnected: true, animate, parentElement: null, ownerDocument: { defaultView: { getComputedStyle: () => ({ translate }) } } } as unknown as HTMLElement;
+  const before = { ...p("task", "task", 0), node };
+  const after = { ...p("task", "task", 40), node };
+  const coordinator = new TaskMotionCoordinator();
+  coordinator.play([{ before, after }]);
+  translate = "0px -15px";
+  expect(coordinator.visiblePoints([after])[0].rect.top).toBe(25);
+  coordinator.cancel();
+  expect(coordinator.visiblePoints([after])).toEqual([after]);
+});

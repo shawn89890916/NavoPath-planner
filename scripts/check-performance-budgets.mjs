@@ -51,6 +51,12 @@ async function checkFrontend() {
   await checkRoute("Widget startup resources", widget, 260_000);
   await checkRoute("Cloud workspace startup resources", staticFiles(["index.html", main, "src/supabasePlannerApi.ts"]), 1_680_000);
   await check("Complete Vite output", await treeSize(dist), 10_100_000);
+  // Whole-output category totals expose chunks omitted from named size-limit groups.
+  const assets = await readdir(path.join(dist, "assets"), { withFileTypes: true });
+  for (const [label, suffix] of [["All built JavaScript", /\\.m?js$/], ["All built CSS", /\\.css$/]]) {
+    const bytes = await Promise.all(assets.filter(item => item.isFile() && suffix.test(item.name)).map(item => stat(path.join(dist, "assets", item.name)).then(item => item.size)));
+    console.log(label + ": " + bytes.reduce((sum, value) => sum + value, 0) + " bytes");
+  }
 }
 
 async function checkDesktop() {
