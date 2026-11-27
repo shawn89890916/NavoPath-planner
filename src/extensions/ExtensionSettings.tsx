@@ -52,7 +52,7 @@ function ThemePreview({ entry, lang, mode }: { entry: CatalogEntry; lang: Langua
   </div>;
 }
 
-export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mcpAccess, onMcpAccessChange, inlineSettings, inlineTarget, inlineAnchor, settingsOwner, settingsAnchor, openMarket, onCloseMarket, onSelectOwner }: {
+export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mcpAccess, onMcpAccessChange, inlineSettings, inlineTarget, inlineAnchor, settingsOwner, settingsAnchor, openMarket, onCloseMarket, onSelectOwner, onManageConnection }: {
   lang: Language;
   kind: ExtensionKind;
   settingsPageId?: string | null;
@@ -62,6 +62,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
   openMarket?: boolean;
   onCloseMarket?: () => void;
   onSelectOwner?: (owner: string) => void;
+  onManageConnection?: () => void;
   inlineSettings?: Readonly<Record<string, ReactNode>>;
   inlineTarget?: string;
   inlineAnchor?: string;
@@ -230,7 +231,7 @@ export function ExtensionSettings({ lang, kind, settingsPageId, onSelectPage, mc
             const inline = inlineSettings?.[item.key] ?? declaredSettings(item);
             const directSettings = Boolean(plugin && onSelectOwner && item.enabled && (inline || pages.length));
             return <div className="df-extension-installed-item" key={item.key}><SettingRow title={item.manifest.name} description={<>{item.manifest.description}<span className="df-extension-meta">v{item.manifest.version} · {item.manifest.author} · {preferences.sources.find(source => source.id === item.sourceId)?.name ?? item.sourceId}</span><span className="df-extension-state">{plugin ? statusLabel(snapshot.status[item.key] || (item.enabled ? text("已启用", "Enabled") : text("已停用", "Disabled"))) : selected ? text("使用中", "Active") : text("已安装", "Installed")}</span></>} control={confirmation === item.key ? <><SettingActionButton disabled={busy} tone="danger" onClick={() => void run(async () => { await extensionService.uninstall(item.key); setConfirmation(null); }, text("正在卸载…", "Uninstalling…"))}>{text("确认卸载", "Confirm uninstall")}</SettingActionButton><SettingActionButton onClick={() => setConfirmation(null)}>{text("取消", "Cancel")}</SettingActionButton></> : <>
-              {directSettings ? <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => onSelectOwner?.(item.key)}>{text("设置", "Settings")}</SettingActionButton> : <>{inline && <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => setExpandedInline(current => current === item.key ? undefined : item.key)}>{expandedInline === item.key ? text("收起", "Collapse") : text("设置", "Settings")}</SettingActionButton>}
+              {plugin && item.key === "official:super-productivity-sync" && onManageConnection ? <SettingActionButton onClick={onManageConnection}>{text("管理连接", "Manage connection")}</SettingActionButton> : directSettings ? <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => onSelectOwner?.(item.key)}>{text("设置", "Settings")}</SettingActionButton> : <>{inline && <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => setExpandedInline(current => current === item.key ? undefined : item.key)}>{expandedInline === item.key ? text("收起", "Collapse") : text("设置", "Settings")}</SettingActionButton>}
               {pages.length > 0 ? pages.map((contribution) => <SettingActionButton key={contribution.id} ariaLabel={text(`${item.manifest.name} ${inline ? "高级设置" : "设置"}`, `${item.manifest.name} ${inline ? "advanced settings" : "settings"}`)} onClick={() => setPageId(contribution.id)}>{pages.length === 1 ? text(inline ? "高级设置" : "设置", inline ? "Advanced settings" : "Settings") : contribution.name}</SettingActionButton>) : plugin && !inline && <SettingActionButton ariaLabel={text(`${item.manifest.name} 设置`, `${item.manifest.name} settings`)} onClick={() => setFallbackSettingsKey(item.key)}>{text("设置", "Settings")}</SettingActionButton>}</>}
               {!plugin && !selected && <SettingActionButton disabled={busy} onClick={() => void run(() => extensionService.selectTheme(item.key), text("正在切换主题…", "Applying theme…"))}>{text("使用", "Use theme")}</SettingActionButton>}
               {snapshot.updates[item.key] && <SettingActionButton pending={pending === (zh ? "正在更新…" : "Updating…")} disabled={busy || batchRunning} onClick={() => void run(() => extensionService.update(item.key), text("正在更新…", "Updating…"))}>{pending === (zh ? "正在更新…" : "Updating…") ? text("正在更新…", "Updating…") : text("更新", "Update")}</SettingActionButton>}
