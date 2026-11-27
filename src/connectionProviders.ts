@@ -26,7 +26,7 @@ export function spPluginConnection(snapshot: ExtensionSnapshot) {
     : undefined;
   return { installed, catalog, page };
 }
-export const SP_COMPANION_URL = "https://github.com/shawn89890916/NavoPath-planner/raw/main/integrations/super-productivity-navopath/navopath-sync-1.0.6.zip";
+export const SP_COMPANION_URL = "https://github.com/shawn89890916/NavoPath-planner/raw/main/integrations/super-productivity-navopath/navopath-sync-1.1.0.zip";
 
 export type SpPairState = { kind: "loading" | "unavailable" | "unpaired" | "unknown" | "waiting" | "preview" | "active" | "paused"; conflicts: number };
 export function readSpPairState(value: unknown): SpPairState {

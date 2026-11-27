@@ -526,7 +526,7 @@
         "name": "Super Productivity Sync",
         "description": "Sync projects and tasks between NavoPath and Super Productivity through your NavoPath account.",
         "author": "NavoPath",
-        "version": "1.0.6",
+        "version": "1.1.0",
         "kind": "plugin",
         "apiVersion": 1,
         "minAppVersion": "1.7.0-beta.91",
@@ -540,7 +540,7 @@
         "license": "MIT"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/super-productivity-sync.navopackage.json",
-      "sha256": "2d65a9e448fb0f65a2c18e9c2b3c49b5d0fe4e5bc74969f2478610f166cfcf1f"
+      "sha256": "d8e79174da0e9cdf98cc947881c66185d48f00626f3bb7fadedbb10470e0f829"
     },
     {
       "manifest": {
