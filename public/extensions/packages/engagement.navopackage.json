@@ -20,7 +20,7 @@
   "files": {
     "main.js": {
       "encoding": "utf8",
-      "data": "var a={onload(e){return e.app.internal.registerNativeFeature(\"engagement\")}};export{a as default};\n"
+      "data": "var t={onload(e){return e.app.internal.registerNativeFeature(\"engagement\")}};export{t as default};\n"
     },
     "LICENSE": {
       "encoding": "utf8",

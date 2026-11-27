@@ -66,7 +66,7 @@
         "repository": "https://github.com/shawn89890916/NavoPath-planner"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/engagement.navopackage.json",
-      "sha256": "4f43810d707201380bbd3a42aa034b0dd206c7c73c6a6f54d504f3e348792246"
+      "sha256": "7e2469091608a66dd3feadea85157ad2df215bc7f604f4f12387506a01426a2e"
     },
     {
       "manifest": {
@@ -150,7 +150,7 @@
         "repository": "https://github.com/shawn89890916/NavoPath-planner"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/habits.navopackage.json",
-      "sha256": "65119519ce0ff4095ea8e77ce87f322c1361b80e31907ba686ee6bb00f330b59"
+      "sha256": "4cafd9d44807b895832648dff9ae9a5e78dd50fe3daa50918f3f0723aa9c1829"
     },
     {
       "manifest": {
