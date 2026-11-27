@@ -2,7 +2,17 @@ import { createDragProjection } from "../src/motion/dragProjection.ts";
 
 export async function exerciseDragProjection() {
   const assert = (v,m) => { if (!v) throw Error(m); };
-  const tick = () => new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  // Exercise real DOM geometry and WAAPI, but explicitly drive the projection
+  // frame queue: a hidden CI renderer may not present a compositor frame.
+  const raf=window.requestAnimationFrame, caf=window.cancelAnimationFrame, match=window.matchMedia;
+  const pending=new Map();let nextFrame=0;
+  window.requestAnimationFrame=callback=>{pending.set(++nextFrame,callback);return nextFrame;};
+  window.cancelAnimationFrame=id=>pending.delete(id);
+  let reduced=false;
+  const media=new EventTarget();
+  Object.defineProperty(media,"matches",{get:()=>reduced});
+  window.matchMedia=query=>query==="(prefers-reduced-motion: reduce)"?media:match.call(window,query);
+  const tick=()=>{const callbacks=[...pending.values()];pending.clear();for(const cb of callbacks)cb(performance.now());};
   const before = document.documentElement.dataset.motionPreference;
   document.documentElement.dataset.motionPreference="standard";
   const root=document.createElement("div");
@@ -21,7 +31,7 @@ export async function exerciseDragProjection() {
   const projection=createDragProjection(rows[0]);
   try {
     projection.update(rows[3],"before");await tick();
-    assert(created===2,"initial projection expected two animations, got "+created);
+    assert(created===2,"initial projection expected two animations, got "+created+"; viewport="+innerWidth+"x"+innerHeight+"; rect="+JSON.stringify(rows[0].getBoundingClientRect())+"; translate="+getComputedStyle(rows[1]).translate+"; reduced="+matchMedia("(prefers-reduced-motion: reduce)").matches);
     const retained=rows[1].getAnimations()[0];
     projection.update(rows[4],"before");await tick();
     assert(created===3,"unchanged siblings were restarted");
@@ -38,12 +48,18 @@ export async function exerciseDragProjection() {
         assert(style.translate==="none","logical read retained a projection");
       }
     });
+    const measuredCreations=created;
+    reduced=true;media.dispatchEvent(new Event("change"));tick();
+    assert(rows.every(row=>row.getAnimations().length===0),"system reduced motion did not clear animations");
+    reduced=false;media.dispatchEvent(new Event("change"));tick();
+    assert(rows[1].getAnimations().length===1,"normal motion did not resume");
     document.documentElement.dataset.motionPreference="off";
-    window.dispatchEvent(new Event("resize"));await tick();
+    window.dispatchEvent(new Event("resize"));tick();
     assert(rows.every(row=>row.getAnimations().length===0),"motion off did not clear animations");
-    return {confirmedTargets:3,animationCreations:created,legacyRestartCreations:8,unchangedRetained:true,styleInvariant:true,cleanup:true};
+    return {confirmedTargets:3,animationCreations:measuredCreations,legacyRestartCreations:8,unchangedRetained:true,styleInvariant:true,systemReducedMotion:true,cleanup:true,frameQueue:"controlled",animations:"native WAAPI"};
   } finally {
     projection.close();root.remove();
+    window.requestAnimationFrame=raf;window.cancelAnimationFrame=caf;window.matchMedia=match;
     if(before===undefined)delete document.documentElement.dataset.motionPreference;
     else document.documentElement.dataset.motionPreference=before;
   }

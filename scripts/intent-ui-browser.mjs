@@ -2,7 +2,6 @@ import React, {useRef} from "react";
 import {createRoot} from "react-dom/client";
 import {flushSync} from "react-dom";
 import {AnchoredNarrowMenu} from "../src/components/AnchoredNarrowMenu.tsx";
-import {exerciseDragProjection} from "./drag-projection-browser.mjs";
 
 const assert = (v,m) => { if (!v) throw Error(m); };
 const wait = ms => new Promise(r=>setTimeout(r,ms));
@@ -75,8 +74,7 @@ export async function exerciseIntent() {
     assert(!document.querySelector(".ui-narrow-menu-layer"),"menu retained after close");
     const latency=Object.fromEntries(Object.entries(results).map(([mode,rows])=>[mode,{p50:quantile(rows.map(r=>r.latency),.5),p95:quantile(rows.map(r=>r.latency),.95),...(mode==="C"?{medianLead:quantile(rows.map(r=>r.lead),.5)}:{})}]));
     assert(latency.C.p50<latency.B.p50&&latency.B.p50<latency.A.p50,"controlled loader did not benefit from early start");
-    const dragProjection=await exerciseDragProjection();
-    return {width:innerWidth,trialsPerMode:5,controlledLoaderMs:110,latency,actualProductionImport:false,dragProjection,guards:["reversal","touch","drag","selected","blur","focus","close"]};
+    return {width:innerWidth,trialsPerMode:5,controlledLoaderMs:110,latency,actualProductionImport:false,guards:["reversal","touch","drag","selected","blur","focus","close"]};
   } finally {
     root.unmount();host.remove();style.remove();
     if(focus)Object.defineProperty(document,"hasFocus",focus);else delete document.hasFocus;
