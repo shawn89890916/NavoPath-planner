@@ -19,7 +19,7 @@ async function runServer() {
         res.setHeader("Content-Type", "text/html");
         res.end(`<!doctype html><html><body>Isolated Metrics storage test<script type="module">
           const phase=new URL(location.href).searchParams.get("phase");
-          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
+          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):phase==="exerciseSettings"?import("/scripts/settings-ui-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
         </script></body></html>`);
       });
     } }]
@@ -78,6 +78,13 @@ async function runRenderer() {
       const result=await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await window.metricsResult;await new Promise(r=>setTimeout(r,20));}throw Error('Connections test bootstrap missing');})()");
       if(!result||result.error)throw Error(result?.error||"Connections UI fixture did not initialize");
       console.log("Connections Chromium UI: "+JSON.stringify(result.value));
+    }
+    for (const [width,height] of [[1440,900],[620,840],[420,840],[300,640]]) {
+      win.setContentSize(width,height);
+      await win.loadURL(url+"?phase=exerciseSettings");
+      const settings=await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await window.metricsResult;await new Promise(r=>setTimeout(r,20));}throw Error('Settings fixture missing');})()");
+      if(!settings||settings.error)throw Error(settings?.error||"Settings UI fixture failed");
+      console.log("Settings Chromium UI: "+JSON.stringify(settings.value));
     }
     win.webContents.debugger.attach("1.3");
     try {

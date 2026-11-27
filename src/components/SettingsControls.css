@@ -14,7 +14,7 @@
 .df-settings-group-head { margin: 0 0 8px; padding-bottom: 0; border-bottom: 0; }
 .df-settings-surface .df-settings-group-head { padding-inline: calc(var(--settings-row-inset, 16px) + 1px); }
 .df-settings-surface .df-settings-group:not(.df-settings-group--grouped) > .df-settings-group-body { padding-inline: calc(var(--settings-row-inset, 16px) + 1px); }
-.df-settings-surface .df-settings-group .df-settings-group > :is(.df-settings-group-head, .df-settings-group-body) { padding-inline: 0; }
+.df-settings-surface .df-settings-group--grouped .df-settings-group > :is(.df-settings-group-head, .df-settings-group-body) { padding-inline: 0; }
 .df-settings-group-title { margin: 0; color: var(--text-muted); font: 600 13px/1.45 var(--paper-sans); }
 .df-settings-group-desc { margin: var(--space-1) 0 0; max-width: 64ch; color: var(--text-muted); font: 400 12px/1.55 var(--paper-sans); }
 .df-settings-group-body { display: flex; flex-direction: column; min-width: 0; }
@@ -120,7 +120,7 @@
 .df-settings-number-wrap > .df-settings-number-suffix {
   position: absolute; inset-inline-end: var(--space-3); top: 50%; transform: translateY(-50%); pointer-events: none;
 }
-.df-settings-range-control { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; width: 100%; }
+.df-settings-range-control { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; width: 100%; max-width: 220px; }
 #root .df-app .df-settings-color-field {
   position: relative; display: flex; align-items: center; gap: var(--space-2);
   margin: 0; font: 500 12px/1 var(--paper-mono); cursor: pointer;
@@ -171,11 +171,15 @@
 .df-settings-row-control:has(.df-settings-range-control) > .df-settings-range-control { flex: 1 1 80px; }
 .df-settings-row-control:has(.df-settings-range-control) > .df-settings-number-wrap { flex: 0 1 92px; }
 .df-settings-range-control > input[type="range"] { min-width: 0; width: 100%; }
-@container settings-content (max-width: 480px) {
+@container settings-content (max-width: 360px) {
   #root .df-app .df-settings-row:has(.df-settings-range-control, .df-settings-input:not([type="time"]), .df-settings-color-field, .df-settings-select) { grid-template-columns: minmax(0, 1fr); }
   #root .df-app .df-settings-row:has(.df-settings-range-control, .df-settings-input:not([type="time"]), .df-settings-color-field, .df-settings-select) > .df-settings-row-control { justify-content: flex-start; }
 }
 
+@container settings-content (min-width: 361px) and (max-width: 480px) {
+  #root .df-app .df-settings-row:has(.df-settings-range-control):has(.df-settings-number-wrap) { grid-template-columns: minmax(0, 1fr); }
+  #root .df-app .df-settings-row:has(.df-settings-range-control):has(.df-settings-number-wrap) > .df-settings-row-control { justify-content: flex-start; max-width: 220px; }
+}
 /* A dedicated trailing slot stays independent from the wrapping action group. */
 #root .df-app .df-settings-row--actions { grid-template-columns: minmax(0, 1fr) minmax(0, 220px) auto; }
 .df-settings-row-trailing { grid-column: 3; grid-row: 1; display: flex; align-items: center; justify-content: flex-end; }
