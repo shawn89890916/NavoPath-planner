@@ -1,6 +1,7 @@
 import { type CSSProperties, type ReactNode, type RefObject, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Popover } from "./UiPrimitives";
+import { approachesBounds, createIntentSampler } from "../motion/intent";
 
 export function AnchoredNarrowMenu({
   open,
@@ -11,6 +12,7 @@ export function AnchoredNarrowMenu({
   placement = "side",
   focusOnOpen = false,
   label,
+  intentPreload,
 }: {
   open: boolean;
   anchorRef: RefObject<HTMLElement | null>;
@@ -20,14 +22,20 @@ export function AnchoredNarrowMenu({
   placement?: "side" | "below";
   focusOnOpen?: boolean;
   label: string;
+  /** Only host-owned, idempotent module loaders may be passed here. */
+  intentPreload?: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const intent = useRef<ReturnType<typeof createIntentSampler> | null>(null);
+  const warmed = useRef(false);
+  useLayoutEffect(() => { intent.current = null; warmed.current = false; }, [open]);
   const [position, setPosition] = useState({ left: 12, top: 12, maxHeight: 240 });
 
   useLayoutEffect(() => {
     if (!open) return;
     const panel = anchorRef.current?.closest(".df-candidate-panel");
     const update = () => {
+      intent.current?.reset();
       const anchor = anchorRef.current;
       if (!anchor) return;
       const anchorRect = anchor.getBoundingClientRect();
@@ -87,7 +95,27 @@ export function AnchoredNarrowMenu({
 
   if (!open || typeof document === "undefined") return null;
   return createPortal(
-    <div ref={menuRef} className={["ui-narrow-menu-layer", className || ""].filter(Boolean).join(" ")} style={{ left: position.left, top: position.top, "--ui-narrow-menu-max-height": `${position.maxHeight}px` } as CSSProperties}>
+    <div ref={menuRef}
+      onPointerMove={intentPreload ? event => {
+        if (warmed.current || event.pointerType !== "mouse" || event.buttons !== 0 || !document.hasFocus()) {
+          intent.current?.reset();
+          return;
+        }
+        const point = { x: event.clientX, y: event.clientY, t: event.timeStamp };
+        const prediction = (intent.current ??= createIntentSampler()).sample(point);
+        if (!prediction) return;
+        const target = event.currentTarget.querySelector<HTMLButtonElement>("button[data-intent-preload]");
+        if (!target || target.disabled || target.getAttribute("aria-pressed") === "true") return;
+        if (approachesBounds(point, prediction, target.getBoundingClientRect())) {
+          warmed.current = true;
+          intent.current = null;
+          intentPreload();
+        }
+      } : undefined}
+      onPointerLeave={intentPreload ? () => intent.current?.reset() : undefined}
+      onPointerCancel={intentPreload ? () => intent.current?.reset() : undefined}
+      onPointerDown={intentPreload ? () => intent.current?.reset() : undefined}
+      className={["ui-narrow-menu-layer", className || ""].filter(Boolean).join(" ")} style={{ left: position.left, top: position.top, "--ui-narrow-menu-max-height": `${position.maxHeight}px` } as CSSProperties}>
       <Popover role="group" aria-label={label} className="ui-narrow-menu ui-divided-list" onKeyDown={event => {
         if (event.key !== "Escape") return;
         event.stopPropagation();
