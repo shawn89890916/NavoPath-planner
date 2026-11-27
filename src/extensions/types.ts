@@ -18,6 +18,7 @@ export interface ExtensionUpdateBatch {
 export interface ExtensionSnapshot {
   preferences: ExtensionPreferences; catalog: CatalogEntry[]; updates: Record<string, CatalogEntry>;
   status: Record<string, string>; busy: boolean; error: string; safeMode: boolean;
+  nativeFeatures?: string[];
   catalogLoading?: boolean; checkingUpdates?: boolean; updateBatch?: ExtensionUpdateBatch;
   settingsPages: ExtensionContribution[]; views: ExtensionContribution[]; launcherStatus: Record<string, PluginLauncherStatus>;
 }

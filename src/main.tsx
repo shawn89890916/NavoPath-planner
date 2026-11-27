@@ -52,6 +52,7 @@ import { t, detectSystemLanguage, viewLabel, weekdayName } from "./i18n";
 import { term } from "./terminology";
 import { migrateLegacyHabitTracker, scheduleHabitRecord, toggleHabitCompletion, unscheduleHabitRecord, updateHabit, archiveHabit, buildHabitMetrics, isHabitDueOnDate, isHabitWithinDateRange, weekdayLabels, type HabitMetrics } from "./utils/habits";
 import { shouldShowHabitCandidates } from "./utils/habitCandidateVisibility";
+import { nativeFeatureActive } from "./extensions/nativeFeatures";
 import { normalizeAiReply } from "./utils/aiReply";
 import { candidateScheduleSummary, type CandidateScheduleSummary } from "./utils/candidateSchedule";
 import { localIsoDate } from "./utils/localDate";
@@ -1397,12 +1398,15 @@ function App() {
     return () => document.removeEventListener("keydown", closeCompactLayer);
   }, [quickAddOpen, quickTitle, mobileQuickAddKind]);
 
+  const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
+  const habitsEnabled = productDemo ? settings?.featureHabitsEnabled !== false : nativeFeatureActive(extensionSnapshot, "habits");
+  const engagementEnabled = productDemo ? settings?.featureEngagementEnabled === true : nativeFeatureActive(extensionSnapshot, "engagement");
   useEffect(() => {
-    if (settings?.featureHabitsEnabled === false && habitPanel) {
+    if (!habitsEnabled && habitPanel) {
       setHabitPanel(null);
       setEditingHabitId(null);
     }
-  }, [settings?.featureHabitsEnabled]);
+  }, [habitsEnabled, habitPanel]);
 
   const dialog = useInAppDialog(lang);
   useEffect(() => productPresentation ? undefined : installWorkspaceWheelRouting(document), []);
@@ -1540,7 +1544,6 @@ function App() {
   const snapshotTimerRef = useRef<number | null>(null);
   const [isManualSyncing, setIsManualSyncing] = useState(false);
   const extensionHostRef = useRef<ExtensionHost | null>(null);
-  const extensionSnapshot = useSyncExternalStore(extensionService.subscribe, extensionService.getSnapshot);
   const activeExtensionPanel = activeExtensionPanelId === coreHistoryView.id ? coreHistoryView : extensionSnapshot.views.find((view) => view.id === activeExtensionPanelId && !view.planningView);
   function openTaskHistory() {
     rememberLayerTrigger("utility");
@@ -4488,7 +4491,7 @@ if (cached?.data && cached?.settings) {
 
   function finishMobileQuickAdd(more = false, sample?: string) {
     const title = quickTitle.trim() || (!more && mobileQuickAddKind === "task" ? sample || "" : "");
-    if (!data || (!title && (!more || mobileQuickAddKind === "habit"))) return;
+    if (!data || (mobileQuickAddKind === "habit" && !habitsEnabled) || (!title && (!more || mobileQuickAddKind === "habit"))) return;
     if (!more && mobileQuickAddKind === "task") {
       if (mobileQuickAddDate) {
         createAllDayTask(title, mobileQuickAddDate, quickProjectId);
@@ -6112,19 +6115,19 @@ if (cached?.data && cached?.settings) {
 
   function toggleHabitDaily(habitId: string, completed: boolean) {
     const current = dataRef.current;
-    if (!current) return;
+    if (!current || !habitsEnabled) return;
     void saveData(toggleHabitCompletion(current, habitId, today, completed));
   }
 
   function toggleHabitForDate(habitId: string, date: string, completed: boolean) {
     const current = dataRef.current;
-    if (!current) return;
+    if (!current || !habitsEnabled) return;
     void saveData(toggleHabitCompletion(current, habitId, date, completed));
   }
 
   function scheduleHabitAt(habitId: string, date: string, startTime: string, focusTimeline = true) {
     const current = dataRef.current;
-    if (!current) return;
+    if (!current || !habitsEnabled) return;
     if (!focusTimeline) preserveTimelineViewportOnNextDataChange();
     const result = scheduleHabitRecord(current, habitId, date, startTime);
     void saveData(result.data);
@@ -6144,21 +6147,21 @@ if (cached?.data && cached?.settings) {
   }
 
   function openHabitDetail(habitId: string) {
-    if (!settings || settings.featureHabitsEnabled === false) return;
+    if (!settings || !habitsEnabled) return;
     setNewHabitDraft(null);
     setEditingHabitId(habitId);
     setHabitPanel("detail");
   }
 
   function openHabitOverview() {
-    if (!settings || settings.featureHabitsEnabled === false) return;
+    if (!settings || !habitsEnabled) return;
     setNewHabitDraft(null);
     setEditingHabitId(null);
     setHabitPanel("overview");
   }
 
   function createHabit() {
-    if (!data) return;
+    if (!data || !habitsEnabled) return;
     const now = workspaceNow().toISOString();
     const habit: Habit = {
       id: uid("habit"),
@@ -6178,7 +6181,7 @@ if (cached?.data && cached?.settings) {
 
   function saveHabitEdit(habitId: string, patch: Partial<Habit>) {
     const current = dataRef.current;
-    if (!current) return;
+    if (!current || !habitsEnabled) return;
     const source = newHabitDraft?.id === habitId && !current.habits?.some((habit) => habit.id === habitId)
       ? { ...current, habits: [...(current.habits || []), newHabitDraft] }
       : current;
@@ -6279,7 +6282,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function beginHabitDrag(event: React.PointerEvent, habit: Habit) {
-    if (!settings || settings.featureHabitsEnabled === false) return;
+    if (!settings || !habitsEnabled) return;
     beginShelfDrag(event, habitDragTask(habit, timelineDate), "candidate", {
       allowCandidateReorder: false,
       onSchedule: (date, startTime) => scheduleHabitAt(habit.id, date, startTime, false),
@@ -9103,7 +9106,7 @@ if (cached?.data && cached?.settings) {
   }
   const habits = data.habits || [];
   const habitDailyStates = data.habitDailyStates || [];
-  const hasActiveHabits = settings.featureHabitsEnabled !== false && habits.some((habit) => !habit.archived);
+  const hasActiveHabits = habitsEnabled && habits.some((habit) => !habit.archived);
   const draggedTask = drag
     ? drag.shelfTask || tasks.find((task) => task.id === drag.taskId)
       || explicitVisibleTimeline.tasks.find((task) => task.id === drag.taskId)
@@ -9195,7 +9198,7 @@ if (cached?.data && cached?.settings) {
     onTaskUpdate: updateTask, onTaskCreate: createTaskInProject, onTaskDelete: deleteTaskById, onDeleteSubtask: deleteSubtaskById,
     onDataChange: (next: PlannerData) => void saveData(next),
     onTreeMove: movePlanningTreeNode,
-    engagementEnabled: settings.featureEngagementEnabled === true,
+    engagementEnabled: engagementEnabled,
   };
   const scheduleViewProps = {
     onScheduleTask: openShelfTaskPlacement,
@@ -9416,7 +9419,7 @@ if (cached?.data && cached?.settings) {
           lang={lang}
           showTaskExample={onboardingStep === "add"}
           kind={mobileQuickAddKind}
-          kinds={settings.featureHabitsEnabled === false ? ["task", "project"] : ["task", "project", "habit"]}
+          kinds={!habitsEnabled ? ["task", "project"] : ["task", "project", "habit"]}
           title={quickTitle}
           projects={projects}
           projectId={quickProjectId}
@@ -9731,7 +9734,7 @@ if (cached?.data && cached?.settings) {
                   {<TaskCard demo={Boolean(productDemo)} task={task} scheduleButtonRef={guidePlanButtonVisible && onboardingTask?.id === task.id ? onboardingPlanButtonRef : undefined} onGuidedSchedule={onboardingTask?.id === task.id ? scheduleGuidedTask : undefined} onFocusSchedule={focusCandidateSchedule} projects={projects} focusDate={today} placementPreview={placementPreview} placementChoices={placementChoices.filter((choice) => choice.taskId === task.id)} isPlacementLocated={locatedPlacementTaskId === task.id} onLocatePlacement={(schedule) => locateCandidatePlacement(task.id, schedule)} onReturnFromPlacementLocation={() => returnFromCandidatePlacement(task.id)} onQuickDuration={(minutes) => updateTask(task.id, { estimatedHours: minutes / 60 })} onProjectChange={(projectId) => updateTask(task.id, { projectId: projectId || undefined })} onDelete={() => deleteTaskById(task.id)} onMobileSchedule={mobileExecution ? () => startMobilePlacement(task.id) : undefined} onStartPlacementPreview={() => { if (!mobileExecution) startPlacementPreview(task.id); }} onCancelPlacementPreview={() => { if (!mobilePlacementRef.current) cancelPlacementPreview(); }} onConfirmPlacementPreview={() => confirmPlacementPreview(task.id)} onConfirmPlacementChoice={confirmPlacementChoice} onScheduleDate={(date) => scheduleCandidateOnDate(task.id, date)} onSaveDueDate={(date) => updateTask(task.id, { dueDate: date, dueDateSource: date ? "manual" : undefined })} onSaveRecurrence={(recurrence) => saveTaskRecurrence(task.id, recurrence)} onClick={() => openTaskEdit(task)} onPointerDragStart={(event) => beginShelfDrag(event, task, "candidate")} onToggleDone={() => toggleTaskDone(task.id)} onToggleSubtask={(subtaskId) => updateTask(task.id, { subtasks: toggleSubtaskInTree(task.subtasks || [], subtaskId) })} onSubtaskDragStart={(event, subtaskId) => beginCandidateSubtaskDrag(event, task, subtaskId)} onMarkUnfinished={() => markCandidateUnfinished(task.id)} onUnschedule={() => unscheduleTask(task.id)} onMetaUpdate={(patch) => updateTask(task.id, patch)} dragState={drag?.source === "candidate" && drag.taskId === task.id ? "source-placeholder" : undefined} lang={lang} />}
                 </div>
               })}
-              {shouldShowHabitCandidates(settings) && (
+              {habitsEnabled && shouldShowHabitCandidates({ ...settings, featureHabitsEnabled: true }) && (
                 <HabitCandidateCard
                   habits={habits}
                   projects={projects}
@@ -9935,7 +9938,7 @@ if (cached?.data && cached?.settings) {
                                 )}
                                 {allDayDragDate === colDate && drag && draggedTask && <AllDayDropPreview task={draggedTask} projects={projects} lang={lang} />}
                                 {adTasks.map((task) => (
-                                  <AllDayBlock resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
+                                  <AllDayBlock resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={engagementEnabled} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
                                 ))}
                               </div>
                             );
@@ -10162,7 +10165,7 @@ if (cached?.data && cached?.settings) {
                                   }
                                   const isPreview = previewIdByClonedId.has(task.id);
                                   return (
-                                    <TimeBlock blockRef={returnGuideAnchorFor(task)} resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
+                                    <TimeBlock blockRef={returnGuideAnchorFor(task)} resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={engagementEnabled} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
                                       if (!suppressBlockClickRef.current) openTaskEdit(task);
                                     }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
                                       createProjectForTask(task.id, title);
@@ -10357,7 +10360,7 @@ if (cached?.data && cached?.settings) {
                           ...allDayTimelineTasks.filter((task) => task.scheduledDate === timelineWindowAnchorDate),
                           ...eventVisibleTimeline.tasks.filter((task) => !task.scheduledStart && task.scheduledDate === timelineWindowAnchorDate),
                         ].map((task) => (
-                          <AllDayBlock resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
+                          <AllDayBlock resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={engagementEnabled} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
                         ))}
                       </div>
                     </div>
@@ -10545,7 +10548,7 @@ if (cached?.data && cached?.settings) {
 
                           const isPreview = previewIdByClonedId.has(task.id);
                           return (
-                            <TimeBlock blockRef={returnGuideAnchorFor(task)} resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={settings.featureEngagementEnabled === true} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
+                            <TimeBlock blockRef={returnGuideAnchorFor(task)} resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={engagementEnabled} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
                               if (!suppressBlockClickRef.current) openTaskEdit(task);
                             }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
                               createProjectForTask(task.id, title);
@@ -10642,7 +10645,7 @@ if (cached?.data && cached?.settings) {
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer engagementEnabled={settings.featureEngagementEnabled === true} type={addType} setType={(type) => { setAddType(type); if (!editingId) { const initial = defaultForm(type); drawerInitialFormRef.current = initial; setForm(initial); } }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onEditSchedule={editTaskSchedule} weekStartsOn={settings.weekStartsOn} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
+      {drawerOpen && <EditDrawer engagementEnabled={engagementEnabled} type={addType} setType={(type) => { if (type === "habit" && !habitsEnabled) return; setAddType(type); if (!editingId) { const initial = defaultForm(type); drawerInitialFormRef.current = initial; setForm(initial); } }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onEditSchedule={editTaskSchedule} weekStartsOn={settings.weekStartsOn} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && !settings.hideAi} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel && workspaceChatPanel && <div className="df-utility-backdrop" data-workspace-backdrop data-motion-closing={aiPresence.closing || undefined} onMouseDown={closeWorkspaceChat} />}
       {!productAiPresentation && aiPanel}
       {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} data={data} settings={settings} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}
@@ -10670,7 +10673,7 @@ if (cached?.data && cached?.settings) {
           <TaskOperationHistory operations={taskOperations} projects={projects} lang={lang} now={workspaceNow()} label={lang === "zh" ? "活动历史" : "Activity history"} onUndo={undoTaskOperation} />
         </Suspense> : <div className="df-extension-page-content"><ExtensionMount contribution={activeExtensionPanel} lang={lang} /></div>}
       </RightUtilityPanel>}
-      {habitPanel && data && settings.featureHabitsEnabled !== false && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
+      {habitPanel && data && habitsEnabled && <HabitPanel mode={habitPanel} habitId={editingHabitId} draft={newHabitDraft} data={data} today={today} lang={lang} onClose={() => { setHabitPanel(null); setEditingHabitId(null); setNewHabitDraft(null); }} onEditHabit={openHabitDetail} onBack={openHabitOverview} onSave={saveHabitEdit} onArchive={toggleHabitArchive} onToggleDay={toggleHabitForDate} onDeleteHabit={deleteHabitPermanently} onCreateHabit={createHabit} onConvertTo={openHabitConvert} />}
       {focusOverlayMode && (
         <RightUtilityPanel workspace label={focusProvider?.label[lang] || (lang === "zh" ? "专注" : "Focus")} closeLabel={t(lang, "settings.close")} className="df-focus-utility" onClose={() => setFocusOverlayMode(null)}>
           <FocusTimerPanel

@@ -964,26 +964,6 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               </div>
               </SettingSection>}
 
-            {settingsTarget.category === "workflow" && <SettingSection variant="grouped" anchor="habits" title={lang === "zh" ? "任务与习惯" : "Tasks and habits"}>
-              <SettingRow
-                anchor="habits-enabled"
-                title={lang === "zh" ? "启用习惯功能" : "Enable habits"}
-                description={lang === "zh" ? "关闭后隐藏今日候选中的习惯区与习惯入口。" : "When off, the habits area in today's candidates and habit entries are hidden."}
-                control={<SettingToggle checked={settings.featureHabitsEnabled !== false} ariaLabel={lang === "zh" ? "启用习惯功能" : "Enable habits"} onChange={(next) => onSave({ featureHabitsEnabled: next })} />}
-              />
-              {(settings.featureHabitsEnabled !== false || settingsTarget.anchor === "habit-candidates") && <SettingRow
-                anchor="habit-candidates"
-                title={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today's candidates"}
-                description={lang === "zh" ? "关闭后仅隐藏今日候选中的习惯区，保留习惯功能和数据。" : "When off, only hides the habits area in today's candidates; habit features and data stay available."}
-                control={<SettingToggle checked={settings.featureHabitCandidatesEnabled !== false} disabled={settings.featureHabitsEnabled === false} ariaLabel={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today's candidates"} onChange={(next) => onSave({ featureHabitCandidatesEnabled: next })} />}
-              />}
-              <SettingRow anchor="engagement"
-                title={lang === "zh" ? "启用投入度评分" : "Enable engagement rating"}
-                description={lang === "zh" ? "完成后评 10–100%，默认 80%。点击百分比快速选择；左侧色条长度表示投入度，例如 60 分钟 × 80% = 48 分钟有效投入。" : "Rate completed work 10–100%, default 80%. Click the percentage to choose. Left stripe length shows engagement; for example, 60 minutes × 80% = 48 minutes of weighted effort."}
-                control={<SettingToggle checked={settings.featureEngagementEnabled === true} ariaLabel={lang === "zh" ? "启用投入度评分" : "Enable engagement rating"} onChange={(next) => onSave({ featureEngagementEnabled: next })} />}
-              />
-            </SettingSection>}
-
             {settingsTarget.category === "widget" && <>
             {window.desktopApi?.dockWindow && <SettingSection anchor="desktop-window-settings" title={lang === "zh" ? "贴边栏" : "Dock"}>
               <Suspense fallback={null}><DesktopDockSettings lang={lang} /></Suspense>
@@ -1177,7 +1157,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
             </SettingDisclosure>
               </SettingSection>}
             {settingsTarget.category === "integrations" && <Suspense fallback={null}><ConnectionProviders key={authEmail} lang={lang} anchor={settingsTarget.anchor} onSelect={anchor => navigateSettings({ category: "integrations", anchor })} errorMessage={calendarFeedErrorMessage} caldav={<CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} />} externalCalendar={<ExternalCalendarManager lang={lang} />} mcp={<McpTokenManager lang={lang} />} bridge={<SyncBridgeManager lang={lang} />} /></Suspense>}
-            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings inlineSettings={{ "official:metrics": <div data-settings-anchor="metrics" tabIndex={-1}><SettingSection variant="grouped" title={lang === "zh" ? "统计偏好" : "Statistics preferences"}><SettingRow
+            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings inlineSettings={{ "official:habits": <SettingSection variant="grouped" anchor="habits" title={lang === "zh" ? "习惯" : "Habits"}><SettingRow anchor="habit-candidates" title={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today’s candidates"} description={lang === "zh" ? "隐藏此区不会删除习惯或历史记录。" : "Hiding this area does not remove habits or their history."} control={<SettingToggle checked={settings.featureHabitCandidatesEnabled !== false} ariaLabel={lang === "zh" ? "在今日候选中显示习惯区" : "Show habits in today’s candidates"} onChange={(next) => onSave({ featureHabitCandidatesEnabled: next })} />} /></SettingSection>, "official:metrics": <div data-settings-anchor="metrics" tabIndex={-1}><SettingSection variant="grouped" title={lang === "zh" ? "统计偏好" : "Statistics preferences"}><SettingRow
                 anchor="metrics-range"
                 title={lang === "zh" ? "默认时间范围" : "Default time range"}
                 control={<SettingSelect<NonNullable<Settings["metricsRangePreset"]>>

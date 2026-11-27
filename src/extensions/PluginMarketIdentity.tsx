@@ -10,6 +10,8 @@ import type { CatalogEntry } from "./types";
 const officialIcons = new Map<string, typeof UiListIcon>([
   ["class-timetable", UiCalendarDaysIcon],
   ["daily-overview", UiCalendarCheckIcon],
+  ["habits", UiCalendarCheckIcon],
+  ["engagement", UiZapIcon],
   ["kanban", UiKanbanIcon],
   ["list", UiListIcon],
   ["matrix", UiMatrixIcon],

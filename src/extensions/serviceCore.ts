@@ -1,3 +1,4 @@
+import { nativeFeatureIds } from "./nativeFeatures";
 import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionUpdateBatch, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativeShelfViewMode, PluginLauncherStatus } from "./types";
 import { compatibility, compareVersions, defaultExtensionPreferences, isRecord, MAX_PACKAGE_BYTES, normalizeExtensionPreferences, readExtensionResponse, readPackage, publicHttps, sha256 } from "./packages";
 import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
@@ -82,7 +83,7 @@ export class ExtensionService {
       this.host = host;
       let safeMode = false;
       try { safeMode = new URLSearchParams(location.search).has("safe-mode") || localStorage.getItem(this.scope() + "safe-mode") === "true" || localStorage.getItem(this.scope() + "booting") === "true"; } catch { /* ephemeral sessions */ }
-      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, updateBatch: undefined, error: "" });
+      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], nativeFeatures: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, updateBatch: undefined, error: "" });
       if (generation !== this.generation) return;
       if (account && account !== "preview") this.unbindStorage = subscribeExtensionValues((owner, key, value) => {
         const pendingKey = this.scope() + `pending:${owner}:${key}`;
@@ -187,7 +188,7 @@ export class ExtensionService {
       for (let i = entries.length - 1; i >= 0; i--) if (entries[i].manifest.id === "list" || retiredCoreIds.has(entries[i].manifest.id)) entries.splice(i, 1);
       const { officialCatalog } = await import("./officialCatalog");
       for (const bundled of officialCatalog.packages) {
-        if (!toolPageMigrations.has(bundled.manifest.id)) continue;
+        if (!toolPageMigrations.has(bundled.manifest.id) && !nativeFeatureIds.includes(bundled.manifest.id)) continue;
         const index = entries.findIndex((entry) => entry.manifest.id === bundled.manifest.id);
         const current = entries[index];
         if (!current) entries.push({ ...bundled, sourceId });
@@ -425,6 +426,13 @@ export class ExtensionService {
         else delete launcherStatus[key];
         this.setSnapshot({ launcherStatus });
       },
+      registerNativeFeature: (id: string): Dispose => {
+        guard();
+        if (!nativeFeatureIds.includes(id) || key !== `official:${id}`) throw new Error("Unknown native feature");
+        if (this.snapshot.nativeFeatures?.includes(id)) throw new Error("Native feature already registered");
+        this.setSnapshot({ nativeFeatures: [...(this.snapshot.nativeFeatures ?? []), id] });
+        return () => { if (generation === this.generation) this.setSnapshot({ nativeFeatures: (this.snapshot.nativeFeatures ?? []).filter(feature => feature !== id) }); };
+      },
       registerNativePlanningView: (mode: NativeShelfViewMode, name: string, iconUrl?: string): Dispose => {
         guard();
         const nativeModes: Record<string, NativeShelfViewMode> = { kanban: "kanban", matrix: "eisenhower", metrics: "metrics" };
@@ -522,8 +530,8 @@ export class ExtensionService {
     }
     if (!preferences.migratedPlanningViews || !preferences.migratedShelfViews) {
       const builtins: Array<{ id: string; enabled: boolean }> = [
-        { id: "kanban", enabled: true },
-        { id: "matrix", enabled: true },
+        { id: "kanban", enabled: settings.featureKanbanViewEnabled === true },
+        { id: "matrix", enabled: settings.featureQuadrantViewEnabled === true },
         { id: "metrics", enabled: settings.featureMetricsEnabled !== false },
       ];
       for (const { id, enabled } of builtins) {
@@ -539,7 +547,22 @@ export class ExtensionService {
       next.migratedShelfViews = true;
       changed = true;
     }
-    if (settings.featureTemplatesEnabled !== false && !next.installed["official:schedule-templates"] && !next.removed["official:schedule-templates"]) {
+    if (!preferences.migratedNativeFeatures) {
+      const seeds = [
+        { id: "habits", install: true, enabled: settings.featureHabitsEnabled !== false },
+        { id: "engagement", install: settings.featureEngagementEnabled === true, enabled: true },
+      ];
+      for (const { id, install, enabled } of seeds) {
+        const key = `official:${id}`;
+        if (!install || next.installed[key] || next.removed[key]) continue;
+        const entry = getBundledExtension(id);
+        if (!entry || !await this.publishBundledMigration(entry, generation)) return;
+        addDefault(entry, enabled, entry.downloadUrl);
+      }
+      next.migratedNativeFeatures = true;
+      changed = true;
+    }
+    if (settings.featureTemplatesEnabled === true && !next.installed["official:schedule-templates"] && !next.removed["official:schedule-templates"]) {
       const entry = getBundledExtension("schedule-templates")!;
       if (!await this.publishBundledMigration(entry, generation)) return;
       addDefault(entry, true);

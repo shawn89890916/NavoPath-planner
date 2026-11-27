@@ -63,7 +63,7 @@ const legacyTargets: Record<LegacySettingsSection, SettingsTarget> = {
   execution: { category: "workflow", anchor: "execution-defaults" },
   planning: { category: "workflow", anchor: "planning-views" },
   templates: { category: "workflow", anchor: "templates" },
-  habits: { category: "workflow", anchor: "habits" },
+  habits: { category: "plugins", anchor: "habits", pluginOwner: "official:habits" },
   metrics: { category: "plugins", anchor: "metrics" },
   widget: { category: "widget" },
   data: { category: "account-data", anchor: "data-backup" },
@@ -89,6 +89,8 @@ export function normalizeSettingsTarget(input?: SettingsTargetInput): SettingsTa
   }
   if (input.anchor && ["execution-defaults", "day-start", "default-timeline", "continuous-scroll", "hide-completed"].includes(input.anchor)) return { category: "workflow", anchor: input.anchor };
   if (input.anchor === "auto-launch") return { category: "general", anchor: input.anchor };
+  if (input.anchor === "habits" || input.anchor === "habits-enabled" || input.anchor === "habit-candidates") return { category: "plugins", anchor: input.anchor === "habit-candidates" ? "habit-candidates" : "habits", pluginOwner: "official:habits" };
+  if (input.anchor === "engagement") return { category: "plugins", anchor: "plugin-market" };
   if (input.anchor === "metrics" || input.anchor?.startsWith("metrics-")) return { category: "plugins", anchor: input.anchor };
   if (input.anchor === "updates" || input.anchor === "beta-updates") return { category: "general", anchor: input.anchor };
   if (input.category === "integrations" && input.anchor === "plugins") return { category: "plugins", anchor: "plugins" };

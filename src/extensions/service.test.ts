@@ -20,7 +20,7 @@ async function fetchBundled(url: string) {
 }
 
 function fixture(account = "preview", extensions = defaultExtensionPreferences()) {
-  let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true, migratedPlanningViews: extensions.migratedPlanningViews ?? true, migratedShelfViews: extensions.migratedShelfViews ?? true }, extensionConfigs: {} };
+  let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true, migratedPlanningViews: extensions.migratedPlanningViews ?? true, migratedShelfViews: extensions.migratedShelfViews ?? true, migratedNativeFeatures: extensions.migratedNativeFeatures ?? true }, extensionConfigs: {} };
   let data: any = { tasks: [], projects: [], events: [] };
   const host: ExtensionHost = { getData: () => data, saveData: async next => { data = next; }, getSettings: () => settings, saveSettings: async patch => { settings = { ...settings, ...patch }; }, getAccountId: () => account === "preview" ? null : account, toast: vi.fn(), internal: {} };
   return { host, settings: () => settings };
@@ -124,15 +124,27 @@ describe("batch extension updates", () => {
 });
 
 describe("extension installation and account reconciliation", () => {
-  it("preinstalls the existing planning plugins on a clean installation", async () => {
+  it("preinstalls only the core-recommended Metrics view on a clean installation", async () => {
     const f = fixture("preview", { ...defaultExtensionPreferences(), migratedPlanningViews: false, migratedShelfViews: false });
     await current.configure(f.host);
     const installed = current.getSnapshot().preferences.installed;
-    expect(Object.keys(installed).sort()).toEqual(["official:kanban", "official:matrix", "official:metrics"]);
+    expect(Object.keys(installed).sort()).toEqual(["official:metrics"]);
     expect(Object.values(installed).every((item) => item.enabled)).toBe(true);
     expect(vi.mocked(fetch).mock.calls.map(([url]) => url).sort()).toEqual(
-      ["kanban", "matrix", "metrics"].map(id => `/extensions/packages/${id}.navopackage.json`),
+      ["metrics"].map(id => `/extensions/packages/${id}.navopackage.json`),
     );
+  });
+
+  it("migrates habits and enabled engagement once without reinstalling removed packages", async () => {
+    const f = fixture("native-migration", { ...defaultExtensionPreferences(), migratedNativeFeatures: false });
+    await f.host.saveSettings({ featureHabitsEnabled: true, featureEngagementEnabled: true });
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:habits"]?.enabled).toBe(true);
+    expect(current.getSnapshot().preferences.installed["official:engagement"]?.enabled).toBe(true);
+    await current.uninstall("official:habits");
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:habits"]).toBeUndefined();
+    expect(f.settings().extensions.migratedNativeFeatures).toBe(true);
   });
 
   it("migrates existing profiles while respecting explicit disabled and removed views", async () => {

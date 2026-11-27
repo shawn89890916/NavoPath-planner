@@ -8,6 +8,7 @@
 
 - 插件管理和市场区分官方与社区插件，支持按分类筛选；功能插件采用简洁列表，外观主题保留预览卡片。
 - Tree 与活动历史直接内置，活动历史保留工作区顶栏和窄屏更多入口；卸载其他插件或受限模式不会影响任务树、记录与撤销。
+- 习惯迁移为官方插件，投入度迁移为社区插件；旧用户配置与历史保留，未安装的看板、矩阵及模板不再默认启用。
 
 ### 1.7.0 Beta 130
 
@@ -1324,6 +1325,7 @@
 
 - Distinguish official and community plugins in management and the market, add a category filter, and use compact rows for functional plugins while retaining theme previews.
 - Build Tree and Activity history into the core. Activity history remains accessible from the workspace header and compact More menu; removing other plugins or enabling restricted mode does not disable the task tree, records or undo.
+- Habits become an official plugin and Engagement becomes a community plugin; preserve existing settings and history, and stop preinstalling unused Kanban, Matrix and templates.
 
 ### 1.7.0 Beta 130
 
