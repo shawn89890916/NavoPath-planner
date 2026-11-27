@@ -120,23 +120,23 @@ export default function ConnectionProviders({ lang, anchor, onSelect, errorMessa
   const isHome = !anchor || anchor === "connections";
   return <div data-settings-anchor="connections" tabIndex={-1}>
     {isHome ? <>
-      <SettingSection title={t("应用", "Apps")}>
+      <SettingSection variant="grouped" title={t("应用", "Apps")}>
         {spListed && <SettingRow title="Super Productivity" description={spConnectionLabel(status.pair, Boolean(installed?.enabled && page && !snapshot.safeMode), zh)} control={action("connection-super-productivity")} />}
         {status.apple === true && <SettingRow title={t("Apple 日历", "Apple Calendar")} description={t("已生成凭据 · 远端状态未知", "Credential issued · remote status unknown")} control={action("connection-apple-calendar")} />}
         {!spListed && status.apple !== true && <p className="df-mcp-status muted">{status.pair.kind === "loading" ? t("正在检查连接…", "Checking connections…") : status.pair.kind === "unknown" ? t("暂时无法验证应用连接", "Unable to verify app connections") : t("尚无可确认的应用连接", "No verified app connections")}</p>}
         <SettingRow title={t("添加连接", "Add connection")} control={action("connection-add", t("添加", "Add"))} />
       </SettingSection>
-      <SettingSection title={t("其他连接", "Other connections")}>
+      <SettingSection variant="grouped" title={t("其他连接", "Other connections")}>
         <SettingRow title={t("外部日历", "External calendars")} description={status.external === null ? t("只读忙碌时间", "Read-only busy time") : t(`${status.external} 个来源`, `${status.external} sources`)} control={action("external-calendar")} />
         <SettingRow title={t("高级连接", "Advanced connections")} control={action("connection-advanced")} />
       </SettingSection>
     </> : <>
       {back(anchor === "calendar-feed" || anchor === "mcp" || anchor === "sync-bridge" ? "connection-advanced" : "connections")}
       <div data-settings-anchor={anchor} tabIndex={-1}>
-        {anchor === "connection-add" ? <SettingSection title={t("添加连接", "Add connection")}>
+        {anchor === "connection-add" ? <SettingSection variant="grouped" title={t("添加连接", "Add connection")}>
           {CONNECTION_PROVIDERS.filter(item => item.id !== "super-productivity" || !spListed).filter(item => item.id !== "apple-calendar" || status.apple !== true).map(item =>
             <SettingRow key={item.id} title={zh ? item.nameZh : item.nameEn} description={zh ? item.descriptionZh : item.descriptionEn} control={action(item.anchor, t("选择", "Choose"))} />)}
-        </SettingSection> : anchor === "connection-advanced" ? <SettingSection title={t("高级连接", "Advanced connections")}>
+        </SettingSection> : anchor === "connection-advanced" ? <SettingSection variant="grouped" title={t("高级连接", "Advanced connections")}>
           <SettingRow title={t("共享日历订阅链接", "Shared calendar subscription")} description={status.shared === true ? t("已有有效链接", "Active link exists") : undefined} control={action("calendar-feed")} />
           <SettingRow title="MCP" control={action("mcp")} />
           <SettingRow title={t("云盘桥接", "Cloud folder bridge")} control={action("sync-bridge")} />

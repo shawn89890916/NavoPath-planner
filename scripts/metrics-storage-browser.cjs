@@ -79,6 +79,41 @@ async function runRenderer() {
       if(!result||result.error)throw Error(result?.error||"Connections UI fixture did not initialize");
       console.log("Connections Chromium UI: "+JSON.stringify(result.value));
     }
+    // Exercise the actual shared controls in Chromium at all five radius points.
+    for (const [width,height] of [[1280,900],[420,840],[300,640]]) {
+      win.setContentSize(width,height);
+      await win.loadURL(new URL("/dev/ui-review.html",url).href);
+      const result = await win.webContents.executeJavaScript(`(async()=>{
+        const wait=async(fn)=>{for(let i=0;i<250;i++){const v=fn();if(v)return v;await new Promise(r=>setTimeout(r,20));}throw Error("Settings review did not load")};
+        const input=await wait(()=>document.querySelector('[aria-label="Review radius"]'));
+        const nativeSet=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;
+        const group=document.querySelector(".df-settings-group--grouped > .df-settings-group-body");
+        const select=group.querySelector("select"), nav=document.querySelector(".df-settings-nav > .ui-choice-item");
+        const knob=group.querySelector(".df-settings-toggle-knob");
+        const round=el=>parseFloat(getComputedStyle(el).borderTopLeftRadius);
+        const assert=(v,m)=>{if(!v)throw Error(m)};
+        let results=[];
+        for(const dark of [false,true]){
+          if(dark){[...document.querySelectorAll("button")].find(b=>b.textContent.trim()==="深色")?.click();await wait(()=>document.querySelector(".theme-dark"));}
+          const baseline=group.getBoundingClientRect();
+          for(const r of [0,16,32,48,64]){
+            nativeSet.call(input,String(r));input.dispatchEvent(new Event("input",{bubbles:true}));input.dispatchEvent(new Event("change",{bubbles:true}));
+            await wait(()=>document.documentElement.style.getPropertyValue("--workspace-corner-radius")===r+"px");
+            await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+            assert(Math.abs(round(group)-Math.min(20,r*.375))<.1,"Group radius "+round(group)+" at "+r);
+            assert(Math.abs(round(select)-Math.min(12,r*.1875))<.1,"Control radius "+round(select)+" at "+r);
+            assert(Math.abs(round(nav)-Math.min(12,r*.25))<.1,"Navigation radius "+round(nav)+" at "+r);
+            assert(getComputedStyle(knob).borderTopLeftRadius==="50%","Switch geometry changed");
+            const box=group.getBoundingClientRect();
+            assert(Math.abs(box.width-baseline.width)<1 && Math.abs(box.height-baseline.height)<1,"Radius changed layout");
+            assert(group.scrollWidth<=group.clientWidth+2,"Grouped settings overflow");
+            results.push({dark,r,group:round(group),control:round(select),navigation:round(nav)});
+          }
+        }
+        return {width:innerWidth,results};
+      })()`);
+      console.log("Settings Chromium UI: "+JSON.stringify(result));
+    }
   } finally { win.destroy(); }
   app.exit(0);
 }
