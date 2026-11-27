@@ -44,7 +44,7 @@ test("host runtime polls without mounting the UI and schedules a newly imported 
     async getTasks() { return tasks; },
     async addTask(fields) { assert.ok(!Object.hasOwn(fields, "dueWithTime")); tasks.push({ ...fields, id: "sp-created" }); return "sp-created"; },
     async updateTask(id, patch) { updates.push({ id, patch }); Object.assign(tasks.find(task => task.id === id), patch); },
-    async deleteTask() {}, async addProject() {}, async updateProject(id) { assert.notEqual(id, "INBOX_PROJECT"); }, async deleteProject(id) { assert.notEqual(id, "INBOX_PROJECT"); }, async addTag() {},
+    async batchUpdateForProject() { return {success:true,createdTaskIds:{}}; }, async deleteTask() {}, async addProject() {}, async updateProject(id) { assert.notEqual(id, "INBOX_PROJECT"); }, async deleteProject(id) { assert.notEqual(id, "INBOX_PROJECT"); }, async addTag() {},
     async request(url, options) {
       assert.equal(options.headers.Authorization, "Bearer local-test-token");
       if (url.includes("/state?")) return state;

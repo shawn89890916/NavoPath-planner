@@ -34,11 +34,11 @@
     const STORE = 'navopath-sync-state';
     const TOKEN_KEY = 'navopath-sync:token:v1';
     const $ = id => root.getElementById(id);
-    let local = { pairId: '', links: { tasks: {}, projects: {} }, tombstones: {} };
+    let local = { pairId: '', links: { tasks: {}, projects: {} }, tombstones: {}, pendingDeletes: {}, pendingHierarchy: {} };
     let previewMode = 'merge';
     let token = null, busy = false, preview = null, stopped = false, previewKey = "", previewRevision = null, lastSuccess = "", lastApplied = 0;
     const setStatus = (text, error = false) => { $('status').textContent = text; $('status').className = error ? 'error' : ''; };
-    const requiredMethods = ['request', 'persistDataSynced', 'loadSyncedData', 'getAllProjects', 'getAllTags', 'getTasks', 'addTask', 'updateTask', 'deleteTask', 'addProject', 'updateProject', 'deleteProject', 'addTag', 'getSecret', 'setSecret', 'deleteSecret'];
+    const requiredMethods = ['request', 'persistDataSynced', 'loadSyncedData', 'getAllProjects', 'getAllTags', 'getTasks', 'addTask', 'updateTask', 'deleteTask', 'addProject', 'updateProject', 'batchUpdateForProject', 'addTag', 'getSecret', 'setSecret', 'deleteSecret'];
     const missingMethods = !API ? ['PluginAPI'] : requiredMethods.filter(method => typeof API[method] !== 'function');
     if (missingMethods.length) {
       const version = API?.cfg?.appVersion ? ` (app ${API.cfg.appVersion})` : '';
@@ -88,6 +88,7 @@
       const allProjects = await projects(), allTasks = await tasks();
       return {
         overwriteVersion: 1,
+        hierarchyVersion: 1,
         projects: allProjects.filter(item => item.id !== 'INBOX_PROJECT').map(item => ({ id: item.id, syncId: syncId('projects', item.id), fields: { title: item.title, notes: '', color: item.theme?.primary || null } })),
         tasks: await Promise.all(allTasks.map(async item => ({ id: item.id, syncId: syncId('tasks', item.id), parentId: item.parentId || undefined, projectId: item.projectId || undefined, fields: {
           title: item.title, notes: item.notes || '', completed: item.isDone, dueDate: item.dueDay || null,
@@ -180,6 +181,143 @@
         row.append(title, a, b, buttons); root.append(row);
       }
     }
+    // Keep recovery data separate from the completed deletion list until the
+    // public host API confirms the task/project is no longer active.
+    const safeTask = task => Object.fromEntries(['id','title','notes','isDone','timeEstimate','dueDay','dueWithTime','projectId','parentId','tagIds'].filter(key => Object.hasOwn(task,key)).map(key => [key,task[key]]));
+    const safeProject = project => ({ id: project.id, title: project.title });
+    const findTask = async id => (await tasks()).find(item => item.id === id);
+    const findProject = async id => (await projects()).find(item => item.id === id);
+    const mappedTask = id => Object.keys(local.links.tasks).find(key => local.links.tasks[key] === id);
+    const completeDelete = async (sync, entry) => {
+      const item = entry.kind === 'task' ? entry.task : entry.project;
+      const map = local.links[entry.kind === 'task' ? 'tasks' : 'projects'];
+      delete map[item.id];
+      local.tombstones[sync] = { ...entry, deletedAt: new Date().toISOString() };
+      delete local.pendingDeletes[sync];
+      await persist();
+    };
+    async function reconcileDeletes() {
+      // Migrate old versions' prematurely written tombstones. A still-live
+      // entity is not restorable; preserve its existing mapping and retry.
+      const activeTasks = await tasks(), activeProjects = await projects();
+      for (const [sync, entry] of Object.entries(local.tombstones)) {
+        const item = entry.kind === 'task' ? entry.task : entry.project;
+        if (!item?.id) { delete local.tombstones[sync]; continue; }
+        if (entry.kind === 'task') entry.task = safeTask(item);
+        else entry.project = safeProject(item);
+        const active = (entry.kind === 'task' ? activeTasks : activeProjects).some(value => value.id === item.id);
+        if (active && !entry.restoring && !entry.restoreId) {
+          local.pendingDeletes[sync] = entry;
+          local.links[entry.kind === 'task' ? 'tasks' : 'projects'][item.id] = sync;
+          delete local.tombstones[sync];
+        }
+      }
+      for (const [sync, entry] of Object.entries(local.pendingDeletes)) {
+        const item = entry.kind === 'task' ? entry.task : entry.project;
+        if (!(entry.kind === 'task' ? activeTasks : activeProjects).some(value => value.id === item.id)) await completeDelete(sync, entry);
+      }
+      await persist();
+    }
+    async function applyDelete(action, id) {
+      const sync = action.syncId;
+      if (action.kind === 'project' && id === 'INBOX_PROJECT') return;
+      let entry = local.pendingDeletes[sync];
+      const item = action.kind === 'task' ? await findTask(id) : await findProject(id);
+      if (!item) {
+        if (entry) await completeDelete(sync, entry);
+        return;
+      }
+      if (action.kind === 'task') {
+        // Re-read immediately before deleting: a failed child deletion must
+        // never cause its parent to cascade-delete that still-live child.
+        const children = (await tasks()).filter(task => task.parentId === id);
+        if (children.length || item.subTaskIds?.length) throw new Error('Retained subtasks prevent deleting this task');
+        if (!entry) entry = {kind:'task', task:safeTask(item), parentSyncId: item.parentId ? local.links.tasks[item.parentId] : undefined};
+        local.pendingDeletes[sync] = entry; await persist();
+        await API.deleteTask(id);
+        if (await findTask(id)) throw new Error('Task deletion was not confirmed by the host');
+      } else {
+        const projectTasks = (await tasks()).filter(task => task.projectId === id);
+        if (!entry) entry = {kind:'project', project:safeProject(item), archived:true, taskIds:projectTasks.filter(task=>!task.parentId).map(task=>task.id)};
+        entry.archived = true;
+        local.pendingDeletes[sync] = entry; await persist();
+        for (const task of projectTasks.filter(task => !task.parentId)) {
+          await API.updateTask(task.id, {projectId:'INBOX_PROJECT'});
+          if ((await findTask(task.id))?.projectId !== 'INBOX_PROJECT') throw new Error('Project task move was not confirmed');
+        }
+        if ((await tasks()).some(task => task.projectId === id)) throw new Error('Retained tasks still belong to the project');
+        // Archive via the documented project API. No deleteProject permission
+        // is requested and no SP-only project notes/history are destroyed.
+        await API.updateProject(id, {isArchived:true});
+        if (await findProject(id)) throw new Error('Project archive was not confirmed by the host');
+      }
+      await completeDelete(sync, entry);
+    }
+    async function applyParent(taskId, parentId) {
+      const task = await findTask(taskId);
+      if (!task) throw new Error('Task not found for hierarchy update');
+      if ((task.parentId || null) === parentId) return;
+      const parent = parentId ? await findTask(parentId) : null;
+      if (parentId && (!parent || parent.id === taskId || parent.parentId || (await tasks()).some(item => item.parentId === taskId))) throw new Error('SP supports only two task levels; move needs review');
+      const batch = async (item, next) => {
+        const result = await API.batchUpdateForProject({projectId:item.projectId || 'INBOX_PROJECT',operations:[{type:'update',taskId:item.id,updates:{parentId:next}}]});
+        const updated = await findTask(item.id);
+        if (!result?.success || !updated || (updated.parentId || null) !== next) throw new Error('Parent change was not confirmed by the host');
+        if (next) { const target = await findTask(next); if (!target || !target.subTaskIds?.includes(item.id)) throw new Error('Parent membership was not confirmed by the host'); }
+      };
+      let current = task;
+      if (parent && current.projectId !== parent.projectId) {
+        if (current.parentId) { await batch(current,null); current = await findTask(taskId); }
+        await API.updateTask(taskId,{projectId:parent.projectId || 'INBOX_PROJECT'});
+        current = await findTask(taskId);
+        if (!current || current.projectId !== (parent.projectId || 'INBOX_PROJECT')) throw new Error('Project move was not confirmed by the host');
+      }
+      await batch(current,parentId);
+    }
+    async function reconcileHierarchy() {
+      for (const [id,entry] of Object.entries(local.pendingHierarchy)) {
+        await applyParent(entry.taskId,entry.parentId);
+        delete local.pendingHierarchy[id]; await persist();
+      }
+    }
+    async function finishRestore(sync, entry) {
+      let newId = entry.restoreId;
+      if (!newId) {
+        // An interrupted host create has no idempotency key. Never repeat it
+        // blindly: the user can inspect the local task and seek recovery.
+        if (entry.restoring && entry.kind === 'task') throw new Error('Interrupted restore needs manual review; no duplicate was created');
+        entry.restoring = true; await persist();
+        if (entry.kind === 'project') {
+          if (!entry.archived) throw new Error('Legacy permanently deleted project needs manual recovery');
+          newId = entry.project.id;
+          if (!await findProject(newId)) await API.updateProject(newId,{isArchived:false});
+          if (!await findProject(newId)) throw new Error('Project restore was not confirmed');
+        } else {
+          const original = entry.task;
+          const parentId = entry.parentSyncId ? mappedTask(entry.parentSyncId) : original.parentId;
+          if (original.parentId && (!parentId || !await findTask(parentId))) { entry.restoring = false; await persist(); throw new Error('Restore the parent task first'); }
+          const {id:oldId,parentId:oldParent,dueWithTime,projectId,tagIds,...fields} = safeTask(original);
+          newId = await API.addTask({...fields,...(parentId ? {parentId} : {projectId:await findProject(projectId) ? projectId : 'INBOX_PROJECT',tagIds:tagIds || []}),isIgnoreShortSyntax:true});
+          // Save the returned ID before any scheduling or network operation.
+        }
+        entry.restoreId = newId; await persist();
+      }
+      if (entry.kind === 'project') {
+        if (!await findProject(newId)) throw new Error('Restored project is no longer active');
+        for (const taskId of entry.taskIds || []) {
+          const task = await findTask(taskId);
+          if (task && !task.parentId && task.projectId === 'INBOX_PROJECT') await API.updateTask(taskId,{projectId:newId});
+        }
+        local.links.projects[newId] = sync;
+      } else {
+        if (!await findTask(newId)) throw new Error('Restored task is no longer active');
+        if (entry.task.dueWithTime != null) await API.updateTask(newId,{dueWithTime:entry.task.dueWithTime,dueDay:null},{isIgnoreShortSyntax:true});
+        local.links.tasks[newId] = sync;
+      }
+      await persist();
+      await request('restore','POST',{pairId:local.pairId,syncId:sync,localId:newId});
+      delete local.tombstones[sync]; await persist();
+    }
     function showDeleted() {
       const root = $('deleted-list'); root.replaceChildren(); const cutoff = Date.now() - 30 * 86400_000;
       for (const [id, entry] of Object.entries(local.tombstones)) {
@@ -187,16 +325,7 @@
         const row = document.createElement('div'); row.className = 'row'; const label = document.createElement('span'); label.textContent = entry.kind === 'project' ? entry.project.title : entry.task.title || '(untitled task)';
         const restore = document.createElement('button'); restore.type = 'button'; restore.textContent = 'Restore';
         restore.onclick = () => void withBusy(async () => {
-          let newId;
-          if (entry.kind === 'project') {
-            if (entry.archived) { newId = entry.project.id; await API.updateProject(newId, { isArchived: false }); }
-            else { const project = { ...entry.project }; delete project.id; newId = await API.addProject(project); }
-            local.links.projects[newId] = id;
-            const currentTasks = await tasks(); for (const taskId of entry.taskIds || []) if (currentTasks.some(task => task.id === taskId && !task.parentId)) await API.updateTask(taskId, { projectId: newId });
-          }
-          else { const task = { ...entry.task }; delete task.id; newId = await API.addTask({ ...task, isIgnoreShortSyntax: true }); local.links.tasks[newId] = id; }
-          delete local.tombstones[id];
-          await request('restore', 'POST', { pairId: local.pairId, syncId: id, localId: newId }); await persist(); await runSync();
+          await finishRestore(id,entry); await runSync();
         }); row.append(label, restore); root.append(row);
       }
       $('deleted').hidden = root.childElementCount === 0;
@@ -209,44 +338,17 @@
       // A parent delete can cascade. Preserve every task before its removal,
       // and refuse to remove a parent if a retained child would disappear.
       const allTasks = await tasks();
-      const deleting = new Set(actions.filter(action => action.deleted && action.kind === 'task').map(action => action.id || Object.keys(local.links.tasks).find(key => local.links.tasks[key] === action.syncId)));
-      const blockedParents = new Set();
-      for (const task of allTasks) if (!deleting.has(task.id)) {
-        let parent = task.parentId;
-        const visited = new Set();
-        while (parent && !visited.has(parent)) {
-          visited.add(parent);
-          if (deleting.has(parent)) blockedParents.add(parent);
-          parent = allTasks.find(item => item.id === parent)?.parentId;
-        }
-      }
       const failures = [];
       const depth = (id) => { let n = 0, current = allTasks.find(task => task.id === id); const seen = new Set(); while (current?.parentId && !seen.has(current.id)) { seen.add(current.id); n++; current = allTasks.find(task => task.id === current.parentId); } return n; };
       const phase = action => action.deleted ? (action.kind === 'task' ? 2 : 3) : (action.kind === 'project' ? 0 : 1);
       actions = [...actions].sort((a,b) => phase(a) - phase(b) || (phase(a) === 2 ? depth(b.id) - depth(a.id) : 0));
       for (const action of actions) {
         const map = local.links[action.kind === 'task' ? 'tasks' : 'projects'];
-        let id = action.id || Object.keys(map).find(key => map[key] === action.syncId);
+        let id = Object.keys(map).find(key => map[key] === action.syncId) || action.id;
         if (action.kind === 'project' && id === 'INBOX_PROJECT') { delete map[id]; continue; }
-        if (action.deleted && action.kind === 'task' && blockedParents.has(id)) { failures.push('Retained subtasks prevent deleting ' + (action.fields?.title || id)); continue; }
         try {
         if (action.deleted) {
-          if (action.kind === 'task') {
-            const task = (await tasks()).find(item => item.id === id);
-            if (task) { local.tombstones[action.syncId] = { kind: 'task', task, deletedAt: new Date().toISOString() }; await persist(); await API.deleteTask(task.id); }
-          } else {
-            const project = allProjects.find(item => item.id === id);
-            if (project) {
-              const projectTasks = (await tasks()).filter(task => task.projectId === project.id);
-              local.tombstones[action.syncId] = { kind: 'project', project, archived: true, taskIds: projectTasks.map(task => task.id), deletedAt: new Date().toISOString() };
-              await persist();
-              for (const task of projectTasks.filter(task => !task.parentId)) await API.updateTask(task.id, { projectId: 'INBOX_PROJECT' });
-              // Archiving removes the project from the active workspace without
-              // irreversibly cascading into SP-only notes and archived history.
-              await API.updateProject(project.id, { isArchived: true });
-            }
-          }
-          if (id) delete map[id];
+          await applyDelete(action,id);
           continue;
         }
         const fields = action.fields || {};
@@ -256,7 +358,25 @@
           else { const title = fields.title || 'Imported project'; const created = await API.addProject({ title, theme: { primary: fields.color || undefined } }); map[created] = action.syncId; const createdProject = (await projects()).find(item => item.id === created); if (createdProject) allProjects.push(createdProject); }
           continue;
         }
-        const current = (await tasks()).find(item => item.id === id);
+        let current = await findTask(id);
+        const hasParent = Object.hasOwn(fields,'parentSyncId');
+        let parentId;
+        if (hasParent) {
+          parentId = fields.parentSyncId == null ? null : mappedTask(fields.parentSyncId);
+          if (fields.parentSyncId != null && !parentId) throw new Error('Parent is not yet available');
+          if (parentId) {
+            const parent = await findTask(parentId);
+            if (!parent || parent.parentId || parentId === id) throw new Error('SP supports only two task levels; move needs review');
+          }
+          if (current && (current.parentId || null) !== parentId) {
+            // Journal before a multi-step cross-project reparent. A partially
+            // applied relationship is never uploaded as an intentional edit.
+            local.pendingHierarchy[action.syncId] = {taskId:current.id,parentId}; await persist();
+            await applyParent(current.id,parentId);
+            delete local.pendingHierarchy[action.syncId]; await persist();
+            current = await findTask(current.id);
+          }
+        }
         const updates = current ? {} : { title: 'Imported task' };
         if (Object.hasOwn(fields, 'title')) updates.title = fields.title || 'Imported task';
         if (Object.hasOwn(fields, 'notes')) updates.notes = fields.notes || '';
@@ -286,14 +406,16 @@
           updates.tagIds = tagIds;
         }
         if (current) {
-          if (current.parentId) delete updates.projectId; // SP moves subtasks with their parent.
+          if (current.parentId) { delete updates.projectId; delete updates.tagIds; } // Parent owns membership.
           await API.updateTask(current.id, updates, { isIgnoreShortSyntax: true });
         }
         else {
           const { dueWithTime, ...createFields } = updates;
+          if (parentId) { delete createFields.projectId; delete createFields.tagIds; createFields.parentId = parentId; }
           const created = await API.addTask({ ...createFields, isIgnoreShortSyntax: true });
           id = created; map[created] = action.syncId;
           await persist();
+          if (parentId && (await findTask(created))?.parentId !== parentId) throw new Error('Subtask creation was not confirmed');
           // addTask accepts dueDay but not dueWithTime.
           if (dueWithTime != null) await API.updateTask(created, { dueWithTime, dueDay: null }, { isIgnoreShortSyntax: true });
         }
@@ -321,6 +443,9 @@
       if (!token || !local.pairId || stopped) return;
       const state = await request(`state?pairId=${encodeURIComponent(local.pairId)}`); await renderState(state);
       if (state.status === 'paused') return;
+      await reconcileDeletes();
+      await reconcileHierarchy();
+      for (const [id,entry] of Object.entries(local.tombstones)) if (entry.restoreId) await finishRestore(id,entry); else if (entry.restoring) throw new Error('Interrupted restore needs manual review');
       if (state.status === 'preview') {
         const outgoing = await snapshot();
         if (JSON.stringify(outgoing) !== lastSnapshot) {
@@ -336,7 +461,7 @@
     $('connect').onclick = () => void withBusy(async () => {
       const code = $('code').value.trim(); if (!code) throw new Error('Paste a pairing code first');
       const result = await request('exchange', 'POST', { code }, null);
-      if (local.pairId && local.pairId !== result.pairId) local = {pairId:'', links:{tasks:{},projects:{}}, tombstones:{}};
+      if (local.pairId && local.pairId !== result.pairId) local = {pairId:'', links:{tasks:{},projects:{}}, tombstones:{}, pendingDeletes:{},pendingHierarchy:{}};
       local.pairId = result.pairId; await writeToken(result.token); token = result.token; await persist();
       $('code').value = ''; await runSync();
     });
