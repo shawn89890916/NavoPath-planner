@@ -1,3 +1,4 @@
+import { nativeFeatureIds } from "./nativeFeatures";
 import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionUpdateBatch, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativeShelfViewMode, PluginLauncherStatus } from "./types";
 import { compatibility, compareVersions, defaultExtensionPreferences, isRecord, MAX_PACKAGE_BYTES, normalizeExtensionPreferences, readExtensionResponse, readPackage, publicHttps, sha256 } from "./packages";
 import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
@@ -8,7 +9,8 @@ import { getAppHeaderPlugins, moveCompactPlugin } from "./compactDock";
 import type { CompactPluginPlacement } from "./model";
 
 type PendingValue = { owner: string; key: string; value: unknown; remove: boolean; id: string };
-const toolPageMigrations = new Set(["weather", "pomodoro", "schedule-templates", "daily-overview", "quick-capture", "class-timetable"]);
+const retiredCoreIds = new Set(["tree", "activity-history"]);
+const toolPageMigrations = new Set(["list", "weather", "pomodoro", "schedule-templates", "daily-overview", "quick-capture", "class-timetable"]);
 const OFFICIAL_RAW = "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/";
 const OFFICIAL_MIRROR = "https://navopath.com/extensions/";
 const SYNC_PLUGIN_ID = "super-productivity-sync";
@@ -81,7 +83,7 @@ export class ExtensionService {
       this.host = host;
       let safeMode = false;
       try { safeMode = new URLSearchParams(location.search).has("safe-mode") || localStorage.getItem(this.scope() + "safe-mode") === "true" || localStorage.getItem(this.scope() + "booting") === "true"; } catch { /* ephemeral sessions */ }
-      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, updateBatch: undefined, error: "" });
+      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], nativeFeatures: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, updateBatch: undefined, error: "" });
       if (generation !== this.generation) return;
       if (account && account !== "preview") this.unbindStorage = subscribeExtensionValues((owner, key, value) => {
         const pendingKey = this.scope() + `pending:${owner}:${key}`;
@@ -183,11 +185,10 @@ export class ExtensionService {
       return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId, ...(entry.previewUrl ? { previewUrl: publicHttps(entry.previewUrl) } : {}), ...(previewUrls ? { previewUrls } : {}), ...(entry.iconUrl ? { iconUrl: publicHttps(entry.iconUrl) } : {}), ...(entry.downloads !== undefined ? { downloads: entry.downloads } : {}), ...(entry.publishedAt ? { publishedAt: entry.publishedAt } : {}) };
     });
     if (sourceId === "official") {
-      const retiredIndex = entries.findIndex((entry) => entry.manifest.id === "list");
-      if (retiredIndex !== -1) entries.splice(retiredIndex, 1);
+      for (let i = entries.length - 1; i >= 0; i--) if (retiredCoreIds.has(entries[i].manifest.id)) entries.splice(i, 1);
       const { officialCatalog } = await import("./officialCatalog");
       for (const bundled of officialCatalog.packages) {
-        if (!toolPageMigrations.has(bundled.manifest.id)) continue;
+        if (!toolPageMigrations.has(bundled.manifest.id) && !nativeFeatureIds.includes(bundled.manifest.id)) continue;
         const index = entries.findIndex((entry) => entry.manifest.id === bundled.manifest.id);
         const current = entries[index];
         if (!current) entries.push({ ...bundled, sourceId });
@@ -253,6 +254,7 @@ export class ExtensionService {
     const account = this.account, pkg = await readPackage(bytes), hash = await sha256(bytes);
     if (expectedHash && hash !== expectedHash) throw new Error("Package integrity check failed");
     if (expectedKind && pkg.manifest.kind !== expectedKind) throw new Error(expectedKind === "theme" ? "请在插件页导入插件 / Import plugins from Plugins" : "请在外观页导入主题 / Import themes from Appearance");
+    if (sourceId === "official" && retiredCoreIds.has(pkg.manifest.id)) throw new Error("This feature is built in / 此功能已内置");
     const key = `${sourceId}:${pkg.manifest.id}`, previous = this.snapshot.preferences.installed[key];
     const incompatibility = compatibility(pkg.manifest, platform());
     if (incompatibility) throw new Error(incompatibility);
@@ -424,9 +426,16 @@ export class ExtensionService {
         else delete launcherStatus[key];
         this.setSnapshot({ launcherStatus });
       },
+      registerNativeFeature: (id: string): Dispose => {
+        guard();
+        if (!nativeFeatureIds.includes(id) || key !== `official:${id}`) throw new Error("Unknown native feature");
+        if (this.snapshot.nativeFeatures?.includes(id)) throw new Error("Native feature already registered");
+        this.setSnapshot({ nativeFeatures: [...(this.snapshot.nativeFeatures ?? []), id] });
+        return () => { if (generation === this.generation) this.setSnapshot({ nativeFeatures: (this.snapshot.nativeFeatures ?? []).filter(feature => feature !== id) }); };
+      },
       registerNativePlanningView: (mode: NativeShelfViewMode, name: string, iconUrl?: string): Dispose => {
         guard();
-        const nativeModes: Record<string, NativeShelfViewMode> = { tree: "tree", kanban: "kanban", matrix: "eisenhower", metrics: "metrics", "activity-history": "activity-history" };
+        const nativeModes: Record<string, NativeShelfViewMode> = { list: "list", kanban: "kanban", matrix: "eisenhower", metrics: "metrics" };
         if (!key.startsWith("official:") || nativeModes[key.slice("official:".length)] !== mode) throw new Error("Native planning views are reserved for matching official packages");
         return this.bridge(key).contribute("views", name, () => {}, { iconUrl, planningView: true, nativeMode: mode });
       },
@@ -502,10 +511,11 @@ export class ExtensionService {
       next.installed[key] = { key, sourceId: "official", manifest: entry.manifest, sha256: entry.sha256, downloadUrl, enabled, installedAt: now, updatedAt: now };
       changed = true;
     };
-    const retiredKey = "official:list";
-    if (next.installed[retiredKey]) {
-      delete next.installed[retiredKey];
-      next.removed = { ...next.removed, [retiredKey]: next.removed[retiredKey] || new Date().toISOString() };
+    for (const id of retiredCoreIds) {
+      const key = `official:${id}`;
+      if (!next.installed[key]) continue;
+      delete next.installed[key];
+      next.removed = { ...next.removed, [key]: new Date().toISOString() };
       changed = true;
     }
     if (!preferences.migratedLegacy) {
@@ -520,8 +530,8 @@ export class ExtensionService {
     }
     if (!preferences.migratedPlanningViews || !preferences.migratedShelfViews) {
       const builtins: Array<{ id: string; enabled: boolean }> = [
-        { id: "kanban", enabled: true },
-        { id: "matrix", enabled: true },
+        { id: "kanban", enabled: settings.featureKanbanViewEnabled === true },
+        { id: "matrix", enabled: settings.featureQuadrantViewEnabled === true },
         { id: "metrics", enabled: settings.featureMetricsEnabled !== false },
       ];
       for (const { id, enabled } of builtins) {
@@ -537,15 +547,53 @@ export class ExtensionService {
       next.migratedShelfViews = true;
       changed = true;
     }
-    if (settings.featureTemplatesEnabled !== false && !next.installed["official:schedule-templates"] && !next.removed["official:schedule-templates"]) {
+    if (!preferences.migratedNativeFeatures) {
+      const seeds = [
+        { id: "habits", install: true, enabled: settings.featureHabitsEnabled !== false },
+        { id: "navo-ai", install: true, enabled: settings.hideAi !== true },
+        { id: "engagement", install: settings.featureEngagementEnabled === true, enabled: true },
+        { id: "flowtime", install: settings.focusModeDefault === "flowtime", enabled: true },
+        { id: "countdown", install: settings.widgetTimerPreferences?.mode === "countdown", enabled: true },
+      ];
+      for (const { id, install, enabled } of seeds) {
+        const key = `official:${id}`;
+        if (!install || next.installed[key] || next.removed[key]) continue;
+        const entry = getBundledExtension(id);
+        if (!entry || !await this.publishBundledMigration(entry, generation)) return;
+        addDefault(entry, enabled, entry.downloadUrl);
+      }
+      next.migratedNativeFeatures = true;
+      changed = true;
+    }
+    if (platform() === "desktop" && !preferences.migratedDesktopWidget) {
+      const key = "official:desktop-widget";
+      if (!next.installed[key] && !next.removed[key]) {
+        const entry = getBundledExtension("desktop-widget");
+        if (!entry || !await this.publishBundledMigration(entry, generation)) return;
+        addDefault(entry, settings.featureWidgetEnabled !== false, entry.downloadUrl);
+      }
+      next.migratedDesktopWidget = true;
+      changed = true;
+    }
+    if (host.getAccountId() && !preferences.migratedCloudDriveSync && window.plannerApi?.listSyncBridgeStatuses) {
+      // Only migrate a verified existing bridge. If offline, retain legacy access and retry on later reconciliation.
+      const statuses = await window.plannerApi.listSyncBridgeStatuses().catch(() => undefined);
+      if (generation !== this.generation) return;
+      if (statuses) {
+        const key = "official:cloud-drive-sync";
+        if (statuses.some(status => status.status !== "stopped") && !next.installed[key] && !next.removed[key]) {
+          const entry = getBundledExtension("cloud-drive-sync");
+          if (!entry || !await this.publishBundledMigration(entry, generation)) return;
+          addDefault(entry, true, entry.downloadUrl);
+        }
+        next.migratedCloudDriveSync = true;
+        changed = true;
+      }
+    }
+    if (settings.featureTemplatesEnabled === true && !next.installed["official:schedule-templates"] && !next.removed["official:schedule-templates"]) {
       const entry = getBundledExtension("schedule-templates")!;
       if (!await this.publishBundledMigration(entry, generation)) return;
       addDefault(entry, true);
-    }
-    const historyKey = "official:activity-history";
-    if (!next.installed[historyKey] && !next.removed[historyKey]) {
-      const entry = getBundledExtension("activity-history")!;
-      addDefault(entry, true, entry.downloadUrl);
     }
     const legacyTools = Object.values(next.installed).filter((item) =>
       toolPageMigrations.has(item.manifest.id) && (item.sourceId === "official" ||

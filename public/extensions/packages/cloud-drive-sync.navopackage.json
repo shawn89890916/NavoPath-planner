@@ -1,31 +1,26 @@
 {
   "manifest": {
-    "id": "activity-history",
-    "name": "Activity history",
-    "description": "Review recent task changes and undo individual actions from the task view menu.",
+    "id": "cloud-drive-sync",
+    "name": "Cloud Drive Sync",
+    "description": "Connect a user-owned cloud folder mirror to NavoPath.",
     "author": "NavoPath",
     "version": "1.0.0",
     "kind": "plugin",
     "apiVersion": 1,
-    "minAppVersion": "1.7.0-beta.24",
+    "minAppVersion": "1.7.0-beta.132",
     "platforms": [
       "desktop",
       "web",
       "mobile"
     ],
     "main": "main.js",
-    "icon": "icon.svg",
     "license": "MIT",
     "repository": "https://github.com/shawn89890916/NavoPath-planner"
   },
   "files": {
     "main.js": {
       "encoding": "utf8",
-      "data": "var e={onload(a){return a.app.internal.registerNativePlanningView(\"activity-history\",a.manifest.name)}};export{e as default};\n"
-    },
-    "icon.svg": {
-      "encoding": "utf8",
-      "data": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n  <path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5m4-1v5l4 2\"/>\n</svg>\n"
+      "data": "var r={onload(e){return e.app.internal.registerNativeFeature(\"cloud-drive-sync\")}};export{r as default};\n"
     },
     "LICENSE": {
       "encoding": "utf8",

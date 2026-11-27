@@ -1,7 +1,7 @@
 // @ts-nocheck
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildBehaviorProfile, findUnrecordedGap, findUpcomingTaskStarts, findUnfinishedTasks, getWorkspaceEvents, ingestWorkspaceEvent, isQuarterHourTime, normalizeTaskOperations, previewTaskOperations, processAssistantMessage, verifyWebhookSignature, type CloudAssistantEnv } from "./cloudAssistant.ts";
+import { navoAiPluginEnabled, buildBehaviorProfile, findUnrecordedGap, findUpcomingTaskStarts, findUnfinishedTasks, getWorkspaceEvents, ingestWorkspaceEvent, isQuarterHourTime, normalizeTaskOperations, previewTaskOperations, processAssistantMessage, verifyWebhookSignature, type CloudAssistantEnv } from "./cloudAssistant.ts";
 
 test("workspace reads start from recent account-owned events, including processed changes", async (t) => {
   const originalFetch = globalThis.fetch;
@@ -289,4 +289,15 @@ test("aggregates unfinished blocks at workday end and handles a block crossing m
   ] }, "2026-08-28", new Date("2026-08-28T14:00:00.000Z"));
   assert.deepEqual(result.map((item) => item.recordId), ["record-1", "record-running"]);
   assert.deepEqual(findUnfinishedTasks({ tasks: [task({ timelineRecords: [{ id: "record-1", taskId: "task-1", scheduledDate: "2026-08-28", scheduledStart: "09:00", scheduledEnd: "10:00", executionStatus: "scheduled" }] })] }, "2026-08-28", new Date("2026-08-28T00:59:59.000Z")), []);
+});
+
+
+test("AI lifecycle rejects disabled and removed packages without disabling legacy MCP", () => {
+  const key = "official:navo-ai";
+  assert.equal(navoAiPluginEnabled({}), true);
+  assert.equal(navoAiPluginEnabled({ hideAi: true }), false);
+  assert.equal(navoAiPluginEnabled({ hideAi: true, extensions: { installed: { [key]: { enabled: true } } } }), true);
+  assert.equal(navoAiPluginEnabled({ extensions: { installed: { [key]: { enabled: false } } } }), false);
+  assert.equal(navoAiPluginEnabled({ extensions: { removed: { [key]: "2026-11-27" } } }), false);
+  assert.equal(navoAiPluginEnabled({ extensions: { removed: { [key]: "2026-11-27" }, installed: { [key]: { enabled: true } } } }), true);
 });

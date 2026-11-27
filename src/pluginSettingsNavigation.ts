@@ -16,10 +16,10 @@ export function pluginSettingsPages(snapshot: ExtensionSnapshot, item: Installed
   return Array.from(new Map(pages.map(page => [page.name.trim().toLocaleLowerCase(), page])).values());
 }
 export function pluginSettingsDestinations(snapshot: ExtensionSnapshot, previous: readonly PluginSettingsDestination[] = []): PluginSettingsDestination[] {
-  return Object.values(snapshot.preferences.installed).filter(item => item.manifest.kind === "plugin" && item.enabled)
+  return Object.values(snapshot.preferences.installed).filter(item => item.manifest.kind === "plugin" && item.enabled && (item.key !== "official:desktop-widget" || (typeof window !== "undefined" && !!window.desktopApi?.isDesktop?.())))
     .sort((a,b) => a.key.localeCompare(b.key, "en"))
     .flatMap<PluginSettingsDestination>(item => {
-      const native = item.key === METRICS_SETTINGS_OWNER;
+      const native = item.key === METRICS_SETTINGS_OWNER || ["official:habits", "official:navo-ai", "official:desktop-widget", "official:cloud-drive-sync"].includes(item.key);
       const options = item.manifest.settingsOptions ?? [];
       const pages = pluginSettingsPages(snapshot, item);
       if (!native && !options.length && !pages.length) {

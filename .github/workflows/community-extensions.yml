@@ -17,7 +17,10 @@ jobs:
       - run: npm ci
       - run: node scripts/build-extensions.mjs --check
       - run: npx vitest run src/extensions src/widget/widgetTimer.test.ts
-      - run: node --test mcp-worker/src/superProductivitySync.node-test.ts
+      - run: npm ci --prefix mcp-worker
+      - run: npm run typecheck --prefix mcp-worker
+      - run: npm test --prefix mcp-worker
+      - run: node --test sync-bridge/bridge.test.mjs
       - run: node --check integrations/super-productivity-navopath/plugin.js
       - run: node scripts/changelog-maintain.mjs --check
       - run: npm run css:check

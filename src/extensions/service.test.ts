@@ -20,7 +20,7 @@ async function fetchBundled(url: string) {
 }
 
 function fixture(account = "preview", extensions = defaultExtensionPreferences()) {
-  let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true, migratedPlanningViews: extensions.migratedPlanningViews ?? true, migratedShelfViews: extensions.migratedShelfViews ?? true }, extensionConfigs: {} };
+  let settings: any = { language: "en", featureTemplatesEnabled: false, extensions: { ...extensions, autoCheckUpdates: false, migratedLegacy: true, migratedPlanningViews: extensions.migratedPlanningViews ?? true, migratedShelfViews: extensions.migratedShelfViews ?? true, migratedNativeFeatures: extensions.migratedNativeFeatures ?? true, migratedDesktopWidget: extensions.migratedDesktopWidget ?? true, migratedCloudDriveSync: extensions.migratedCloudDriveSync ?? true }, extensionConfigs: {} };
   let data: any = { tasks: [], projects: [], events: [] };
   const host: ExtensionHost = { getData: () => data, saveData: async next => { data = next; }, getSettings: () => settings, saveSettings: async patch => { settings = { ...settings, ...patch }; }, getAccountId: () => account === "preview" ? null : account, toast: vi.fn(), internal: {} };
   return { host, settings: () => settings };
@@ -124,15 +124,51 @@ describe("batch extension updates", () => {
 });
 
 describe("extension installation and account reconciliation", () => {
-  it("preinstalls Activity history, Matrix, Kanban and Metrics on a clean installation", async () => {
+  it("preinstalls only the core-recommended Metrics view on a clean installation", async () => {
     const f = fixture("preview", { ...defaultExtensionPreferences(), migratedPlanningViews: false, migratedShelfViews: false });
     await current.configure(f.host);
     const installed = current.getSnapshot().preferences.installed;
-    expect(Object.keys(installed).sort()).toEqual(["official:activity-history", "official:kanban", "official:matrix", "official:metrics"]);
+    expect(Object.keys(installed).sort()).toEqual(["official:metrics"]);
     expect(Object.values(installed).every((item) => item.enabled)).toBe(true);
     expect(vi.mocked(fetch).mock.calls.map(([url]) => url).sort()).toEqual(
-      ["activity-history", "kanban", "matrix", "metrics"].map(id => `/extensions/packages/${id}.navopackage.json`),
+      ["metrics"].map(id => `/extensions/packages/${id}.navopackage.json`),
     );
+  });
+
+  it("migrates habits and enabled engagement once without reinstalling removed packages", async () => {
+    const f = fixture("native-migration", { ...defaultExtensionPreferences(), migratedNativeFeatures: false });
+    await f.host.saveSettings({ featureHabitsEnabled: true, featureEngagementEnabled: true });
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:habits"]?.enabled).toBe(true);
+    expect(current.getSnapshot().preferences.installed["official:engagement"]?.enabled).toBe(true);
+    expect(current.getSnapshot().preferences.installed["official:navo-ai"]?.enabled).toBe(true);
+    expect(current.getSnapshot().preferences.installed["official:desktop-widget"]).toBeUndefined();
+    await current.uninstall("official:habits");
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:habits"]).toBeUndefined();
+    expect(f.settings().extensions.migratedNativeFeatures).toBe(true);
+  });
+
+  it("preserves selected legacy timer modes and discovers an existing cloud bridge once", async () => {
+    const f = fixture("existing-bridge", { ...defaultExtensionPreferences(), migratedNativeFeatures: false, migratedCloudDriveSync: false });
+    await f.host.saveSettings({ focusModeDefault: "flowtime", widgetTimerPreferences: { mode: "countdown", countdownSeconds: 1500 } });
+    Object.assign(window, { plannerApi: { listSyncBridgeStatuses: async () => [{ status: "running" }] } });
+    await current.configure(f.host);
+    for (const id of ["flowtime", "countdown", "cloud-drive-sync"]) expect(current.getSnapshot().preferences.installed[`official:${id}`]?.enabled).toBe(true);
+    await current.uninstall("official:cloud-drive-sync");
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:cloud-drive-sync"]).toBeUndefined();
+  });
+
+  it("seeds the desktop-only widget on desktop without enabling a disabled preference", async () => {
+    const f = fixture("desktop-seed", { ...defaultExtensionPreferences(), migratedDesktopWidget: false });
+    await f.host.saveSettings({ featureWidgetEnabled: false });
+    Object.assign(window, { desktopApi: { isDesktop: () => true, extensions: { readOfficialPackage: async (id: string) => new Uint8Array(readFileSync(new URL(`${id}.navopackage.json`, bundledDirectory))) } } });
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:desktop-widget"]?.enabled).toBe(false);
+    await current.uninstall("official:desktop-widget");
+    await current.configure(f.host);
+    expect(current.getSnapshot().preferences.installed["official:desktop-widget"]).toBeUndefined();
   });
 
   it("migrates existing profiles while respecting explicit disabled and removed views", async () => {
@@ -146,46 +182,41 @@ describe("extension installation and account reconciliation", () => {
     await f.host.saveSettings({ featureMetricsEnabled: false });
     await current.configure(f.host);
     const installed = current.getSnapshot().preferences.installed;
-    expect(Object.keys(installed).sort()).toEqual(["official:activity-history", "official:matrix", "official:metrics"]);
+    expect(Object.keys(installed).sort()).toEqual(["official:matrix", "official:metrics"]);
     expect(installed["official:metrics"].enabled).toBe(false);
     expect(installed["official:matrix"].enabled).toBe(false);
     expect(f.settings().extensions.migratedShelfViews).toBe(true);
   });
 
-  it("retires the installed official List once without changing other views or planner data", async () => {
-    const matrix = officialCatalog.packages.find((entry) => entry.manifest.id === "matrix") as CatalogEntry;
-    const now = "2026-11-16T00:00:00.000Z";
-    const key = "official:list";
-    const f = fixture("preview", {
-      ...defaultExtensionPreferences(),
-      installed: {
-        [key]: { ...matrix, manifest: { ...matrix.manifest, id: "list", name: "List" }, key, sourceId: "official", enabled: true, installedAt: now },
-        "official:matrix": { ...matrix, key: "official:matrix", sourceId: "official", enabled: false, installedAt: now },
-      },
-    });
+  it("offers List as an optional plugin while respecting a prior removal", async () => {
+    const key = "official:list", now = "2026-11-16T00:00:00.000Z";
+    const f = fixture("list-tombstone", { ...defaultExtensionPreferences(), removed: { [key]: now } });
     const data = f.host.getData();
     await current.configure(f.host);
-    const preferences = current.getSnapshot().preferences;
-    expect(preferences.installed[key]).toBeUndefined();
-    expect(preferences.removed[key]).toBeTruthy();
-    expect(preferences.installed["official:matrix"]?.enabled).toBe(false);
+    expect(current.getSnapshot().preferences.installed[key]).toBeUndefined();
+    expect(current.getSnapshot().preferences.removed[key]).toBe(now);
+    expect(f.host.getData()).toBe(data);
+    expect(officialCatalog.packages.some(entry => entry.manifest.id === "list")).toBe(true);
+    await current.install(getBundledExtension("list")!);
+    expect(current.getSnapshot().preferences.installed[key]?.enabled).toBe(false);
+    await current.toggle(key, true);
+    expect(current.getSnapshot().preferences.installed[key]?.enabled).toBe(true);
+  });
+
+  it("retires the old Tree and Activity history packages without modifying planner data", async () => {
+    const matrix = getBundledExtension("matrix")!;
+    const ids = ["activity-history", "tree"];
+    const f = fixture("retired-core", { ...defaultExtensionPreferences(), installed: Object.fromEntries(ids.map(id => [`official:${id}`, { ...matrix, key: `official:${id}`, manifest: { ...matrix.manifest, id }, enabled: true, installedAt: "2026-11-01T00:00:00Z" }])) });
+    const data = f.host.getData();
+    await current.configure(f.host);
+    for (const id of ids) {
+      expect(current.getSnapshot().preferences.installed[`official:${id}`]).toBeUndefined();
+      expect(f.settings().extensions.removed[`official:${id}`]).toBeTruthy();
+    }
     expect(f.host.getData()).toBe(data);
     await current.configure(null);
     await current.configure(f.host);
-    expect(current.getSnapshot().preferences.removed[key]).toBe(preferences.removed[key]);
-    expect(officialCatalog.packages.some((entry) => entry.manifest.id === "list")).toBe(false);
-  });
-
-  it("adds Activity history to an already migrated profile and remembers uninstall after restarting", async () => {
-    const key = "official:activity-history";
-    const f = fixture();
-    await current.configure(f.host);
-    expect(current.getSnapshot().preferences.installed[key]?.enabled).toBe(true);
-    await current.uninstall(key);
-    await current.configure(null);
-    await current.configure(f.host);
-    expect(current.getSnapshot().preferences.installed[key]).toBeUndefined();
-    expect(f.settings().extensions.removed[key]).toBeTruthy();
+    for (const id of ids) expect(current.getSnapshot().preferences.installed[`official:${id}`]).toBeUndefined();
   });
   it("keeps local controls available during a slow update check and shares catalog requests", async () => {
     const f = fixture(); await current.configure(f.host);
@@ -268,7 +299,7 @@ describe("extension installation and account reconciliation", () => {
     Object.assign(window, { desktopApi: { isDesktop: () => true, extensions: { readOfficialPackage } } });
     await current.configure(fixture("desktop-offline").host);
     await current.install(entry);
-    expect(readOfficialPackage.mock.calls).toEqual([["activity-history"], ["weather"]]);
+    expect(readOfficialPackage.mock.calls).toEqual([["weather"]]);
     expect(fetch).not.toHaveBeenCalled();
     expect(mocks.get).not.toHaveBeenCalled();
   });
@@ -296,12 +327,12 @@ describe("extension installation and account reconciliation", () => {
     expect(current.getSnapshot().preferences.installed["official:weather"].sha256).toBe(entry.sha256);
   });
   it("rolls back through private storage when the previous hash is not bundled", async () => {
-    const entry = getBundledExtension("tree")!;
-    const oldPackage = JSON.parse(readFileSync(new URL("tree.navopackage.json", bundledDirectory), "utf8"));
+    const entry = getBundledExtension("kanban")!;
+    const oldPackage = JSON.parse(readFileSync(new URL("kanban.navopackage.json", bundledDirectory), "utf8"));
     oldPackage.manifest.version = "0.0.1";
     const previousBytes = new TextEncoder().encode(JSON.stringify(oldPackage));
     const previous = { manifest: oldPackage.manifest, sha256: await sha256(previousBytes), downloadUrl: entry.downloadUrl };
-    const key = "official:tree", account = "rollback";
+    const key = "official:kanban", account = "rollback";
     const f = fixture(account, {
       ...defaultExtensionPreferences(),
       installed: { [key]: { ...entry, key, enabled: false, installedAt: "2026-11-10T00:00:00Z", previous } },

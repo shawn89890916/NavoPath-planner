@@ -43,7 +43,7 @@ describe("compact plugin dock", () => {
     expect(names(getCompactPluginGroups(unpinned, toolbarOwners).more)).toEqual(["plugin-2", "plugin-7"]);
   });
 
-  it("excludes Tasks views even when an older preference pinned them, while keeping Metrics, Activity history and registered workspace pages", () => {
+  it("excludes Tasks views even when an older preference pinned them, while keeping Metrics and registered workspace pages", () => {
     const prefs = { ...preferences(), compactPlacements: { "local:plugin-1": "bottom", "local:plugin-2": "more" } } as const;
     const contribution = (id: number) => ({ id: String(id), name: `plugin-${id}`, owner: `local:plugin-${id}`, mount() {} });
     const snapshot: ExtensionSnapshot = {
@@ -58,7 +58,7 @@ describe("compact plugin dock", () => {
       ],
     };
     const { owners } = getAppHeaderPlugins(snapshot);
-    expect(names(getCompactPluginGroups(prefs, owners).dock)).toEqual(["plugin-3", "plugin-4", "plugin-5"]);
+    expect(names(getCompactPluginGroups(prefs, owners).dock)).toEqual(["plugin-3", "plugin-4"]);
     expect(getCompactPluginGroups(prefs, owners).more).toEqual([]);
     expect(moveCompactPlugin(prefs, owners, "local:plugin-1", "bottom")).toBeUndefined();
     expect(getAppHeaderPlugins({ ...snapshot, safeMode: true }).owners.size).toBe(0);

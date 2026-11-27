@@ -1,31 +1,26 @@
 {
   "manifest": {
-    "id": "tree",
-    "name": "Tree",
-    "description": "Organize projects and tasks as an editable hierarchy.",
+    "id": "countdown",
+    "name": "Countdown",
+    "description": "Count down to a scheduled deadline and record overtime.",
     "author": "NavoPath",
     "version": "1.0.0",
     "kind": "plugin",
     "apiVersion": 1,
-    "minAppVersion": "1.6.3-beta.5",
+    "minAppVersion": "1.7.0-beta.132",
     "platforms": [
       "desktop",
       "web",
       "mobile"
     ],
     "main": "main.js",
-    "icon": "icon.svg",
     "license": "MIT",
     "repository": "https://github.com/shawn89890916/NavoPath-planner"
   },
   "files": {
     "main.js": {
       "encoding": "utf8",
-      "data": "var a={onload(e){return e.app.internal.registerNativePlanningView(\"tree\",e.manifest.name)}};export{a as default};\n"
-    },
-    "icon.svg": {
-      "encoding": "utf8",
-      "data": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n  <rect x=\"2\" y=\"9\" width=\"6\" height=\"6\" rx=\"1.2\"/><rect x=\"16\" y=\"2.5\" width=\"6\" height=\"6\" rx=\"1.2\"/><rect x=\"16\" y=\"15.5\" width=\"6\" height=\"6\" rx=\"1.2\"/><path d=\"M8 12h4m0-6.5v13m0-13h4m-4 13h4\"/>\n</svg>\n"
+      "data": "var t={onload(e){return e.app.internal.registerNativeFeature(\"countdown\")}};export{t as default};\n"
     },
     "LICENSE": {
       "encoding": "utf8",

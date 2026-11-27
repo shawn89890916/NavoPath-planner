@@ -1,0 +1,18 @@
+{
+  "id": "cloud-drive-sync",
+  "name": "Cloud Drive Sync",
+  "description": "Connect a user-owned cloud folder mirror to NavoPath.",
+  "author": "NavoPath",
+  "version": "1.0.0",
+  "kind": "plugin",
+  "apiVersion": 1,
+  "minAppVersion": "1.7.0-beta.132",
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
+  "main": "main.js",
+  "license": "MIT",
+  "repository": "https://github.com/shawn89890916/NavoPath-planner"
+}

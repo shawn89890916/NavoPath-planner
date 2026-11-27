@@ -9,6 +9,7 @@ export interface RuntimeBridge {
   getValue<T>(key: string): Promise<T | null>; setValue(key: string, value: unknown): Promise<void>; removeValue(key: string): Promise<void>;
   contribute(kind: "settingsPages" | "views", name: string, mount: Mount, options?: Pick<ExtensionContribution, "iconUrl" | "planningView" | "nativeMode" | "nativeTool">): Dispose;
   setLauncherStatus(status?: PluginLauncherStatus): void;
+  registerNativeFeature?(id: string): Dispose;
   registerNativePlanningView(mode: NativeShelfViewMode, name: string, iconUrl?: string): Dispose;
   executeCommand(id: string): Promise<void>; addCommand(id: string, name: string, run: () => void | Promise<void>, shortcut?: string): Dispose;
 }
@@ -88,6 +89,10 @@ export async function loadPlugin(pkg: ExtensionPackage, bridge: RuntimeBridge, i
   const context: PluginContext = {
     apiVersion: 1, id: bridge.key, manifest: pkg.manifest, platform: bridge.platform, window: typeof location !== "undefined" && new URLSearchParams(location.search).get("compactWindow") === "1" ? "compact" : "main", language: bridge.host.getSettings().language,
     app: { ...bridge.host, superProductivity: syncHost ? scopedSync : undefined, internal: { ...bridge.host.internal,
+      registerNativeFeature: (id: string) => {
+        if (disposed || bridge.key !== `official:${id}` || pkg.manifest.id !== id || !bridge.registerNativeFeature) throw new Error("Native features are reserved for matching bundled packages");
+        return register(bridge.registerNativeFeature(id));
+      },
       registerNativePlanningView: (mode: NativeShelfViewMode, name: string) => bridge.registerNativePlanningView(mode, name, pkg.manifest.icon ? resources.get(pkg.manifest.icon) : undefined),
       registerNativeToolPage: (tool: NativeToolPage, name: string) => {
         if ((tool !== "pomodoro" && tool !== "schedule-templates") || pkg.manifest.id !== tool ||

@@ -6,7 +6,7 @@ export type * from "./model";
 
 export type Dispose = () => void | Promise<void>;
 export type Mount = (container: HTMLElement) => void | Dispose;
-export type NativePlanningViewMode = "tree" | "kanban" | "eisenhower" | "metrics";
+export type NativePlanningViewMode = "tree" | "list" | "kanban" | "eisenhower" | "metrics";
 export type NativeShelfViewMode = NativePlanningViewMode | "activity-history";
 export type NativeToolPage = "pomodoro" | "schedule-templates";
 export interface PluginLauncherStatus { label: string; weather?: "sun" | "cloud" | "fog" | "rain" | "snow" | "storm" | "unknown"; active?: boolean }
@@ -18,6 +18,7 @@ export interface ExtensionUpdateBatch {
 export interface ExtensionSnapshot {
   preferences: ExtensionPreferences; catalog: CatalogEntry[]; updates: Record<string, CatalogEntry>;
   status: Record<string, string>; busy: boolean; error: string; safeMode: boolean;
+  nativeFeatures?: string[];
   catalogLoading?: boolean; checkingUpdates?: boolean; updateBatch?: ExtensionUpdateBatch;
   settingsPages: ExtensionContribution[]; views: ExtensionContribution[]; launcherStatus: Record<string, PluginLauncherStatus>;
 }

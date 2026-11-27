@@ -19,8 +19,8 @@ const FILE_NAME = "navopath-workspace.json";
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const COLLECTIONS = ["goals", "projects", "tasks", "events", "habits", "habitDailyStates", "timeEntries", "longTasks", "notes", "drafts", "aiConversations", "aiMemories", "scheduleTemplates"];
 
-function exec(file, args, input) {
-  const child = spawnSync(file, args, { encoding: "utf8", input, windowsHide: true });
+function exec(file, args, input, env = process.env) {
+  const child = spawnSync(file, args, { encoding: "utf8", input, windowsHide: true, env });
   if (child.status !== 0) throw new Error((child.stderr || child.stdout || `${file} failed`).trim());
   return child.stdout.trim();
 }
@@ -32,7 +32,10 @@ function powershell(script, input) {
     : [];
   const modern = versions.map((version) => join(installs, version, "pwsh.exe")).find(existsSync);
   const configured = process.env.NAVOPATH_PWSH_PATH;
-  return exec(configured && existsSync(configured) ? configured : (modern || "powershell.exe"), ["-NoProfile", "-NonInteractive", "-Command", `$ErrorActionPreference='Stop'; ${script}`], input);
+  // A PowerShell 7 parent can export an incompatible module path to Windows PowerShell.
+  // Let the selected shell discover its own built-in security modules.
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => key.toLowerCase() !== "psmodulepath"));
+  return exec(configured && existsSync(configured) ? configured : (modern || "powershell.exe"), ["-NoProfile", "-NonInteractive", "-Command", `$ErrorActionPreference='Stop'; ${script}`], input, env);
 }
 
 async function storeToken(token) {
@@ -251,7 +254,7 @@ async function run() {
       failures += 1;
       const message = error instanceof Error ? error.message : String(error);
       process.stderr.write(`${new Date().toISOString()} ${message}\n`);
-      await report(config, token, "error", lastSuccessAt, message);
+      await report(config, token, message === "SYNC_BRIDGE_DISABLED" ? "stopped" : "error", lastSuccessAt, message);
     }
     const delay = Math.min(600_000, config.intervalSeconds * 1000 * 2 ** Math.min(failures, 5));
     await new Promise((resolveDelay) => setTimeout(resolveDelay, delay));

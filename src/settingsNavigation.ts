@@ -55,15 +55,15 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("schedule-end", { category: "workflow" }, "规划结束", "Planning ends", "AI schedule 排程"),
   entry("schedule-buffer", { category: "workflow" }, "排程任务间隔", "Gap between scheduled tasks", "任务缓冲 Task buffer minutes AI schedule 间隔 排程"),
   entry("templates", { category: "workflow" }, "模板", "Templates", "schedule template 时间段"),
-  entry("habits", { category: "workflow" }, "习惯", "Habits", "candidate metrics 每日 每周"),
+  entry("habits", { category: "plugins", pluginOwner: "official:habits" }, "习惯", "Habits", "candidate metrics 每日 每周"),
   entry("metrics", { category: "plugins" }, "指标", "Metrics", "range grouping completion 统计 范围 分组 完成"),
   entry("metrics-range", { category: "plugins" }, "指标时间范围", "Metrics time range", "statistics period 时间 统计"),
   entry("metrics-group", { category: "plugins" }, "指标分组", "Metrics grouping", "statistics group 统计"),
   entry("metrics-display", { category: "plugins" }, "显示指标", "Metrics display", "statistics metric duration 统计"),
   entry("metrics-habits", { category: "plugins" }, "习惯是否计入统计", "Include habits in metrics", "statistics habits 统计"),
   entry("metrics-completion", { category: "plugins" }, "指标完成状态筛选", "Metrics completion filter", "statistics filter 统计"),
-  entry("habit-candidates", { category: "workflow" }, "候选中的习惯区", "Habits in candidates", "习惯"),
-  entry("engagement", { category: "workflow" }, "投入度评分", "Engagement rating", "engagement effort focus density weighted 80% 投入 专注 评分 颜色 密度 时长 加权"),
+  entry("habit-candidates", { category: "plugins", pluginOwner: "official:habits" }, "候选中的习惯区", "Habits in candidates", "习惯"),
+  entry("engagement", { category: "plugins", anchor: "plugin-market" }, "投入度评分", "Engagement rating", "engagement effort focus density weighted 80% 投入 专注 评分 颜色 密度 时长 加权"),
 
   entry("account", { category: "account-data" }, "个人资料与账户", "Profile & account", "avatar name plan subscription 头像 用户名 方案"),
   entry("sync", { category: "account-data" }, "同步", "Sync", "cloud interval push pull 云端"),
@@ -74,35 +74,34 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
   entry("clear-local-data", { category: "account-data" }, "清空本地数据", "Clear local data", "delete danger 删除 危险"),
   entry("delete-account", { category: "account-data" }, "删除账户", "Delete account", "danger sign out logout 危险 退出"),
 
-  entry("ai-provider", { category: "ai" }, "AI 提供商与密钥", "AI provider and key", "API key provider model 服务商 密钥"),
-  entry("ai-model", { category: "ai", anchor: "ai-provider" }, "高级模型偏好", "Advanced model preference", "model routing 模型"),
-  entry("ai-reasoning", { category: "ai" }, "思考模式", "Reasoning mode", "instant high xhigh"),
-  entry("ai-estimate", { category: "ai" }, "自动估算任务用时", "Estimate task duration", "AI duration"),
-  entry("ai-project", { category: "ai" }, "自动归入项目", "Auto-assign project", "AI confidence"),
-  entry("ai-briefs", { category: "ai" }, "每日开工与收工简报", "Daily start and end briefs", "08:00 21:30 proactive review 主动 开工 收工 复盘"),
-  entry("ai-memory", { category: "ai" }, "AI 记忆", "AI memory", "context personalization 上下文 个性化"),
-  entry("hide-ai", { category: "ai" }, "隐藏所有 AI", "Hide all AI", "disable"),
-  entry("ai-reset", { category: "ai" }, "重置 AI 个性化", "Reset AI personalization", "clear history 清空历史"),
+  entry("ai-provider", { category: "plugins", pluginOwner: "official:navo-ai" }, "AI 提供商与密钥", "AI provider and key", "API key provider model 服务商 密钥"),
+  entry("ai-model", { category: "plugins", pluginOwner: "official:navo-ai", anchor: "ai-provider" }, "高级模型偏好", "Advanced model preference", "model routing 模型"),
+  entry("ai-reasoning", { category: "plugins", pluginOwner: "official:navo-ai" }, "思考模式", "Reasoning mode", "instant high xhigh"),
+  entry("ai-estimate", { category: "plugins", pluginOwner: "official:navo-ai" }, "自动估算任务用时", "Estimate task duration", "AI duration"),
+  entry("ai-project", { category: "plugins", pluginOwner: "official:navo-ai" }, "自动归入项目", "Auto-assign project", "AI confidence"),
+  entry("ai-briefs", { category: "plugins", pluginOwner: "official:navo-ai" }, "每日开工与收工简报", "Daily start and end briefs", "08:00 21:30 proactive review 主动 开工 收工 复盘"),
+  entry("ai-memory", { category: "plugins", pluginOwner: "official:navo-ai" }, "AI 记忆", "AI memory", "context personalization 上下文 个性化"),
+  entry("ai-reset", { category: "plugins", pluginOwner: "official:navo-ai" }, "重置 AI 个性化", "Reset AI personalization", "clear history 清空历史"),
 
-  entry("portrait-window", { category: "widget" }, "竖屏小窗", "Portrait window", "desktop compact 置顶"),
-  entry("desktop-widget", { category: "widget" }, "桌面小组件", "Desktop widget", "launch always on top opacity 启动 置顶 透明度"),
-  entry("widget-font", { category: "widget" }, "小组件字体", "Widget font", "family scale 字号"),
-  entry("widget-light", { category: "widget" }, "小组件浅色外观", "Widget light appearance", "background text timer overrun color 背景 文字 计时 超时"),
-  entry("widget-light-background", { category: "widget" }, "浅色背景", "Light background", "widget color 小组件 背景颜色"),
-  entry("widget-light-text", { category: "widget" }, "浅色文字", "Light text", "widget font color 小组件 文字颜色"),
-  entry("widget-light-timer", { category: "widget" }, "浅色计时", "Light timer", "widget timer color 小组件 计时颜色"),
-  entry("widget-light-overrun", { category: "widget" }, "浅色超时", "Light overrun", "widget overtime color 小组件 超时颜色"),
-  entry("widget-dark", { category: "widget" }, "小组件深色外观", "Widget dark appearance", "background text timer overrun color 背景 文字 计时 超时"),
-  entry("widget-dark-background", { category: "widget" }, "深色背景", "Dark background", "widget color 小组件 背景颜色"),
-  entry("widget-dark-text", { category: "widget" }, "深色文字", "Dark text", "widget font color 小组件 文字颜色"),
-  entry("widget-dark-timer", { category: "widget" }, "深色计时", "Dark timer", "widget timer color 小组件 计时颜色"),
-  entry("widget-dark-overrun", { category: "widget" }, "深色超时", "Dark overrun", "widget overtime color 小组件 超时颜色"),
-  entry("widget-timer", { category: "widget" }, "小组件计时模式", "Widget timer mode", "stopwatch countdown plugin 正计时 倒计时 插件"),
-  entry("widget-reset", { category: "widget" }, "重置小组件", "Reset widget", "appearance position size 外观 位置 尺寸"),
+  entry("portrait-window", { category: "general" }, "竖屏小窗", "Portrait window", "desktop compact 置顶"),
+  entry("desktop-widget", { category: "plugins", pluginOwner: "official:desktop-widget" }, "桌面小组件", "Desktop widget", "launch always on top opacity 启动 置顶 透明度"),
+  entry("widget-font", { category: "plugins", pluginOwner: "official:desktop-widget" }, "小组件字体", "Widget font", "family scale 字号"),
+  entry("widget-light", { category: "plugins", pluginOwner: "official:desktop-widget" }, "小组件浅色外观", "Widget light appearance", "background text timer overrun color 背景 文字 计时 超时"),
+  entry("widget-light-background", { category: "plugins", pluginOwner: "official:desktop-widget" }, "浅色背景", "Light background", "widget color 小组件 背景颜色"),
+  entry("widget-light-text", { category: "plugins", pluginOwner: "official:desktop-widget" }, "浅色文字", "Light text", "widget font color 小组件 文字颜色"),
+  entry("widget-light-timer", { category: "plugins", pluginOwner: "official:desktop-widget" }, "浅色计时", "Light timer", "widget timer color 小组件 计时颜色"),
+  entry("widget-light-overrun", { category: "plugins", pluginOwner: "official:desktop-widget" }, "浅色超时", "Light overrun", "widget overtime color 小组件 超时颜色"),
+  entry("widget-dark", { category: "plugins", pluginOwner: "official:desktop-widget" }, "小组件深色外观", "Widget dark appearance", "background text timer overrun color 背景 文字 计时 超时"),
+  entry("widget-dark-background", { category: "plugins", pluginOwner: "official:desktop-widget" }, "深色背景", "Dark background", "widget color 小组件 背景颜色"),
+  entry("widget-dark-text", { category: "plugins", pluginOwner: "official:desktop-widget" }, "深色文字", "Dark text", "widget font color 小组件 文字颜色"),
+  entry("widget-dark-timer", { category: "plugins", pluginOwner: "official:desktop-widget" }, "深色计时", "Dark timer", "widget timer color 小组件 计时颜色"),
+  entry("widget-dark-overrun", { category: "plugins", pluginOwner: "official:desktop-widget" }, "深色超时", "Dark overrun", "widget overtime color 小组件 超时颜色"),
+  entry("widget-timer", { category: "plugins", pluginOwner: "official:desktop-widget" }, "小组件计时模式", "Widget timer mode", "stopwatch countdown plugin 正计时 倒计时 插件"),
+  entry("widget-reset", { category: "plugins", pluginOwner: "official:desktop-widget" }, "重置小组件", "Reset widget", "appearance position size 外观 位置 尺寸"),
 
   entry("plugins", { category: "plugins" }, "插件", "Plugins", "extension market import sources update restricted 扩展 市场 导入 来源 更新 受限"),
   entry("mcp", { category: "integrations" }, "MCP", "MCP", "token server integration 令牌 服务"),
-  entry("sync-bridge", { category: "integrations" }, "同步", "Sync", "iCloud Drive OneDrive Dropbox 云盘 文件夹 桥接 备份"),
+  entry("sync-bridge", { category: "plugins", pluginOwner: "official:cloud-drive-sync" }, "同步", "Sync", "iCloud Drive OneDrive Dropbox 云盘 文件夹 桥接 备份"),
   entry("reset-settings", { category: "account-data" }, "重置所有设置", "Reset all settings", "restore defaults danger 恢复默认 危险"),
 ];
 
@@ -115,7 +114,7 @@ export function searchSettings(query: string, lang: Language, desktopAvailable =
   if (tokens.length === 0 && !modifiedIds) return [];
   return SETTINGS_SEARCH_ENTRIES
     .filter((item) => item.id !== "modified-settings" && (!modifiedIds || modifiedIds.has(item.id)))
-    .filter((item) => desktopAvailable || item.target.category !== "widget")
+    .filter((item) => desktopAvailable || (item.target.category !== "widget" && item.target.pluginOwner !== "official:desktop-widget" && item.id !== "portrait-window"))
     .filter((item) => desktopAvailable || !["beta-updates", "auto-launch", "updates"].includes(item.id))
     .filter((item) => tokens.every((token) => searchableText(item).includes(token)))
     .sort((a, b) => {

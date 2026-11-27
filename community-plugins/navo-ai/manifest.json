@@ -1,0 +1,18 @@
+{
+  "id": "navo-ai",
+  "name": "Navo AI",
+  "description": "AI planning, task suggestions and proactive assistant.",
+  "author": "NavoPath",
+  "version": "1.0.0",
+  "kind": "plugin",
+  "apiVersion": 1,
+  "minAppVersion": "1.7.0-beta.132",
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
+  "main": "main.js",
+  "license": "MIT",
+  "repository": "https://github.com/shawn89890916/NavoPath-planner"
+}

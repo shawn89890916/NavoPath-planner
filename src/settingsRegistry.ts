@@ -26,9 +26,7 @@ const definitions = [
   ["schedule-start", "scheduleDayStartTime", "basic"],
   ["schedule-end", "dayEndTime", "basic"],
   ["schedule-buffer", "scheduleBufferMinutes", "advanced"],
-  ["habits", "featureHabitsEnabled", "advanced"],
   ["habit-candidates", "featureHabitCandidatesEnabled", "advanced"],
-  ["engagement", "featureEngagementEnabled", "advanced"],
   ["metrics-range", "metricsRangePreset", "advanced"],
   ["metrics-group", "metricsGroupBy", "advanced"],
   ["metrics-display", "metricsDisplayMetric", "advanced"],
@@ -37,7 +35,6 @@ const definitions = [
   ["ai-estimate", "autoEstimateTaskDuration", "basic"],
   ["ai-project", "autoAssignTaskProject", "basic"],
   ["ai-memory", "aiMemoryEnabled", "basic"],
-  ["hide-ai", "hideAi", "basic"],
   ["ai-reasoning", "reasoningMode", "advanced"],
 ] as const satisfies readonly (readonly [string, keyof Settings, PreferenceLevel])[];
 

@@ -494,6 +494,15 @@ function applyInverseOperations(data: Json, input: unknown) {
   return next;
 }
 
+/** Explicit plugin state supersedes legacy preferences; old clients without it retain their existing behavior. */
+export function navoAiPluginEnabled(settings: Json): boolean {
+  const extensions = settings?.extensions;
+  const key = "official:navo-ai";
+  if (extensions?.removed?.[key] && !extensions?.installed?.[key]) return false;
+  if (extensions?.installed?.[key]) return extensions.installed[key].enabled === true;
+  return settings?.hideAi !== true;
+}
+
 export async function getCloudProfile(env: CloudAssistantEnv, userId: string): Promise<Profile> {
   const rows = await dbJson<Profile[]>(env, `dayflow_profiles?select=data,settings,revision&user_id=eq.${encodeURIComponent(userId)}&limit=1`);
   if (!rows[0]) throw new Error("Workspace not found");
@@ -504,6 +513,7 @@ export async function batchUpdateTasks(env: CloudAssistantEnv, userId: string, p
   if (!params.dryRun && !params.commit) throw new Error("Set dry_run=true to preview or commit=true to apply");
   if (!/^[A-Za-z0-9._:-]{8,240}$/.test(params.idempotencyKey)) throw new Error("Invalid idempotency_key");
   const profile = await getCloudProfile(env, userId);
+  if ((params.source === "cloud_assistant" || params.source === "workspace_event") && !navoAiPluginEnabled(profile.settings)) throw new Error("AI_PLUGIN_DISABLED");
   const preview = previewTaskOperations(profile.data, params.operations);
   const publicPreview = { operations: preview.operations, changes: preview.changes, confirmationRequired: preview.confirmationRequired };
   if (params.dryRun || !params.commit) return { dryRun: true, revision: profile.revision, ...publicPreview };
@@ -774,7 +784,7 @@ async function processNotificationTick(env: CloudAssistantEnv, userId: string, d
     dbJson<Json[]>(env, `navopath_cloud_assistant_settings?select=*&user_id=eq.${encodeURIComponent(userId)}&limit=1`),
   ]);
   const assistantSettings = settingsRows[0] || {};
-  if (assistantSettings.enabled !== true || profile.settings.proactiveAssistantEnabled === false) return { skipped: "disabled" };
+  if (!navoAiPluginEnabled(profile.settings) || assistantSettings.enabled !== true || profile.settings.proactiveAssistantEnabled === false) return { skipped: "disabled" };
   await deliverDueNotifications(env, userId);
   const now = new Date();
   const local = shanghaiDateTime(now.toISOString());
@@ -842,7 +852,6 @@ export async function processAssistantMessage(env: CloudAssistantEnv, message: A
   const job = await claimJob(env, message, eventIds, key);
   if (!job?.claimed) return { skipped: "duplicate_job" };
   try {
-    await deliverDueNotifications(env, message.userId);
     const [profile, settingsRows, stateRows, activityRows] = await Promise.all([
       getCloudProfile(env, message.userId),
       dbJson<Json[]>(env, `navopath_cloud_assistant_settings?select=*&user_id=eq.${encodeURIComponent(message.userId)}&limit=1`),
@@ -850,10 +859,13 @@ export async function processAssistantMessage(env: CloudAssistantEnv, message: A
       dbJson<Json[]>(env, `navopath_cloud_change_sets?select=source,status,summary,reason,created_at&user_id=eq.${encodeURIComponent(message.userId)}&order=change_cursor.desc&limit=20`),
     ]);
     const assistantSettings = settingsRows[0] || {};
-    if (message.trigger !== "workspace_event" && (assistantSettings.enabled !== true || profile.settings.proactiveAssistantEnabled === false)) {
+    if (!navoAiPluginEnabled(profile.settings) || (message.trigger !== "workspace_event" && (assistantSettings.enabled !== true || profile.settings.proactiveAssistantEnabled === false))) {
+      // Keep the original workspace facts, but do not keep retrying disabled AI jobs.
+      if (events.length) await serviceDb(env, `navopath_workspace_events?id=in.(${events.map((event) => event.id).join(",")})`, { method: "PATCH", body: JSON.stringify({ status: "processed", processed_at: isoNow(), failure_reason: "AI plugin disabled" }) });
       await updateJob(env, job.job_id, { status: "completed", result: { skipped: "disabled" }, finished_at: isoNow() });
       return { skipped: "disabled" };
     }
+    await deliverDueNotifications(env, message.userId);
     if (assistantSettings.intro_seen !== true && profile.settings.proactiveAssistantIntroSeen !== true) {
       const notification = await sendNotification(env, message.userId, {
         kind: "summary", title: "Navo AI 已准备好主动规划", body: "它会基于你的计划和实际时长主动安排普通任务；你可以随时在设置中关闭或调整。",
@@ -876,6 +888,11 @@ export async function processAssistantMessage(env: CloudAssistantEnv, message: A
     const context = { trigger: message.trigger, timezone: "Asia/Shanghai", language: profile.settings.language === "zh" ? "zh" : "en", workspace: plannerSnapshot, weather, events: eventContext, workspaceSnapshot: fileSnapshot.slice(-40).map((file) => ({ ...file, excerpt: cleanText(file.excerpt, 800) })), persistentState: { preferences: { ...(assistantSettings.preferences || {}), autoAdjust: profile.settings.proactiveAssistantAutoAdjust !== false }, behaviorProfile, lastScanSummary: stateRows[0]?.last_scan_summary || "", eventCursor: stateRows[0]?.event_cursor || 0, recentActivity: activityRows } };
     await updateJob(env, job.job_id, { model_called: true });
     const decision = await callDecisionModel(env, context);
+    if (!navoAiPluginEnabled((await getCloudProfile(env, message.userId)).settings)) {
+      if (events.length) await serviceDb(env, `navopath_workspace_events?id=in.(${events.map((event) => event.id).join(",")})`, { method: "PATCH", body: JSON.stringify({ status: "processed", processed_at: isoNow(), failure_reason: "AI plugin disabled" }) });
+      await updateJob(env, job.job_id, { status: "completed", result: { skipped: "disabled" }, finished_at: isoNow() });
+      return { skipped: "disabled" };
+    }
     const applied = await batchUpdateTasks(env, message.userId, { operations: message.trigger === "evening" || profile.settings.proactiveAssistantAutoAdjust === false ? [] : decision.operations, dryRun: false, commit: true, idempotencyKey: key, source: message.trigger === "workspace_event" ? "workspace_event" : "cloud_assistant", summary: decision.summary, reason: decision.reason });
     const scheduledSummary = message.trigger === "morning" || message.trigger === "evening"
       ? await sendNotification(env, message.userId, {
