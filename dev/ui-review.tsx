@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Button, IconButton, Input, Modal } from "../src/components/UiPrimitives";
-import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingTextInput, SettingActionButton } from "../src/components/SettingsControls";
+import { SettingSection, SettingRow, SettingToggle, SettingSelect, SettingTextInput, SettingActionButton, SettingSlider, SettingNumberInput, SettingColorInput } from "../src/components/SettingsControls";
 import { UiCloseIcon } from "../src/components/UiIcons";
 import "../src/app.css";
 import "../src/ui-primitives.css";
@@ -45,6 +45,9 @@ function Review() {
         <SettingRow title={t("通知", "Notifications")} description={t("显示未读数量，关闭后仍可在通知中心查看。", "Show unread counts. Notifications remain available in the notification center when hidden.")} control={<SettingToggle checked={enabled} ariaLabel={t("通知", "Notifications")} onChange={setEnabled} />} />
         <SettingRow title={t("时间视图", "Timeline view")} description={t("窄面板将选择框放到说明下方，保留足够的阅读宽度。", "Narrow panels place the selection below its description to preserve reading space.")} control={<SettingSelect value="day" onChange={() => {}} ariaLabel={t("时间视图", "Timeline view")} options={[{value:"day",label:t("天", "Day")},{value:"week",label:t("周", "Week")}]} />} />
         <SettingRow title={t("名称", "Name")} control={<SettingTextInput value={value} onChange={setValue} ariaLabel={t("名称", "Name")} />} />
+        <SettingRow title={t("界面圆角", "Corner radius")} control={<><SettingSlider value={radius} min={0} max={64} onChange={setRadius} ariaLabel="Radius slider" /><SettingNumberInput value={radius} min={0} max={64} onChange={setRadius} ariaLabel="Radius number" suffix="px" /></>} />
+        <SettingRow title={t("颜色", "Color")} control={<SettingColorInput value="#73968a" onChange={() => {}} ariaLabel="Color" />} />
+        <SettingRow layout="actions" title={t("插件", "Plugin")} description={t("长描述与更新操作不应挤压开关。", "Long descriptions and update actions must not displace the switch.")} control={<><SettingActionButton>{t("设置", "Settings")}</SettingActionButton><SettingActionButton>{t("更新", "Update")}</SettingActionButton></>} trailing={<SettingToggle checked={enabled} onChange={setEnabled} ariaLabel="Plugin enabled" />} />
         <SettingRow title={t("禁用状态", "Disabled state")} disabled description={t("保留可读的文字与控件轮廓。", "Keep labels and control boundaries readable.")} control={<SettingToggle disabled checked={false} ariaLabel={t("禁用开关", "Disabled switch")} onChange={() => {}} />} />
         <SettingRow title={t("弹窗", "Modal")} control={<SettingActionButton onClick={() => setModal(true)}>{t("打开弹窗", "Open modal")}</SettingActionButton>} />
       </SettingSection>

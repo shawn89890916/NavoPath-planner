@@ -7928,11 +7928,8 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
    SaaS pill. */
 /* Accent color row: place the two ThemeColorSetting pickers side by
    side when there is room. */
-.df-settings-accent-row { display: flex; flex-wrap: wrap; gap: 18px; padding: 4px 0 8px; }
-.df-settings-accent-colors { display: grid; gap: 4px; padding-top: 8px; }
 /* Theme accents are flat paper swatches; the picker must not inherit the
    textured project-color shadow treatment. */
-.df-settings-accent-row > .df-theme-setting { padding: 6px 0; border: 0; }
 /* Confirmation phrase input for danger dialogs. */
 .df-utility-confirm-phrase { display: flex; flex-direction: column; gap: 6px; margin: 14px 0 4px; }
 .df-utility-confirm-phrase span { color: var(--text-muted); font: 500 11px/1.3 var(--paper-sans); }
@@ -7952,7 +7949,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-dialog-danger:hover:not(:disabled) { background: rgba(201, 111, 91, 0.08); }
 .df-dialog-danger:disabled { opacity: .45; cursor: not-allowed; }
 @media (max-width: 640px) {
-  .df-settings-accent-row { flex-direction: column; }
 }
 .df-app .df-task-detail.df-drawer {
   width: min(560px,94vw); padding: 30px 28px; border-radius: var(--paper-radius-soft) 0 0 var(--paper-radius-soft);
@@ -20313,9 +20309,9 @@ body[data-navopath-base-theme="light"],
 
 /* The settings column is centered in its own available space, not the app.
    Keep the scroll container independent of the content's optical alignment. */
-#root .df-app .df-settings-detail-shell > .df-settings-content { scrollbar-gutter: stable both-edges; container-type: inline-size; }
+#root .df-app .df-settings-detail-shell > .df-settings-content { scrollbar-gutter: stable both-edges; container: settings-content / inline-size; padding-inline: 24px; }
 #root .df-app .df-settings-content-column { width: min(100%, 620px); min-width: 0; margin-inline: auto; }
-#root .df-app .df-settings-content-title { margin: 0 0 24px; font: 600 22px/1.25 var(--paper-sans); color: var(--text-main); overflow-wrap: anywhere; }
+#root .df-app .df-settings-content-title { padding-inline: calc(var(--settings-row-inset, 16px) + 1px); margin: 0 0 24px; font: 600 22px/1.25 var(--paper-sans); color: var(--text-main); overflow-wrap: anywhere; }
 #root .df-app .df-settings-header { justify-content: space-between; min-width: 0; }
 #root .df-app .df-settings-header > .df-utility-head-leading { flex: 1 1 0; min-width: 0; }
 #root .df-app .df-settings-header-actions { display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto; }
@@ -20339,10 +20335,10 @@ body[data-navopath-base-theme="light"],
 #root .df-app .df-settings-plugin-heading:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
 
 /* Keep settings controls and navigation aligned while the outer workspace keeps its radius. */
-#root .df-app .df-settings-surface .df-settings-nav > .ui-choice-item { min-height: 36px; border-radius: var(--settings-radius-navigation); }
-#root .df-app .df-settings-surface .df-settings-home-plugin-nav > .ui-choice-item { border-radius: var(--settings-radius-navigation); }
-#root .df-app .df-settings-surface .df-settings-home-card { border-radius: var(--settings-radius-group); }
-#root .df-app .df-settings-surface .df-settings-profile-name-input { border-radius: var(--settings-radius-control); }
+#root .df-app .df-settings-surface .df-settings-nav > .ui-choice-item { min-height: 40px; border-radius: var(--radius-control); }
+#root .df-app .df-settings-surface .df-settings-home-plugin-nav > .ui-choice-item { border-radius: var(--radius-control); }
+#root .df-app .df-settings-surface .df-settings-home-card { border-radius: var(--radius-card); }
+#root .df-app .df-settings-surface .df-settings-profile-name-input { border-radius: var(--radius-control); }
 @media (orientation: landscape) and (min-width: 981px) {
   #root .df-app .df-settings-surface .df-settings-header h2 { font-size: 13px; font-weight: 500; color: var(--text-muted); }
 }

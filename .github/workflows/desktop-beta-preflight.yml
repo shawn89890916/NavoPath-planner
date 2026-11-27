@@ -4,7 +4,13 @@ on:
     branches: [desktop-beta, feat/metrics-2-desktop-beta, feat/metrics-review-beta-113, feat/metrics-history-beta-114, feat/metrics-full-history-beta-116, feat/metrics-storage-beta-117, feat/metrics-capture-beta-118, feat/metrics-breakdown-beta-119, feat/metrics-execution-beta-120, feat/plugin-settings-navigation-beta-121, feat/metrics-project-detail-beta-123, feat/metrics-ui-validation-beta-124, feat/connections-compact-beta-126, feat/settings-grouped-radius, feat/official-community-plugin-classification, fix/stability-beta-133, feat/intent-engine-pilot]
   pull_request:
     branches: [desktop-beta]
-    paths: ['src/reading/**', 'community-plugins/reading/**']
+    paths:
+      - 'src/components/SettingsControls.*'
+      - 'src/SettingsPanel.tsx'
+      - 'src/extensions/ExtensionSettings.*'
+      - 'scripts/settings-ui-browser.mjs'
+      - 'src/reading/**'
+      - 'community-plugins/reading/**'
   workflow_dispatch:
 permissions:
   contents: read
