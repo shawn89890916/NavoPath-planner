@@ -2,6 +2,12 @@
 
 ## 2026-11-27
 
+### 1.7.0 Beta 134
+
+#### 改进
+
+- 任务视图菜单试行轻量鼠标轨迹预测，提前准备 Tree 模块，保留原有悬停、键盘与点击交互。
+
 ### 1.7.0 Beta 133
 
 #### 修复
@@ -1328,6 +1334,12 @@
 # NavoPath Changelog
 
 ## 2026-11-27
+
+### 1.7.0 Beta 134
+
+#### Improvements
+
+- Pilot lightweight pointer prediction in the Tasks view menu to warm the Tree module ahead of hover, preserving existing focus and click behavior.
 
 ### 1.7.0 Beta 133
 

@@ -9668,11 +9668,11 @@ if (cached?.data && cached?.settings) {
               </>
             }
             />
-            <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu">
+            <AnchoredNarrowMenu open={shelfMenuOpen} anchorRef={shelfTitleRef} placement="below" focusOnOpen label={switchViewsLabel} onClose={() => setShelfMenuOpen(false)} className="df-shelf-view-menu" intentPreload={planningViewPromise ? undefined : preloadPlanningView}>
               {tourStep === "views" && <p className="df-shelf-view-guide" role="status">{lang === "zh" ? "选一个视图试试看。" : "Pick a view to try."}</p>}
               <Button variant="ghost" aria-pressed={!shelfView} onClick={() => selectShelfView("")}><UiListChecksIcon size={16} />{shelfTitle}</Button>
               {shelfViews.map((view) => <Button key={view.id} variant="ghost" aria-pressed={shelfViewId === view.id}
-                onPointerEnter={view === treeView ? preloadPlanningView : undefined} onFocus={view === treeView ? preloadPlanningView : undefined}
+                data-intent-preload={view === treeView ? "" : undefined} onPointerEnter={view === treeView ? preloadPlanningView : undefined} onFocus={view === treeView ? preloadPlanningView : undefined}
                 onClick={() => selectShelfView(view.id)}><CandidateViewIcon view={view} />{candidateViewName(view, lang)}</Button>)}
             </AnchoredNarrowMenu>
             {candidateDropActive && (
