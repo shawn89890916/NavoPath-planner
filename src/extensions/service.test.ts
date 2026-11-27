@@ -188,28 +188,17 @@ describe("extension installation and account reconciliation", () => {
     expect(f.settings().extensions.migratedShelfViews).toBe(true);
   });
 
-  it("retires the installed official List once without changing other views or planner data", async () => {
-    const matrix = officialCatalog.packages.find((entry) => entry.manifest.id === "matrix") as CatalogEntry;
-    const now = "2026-11-16T00:00:00.000Z";
-    const key = "official:list";
-    const f = fixture("preview", {
-      ...defaultExtensionPreferences(),
-      installed: {
-        [key]: { ...matrix, manifest: { ...matrix.manifest, id: "list", name: "List" }, key, sourceId: "official", enabled: true, installedAt: now },
-        "official:matrix": { ...matrix, key: "official:matrix", sourceId: "official", enabled: false, installedAt: now },
-      },
-    });
+  it("offers List as an optional plugin while respecting a prior removal", async () => {
+    const key = "official:list", now = "2026-11-16T00:00:00.000Z";
+    const f = fixture("list-tombstone", { ...defaultExtensionPreferences(), removed: { [key]: now } });
     const data = f.host.getData();
     await current.configure(f.host);
-    const preferences = current.getSnapshot().preferences;
-    expect(preferences.installed[key]).toBeUndefined();
-    expect(preferences.removed[key]).toBeTruthy();
-    expect(preferences.installed["official:matrix"]?.enabled).toBe(false);
+    expect(current.getSnapshot().preferences.installed[key]).toBeUndefined();
+    expect(current.getSnapshot().preferences.removed[key]).toBe(now);
     expect(f.host.getData()).toBe(data);
-    await current.configure(null);
-    await current.configure(f.host);
-    expect(current.getSnapshot().preferences.removed[key]).toBe(preferences.removed[key]);
-    expect(officialCatalog.packages.some((entry) => entry.manifest.id === "list")).toBe(false);
+    expect(officialCatalog.packages.some(entry => entry.manifest.id === "list")).toBe(true);
+    await current.install(getBundledExtension("list")!);
+    expect(current.getSnapshot().preferences.installed[key]?.enabled).toBe(true);
   });
 
   it("retires the old Tree and Activity history packages without modifying planner data", async () => {

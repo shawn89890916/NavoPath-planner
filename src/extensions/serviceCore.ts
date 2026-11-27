@@ -10,7 +10,7 @@ import type { CompactPluginPlacement } from "./model";
 
 type PendingValue = { owner: string; key: string; value: unknown; remove: boolean; id: string };
 const retiredCoreIds = new Set(["tree", "activity-history"]);
-const toolPageMigrations = new Set(["weather", "pomodoro", "schedule-templates", "daily-overview", "quick-capture", "class-timetable"]);
+const toolPageMigrations = new Set(["list", "weather", "pomodoro", "schedule-templates", "daily-overview", "quick-capture", "class-timetable"]);
 const OFFICIAL_RAW = "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/";
 const OFFICIAL_MIRROR = "https://navopath.com/extensions/";
 const SYNC_PLUGIN_ID = "super-productivity-sync";
@@ -185,7 +185,7 @@ export class ExtensionService {
       return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId, ...(entry.previewUrl ? { previewUrl: publicHttps(entry.previewUrl) } : {}), ...(previewUrls ? { previewUrls } : {}), ...(entry.iconUrl ? { iconUrl: publicHttps(entry.iconUrl) } : {}), ...(entry.downloads !== undefined ? { downloads: entry.downloads } : {}), ...(entry.publishedAt ? { publishedAt: entry.publishedAt } : {}) };
     });
     if (sourceId === "official") {
-      for (let i = entries.length - 1; i >= 0; i--) if (entries[i].manifest.id === "list" || retiredCoreIds.has(entries[i].manifest.id)) entries.splice(i, 1);
+      for (let i = entries.length - 1; i >= 0; i--) if (retiredCoreIds.has(entries[i].manifest.id)) entries.splice(i, 1);
       const { officialCatalog } = await import("./officialCatalog");
       for (const bundled of officialCatalog.packages) {
         if (!toolPageMigrations.has(bundled.manifest.id) && !nativeFeatureIds.includes(bundled.manifest.id)) continue;
@@ -435,7 +435,7 @@ export class ExtensionService {
       },
       registerNativePlanningView: (mode: NativeShelfViewMode, name: string, iconUrl?: string): Dispose => {
         guard();
-        const nativeModes: Record<string, NativeShelfViewMode> = { kanban: "kanban", matrix: "eisenhower", metrics: "metrics" };
+        const nativeModes: Record<string, NativeShelfViewMode> = { list: "list", kanban: "kanban", matrix: "eisenhower", metrics: "metrics" };
         if (!key.startsWith("official:") || nativeModes[key.slice("official:".length)] !== mode) throw new Error("Native planning views are reserved for matching official packages");
         return this.bridge(key).contribute("views", name, () => {}, { iconUrl, planningView: true, nativeMode: mode });
       },
@@ -511,7 +511,7 @@ export class ExtensionService {
       next.installed[key] = { key, sourceId: "official", manifest: entry.manifest, sha256: entry.sha256, downloadUrl, enabled, installedAt: now, updatedAt: now };
       changed = true;
     };
-    for (const id of ["list", ...retiredCoreIds]) {
+    for (const id of retiredCoreIds) {
       const key = `official:${id}`;
       if (!next.installed[key]) continue;
       delete next.installed[key];

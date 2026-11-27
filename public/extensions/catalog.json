@@ -43,7 +43,7 @@
         "repository": "https://github.com/shawn89890916/NavoPath-planner"
       },
       "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/cloud-drive-sync.navopackage.json",
-      "sha256": "98fd3e414fa4cb90565e3968f3112e6c98cebebb3959eecf4b0ea1a5108014f9"
+      "sha256": "278d3f17b0139a01a8c4e8a3ff6e752aa90fad5a60dbcddcd4a24fb5f33ab024"
     },
     {
       "manifest": {
@@ -323,6 +323,30 @@
         "light": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/linen-light.png",
         "dark": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/previews/linen-dark.png"
       }
+    },
+    {
+      "manifest": {
+        "id": "list",
+        "name": "List",
+        "description": "Review, filter and reorder tasks in a compact list.",
+        "author": "NavoPath",
+        "version": "1.1.0",
+        "kind": "plugin",
+        "apiVersion": 1,
+        "minAppVersion": "1.7.0-beta.132",
+        "platforms": [
+          "desktop",
+          "web",
+          "mobile"
+        ],
+        "main": "main.js",
+        "icon": "icon.svg",
+        "license": "MIT",
+        "repository": "https://github.com/shawn89890916/NavoPath-planner"
+      },
+      "downloadUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/packages/list.navopackage.json",
+      "sha256": "84a98fb8fb397231389f7c9281a7f239e807a8e1ca45870e99b2fa0c4e1d8307",
+      "iconUrl": "https://raw.githubusercontent.com/shawn89890916/NavoPath-planner/main/public/extensions/icons/list.svg"
     },
     {
       "manifest": {

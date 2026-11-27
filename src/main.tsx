@@ -187,6 +187,7 @@ const TIME_OPTIONS = Array.from({ length: ((TIMELINE_END - TIMELINE_START) * 60)
 const categoryOrder: Category[] = ["exam", "project", "essay", "materials", "uk", "us", "personal"];
 
 const candidateViewNames = {
+  list: ["列表", "List", UiListChecksIcon],
   eisenhower: ["矩阵", "Matrix", UiMatrixIcon],
   kanban: ["看板", "Kanban", UiKanbanIcon],
 } as const;

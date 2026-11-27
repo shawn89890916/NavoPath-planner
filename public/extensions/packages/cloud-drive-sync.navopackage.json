@@ -20,7 +20,7 @@
   "files": {
     "main.js": {
       "encoding": "utf8",
-      "data": "var t={onload(e){return e.app.internal.registerNativeFeature(\"cloud-drive-sync\")}};export{t as default};\n"
+      "data": "var r={onload(e){return e.app.internal.registerNativeFeature(\"cloud-drive-sync\")}};export{r as default};\n"
     },
     "LICENSE": {
       "encoding": "utf8",

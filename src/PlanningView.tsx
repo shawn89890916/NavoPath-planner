@@ -900,7 +900,7 @@ export default function PlanningView(props: {
 
   const viewFilteredTasks = useMemo(() => {
     return safeTasks.filter((task) => {
-      if (viewMode === "tree" && !includeCompleted && task.completed && task.id !== props.focusTaskId) return false;
+      if ((viewMode === "tree" || viewMode === "list") && !includeCompleted && task.completed && task.id !== props.focusTaskId) return false;
       if (filterProjects.length > 0 && !filterProjects.includes(String(task.projectId || ""))) return false;
       const uiStatus = normalizeWorkflowStatus(task);
       if (filterWorkflows.length > 0 && !filterWorkflows.includes(uiStatus)) return false;
@@ -1026,7 +1026,7 @@ export default function PlanningView(props: {
   const matrixQuadrant = (task: Task) => task.importance === "high"
     ? task.urgency === "high" ? "q1" : "q2"
     : task.urgency === "high" ? "q3" : "q4";
-  const planningContainer = (task: Task) => viewMode === "kanban" ? kanbanStatus(task) : matrixQuadrant(task);
+  const planningContainer = (task: Task) => viewMode === "list" ? "list" : viewMode === "kanban" ? kanbanStatus(task) : matrixQuadrant(task);
 
   const beginPlanningDrag = (event: React.PointerEvent, task: Task) => {
     if (event.button !== 0 || isEventDisplayTask(task)) return;
@@ -1143,7 +1143,7 @@ export default function PlanningView(props: {
           const sequence = viewFilteredTasks.filter((item) => !isEventDisplayTask(item) && planningContainer(item) === sourceContainer);
           const targetId = drop.taskId || orderPlanningTasks(sequence).filter((item) => item.id !== task.id).at(-1)?.id;
           if (targetId) { rememberDragLanding(task.id, "planning"); reorderPlanningTasks(task.id, targetId, drop.position === "before" ? "before" : "after", sequence); }
-        } else if (drop) {
+        } else if (drop && viewMode !== "list") {
           rememberDragLanding(task.id, "planning");
           if (viewMode === "kanban") {
             props.onTaskUpdate(task.id, workflowStatusForPatch(drop.container === "done" ? "done" : "backlog"));
@@ -1689,7 +1689,7 @@ export default function PlanningView(props: {
   };
 
   const projectFilters = (<>
-              {viewMode === "tree" && (
+              {(viewMode === "tree" || viewMode === "list") && (
               <div className="df-filter-popover-anchor">
                 <button
                   type="button"
@@ -1910,7 +1910,7 @@ export default function PlanningView(props: {
                 </header>
               )}
             <div className="df-tree-wrap">
-          {viewMode === "tree" && activeFilterChips.length > 0 && (
+          {(viewMode === "tree" || viewMode === "list") && activeFilterChips.length > 0 && (
             <div className="df-active-filter-bar" role="region" aria-label={props.lang === "zh" ? "Active filters" : "Active filters"}>
               {activeFilterChips.map((chip) => (
                 <button
@@ -1994,6 +1994,19 @@ export default function PlanningView(props: {
               })}
             </div>;
           })()}
+
+          {viewMode === "list" && <div className="df-kanban-card-list" data-planning-group="list">
+            {orderPlanningTasks(viewFilteredTasks).map(task => <PlanningCandidateCard key={task.id} as="div" task={task} lang={props.lang}
+              projectColor={isEventDisplayTask(task) ? categories[task.category]?.color : projectColor(task.projectId)}
+              dragState={planningDragTask?.task.id === task.id ? "source-placeholder" : undefined}
+              dataAttrs={{ "planning-task-id": task.id, kind: isEventDisplayTask(task) ? "event" : undefined }}
+              onPointerDown={event => beginPlanningDrag(event, task)} onClick={() => openTaskFromPlanning(task)}
+              onToggle={() => props.onTaskUpdate(task.id, workflowStatusForPatch(kanbanStatus(task) === "done" ? "backlog" : "done"))}
+              meta={<span className="df-shelf-task-meta"><span>{projectName(task.projectId)}</span>{task.dueDate && <time dateTime={task.dueDate}>{task.dueDate.slice(5)}</time>}</span>}
+              actions={<TaskActions>{scheduleButton(task)}</TaskActions>}>
+              {scheduleSubtasks(task)}
+            </PlanningCandidateCard>)}
+          </div>}
 
           {viewMode === "tree" && (
           <div
