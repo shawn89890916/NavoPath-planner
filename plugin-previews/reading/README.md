@@ -1,3 +1,5 @@
 # Reading v2 preview
 
 Unpublished, SDK-only migration candidate. Build with `node scripts/build-plugin-preview.mjs reading <output-file>`. The production catalog and existing Reading v1 remain unchanged. The v2 namespace is separate. A read-only same-owner legacy snapshot can be explicitly copied using create-only CAS; existing v2 data is never overwritten by import. Legacy data remains intact. The preview includes explicit conflict comparison and resolution and guarded undo of the latest book edit while the shelf is mounted. Do not promote until mixed-version preference/catalog compatibility, undo parity and real desktop/browser checks are complete; legacy clients can still write their own v1 library. No host-private import or separate timer collector is used.
+
+Stage the independent catalog with `node scripts/build-plugin-preview.mjs --catalog <staging-directory> https://navopath.com/extensions-preview/`. This writes a protocol-2 catalog and immutable content-addressed packages outside the live V1 directory. It does not upload, install, or update an existing plugin.

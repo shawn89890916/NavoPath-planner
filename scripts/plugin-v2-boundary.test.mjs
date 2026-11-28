@@ -25,7 +25,9 @@ test("v2 example and all registered v2 package sources obey the static boundary"
   await checkV2Boundary();
 });
 
-import { buildPluginPreview } from "./build-plugin-preview.mjs";
+import { buildPluginPreview, buildPreviewCatalog } from "./build-plugin-preview.mjs";
+import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { readPackage } from "../src/extensions/packages.ts";
 test("Reading v2 builds independently of the host", async () => {
   const a=await buildPluginPreview("reading"),b=await buildPluginPreview("reading");
@@ -33,4 +35,20 @@ test("Reading v2 builds independently of the host", async () => {
   const pkg=await readPackage(new TextEncoder().encode(a.data));
   assert.equal(pkg.manifest.apiVersion,2);
   assert.equal(pkg.manifest.id,"reading");
+});
+
+test("protocol 2 release artifacts use a separate catalog and immutable hashed paths",async()=>{
+  const first=await buildPreviewCatalog("https://navopath.com/extensions-preview/",["reading"]);
+  const second=await buildPreviewCatalog("https://navopath.com/extensions-preview/",["reading"]);
+  assert.deepEqual(first,second);
+  assert.equal(first.catalog.version,2);
+  const entry=first.catalog.packages[0],artifact=first.artifacts[0];
+  assert.equal(entry.manifest.apiVersion,2);
+  assert.equal(entry.sha256,createHash("sha256").update(artifact.data).digest("hex"));
+  assert.equal(entry.downloadUrl,"https://navopath.com/extensions-preview/"+artifact.filename);
+  assert.ok(artifact.filename.includes(entry.sha256));
+  const live=JSON.parse(await readFile(new URL("../public/extensions/catalog.json",import.meta.url),"utf8"));
+  assert.equal(live.version,1);
+  assert.ok(live.packages.every(item=>item.manifest.apiVersion===1));
+  assert.equal(live.packages.find(item=>item.manifest.id==="reading").manifest.apiVersion,1);
 });
