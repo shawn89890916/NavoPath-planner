@@ -29,6 +29,7 @@ export const extensionService = {
     if (revision === configureRevision) await current.configure(host);
   },
   getConfig: (key: string) => implementation?.getConfig(key) ?? {},
+  readingWeRead: async (action: import("../reading/wereadConnection").WeReadAction, candidate?: string) => (await engine()).readingWeRead(action, candidate),
   readReadingLibrary: async (account: string) => (await engine()).readReadingLibrary(account),
   writeReadingLibrary: async (account: string, value: unknown) => (await engine()).writeReadingLibrary(account, value),
   getActiveThemeDescriptor: () => implementation?.getActiveThemeDescriptor(),

@@ -377,6 +377,9 @@ app.on("window-all-closed", () => {
   }
 });
 
+const { createWeReadConnection } = require("./weread-connection.cjs");
+const weReadConnection = createWeReadConnection({ directory: path.join(app.getPath("userData"), "connection-secrets"), safeStorage });
+handleTrusted("reading:weread", (_event, scope, action, candidate) => weReadConnection.run(scope, action, candidate));
 handleTrusted("auth-storage:get", (_event, key) => readAuthStorage(key));
 handleTrusted("auth-storage:set", (_event, key, value) => writeAuthStorage(key, value));
 handleTrusted("auth-storage:remove", (_event, key) => removeAuthStorage(key));

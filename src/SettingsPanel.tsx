@@ -39,6 +39,7 @@ import { uid } from "./utils/ids";
 const localStorage = getWorkspaceStorage();
 
 const AiProviderSettings = lazy(() => import("./components/AiProviderSettings"));
+const ReadingSettings = lazy(() => import("./reading/ReadingSettings"));
 
 const ProactiveAssistantSettings = lazy(() => import("./components/ProactiveAssistantSettings").then((module) => ({ default: module.ProactiveAssistantSettings })));
 
@@ -1010,7 +1011,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
               </SettingDisclosure>
             </SettingSection>}
             {settingsTarget.category === "integrations" && <Suspense fallback={null}><ConnectionProviders key={authEmail} lang={lang} anchor={settingsTarget.anchor} onSelect={anchor => navigateSettings({ category: "integrations", anchor })} errorMessage={calendarFeedErrorMessage} caldav={<CalDavManager lang={lang} errorMessage={calendarFeedErrorMessage} />} externalCalendar={<ExternalCalendarManager lang={lang} />} mcp={<McpTokenManager lang={lang} />} bridge={<SyncBridgeManager lang={lang} />} /></Suspense>}
-            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings inlineSettings={{ "official:cloud-drive-sync": <SettingSection anchor="sync-bridge" title={lang === "zh" ? "云盘桥接" : "Cloud folder bridge"}><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></SettingSection>, "official:navo-ai": <>{/* AI settings follow the plugin owner. */}            <SettingSection title={lang === "zh" ? "模型服务" : "Model service"} description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
+            {settingsTarget.category === "plugins" && <Suspense fallback={null}><ExtensionSettings inlineSettings={{ "official:reading": <Suspense fallback={null}><ReadingSettings key={authEmail} lang={lang} active={nativeFeatureActive(extensionSnapshot, "reading")} /></Suspense>, "official:cloud-drive-sync": <SettingSection anchor="sync-bridge" title={lang === "zh" ? "云盘桥接" : "Cloud folder bridge"}><Suspense fallback={null}><SyncBridgeManager lang={lang} /></Suspense></SettingSection>, "official:navo-ai": <>{/* AI settings follow the plugin owner. */}            <SettingSection title={lang === "zh" ? "模型服务" : "Model service"} description={lang === "zh" ? "模型由服务端网关自动路由；本地估时、分类与排程在 AI 不可用时仍可工作。" : "Models are routed by the server gateway; local estimation, classification, and scheduling still work when AI is unavailable."}>
               <SettingRow layout="stacked" anchor="ai-provider" title={lang === "zh" ? "AI 提供商与密钥" : "AI provider and key"} description={lang === "zh" ? "支持 DeepSeek、SiliconFlow、OpenAI、Anthropic、GLM 和通义千问。" : "Supports DeepSeek, SiliconFlow, OpenAI, Anthropic, GLM, and Qwen."} control={<Suspense fallback={null}><AiProviderSettings lang={lang} onSave={onSave} /></Suspense>} />
               <SettingRow anchor="ai-reasoning" title={lang === "zh" ? "思考模式" : "Reasoning mode"} control={<SettingSelect value={settings.reasoningMode || "instant"} ariaLabel={lang === "zh" ? "思考模式" : "Reasoning mode"} onChange={(value) => onSave({ reasoningMode: value as Settings["reasoningMode"] })} options={[
                 { value: "instant", label: lang === "zh" ? "即时" : "Instant" },
