@@ -31,6 +31,8 @@ export function useUnifiedDrag(): UnifiedDragController {
     const startY = event.clientY;
     const threshold = config.threshold ?? 5;
     let active = false;
+    let frame = 0;
+    let latest = { x: startX, y: startY };
     let holdReady = config.requireHoldMs && event.pointerType === "touch" ? false : true;
     let holdCancelled = false;
     let holdTimer: number | undefined;
@@ -68,23 +70,31 @@ export function useUnifiedDrag(): UnifiedDragController {
       }
       if (holdCancelled) return;
       if (!active && distance < threshold) return;
+      const next = latest = { x: moveEvent.clientX, y: moveEvent.clientY };
       if (!active) {
         active = true;
         moveEvent.preventDefault();
         try { sourceElement.setPointerCapture(pointerId); } catch { /* ignore */ }
         sourceElement.classList.add(SOURCE_CLASS);
         document.body.classList.add(BODY_CLASS);
-        const snap: UnifiedDragSnapshot = { ...baseSnapshot, pointer: { x: moveEvent.clientX, y: moveEvent.clientY } };
+        const snap: UnifiedDragSnapshot = { ...baseSnapshot, pointer: next };
         setSnapshot(snap);
-         config.onActivate?.(snap);
+        config.onActivate?.(snap);
+      } else if (!frame) {
+        // Only the visual snapshot is frame-coalesced. Hit testing and
+        // edge scrolling retain every actual pointer event.
+        frame = window.requestAnimationFrame(() => {
+          frame = 0;
+          setSnapshot({ ...baseSnapshot, pointer: latest });
+        });
       }
       moveEvent.preventDefault();
-      const next = { x: moveEvent.clientX, y: moveEvent.clientY };
-       setSnapshot((current) => current ? { ...current, pointer: next } : current);
       config.onMove?.(next, { ...baseSnapshot, pointer: next });
     };
 
     const cleanup = () => {
+      window.cancelAnimationFrame(frame);
+      frame = 0;
       clearHold();
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
