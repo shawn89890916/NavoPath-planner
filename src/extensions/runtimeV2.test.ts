@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { V2Capability, V2ContributionKind, V2ContributionMap, V2TaskGroup } from "./sdkV2";
 import { activateV2, createV2Session, type V2HostAdapter } from "./runtimeV2";
+import samplePlugin from "../../integrations/navopath-plugin-template/examples/protocol-v2";
 
 function mockHost(...capabilities: V2Capability[]) {
   let current = true;
@@ -29,6 +30,12 @@ function mockHost(...capabilities: V2Capability[]) {
     manifest: { apiVersion: 2 as const, permissions: capabilities } };
 }
 describe("protocol 2 contract (mock host; not production negotiation)", () => {
+  it("runs the example authored against the generated public SDK", async () => {
+    const f = mockHost("tasks.read", "tasks.write", "ui.toast", "ui.tasksGroup", "ui.workspace", "ui.planning", "ui.settings", "metrics.provider");
+    const loaded = await activateV2(samplePlugin, f.manifest, f.host);
+    expect(f.registry.size).toBe(5);
+    await loaded.dispose(); expect(f.registry.size).toBe(0);
+  });
   it("rejects unsupported or ungranted capabilities before activation", () => {
     const f = mockHost("tasks.read");
     expect(() => createV2Session({ apiVersion: 2, permissions: ["storage.read"] }, f.host)).toThrow("storage.read");

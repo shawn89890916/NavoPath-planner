@@ -17,3 +17,10 @@ SDK registrations dispose automatically. Use `ctx.ui.registerPage` to register a
 mobile. Check availability instead of assuming a desktop environment.
 
 MIT licensed. Never commit API keys, account exports, node_modules or app bundles.
+
+## Protocol 2 preview
+
+`examples/protocol-v2.ts` demonstrates the experimental type-only public
+contract in `api/v2.d.ts`. It is exercised by host contract tests, not by
+installed clients. Keep `manifest.json` on API v1; do not publish the example
+as a working v2 package until host integration is available.

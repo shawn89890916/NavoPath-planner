@@ -240,3 +240,22 @@ ships the same declarations in `api/` plus this guide as `API.md`; editors can
 use `import("./api").PluginContext` in JSDoc without installing the host.
 
 `calendar.registerBackground(predicate)` registers ownership of fixedCourse calendar backgrounds. Disposing hides backgrounds without deleting them. Backgrounds never block task placement or compress task columns.
+
+## Experimental protocol 2 (development preview)
+
+The generated type-only SDK now includes `PluginContextV2` in `api/v2.d.ts`.
+The contract, reference activation layer and mock-host tests are under
+`src/extensions/sdkV2.ts`, `runtimeV2.ts` and `runtimeV2.test.ts`.
+The `integrations/navopath-plugin-template/examples/protocol-v2.ts` example
+runs in those tests. It is **not an installable plugin yet**: production
+manifest validation continues to accept only apiVersion 1 until the real
+host adapters, data guarantees and compatibility checks are wired. Keep
+existing plugin packages on v1. The protocol number is independent of the
+SDK package semver. No SDK release or catalog publication has occurred.
+
+The v2 surface is a scoped, revocable activation with declared capabilities;
+there is no raw app/internal, planner state, arbitrary desktop IPC or host
+module import. The static boundary check is a development guard, not a
+security sandbox. The proposed storage results distinguish unavailable,
+conflict and pending from committed, but production atomic revision checks
+are not implemented yet. Do not store credentials in ordinary plugin data.
