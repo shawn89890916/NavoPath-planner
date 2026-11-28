@@ -1,12 +1,20 @@
 # NavoPath 更新日志
 
+## 2026-11-28
+
+### 1.7.0 Beta 139
+
+#### 改进
+
+- 竖屏和贴边栏的任务入口改为侧滑工作区，保留可滚动的时间轴和原有任务块；支持视图切换、连续拖拽安排及触屏边缘手势。
+
 ## 2026-11-27
 
 ### 1.7.0 Beta 138
 
 #### 改进
 
-- 竖屏和贴边栏的任务入口改为侧滑工作区，保留可滚动的时间轴和原有任务块；支持视图切换、连续拖拽安排及触屏边缘手势。
+- 拖拽时保留落点不变的邻项位移动画，限制布局计算范围；时间轴复用排程列表和画布宽度，减少拖动时冲突布局重算；月视图滚动使用二分定位。任务块样式与真实拖放规则保持不变。
 
 ### 1.7.0 Beta 137
 
@@ -1357,13 +1365,21 @@
 
 # NavoPath Changelog
 
+## 2026-11-28
+
+### 1.7.0 Beta 139
+
+#### Improvements
+
+- Replace the portrait and Dock task entry with a sliding workspace, keeping the timeline scrollable and existing task-block appearance; switch views, drag tasks to schedule, and use touch edge gestures.
+
 ## 2026-11-27
 
 ### 1.7.0 Beta 138
 
 #### Improvements
 
-- Replace the portrait and Dock task entry with a sliding workspace, keeping the timeline scrollable and existing task-block appearance; switch views, drag tasks to schedule, and use touch edge gestures.
+- Retain unchanged sibling translations during dragging and bound projection work; reuse scheduled lists and canvas width, avoid unnecessary conflict layout recomputation, and use binary lookup for month scrolling. Preserve task styling and actual drop rules.
 
 ### 1.7.0 Beta 137
 

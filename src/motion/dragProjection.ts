@@ -1,13 +1,13 @@
 import { MOTION, MOTION_EASE, effectiveMotionPreference } from "../motion";
 
-export function projectedOffsets(count: number, source: number, target: number, position: "before" | "after", extent: number) {
+export function projectedOffsets(count: number, source: number, target: number, position: "before" | "after", extent: number, limit = Infinity) {
   const result = new Map<number, number>();
   if (source === target || source < 0 || target < 0 || target >= count || source >= count) return result;
   const end = target + (position === "after" ? 1 : 0);
-  for (let i = 0; i < count; i++) {
-    if (source < end && i > source && i < end) result.set(i, -extent);
-    if (source > end && i >= end && i < source) result.set(i, extent);
-  }
+  const first = source < end ? source + 1 : end;
+  const last = source < end ? end : source;
+  if (last - first > limit) return result;
+  for (let i = first; i < last; i++) result.set(i, source < end ? -extent : extent);
   return result;
 }
 
@@ -36,8 +36,9 @@ export function createDragProjection(source: HTMLElement) {
   let target: HTMLElement | undefined;
   let position: string | undefined;
   const active = new Map<HTMLElement, Animation>();
-  const clear = () => { for (const animation of active.values()) animation.cancel(); active.clear(); };
-  const logical = <T,>(read: () => T): T => readLogicalLayout(active.values(), read);
+  const destinations = new Map<HTMLElement, number>();
+  const clear = () => { for (const animation of active.values()) animation.cancel(); active.clear(); destinations.clear(); };
+  const logical = <T,>(read: () => T): T => active.size ? readLogicalLayout(active.values(), read) : read();
   const render = () => {
     frame = 0;
     const preference = effectiveMotionPreference(window);
@@ -50,8 +51,7 @@ export function createDragProjection(source: HTMLElement) {
       const rect = from.getBoundingClientRect();
       if (!rect.height) return result;
       const gap = parseFloat(getComputedStyle(parent).rowGap) || 0;
-      const offsets = projectedOffsets(siblings.length, siblings.indexOf(from), siblings.indexOf(to), position, rect.height + gap);
-      if (offsets.size > (preference === "rich" ? 24 : 12)) return result;
+      const offsets = projectedOffsets(siblings.length, siblings.indexOf(from), siblings.indexOf(to), position, rect.height + gap, preference === "rich" ? 24 : 12);
       for (const [index, dy] of offsets) {
         const node = siblings[index];
         const box = node.getBoundingClientRect();
@@ -60,17 +60,24 @@ export function createDragProjection(source: HTMLElement) {
       return result;
     });
     if (preference === "off") { clear(); return; }
-    const nodes = new Set([...active.keys(), ...next.keys()]);
-    for (const node of nodes) {
+    // Reconcile confirmed layouts incrementally. Do not restart unchanged
+    // siblings or interleave style reads with animation writes.
+    const changes: { node: HTMLElement; prior?: Animation; current: string; dy: number }[] = [];
+    for (const node of new Set([...active.keys(), ...next.keys()])) {
       const prior = active.get(node);
-      const current = prior ? getComputedStyle(node).translate : "0px 0px";
+      const dy = next.get(node) || 0;
+      if (prior && node.isConnected && destinations.get(node) === dy) continue;
+      changes.push({ node, prior, dy, current: prior && node.isConnected ? getComputedStyle(node).translate : "0px 0px" });
+    }
+    for (const { node, prior, current, dy } of changes) {
       prior?.cancel();
       active.delete(node);
+      destinations.delete(node);
       if (!node.isConnected || !node.animate) continue;
-      const dy = next.get(node) || 0;
       const animation = node.animate([{ translate: current === "none" ? "0px 0px" : current }, { translate: "0px " + dy + "px" }], { duration: MOTION.base, easing: MOTION_EASE, fill: "forwards" });
       active.set(node, animation);
-      if (!dy) void animation.finished.then(() => { if (active.get(node) === animation) { animation.cancel(); active.delete(node); } }, () => {});
+      destinations.set(node, dy);
+      if (!dy) void animation.finished.then(() => { if (active.get(node) === animation) { animation.cancel(); active.delete(node); destinations.delete(node); } }, () => {});
       else void animation.finished.catch(() => {});
     }
   };

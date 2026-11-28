@@ -4,6 +4,8 @@ on:
     branches: [desktop-beta]
     paths:
       - 'src/motion/intent*'
+      - 'src/motion/dragProjection*'
+      - 'scripts/drag-projection-browser.mjs'
       - 'src/components/AnchoredNarrowMenu.tsx'
       - 'src/main.tsx'
       - 'scripts/intent-ui-browser.mjs'
