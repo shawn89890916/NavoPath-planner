@@ -12,7 +12,7 @@ const plugin: PluginModuleV2 = {
         const result = await ctx.tasks.execute({
           kind: "create", operationId: crypto.randomUUID(), title: "Sample task",
         });
-        if (result.status !== "committed") ctx.ui.toast(result.message);
+        if ("message" in result) ctx.ui.toast(result.message);
       },
     });
     ctx.ui.registerWorkspacePage({

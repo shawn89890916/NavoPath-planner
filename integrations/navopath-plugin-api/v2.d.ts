@@ -1,6 +1,6 @@
 /**
  * Experimental protocol-2 contract. Production preview supports only approved
- * catalog packages requesting the implemented read-only/page capabilities.
+ * catalog packages requesting the implemented capabilities.
  * No host-internal types or runtime dependencies are exported from this file.
  */
 export type V2Dispose = () => void | Promise<void>;
@@ -24,6 +24,7 @@ export interface V2Task {
   readonly projectId?: string;
   readonly dueDate?: string;
   readonly estimateMinutes?: number;
+  readonly updatedAt?: string;
 }
 export interface V2TaskQuery {
   readonly ids?: readonly string[];
@@ -32,10 +33,11 @@ export interface V2TaskQuery {
 export type V2TaskCommand =
   | { readonly kind: "create"; readonly operationId: string; readonly title: string;
       readonly projectId?: string; readonly estimateMinutes?: number; readonly entityId?: string }
-  | { readonly kind: "complete"; readonly operationId: string; readonly taskId: string; readonly completed: boolean }
-  | { readonly kind: "rename"; readonly operationId: string; readonly taskId: string; readonly title: string };
+  | { readonly kind: "complete"; readonly operationId: string; readonly taskId: string; readonly completed: boolean; readonly expectedUpdatedAt?: string }
+  | { readonly kind: "rename"; readonly operationId: string; readonly taskId: string; readonly title: string; readonly expectedUpdatedAt?: string };
 export type V2TaskResult =
-  | { readonly status: "committed"; readonly task: V2Task }
+  /** Accepted by the core local mutation/history path; cloud sync may still be pending. */
+  | { readonly status: "accepted" | "committed"; readonly task: V2Task }
   | { readonly status: "conflict" | "unavailable"; readonly message: string };
 export interface V2ActivityQuery {
   /** Half-open ISO timestamp interval; actual and planned records are separate. */

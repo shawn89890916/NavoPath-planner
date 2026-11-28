@@ -53,7 +53,7 @@ describe("protocol 2 production preview bridge", () => {
       },
     } }));
     expect(ctx).not.toHaveProperty("app");
-    expect(await ctx.tasks.list()).toEqual([{ id: "one", title: "Read", completed: false, projectId: "project", dueDate: undefined, estimateMinutes: 30 }]);
+    expect(await ctx.tasks.list()).toEqual([{ id: "one", title: "Read", completed: false, projectId: "project", dueDate: undefined, estimateMinutes: 30, updatedAt: undefined }]);
     expect((await ctx.tasks.list({ ids: ["two"], includeCompleted: true }))[0].id).toBe("two");
     const projected = await ctx.tasks.list();
     (projected[0] as { title: string }).title = "edited";

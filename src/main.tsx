@@ -3393,6 +3393,16 @@ if (cached?.data && cached?.settings) {
     }
     if (!extensionHostRef.current) extensionHostRef.current = {
       getData: () => dataRef.current!, saveData: next => saveData(next,"plugin"),
+      executePluginTask: async (owner, command, active) => {
+        const scope = loadedWorkspaceKeyRef.current;
+        const { executePluginTask } = await import("./extensions/pluginTaskCommands");
+        return executePluginTask(owner, command, {
+          current: () => dataRef.current,
+          active: () => active() && scope === loadedWorkspaceKeyRef.current,
+          now: () => workspaceNow().toISOString(), today: todayIso,
+          save: (next, kind) => saveTaskOperation(next, kind, { source: "plugin" }),
+        });
+      },
       getSettings: () => settingsRef.current!, saveSettings: patch => saveSettings(patch),
       getAccountId: () => authStateRef.current?.user?.id || null,
       toast: message => showToast(message),

@@ -12,6 +12,8 @@ export interface V2PreviewBridge {
   registerTaskGroup(group: ExtensionTaskGroup): Dispose;
   register(kind: "views" | "settingsPages", contribution: ExtensionContribution): Dispose;
 }
+import { projectPluginTask } from "./pluginTaskCommands";
+
 function listTasks(host: ExtensionHost, query?: V2TaskQuery): readonly V2Task[] {
   if (query !== undefined && (!query || typeof query !== "object" ||
     (query.ids !== undefined && (!Array.isArray(query.ids) || query.ids.some(id => typeof id !== "string"))) ||
@@ -20,11 +22,7 @@ function listTasks(host: ExtensionHost, query?: V2TaskQuery): readonly V2Task[] 
   }
   const ids = query?.ids ? new Set(query.ids) : undefined;
   return host.getData().tasks.filter(task => (!ids || ids.has(task.id)) && (query?.includeCompleted || !task.completed))
-    .map(task => ({
-      id: task.id, title: task.title, completed: task.completed, projectId: task.projectId,
-      dueDate: task.dueDate || undefined,
-      estimateMinutes: Number.isFinite(task.estimatedHours) ? task.estimatedHours! * 60 : undefined,
-    }));
+    .map(projectPluginTask);
 }
 
 /** Protocol 2 preview uses the real extension view registry, not native feature IDs.
@@ -46,8 +44,9 @@ export async function loadV2Preview(
   const registered = new Set<V2ContributionKind>();
   const adapter: V2HostAdapter = {
     owner: bridge.key, platform: bridge.platform, language: bridge.host.getSettings().language,
-    supported: new Set(v2PreviewCapabilities), granted: new Set(permissions), isCurrent: bridge.isCurrent,
-    tasks: { list: async query => listTasks(bridge.host, query) },
+    supported: new Set(v2PreviewCapabilities.filter(capability => capability !== "tasks.write" || !!bridge.host.executePluginTask)), granted: new Set(permissions), isCurrent: bridge.isCurrent,
+    tasks: { list: async query => listTasks(bridge.host, query),
+      execute: bridge.host.executePluginTask ? (command, signal) => bridge.host.executePluginTask!(bridge.key, command, () => !signal.aborted && bridge.isCurrent()) : undefined },
     contribute(kind, id, value) {
       if (kind === "ui.tasksGroup") return bridge.registerTaskGroup({ ...(value as V2TaskGroup), id, owner: bridge.key });
       if (kind !== "ui.workspace" && kind !== "ui.planning" && kind !== "ui.settings") {

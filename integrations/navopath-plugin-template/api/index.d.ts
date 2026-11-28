@@ -1,5 +1,5 @@
 import type { CalendarEvent, Language, PlannerData, Project, Settings, Task } from "./models";
-import type { V2TaskGroup } from "./v2";
+import type { V2TaskCommand, V2TaskGroup, V2TaskResult } from "./v2";
 import type { TimerModeProvider } from "./timer";
 
 import type { ExtensionManifest, ExtensionPlatform, ExtensionPreferences, CatalogEntry, ExtensionKind } from "./extensions";
@@ -27,6 +27,8 @@ export interface ExtensionSnapshot {
 }
 export interface ExtensionHost {
   getData(): PlannerData; saveData(data: PlannerData): void | Promise<void>;
+  /** Host-only protocol 2 command adapter; never copied into the v2 plugin context. */
+  executePluginTask?(owner: string, command: V2TaskCommand, isCurrent: () => boolean): Promise<V2TaskResult>;
   getSettings(): Settings; saveSettings(patch: Partial<Settings>): void | Promise<void>;
   toast(message: string): void; getAccountId(): string | null;
   superProductivity?: { createPairingCode(): Promise<{ code: string; expiresAt: string }>; request(path: string, method?: "GET" | "POST" | "DELETE", body?: unknown): Promise<any>; commitBatch?(pairId: string, before: Pick<PlannerData, "tasks" | "projects">, after: Pick<PlannerData, "tasks" | "projects">): Promise<void> };

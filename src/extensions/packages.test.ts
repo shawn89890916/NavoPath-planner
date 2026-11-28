@@ -85,7 +85,7 @@ describe("community extension packages", () => {
     pkg.manifest.permissions = ["tasks.read", "ui.workspace", "ui.planning", "ui.settings", "ui.toast"];
     expect(parsePackage(strToU8(JSON.stringify(pkg))).manifest.apiVersion).toBe(2);
     for (const patch of [
-      { permissions: ["tasks.write"] }, { permissions: ["storage.read"] },
+      { permissions: ["activity.read"] }, { permissions: ["storage.read"] },
       { permissions: ["tasks.read", "tasks.read"] }, { permissions: undefined },
       { desktop: "native.js" }, { styles: "styles.css" }, { apiVersion: 3 },
       { kind: "theme" }, { settingsOptions: [] },
