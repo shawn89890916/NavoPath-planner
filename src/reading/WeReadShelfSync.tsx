@@ -12,9 +12,9 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
   const [choices,setChoices]=useState<Record<string,string>>({}),[search,setSearch]=useState(""),[limit,setLimit]=useState(60),[autoImport,setAutoImport]=useState(false);
 
   const current=useRef({library,mutate,busy});current.current={library,mutate,busy};
-  const lock=useRef(false),epoch=useRef(0),last=useRef(0),connectionRef=useRef(""),previewOpen=useRef(false);previewOpen.current=!!preview;
+  const lock=useRef(false),epoch=useRef(0),last=useRef(0),previewOpen=useRef(false);previewOpen.current=!!preview;
   const tr=(a:string,b:string)=>zh?a:b;
-  const request=async(action:"status"|"shelf"|"progress"|"statistics",arg?:string)=>extensionService.readingWeRead(action,arg,account);
+  const request=async(action:"status"|"shelf"|"progress",arg?:string)=>extensionService.readingWeRead(action,arg,account);
   async function run(open=false){
     if(lock.current||current.current.busy||!weReadDesktopAvailable())return;
     lock.current=true;const e=epoch.current;setLoading(true);setError("");
@@ -24,7 +24,6 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
       if(!result.ok){if(result.code==="not-connected"){setConnected(false);setPreview(null);}else setError(result.code);return;}
       if(!result.shelf||!result.connectionId)throw Error("Invalid shelf");
       const connectionId=result.connectionId,items=result.shelf;
-      if(connectionRef.current!==connectionId)connectionRef.current=connectionId;
       setConnected(true);setSynced(result.checkedAt??new Date().toISOString());last.current=Date.now();
       let next=current.current.library;
       if(next.books.some(b=>b.weread?.connectionId===connectionId)||next.wereadPreferences?.connectionId===connectionId){
@@ -50,14 +49,14 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
   useEffect(()=>{
     const e=++epoch.current;lock.current=false;last.current=0;setConnected(false);setPreview(null);setError("");setLoading(false);setSynced("");
     if(!weReadDesktopAvailable())return;
-    const status=()=>void request("status").then(result=>{if(e!==epoch.current)return;if(result.ok){setConnected(result.connected);if(result.connected&&current.current.library.books.some(b=>b.weread)&&!previewOpen.current)void run();else if(!result.connected)setPreview(null);}}).catch(()=>{});
+    const status=()=>void request("status").then(result=>{if(e!==epoch.current)return;if(result.ok){setConnected(result.connected);if(result.connected&&(current.current.library.books.some(b=>b.weread)||current.current.library.wereadPreferences?.autoImport)&&!previewOpen.current)void run();else if(!result.connected)setPreview(null);}}).catch(()=>{});
     status();
     const focus=()=>{if(!previewOpen.current&&Date.now()-last.current>5*60_000)status();};
     const changed=()=>{setPreview(null);setSynced("");last.current=0;status();};
     window.addEventListener("focus",focus);window.addEventListener(WEREAD_CONNECTION_EVENT,changed);
     return()=>{++epoch.current;lock.current=false;window.removeEventListener("focus",focus);window.removeEventListener(WEREAD_CONNECTION_EVENT,changed);};
   },[account]);
-  useEffect(()=>{if(connected&&!preview&&Date.now()-last.current>5*60_000&&current.current.library.books.some(b=>b.weread))void run();},[refreshToken]);
+  useEffect(()=>{if(connected&&!preview&&Date.now()-last.current>5*60_000&&(current.current.library.books.some(b=>b.weread)||current.current.library.wereadPreferences?.autoImport))void run();},[refreshToken]);
   const unlinked=preview?.items.filter(item=>!library.books.some(book=>sourceMatches(book,preview.connectionId,item)))??[];
   const filtered=unlinked.filter(item=>(item.title+" "+item.author).toLocaleLowerCase().includes(search.toLocaleLowerCase()));const visible=filtered.slice(0,limit);
   const selected=Object.keys(choices).length;
