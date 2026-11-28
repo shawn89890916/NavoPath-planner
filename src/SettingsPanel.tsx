@@ -469,6 +469,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
     <IconButton icon={<UiFilterIcon size={16} />} label={lang === "zh" ? "仅显示已修改项" : "Modified settings only"} aria-pressed={modifiedOnly} onClick={() => setModifiedOnly(value => !value)} />
   </div>;
   const searchResults = <div className="df-settings-search-results">
+    {(modifiedOnly || navigationResults.length > 0 || matchingPluginPages.length > 0) && <SettingSection>
     {modifiedOnly && <SettingRow title={lang === "zh" ? "仅显示已修改项" : "Modified settings only"} description={lang === "zh" ? "仅包含可安全恢复的已注册偏好。" : "Includes only registered, safely resettable preferences."} control={<SettingActionButton onClick={() => setModifiedOnly(false)}>{lang === "zh" ? "清除筛选" : "Clear filter"}</SettingActionButton>} />}
     {navigationResults.map(result => {
       const pref = SETTINGS_REGISTRY.find(item => item.search.id === result.id);
@@ -479,6 +480,7 @@ export function UtilityPanel({ kind, settings, initialSection, onboardingSetting
         control={<>{pref && <span className="df-settings-search-value">{registeredPreferenceValue(pref, settings, lang)}</span>}{pref && changed && <IconButton icon={<UiRefreshIcon size={15} />} label={lang === "zh" ? "恢复 " + label : "Reset " + label} onClick={() => onSave(resetRegisteredPreferences([pref]))} />}</>} />;
     })}
     {matchingPluginPages.map(page => <SettingRow key={page.id} title={<button type="button" className="df-settings-result-link" onClick={() => navigateSettings(page.target)}>{page.title}</button>} description={page.ownerTitle} />)}
+    </SettingSection>}
     {!navigationResults.length && !matchingPluginPages.length && <EmptyState compact title={lang === "zh" ? "没有匹配的设置" : "No matching settings"} />}
     {modifiedOnly && navigationResults.length > 0 && <SettingDisclosure title={lang === "zh" ? "批量恢复" : "Reset multiple preferences"}>
       {categories.map(category => {
