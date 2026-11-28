@@ -9312,6 +9312,17 @@ if (cached?.data && cached?.settings) {
     });
   }
   const candidatesEmpty = ordinaryCandidates.length === 0 && !hasActiveHabits && !readingEnabled && !extensionSnapshot.taskGroups?.length;
+  const groupCandidates = (candidates: readonly Task[]) => {
+    const candidatesByProject = new Map<string, Task[]>();
+    projects.forEach((project) => candidatesByProject.set(String(project.id), []));
+    candidatesByProject.set("__unassigned__", []);
+    candidates.forEach((task) => {
+      const gid = task.projectId || "__unassigned__";
+      if (!candidatesByProject.has(gid)) candidatesByProject.set(gid, []);
+      candidatesByProject.get(gid)!.push(task);
+    });
+    return [...candidatesByProject].filter(([, tasks]) => tasks.length > 0);
+  };
   const renderOrdinaryCandidates = (candidates: readonly Task[]) => (candidates.length === 0 && candidatesEmpty ? (
                 productDemo ? (
                   <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.demoEmptyTitle")}</strong></div>
@@ -9324,15 +9335,7 @@ if (cached?.data && cached?.settings) {
                 )
               ) : groupByProject ? (
                 (() => {
-                  const candidatesByProject = new Map<string, Task[]>();
-                  projects.forEach((project) => candidatesByProject.set(String(project.id), []));
-                  candidatesByProject.set("__unassigned__", []);
-                  candidates.forEach((task) => {
-                    const gid = task.projectId || "__unassigned__";
-                    if (!candidatesByProject.has(gid)) candidatesByProject.set(gid, []);
-                    candidatesByProject.get(gid)!.push(task);
-                  });
-                  const groups = [...candidatesByProject].filter(([, tasks]) => tasks.length > 0);
+                  const groups = groupCandidates(candidates);
                   return groups.map(([gid, tasks]) => {
                     const project = gid === "__unassigned__" ? null : projects.find(p => String(p.id) === String(gid));
                     const projectColor = project?.color || "var(--accent-active)";
@@ -9785,7 +9788,6 @@ if (cached?.data && cached?.settings) {
                   {!productDemo && <Button variant="ghost" onClick={() => compactLayout ? openQuickTaskAdd() : openTaskDraft()}>{t(lang, "fab.add")}</Button>}
                   {shelfTreeOpen && <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />}
                   {shelfTreeOpen && !productDemo && <Button variant="ghost" onClick={() => openAdd("project")}>{lang === "zh" ? "新建项目" : "New project"}</Button>}
-                  {shelfTreeOpen && !productDemo && <Button variant="ghost" onClick={() => { setCommandQuery(""); setCommandOpen(true); }}>{lang === "zh" ? "管理项目（搜索）" : "Manage projects (search)"}</Button>}
                   {!shelfView && <Button variant="ghost" aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)}>{lang === "zh" ? "按项目分类" : "Group by project"}</Button>}
                   {!shelfTreeOpen && <Button variant="ghost" aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)}>{t(lang, "candidate.showCompleted")}</Button>}
                   {!productDemo && !shelfTreeOpen && <Button variant="ghost" aria-pressed={showScheduledCandidates} onClick={() => setShowScheduledCandidates((show) => !show)}>{lang === "zh" ? "显示已安排" : "Show scheduled"}</Button>}
@@ -9793,8 +9795,7 @@ if (cached?.data && cached?.settings) {
                     <Button variant="ghost" onClick={acceptAllPreviews}>{t(lang, "timeline.adoptAll")}</Button>
                     <Button variant="ghost" onClick={() => cancelAutoSchedule()}>{t(lang, "timeline.cancelPreview")}</Button>
                   </>}
-                  {compactLayout && groupByProject && !shelfView && aiEnabled && projects.filter(project => ordinaryCandidates.some(task => task.projectId === project.id)).map(project => <Button key={project.id} variant="ghost" disabled={autoScheduleState === "generating" || autoScheduleState === "committing"} onClick={() => void planMyDay(undefined, ordinaryCandidates.filter(task => task.projectId === project.id))}>{lang === "zh" ? `规划 · ${project.title}` : `Plan · ${project.title}`}</Button>)}
-                  {compactLayout && groupByProject && !shelfView && aiEnabled && ordinaryCandidates.some(task => !task.projectId) && <Button variant="ghost" disabled={autoScheduleState === "generating" || autoScheduleState === "committing"} onClick={() => void planMyDay(undefined, ordinaryCandidates.filter(task => !task.projectId))}>{lang === "zh" ? "规划 · 未归属" : "Plan · Unassigned"}</Button>}
+                  {compactLayout && groupByProject && !shelfView && groupCandidates(ordinaryCandidates).map(([id, tasks]) => <Button key={id} variant="ghost" disabled={autoScheduleState === "generating" || autoScheduleState === "committing"} onClick={() => void planMyDay(undefined, tasks)}>{lang === "zh" ? "规划" : "Plan"} · {projects.find(project => project.id === id)?.title || t(lang, "candidate.unassigned")}</Button>)}
                   {canCollapseCandidatePanel && <Button variant="ghost" onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }}>{t(lang, "candidate.collapse")}</Button>}
                 </ActionDisclosure>}
               </>
