@@ -1,5 +1,5 @@
 import { nativeFeatureIds } from "./nativeFeatures";
-import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionHost, ExtensionKind, ExtensionUpdateBatch, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativeShelfViewMode, PluginLauncherStatus } from "./types";
+import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionTaskGroup, ExtensionHost, ExtensionKind, ExtensionUpdateBatch, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativeShelfViewMode, PluginLauncherStatus } from "./types";
 import { compatibility, compareVersions, defaultExtensionPreferences, isRecord, MAX_PACKAGE_BYTES, normalizeExtensionPreferences, readExtensionResponse, readPackage, publicHttps, sha256 } from "./packages";
 import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
 import { emitPluginEvent, loadPlugin, type LoadedPlugin } from "./runtime";
@@ -84,7 +84,7 @@ export class ExtensionService {
       this.host = host;
       let safeMode = false;
       try { safeMode = new URLSearchParams(location.search).has("safe-mode") || localStorage.getItem(this.scope() + "safe-mode") === "true" || localStorage.getItem(this.scope() + "booting") === "true"; } catch { /* ephemeral sessions */ }
-      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], nativeFeatures: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, updateBatch: undefined, error: "" });
+      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], taskGroups: [], nativeFeatures: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, updateBatch: undefined, error: "" });
       if (generation !== this.generation) return;
       if (account && account !== "preview") this.unbindStorage = subscribeExtensionValues((owner, key, value) => {
         const pendingKey = this.scope() + `pending:${owner}:${key}`;
@@ -412,6 +412,13 @@ export class ExtensionService {
     if (!isCurrent()) throw new Error("Extension account changed");
     return loadV2Preview(pkg, {
       key, host, platform: platform(), isCurrent,
+      registerTaskGroup: (group: ExtensionTaskGroup) => {
+        if (!isCurrent()) throw new Error("Extension account changed");
+        const groups = this.snapshot.taskGroups ?? [];
+        if (groups.some(item => item.id === group.id)) throw new Error("Duplicate task group");
+        this.setSnapshot({ taskGroups: [...groups, group] });
+        return () => { this.setSnapshot({ taskGroups: (this.snapshot.taskGroups ?? []).filter(item => item !== group) }); };
+      },
       register: (kind, contribution) => {
         if (!isCurrent()) throw new Error("Extension account changed");
         return this.registerContribution(kind, contribution);

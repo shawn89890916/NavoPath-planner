@@ -386,6 +386,7 @@ function preloadPlanningView() { void loadPlanningView().catch(() => undefined);
 const PlanningViewLazy = lazy(loadPlanningView);
 const ReadingRuntimeLazy = lazy(() => import("./reading/ReadingRuntime"));
 const ReadingShelfLazy = lazy(() => import("./reading/ReadingShelf"));
+const PluginTaskGroupsLazy = lazy(() => import("./extensions/PluginTaskGroups"));
 const ReadingTaskGroupLazy = lazy(() => import("./reading/ReadingShelf").then(module => ({ default: module.ReadingTaskGroup })));
 const LandingPageLazy = lazy(() => import("./LandingPage"));
 const OAuthConsentPageLazy = lazy(() => import("./OAuthConsentPage"));
@@ -9297,6 +9298,62 @@ if (cached?.data && cached?.settings) {
     });
   }
   const candidatesEmpty = ordinaryCandidates.length === 0 && !hasActiveHabits && !readingEnabled;
+  const renderOrdinaryCandidates = (candidates: readonly Task[]) => (candidates.length === 0 && candidatesEmpty ? (
+                productDemo ? (
+                  <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.demoEmptyTitle")}</strong></div>
+                ) : (
+                  <EmptyState announce title={todayHasBlocks ? (lang === "zh" ? "待安排的任务已清空" : "You’re caught up on scheduling") : t(lang, "candidate.emptyTitle")}>
+                    <Button variant="primary" onClick={todayHasBlocks ? () => { setSelectedDate(today); showTimelineWorkspace(); } : openTaskDraft}>
+                      {todayHasBlocks ? (lang === "zh" ? "查看时间轴" : "View timeline") : t(lang, "planning.addTask")}
+                    </Button>
+                  </EmptyState>
+                )
+              ) : groupByProject ? (
+                (() => {
+                  const candidatesByProject = new Map<string, Task[]>();
+                  projects.forEach((project) => candidatesByProject.set(String(project.id), []));
+                  candidatesByProject.set("__unassigned__", []);
+                  candidates.forEach((task) => {
+                    const gid = task.projectId || "__unassigned__";
+                    if (!candidatesByProject.has(gid)) candidatesByProject.set(gid, []);
+                    candidatesByProject.get(gid)!.push(task);
+                  });
+                  const groups = [...candidatesByProject].filter(([, tasks]) => tasks.length > 0);
+                  return groups.map(([gid, tasks]) => {
+                    const project = gid === "__unassigned__" ? null : projects.find(p => String(p.id) === String(gid));
+                    const projectColor = project?.color || "var(--accent-active)";
+                    const projectTitle = project?.title || t(lang, "candidate.unassigned");
+                    return (
+                      <div
+                        key={gid}
+                        className="df-project-group"
+                        data-candidate-project-id={gid === "__unassigned__" ? "" : gid}
+                      >
+                        <div className="df-project-group-header">
+                          <span className="df-project-group-dot" style={{ background: projectColorInk(projectColor) }} />
+                          <span className="df-project-group-name">{projectTitle}</span>
+                          {!productAiPresentation && <span className="df-project-group-actions">
+                            <IconButton
+                              className="df-project-group-action"
+                              icon={<UiCalendarCheckIcon size={16} />}
+                              label={lang === "zh" ? `智能安排「${projectTitle}」的全部任务` : `Schedule all tasks in “${projectTitle}”`}
+                              disabled={autoScheduleState === "generating" || autoScheduleState === "committing"}
+                              onClick={() => void planMyDay(undefined, tasks)}
+                            />
+                            <IconButton
+                              className="df-project-group-action"
+                              icon={<UiPlusIcon size={17} />}
+                              label={lang === "zh" ? `为「${projectTitle}」快速添加任务` : `Quick add a task to “${projectTitle}”`}
+                              onClick={() => focusQuickAddForProject(gid)}
+                            />
+                          </span>}
+                        </div>
+                        {tasks.map(renderCandidateTask)}
+                      </div>
+                    );
+                  });
+                })()
+              ) : candidates.map(renderCandidateTask));
   const teachingSchedule = onboardingStep === "schedule" || onboardingStep === "plan";
   const trackedTask = teachingSchedule || onboardingStep === "return" ? onboardingTarget(settings, tasks) : undefined;
   const onboardingTask = trackedTask && isOnboardingTask(trackedTask) ? trackedTask : undefined;
@@ -9739,62 +9796,7 @@ if (cached?.data && cached?.settings) {
             )}
             <Activity mode={shelfView ? "hidden" : "visible"}>
             <div className="df-candidate-list" data-shelf-scroll="candidates" inert={productAiPresentation && demoPresetBusy ? true : undefined}>
-              {candidatesEmpty ? (
-                productDemo ? (
-                  <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.demoEmptyTitle")}</strong></div>
-                ) : (
-                  <EmptyState announce title={todayHasBlocks ? (lang === "zh" ? "待安排的任务已清空" : "You’re caught up on scheduling") : t(lang, "candidate.emptyTitle")}>
-                    <Button variant="primary" onClick={todayHasBlocks ? () => { setSelectedDate(today); showTimelineWorkspace(); } : openTaskDraft}>
-                      {todayHasBlocks ? (lang === "zh" ? "查看时间轴" : "View timeline") : t(lang, "planning.addTask")}
-                    </Button>
-                  </EmptyState>
-                )
-              ) : groupByProject ? (
-                (() => {
-                  const candidatesByProject = new Map<string, Task[]>();
-                  projects.forEach((project) => candidatesByProject.set(String(project.id), []));
-                  candidatesByProject.set("__unassigned__", []);
-                  ordinaryCandidates.forEach((task) => {
-                    const gid = task.projectId || "__unassigned__";
-                    if (!candidatesByProject.has(gid)) candidatesByProject.set(gid, []);
-                    candidatesByProject.get(gid)!.push(task);
-                  });
-                  const groups = [...candidatesByProject].filter(([, tasks]) => tasks.length > 0);
-                  return groups.map(([gid, tasks]) => {
-                    const project = gid === "__unassigned__" ? null : projects.find(p => String(p.id) === String(gid));
-                    const projectColor = project?.color || "var(--accent-active)";
-                    const projectTitle = project?.title || t(lang, "candidate.unassigned");
-                    return (
-                      <div
-                        key={gid}
-                        className="df-project-group"
-                        data-candidate-project-id={gid === "__unassigned__" ? "" : gid}
-                      >
-                        <div className="df-project-group-header">
-                          <span className="df-project-group-dot" style={{ background: projectColorInk(projectColor) }} />
-                          <span className="df-project-group-name">{projectTitle}</span>
-                          {!productAiPresentation && <span className="df-project-group-actions">
-                            <IconButton
-                              className="df-project-group-action"
-                              icon={<UiCalendarCheckIcon size={16} />}
-                              label={lang === "zh" ? `智能安排「${projectTitle}」的全部任务` : `Schedule all tasks in “${projectTitle}”`}
-                              disabled={autoScheduleState === "generating" || autoScheduleState === "committing"}
-                              onClick={() => void planMyDay(undefined, tasks)}
-                            />
-                            <IconButton
-                              className="df-project-group-action"
-                              icon={<UiPlusIcon size={17} />}
-                              label={lang === "zh" ? `为「${projectTitle}」快速添加任务` : `Quick add a task to “${projectTitle}”`}
-                              onClick={() => focusQuickAddForProject(gid)}
-                            />
-                          </span>}
-                        </div>
-                        {tasks.map(renderCandidateTask)}
-                      </div>
-                    );
-                  });
-                })()
-              ) : ordinaryCandidates.map(renderCandidateTask)}
+              {extensionSnapshot.taskGroups?.length && !productDemo ? <Suspense fallback={renderOrdinaryCandidates(ordinaryCandidates)}><PluginTaskGroupsLazy groups={extensionSnapshot.taskGroups} candidates={ordinaryCandidates} revision={tasks} lang={lang} renderOrdinary={renderOrdinaryCandidates} renderTask={renderCandidateTask} /></Suspense> : renderOrdinaryCandidates(ordinaryCandidates)}
               {readingEnabled && (
                 <Suspense fallback={null}><ReadingTaskGroupLazy library={reading.library} busy={reading.busy} error={reading.error} lang={lang} count={readingCandidates.length} onOpenLibrary={readingView ? openReading : undefined} onCreateTask={createReadingTask}>
                   {readingCandidates.map(renderCandidateTask)}

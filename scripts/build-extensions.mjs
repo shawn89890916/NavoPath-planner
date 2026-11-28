@@ -96,7 +96,7 @@ await emit(resolve(root, 'electron/official-extension-ids.json'), `${JSON.string
 console.log(`${check ? 'Validated' : 'Built'} ${catalog.packages.length} extension packages and catalog SHA-256 values.`);
 // Ship a standalone type-only SDK and self-contained references with each
 // copyable template. They are generated from the actual host contracts.
-const apiTypes = (await readFile(resolve(root, 'src/extensions/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"../types"', '"./models"').replaceAll('"./timers"', '"./timer"').replaceAll('"./model"', '"./extensions"');
+const apiTypes = (await readFile(resolve(root, 'src/extensions/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"../types"', '"./models"').replaceAll('"./timers"', '"./timer"').replaceAll('"./model"', '"./extensions"').replaceAll('"./sdkV2"', '"./v2"');
 const modelTypes = (await readFile(resolve(root, 'src/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"./extensions/model"', '"./extensions"').replace('"../shared/pluginMcp"', '"./pluginMcp"');
 const extensionTypes = (await readFile(resolve(root, 'src/extensions/model.ts'), 'utf8')).replaceAll('\r\n','\n').replace('"../../shared/pluginMcp"', '"./pluginMcp"');
 const pluginMcpTypes = (await readFile(resolve(root, 'shared/pluginMcp.ts'), 'utf8')).match(/^export type PluginMcp\w* = [^\r\n]+/gm)?.join('\n');

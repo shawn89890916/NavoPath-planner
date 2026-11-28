@@ -1,4 +1,5 @@
 import type { CalendarEvent, Language, PlannerData, Project, Settings, Task } from "./models";
+import type { V2TaskGroup } from "./v2";
 import type { TimerModeProvider } from "./timer";
 
 import type { ExtensionManifest, ExtensionPlatform, ExtensionPreferences, CatalogEntry, ExtensionKind } from "./extensions";
@@ -11,6 +12,7 @@ export type NativeShelfViewMode = NativePlanningViewMode | "activity-history";
 export type NativeToolPage = "pomodoro" | "schedule-templates";
 export interface PluginLauncherStatus { label: string; weather?: "sun" | "cloud" | "fog" | "rain" | "snow" | "storm" | "unknown"; active?: boolean }
 export interface ExtensionContribution { id: string; owner: string; name: string; mount: Mount; iconUrl?: string; planningView?: boolean; nativeMode?: NativeShelfViewMode; nativeTool?: NativeToolPage }
+export interface ExtensionTaskGroup extends V2TaskGroup { owner: string }
 export interface ExtensionUpdateBatch {
   kind: ExtensionKind; total: number; processed: number; updated: number; skipped: number;
   current?: string; running: boolean; failures: { key: string; name: string; error: string }[];
@@ -19,6 +21,7 @@ export interface ExtensionSnapshot {
   preferences: ExtensionPreferences; catalog: CatalogEntry[]; updates: Record<string, CatalogEntry>;
   status: Record<string, string>; busy: boolean; error: string; safeMode: boolean;
   nativeFeatures?: string[];
+  taskGroups?: ExtensionTaskGroup[];
   catalogLoading?: boolean; checkingUpdates?: boolean; updateBatch?: ExtensionUpdateBatch;
   settingsPages: ExtensionContribution[]; views: ExtensionContribution[]; launcherStatus: Record<string, PluginLauncherStatus>;
 }

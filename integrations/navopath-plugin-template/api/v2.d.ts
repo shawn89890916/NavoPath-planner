@@ -72,6 +72,8 @@ export interface V2ContributionBase { readonly id: string; readonly name: string
 export interface V2TaskGroup extends V2ContributionBase {
   /** Only these existing candidate IDs are eligible; the host renders task rows. */
   resolve(candidateIds: readonly string[]): readonly string[] | Promise<readonly string[]>;
+  /** Notify the host when plugin-private membership changes. */
+  subscribe?(invalidate: () => void): V2Dispose;
   readonly actions?: readonly { readonly id: string; readonly label: string }[];
   invoke?(actionId: string): void | Promise<void>;
 }

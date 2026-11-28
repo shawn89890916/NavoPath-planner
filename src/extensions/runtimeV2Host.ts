@@ -1,5 +1,5 @@
-import type { ExtensionContribution, ExtensionHost, ExtensionPackage, ExtensionPlatform, Dispose } from "./types";
-import type { PluginModuleV2, V2ContributionKind, V2Page, V2Task, V2TaskQuery } from "./sdkV2";
+import type { ExtensionContribution, ExtensionTaskGroup, ExtensionHost, ExtensionPackage, ExtensionPlatform, Dispose } from "./types";
+import type { PluginModuleV2, V2ContributionKind, V2Page, V2TaskGroup, V2Task, V2TaskQuery } from "./sdkV2";
 import { activateV2, negotiateV2, V2ContractError, type V2HostAdapter } from "./runtimeV2";
 import { createResourceUrls } from "./runtime";
 import { v2PreviewCapabilities, validV2PreviewPermissions } from "./v2PreviewPolicy";
@@ -9,6 +9,7 @@ export interface V2PreviewBridge {
   readonly platform: ExtensionPlatform;
   readonly host: ExtensionHost;
   isCurrent(): boolean;
+  registerTaskGroup(group: ExtensionTaskGroup): Dispose;
   register(kind: "views" | "settingsPages", contribution: ExtensionContribution): Dispose;
 }
 function listTasks(host: ExtensionHost, query?: V2TaskQuery): readonly V2Task[] {
@@ -48,6 +49,7 @@ export async function loadV2Preview(
     supported: new Set(v2PreviewCapabilities), granted: new Set(permissions), isCurrent: bridge.isCurrent,
     tasks: { list: async query => listTasks(bridge.host, query) },
     contribute(kind, id, value) {
+      if (kind === "ui.tasksGroup") return bridge.registerTaskGroup({ ...(value as V2TaskGroup), id, owner: bridge.key });
       if (kind !== "ui.workspace" && kind !== "ui.planning" && kind !== "ui.settings") {
         throw new V2ContractError("UNSUPPORTED_CAPABILITY", kind);
       }

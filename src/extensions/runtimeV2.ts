@@ -103,7 +103,7 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
       return off;
     },
   });
-  const wrapGroup = (group: V2TaskGroup, ensure: () => void): V2TaskGroup => ({
+  const wrapGroup = (group: V2TaskGroup, ensure: () => void, active: () => boolean): V2TaskGroup => ({
     id: group.id, name: group.name, actions: structuredClone(group.actions),
     async resolve(candidateIds) {
       ensure();
@@ -112,6 +112,10 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
       ensure();
       return [...new Set(ids)].filter(id => allowed.has(id));
     },
+    subscribe: group.subscribe ? listener => {
+      ensure();
+      return track(group.subscribe!(() => { if (active()) listener(); }));
+    } : undefined,
     invoke: group.invoke ? async id => {
       ensure();
       if (!group.actions?.some(action => action.id === id)) throw new V2ContractError("INVALID_INPUT", "Unknown group action");
@@ -142,7 +146,7 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
       if (!active()) throw new V2ContractError("INACTIVE", "Plugin contribution ended");
       check(kind);
     };
-    const wrapped = (kind === "ui.tasksGroup" ? wrapGroup(value as V2TaskGroup, ensure)
+    const wrapped = (kind === "ui.tasksGroup" ? wrapGroup(value as V2TaskGroup, ensure, active)
       : kind === "metrics.provider" ? wrapMetrics(value as V2MetricsProvider, ensure)
       : wrapPage(value as V2Page, ensure, active, pageCleanups)) as V2ContributionMap[K];
     contributionKeys.add(stableId);
