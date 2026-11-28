@@ -403,6 +403,16 @@ export function candidateQuickScheduleOptions(focusDate: string, lang: Language,
   });
 }
 
+export function CandidateDurationMenu({ open, anchorRef, onClose, lang, minutes, draft, onDraft, onCommit }: {
+  open: boolean; anchorRef: React.RefObject<HTMLButtonElement | null>; onClose: () => void; lang: Language;
+  minutes: number; draft: string; onDraft: (value: string) => void; onCommit: (minutes: number) => void;
+}) {
+  return <AnchoredNarrowMenu open={open} anchorRef={anchorRef} onClose={onClose} placement="below" label={t(lang, "taskCard.adjustDuration")} className="df-candidate-duration-menu">
+    <label><span>{lang === "zh" ? "分钟" : "Minutes"}</span><input type="number" min={SLOT_MINUTES} max={1440} step={SLOT_MINUTES} value={draft} onChange={(event) => onDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") onCommit(Number(draft)); }} /></label>
+    {DURATION_OPTIONS.map(value => <button key={value} type="button" className={minutes === value ? "active" : ""} onClick={() => onCommit(value)}>{formatMinutes(value)}</button>)}
+  </AnchoredNarrowMenu>;
+}
+
 export function TaskCard({
   demo = false,
   task,
@@ -474,7 +484,6 @@ export function TaskCard({
 }) {
   const compact = window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches;
   const cardRef = useRef<HTMLElement>(null);
-  const [stackedActions, setStackedActions] = useState(false);
   const [openPanel, setOpenPanel] = useState<"more" | null>(null);
   const [subtasksOpen, setSubtasksOpen] = useState(false);
   const [schedulePanelOpen, setSchedulePanelOpen] = useState(false);
@@ -513,37 +522,6 @@ export function TaskCard({
   const isOverdueCandidate = overdue > 0 || Boolean(returnedSchedule);
   const hasSubtasks = (task.subtasks || []).length > 0;
   const displayTitle = task.title.trimStart();
-  useLayoutEffect(() => {
-    const row = cardRef.current?.querySelector<HTMLElement>(".df-candidate-row");
-    const title = row?.querySelector<HTMLElement>(".df-task-block-title");
-    if (!row || !title) return;
-    if (isEvent) { setStackedActions(false); return; }
-    const narrow = window.matchMedia("(max-width: 980px)");
-    const context = document.createElement("canvas").getContext("2d");
-    let disposed = false;
-    const measure = () => {
-      if (disposed || !context || !row.clientWidth) return;
-      const titleStyle = getComputedStyle(title);
-      context.font = titleStyle.font;
-      const spacing = parseFloat(titleStyle.letterSpacing) || 0;
-      const textWidth = context.measureText(displayTitle).width + spacing * Math.max(0, displayTitle.length - 1);
-      const actions = row.querySelector<HTMLElement>(".df-task-actions");
-      // Measure the horizontal controls independently of their current direction,
-      // so widening the title for a stacked row cannot flip it back and forth.
-      const actionWidth = actions ? Array.from(actions.children).reduce((width, child) => width + child.getBoundingClientRect().width, 0) : 0;
-      const checkWidth = row.querySelector(".df-task-checkbox-wrap")?.getBoundingClientRect().width || 0;
-      const durationWidth = row.querySelector(".df-task-block-duration")?.getBoundingClientRect().width || 0;
-      const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
-      const inlineTitleWidth = row.clientWidth - checkWidth - durationWidth - actionWidth - 3 * gap;
-      setStackedActions(narrow.matches && (actions?.children.length || 0) >= 2 && textWidth > inlineTitleWidth + 1);
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(row);
-    narrow.addEventListener("change", measure);
-    void document.fonts.ready.then(measure);
-    return () => { disposed = true; observer.disconnect(); narrow.removeEventListener("change", measure); };
-  }, [displayTitle, isEvent, isPlacementArmed, isOverdueCandidate, scheduleSummary?.label]);
   const isMoreOpen = openPanel === "more";
   const recurrenceChoices = recurrenceOptions(lang);
   const relativeScheduleOptions = candidateRelativeScheduleOptions(focusDate, lang);
@@ -659,13 +637,15 @@ export function TaskCard({
         dragState={dragState}
         projectColor={cardAccentColor}
         className={`${isOverdueCandidate && !isEvent ? "overdue" : ""} ${task.completed && !isEvent ? "completed" : ""} ${openPanel || schedulePanelOpen ? "expanded" : ""} ${isMoreOpen ? "more-open" : ""} ${isPlacementArmed ? "placement-armed" : ""} ${isEvent ? "is-event" : ""}`}
-        dataAttrs={{ "placement-card": task.id, kind: isEvent ? "event" : "task", "candidate-layout": stackedActions ? "stacked" : "inline" }}
+        dataAttrs={{ "placement-card": task.id, kind: isEvent ? "event" : "task", "candidate-layout": "inline" }}
         onPointerDown={isEvent ? undefined : onPointerDragStart}
         onMouseLeave={isOverdueCandidate && !isEvent ? () => {
           cancelQueuedPlacementPreview();
           if (isPlacementArmed && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview();
         } : undefined}
         onClick={onClick}
+        tabIndex={isEvent ? undefined : 0}
+        onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); onClick(); } }}
         title={demo ? undefined : compact ? (lang === "zh" ? "长按后拖到时间轴排程" : "Long press, then drag to schedule") : t(lang, "taskCard.dragHint")}
         rowClassName={scheduleSummary ? "df-candidate-summary-row" : undefined}
         row={<>
@@ -703,7 +683,7 @@ export function TaskCard({
             {isOverdueCandidate && !scheduleSummary && isPlacementArmed && <div className="df-candidate-schedule-actions" onBlur={(event) => {
               if (!event.currentTarget.contains(event.relatedTarget as Node | null) && !isPlacementLocated && !schedulePanelOpen) onCancelPlacementPreview();
             }}>{renderPlacementLocateAction()}</div>}
-            {!demo && !isPlacementArmed && <button className={`df-icon-button ${isMoreOpen ? "icon-collapse" : "icon-expand"}`} title={isMoreOpen ? t(lang, "taskCard.collapseMore") : t(lang, "taskCard.expandMore")} aria-label={isMoreOpen ? t(lang, "taskCard.collapseMore") : t(lang, "taskCard.expandMore")} aria-expanded={isMoreOpen} onClick={(event) => { event.stopPropagation(); setPopoverOpen(null); setMorePopover(null); setSchedulePanelOpen(false); setOpenPanel((current) => current === "more" ? null : "more"); }}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{isMoreOpen ? <path d="M5 12l5-5 5 5" /> : <path d="M5 8l5 5 5-5" />}</svg></button>}
+            {!compact && !demo && !isPlacementArmed && <button className={`df-icon-button ${isMoreOpen ? "icon-collapse" : "icon-expand"}`} title={isMoreOpen ? t(lang, "taskCard.collapseMore") : t(lang, "taskCard.expandMore")} aria-label={isMoreOpen ? t(lang, "taskCard.collapseMore") : t(lang, "taskCard.expandMore")} aria-expanded={isMoreOpen} onClick={(event) => { event.stopPropagation(); setPopoverOpen(null); setMorePopover(null); setSchedulePanelOpen(false); setOpenPanel((current) => current === "more" ? null : "more"); }}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{isMoreOpen ? <path d="M5 12l5-5 5 5" /> : <path d="M5 8l5 5 5-5" />}</svg></button>}
           </TaskActions>}
           {suggestedProject && <span className="df-ai-project-suggestion" onPointerDown={(event) => event.stopPropagation()} onClick={stop}>
             <button type="button" className="df-ai-project-suggestion-accept" title={lang === "zh" ? `建议归入「${suggestedProject.title}」` : `Suggested project: ${suggestedProject.title}`} onClick={() => onProjectChange(suggestedProject.id)}>↗ {suggestedProject.title}</button>
@@ -740,17 +720,14 @@ export function TaskCard({
           <button ref={scheduleMoreTriggerRef} type="button" className="df-candidate-schedule-more" title={lang === "zh" ? "更多安排日期" : "More schedule dates"} aria-label={lang === "zh" ? "更多安排日期" : "More schedule dates"} aria-expanded={morePopover === "schedule-more"} onClick={() => setMorePopover((current) => current === "schedule-more" ? null : "schedule-more")}><span aria-hidden="true">•••</span></button>
         </div>)}
 
-        {isMoreOpen && <div className="df-candidate-more-toolbar" onClick={stop}>
+        {!compact && isMoreOpen && <div className="df-candidate-more-toolbar" onClick={stop}>
           <button ref={priorityTriggerRef} type="button" title={lang === "zh" ? "设置优先级" : "Set priority"} aria-expanded={morePopover === "priority"} onClick={() => setMorePopover((current) => current === "priority" ? null : "priority")}><UiFlagIcon size={18} /><span>{lang === "zh" ? "优先级" : "Priority"}</span></button>
           <button ref={projectTriggerRef} type="button" title={t(lang, "drawer.assignProject")} aria-expanded={morePopover === "project"} onClick={() => setMorePopover((current) => current === "project" ? null : "project")}><UiFolderInputIcon size={18} /><span>{lang === "zh" ? "项目" : "Project"}</span></button>
           <button type="button" className={`danger-lite${deleteConfirm ? " is-confirming" : ""}`} title={deleteConfirm ? (lang === "zh" ? "再次点击确认删除" : "Click again to delete") : t(lang, "taskCard.delete")} onClick={() => { if (deleteConfirm) onDelete(); else setDeleteConfirm(true); }}><UiTrashIcon size={18} /><span>{deleteConfirm ? (lang === "zh" ? "确认删除" : "Confirm") : t(lang, "taskCard.delete")}</span></button>
         </div>}
       </CandidateTaskCard>
 
-      <AnchoredNarrowMenu open={popoverOpen === "duration"} anchorRef={durationTriggerRef} onClose={() => setPopoverOpen(null)} placement="below" label={t(lang, "taskCard.adjustDuration")} className="df-candidate-duration-menu">
-        <label><span>{lang === "zh" ? "分钟" : "Minutes"}</span><input type="number" min={SLOT_MINUTES} max={1440} step={SLOT_MINUTES} value={durationDraft} onChange={(event) => setDurationDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") commitDuration(Number(durationDraft)); }} /></label>
-        {DURATION_OPTIONS.map((minutes) => <button key={minutes} type="button" className={Math.round((task.estimatedHours || 0.5) * 60) === minutes ? "active" : ""} onClick={() => commitDuration(minutes)}>{formatMinutes(minutes)}</button>)}
-      </AnchoredNarrowMenu>
+      <CandidateDurationMenu open={popoverOpen === "duration"} anchorRef={durationTriggerRef} onClose={() => setPopoverOpen(null)} lang={lang} minutes={Math.round((task.estimatedHours || 0.5) * 60)} draft={durationDraft} onDraft={setDurationDraft} onCommit={commitDuration} />
 
       <AnchoredNarrowMenu open={popoverOpen === "deadline"} anchorRef={deadlineTriggerRef} onClose={() => setPopoverOpen(null)} label={lang === "zh" ? "设置截止日期" : "Set due date"} className="df-candidate-deadline-menu">
         <label><input type="date" value={draftDueDate} onChange={(event) => setDraftDueDate(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { onSaveDueDate(draftDueDate); setPopoverOpen(null); } }} /></label>

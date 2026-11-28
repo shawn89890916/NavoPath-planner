@@ -2746,16 +2746,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
   animation: df-spin .8s linear infinite;
   corner-shape: var(--corner-shape, squircle);
 }
-.df-ai-plan-confirm:hover { background: color-mix(in srgb, var(--accent-active) 8%, transparent); }
-.df-ai-plan-cancel:hover { background: rgba(239,68,68,0.08); }
-.df-app:not(.theme-dark) .df-ai-plan-confirm {
-  color: var(--accent-active);
-}
-.df-app:not(.theme-dark) .df-ai-plan-cancel {
-  color: #DC2626;
-}
-.df-app:not(.theme-dark) .df-ai-plan-confirm:hover { background: color-mix(in srgb, var(--accent-active) 8%, transparent); }
-.df-app:not(.theme-dark) .df-ai-plan-cancel:hover { background: rgba(239,68,68,0.08); }
 .df-ai-plan-menu {
   position: absolute;
   top: 0;
@@ -6645,12 +6635,6 @@ body:has(:active)::-webkit-scrollbar-thumb {
 .df-app.theme-dark .df-ai-conversation-rename {
   color: var(--text-main);
 }
-.df-app.theme-dark .df-ai-plan-confirm {
-  color: var(--text-main);
-}
-.df-app.theme-dark .df-ai-plan-cancel {
-  color: var(--text-main);
-}
 .df-app.theme-dark .df-week-view {
   color: var(--text-main);
 }
@@ -7726,36 +7710,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   margin: 0 12px 8px;
   border-color: var(--paper-rule); filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
 }
-#root .df-app .df-ai-plan-confirm.ui-icon-button {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0; border-radius: var(--paper-radius);
-  font-size: 14px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 4px;
-  transition: background .14s ease, color .14s ease;
-  background: transparent; color: var(--text-main);
-  border-color: var(--paper-rule); box-shadow: none; filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
-}
-.df-ai-plan-cancel {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid var(--border-soft); border-radius: var(--paper-radius);
-  font-size: 14px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 4px;
-  transition: background .14s ease, color .14s ease;
-  background: transparent; color: var(--text-main);
-  border-color: var(--paper-rule); box-shadow: none; filter: none; text-shadow: none; corner-shape: var(--corner-shape, squircle);
-}
 .df-ai-plan:hover { box-shadow: none; transform: none; border-color: var(--paper-accent-rule); background: var(--paper-note); color: var(--accent-active); }
 .df-ai-plan.thinking {
   width: 150px;
@@ -8645,15 +8599,9 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
 .df-app .df-preview-action {
   box-shadow: none; filter: none;
 }
-.df-app .df-ai-plan-confirm {
-  box-shadow: none; filter: none;
-}
-.df-app :is(.df-ai-plan-confirm, .df-preview-action.accept):focus-visible {
+.df-app .df-preview-action.accept:focus-visible {
   outline: 2px solid var(--accent-active);
   outline-offset: 2px;
-}
-.df-app .df-ai-plan-cancel {
-  box-shadow: none; filter: none;
 }
 .df-app .df-icon-action:hover {
   color: var(--accent-active); border-color: var(--paper-accent-rule);
@@ -8672,14 +8620,6 @@ html[data-motion-fallback][data-motion-scope="settings"] .df-app .df-settings-co
   background: var(--paper-note); transform: none; box-shadow: none; filter: none;
 }
 .df-app .df-preview-action:hover {
-  color: var(--accent-active); border-color: var(--paper-accent-rule);
-  background: var(--paper-note); transform: none; box-shadow: none; filter: none;
-}
-.df-app .df-ai-plan-confirm:hover {
-  color: var(--accent-active); border-color: var(--paper-accent-rule);
-  background: var(--paper-note); transform: none; box-shadow: none; filter: none;
-}
-.df-app .df-ai-plan-cancel:hover {
   color: var(--accent-active); border-color: var(--paper-accent-rule);
   background: var(--paper-note); transform: none; box-shadow: none; filter: none;
 }
@@ -18023,38 +17963,11 @@ body.df-unified-dragging .df-unified-drag-overlay {
     display: block;
     font-size: 14px;
     line-height: 1.45;
-    overflow: visible;
-    -webkit-line-clamp: unset;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-wrap: normal;
     word-break: normal;
-  }
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-candidate-row {
-    grid-template-columns: 44px minmax(0, 1fr) auto;
-    grid-template-rows: 44px minmax(88px, auto);
-  }
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-task-checkbox-wrap,
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-candidate-main {
-    grid-row: 1 / 3;
-  }
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-task-block-duration {
-    grid-column: 3;
-    grid-row: 1;
-    justify-self: center;
-  }
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-task-actions {
-    grid-column: 3;
-    grid-row: 2;
-    align-self: start;
-    justify-self: center;
-    flex-direction: column;
-    align-items: center;
-  }
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-ai-project-suggestion {
-    grid-column: 3;
-    grid-row: 1 / 3;
-    flex-direction: column;
-    justify-content: center;
   }
   #root .df-app.mode-execute .df-time-block .df-block-check {
     width: 20px;
@@ -20136,14 +20049,15 @@ body[data-navopath-base-theme="light"],
   padding-left: 10px;
 }
 .df-shelf-loading { padding: 12px; color: var(--text-muted); }
-.df-project-filter-anchor { display: inline-flex; position: relative; }
+.df-project-filter-anchor { display: flex; position: relative; width: 100%; }
+.df-project-filter-anchor .df-filter-popover-anchor { width: 100%; }
+#root .df-app .df-project-filter-anchor .df-filter-trigger { width: 100%; justify-content: flex-start; gap: 8px; padding: 8px; }
 #root .df-app .df-project-filter-anchor .df-filter-panel {
-  left: auto;
-  right: 0;
-  top: calc(100% + 4px);
-  width: min(240px, calc(100vw - 32px));
-  max-height: min(48dvh, 390px);
-  z-index: 80;
+  position: static;
+  width: 100%;
+  max-height: min(38dvh, 300px);
+  overflow: auto;
+  box-shadow: none;
 }
 #root .df-app .df-project-filter-anchor .df-filter-flyout-panel {
   position: static;

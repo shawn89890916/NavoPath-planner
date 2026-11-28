@@ -293,5 +293,13 @@ describe("compact side workspace", () => {
     expect(controls).toContain('onClick={drawerOpen ? onClose : onOpen}');
     expect(styles).toContain('translate: var(--side-workspace-offset) 0;');
     expect(styles).not.toContain('transform: translateY(100%)');
+    expect(styles).toContain("calc(100vw - 112px)");
+    expect(styles).toContain("data-side-workspace-drag-expanded");
+    expect(main).toContain("updateSideWorkspaceDragExposure(null)");
+    const header = main.slice(main.indexOf("<CandidatePanelHeader"), main.indexOf("<AnchoredNarrowMenu open={shelfMenuOpen}"));
+    expect(header).toContain("df-ai-plan-title-icon");
+    expect(header).toContain("UiSearchIcon");
+    expect(header).toContain("<ActionDisclosure");
+    expect(header.indexOf("ref={setProjectFilterAnchor}")).toBeGreaterThan(header.indexOf("<ActionDisclosure"));
   });
 });

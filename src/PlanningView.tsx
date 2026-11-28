@@ -29,7 +29,7 @@ import type { MetricCompletionFilter, MetricDisplayMetric, MetricGroupBy, Metric
 import type { MetricsQuery } from "./metrics/savedViews";
 const MetricsInsights=React.lazy(()=>import("./metrics/MetricsInsights").then(m=>({default:m.MetricsInsights})));
 import type { NativePlanningViewMode } from "./extensions/types";
-import { CandidateSubtaskItem, CandidateTaskCard, categories, formatDuration, isEventDisplayTask } from "./WorkspacePresentation";
+import { CandidateSubtaskItem, CandidateTaskCard, CandidateDurationMenu, SLOT_MINUTES, categories, formatDuration, isEventDisplayTask } from "./WorkspacePresentation";
 
 type TreeNodeKind = "project" | "task" | "subtask";
 type TreeDragNode = { kind: TreeNodeKind; id: string };
@@ -257,27 +257,34 @@ function PlanningSubtaskNode(props: {
   );
 }
 
-function PlanningCandidateCard({ task, lang, meta, actions, onToggle, children, ...props }:
+function PlanningCandidateCard({ task, lang, meta, actions, onToggle, onDuration, children, ...props }:
   Omit<React.ComponentPropsWithoutRef<typeof CandidateTaskCard>, "row"> & {
     meta?: React.ReactNode;
     actions?: React.ReactNode;
     onToggle?: () => void;
+    onDuration?: (minutes: number) => void;
   }) {
+  const [durationOpen, setDurationOpen] = useState(false);
+  const minutes = Math.round((task.estimatedHours || 0.5) * 60);
+  const [durationDraft, setDurationDraft] = useState(String(minutes));
+  const durationRef = useRef<HTMLButtonElement>(null);
   const isEvent = isEventDisplayTask(task);
   const done = !isEvent && normalizeWorkflowStatus(task) === "done";
-  return <CandidateTaskCard {...props} task={task} lang={lang} checked={done} title={task.title} row={<>
+  return <><CandidateTaskCard {...props} task={task} lang={lang} checked={done} title={task.title} tabIndex={isEvent ? undefined : 0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); event.currentTarget.click(); } }} row={<>
     {isEvent ? <span className="df-task-block-check df-candidate-kind" aria-hidden="true" /> : <TaskCheckbox lang={lang} checked={done} tone={normalizeTaskCheckTone(task)} priority={task.priority}
       ariaLabel={t(lang || "en", done ? "planning.markIncomplete" : "planning.markComplete")}
       onClick={onToggle && ((event) => { event.stopPropagation(); onToggle(); })} />}
     <TaskBlockContent className="df-candidate-main" title={task.title}>{isEvent ? <span className="df-candidate-kind">EVENT</span> : meta}</TaskBlockContent>
     {!isEvent && <>
-      <TaskBlockDuration>{task.estimatedHours !== 0 ? <span className="df-duration-pill">{formatDuration(task.estimatedHours || 0.5)}</span> : null}</TaskBlockDuration>
+      <TaskBlockDuration>{onDuration && lang ? <button type="button" ref={durationRef} className="df-duration-pill" aria-label={t(lang, "taskCard.adjustDuration")} aria-expanded={durationOpen} onClick={event => { event.stopPropagation(); setDurationDraft(String(minutes)); setDurationOpen(value => !value); }}>{formatDuration(task.estimatedHours || 0.5)}</button> : task.estimatedHours !== 0 ? <span className="df-duration-pill">{formatDuration(task.estimatedHours || 0.5)}</span> : null}</TaskBlockDuration>
       {actions}
     </>}
-  </>}>{children}</CandidateTaskCard>;
+  </>}>{children}</CandidateTaskCard>{onDuration && lang && <CandidateDurationMenu open={durationOpen} anchorRef={durationRef} onClose={() => setDurationOpen(false)} lang={lang} minutes={minutes} draft={durationDraft} onDraft={setDurationDraft} onCommit={value => { if (!Number.isFinite(value)) return; onDuration(Math.max(SLOT_MINUTES, Math.min(1440, Math.round(value / SLOT_MINUTES) * SLOT_MINUTES))); setDurationOpen(false); }} />}</>;
 }
 
 function PlanningTaskNode(props: {
+  compact?: boolean;
+  onDuration?: (minutes: number) => void;
   demo?: boolean;
   lang: Language;
   task: Task;
@@ -321,12 +328,13 @@ function PlanningTaskNode(props: {
           ariaGrabbed={props.dragging}
           onClick={props.onOpen}
           onToggle={props.onToggleComplete}
+          onDuration={props.onDuration}
           meta={metaBadges.length > 0 && <span className="df-task-meta-badges" aria-label="Task status">
             {metaBadges.map((badge) => <span key={badge.key} className={badge.className}>{badge.label}</span>)}
           </span>}
           actions={<TaskActions className="df-task-node-actions">
             {props.onSchedule && <IconButton className="df-tree-icon-button" icon={<UiCalendarCheckIcon size={16} />} label={props.lang === "zh" ? "安排" : "Schedule"} onClick={(event) => { event.stopPropagation(); props.onSchedule?.(); }} />}
-            {!props.demo && <button className="df-tree-icon-button" onClick={(event) => {
+            {!props.compact && !props.demo && <button className="df-tree-icon-button" onClick={(event) => {
               event.stopPropagation();
               event.currentTarget.focus();
               setMenuOpen((open) => !open);
@@ -343,7 +351,7 @@ function PlanningTaskNode(props: {
           />}
           {props.subtaskContent}
           <TreeMenu
-            open={menuOpen}
+            open={!props.compact && menuOpen}
             onClose={() => setMenuOpen(false)}
             actions={[
               { label: t(props.lang, "planning.editName"), onClick: props.onRename },
@@ -359,6 +367,7 @@ function PlanningTaskNode(props: {
 }
 
 function PlanningProjectNode(props: {
+  compact?: boolean;
   demo?: boolean;
   lang: Language;
   project: Project;
@@ -392,7 +401,11 @@ function PlanningProjectNode(props: {
         <span
           className="df-project-name"
           ref={titleRef}
-          onClick={props.onOpen}
+          onClick={props.compact ? props.onToggleCollapse : props.onOpen}
+          role={props.compact ? "button" : undefined}
+          tabIndex={props.compact ? 0 : undefined}
+          aria-expanded={props.compact ? !props.collapsed : undefined}
+          onKeyDown={event => { if (props.compact && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); props.onToggleCollapse(); } }}
           onMouseEnter={() => {
             if (titleRef.current && titleRef.current.scrollWidth > titleRef.current.clientWidth) {
               showTip(props.project.title, titleRef.current);
@@ -400,11 +413,11 @@ function PlanningProjectNode(props: {
           }}
           onMouseLeave={hideTip}
         >
-          {props.project.title}
+          {props.compact ? <><span title={props.project.title}>{props.project.title}</span><ChevronIcon open={!props.collapsed} /></> : props.project.title}
         </span>
-        <span className="df-project-badge">{props.taskCount}</span>
+        {!props.compact && <span className="df-project-badge">{props.taskCount}</span>}
         <div className="df-project-node-actions">
-          {props.onComplete && !props.project.completed && (
+          {!props.compact && props.onComplete && !props.project.completed && (
             <button
               className="df-tree-icon-button df-project-complete-btn"
               onClick={(event) => {
@@ -419,9 +432,9 @@ function PlanningProjectNode(props: {
           {!props.demo && <button className="df-tree-icon-button df-project-add-btn" onClick={props.onAddTask} aria-label={t(props.lang, "planning.addTask")}>
             <PlusIcon />
           </button>}
-          <button className="df-tree-icon-button df-collapse-btn" onClick={props.onToggleCollapse} aria-label={props.collapsed ? t(props.lang, "planning.expandProject") : t(props.lang, "planning.collapseProject")}>
+          {!props.compact && <button className="df-tree-icon-button df-collapse-btn" onClick={props.onToggleCollapse} aria-label={props.collapsed ? t(props.lang, "planning.expandProject") : t(props.lang, "planning.collapseProject")}>
             <ChevronIcon open={!props.collapsed} />
-          </button>
+          </button>}
         </div>
       </div>
     </>
@@ -1707,7 +1720,7 @@ export default function PlanningView(props: {
 
   const projectFilters = (<>
               {(viewMode === "tree" || viewMode === "list") && (
-              <div className="df-filter-popover-anchor">
+              <div className="df-filter-popover-anchor" onClick={(event) => event.stopPropagation()}>
                 <button
                   type="button"
                   className={`df-filter-trigger${filterOpen ? " active" : ""}${hasActiveFilters ? " has-active" : ""}`}
@@ -1717,6 +1730,7 @@ export default function PlanningView(props: {
                   onClick={() => { setFilterOpen((open) => !open); setFilterExpandedCategory(null); }}
                 >
                   <UiFilterIcon size={17} />
+                  {props.filterAnchor && <span>{props.lang === "zh" ? "筛选任务" : "Filter tasks"}</span>}
                   {hasActiveFilters && <b>{activeFilterChips.length + Number(includeCompleted)}</b>}
                 </button>
                 {filterOpen && (
@@ -1998,6 +2012,7 @@ export default function PlanningView(props: {
                       dragState={planningDragTask?.task.id === task.id ? "source-placeholder" : undefined}
                       dataAttrs={{ "planning-task-id": task.id, kind: isEventDisplayTask(task) ? "event" : undefined }}
                       onPointerDown={(event) => beginPlanningDrag(event, task)} onClick={() => openTaskFromPlanning(task)}
+                      onDuration={props.compact && !props.demo ? minutes => props.onTaskUpdate(task.id, { estimatedHours: minutes / 60 }) : undefined}
                       onToggle={() => props.onTaskUpdate(task.id, workflowStatusForPatch(kanbanStatus(task) === "done" ? "backlog" : "done"))}
                       meta={<span className="df-shelf-task-meta">
                         <span>{projectName(task.projectId)}</span>{task.dueDate && <time dateTime={task.dueDate}>{task.dueDate.slice(5)}</time>}
@@ -2018,6 +2033,7 @@ export default function PlanningView(props: {
               dragState={planningDragTask?.task.id === task.id ? "source-placeholder" : undefined}
               dataAttrs={{ "planning-task-id": task.id, kind: isEventDisplayTask(task) ? "event" : undefined }}
               onPointerDown={event => beginPlanningDrag(event, task)} onClick={() => openTaskFromPlanning(task)}
+              onDuration={props.compact && !props.demo ? minutes => props.onTaskUpdate(task.id, { estimatedHours: minutes / 60 }) : undefined}
               onToggle={() => props.onTaskUpdate(task.id, workflowStatusForPatch(kanbanStatus(task) === "done" ? "backlog" : "done"))}
               meta={<span className="df-shelf-task-meta"><span>{projectName(task.projectId)}</span>{task.dueDate && <time dateTime={task.dueDate}>{task.dueDate.slice(5)}</time>}</span>}
               actions={<TaskActions>{scheduleButton(task)}</TaskActions>}>
@@ -2045,12 +2061,13 @@ export default function PlanningView(props: {
               <React.Fragment key={project.id}>
                 <div className="df-category-branch" data-project-id={project.id}>
                   <PlanningProjectNode
+                compact={props.compact && !props.demo}
                 demo={props.demo}
                     lang={props.lang}
                     project={project}
                     taskCount={tasks.length}
                     collapsed={Boolean(props.collapsed[project.id])}
-                    onToggleCollapse={() => props.setCollapsed((current) => ({ ...current, [project.id]: !current[project.id] }))}
+                    onToggleCollapse={() => { if (!shouldSuppressTaskClick()) props.setCollapsed((current) => ({ ...current, [project.id]: !current[project.id] })); }}
                     onOpen={() => props.onProjectEdit(project)}
                     onAddTask={() => props.onTaskCreate(project.id)}
                     onComplete={props.demo ? undefined : () => props.onProjectComplete?.(project.id)}
@@ -2064,6 +2081,8 @@ export default function PlanningView(props: {
                       {tasks.map((task) => (
                         <div className="df-task-branch" key={task.id}>
                         <PlanningTaskNode
+                compact={props.compact && !props.demo}
+                onDuration={props.compact && !props.demo ? minutes => props.onTaskUpdate(task.id, { estimatedHours: minutes / 60 }) : undefined}
                 demo={props.demo}
                           lang={props.lang}
                           task={task}
@@ -2095,12 +2114,13 @@ export default function PlanningView(props: {
               <React.Fragment>
                 <div className="df-category-branch" data-project-id="__unassigned__">
                 <PlanningProjectNode
+                compact={props.compact && !props.demo}
                 demo={props.demo}
                   lang={props.lang}
                   project={createProjectShell(t(props.lang, "planning.unassignedTasks"))}
                   taskCount={unassigned.length}
                   collapsed={Boolean(props.collapsed.unassigned)}
-                  onToggleCollapse={() => props.setCollapsed((current) => ({ ...current, unassigned: !current.unassigned }))}
+                  onToggleCollapse={() => { if (!shouldSuppressTaskClick()) props.setCollapsed((current) => ({ ...current, unassigned: !current.unassigned })); }}
                   onOpen={() => {}}
                   onAddTask={() => props.onTaskCreate("")}
                 />
@@ -2109,6 +2129,8 @@ export default function PlanningView(props: {
                     {unassigned.map((task) => (
                       <div className="df-task-branch" key={task.id}>
                         <PlanningTaskNode
+                compact={props.compact && !props.demo}
+                onDuration={props.compact && !props.demo ? minutes => props.onTaskUpdate(task.id, { estimatedHours: minutes / 60 }) : undefined}
                 demo={props.demo}
                           lang={props.lang}
                           task={task}

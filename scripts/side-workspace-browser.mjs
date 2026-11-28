@@ -57,6 +57,16 @@ export async function exerciseSideWorkspace(){
       assert(opened.left>0&&innerWidth-opened.left>=108,"Timeline strip is unusable");
       assert(button.left>triggerX&&button.right<=innerWidth+1,"Moving button clipped");
       assert(canvas.scrollTop>=199,"Opening reset timeline scroll");
+      document.documentElement.setAttribute("data-side-workspace-drag-active","");
+      document.documentElement.setAttribute("data-side-workspace-drag-expanded","");
+      await frames();
+      const exposed=timeline.getBoundingClientRect();
+      assert(exposed.left<opened.left-10,"Drag does not expose more timeline");
+      close(block.getBoundingClientRect().width,blockWidth,"Drag exposure changed task geometry");
+      document.documentElement.removeAttribute("data-side-workspace-drag-expanded");
+      document.documentElement.removeAttribute("data-side-workspace-drag-active");
+      await wait();await frames();
+      close(timeline.getBoundingClientRect().left,opened.left,"Drag exposure did not restore");
       canvas.scrollTop=320;assert(canvas.scrollTop>=319,"Open timeline cannot scroll");
       const rect=canvas.getBoundingClientRect(), x=Math.min(innerWidth-10,Math.max(rect.left+5,opened.left+5)), y=Math.min(innerHeight-120,rect.top+80);
       assert(document.elementFromPoint(x,y)?.closest(".df-timeline-panel"),"Visible timeline is covered");
@@ -75,5 +85,5 @@ export async function exerciseSideWorkspace(){
       assert(canvas.scrollTop>=319,"Closing reset timeline scroll");
     }
     return {width:innerWidth,height:innerHeight,themes:2,stableTaskWidth:true,liveTimeline:true,viewSwitch:true};
-  }finally{root.unmount();style.remove();}
+  }finally{document.documentElement.removeAttribute("data-side-workspace-drag-expanded");document.documentElement.removeAttribute("data-side-workspace-drag-active");root.unmount();style.remove();}
 }
