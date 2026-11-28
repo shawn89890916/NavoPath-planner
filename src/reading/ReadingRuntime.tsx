@@ -7,7 +7,9 @@ import {applyWeReadProgress,recentLinkedItems,syncWeReadShelf} from "./wereadSyn
 export type ReadingRuntimeSnapshot = ReturnType<typeof useReadingLibrary> & {account:string};
 const REFRESH_MS=5*60_000;
 /** Optional runtime owns background refresh; it never starts for an unimported library. */
-export default function ReadingRuntime({account,onChange,tasks,entries,shelfVisible}:{account:string;onChange:(snapshot:ReadingRuntimeSnapshot|null)=>void;tasks:readonly Task[];entries:readonly TimeEntry[];shelfVisible:boolean}){
+export default function ReadingRuntime({account,onChange,activity,view}:{account:string;onChange:(snapshot:ReadingRuntimeSnapshot|null)=>void;activity:[readonly Task[],readonly TimeEntry[]];view?:string}){
+  const [tasks,entries]=activity;
+  const shelfVisible=view==="official:reading";
   const reading=useReadingLibrary(true,account);
   const state=useRef({reading,shelfVisible});state.current={reading,shelfVisible};
   const epoch=useRef(0),lock=useRef(false),last=useRef(0),previous=useRef("");
