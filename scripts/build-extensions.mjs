@@ -102,15 +102,17 @@ const extensionTypes = (await readFile(resolve(root, 'src/extensions/model.ts'),
 const pluginMcpTypes = (await readFile(resolve(root, 'shared/pluginMcp.ts'), 'utf8')).match(/^export type PluginMcp\w* = [^\r\n]+/gm)?.join('\n');
 if (!pluginMcpTypes) throw new Error('Plugin MCP type declarations are missing');
 const timerTypes = (await readFile(resolve(root, 'src/extensions/timers.ts'), 'utf8')).replaceAll('\r\n','\n').split('const modes =')[0].replaceAll('"../types"', '"./models"');
+const v2Types = (await readFile(resolve(root, 'src/extensions/sdkV2.ts'), 'utf8')).replaceAll('\r\n','\n');
 const apiDoc = await readFile(resolve(root, 'docs/plugin-development.md'), 'utf8');
 for (const folder of ['navopath-plugin-api', 'navopath-plugin-template', 'navopath-theme-template']) {
   const directory = resolve(root, 'integrations', folder, folder === 'navopath-plugin-api' ? '' : 'api');
   await mkdir(directory, { recursive: true });
-  await emit(resolve(directory, 'index.d.ts'), apiTypes + '\nexport type * from "./models";\nexport type * from "./timer";\n');
+  await emit(resolve(directory, 'index.d.ts'), apiTypes + '\nexport type * from "./models";\nexport type * from "./timer";\nexport type * from "./v2";\n');
+  await emit(resolve(directory, 'v2.d.ts'), v2Types);
   await emit(resolve(directory, 'models.d.ts'), modelTypes);
   await emit(resolve(directory, 'extensions.d.ts'), extensionTypes);
   await emit(resolve(directory, 'pluginMcp.d.ts'), pluginMcpTypes + '\n');
   await emit(resolve(directory, 'timer.d.ts'), timerTypes.trimEnd() + '\n');
   if (folder !== 'navopath-plugin-api') await emit(resolve(directory, '../API.md'), apiDoc);
 }
-await emit(resolve(root, 'integrations/navopath-plugin-api/package.json'), JSON.stringify({name:'@navopath/plugin-api',version:'2.0.0',type:'module',types:'index.d.ts',license:'MIT',files:['*.d.ts']},null,2)+'\n');
+await emit(resolve(root, 'integrations/navopath-plugin-api/package.json'), JSON.stringify({name:'@navopath/plugin-api',version:'2.1.0',type:'module',types:'index.d.ts',license:'MIT',files:['*.d.ts']},null,2)+'\n');

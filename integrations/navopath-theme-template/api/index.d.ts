@@ -53,3 +53,4 @@ export interface CollectionApi<T extends { id: string }> { list(): T[]; get(id: 
 
 export type * from "./models";
 export type * from "./timer";
+export type * from "./v2";
