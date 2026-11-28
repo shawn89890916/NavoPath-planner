@@ -10,16 +10,21 @@ if (process.versions.electron) {
 }
 async function runServer() {
   const { createServer } = await import("vite");
+  const { buildPreviewCatalog } = await import("./build-plugin-preview.mjs");
+  const preview = await buildPreviewCatalog("https://navopath.com/extensions-preview/", ["reading"]);
   const profile = await fs.mkdtemp(path.join(os.tmpdir(), "navopath-metrics-test-"));
   const server = await createServer({
     root: path.resolve(__dirname, ".."), configFile: false, logLevel: "error",
     server: { host: "127.0.0.1", port: 0, strictPort: true, hmr: false },
     plugins: [{ name: "isolated-metrics-test", configureServer(server) {
+      server.middlewares.use("/__plugin_v2_fixture", (_req,res)=>{
+        res.setHeader("Content-Type","application/json");res.end(JSON.stringify(preview));
+      });
       server.middlewares.use("/__metrics_test", (_req, res) => {
         res.setHeader("Content-Type", "text/html");
         res.end(`<!doctype html><html><body>Isolated Metrics storage test<script type="module">
           const phase=new URL(location.href).searchParams.get("phase");
-          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):phase==="exerciseSettings"?import("/scripts/settings-ui-browser.mjs"):phase==="exerciseIntent"?import("/scripts/intent-ui-browser.mjs"):phase==="exerciseDragProjection"?import("/scripts/drag-projection-browser.mjs"):phase==="exerciseSideWorkspace"?import("/scripts/side-workspace-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
+          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):phase==="exerciseSettings"?import("/scripts/settings-ui-browser.mjs"):phase==="exerciseIntent"?import("/scripts/intent-ui-browser.mjs"):phase==="exerciseDragProjection"?import("/scripts/drag-projection-browser.mjs"):phase==="exerciseSideWorkspace"?import("/scripts/side-workspace-browser.mjs"):phase==="exercisePluginV2"?import("/scripts/plugin-v2-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
         </script></body></html>`);
       });
     } }]
@@ -69,6 +74,11 @@ async function runRenderer() {
         if (!result || result.error) throw Error(result?.error || "Side workspace fixture failed");
         console.log("Side workspace Chromium: "+JSON.stringify(result.value));
       }
+      win.setContentSize(420,840);
+      await win.loadURL(url+"?phase=exercisePluginV2&plugin-runtime-v2=1");
+      const plugin=await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await Promise.race([window.metricsResult,new Promise((_,reject)=>setTimeout(()=>reject(Error('Plugin fixture timed out')),30000))]);await new Promise(r=>setTimeout(r,20));}throw Error('Plugin fixture missing');})()");
+      if(!plugin || plugin.error)throw Error(plugin?.error || "Plugin V2 fixture failed");
+      console.log("Plugin V2 Chromium: "+JSON.stringify(plugin.value));
     } else {
     for (const phase of ["seedInterrupted", "recoverAndExercise", "recoverPurge"]) {
       await win.loadURL(url+"?phase="+phase);
