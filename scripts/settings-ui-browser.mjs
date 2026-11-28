@@ -3,6 +3,9 @@ import {createRoot} from "react-dom/client";
 import {flushSync} from "react-dom";
 import {SettingSection,SettingRow,SettingToggle,SettingSelect,SettingTextInput,SettingColorInput,SettingNumberInput,SettingSlider,SettingActionButton,SettingDisclosure} from "../src/components/SettingsControls.tsx";
 import ReadingSettings from "../src/reading/ReadingSettings.tsx";
+import ReadingShelf from "../src/reading/ReadingShelf.tsx";
+import {extensionService} from "../src/extensions/service.ts";
+import {emptyReadingLibrary,createBook,linkReadingTask} from "../src/reading/model.ts";
 import "../src/app.css";
 import "../src/ui-primitives.css";
 const h=React.createElement;
@@ -102,5 +105,36 @@ export async function exerciseSettings(){
   mount("zh",false);await wait(()=>document.body.textContent.includes("请先启用阅读插件"),"Disabled plugin guard missing");
   mount("zh",true,()=>false);await wait(()=>document.body.textContent.includes("连接仅支持桌面端"),"Web limitation missing");
   assert(calls.map(x=>x.action).join(",")==="status,connect,test,disconnect","Unexpected external connection calls");
-  root.unmount();style.remove();document.documentElement.style.removeProperty("--workspace-corner-radius");return {width:innerWidth,cases,sharedRadius:true,fieldAlignment:true,pluginSwitchAlignment:true,sectionHierarchy:true,readingConnection:true};
+  const original=extensionService.readingWeRead,oldDesktop=window.desktopApi;
+  window.desktopApi={readingWeRead:()=>{}};
+  let library=linkReadingTask(createBook(emptyReadingLibrary(),{id:"existing",title:"Existing Book",author:"Author",now:"2026-11-28T00:00:00Z"}),"existing","existing-task"),taskBook="";
+  const item=(id,title,secret=false)=>({id,kind:"book",title,author:"Author",private:secret,finished:false,recent:100});
+  const books=[item("existing-remote","Existing Book"),item("new","New Book"),item("private","Private Book",true)];
+  extensionService.readingWeRead=async(action,arg,account)=>{
+    assert(account==="preview","Wrong account");
+    const base={ok:true,connected:true,connectionId:"fixture",checkedAt:"2026-11-28T00:00:00Z"};
+    if(action==="shelf")return {...base,shelf:books};
+    if(action==="progress")return {...base,progress:{id:arg,percent:25,seconds:1800,started:true,finished:false,recent:101}};
+    if(action==="statistics")return {...base,statistics:{period:arg,base:100,totalSeconds:1800,days:[{day:100,seconds:1800}],readDays:1}};
+    return base;
+  };
+  const mutate=async change=>{library=change(library);mountShelf();return library;};
+  function mountShelf(){flushSync(()=>root.render(h("div",{className:"df-app mode-execute",style:{width:"100%",minWidth:0}},h(ReadingShelf,{account:"preview",library,busy:false,error:"",lang:"en",onCreateTask:async id=>{taskBook=id;},mutate,tasks:[],entries:[],engagementEnabled:false,onSaved:()=>{}}))))}
+  try{
+    mountShelf();await wait(()=>[...document.querySelectorAll("button")].some(b=>b.textContent==="Import books"),"Shelf connection missing");
+    click("Import books");await wait(()=>document.querySelector(".reading-import"),"Import preview missing");
+    click("Select public new books");
+    const existingRow=[...document.querySelectorAll(".reading-import-row")].find(row=>row.textContent.includes("Existing Book"));
+    existingRow.querySelector("input").click();
+    await wait(()=>existingRow.querySelector("select")?.value==="existing","Existing book was not matched");
+    assert(![...document.querySelectorAll(".reading-import-row")].find(row=>row.textContent.includes("Private Book")).querySelector("input").checked,"Private book selected");
+    click("Confirm (2)");await wait(()=>library.books.length===2&&!document.querySelector(".reading-import"),"Import failed");
+    assert(library.taskLinks[0].taskId==="existing-task"&&library.books.some(b=>b.id==="existing"),"Existing book/task identity lost");
+    assert(library.books.find(b=>b.title==="New Book").progress.current===25,"Progress not imported");
+    click("New Book");click("Add reading task");await wait(()=>taskBook,"Reading task not created");
+    assert(taskBook===library.books.find(b=>b.title==="New Book").id,"Task not linked to book");
+    click("View statistics");await wait(()=>document.body.textContent.includes("30 min")&&document.querySelector(".reading-stat-row"),"External statistics missing");
+    for(const el of document.querySelectorAll(".reading-shelf,.reading-sync,.reading-book,.reading-week"))assert(el.scrollWidth<=el.clientWidth+2,"Reading shelf overflow at "+innerWidth);
+  }finally{extensionService.readingWeRead=original;window.desktopApi=oldDesktop;}
+  root.unmount();style.remove();document.documentElement.style.removeProperty("--workspace-corner-radius");return {width:innerWidth,cases,sharedRadius:true,fieldAlignment:true,pluginSwitchAlignment:true,sectionHierarchy:true,readingConnection:true,readingImport:true};
 }

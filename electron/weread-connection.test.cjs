@@ -17,7 +17,7 @@ test("verifies official shelf, encrypts per account, never returns key or shelf 
   assert.deepEqual(await service.run(account,"status"),{ok:true,connected:false});
   const result=await service.run(account,"connect",key);assert.deepEqual(result.counts,{books:1,audiobooks:1,articles:1});
   assert.doesNotMatch(JSON.stringify(result),/Private title|wrk-example|upgrade_info/);assert.equal(result.upgradeNotice,true);assert.equal(result.ok,true);
-  assert.equal(fs.readdirSync(directory).length,1);assert.ok(!fs.readFileSync(path.join(directory,fs.readdirSync(directory)[0])).includes(key));
+  assert.equal(fs.readdirSync(directory).length,2);for(const name of fs.readdirSync(directory))assert.ok(!fs.readFileSync(path.join(directory,name)).includes(key));
   assert.equal((await service.run(other,"status")).connected,false);
   assert.equal((await service.run(account,"test")).ok,true);
   assert.equal((await service.run(account,"disconnect")).connected,false);
@@ -70,7 +70,9 @@ test("reads sanitized shelf/progress/weekly statistics; isolates credential chan
   const id=shelf.connectionId;assert.ok(id);
   const next=await service.run(account,"progress","book1");assert.equal(next.connectionId,id);assert.equal(next.progress.percent,1);assert.equal(next.progress.seconds,3600);
   assert.deepEqual(calls.at(-1),{api_name:"/book/getprogress",skill_version:"1.0.6",bookId:"book1"});
-  const stats=await service.run(account,"statistics");assert.equal(stats.statistics.totalSeconds,3600);assert.equal(stats.statistics.days.length,2);
+  const stats=await service.run(account,"statistics");assert.equal(stats.statistics.totalSeconds,3600);assert.equal(stats.statistics.period,"weekly");assert.equal(stats.statistics.days.length,2);
+  assert.equal((await service.run(account,"statistics","monthly")).statistics.period,"monthly");
+  assert.equal((await service.run(account,"statistics","invalid")).code,"format");
   assert.equal((await service.run(account,"connect",key)).ok,true);assert.equal((await service.run(account,"shelf")).connectionId,id);
   assert.equal((await service.run(account,"connect","wrk-other-key")).ok,true);assert.notEqual((await service.run(account,"shelf")).connectionId,id);
   assert.equal((await service.run(other,"shelf")).code,"not-connected");

@@ -25,3 +25,7 @@
 
 .reading-cover { width:32px; height:44px; object-fit:cover; border-radius:4px; flex:none; }
 .reading-book-header .reading-book-title { flex:1; }
+
+.reading-stat-row { display:grid; grid-template-columns:minmax(65px,auto) minmax(0,1fr) auto; gap:8px; align-items:center; }
+.reading-stat-row progress { width:100%;height:5px;accent-color:var(--accent-active); }
+.reading-week select { min-width:0;max-width:100%; }

@@ -2,7 +2,7 @@ import {useEffect,useRef,useCallback} from "react";
 import {useReadingLibrary} from "./useReadingLibrary";
 import type {Task,TimeEntry} from "../types";
 import {extensionService} from "../extensions/service";
-import {weReadDesktopAvailable,type WeReadProgress} from "./wereadConnection";
+import {weReadDesktopAvailable,WEREAD_CONNECTION_EVENT,type WeReadProgress} from "./wereadConnection";
 import {applyWeReadProgress,recentLinkedItems,syncWeReadShelf} from "./wereadSync";
 export type ReadingRuntimeSnapshot = ReturnType<typeof useReadingLibrary> & {account:string};
 const REFRESH_MS=5*60_000;
@@ -40,9 +40,9 @@ export default function ReadingRuntime({account,onChange,tasks,entries,shelfVisi
   },[account]);
   useEffect(()=>{
     ++epoch.current;lock.current=false;last.current=0;previous.current="";
-    const focus=()=>{void refresh();};
-    window.addEventListener("focus",focus);
-    return()=>{++epoch.current;lock.current=false;window.removeEventListener("focus",focus);};
+    const focus=()=>{void refresh();};const changed=()=>{last.current=0;void refresh();};
+    window.addEventListener("focus",focus);window.addEventListener(WEREAD_CONNECTION_EVENT,changed);
+    return()=>{++epoch.current;lock.current=false;window.removeEventListener("focus",focus);window.removeEventListener(WEREAD_CONNECTION_EVENT,changed);};
   },[account,refresh]);
   useEffect(()=>{if(linked&&!shelfVisible)void refresh();},[linked,shelfVisible,refresh]);
   useEffect(()=>{

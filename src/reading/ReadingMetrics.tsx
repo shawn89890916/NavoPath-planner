@@ -3,6 +3,8 @@ import type { Language } from "../types";
 import type { TimeAllocationMetrics } from "../metrics/timeAllocation";
 import type { buildInsights } from "../metrics/insightFacts";
 import type { ReadingLibrary } from "./model";
+import WeReadStatisticsPanel from "./WeReadStatisticsPanel";
+import "./ReadingShelf.css";
 
 /** Reuse the filtered and range-clipped Metrics facts. No new collector or duration store. */
 export function groupReadingMetrics(library: ReadingLibrary, allocation: Pick<TimeAllocationMetrics, "taskEntries">, trackedEntries: ReturnType<typeof buildInsights>["trackedEntries"]) {
@@ -24,7 +26,8 @@ export function groupReadingMetrics(library: ReadingLibrary, allocation: Pick<Ti
   return [...rows.values()].filter(row => row.planned || row.tracked).sort((a,b) => b.tracked-a.tracked || b.planned-a.planned || a.title.localeCompare(b.title));
 }
 
-export default function ReadingMetrics({ library, allocation, trackedEntries, lang }: {
+export default function ReadingMetrics({ library, allocation, trackedEntries, lang, account }: {
+  account?:string;
   library: ReadingLibrary; allocation: TimeAllocationMetrics; trackedEntries: ReturnType<typeof buildInsights>["trackedEntries"]; lang: Language;
 }) {
   const zh = lang === "zh";
@@ -35,6 +38,7 @@ export default function ReadingMetrics({ library, allocation, trackedEntries, la
     <h3>{zh ? "阅读统计" : "Reading statistics"}</h3>
     <p>{zh ? "按当前统计范围和筛选条件汇总关联阅读任务，实际时长仅包含计时记录。" : "Reading tasks within the selected range and filters. Actual time uses recorded time entries only."}</p>
     <div className="df-metric-insight-stats"><div><span>{zh ? "阅读排程" : "Reading schedule"}</span><strong>{minutes(planned)}</strong></div><div><span>{zh ? "阅读计时" : "Reading tracked"}</span><strong>{minutes(tracked)}</strong></div></div>
+    {account&&library.books.some(book=>book.weread)&&<WeReadStatisticsPanel account={account} zh={zh}/>}
     {library.books.some(book=>book.weread?.seconds!==undefined)&&<><h4>{zh?"微信读书累计时长（全部历史）":"WeRead lifetime duration (all history)"}</h4><p>{zh?"外部书籍累计时长不受本页日期或项目筛选限制，也不与本地计时相加。":"External lifetime durations are not affected by this page’s date or project filters and are not added to local tracked time."}</p><div className="df-metric-insight-table" tabIndex={0} role="region" aria-label={zh?"微信读书累计时长":"WeRead lifetime duration"}><table><thead><tr><th>{zh?"书籍":"Book"}</th><th>{zh?"累计时长":"Lifetime duration"}</th></tr></thead><tbody>{library.books.filter(b=>b.weread?.seconds!==undefined).map(b=><tr key={b.id}><td>{b.title}</td><td>{minutes(b.weread!.seconds!/60)}</td></tr>)}</tbody></table></div></>}
     {rows.length ? <div className="df-metric-insight-table" tabIndex={0} role="region" aria-label={zh ? "按书籍统计" : "By book"}><table><thead><tr><th>{zh ? "书籍" : "Book"}</th><th>{zh ? "排程" : "Scheduled"}</th><th>{zh ? "计时" : "Tracked"}</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.title}</td><td>{minutes(row.planned)}</td><td>{minutes(row.tracked)}</td></tr>)}</tbody></table></div> : <p>{zh ? "所选范围暂无阅读记录。" : "No reading activity in this range."}</p>}
   </section>;

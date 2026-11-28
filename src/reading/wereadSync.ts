@@ -6,9 +6,12 @@ export const sourceKey=identity;
 export function sourceMatches(book:ReadingBook,connectionId:string,item:WeReadItem){
   return book.weread?.connectionId===connectionId&&book.weread.externalId===item.id&&book.weread.kind===item.kind;
 }
-export function suggestedBook(library:ReadingLibrary,item:WeReadItem){
+export function matchingBooks(library:ReadingLibrary,item:WeReadItem){
   const normalize=(s:string)=>s.normalize("NFKC").trim().toLowerCase();
-  const matches=library.books.filter(b=>normalize(b.title)===normalize(item.title)&&normalize(b.author)===normalize(item.author));
+  return library.books.filter(b=>normalize(b.title)===normalize(item.title)&&normalize(b.author)===normalize(item.author));
+}
+export function suggestedBook(library:ReadingLibrary,item:WeReadItem){
+  const matches=matchingBooks(library,item);
   return matches.length===1?matches[0]:undefined;
 }
 function updateSource(book:ReadingBook,connectionId:string,item:WeReadItem,now:string,managed:boolean){
@@ -55,7 +58,7 @@ export function syncWeReadShelf(library:ReadingLibrary,connectionId:string,items
   if(library.wereadPreferences?.autoImport&&library.wereadPreferences.connectionId===connectionId){
     const previous=library.wereadPreferences.seenKeys;
     const seen=new Set(previous??items.map(identity));
-    const choices=items.filter(item=>!item.private&&!seen.has(identity(item))&&!next.books.some(book=>sourceMatches(book,connectionId,item))&&!suggestedBook(next,item)).map(item=>({item}));
+    const choices=items.filter(item=>!item.private&&!seen.has(identity(item))&&!next.books.some(book=>sourceMatches(book,connectionId,item))&&!matchingBooks(next,item).length).map(item=>({item}));
     next=importWeRead(next,connectionId,choices,now);
     const seenKeys=[...new Set([...seen,...items.map(identity)])].sort();
     if(JSON.stringify(seenKeys)!==JSON.stringify(previous))next={...next,wereadPreferences:{...library.wereadPreferences,seenKeys}};
@@ -67,8 +70,8 @@ export function applyWeReadProgress(library:ReadingLibrary,connectionId:string,p
   const book=library.books.find(b=>b.weread?.connectionId===connectionId&&b.weread.kind==="book"&&b.weread.externalId===progress.id);
   if(!book?.weread)return library;
   const source=book.weread;
-  if(source.percent!==undefined&&source.recent!==undefined&&progress.recent!==undefined&&progress.recent<source.recent)return library;
-  const nextSource={...source,percent:progress.percent,seconds:progress.seconds??source.seconds,recent:progress.recent??source.recent,finished:progress.finished};
+  if(source.progressAt!==undefined&&progress.recent!==undefined&&progress.recent<source.progressAt)return library;
+  const nextSource={...source,percent:progress.percent,seconds:progress.seconds??source.seconds,recent:Math.max(source.recent??0,progress.recent??0)||undefined,progressAt:progress.recent??source.progressAt,finished:progress.finished};
   let next:ReadingBook={...book,weread:nextSource};
   if(source.managed){
     next={...next,progress:{unit:"percent",current:progress.percent},status:progress.finished?"finished":progress.started?"reading":"to-read"};

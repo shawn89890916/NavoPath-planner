@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Language } from "../types";
 import { SettingSection, SettingRow, SettingActionButton, SettingTextInput } from "../components/SettingsControls";
 import { extensionService } from "../extensions/service";
-import { weReadDesktopAvailable, type WeReadAction, type WeReadResult } from "./wereadConnection";
+import { weReadDesktopAvailable, WEREAD_CONNECTION_EVENT, type WeReadAction, type WeReadResult } from "./wereadConnection";
 
 export default function ReadingSettings({lang,active,connection=extensionService.readingWeRead,desktopAvailable=weReadDesktopAvailable}:{lang:Language;active:boolean;connection?:typeof extensionService.readingWeRead;desktopAvailable?:typeof weReadDesktopAvailable}){
   const tr=(zh:string,en:string)=>lang==="zh"?zh:en;
@@ -20,6 +20,7 @@ export default function ReadingSettings({lang,active,connection=extensionService
       setConnected(result.connected);
       if(action==="connect"||action==="test")setVerified(result);
       if(action==="disconnect"){setVerified(null);setKey("");}
+      if(action==="connect"||action==="disconnect")window.dispatchEvent(new Event(WEREAD_CONNECTION_EVENT));
     }catch{if(current===epoch.current)setError("unavailable");}
     finally{if(current===epoch.current){lock.current=false;setBusy(null);}}
   };

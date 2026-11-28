@@ -17,18 +17,25 @@ function createWeReadConnection({directory,safeStorage,fetchImpl=fetch,now=()=>n
     if(!fs.existsSync(filePath))return null;
     if(!secure()||fs.statSync(filePath).size>16384)throw Error("Storage unavailable");
     const raw=safeStorage.decryptString(fs.readFileSync(filePath));
-    // Upgrade the old encrypted key in place; a replacement credential is a distinct connection.
-    if(validKey(raw)){const credential={key:raw,id:randomUUID()};save(filePath,credential);return credential;}
-    const credential=JSON.parse(raw);
-    if(!validKey(credential.key)||typeof credential.id!=="string"||!/^[0-9a-f-]{36}$/i.test(credential.id))throw Error("Storage unavailable");
-    return credential;
+    if(!validKey(raw))throw Error("Storage unavailable");
+    return raw;
   }
-  function save(filePath,credential){
+  function save(filePath,value){
     if(!secure())throw Error("Storage unavailable");
     fs.mkdirSync(directory,{recursive:true});
     const temp=filePath+"."+randomUUID()+".tmp";
-    try{fs.writeFileSync(temp,safeStorage.encryptString(JSON.stringify(credential)),{mode:0o600});fs.renameSync(temp,filePath);}
+    try{fs.writeFileSync(temp,safeStorage.encryptString(value),{mode:0o600});fs.renameSync(temp,filePath);}
     finally{try{fs.unlinkSync(temp);}catch{}}
+  }
+  function credential(filePath,key){
+    const idPath=filePath+".identity",check=createHash("sha256").update(key).digest("hex");
+    try{
+      if(fs.statSync(idPath).size<=16384){
+        const saved=JSON.parse(safeStorage.decryptString(fs.readFileSync(idPath)));
+        if(saved.check===check&&typeof saved.id==="string"&&/^[0-9a-f-]{36}$/i.test(saved.id))return {key,id:saved.id};
+      }
+    }catch{}
+    const id=randomUUID();save(idPath,JSON.stringify({check,id}));return {key,id};
   }
   async function request(key,api,params={}){
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
@@ -96,16 +103,19 @@ function createWeReadConnection({directory,safeStorage,fetchImpl=fetch,now=()=>n
       finished:book.progress===100&&!!seconds(book.finishTime),started:book.isStartReading===1||book.isStartReading===true||book.progress>0
     }};
   }
-  async function statistics(credential){
-    const result=await request(credential.key,"/readdata/detail",{mode:"weekly",baseTime:0});
+  async function statistics(credential,period="weekly"){
+    if(!["weekly","monthly","annually","overall","lastWeek"].includes(period))return fail("format");
+    const mode=period==="lastWeek"?"weekly":period;
+    const baseTime=period==="lastWeek"?Math.floor(Date.now()/1000)-7*86400:0;
+    const result=await request(credential.key,"/readdata/detail",{mode,baseTime});
     if(!result.ok)return result;
-    const data=result.data,total=seconds(data.totalReadTime),base=seconds(data.baseTime);
+    const data=result.data,total=seconds(data.totalReadTime),base=mode==="overall"?0:seconds(data.baseTime);
     if(total===undefined||base===undefined)return fail("response");
     const days=Object.entries(obj(data.readTimes)?data.readTimes:{}).flatMap(([key,value])=>{
       const day=Number(key),duration=seconds(value);
-      return Number.isSafeInteger(day)&&day>=base&&day<base+7*86400&&duration!==undefined?[{day,seconds:duration}]:[];
-    }).sort((a,b)=>a.day-b.day).slice(0,7);
-    return {ok:true,connected:true,checkedAt:now(),connectionId:credential.id,statistics:{base,totalSeconds:total,days,readDays:seconds(data.readDays)}};
+      return Number.isSafeInteger(day)&&(mode==="overall"||day>=base)&&duration!==undefined?[{day,seconds:duration}]:[];
+    }).sort((a,b)=>a.day-b.day).slice(0,mode==="weekly"?7:mode==="monthly"?31:mode==="annually"?12:100);
+    return {ok:true,connected:true,checkedAt:now(),connectionId:credential.id,statistics:{period,base,totalSeconds:total,days,readDays:seconds(data.readDays)}};
 
   }
   async function run(scope,action,candidate){
@@ -113,23 +123,24 @@ function createWeReadConnection({directory,safeStorage,fetchImpl=fetch,now=()=>n
     if(locks.has(filePath))return fail("busy");
     locks.add(filePath);
     try{
-      if(action==="disconnect"){fs.rmSync(filePath,{force:true});return {ok:true,connected:false};}
+      if(action==="disconnect"){fs.rmSync(filePath,{force:true});fs.rmSync(filePath+".identity",{force:true});return {ok:true,connected:false};}
       if(action==="status")return {ok:true,connected:fs.existsSync(filePath)};
       if(!secure())return fail("storage");
       if(action==="connect"){
         const key=typeof candidate==="string"?candidate.trim():"";
         if(!validKey(key))return fail("format");
         const result=await verify(key);if(result.ok){
-          let previous=null;try{previous=read(filePath);}catch{}
-          save(filePath,{key,id:previous?.key===key?previous.id:randomUUID()});
+          save(filePath,key);credential(filePath,key);
         }return result;
       }
       if(["test","shelf","progress","statistics"].includes(action)){
-        const credential=read(filePath);if(!credential)return fail("not-connected");
-        if(action==="progress")return await progress(credential,candidate);
-        if(action==="statistics")return await statistics(credential);
-        const result=await verify(credential.key,action==="shelf");
-        return result.ok&&action==="shelf"?{...result,connectionId:credential.id}:result;
+        const key=read(filePath);if(!key)return fail("not-connected");
+        if(action==="test")return await verify(key);
+        const active=credential(filePath,key);
+        if(action==="progress")return await progress(active,candidate);
+        if(action==="statistics")return await statistics(active,candidate);
+        const result=await verify(key,true);
+        return result.ok?{...result,connectionId:active.id}:result;
       }
       return fail("action");
     }catch{return fail("storage");}finally{locks.delete(filePath);}

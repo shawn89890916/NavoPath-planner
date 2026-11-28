@@ -2,14 +2,15 @@ import {useEffect,useRef,useState} from "react";
 import {Button,Input} from "../components/UiPrimitives";
 import {extensionService} from "../extensions/service";
 import type {ReadingLibrary,ReadingBook} from "./model";
-import {weReadDesktopAvailable,type WeReadItem,type WeReadStatistics,type WeReadProgress} from "./wereadConnection";
-import {applyWeReadProgress,importWeRead,recentLinkedItems,sourceKey,sourceMatches,suggestedBook,syncWeReadShelf} from "./wereadSync";
+import {weReadDesktopAvailable,WEREAD_CONNECTION_EVENT,type WeReadItem,type WeReadProgress} from "./wereadConnection";
+import {applyWeReadProgress,importWeRead,recentLinkedItems,sourceKey,sourceMatches,suggestedBook,matchingBooks,syncWeReadShelf} from "./wereadSync";
 import type {ReadingMutate} from "./ReadingShelf";
+import WeReadStatisticsPanel from "./WeReadStatisticsPanel";
 export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshToken}:{account:string;library:ReadingLibrary;mutate:ReadingMutate;zh:boolean;busy:boolean;refreshToken:string}){
   const [connected,setConnected]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState(""),[synced,setSynced]=useState("");
   const [preview,setPreview]=useState<{connectionId:string;items:WeReadItem[]}|null>(null);
   const [choices,setChoices]=useState<Record<string,string>>({}),[search,setSearch]=useState(""),[limit,setLimit]=useState(60),[autoImport,setAutoImport]=useState(false);
-  const [stats,setStats]=useState<WeReadStatistics|null>(null);
+
   const current=useRef({library,mutate,busy});current.current={library,mutate,busy};
   const lock=useRef(false),epoch=useRef(0),last=useRef(0),connectionRef=useRef(""),previewOpen=useRef(false);previewOpen.current=!!preview;
   const tr=(a:string,b:string)=>zh?a:b;
@@ -20,10 +21,10 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
     try{
       const result=await request("shelf");
       if(e!==epoch.current)return;
-      if(!result.ok){if(result.code==="not-connected"){setConnected(false);setStats(null);setPreview(null);}else setError(result.code);return;}
+      if(!result.ok){if(result.code==="not-connected"){setConnected(false);setPreview(null);}else setError(result.code);return;}
       if(!result.shelf||!result.connectionId)throw Error("Invalid shelf");
       const connectionId=result.connectionId,items=result.shelf;
-      if(connectionRef.current!==connectionId){connectionRef.current=connectionId;setStats(null);}
+      if(connectionRef.current!==connectionId)connectionRef.current=connectionId;
       setConnected(true);setSynced(result.checkedAt??new Date().toISOString());last.current=Date.now();
       let next=current.current.library;
       if(next.books.some(b=>b.weread?.connectionId===connectionId)||next.wereadPreferences?.connectionId===connectionId){
@@ -47,12 +48,14 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
     finally{if(e===epoch.current){lock.current=false;setLoading(false);}}
   }
   useEffect(()=>{
-    const e=++epoch.current;lock.current=false;last.current=0;setConnected(false);setPreview(null);setStats(null);setError("");setLoading(false);setSynced("");
+    const e=++epoch.current;lock.current=false;last.current=0;setConnected(false);setPreview(null);setError("");setLoading(false);setSynced("");
     if(!weReadDesktopAvailable())return;
-    void request("status").then(result=>{if(e!==epoch.current)return;if(result.ok){setConnected(result.connected);if(result.connected&&current.current.library.books.some(b=>b.weread))void run();}}).catch(()=>{});
-    const focus=()=>{if(!previewOpen.current&&Date.now()-last.current>5*60_000)void run();};
-    window.addEventListener("focus",focus);
-    return()=>{++epoch.current;lock.current=false;window.removeEventListener("focus",focus);};
+    const status=()=>void request("status").then(result=>{if(e!==epoch.current)return;if(result.ok){setConnected(result.connected);if(result.connected&&current.current.library.books.some(b=>b.weread)&&!previewOpen.current)void run();else if(!result.connected)setPreview(null);}}).catch(()=>{});
+    status();
+    const focus=()=>{if(!previewOpen.current&&Date.now()-last.current>5*60_000)status();};
+    const changed=()=>{setPreview(null);setSynced("");last.current=0;status();};
+    window.addEventListener("focus",focus);window.addEventListener(WEREAD_CONNECTION_EVENT,changed);
+    return()=>{++epoch.current;lock.current=false;window.removeEventListener("focus",focus);window.removeEventListener(WEREAD_CONNECTION_EVENT,changed);};
   },[account]);
   useEffect(()=>{if(connected&&!preview&&Date.now()-last.current>5*60_000&&current.current.library.books.some(b=>b.weread))void run();},[refreshToken]);
   const unlinked=preview?.items.filter(item=>!library.books.some(book=>sourceMatches(book,preview.connectionId,item)))??[];
@@ -88,10 +91,6 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
     }catch{if(e===epoch.current)setError("unavailable");}
     finally{if(e===epoch.current){lock.current=false;setLoading(false);}}
   }
-  async function loadStats(){
-    if(lock.current)return;lock.current=true;setLoading(true);setError("");const e=epoch.current;
-    try{const result=await request("statistics");if(e===epoch.current){if(result.ok&&result.statistics&&(!connectionRef.current||result.connectionId===connectionRef.current))setStats(result.statistics);else setError(result.ok?"response":result.code);}}catch{if(e===epoch.current)setError("unavailable");}finally{if(e===epoch.current){lock.current=false;setLoading(false);}}
-  }
   if(!weReadDesktopAvailable())return null;
   return <div className="reading-sync">
     <div className="reading-heading"><span className="reading-muted">{connected?(synced?tr("微信读书 · 已同步 ","WeRead · Synced ")+new Date(synced).toLocaleTimeString():tr("微信读书 · 已连接","WeRead · Connected")):tr("微信读书 · 未连接（在阅读设置中连接）","WeRead · Not connected (connect in Reading settings)")}</span>
@@ -101,7 +100,7 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
     {preview&&<div className="reading-import">
       <h3>{tr("导入预览","Import preview")}</h3><p className="reading-muted">{tr("选中的书籍将保存到 NavoPath 书架并随书库同步。私密书籍默认不选中；已有任务关联会保留。","Selected books are saved and synced with your NavoPath library. Private books are unselected by default. Existing task links are preserved.")}</p>
       <Input value={search} placeholder={tr("搜索书籍","Search books")} onChange={e=>{setSearch(e.target.value);setLimit(60);}}/>
-      <div className="reading-actions"><Button variant="ghost" disabled={loading} onClick={()=>setChoices(Object.fromEntries(unlinked.filter(item=>!item.private&&!suggestedBook(library,item)).map(item=>[sourceKey(item),""])))}>{tr("选择公开新书","Select public new books")}</Button><Button variant="ghost" onClick={()=>setChoices({})}>{tr("清空选择","Clear selection")}</Button></div>
+      <div className="reading-actions"><Button variant="ghost" disabled={loading} onClick={()=>setChoices(Object.fromEntries(unlinked.filter(item=>!item.private&&!matchingBooks(library,item).length).map(item=>[sourceKey(item),""])))}>{tr("选择公开新书","Select public new books")}</Button><Button variant="ghost" onClick={()=>setChoices({})}>{tr("清空选择","Clear selection")}</Button></div>
       {visible.map(item=>{
         const key=sourceKey(item),isSelected=Object.hasOwn(choices,key),suggested=suggestedBook(library,item);
         const candidates=library.books.filter(b=>!b.weread||b.weread.connectionId!==preview.connectionId);
@@ -112,8 +111,7 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
       <label className="reading-muted"><input type="checkbox" checked={autoImport} onChange={e=>setAutoImport(e.target.checked)}/>{tr("自动导入以后新增的公开书籍（不自动合并同名书）","Automatically import future public books (no automatic title merge)")}</label>
       <div className="reading-actions"><Button variant="ghost" onClick={()=>setPreview(null)} disabled={loading}>{tr("取消","Cancel")}</Button><Button variant="primary" disabled={loading||busy} onClick={()=>void save()}>{tr("确认","Confirm")} ({selected})</Button></div>
     </div>}
-    {connected&&!preview&&<div className="reading-heading"><span className="reading-muted">{stats?tr("本周微信读书 ","WeRead this week ")+Math.round(stats.totalSeconds/60)+" min":tr("微信读书时长独立统计","WeRead time is reported separately")}</span><Button variant="ghost" disabled={loading} onClick={()=>void loadStats()}>{tr("本周统计","Weekly stats")}</Button></div>}
-    {stats&&!preview&&<div className="reading-week">{stats.days.map(day=><div key={day.day} className="reading-heading"><span className="reading-muted">{new Date(day.day*1000).toLocaleDateString()}</span><span>{Math.round(day.seconds/60)} min</span></div>)}<p className="reading-muted">{tr("来源：微信读书，含阅读/收听，不与 NavoPath 计时直接相加。","Source: WeRead reading/listening. Not added to NavoPath tracked time.")}</p></div>}
+    {connected&&!preview&&<WeReadStatisticsPanel account={account} zh={zh} disabled={loading}/>}
   </div>;
 }
 export function WeReadBookActions({book,account,mutate,zh,busy}:{book:ReadingBook;account:string;mutate:ReadingMutate;zh:boolean;busy:boolean}){

@@ -5,7 +5,7 @@ export type ReadingStatus = "to-read" | "reading" | "finished";
 export type ReadingProgress =
   | { unit: "percent"; current: number }
   | { unit: "pages" | "chapters"; current: number; total?: number };
-export interface ReadingWeReadSource { connectionId:string; externalId:string; kind:"book"|"audio"; managed:boolean; private?:boolean; cover?:string; readerLink?:string; recent?:number; percent?:number; seconds?:number; finished?:boolean; checkedAt:string; }
+export interface ReadingWeReadSource { connectionId:string; externalId:string; kind:"book"|"audio"; managed:boolean; private?:boolean; cover?:string; readerLink?:string; recent?:number; progressAt?:number; percent?:number; seconds?:number; finished?:boolean; checkedAt:string; }
 export interface ReadingBook {
   id: string; title: string; author: string; status: ReadingStatus;
   progress: ReadingProgress; createdAt: string; updatedAt: string; weread?:ReadingWeReadSource;
