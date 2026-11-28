@@ -75,6 +75,28 @@ describe("protocol 2 contract (mock host; not production negotiation)", () => {
     expect(f.registry.size).toBe(0);
     await expect(registered.resolve(["task"])).rejects.toMatchObject({ code: "INACTIVE" });
   });
+  it("revokes an individual contribution without revoking the plugin", async () => {
+    const f = mockHost("ui.tasksGroup", "ui.workspace", "tasks.read");
+    const session = createV2Session(f.manifest, f.host);
+    const group: V2TaskGroup = { id: "group", name: "Tasks", resolve: () => ["task"] };
+    const off = session.context.ui.registerTaskGroup(group);
+    const stale = f.registry.get("official:sample:ui.tasksGroup:group") as V2TaskGroup;
+    await off();
+    await expect(stale.resolve(["task"])).rejects.toMatchObject({ code: "INACTIVE" });
+    session.context.ui.registerTaskGroup(group);
+    await expect(stale.resolve(["task"])).rejects.toMatchObject({ code: "INACTIVE" });
+    expect(await session.context.tasks.list()).toHaveLength(1);
+
+    const cleanup = vi.fn();
+    let finish!: (off: () => void) => void;
+    const unmount = session.context.ui.registerWorkspacePage({ id: "page", name: "Page", mount: () => new Promise(resolve => { finish = resolve; }) });
+    const page = f.registry.get("official:sample:ui.workspace:page") as V2ContributionMap["ui.workspace"];
+    const pending = page.mount({} as HTMLElement);
+    await unmount();
+    finish(cleanup); await pending;
+    expect(cleanup).toHaveBeenCalledTimes(1);
+    await session.close();
+  });
   it("revokes before cleanup, cleans up after activation failure and continues after errors", async () => {
     const f = mockHost("ui.workspace");
     const disposed = vi.fn();

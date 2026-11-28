@@ -91,32 +91,39 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
     check(capability);
     return structuredClone(value);
   };
-  const wrapPage = (page: V2Page): V2Page => ({
+  const wrapPage = (page: V2Page, ensure: () => void, active: () => boolean): V2Page => ({
     id: page.id, name: page.name,
     async mount(container) {
-      check();
+      ensure();
       const cleanup = await page.mount(container);
-      if (controller.signal.aborted || !host.isCurrent()) { if (cleanup) await cleanup(); return; }
+      if (!active()) { if (cleanup) await cleanup(); return; }
       return cleanup ? track(cleanup) : undefined;
     },
   });
-  const wrapGroup = (group: V2TaskGroup): V2TaskGroup => ({
+  const wrapGroup = (group: V2TaskGroup, ensure: () => void): V2TaskGroup => ({
     id: group.id, name: group.name, actions: structuredClone(group.actions),
     async resolve(candidateIds) {
+      ensure();
       const allowed = new Set(candidateIds);
       const ids = await call("ui.tasksGroup", async () => group.resolve([...candidateIds]));
+      ensure();
       return [...new Set(ids)].filter(id => allowed.has(id));
     },
     invoke: group.invoke ? async id => {
-      check("ui.tasksGroup");
+      ensure();
       if (!group.actions?.some(action => action.id === id)) throw new V2ContractError("INVALID_INPUT", "Unknown group action");
       await group.invoke!(id);
-      check("ui.tasksGroup");
+      ensure();
     } : undefined,
   });
-  const wrapMetrics = (provider: V2MetricsProvider): V2MetricsProvider => ({
+  const wrapMetrics = (provider: V2MetricsProvider, ensure: () => void): V2MetricsProvider => ({
     id: provider.id, name: provider.name,
-    query: facts => call("metrics.provider", async () => provider.query(structuredClone(facts))),
+    async query(facts) {
+      ensure();
+      const rows = await call("metrics.provider", async () => provider.query(structuredClone(facts)));
+      ensure();
+      return rows;
+    },
   });
   const contribute = <K extends V2ContributionKind>(kind: K, value: V2ContributionMap[K]): V2Dispose => {
     check(kind);
@@ -125,12 +132,23 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
     }
     const stableId = host.owner + ":" + kind + ":" + value.id;
     if (contributionKeys.has(stableId)) throw new V2ContractError("DUPLICATE_CONTRIBUTION", stableId);
-    const wrapped = (kind === "ui.tasksGroup" ? wrapGroup(value as V2TaskGroup)
-      : kind === "metrics.provider" ? wrapMetrics(value as V2MetricsProvider)
-      : wrapPage(value as V2Page)) as V2ContributionMap[K];
-    const off = host.contribute!(kind, stableId, wrapped);
+    let registered = true;
+    const active = () => registered && !controller.signal.aborted && host.isCurrent();
+    const ensure = () => {
+      if (!active()) throw new V2ContractError("INACTIVE", "Plugin contribution ended");
+      check(kind);
+    };
+    const wrapped = (kind === "ui.tasksGroup" ? wrapGroup(value as V2TaskGroup, ensure)
+      : kind === "metrics.provider" ? wrapMetrics(value as V2MetricsProvider, ensure)
+      : wrapPage(value as V2Page, ensure, active)) as V2ContributionMap[K];
     contributionKeys.add(stableId);
-    return track(async () => { try { await off(); } finally { contributionKeys.delete(stableId); } });
+    let off: V2Dispose;
+    try { off = host.contribute!(kind, stableId, wrapped); }
+    catch (error) { registered = false; contributionKeys.delete(stableId); throw error; }
+    return track(async () => {
+      registered = false;
+      try { await off(); } finally { contributionKeys.delete(stableId); }
+    });
   };
   const context: PluginContextV2 = Object.freeze({
     apiVersion: 2 as const, id: host.owner, language: host.language, platform: host.platform,
