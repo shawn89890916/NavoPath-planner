@@ -14,7 +14,7 @@ export function suggestedBook(library:ReadingLibrary,item:WeReadItem){
 function updateSource(book:ReadingBook,connectionId:string,item:WeReadItem,now:string,managed:boolean){
   const prior=sourceMatches(book,connectionId,item)?book.weread:undefined;
   const source:ReadingWeReadSource={...prior,connectionId,externalId:item.id,kind:item.kind,managed,
-    cover:item.cover,readerLink:item.readerLink,recent:item.recent,finished:item.kind==="book"?item.finished:undefined,checkedAt:prior?.checkedAt??now};
+    private:item.private,cover:item.cover??prior?.cover,readerLink:item.readerLink??prior?.readerLink,recent:item.recent??prior?.recent,finished:item.kind==="book"?item.finished:undefined,checkedAt:prior?.checkedAt??now};
   // Shelf completion is explicit; missing progress is never treated as a measured 0%.
   let status=book.status;
   if(managed&&item.kind==="book"){
@@ -53,8 +53,13 @@ export function syncWeReadShelf(library:ReadingLibrary,connectionId:string,items
   });
   let next=changed?{...library,books}:library;
   if(library.wereadPreferences?.autoImport&&library.wereadPreferences.connectionId===connectionId){
-    const choices=items.filter(item=>!item.private&&!next.books.some(book=>sourceMatches(book,connectionId,item))&&!suggestedBook(next,item)).map(item=>({item}));
+    const previous=library.wereadPreferences.seenKeys;
+    const seen=new Set(previous??items.map(identity));
+    const choices=items.filter(item=>!item.private&&!seen.has(identity(item))&&!next.books.some(book=>sourceMatches(book,connectionId,item))&&!suggestedBook(next,item)).map(item=>({item}));
     next=importWeRead(next,connectionId,choices,now);
+    const seenKeys=[...new Set([...seen,...items.map(identity)])].sort();
+    if(JSON.stringify(seenKeys)!==JSON.stringify(previous))next={...next,wereadPreferences:{...library.wereadPreferences,seenKeys}};
+
   }
   return next;
 }
@@ -62,7 +67,7 @@ export function applyWeReadProgress(library:ReadingLibrary,connectionId:string,p
   const book=library.books.find(b=>b.weread?.connectionId===connectionId&&b.weread.kind==="book"&&b.weread.externalId===progress.id);
   if(!book?.weread)return library;
   const source=book.weread;
-  if(source.recent!==undefined&&progress.recent!==undefined&&progress.recent<source.recent)return library;
+  if(source.percent!==undefined&&source.recent!==undefined&&progress.recent!==undefined&&progress.recent<source.recent)return library;
   const nextSource={...source,percent:progress.percent,seconds:progress.seconds??source.seconds,recent:progress.recent??source.recent,finished:progress.finished};
   let next:ReadingBook={...book,weread:nextSource};
   if(source.managed){

@@ -22,3 +22,6 @@
 .reading-import-row { display:grid; gap:4px; padding:6px 0; border-bottom:1px solid var(--rule,currentColor); min-width:0; }
 .reading-import-row label { display:flex; align-items:flex-start; gap:8px; overflow-wrap:anywhere; }
 .reading-import-row .ui-input,.reading-import>.ui-input { min-width:0; width:100%; }
+
+.reading-cover { width:32px; height:44px; object-fit:cover; border-radius:4px; flex:none; }
+.reading-book-header .reading-book-title { flex:1; }
