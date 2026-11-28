@@ -22,7 +22,7 @@ function json(value: unknown, depth = 0): V2Json {
   throw invalid();
 }
 export function normalizeStorageCommand(command: V2StorageWrite): V2StorageWrite {
-  if (!command || !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,127}$/.test(command.operationId) ||
+  if (!command || typeof command.operationId !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,127}$/.test(command.operationId) ||
       (command.expectedRevision !== null && !validRevision(command.expectedRevision))) throw invalid();
   const base = { expectedRevision: command.expectedRevision, operationId: command.operationId };
   if (command.kind === "remove") return { kind: "remove", ...base };
