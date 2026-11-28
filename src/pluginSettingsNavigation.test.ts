@@ -34,6 +34,8 @@ describe("plugin settings destinations", () => {
     const state = snapshot();
     expect(pluginSettingsOwner(normalizeSettingsTarget("metrics"), state)).toBe("official:metrics");
     expect(pluginSettingsOwner(normalizeSettingsTarget({category:"plugins",pluginPage:"custom:two"}), state)).toBe("official:custom");
+    const weread = searchPluginSettings(pluginSettingsDestinations(state), "微信读书")[0];
+    expect(weread.target).toMatchObject({category:"plugins",pluginOwner:"official:reading",anchor:"reading-weread"});
     const result = searchPluginSettings(pluginSettingsDestinations(state), "timer duration")[0];
     expect(normalizeSettingsTarget(result.target)).toMatchObject({ category: "plugins", pluginOwner: "official:timer", anchor: "plugin-option-duration" });
   });

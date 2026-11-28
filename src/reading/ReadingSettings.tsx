@@ -4,9 +4,9 @@ import { SettingSection, SettingRow, SettingActionButton, SettingTextInput } fro
 import { extensionService } from "../extensions/service";
 import { weReadDesktopAvailable, type WeReadAction, type WeReadResult } from "./wereadConnection";
 
-export default function ReadingSettings({lang,active}:{lang:Language;active:boolean}){
+export default function ReadingSettings({lang,active,connection=extensionService.readingWeRead,desktopAvailable=weReadDesktopAvailable}:{lang:Language;active:boolean;connection?:typeof extensionService.readingWeRead;desktopAvailable?:typeof weReadDesktopAvailable}){
   const tr=(zh:string,en:string)=>lang==="zh"?zh:en;
-  const supported=weReadDesktopAvailable();
+  const supported=desktopAvailable();
   const [key,setKey]=useState(""),[connected,setConnected]=useState(false),[verified,setVerified]=useState<Extract<WeReadResult,{ok:true}>|null>(null);
   const [busy,setBusy]=useState<WeReadAction|null>(null),[error,setError]=useState("");
   const epoch=useRef(0),lock=useRef(false);
@@ -14,7 +14,7 @@ export default function ReadingSettings({lang,active}:{lang:Language;active:bool
     if(!supported||!active||lock.current)return;
     const current=epoch.current;lock.current=true;setBusy(action);setError("");
     try{
-      const result=await extensionService.readingWeRead(action,candidate);
+      const result=await connection(action,candidate);
       if(current!==epoch.current)return;
       if(!result.ok){setError(result.code);if(action==="test")setVerified(null);return;}
       setConnected(result.connected);
@@ -27,7 +27,7 @@ export default function ReadingSettings({lang,active}:{lang:Language;active:bool
     epoch.current++;lock.current=false;setConnected(false);setVerified(null);setKey("");setError("");setBusy(null);
     if(active&&supported)void run("status");
     return ()=>{epoch.current++;lock.current=false;};
-  },[active,supported]);
+  },[active,supported,connection]);
   const errors:Record<string,string>={
     format:tr("请输入有效的 wrk- API Key。","Enter a valid wrk- API key."),
     auth:tr("微信读书拒绝了授权，请检查或重新生成密钥。","WeRead rejected authorization. Check or regenerate your key."),

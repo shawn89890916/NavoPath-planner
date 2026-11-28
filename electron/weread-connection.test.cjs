@@ -33,6 +33,16 @@ test("rejects bad keys, unavailable encryption, API errors and failed replacemen
   assert.equal((await blocked.service.run(account,"connect",key)).code,"storage");
   assert.equal(fs.readdirSync(blocked.directory).length,0);
 });
+test("never silently falls back to Linux basic_text and disconnect works after storage becomes unavailable",async t=>{
+  const directory=fs.mkdtempSync(path.join(os.tmpdir(),"nvp-weread-"));t.after(()=>fs.rmSync(directory,{recursive:true,force:true}));
+  let basic=false;const safeStorage={isEncryptionAvailable:()=>true,getSelectedStorageBackend:()=>basic?"basic_text":"kwallet",encryptString:v=>Buffer.from(v).map(x=>x^42),decryptString:v=>Buffer.from(v).map(x=>x^42).toString()};
+  const service=createWeReadConnection({directory,safeStorage,fetchImpl:async()=>response({books:[],albums:[]})});
+  assert.equal((await service.run(account,"connect",key)).ok,true);basic=true;
+  assert.equal((await service.run(account,"status")).connected,true);
+  assert.equal((await service.run(account,"test")).code,"storage");
+  assert.equal((await service.run(other,"connect",key)).code,"storage");
+  assert.equal((await service.run(account,"disconnect")).connected,false);
+});
 test("validates response and rejects unapproved scopes or concurrent writes",async t=>{
   let release;const {service}=fixture(t,()=>new Promise(r=>release=r));
   const pending=service.run(account,"connect",key);

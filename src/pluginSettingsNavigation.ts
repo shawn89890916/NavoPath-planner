@@ -47,6 +47,7 @@ export function searchPluginSettings(destinations: readonly PluginSettingsDestin
     const base: SettingsTarget = { category: "plugins", pluginOwner: destination.owner };
     return [
       ...(matches(destination.title) ? [{ id: destination.owner, title: destination.title, ownerTitle: destination.title, target: base }] : []),
+      ...(destination.owner==="official:reading" && matches(destination.title,"阅读 微信读书 API Key WeRead connection 连接") ? [{id:"official:reading:weread",title:"WeRead · 微信读书",ownerTitle:destination.title,target:{...base,anchor:"reading-weread"}}] : []),
       ...destination.options.filter(option => matches(destination.title, option.label, option.key, option.description ?? "")).map(option => ({ id: destination.owner + ":" + option.key, title: option.label, ownerTitle: destination.title, target: { ...base, anchor: pluginOptionAnchor(option.key) } })),
       ...destination.pages.filter(page => matches(destination.title, page.name)).map(page => ({ id: page.id, title: page.name, ownerTitle: destination.title, target: { ...base, pluginPage: page.id, anchor: pluginPageAnchor(page.id) } })),
     ];

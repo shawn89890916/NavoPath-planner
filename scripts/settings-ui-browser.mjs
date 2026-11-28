@@ -2,6 +2,7 @@ import React from "react";
 import {createRoot} from "react-dom/client";
 import {flushSync} from "react-dom";
 import {SettingSection,SettingRow,SettingToggle,SettingSelect,SettingTextInput,SettingColorInput,SettingNumberInput,SettingSlider,SettingActionButton,SettingDisclosure} from "../src/components/SettingsControls.tsx";
+import ReadingSettings from "../src/reading/ReadingSettings.tsx";
 import "../src/app.css";
 import "../src/ui-primitives.css";
 const h=React.createElement;
@@ -71,5 +72,33 @@ export async function exerciseSettings(){
     disclosure.open=true;
     cases++;
   }
-  root.unmount();style.remove();document.documentElement.style.removeProperty("--workspace-corner-radius");return {width:innerWidth,cases,sharedRadius:true,fieldAlignment:true,pluginSwitchAlignment:true,sectionHierarchy:true};
+  // Exercise the actual Reading settings component using a local IPC-contract fixture.
+  let connected=false, failTest=false;const calls=[];
+  const connection=async(action,candidate)=>{
+    calls.push({action,hasKey:!!candidate});
+    if(action==="status")return {ok:true,connected};
+    if(action==="disconnect"){connected=false;return {ok:true,connected:false};}
+    if(action==="test"&&failTest)return {ok:false,code:"auth"};
+    if(action==="connect"){assert(candidate==="wrk-fixture-key","Key was not submitted to connection adapter");connected=true;}
+    return {ok:true,connected,checkedAt:"2026-11-28T00:00:00Z",counts:{books:2,audiobooks:1,articles:1}};
+  };
+  const desktopAvailable=()=>true;
+  const wait=async(fn,message)=>{for(let i=0;i<100;i++){const value=fn();if(value)return value;await new Promise(r=>setTimeout(r,20));}throw Error(message);};
+  const click=label=>{const button=[...document.querySelectorAll("button")].find(b=>b.textContent===label&&!b.disabled);assert(button,"Missing action "+label);button.click();};
+  const mount=(lang,active,available=desktopAvailable)=>flushSync(()=>root.render(h("div",{id:"settings-fixture",className:"df-app df-settings-surface mode-execute"},h("main",{className:"fixture-pane df-settings-content"},h("div",{className:"df-settings-content-column"},h(ReadingSettings,{lang,active,connection,desktopAvailable:available}))))));
+  mount("en",true);await wait(()=>document.querySelector('input[type=password]:not(:disabled)'),"Reading connection not initialized");
+  const password=document.querySelector('input[type=password]');
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(password,"wrk-fixture-key");
+  password.dispatchEvent(new Event("input",{bubbles:true}));password.dispatchEvent(new Event("change",{bubbles:true}));
+  await wait(()=>[...document.querySelectorAll("button")].find(b=>b.textContent==="Verify and connect"&&!b.disabled),"Connect remained disabled");
+  click("Verify and connect");
+  await wait(()=>document.body.textContent.includes("Audiobooks 1"),"Shelf summary missing");
+  assert(password.value==="","Credential input retained the submitted key");
+  for(const el of document.querySelectorAll(".df-settings-row,.df-settings-row-control,.df-settings-group-body"))assert(el.scrollWidth<=el.clientWidth+2,"Reading settings overflow at "+innerWidth);
+  failTest=true;click("Test connection");await wait(()=>document.querySelector('[role=alert]')?.textContent.includes("rejected authorization"),"Auth failure missing");
+  click("Disconnect");await wait(()=>document.body.textContent.includes("Not connected"),"Disconnect did not clear state");
+  mount("zh",false);await wait(()=>document.body.textContent.includes("请先启用阅读插件"),"Disabled plugin guard missing");
+  mount("zh",true,()=>false);await wait(()=>document.body.textContent.includes("连接仅支持桌面端"),"Web limitation missing");
+  assert(calls.map(x=>x.action).join(",")==="status,connect,test,disconnect","Unexpected external connection calls");
+  root.unmount();style.remove();document.documentElement.style.removeProperty("--workspace-corner-radius");return {width:innerWidth,cases,sharedRadius:true,fieldAlignment:true,pluginSwitchAlignment:true,sectionHierarchy:true,readingConnection:true};
 }

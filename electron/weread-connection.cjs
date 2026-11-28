@@ -60,7 +60,7 @@ function createWeReadConnection({directory,safeStorage,fetchImpl=fetch,now=()=>n
     locks.add(filePath);
     try{
       if(action==="disconnect"){fs.rmSync(filePath,{force:true});return {ok:true,connected:false};}
-      if(action==="status")return {ok:true,connected:read(filePath)!==null};
+      if(action==="status")return {ok:true,connected:fs.existsSync(filePath)};
       if(!secure())return fail("storage");
       if(action==="connect"){
         const key=typeof candidate==="string"?candidate.trim():"";
