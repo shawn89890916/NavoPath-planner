@@ -9,8 +9,8 @@ export default function WeReadStatisticsPanel({account,zh,disabled=false}:{accou
   const tr=(a:string,b:string)=>zh?a:b;
   useEffect(()=>{generation.current++;setStats(null);setBusy(false);setError(false);lock.current=false;
     const reset=()=>{generation.current++;lock.current=false;setStats(null);setBusy(false);setError(false);};
-    window.addEventListener(reset);
-    return()=>{generation.current++;window.removeEventListener(reset);};
+    window.addEventListener("navopath:weread-connection-changed",reset);
+    return()=>{generation.current++;window.removeEventListener("navopath:weread-connection-changed",reset);};
   },[account]);
   async function refresh(){if(lock.current)return;const epoch=generation.current;lock.current=true;setBusy(true);setError(false);
     try{const r=await readingWeRead("statistics",period,account);if(epoch!==generation.current)return;if(r.ok&&r.statistics?.period===period)setStats(r.statistics);else{setStats(null);setError(true);}}

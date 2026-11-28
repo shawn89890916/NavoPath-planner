@@ -53,8 +53,8 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
     status();
     const focus=()=>{if(!previewOpen.current&&Date.now()-last.current>5*60_000)status();};
     const changed=()=>{++epoch.current;lock.current=false;setLoading(false);setPreview(null);setSynced("");last.current=0;status();};
-    window.addEventListener("focus",focus);window.addEventListener(changed);
-    return()=>{++epoch.current;lock.current=false;window.removeEventListener("focus",focus);window.removeEventListener(changed);};
+    window.addEventListener("focus",focus);window.addEventListener("navopath:weread-connection-changed",changed);
+    return()=>{++epoch.current;lock.current=false;window.removeEventListener("focus",focus);window.removeEventListener("navopath:weread-connection-changed",changed);};
   },[account]);
   useEffect(()=>{if(connected&&!preview&&Date.now()-last.current>5*60_000&&(current.current.library.books.some(b=>b.weread)||current.current.library.wereadPreferences?.autoImport))void run();},[refreshToken]);
   const unlinked=preview?.items.filter(item=>!library.books.some(book=>sourceMatches(book,preview.connectionId,item)))??[];
