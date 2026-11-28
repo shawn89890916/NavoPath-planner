@@ -843,6 +843,21 @@ function App() {
   mobileExecutionRef.current = mobileExecution;
   const [candidateDrawerOpen, setCandidateDrawerOpen] = useState(false);
   const candidatePanelRef = useRef<HTMLElement>(null);
+  useEffect(() => () => document.documentElement.removeAttribute("data-side-workspace-drag-expanded"), [mobileExecution, candidateDrawerOpen]);
+  function updateSideWorkspaceDragExposure(point: { x: number; y: number } | null) {
+    const html = document.documentElement;
+    const panel = candidatePanelRef.current;
+    if (!point || !mobileExecution || !candidateDrawerOpen || !panel) {
+      html.removeAttribute("data-side-workspace-drag-expanded");
+      return;
+    }
+    const expanded = html.hasAttribute("data-side-workspace-drag-expanded");
+    if (expanded) {
+      if (point.x < panel.getBoundingClientRect().right - 12) html.removeAttribute("data-side-workspace-drag-expanded");
+    } else if (document.elementFromPoint(point.x, point.y)?.closest(".df-timeline-panel")) {
+      html.setAttribute("data-side-workspace-drag-expanded", "");
+    }
+  }
   const candidateTriggerRef = useRef<HTMLButtonElement>(null);
   const candidateScrollRef = useRef(0);
   const mobileTapRef = useRef({ x: 0, y: 0, moved: false });
@@ -6281,6 +6296,7 @@ if (cached?.data && cached?.settings) {
   }
 
   function previewShelfTimelineDrop(owner: Task, point: { x: number; y: number } | null, subtaskId?: string) {
+    updateSideWorkspaceDragExposure(point);
     const snapshot = dataRef.current;
     const task = point && snapshot ? shelfTask(snapshot, owner.id,
       subtaskId ? { id: subtaskId, draftTaskId: `shelf-preview:${subtaskId}` } : undefined) : undefined;
@@ -7972,6 +7988,7 @@ if (cached?.data && cached?.settings) {
       else if (control?.classList.contains("df-compact-date-picker-trigger")) setMobileDatePickerOpen(true);
     };
     const cleanup = () => {
+      updateSideWorkspaceDragExposure(null);
       projection?.close();
       window.removeEventListener("blur", cleanup);
       window.removeEventListener("pointermove", move);
@@ -8139,6 +8156,7 @@ if (cached?.data && cached?.settings) {
         }
       }
       pointerEvent.preventDefault();
+      if (source === "candidate") updateSideWorkspaceDragExposure({ x: pointerEvent.clientX, y: pointerEvent.clientY });
       setDragOverlayPointer({ x: pointerEvent.clientX, y: pointerEvent.clientY });
       autoScrollAtDragEdge(pointerEvent.clientX, pointerEvent.clientY, [
         document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY)?.closest<HTMLElement>(".df-candidate-list"),
@@ -9737,7 +9755,7 @@ if (cached?.data && cached?.settings) {
                 </button>
               }
               actions={<>
-                {aiEnabled && (
+                {(!productDemo || aiEnabled) && (
                   <span className="df-ai-plan-title-tools">
                     <IconButton
                       className={`df-ai-plan-title-icon${productAiPresentation && !demoHasSchedule && !demoPresetBusy ? " needs-demo-plan" : ""} ${autoScheduleState === "generating" || autoScheduleState === "committing" || (productAiPresentation && demoPresetBusy) ? "thinking" : ""}`}
@@ -9765,6 +9783,7 @@ if (cached?.data && cached?.settings) {
                   {!productDemo && <Button variant="ghost" onClick={() => compactLayout ? openQuickTaskAdd() : openTaskDraft()}>{t(lang, "fab.add")}</Button>}
                   {shelfTreeOpen && <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />}
                   {shelfTreeOpen && !productDemo && <Button variant="ghost" onClick={() => openAdd("project")}>{lang === "zh" ? "新建项目" : "New project"}</Button>}
+                  {shelfTreeOpen && !productDemo && <Button variant="ghost" onClick={() => { setCommandQuery(""); setCommandOpen(true); }}>{lang === "zh" ? "管理项目（搜索）" : "Manage projects (search)"}</Button>}
                   {!shelfView && <Button variant="ghost" aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)}>{lang === "zh" ? "按项目分类" : "Group by project"}</Button>}
                   {!shelfTreeOpen && <Button variant="ghost" aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)}>{t(lang, "candidate.showCompleted")}</Button>}
                   {!productDemo && !shelfTreeOpen && <Button variant="ghost" aria-pressed={showScheduledCandidates} onClick={() => setShowScheduledCandidates((show) => !show)}>{lang === "zh" ? "显示已安排" : "Show scheduled"}</Button>}
@@ -10688,7 +10707,7 @@ if (cached?.data && cached?.settings) {
       /></div>, document.body)}
 
       {drawerOpen && !(compactLayout && mobileTaskSummary) && <div className="df-drawer-backdrop" onMouseDown={() => editingId && addType === "task" ? closeTaskDrawer({ autoSave: true }) : closeTaskDrawer()} />}
-      {drawerOpen && <EditDrawer engagementEnabled={engagementEnabled} type={addType} setType={(type) => { if (type === "habit" && !habitsEnabled) return; setAddType(type); if (!editingId) { const initial = defaultForm(type); drawerInitialFormRef.current = initial; setForm(initial); } }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onEditSchedule={editTaskSchedule} weekStartsOn={settings.weekStartsOn} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && aiEnabled} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
+      {drawerOpen && <EditDrawer engagementEnabled={engagementEnabled} type={addType} setType={(type) => { if (type === "habit" && !habitsEnabled) return; setAddType(type); if (!editingId) { const initial = defaultForm(type); drawerInitialFormRef.current = initial; setForm(initial); } }} form={form} setForm={setForm} projects={projects} editing={Boolean(editingId)} task={tasks.find((task) => task.id === editingId)} project={projects.find((project) => project.id === editingId)} habit={(data.habits || []).find((habit) => habit.id === editingId)} today={today} onClose={() => closeTaskDrawer(editingId && addType === "task" ? { autoSave: true } : undefined)} onSave={saveForm} onDelete={deleteEditingItem} onCopy={copyEditingTask} onTaskUpdate={updateTask} onQuickReschedule={quickRescheduleTask} onEditSchedule={editTaskSchedule} weekStartsOn={settings.weekStartsOn} onLocateTimeline={locateTaskOnTimeline} onLocateTree={treeView ? locateTaskInTree : undefined} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCompleteProject={completeProject} onToggleDone={() => updateTask(editingId, { completed: !tasks.find((task) => task.id === editingId)?.completed })} onCreateProject={quickCreateProject} editingRecordId={editingRecordId} setEditingRecordId={setEditingRecordId} editingOccurrence={editingOccurrence} data={data} saveData={saveData} onSaveRecurrence={saveTaskRecurrence} onCancelOccurrence={cancelRecurringOccurrence} onReplanOccurrence={replanRecurringOccurrence} onCancelAllRecurrence={cancelAllRecurringFuture} aiEnabled={!productDemo && aiEnabled} subtaskAiLoading={subtaskAiBusyId === editingId} subtaskAiRevealIds={subtaskAiRevealIds} onGenerateSubtasks={(taskId) => void generateTaskSubtasks(taskId)} lang={lang} compactSummary={compactLayout && mobileTaskSummary} onCompactActionSuccess={(message) => { void closeTaskDrawer(); showToast(message); }} onShowMore={() => setMobileTaskSummary(false)} />}
       {!productAiPresentation && aiPanel && workspaceChatPanel && <div className="df-utility-backdrop" data-workspace-backdrop data-motion-closing={aiPresence.closing || undefined} onMouseDown={closeWorkspaceChat} />}
       {!productAiPresentation && aiPanel}
       {commandPresence.present && (commandOpen || !workspacePanel) && <Suspense fallback={null}><CommandPalette closing={commandPresence.closing} query={commandQuery} data={data} settings={settings} lang={lang} onQuery={setCommandQuery} onClose={() => setCommandOpen(false)} onChoose={chooseCommand} /></Suspense>}
@@ -11901,7 +11920,7 @@ function NowLine({ extraStyle, dayStartHour = 0, hourHeight = HOUR_HEIGHT, highl
 
 function EditDrawer(props: {
   engagementEnabled?: boolean;
-  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; today: string; onClose: () => void; onSave: () => void; onDelete: () => void; onCopy: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => Promise<void> | undefined; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onLocateTimeline: (date: string, startTime: string, taskId: string) => void; onLocateTree?: (task: Task) => void; onProjectColorChange: (projectId: string, color: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
+  type: AddType; setType: (type: AddType) => void; form: FormState; setForm: React.Dispatch<React.SetStateAction<FormState>>; projects: Project[]; editing: boolean; task?: Task; project?: Project; habit?: Habit; today: string; onClose: () => void; onSave: () => void; onDelete: () => void; onCopy: () => void; onTaskUpdate: (taskId: string, patch: Partial<Task>) => Promise<void> | undefined; onQuickReschedule: (taskId: string, date: string, recordId?: string) => void; onLocateTimeline: (date: string, startTime: string, taskId: string) => void; onLocateTree?: (task: Task) => void; onProjectColorChange: (projectId: string, color: string) => void; onCompleteProject: (projectId: string) => void; onToggleDone: () => void; onCreateProject: (title: string) => string;
   onEditSchedule: (taskId: string, source: TaskScheduleRange, next: TaskScheduleRange, duration: number, recordId?: string, occurrence?: EditingOccurrence) => string | undefined; weekStartsOn: 0 | 1;
   editingRecordId?: string; setEditingRecordId?: (id: string | undefined) => void; editingOccurrence?: EditingOccurrence; data?: PlannerData | null; saveData?: (next: PlannerData) => Promise<void>; onSaveRecurrence: (taskId: string, recurrence?: TaskRecurrence) => void; onCancelOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onReplanOccurrence: (taskId: string, occurrence: EditingOccurrence) => void; onCancelAllRecurrence: (taskId: string, cutoffDate: string) => void; aiEnabled: boolean; subtaskAiLoading: boolean; subtaskAiRevealIds: string[]; onGenerateSubtasks: (taskId: string) => void; lang: Language; compactSummary?: boolean; onCompactActionSuccess: (message: string) => void; onShowMore?: () => void;
 }) {
@@ -12515,6 +12534,7 @@ function EditDrawer(props: {
           <Button className="df-editor-action" variant="primary" onClick={props.onSave}><UiCheckIcon size={14} />{props.project ? t(props.lang, "drawer.save") : createLabel("project")}</Button>
           {props.project && <EditorRemove onClick={props.onDelete}>{t(props.lang, "drawer.remove")}</EditorRemove>}
           <ActionDisclosure label={props.lang === "zh" ? "更多" : "More"}>
+            {props.project && !props.project.completed && <Button variant="ghost" onClick={() => props.onCompleteProject(props.project!.id)}>{zh ? "完成项目" : "Complete project"}</Button>}
             <EditorConversion targets={["task", "habit"]} lang={props.lang} onConvert={props.setType} />
           </ActionDisclosure>
         </EditorActionRow>

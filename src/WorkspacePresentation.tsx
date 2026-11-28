@@ -403,6 +403,16 @@ export function candidateQuickScheduleOptions(focusDate: string, lang: Language,
   });
 }
 
+export function CandidateDurationMenu({ open, anchorRef, onClose, lang, minutes, draft, onDraft, onCommit }: {
+  open: boolean; anchorRef: React.RefObject<HTMLButtonElement | null>; onClose: () => void; lang: Language;
+  minutes: number; draft: string; onDraft: (value: string) => void; onCommit: (minutes: number) => void;
+}) {
+  return <AnchoredNarrowMenu open={open} anchorRef={anchorRef} onClose={onClose} placement="below" label={t(lang, "taskCard.adjustDuration")} className="df-candidate-duration-menu">
+    <label><span>{lang === "zh" ? "分钟" : "Minutes"}</span><input type="number" min={SLOT_MINUTES} max={1440} step={SLOT_MINUTES} value={draft} onChange={(event) => onDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") onCommit(Number(draft)); }} /></label>
+    {DURATION_OPTIONS.map(value => <button key={value} type="button" className={minutes === value ? "active" : ""} onClick={() => onCommit(value)}>{formatMinutes(value)}</button>)}
+  </AnchoredNarrowMenu>;
+}
+
 export function TaskCard({
   demo = false,
   task,
@@ -717,10 +727,7 @@ export function TaskCard({
         </div>}
       </CandidateTaskCard>
 
-      <AnchoredNarrowMenu open={popoverOpen === "duration"} anchorRef={durationTriggerRef} onClose={() => setPopoverOpen(null)} placement="below" label={t(lang, "taskCard.adjustDuration")} className="df-candidate-duration-menu">
-        <label><span>{lang === "zh" ? "分钟" : "Minutes"}</span><input type="number" min={SLOT_MINUTES} max={1440} step={SLOT_MINUTES} value={durationDraft} onChange={(event) => setDurationDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") commitDuration(Number(durationDraft)); }} /></label>
-        {DURATION_OPTIONS.map((minutes) => <button key={minutes} type="button" className={Math.round((task.estimatedHours || 0.5) * 60) === minutes ? "active" : ""} onClick={() => commitDuration(minutes)}>{formatMinutes(minutes)}</button>)}
-      </AnchoredNarrowMenu>
+      <CandidateDurationMenu open={popoverOpen === "duration"} anchorRef={durationTriggerRef} onClose={() => setPopoverOpen(null)} lang={lang} minutes={Math.round((task.estimatedHours || 0.5) * 60)} draft={durationDraft} onDraft={setDurationDraft} onCommit={commitDuration} />
 
       <AnchoredNarrowMenu open={popoverOpen === "deadline"} anchorRef={deadlineTriggerRef} onClose={() => setPopoverOpen(null)} label={lang === "zh" ? "设置截止日期" : "Set due date"} className="df-candidate-deadline-menu">
         <label><input type="date" value={draftDueDate} onChange={(event) => setDraftDueDate(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { onSaveDueDate(draftDueDate); setPopoverOpen(null); } }} /></label>
