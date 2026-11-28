@@ -7,6 +7,7 @@
 #### 改进
 
 - 竖屏和贴边栏的任务入口改为侧滑工作区，保留可滚动的时间轴和原有任务块；支持视图切换、连续拖拽安排及触屏边缘手势。
+- 复用日视图与多日视图的任务块渲染入口，移除重复竖屏监听，保持首屏体积预算及原有交互。
 
 ### 1.7.0 Beta 140
 
@@ -1384,6 +1385,7 @@
 #### Improvements
 
 - Replace the portrait and Dock task entry with a sliding workspace, keeping the timeline scrollable and existing task-block appearance; switch views, drag tasks to schedule, and use touch edge gestures.
+- Share Day and multi-day task-block rendering and remove the duplicate portrait listener to preserve the initial script budget and existing interactions.
 
 ### 1.7.0 Beta 140
 
