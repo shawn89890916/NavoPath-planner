@@ -4,7 +4,7 @@ import {flushSync} from "react-dom";
 import {SettingSection,SettingRow,SettingToggle,SettingSelect,SettingTextInput,SettingColorInput,SettingNumberInput,SettingSlider,SettingActionButton,SettingDisclosure} from "../src/components/SettingsControls.tsx";
 import ReadingSettings from "../src/reading/ReadingSettings.tsx";
 import ReadingShelf from "../src/reading/ReadingShelf.tsx";
-import {extensionService} from "../src/extensions/service.ts";
+import {engine} from "../src/extensions/service.ts";
 import {emptyReadingLibrary,createBook,linkReadingTask} from "../src/reading/model.ts";
 import "../src/app.css";
 import "../src/ui-primitives.css";
@@ -105,13 +105,13 @@ export async function exerciseSettings(){
   mount("zh",false);await wait(()=>document.body.textContent.includes("请先启用阅读插件"),"Disabled plugin guard missing");
   mount("zh",true,()=>false);await wait(()=>document.body.textContent.includes("连接仅支持桌面端"),"Web limitation missing");
   assert(calls.map(x=>x.action).join(",")==="status,connect,test,disconnect","Unexpected external connection calls");
-  const original=extensionService.readingWeRead,oldDesktop=window.desktopApi;
+  const core=await engine(),original=core.readingWeRead,oldDesktop=window.desktopApi;
   window.desktopApi={readingWeRead:()=>{}};
   let library=linkReadingTask(createBook(emptyReadingLibrary(),{id:"existing",title:"Existing Book",author:"Author",now:"2026-11-28T00:00:00Z"}),"existing","existing-task"),taskBook="";
   const item=(id,title,secret=false)=>({id,kind:"book",title,author:"Author",private:secret,finished:false,recent:100});
   const books=[item("existing-remote","Existing Book"),item("new","New Book"),item("private","Private Book",true)];
   let pauseNextShelf=false,releaseShelf;
-  extensionService.readingWeRead=async(action,arg,account)=>{
+  core.readingWeRead=async(action,arg,account)=>{
     assert(account==="preview","Wrong account");
     const base={ok:true,connected:true,connectionId:"fixture",checkedAt:"2026-11-28T00:00:00Z"};
     if(action==="shelf"){if(pauseNextShelf){pauseNextShelf=false;return new Promise(resolve=>{releaseShelf=()=>resolve({...base,shelf:books});});}return {...base,shelf:books};}
@@ -143,6 +143,6 @@ export async function exerciseSettings(){
     assert(taskBook===library.books.find(b=>b.title==="New Book").id,"Task not linked to book");
     click("View statistics");await wait(()=>document.body.textContent.includes("30 min")&&document.querySelector(".reading-stat-row"),"External statistics missing");
     for(const el of document.querySelectorAll(".reading-shelf,.reading-sync,.reading-book,.reading-week"))assert(el.scrollWidth<=el.clientWidth+2,"Reading shelf overflow at "+innerWidth);
-  }finally{extensionService.readingWeRead=original;window.desktopApi=oldDesktop;}
+  }finally{core.readingWeRead=original;window.desktopApi=oldDesktop;}
   root.unmount();style.remove();document.documentElement.style.removeProperty("--workspace-corner-radius");return {width:innerWidth,cases,sharedRadius:true,fieldAlignment:true,pluginSwitchAlignment:true,sectionHierarchy:true,readingConnection:true,readingImport:true};
 }
