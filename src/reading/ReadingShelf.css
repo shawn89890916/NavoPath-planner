@@ -3,9 +3,9 @@
 .reading-heading, .reading-book-header, .reading-actions, .reading-composer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .reading-heading, .reading-book-header { justify-content: space-between; }
 .reading-heading h2, .reading-muted { margin: 0; }
-.reading-muted { font-size: .82em; color: var(--ink-muted, inherit); overflow-wrap: anywhere; }
+.reading-muted { font-size: .82em; color: var(--text-muted, inherit); overflow-wrap: anywhere; }
 .reading-book { display: grid; gap: 6px; padding: 10px 4px; min-width: 0; }
-.reading-book + .reading-book { border-top: 1px solid var(--rule, currentColor); }
+.reading-book + .reading-book { border-top: 1px solid var(--paper-rule); }
 .reading-book-title { appearance: none; background: none; border: 0; padding: 0; color: inherit; font: inherit; font-weight: 600; text-align: start; cursor: pointer; overflow-wrap: anywhere; min-width: 0; }
 .reading-book progress { width: 100%; height: 5px; accent-color: var(--accent-active); }
 .reading-actions { justify-content: flex-end; }
@@ -17,11 +17,17 @@
 .reading-composer .reading-muted { flex-basis: 100%; }
 
 .reading-sync,.reading-import,.reading-week { display:grid; gap:8px; min-width:0; }
-.reading-import { border-top:1px solid var(--rule,currentColor); padding-top:8px; }
+.reading-import { border-top:1px solid var(--paper-rule); padding-top:8px; }
 .reading-import h3 { margin:0; }
-.reading-import-row { display:grid; gap:4px; padding:6px 0; border-bottom:1px solid var(--rule,currentColor); min-width:0; }
-.reading-import-row label { display:flex; align-items:flex-start; gap:8px; overflow-wrap:anywhere; }
-.reading-import-row .ui-input,.reading-import>.ui-input { min-width:0; width:100%; }
+.reading-import-tools { justify-content:flex-start; }
+.reading-import-row { display:grid; grid-template-columns:minmax(0,1fr); gap:4px; padding:6px 0; border-bottom:1px solid var(--paper-rule); min-width:0; }
+.reading-import-choice { display:grid; grid-template-columns:18px minmax(0,1fr); align-items:start; gap:10px; margin:0; min-width:0; overflow-wrap:anywhere; cursor:pointer; }
+.df-app .reading-import-choice input[type="checkbox"] { width:18px; height:18px; min-width:0; min-height:0; margin:2px 0 0; padding:0; accent-color:var(--accent-active); }
+.reading-import-title { display:block; font-weight:500; }
+.reading-import-choice small { display:block; margin-top:2px; }
+.reading-import-row .ui-input { margin-inline-start:28px; width:calc(100% - 28px); min-width:0; }
+.reading-import>.ui-input { min-width:0; width:100%; }
+@media (pointer:coarse) { .reading-import-choice { min-height:44px; align-content:center; } }
 
 .reading-cover { width:32px; height:44px; object-fit:cover; border-radius:4px; flex:none; }
 .reading-book-header .reading-book-title { flex:1; }

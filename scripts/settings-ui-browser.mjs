@@ -120,11 +120,21 @@ export async function exerciseSettings(){
     return base;
   };
   const mutate=async change=>{library=change(library);mountShelf();return library;};
-  function mountShelf(){flushSync(()=>root.render(h("div",{className:"df-app mode-execute",style:{width:"100%",minWidth:0}},h(ReadingShelf,{account:"preview",library,busy:false,error:"",lang:"en",onCreateTask:async id=>{taskBook=id;},mutate,tasks:[],entries:[],engagementEnabled:false,showUndoToast:()=>{},showToast:()=>{}}))))}
+  function mountShelf(){flushSync(()=>root.render(h("div",{className:"df-app mode-execute",style:{width:"100%",minWidth:0}},h("div",{className:"df-shelf-scroll",style:{width:"min(100%, 400px)",height:"600px"}},h(ReadingShelf,{account:"preview",library,busy:false,error:"",lang:"en",onCreateTask:async id=>{taskBook=id;},mutate,tasks:[],entries:[],engagementEnabled:false,showUndoToast:()=>{},showToast:()=>{}})))))}
   try{
     mountShelf();await wait(()=>[...document.querySelectorAll("button")].some(b=>b.textContent==="Import books"),"Shelf connection missing");
     async function selectImport(){
       click("Import books");await wait(()=>document.querySelector(".reading-import"),"Import preview missing");
+      const rows=[...document.querySelectorAll(".reading-import-row")];
+      const left=rows[0].getBoundingClientRect().left;
+      for(const row of rows){
+        const checkbox=box(row,"input[type=checkbox]"),title=box(row,".reading-import-title");
+        close(checkbox.width,18,"Import checkbox width");
+        close(checkbox.left,left,"Import checkbox left");
+        close(title.left,left+28,"Import title left");
+        assert(row.scrollWidth<=row.clientWidth+2,"Import row overflow");
+      }
+      close(box(document,".reading-import > label input").left,left,"Automatic import checkbox left");
       click("Select public new books");
       const existingRow=[...document.querySelectorAll(".reading-import-row")].find(row=>row.textContent.includes("Existing Book"));
       existingRow.querySelector("input").click();
@@ -139,6 +149,12 @@ export async function exerciseSettings(){
     await selectImport();click("Confirm (2)");await wait(()=>library.books.length===2&&!document.querySelector(".reading-import"),"Import failed");
     assert(library.taskLinks[0].taskId==="existing-task"&&library.books.some(b=>b.id==="existing"),"Existing book/task identity lost");
     assert(library.books.find(b=>b.title==="New Book").progress.current===25,"Progress not imported");
+    click("Import books");await wait(()=>document.querySelector(".reading-import-row"),"Remaining private book missing");
+    const remaining=document.querySelector(".reading-import-row");
+    remaining.querySelector("input").click();
+    await wait(()=>document.querySelector(".reading-import-row input").checked,"Private selection did not update");
+    assert(!remaining.querySelector("select"),"Redundant mapping control without local candidates");
+    click("Cancel");await wait(()=>!document.querySelector(".reading-import"),"Cancel did not close preview");
     click("New Book");await wait(()=>[...document.querySelectorAll("button")].some(b=>b.textContent==="Add reading task"&&!b.disabled),"Book details did not open");click("Add reading task");await wait(()=>taskBook,"Reading task not created");
     assert(taskBook===library.books.find(b=>b.title==="New Book").id,"Task not linked to book");
     click("View statistics");await wait(()=>document.body.textContent.includes("30 min")&&document.querySelector(".reading-stat-row"),"External statistics missing");
