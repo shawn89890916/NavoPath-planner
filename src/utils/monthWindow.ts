@@ -34,8 +34,16 @@ export function layoutMonthWeeks(weeks: string[][], taskCount: (date: string) =>
 type MonthWeekRow = ReturnType<typeof layoutMonthWeeks>["rows"][number];
 
 export function monthWeekAtOffset(rows: MonthWeekRow[], offset: number) {
-  const index = rows.findIndex(({ top, height }) => top + height > offset);
-  return index === -1 ? rows.length - 1 : index;
+  // Rows are contiguous and sorted by top. Preserve boundary/clamping
+  // semantics while making repeated scroll probes logarithmic.
+  let low = 0, high = rows.length;
+  while (low < high) {
+    const middle = (low + high) >>> 1;
+    const { top, height } = rows[middle];
+    if (top + height > offset) high = middle;
+    else low = middle + 1;
+  }
+  return Math.min(low, rows.length - 1);
 }
 
 export function visibleMonthWeekRange(rows: MonthWeekRow[], scrollTop: number, viewportHeight: number) {

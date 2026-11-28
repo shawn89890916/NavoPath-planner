@@ -3948,6 +3948,11 @@ if (cached?.data && cached?.settings) {
     )).sort((a, b) => (a.order || 0) - (b.order || 0)),
     [tasks, today]
   );
+  // Only committed draft time changes can alter conflict columns; pointer
+  // coordinates and an uncommitted drag preview do not invalidate this map.
+  const conflictDraftDate = dragCreate?.committed ? dragCreate.date : undefined;
+  const conflictDraftStart = dragCreate?.committed ? dragCreate.startMinutes : undefined;
+  const conflictDraftEnd = dragCreate?.committed ? dragCreate.endMinutes : undefined;
   // Conflict layout: maps taskId → { index, count } for overlapping tasks
   const conflictLayout = useMemo(() => {
     const map = new Map<string, { index: number; count: number }>();
@@ -3959,15 +3964,15 @@ if (cached?.data && cached?.settings) {
         if (!byDate.has(date)) byDate.set(date, []);
         byDate.get(date)!.push(task);
       }
-      if (dragCreate?.committed) {
-        const draftTask = { id: "__timeline_draft__", scheduledDate: dragCreate.date, scheduledStart: minutesToTime(dragCreate.startMinutes), scheduledEnd: minutesToTime(dragCreate.endMinutes) } as Task;
-        const group = byDate.get(dragCreate.date) || [];
-        byDate.set(dragCreate.date, [...group, draftTask]);
+      if (conflictDraftDate !== undefined && conflictDraftStart !== undefined && conflictDraftEnd !== undefined) {
+        const draftTask = { id: "__timeline_draft__", scheduledDate: conflictDraftDate, scheduledStart: minutesToTime(conflictDraftStart), scheduledEnd: minutesToTime(conflictDraftEnd) } as Task;
+        const group = byDate.get(conflictDraftDate) || [];
+        byDate.set(conflictDraftDate, [...group, draftTask]);
       }
       for (const [, group] of byDate) computeConflictLayout(group).forEach((v, k) => map.set(k, v));
     }
     return map;
-  }, [timelineView, scheduledTasks, dragCreate]);
+  }, [timelineView, scheduledTasks, conflictDraftDate, conflictDraftStart, conflictDraftEnd]);
   const draftConflictStyle = (state: NonNullable<DragCreateState>, view: TimelineView) => {
     const style = computeConflictStyle("__timeline_draft__", conflictLayout, state.width, state.left, view === "weekly" ? 3 : 4, view);
     return style ? { left: style.left, width: style.width } : { left: state.left, width: state.width };
@@ -9922,7 +9927,7 @@ if (cached?.data && cached?.settings) {
                   const weekdayShort = lang === "zh" ? ["周日", "周一", "周二", "周三", "周四", "周五", "周六"] : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
                   const canvasHeight = continuousTimelineEnabled ? dailyTimelineCanvasHeight : ((TIMELINE_END - TIMELINE_START) * 60 / SLOT_MINUTES) * timelineSlotHeight;
                   const slotCount = continuousTimelineEnabled ? dailyTimelineSlotCount : ((TIMELINE_END - TIMELINE_START) * 60 / SLOT_MINUTES) + 1;
-                  const multiDayScheduledTasks = [...expandedVisibleTimelineTasks.filter((task) => continuousTimelineDates.includes(task.scheduledDate || "")), ...previewTasks.filter((task) => continuousTimelineDates.includes(task.scheduledDate || ""))].sort((a, b) => timeToMinutes(a.scheduledStart) - timeToMinutes(b.scheduledStart));
+                  const multiDayScheduledTasks = scheduledTasks;
                   return (
                     <div className={`df-timeline-3day ${timelineView === "weekly" ? "df-week-view" : ""}`} style={{ "--df-day-columns": String(threeDates.length) } as CSSProperties}>
                       <div className="df-timeline-3day-top">
@@ -10596,12 +10601,11 @@ if (cached?.data && cached?.settings) {
                             hourHeight={timelineHourHeight}
                           />
                         ))}
-                        {scheduledTasks.map((task) => {
-                          // Use dailyCanvasWidth from ResizeObserver if available,
-                          // otherwise fall back to synchronously reading the DOM ref.
-                          const liveEl = timelineCanvasRef.current;
-                          const liveW = liveEl ? liveEl.getBoundingClientRect().width : 0;
-                          const avail = dailyCanvasWidth > 0 ? dailyCanvasWidth : liveW;
+                        {(() => {
+                          // Reuse the observer's measurement; at most one fallback
+                          // read for the entire list, never one per task.
+                          const avail = dailyCanvasWidth > 0 ? dailyCanvasWidth : timelineCanvasRef.current?.getBoundingClientRect().width || 0;
+                          return scheduledTasks.map((task) => {
                           const gutter = compactLayout ? 0 : 8;
                           const innerW = avail > 0 ? avail - gutter * 2 : 0;
                           const baseLeft = gutter;
@@ -10628,7 +10632,8 @@ if (cached?.data && cached?.settings) {
                               dragState={drag?.kind === "block" && drag.taskId === task.id ? "source-placeholder" : undefined}
                             />
                           );
-                        })}
+                          });
+                        })()}
                         {dragCreate && (
                           <div className="drag-create-preview df-task-block df-task-block--scheduled df-time-block-quick-add" style={{
                             position: "absolute", zIndex: 99998,

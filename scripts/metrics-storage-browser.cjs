@@ -19,7 +19,7 @@ async function runServer() {
         res.setHeader("Content-Type", "text/html");
         res.end(`<!doctype html><html><body>Isolated Metrics storage test<script type="module">
           const phase=new URL(location.href).searchParams.get("phase");
-          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):phase==="exerciseSettings"?import("/scripts/settings-ui-browser.mjs"):phase==="exerciseIntent"?import("/scripts/intent-ui-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
+          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):phase==="exerciseSettings"?import("/scripts/settings-ui-browser.mjs"):phase==="exerciseIntent"?import("/scripts/intent-ui-browser.mjs"):phase==="exerciseDragProjection"?import("/scripts/drag-projection-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
         </script></body></html>`);
       });
     } }]
@@ -54,10 +54,13 @@ async function runRenderer() {
     if (process.env.NAVOPATH_INTENT_ONLY === "1") {
       for (const [width,height] of [[1280,900],[420,840]]) {
         win.setContentSize(width,height);
-        await win.loadURL(url+"?phase=exerciseIntent");
-        const intent = await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await window.metricsResult;await new Promise(r=>setTimeout(r,20));}throw Error('Intent fixture missing');})()");
-        if (!intent || intent.error) throw Error(intent?.error || "Intent fixture failed");
-        console.log("Intent Chromium: "+JSON.stringify(intent.value));
+        for (const phase of ["exerciseDragProjection","exerciseIntent"]) {
+          console.log("Starting Chromium "+phase+" at "+width+"x"+height);
+          await win.loadURL(url+"?phase="+phase);
+          const result = await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await Promise.race([window.metricsResult,new Promise((_,reject)=>setTimeout(()=>reject(Error('Fixture timed out')),55000))]);await new Promise(r=>setTimeout(r,20));}throw Error('Fixture missing');})()");
+          if (!result || result.error) throw Error(result?.error || phase+" failed");
+          console.log("Chromium "+phase+": "+JSON.stringify(result.value));
+        }
       }
     } else {
     for (const phase of ["seedInterrupted", "recoverAndExercise", "recoverPurge"]) {

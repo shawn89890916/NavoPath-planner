@@ -57,3 +57,13 @@ describe("month week layout", () => {
     expect(monthScrollTopForDate(rows, "2026-12-15", 100)).toBeUndefined();
   });
 });
+
+ it("matches the linear reference for variable heights, exact boundaries and out-of-range offsets", () => {
+  const weeks = buildWeekWindow("2026-11-18", 80, 80);
+  const { rows, totalHeight } = layoutMonthWeeks(weeks, date => Number(date.slice(-2)) % 7, false);
+  for (const offset of [-100, 0, ...rows.flatMap(row => [row.top - 1, row.top, row.top + row.height - 1]), totalHeight, totalHeight + 100]) {
+    const expected = rows.findIndex(row => row.top + row.height > offset);
+    expect(monthWeekAtOffset(rows, offset)).toBe(expected === -1 ? rows.length - 1 : expected);
+  }
+  expect(monthWeekAtOffset([], 0)).toBe(-1);
+});
