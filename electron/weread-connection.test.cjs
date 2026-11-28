@@ -56,7 +56,7 @@ test("reads sanitized shelf/progress/weekly statistics; isolates credential chan
   const calls=[];
   const {service,directory}=fixture(t,async(_url,options)=>{
     const body=JSON.parse(options.body);calls.push(body);
-    if(body.api_name==="/shelf/sync")return response({books:[{bookId:"book1",title:"Book",author:"Author",secret:0,readUpdateTime:100,cover:"https://wfqqreader.qq.com/cover",readerLink:"https://weread.qq.com/web/reader/abc",token:"must-not-return"},{bookId:"book2",title:"Private",secret:1,readerLink:"javascript:alert(1)"},{bookId:"book1",title:"Duplicate",secret:0}],albums:[{albumInfo:{albumId:"album1",name:"Audio"},albumInfoExtra:{secret:0,lectureReadUpdateTime:50}}],mp:{id:"mp"}});
+    if(body.api_name==="/shelf/sync")return response({books:[{bookId:"book1",title:"Book",author:"Author",secret:0,readUpdateTime:100,cover:"https://wfqqreader-1252317822.image.myqcloud.com/cover",readerLink:"https://weread.qq.com/web/reader/abc",token:"must-not-return"},{bookId:"book2",title:"Private",secret:1,cover:"https://myqcloud.com.attacker.example/cover",readerLink:"javascript:alert(1)"},{bookId:"book1",title:"Duplicate",secret:0}],albums:[{albumInfo:{albumId:"album1",name:"Audio"},albumInfoExtra:{secret:0,lectureReadUpdateTime:50}}],mp:{id:"mp"}});
     if(body.api_name==="/book/getprogress")return response({bookId:body.bookId,book:{progress:1,recordReadingTime:3600,updateTime:101,isStartReading:1}});
     if(body.api_name==="/readdata/detail")return response({baseTime:100,totalReadTime:3600,readTimes:{"100":1800,"86500":1800},readDays:2});
     throw Error("Unexpected endpoint");
@@ -65,7 +65,7 @@ test("reads sanitized shelf/progress/weekly statistics; isolates credential chan
   const {createHash}=require("node:crypto");const filename="weread-"+createHash("sha256").update(account).digest("hex")+".enc";
   fs.writeFileSync(path.join(directory,filename),Buffer.from(key).map(x=>x^42));
   const shelf=await service.run(account,"shelf");assert.equal(shelf.ok,true);assert.equal(shelf.shelf.length,3);
-  assert.equal(shelf.shelf[1].private,true);assert.equal(shelf.shelf[1].readerLink,undefined);
+  assert.equal(shelf.shelf[1].private,true);assert.equal(shelf.shelf[1].cover,undefined);assert.equal(shelf.shelf[1].readerLink,undefined);assert.equal(shelf.shelf[0].cover,"https://wfqqreader-1252317822.image.myqcloud.com/cover");
   assert.doesNotMatch(JSON.stringify(shelf),/must-not-return|wrk-example/);
   const id=shelf.connectionId;assert.ok(id);
   const next=await service.run(account,"progress","book1");assert.equal(next.connectionId,id);assert.equal(next.progress.percent,1);assert.equal(next.progress.seconds,3600);

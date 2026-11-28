@@ -49,10 +49,10 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
   useEffect(()=>{
     const e=++epoch.current;lock.current=false;last.current=0;setConnected(false);setPreview(null);setError("");setLoading(false);setSynced("");
     if(!weReadDesktopAvailable())return;
-    const status=()=>void request("status").then(result=>{if(e!==epoch.current)return;if(result.ok){setConnected(result.connected);if(result.connected&&(current.current.library.books.some(b=>b.weread)||current.current.library.wereadPreferences?.autoImport)&&!previewOpen.current)void run();else if(!result.connected)setPreview(null);}}).catch(()=>{});
+    const status=()=>{const expected=epoch.current;void request("status").then(result=>{if(expected!==epoch.current)return;if(result.ok){setConnected(result.connected);if(result.connected&&(current.current.library.books.some(b=>b.weread)||current.current.library.wereadPreferences?.autoImport)&&!previewOpen.current)void run();else if(!result.connected)setPreview(null);}}).catch(()=>{});};
     status();
     const focus=()=>{if(!previewOpen.current&&Date.now()-last.current>5*60_000)status();};
-    const changed=()=>{setPreview(null);setSynced("");last.current=0;status();};
+    const changed=()=>{++epoch.current;lock.current=false;setLoading(false);setPreview(null);setSynced("");last.current=0;status();};
     window.addEventListener("focus",focus);window.addEventListener(WEREAD_CONNECTION_EVENT,changed);
     return()=>{++epoch.current;lock.current=false;window.removeEventListener("focus",focus);window.removeEventListener(WEREAD_CONNECTION_EVENT,changed);};
   },[account]);

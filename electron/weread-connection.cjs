@@ -62,7 +62,7 @@ function createWeReadConnection({directory,safeStorage,fetchImpl=fetch,now=()=>n
     if(typeof value!=="string"||value.length>2048)return undefined;
     try{const u=new URL(value);if(u.protocol!=="https:"||u.username||u.password||u.port)return undefined;
       const host=u.hostname.toLowerCase();
-      return (cover?(host.endsWith(".qq.com")||host.endsWith(".qpic.cn")):(host==="weread.qq.com"||host==="i.weread.qq.com"))?u.href:undefined;
+      return (cover?(host.endsWith(".qq.com")||host.endsWith(".qpic.cn")||host.endsWith(".myqcloud.com")):(host==="weread.qq.com"||host==="i.weread.qq.com"))?u.href:undefined;
     }catch{return undefined;}
   };
   function shelfItems(data){

@@ -110,10 +110,11 @@ export async function exerciseSettings(){
   let library=linkReadingTask(createBook(emptyReadingLibrary(),{id:"existing",title:"Existing Book",author:"Author",now:"2026-11-28T00:00:00Z"}),"existing","existing-task"),taskBook="";
   const item=(id,title,secret=false)=>({id,kind:"book",title,author:"Author",private:secret,finished:false,recent:100});
   const books=[item("existing-remote","Existing Book"),item("new","New Book"),item("private","Private Book",true)];
+  let pauseNextShelf=false,releaseShelf;
   extensionService.readingWeRead=async(action,arg,account)=>{
     assert(account==="preview","Wrong account");
     const base={ok:true,connected:true,connectionId:"fixture",checkedAt:"2026-11-28T00:00:00Z"};
-    if(action==="shelf")return {...base,shelf:books};
+    if(action==="shelf"){if(pauseNextShelf){pauseNextShelf=false;return new Promise(resolve=>{releaseShelf=()=>resolve({...base,shelf:books});});}return {...base,shelf:books};}
     if(action==="progress")return {...base,progress:{id:arg,percent:25,seconds:1800,started:true,finished:false,recent:101}};
     if(action==="statistics")return {...base,statistics:{period:arg,base:100,totalSeconds:1800,days:[{day:100,seconds:1800}],readDays:1}};
     return base;
@@ -122,13 +123,20 @@ export async function exerciseSettings(){
   function mountShelf(){flushSync(()=>root.render(h("div",{className:"df-app mode-execute",style:{width:"100%",minWidth:0}},h(ReadingShelf,{account:"preview",library,busy:false,error:"",lang:"en",onCreateTask:async id=>{taskBook=id;},mutate,tasks:[],entries:[],engagementEnabled:false,onSaved:()=>{}}))))}
   try{
     mountShelf();await wait(()=>[...document.querySelectorAll("button")].some(b=>b.textContent==="Import books"),"Shelf connection missing");
-    click("Import books");await wait(()=>document.querySelector(".reading-import"),"Import preview missing");
-    click("Select public new books");
-    const existingRow=[...document.querySelectorAll(".reading-import-row")].find(row=>row.textContent.includes("Existing Book"));
-    existingRow.querySelector("input").click();
-    await wait(()=>existingRow.querySelector("select")?.value==="existing","Existing book was not matched");
-    assert(![...document.querySelectorAll(".reading-import-row")].find(row=>row.textContent.includes("Private Book")).querySelector("input").checked,"Private book selected");
-    click("Confirm (2)");await wait(()=>library.books.length===2&&!document.querySelector(".reading-import"),"Import failed");
+    async function selectImport(){
+      click("Import books");await wait(()=>document.querySelector(".reading-import"),"Import preview missing");
+      click("Select public new books");
+      const existingRow=[...document.querySelectorAll(".reading-import-row")].find(row=>row.textContent.includes("Existing Book"));
+      existingRow.querySelector("input").click();
+      await wait(()=>existingRow.querySelector("select")?.value==="existing","Existing book was not matched");
+      assert(![...document.querySelectorAll(".reading-import-row")].find(row=>row.textContent.includes("Private Book")).querySelector("input").checked,"Private book selected");
+    }
+    await selectImport();pauseNextShelf=true;click("Confirm (2)");
+    await wait(()=>typeof releaseShelf==="function","Import validation request did not start");
+    window.dispatchEvent(new Event("navopath:weread-connection-changed"));releaseShelf();
+    await wait(()=>!document.querySelector(".reading-import"),"Connection change did not close stale preview");
+    assert.equal(library.books.length,1,"Stale preview committed after credential change");
+    await selectImport();click("Confirm (2)");await wait(()=>library.books.length===2&&!document.querySelector(".reading-import"),"Import failed");
     assert(library.taskLinks[0].taskId==="existing-task"&&library.books.some(b=>b.id==="existing"),"Existing book/task identity lost");
     assert(library.books.find(b=>b.title==="New Book").progress.current===25,"Progress not imported");
     click("New Book");await wait(()=>[...document.querySelectorAll("button")].some(b=>b.textContent==="Add reading task"&&!b.disabled),"Book details did not open");click("Add reading task");await wait(()=>taskBook,"Reading task not created");
