@@ -15,8 +15,8 @@ export interface V2HostAdapter {
   readonly granted: ReadonlySet<V2Capability>;
   isCurrent(): boolean;
   tasks?: {
-    list(query: V2TaskQuery | undefined, signal: AbortSignal): Promise<readonly V2Task[]>;
-    execute(command: V2TaskCommand, signal: AbortSignal): Promise<V2TaskResult>;
+    list?(query: V2TaskQuery | undefined, signal: AbortSignal): Promise<readonly V2Task[]>;
+    execute?(command: V2TaskCommand, signal: AbortSignal): Promise<V2TaskResult>;
   };
   activity?: { query(query: V2ActivityQuery, signal: AbortSignal): Promise<V2ActivityFacts> };
   storage?: {
@@ -154,8 +154,8 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
     apiVersion: 2 as const, id: host.owner, language: host.language, platform: host.platform,
     capabilities: granted, signal: controller.signal, register: track,
     tasks: Object.freeze({
-      list: (query?: V2TaskQuery) => call("tasks.read", () => host.tasks!.list(structuredClone(query), controller.signal)),
-      execute: (command: V2TaskCommand) => call("tasks.write", () => host.tasks!.execute(structuredClone(command), controller.signal)),
+      list: (query?: V2TaskQuery) => call("tasks.read", () => host.tasks!.list!(structuredClone(query), controller.signal)),
+      execute: (command: V2TaskCommand) => call("tasks.write", () => host.tasks!.execute!(structuredClone(command), controller.signal)),
     }),
     activity: Object.freeze({
       query: (query: V2ActivityQuery) => call("activity.read", () => host.activity!.query(structuredClone(query), controller.signal)),

@@ -5,7 +5,7 @@ import type { ExtensionManifest, ExtensionPlatform, ExtensionPreferences, Catalo
 export type * from "./model";
 
 export type Dispose = () => void | Promise<void>;
-export type Mount = (container: HTMLElement) => void | Dispose;
+export type Mount = (container: HTMLElement) => void | Dispose | Promise<void | Dispose>;
 export type NativePlanningViewMode = "tree" | "list" | "kanban" | "eisenhower" | "metrics";
 export type NativeShelfViewMode = NativePlanningViewMode | "activity-history";
 export type NativeToolPage = "pomodoro" | "schedule-templates";

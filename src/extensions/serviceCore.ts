@@ -32,7 +32,7 @@ export class ExtensionService {
   private account = "";
   private generation = 0;
   private listeners = new Set<() => void>();
-  private loaded = new Map<string, { hash: string; plugin: LoadedPlugin; config: string }>();
+  private loaded = new Map<string, { hash: string; plugin: Pick<LoadedPlugin, "iconUrl" | "dispose" | "configChanged">; config: string }>();
   private failed = new Set<string>();
   private commands = new Map<string, { name: string; run: () => void | Promise<void>; shortcut?: string }>();
   private themeCleanup: Dispose = () => {};
@@ -254,6 +254,7 @@ export class ExtensionService {
   private async installBytes(bytes: Uint8Array, sourceId: string, downloadUrl?: string, expectedHash?: string, expectedKind?: ExtensionKind) {
     const account = this.account, pkg = await readPackage(bytes), hash = await sha256(bytes);
     if (expectedHash && hash !== expectedHash) throw new Error("Package integrity check failed");
+    if (pkg.manifest.apiVersion === 2 && (sourceId !== "official" || !expectedHash)) throw new Error("Protocol 2 preview is restricted to the approved catalog / V2 预览仅支持审核目录");
     if (expectedKind && pkg.manifest.kind !== expectedKind) throw new Error(expectedKind === "theme" ? "请在插件页导入插件 / Import plugins from Plugins" : "请在外观页导入主题 / Import themes from Appearance");
     if (sourceId === "official" && retiredCoreIds.has(pkg.manifest.id)) throw new Error("This feature is built in / 此功能已内置");
     const key = `${sourceId}:${pkg.manifest.id}`, previous = this.snapshot.preferences.installed[key];
@@ -267,7 +268,7 @@ export class ExtensionService {
     // First load is part of the install transaction. Failed updates keep the old descriptor.
     if (previous?.enabled && pkg.manifest.kind === "plugin" && !this.snapshot.safeMode) {
       await this.unload(key);
-      try { const plugin = await loadPlugin(pkg, this.bridge(key)); this.loaded.set(key, { hash, plugin, config: JSON.stringify(this.getConfig(key)) }); }
+      try { const plugin = await this.loadInstalledPlugin(pkg, key); this.loaded.set(key, { hash, plugin, config: JSON.stringify(this.getConfig(key)) }); }
       catch (error) { if (previous) await this.activate(previous); throw error; }
     }
     const removed = { ...this.snapshot.preferences.removed }; delete removed[key];
@@ -396,6 +397,26 @@ export class ExtensionService {
     this.setSnapshot({ updates });
     return true;
   }
+  private registerContribution(kind: "settingsPages" | "views", contribution: ExtensionContribution): Dispose {
+    if (this.snapshot[kind].some(item => item.id === contribution.id)) throw new Error("Duplicate plugin contribution");
+    this.setSnapshot({ [kind]: [...this.snapshot[kind], contribution] });
+    // Use object identity: a stale disposer cannot remove a replacement with the same stable ID.
+    return () => { this.setSnapshot({ [kind]: this.snapshot[kind].filter(item => item !== contribution) }); };
+  }
+  private async loadInstalledPlugin(pkg: ExtensionPackage, key: string): Promise<Pick<LoadedPlugin, "iconUrl" | "dispose" | "configChanged">> {
+    if (pkg.manifest.apiVersion !== 2) return loadPlugin(pkg, this.bridge(key));
+    const generation = this.generation, account = this.account, host = this.ensureHost();
+    const isCurrent = () => generation === this.generation && account === this.account && !!this.host;
+    const { loadV2Preview } = await import("./runtimeV2Host");
+    if (!isCurrent()) throw new Error("Extension account changed");
+    return loadV2Preview(pkg, {
+      key, host, platform: platform(), isCurrent,
+      register: (kind, contribution) => {
+        if (!isCurrent()) throw new Error("Extension account changed");
+        return this.registerContribution(kind, contribution);
+      },
+    });
+  }
   private bridge(key: string) {
     const host = this.ensureHost(), generation = this.generation, account = this.account;
     const guard = () => { if (generation !== this.generation || account !== this.account) throw new Error("Extension account changed"); };
@@ -416,7 +437,7 @@ export class ExtensionService {
       removeValue: async (name: string) => { guard(); await this.writeValue(key, name, null, true); },
       contribute: (kind: "settingsPages" | "views", name: string, mount: Mount, options?: Pick<ExtensionContribution, "iconUrl" | "planningView" | "nativeMode" | "nativeTool">): Dispose => {
         guard(); const contribution: ExtensionContribution = { id: crypto.randomUUID(), owner: key, name, mount, ...options };
-        this.setSnapshot({ [kind]: [...this.snapshot[kind], contribution] }); return () => { this.setSnapshot({ [kind]: this.snapshot[kind].filter(item => item.id !== contribution.id) }); };
+        return this.registerContribution(kind, contribution);
       }, executeCommand: this.executeCommand,
       setLauncherStatus: (status?: PluginLauncherStatus) => {
         if (generation !== this.generation) return;
@@ -532,7 +553,7 @@ export class ExtensionService {
     const generation = this.generation;
     const pkg = await readPackage(await this.packageBytes(item));
     if (generation !== this.generation) return;
-    const plugin = await loadPlugin(pkg, this.bridge(item.key));
+    const plugin = await this.loadInstalledPlugin(pkg, item.key);
     if (generation !== this.generation) { await plugin.dispose(); return; }
     this.loaded.set(item.key, { hash: item.sha256, plugin, config: JSON.stringify(this.getConfig(item.key)) });
   }

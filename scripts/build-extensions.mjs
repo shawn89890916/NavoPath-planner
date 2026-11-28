@@ -98,7 +98,7 @@ console.log(`${check ? 'Validated' : 'Built'} ${catalog.packages.length} extensi
 // copyable template. They are generated from the actual host contracts.
 const apiTypes = (await readFile(resolve(root, 'src/extensions/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"../types"', '"./models"').replaceAll('"./timers"', '"./timer"').replaceAll('"./model"', '"./extensions"');
 const modelTypes = (await readFile(resolve(root, 'src/types.ts'), 'utf8')).replaceAll('\r\n','\n').replaceAll('"./extensions/model"', '"./extensions"').replace('"../shared/pluginMcp"', '"./pluginMcp"');
-const extensionTypes = (await readFile(resolve(root, 'src/extensions/model.ts'), 'utf8')).replaceAll('\r\n','\n').replace('"../../shared/pluginMcp"', '"./pluginMcp"');
+const extensionTypes = (await readFile(resolve(root, 'src/extensions/model.ts'), 'utf8')).replaceAll('\r\n','\n').replace('"../../shared/pluginMcp"', '"./pluginMcp"').replace('"./sdkV2"', '"./v2"');
 const pluginMcpTypes = (await readFile(resolve(root, 'shared/pluginMcp.ts'), 'utf8')).match(/^export type PluginMcp\w* = [^\r\n]+/gm)?.join('\n');
 if (!pluginMcpTypes) throw new Error('Plugin MCP type declarations are missing');
 const timerTypes = (await readFile(resolve(root, 'src/extensions/timers.ts'), 'utf8')).replaceAll('\r\n','\n').split('const modes =')[0].replaceAll('"../types"', '"./models"');
