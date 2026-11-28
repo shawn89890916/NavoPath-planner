@@ -17,7 +17,7 @@
 .df-settings-group-title { margin: 0; color: var(--text-muted); font: 600 13px/1.45 var(--paper-sans); }
 .df-settings-group-desc { margin: var(--space-1) 0 0; max-width: 64ch; color: var(--text-muted); font: 400 12px/1.55 var(--paper-sans); }
 .df-settings-group-body { display: flex; flex-direction: column; min-width: 0; }
-:is(.df-settings-group--grouped > .df-settings-group-body, .df-settings-disclosure:not(:where(.df-settings-group-body *, .df-settings-disclosure *))) {
+:is(.df-settings-group--grouped > .df-settings-group-body, .df-settings-home-card, .df-settings-disclosure:not(:where(.df-settings-group-body *, .df-settings-disclosure *))) {
   background: var(--settings-group-surface, var(--surface-card));
   border: 1px solid var(--paper-rule);
   border-radius: var(--radius-card);

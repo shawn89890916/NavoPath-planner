@@ -38,7 +38,8 @@ export async function exerciseSettings(){
           h("div",null,h(SettingSection,{title:tr("Nested plugin","插件子组"),anchor:"embedded"},row("embedded-row","Nested",null)))),
         h(SettingDisclosure,{title:tr("More options","更多选项"),anchor:"disclosure",open:true},
           h(SettingSection,{title:tr("Inner","内部"),anchor:"disclosure-child"},row("disclosure-row","Option",null))),
-        h(SettingSection,{title:tr("Danger","危险操作"),tone:"danger",anchor:"danger"},row("danger-row","Reset",null))
+        h(SettingSection,{title:tr("Danger","危险操作"),tone:"danger",anchor:"danger"},row("danger-row","Reset",null)),
+        h("div",{className:"df-settings-home-card df-settings-home-quick-card","data-settings-anchor":"home"},h("div",{className:"df-settings-home-quick-row"},h("span",null,tr("Language","语言")),h(SettingSelect,{value:"en",onChange:noop,ariaLabel:"Language",options:[{value:"en",label:"English"}]})))
       )))));
     const f=document.getElementById("settings-fixture");
     const pick=a=>'[data-settings-anchor="'+a+'"]';
@@ -51,7 +52,7 @@ export async function exerciseSettings(){
     for(const el of f.querySelectorAll(".df-settings-row,.df-settings-row-control,.df-settings-group-body"))assert(el.scrollWidth<=el.clientWidth+1,"Overflow "+el.className+" "+el.scrollWidth+"/"+el.clientWidth+" viewport="+innerWidth+" radius="+r);
     const outer=f.querySelector(".df-settings-group--grouped > .df-settings-group-body");
     const disclosure=f.querySelector(pick("disclosure"));
-    for(const selector of [pick("legacy")+" > .df-settings-group-body",pick("danger")+" > .df-settings-group-body",pick("disclosure")]){
+    for(const selector of [pick("legacy")+" > .df-settings-group-body",pick("danger")+" > .df-settings-group-body",pick("disclosure"),pick("home")]){
       const el=f.querySelector(selector), cs=getComputedStyle(el);
       close(parseFloat(cs.borderTopWidth),1,"Outer border "+selector);
       close(parseFloat(cs.borderTopLeftRadius),r,"Outer radius "+selector);
