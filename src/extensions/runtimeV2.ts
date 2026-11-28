@@ -1,7 +1,7 @@
 import type {
   PluginContextV2, PluginModuleV2, V2ActivityFacts, V2ActivityQuery, V2Capability,
   V2ContributionKind, V2ContributionMap, V2Dispose, V2ErrorCode, V2ManifestContract,
-  V2MetricsProvider, V2Page, V2StorageRead, V2StorageResult, V2StorageWrite,
+  V2MetricsProvider, V2Page, V2StorageRead, V2StorageResult, V2StorageWrite, V2Json,
   V2Task, V2TaskCommand, V2TaskGroup, V2TaskQuery, V2TaskResult, V2EntityTaskLink,
 } from "./sdkV2";
 
@@ -22,6 +22,7 @@ export interface V2HostAdapter {
   activity?: { query(query: V2ActivityQuery, signal: AbortSignal): Promise<V2ActivityFacts> };
   storage?: {
     read(key: string, signal: AbortSignal): Promise<V2StorageRead>;
+    readLegacy?(key: string, signal: AbortSignal): Promise<V2Json>;
     write(key: string, command: V2StorageWrite, signal: AbortSignal): Promise<V2StorageResult>;
     subscribe(key: string, listener: () => void): V2Dispose;
   };
@@ -200,6 +201,10 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
     }),
     storage: Object.freeze({
       read: (key: string) => call("storage.read", () => host.storage!.read(storageKey(key), controller.signal)),
+      readLegacy: (key: string) => call("storage.read", () => {
+        if (!host.storage?.readLegacy) throw new V2ContractError("UNSUPPORTED_CAPABILITY", "storage.readLegacy");
+        return host.storage.readLegacy(storageKey(key), controller.signal);
+      }),
       write: (key: string, command: V2StorageWrite) => call("storage.write", () => host.storage!.write(storageKey(key), structuredClone(command), controller.signal)),
       subscribe: (key: string, listener: () => void) => {
         check("storage.read");

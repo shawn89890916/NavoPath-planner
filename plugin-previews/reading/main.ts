@@ -3,20 +3,22 @@ import { createBook, updateBook, decodeReadingLibrary, groupReadingBooks, totals
 const KEY = "library-v2";
 export function createReadingController(ctx: PluginContextV2) {
   const tr = (zh:string,en:string) => ctx.language === "zh" ? zh : en;
-  let snapshot: V2StorageRead = {status:"unavailable"}, library: ReadingLibrary | undefined, busy=false, error="", generation=0;
+  let snapshot: V2StorageRead = {status:"unavailable"}, library: ReadingLibrary | undefined, legacy: ReadingLibrary | null | undefined, busy=false, error="", generation=0;
   const listeners = new Set<()=>void>();
   const notify = () => { if (!ctx.signal.aborted) for(const fn of listeners) fn(); };
   const subscribe = (fn:()=>void) => { listeners.add(fn); return () => {listeners.delete(fn);}; };
-  const ready = () => !busy && !error && !ctx.signal.aborted && !!library && (snapshot.status==="value" || snapshot.status==="absent");
+  const ready = () => !busy && !error && !ctx.signal.aborted && !!library && (snapshot.status==="value" || (snapshot.status==="absent" && snapshot.revision===null && legacy===null));
   async function refresh() {
     const run=++generation;
     try {
       const next=await ctx.storage.read(KEY);
+      const source=next.status==="absent" && next.revision===null ? await ctx.storage.readLegacy("library-v1") : null;
       if(ctx.signal.aborted || run!==generation) return;
+      legacy=source===null?null:decodeReadingLibrary(source);
       const value=next.status==="conflict" ? next.current : next;
       library=value.status==="value" || value.status==="pending" ? decodeReadingLibrary(value.value) : value.status==="absent" ? decodeReadingLibrary(null) : undefined;
       snapshot=next; error="";
-    } catch(e) { if(run===generation && !ctx.signal.aborted) {error=String(e);library=undefined;snapshot={status:"unavailable"};} }
+    } catch(e) { if(run===generation && !ctx.signal.aborted) {error=String(e);library=undefined;legacy=undefined;snapshot={status:"unavailable"};} }
     finally {if(run===generation) notify();}
   }
   async function mutate(fn:(value:ReadingLibrary)=>ReadingLibrary, expected?:ReadingLibrary) {
@@ -28,6 +30,33 @@ export function createReadingController(ctx: PluginContextV2) {
       await refresh();
       if(result.status==="conflict" || result.status==="unavailable") throw Error(tr("写入冲突或不可用","Write conflict or unavailable"));
     } finally {busy=false;notify();}
+  }
+  async function migrateLegacy() {
+    if(busy || ctx.signal.aborted || snapshot.status!=="absent" || snapshot.revision!==null || !legacy) throw Error("Migration unavailable");
+    const source=legacy;busy=true;notify();
+    try {
+      const latest=decodeReadingLibrary(await ctx.storage.readLegacy("library-v1"));
+      if(JSON.stringify(source)!==JSON.stringify(latest)) throw Error(tr("旧书库已变化，请刷新后重新导入","Legacy library changed; refresh before importing"));
+      const result=await ctx.storage.write(KEY,{kind:"set",expectedRevision:null,operationId:crypto.randomUUID(),value:source as unknown as V2Json});
+      await refresh();
+      if(result.status!=="committed" && result.status!=="pending") throw Error("Migration conflict");
+    } finally {busy=false;notify();}
+  }
+  async function resolveConflict(choice:"remote"|"local") {
+    if(busy || ctx.signal.aborted || snapshot.status!=="conflict") throw Error("No conflict to resolve");
+    const original=snapshot;
+    const selected=choice==="remote"?original.current:original.rejected;
+    const isValue="value" in selected;
+    if(isValue) decodeReadingLibrary(selected.value);
+    busy=true;notify();
+    try {
+      const latest=await ctx.storage.read(KEY);
+      if(JSON.stringify(latest)!==JSON.stringify(original)) throw Error(tr("冲突已变化，请刷新","Conflict changed; refresh"));
+      const command={expectedRevision:original.current.revision,operationId:crypto.randomUUID()};
+      const result=await ctx.storage.write(KEY,isValue?{kind:"set",value:selected.value,...command}:{kind:"set",value:decodeReadingLibrary(null) as unknown as V2Json,...command});
+      await refresh();
+      if(result.status!=="committed" && result.status!=="pending") throw Error("Conflict resolution failed");
+    }finally{busy=false;notify();}
   }
   async function links(ids:readonly string[], value=library) {
     if(!value || ctx.signal.aborted || !ids.length || !value.books.length) return [];
@@ -60,7 +89,7 @@ export function createReadingController(ctx: PluginContextV2) {
   }
   ctx.register(ctx.storage.subscribe(KEY,()=>{void refresh();}));
   ctx.register(()=>{generation++;listeners.clear();pendingTaskOps.clear();runningTasks.clear();});
-  return {tr,refresh,subscribe,mutate,createTask,membership,summarize,ready,get library(){return library},get state(){return snapshot.status},get error(){return error}};
+  return {tr,refresh,subscribe,mutate,migrateLegacy,resolveConflict,createTask,membership,summarize,ready,get library(){return library},get legacy(){return legacy},get conflict(){return snapshot.status==="conflict"?snapshot:undefined},get busy(){return busy},get state(){return snapshot.status},get error(){return error}};
 }
 type Controller=ReturnType<typeof createReadingController>;
 function mountShelf(ctx:PluginContextV2,c:Controller,container:HTMLElement) {
@@ -98,7 +127,23 @@ function mountShelf(ctx:PluginContextV2,c:Controller,container:HTMLElement) {
     el("h2",tr("阅读","Reading"));
     const state=c.state;
     if(state==="pending")el("p",tr("离线修改待同步；暂不可继续编辑。","Offline changes pending; editing paused."));
-    if(state==="conflict")el("p",tr("存在同步冲突。已保留未提交修改，请勿覆盖。","Sync conflict. Rejected changes are preserved; do not overwrite."));
+    if(state==="conflict" && c.conflict){
+      const conflict=c.conflict;
+      el("p",tr("存在同步冲突。请对照两个版本后选择保留哪一份完整书库。","Sync conflict. Compare the two versions before selecting a complete library."));
+      for(const [label,value] of [[tr("远端版本","Remote version"),"value" in conflict.current?conflict.current.value:null],[tr("本机修改","Local changes"),"value" in conflict.rejected?conflict.rejected.value:null]] as const){
+        const details=el("details");el("summary",label,details);
+        try{for(const book of decodeReadingLibrary(value).books)el("p",book.title+" · "+book.status+" · "+JSON.stringify(book.progress),details);}catch{el("p",tr("数据格式无效","Invalid data"),details);}
+        const raw=el("pre",JSON.stringify(value,null,2),details);raw.style.whiteSpace="pre-wrap";raw.style.overflowWrap="anywhere";
+      }
+      for(const [choice,label] of [["remote",tr("保留远端书库","Keep remote library")],["local",tr("保留本机书库","Keep local library")]] as const){
+        const confirm=el("details");el("summary",label,confirm);el("p",tr("另一版本的修改将被替换。请先复制需要保留的数据。","The other version's edits will be replaced. Copy anything you need first."),confirm);
+        button(tr("确认选择","Confirm choice"),()=>{void c.resolveConflict(choice).catch(report);},confirm).disabled=c.busy;
+      }
+    }
+    if(c.legacy && state==="absent"){
+      el("p",tr("检测到旧书库：","Legacy library found: ")+c.legacy.books.length+tr(" 本书、"," books, ")+c.legacy.taskLinks.length+tr(" 条任务关联。旧客户端需停止修改阅读数据。"," linked tasks. Stop editing Reading on old clients."));
+      button(tr("导入旧书库（保留原数据）","Import legacy library (keep original)"),()=>{void c.migrateLegacy().catch(report);}).disabled=c.busy;
+    }
     if(state==="unavailable" || c.error)el("p",tr("书库暂不可用。","Library unavailable."));
     button(tr("刷新","Refresh"),()=>{void c.refresh();});
     button(tr("添加书籍","Add book"),()=>editor()).disabled=!c.ready();

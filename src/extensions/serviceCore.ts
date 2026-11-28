@@ -420,6 +420,18 @@ export class ExtensionService {
         notify: (owner, name) => emitPluginEvent("v2-storage:" + JSON.stringify([account, owner, name])),
         subscribe: (name, listener) => subscribePluginEvent("v2-storage:" + JSON.stringify([account, key, name]), listener),
       }) : undefined;
+    if (storage) storage.readLegacy = async (name, signal) => {
+      const check = () => { if (!isCurrent() || signal.aborted) throw new Error("Extension account changed"); };
+      check();
+      const scope = "account:" + account + ":";
+      const pendingKey = scope + `pending:${key}:${name}`;
+      if (await cacheGet(pendingKey)) throw new Error("Legacy edits are pending; sync them before migration");
+      check();
+      const value = account === "preview" ? await cacheGet(scope + `value:${key}:${name}`) : await getExtensionValue(key, name, account);
+      if (await cacheGet(pendingKey)) throw new Error("Legacy edits are pending; sync them before migration");
+      check();
+      return value as import("./sdkV2").V2Json;
+    };
     if (!isCurrent()) throw new Error("Extension account changed");
     return loadV2Preview(pkg, {
       key, host, platform: platform(), isCurrent, storage, engagementEnabled: () => this.snapshot.nativeFeatures?.includes("engagement") === true,

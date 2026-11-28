@@ -128,6 +128,8 @@ export interface PluginContextV2 {
   readonly activity: { query(query: V2ActivityQuery): Promise<V2ActivityFacts> };
   readonly storage: {
     read(key: string): Promise<V2StorageRead>;
+    /** Read-only snapshot of this plugin's legacy namespace. No cached offline fallback. */
+    readLegacy(key: string): Promise<V2Json>;
     write(key: string, command: V2StorageWrite): Promise<V2StorageResult>;
     subscribe(key: string, listener: () => void): V2Dispose;
   };
