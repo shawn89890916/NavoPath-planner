@@ -131,7 +131,7 @@ export async function exerciseSettings(){
     click("Confirm (2)");await wait(()=>library.books.length===2&&!document.querySelector(".reading-import"),"Import failed");
     assert(library.taskLinks[0].taskId==="existing-task"&&library.books.some(b=>b.id==="existing"),"Existing book/task identity lost");
     assert(library.books.find(b=>b.title==="New Book").progress.current===25,"Progress not imported");
-    click("New Book");click("Add reading task");await wait(()=>taskBook,"Reading task not created");
+    click("New Book");await wait(()=>[...document.querySelectorAll("button")].some(b=>b.textContent==="Add reading task"&&!b.disabled),"Book details did not open");click("Add reading task");await wait(()=>taskBook,"Reading task not created");
     assert(taskBook===library.books.find(b=>b.title==="New Book").id,"Task not linked to book");
     click("View statistics");await wait(()=>document.body.textContent.includes("30 min")&&document.querySelector(".reading-stat-row"),"External statistics missing");
     for(const el of document.querySelectorAll(".reading-shelf,.reading-sync,.reading-book,.reading-week"))assert(el.scrollWidth<=el.clientWidth+2,"Reading shelf overflow at "+innerWidth);
