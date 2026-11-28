@@ -470,6 +470,27 @@ describe("Reading library lifecycle", () => {
 });
 
 describe("protocol 2 preview service routing", () => {
+  it("never replaces an existing V1 plugin through an automatic or explicit V2 update", async () => {
+    const bundled=getBundledExtension("reading")!,key="official:reading";
+    const pkg=JSON.parse(weatherPackageText);
+    pkg.manifest={...pkg.manifest,id:"reading",version:"2.0.0",apiVersion:2,permissions:["tasks.read"]};
+    delete pkg.manifest.styles;delete pkg.manifest.settingsOptions;delete pkg.manifest.mcp;
+    const bytes=new TextEncoder().encode(JSON.stringify(pkg));
+    const entry={manifest:pkg.manifest,sourceId:"official",sha256:await sha256(bytes),downloadUrl:"https://example.com/reading-v2.navopackage.json"};
+    const f=fixture("v2-update-guard",{...defaultExtensionPreferences(),installed:{[key]:{...bundled,key,sourceId:"official",enabled:false,installedAt:"2026-11-24T00:00:00Z"}}});
+    await current.configure(f.host);
+    vi.stubGlobal("fetch",vi.fn(async(url:string)=>{
+      if(url.includes("catalog.json"))return new Response(JSON.stringify({version:1,packages:[entry]}));
+      if(url===entry.downloadUrl)return new Response(bytes);
+      return fetchBundled(url);
+    }));
+    await current.checkUpdates();
+    expect(current.getSnapshot().updates[key]).toBeUndefined();
+    const found=current.getSnapshot().catalog.find(item=>item.manifest.id==="reading")!;
+    await expect(current.install(found)).rejects.toThrow("Cross-protocol migration");
+    expect(current.getSnapshot().preferences.installed[key].manifest.apiVersion).toBe(1);
+    expect(mocks.loadV2).not.toHaveBeenCalled();
+  });
   it("accepts approved catalog packages, refuses imports, and dispatches to the v2 loader only", async () => {
     const f = fixture("v2-preview-test");
     const pkg = JSON.parse(weatherPackageText);

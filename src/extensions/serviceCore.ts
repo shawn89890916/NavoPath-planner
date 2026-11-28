@@ -22,9 +22,9 @@ const trustedSyncHashes = new Set([
   "9dfc5a9fa767994eab19d32c43e2539b8efb1400eceb31a74af6a75657676fed",
 ]);
 const canUseOfficialUpdate = (item: InstalledExtension, entry: CatalogEntry) =>
-  entry.sourceId === item.sourceId ||
+  item.manifest.apiVersion === entry.manifest.apiVersion && (entry.sourceId === item.sourceId ||
   (entry.sourceId === "official" && (item.sourceId === "imported" || item.sourceId.startsWith("direct-")) &&
-    item.manifest.id === SYNC_PLUGIN_ID && trustedSyncHashes.has(item.sha256));
+    item.manifest.id === SYNC_PLUGIN_ID && trustedSyncHashes.has(item.sha256)));
 const errorText = (error: unknown) => error instanceof Error ? error.message : String(error);
 const platform = (): ExtensionPlatform => window.desktopApi?.isDesktop?.() ? "desktop" : /^(capacitor|ionic):/.test(location.protocol) || !!(window as any).Capacitor?.isNativePlatform?.() ? "mobile" : "web";
 export class ExtensionService {
@@ -262,6 +262,7 @@ export class ExtensionService {
     if (expectedKind && pkg.manifest.kind !== expectedKind) throw new Error(expectedKind === "theme" ? "请在插件页导入插件 / Import plugins from Plugins" : "请在外观页导入主题 / Import themes from Appearance");
     if (sourceId === "official" && retiredCoreIds.has(pkg.manifest.id)) throw new Error("This feature is built in / 此功能已内置");
     const key = `${sourceId}:${pkg.manifest.id}`, previous = this.snapshot.preferences.installed[key];
+    if (previous && previous.manifest.apiVersion !== pkg.manifest.apiVersion) throw new Error("Cross-protocol migration is not yet available / 暂不支持跨协议迁移");
     const incompatibility = compatibility(pkg.manifest, platform());
     if (incompatibility) throw new Error(incompatibility);
     if (account !== this.account) throw new Error("Account changed during installation");
