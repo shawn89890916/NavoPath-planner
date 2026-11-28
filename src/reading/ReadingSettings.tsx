@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import type { Language } from "../types";
 import { SettingSection, SettingRow, SettingActionButton, SettingTextInput } from "../components/SettingsControls";
 import { readingWeRead } from "./wereadConnectionService";
-import { weReadDesktopAvailable, WEREAD_CONNECTION_EVENT, type WeReadAction, type WeReadResult } from "./wereadConnection";
+import { weReadDesktopAvailable, type WeReadAction, type WeReadResult } from "./wereadConnection";
 
-export default function ReadingSettings({lang,active,connection=readingWeRead,desktopAvailable=weReadDesktopAvailable}:{lang:Language;active:boolean;connection?:typeof extensionService.readingWeRead;desktopAvailable?:typeof weReadDesktopAvailable}){
+export default function ReadingSettings({lang,active,connection=readingWeRead,desktopAvailable=weReadDesktopAvailable}:{lang:Language;active:boolean;connection?:typeof readingWeRead;desktopAvailable?:typeof weReadDesktopAvailable}){
   const tr=(zh:string,en:string)=>lang==="zh"?zh:en;
   const supported=desktopAvailable();
   const [key,setKey]=useState(""),[connected,setConnected]=useState(false),[verified,setVerified]=useState<Extract<WeReadResult,{ok:true}>|null>(null);
@@ -20,7 +20,7 @@ export default function ReadingSettings({lang,active,connection=readingWeRead,de
       setConnected(result.connected);
       if(action==="connect"||action==="test")setVerified(result);
       if(action==="disconnect"){setVerified(null);setKey("");}
-      if(action==="connect"||action==="disconnect")window.dispatchEvent(new Event(WEREAD_CONNECTION_EVENT));
+      if(action==="connect"||action==="disconnect")window.dispatchEvent(new Event("navopath:weread-connection-changed"));
     }catch{if(current===epoch.current)setError("unavailable");}
     finally{if(current===epoch.current){lock.current=false;setBusy(null);}}
   };

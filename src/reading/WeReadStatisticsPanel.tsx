@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from "react";
 import {Button} from "../components/UiPrimitives";
-import {extensionService} from "../extensions/service";
-import {weReadDesktopAvailable,WEREAD_CONNECTION_EVENT,type WeReadPeriod,type WeReadStatistics} from "./wereadConnection";
+import {readingWeRead} from "./wereadConnectionService";
+import {weReadDesktopAvailable,type WeReadPeriod,type WeReadStatistics} from "./wereadConnection";
 /** Source-native calendar buckets; never enter core TimeEntry or local task filters. */
 export default function WeReadStatisticsPanel({account,zh,disabled=false}:{account:string;zh:boolean;disabled?:boolean}){
   const [period,setPeriod]=useState<WeReadPeriod>("weekly"),[stats,setStats]=useState<WeReadStatistics|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(false);
@@ -9,11 +9,11 @@ export default function WeReadStatisticsPanel({account,zh,disabled=false}:{accou
   const tr=(a:string,b:string)=>zh?a:b;
   useEffect(()=>{generation.current++;setStats(null);setBusy(false);setError(false);lock.current=false;
     const reset=()=>{generation.current++;lock.current=false;setStats(null);setBusy(false);setError(false);};
-    window.addEventListener(WEREAD_CONNECTION_EVENT,reset);
-    return()=>{generation.current++;window.removeEventListener(WEREAD_CONNECTION_EVENT,reset);};
+    window.addEventListener(reset);
+    return()=>{generation.current++;window.removeEventListener(reset);};
   },[account]);
   async function refresh(){if(lock.current)return;const epoch=generation.current;lock.current=true;setBusy(true);setError(false);
-    try{const r=await extensionService.readingWeRead("statistics",period,account);if(epoch!==generation.current)return;if(r.ok&&r.statistics?.period===period)setStats(r.statistics);else{setStats(null);setError(true);}}
+    try{const r=await readingWeRead("statistics",period,account);if(epoch!==generation.current)return;if(r.ok&&r.statistics?.period===period)setStats(r.statistics);else{setStats(null);setError(true);}}
     catch{if(epoch===generation.current){setStats(null);setError(true);}}
     finally{if(epoch===generation.current){lock.current=false;setBusy(false);}}
   }

@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from "react";
 import {Button,Input} from "../components/UiPrimitives";
 import {readingWeRead} from "./wereadConnectionService";
 import type {ReadingLibrary,ReadingBook} from "./model";
-import {weReadDesktopAvailable,WEREAD_CONNECTION_EVENT,type WeReadItem,type WeReadProgress} from "./wereadConnection";
+import {weReadDesktopAvailable,type WeReadItem,type WeReadProgress} from "./wereadConnection";
 import {applyWeReadProgress,importWeRead,recentLinkedItems,sourceKey,sourceMatches,suggestedBook,matchingBooks,syncWeReadShelf} from "./wereadSync";
 import type {ReadingMutate} from "./ReadingShelf";
 import WeReadStatisticsPanel from "./WeReadStatisticsPanel";
@@ -53,8 +53,8 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
     status();
     const focus=()=>{if(!previewOpen.current&&Date.now()-last.current>5*60_000)status();};
     const changed=()=>{++epoch.current;lock.current=false;setLoading(false);setPreview(null);setSynced("");last.current=0;status();};
-    window.addEventListener("focus",focus);window.addEventListener(WEREAD_CONNECTION_EVENT,changed);
-    return()=>{++epoch.current;lock.current=false;window.removeEventListener("focus",focus);window.removeEventListener(WEREAD_CONNECTION_EVENT,changed);};
+    window.addEventListener("focus",focus);window.addEventListener(changed);
+    return()=>{++epoch.current;lock.current=false;window.removeEventListener("focus",focus);window.removeEventListener(changed);};
   },[account]);
   useEffect(()=>{if(connected&&!preview&&Date.now()-last.current>5*60_000&&(current.current.library.books.some(b=>b.weread)||current.current.library.wereadPreferences?.autoImport))void run();},[refreshToken]);
   const unlinked=preview?.items.filter(item=>!library.books.some(book=>sourceMatches(book,preview.connectionId,item)))??[];
@@ -117,7 +117,7 @@ export function WeReadBookActions({book,account,mutate,zh,busy}:{book:ReadingBoo
   const [pending,setPending]=useState(false),[error,setError]=useState(false);
   const source=book.weread;if(!source)return null;
   async function refresh(){if(!source||pending)return;setPending(true);setError(false);try{
-    const result=await extensionService.readingWeRead("progress",source.externalId,account);
+    const result=await readingWeRead("progress",source.externalId,account);
     if(!result.ok||result.connectionId!==source.connectionId||!result.progress)throw Error("Connection changed");
     const value=result.progress,connectionId=source.connectionId;
     await mutate(library=>applyWeReadProgress(library,connectionId,value,new Date().toISOString()));
