@@ -25,7 +25,7 @@ test("v2 example and all registered v2 package sources obey the static boundary"
   await checkV2Boundary();
 });
 
-import { buildPluginPreview, buildPreviewCatalog } from "./build-plugin-preview.mjs";
+import { buildPluginPreview, buildPreviewCatalog, MAX_PREVIEW_PACKAGE_BYTES } from "./build-plugin-preview.mjs";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { readPackage } from "../src/extensions/packages.ts";
@@ -45,6 +45,7 @@ test("protocol 2 release artifacts use a separate catalog and immutable hashed p
   const entry=first.catalog.packages[0],artifact=first.artifacts[0];
   assert.equal(entry.manifest.apiVersion,2);
   assert.equal(entry.sha256,createHash("sha256").update(artifact.data).digest("hex"));
+  assert.ok(Buffer.byteLength(artifact.data)<=MAX_PREVIEW_PACKAGE_BYTES);
   assert.equal(entry.downloadUrl,"https://navopath.com/extensions-preview/"+artifact.filename);
   assert.ok(artifact.filename.includes(entry.sha256));
   const live=JSON.parse(await readFile(new URL("../public/extensions/catalog.json",import.meta.url),"utf8"));

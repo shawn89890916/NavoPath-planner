@@ -6,6 +6,8 @@ import { build } from "esbuild";
 import { validateManifest, publicHttps } from "../src/extensions/packages.ts";
 import { checkV2Boundary } from "./check-plugin-v2-boundary.mjs";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
+// An optional lightweight plugin should never approach the generic 20 MiB import ceiling.
+export const MAX_PREVIEW_PACKAGE_BYTES=256*1024;
 export async function buildPluginPreview(id) {
   if(!/^[a-z0-9-]+$/.test(id))throw Error("Invalid preview id");
   await checkV2Boundary();
@@ -18,6 +20,7 @@ export async function buildPluginPreview(id) {
     if(!rel || isAbsolute(rel) || rel===".." || rel.startsWith(".."+sep))throw Error("Unexpected bundled runtime dependency: "+input);
   }
   const data=JSON.stringify({manifest,files:{[manifest.main]:{encoding:"utf8",data:result.outputFiles[0].text},LICENSE:{encoding:"utf8",data:await readFile(resolve(dir,"LICENSE"),"utf8")}}},null,2)+"\n";
+  if(Buffer.byteLength(data)>MAX_PREVIEW_PACKAGE_BYTES)throw Error("Preview package exceeds 256 KiB budget");
   return {manifest,data,sha256:createHash("sha256").update(data).digest("hex")};
 }
 /** Build an isolated protocol-2 catalog. No v1 file or repository state is modified. */
