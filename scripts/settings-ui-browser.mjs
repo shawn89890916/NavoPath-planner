@@ -1,7 +1,7 @@
 import React from "react";
 import {createRoot} from "react-dom/client";
 import {flushSync} from "react-dom";
-import {SettingSection,SettingRow,SettingToggle,SettingSelect,SettingTextInput,SettingColorInput,SettingNumberInput,SettingSlider,SettingActionButton} from "../src/components/SettingsControls.tsx";
+import {SettingSection,SettingRow,SettingToggle,SettingSelect,SettingTextInput,SettingColorInput,SettingNumberInput,SettingSlider,SettingActionButton,SettingDisclosure} from "../src/components/SettingsControls.tsx";
 import "../src/app.css";
 import "../src/ui-primitives.css";
 const h=React.createElement;
@@ -34,7 +34,12 @@ export async function exerciseSettings(){
           row("plugin",tr("An installed plugin with a long name","一个拥有较长名称的已安装插件"),h(React.Fragment,null,h(SettingActionButton,null,tr("Manage connection","管理连接")),h(SettingActionButton,null,tr("Update","更新")),h(SettingActionButton,null,tr("Retry","重试"))),{layout:"actions",description:tr("Long supporting metadata and status.","较长的插件描述与状态。"),trailing:h(SettingToggle,{checked:true,onChange:noop,ariaLabel:"Plugin enabled"})}),
           row("switch",tr("Notification","通知"),h(SettingToggle,{checked:false,onChange:noop,ariaLabel:"Notifications"}))
         ),
-        h(SettingSection,{title:tr("Advanced","高级")},row("plain",tr("Name","名称"),h(SettingTextInput,{value:"",onChange:noop,ariaLabel:"Other name"})))
+        h(SettingSection,{title:tr("Advanced","高级"),variant:"plain",anchor:"legacy"},row("plain",tr("Name","名称"),h(SettingTextInput,{value:"",onChange:noop,ariaLabel:"Other name"})),
+          h("div",null,h(SettingSection,{title:tr("Nested plugin","插件子组"),anchor:"embedded"},row("embedded-row","Nested",null)))),
+        h(SettingDisclosure,{title:tr("More options","更多选项"),anchor:"disclosure",open:true},
+          h(SettingSection,{title:tr("Inner","内部"),anchor:"disclosure-child"},row("disclosure-row","Option",null))),
+        h(SettingSection,{title:tr("Danger","危险操作"),tone:"danger",anchor:"danger"},row("danger-row","Reset",null)),
+        h("div",{className:"df-settings-home-card df-settings-home-quick-card","data-settings-anchor":"home"},h("div",{className:"df-settings-home-quick-row"},h("span",null,tr("Language","语言")),h(SettingSelect,{value:"en",onChange:noop,ariaLabel:"Language",options:[{value:"en",label:"English"}]})))
       )))));
     const f=document.getElementById("settings-fixture");
     const pick=a=>'[data-settings-anchor="'+a+'"]';
@@ -45,7 +50,26 @@ export async function exerciseSettings(){
     close(box(f,pick("select")+" .df-settings-row-title").left,box(f,".df-settings-group-title").left,"Heading left");
     close(box(f,pick("plugin")+" [role=switch]").right,box(f,pick("switch")+" [role=switch]").right,"Switch right");
     for(const el of f.querySelectorAll(".df-settings-row,.df-settings-row-control,.df-settings-group-body"))assert(el.scrollWidth<=el.clientWidth+1,"Overflow "+el.className+" "+el.scrollWidth+"/"+el.clientWidth+" viewport="+innerWidth+" radius="+r);
+    const outer=f.querySelector(".df-settings-group--grouped > .df-settings-group-body");
+    const disclosure=f.querySelector(pick("disclosure"));
+    for(const selector of [pick("legacy")+" > .df-settings-group-body",pick("danger")+" > .df-settings-group-body",pick("disclosure"),pick("home")]){
+      const el=f.querySelector(selector), cs=getComputedStyle(el);
+      close(parseFloat(cs.borderTopWidth),1,"Outer border "+selector);
+      close(parseFloat(cs.borderTopLeftRadius),r,"Outer radius "+selector);
+      close(el.getBoundingClientRect().left,outer.getBoundingClientRect().left,"Outer left "+selector);
+      close(el.getBoundingClientRect().right,outer.getBoundingClientRect().right,"Outer right "+selector);
+    }
+    for(const anchor of ["embedded","disclosure-child"]){
+      const cs=getComputedStyle(f.querySelector(pick(anchor)+" > .df-settings-group-body"));
+      close(parseFloat(cs.borderTopWidth),0,"Nested border "+anchor);
+      close(parseFloat(cs.paddingLeft),0,"Nested inset "+anchor);
+    }
+    const before=disclosure.getBoundingClientRect();
+    disclosure.open=false;
+    close(disclosure.getBoundingClientRect().left,before.left,"Closed left");
+    close(disclosure.getBoundingClientRect().width,before.width,"Closed width");
+    disclosure.open=true;
     cases++;
   }
-  root.unmount();style.remove();document.documentElement.style.removeProperty("--workspace-corner-radius");return {width:innerWidth,cases,sharedRadius:true,fieldAlignment:true,pluginSwitchAlignment:true};
+  root.unmount();style.remove();document.documentElement.style.removeProperty("--workspace-corner-radius");return {width:innerWidth,cases,sharedRadius:true,fieldAlignment:true,pluginSwitchAlignment:true,sectionHierarchy:true};
 }

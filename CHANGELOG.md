@@ -2,11 +2,17 @@
 
 ## 2026-11-28
 
-### 1.7.0 Beta 140
+### 1.7.0 Beta 141
 
 #### 改进
 
 - 竖屏和贴边栏的任务入口改为侧滑工作区，保留可滚动的时间轴和原有任务块；支持视图切换、连续拖拽安排及触屏边缘手势。
+
+### 1.7.0 Beta 140
+
+#### 修复
+
+- 统一设置一级分区与独立折叠区的外围框，内部子组不再重复描边或缩进；连接、搜索、紧凑首页与插件设置沿用同一层级规则。
 
 ### 1.7.0 Beta 139
 
@@ -1373,11 +1379,17 @@
 
 ## 2026-11-28
 
-### 1.7.0 Beta 140
+### 1.7.0 Beta 141
 
 #### Improvements
 
 - Replace the portrait and Dock task entry with a sliding workspace, keeping the timeline scrollable and existing task-block appearance; switch views, drag tasks to schedule, and use touch edge gestures.
+
+### 1.7.0 Beta 140
+
+#### Fixes
+
+- Use one surface for top-level settings sections and standalone disclosures, keeping nested groups flat and consistent across connections, search, compact home and plugin settings.
 
 ### 1.7.0 Beta 139
 
