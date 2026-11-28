@@ -2,6 +2,12 @@
 
 ## 2026-11-28
 
+### 1.7.0 Beta 143
+
+#### 新增
+
+- 阅读插件增加独立设置页，支持通过官方 API Key 连接微信读书、验证书架及断开连接，凭证仅在桌面设备加密保存。所有已启用插件均提供独立设置入口，无配置项时显示插件信息。
+
 ### 1.7.0 Beta 142
 
 #### 新增
@@ -1385,6 +1391,12 @@
 # NavoPath Changelog
 
 ## 2026-11-28
+
+### 1.7.0 Beta 143
+
+#### Added
+
+- Reading has a dedicated settings page with official WeRead API key connection, bookshelf verification and disconnection; credentials are encrypted on the desktop device only. Every enabled plugin has a dedicated settings destination, with plugin information when no options exist.
 
 ### 1.7.0 Beta 142
 
