@@ -61,10 +61,14 @@ export interface V2ActivityFacts {
   readonly planned: readonly V2ActivityFact[];
   readonly actual: readonly V2ActivityFact[];
 }
-export type V2StorageRead =
+export type V2StorageSnapshot =
   | { readonly status: "value"; readonly revision: string; readonly value: V2Json }
-  | { readonly status: "absent"; readonly revision: string | null }
-  | { readonly status: "pending"; readonly revision: string | null; readonly value: V2Json }
+  | { readonly status: "absent"; readonly revision: string | null };
+export type V2StorageRead =
+  | V2StorageSnapshot
+  | { readonly status: "pending"; readonly revision: string | null; readonly value: V2Json; readonly operation: V2StorageWrite }
+  /** A rejected queued edit survives reload; resolve with a new operation and the current revision. */
+  | { readonly status: "conflict"; readonly current: V2StorageSnapshot; readonly rejected: V2StorageWrite }
   | { readonly status: "unavailable" };
 export type V2StorageWrite =
   | { readonly kind: "set"; readonly value: V2Json; readonly expectedRevision: string | null; readonly operationId: string }

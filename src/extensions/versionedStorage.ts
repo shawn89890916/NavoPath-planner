@@ -1,6 +1,6 @@
 import { cacheEntries, cacheGet, cacheUpdate } from "./cache";
 import { V2ContractError, type V2HostAdapter } from "./runtimeV2";
-import type { V2Json, V2StorageRead, V2StorageResult, V2StorageWrite } from "./sdkV2";
+import type { V2Json, V2StorageRead, V2StorageResult, V2StorageWrite, V2StorageSnapshot } from "./sdkV2";
 
 export type VersionedRow = { revision: string; command: V2StorageWrite };
 export type WireRow = { revision: unknown; value: unknown };
@@ -40,10 +40,11 @@ function decode(row: WireRow | null): VersionedRow | null {
   if (!validRevision(revision) || value?.version !== 2 || !value.command) throw new Error("Unknown versioned storage record");
   return { revision, command: normalizeStorageCommand(value.command) };
 }
-const readRow = (row: VersionedRow | null): V2StorageRead =>
+const readRow = (row: VersionedRow | null): V2StorageSnapshot =>
   !row || row.command.kind === "remove" ? { status: "absent", revision: row?.revision ?? null } : { status: "value", revision: row.revision, value: row.command.value };
 const readEntry = (entry: Entry | null): V2StorageRead => !entry ? { status: "unavailable" } :
-  entry.pending ? { status: "pending", revision: entry.pending.expectedRevision, value: entry.pending.kind === "set" ? entry.pending.value : null } : readRow(entry.current);
+  entry.pending ? { status: "pending", revision: entry.pending.expectedRevision, value: entry.pending.kind === "set" ? entry.pending.value : null, operation: entry.pending } :
+  entry.rejected ? { status: "conflict", current: readRow(entry.current), rejected: entry.rejected } : readRow(entry.current);
 export const versionedPrefix = (account: string) => "account:" + account + ":v2-storage:";
 export const versionedOwner = (owner: string) => "v2:" + owner;
 const localKey = (account: string, owner: string, key: string) => versionedPrefix(account) + JSON.stringify([owner, key]);

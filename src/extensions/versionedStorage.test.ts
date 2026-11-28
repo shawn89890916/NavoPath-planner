@@ -44,7 +44,9 @@ describe("versioned plugin storage", () => {
     f.offline(false);
     await f.backend.compareAndSwap("v2:official:reading", "book", "v2-offline", f.set("remote", "1", 4));
     await flushVersionedStorage(f.backend, "v2-offline", () => true, () => {});
-    expect(await s.read("book", f.signal)).toEqual({ status: "value", revision: "2", value: 4 });
+    expect(await s.read("book", f.signal)).toEqual({ status: "conflict", current: { status: "value", revision: "2", value: 4 }, rejected: pending });
+    const reopened = createVersionedStorage({ account: "v2-offline", owner: "official:reading", current: () => true, backend: f.backend, notify: () => {}, subscribe: () => () => {} });
+    expect(await reopened.read("book", f.signal)).toEqual({ status: "conflict", current: { status: "value", revision: "2", value: 4 }, rejected: pending });
     expect(await s.write("book", pending, f.signal)).toMatchObject({ status: "conflict" });
     expect(await s.write("book", f.set("resolved", "2", 5), f.signal)).toEqual({ status: "committed", revision: "3" });
   });
