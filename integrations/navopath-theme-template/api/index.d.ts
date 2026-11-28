@@ -1,16 +1,18 @@
 import type { CalendarEvent, Language, PlannerData, Project, Settings, Task } from "./models";
+import type { V2TaskCommand, V2TaskGroup, V2TaskResult, V2MetricsProvider } from "./v2";
 import type { TimerModeProvider } from "./timer";
 
 import type { ExtensionManifest, ExtensionPlatform, ExtensionPreferences, CatalogEntry, ExtensionKind } from "./extensions";
 export type * from "./extensions";
 
 export type Dispose = () => void | Promise<void>;
-export type Mount = (container: HTMLElement) => void | Dispose;
+export type Mount = (container: HTMLElement) => void | Dispose | Promise<void | Dispose>;
 export type NativePlanningViewMode = "tree" | "list" | "kanban" | "eisenhower" | "metrics";
 export type NativeShelfViewMode = NativePlanningViewMode | "activity-history";
 export type NativeToolPage = "pomodoro" | "schedule-templates";
 export interface PluginLauncherStatus { label: string; weather?: "sun" | "cloud" | "fog" | "rain" | "snow" | "storm" | "unknown"; active?: boolean }
 export interface ExtensionContribution { id: string; owner: string; name: string; mount: Mount; iconUrl?: string; planningView?: boolean; nativeMode?: NativeShelfViewMode; nativeTool?: NativeToolPage }
+export interface ExtensionTaskGroup extends V2TaskGroup { owner: string }
 export interface ExtensionUpdateBatch {
   kind: ExtensionKind; total: number; processed: number; updated: number; skipped: number;
   current?: string; running: boolean; failures: { key: string; name: string; error: string }[];
@@ -19,11 +21,15 @@ export interface ExtensionSnapshot {
   preferences: ExtensionPreferences; catalog: CatalogEntry[]; updates: Record<string, CatalogEntry>;
   status: Record<string, string>; busy: boolean; error: string; safeMode: boolean;
   nativeFeatures?: string[];
+  taskGroups?: ExtensionTaskGroup[];
+  metricsProviders?: (V2MetricsProvider & { owner: string })[];
   catalogLoading?: boolean; checkingUpdates?: boolean; updateBatch?: ExtensionUpdateBatch;
   settingsPages: ExtensionContribution[]; views: ExtensionContribution[]; launcherStatus: Record<string, PluginLauncherStatus>;
 }
 export interface ExtensionHost {
   getData(): PlannerData; saveData(data: PlannerData): void | Promise<void>;
+  /** Host-only protocol 2 command adapter; never copied into the v2 plugin context. */
+  executePluginTask?(owner: string, command: V2TaskCommand, isCurrent: () => boolean): Promise<V2TaskResult>;
   getSettings(): Settings; saveSettings(patch: Partial<Settings>): void | Promise<void>;
   toast(message: string): void; getAccountId(): string | null;
   superProductivity?: { createPairingCode(): Promise<{ code: string; expiresAt: string }>; request(path: string, method?: "GET" | "POST" | "DELETE", body?: unknown): Promise<any>; commitBatch?(pairId: string, before: Pick<PlannerData, "tasks" | "projects">, after: Pick<PlannerData, "tasks" | "projects">): Promise<void> };
@@ -53,3 +59,4 @@ export interface CollectionApi<T extends { id: string }> { list(): T[]; get(id: 
 
 export type * from "./models";
 export type * from "./timer";
+export type * from "./v2";

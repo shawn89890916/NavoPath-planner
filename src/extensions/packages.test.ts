@@ -76,6 +76,23 @@ describe("community extension packages", () => {
       expect(() => parsePackage(strToU8(JSON.stringify(candidate)))).toThrow("Invalid plugin settings options");
     }
   });
+  it("accepts only the wired protocol 2 preview capabilities and rejects native entries", () => {
+    const pkg = JSON.parse(weatherPackageText);
+    delete pkg.manifest.styles;
+    delete pkg.manifest.settingsOptions;
+    delete pkg.manifest.mcp;
+    pkg.manifest.apiVersion = 2;
+    pkg.manifest.permissions = ["tasks.read", "activity.read", "metrics.provider", "storage.read", "storage.write", "ui.workspace", "ui.planning", "ui.settings", "ui.toast"];
+    expect(parsePackage(strToU8(JSON.stringify(pkg))).manifest.apiVersion).toBe(2);
+    for (const patch of [
+      { permissions: ["storage.delete"] }, { permissions: ["unknown"] },
+      { permissions: ["tasks.read", "tasks.read"] }, { permissions: undefined },
+      { desktop: "native.js" }, { styles: "styles.css" }, { apiVersion: 3 },
+      { kind: "theme" }, { settingsOptions: [] },
+    ]) {
+      expect(() => parsePackage(strToU8(JSON.stringify({ ...pkg, manifest: { ...pkg.manifest, ...patch } })))).toThrow();
+    }
+  });
   it("retains incompatible installations without pretending they can run", () => {
     const manifest = JSON.parse(weatherPackageText).manifest;
     expect(compatibility({ ...manifest, platforms: ["desktop"] }, "web")).toContain("Unsupported");

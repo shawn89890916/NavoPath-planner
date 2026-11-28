@@ -2,6 +2,12 @@
 
 ## 2026-11-28
 
+### 1.7.0 Beta 142
+
+#### 新增
+
+- 为明确启用的本地预览工作区提供实验性独立插件运行能力；正式账户、现有阅读插件及原有数据保持不变。
+
 ### 1.7.0 Beta 141
 
 #### 改进
@@ -1379,6 +1385,12 @@
 # NavoPath Changelog
 
 ## 2026-11-28
+
+### 1.7.0 Beta 142
+
+#### Added
+
+- Add experimental independent plugin runtime support for explicitly opted-in local preview workspaces; signed-in accounts, existing Reading installations and data remain unchanged.
 
 ### 1.7.0 Beta 141
 

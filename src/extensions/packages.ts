@@ -2,6 +2,7 @@ import { isPluginMcpDeclaration, isSafePluginConfigKey } from "../../shared/plug
 import type { ExtensionManifest, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSource, InstalledExtension } from "./types";
 import type { Settings } from "../types";
 
+import { validV2PreviewPermissions } from "./v2PreviewPolicy.ts";
 import packageInfo from "../../package.json" with { type: "json" };
 
 export const APP_VERSION = packageInfo.version;
@@ -64,7 +65,8 @@ function validPluginSettingOptions(input: unknown): boolean {
   return true;
 }
 export function validateManifest(input: unknown): ExtensionManifest {
-  if (!isRecord(input) || !safeId(input.id) || !["plugin", "theme"].includes(input.kind) || input.apiVersion !== 1) throw new Error("Invalid extension manifest / 插件声明无效");
+  if (!isRecord(input) || !safeId(input.id) || !["plugin", "theme"].includes(input.kind) || ![1, 2].includes(input.apiVersion)) throw new Error("Invalid extension manifest / 插件声明无效");
+  if (input.apiVersion === 2 && (input.kind !== "plugin" || !validV2PreviewPermissions(input.permissions) || input.desktop !== undefined || input.styles !== undefined || input.mcp !== undefined || input.settingsOptions !== undefined)) throw new Error("Unsupported protocol 2 preview declaration / V2 预览声明不受支持");
   for (const key of ["name", "description", "author", "version", "minAppVersion"]) if (typeof input[key] !== "string" || !input[key].trim() || input[key].length > 2000) throw new Error(`Invalid manifest ${key}`);
   if (![input.version, input.minAppVersion].every(v => /^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(v))) throw new Error("Invalid extension version");
   if (!Array.isArray(input.platforms) || !input.platforms.length || !input.platforms.every((p: unknown) => ["desktop", "web", "mobile"].includes(p as string))) throw new Error("Invalid extension platforms");
@@ -96,7 +98,8 @@ export function compareVersions(a: string, b: string): number {
 }
 export function compatibility(manifest: ExtensionManifest, platform: ExtensionPlatform): string | null {
   if (!manifest.platforms.includes(platform)) return `Unsupported on ${platform} / 当前平台不兼容`;
-  if (manifest.apiVersion !== 1 || compareVersions(APP_VERSION, manifest.minAppVersion) < 0) return `Requires NavoPath ${manifest.minAppVersion}`;
+  if (manifest.apiVersion === 2 && !validV2PreviewPermissions(manifest.permissions)) return "Unsupported protocol 2 capability / V2 能力不受支持";
+  if (![1, 2].includes(manifest.apiVersion) || compareVersions(APP_VERSION, manifest.minAppVersion) < 0) return `Requires NavoPath ${manifest.minAppVersion}`;
   return null;
 }
 export function publicHttps(value: string): string {

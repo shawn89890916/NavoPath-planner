@@ -1,0 +1,35 @@
+name: Plugin preview package
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [desktop-beta]
+    paths:
+      - 'plugin-previews/**'
+      - 'scripts/build-plugin-preview.mjs'
+      - 'scripts/check-plugin-v2-boundary.mjs'
+      - 'scripts/plugin-v2-boundary.test.mjs'
+      - 'src/extensions/**'
+      - 'integrations/navopath-plugin-api/**'
+      - '.github/workflows/plugin-preview-package.yml'
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/build-extensions.mjs --check
+      - run: node --test scripts/plugin-v2-boundary.test.mjs
+      - run: npx vitest run src/extensions/readingV2Preview.test.ts src/extensions/runtimeV2.test.ts src/extensions/runtimeV2Host.test.ts src/extensions/versionedStorage.test.ts src/extensions/previewCatalogV2.test.ts
+      - run: node scripts/build-plugin-preview.mjs --catalog preview-artifacts https://navopath.com/extensions-preview/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-runtime-v2-preview
+          path: preview-artifacts/
+          if-no-files-found: error
+          retention-days: 14

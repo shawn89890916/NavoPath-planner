@@ -240,3 +240,75 @@ ships the same declarations in `api/` plus this guide as `API.md`; editors can
 use `import("./api").PluginContext` in JSDoc without installing the host.
 
 `calendar.registerBackground(predicate)` registers ownership of fixedCourse calendar backgrounds. Disposing hides backgrounds without deleting them. Backgrounds never block task placement or compress task columns.
+
+## Experimental protocol 2 (development preview)
+
+The generated type-only SDK includes `PluginContextV2` in `api/v2.d.ts`.
+The contract, activation layer and tests are in `src/extensions/sdkV2.ts`,
+`runtimeV2.ts`, and `runtimeV2.test.ts`. The production preview adapter in
+`runtimeV2Host.ts` connects `tasks.read`, `tasks.write`, `activity.read`, `storage.read`,
+`storage.write`, `metrics.provider`, `ui.tasksGroup`, `ui.workspace`, `ui.planning`,
+`ui.settings` and `ui.toast` to the existing host. One page per plugin per
+surface is supported. Task reads default to incomplete tasks and expose only
+the public DTO; pass `includeCompleted: true` to include completed tasks.
+
+Preview manifests declare `apiVersion: 2` and a unique array of supported
+`permissions`. Preview packages are restricted to the approved official
+catalog and existing explicit enable lifecycle; local imports and direct
+third-party sources are rejected. No desktop entry, global styles, MCP
+declaration or declarative settings options are accepted at this stage.
+The original example `examples/protocol-v2.ts` exercises the broader mock
+contract; `examples/protocol-v2-preview.ts` demonstrates the wired subset.
+Neither example is published in the catalog. The independent Reading candidate
+in `plugin-previews/reading` is also unpublished. Build it with
+`node scripts/build-plugin-preview.mjs reading <output-file>`; this never modifies
+the live v1 catalog.
+
+The v2 context has no raw app/internal, planner state, arbitrary desktop IPC
+or host module import. The static boundary check is a development guard;
+approved packages remain trusted renderer code, not sandboxed code.
+Tasks groups return candidate IDs (not duplicated TaskCard components). The host
+assigns overlapping membership by stable group ID, keeps native order and renders
+unclaimed candidates normally. Optional subscribe(invalidate) refreshes membership.
+Task commands use the core task-operation/history path and return `accepted`
+for local acceptance, not cloud acknowledgement. Reuse the same operation ID
+for a retry of the same create; the host derives a stable task ID and checks
+existing deletion tombstones. Rename and completion require the latest
+`expectedUpdatedAt` unless already at the desired state. The adapter supports immutable entity links on creation and rejects edits of
+protected habit/course/calendar tasks. This is not a cross-device atomic
+core command guarantee or a durable core command ledger. Activity queries,
+Metrics providers and versioned storage use the scoped APIs documented below.
+Do not store credentials in ordinary plugin data.
+
+Keep existing plugin packages on v1. Older clients reject unknown manifest
+protocols when loading a catalog, so publishing v2 packages requires a
+separate compatible catalog/version delivery design. No v2 SDK or plugin
+release, catalog publication or database migration has occurred.
+
+### Protocol 2 preview: activity and metric providers
+
+Approved protocol-2 packages may request `activity.read` to query concrete scheduled intervals and measured time entries by explicit half-open ISO timestamp interval (up to 366 days) and optional task IDs. Estimated all-day records and projected recurrences are omitted; planned duration is raw, not engagement-weighted. Metric providers require `metrics.provider`; they receive the existing Metrics overview's filtered facts and return at most 50 finite numeric rows. Providers are evaluated only while the overview is open, are isolated from other providers' asynchronous failures, and are removed on deactivation. Provider output refreshes when host facts change, the overview is reopened, or its optional subscribe callback invalidates the result. The host disposes subscriptions on unmount and deactivation. Neither capability starts a collector, grants access to raw history, or enables storage writes.
+
+### Protocol 2 preview: versioned storage
+
+`storage.read` and `storage.write` use a separate per-account, per-plugin namespace, the existing cloud revision trigger, conditional updates, and insert-only creation. A remove writes a tombstone; its non-null revision must be used when recreating a value. JSON null is a legitimate set value. Callers must read before editing, send the observed revision, and use a unique operation ID per logical edit. An unknown offline value is unavailable, not absent. Accepted offline writes are durably queued, one per key; a second write must wait or resolve the conflict. Pending reads include the original operation so a null set can be distinguished from removal. Reconnect replays the original expected revision and reports conflicts without overwriting newer cloud data. Rejected queued edits remain available after restart as a conflict snapshot containing the current value and rejected operation. After reviewing that snapshot, explicitly submit a new operation ID with the current revision. Latest-operation replay is idempotent; a replay after subsequent edits conflicts rather than reapplying. Preview accounts commit locally only. V1 data is not migrated implicitly. Uninstall retains data and accepted pending writes. No schema change or production data migration is required by this implementation; real multi-device integration verification is still required.
+
+### Protocol 2 preview: immutable task association
+
+A task creation command may include an existing plugin entity ID. The host encodes an owner-scoped digest in the stable task identity at creation, so task and association enter the same core save/undo pipeline without a separate mapping write. Plugins recover links using `tasks.list({ entityIds: [...] , includeCompleted: true })`; only matching entities from the caller's namespace are returned and annotated with the supplied entity ID. The host does not access or validate the plugin's domain model. A plugin must persist the entity before creating its linked task, retain legacy mappings when migrating old tasks, and handle entity deletion without deleting user tasks. Task deletion uses the existing core tombstone ledger. No raw domain ID, new task fields, or new cloud schema are needed. Associations are immutable; task IDs remain stable. This does not make separate domain writes and core task sync a cross-device transaction, nor guarantee same-operation misuse with differing entity IDs across concurrent devices.
+
+Use `tasks.resolveEntityLinks(taskIds, entityIds)` to recover owner-scoped associations for IDs supplied by activity facts, including deleted task IDs with retained time entries. It resolves identity only; it does not assert that an input task or entity still exists. This lets metrics providers use the already filtered host facts without asking for a second full activity scan.
+
+Task groups can declare a generic select action with `input: "select"`, provide up to 1000 labeled choices via `choices(actionId)`, and accept the selected value in `invoke(actionId, value)`. The host owns the native select, button, disabled state, and task cards; validate the selected entity again before mutating data. Existing button-only actions remain compatible. Choices are queried only while the group is open and refresh when membership is invalidated.
+
+Activity queries also support `{ range: "all" }` for all recorded intervals. If the Engagement plugin is enabled, facts may include a separate `weightedMinutes` field using the host's existing engagement rule (including its default rating). Never substitute it for raw actual minutes or present it as measured time.
+
+For migration only, `storage.readLegacy(key)` reads the same owner's V1 namespace without offline fallback; the host refuses reads while legacy writes are queued. It never writes V1. Import into an absent V2 key with expectedRevision null and retain the source for rollback. This snapshot is not a lock on old clients; stop legacy editing before cutover. Reading's unpublished preview supports explicit import and conflict comparison. Production migration remains gated on mixed-client compatibility.
+
+### Isolated protocol 2 release artifacts
+
+`node scripts/build-plugin-preview.mjs --catalog <staging-directory> <https-base-directory>` creates a separate `catalog-v2.json` and `packages-v2/<id>-<version>-<sha256>.navopackage.json` artifacts, with deterministic exact-byte hashes. The live V1 catalog remains unchanged and the staging command refuses the official live directory. The host must not automatically replace a V1 installation with V2 solely because a higher version exists: older clients discard unrecognized descriptors when normalizing preferences and can still write V1 data. Separate catalog artifacts solve discovery compatibility only, not mixed-client installation or data-cutover safety. Keep the production loader restricted to approved packages and do not promote Reading until these issues are resolved.
+
+The host currently reads the isolated official protocol-2 catalog only in a local preview workspace (no signed-in account), with the explicit URL flag `?plugin-runtime-v2=1`. It requires exact official content-addressed paths, leaves an existing V1 installation untouched, and refuses protocol-2 activation/installation in synced accounts. Normal catalogs expose V1 only. This is a deliberately limited compatibility rehearsal: no new V2 descriptors are written to shared account settings. It is not a release or a substitute for a mixed-client migration strategy. Reading records a canonical legacy fingerprint to detect subsequent old-client edits and pauses further writes until divergence is handled. A server-side cutover lock is still absent; offline V2 editing is deliberately paused when the live legacy source cannot be checked.
+
+The independent `Plugin preview package` workflow can be run manually to produce a temporary catalog/package artifact after boundary, generated SDK, contract and package-size checks. It does not build or publish a desktop release or deploy the preview catalog. The package budget is 256 KiB. The Electron Chromium test uses the generated Reading bytes on an isolated loopback fixture to verify installation, migration, book edits, task attribution, update, failed-update rollback, disable, uninstall and reinstall; test versions beyond the source package are synthetic and never published.

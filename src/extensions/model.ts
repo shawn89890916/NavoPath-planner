@@ -13,6 +13,8 @@ export type PluginSettingOption = { key: string; label: string; description?: st
 export interface ExtensionManifest {
   id: string; name: string; description: string; author: string; version: string;
   kind: ExtensionKind; apiVersion: number; minAppVersion: string; platforms: ExtensionPlatform[];
+  /** Protocol-specific capabilities; validated by the runtime before execution. */
+  permissions?: string[];
   main?: string; desktop?: string; styles?: string; preview?: string; previews?: { light: string; dark: string }; options?: ThemeOption[];
   /** Simple plugin options use the same native controls as core settings. */
   settingsOptions?: PluginSettingOption[];

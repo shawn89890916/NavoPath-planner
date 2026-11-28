@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ load: vi.fn(), put: vi.fn(), get: vi.fn(), setValue: vi.fn(), getValue: vi.fn(), removeValue: vi.fn(), theme: vi.fn() }));
+const mocks = vi.hoisted(() => ({ load: vi.fn(), loadV2: vi.fn(), put: vi.fn(), get: vi.fn(), setValue: vi.fn(), getValue: vi.fn(), removeValue: vi.fn(), theme: vi.fn() }));
 vi.mock("./runtime", () => ({ emitPluginEvent: vi.fn(), loadPlugin: mocks.load }));
+vi.mock("./runtimeV2Host", () => ({ loadV2Preview: mocks.loadV2 }));
 vi.mock("./theme", () => ({ applyExtensionTheme: mocks.theme }));
 vi.mock("./transport", () => ({ fetchExtensionBytes: vi.fn(() => Promise.reject(new Error("offline"))), getPrivatePackage: mocks.get, putPrivatePackage: mocks.put, getExtensionValue: mocks.getValue, setExtensionValue: mocks.setValue, removeExtensionValue: mocks.removeValue, subscribeExtensionValues: () => () => {} }));
 import { ExtensionService } from "./serviceCore";
@@ -33,6 +34,7 @@ beforeEach(() => {
   vi.stubGlobal("window", new EventTarget()); vi.stubGlobal("location", new URL("https://navopath.test/app")); vi.stubGlobal("navigator", { onLine: false });
   vi.stubGlobal("fetch", vi.fn(fetchBundled));
   mocks.load.mockImplementation(async () => ({ dispose: vi.fn(), configChanged: vi.fn(), context: {} }));
+  mocks.loadV2.mockImplementation(async () => ({ dispose: vi.fn(), configChanged: vi.fn() }));
   mocks.get.mockResolvedValue(null); mocks.put.mockResolvedValue(undefined); mocks.theme.mockReturnValue(vi.fn()); mocks.getValue.mockResolvedValue(null);
   current = new ExtensionService();
 });
@@ -464,5 +466,69 @@ describe("Reading library lifecycle", () => {
     expect(await current.readReadingLibrary(account)).toEqual(library);
     await current.configure(null);
     for (const [key] of await cacheEntries("account:" + account + ":")) await cacheDelete(key);
+  });
+});
+
+describe("protocol 2 preview service routing", () => {
+  async function previewEntry(id="v2-sample"){
+    const pkg=JSON.parse(weatherPackageText);
+    pkg.manifest={...pkg.manifest,id,version:"2.0.0",apiVersion:2,permissions:["tasks.read"]};
+    delete pkg.manifest.styles;delete pkg.manifest.settingsOptions;delete pkg.manifest.mcp;
+    const bytes=new TextEncoder().encode(JSON.stringify(pkg)),hash=await sha256(bytes);
+    const entry={manifest:pkg.manifest,sourceId:"official",sha256:hash,downloadUrl:"https://navopath.com/extensions-preview/packages-v2/"+id+"-2.0.0-"+hash+".navopackage.json"};
+    return {entry,bytes};
+  }
+  function serve(entry:CatalogEntry,bytes:Uint8Array,legacy:CatalogEntry[]=[]){
+    vi.stubGlobal("fetch",vi.fn(async(url:string)=>{
+      if(url.includes("catalog-v2.json"))return new Response(JSON.stringify({version:2,packages:[entry]}));
+      if(url.includes("catalog.json"))return new Response(JSON.stringify({version:1,packages:legacy}));
+      if(url===entry.downloadUrl)return new Response(bytes as Uint8Array<ArrayBuffer>);
+      return fetchBundled(url);
+    }));
+  }
+  afterEach(async()=>{
+    await current.configure(null);
+    for(const [key] of await cacheEntries("account:preview:"))await cacheDelete(key);
+  });
+  it("never replaces an existing V1 plugin in an opted-in preview",async()=>{
+    vi.stubGlobal("location",new URL("https://navopath.test/app?plugin-runtime-v2=1"));
+    const bundled=getBundledExtension("reading")!,key="official:reading";
+    const {entry,bytes}=await previewEntry("reading");
+    const f=fixture("preview",{...defaultExtensionPreferences(),installed:{[key]:{...bundled,key,sourceId:"official",enabled:false,installedAt:"2026-11-24T00:00:00Z"}}});
+    await current.configure(f.host);serve(entry,bytes,[{...bundled,sourceId:"official"}]);
+    await current.checkUpdates();
+    expect(current.getSnapshot().updates[key]).toBeUndefined();
+    expect(current.getSnapshot().catalog.find(item=>item.manifest.id==="reading")?.manifest.apiVersion).toBe(1);
+    await expect(current.install(entry)).rejects.toThrow("verified official catalog");
+    expect(current.getSnapshot().preferences.installed[key].manifest.apiVersion).toBe(1);
+    expect(mocks.loadV2).not.toHaveBeenCalled();
+  });
+  it("does not request the preview catalog or install V2 on signed-in accounts",async()=>{
+    vi.stubGlobal("location",new URL("https://navopath.test/app?plugin-runtime-v2=1"));
+    const {entry,bytes}=await previewEntry();
+    await current.configure(fixture("v2-signed-in").host);serve(entry,bytes,[entry]);
+    await current.refreshCatalog();
+    expect(current.getSnapshot().catalog.some(item=>item.manifest.apiVersion===2)).toBe(false);
+    expect(vi.mocked(fetch).mock.calls.some(args=>String(args[0]).includes("catalog-v2.json"))).toBe(false);
+    await expect(current.install(entry)).rejects.toThrow("verified official catalog");
+  });
+  it("accepts an approved separate catalog only in the opted-in local workspace",async()=>{
+    vi.stubGlobal("location",new URL("https://navopath.test/app?plugin-runtime-v2=1"));
+    const {entry,bytes}=await previewEntry();
+    await current.configure(fixture().host);
+    await expect(current.importFile(new File([bytes as Uint8Array<ArrayBuffer>],"sample.navopackage.json"))).rejects.toThrow("approved catalog");
+    await expect(current.install(entry)).rejects.toThrow("verified official catalog");
+    serve(entry,bytes);
+    await current.refreshCatalog();
+    const found=current.getSnapshot().catalog.find(item=>item.manifest.id==="v2-sample")!;
+    expect(found).toBeDefined();
+    await current.install(found);
+    const key="official:v2-sample";
+    expect(mocks.loadV2).not.toHaveBeenCalled();
+    await current.toggle(key,true);
+    expect(mocks.loadV2).toHaveBeenCalledTimes(1);
+    const bridge=mocks.loadV2.mock.calls[0][1];
+    expect(bridge.key).toBe(key);expect(bridge.isCurrent()).toBe(true);
+    await current.toggle(key,false);expect(bridge.isCurrent()).toBe(false);
   });
 });

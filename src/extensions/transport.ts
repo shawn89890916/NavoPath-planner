@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { VersionedBackend } from "./versionedStorage";
 
 const BUCKET = "extension-packages";
 const TABLE = "navopath_extension_values";
@@ -102,6 +103,30 @@ export async function removeExtensionValue(owner: string, key: string, expectedU
   const { error } = await current.from(TABLE).delete().eq("user_id", userId).eq("extension_key", owner).eq("key", key);
   if (error) throw new Error(`Extension storage delete failed: ${error.message}`);
 }
+/** CAS uses the existing primary key, RLS and revision-increment trigger.
+ * No upsert or physical delete is permitted for protocol 2 records. */
+export const versionedBackend: VersionedBackend = {
+  async read(owner, key, account) {
+    validateStorageKey(owner, key);
+    const { current, userId } = await authenticatedClient(account);
+    const { data, error } = await current.from(TABLE).select("revision,value").eq("user_id", userId).eq("extension_key", owner).eq("key", key).maybeSingle();
+    if (error) throw new Error("Versioned storage read failed: " + error.message);
+    await authenticatedClient(account);
+    return data;
+  },
+  async compareAndSwap(owner, key, account, command) {
+    validateStorageKey(owner, key);
+    const { current, userId } = await authenticatedClient(account);
+    const value = { version: 2, command };
+    const query = command.expectedRevision === null
+      ? current.from(TABLE).insert({ user_id: userId, extension_key: owner, key, value })
+      : current.from(TABLE).update({ value }).eq("user_id", userId).eq("extension_key", owner).eq("key", key).eq("revision", command.expectedRevision);
+    const { data, error } = await query.select("revision,value").maybeSingle();
+    if (error && error.code !== "23505") throw new Error("Versioned storage write failed: " + error.message);
+    await authenticatedClient(account);
+    return data ?? versionedBackend.read(owner, key, account);
+  },
+};
 export async function purgePrivatePackages(): Promise<void> {
   const { current, userId } = await authenticatedClient();
   // Storage API deletion also removes underlying blobs. Delete each first page
