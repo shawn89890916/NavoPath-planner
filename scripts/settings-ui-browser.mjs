@@ -120,7 +120,7 @@ export async function exerciseSettings(){
     return base;
   };
   const mutate=async change=>{library=change(library);mountShelf();return library;};
-  function mountShelf(){flushSync(()=>root.render(h("div",{className:"df-app mode-execute",style:{width:"100%",minWidth:0}},h(ReadingShelf,{account:"preview",library,busy:false,error:"",lang:"en",onCreateTask:async id=>{taskBook=id;},mutate,tasks:[],entries:[],engagementEnabled:false,onSaved:()=>{}}))))}
+  function mountShelf(){flushSync(()=>root.render(h("div",{className:"df-app mode-execute",style:{width:"100%",minWidth:0}},h(ReadingShelf,{account:"preview",library,busy:false,error:"",lang:"en",onCreateTask:async id=>{taskBook=id;},mutate,tasks:[],entries:[],engagementEnabled:false,showUndoToast:()=>{},showToast:()=>{}}))))}
   try{
     mountShelf();await wait(()=>[...document.querySelectorAll("button")].some(b=>b.textContent==="Import books"),"Shelf connection missing");
     async function selectImport(){

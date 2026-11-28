@@ -1,10 +1,11 @@
 import { useState, type ReactNode } from "react";
+import { t } from "../i18n";
 import WeReadShelfSync,{WeReadBookActions} from "./WeReadShelfSync";
 import { UiChevronDownIcon, UiChevronRightIcon } from "../components/UiIcons";
 import type { Language, Task, TimeEntry } from "../types";
 import { Button, Input } from "../components/UiPrimitives";
 import { TaskGroup } from "../components/TaskBlock";
-import { createBook, groupReadingBooks, readingTotals, updateBook, type ReadingBook, type ReadingLibrary, type ReadingProgress, type ReadingStatus } from "./model";
+import { createBook, groupReadingBooks, readingTotals, undoReadingBookChange, updateBook, type ReadingBook, type ReadingLibrary, type ReadingProgress, type ReadingStatus } from "./model";
 import "./ReadingShelf.css";
 
 export type ReadingMutate = (change: (library: ReadingLibrary) => ReadingLibrary) => Promise<ReadingLibrary>;
@@ -75,10 +76,11 @@ function BookEditor({ book, zh, busy, onSave, onCancel }: {
     <div className="reading-actions"><Button variant="ghost" onClick={onCancel} disabled={busy}>{zh ? "取消" : "Cancel"}</Button><Button variant="primary" type="submit" disabled={busy || !title.trim()}>{zh ? "保存" : "Save"}</Button></div>
   </form>;
 }
-export default function ReadingShelf({ account, library, busy, error, lang, onCreateTask, mutate, tasks, entries, engagementEnabled, onSaved }: Props & {
+export default function ReadingShelf({ account, library, busy, error, lang, onCreateTask, mutate, tasks, entries, engagementEnabled, showUndoToast, showToast }: Props & {
   account:string;
   mutate: ReadingMutate; tasks: readonly Task[]; entries: readonly TimeEntry[]; engagementEnabled: boolean;
-  onSaved: (before: ReadingBook | undefined, after: ReadingBook) => void;
+  showUndoToast: (message: string, actionLabel: string, onUndo: () => void) => void;
+  showToast: (message: string) => void;
 }) {
   const zh = lang === "zh";
   const [editor, setEditor] = useState<string | null>(null);
@@ -101,7 +103,12 @@ export default function ReadingShelf({ account, library, busy, error, lang, onCr
         if (book && (!before || JSON.stringify(before) !== JSON.stringify(book))) throw new Error("Book changed on another device");
         return updateBook(book ? current : createBook(current, { id, title: patch.title, author: patch.author, now }), id, patch, now);
       });
-      setEditor(null); onSaved(before, saved.books.find(item => item.id === id)!);
+      setEditor(null);
+      const after = saved.books.find(item => item.id === id)!;
+      showUndoToast(zh ? "已保存书籍" : "Book saved", t(lang, "toast.undo"), () => {
+        void mutate(library => undoReadingBookChange(library, before, after))
+          .then(() => showToast(t(lang, "toast.undone"))).catch(() => showToast(zh ? "书籍已发生变化，无法安全撤销。" : "The book changed and cannot be safely undone."));
+      });
     }} />}
     {failed && <p role="alert" className="reading-muted">{zh ? "操作失败，请重试。" : "Action failed. Try again."}</p>}
     {(["reading","to-read","finished"] as ReadingStatus[]).map(status => <TaskGroup key={status} title={<Button variant="ghost" aria-expanded={!collapsed.includes(status)} onClick={()=>setCollapsed(old=>old.includes(status)?old.filter(v=>v!==status):[...old,status])}>{collapsed.includes(status)?<UiChevronRightIcon size={16}/>:<UiChevronDownIcon size={16}/>} {statusNames[status][zh ? 0 : 1]}</Button>} count={groups[status].length}>
