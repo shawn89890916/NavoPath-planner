@@ -9297,7 +9297,7 @@ if (cached?.data && cached?.settings) {
       title: task.title, toast: lang === "zh" ? "已添加阅读任务" : "Reading task added",
     });
   }
-  const candidatesEmpty = ordinaryCandidates.length === 0 && !hasActiveHabits && !readingEnabled;
+  const candidatesEmpty = ordinaryCandidates.length === 0 && !hasActiveHabits && !readingEnabled && !extensionSnapshot.taskGroups?.length;
   const renderOrdinaryCandidates = (candidates: readonly Task[]) => (candidates.length === 0 && candidatesEmpty ? (
                 productDemo ? (
                   <div className="df-empty"><div className="blob-accent" /><strong>{productAiPresentation && demoHasSchedule ? (lang === "zh" ? "今天，已经安排好了。" : "Your day is arranged.") : t(lang, "candidate.demoEmptyTitle")}</strong></div>

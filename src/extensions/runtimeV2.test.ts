@@ -75,6 +75,21 @@ describe("protocol 2 contract (mock host; not production negotiation)", () => {
     expect(f.registry.size).toBe(0);
     await expect(registered.resolve(["task"])).rejects.toMatchObject({ code: "INACTIVE" });
   });
+  it("releases membership subscriptions when a group is removed", async () => {
+    const f = mockHost("ui.tasksGroup");
+    const session = createV2Session(f.manifest, f.host);
+    let notify!: () => void;
+    const cleanup = vi.fn(), listener = vi.fn();
+    const remove = session.context.ui.registerTaskGroup({ id: "group", name: "Tasks", resolve: () => [],
+      subscribe(fn) { notify = fn; return cleanup; },
+    });
+    const group = f.registry.get("official:sample:ui.tasksGroup:group") as V2TaskGroup;
+    const off = group.subscribe!(listener);
+    notify(); expect(listener).toHaveBeenCalledTimes(1);
+    await remove(); notify(); await off(); await session.close();
+    expect(cleanup).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
   it("revokes an individual contribution without revoking the plugin", async () => {
     const f = mockHost("ui.tasksGroup", "ui.workspace", "tasks.read");
     const session = createV2Session(f.manifest, f.host);

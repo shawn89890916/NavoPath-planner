@@ -246,7 +246,7 @@ use `import("./api").PluginContext` in JSDoc without installing the host.
 The generated type-only SDK includes `PluginContextV2` in `api/v2.d.ts`.
 The contract, activation layer and tests are in `src/extensions/sdkV2.ts`,
 `runtimeV2.ts`, and `runtimeV2.test.ts`. The production preview adapter in
-`runtimeV2Host.ts` connects only `tasks.read`, `ui.workspace`, `ui.planning`,
+`runtimeV2Host.ts` connects `tasks.read`, `ui.tasksGroup`, `ui.workspace`, `ui.planning`,
 `ui.settings` and `ui.toast` to the existing host. One page per plugin per
 surface is supported. Task reads default to incomplete tasks and expose only
 the public DTO; pass `includeCompleted: true` to include completed tasks.
@@ -263,7 +263,10 @@ Neither example is published in the catalog.
 The v2 context has no raw app/internal, planner state, arbitrary desktop IPC
 or host module import. The static boundary check is a development guard;
 approved packages remain trusted renderer code, not sandboxed code.
-Task writes, activity queries, Tasks groups, Metrics providers and versioned
+Tasks groups return candidate IDs (not duplicated TaskCard components). The host
+assigns overlapping membership by stable group ID, keeps native order and renders
+unclaimed candidates normally. Optional subscribe(invalidate) refreshes membership.
+Task writes, activity queries, Metrics providers and versioned
 storage remain unwired and must fail rather than fall back to unsafe v1 writes.
 Do not store credentials in ordinary plugin data.
 
