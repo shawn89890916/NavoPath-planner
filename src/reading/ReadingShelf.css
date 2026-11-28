@@ -15,3 +15,10 @@
 .reading-composer { padding: 4px; }
 .reading-composer .ui-input { flex: 1 1 120px; width: auto; }
 .reading-composer .reading-muted { flex-basis: 100%; }
+
+.reading-sync,.reading-import,.reading-week { display:grid; gap:8px; min-width:0; }
+.reading-import { border-top:1px solid var(--rule,currentColor); padding-top:8px; }
+.reading-import h3 { margin:0; }
+.reading-import-row { display:grid; gap:4px; padding:6px 0; border-bottom:1px solid var(--rule,currentColor); min-width:0; }
+.reading-import-row label { display:flex; align-items:flex-start; gap:8px; overflow-wrap:anywhere; }
+.reading-import-row .ui-input,.reading-import>.ui-input { min-width:0; width:100%; }

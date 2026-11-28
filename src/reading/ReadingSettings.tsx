@@ -49,7 +49,7 @@ export default function ReadingSettings({lang,active,connection=extensionService
       {counts&&<SettingRow title={tr("微信读书书架","WeRead bookshelf")} description={tr("电子书 ","Books ")+counts.books+tr(" · 有声书 "," · Audiobooks ")+counts.audiobooks+tr(" · 文章收藏入口 "," · Article collections ")+counts.articles} control={<span>{counts.books+counts.audiobooks+counts.articles}</span>}/>}
       {error&&<p role="alert" className="df-extension-error">{errors[error]??tr("连接暂不可用，请重试。","Connection unavailable; retry.")}</p>}
       {connected&&<SettingRow title={tr("断开连接","Disconnect")} description={tr("删除本机密钥；保留阅读书库和任务。","Remove the local credential; keep your library and tasks.")} control={<SettingActionButton tone="danger" disabled={!!busy} onClick={()=>void run("disconnect")}>{tr("断开","Disconnect")}</SettingActionButton>}/>}
-      <SettingRow title={tr("数据范围","Data scope")} description={tr("当前只读取书架数量以验证连接；不自动导入书籍、同步进度或生成排程。","Currently reads bookshelf counts to verify the connection. No automatic import, progress sync or timeline entries.")}/>
+      <SettingRow title={tr("数据范围","Data scope")} description={tr("连接后在阅读书架中导入书籍、同步进度及查看独立时长。私密书籍需单独选择，不会自动生成排程。","Import books, sync progress and view separate durations in the Reading shelf. Private books require explicit selection. No timeline entries are generated.")}/>
     </>}
   </SettingSection>;
 }

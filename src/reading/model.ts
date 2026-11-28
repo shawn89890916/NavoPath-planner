@@ -5,14 +5,16 @@ export type ReadingStatus = "to-read" | "reading" | "finished";
 export type ReadingProgress =
   | { unit: "percent"; current: number }
   | { unit: "pages" | "chapters"; current: number; total?: number };
+export interface ReadingWeReadSource { connectionId:string; externalId:string; kind:"book"|"audio"; managed:boolean; cover?:string; readerLink?:string; recent?:number; percent?:number; seconds?:number; finished?:boolean; checkedAt:string; }
 export interface ReadingBook {
   id: string; title: string; author: string; status: ReadingStatus;
-  progress: ReadingProgress; createdAt: string; updatedAt: string;
+  progress: ReadingProgress; createdAt: string; updatedAt: string; weread?:ReadingWeReadSource;
 }
 export interface ReadingLibrary {
   version: 1;
   books: ReadingBook[];
   taskLinks: { taskId: string; bookId: string }[];
+  wereadPreferences?: { autoImport:boolean; connectionId:string };
 }
 export const emptyReadingLibrary = (): ReadingLibrary => ({ version: 1, books: [], taskLinks: [] });
 
@@ -135,6 +137,7 @@ export function decodeReadingLibrary(value: unknown): ReadingLibrary {
       !["to-read", "reading", "finished"].includes(book.status) ||
       !book.progress || typeof book.createdAt !== "string" || typeof book.updatedAt !== "string") throw new Error("Invalid reading book");
     validateProgress(book.progress);
+    if(book.weread&&(!book.weread.connectionId||!book.weread.externalId||!["book","audio"].includes(book.weread.kind)||typeof book.weread.managed!=="boolean"||typeof book.weread.checkedAt!=="string"))throw new Error("Invalid WeRead source");
     ids.add(book.id);
   }
   for (const link of library.taskLinks) {

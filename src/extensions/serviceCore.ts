@@ -536,8 +536,9 @@ export class ExtensionService {
       !this.snapshot.preferences.installed["official:reading"]?.enabled ||
       !this.snapshot.nativeFeatures?.includes("reading")) throw new Error("Reading is inactive or the account changed");
   }
-  async readingWeRead(action: import("../reading/wereadConnection").WeReadAction, candidate?: string) {
+  async readingWeRead(action: import("../reading/wereadConnection").WeReadAction, candidate?: string, expectedAccount?: string) {
     const account=this.account, generation=this.generation;
+    if(expectedAccount!==undefined&&account!==expectedAccount)throw Error("Reading account changed");
     this.requireReadingAccount(account);
     const { requestWeRead }=await import("../reading/wereadConnection");
     this.requireReadingAccount(account);

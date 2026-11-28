@@ -9857,7 +9857,7 @@ if (cached?.data && cached?.settings) {
               <div className="df-shelf-scroll" data-shelf-scroll="views">
                 <Suspense fallback={<div className="df-shelf-loading" role="status">{(lang === "zh" ? "正在打开…" : "Opening…")}</div>}>
                   {shelfView.owner === "official:reading" && readingEnabled
-                      ? <ReadingShelfLazy library={reading.library} busy={reading.busy} error={reading.error} lang={lang} onCreateTask={createReadingTask} mutate={reading.mutate} tasks={tasks} entries={data.timeEntries || []} engagementEnabled={engagementEnabled} onSaved={(before, after) => showUndoToast(lang === "zh" ? "已保存书籍" : "Book saved", t(lang, "toast.undo"), () => {
+                      ? <ReadingShelfLazy account={readingAccount} library={reading.library} busy={reading.busy} error={reading.error} lang={lang} onCreateTask={createReadingTask} mutate={reading.mutate} tasks={tasks} entries={data.timeEntries || []} engagementEnabled={engagementEnabled} onSaved={(before, after) => showUndoToast(lang === "zh" ? "已保存书籍" : "Book saved", t(lang, "toast.undo"), () => {
                         void import("./reading/model").then(({ undoReadingBookChange }) => reading.mutate(library => undoReadingBookChange(library, before, after)))
                           .then(() => showToast(t(lang, "toast.undone"))).catch(() => showToast(lang === "zh" ? "书籍已发生变化，无法安全撤销。" : "The book changed and cannot be safely undone."));
                       })} />
