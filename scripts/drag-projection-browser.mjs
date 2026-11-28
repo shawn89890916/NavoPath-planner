@@ -1,4 +1,8 @@
 import { createDragProjection } from "../src/motion/dragProjection.ts";
+import React from "react";
+import { createRoot } from "react-dom/client";
+import { flushSync } from "react-dom";
+import { useUnifiedDrag } from "../src/useUnifiedDrag.tsx";
 
 export async function exerciseDragProjection() {
   const assert = (v,m) => { if (!v) throw Error(m); };
@@ -56,11 +60,79 @@ export async function exerciseDragProjection() {
     document.documentElement.dataset.motionPreference="off";
     window.dispatchEvent(new Event("resize"));tick();
     assert(rows.every(row=>row.getAnimations().length===0),"motion off did not clear animations");
-    return {confirmedTargets:3,animationCreations:measuredCreations,legacyRestartCreations:8,unchangedRetained:true,styleInvariant:true,systemReducedMotion:true,cleanup:true,frameQueue:"controlled",animations:"native WAAPI"};
+    const dragFrameCoalescing = exerciseUnifiedDragFrames(tick);
+    return {confirmedTargets:3,animationCreations:measuredCreations,legacyRestartCreations:8,unchangedRetained:true,styleInvariant:true,systemReducedMotion:true,cleanup:true,frameQueue:"controlled",animations:"native WAAPI",dragFrameCoalescing};
   } finally {
     projection.close();root.remove();
     window.requestAnimationFrame=raf;window.cancelAnimationFrame=caf;window.matchMedia=match;
     if(before===undefined)delete document.documentElement.dataset.motionPreference;
     else document.documentElement.dataset.motionPreference=before;
+  }
+}
+
+/** Real React hook, distinct synchronous event batches and controlled frames.
+ * Count committed renders, not OS input rate, FPS or total CPU work. */
+function exerciseUnifiedDragFrames(tick) {
+  const assert = (v,m) => { if (!v) throw Error(m); };
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  let snapshot, renders = 0, moves = [], drops = [], cancelled = 0;
+  const config = {
+    taskId:"frame-fixture",
+    onMove:(point) => moves.push(point.x),
+    onDrop:(point) => drops.push(point.x),
+    onCancel:() => cancelled++,
+  };
+  function Fixture() {
+    const drag = useUnifiedDrag();
+    snapshot = drag.snapshot;
+    React.useLayoutEffect(() => { renders++; });
+    return React.createElement("button",{onPointerDown:event=>drag.beginDrag(event,config)},"Drag");
+  }
+  const dispatch = (target,type,x,pointerId=41) => flushSync(() => {
+    target.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId,pointerType:"mouse",isPrimary:true,button:0,buttons:type==="pointerup"?0:1,clientX:x,clientY:10}));
+  });
+  const start = () => {
+    dispatch(host.querySelector("button"),"pointerdown",10);
+    dispatch(window,"pointermove",20);
+    assert(snapshot?.pointer.x===20,"activation did not publish its first snapshot");
+  };
+  try {
+    flushSync(()=>root.render(React.createElement(Fixture)));
+    start();
+    const initial = renders;
+    for(let x=21;x<=60;x++) dispatch(window,"pointermove",x);
+    assert(renders===initial,"pointer burst triggered visual renders before frame");
+    assert(moves.length===41 && moves.at(-1)===60,"actual movement callbacks were coalesced");
+    flushSync(tick);
+    assert(renders===initial+1 && snapshot?.pointer.x===60,"frame did not publish latest position exactly once");
+    dispatch(window,"pointermove",70);
+    dispatch(window,"pointerup",85,42);
+    assert(snapshot!==null && !drops.length,"different pointer completed the drag");
+    dispatch(window,"pointerup",80);
+    assert(snapshot===null && drops.length===1 && drops[0]===80,"drop did not use actual release coordinates");
+    const afterDrop = renders;
+    flushSync(tick);
+    assert(snapshot===null && renders===afterDrop,"queued visual update survived drop");
+    start();
+    dispatch(window,"pointermove",30);
+    dispatch(window,"pointercancel",32);
+    flushSync(tick);
+    assert(snapshot===null && cancelled===1 && drops.length===1,"cancel did not clear pending frame");
+    start();
+    dispatch(window,"pointermove",30);
+    flushSync(()=>window.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape"})));
+    flushSync(tick);
+    assert(snapshot===null && cancelled===2,"Escape did not clear pending frame");
+    start();
+    dispatch(window,"pointermove",30);
+    flushSync(()=>window.dispatchEvent(new Event("blur")));
+    flushSync(tick);
+    assert(snapshot===null && cancelled===3,"blur did not clear pending frame");
+    return {pointerBurst:40,visualCommits:1,moveCallbacks:41,latestPoint:true,exactRelease:true,foreignPointerIgnored:true,cancellation:true};
+  } finally {
+    flushSync(()=>root.unmount());
+    host.remove();
   }
 }

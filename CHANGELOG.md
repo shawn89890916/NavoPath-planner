@@ -2,11 +2,17 @@
 
 ## 2026-11-28
 
-### 1.7.0 Beta 139
+### 1.7.0 Beta 140
 
 #### 修复
 
-- 统一设置一级分区与独立折叠区的外围框，内部子组不再重复描边或缩进；连接、搜索与插件设置沿用同一层级规则。
+- 统一设置一级分区与独立折叠区的外围框，内部子组不再重复描边或缩进；连接、搜索、紧凑首页与插件设置沿用同一层级规则。
+
+### 1.7.0 Beta 139
+
+#### 改进
+
+- 月视图和紧凑插件栏的共用拖拽浮层按渲染帧合并位置更新，保留真实指针命中、边缘滚动及释放坐标，减少重复渲染。
 
 ## 2026-11-27
 
@@ -1367,11 +1373,17 @@
 
 ## 2026-11-28
 
-### 1.7.0 Beta 139
+### 1.7.0 Beta 140
 
 #### Fixes
 
-- Use one surface for top-level settings sections and standalone disclosures, keeping nested groups flat and consistent across connections, search and plugin settings.
+- Use one surface for top-level settings sections and standalone disclosures, keeping nested groups flat and consistent across connections, search, compact home and plugin settings.
+
+### 1.7.0 Beta 139
+
+#### Improvements
+
+- Coalesce shared drag overlay position updates per animation frame in Month view and the compact plugin dock, preserving actual hit testing, edge scrolling and release coordinates.
 
 ## 2026-11-27
 
