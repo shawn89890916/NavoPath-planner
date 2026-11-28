@@ -1076,6 +1076,7 @@ function App() {
   const quickAddButtonRef = useRef<HTMLButtonElement>(null);
   const compactQuickInputRef = useRef<HTMLInputElement>(null);
   const [candidatePanelCollapsed, setCandidatePanelCollapsed] = useState(false);
+  const [collapsedCandidateProjects, setCollapsedCandidateProjects] = useState<Set<string>>(() => new Set());
   const [candidatePanelWidth, setCandidatePanelWidth] = useState<number | null>(null);
   const [simpleView, setSimpleView] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -9324,15 +9325,15 @@ if (cached?.data && cached?.settings) {
                       >
                         <div className="df-project-group-header">
                           <span className="df-project-group-dot" style={{ background: projectColorInk(projectColor) }} />
-                          <span className="df-project-group-name">{projectTitle}</span>
+                          {compactLayout ? <button type="button" className="df-project-group-name df-project-group-toggle" aria-expanded={!collapsedCandidateProjects.has(gid)} onClick={() => setCollapsedCandidateProjects(previous => { const next = new Set(previous); if (next.has(gid)) next.delete(gid); else next.add(gid); return next; })}><span>{projectTitle}</span><UiChevronDownIcon size={14} style={{ transform: collapsedCandidateProjects.has(gid) ? "rotate(-90deg)" : undefined }} /></button> : <span className="df-project-group-name">{projectTitle}</span>}
                           {!productAiPresentation && <span className="df-project-group-actions">
-                            <IconButton
+                            {!compactLayout && <IconButton
                               className="df-project-group-action"
                               icon={<UiCalendarCheckIcon size={16} />}
                               label={lang === "zh" ? `智能安排「${projectTitle}」的全部任务` : `Schedule all tasks in “${projectTitle}”`}
                               disabled={autoScheduleState === "generating" || autoScheduleState === "committing"}
                               onClick={() => void planMyDay(undefined, tasks)}
-                            />
+                            />}
                             <IconButton
                               className="df-project-group-action"
                               icon={<UiPlusIcon size={17} />}
@@ -9341,7 +9342,7 @@ if (cached?.data && cached?.settings) {
                             />
                           </span>}
                         </div>
-                        {tasks.map(renderCandidateTask)}
+                        {(!compactLayout || !collapsedCandidateProjects.has(gid)) && tasks.map(renderCandidateTask)}
                       </div>
                     );
                   });
@@ -9736,13 +9737,7 @@ if (cached?.data && cached?.settings) {
                 </button>
               }
               actions={<>
-                {mobileExecution && <><IconButton icon={<UiSearchIcon size={17} />} label={lang === "zh" ? "搜索任务" : "Search tasks"} onClick={() => { setCommandQuery(""); setCommandOpen(true); }} /><IconButton icon={<UiPlusIcon size={17} />} label={t(lang, "fab.add")} onClick={() => openQuickTaskAdd()} /></>}
-                {shelfTreeOpen ? <>
-                  <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />
-                  {!productDemo && <IconButton icon={<UiPlusIcon size={17} />} label={lang === "zh" ? "新建项目" : "New project"} onClick={() => openAdd("project")} />}
-                </> : <>
-                {!shelfView && <IconButton className={`df-icon-action df-candidate-header-icon${groupByProject ? " active" : ""}`} icon={<UiFolderInputIcon size={17} />} label={lang === "zh" ? "按项目分类" : "Group by project"} aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)} />}
-                <IconButton className={`df-icon-action df-candidate-header-icon${showCompletedCandidates ? " active" : ""}`} icon={<UiListChecksIcon size={17} />} label={t(lang, "candidate.showCompleted")} aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)} />
+                {shelfTreeOpen && <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />}
                 {aiEnabled && (
                   <span className="df-ai-plan-title-tools">
                     <IconButton
@@ -9753,10 +9748,6 @@ if (cached?.data && cached?.settings) {
                       disabled={autoScheduleState === "generating" || autoScheduleState === "committing" || drawerOpen || (productAiPresentation && (demoPresetBusy || !demoTodayTasks.some(task => !task.scheduledStart && !task.timelineRecords?.some(record => record.executionStatus === "scheduled"))))}
                       onClick={() => { setAiPlanMenuOpen(false); if (productAiPresentation) void runProductDemoPreset(); else void planMyDay(); }}
                     />
-                    {schedulePreviews.length > 0 && autoScheduleState === "preview" && <>
-                      <IconButton className="df-icon-action df-ai-plan-confirm ui-icon-button--borderless" icon={<UiCheckIcon />} label={t(lang, "timeline.adoptAll")} onClick={acceptAllPreviews} />
-            <CloseButton className="df-ai-plan-cancel" onClick={() => cancelAutoSchedule()} label={t(lang, "timeline.cancelPreview")} />
-                    </>}
                     {aiPlanMenuOpen && <span className="df-ai-plan-menu df-ai-plan-menu-visible open" onClick={(event) => event.stopPropagation()}>
                       <CloseButton label={t(lang, "form.close")} onClick={() => setAiPlanMenuOpen(false)} />
                       <span className={`df-ai-capacity-risk ${dailyCapacityRisk.level}`}>
@@ -9769,13 +9760,22 @@ if (cached?.data && cached?.settings) {
                     </span>}
                   </span>
                 )}
+
+                {!productDemo && <IconButton className="df-candidate-header-icon" icon={<UiSearchIcon size={17} />} label={lang === "zh" ? "搜索任务" : "Search tasks"} onClick={() => { setCommandQuery(""); setCommandOpen(true); }} />}
                 {(!productDemo || canCollapseCandidatePanel) && <ActionDisclosure label={lang === "zh" ? "更多候选操作" : "More task options"}>
-                  {!productDemo && <Button variant="ghost" aria-pressed={showScheduledCandidates} onClick={() => setShowScheduledCandidates((show) => !show)}>
-                    {lang === "zh" ? "显示已安排" : "Show scheduled"}
-                  </Button>}
+                  {!productDemo && <Button variant="ghost" onClick={() => openQuickTaskAdd()}>{t(lang, "fab.add")}</Button>}
+                  {shelfTreeOpen && !productDemo && <Button variant="ghost" onClick={() => openAdd("project")}>{lang === "zh" ? "新建项目" : "New project"}</Button>}
+                  {!shelfView && <Button variant="ghost" aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)}>{lang === "zh" ? "按项目分类" : "Group by project"}</Button>}
+                  {!shelfTreeOpen && <Button variant="ghost" aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)}>{t(lang, "candidate.showCompleted")}</Button>}
+                  {!productDemo && !shelfTreeOpen && <Button variant="ghost" aria-pressed={showScheduledCandidates} onClick={() => setShowScheduledCandidates((show) => !show)}>{lang === "zh" ? "显示已安排" : "Show scheduled"}</Button>}
+                  {schedulePreviews.length > 0 && autoScheduleState === "preview" && <>
+                    <Button variant="ghost" onClick={acceptAllPreviews}>{t(lang, "timeline.adoptAll")}</Button>
+                    <Button variant="ghost" onClick={() => cancelAutoSchedule()}>{t(lang, "timeline.cancelPreview")}</Button>
+                  </>}
+                  {compactLayout && groupByProject && !shelfView && aiEnabled && projects.filter(project => ordinaryCandidates.some(task => task.projectId === project.id)).map(project => <Button key={project.id} variant="ghost" disabled={autoScheduleState === "generating" || autoScheduleState === "committing"} onClick={() => void planMyDay(undefined, ordinaryCandidates.filter(task => task.projectId === project.id))}>{lang === "zh" ? `规划 · ${project.title}` : `Plan · ${project.title}`}</Button>)}
+                  {compactLayout && groupByProject && !shelfView && aiEnabled && ordinaryCandidates.some(task => !task.projectId) && <Button variant="ghost" disabled={autoScheduleState === "generating" || autoScheduleState === "committing"} onClick={() => void planMyDay(undefined, ordinaryCandidates.filter(task => !task.projectId))}>{lang === "zh" ? "规划 · 未归属" : "Plan · Unassigned"}</Button>}
                   {canCollapseCandidatePanel && <Button variant="ghost" onClick={() => { setCandidatePanelCollapsed(true); setFullscreen(false); }}>{t(lang, "candidate.collapse")}</Button>}
                 </ActionDisclosure>}
-                </>}
               </>
             }
             />

@@ -18023,38 +18023,11 @@ body.df-unified-dragging .df-unified-drag-overlay {
     display: block;
     font-size: 14px;
     line-height: 1.45;
-    overflow: visible;
-    -webkit-line-clamp: unset;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-wrap: normal;
     word-break: normal;
-  }
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-candidate-row {
-    grid-template-columns: 44px minmax(0, 1fr) auto;
-    grid-template-rows: 44px minmax(88px, auto);
-  }
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-task-checkbox-wrap,
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-candidate-main {
-    grid-row: 1 / 3;
-  }
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-task-block-duration {
-    grid-column: 3;
-    grid-row: 1;
-    justify-self: center;
-  }
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-task-actions {
-    grid-column: 3;
-    grid-row: 2;
-    align-self: start;
-    justify-self: center;
-    flex-direction: column;
-    align-items: center;
-  }
-  #root .df-app.mode-execute .df-task-card[data-candidate-layout="stacked"] .df-ai-project-suggestion {
-    grid-column: 3;
-    grid-row: 1 / 3;
-    flex-direction: column;
-    justify-content: center;
   }
   #root .df-app.mode-execute .df-time-block .df-block-check {
     width: 20px;
