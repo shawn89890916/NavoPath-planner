@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { activateV2, createV2Session, type V2HostAdapter } from "./runtimeV2";
 import type { V2Capability, V2ContributionKind, V2ContributionMap, V2TaskGroup, V2MetricsProvider, V2StorageRead, V2StorageWrite, V2Json } from "./sdkV2";
 import plugin, { createReadingController } from "../../plugin-previews/reading/main";
-import { createBook, emptyReadingLibrary, totals } from "../../plugin-previews/reading/model";
+import { createBook, emptyReadingLibrary, totals, legacyFingerprint } from "../../plugin-previews/reading/model";
 const caps: V2Capability[]=["tasks.read","tasks.write","activity.read","storage.read","storage.write","ui.tasksGroup","ui.workspace","ui.toast","metrics.provider"];
 const library=createBook(emptyReadingLibrary(),{id:"book",title:"Book",now:"2026-11-28T00:00:00Z"});
 describe("independent Reading v2 candidate",()=>{
@@ -13,7 +13,7 @@ describe("independent Reading v2 candidate",()=>{
     const host:V2HostAdapter={
       owner:"official:reading",language:"en",platform:"desktop",supported:new Set(caps),granted:new Set(caps),isCurrent:()=>true,
       tasks:{list:async()=>[],execute,resolveEntityLinks:async ids=>ids.includes("task")?[{taskId:"task",entityId:"book"}]:[]},
-      storage:{read:async()=>({status:"value",revision:"1",value:JSON.parse(JSON.stringify(library))}),write:async()=>({status:"unavailable"}),subscribe:()=>off},
+      storage:{read:async()=>({status:"value",revision:"1",value:JSON.parse(JSON.stringify({...library,legacyFingerprint:await legacyFingerprint(null)}))}),readLegacy:async()=>null,write:async()=>({status:"unavailable"}),subscribe:()=>off},
       activity:{query:async()=>({planned:[],actual:[]})},toast:vi.fn(),
       contribute:(_kind,id,value)=>{contributions.set(id,value);return()=>{contributions.delete(id);};}
     };
@@ -53,7 +53,7 @@ function migrationFixture(source: V2Json | undefined, initial: V2StorageRead = {
   };
   const session=createV2Session({apiVersion:2,permissions:caps},host);
   const controller=createReadingController(session.context);
-  return {controller,session,write,readLegacy,setLegacy:(value:V2Json)=>{legacy=value;}};
+  return {controller,session,write,readLegacy,setLegacy:(value:V2Json|undefined)=>{legacy=value;}};
 }
 describe("Reading migration and conflict recovery",()=>{
   const original=JSON.parse(JSON.stringify({...library,taskLinks:[{taskId:"legacy-task",bookId:"book"}]})) as V2Json;
@@ -65,7 +65,7 @@ describe("Reading migration and conflict recovery",()=>{
       expect(f.controller.legacy?.taskLinks).toEqual([{taskId:"legacy-task",bookId:"book"}]);
       expect(f.write).not.toHaveBeenCalled();
       await f.controller.migrateLegacy();
-      expect(f.write).toHaveBeenCalledWith("library-v2",expect.objectContaining({kind:"set",expectedRevision:null,value:original}),expect.anything());
+      expect(f.write).toHaveBeenCalledWith("library-v2",expect.objectContaining({kind:"set",expectedRevision:null,value:expect.objectContaining({legacyFingerprint:await legacyFingerprint(original),books:library.books,taskLinks:[{taskId:"legacy-task",bookId:"book"}]})}),expect.anything());
       expect(f.controller.ready()).toBe(true);
       await expect(f.controller.migrateLegacy()).rejects.toThrow("Migration unavailable");
       expect(f.write).toHaveBeenCalledTimes(1);
@@ -82,7 +82,7 @@ describe("Reading migration and conflict recovery",()=>{
     }finally{await f.session.close();}
   });
   it("undoes only the matching book edit and tolerates JSON key reordering",async()=>{
-    const f=migrationFixture(null,{status:"value",revision:"1",value:original});
+    const f=migrationFixture(null,{status:"value",revision:"1",value:{...library,taskLinks:[{taskId:"legacy-task",bookId:"book"}],legacyFingerprint:await legacyFingerprint(null)} as unknown as V2Json});
     try{
       await f.controller.refresh();
       const before=f.controller.library!.books[0];
@@ -93,14 +93,31 @@ describe("Reading migration and conflict recovery",()=>{
       await expect(f.controller.undoBook(before,after)).rejects.toThrow("Book has changed");
     }finally{await f.session.close();}
   });
+  it("detects V1 divergence before a V2 edit and preserves both libraries",async()=>{
+    const f=migrationFixture(original);
+    try{
+      await f.controller.refresh();await f.controller.migrateLegacy();
+      f.setLegacy({...library,books:[{...library.books[0],title:"Old client edit"}]} as unknown as V2Json);
+      await expect(f.controller.mutate(v=>v)).rejects.toThrow("Legacy library changed");
+      expect(f.controller.legacyChanged).toBe(true);expect(f.controller.ready()).toBe(false);
+      expect(f.controller.library!.books[0].title).toBe("Book");expect(f.controller.legacy!.books[0].title).toBe("Old client edit");
+      expect(f.write).toHaveBeenCalledTimes(1);
+    }finally{await f.session.close();}
+  });
+  it("retains read-only V2 data when the legacy check is offline",async()=>{
+    const f=migrationFixture(original);
+    try{await f.controller.refresh();await f.controller.migrateLegacy();f.setLegacy(undefined);await f.controller.refresh();expect(f.controller.ready()).toBe(false);expect(f.controller.library!.books[0].title).toBe("Book");expect(f.write).toHaveBeenCalledTimes(1);}finally{await f.session.close();}
+  });
   it("requires an explicit choice and the current revision for durable conflicts",async()=>{
-    const f=migrationFixture(null,{status:"conflict",current:{status:"value",revision:"4",value:original},rejected:{kind:"set",value:{version:1,books:[],taskLinks:[]},operationId:"failed",expectedRevision:"3"}});
+    const hash=await legacyFingerprint(null);
+    const marked={...library,taskLinks:[{taskId:"legacy-task",bookId:"book"}],legacyFingerprint:hash} as unknown as V2Json;
+    const f=migrationFixture(null,{status:"conflict",current:{status:"value",revision:"4",value:marked},rejected:{kind:"set",value:{version:1,books:[],taskLinks:[],legacyFingerprint:hash},operationId:"failed",expectedRevision:"3"}});
     try{
       await f.controller.refresh();
       expect(f.controller.ready()).toBe(false);
       expect(f.write).not.toHaveBeenCalled();
       await f.controller.resolveConflict("remote");
-      expect(f.write).toHaveBeenCalledWith("library-v2",expect.objectContaining({kind:"set",expectedRevision:"4",value:original}),expect.anything());
+      expect(f.write).toHaveBeenCalledWith("library-v2",expect.objectContaining({kind:"set",expectedRevision:"4",value:marked}),expect.anything());
       expect(f.controller.ready()).toBe(true);
     }finally{await f.session.close();}
   });

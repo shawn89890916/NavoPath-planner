@@ -1,31 +1,42 @@
 import type { PluginModuleV2, PluginContextV2, V2ActivityFacts, V2StorageRead, V2Json } from "../../integrations/navopath-plugin-api/v2";
-import { createBook, updateBook, decodeReadingLibrary, groupReadingBooks, totals, sameReadingValue, undoReadingBookChange, type ReadingLibrary, type ReadingBook, type ReadingStatus, type ReadingProgress } from "./model";
+import { createBook, updateBook, decodeReadingLibrary, groupReadingBooks, totals, sameReadingValue, legacyFingerprint, undoReadingBookChange, type ReadingLibrary, type ReadingBook, type ReadingStatus, type ReadingProgress } from "./model";
 const KEY = "library-v2";
 export function createReadingController(ctx: PluginContextV2) {
   const tr = (zh:string,en:string) => ctx.language === "zh" ? zh : en;
-  let snapshot: V2StorageRead = {status:"unavailable"}, library: ReadingLibrary | undefined, legacy: ReadingLibrary | null | undefined, busy=false, error="", generation=0;
+  let snapshot: V2StorageRead = {status:"unavailable"}, library: ReadingLibrary | undefined, legacy: ReadingLibrary | null | undefined, fingerprint:string|undefined, legacyChanged=false, busy=false, error="", generation=0;
   const listeners = new Set<()=>void>();
   const notify = () => { if (!ctx.signal.aborted) for(const fn of listeners) fn(); };
   const subscribe = (fn:()=>void) => { listeners.add(fn); return () => {listeners.delete(fn);}; };
-  const ready = () => !busy && !error && !ctx.signal.aborted && !!library && (snapshot.status==="value" || (snapshot.status==="absent" && snapshot.revision===null && legacy===null));
+  const ready = () => !busy && !error && !legacyChanged && !ctx.signal.aborted && !!library && (snapshot.status==="value" || (snapshot.status==="absent" && snapshot.revision===null && legacy===null));
   async function refresh() {
     const run=++generation;
     try {
       const next=await ctx.storage.read(KEY);
-      const source=next.status==="absent" && next.revision===null ? await ctx.storage.readLegacy("library-v1") : null;
-      if(ctx.signal.aborted || run!==generation) return;
-      legacy=source===null?null:decodeReadingLibrary(source);
       const value=next.status==="conflict" ? next.current : next;
-      library=value.status==="value" || value.status==="pending" ? decodeReadingLibrary(value.value) : value.status==="absent" ? decodeReadingLibrary(null) : undefined;
-      snapshot=next; error="";
-    } catch(e) { if(run===generation && !ctx.signal.aborted) {error=String(e);library=undefined;legacy=undefined;snapshot={status:"unavailable"};} }
+      const decoded=value.status==="value" || value.status==="pending" ? decodeReadingLibrary(value.value) : value.status==="absent" ? decodeReadingLibrary(null) : undefined;
+      if(ctx.signal.aborted || run!==generation) return;
+      snapshot=next;library=decoded;error="";legacy=undefined;fingerprint=undefined;legacyChanged=false;
+      // Keep the current V2 library visible even when the legacy check is offline.
+      const source=await ctx.storage.readLegacy("library-v1");
+      const hash=await legacyFingerprint(source);
+      if(ctx.signal.aborted || run!==generation) return;
+      legacy=source===null?null:decodeReadingLibrary(source);fingerprint=hash;
+      legacyChanged=!!decoded && (value.status==="value" || value.status==="pending") && decoded.legacyFingerprint!==hash;
+    } catch(e) { if(run===generation && !ctx.signal.aborted) {error=String(e);legacy=undefined;fingerprint=undefined;} }
     finally {if(run===generation) notify();}
+  }
+  async function checkLegacy(expected:string|undefined) {
+    if(!expected)throw Error(tr("无法验证旧书库","Cannot verify legacy library"));
+    const hash=await legacyFingerprint(await ctx.storage.readLegacy("library-v1"));
+    if(ctx.signal.aborted)throw Error("Reading inactive");
+    if(hash!==expected){await refresh();throw Error(tr("旧客户端已修改书库，已暂停编辑","Legacy library changed; editing paused"));}
   }
   async function mutate(fn:(value:ReadingLibrary)=>ReadingLibrary, expected?:ReadingLibrary) {
     if(!ready() || !library || (snapshot.status!=="value" && snapshot.status!=="absent")) throw Error(tr("书库暂不可编辑","Library is not writable"));
     if(expected && !sameReadingValue(expected,library)) throw Error(tr("书库已更新，请重新编辑","Library changed; reopen the editor"));
-    const next=fn(library), expectedRevision=snapshot.revision; busy=true; notify();
+    const expectedHash=fingerprint, next={...fn(library),legacyFingerprint:expectedHash}, expectedRevision=snapshot.revision; busy=true; notify();
     try {
+      await checkLegacy(expectedHash);
       const result=await ctx.storage.write(KEY,{kind:"set",expectedRevision,operationId:crypto.randomUUID(),value:next as unknown as V2Json});
       await refresh();
       if(result.status==="conflict" || result.status==="unavailable") throw Error(tr("写入冲突或不可用","Write conflict or unavailable"));
@@ -34,11 +45,10 @@ export function createReadingController(ctx: PluginContextV2) {
   }
   async function migrateLegacy() {
     if(busy || ctx.signal.aborted || snapshot.status!=="absent" || snapshot.revision!==null || !legacy) throw Error("Migration unavailable");
-    const source=legacy;busy=true;notify();
+    const source=legacy,expectedHash=fingerprint;busy=true;notify();
     try {
-      const latest=decodeReadingLibrary(await ctx.storage.readLegacy("library-v1"));
-      if(!sameReadingValue(source,latest)) throw Error(tr("旧书库已变化，请刷新后重新导入","Legacy library changed; refresh before importing"));
-      const result=await ctx.storage.write(KEY,{kind:"set",expectedRevision:null,operationId:crypto.randomUUID(),value:source as unknown as V2Json});
+      await checkLegacy(expectedHash);
+      const result=await ctx.storage.write(KEY,{kind:"set",expectedRevision:null,operationId:crypto.randomUUID(),value:{...source,legacyFingerprint:expectedHash} as unknown as V2Json});
       await refresh();
       if(result.status!=="committed" && result.status!=="pending") throw Error("Migration conflict");
     } finally {busy=false;notify();}
@@ -48,13 +58,16 @@ export function createReadingController(ctx: PluginContextV2) {
     const original=snapshot;
     const selected=choice==="remote"?original.current:original.rejected;
     const isValue="value" in selected;
-    if(isValue) decodeReadingLibrary(selected.value);
+    const selectedLibrary=isValue?decodeReadingLibrary(selected.value):decodeReadingLibrary(null);
+    const expectedHash=fingerprint;
+    if(legacyChanged || error || !expectedHash || (isValue && selectedLibrary.legacyFingerprint!==expectedHash))throw Error(tr("请先处理旧书库分叉","Resolve legacy divergence first"));
     busy=true;notify();
     try {
+      await checkLegacy(expectedHash);
       const latest=await ctx.storage.read(KEY);
       if(!sameReadingValue(latest,original)) throw Error(tr("冲突已变化，请刷新","Conflict changed; refresh"));
       const command={expectedRevision:original.current.revision,operationId:crypto.randomUUID()};
-      const result=await ctx.storage.write(KEY,isValue?{kind:"set",value:selected.value,...command}:{kind:"set",value:decodeReadingLibrary(null) as unknown as V2Json,...command});
+      const result=await ctx.storage.write(KEY,isValue?{kind:"set",value:selected.value,...command}:{kind:"set",value:{...decodeReadingLibrary(null),legacyFingerprint:expectedHash} as unknown as V2Json,...command});
       await refresh();
       if(result.status!=="committed" && result.status!=="pending") throw Error("Conflict resolution failed");
     }finally{busy=false;notify();}
@@ -90,6 +103,7 @@ export function createReadingController(ctx: PluginContextV2) {
     runningTasks.add(bookId);
     const operationId=pendingTaskOps.get(bookId) ?? crypto.randomUUID();pendingTaskOps.set(bookId,operationId);
     try {
+      await checkLegacy(fingerprint);
       const result=await ctx.tasks.execute({kind:"create",operationId,entityId:bookId,title:tr("阅读 ","Read ")+book.title,estimateMinutes:30});
       if("message" in result) throw Error(result.message);
       pendingTaskOps.delete(bookId); notify();
@@ -101,7 +115,7 @@ export function createReadingController(ctx: PluginContextV2) {
   }
   ctx.register(ctx.storage.subscribe(KEY,()=>{void refresh();}));
   ctx.register(()=>{generation++;listeners.clear();pendingTaskOps.clear();runningTasks.clear();});
-  return {tr,refresh,subscribe,mutate,migrateLegacy,resolveConflict,undoBook,createTask,membership,summarize,ready,get library(){return library},get legacy(){return legacy},get conflict(){return snapshot.status==="conflict"?snapshot:undefined},get busy(){return busy},get state(){return snapshot.status},get error(){return error}};
+  return {tr,refresh,subscribe,mutate,migrateLegacy,resolveConflict,undoBook,createTask,membership,summarize,ready,get library(){return library},get legacy(){return legacy},get legacyChanged(){return legacyChanged},get conflict(){return snapshot.status==="conflict"?snapshot:undefined},get busy(){return busy},get state(){return snapshot.status},get error(){return error}};
 }
 type Controller=ReturnType<typeof createReadingController>;
 function mountShelf(ctx:PluginContextV2,c:Controller,container:HTMLElement) {
@@ -153,6 +167,11 @@ function mountShelf(ctx:PluginContextV2,c:Controller,container:HTMLElement) {
         button(tr("确认选择","Confirm choice"),()=>{void c.resolveConflict(choice).catch(report);},confirm).disabled=c.busy;
       }
     }
+    if(c.legacyChanged){
+      el("p",tr("检测到旧版本书库与迁移基线不一致，已暂停编辑及创建阅读任务。两份数据均保留，请先处理分叉。","The legacy library differs from its cutover snapshot. Editing and task creation are paused. Both versions are retained."));
+      const details=el("details");el("summary",tr("查看旧书库（供恢复）","View legacy library for recovery"),details);
+      const raw=el("pre",JSON.stringify(c.legacy,null,2),details);raw.style.whiteSpace="pre-wrap";raw.style.overflowWrap="anywhere";
+    }
     if(c.legacy && state==="absent"){
       el("p",tr("检测到旧书库：","Legacy library found: ")+c.legacy.books.length+tr(" 本书、"," books, ")+c.legacy.taskLinks.length+tr(" 条任务关联。旧客户端需停止修改阅读数据。"," linked tasks. Stop editing Reading on old clients."));
       button(tr("导入旧书库（保留原数据）","Import legacy library (keep original)"),()=>{void c.migrateLegacy().catch(report);}).disabled=c.busy;
@@ -177,8 +196,8 @@ function mountShelf(ctx:PluginContextV2,c:Controller,container:HTMLElement) {
       for(const [id,node] of metrics){const t=rows.get(id);node.textContent=tr("计划 ","Planned ")+Math.round(t?.planned??0)+tr(" 分钟 · 实际 "," min · Actual ")+Math.round(t?.actual??0)+tr(" 分钟"," min")+(t?.hasWeighted?tr(" · 加权 "," · Weighted ")+Math.round(t.weighted)+tr(" 分钟"," min"):"");}
     }).catch(()=>{if(run===statsRun&&!disposed)for(const node of metrics.values())node.textContent=tr("统计暂不可用","Statistics unavailable");});
   }
-  const unsubscribe=c.subscribe(render);render();void c.refresh();
-  return ()=>{disposed=true;unsubscribe();root.remove();};
+  const unsubscribe=c.subscribe(render);const onFocus=()=>{void c.refresh();};doc.defaultView?.addEventListener("focus",onFocus);render();void c.refresh();
+  return ()=>{disposed=true;doc.defaultView?.removeEventListener("focus",onFocus);unsubscribe();root.remove();};
 }
 const plugin:PluginModuleV2={onload(ctx){
   const c=createReadingController(ctx),tr=c.tr;

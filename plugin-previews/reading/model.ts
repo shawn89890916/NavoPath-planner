@@ -8,6 +8,8 @@ export interface ReadingBook {
 }
 export interface ReadingLibrary {
   version: 1;
+  /** Hash of the unmodified V1 snapshot at cutover; absent on V1 libraries. */
+  legacyFingerprint?: string;
   books: ReadingBook[];
   taskLinks: { taskId: string; bookId: string }[];
 }
@@ -95,9 +97,14 @@ export function decodeReadingLibrary(value: unknown): ReadingLibrary {
 }
 
 /** Canonical comparison: versioned storage sorts JSON object keys. */
+function canonical(v:unknown):unknown{return Array.isArray(v)?v.map(canonical):v&&typeof v==="object"?Object.fromEntries(Object.entries(v).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([k,x])=>[k,canonical(x)])):v;}
 export function sameReadingValue(a: unknown,b: unknown): boolean {
-  const canonical=(v:unknown):unknown=>Array.isArray(v)?v.map(canonical):v&&typeof v==="object"?Object.fromEntries(Object.entries(v).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([k,x])=>[k,canonical(x)])):v;
   return JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
+}
+export async function legacyFingerprint(source:unknown):Promise<string>{
+  if(source!==null)decodeReadingLibrary(source);
+  const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify(canonical(source))));
+  return Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,"0")).join("");
 }
 
 /** Undo a book edit only if that exact saved state still exists.
