@@ -40,21 +40,26 @@ export function createReadingController(ctx: PluginContextV2) {
     return [...new Set([...linked.map(l=>l.taskId),...value.taskLinks.map(l=>l.taskId)])].filter(id=>candidates.has(id));
   }
   const pendingTaskOps=new Map<string,string>();
+  const runningTasks=new Set<string>();
   async function createTask(bookId:string) {
     if(!ready()) throw Error(tr("书库暂不可用","Library unavailable"));
     const book=library?.books.find(b=>b.id===bookId && b.status!=="finished");
     if(!book) throw Error("Book unavailable");
+    if(runningTasks.has(bookId)) return;
+    runningTasks.add(bookId);
     const operationId=pendingTaskOps.get(bookId) ?? crypto.randomUUID();pendingTaskOps.set(bookId,operationId);
-    const result=await ctx.tasks.execute({kind:"create",operationId,entityId:bookId,title:tr("阅读 ","Read ")+book.title,estimateMinutes:30});
-    if(result.status!=="accepted" && result.status!=="committed") throw Error(result.message);
-    pendingTaskOps.delete(bookId); notify();
+    try {
+      const result=await ctx.tasks.execute({kind:"create",operationId,entityId:bookId,title:tr("阅读 ","Read ")+book.title,estimateMinutes:30});
+      if("message" in result) throw Error(result.message);
+      pendingTaskOps.delete(bookId); notify();
+    } finally {runningTasks.delete(bookId);}
   }
   async function summarize(facts:V2ActivityFacts) {
     const value=library; if(!value) return new Map<string,{planned:number;actual:number;weighted:number;hasWeighted:boolean}>();
     return totals(value,facts,await links([...facts.planned,...facts.actual].map(f=>f.taskId),value));
   }
   ctx.register(ctx.storage.subscribe(KEY,()=>{void refresh();}));
-  ctx.register(()=>{generation++;listeners.clear();pendingTaskOps.clear();});
+  ctx.register(()=>{generation++;listeners.clear();pendingTaskOps.clear();runningTasks.clear();});
   return {tr,refresh,subscribe,mutate,createTask,membership,summarize,ready,get library(){return library},get state(){return snapshot.status},get error(){return error}};
 }
 type Controller=ReturnType<typeof createReadingController>;

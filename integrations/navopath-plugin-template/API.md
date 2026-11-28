@@ -246,7 +246,8 @@ use `import("./api").PluginContext` in JSDoc without installing the host.
 The generated type-only SDK includes `PluginContextV2` in `api/v2.d.ts`.
 The contract, activation layer and tests are in `src/extensions/sdkV2.ts`,
 `runtimeV2.ts`, and `runtimeV2.test.ts`. The production preview adapter in
-`runtimeV2Host.ts` connects `tasks.read`, `tasks.write`, `ui.tasksGroup`, `ui.workspace`, `ui.planning`,
+`runtimeV2Host.ts` connects `tasks.read`, `tasks.write`, `activity.read`, `storage.read`,
+`storage.write`, `metrics.provider`, `ui.tasksGroup`, `ui.workspace`, `ui.planning`,
 `ui.settings` and `ui.toast` to the existing host. One page per plugin per
 surface is supported. Task reads default to incomplete tasks and expose only
 the public DTO; pass `includeCompleted: true` to include completed tasks.
@@ -258,7 +259,10 @@ third-party sources are rejected. No desktop entry, global styles, MCP
 declaration or declarative settings options are accepted at this stage.
 The original example `examples/protocol-v2.ts` exercises the broader mock
 contract; `examples/protocol-v2-preview.ts` demonstrates the wired subset.
-Neither example is published in the catalog.
+Neither example is published in the catalog. The independent Reading candidate
+in `plugin-previews/reading` is also unpublished. Build it with
+`node scripts/build-plugin-preview.mjs reading <output-file>`; this never modifies
+the live v1 catalog.
 
 The v2 context has no raw app/internal, planner state, arbitrary desktop IPC
 or host module import. The static boundary check is a development guard;
@@ -270,11 +274,10 @@ Task commands use the core task-operation/history path and return `accepted`
 for local acceptance, not cloud acknowledgement. Reuse the same operation ID
 for a retry of the same create; the host derives a stable task ID and checks
 existing deletion tombstones. Rename and completion require the latest
-`expectedUpdatedAt` unless already at the desired state. The first adapter
-rejects domain entity links and edits of protected habit/course/calendar tasks.
-This is not a cross-device atomic guarantee or a durable command ledger.
-Activity queries, Metrics providers and versioned
-storage remain unwired and must fail rather than fall back to unsafe v1 writes.
+`expectedUpdatedAt` unless already at the desired state. The adapter supports immutable entity links on creation and rejects edits of
+protected habit/course/calendar tasks. This is not a cross-device atomic
+core command guarantee or a durable core command ledger. Activity queries,
+Metrics providers and versioned storage use the scoped APIs documented below.
 Do not store credentials in ordinary plugin data.
 
 Keep existing plugin packages on v1. Older clients reject unknown manifest
