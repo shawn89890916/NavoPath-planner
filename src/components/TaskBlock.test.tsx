@@ -229,6 +229,7 @@ describe("TaskBlock shared component contract", () => {
     expect(main).toContain("const renderCandidateTask = (task: Task)");
     expect(main).toContain("tasks.map(renderCandidateTask)");
     expect(main).toContain("candidates.map(renderCandidateTask)");
+    expect(main).toContain("renderTask={renderCandidateTask}");
     expect(main).toContain("readingCandidates.map(renderCandidateTask)");
     const candidateRow = css.match(/\.df-app \.df-candidate-task-row \{([^}]+)\}/)?.[1];
     expect(candidateRow).toBeDefined();

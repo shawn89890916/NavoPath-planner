@@ -8,6 +8,11 @@ describe("host-owned candidate group partition", () => {
     const result = await resolveTaskGroups([z, a], ["a", "b", "c", "d"]);
     expect(result.map(item => [item.group.id, item.ids])).toEqual([["a", ["a", "b"]], ["z", ["c"]]]);
   });
+  it("fails open when a resolver never settles", async () => {
+    const a = group("a", () => new Promise(() => {}));
+    const b = group("b", () => ["one"]);
+    expect((await resolveTaskGroups([a, b], ["one", "two"], 5)).map(item => item.ids)).toEqual([[], ["one"]]);
+  });
   it("leaves tasks available when a plugin throws or returns malformed data", async () => {
     const a = group("a", () => { throw Error("disabled"); });
     const b = group("b", () => null as unknown as string[]);

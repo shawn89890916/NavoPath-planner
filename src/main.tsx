@@ -9806,7 +9806,7 @@ if (cached?.data && cached?.settings) {
             )}
             <Activity mode={shelfView ? "hidden" : "visible"}>
             <div className="df-candidate-list" data-shelf-scroll="candidates" inert={productAiPresentation && demoPresetBusy ? true : undefined}>
-              {extensionSnapshot.taskGroups?.length && !productDemo ? <Suspense fallback={renderOrdinaryCandidates(ordinaryCandidates)}><PluginTaskGroupsLazy groups={extensionSnapshot.taskGroups} candidates={ordinaryCandidates} revision={tasks} lang={lang} renderOrdinary={renderOrdinaryCandidates} renderTask={renderCandidateTask} /></Suspense> : renderOrdinaryCandidates(ordinaryCandidates)}
+              {extensionSnapshot.taskGroups?.length && !productDemo ? <Suspense fallback={renderOrdinaryCandidates(ordinaryCandidates)}><PluginTaskGroupsLazy groups={extensionSnapshot.taskGroups} candidates={ordinaryCandidates} revision={tasks} lang={lang} dragging={!!drag} renderOrdinary={renderOrdinaryCandidates} renderTask={renderCandidateTask} /></Suspense> : renderOrdinaryCandidates(ordinaryCandidates)}
               {readingEnabled && (
                 <Suspense fallback={null}><ReadingTaskGroupLazy library={reading.library} busy={reading.busy} error={reading.error} lang={lang} count={readingCandidates.length} onOpenLibrary={readingView ? openReading : undefined} onCreateTask={createReadingTask}>
                   {readingCandidates.map(renderCandidateTask)}
