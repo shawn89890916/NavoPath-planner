@@ -1,5 +1,5 @@
 import type { CalendarEvent, Language, PlannerData, Project, Settings, Task } from "../types";
-import type { V2TaskCommand, V2TaskGroup, V2TaskResult } from "./sdkV2";
+import type { V2TaskCommand, V2TaskGroup, V2TaskResult, V2MetricsProvider } from "./sdkV2";
 import type { TimerModeProvider } from "./timers";
 
 import type { ExtensionManifest, ExtensionPlatform, ExtensionPreferences, CatalogEntry, ExtensionKind } from "./model";
@@ -22,6 +22,7 @@ export interface ExtensionSnapshot {
   status: Record<string, string>; busy: boolean; error: string; safeMode: boolean;
   nativeFeatures?: string[];
   taskGroups?: ExtensionTaskGroup[];
+  metricsProviders?: (V2MetricsProvider & { owner: string })[];
   catalogLoading?: boolean; checkingUpdates?: boolean; updateBatch?: ExtensionUpdateBatch;
   settingsPages: ExtensionContribution[]; views: ExtensionContribution[]; launcherStatus: Record<string, PluginLauncherStatus>;
 }

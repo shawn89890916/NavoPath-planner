@@ -5,6 +5,8 @@ const ReadingMetrics = React.lazy(() => import("../reading/ReadingMetrics"));
 import { buildTimeAllocationMetrics, parseDayStartMinutes, type MetricHabitMode, type MetricCompletionFilter } from "./timeAllocation";
 const MetricsAllocation=React.lazy(()=>import("./MetricsAllocation"));
 import { buildInsights } from "./insightFacts";
+import { projectActivityFacts } from "./pluginActivityFacts";
+import { PluginMetrics } from "./PluginMetrics";
 import { analyticsError, analyticsPreference, clearAnalytics, readAnalyticsEvents, scanAnalyticsEvents, type AnalyticsPageCursor, recoverAnalytics, captureDailyPlan, readDailyPlans, setAnalyticsEnabled, subscribeAnalytics } from "./activityStore";
 import type { AnalyticsEvent } from "./activityEvents";
 import { createObservedPlanAccumulator, type ObservedPlanHistory } from "./historyAnalysis";
@@ -51,6 +53,7 @@ function ScopedMetricsInsights(props:Props) {
   const t=(zh:string,en:string)=>p.lang==="zh"?zh:en;
   const preference=p.scope?analyticsPreference(p.scope):null;
   const result=useMemo(()=>buildInsights(p.data,p.allocation,p),[p.data,p.allocation,p.dayStartMinutes,p.projectIds,p.habitMode,p.completion]);
+  const pluginFacts=useMemo(()=>view==="overview"?projectActivityFacts(allocation,result.trackedEntries):null,[view,allocation,result]);
   const start=p.allocation.range.start.getTime(),end=p.allocation.range.end.getTime();
   const historyStart=p.query.range==="all"?Date.parse("2000-01-01T00:00:00Z"):start,historyEnd=p.query.range==="all"?Date.parse("2100-01-01T00:00:00Z"):end;
   const pageKey=JSON.stringify([p.scope,historyStart,historyEnd,p.projectIds,historySource,historyEntity]);
@@ -102,7 +105,7 @@ function ScopedMetricsInsights(props:Props) {
       {saveViewError&&<span role="alert">{t("无法保存视图","Could not save view")}</span>}
     </div></details>}
     {view==="allocation"?<React.Suspense fallback={<p role="status">{t("正在加载分布…","Loading allocation…")}</p>}><MetricsAllocation lang={p.lang} engagementEnabled={p.engagementEnabled} metricsResult={allocation} display={p.query.display} onAdjustRange={()=>p.onApplyQuery({...p.query,range:"today"})}/></React.Suspense>:<section className="df-metric-insight-content">
-      {view==="overview"&&<React.Suspense fallback={<p role="status">{t("正在加载概览…","Loading overview…")}</p>}><MetricsReview data={p.data} allocation={allocation} result={result} query={p.query} dayStartMinutes={dayStartMinutes} weekStartsOn={weekStartsOn} lang={p.lang} onApplyQuery={p.onApplyQuery}/>{p.readingLibrary && <React.Suspense fallback={null}><ReadingMetrics library={p.readingLibrary} allocation={allocation} trackedEntries={result.trackedEntries} lang={p.lang} /></React.Suspense>}</React.Suspense>}
+      {view==="overview"&&<React.Suspense fallback={<p role="status">{t("正在加载概览…","Loading overview…")}</p>}><MetricsReview data={p.data} allocation={allocation} result={result} query={p.query} dayStartMinutes={dayStartMinutes} weekStartsOn={weekStartsOn} lang={p.lang} onApplyQuery={p.onApplyQuery}/>{pluginFacts && <PluginMetrics facts={pluginFacts} lang={p.lang}/>}{p.readingLibrary && <React.Suspense fallback={null}><ReadingMetrics library={p.readingLibrary} allocation={allocation} trackedEntries={result.trackedEntries} lang={p.lang} /></React.Suspense>}</React.Suspense>}
       {view==="time"&&<React.Suspense fallback={<p role="status">{t("正在加载时间统计…","Loading time statistics…")}</p>}><MetricsTimeSeries data={p.data} allocation={allocation} result={result} dayStartMinutes={dayStartMinutes} weekStartsOn={weekStartsOn} lang={p.lang} chart={timeChart} grain={grain} setChart={setTimeChart} setGrain={setGrain}/></React.Suspense>}
       {view==="execution"&&<React.Suspense fallback={<p role="status">{t("正在加载执行统计…","Loading execution statistics…")}</p>}><MetricsExecution key={requestKey} scope={p.scope} data={p.data} allocation={allocation} result={result} dayStartMinutes={dayStartMinutes} lang={p.lang} query={p.query} historyState={historyState} plans={plans} observed={observed} onRetry={()=>setRevision(n=>n+1)}/></React.Suspense>}
       {(view==="engagement"||view==="projects")&&<React.Suspense fallback={<p role="status">{t("正在加载统计…","Loading breakdown…")}</p>}><MetricsBreakdown key={view} view={view} data={p.data} allocation={allocation} result={result} dayStartMinutes={dayStartMinutes} lang={p.lang} query={p.query} onApplyQuery={p.onApplyQuery}/></React.Suspense>}

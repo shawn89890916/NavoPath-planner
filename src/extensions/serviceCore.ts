@@ -84,7 +84,7 @@ export class ExtensionService {
       this.host = host;
       let safeMode = false;
       try { safeMode = new URLSearchParams(location.search).has("safe-mode") || localStorage.getItem(this.scope() + "safe-mode") === "true" || localStorage.getItem(this.scope() + "booting") === "true"; } catch { /* ephemeral sessions */ }
-      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], taskGroups: [], nativeFeatures: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, updateBatch: undefined, error: "" });
+      this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], taskGroups: [], metricsProviders: [], nativeFeatures: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, updateBatch: undefined, error: "" });
       if (generation !== this.generation) return;
       if (account && account !== "preview") this.unbindStorage = subscribeExtensionValues((owner, key, value) => {
         const pendingKey = this.scope() + `pending:${owner}:${key}`;
@@ -418,6 +418,13 @@ export class ExtensionService {
         if (groups.some(item => item.id === group.id)) throw new Error("Duplicate task group");
         this.setSnapshot({ taskGroups: [...groups, group] });
         return () => { this.setSnapshot({ taskGroups: (this.snapshot.taskGroups ?? []).filter(item => item !== group) }); };
+      },
+      registerMetricsProvider: provider => {
+        if (!isCurrent()) throw new Error("Extension account changed");
+        const providers = this.snapshot.metricsProviders ?? [];
+        if (providers.some(item => item.id === provider.id)) throw new Error("Duplicate metrics provider");
+        this.setSnapshot({ metricsProviders: [...providers, provider] });
+        return () => { this.setSnapshot({ metricsProviders: (this.snapshot.metricsProviders ?? []).filter(item => item !== provider) }); };
       },
       register: (kind, contribution) => {
         if (!isCurrent()) throw new Error("Extension account changed");

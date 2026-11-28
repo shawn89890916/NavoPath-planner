@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadV2Preview, type V2PreviewBridge } from "./runtimeV2Host";
 import type { ExtensionPackage, ExtensionContribution, ExtensionTaskGroup, ExtensionHost } from "./types";
-import type { PluginContextV2 } from "./sdkV2";
+import type { PluginContextV2, V2MetricsProvider } from "./sdkV2";
 
 function fixture() {
   const tasks = [
@@ -92,6 +92,25 @@ describe("protocol 2 production preview bridge", () => {
     await loaded.dispose();
     await expect(ctx.tasks.execute(command)).rejects.toMatchObject({ code: "INACTIVE" });
     expect(execute).toHaveBeenCalledTimes(1);
+  });
+  it("registers scoped metrics providers and removes them on disposal", async () => {
+    const f = fixture();
+    f.pkg.manifest.permissions = ["metrics.provider"];
+    const providers = new Map<string, V2MetricsProvider>();
+    f.bridge.registerMetricsProvider = provider => {
+      providers.set(provider.id, provider); return () => { providers.delete(provider.id); };
+    };
+    let ctx!: PluginContextV2;
+    const loaded = await loadV2Preview(f.pkg, f.bridge, async () => ({ default: { onload(context) {
+      ctx = context;
+      ctx.metrics.registerProvider({ id: "minutes", name: "Minutes", query: facts => [{ label: "Actual", value: facts.actual.length }] });
+    } } }));
+    const provider = providers.get("official:preview-sample:metrics.provider:minutes")!;
+    expect(await provider.query({ planned: [], actual: [] })).toEqual([{ label: "Actual", value: 0 }]);
+    await expect(ctx.activity.query({ from: "2026-11-01T00:00:00Z", to: "2026-11-02T00:00:00Z" })).rejects.toMatchObject({ code: "PERMISSION_DENIED" });
+    await loaded.dispose();
+    expect(providers.size).toBe(0);
+    await expect(provider.query({ planned: [], actual: [] })).rejects.toMatchObject({ code: "INACTIVE" });
   });
   it("does not activate a module whose import resolves after the account changes", async () => {
     const f = fixture(), onload = vi.fn();

@@ -1,5 +1,5 @@
 import type { ExtensionContribution, ExtensionTaskGroup, ExtensionHost, ExtensionPackage, ExtensionPlatform, Dispose } from "./types";
-import type { PluginModuleV2, V2ContributionKind, V2Page, V2TaskGroup, V2Task, V2TaskQuery } from "./sdkV2";
+import type { PluginModuleV2, V2ContributionKind, V2Page, V2TaskGroup, V2Task, V2TaskQuery, V2MetricsProvider } from "./sdkV2";
 import { activateV2, negotiateV2, V2ContractError, type V2HostAdapter } from "./runtimeV2";
 import { createResourceUrls } from "./runtime";
 import { v2PreviewCapabilities, validV2PreviewPermissions } from "./v2PreviewPolicy";
@@ -10,6 +10,7 @@ export interface V2PreviewBridge {
   readonly host: ExtensionHost;
   isCurrent(): boolean;
   registerTaskGroup(group: ExtensionTaskGroup): Dispose;
+  registerMetricsProvider?(provider: V2MetricsProvider & { owner: string }): Dispose;
   register(kind: "views" | "settingsPages", contribution: ExtensionContribution): Dispose;
 }
 import { projectPluginTask } from "./pluginTaskCommands";
@@ -44,10 +45,16 @@ export async function loadV2Preview(
   const registered = new Set<V2ContributionKind>();
   const adapter: V2HostAdapter = {
     owner: bridge.key, platform: bridge.platform, language: bridge.host.getSettings().language,
-    supported: new Set(v2PreviewCapabilities.filter(capability => capability !== "tasks.write" || !!bridge.host.executePluginTask)), granted: new Set(permissions), isCurrent: bridge.isCurrent,
+    supported: new Set(v2PreviewCapabilities.filter(capability => (capability !== "tasks.write" || !!bridge.host.executePluginTask) && (capability !== "metrics.provider" || !!bridge.registerMetricsProvider))), granted: new Set(permissions), isCurrent: bridge.isCurrent,
     tasks: { list: async query => listTasks(bridge.host, query),
       execute: bridge.host.executePluginTask ? (command, signal) => bridge.host.executePluginTask!(bridge.key, command, () => !signal.aborted && bridge.isCurrent()) : undefined },
+    activity: { async query(query, signal) {
+      const [{ queryPluginActivity }, { parseDayStartMinutes }] = await Promise.all([import("../metrics/pluginActivityFacts"), import("../metrics/timeAllocation")]);
+      if (signal.aborted || !bridge.isCurrent()) throw new V2ContractError("INACTIVE", "Workspace changed");
+      return queryPluginActivity(bridge.host.getData(), query, parseDayStartMinutes(bridge.host.getSettings().dayStartTime));
+    } },
     contribute(kind, id, value) {
+      if (kind === "metrics.provider") return bridge.registerMetricsProvider!({ ...(value as V2MetricsProvider), id, owner: bridge.key });
       if (kind === "ui.tasksGroup") return bridge.registerTaskGroup({ ...(value as V2TaskGroup), id, owner: bridge.key });
       if (kind !== "ui.workspace" && kind !== "ui.planning" && kind !== "ui.settings") {
         throw new V2ContractError("UNSUPPORTED_CAPABILITY", kind);
