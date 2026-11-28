@@ -1404,6 +1404,18 @@
 
 ## 2026-11-28
 
+### 1.7.0 Beta 145
+
+#### Added
+
+- Add WeRead bookshelf import preview, existing-book linking, recent progress sync and per-book refresh. Optionally import new public books and report provider reading time separately from local tracking.
+
+### 1.7.0 Beta 144
+
+#### Fixes
+
+- Update the WeRead Agent API to official Skill 1.0.6 and treat `upgrade_info` as a non-blocking notice, allowing bookshelf data to load without incorrectly asking users to update NavoPath.
+
 ### 1.7.0 Beta 143
 
 #### Added
