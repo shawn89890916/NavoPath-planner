@@ -84,7 +84,7 @@ export default function ReadingShelf({ account, library, busy, error, lang, onCr
   const [editor, setEditor] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [detail,setDetail]=useState<string|null>(null);
-  const [collapsed,setCollapsed]=useState<ReadingStatus[]>(["to-read","finished"]);
+  const [collapsed,setCollapsed]=useState<ReadingStatus[]>(["finished"]);
   if (!library) return <p className="reading-muted" role="status">{error ? (zh ? "无法读取书架，请重新打开窗口。" : "Library unavailable. Reopen the window.") : (zh ? "正在读取书架…" : "Loading library…")}</p>;
   const groups = groupReadingBooks(library);
   const book = library.books.find(item => item.id === editor);

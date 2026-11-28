@@ -49,7 +49,7 @@ export default function ReadingSettings({lang,active,connection=extensionService
       {counts&&<SettingRow title={tr("微信读书书架","WeRead bookshelf")} description={tr("电子书 ","Books ")+counts.books+tr(" · 有声书 "," · Audiobooks ")+counts.audiobooks+tr(" · 文章收藏入口 "," · Article collections ")+counts.articles} control={<span>{counts.books+counts.audiobooks+counts.articles}</span>}/>}
       {error&&<p role="alert" className="df-extension-error">{errors[error]??tr("连接暂不可用，请重试。","Connection unavailable; retry.")}</p>}
       {connected&&<SettingRow title={tr("断开连接","Disconnect")} description={tr("删除本机密钥；保留阅读书库和任务。","Remove the local credential; keep your library and tasks.")} control={<SettingActionButton tone="danger" disabled={!!busy} onClick={()=>void run("disconnect")}>{tr("断开","Disconnect")}</SettingActionButton>}/>}
-      <SettingRow title={tr("数据范围","Data scope")} description={tr("连接后在阅读书架中导入书籍、同步进度及查看独立时长。私密书籍需单独选择，不会自动生成排程。","Import books, sync progress and view separate durations in the Reading shelf. Private books require explicit selection. No timeline entries are generated.")}/>
+      <SettingRow title={tr("数据范围","Data scope")} description={tr("在阅读书架中导入书籍并管理自动导入。已关联书籍在应用聚焦和阅读活动后同步。私密书籍需单独选择，不会自动生成排程。","Import books and manage automatic import in the Reading shelf. Linked books refresh on app focus and reading activity. Private books require explicit selection. No timeline entries are generated.")}/>
     </>}
   </SettingSection>;
 }

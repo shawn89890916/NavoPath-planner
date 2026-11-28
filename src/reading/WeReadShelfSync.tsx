@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from "react";
 import {Button,Input} from "../components/UiPrimitives";
 import {extensionService} from "../extensions/service";
 import type {ReadingLibrary,ReadingBook} from "./model";
-import {weReadDesktopAvailable,type WeReadItem,type WeReadStatistics} from "./wereadConnection";
+import {weReadDesktopAvailable,type WeReadItem,type WeReadStatistics,type WeReadProgress} from "./wereadConnection";
 import {applyWeReadProgress,importWeRead,recentLinkedItems,sourceKey,sourceMatches,suggestedBook,syncWeReadShelf} from "./wereadSync";
 import type {ReadingMutate} from "./ReadingShelf";
 export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshToken}:{account:string;library:ReadingLibrary;mutate:ReadingMutate;zh:boolean;busy:boolean;refreshToken:string}){
@@ -34,7 +34,7 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
         setPreview({connectionId,items});setChoices({});setSearch("");setLimit(60);
         setAutoImport(next.wereadPreferences?.connectionId===connectionId&&next.wereadPreferences.autoImport);
       }else{
-        const updates=[];
+        const updates:WeReadProgress[]=[];
         for(const item of recentLinkedItems(next,connectionId,items)){
           if(e!==epoch.current)return;
           const data=await request("progress",item.id);
@@ -60,7 +60,7 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
   const selected=Object.keys(choices).length;
   async function save(){
     if(!preview||lock.current||current.current.busy)return;
-    lock.current=true;setLoading(true);const e=epoch.current;setError("");let saved=false;
+    lock.current=true;setLoading(true);const e=epoch.current;setError("");
     try{
       const {connectionId,items}=preview;
       // Recheck the credential before committing; replacement keys must never apply old previews.
@@ -72,13 +72,21 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
         const fresh=latest.get(sourceKey(item));if(!fresh||fresh.private!==item.private)throw Error("Shelf changed");
         return {item:fresh,localId:choices[sourceKey(item)]||undefined};
       });
+      const updates:WeReadProgress[]=[];
+      for(const {item} of selectedItems.filter(x=>x.item.kind==="book").sort((a,b)=>(b.item.recent??0)-(a.item.recent??0)).slice(0,5)){
+        if(e!==epoch.current)return;
+        const result=await request("progress",item.id);
+        if(result.ok&&result.connectionId===connectionId&&result.progress)updates.push(result.progress);
+        else if(!result.ok&&result.code==="rate-limit")break;
+      }
+      if(e!==epoch.current)return;
       await current.current.mutate(value=>{
-        const next=importWeRead(value,connectionId,selectedItems,new Date().toISOString());
+        const next=updates.reduce((v,update)=>applyWeReadProgress(v,connectionId,update,new Date().toISOString()),importWeRead(value,connectionId,selectedItems,new Date().toISOString()));
         return {...next,wereadPreferences:{connectionId,autoImport,seenKeys:[...new Set([...(value.wereadPreferences?.connectionId===connectionId?value.wereadPreferences.seenKeys??[]:[]),...check.shelf!.map(sourceKey)])].sort()}};
       });
-      saved=true;if(e===epoch.current){setPreview(null);setChoices({});last.current=0;}
+      if(e===epoch.current){setPreview(null);setChoices({});last.current=Date.now();setSynced(check.checkedAt??new Date().toISOString());}
     }catch{if(e===epoch.current)setError("unavailable");}
-    finally{if(e===epoch.current){lock.current=false;setLoading(false);if(saved)void run();}}
+    finally{if(e===epoch.current){lock.current=false;setLoading(false);}}
   }
   async function loadStats(){
     if(lock.current)return;lock.current=true;setLoading(true);setError("");const e=epoch.current;
