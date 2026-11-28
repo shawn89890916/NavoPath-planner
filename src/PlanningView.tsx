@@ -270,7 +270,7 @@ function PlanningCandidateCard({ task, lang, meta, actions, onToggle, onDuration
   const durationRef = useRef<HTMLButtonElement>(null);
   const isEvent = isEventDisplayTask(task);
   const done = !isEvent && normalizeWorkflowStatus(task) === "done";
-  return <><CandidateTaskCard {...props} task={task} lang={lang} checked={done} title={task.title} tabIndex={isEvent ? undefined : 0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); props.onClick?.(event as unknown as React.MouseEvent<HTMLElement>); } }} row={<>
+  return <><CandidateTaskCard {...props} task={task} lang={lang} checked={done} title={task.title} tabIndex={isEvent ? undefined : 0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); event.currentTarget.click(); } }} row={<>
     {isEvent ? <span className="df-task-block-check df-candidate-kind" aria-hidden="true" /> : <TaskCheckbox lang={lang} checked={done} tone={normalizeTaskCheckTone(task)} priority={task.priority}
       ariaLabel={t(lang || "en", done ? "planning.markIncomplete" : "planning.markComplete")}
       onClick={onToggle && ((event) => { event.stopPropagation(); onToggle(); })} />}
@@ -413,7 +413,7 @@ function PlanningProjectNode(props: {
           }}
           onMouseLeave={hideTip}
         >
-          {props.project.title}{props.compact && <ChevronIcon open={!props.collapsed} />}
+          {props.compact ? <><span title={props.project.title}>{props.project.title}</span><ChevronIcon open={!props.collapsed} /></> : props.project.title}
         </span>
         {!props.compact && <span className="df-project-badge">{props.taskCount}</span>}
         <div className="df-project-node-actions">
@@ -2061,7 +2061,7 @@ export default function PlanningView(props: {
               <React.Fragment key={project.id}>
                 <div className="df-category-branch" data-project-id={project.id}>
                   <PlanningProjectNode
-                compact={props.compact}
+                compact={props.compact && !props.demo}
                 demo={props.demo}
                     lang={props.lang}
                     project={project}
@@ -2081,7 +2081,7 @@ export default function PlanningView(props: {
                       {tasks.map((task) => (
                         <div className="df-task-branch" key={task.id}>
                         <PlanningTaskNode
-                compact={props.compact}
+                compact={props.compact && !props.demo}
                 onDuration={props.compact && !props.demo ? minutes => props.onTaskUpdate(task.id, { estimatedHours: minutes / 60 }) : undefined}
                 demo={props.demo}
                           lang={props.lang}
@@ -2114,7 +2114,7 @@ export default function PlanningView(props: {
               <React.Fragment>
                 <div className="df-category-branch" data-project-id="__unassigned__">
                 <PlanningProjectNode
-                compact={props.compact}
+                compact={props.compact && !props.demo}
                 demo={props.demo}
                   lang={props.lang}
                   project={createProjectShell(t(props.lang, "planning.unassignedTasks"))}
@@ -2129,7 +2129,7 @@ export default function PlanningView(props: {
                     {unassigned.map((task) => (
                       <div className="df-task-branch" key={task.id}>
                         <PlanningTaskNode
-                compact={props.compact}
+                compact={props.compact && !props.demo}
                 onDuration={props.compact && !props.demo ? minutes => props.onTaskUpdate(task.id, { estimatedHours: minutes / 60 }) : undefined}
                 demo={props.demo}
                           lang={props.lang}

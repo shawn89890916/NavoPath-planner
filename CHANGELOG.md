@@ -6,7 +6,13 @@
 
 #### 改进
 
-- 精简候选任务顶部为规划、搜索与更多操作，竖屏及贴边栏保留横向时长与安排按钮、单击编辑和紧凑项目卡片，改善负一屏空间层次。
+- 精简候选任务顶部为规划、搜索与更多操作，竖屏及贴边栏保留横向时长与安排按钮、单击编辑和紧凑项目卡片，改善负一屏空间层次；拖入时间轴时临时扩大可见区，Tree 与列表沿用相同的时长编辑入口。
+
+### 1.7.0 Beta 143
+
+#### 新增
+
+- 阅读插件增加独立设置页，支持通过官方 API Key 连接微信读书、验证书架及断开连接，凭证仅在桌面设备加密保存。所有已启用插件均提供独立设置入口，无配置项时显示插件信息。
 
 ### 1.7.0 Beta 142
 
@@ -1396,7 +1402,13 @@
 
 #### Improvements
 
-- Streamline candidate controls to Plan, Search and More; retain horizontal duration and scheduling actions, click-to-edit and compact project cards in portrait and Dock, with clearer side-workspace depth.
+- Streamline candidate controls to Plan, Search and More; retain horizontal duration and scheduling actions, click-to-edit and compact project cards in portrait and Dock, with clearer side-workspace depth; temporarily expose more timeline during drag and share duration editing across Tree and List.
+
+### 1.7.0 Beta 143
+
+#### Added
+
+- Reading has a dedicated settings page with official WeRead API key connection, bookshelf verification and disconnection; credentials are encrypted on the desktop device only. Every enabled plugin has a dedicated settings destination, with plugin information when no options exist.
 
 ### 1.7.0 Beta 142
 

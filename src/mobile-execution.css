@@ -41,9 +41,9 @@
   html[data-side-workspace-drag-expanded] :is(.df-app[data-phone-execution], .df-mobile-floating-actions[data-side-workspace], .df-mobile-dock--viewport[data-side-workspace])[data-side-workspace-open] {
     --side-workspace-offset: max(0px, calc(var(--side-workspace-width) - min(80px, 18vw)));
   }
-  html[data-side-workspace-drag-expanded] #root .df-app[data-phone-execution] .df-execute > :is(.df-candidate-panel, .df-timeline-panel, .df-compact-execute-controls, .df-mobile-date-picker),
-  html[data-side-workspace-drag-expanded] .df-mobile-dock--viewport[data-side-workspace],
-  html[data-side-workspace-drag-expanded] .df-mobile-candidates-trigger {
+  html[data-side-workspace-drag-active] #root .df-app[data-phone-execution] .df-execute > :is(.df-candidate-panel, .df-timeline-panel, .df-compact-execute-controls, .df-mobile-date-picker),
+  html[data-side-workspace-drag-active] .df-mobile-dock--viewport[data-side-workspace],
+  html[data-side-workspace-drag-active] .df-mobile-candidates-trigger {
     transition: none;
   }
   #root .df-app[data-phone-execution] > .df-execute {

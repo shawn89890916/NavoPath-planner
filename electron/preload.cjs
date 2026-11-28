@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("desktopApi", {
+  readingWeRead: (scope, action, candidate) => ipcRenderer.invoke("reading:weread", scope, action, candidate),
   authStorage: {
     getItem: (key) => ipcRenderer.invoke("auth-storage:get", key),
     setItem: (key, value) => ipcRenderer.invoke("auth-storage:set", key, value),

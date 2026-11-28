@@ -296,5 +296,10 @@ describe("compact side workspace", () => {
     expect(styles).toContain("calc(100vw - 112px)");
     expect(styles).toContain("data-side-workspace-drag-expanded");
     expect(main).toContain("updateSideWorkspaceDragExposure(null)");
+    const header = main.slice(main.indexOf("<CandidatePanelHeader"), main.indexOf("<AnchoredNarrowMenu open={shelfMenuOpen}"));
+    expect(header).toContain("df-ai-plan-title-icon");
+    expect(header).toContain("UiSearchIcon");
+    expect(header).toContain("<ActionDisclosure");
+    expect(header.indexOf("ref={setProjectFilterAnchor}")).toBeGreaterThan(header.indexOf("<ActionDisclosure"));
   });
 });

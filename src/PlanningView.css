@@ -1604,7 +1604,9 @@ html[data-motion-fallback][data-motion-scope="planning"] .df-app > .df-planning 
   }
   #root .df-app .df-planning.compact-layout .df-plan-project-node::before { display: none; }
   #root .df-app .df-planning.compact-layout .df-project-name { min-width: 0; font-size: 13px; cursor: pointer; }
-  #root .df-app .df-planning.compact-layout .df-project-name svg { width: 14px; height: 14px; vertical-align: middle; }
+  #root .df-app .df-planning.compact-layout .df-project-name[role="button"] { display: flex; align-items: center; gap: 4px; }
+  #root .df-app .df-planning.compact-layout .df-project-name[role="button"] > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #root .df-app .df-planning.compact-layout .df-project-name svg { flex: none; width: 14px; height: 14px; vertical-align: middle; }
   #root .df-app .df-planning.compact-layout .df-project-node-actions { opacity: 1; position: static; margin-left: auto; }
   #root .df-app .df-planning.compact-layout .df-project-node-actions .df-tree-icon-button { min-width: 28px; width: 28px; height: 36px; min-height: 36px; }
   #root .df-app .df-planning.compact-layout .df-project-tasks { margin: 4px 0 0; padding-left: 0; }

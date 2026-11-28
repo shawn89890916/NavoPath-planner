@@ -7,15 +7,17 @@ const item = (id: string, enabled = true, configurable = false): InstalledExtens
   manifest: { id, name: id, kind: "plugin", version: "1.0.0", description: "", author: "", apiVersion: 1, minAppVersion: "1.0.0", platforms: ["web"], ...(configurable ? { settingsOptions: [{ key: "duration", label: "Duration", type: "number", default: 25 }] } : {}) },
 });
 function snapshot(): ExtensionSnapshot {
-  const items = [item("metrics"), item("timer", true, true), item("disabled", false, true), item("plain"), item("custom")];
+  const items = [item("metrics"), item("timer", true, true), item("disabled", false, true), item("plain"), item("custom"), item("reading")];
   return { preferences: { version: 1, sources: [], installed: Object.fromEntries(items.map(entry => [entry.key, entry])), removed: {}, activeTheme: null, autoCheckUpdates: true, autoUpdate: false }, catalog: [], updates: {}, status: {}, busy: false, error: "", safeMode: false, settingsPages: [{ id: "custom:one", owner: "official:custom", name: "Options", mount: () => {} }, { id: "custom:two", owner: "official:custom", name: "Advanced", mount: () => {} }], views: [], launcherStatus: {} };
 }
 describe("plugin settings destinations", () => {
   it("includes one destination per enabled configurable owner with stable sorting", () => {
     const state = snapshot();
     const list = pluginSettingsDestinations(state);
-    expect(list.map(x => x.owner)).toEqual(["official:custom", "official:metrics", "official:timer"]);
+    expect(list.map(x => x.owner)).toEqual(["official:custom", "official:metrics", "official:plain", "official:reading", "official:timer"]);
     expect(list[0].pages).toHaveLength(2);
+    expect(list.find(x=>x.owner==="official:reading")?.native).toBe(true);
+    expect(list.find(x=>x.owner==="official:plain")?.pages).toEqual([]);
     state.preferences.installed["official:timer"].manifest.name = "Renamed";
     expect(pluginSettingsDestinations(state).map(x => x.owner)).toEqual(list.map(x => x.owner));
   });
@@ -32,6 +34,8 @@ describe("plugin settings destinations", () => {
     const state = snapshot();
     expect(pluginSettingsOwner(normalizeSettingsTarget("metrics"), state)).toBe("official:metrics");
     expect(pluginSettingsOwner(normalizeSettingsTarget({category:"plugins",pluginPage:"custom:two"}), state)).toBe("official:custom");
+    const weread = searchPluginSettings(pluginSettingsDestinations(state), "微信读书")[0];
+    expect(weread.target).toMatchObject({category:"plugins",pluginOwner:"official:reading",anchor:"reading-weread"});
     const result = searchPluginSettings(pluginSettingsDestinations(state), "timer duration")[0];
     expect(normalizeSettingsTarget(result.target)).toMatchObject({ category: "plugins", pluginOwner: "official:timer", anchor: "plugin-option-duration" });
   });

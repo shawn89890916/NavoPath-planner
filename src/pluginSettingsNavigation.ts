@@ -19,13 +19,13 @@ export function pluginSettingsDestinations(snapshot: ExtensionSnapshot, previous
   return Object.values(snapshot.preferences.installed).filter(item => item.manifest.kind === "plugin" && item.enabled && (item.key !== "official:desktop-widget" || (typeof window !== "undefined" && !!window.desktopApi?.isDesktop?.())))
     .sort((a,b) => a.key.localeCompare(b.key, "en"))
     .flatMap<PluginSettingsDestination>(item => {
-      const native = item.key === METRICS_SETTINGS_OWNER || ["official:habits", "official:navo-ai", "official:desktop-widget", "official:cloud-drive-sync"].includes(item.key);
+      const native = item.key === METRICS_SETTINGS_OWNER || ["official:habits", "official:navo-ai", "official:desktop-widget", "official:cloud-drive-sync", "official:reading"].includes(item.key);
       const options = item.manifest.settingsOptions ?? [];
       const pages = pluginSettingsPages(snapshot, item);
       if (!native && !options.length && !pages.length) {
         const prior = previous.find(entry => entry.owner === item.key);
         // Retain the destination, never a stale mount callback, during a reload.
-        return (snapshot.busy || snapshot.updateBatch?.running) && prior ? [{ ...prior, pages: [] }] : [];
+        return (snapshot.busy || snapshot.updateBatch?.running) && prior ? [{ ...prior, pages: [] }] : [{ owner: item.key, title: item.manifest.name, native, options, pages: [] }];
       }
       return [{ owner: item.key, title: item.manifest.name, native, options, pages }];
     });
@@ -47,6 +47,7 @@ export function searchPluginSettings(destinations: readonly PluginSettingsDestin
     const base: SettingsTarget = { category: "plugins", pluginOwner: destination.owner };
     return [
       ...(matches(destination.title) ? [{ id: destination.owner, title: destination.title, ownerTitle: destination.title, target: base }] : []),
+      ...(destination.owner==="official:reading" && matches(destination.title,"阅读 微信读书 API Key WeRead connection 连接") ? [{id:"official:reading:weread",title:"WeRead · 微信读书",ownerTitle:destination.title,target:{...base,anchor:"reading-weread"}}] : []),
       ...destination.options.filter(option => matches(destination.title, option.label, option.key, option.description ?? "")).map(option => ({ id: destination.owner + ":" + option.key, title: option.label, ownerTitle: destination.title, target: { ...base, anchor: pluginOptionAnchor(option.key) } })),
       ...destination.pages.filter(page => matches(destination.title, page.name)).map(page => ({ id: page.id, title: page.name, ownerTitle: destination.title, target: { ...base, pluginPage: page.id, anchor: pluginPageAnchor(page.id) } })),
     ];

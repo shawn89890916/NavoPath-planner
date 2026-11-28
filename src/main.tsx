@@ -843,14 +843,16 @@ function App() {
   mobileExecutionRef.current = mobileExecution;
   const [candidateDrawerOpen, setCandidateDrawerOpen] = useState(false);
   const candidatePanelRef = useRef<HTMLElement>(null);
-  useEffect(() => () => document.documentElement.removeAttribute("data-side-workspace-drag-expanded"), [mobileExecution, candidateDrawerOpen]);
+  useEffect(() => () => { document.documentElement.removeAttribute("data-side-workspace-drag-expanded"); document.documentElement.removeAttribute("data-side-workspace-drag-active"); }, [mobileExecution, candidateDrawerOpen]);
   function updateSideWorkspaceDragExposure(point: { x: number; y: number } | null) {
     const html = document.documentElement;
     const panel = candidatePanelRef.current;
     if (!point || !mobileExecution || !candidateDrawerOpen || !panel) {
       html.removeAttribute("data-side-workspace-drag-expanded");
+      html.removeAttribute("data-side-workspace-drag-active");
       return;
     }
+    html.setAttribute("data-side-workspace-drag-active", "");
     const expanded = html.hasAttribute("data-side-workspace-drag-expanded");
     if (expanded) {
       if (point.x < panel.getBoundingClientRect().right - 12) html.removeAttribute("data-side-workspace-drag-expanded");
