@@ -278,3 +278,20 @@ describe("portrait timeline and Planning control contracts", () => {
     expect(appCss).toContain("width: 44px;");
   });
 });
+
+
+describe("compact side workspace", () => {
+  it("keeps the timeline live and does not close Tasks when candidate dragging begins", () => {
+    const controls = readFileSync(resolve(__dirname, "components/MobileExecutionControls.tsx"), "utf8");
+    const styles = readFileSync(resolve(__dirname, "mobile-execution.css"), "utf8");
+    expect(main).toContain('const mobileExecution = (portraitLayout || dockMouseLayout) && !productPresentation;');
+    expect(main).not.toContain('if (mobileExecution && candidateDrawerOpen) event.stopPropagation()');
+    expect(main).not.toContain('df-mobile-candidate-backdrop');
+    expect(main).toContain('const compactOverlayOpen = Boolean(quickAddOpen || drawerOpen || mobilePlacement);');
+    expect(main).not.toContain('if (mobileExecution) closeCandidateDrawer();\n          setCompactExecuteView("schedule");');
+    expect(controls).toContain('aria-expanded={drawerOpen}');
+    expect(controls).toContain('onClick={drawerOpen ? onClose : onOpen}');
+    expect(styles).toContain('translate: var(--side-workspace-offset) 0;');
+    expect(styles).not.toContain('transform: translateY(100%)');
+  });
+});
