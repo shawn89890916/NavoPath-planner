@@ -20049,14 +20049,15 @@ body[data-navopath-base-theme="light"],
   padding-left: 10px;
 }
 .df-shelf-loading { padding: 12px; color: var(--text-muted); }
-.df-project-filter-anchor { display: inline-flex; position: relative; }
+.df-project-filter-anchor { display: flex; position: relative; width: 100%; }
+.df-project-filter-anchor .df-filter-popover-anchor { width: 100%; }
+#root .df-app .df-project-filter-anchor .df-filter-trigger { width: 100%; justify-content: flex-start; gap: 8px; padding: 8px; }
 #root .df-app .df-project-filter-anchor .df-filter-panel {
-  left: auto;
-  right: 0;
-  top: calc(100% + 4px);
-  width: min(240px, calc(100vw - 32px));
-  max-height: min(48dvh, 390px);
-  z-index: 80;
+  position: static;
+  width: 100%;
+  max-height: min(38dvh, 300px);
+  overflow: auto;
+  box-shadow: none;
 }
 #root .df-app .df-project-filter-anchor .df-filter-flyout-panel {
   position: static;

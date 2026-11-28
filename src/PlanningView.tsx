@@ -1707,7 +1707,7 @@ export default function PlanningView(props: {
 
   const projectFilters = (<>
               {(viewMode === "tree" || viewMode === "list") && (
-              <div className="df-filter-popover-anchor">
+              <div className="df-filter-popover-anchor" onClick={(event) => event.stopPropagation()}>
                 <button
                   type="button"
                   className={`df-filter-trigger${filterOpen ? " active" : ""}${hasActiveFilters ? " has-active" : ""}`}
@@ -1717,6 +1717,7 @@ export default function PlanningView(props: {
                   onClick={() => { setFilterOpen((open) => !open); setFilterExpandedCategory(null); }}
                 >
                   <UiFilterIcon size={17} />
+                  {props.filterAnchor && <span>{props.lang === "zh" ? "筛选任务" : "Filter tasks"}</span>}
                   {hasActiveFilters && <b>{activeFilterChips.length + Number(includeCompleted)}</b>}
                 </button>
                 {filterOpen && (

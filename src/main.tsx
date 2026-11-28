@@ -9737,7 +9737,6 @@ if (cached?.data && cached?.settings) {
                 </button>
               }
               actions={<>
-                {shelfTreeOpen && <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />}
                 {aiEnabled && (
                   <span className="df-ai-plan-title-tools">
                     <IconButton
@@ -9763,7 +9762,8 @@ if (cached?.data && cached?.settings) {
 
                 {!productDemo && <IconButton className="df-candidate-header-icon" icon={<UiSearchIcon size={17} />} label={lang === "zh" ? "搜索任务" : "Search tasks"} onClick={() => { setCommandQuery(""); setCommandOpen(true); }} />}
                 {(!productDemo || canCollapseCandidatePanel) && <ActionDisclosure label={lang === "zh" ? "更多候选操作" : "More task options"}>
-                  {!productDemo && <Button variant="ghost" onClick={() => openQuickTaskAdd()}>{t(lang, "fab.add")}</Button>}
+                  {!productDemo && <Button variant="ghost" onClick={() => compactLayout ? openQuickTaskAdd() : openTaskDraft()}>{t(lang, "fab.add")}</Button>}
+                  {shelfTreeOpen && <span ref={setProjectFilterAnchor} className="df-project-filter-anchor" />}
                   {shelfTreeOpen && !productDemo && <Button variant="ghost" onClick={() => openAdd("project")}>{lang === "zh" ? "新建项目" : "New project"}</Button>}
                   {!shelfView && <Button variant="ghost" aria-pressed={groupByProject} onClick={() => setGroupByProject((value) => !value)}>{lang === "zh" ? "按项目分类" : "Group by project"}</Button>}
                   {!shelfTreeOpen && <Button variant="ghost" aria-pressed={showCompletedCandidates} onClick={() => setShowCompletedCandidates((value) => !value)}>{t(lang, "candidate.showCompleted")}</Button>}
