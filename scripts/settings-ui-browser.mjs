@@ -133,9 +133,9 @@ export async function exerciseSettings(){
     }
     await selectImport();pauseNextShelf=true;click("Confirm (2)");
     await wait(()=>typeof releaseShelf==="function","Import validation request did not start");
-    window.dispatchEvent(new Event("navopath:weread-connection-changed"));releaseShelf();
+    window.dispatchEvent(new Event("navopath:weread"));releaseShelf();
     await wait(()=>!document.querySelector(".reading-import"),"Connection change did not close stale preview");
-    assert.equal(library.books.length,1,"Stale preview committed after credential change");
+    assert(library.books.length===1,"Stale preview committed after credential change");
     await selectImport();click("Confirm (2)");await wait(()=>library.books.length===2&&!document.querySelector(".reading-import"),"Import failed");
     assert(library.taskLinks[0].taskId==="existing-task"&&library.books.some(b=>b.id==="existing"),"Existing book/task identity lost");
     assert(library.books.find(b=>b.title==="New Book").progress.current===25,"Progress not imported");
