@@ -70,6 +70,7 @@ export class ExtensionService {
   isReady = () => this.ready;
   private setSnapshot(patch: Partial<ExtensionSnapshot>) { this.snapshot = { ...this.snapshot, ...patch }; for (const listener of this.listeners) listener(); }
   private scope() { return `account:${this.account}:`; }
+  private allowsV2Preview() { return this.account === "preview" && typeof location !== "undefined" && new URLSearchParams(location.search).get("plugin-runtime-v2") === "1"; }
   private ensureHost() { if (!this.host) throw new Error("Open a workspace first / 请先打开工作区"); return this.host; }
   async configure(host: ExtensionHost | null): Promise<void> {
     const account = host ? host.getAccountId() || "preview" : "";
@@ -189,6 +190,8 @@ export class ExtensionService {
       if (entry.publishedAt !== undefined && (typeof entry.publishedAt !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(entry.publishedAt) || !Number.isFinite(Date.parse(entry.publishedAt)))) throw new Error("Catalog publish date must be an ISO timestamp");
       return { manifest: validateManifest(entry.manifest), downloadUrl: publicHttps(entry.downloadUrl), sha256: entry.sha256, sourceId, ...(entry.previewUrl ? { previewUrl: publicHttps(entry.previewUrl) } : {}), ...(previewUrls ? { previewUrls } : {}), ...(entry.iconUrl ? { iconUrl: publicHttps(entry.iconUrl) } : {}), ...(entry.downloads !== undefined ? { downloads: entry.downloads } : {}), ...(entry.publishedAt ? { publishedAt: entry.publishedAt } : {}) };
     });
+    // Protocol 2 is never discovered via the legacy catalog or an external source.
+    for (let i = entries.length - 1; i >= 0; i--) if (entries[i].manifest.apiVersion !== 1) entries.splice(i, 1);
     if (sourceId === "official") {
       for (let i = entries.length - 1; i >= 0; i--) if (retiredCoreIds.has(entries[i].manifest.id)) entries.splice(i, 1);
       const { officialCatalog } = await import("./officialCatalog");
@@ -200,11 +203,23 @@ export class ExtensionService {
         else if (compareVersions(bundled.manifest.version, current.manifest.version) > 0) entries[index] = { ...bundled, sourceId };
       }
     }
+    if (sourceId === "official" && this.allowsV2Preview()) {
+      try {
+        const { PREVIEW_CATALOG_URL, readV2PreviewCatalog } = await import("./previewCatalogV2");
+        const address = new URL(PREVIEW_CATALOG_URL); address.searchParams.set("_nvp", String(Date.now()));
+        const preview = readV2PreviewCatalog(JSON.parse(new TextDecoder().decode(await this.download(address.href, true))));
+        for (const entry of preview) {
+          if (retiredCoreIds.has(entry.manifest.id) || this.snapshot.preferences.installed["official:" + entry.manifest.id]?.manifest.apiVersion === 1) continue;
+          const index = entries.findIndex(item => item.manifest.id === entry.manifest.id);
+          if (index < 0) entries.push(entry); else entries[index] = entry;
+        }
+      } catch { warning = [warning, "Protocol 2 preview catalog unavailable / V2 预览目录不可用"].filter(Boolean).join("\n"); }
+    }
     return { entries, warning };
   }
   private refreshCatalogImpl(): Promise<void> {
     const generation = this.generation, sources = this.snapshot.preferences.sources;
-    const signature = `${generation}:${JSON.stringify(sources)}`;
+    const signature = `${generation}:${this.allowsV2Preview()}:${JSON.stringify(sources)}`;
     if (this.catalogRequest?.signature === signature) return this.catalogRequest.promise;
     const request = { signature, promise: Promise.resolve().then(async () => {
       const catalog: CatalogEntry[] = [], errors: string[] = [];
@@ -258,7 +273,7 @@ export class ExtensionService {
   private async installBytes(bytes: Uint8Array, sourceId: string, downloadUrl?: string, expectedHash?: string, expectedKind?: ExtensionKind) {
     const account = this.account, pkg = await readPackage(bytes), hash = await sha256(bytes);
     if (expectedHash && hash !== expectedHash) throw new Error("Package integrity check failed");
-    if (pkg.manifest.apiVersion === 2 && (sourceId !== "official" || !expectedHash)) throw new Error("Protocol 2 preview is restricted to the approved catalog / V2 预览仅支持审核目录");
+    if (pkg.manifest.apiVersion === 2 && (sourceId !== "official" || !expectedHash || !this.allowsV2Preview())) throw new Error("Protocol 2 preview is restricted to the approved catalog in an opted-in local workspace / V2 预览仅支持本地预览工作区审核目录");
     if (expectedKind && pkg.manifest.kind !== expectedKind) throw new Error(expectedKind === "theme" ? "请在插件页导入插件 / Import plugins from Plugins" : "请在外观页导入主题 / Import themes from Appearance");
     if (sourceId === "official" && retiredCoreIds.has(pkg.manifest.id)) throw new Error("This feature is built in / 此功能已内置");
     const key = `${sourceId}:${pkg.manifest.id}`, previous = this.snapshot.preferences.installed[key];
@@ -281,7 +296,7 @@ export class ExtensionService {
     await this.savePreferences({ ...this.snapshot.preferences, removed, installed: { ...this.snapshot.preferences.installed, [key]: installed } });
   }
   install = (entry: CatalogEntry) => this.operation(async () => {
-    if (entry.manifest.apiVersion === 2 && (entry.sourceId !== "official" || !this.snapshot.catalog.some(candidate => candidate.sourceId === "official" && candidate.manifest.id === entry.manifest.id && candidate.sha256 === entry.sha256))) throw new Error("Protocol 2 preview requires a verified official catalog entry");
+    if (entry.manifest.apiVersion === 2 && (!this.allowsV2Preview() || entry.sourceId !== "official" || !this.snapshot.catalog.some(candidate => candidate.sourceId === "official" && candidate.manifest.id === entry.manifest.id && candidate.sha256 === entry.sha256))) throw new Error("Protocol 2 preview requires a verified official catalog entry");
     const bytes = await this.packageBytes(entry); const pkg = await readPackage(bytes);
     if (pkg.manifest.id !== entry.manifest.id || pkg.manifest.version !== entry.manifest.version || pkg.manifest.kind !== entry.manifest.kind) throw new Error("Catalog manifest does not match package");
     await this.installBytes(bytes, entry.sourceId, entry.downloadUrl, entry.sha256);
@@ -411,8 +426,9 @@ export class ExtensionService {
   }
   private async loadInstalledPlugin(pkg: ExtensionPackage, key: string): Promise<Pick<LoadedPlugin, "iconUrl" | "dispose" | "configChanged">> {
     if (pkg.manifest.apiVersion !== 2) return loadPlugin(pkg, this.bridge(key));
+    if (!this.allowsV2Preview()) throw new Error("Protocol 2 requires an opted-in local preview workspace");
     const generation = this.generation, account = this.account, host = this.ensureHost();
-    const isCurrent = () => generation === this.generation && account === this.account && !!this.host && (host.getAccountId() || "preview") === account && !this.snapshot.safeMode && this.snapshot.preferences.installed[key]?.enabled === true;
+    const isCurrent = () => this.allowsV2Preview() && generation === this.generation && account === this.account && !!this.host && (host.getAccountId() || "preview") === account && !this.snapshot.safeMode && this.snapshot.preferences.installed[key]?.enabled === true;
     const { loadV2Preview } = await import("./runtimeV2Host");
     if (!isCurrent()) throw new Error("Extension account changed");
     const storage = pkg.manifest.permissions?.some(permission => permission === "storage.read" || permission === "storage.write")
@@ -746,11 +762,12 @@ export class ExtensionService {
     await this.migrateLegacy();
     if (generation !== this.generation) return;
     const prefs = this.snapshot.preferences, statuses: Record<string,string> = {};
-    for (const [key, active] of this.loaded) if (this.snapshot.safeMode || !prefs.installed[key]?.enabled || prefs.installed[key]?.sha256 !== active.hash) await this.unload(key);
+    for (const [key, active] of this.loaded) if (this.snapshot.safeMode || !prefs.installed[key]?.enabled || prefs.installed[key]?.sha256 !== active.hash || (prefs.installed[key]?.manifest.apiVersion === 2 && !this.allowsV2Preview())) await this.unload(key);
     try { localStorage.setItem(this.scope() + "booting", "true"); } catch { /* recovery remains available via URL */ }
     try {
       for (const item of Object.values(prefs.installed)) {
         if (generation !== this.generation) return;
+        if (item.manifest.apiVersion === 2 && !this.allowsV2Preview()) { statuses[item.key] = "V2 local preview only / V2 仅本地预览"; continue; }
         const incompatible = compatibility(item.manifest, platform());
         if (incompatible) { statuses[item.key] = incompatible; continue; }
         if (this.snapshot.safeMode) { statuses[item.key] = "受限模式 / Restricted mode"; continue; }

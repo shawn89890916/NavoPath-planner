@@ -7,7 +7,7 @@ export function createReadingController(ctx: PluginContextV2) {
   const listeners = new Set<()=>void>();
   const notify = () => { if (!ctx.signal.aborted) for(const fn of listeners) fn(); };
   const subscribe = (fn:()=>void) => { listeners.add(fn); return () => {listeners.delete(fn);}; };
-  const ready = () => !busy && !error && !legacyChanged && !ctx.signal.aborted && !!library && (snapshot.status==="value" || (snapshot.status==="absent" && snapshot.revision===null && legacy===null));
+  const ready = () => !busy && !error && !legacyChanged && !!fingerprint && !ctx.signal.aborted && !!library && (snapshot.status==="value" || (snapshot.status==="absent" && snapshot.revision===null && legacy===null));
   async function refresh() {
     const run=++generation;
     try {
@@ -27,7 +27,8 @@ export function createReadingController(ctx: PluginContextV2) {
   }
   async function checkLegacy(expected:string|undefined) {
     if(!expected)throw Error(tr("无法验证旧书库","Cannot verify legacy library"));
-    const hash=await legacyFingerprint(await ctx.storage.readLegacy("library-v1"));
+    let hash:string;
+    try{hash=await legacyFingerprint(await ctx.storage.readLegacy("library-v1"));}catch(e){await refresh();throw e;}
     if(ctx.signal.aborted)throw Error("Reading inactive");
     if(hash!==expected){await refresh();throw Error(tr("旧客户端已修改书库，已暂停编辑","Legacy library changed; editing paused"));}
   }

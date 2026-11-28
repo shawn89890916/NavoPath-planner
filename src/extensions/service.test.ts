@@ -470,57 +470,65 @@ describe("Reading library lifecycle", () => {
 });
 
 describe("protocol 2 preview service routing", () => {
-  it("never replaces an existing V1 plugin through an automatic or explicit V2 update", async () => {
-    const bundled=getBundledExtension("reading")!,key="official:reading";
+  async function previewEntry(id="v2-sample"){
     const pkg=JSON.parse(weatherPackageText);
-    pkg.manifest={...pkg.manifest,id:"reading",version:"2.0.0",apiVersion:2,permissions:["tasks.read"]};
+    pkg.manifest={...pkg.manifest,id,version:"2.0.0",apiVersion:2,permissions:["tasks.read"]};
     delete pkg.manifest.styles;delete pkg.manifest.settingsOptions;delete pkg.manifest.mcp;
-    const bytes=new TextEncoder().encode(JSON.stringify(pkg));
-    const entry={manifest:pkg.manifest,sourceId:"official",sha256:await sha256(bytes),downloadUrl:"https://example.com/reading-v2.navopackage.json"};
-    const f=fixture("v2-update-guard",{...defaultExtensionPreferences(),installed:{[key]:{...bundled,key,sourceId:"official",enabled:false,installedAt:"2026-11-24T00:00:00Z"}}});
-    await current.configure(f.host);
+    const bytes=new TextEncoder().encode(JSON.stringify(pkg)),hash=await sha256(bytes);
+    const entry={manifest:pkg.manifest,sourceId:"official",sha256:hash,downloadUrl:"https://navopath.com/extensions-preview/packages-v2/"+id+"-2.0.0-"+hash+".navopackage.json"};
+    return {entry,bytes};
+  }
+  function serve(entry:CatalogEntry,bytes:Uint8Array,legacy:CatalogEntry[]=[]){
     vi.stubGlobal("fetch",vi.fn(async(url:string)=>{
-      if(url.includes("catalog.json"))return new Response(JSON.stringify({version:1,packages:[entry]}));
-      if(url===entry.downloadUrl)return new Response(bytes);
+      if(url.includes("catalog-v2.json"))return new Response(JSON.stringify({version:2,packages:[entry]}));
+      if(url.includes("catalog.json"))return new Response(JSON.stringify({version:1,packages:legacy}));
+      if(url===entry.downloadUrl)return new Response(bytes as Uint8Array<ArrayBuffer>);
       return fetchBundled(url);
     }));
+  }
+  afterEach(async()=>{
+    await current.configure(null);
+    for(const [key] of await cacheEntries("account:preview:"))await cacheDelete(key);
+  });
+  it("never replaces an existing V1 plugin in an opted-in preview",async()=>{
+    vi.stubGlobal("location",new URL("https://navopath.test/app?plugin-runtime-v2=1"));
+    const bundled=getBundledExtension("reading")!,key="official:reading";
+    const {entry,bytes}=await previewEntry("reading");
+    const f=fixture("preview",{...defaultExtensionPreferences(),installed:{[key]:{...bundled,key,sourceId:"official",enabled:false,installedAt:"2026-11-24T00:00:00Z"}}});
+    await current.configure(f.host);serve(entry,bytes,[{...bundled,sourceId:"official"}]);
     await current.checkUpdates();
     expect(current.getSnapshot().updates[key]).toBeUndefined();
-    const found=current.getSnapshot().catalog.find(item=>item.manifest.id==="reading")!;
-    await expect(current.install(found)).rejects.toThrow("Cross-protocol migration");
+    expect(current.getSnapshot().catalog.find(item=>item.manifest.id==="reading")?.manifest.apiVersion).toBe(1);
+    await expect(current.install(entry)).rejects.toThrow("verified official catalog");
     expect(current.getSnapshot().preferences.installed[key].manifest.apiVersion).toBe(1);
     expect(mocks.loadV2).not.toHaveBeenCalled();
   });
-  it("accepts approved catalog packages, refuses imports, and dispatches to the v2 loader only", async () => {
-    const f = fixture("v2-preview-test");
-    const pkg = JSON.parse(weatherPackageText);
-    pkg.manifest = { ...pkg.manifest, id: "v2-sample", apiVersion: 2, permissions: ["tasks.read"] };
-    delete pkg.manifest.styles; delete pkg.manifest.settingsOptions; delete pkg.manifest.mcp;
-    const bytes = new TextEncoder().encode(JSON.stringify(pkg));
-    const entry = { manifest: pkg.manifest, sourceId: "official", sha256: await sha256(bytes), downloadUrl: "https://example.com/v2-sample.navopackage.json" };
-    await current.configure(f.host);
-    await expect(current.importFile(new File([bytes], "sample.navopackage.json"))).rejects.toThrow("approved catalog");
-    await expect(current.install(entry)).rejects.toThrow("verified official catalog");
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
-      if (url.includes("catalog.json")) return new Response(JSON.stringify({ version: 1, packages: [entry] }));
-      if (url === entry.downloadUrl) return new Response(bytes);
-      return fetchBundled(url);
-    }));
+  it("does not request the preview catalog or install V2 on signed-in accounts",async()=>{
+    vi.stubGlobal("location",new URL("https://navopath.test/app?plugin-runtime-v2=1"));
+    const {entry,bytes}=await previewEntry();
+    await current.configure(fixture("v2-signed-in").host);serve(entry,bytes,[entry]);
     await current.refreshCatalog();
-    const found = current.getSnapshot().catalog.find(item => item.manifest.id === "v2-sample")!;
+    expect(current.getSnapshot().catalog.some(item=>item.manifest.apiVersion===2)).toBe(false);
+    expect(vi.mocked(fetch).mock.calls.some(args=>String(args[0]).includes("catalog-v2.json"))).toBe(false);
+    await expect(current.install(entry)).rejects.toThrow("verified official catalog");
+  });
+  it("accepts an approved separate catalog only in the opted-in local workspace",async()=>{
+    vi.stubGlobal("location",new URL("https://navopath.test/app?plugin-runtime-v2=1"));
+    const {entry,bytes}=await previewEntry();
+    await current.configure(fixture().host);
+    await expect(current.importFile(new File([bytes as Uint8Array<ArrayBuffer>],"sample.navopackage.json"))).rejects.toThrow("approved catalog");
+    await expect(current.install(entry)).rejects.toThrow("verified official catalog");
+    serve(entry,bytes);
+    await current.refreshCatalog();
+    const found=current.getSnapshot().catalog.find(item=>item.manifest.id==="v2-sample")!;
     expect(found).toBeDefined();
     await current.install(found);
-    const key = "official:v2-sample";
+    const key="official:v2-sample";
     expect(mocks.loadV2).not.toHaveBeenCalled();
-    await current.toggle(key, true);
+    await current.toggle(key,true);
     expect(mocks.loadV2).toHaveBeenCalledTimes(1);
-    expect(mocks.loadV2.mock.calls[0][1].key).toBe(key);
-    expect(mocks.load).not.toHaveBeenCalled();
-    const bridge = mocks.loadV2.mock.calls[0][1];
-    expect(bridge.isCurrent()).toBe(true);
-    await current.toggle(key, false);
-    expect(bridge.isCurrent()).toBe(false);
-    await current.configure(null);
-    for (const [cacheKey] of await cacheEntries("account:v2-preview-test:")) await cacheDelete(cacheKey);
+    const bridge=mocks.loadV2.mock.calls[0][1];
+    expect(bridge.key).toBe(key);expect(bridge.isCurrent()).toBe(true);
+    await current.toggle(key,false);expect(bridge.isCurrent()).toBe(false);
   });
 });
