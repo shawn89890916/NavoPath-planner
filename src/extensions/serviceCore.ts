@@ -2,8 +2,8 @@ import { nativeFeatureIds } from "./nativeFeatures";
 import type { CatalogEntry, Dispose, ExtensionContribution, ExtensionTaskGroup, ExtensionHost, ExtensionKind, ExtensionUpdateBatch, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSnapshot, InstalledExtension, Mount, NativeShelfViewMode, PluginLauncherStatus } from "./types";
 import { compatibility, compareVersions, defaultExtensionPreferences, isRecord, MAX_PACKAGE_BYTES, normalizeExtensionPreferences, readExtensionResponse, readPackage, publicHttps, sha256 } from "./packages";
 import { cacheDelete, cacheEntries, cacheGet, cachePut } from "./cache";
-import { emitPluginEvent, loadPlugin, type LoadedPlugin } from "./runtime";
-import { fetchExtensionBytes, getExtensionValue, getPrivatePackage, putPrivatePackage, removeExtensionValue, setExtensionValue, subscribeExtensionValues } from "./transport";
+import { emitPluginEvent, subscribePluginEvent, loadPlugin, type LoadedPlugin } from "./runtime";
+import { fetchExtensionBytes, getExtensionValue, getPrivatePackage, putPrivatePackage, removeExtensionValue, setExtensionValue, subscribeExtensionValues, versionedBackend } from "./transport";
 import { applyExtensionTheme } from "./theme";
 import { getAppHeaderPlugins, moveCompactPlugin } from "./compactDock";
 import type { CompactPluginPlacement } from "./model";
@@ -87,6 +87,10 @@ export class ExtensionService {
       this.setSnapshot({ preferences: normalizeExtensionPreferences(host?.getSettings().extensions), safeMode, status: {}, settingsPages: [], views: [], taskGroups: [], metricsProviders: [], nativeFeatures: [], launcherStatus: {}, catalog: [], updates: {}, catalogLoading: false, checkingUpdates: false, updateBatch: undefined, error: "" });
       if (generation !== this.generation) return;
       if (account && account !== "preview") this.unbindStorage = subscribeExtensionValues((owner, key, value) => {
+        if (owner.startsWith("v2:")) {
+          if (account === this.account && generation === this.generation) emitPluginEvent("v2-storage:" + JSON.stringify([account, owner.slice(3), key]));
+          return;
+        }
         const pendingKey = this.scope() + `pending:${owner}:${key}`;
         void cacheGet(pendingKey).then(pending => { if (!pending && account === this.account) { void cachePut(this.scope() + `value:${owner}:${key}`, value); emitPluginEvent(`storage:${owner}`, { key, value }); } });
       });
@@ -410,8 +414,15 @@ export class ExtensionService {
     const isCurrent = () => generation === this.generation && account === this.account && !!this.host && (host.getAccountId() || "preview") === account && !this.snapshot.safeMode && this.snapshot.preferences.installed[key]?.enabled === true;
     const { loadV2Preview } = await import("./runtimeV2Host");
     if (!isCurrent()) throw new Error("Extension account changed");
+    const storage = pkg.manifest.permissions?.some(permission => permission === "storage.read" || permission === "storage.write")
+      ? (await import("./versionedStorage")).createVersionedStorage({
+        account, owner: key, current: isCurrent, backend: versionedBackend,
+        notify: (owner, name) => emitPluginEvent("v2-storage:" + JSON.stringify([account, owner, name])),
+        subscribe: (name, listener) => subscribePluginEvent("v2-storage:" + JSON.stringify([account, key, name]), listener),
+      }) : undefined;
+    if (!isCurrent()) throw new Error("Extension account changed");
     return loadV2Preview(pkg, {
-      key, host, platform: platform(), isCurrent,
+      key, host, platform: platform(), isCurrent, storage,
       registerTaskGroup: (group: ExtensionTaskGroup) => {
         if (!isCurrent()) throw new Error("Extension account changed");
         const groups = this.snapshot.taskGroups ?? [];
@@ -553,7 +564,12 @@ export class ExtensionService {
     if (this.flushing || !this.account || this.account === "preview" || !navigator.onLine) return;
     this.flushing = true; const scope = this.scope();
     try {
-      const account = this.account;
+      const account = this.account, generation = this.generation;
+      if ((await cacheEntries(scope + "v2-storage:")).length) {
+        const { flushVersionedStorage } = await import("./versionedStorage");
+        await flushVersionedStorage(versionedBackend, account, () => scope === this.scope() && generation === this.generation,
+          (owner, key) => emitPluginEvent("v2-storage:" + JSON.stringify([account, owner, key])));
+      }
       for (const [key, bytes] of await cacheEntries<Uint8Array>(scope + "upload:")) { if (scope !== this.scope()) return; await putPrivatePackage(key.slice((scope + "upload:").length), bytes, account); await cacheDelete(key); }
       for (const [key, pending] of await cacheEntries<PendingValue>(scope + "pending:")) {
         if (scope !== this.scope()) return;

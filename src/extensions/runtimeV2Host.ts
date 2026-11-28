@@ -11,6 +11,7 @@ export interface V2PreviewBridge {
   isCurrent(): boolean;
   registerTaskGroup(group: ExtensionTaskGroup): Dispose;
   registerMetricsProvider?(provider: V2MetricsProvider & { owner: string }): Dispose;
+  storage?: V2HostAdapter["storage"];
   register(kind: "views" | "settingsPages", contribution: ExtensionContribution): Dispose;
 }
 import { projectPluginTask } from "./pluginTaskCommands";
@@ -45,9 +46,10 @@ export async function loadV2Preview(
   const registered = new Set<V2ContributionKind>();
   const adapter: V2HostAdapter = {
     owner: bridge.key, platform: bridge.platform, language: bridge.host.getSettings().language,
-    supported: new Set(v2PreviewCapabilities.filter(capability => (capability !== "tasks.write" || !!bridge.host.executePluginTask) && (capability !== "metrics.provider" || !!bridge.registerMetricsProvider))), granted: new Set(permissions), isCurrent: bridge.isCurrent,
+    supported: new Set(v2PreviewCapabilities.filter(capability => (capability !== "tasks.write" || !!bridge.host.executePluginTask) && (capability !== "metrics.provider" || !!bridge.registerMetricsProvider) && (!capability.startsWith("storage.") || !!bridge.storage))), granted: new Set(permissions), isCurrent: bridge.isCurrent,
     tasks: { list: async query => listTasks(bridge.host, query),
       execute: bridge.host.executePluginTask ? (command, signal) => bridge.host.executePluginTask!(bridge.key, command, () => !signal.aborted && bridge.isCurrent()) : undefined },
+    storage: bridge.storage,
     activity: { async query(query, signal) {
       const [{ queryPluginActivity }, { parseDayStartMinutes }] = await Promise.all([import("../metrics/pluginActivityFacts"), import("../metrics/timeAllocation")]);
       if (signal.aborted || !bridge.isCurrent()) throw new V2ContractError("INACTIVE", "Workspace changed");
