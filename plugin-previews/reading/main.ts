@@ -70,7 +70,7 @@ function mountShelf(ctx:PluginContextV2,c:Controller,container:HTMLElement) {
   function el<K extends keyof HTMLElementTagNameMap>(tag:K,text?:string,parent:HTMLElement=root) {
     const node=doc.createElement(tag); if(text!==undefined) node.textContent=text;parent.append(node);return node;
   }
-  function button(label:string,action:()=>void,parent=root) {const b=el("button",label,parent);b.type="button";b.className="ui-button ui-button--secondary";b.onclick=action;return b;}
+  function button(label:string,action:()=>void,parent:HTMLElement=root) {const b=el("button",label,parent);b.type="button";b.className="ui-button ui-button--secondary";b.onclick=action;return b;}
   function report(e:unknown){if(!disposed && !ctx.signal.aborted) ctx.ui.toast(String(e));}
   function editor(book?:ReadingBook) {
     const before=c.library;if(!before || !c.ready()) return;
