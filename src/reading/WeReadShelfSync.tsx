@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState} from "react";
 import {Button,Input} from "../components/UiPrimitives";
-import {extensionService} from "../extensions/service";
+import {readingWeRead} from "./wereadConnectionService";
 import type {ReadingLibrary,ReadingBook} from "./model";
 import {weReadDesktopAvailable,WEREAD_CONNECTION_EVENT,type WeReadItem,type WeReadProgress} from "./wereadConnection";
 import {applyWeReadProgress,importWeRead,recentLinkedItems,sourceKey,sourceMatches,suggestedBook,matchingBooks,syncWeReadShelf} from "./wereadSync";
@@ -14,7 +14,7 @@ export default function WeReadShelfSync({account,library,mutate,zh,busy,refreshT
   const current=useRef({library,mutate,busy});current.current={library,mutate,busy};
   const lock=useRef(false),epoch=useRef(0),last=useRef(0),previewOpen=useRef(false);previewOpen.current=!!preview;
   const tr=(a:string,b:string)=>zh?a:b;
-  const request=async(action:"status"|"shelf"|"progress",arg?:string)=>extensionService.readingWeRead(action,arg,account);
+  const request=async(action:"status"|"shelf"|"progress",arg?:string)=>readingWeRead(action,arg,account);
   async function run(open=false){
     if(lock.current||current.current.busy||!weReadDesktopAvailable())return;
     lock.current=true;const e=epoch.current;setLoading(true);setError("");

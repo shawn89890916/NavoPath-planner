@@ -9,7 +9,7 @@ let pending: Promise<ExtensionService> | undefined;
 let configureRevision = 0;
 const listeners = new Set<() => void>();
 let snapshot: ExtensionSnapshot = { preferences: defaultExtensionPreferences(), catalog: [], updates: {}, status: {}, busy: false, error: "", safeMode: false, settingsPages: [], views: [], launcherStatus: {} };
-async function engine() {
+export async function engine() {
   return implementation ?? (pending ??= import("./serviceCore").then(({ ExtensionService }) => {
     implementation = new ExtensionService();
     implementation.subscribe(() => { snapshot = implementation!.getSnapshot(); for (const listener of listeners) listener(); });
@@ -29,7 +29,6 @@ export const extensionService = {
     if (revision === configureRevision) await current.configure(host);
   },
   getConfig: (key: string) => implementation?.getConfig(key) ?? {},
-  readingWeRead: async (action: import("../reading/wereadConnection").WeReadAction, candidate?: string, expectedAccount?: string) => (await engine()).readingWeRead(action, candidate, expectedAccount),
   readReadingLibrary: async (account: string) => (await engine()).readReadingLibrary(account),
   writeReadingLibrary: async (account: string, value: unknown) => (await engine()).writeReadingLibrary(account, value),
   getActiveThemeDescriptor: () => implementation?.getActiveThemeDescriptor(),

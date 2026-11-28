@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { Language } from "../types";
 import { SettingSection, SettingRow, SettingActionButton, SettingTextInput } from "../components/SettingsControls";
-import { extensionService } from "../extensions/service";
+import { readingWeRead } from "./wereadConnectionService";
 import { weReadDesktopAvailable, WEREAD_CONNECTION_EVENT, type WeReadAction, type WeReadResult } from "./wereadConnection";
 
-export default function ReadingSettings({lang,active,connection=extensionService.readingWeRead,desktopAvailable=weReadDesktopAvailable}:{lang:Language;active:boolean;connection?:typeof extensionService.readingWeRead;desktopAvailable?:typeof weReadDesktopAvailable}){
+export default function ReadingSettings({lang,active,connection=readingWeRead,desktopAvailable=weReadDesktopAvailable}:{lang:Language;active:boolean;connection?:typeof extensionService.readingWeRead;desktopAvailable?:typeof weReadDesktopAvailable}){
   const tr=(zh:string,en:string)=>lang==="zh"?zh:en;
   const supported=desktopAvailable();
   const [key,setKey]=useState(""),[connected,setConnected]=useState(false),[verified,setVerified]=useState<Extract<WeReadResult,{ok:true}>|null>(null);
