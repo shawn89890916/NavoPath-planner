@@ -10,6 +10,10 @@ describe("plugin activity facts", () => {
     expect(queryPluginActivity(data, { from, to }, 0)).toEqual({ planned: [], actual: [{ id: "measured", taskId: "deleted-task", start: "2026-11-28T10:00:00.000Z", end: "2026-11-28T11:00:00.000Z", minutes: 45 }] });
     expect(queryPluginActivity(data, { from, to, taskIds: [] }, 0).actual).toEqual([]);
   });
+  it("supports all recorded activity and reports optional weighted time separately", () => {
+    const facts = queryPluginActivity(data, { range: "all" }, 0, true);
+    expect(facts.actual).toMatchObject([{ id: "measured", minutes: 90, weightedMinutes: 72 }]);
+  });
   it("rejects invalid, inverted and unbounded ranges", () => {
     for (const query of [{ from: "invalid", to }, { from: to, to: from }, { from: "2024-01-01T00:00:00Z", to }]) expect(() => queryPluginActivity(data, query, 0)).toThrow();
   });

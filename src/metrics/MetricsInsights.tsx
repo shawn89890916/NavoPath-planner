@@ -53,7 +53,7 @@ function ScopedMetricsInsights(props:Props) {
   const t=(zh:string,en:string)=>p.lang==="zh"?zh:en;
   const preference=p.scope?analyticsPreference(p.scope):null;
   const result=useMemo(()=>buildInsights(p.data,p.allocation,p),[p.data,p.allocation,p.dayStartMinutes,p.projectIds,p.habitMode,p.completion]);
-  const pluginFacts=useMemo(()=>view==="overview"?projectActivityFacts(allocation,result.trackedEntries):null,[view,allocation,result]);
+  const pluginFacts=useMemo(()=>view==="overview"?projectActivityFacts(allocation,result.trackedEntries,data,engagementEnabled):null,[view,allocation,result,data,engagementEnabled]);
   const start=p.allocation.range.start.getTime(),end=p.allocation.range.end.getTime();
   const historyStart=p.query.range==="all"?Date.parse("2000-01-01T00:00:00Z"):start,historyEnd=p.query.range==="all"?Date.parse("2100-01-01T00:00:00Z"):end;
   const pageKey=JSON.stringify([p.scope,historyStart,historyEnd,p.projectIds,historySource,historyEntity]);

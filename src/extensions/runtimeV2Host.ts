@@ -12,6 +12,7 @@ export interface V2PreviewBridge {
   registerTaskGroup(group: ExtensionTaskGroup): Dispose;
   registerMetricsProvider?(provider: V2MetricsProvider & { owner: string }): Dispose;
   storage?: V2HostAdapter["storage"];
+  engagementEnabled?(): boolean;
   register(kind: "views" | "settingsPages", contribution: ExtensionContribution): Dispose;
 }
 import { projectPluginTask, validPluginEntityId, pluginEntityKeys, linkedPluginEntity } from "./pluginTaskCommands";
@@ -70,7 +71,7 @@ export async function loadV2Preview(
     activity: { async query(query, signal) {
       const [{ queryPluginActivity }, { parseDayStartMinutes }] = await Promise.all([import("../metrics/pluginActivityFacts"), import("../metrics/timeAllocation")]);
       if (signal.aborted || !bridge.isCurrent()) throw new V2ContractError("INACTIVE", "Workspace changed");
-      return queryPluginActivity(bridge.host.getData(), query, parseDayStartMinutes(bridge.host.getSettings().dayStartTime));
+      return queryPluginActivity(bridge.host.getData(), query, parseDayStartMinutes(bridge.host.getSettings().dayStartTime), bridge.engagementEnabled?.() ?? false);
     } },
     contribute(kind, id, value) {
       if (kind === "metrics.provider") return bridge.registerMetricsProvider!({ ...(value as V2MetricsProvider), id, owner: bridge.key });

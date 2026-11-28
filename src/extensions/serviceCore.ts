@@ -422,7 +422,7 @@ export class ExtensionService {
       }) : undefined;
     if (!isCurrent()) throw new Error("Extension account changed");
     return loadV2Preview(pkg, {
-      key, host, platform: platform(), isCurrent, storage,
+      key, host, platform: platform(), isCurrent, storage, engagementEnabled: () => this.snapshot.nativeFeatures?.includes("engagement") === true,
       registerTaskGroup: (group: ExtensionTaskGroup) => {
         if (!isCurrent()) throw new Error("Extension account changed");
         const groups = this.snapshot.taskGroups ?? [];

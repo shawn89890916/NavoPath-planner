@@ -44,18 +44,19 @@ export type V2TaskResult =
   /** Accepted by the core local mutation/history path; cloud sync may still be pending. */
   | { readonly status: "accepted" | "committed"; readonly task: V2Task }
   | { readonly status: "conflict" | "unavailable"; readonly message: string };
-export interface V2ActivityQuery {
+export type V2ActivityQuery =
   /** Half-open ISO timestamp interval; actual and planned records are separate. */
-  readonly from: string;
-  readonly to: string;
-  readonly taskIds?: readonly string[];
-}
+  | { readonly from: string; readonly to: string; readonly taskIds?: readonly string[] }
+  /** All recorded intervals, without projected recurrences or all-day estimates. */
+  | { readonly range: "all"; readonly taskIds?: readonly string[] };
 export interface V2ActivityFact {
   readonly id: string;
   readonly taskId: string;
   readonly start: string;
   readonly end: string;
   readonly minutes: number;
+  /** Optional engagement-weighted duration; never used in place of actual minutes. */
+  readonly weightedMinutes?: number;
 }
 export interface V2ActivityFacts {
   readonly planned: readonly V2ActivityFact[];
