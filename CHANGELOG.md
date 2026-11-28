@@ -2,6 +2,12 @@
 
 ## 2026-11-28
 
+### 1.7.0 Beta 141
+
+#### 改进
+
+- 竖屏和贴边栏的任务入口改为侧滑工作区，保留可滚动的时间轴和原有任务块；支持视图切换、连续拖拽安排及触屏边缘手势。
+
 ### 1.7.0 Beta 140
 
 #### 修复
@@ -1372,6 +1378,12 @@
 # NavoPath Changelog
 
 ## 2026-11-28
+
+### 1.7.0 Beta 141
+
+#### Improvements
+
+- Replace the portrait and Dock task entry with a sliding workspace, keeping the timeline scrollable and existing task-block appearance; switch views, drag tasks to schedule, and use touch edge gestures.
 
 ### 1.7.0 Beta 140
 

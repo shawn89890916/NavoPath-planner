@@ -19,7 +19,7 @@ async function runServer() {
         res.setHeader("Content-Type", "text/html");
         res.end(`<!doctype html><html><body>Isolated Metrics storage test<script type="module">
           const phase=new URL(location.href).searchParams.get("phase");
-          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):phase==="exerciseSettings"?import("/scripts/settings-ui-browser.mjs"):phase==="exerciseIntent"?import("/scripts/intent-ui-browser.mjs"):phase==="exerciseDragProjection"?import("/scripts/drag-projection-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
+          window.metricsResult=(phase==="exerciseUi"?import("/scripts/metrics-ui-browser.mjs"):phase==="exerciseConnections"?import("/scripts/connections-ui-browser.mjs"):phase==="exerciseMotion"?import("/scripts/stability-motion-browser.mjs"):phase==="exerciseSettings"?import("/scripts/settings-ui-browser.mjs"):phase==="exerciseIntent"?import("/scripts/intent-ui-browser.mjs"):phase==="exerciseDragProjection"?import("/scripts/drag-projection-browser.mjs"):phase==="exerciseSideWorkspace"?import("/scripts/side-workspace-browser.mjs"):import("/scripts/metrics-storage-browser.mjs")).then(tests=>tests[phase]()).then(value=>({value}),error=>({error:String(error?.stack||error)}));
         </script></body></html>`);
       });
     } }]
@@ -32,7 +32,7 @@ async function runServer() {
         env: { ...process.env, NAVOPATH_METRICS_TEST_PROFILE: profile, NAVOPATH_METRICS_TEST_URL: "http://127.0.0.1:"+port+"/__metrics_test" },
         stdio: "inherit", windowsHide: true
       });
-      const timeout = setTimeout(() => child.kill(), 120000);
+      const timeout = setTimeout(() => child.kill(), process.env.NAVOPATH_INTENT_ONLY === "1" ? 240000 : 120000);
       child.once("error", error => { clearTimeout(timeout); reject(error); });
       child.once("close", code => { clearTimeout(timeout); code === 0 ? resolve() : reject(Error("Metrics Chromium test exited with "+code)); });
     });
@@ -61,6 +61,13 @@ async function runRenderer() {
           if (!result || result.error) throw Error(result?.error || phase+" failed");
           console.log("Chromium "+phase+": "+JSON.stringify(result.value));
         }
+      }
+      for (const [width,height] of [[420,840],[300,640],[620,440]]) {
+        win.setContentSize(width,height);
+        await win.loadURL(url+"?phase=exerciseSideWorkspace");
+        const result=await win.webContents.executeJavaScript("(async()=>{for(let i=0;i<250;i++){if(window.metricsResult)return await Promise.race([window.metricsResult,new Promise((_,reject)=>setTimeout(()=>reject(Error('Side workspace fixture timed out')),55000))]);await new Promise(r=>setTimeout(r,20));}throw Error('Side workspace fixture missing');})()");
+        if (!result || result.error) throw Error(result?.error || "Side workspace fixture failed");
+        console.log("Side workspace Chromium: "+JSON.stringify(result.value));
       }
     } else {
     for (const phase of ["seedInterrupted", "recoverAndExercise", "recoverPurge"]) {

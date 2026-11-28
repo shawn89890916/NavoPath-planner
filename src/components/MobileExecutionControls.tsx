@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import { Button } from "./UiPrimitives";
-import { UiChevronUpIcon } from "./UiIcons";
+import { UiChevronLeftIcon, UiChevronRightIcon } from "./UiIcons";
 import type { Language } from "../types";
 import { t } from "../i18n";
+import { useSideWorkspaceGesture } from "../useSideWorkspaceGesture";
 
 export default function MobileExecutionControls({ lang, count, title, time, noSlot, conflict, onOpen, onCancel, onConfirm, triggerRef, desktop, hidden, drawerOpen, panelRef, scrollRef, onClose }: {
   desktop?: boolean; hidden: boolean; drawerOpen: boolean; panelRef: React.RefObject<HTMLElement | null>; scrollRef: React.RefObject<number>; onClose: () => void;
@@ -14,6 +15,7 @@ export default function MobileExecutionControls({ lang, count, title, time, noSl
   const wasOpen = useRef(false);
   const placementRef = useRef<HTMLElement>(null);
   const placing = title !== undefined;
+  useSideWorkspaceGesture({ enabled: !desktop && !hidden && !placing, open: drawerOpen, panelRef, onOpen, onClose });
   const manualHint = zh ? (desktop ? "点击时间轴手动选择。" : "轻点时间轴手动选择。")
     : (desktop ? "Click the timeline to pick a time." : "Tap the timeline to pick a time.");
   const placementHint = noSlot
@@ -32,10 +34,11 @@ export default function MobileExecutionControls({ lang, count, title, time, noSl
     const panel = panelRef.current;
     const list = panel?.querySelector<HTMLElement>(".df-candidate-list");
     if (list) list.scrollTop = scrollRef.current;
-    panel?.querySelector<HTMLButtonElement>(".df-mobile-candidate-close")?.focus();
+    panel?.querySelector<HTMLButtonElement>(".df-shelf-title-button")?.focus({ preventScroll: true });
     const key = (event: KeyboardEvent) => {
       if (event.target instanceof Element && event.target.closest("details[open]")) return;
       if (document.querySelector(".df-shelf-view-menu, .df-project-filter-anchor [aria-expanded=true]")) return;
+      if (document.body.classList.contains("df-timeline-pointer-drag") || document.documentElement.hasAttribute("data-side-workspace-gesture")) return;
       if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); onClose(); }
     };
     window.addEventListener("keydown", key, true);
@@ -48,6 +51,6 @@ export default function MobileExecutionControls({ lang, count, title, time, noSl
         {conflict && <span role="status">{zh ? "与已有日程重叠，仍可确认" : "Overlaps an existing event; you can still confirm"}</span>}</div>
       <div className="df-mobile-placement-actions"><Button onClick={onCancel}>{zh ? "取消" : "Cancel"}</Button>
         <Button variant="primary" disabled={!time} onClick={onConfirm}>{zh ? "确认安排" : "Confirm schedule"}</Button></div>
-    </section> : <button type="button" ref={triggerRef} className="df-mobile-candidates-trigger" aria-label={zh ? `展开待安排任务（${count}）` : `Expand tasks to schedule (${count})`} title={zh ? "展开待安排任务" : "Expand tasks to schedule"} aria-haspopup="dialog" aria-expanded={false} onClick={onOpen}><UiChevronUpIcon size={20} /></button>}
+    </section> : <button type="button" ref={triggerRef} className="df-mobile-candidates-trigger" aria-label={drawerOpen ? (zh ? "收起任务工作区" : "Close Tasks workspace") : (zh ? `展开任务（${count}）` : `Open Tasks (${count})`)} title={drawerOpen ? (zh ? "收起任务" : "Close Tasks") : (zh ? "展开任务" : "Open Tasks")} aria-expanded={drawerOpen} onClick={drawerOpen ? onClose : onOpen}>{drawerOpen ? <UiChevronLeftIcon size={20} /> : <UiChevronRightIcon size={20} />}</button>}
   </div>;
 }
