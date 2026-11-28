@@ -55,6 +55,16 @@ export async function loadV2Preview(
     owner: bridge.key, platform: bridge.platform, language: bridge.host.getSettings().language,
     supported: new Set(v2PreviewCapabilities.filter(capability => (capability !== "tasks.write" || !!bridge.host.executePluginTask) && (capability !== "metrics.provider" || !!bridge.registerMetricsProvider) && (!capability.startsWith("storage.") || !!bridge.storage))), granted: new Set(permissions), isCurrent: bridge.isCurrent,
     tasks: { list: query => listTasks(bridge, query),
+      async resolveEntityLinks(taskIds, entityIds, signal) {
+        if (!Array.isArray(taskIds) || taskIds.length > 10000 || taskIds.some(id => typeof id !== "string" || id.length > 200) ||
+            !Array.isArray(entityIds) || entityIds.length > 1000 || entityIds.some(id => !validPluginEntityId(id))) throw new V2ContractError("INVALID_INPUT", "Invalid entity link query");
+        const keys = await pluginEntityKeys(bridge.key, entityIds);
+        if (signal.aborted || !bridge.isCurrent()) throw new V2ContractError("INACTIVE", "Workspace changed");
+        return [...new Set(taskIds)].flatMap(taskId => {
+          const entityId = linkedPluginEntity(taskId, keys);
+          return entityId === undefined ? [] : [{ taskId, entityId }];
+        });
+      },
       execute: bridge.host.executePluginTask ? (command, signal) => bridge.host.executePluginTask!(bridge.key, command, () => !signal.aborted && bridge.isCurrent()) : undefined },
     storage: bridge.storage,
     activity: { async query(query, signal) {

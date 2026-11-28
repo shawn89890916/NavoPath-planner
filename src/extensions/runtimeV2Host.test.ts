@@ -84,7 +84,10 @@ describe("protocol 2 production preview bridge", () => {
     expect(await ctx.tasks.list({ entityIds: [] })).toEqual([]);
     expect(await ctx.tasks.list({ entityIds: ["another"] })).toEqual([]);
     expect((await ctx.tasks.list()).find(task => task.id === taskId)).not.toHaveProperty("entityId");
+    f.tasks.splice(f.tasks.findIndex(task => task.id === taskId), 1);
+    expect(await ctx.tasks.resolveEntityLinks([taskId, "ordinary"], ["book"])).toEqual([{ taskId, entityId: "book" }]);
     await loaded.dispose();
+    await expect(ctx.tasks.resolveEntityLinks([taskId], ["book"])).rejects.toMatchObject({ code: "INACTIVE" });
   });
   it("rejects unwired permissions and non-approved owners before importing code", async () => {
     const f = fixture(), importer = vi.fn();
@@ -111,19 +114,24 @@ describe("protocol 2 production preview bridge", () => {
     const f = fixture();
     f.pkg.manifest.permissions = ["metrics.provider"];
     const providers = new Map<string, V2MetricsProvider>();
+    const off = vi.fn(), invalidate = vi.fn();
+    let emit: (() => void) | undefined;
     f.bridge.registerMetricsProvider = provider => {
       providers.set(provider.id, provider); return () => { providers.delete(provider.id); };
     };
     let ctx!: PluginContextV2;
     const loaded = await loadV2Preview(f.pkg, f.bridge, async () => ({ default: { onload(context) {
       ctx = context;
-      ctx.metrics.registerProvider({ id: "minutes", name: "Minutes", query: facts => [{ label: "Actual", value: facts.actual.length }] });
+      ctx.metrics.registerProvider({ id: "minutes", name: "Minutes", query: facts => [{ label: "Actual", value: facts.actual.length }], subscribe: listener => { emit = listener; return off; } });
     } } }));
     const provider = providers.get("official:preview-sample:metrics.provider:minutes")!;
     expect(await provider.query({ planned: [], actual: [] })).toEqual([{ label: "Actual", value: 0 }]);
+    provider.subscribe!(invalidate);
+    emit!(); expect(invalidate).toHaveBeenCalledTimes(1);
     await expect(ctx.activity.query({ from: "2026-11-01T00:00:00Z", to: "2026-11-02T00:00:00Z" })).rejects.toMatchObject({ code: "PERMISSION_DENIED" });
     await loaded.dispose();
     expect(providers.size).toBe(0);
+    emit!(); expect(invalidate).toHaveBeenCalledTimes(1); expect(off).toHaveBeenCalledTimes(1);
     await expect(provider.query({ planned: [], actual: [] })).rejects.toMatchObject({ code: "INACTIVE" });
   });
   it("does not activate a module whose import resolves after the account changes", async () => {

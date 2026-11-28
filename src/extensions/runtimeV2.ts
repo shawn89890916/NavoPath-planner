@@ -2,7 +2,7 @@ import type {
   PluginContextV2, PluginModuleV2, V2ActivityFacts, V2ActivityQuery, V2Capability,
   V2ContributionKind, V2ContributionMap, V2Dispose, V2ErrorCode, V2ManifestContract,
   V2MetricsProvider, V2Page, V2StorageRead, V2StorageResult, V2StorageWrite,
-  V2Task, V2TaskCommand, V2TaskGroup, V2TaskQuery, V2TaskResult,
+  V2Task, V2TaskCommand, V2TaskGroup, V2TaskQuery, V2TaskResult, V2EntityTaskLink,
 } from "./sdkV2";
 
 /** Host-only adapter. All writes must be owned by the eventual authoritative
@@ -16,6 +16,7 @@ export interface V2HostAdapter {
   isCurrent(): boolean;
   tasks?: {
     list?(query: V2TaskQuery | undefined, signal: AbortSignal): Promise<readonly V2Task[]>;
+    resolveEntityLinks?(taskIds: readonly string[], entityIds: readonly string[], signal: AbortSignal): Promise<readonly V2EntityTaskLink[]>;
     execute?(command: V2TaskCommand, signal: AbortSignal): Promise<V2TaskResult>;
   };
   activity?: { query(query: V2ActivityQuery, signal: AbortSignal): Promise<V2ActivityFacts> };
@@ -126,7 +127,7 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
       ensure();
     } : undefined,
   });
-  const wrapMetrics = (provider: V2MetricsProvider, ensure: () => void): V2MetricsProvider => ({
+  const wrapMetrics = (provider: V2MetricsProvider, ensure: () => void, active: () => boolean, ownedCleanups: Set<V2Dispose>): V2MetricsProvider => ({
     id: provider.id, name: provider.name,
     async query(facts) {
       ensure();
@@ -134,6 +135,13 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
       ensure();
       return rows;
     },
+    subscribe: provider.subscribe ? listener => {
+      ensure();
+      const cleanup = provider.subscribe!(() => { if (active()) listener(); });
+      const off = track(async () => { ownedCleanups.delete(off); await cleanup(); });
+      ownedCleanups.add(off);
+      return off;
+    } : undefined,
   });
   const contribute = <K extends V2ContributionKind>(kind: K, value: V2ContributionMap[K]): V2Dispose => {
     check(kind);
@@ -150,7 +158,7 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
       check(kind);
     };
     const wrapped = (kind === "ui.tasksGroup" ? wrapGroup(value as V2TaskGroup, ensure, active, pageCleanups)
-      : kind === "metrics.provider" ? wrapMetrics(value as V2MetricsProvider, ensure)
+      : kind === "metrics.provider" ? wrapMetrics(value as V2MetricsProvider, ensure, active, pageCleanups)
       : wrapPage(value as V2Page, ensure, active, pageCleanups)) as V2ContributionMap[K];
     contributionKeys.add(stableId);
     let off: V2Dispose;
@@ -172,6 +180,10 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
     capabilities: granted, signal: controller.signal, register: track,
     tasks: Object.freeze({
       list: (query?: V2TaskQuery) => call("tasks.read", () => host.tasks!.list!(structuredClone(query), controller.signal)),
+      resolveEntityLinks: (taskIds: readonly string[], entityIds: readonly string[]) => call("tasks.read", () => {
+        if (!host.tasks?.resolveEntityLinks) throw new V2ContractError("UNSUPPORTED_CAPABILITY", "tasks.resolveEntityLinks");
+        return host.tasks.resolveEntityLinks(structuredClone(taskIds), structuredClone(entityIds), controller.signal);
+      }),
       execute: (command: V2TaskCommand) => call("tasks.write", () => host.tasks!.execute!(structuredClone(command), controller.signal)),
     }),
     activity: Object.freeze({

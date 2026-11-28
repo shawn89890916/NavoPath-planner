@@ -34,6 +34,7 @@ export interface V2TaskQuery {
   /** Only tasks created with a matching entity ID in this plugin's namespace. */
   readonly entityIds?: readonly string[];
 }
+export interface V2EntityTaskLink { readonly taskId: string; readonly entityId: string }
 export type V2TaskCommand =
   | { readonly kind: "create"; readonly operationId: string; readonly title: string;
       readonly projectId?: string; readonly estimateMinutes?: number; readonly entityId?: string }
@@ -91,6 +92,8 @@ export interface V2MetricRow { readonly label: string; readonly value: number; r
 export interface V2MetricsProvider extends V2ContributionBase {
   /** Host supplies already-filtered facts; providers must not start extra collectors. */
   query(facts: V2ActivityFacts): readonly V2MetricRow[] | Promise<readonly V2MetricRow[]>;
+  /** Invalidate when plugin-private data changes. The host owns subscription lifetime. */
+  subscribe?(invalidate: () => void): V2Dispose;
 }
 export interface V2ContributionMap {
   "ui.tasksGroup": V2TaskGroup;
@@ -110,6 +113,8 @@ export interface PluginContextV2 {
   register(dispose: V2Dispose): V2Dispose;
   readonly tasks: {
     list(query?: V2TaskQuery): Promise<readonly V2Task[]>;
+    /** Resolve supplied task IDs, including those retained in historical facts after deletion. */
+    resolveEntityLinks(taskIds: readonly string[], entityIds: readonly string[]): Promise<readonly V2EntityTaskLink[]>;
     execute(command: V2TaskCommand): Promise<V2TaskResult>;
   };
   readonly activity: { query(query: V2ActivityQuery): Promise<V2ActivityFacts> };
