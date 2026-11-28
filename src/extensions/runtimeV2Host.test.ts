@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadV2Preview, type V2PreviewBridge } from "./runtimeV2Host";
 import type { ExtensionPackage, ExtensionContribution, ExtensionTaskGroup, ExtensionHost } from "./types";
 import type { PluginContextV2, V2MetricsProvider } from "./sdkV2";
+import { pluginEntityKeys } from "./pluginTaskCommands";
 
 function fixture() {
   const tasks = [
@@ -71,6 +72,19 @@ describe("protocol 2 production preview bridge", () => {
     expect(cleanup).toHaveBeenCalledTimes(1);
     expect(f.views.size + f.settings.size + f.groups.size).toBe(0);
     await expect(ctx.tasks.list()).rejects.toMatchObject({ code: "INACTIVE" });
+  });
+  it("lists only linked tasks for the caller's requested entities", async () => {
+    const f = fixture();
+    const [digest] = (await pluginEntityKeys(f.bridge.key, ["book"])).keys();
+    const taskId = "plugin-task-" + "a".repeat(64) + "-" + digest;
+    f.tasks.push({ id: taskId, title: "Read book", completed: false });
+    let ctx!: PluginContextV2;
+    const loaded = await loadV2Preview(f.pkg, f.bridge, async () => ({ default: { onload(context) { ctx = context; } } }));
+    expect(await ctx.tasks.list({ entityIds: ["book"] })).toMatchObject([{ id: taskId, entityId: "book" }]);
+    expect(await ctx.tasks.list({ entityIds: [] })).toEqual([]);
+    expect(await ctx.tasks.list({ entityIds: ["another"] })).toEqual([]);
+    expect((await ctx.tasks.list()).find(task => task.id === taskId)).not.toHaveProperty("entityId");
+    await loaded.dispose();
   });
   it("rejects unwired permissions and non-approved owners before importing code", async () => {
     const f = fixture(), importer = vi.fn();

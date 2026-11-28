@@ -14,17 +14,24 @@ export interface V2PreviewBridge {
   storage?: V2HostAdapter["storage"];
   register(kind: "views" | "settingsPages", contribution: ExtensionContribution): Dispose;
 }
-import { projectPluginTask } from "./pluginTaskCommands";
+import { projectPluginTask, validPluginEntityId, pluginEntityKeys, linkedPluginEntity } from "./pluginTaskCommands";
 
-function listTasks(host: ExtensionHost, query?: V2TaskQuery): readonly V2Task[] {
+async function listTasks(bridge: V2PreviewBridge, query?: V2TaskQuery): Promise<readonly V2Task[]> {
   if (query !== undefined && (!query || typeof query !== "object" ||
     (query.ids !== undefined && (!Array.isArray(query.ids) || query.ids.some(id => typeof id !== "string"))) ||
-    (query.includeCompleted !== undefined && typeof query.includeCompleted !== "boolean"))) {
+    (query.includeCompleted !== undefined && typeof query.includeCompleted !== "boolean") ||
+    (query.entityIds !== undefined && (!Array.isArray(query.entityIds) || query.entityIds.length > 1000 || query.entityIds.some(id => !validPluginEntityId(id)))))) {
     throw new V2ContractError("INVALID_INPUT", "Invalid task query");
   }
   const ids = query?.ids ? new Set(query.ids) : undefined;
-  return host.getData().tasks.filter(task => (!ids || ids.has(task.id)) && (query?.includeCompleted || !task.completed))
-    .map(projectPluginTask);
+  const entityKeys = query?.entityIds === undefined ? undefined : await pluginEntityKeys(bridge.key, query.entityIds);
+  if (!bridge.isCurrent()) throw new V2ContractError("INACTIVE", "Workspace changed");
+  return bridge.host.getData().tasks.flatMap(task => {
+    if ((ids && !ids.has(task.id)) || (!query?.includeCompleted && task.completed)) return [];
+    const entityId = entityKeys && linkedPluginEntity(task.id, entityKeys);
+    if (entityKeys && entityId === undefined) return [];
+    return [{ ...projectPluginTask(task), ...(entityId === undefined ? {} : { entityId }) }];
+  });
 }
 
 /** Protocol 2 preview uses the real extension view registry, not native feature IDs.
@@ -47,7 +54,7 @@ export async function loadV2Preview(
   const adapter: V2HostAdapter = {
     owner: bridge.key, platform: bridge.platform, language: bridge.host.getSettings().language,
     supported: new Set(v2PreviewCapabilities.filter(capability => (capability !== "tasks.write" || !!bridge.host.executePluginTask) && (capability !== "metrics.provider" || !!bridge.registerMetricsProvider) && (!capability.startsWith("storage.") || !!bridge.storage))), granted: new Set(permissions), isCurrent: bridge.isCurrent,
-    tasks: { list: async query => listTasks(bridge.host, query),
+    tasks: { list: query => listTasks(bridge, query),
       execute: bridge.host.executePluginTask ? (command, signal) => bridge.host.executePluginTask!(bridge.key, command, () => !signal.aborted && bridge.isCurrent()) : undefined },
     storage: bridge.storage,
     activity: { async query(query, signal) {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PlannerData, Task } from "../types";
-import { executePluginTask } from "./pluginTaskCommands";
+import { executePluginTask, pluginEntityKeys, linkedPluginEntity } from "./pluginTaskCommands";
 import { captureTaskUndo } from "../utils/taskUndo";
 import { withDeletionTombstones } from "../syncMerge";
 
@@ -26,7 +26,7 @@ describe("core plugin task command adapter", () => {
     await executePluginTask("official:other", create, f.host);
     expect(f.data.tasks).toHaveLength(2);
   });
-  it("prevents recreation of a deleted deterministic task and invalid project or unimplemented entity links", async () => {
+  it("prevents recreation of a deleted deterministic task and invalid project or malformed entity links", async () => {
     const f = fixture();
     await executePluginTask("official:reading", create, f.host);
     const id = f.data.tasks[0].id;
@@ -34,8 +34,23 @@ describe("core plugin task command adapter", () => {
     expect(f.data.sync?.deleted["tasks:" + id]).toBeDefined();
     expect(await executePluginTask("official:reading", create, f.host)).toMatchObject({ status: "conflict" });
     expect(await executePluginTask("official:reading", { ...create, operationId: "bad", projectId: "absent" }, f.host)).toMatchObject({ status: "conflict" });
-    expect(await executePluginTask("official:reading", { ...create, operationId: "link", entityId: "book" }, f.host)).toMatchObject({ status: "conflict" });
+    expect(await executePluginTask("official:reading", { ...create, operationId: "link", entityId: "" }, f.host)).toMatchObject({ status: "conflict" });
     expect(f.data.tasks).toHaveLength(0);
+  });
+  it("creates and recovers immutable owner-scoped entity associations without a separate link write", async () => {
+    const f = fixture(), owner = "official:reading";
+    const linked = { ...create, entityId: "book-1" };
+    const result = await executePluginTask(owner, linked, f.host);
+    expect(result).toMatchObject({ status: "accepted", task: { entityId: "book-1" } });
+    const id = f.data.tasks[0].id;
+    expect(id.length).toBeLessThanOrEqual(200);
+    expect(linkedPluginEntity(id, await pluginEntityKeys(owner, ["book-1", "book-2"]))).toBe("book-1");
+    expect(linkedPluginEntity(id, await pluginEntityKeys("official:other", ["book-1"]))).toBeUndefined();
+    expect(await executePluginTask(owner, linked, f.host)).toEqual(result);
+    expect(await executePluginTask(owner, { ...linked, entityId: "book-2" }, f.host)).toMatchObject({ status: "conflict" });
+    expect(f.save).toHaveBeenCalledTimes(1);
+    f.data = withDeletionTombstones(f.data, { ...f.data, tasks: [] }, stamp);
+    expect(await executePluginTask(owner, { ...linked, entityId: "book-2" }, f.host)).toMatchObject({ status: "conflict" });
   });
   it("requires the current task revision and uses native completion semantics for linked records", async () => {
     const f = fixture();

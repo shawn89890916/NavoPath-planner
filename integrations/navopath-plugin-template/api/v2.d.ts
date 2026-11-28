@@ -25,10 +25,14 @@ export interface V2Task {
   readonly dueDate?: string;
   readonly estimateMinutes?: number;
   readonly updatedAt?: string;
+  /** Returned for the calling plugin's entity-filtered query or linked creation only. */
+  readonly entityId?: string;
 }
 export interface V2TaskQuery {
   readonly ids?: readonly string[];
   readonly includeCompleted?: boolean;
+  /** Only tasks created with a matching entity ID in this plugin's namespace. */
+  readonly entityIds?: readonly string[];
 }
 export type V2TaskCommand =
   | { readonly kind: "create"; readonly operationId: string; readonly title: string;
