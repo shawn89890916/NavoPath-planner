@@ -281,3 +281,7 @@ Keep existing plugin packages on v1. Older clients reject unknown manifest
 protocols when loading a catalog, so publishing v2 packages requires a
 separate compatible catalog/version delivery design. No v2 SDK or plugin
 release, catalog publication or database migration has occurred.
+
+### Protocol 2 preview: activity and metric providers
+
+Approved protocol-2 packages may request `activity.read` to query concrete scheduled intervals and measured time entries by explicit half-open ISO timestamp interval (up to 366 days) and optional task IDs. Estimated all-day records and projected recurrences are omitted; planned duration is raw, not engagement-weighted. Metric providers require `metrics.provider`; they receive the existing Metrics overview's filtered facts and return at most 50 finite numeric rows. Providers are evaluated only while the overview is open, are isolated from other providers' asynchronous failures, and are removed on deactivation. Provider output refreshes when host facts change or the overview is reopened; private plugin-data subscriptions are not yet supported. Neither capability starts a collector, grants access to raw history, or enables storage writes.
