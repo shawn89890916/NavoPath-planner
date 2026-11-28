@@ -2,6 +2,12 @@
 
 ## 2026-11-28
 
+### 1.7.0 Beta 146
+
+#### 修复
+
+- 修正微信读书导入预览的复选框、书名与作者对齐、主题色及分隔线；没有可关联的本地书籍时隐藏重复的创建书籍下拉框。
+
 ### 1.7.0 Beta 145
 
 #### 新增
@@ -1403,6 +1409,12 @@
 # NavoPath Changelog
 
 ## 2026-11-28
+
+### 1.7.0 Beta 146
+
+#### Fixes
+
+- Correct WeRead import checkbox, title and author alignment, theme colors and separators; hide redundant create-book selectors when there are no local books to link.
 
 ### 1.7.0 Beta 145
 
