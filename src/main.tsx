@@ -833,8 +833,7 @@ function App() {
     return () => { cancelled = true; };
   }, []);
   const [compactExecuteView, setCompactExecuteView] = useState<CompactExecuteView>("schedule");
-  const [phoneLayout, setPhoneLayout] = useState(() => window.matchMedia("(max-width: 899.98px) and (orientation: portrait)").matches);
-  const workspaceLayout = productPresentation ? "wide" : desktopDockSide ? "dock-" + desktopDockSide : phoneLayout ? "portrait" : compactLayout ? portraitLayout ? "portrait" : "split" : "wide";
+  const workspaceLayout = productPresentation ? "wide" : desktopDockSide ? "dock-" + desktopDockSide : portraitLayout ? "portrait" : compactLayout ? "split" : "wide";
   const mobileExecution = (portraitLayout || dockMouseLayout) && !productPresentation;
   const narrowSplitLayout = compactLayout && !portraitLayout && !productPresentation;
   const compactTasksActive = !mobileExecution && compactExecuteView === "tasks";
@@ -2608,13 +2607,6 @@ if (cached?.data && cached?.settings) {
     scrollElement.addEventListener("scroll", handleTimelineScroll, { passive: true });
     return () => scrollElement.removeEventListener("scroll", handleTimelineScroll);
   }, [settings?.continuousCrossDayScroll, timelineView, selectedDate, pendingTimelineFocus, timelineSlotHeight, workspaceLoaded, workspaceSuspended]);
-
-  useEffect(() => {
-    const media = window.matchMedia("(max-width: 899.98px) and (orientation: portrait)");
-    const update = () => setPhoneLayout(media.matches);
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
 
   function closeCandidateDrawer() {
     setShelfMenuOpen(false);
@@ -9452,6 +9444,25 @@ if (cached?.data && cached?.settings) {
       }}
     />
   );
+  const renderAllDayBlock = (task: Task) => (
+    <AllDayBlock resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={engagementEnabled} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
+  );
+  const renderScheduledBlock = (task: Task, isPreview: boolean, style: CSSProperties, viewMode: "daily" | "3day" | "weekly") => (
+    <TimeBlock blockRef={returnGuideAnchorFor(task)} resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={engagementEnabled} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
+    if (!suppressBlockClickRef.current) openTaskEdit(task);
+    }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
+    createProjectForTask(task.id, title);
+    }} onDragStart={(event) => beginBlockDrag(event, task)} onResizeStart={(event, edge) => beginBlockResize(event, task, edge)} resizeEdges={explicitVisibleTimeline.resizeEdges.get(task.id) || eventVisibleTimeline.resizeEdges.get(task.id)}
+    extraStyle={style}
+    onAcceptPreview={isPreview ? () => acceptOnePreview(previewIdByClonedId.get(task.id)!) : undefined}
+    onCancelPreview={isPreview ? () => cancelOnePreview(previewIdByClonedId.get(task.id)!) : undefined}
+    viewMode={viewMode}
+    lang={lang}
+    dayStartHour={dayStartHour}
+    hourHeight={timelineHourHeight}
+    dragState={drag?.kind === "block" && drag.taskId === task.id ? "source-placeholder" : undefined}
+    />
+  );
   const compactChat = !productPresentation && aiEnabled && <IconButton className="df-mobile-dock-action df-mobile-ai" label={t(lang, "fab.askNavo")} icon={<UiChatIcon />} aria-pressed={aiOpen} onClick={() => aiOpen ? closeWorkspaceChat() : setAiOpen(true)} />;
   return (
     <div className={`df-app${productDemo ? " product-demo-workspace" : ""} mode-execute theme-${settings.theme} type-${settings.typographyStyle || "editorial"}${fullscreen ? " is-timeline-fullscreen" : ""}${drag ? " is-dragging" : ""}${settings.taskBlockFill ? " task-block-fill" : ""}${aiOpen || utilityPanel ? " is-mobile-sheet-open" : ""}${utilityPanel === "settings" ? " is-settings-open" : ""}${aiOpen && aiDocked && !workspaceChatPanel ? " is-ai-docked" : ""}${desktopDockSide ? " is-desktop-docked" : ""}${quickAddOpen ? " is-compact-quick-add-open" : ""}`} data-workspace-layout={workspaceLayout} data-inline-timeline-draft={inlineTimelineDraft ? "true" : undefined} data-guide-return-drag={returningGuideBlock || undefined} data-phone-execution={mobileExecution ? "true" : undefined} data-side-workspace-open={mobileExecution && candidateDrawerOpen || undefined} data-mobile-placing={mobilePlacement ? "true" : undefined} data-product-feature={productAiPresentation ? "ai" : undefined} data-product-revealing={productAiPresentation && demoRevealing ? "true" : undefined} data-timeline-view={timelineView} data-task-block-fill={settings.taskBlockFill ? "true" : undefined} style={{ ...themeVars(settings, "execute"), "--timeline-slot-height": `${timelineSlotHeight}px`, "--timeline-hour-height": `${timelineHourHeight}px` } as CSSProperties}>
@@ -9987,9 +9998,7 @@ if (cached?.data && cached?.settings) {
                                   <AllDayQuickAddPopover add={allDayQuickAdd} projects={projects} onSave={(title, projectId) => createAllDayTask(title, colDate, projectId)} onCancel={() => setAllDayQuickAdd(null)} />
                                 )}
                                 {allDayDragDate === colDate && drag && draggedTask && <AllDayDropPreview task={draggedTask} projects={projects} lang={lang} />}
-                                {adTasks.map((task) => (
-                                  <AllDayBlock resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={engagementEnabled} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
-                                ))}
+                                {adTasks.map(renderAllDayBlock)}
                               </div>
                             );
                           })}
@@ -10215,20 +10224,7 @@ if (cached?.data && cached?.settings) {
                                   }
                                   const isPreview = previewIdByClonedId.has(task.id);
                                   return (
-                                    <TimeBlock blockRef={returnGuideAnchorFor(task)} resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={engagementEnabled} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
-                                      if (!suppressBlockClickRef.current) openTaskEdit(task);
-                                    }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
-                                      createProjectForTask(task.id, title);
-                                    }} onDragStart={(event) => beginBlockDrag(event, task)} onResizeStart={(event, edge) => beginBlockResize(event, task, edge)} resizeEdges={explicitVisibleTimeline.resizeEdges.get(task.id) || eventVisibleTimeline.resizeEdges.get(task.id)}
-                                      extraStyle={{ position: "absolute", left, width, top: continuousTimelineEnabled ? continuousTimedTop(task.scheduledDate || timelineDate, task.scheduledStart || "09:00") : undefined, pointerEvents: "auto", ...(isPreview ? { ["--df-preview" as any]: "1" } as CSSProperties : {}) }}
-                                      onAcceptPreview={isPreview ? () => acceptOnePreview(previewIdByClonedId.get(task.id)!) : undefined}
-                                      onCancelPreview={isPreview ? () => cancelOnePreview(previewIdByClonedId.get(task.id)!) : undefined}
-                                      viewMode={timelineView}
-                                      lang={lang}
-                                      dayStartHour={dayStartHour}
-                                      hourHeight={timelineHourHeight}
-                                      dragState={drag?.kind === "block" && drag.taskId === task.id ? "source-placeholder" : undefined}
-                                    />
+                                    renderScheduledBlock(task, isPreview, { position: "absolute", left, width, top: continuousTimelineEnabled ? continuousTimedTop(task.scheduledDate || timelineDate, task.scheduledStart || "09:00") : undefined, pointerEvents: "auto", ...(isPreview ? { ["--df-preview" as any]: "1" } as CSSProperties : {}) }, timelineView)
                                   );
                                 })}
                                 {/* Preview block during drag */}
@@ -10409,9 +10405,7 @@ if (cached?.data && cached?.settings) {
                           ...tasks.filter((task) => isAllDayTask(task) && task.scheduledDate === timelineWindowAnchorDate),
                           ...allDayTimelineTasks.filter((task) => task.scheduledDate === timelineWindowAnchorDate),
                           ...eventVisibleTimeline.tasks.filter((task) => !task.scheduledStart && task.scheduledDate === timelineWindowAnchorDate),
-                        ].map((task) => (
-                          <AllDayBlock resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={engagementEnabled} key={task.id} task={task} dragging={drag?.source === "allDay" && drag.taskId === task.id} projectName={projectName(task)} projects={projects} onEdit={() => { if (!suppressBlockClickRef.current) openTaskEdit(task); }} onToggleDone={() => toggleTaskDone(task.id)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => createProjectForTask(task.id, title)} onPointerDragStart={(event) => beginShelfDrag(event, task, "allDay")} lang={lang} />
-                        ))}
+                        ].map(renderAllDayBlock)}
                       </div>
                     </div>
                     <TimelineCanvas
@@ -10597,19 +10591,7 @@ if (cached?.data && cached?.settings) {
 
                           const isPreview = previewIdByClonedId.has(task.id);
                           return (
-                            <TimeBlock blockRef={returnGuideAnchorFor(task)} resolvedUnfinished={isResolvedUnfinished(task)} engagementEnabled={engagementEnabled} key={task.id} task={task} preview={resizePreview?.taskId === task.id ? resizePreview : null} projectName={projectName(task)} projects={projects} hovered={hoveredBlock === task.id || resizePreview?.taskId === task.id} showResizeHint={resizeHintTaskId === resolveTimelineRecordId(task.id)} projectInteractive={!compactLayout} onHover={setHoveredBlock} mouseOptimized={dockMouseLayout} onSelect={(event) => selectTimelineTask(task, event)} onEdit={() => {
-                              if (!suppressBlockClickRef.current) openTaskEdit(task);
-                            }} onToggleDone={() => toggleTaskDone(task.id)} onTaskUpdate={(patch) => updateTask(resolveOwningTask(task.id)?.id || task.id, patch)} onProjectChange={(projectId) => updateTask(resolveOwningTask(task.id)?.id || task.id, { projectId: projectId || undefined })} onProjectColorChange={(projectId, color) => updateProject(projectId, { color })} onCreateProject={(title) => {
-                              createProjectForTask(task.id, title);
-                            }} onDragStart={(event) => beginBlockDrag(event, task)} onResizeStart={(event, edge) => beginBlockResize(event, task, edge)} resizeEdges={explicitVisibleTimeline.resizeEdges.get(task.id) || eventVisibleTimeline.resizeEdges.get(task.id)} extraStyle={{ ...extraStyle, ...(isPreview ? { ["--df-preview" as any]: "1" } as CSSProperties : {}), ...(productAiPresentation ? { "--product-arrival-order": scheduledTasks.filter(other => (other.scheduledStart || "") < (task.scheduledStart || "")).length } as CSSProperties : {}) }}
-                              onAcceptPreview={isPreview ? () => acceptOnePreview(previewIdByClonedId.get(task.id)!) : undefined}
-                              onCancelPreview={isPreview ? () => cancelOnePreview(previewIdByClonedId.get(task.id)!) : undefined}
-                              viewMode="daily"
-                              lang={lang}
-                              dayStartHour={dayStartHour}
-                              hourHeight={timelineHourHeight}
-                              dragState={drag?.kind === "block" && drag.taskId === task.id ? "source-placeholder" : undefined}
-                            />
+                            renderScheduledBlock(task, isPreview, { ...extraStyle, ...(isPreview ? { ["--df-preview" as any]: "1" } as CSSProperties : {}), ...(productAiPresentation ? { "--product-arrival-order": scheduledTasks.filter(other => (other.scheduledStart || "") < (task.scheduledStart || "")).length } as CSSProperties : {}) }, "daily")
                           );
                           });
                         })()}
