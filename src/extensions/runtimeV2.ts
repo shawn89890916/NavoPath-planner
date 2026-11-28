@@ -120,10 +120,19 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
       ownedCleanups.add(off);
       return off;
     } : undefined,
-    invoke: group.invoke ? async id => {
+    choices: group.choices ? async id => {
       ensure();
-      if (!group.actions?.some(action => action.id === id)) throw new V2ContractError("INVALID_INPUT", "Unknown group action");
-      await group.invoke!(id);
+      if (!group.actions?.some(action => action.id === id && action.input === "select")) throw new V2ContractError("INVALID_INPUT", "Unknown select action");
+      const choices = await call("ui.tasksGroup", async () => group.choices!(id));
+      ensure();
+      if (!Array.isArray(choices) || choices.length > 1000 || choices.some(choice => !choice || typeof choice.value !== "string" || !choice.value || choice.value.length > 200 || typeof choice.label !== "string" || !choice.label || choice.label.length > 240) || new Set(choices.map(choice => choice.value)).size !== choices.length) throw new V2ContractError("INVALID_INPUT", "Invalid group choices");
+      return choices.map(({ value, label }) => ({ value, label }));
+    } : undefined,
+    invoke: group.invoke ? async (id, value) => {
+      ensure();
+      const action = group.actions?.find(item => item.id === id);
+      if (!action || (action.input === "select" ? typeof value !== "string" || !value || value.length > 200 : value !== undefined)) throw new V2ContractError("INVALID_INPUT", "Invalid group action");
+      await group.invoke!(id, value);
       ensure();
     } : undefined,
   });

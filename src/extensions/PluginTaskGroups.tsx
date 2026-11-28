@@ -4,6 +4,7 @@ import { UiChevronDownIcon, UiChevronRightIcon } from "../components/UiIcons";
 import { Button } from "../components/UiPrimitives";
 import type { Language, Task } from "../types";
 import type { ExtensionTaskGroup } from "./types";
+import type { V2TaskGroupAction, V2SelectOption } from "./sdkV2";
 import { resolveTaskGroups, type TaskGroupSelection } from "./taskGroupPartition";
 
 type Props = {
@@ -15,6 +16,29 @@ type Props = {
   renderOrdinary(tasks: readonly Task[]): ReactNode;
   renderTask(task: Task): ReactNode;
 };
+function GroupAction({ group, action, tick, busy, invoke }: { group: ExtensionTaskGroup; action: V2TaskGroupAction; tick: number; busy: boolean; invoke(value?: string): void }) {
+  const [choices, setChoices] = useState<readonly V2SelectOption[]>([]);
+  const [selected, setSelected] = useState("");
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (action.input !== "select") return;
+    let active = true;
+    setReady(false);
+    const timeout = setTimeout(() => { if (active) { setChoices([]); active = false; } }, 1500);
+    void Promise.resolve().then(() => group.choices?.(action.id) ?? []).then(items => {
+      if (active) { setChoices(items); setReady(true); }
+    }).catch(() => { if (active) setChoices([]); }).finally(() => clearTimeout(timeout));
+    return () => { active = false; clearTimeout(timeout); };
+  }, [group, action.id, action.input, tick]);
+  if (action.input !== "select") return <Button variant="secondary" disabled={busy} onClick={() => invoke()}>{action.label}</Button>;
+  const value = choices.some(option => option.value === selected) ? selected : choices[0]?.value ?? "";
+  return <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+    <select className="ui-input" aria-label={action.label} value={value} disabled={busy || !ready || !choices.length} onChange={event => setSelected(event.target.value)} style={{ flex: "1 1 120px", minWidth: 0 }}>
+      {choices.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+    </select>
+    <Button variant="secondary" disabled={busy || !ready || !value} onClick={() => invoke(value)}>{action.label}</Button>
+  </div>;
+}
 export default function PluginTaskGroups({ groups, candidates, revision, lang, dragging, renderOrdinary, renderTask }: Props) {
   const key = JSON.stringify(candidates.map(task => task.id));
   const [selection, setSelection] = useState<TaskGroupSelection[]>([]);
@@ -51,11 +75,11 @@ export default function PluginTaskGroups({ groups, candidates, revision, lang, d
       })}>{open ? <UiChevronDownIcon size={16} /> : <UiChevronRightIcon size={16} />}{group.name}</Button>} count={rows.length}>
         {open && <>
           {rows.map(renderTask)}
-          {group.invoke && group.actions?.map(action => <Button key={action.id} variant="secondary" disabled={pending.has(group.id)} onClick={() => {
+          {group.invoke && group.actions?.map(action => <GroupAction key={action.id} group={group} action={action} tick={tick} busy={pending.has(group.id)} invoke={selected => {
             setError(""); setPending(value => new Set(value).add(group.id));
-            void Promise.resolve().then(() => group.invoke!(action.id)).then(() => setTick(value => value + 1))
+            void Promise.resolve().then(() => group.invoke!(action.id, selected)).then(() => setTick(value => value + 1))
               .catch(() => setError(group.id)).finally(() => setPending(value => { const next = new Set(value); next.delete(group.id); return next; }));
-          }}>{action.label}</Button>)}
+          }}/>)}
           {error === group.id && <p role="alert">{lang === "zh" ? "操作失败，请重试。" : "Action failed. Try again."}</p>}
         </>}
       </TaskGroup>;

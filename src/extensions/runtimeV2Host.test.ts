@@ -47,7 +47,7 @@ describe("protocol 2 production preview bridge", () => {
     const loaded = await loadV2Preview(f.pkg, f.bridge, async () => ({ default: {
       onload(context) {
         ctx = context;
-        ctx.ui.registerTaskGroup({ id: "read", name: "Reading", resolve: () => ["one", "unknown"] });
+        ctx.ui.registerTaskGroup({ id: "read", name: "Reading", resolve: () => ["one", "unknown"], actions: [{ id: "add", label: "Add reading task", input: "select" }], choices: () => [{ value: "book", label: "Book" }], invoke: (_id, value) => { if (value !== "book") throw new Error("Invalid book"); } });
         ctx.ui.registerWorkspacePage({ id: "work", name: "Work", mount: () => cleanup });
         ctx.ui.registerPlanningView({ id: "plan", name: "Plan", mount: () => {} });
         ctx.ui.registerSettingsPage({ id: "options", name: "Options", mount: () => {} });
@@ -65,6 +65,9 @@ describe("protocol 2 production preview bridge", () => {
     expect(f.settings.size).toBe(1);
     const group = f.groups.get("official:preview-sample:ui.tasksGroup:read")!;
     expect(await group.resolve(["one"])).toEqual(["one"]);
+    expect(await group.choices!("add")).toEqual([{ value: "book", label: "Book" }]);
+    await expect(group.invoke!("add")).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    await expect(group.invoke!("add", "book")).resolves.toBeUndefined();
     const page = f.views.get("official:preview-sample:ui.workspace:work")!;
     const off = await page.mount({} as HTMLElement);
     await loaded.dispose();

@@ -80,13 +80,16 @@ export type V2StorageResult =
   | { readonly status: "unavailable" };
 
 export interface V2ContributionBase { readonly id: string; readonly name: string }
+export interface V2TaskGroupAction { readonly id: string; readonly label: string; readonly input?: "select" }
+export interface V2SelectOption { readonly value: string; readonly label: string }
 export interface V2TaskGroup extends V2ContributionBase {
   /** Only these existing candidate IDs are eligible; the host renders task rows. */
   resolve(candidateIds: readonly string[]): readonly string[] | Promise<readonly string[]>;
   /** Notify the host when plugin-private membership changes. */
   subscribe?(invalidate: () => void): V2Dispose;
-  readonly actions?: readonly { readonly id: string; readonly label: string }[];
-  invoke?(actionId: string): void | Promise<void>;
+  readonly actions?: readonly V2TaskGroupAction[];
+  choices?(actionId: string): readonly V2SelectOption[] | Promise<readonly V2SelectOption[]>;
+  invoke?(actionId: string, value?: string): void | Promise<void>;
 }
 /** Trusted plugin DOM mount. This is deliberately not an untrusted-code sandbox. */
 export interface V2Page extends V2ContributionBase {
