@@ -144,3 +144,14 @@ unknown manifest protocols in the catalog; use a distinct compatibility
 channel or another backward-compatible strategy before publishing v2.
 Production Task groups, writes, activity/metrics, storage CAS, Reading
 migration and security isolation remain open.
+
+## P2b implementation checkpoint
+
+The host now owns candidate task group rendering and deterministic membership,
+using the existing TaskCard and TaskGroup. A contribution subscription can
+invalidate membership; disposal releases callbacks and subscriptions.
+The preview task command adapter uses existing saveTaskOperation and
+setTaskCompletion, with stable owner/operation creation IDs, deletion
+tombstones and local revision checks. Success is local acceptance, not a
+cloud commit. Entity links and server CAS are still unavailable; the Reading
+migration and independent catalog release are not complete.

@@ -55,7 +55,9 @@ export async function executePluginTask(owner: string, command: V2TaskCommand, h
   if (command.kind === "complete" && typeof command.completed !== "boolean") return conflict("Invalid completion");
   if (command.kind === "rename" ? task.title === command.title.trim() : task.completed === command.completed) return accepted(task);
   if (!command.expectedUpdatedAt || command.expectedUpdatedAt !== task.updatedAt) return conflict("Task changed; read the current revision first");
-  const now = new Date(Math.max(Date.parse(host.now()), Date.parse(task.updatedAt) + 1)).toISOString();
+  const stamp = Date.parse(task.updatedAt), wall = Date.parse(host.now());
+  if (!Number.isFinite(stamp) || !Number.isFinite(wall)) return conflict("Task revision unavailable");
+  const now = new Date(Math.max(wall, stamp + 1)).toISOString();
   const next = command.kind === "complete" ? setTaskCompletion(current, task.id, command.completed, now)
     : { ...current, tasks: current.tasks.map(item => item.id === task.id ? { ...item, title: command.title.trim(), updatedAt: now,
       aiInference: item.aiInference ? { duration: item.aiInference.duration?.userOverridden ? item.aiInference.duration : undefined,

@@ -246,7 +246,7 @@ use `import("./api").PluginContext` in JSDoc without installing the host.
 The generated type-only SDK includes `PluginContextV2` in `api/v2.d.ts`.
 The contract, activation layer and tests are in `src/extensions/sdkV2.ts`,
 `runtimeV2.ts`, and `runtimeV2.test.ts`. The production preview adapter in
-`runtimeV2Host.ts` connects `tasks.read`, `ui.tasksGroup`, `ui.workspace`, `ui.planning`,
+`runtimeV2Host.ts` connects `tasks.read`, `tasks.write`, `ui.tasksGroup`, `ui.workspace`, `ui.planning`,
 `ui.settings` and `ui.toast` to the existing host. One page per plugin per
 surface is supported. Task reads default to incomplete tasks and expose only
 the public DTO; pass `includeCompleted: true` to include completed tasks.
@@ -266,7 +266,14 @@ approved packages remain trusted renderer code, not sandboxed code.
 Tasks groups return candidate IDs (not duplicated TaskCard components). The host
 assigns overlapping membership by stable group ID, keeps native order and renders
 unclaimed candidates normally. Optional subscribe(invalidate) refreshes membership.
-Task writes, activity queries, Metrics providers and versioned
+Task commands use the core task-operation/history path and return `accepted`
+for local acceptance, not cloud acknowledgement. Reuse the same operation ID
+for a retry of the same create; the host derives a stable task ID and checks
+existing deletion tombstones. Rename and completion require the latest
+`expectedUpdatedAt` unless already at the desired state. The first adapter
+rejects domain entity links and edits of protected habit/course/calendar tasks.
+This is not a cross-device atomic guarantee or a durable command ledger.
+Activity queries, Metrics providers and versioned
 storage remain unwired and must fail rather than fall back to unsafe v1 writes.
 Do not store credentials in ordinary plugin data.
 

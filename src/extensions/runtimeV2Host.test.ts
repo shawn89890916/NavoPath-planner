@@ -76,8 +76,22 @@ describe("protocol 2 production preview bridge", () => {
     const f = fixture(), importer = vi.fn();
     await expect(loadV2Preview(f.pkg, { ...f.bridge, key: "imported:preview-sample" }, importer)).rejects.toThrow("approved catalog");
     f.pkg.manifest.permissions = ["tasks.write"];
-    await expect(loadV2Preview(f.pkg, f.bridge, importer)).rejects.toThrow("supported permissions");
+    await expect(loadV2Preview(f.pkg, f.bridge, importer)).rejects.toMatchObject({ code: "UNSUPPORTED_CAPABILITY" });
     expect(importer).not.toHaveBeenCalled();
+  });
+  it("delegates approved commands to the core adapter with activation-scoped ownership", async () => {
+    const f = fixture();
+    f.pkg.manifest.permissions = ["tasks.write"];
+    const execute = vi.fn(async () => ({ status: "accepted" as const, task: { id: "one", title: "Read", completed: false } }));
+    f.bridge.host.executePluginTask = execute;
+    let ctx!: PluginContextV2;
+    const loaded = await loadV2Preview(f.pkg, f.bridge, async () => ({ default: { onload(context) { ctx = context; } } }));
+    const command = { kind: "create", operationId: "one", title: "Read" } as const;
+    expect(await ctx.tasks.execute(command)).toMatchObject({ status: "accepted" });
+    expect(execute).toHaveBeenCalledWith("official:preview-sample", command, expect.any(Function));
+    await loaded.dispose();
+    await expect(ctx.tasks.execute(command)).rejects.toMatchObject({ code: "INACTIVE" });
+    expect(execute).toHaveBeenCalledTimes(1);
   });
   it("does not activate a module whose import resolves after the account changes", async () => {
     const f = fixture(), onload = vi.fn();
