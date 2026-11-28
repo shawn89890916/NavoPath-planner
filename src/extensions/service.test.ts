@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ load: vi.fn(), put: vi.fn(), get: vi.fn(), setValue: vi.fn(), getValue: vi.fn(), removeValue: vi.fn(), theme: vi.fn() }));
+const mocks = vi.hoisted(() => ({ load: vi.fn(), loadV2: vi.fn(), put: vi.fn(), get: vi.fn(), setValue: vi.fn(), getValue: vi.fn(), removeValue: vi.fn(), theme: vi.fn() }));
 vi.mock("./runtime", () => ({ emitPluginEvent: vi.fn(), loadPlugin: mocks.load }));
+vi.mock("./runtimeV2Host", () => ({ loadV2Preview: mocks.loadV2 }));
 vi.mock("./theme", () => ({ applyExtensionTheme: mocks.theme }));
 vi.mock("./transport", () => ({ fetchExtensionBytes: vi.fn(() => Promise.reject(new Error("offline"))), getPrivatePackage: mocks.get, putPrivatePackage: mocks.put, getExtensionValue: mocks.getValue, setExtensionValue: mocks.setValue, removeExtensionValue: mocks.removeValue, subscribeExtensionValues: () => () => {} }));
 import { ExtensionService } from "./serviceCore";
@@ -33,6 +34,7 @@ beforeEach(() => {
   vi.stubGlobal("window", new EventTarget()); vi.stubGlobal("location", new URL("https://navopath.test/app")); vi.stubGlobal("navigator", { onLine: false });
   vi.stubGlobal("fetch", vi.fn(fetchBundled));
   mocks.load.mockImplementation(async () => ({ dispose: vi.fn(), configChanged: vi.fn(), context: {} }));
+  mocks.loadV2.mockImplementation(async () => ({ dispose: vi.fn(), configChanged: vi.fn() }));
   mocks.get.mockResolvedValue(null); mocks.put.mockResolvedValue(undefined); mocks.theme.mockReturnValue(vi.fn()); mocks.getValue.mockResolvedValue(null);
   current = new ExtensionService();
 });
@@ -464,5 +466,40 @@ describe("Reading library lifecycle", () => {
     expect(await current.readReadingLibrary(account)).toEqual(library);
     await current.configure(null);
     for (const [key] of await cacheEntries("account:" + account + ":")) await cacheDelete(key);
+  });
+});
+
+describe("protocol 2 preview service routing", () => {
+  it("accepts approved catalog packages, refuses imports, and dispatches to the v2 loader only", async () => {
+    const f = fixture("v2-preview-test");
+    const pkg = JSON.parse(weatherPackageText);
+    pkg.manifest = { ...pkg.manifest, id: "v2-sample", apiVersion: 2, permissions: ["tasks.read"] };
+    delete pkg.manifest.styles; delete pkg.manifest.settingsOptions; delete pkg.manifest.mcp;
+    const bytes = new TextEncoder().encode(JSON.stringify(pkg));
+    const entry = { manifest: pkg.manifest, sourceId: "official", sha256: await sha256(bytes), downloadUrl: "https://example.com/v2-sample.navopackage.json" };
+    await current.configure(f.host);
+    await expect(current.importFile(new File([bytes], "sample.navopackage.json"))).rejects.toThrow("approved catalog");
+    await expect(current.install(entry)).rejects.toThrow("verified official catalog");
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.includes("catalog.json")) return new Response(JSON.stringify({ version: 1, packages: [entry] }));
+      if (url === entry.downloadUrl) return new Response(bytes);
+      return fetchBundled(url);
+    }));
+    await current.refreshCatalog();
+    const found = current.getSnapshot().catalog.find(item => item.manifest.id === "v2-sample")!;
+    expect(found).toBeDefined();
+    await current.install(found);
+    const key = "official:v2-sample";
+    expect(mocks.loadV2).not.toHaveBeenCalled();
+    await current.toggle(key, true);
+    expect(mocks.loadV2).toHaveBeenCalledTimes(1);
+    expect(mocks.loadV2.mock.calls[0][1].key).toBe(key);
+    expect(mocks.load).not.toHaveBeenCalled();
+    const bridge = mocks.loadV2.mock.calls[0][1];
+    expect(bridge.isCurrent()).toBe(true);
+    await current.toggle(key, false);
+    expect(bridge.isCurrent()).toBe(false);
+    await current.configure(null);
+    for (const [cacheKey] of await cacheEntries("account:v2-preview-test:")) await cacheDelete(cacheKey);
   });
 });

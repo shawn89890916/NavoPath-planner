@@ -67,12 +67,13 @@ export async function loadV2Preview(
   try {
     negotiateV2(manifest, adapter);
     if (!bridge.isCurrent()) throw new V2ContractError("INACTIVE", "Workspace changed");
+    const iconUrl = pkg.manifest.icon ? resources.get(pkg.manifest.icon) : undefined;
     const module = (await importer(resources.get(pkg.manifest.main!))).default;
     if (!module || typeof module.onload !== "function") throw new Error("Plugin must export default { onload(context) }");
     if (!bridge.isCurrent()) throw new V2ContractError("INACTIVE", "Workspace changed");
     const loaded = await activateV2(module, manifest, adapter);
     return {
-      iconUrl: pkg.manifest.icon ? resources.get(pkg.manifest.icon) : undefined,
+      iconUrl,
       dispose: async () => { try { await loaded.dispose(); } catch (error) { console.warn("[extensions] v2 cleanup", error); } finally { resources.dispose(); } },
       async configChanged(_config: Record<string, unknown>) { /* v2 settings API not available in this preview */ },
     };

@@ -91,13 +91,16 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
     check(capability);
     return structuredClone(value);
   };
-  const wrapPage = (page: V2Page, ensure: () => void, active: () => boolean): V2Page => ({
+  const wrapPage = (page: V2Page, ensure: () => void, active: () => boolean, pageCleanups: Set<V2Dispose>): V2Page => ({
     id: page.id, name: page.name,
     async mount(container) {
       ensure();
       const cleanup = await page.mount(container);
       if (!active()) { if (cleanup) await cleanup(); return; }
-      return cleanup ? track(cleanup) : undefined;
+      if (!cleanup) return undefined;
+      const off = track(async () => { pageCleanups.delete(off); await cleanup(); });
+      pageCleanups.add(off);
+      return off;
     },
   });
   const wrapGroup = (group: V2TaskGroup, ensure: () => void): V2TaskGroup => ({
@@ -132,6 +135,7 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
     }
     const stableId = host.owner + ":" + kind + ":" + value.id;
     if (contributionKeys.has(stableId)) throw new V2ContractError("DUPLICATE_CONTRIBUTION", stableId);
+    const pageCleanups = new Set<V2Dispose>();
     let registered = true;
     const active = () => registered && !controller.signal.aborted && host.isCurrent();
     const ensure = () => {
@@ -140,14 +144,20 @@ export function createV2Session(manifest: V2ManifestContract, host: V2HostAdapte
     };
     const wrapped = (kind === "ui.tasksGroup" ? wrapGroup(value as V2TaskGroup, ensure)
       : kind === "metrics.provider" ? wrapMetrics(value as V2MetricsProvider, ensure)
-      : wrapPage(value as V2Page, ensure, active)) as V2ContributionMap[K];
+      : wrapPage(value as V2Page, ensure, active, pageCleanups)) as V2ContributionMap[K];
     contributionKeys.add(stableId);
     let off: V2Dispose;
     try { off = host.contribute!(kind, stableId, wrapped); }
     catch (error) { registered = false; contributionKeys.delete(stableId); throw error; }
     return track(async () => {
       registered = false;
-      try { await off(); } finally { contributionKeys.delete(stableId); }
+      const errors: unknown[] = [];
+      for (const cleanup of [...pageCleanups]) {
+        try { await cleanup(); } catch (error) { errors.push(error); }
+      }
+      try { await off(); } catch (error) { errors.push(error); }
+      finally { contributionKeys.delete(stableId); }
+      if (errors.length) throw new AggregateError(errors, "Plugin contribution cleanup failed");
     });
   };
   const context: PluginContextV2 = Object.freeze({

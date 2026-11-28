@@ -1,6 +1,6 @@
 /**
- * Experimental protocol-2 contract. The application still negotiates protocol 1
- * until the production adapters and compatibility gates have been implemented.
+ * Experimental protocol-2 contract. Production preview supports only approved
+ * catalog packages requesting the implemented read-only/page capabilities.
  * No host-internal types or runtime dependencies are exported from this file.
  */
 export type V2Dispose = () => void | Promise<void>;

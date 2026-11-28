@@ -276,6 +276,7 @@ export class ExtensionService {
     await this.savePreferences({ ...this.snapshot.preferences, removed, installed: { ...this.snapshot.preferences.installed, [key]: installed } });
   }
   install = (entry: CatalogEntry) => this.operation(async () => {
+    if (entry.manifest.apiVersion === 2 && (entry.sourceId !== "official" || !this.snapshot.catalog.some(candidate => candidate.sourceId === "official" && candidate.manifest.id === entry.manifest.id && candidate.sha256 === entry.sha256))) throw new Error("Protocol 2 preview requires a verified official catalog entry");
     const bytes = await this.packageBytes(entry); const pkg = await readPackage(bytes);
     if (pkg.manifest.id !== entry.manifest.id || pkg.manifest.version !== entry.manifest.version || pkg.manifest.kind !== entry.manifest.kind) throw new Error("Catalog manifest does not match package");
     await this.installBytes(bytes, entry.sourceId, entry.downloadUrl, entry.sha256);
@@ -406,7 +407,7 @@ export class ExtensionService {
   private async loadInstalledPlugin(pkg: ExtensionPackage, key: string): Promise<Pick<LoadedPlugin, "iconUrl" | "dispose" | "configChanged">> {
     if (pkg.manifest.apiVersion !== 2) return loadPlugin(pkg, this.bridge(key));
     const generation = this.generation, account = this.account, host = this.ensureHost();
-    const isCurrent = () => generation === this.generation && account === this.account && !!this.host;
+    const isCurrent = () => generation === this.generation && account === this.account && !!this.host && (host.getAccountId() || "preview") === account && !this.snapshot.safeMode && this.snapshot.preferences.installed[key]?.enabled === true;
     const { loadV2Preview } = await import("./runtimeV2Host");
     if (!isCurrent()) throw new Error("Extension account changed");
     return loadV2Preview(pkg, {
