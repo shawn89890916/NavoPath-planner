@@ -94,12 +94,18 @@ export function decodeReadingLibrary(value: unknown): ReadingLibrary {
   return library;
 }
 
+/** Canonical comparison: versioned storage sorts JSON object keys. */
+export function sameReadingValue(a: unknown,b: unknown): boolean {
+  const canonical=(v:unknown):unknown=>Array.isArray(v)?v.map(canonical):v&&typeof v==="object"?Object.fromEntries(Object.entries(v).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([k,x])=>[k,canonical(x)])):v;
+  return JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
+}
+
 /** Undo a book edit only if that exact saved state still exists.
  * Never remove a book with linked tasks or revert an unrelated book.
  */
 export function undoReadingBookChange(library: ReadingLibrary, before: ReadingBook | undefined, after: ReadingBook): ReadingLibrary {
   const existing = library.books.find(book => book.id === after.id);
-  if (!existing || JSON.stringify(existing) !== JSON.stringify(after)) throw new Error("Book has changed");
+  if (!existing || !sameReadingValue(existing, after)) throw new Error("Book has changed");
   if (before && before.id !== after.id) throw new Error("Book identity changed");
   if (!before && library.taskLinks.some(link => link.bookId === after.id)) throw new Error("Book has linked tasks");
   return { ...library, books: before

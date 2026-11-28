@@ -81,6 +81,18 @@ describe("Reading migration and conflict recovery",()=>{
       expect(f.write).not.toHaveBeenCalled();
     }finally{await f.session.close();}
   });
+  it("undoes only the matching book edit and tolerates JSON key reordering",async()=>{
+    const f=migrationFixture(null,{status:"value",revision:"1",value:original});
+    try{
+      await f.controller.refresh();
+      const before=f.controller.library!.books[0];
+      const next=await f.controller.mutate(value=>({...value,books:[{...before,title:"Edited"}]}));
+      const after=next.books[0];
+      await f.controller.undoBook(before,{...after,progress:{...after.progress}});
+      expect(f.controller.library!.books[0].title).toBe("Book");
+      await expect(f.controller.undoBook(before,after)).rejects.toThrow("Book has changed");
+    }finally{await f.session.close();}
+  });
   it("requires an explicit choice and the current revision for durable conflicts",async()=>{
     const f=migrationFixture(null,{status:"conflict",current:{status:"value",revision:"4",value:original},rejected:{kind:"set",value:{version:1,books:[],taskLinks:[]},operationId:"failed",expectedRevision:"3"}});
     try{

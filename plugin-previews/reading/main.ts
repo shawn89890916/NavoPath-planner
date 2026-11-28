@@ -1,5 +1,5 @@
 import type { PluginModuleV2, PluginContextV2, V2ActivityFacts, V2StorageRead, V2Json } from "../../integrations/navopath-plugin-api/v2";
-import { createBook, updateBook, decodeReadingLibrary, groupReadingBooks, totals, type ReadingLibrary, type ReadingBook, type ReadingStatus, type ReadingProgress } from "./model";
+import { createBook, updateBook, decodeReadingLibrary, groupReadingBooks, totals, sameReadingValue, undoReadingBookChange, type ReadingLibrary, type ReadingBook, type ReadingStatus, type ReadingProgress } from "./model";
 const KEY = "library-v2";
 export function createReadingController(ctx: PluginContextV2) {
   const tr = (zh:string,en:string) => ctx.language === "zh" ? zh : en;
@@ -23,12 +23,13 @@ export function createReadingController(ctx: PluginContextV2) {
   }
   async function mutate(fn:(value:ReadingLibrary)=>ReadingLibrary, expected?:ReadingLibrary) {
     if(!ready() || !library || (snapshot.status!=="value" && snapshot.status!=="absent")) throw Error(tr("书库暂不可编辑","Library is not writable"));
-    if(expected && expected!==library) throw Error(tr("书库已更新，请重新编辑","Library changed; reopen the editor"));
+    if(expected && !sameReadingValue(expected,library)) throw Error(tr("书库已更新，请重新编辑","Library changed; reopen the editor"));
     const next=fn(library), expectedRevision=snapshot.revision; busy=true; notify();
     try {
       const result=await ctx.storage.write(KEY,{kind:"set",expectedRevision,operationId:crypto.randomUUID(),value:next as unknown as V2Json});
       await refresh();
       if(result.status==="conflict" || result.status==="unavailable") throw Error(tr("写入冲突或不可用","Write conflict or unavailable"));
+      return next;
     } finally {busy=false;notify();}
   }
   async function migrateLegacy() {
@@ -36,7 +37,7 @@ export function createReadingController(ctx: PluginContextV2) {
     const source=legacy;busy=true;notify();
     try {
       const latest=decodeReadingLibrary(await ctx.storage.readLegacy("library-v1"));
-      if(JSON.stringify(source)!==JSON.stringify(latest)) throw Error(tr("旧书库已变化，请刷新后重新导入","Legacy library changed; refresh before importing"));
+      if(!sameReadingValue(source,latest)) throw Error(tr("旧书库已变化，请刷新后重新导入","Legacy library changed; refresh before importing"));
       const result=await ctx.storage.write(KEY,{kind:"set",expectedRevision:null,operationId:crypto.randomUUID(),value:source as unknown as V2Json});
       await refresh();
       if(result.status!=="committed" && result.status!=="pending") throw Error("Migration conflict");
@@ -51,12 +52,23 @@ export function createReadingController(ctx: PluginContextV2) {
     busy=true;notify();
     try {
       const latest=await ctx.storage.read(KEY);
-      if(JSON.stringify(latest)!==JSON.stringify(original)) throw Error(tr("冲突已变化，请刷新","Conflict changed; refresh"));
+      if(!sameReadingValue(latest,original)) throw Error(tr("冲突已变化，请刷新","Conflict changed; refresh"));
       const command={expectedRevision:original.current.revision,operationId:crypto.randomUUID()};
       const result=await ctx.storage.write(KEY,isValue?{kind:"set",value:selected.value,...command}:{kind:"set",value:decodeReadingLibrary(null) as unknown as V2Json,...command});
       await refresh();
       if(result.status!=="committed" && result.status!=="pending") throw Error("Conflict resolution failed");
     }finally{busy=false;notify();}
+  }
+  async function undoBook(before:ReadingBook|undefined,after:ReadingBook) {
+    const expected=library;
+    if(!ready() || !expected) throw Error("Library unavailable");
+    if(!before){
+      const tasks=await ctx.tasks.list({entityIds:[after.id],includeCompleted:true});
+      if(tasks.length) throw Error(tr("书籍已有阅读任务，无法撤销添加","Book already has linked tasks"));
+      const facts=await ctx.activity.query({range:"all"});
+      if((await ctx.tasks.resolveEntityLinks([...new Set([...facts.planned,...facts.actual].map(f=>f.taskId))],[after.id])).length) throw Error(tr("书籍已有阅读记录，无法撤销添加","Book already has reading history"));
+    }
+    return mutate(value=>undoReadingBookChange(value,before,after),expected);
   }
   async function links(ids:readonly string[], value=library) {
     if(!value || ctx.signal.aborted || !ids.length || !value.books.length) return [];
@@ -89,12 +101,13 @@ export function createReadingController(ctx: PluginContextV2) {
   }
   ctx.register(ctx.storage.subscribe(KEY,()=>{void refresh();}));
   ctx.register(()=>{generation++;listeners.clear();pendingTaskOps.clear();runningTasks.clear();});
-  return {tr,refresh,subscribe,mutate,migrateLegacy,resolveConflict,createTask,membership,summarize,ready,get library(){return library},get legacy(){return legacy},get conflict(){return snapshot.status==="conflict"?snapshot:undefined},get busy(){return busy},get state(){return snapshot.status},get error(){return error}};
+  return {tr,refresh,subscribe,mutate,migrateLegacy,resolveConflict,undoBook,createTask,membership,summarize,ready,get library(){return library},get legacy(){return legacy},get conflict(){return snapshot.status==="conflict"?snapshot:undefined},get busy(){return busy},get state(){return snapshot.status},get error(){return error}};
 }
 type Controller=ReturnType<typeof createReadingController>;
 function mountShelf(ctx:PluginContextV2,c:Controller,container:HTMLElement) {
   const doc=container.ownerDocument,root=doc.createElement("div");container.append(root);
   let disposed=false, editing=false, statsRun=0;
+  let undo:{before?:ReadingBook;after:ReadingBook}|undefined;
   const tr=c.tr;
   function el<K extends keyof HTMLElementTagNameMap>(tag:K,text?:string,parent:HTMLElement=root) {
     const node=doc.createElement(tag); if(text!==undefined) node.textContent=text;parent.append(node);return node;
@@ -108,18 +121,18 @@ function mountShelf(ctx:PluginContextV2,c:Controller,container:HTMLElement) {
     const form=el("form");form.style.display="grid";form.style.gap="12px";
     function input(label:string,value:string,type="text") {const l=el("label",label,form);const i=el("input",undefined,l);i.className="ui-input";i.type=type;i.value=value;return i;}
     function select(label:string,options:readonly [string,string][],value:string){const l=el("label",label,form);const s=el("select",undefined,l);s.className="ui-input";for(const [key,name] of options){const o=el("option",name,s);o.value=key;}s.value=value;return s;}
-    const title=input(tr("书名","Title"),book?.title??"");title.required=true;
-    const author=input(tr("作者","Author"),book?.author??"");
+    const title=input(tr("书名","Title"),book?.title??"");title.required=true;title.maxLength=240;
+    const author=input(tr("作者","Author"),book?.author??"");author.maxLength=240;
     const status=select(tr("状态","Status"),[["to-read",tr("准备读","To read")],["reading",tr("正在读","Reading")],["finished",tr("已读完","Finished")]],book?.status??"to-read");
     const unit=select(tr("进度单位","Progress unit"),[["percent","%"],["pages",tr("页","Pages")],["chapters",tr("章","Chapters")]],book?.progress.unit??"percent");
     const current=input(tr("当前进度","Current progress"),String(book?.progress.current??0),"number");current.min="0";current.step="any";current.required=true;
     const total=input(tr("总数（可选）","Total (optional)"),book?.progress.unit!=="percent" ? String(book?.progress.total??"") : "","number");total.min="1";total.step="1";
-    const toggle=()=>{total.disabled=unit.value==="percent";};unit.onchange=toggle;toggle();
+    const toggle=()=>{total.disabled=unit.value==="percent";current.max=unit.value==="percent"?"100":"";current.step=unit.value==="percent"?"any":"1";};unit.onchange=()=>{current.value="0";total.value="";toggle();};toggle();
     const save=el("button",tr("保存","Save"),form);save.type="submit";save.className="ui-button ui-button--primary";
     button(tr("取消","Cancel"),()=>{editing=false;render();},form);
     form.onsubmit=e=>{e.preventDefault();save.disabled=true;const now=new Date().toISOString(),id=book?.id??crypto.randomUUID();
       const progress:ReadingProgress=unit.value==="percent"?{unit:"percent",current:Number(current.value)}:{unit:unit.value as "pages"|"chapters",current:Number(current.value),...(total.value?{total:Number(total.value)}:{})};
-      void c.mutate(value=>updateBook(book?value:createBook(value,{id,title:title.value,author:author.value,now}),id,{title:title.value,author:author.value,status:status.value as ReadingStatus,progress},now),before).then(()=>{editing=false;render();}).catch(e=>{save.disabled=false;report(e);});
+      void c.mutate(value=>updateBook(book?value:createBook(value,{id,title:title.value,author:author.value,now}),id,{title:title.value,author:author.value,status:status.value as ReadingStatus,progress},now),before).then(saved=>{const after=saved.books.find(item=>item.id===id);if(after)undo={before:book,after};editing=false;render();}).catch(e=>{save.disabled=false;report(e);});
     };
   }
   function render(){
@@ -147,6 +160,7 @@ function mountShelf(ctx:PluginContextV2,c:Controller,container:HTMLElement) {
     if(state==="unavailable" || c.error)el("p",tr("书库暂不可用。","Library unavailable."));
     button(tr("刷新","Refresh"),()=>{void c.refresh();});
     button(tr("添加书籍","Add book"),()=>editor()).disabled=!c.ready();
+    if(undo)button(tr("撤销上次书籍修改","Undo last book change"),()=>{const change=undo;if(change)void c.undoBook(change.before,change.after).then(()=>{undo=undefined;render();}).catch(report);}).disabled=!c.ready();
     if(!c.library)return;
     const groups=groupReadingBooks(c.library),metrics=new Map<string,HTMLElement>();
     for(const [key,label] of [["to-read",tr("准备读","To read")],["reading",tr("正在读","Reading")],["finished",tr("已读完","Finished")]] as const){
