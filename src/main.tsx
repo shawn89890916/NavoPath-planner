@@ -1,7 +1,6 @@
 import { anchorPlacement, observeAnchor, viewportBounds } from "./motion/anchor";
 import { isCalendarBackgroundVisible } from "./extensions/calendarBackgrounds";
 import { blockingCalendarEvents } from "./utils/courseBackground";
-import { useSideWorkspaceGesture } from "./useSideWorkspaceGesture";
 import { installWorkspaceWheelRouting } from "./utils/workspaceWheel";
 import { uid } from "./utils/ids";
 import { toggleTaskCompletion, setTaskCompletion, habitScheduleForTask } from "./utils/taskCompletion";
@@ -846,12 +845,6 @@ function App() {
   const candidatePanelRef = useRef<HTMLElement>(null);
   const candidateTriggerRef = useRef<HTMLButtonElement>(null);
   const candidateScrollRef = useRef(0);
-  const sideWorkspaceGesture = useSideWorkspaceGesture({
-    enabled: mobileExecution, open: candidateDrawerOpen,
-    getWidth: () => candidatePanelRef.current?.offsetWidth || 0,
-    onOpen: () => { setCandidatePanelCollapsed(false); setCandidateDrawerOpen(true); },
-    onClose: closeCandidateDrawer,
-  });
   const mobileTapRef = useRef({ x: 0, y: 0, moved: false });
   type MobilePlacementSession = { guided: boolean; taskId: string; subtask?: ShelfSubtask; recordId?: string; durationMinutes: number; version: string; view: TimelineView; date: string; visibleDate: string; scrollTop: number; drawerOpen: boolean; noSuggestedSlotDate?: string };
   const [mobilePlacement, setMobilePlacement] = useState<MobilePlacementSession | null>(null);
@@ -9868,16 +9861,10 @@ if (cached?.data && cached?.settings) {
           <section
             onPointerDownCapture={(event) => {
               mobileTapRef.current = { x: event.clientX, y: event.clientY, moved: false };
-              sideWorkspaceGesture.onPointerDownCapture?.(event);
             }}
             onPointerMoveCapture={(event) => {
               if (Math.hypot(event.clientX - mobileTapRef.current.x, event.clientY - mobileTapRef.current.y) > 8) mobileTapRef.current.moved = true;
-              sideWorkspaceGesture.onPointerMoveCapture?.(event);
             }}
-            onPointerUpCapture={sideWorkspaceGesture.onPointerUpCapture}
-            onPointerCancelCapture={sideWorkspaceGesture.onPointerCancelCapture}
-            onLostPointerCapture={sideWorkspaceGesture.onLostPointerCapture}
-            onClickCapture={sideWorkspaceGesture.onClickCapture}
             className={`df-timeline-panel${compactTimelineActive ? " compact-active" : " compact-inactive"}`}
             aria-hidden={compactLayout && !compactTimelineActive}
             id="df-execute-timeline"

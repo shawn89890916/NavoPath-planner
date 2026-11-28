@@ -3,6 +3,7 @@ import { Button } from "./UiPrimitives";
 import { UiChevronLeftIcon, UiChevronRightIcon } from "./UiIcons";
 import type { Language } from "../types";
 import { t } from "../i18n";
+import { useSideWorkspaceGesture } from "../useSideWorkspaceGesture";
 
 export default function MobileExecutionControls({ lang, count, title, time, noSlot, conflict, onOpen, onCancel, onConfirm, triggerRef, desktop, hidden, drawerOpen, panelRef, scrollRef, onClose }: {
   desktop?: boolean; hidden: boolean; drawerOpen: boolean; panelRef: React.RefObject<HTMLElement | null>; scrollRef: React.RefObject<number>; onClose: () => void;
@@ -14,6 +15,7 @@ export default function MobileExecutionControls({ lang, count, title, time, noSl
   const wasOpen = useRef(false);
   const placementRef = useRef<HTMLElement>(null);
   const placing = title !== undefined;
+  useSideWorkspaceGesture({ enabled: !desktop && !hidden && !placing, open: drawerOpen, panelRef, onOpen, onClose });
   const manualHint = zh ? (desktop ? "点击时间轴手动选择。" : "轻点时间轴手动选择。")
     : (desktop ? "Click the timeline to pick a time." : "Tap the timeline to pick a time.");
   const placementHint = noSlot
