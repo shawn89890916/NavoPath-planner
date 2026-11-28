@@ -38,7 +38,7 @@ export function linkedPluginEntity(taskId: string, keys: ReadonlyMap<string, str
 }
 /** Stable per-owner creation ID uses the existing task/tombstone ledger, no new cloud schema.
  * A linked task carries an immutable entity digest in the same task identity.
- * No separate association write can be lost between task creation and linking. */
+ * No separate association write can be lost between task creation and linking.
  * For edits, require the current task revision; no promise of cross-device CAS.
  * Success means the existing optimistic local task/history pipeline accepted the mutation. */
 export async function executePluginTask(owner: string, command: V2TaskCommand, host: CommandHost): Promise<V2TaskResult> {
