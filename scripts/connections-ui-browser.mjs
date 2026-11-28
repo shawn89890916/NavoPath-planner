@@ -26,7 +26,11 @@ export async function exerciseConnections(){
     return React.createElement("main",{id:"fixture",className:theme==="dark"?"theme-dark":""},React.createElement(ConnectionProviders,{lang:"en",anchor,onSelect:setAnchor,errorMessage:String,caldav:React.createElement("p",null,"CALDAV"),externalCalendar:React.createElement("p",null,"EXTERNAL"),mcp:React.createElement("p",null,"MCP"),bridge:React.createElement("p",null,"BRIDGE")}));
   }
   const root=createRoot(document.getElementById("root"));root.render(React.createElement(Fixture));
-  const bounds=()=>{const el=document.getElementById("fixture");assert(el.scrollWidth<=el.clientWidth+2,"Connection page horizontal overflow "+el.scrollWidth+"/"+el.clientWidth);};
+  const bounds=()=>{const el=document.getElementById("fixture");assert(el.scrollWidth<=el.clientWidth+2,"Connection page horizontal overflow "+el.scrollWidth+"/"+el.clientWidth);
+    const groups=[...el.querySelectorAll(".df-settings-group")].filter(g=>!g.parentElement.closest(".df-settings-group-body,.df-settings-disclosure"));
+    assert(groups.length>0,"Expected a connection settings section");
+    for(const g of groups){const cs=getComputedStyle(g.querySelector(":scope > .df-settings-group-body"));assert(parseFloat(cs.borderTopWidth)===1,"Connection section must be framed");}
+  };
   await wait(()=>contains("Paired"),"Pair state not loaded");assert(!contains("Notion Calendar"),"Unconfigured provider exposed in overview");bounds();
   await click("Add");await wait(()=>contains("Notion Calendar"),"Provider picker missing");assert(!contains("Super Productivity"),"Paired provider duplicated");bounds();
   window.connectionFixture.setAnchor("connection-super-productivity");
@@ -39,5 +43,5 @@ export async function exerciseConnections(){
   conflicts=[{}];window.connectionFixture.setAnchor("connections");await wait(()=>contains("Sync conflicts"),"Conflict status not shown");
   window.connectionFixture.setAnchor("connection-super-productivity");await wait(()=>contains("PLUGIN MANAGEMENT"),"Conflict management not exposed");bounds();
   assert(writes===0,"Browsing must not create or revoke links");
-  root.unmount();return {width:innerWidth,light:true,dark:true,overview:true,historyDisclosure:true,management:true,conflict:true,credentialWrites:writes};
+  root.unmount();return {width:innerWidth,light:true,dark:true,overview:true,historyDisclosure:true,management:true,conflict:true,credentialWrites:writes,sectionHierarchy:true};
 }

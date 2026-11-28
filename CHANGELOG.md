@@ -1,5 +1,13 @@
 # NavoPath 更新日志
 
+## 2026-11-28
+
+### 1.7.0 Beta 139
+
+#### 修复
+
+- 统一设置一级分区与独立折叠区的外围框，内部子组不再重复描边或缩进；连接、搜索与插件设置沿用同一层级规则。
+
 ## 2026-11-27
 
 ### 1.7.0 Beta 138
@@ -1356,6 +1364,14 @@
 - 竖屏规划页筛选按钮避开顶部安全区；执行页与规划页的底栏移出带变换的应用壳，统一按视口底边定位，执行页日程勾选框缩小可见方框，同时保留 44px 触控区域。
 
 # NavoPath Changelog
+
+## 2026-11-28
+
+### 1.7.0 Beta 139
+
+#### Fixes
+
+- Use one surface for top-level settings sections and standalone disclosures, keeping nested groups flat and consistent across connections, search and plugin settings.
 
 ## 2026-11-27
 

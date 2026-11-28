@@ -13,38 +13,38 @@
 }
 .df-settings-group-head { margin: 0 0 8px; padding-bottom: 0; border-bottom: 0; }
 .df-settings-surface .df-settings-group-head { padding-inline: calc(var(--settings-row-inset, 16px) + 1px); }
-.df-settings-surface .df-settings-group:not(.df-settings-group--grouped) > .df-settings-group-body { padding-inline: calc(var(--settings-row-inset, 16px) + 1px); }
-.df-settings-surface .df-settings-group--grouped .df-settings-group > :is(.df-settings-group-head, .df-settings-group-body) { padding-inline: 0; }
+.df-settings-surface :is(.df-settings-group-body, .df-settings-disclosure) .df-settings-group > .df-settings-group-head { padding-inline: 0; }
 .df-settings-group-title { margin: 0; color: var(--text-muted); font: 600 13px/1.45 var(--paper-sans); }
 .df-settings-group-desc { margin: var(--space-1) 0 0; max-width: 64ch; color: var(--text-muted); font: 400 12px/1.55 var(--paper-sans); }
 .df-settings-group-body { display: flex; flex-direction: column; min-width: 0; }
-.df-settings-group--grouped > .df-settings-group-body {
+.df-settings-group--grouped > .df-settings-group-body,
+.df-settings-disclosure:not(:where(.df-settings-group-body *, .df-settings-disclosure *)) {
   background: var(--settings-group-surface, var(--surface-card));
   border: 1px solid var(--paper-rule);
   border-radius: var(--radius-card);
   padding: 0 var(--settings-row-inset, 16px);
   box-sizing: border-box;
 }
-.df-settings-group--grouped .df-settings-group--grouped > .df-settings-group-body {
-  border: 0; padding: 0; background: transparent;
+/* A disclosure or section inside an existing surface is an unframed subsection,
+   including independently mounted plugin DOM. No React context is required. */
+:is(.df-settings-group-body, .df-settings-disclosure) .df-settings-group--grouped > .df-settings-group-body {
+  border: 0; border-radius: 0; padding: 0; background: transparent;
 }
-.df-settings-group--grouped .df-settings-group { margin-block: 8px; }
+:is(.df-settings-group-body, .df-settings-disclosure) .df-settings-group { margin-block: 12px; }
+.df-settings-disclosure:not(:where(.df-settings-group-body *, .df-settings-disclosure *)) { margin: 0 0 24px; min-width: 0; }
+.df-settings-disclosure[open] > .df-settings-disclosure-body { border-top: 1px solid var(--paper-rule); padding-block-end: 8px; }
+.df-settings-disclosure-body > .df-settings-group:last-child { margin-block-end: 0; }
 .df-settings-group--grouped > .df-settings-group-body > .df-settings-disclosure > .df-settings-disclosure-toggle { border-radius: var(--radius-control); }
 .df-settings-group--grouped > .df-settings-group-body > .df-settings-inline-preview { padding-bottom: 12px; }
 .df-settings-group--grouped > .df-settings-group-body > .df-settings-row--stacked { padding-block: 12px; }
-.df-settings-group--grouped > .df-settings-group-body > .df-settings-disclosure + .df-settings-row,
-.df-settings-group--grouped > .df-settings-group-body > .df-settings-disclosure + .df-settings-disclosure { border-top: 1px solid var(--paper-rule); }
-#root .df-app .df-settings-group--danger {
-  border-inline-start: 2px solid color-mix(in srgb, var(--danger-ink) 48%, var(--paper-rule)); padding-inline-start: var(--space-3);
-}
+:is(.df-settings-group-body, .df-settings-disclosure-body) > :is(.df-settings-disclosure, .df-settings-row) + :is(.df-settings-row, .df-settings-disclosure) { border-top: 1px solid var(--paper-rule); }
 .df-settings-group--danger .df-settings-group-title { color: var(--danger-ink); }
 .df-settings-row, #root .df-app .df-settings-row {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, min(48%, 220px));
   align-items: center; column-gap: var(--space-4); row-gap: var(--space-2);
   min-height: 56px; box-sizing: border-box; padding: var(--space-2) 0;
 }
-.df-settings-row + .df-settings-row,
-.df-settings-row + .df-settings-disclosure { border-top: 1px solid var(--paper-rule); }
+.df-settings-row + .df-settings-row { border-top: 1px solid var(--paper-rule); }
 .df-settings-row-label { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .df-settings-disclosure-toggle {
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
@@ -158,7 +158,7 @@
 .df-settings-inline-preview { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; font: 400 12px/1.4 var(--paper-sans); color: var(--text-muted); padding: var(--space-2) 0; }
 .df-settings-inline-preview-block { padding: 3px var(--space-2); background: var(--paper-note); border-radius: var(--radius-control); color: var(--text-main); white-space: nowrap; }
 .df-settings-inline-preview-gap { border-bottom: 1px dashed var(--paper-rule-strong); text-align: center; min-width: 12px; white-space: nowrap; }
-.df-settings-inline-plugin { padding: var(--space-2) 0 var(--space-3) var(--space-3); border-inline-start: 1px solid var(--paper-rule); }
+.df-settings-inline-plugin { min-width: 0; padding: var(--space-2) 0 var(--space-3); border-block-start: 1px solid var(--paper-rule); }
 .df-settings-extension-tools { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2) 0; }
 .df-settings-result-link { display: inline; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: start; cursor: pointer; }
 .df-settings-result-link:hover { text-decoration: underline; text-underline-offset: 3px; }

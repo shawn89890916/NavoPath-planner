@@ -30,19 +30,19 @@ export function SettingSection({
   description,
   children,
   tone = "normal",
-  variant = "plain",
   anchor,
 }: {
   title?: ReactNode;
   description?: ReactNode;
   children: ReactNode;
   tone?: "normal" | "danger";
+  /** Legacy callers may still pass variant; section depth now determines the surface. */
   variant?: "plain" | "grouped";
   anchor?: string;
 }) {
   return (
     <section
-      className={`df-settings-group${variant === "grouped" ? " df-settings-group--grouped" : ""}${tone === "danger" ? " df-settings-group--danger" : ""}`}
+      className={`df-settings-group df-settings-group--grouped${tone === "danger" ? " df-settings-group--danger" : ""}`}
       data-settings-anchor={anchor}
       tabIndex={anchor ? -1 : undefined}
     >
