@@ -2,11 +2,17 @@
 
 ## 2026-11-28
 
-### 1.7.0 Beta 139
+### 1.7.0 Beta 140
 
 #### 改进
 
 - 竖屏和贴边栏的任务入口改为侧滑工作区，保留可滚动的时间轴和原有任务块；支持视图切换、连续拖拽安排及触屏边缘手势。
+
+### 1.7.0 Beta 139
+
+#### 改进
+
+- 月视图和紧凑插件栏的共用拖拽浮层按渲染帧合并位置更新，保留真实指针命中、边缘滚动及释放坐标，减少重复渲染。
 
 ## 2026-11-27
 
@@ -1367,11 +1373,17 @@
 
 ## 2026-11-28
 
-### 1.7.0 Beta 139
+### 1.7.0 Beta 140
 
 #### Improvements
 
 - Replace the portrait and Dock task entry with a sliding workspace, keeping the timeline scrollable and existing task-block appearance; switch views, drag tasks to schedule, and use touch edge gestures.
+
+### 1.7.0 Beta 139
+
+#### Improvements
+
+- Coalesce shared drag overlay position updates per animation frame in Month view and the compact plugin dock, preserving actual hit testing, edge scrolling and release coordinates.
 
 ## 2026-11-27
 
