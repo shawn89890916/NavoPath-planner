@@ -30,7 +30,7 @@ function createWeReadConnection({directory,safeStorage,fetchImpl=fetch,now=()=>n
   async function request(key,api,params={}){
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
     try{
-      const response=await fetchImpl(GATEWAY,{method:"POST",headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json"},body:JSON.stringify({api_name:api,skill_version:"1.0.4",...params}),redirect:"error",signal:controller.signal});
+      const response=await fetchImpl(GATEWAY,{method:"POST",headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json"},body:JSON.stringify({api_name:api,skill_version:"1.0.6",...params}),redirect:"error",signal:controller.signal});
       if(response.status===401||response.status===403)return fail("auth");
       if(response.status===429)return fail("rate-limit");
       if(!response.ok||!response.body)return fail("network");
@@ -40,9 +40,9 @@ function createWeReadConnection({directory,safeStorage,fetchImpl=fetch,now=()=>n
       finally{reader.releaseLock();}
       let data;try{data=JSON.parse(Buffer.concat(chunks).toString("utf8"));}catch{return fail("response");}
       if(!obj(data))return fail("response");
-      if(data.upgrade_info)return fail("upgrade");
+      const upgradeNotice=Boolean(data.upgrade_info);
       if(data.errcode!==undefined&&data.errcode!==0)return fail("api");
-      return {ok:true,data};
+      return {ok:true,data,upgradeNotice};
     }catch{return fail("network");}finally{clearTimeout(timer);}
   }
   async function verify(key){
@@ -52,7 +52,7 @@ function createWeReadConnection({directory,safeStorage,fetchImpl=fetch,now=()=>n
     if(!Array.isArray(books)||!Array.isArray(albums))return fail("response");
     const counts={books:books.length,audiobooks:albums.length,articles:obj(mp)&&Object.keys(mp).length?1:0};
     // Return aggregate counts only, never raw gateway responses, private titles or secrets.
-    return {ok:true,connected:true,checkedAt:now(),counts};
+    return {ok:true,connected:true,checkedAt:now(),counts,upgradeNotice:result.upgradeNotice};
   }
   async function run(scope,action,candidate){
     let filePath;try{filePath=file(scope);}catch{return fail("account");}

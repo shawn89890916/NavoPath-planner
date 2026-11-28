@@ -73,14 +73,14 @@ export async function exerciseSettings(){
     cases++;
   }
   // Exercise the actual Reading settings component using a local IPC-contract fixture.
-  let connected=false, failTest=false;const calls=[];
+  let connected=false, failTest=false, upgradeNotice=true;const calls=[];
   const connection=async(action,candidate)=>{
     calls.push({action,hasKey:!!candidate});
     if(action==="status")return {ok:true,connected};
     if(action==="disconnect"){connected=false;return {ok:true,connected:false};}
     if(action==="test"&&failTest)return {ok:false,code:"auth"};
     if(action==="connect"){assert(candidate==="wrk-fixture-key","Key was not submitted to connection adapter");connected=true;}
-    return {ok:true,connected,checkedAt:"2026-11-28T00:00:00Z",counts:{books:2,audiobooks:1,articles:1}};
+    return {ok:true,connected,checkedAt:"2026-11-28T00:00:00Z",counts:{books:2,audiobooks:1,articles:1},upgradeNotice};
   };
   const desktopAvailable=()=>true;
   const wait=async(fn,message)=>{for(let i=0;i<100;i++){const value=fn();if(value)return value;await new Promise(r=>setTimeout(r,20));}throw Error(message);};
@@ -93,6 +93,8 @@ export async function exerciseSettings(){
   await wait(()=>[...document.querySelectorAll("button")].find(b=>b.textContent==="Verify and connect"&&!b.disabled),"Connect remained disabled");
   click("Verify and connect");
   await wait(()=>document.body.textContent.includes("Audiobooks 1"),"Shelf summary missing");
+  assert(document.body.textContent.includes("optional API update notice"),"Non-blocking update notice missing");
+  assert(document.body.textContent.includes("Books 2"),"upgrade_info incorrectly blocked bookshelf data");
   assert(password.value==="","Credential input retained the submitted key");
   for(const el of document.querySelectorAll(".df-settings-row,.df-settings-row-control,.df-settings-group-body"))assert(el.scrollWidth<=el.clientWidth+2,"Reading settings overflow at "+innerWidth);
   failTest=true;click("Test connection");await wait(()=>document.querySelector('[role=alert]')?.textContent.includes("rejected authorization"),"Auth failure missing");

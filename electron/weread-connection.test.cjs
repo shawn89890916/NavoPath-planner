@@ -11,12 +11,12 @@ const response=data=>new Response(JSON.stringify(data));
 test("verifies official shelf, encrypts per account, never returns key or shelf contents",async t=>{
   const {directory,service}=fixture(t,async(url,options)=>{
     assert.equal(url,"https://i.weread.qq.com/api/agent/gateway");assert.equal(options.redirect,"error");assert.equal(options.headers.Authorization,"Bearer "+key);
-    assert.deepEqual(JSON.parse(options.body),{api_name:"/shelf/sync",skill_version:"1.0.4"});
-    return response({books:[{title:"Private title"}],albums:[{}],mp:{id:1}});
+    assert.deepEqual(JSON.parse(options.body),{api_name:"/shelf/sync",skill_version:"1.0.6"});
+    return response({books:[{title:"Private title"}],albums:[{}],mp:{id:1},upgrade_info:{version:"1.0.6"}});
   });
   assert.deepEqual(await service.run(account,"status"),{ok:true,connected:false});
   const result=await service.run(account,"connect",key);assert.deepEqual(result.counts,{books:1,audiobooks:1,articles:1});
-  assert.doesNotMatch(JSON.stringify(result),/Private title|wrk-example/);
+  assert.doesNotMatch(JSON.stringify(result),/Private title|wrk-example|upgrade_info/);assert.equal(result.upgradeNotice,true);assert.equal(result.ok,true);
   assert.equal(fs.readdirSync(directory).length,1);assert.ok(!fs.readFileSync(path.join(directory,fs.readdirSync(directory)[0])).includes(key));
   assert.equal((await service.run(other,"status")).connected,false);
   assert.equal((await service.run(account,"test")).ok,true);
@@ -43,11 +43,11 @@ test("never silently falls back to Linux basic_text and disconnect works after s
   assert.equal((await service.run(other,"connect",key)).code,"storage");
   assert.equal((await service.run(account,"disconnect")).connected,false);
 });
-test("validates response and rejects unapproved scopes or concurrent writes",async t=>{
+test("treats upgrade_info as non-blocking and rejects unapproved scopes or concurrent writes",async t=>{
   let release;const {service}=fixture(t,()=>new Promise(r=>release=r));
   const pending=service.run(account,"connect",key);
   assert.equal((await service.run(account,"disconnect")).code,"busy");
-  release(response({books:[],albums:[],upgrade_info:{}}));assert.equal((await pending).code,"upgrade");
-  assert.equal((await service.run(account,"status")).connected,false);
+  release(response({books:[{}],albums:[{}],upgrade_info:{version:"1.0.6"}}));const upgraded=await pending;assert.equal(upgraded.ok,true);assert.equal(upgraded.upgradeNotice,true);assert.deepEqual(upgraded.counts,{books:1,audiobooks:1,articles:0});
+  assert.equal((await service.run(account,"status")).connected,true);
   assert.equal((await service.run("../outside","status")).code,"account");
 });
