@@ -24,3 +24,13 @@ test("v2 source boundary rejects runtime SDK imports, host imports and known leg
 test("v2 example and all registered v2 package sources obey the static boundary", async () => {
   await checkV2Boundary();
 });
+
+import { buildPluginPreview } from "./build-plugin-preview.mjs";
+import { readPackage } from "../src/extensions/packages.ts";
+test("Reading v2 builds independently of the host", async () => {
+  const a=await buildPluginPreview("reading"),b=await buildPluginPreview("reading");
+  assert.equal(a.sha256,b.sha256);
+  const pkg=await readPackage(new TextEncoder().encode(a.data));
+  assert.equal(pkg.manifest.apiVersion,2);
+  assert.equal(pkg.manifest.id,"reading");
+});

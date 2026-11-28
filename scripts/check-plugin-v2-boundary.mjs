@@ -82,6 +82,12 @@ export async function checkV2Boundary() {
     if (manifest.apiVersion !== 2) continue;
     errors.push(...await checkDirectory(dir, dir, [resolve(root, "integrations/navopath-plugin-api")]));
   }
+  const previews = resolve(root, "plugin-previews");
+  for (const entry of await readdir(previews, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const dir = resolve(previews, entry.name);
+    errors.push(...await checkDirectory(dir, dir, [resolve(root, "integrations/navopath-plugin-api")]));
+  }
   if (errors.length) throw new Error(errors.join("\n"));
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

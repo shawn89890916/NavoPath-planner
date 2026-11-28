@@ -1,0 +1,29 @@
+{
+  "id": "reading",
+  "name": "Reading",
+  "description": "Manage books, reading progress and reading tasks using the workspace timeline.",
+  "author": "NavoPath",
+  "version": "2.0.0",
+  "kind": "plugin",
+  "apiVersion": 2,
+  "minAppVersion": "1.7.0-beta.142",
+  "platforms": [
+    "desktop",
+    "web",
+    "mobile"
+  ],
+  "main": "main.js",
+  "license": "MIT",
+  "repository": "https://github.com/shawn89890916/NavoPath-planner",
+  "permissions": [
+    "tasks.read",
+    "tasks.write",
+    "activity.read",
+    "storage.read",
+    "storage.write",
+    "ui.tasksGroup",
+    "ui.workspace",
+    "ui.toast",
+    "metrics.provider"
+  ]
+}
