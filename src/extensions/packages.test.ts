@@ -82,10 +82,10 @@ describe("community extension packages", () => {
     delete pkg.manifest.settingsOptions;
     delete pkg.manifest.mcp;
     pkg.manifest.apiVersion = 2;
-    pkg.manifest.permissions = ["tasks.read", "ui.workspace", "ui.planning", "ui.settings", "ui.toast"];
+    pkg.manifest.permissions = ["tasks.read", "activity.read", "metrics.provider", "ui.workspace", "ui.planning", "ui.settings", "ui.toast"];
     expect(parsePackage(strToU8(JSON.stringify(pkg))).manifest.apiVersion).toBe(2);
     for (const patch of [
-      { permissions: ["activity.read"] }, { permissions: ["storage.read"] },
+      { permissions: ["storage.write"] }, { permissions: ["storage.read"] },
       { permissions: ["tasks.read", "tasks.read"] }, { permissions: undefined },
       { desktop: "native.js" }, { styles: "styles.css" }, { apiVersion: 3 },
       { kind: "theme" }, { settingsOptions: [] },
