@@ -5,14 +5,16 @@ export type ReadingStatus = "to-read" | "reading" | "finished";
 export type ReadingProgress =
   | { unit: "percent"; current: number }
   | { unit: "pages" | "chapters"; current: number; total?: number };
+export interface ReadingWeReadSource { connectionId:string; externalId:string; kind:"book"|"audio"; managed:boolean; private?:boolean; cover?:string; readerLink?:string; recent?:number; progressAt?:number; percent?:number; seconds?:number; finished?:boolean; checkedAt:string; }
 export interface ReadingBook {
   id: string; title: string; author: string; status: ReadingStatus;
-  progress: ReadingProgress; createdAt: string; updatedAt: string;
+  progress: ReadingProgress; createdAt: string; updatedAt: string; weread?:ReadingWeReadSource;
 }
 export interface ReadingLibrary {
   version: 1;
   books: ReadingBook[];
   taskLinks: { taskId: string; bookId: string }[];
+  wereadPreferences?: { autoImport:boolean; connectionId:string; seenKeys?:string[] };
 }
 export const emptyReadingLibrary = (): ReadingLibrary => ({ version: 1, books: [], taskLinks: [] });
 
@@ -54,6 +56,7 @@ export function updateBook(library: ReadingLibrary, bookId: string, patch: {
     ...(patch.author !== undefined ? { author: patch.author.trim() } : {}),
     ...(patch.status !== undefined ? { status: patch.status } : {}),
     ...(progress !== undefined ? { progress } : {}),
+    ...(book.weread?.managed&&((patch.status!==undefined&&patch.status!==book.status)||(progress!==undefined&&JSON.stringify(progress)!==JSON.stringify(book.progress)))?{weread:{...book.weread,managed:false}}:{}),
     updatedAt: now,
   }) };
 }
@@ -128,18 +131,27 @@ export function decodeReadingLibrary(value: unknown): ReadingLibrary {
   if (typeof value !== "object" || !value || Array.isArray(value)) throw new Error("Invalid reading library");
   const library = value as ReadingLibrary;
   if (library.version !== 1 || !Array.isArray(library.books) || !Array.isArray(library.taskLinks)) throw new Error("Unsupported reading library");
-  const ids = new Set<string>(), tasks = new Set<string>();
+  const ids = new Set<string>(), tasks = new Set<string>(), sources=new Set<string>();
   for (const book of library.books) {
     if (!book || typeof book.id !== "string" || !book.id.trim() || ids.has(book.id) ||
       typeof book.title !== "string" || !book.title.trim() || typeof book.author !== "string" ||
       !["to-read", "reading", "finished"].includes(book.status) ||
       !book.progress || typeof book.createdAt !== "string" || typeof book.updatedAt !== "string") throw new Error("Invalid reading book");
     validateProgress(book.progress);
+    if(book.weread){
+      const w=book.weread;
+      if(typeof w.connectionId!=="string"||!w.connectionId||typeof w.externalId!=="string"||!w.externalId||!["book","audio"].includes(w.kind)||typeof w.managed!=="boolean"||typeof w.checkedAt!=="string"||
+        (w.percent!==undefined&&(!Number.isInteger(w.percent)||w.percent<0||w.percent>100))||(w.seconds!==undefined&&(!Number.isSafeInteger(w.seconds)||w.seconds<0)))throw new Error("Invalid WeRead source");
+      const source=JSON.stringify([w.connectionId,w.kind,w.externalId]);if(sources.has(source))throw new Error("Duplicate WeRead source");sources.add(source);
+    }
     ids.add(book.id);
   }
   for (const link of library.taskLinks) {
     if (!link || typeof link.taskId !== "string" || !link.taskId.trim() || tasks.has(link.taskId) || !ids.has(link.bookId)) throw new Error("Invalid reading task link");
     tasks.add(link.taskId);
+  }
+  if(library.wereadPreferences){
+    const p=library.wereadPreferences;if(typeof p.connectionId!=="string"||typeof p.autoImport!=="boolean"||(p.seenKeys!==undefined&&(!Array.isArray(p.seenKeys)||p.seenKeys.some(key=>typeof key!=="string"))))throw Error("Invalid WeRead preferences");
   }
   return library;
 }

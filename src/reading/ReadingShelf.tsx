@@ -1,9 +1,11 @@
 import { useState, type ReactNode } from "react";
+import { t } from "../i18n";
+import WeReadShelfSync,{WeReadBookActions} from "./WeReadShelfSync";
 import { UiChevronDownIcon, UiChevronRightIcon } from "../components/UiIcons";
 import type { Language, Task, TimeEntry } from "../types";
 import { Button, Input } from "../components/UiPrimitives";
 import { TaskGroup } from "../components/TaskBlock";
-import { createBook, groupReadingBooks, readingTotals, updateBook, type ReadingBook, type ReadingLibrary, type ReadingProgress, type ReadingStatus } from "./model";
+import { createBook, groupReadingBooks, readingTotals, undoReadingBookChange, updateBook, type ReadingBook, type ReadingLibrary, type ReadingProgress, type ReadingStatus } from "./model";
 import "./ReadingShelf.css";
 
 export type ReadingMutate = (change: (library: ReadingLibrary) => ReadingLibrary) => Promise<ReadingLibrary>;
@@ -74,19 +76,24 @@ function BookEditor({ book, zh, busy, onSave, onCancel }: {
     <div className="reading-actions"><Button variant="ghost" onClick={onCancel} disabled={busy}>{zh ? "取消" : "Cancel"}</Button><Button variant="primary" type="submit" disabled={busy || !title.trim()}>{zh ? "保存" : "Save"}</Button></div>
   </form>;
 }
-export default function ReadingShelf({ library, busy, error, lang, onCreateTask, mutate, tasks, entries, engagementEnabled, onSaved }: Props & {
+export default function ReadingShelf({ account, library, busy, error, lang, onCreateTask, mutate, tasks, entries, engagementEnabled, showUndoToast, showToast }: Props & {
+  account:string;
   mutate: ReadingMutate; tasks: readonly Task[]; entries: readonly TimeEntry[]; engagementEnabled: boolean;
-  onSaved: (before: ReadingBook | undefined, after: ReadingBook) => void;
+  showUndoToast: (message: string, actionLabel: string, onUndo: () => void) => void;
+  showToast: (message: string) => void;
 }) {
   const zh = lang === "zh";
   const [editor, setEditor] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const [detail,setDetail]=useState<string|null>(null);
+  const [collapsed,setCollapsed]=useState<ReadingStatus[]>(["finished"]);
   if (!library) return <p className="reading-muted" role="status">{error ? (zh ? "无法读取书架，请重新打开窗口。" : "Library unavailable. Reopen the window.") : (zh ? "正在读取书架…" : "Loading library…")}</p>;
   const groups = groupReadingBooks(library);
   const book = library.books.find(item => item.id === editor);
   const run = (action: () => Promise<void>) => { setFailed(false); void action().catch(() => setFailed(true)); };
   return <section className="reading-shelf" aria-label={zh ? "阅读书架" : "Reading shelf"}>
     <header className="reading-heading"><div><h2>{zh ? "书架" : "Library"}</h2><p className="reading-muted">{zh ? "管理书籍与阅读进度" : "Books and reading progress"}</p></div><Button variant="primary" disabled={busy} onClick={() => setEditor("new")}>{zh ? "添加书籍" : "Add book"}</Button></header>
+    <WeReadShelfSync key={account} account={account} library={library} mutate={mutate} zh={zh} busy={busy} refreshToken={String(entries.length)+":"+tasks.filter(t=>t.completed&&library.taskLinks.some(link=>link.taskId===t.id)).length}/>
     {editor && (editor === "new" || book) && <BookEditor key={editor} book={book} zh={zh} busy={busy} onCancel={() => setEditor(null)} onSave={async patch => {
       const now = new Date().toISOString();
       const id = book?.id ?? crypto.randomUUID();
@@ -96,20 +103,25 @@ export default function ReadingShelf({ library, busy, error, lang, onCreateTask,
         if (book && (!before || JSON.stringify(before) !== JSON.stringify(book))) throw new Error("Book changed on another device");
         return updateBook(book ? current : createBook(current, { id, title: patch.title, author: patch.author, now }), id, patch, now);
       });
-      setEditor(null); onSaved(before, saved.books.find(item => item.id === id)!);
+      setEditor(null);
+      const after = saved.books.find(item => item.id === id)!;
+      showUndoToast(zh ? "已保存书籍" : "Book saved", t(lang, "toast.undo"), () => {
+        void mutate(library => undoReadingBookChange(library, before, after))
+          .then(() => showToast(t(lang, "toast.undone"))).catch(() => showToast(zh ? "书籍已发生变化，无法安全撤销。" : "The book changed and cannot be safely undone."));
+      });
     }} />}
     {failed && <p role="alert" className="reading-muted">{zh ? "操作失败，请重试。" : "Action failed. Try again."}</p>}
-    {statuses.map(status => <TaskGroup key={status} title={statusNames[status][zh ? 0 : 1]} count={groups[status].length}>
-      {groups[status].length === 0 && <p className="reading-muted">{zh ? "暂无书籍" : "No books"}</p>}
-      {groups[status].map(item => {
-        const totals = readingTotals(library, item.id, tasks, entries, engagementEnabled);
+    {(["reading","to-read","finished"] as ReadingStatus[]).map(status => <TaskGroup key={status} title={<Button variant="ghost" aria-expanded={!collapsed.includes(status)} onClick={()=>setCollapsed(old=>old.includes(status)?old.filter(v=>v!==status):[...old,status])}>{collapsed.includes(status)?<UiChevronRightIcon size={16}/>:<UiChevronDownIcon size={16}/>} {statusNames[status][zh ? 0 : 1]}</Button>} count={groups[status].length}>
+      {!collapsed.includes(status)&&groups[status].length === 0 && <p className="reading-muted">{zh ? "暂无书籍" : "No books"}</p>}
+      {!collapsed.includes(status)&&groups[status].map(item => {
+        const totals = detail===item.id?readingTotals(library, item.id, tasks, entries, engagementEnabled):null;
         const progress = item.progress.unit === "percent" ? item.progress.current : item.progress.total ? item.progress.current / item.progress.total * 100 : null;
         return <article className="reading-book" key={item.id}>
-          <header className="reading-book-header"><button className="reading-book-title" type="button" onClick={() => setEditor(item.id)}>{item.title}</button><span className="reading-muted">{progressText(item.progress, zh)}</span></header>
-          {item.author && <p className="reading-muted">{item.author}</p>}
-          {progress !== null && <progress aria-label={zh ? "阅读进度" : "Reading progress"} max={100} value={progress} />}
-          <p className="reading-muted">{zh ? "计划" : "Planned"} {Math.round(totals.plannedMinutes)}m · {zh ? "实际" : "Actual"} {Math.round(totals.actualMinutes)}m{totals.weightedMinutes !== null ? " · " + (zh ? "加权" : "Weighted") + " " + Math.round(totals.weightedMinutes) + "m" : ""}</p>
-          <div className="reading-actions"><Button variant="ghost" disabled={busy} onClick={() => setEditor(item.id)}>{zh ? "编辑进度" : "Edit progress"}</Button>{status !== "finished" && <Button variant="secondary" disabled={busy} onClick={() => run(() => onCreateTask(item.id))}>{zh ? "添加阅读任务" : "Add reading task"}</Button>}</div>
+          <header className="reading-book-header">{item.weread?.cover&&!item.weread.private&&/^https:\/\/[^/]+\.(?:qq\.com|qpic\.cn)\//i.test(item.weread.cover)&&<img className="reading-cover" src={item.weread.cover} alt="" loading="lazy" referrerPolicy="no-referrer"/>}<button className="reading-book-title" type="button" onClick={() => setDetail(old=>old===item.id?null:item.id)} aria-expanded={detail===item.id}>{item.title}</button><span className="reading-muted">{item.weread?.managed&&item.weread.percent===undefined?(zh?"待同步":"Not synced"):progressText(item.progress, zh)}</span></header>
+          <p className="reading-muted">{item.author}{item.weread?(zh?" · 微信读书":" · WeRead"):""}</p>
+          {progress !== null && !(item.weread?.managed&&item.weread.percent===undefined) && <progress aria-label={zh ? "阅读进度" : "Reading progress"} max={100} value={progress} />}
+          {detail===item.id&&totals&&<><WeReadBookActions book={item} account={account} mutate={mutate} zh={zh} busy={busy}/><p className="reading-muted">{zh ? "计划" : "Planned"} {Math.round(totals.plannedMinutes)}m · {zh ? "实际" : "Actual"} {Math.round(totals.actualMinutes)}m{totals.weightedMinutes !== null ? " · " + (zh ? "加权" : "Weighted") + " " + Math.round(totals.weightedMinutes) + "m" : ""}</p>
+          <div className="reading-actions"><Button variant="ghost" disabled={busy} onClick={() => setEditor(item.id)}>{item.weread?.managed?(zh?"手动编辑":"Edit manually"):(zh ? "编辑进度" : "Edit progress")}</Button>{status !== "finished" && <Button variant="secondary" disabled={busy} onClick={() => run(() => onCreateTask(item.id))}>{zh ? "添加阅读任务" : "Add reading task"}</Button>}</div></>}
         </article>;
       })}
     </TaskGroup>)}
