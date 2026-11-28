@@ -20,7 +20,8 @@ MIT licensed. Never commit API keys, account exports, node_modules or app bundle
 
 ## Protocol 2 preview
 
-`examples/protocol-v2.ts` demonstrates the experimental type-only public
-contract in `api/v2.d.ts`. It is exercised by host contract tests, not by
-installed clients. Keep `manifest.json` on API v1; do not publish the example
-as a working v2 package until host integration is available.
+`examples/protocol-v2.ts` exercises the experimental contract with a mock
+host. `examples/protocol-v2-preview.ts` uses only the wired task read and
+page capabilities. Keep the template's manifest on protocol 1: approved
+catalog review and compatibility delivery are required before publishing
+v2 packages. See the API guide for current restrictions.

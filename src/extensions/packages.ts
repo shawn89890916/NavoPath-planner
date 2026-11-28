@@ -2,7 +2,7 @@ import { isPluginMcpDeclaration, isSafePluginConfigKey } from "../../shared/plug
 import type { ExtensionManifest, ExtensionPackage, ExtensionPlatform, ExtensionPreferences, ExtensionSource, InstalledExtension } from "./types";
 import type { Settings } from "../types";
 
-import { validV2PreviewPermissions } from "./v2PreviewPolicy";
+import { validV2PreviewPermissions } from "./v2PreviewPolicy.ts";
 import packageInfo from "../../package.json" with { type: "json" };
 
 export const APP_VERSION = packageInfo.version;

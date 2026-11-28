@@ -131,3 +131,16 @@ Release: P0 documentation-only; no runtime version bump or product build needed 
 - Inspect migration/RLS and backend capabilities before implementing versioned cloud values. No backend changes approved or performed.
 - Verify live published release/catalog status and current branch again before implementation; baseline is source snapshot only.
 - Run real install/upgrade/uninstall and Windows resource measurements after P1/P2 code exists. Static audit alone does not prove release readiness.
+
+## P2a implementation checkpoint
+
+The preview now wires the real host view registry and read-only task projections.
+Supported capabilities are explicitly bounded to tasks.read and workspace,
+planning, settings pages and toast. All other operations fail at negotiation.
+The existing v1 loader and native features remain unchanged. Catalog source
+and package integrity checks precede activation; package execution is still
+trusted renderer code. No v2 package is published yet. Legacy clients reject
+unknown manifest protocols in the catalog; use a distinct compatibility
+channel or another backward-compatible strategy before publishing v2.
+Production Task groups, writes, activity/metrics, storage CAS, Reading
+migration and security isolation remain open.

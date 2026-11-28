@@ -243,19 +243,31 @@ use `import("./api").PluginContext` in JSDoc without installing the host.
 
 ## Experimental protocol 2 (development preview)
 
-The generated type-only SDK now includes `PluginContextV2` in `api/v2.d.ts`.
-The contract, reference activation layer and mock-host tests are under
-`src/extensions/sdkV2.ts`, `runtimeV2.ts` and `runtimeV2.test.ts`.
-The `integrations/navopath-plugin-template/examples/protocol-v2.ts` example
-runs in those tests. It is **not an installable plugin yet**: production
-manifest validation continues to accept only apiVersion 1 until the real
-host adapters, data guarantees and compatibility checks are wired. Keep
-existing plugin packages on v1. The protocol number is independent of the
-SDK package semver. No SDK release or catalog publication has occurred.
+The generated type-only SDK includes `PluginContextV2` in `api/v2.d.ts`.
+The contract, activation layer and tests are in `src/extensions/sdkV2.ts`,
+`runtimeV2.ts`, and `runtimeV2.test.ts`. The production preview adapter in
+`runtimeV2Host.ts` connects only `tasks.read`, `ui.workspace`, `ui.planning`,
+`ui.settings` and `ui.toast` to the existing host. One page per plugin per
+surface is supported. Task reads default to incomplete tasks and expose only
+the public DTO; pass `includeCompleted: true` to include completed tasks.
 
-The v2 surface is a scoped, revocable activation with declared capabilities;
-there is no raw app/internal, planner state, arbitrary desktop IPC or host
-module import. The static boundary check is a development guard, not a
-security sandbox. The proposed storage results distinguish unavailable,
-conflict and pending from committed, but production atomic revision checks
-are not implemented yet. Do not store credentials in ordinary plugin data.
+Preview manifests declare `apiVersion: 2` and a unique array of supported
+`permissions`. Preview packages are restricted to the approved official
+catalog and existing explicit enable lifecycle; local imports and direct
+third-party sources are rejected. No desktop entry, global styles, MCP
+declaration or declarative settings options are accepted at this stage.
+The original example `examples/protocol-v2.ts` exercises the broader mock
+contract; `examples/protocol-v2-preview.ts` demonstrates the wired subset.
+Neither example is published in the catalog.
+
+The v2 context has no raw app/internal, planner state, arbitrary desktop IPC
+or host module import. The static boundary check is a development guard;
+approved packages remain trusted renderer code, not sandboxed code.
+Task writes, activity queries, Tasks groups, Metrics providers and versioned
+storage remain unwired and must fail rather than fall back to unsafe v1 writes.
+Do not store credentials in ordinary plugin data.
+
+Keep existing plugin packages on v1. Older clients reject unknown manifest
+protocols when loading a catalog, so publishing v2 packages requires a
+separate compatible catalog/version delivery design. No v2 SDK or plugin
+release, catalog publication or database migration has occurred.
